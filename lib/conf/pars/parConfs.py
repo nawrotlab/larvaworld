@@ -48,7 +48,6 @@ class LarvaConfDict:
     def __init__(self):
         from lib.model.modules import crawler, turner, intermitter, crawl_bend_interference, sensor, memory, feeder, \
             locomotor, brain
-        # dinit = init_pars()
         self.mfunc = {
             'crawler': crawler.Crawler,
             'turner': turner.Turner,
@@ -64,7 +63,7 @@ class LarvaConfDict:
 
         self.mkeys = list(self.mfunc.keys())
         self.mpref = {k: f'brain.{k}_params.' for k in self.mkeys}
-        self.mdicts = dNl.AttrDict.from_nested_dicts({})
+        self.mdicts = dNl.NestDict()
         self.mfunc['locomotor'] = locomotor.DefaultLocomotor
         self.mfunc['brain'] = brain.DefaultBrain
         for k in self.mkeys:
@@ -75,10 +74,10 @@ class LarvaConfDict:
             self.mdicts[k] = mdic
 
         self.aux_keys = ['body', 'physics', 'energetics', 'Box2D_params']
-        self.aux_dicts = dNl.AttrDict.from_nested_dicts({k: init2par(k=k) for k in self.aux_keys})
+        self.aux_dicts = dNl.NestDict({k: init2par(k=k) for k in self.aux_keys})
 
     def conf(self, mdict, prefix=False, **kwargs):
-        conf0 = dNl.AttrDict.from_nested_dicts({})
+        conf0 = dNl.NestDict()
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
                 d0 = f'{p.pref}{d}' if prefix else d
@@ -90,7 +89,7 @@ class LarvaConfDict:
         return conf0
 
     def multiconf(self, mConf):
-        multiconf = dNl.AttrDict({})
+        multiconf = dNl.NestDict()
         for mkey, mdict in mConf.items():
             if mkey == 'modules':
                 multiconf.modules = mConf.modules
@@ -140,7 +139,7 @@ class LarvaConfDict:
         return conf
 
     def compile_pdict(self, dic):
-        pdict = dNl.AttrDict.from_nested_dicts({})
+        pdict = dNl.NestDict()
         for mkey, ds in dic.items():
             mdict = self.mdicts[mkey]
             for d in ds:
@@ -151,7 +150,7 @@ class LarvaConfDict:
         mkeys0 = ['crawler', 'turner', 'interference', 'intermitter', 'feeder']
         if mkeys is None:
             mkeys = mkeys0
-        conf = dNl.AttrDict.from_nested_dicts({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
+        conf = dNl.NestDict({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
         for mkey in mkeys0:
             if mkey in mkeys:
                 mdict = self.mdicts[mkey]
@@ -170,7 +169,7 @@ class LarvaConfDict:
         if mkeys is None:
             mkeys = mkeys0
 
-        conf = dNl.AttrDict.from_nested_dicts({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
+        conf = dNl.NestDict({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
         for mkey in mkeys0:
             if mkey in mkeys:
                 mdict = self.mdicts[mkey]
@@ -187,7 +186,7 @@ class LarvaConfDict:
     def mIDconf(self, mID=None, m=None):
         if m is None :
             m = loadConf(mID, 'Model').brain
-        mIDconf = dNl.AttrDict({})
+        mIDconf = dNl.NestDict()
         mIDconf.modules = m.modules
         for mkey, mdic in self.mdicts.items():
             if m.modules[mkey]:
@@ -221,7 +220,7 @@ class LarvaConfDict:
 
 def confID_dict():
     from lib.conf.stored.conf import kConfDict, ConfSelector
-    dic = dNl.AttrDict.from_nested_dicts({})
+    dic = dNl.NestDict()
     keys = ['Ref', 'Model', 'Env', 'Exp', 'Ga']
     for K0 in keys:
         k0 = K0.lower()

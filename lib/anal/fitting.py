@@ -5,7 +5,9 @@ from scipy.stats import levy, norm, uniform, rv_discrete, ks_2samp
 from scipy.special import erf
 
 from lib.aux import naming as nam
-from lib.aux.dictsNlists import AttrDict, save_dict
+#from lib.aux.dictsNlists import AttrDict, save_dict, NestDict
+import lib.aux.dictsNlists as dNl
+
 from lib.process.aux import suppress_stdout, suppress_stdout_stderr
 
 def gaussian(x, mu, sig):
@@ -190,13 +192,13 @@ def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id
             dic[k] = None
             best[k] = None
 
-    c.bout_distros = AttrDict(best)
+    c.bout_distros = dNl.NestDict(best)
 
-    dic = AttrDict(dic)
+    dic = dNl.NestDict(dic)
     if store:
         path=c.dir_dict.pooled_epochs
         os.makedirs(path, exist_ok=True)
-        save_dict(dic, f'{path}/{id}.txt', use_pickle=True)
+        dNl.save_dict(dic, f'{path}/{id}.txt', use_pickle=True)
         print('Pooled group bouts saved')
     # return dic
 
@@ -425,8 +427,8 @@ def fit2d_coeff(df, vars, target,N=3, show=True):
     coeff = np.linalg.lstsq(matrix, z, rcond=None)[0]  # lstsq returns some additional info we ignore
     fit = np.dot(matrix, coeff)
     if show:
+        from lib.plot.dataplot import plot_3d, plot_surface
         import matplotlib.pyplot as plt
-        from lib.anal.plot_datasets import plot_3d
         plot_3d(df, vars=vars, target=target, show=show, surface=True)
         plt.plot(fit, color='red', label='fitted')
         plt.plot(z, color='green', label='original')
@@ -447,7 +449,7 @@ def fit2d_predict(coeff, ranges,  Ngrid=100, target=None,vars=None,  show=True):
     predict = np.dot(matrix, coeff)
     if show:
         import matplotlib.pyplot as plt
-        from lib.anal.plot_datasets import plot_surface
+        from lib.plot.dataplot import plot_3d, plot_surface
         z0 = predict.reshape(yy0.shape)
         fig3 = plot_surface(yy0, yy1, z0, vars=vars, target=target, show=show)
 
@@ -527,8 +529,7 @@ class BoutGenerator:
 
 def test_boutGens(mID,refID, **kwargs):
     from lib.conf.stored.conf import loadConf, loadRef
-    from lib.anal.plotting import plot_bouts
-
+    from lib.plot.plotting import plot_bouts
     d = loadRef(refID)
     d.load(contour=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
@@ -550,6 +551,6 @@ def test_boutGens(mID,refID, **kwargs):
             vs = B.sample(N)
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'}, {'id' : 'experiment', 'pooled_epochs': d.load_pooled_epochs(), 'color': 'red'}]
-    datasets = [AttrDict.from_nested_dicts(dd) for dd in datasets]
+    datasets = [dNl.NestDict(dd) for dd in datasets]
     return plot_bouts(datasets=datasets, plot_fits='none', **kwargs)
 

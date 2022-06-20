@@ -6,7 +6,7 @@ import copy
 
 import numpy as np
 
-from lib.aux.dictsNlists import AttrDict
+import lib.aux.dictsNlists as dNl
 from lib.conf.base.dtypes import null_dict
 from lib.conf.stored.conf import loadConf
 
@@ -223,7 +223,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo
-    return AttrDict.from_nested_dicts(d)
+    return dNl.NestDict(d)
 
 
 if __name__ == '__main__':

@@ -5,8 +5,8 @@ import shutil
 import time
 
 import param
+import lib.aux.dictsNlists as dNl
 
-from lib.aux.dictsNlists import AttrDict
 from lib.conf.base.dtypes import null_dict, base_enrich
 from lib.conf.base import paths
 
@@ -15,8 +15,7 @@ def loadConf(id, conf_type, **kwargs):
     try:
         conf_dict = loadConfDict(conf_type, **kwargs)
         conf = conf_dict[id]
-        return AttrDict.from_nested_dicts(conf)
-        # return conf
+        return dNl.NestDict(conf)
     except:
         raise ValueError(f'{conf_type} Configuration {id} does not exist')
 
@@ -48,9 +47,10 @@ def loadConfDict(conf_type, use_pickle=False):
         else:
             with open(paths.path(conf_type)) as f:
                 d = json.load(f)
-        return d
+        # return dNl.NestDict(d)
     except:
-        return {}
+        d={}
+    return dNl.NestDict(d)
 
 def kConfDict(conf_type, **kwargs) :
     return list(loadConfDict(conf_type, **kwargs).keys())
@@ -78,7 +78,7 @@ def loadRef(id) :
 
 
 def copyConf(id, conf_type) :
-    return AttrDict.from_nested_dicts(copy.deepcopy(expandConf(id, conf_type)))
+    return dNl.NestDict(copy.deepcopy(expandConf(id, conf_type)))
 
 def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
     try:

@@ -512,7 +512,7 @@ def comp_chunk_dicts(s,e,c,vel_thr=0.3,strides_enabled=True,store=False) :
     fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
-    chunk_dicts = dNl.AttrDict.from_nested_dicts({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
+    chunk_dicts = dNl.NestDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
     if store :
         path = c.dir_dict.chunk_dicts
         os.makedirs(path, exist_ok=True)
@@ -562,7 +562,7 @@ def mean_stride_curve(a, strides,da,Nbins=64) :
     aa_minus = aa[da < 0]
     aa_plus = aa[da > 0]
     aa_norm = np.vstack([aa_plus, -aa_minus])
-    dic= dNl.AttrDict.from_nested_dicts({
+    dic= dNl.NestDict({
         'abs': np.nanquantile(np.abs(aa), q=0.5, axis=0).tolist(),
         'plus': np.nanquantile(aa_plus, q=0.5, axis=0).tolist(),
         'minus': np.nanquantile(aa_minus, q=0.5, axis=0).tolist(),
@@ -575,7 +575,7 @@ def cycle_curve_dict(s,dt, shs=['sv', 'fov', 'rov', 'foa', 'b']) :
     strides = detect_strides(s[getPar('sv')], dt, return_extrema=False, return_runs=False)
     da = np.array([np.trapz(s[getPar('fov')][s0:s1]) for ii, (s0, s1) in enumerate(strides)])
     dic = {sh: mean_stride_curve(s[getPar(sh)], strides, da) for sh in shs}
-    return dNl.AttrDict.from_nested_dicts(dic)
+    return dNl.NestDict(dic)
 
 
 
@@ -620,13 +620,13 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
             curves_minus[jj, :]=np.nanquantile(aa_minus, q=0.5, axis=0)
             curves_norm[jj, :]=np.nanquantile(aa_norm, q=0.5, axis=0)
         mean_curves_abs[sh]=curves_abs
-        cycle_curves[sh]=dNl.AttrDict.from_nested_dicts({
+        cycle_curves[sh]=dNl.NestDict({
             'abs': curves_abs,
             'plus': curves_plus,
             'minus': curves_minus,
             'norm': curves_norm,
         })
-        pooled_curves[sh]=dNl.AttrDict.from_nested_dicts({
+        pooled_curves[sh]=dNl.NestDict({
             'abs': np.nanquantile(curves_abs, q=0.5, axis=0).tolist(),
             'plus': np.nanquantile(curves_plus, q=0.5, axis=0).tolist(),
             'minus': np.nanquantile(curves_minus, q=0.5, axis=0).tolist(),

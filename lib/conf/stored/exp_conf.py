@@ -1,6 +1,5 @@
 import numpy as np
 
-from lib.aux.dictsNlists import AttrDict
 from lib.conf.stored.conf import imitation_exp, loadConf
 from lib.conf.base.dtypes import enr_dict, null_dict, oG, oD, prestarved
 
@@ -230,15 +229,3 @@ grouped_exp_dict = {
         'imitation': imitation_exp('None.50controls', model='explorer'),
     }
 }
-
-if __name__ == '__main__':
-    # from lib.conf.stored.conf import saveConf
-    # for k, v in batch_dict.items():
-    #     saveConf(v, 'Batch', k)
-
-    data1 = AttrDict.from_nested_dicts(grouped_exp_dict)
-    # print(data1.chemotaxis.chemorbit_x3.larva_groups.CoupledOsc.distribution['N'])  # -> b3bval
-    # data1.chemotaxis.chemorbit_x3.larva_groups.CoupledOsc.distribution['N']=5
-    print(type(data1))
-    print(type(data1) == dict)
-    print(isinstance(data1, dict))

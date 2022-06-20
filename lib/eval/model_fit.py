@@ -8,7 +8,9 @@ from lib.aux import dictsNlists as dNl
 from lib.conf.base.dtypes import null_dict, ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.conf.pars.pars import getPar
-
+from lib.plot.base import BasePlot
+from lib.plot.grid import model_summary
+from lib.plot.table import modelConfTable
 
 
 class Calibration:
@@ -52,15 +54,9 @@ class Calibration:
 
 
     def plot_turner_distros(self, sim, fig=None, axs=None,in_deg=False,**kwargs):
-        from lib.anal.plot_aux import BasePlot
-
-        # err, Ks_dic = self.eval_turner(sim, absolute=True)
-        # print(Ks_dic)
         Nps = len(self.shorts)
         P=BasePlot(name='turner_distros',**kwargs)
         P.build(Ncols=Nps, fig=fig, axs=axs,figsize=(5 * Nps, 5), sharey=True)
-        # if fig is None and axs is None:
-        #     fig, axs = plt.subplots(1, Nps, figsize=(6 * Nps, 6), sharey=True)
         for i, sh in enumerate(self.shorts):
             p, lab = getPar(sh, to_return=['d', 'lab'])
             vs = self.target[sh]
@@ -135,8 +131,8 @@ class Calibration:
         return err, Ks_dic
 
     def retrieve_modules(self,q, Ndec=None):
-        dic = dNl.AttrDict.from_nested_dicts({k: q0 for (k, dic), q0 in zip(self.space_dict.items(), q)})
-        turner = dNl.AttrDict.from_nested_dicts(copy.deepcopy(self.base_turner))
+        dic = dNl.NestDict({k: q0 for (k, dic), q0 in zip(self.space_dict.items(), q)})
+        turner = dNl.NestDict(copy.deepcopy(self.base_turner))
 
         if Ndec is not None :
             physics = null_dict('physics', **{k: np.round(dic[k], Ndec) for k in self.physics_keys})
@@ -184,7 +180,7 @@ class Calibration:
         ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
         print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
         _=self.plot_turner_distros(sim)
-        best = dNl.AttrDict.from_nested_dicts({'turner': turner, 'physics': physics})
+        best = dNl.NestDict({'turner': turner, 'physics': physics})
 
         return best, Ks_dic
         # pass
@@ -389,8 +385,6 @@ def calibrate_4models(refID='None.150controls') :
     return mdict
 
 def update_modelConfs(refID, mIDs):
-    from lib.anal.plot_aux import modelConfTable
-    from lib.anal.plot_combos import model_summary
 
     d = loadRef(refID)
     # c = d.config

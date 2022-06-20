@@ -252,7 +252,7 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
 def arrange_evaluation(d, evaluation_metrics):
 
     Edata, Ddata = {},{}
-    dic = dNl.AttrDict.from_nested_dicts({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
+    dic = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         Eshorts, Dshorts = [], []
         ps = getPar(shs)
@@ -277,11 +277,11 @@ def arrange_evaluation(d, evaluation_metrics):
         if len(Dshorts) > 0:
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
-    eval_data = dNl.AttrDict.from_nested_dicts({'step':Ddata, 'end': Edata})
+    eval_data = dNl.NestDict({'step':Ddata, 'end': Edata})
     return dic,eval_data
 
 def arrange_evaluation2(s, e, evaluation_metrics):
-    d = dNl.AttrDict.from_nested_dicts({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
+    d = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         ps = getPar(shs)
         Eshorts = [sh for sh, p in zip(shs, ps) if p in e.columns]
@@ -297,7 +297,7 @@ def arrange_evaluation2(s, e, evaluation_metrics):
 
 
 def prepare_sim_dataset(e, c, id, color):
-    cc = dNl.AttrDict.from_nested_dicts({
+    cc = dNl.NestDict({
         'env_params': c.env_params,
         'bout_distros': c.bout_distros,
         'id': id,
@@ -329,7 +329,7 @@ def prepare_dataset(d, Nids, id='experiment', color='black'):
     s = copy.deepcopy(s0.loc[(slice(None), ids), slice(None)])
     e = copy.deepcopy(e0.loc[ids])
 
-    c = dNl.AttrDict.from_nested_dicts(c0)
+    c = dNl.NestDict(c0)
     c.id = id
     c.agent_ids = ids
     c.N = Nids
@@ -353,7 +353,7 @@ def prepare_validation_dataset(d, Nids):
 
     s_val = copy.deepcopy(s.loc[(slice(None), ids2), slice(None)])
     e_val = copy.deepcopy(e.loc[ids2])
-    c_val = dNl.AttrDict.from_nested_dicts(c)
+    c_val = dNl.NestDict(c)
     c_val.id = 'cross-val'
     c_val.agent_ids = ids2
     c_val.N = Nids
@@ -413,7 +413,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
                                    default_color=color,
                                    distribution=null_dict('larva_distro', N=Nids))}
 
-    c = dNl.AttrDict.from_nested_dicts(
+    c = dNl.NestDict(
         {'dir': dir, 'id': dataset_id,'larva_groups' : larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1/dt, 'agent_ids': ids, 'duration': dur * 60,
          'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': int(dur * 60 / dt), 'mID': mID, 'color': color, 'env_params': env_params})
 
@@ -478,7 +478,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         d.set_data(step=s, end=e)
         c=d.config
     else :
-        d = dNl.AttrDict.from_nested_dicts(
+        d = dNl.NestDict(
             {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
 
     if enrichment :
@@ -500,7 +500,6 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     return d
 
 
-from lib.aux.dictsNlists import flatten_dict, AttrDict
 
 
 def RSS(vs0, vs):
@@ -529,19 +528,15 @@ def RSS_dic(dd, d):
         dic = {}
         for mode in f[sh].keys():
             dic[mode] = RSS0(ff, f, sh, mode)
-        return AttrDict.from_nested_dicts(dic)
+        return dic
 
 
     dic = {}
     for sh in f.keys():
         dic[sh] = RSS1(ff, f, sh)
 
-    ers = AttrDict.from_nested_dicts(dic)
-
-    # ang_ks=[sh for sh in f.keys() if sh!='sv']
-
-    stat = np.round(np.mean([ers[sh]['norm'] for sh in f.keys() if sh!='sv']),2)
-    dd.config.pooled_cycle_curves_errors=AttrDict.from_nested_dicts({'dict' : ers, 'stat':stat})
+    stat = np.round(np.mean([dic[sh]['norm'] for sh in f.keys() if sh!='sv']),2)
+    dd.config.pooled_cycle_curves_errors=dNl.NestDict({'dict' : dic, 'stat':stat})
     return stat
 
 if __name__ == '__main__':

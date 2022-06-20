@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.aux.ang_aux import restore_bend_2seg
-from lib.aux.dictsNlists import AttrDict
+from lib.aux.dictsNlists import NestDict
 from lib.model.modules.crawl_bend_interference import  Coupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
@@ -97,7 +97,7 @@ class DefaultLocomotor(Locomotor):
         if m['feeder']:
             self.feeder = Feeder(dt=self.dt, **c.feeder_params)
         if c.interference_params is None or not m['interference']:
-            c.interference_params=AttrDict.from_nested_dicts({'mode' : 'default', 'attenuation' : 1})
+            c.interference_params=NestDict({'mode' : 'default', 'attenuation' : 1})
         self.coupling = Coupling(locomotor=self, **c.interference_params)
 
         #     self.coupling = DefaultCoupling(locomotor=self, attenuation=1)

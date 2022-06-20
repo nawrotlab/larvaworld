@@ -214,13 +214,13 @@ class ParRegistry:
 
             self.dict = self.finalize_dict(self.dict_entries)
 
-            self.ddict=dNl.AttrDict.from_nested_dicts({p.d:p for k,p in self.dict.items()})
-            self.pdict=dNl.AttrDict.from_nested_dicts({p.p:p for k,p in self.dict.items()})
+            self.ddict=dNl.NestDict({p.d:p for k,p in self.dict.items()})
+            self.pdict=dNl.NestDict({p.p:p for k,p in self.dict.items()})
             if save :
                 self.save()
 
     def finalize_dict(self, entries):
-        dic = dNl.AttrDict.from_nested_dicts({})
+        dic = dNl.NestDict()
         for prepar in entries:
             p = v_descriptor(**prepar)
             dic[p.k] = p
@@ -312,8 +312,8 @@ if __name__ == '__main__':
     # for d,p in ParDict.dict.items() :
     #     print(d,p.v,type(p.func),type(p.dtype))
     # # p.param.trigger('disp', 'd')
-    d=ParDict.dict['ba'].param.d
-    # # print(d.name)
+    #d=ParDict.dict['ba'].param.d
+    print(ParDict.dict['ba'].param.values())
     # # print(ParDict.dict['b'].v)
     # # print(p.param.values())
     # # p._internal_name = 'ddd'

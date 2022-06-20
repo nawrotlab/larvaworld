@@ -59,11 +59,11 @@ class OptParDict(Parameterized):
     def dict(self):
         dic = self.param.values()
         dic.pop('name', None)
-        return dNl.AttrDict.from_nested_dicts(dic)
+        return dNl.NestDict(dic)
 
     @property
     def entry(self):
-        return dNl.AttrDict.from_nested_dicts({self.name: self.dict})
+        return dNl.NestDict({self.name: self.dict})
 
 
 class SimParConf(OptParDict):

@@ -36,7 +36,7 @@ def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbo
     rowColors = [None]
     data = []
 
-    dvalid = dNl.AttrDict.from_nested_dicts({'interference': {
+    dvalid = dNl.NestDict({'interference': {
         'square': ['crawler_phi_range', 'attenuation', 'attenuation_max'],
         'phasic': ['max_attenuation_phase', 'attenuation', 'attenuation_max'],
         'default': ['attenuation']

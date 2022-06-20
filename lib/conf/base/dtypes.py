@@ -6,8 +6,9 @@ import pandas as pd
 
 import numpy as np
 from typing import TypedDict, List, Tuple
+import lib.aux.dictsNlists as dNl
 
-from lib.aux.dictsNlists import AttrDict, tree_dict
+#from lib.aux.dictsNlists import AttrDict, tree_dict
 from lib.conf.base.init_pars import init_pars
 from lib.conf.pars.units import ureg
 
@@ -124,7 +125,7 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
         return p_kws
 
 
-    if vs is not None:
+    if vs not in [None, []]:
         Ndigits = maxNdigits(np.array(vs), 4)
     if aux_vs is not None and vs is not None:
         vs += aux_vs
@@ -161,7 +162,7 @@ def ga_dict(name=None, suf='', excluded=None, only=None):
         else:
             kws['min'], kws['max'] = np.min(vs['values']), np.max(vs['values'])
         d[k0] = kws
-    return AttrDict.from_nested_dicts(d)
+    return dNl.NestDict(d)
 
 def interference_ga_dict(mID, suf='brain.interference_params.') :
     from lib.conf.stored.conf import loadConf
@@ -190,7 +191,7 @@ def par_dict(name=None, d0=None, **kwargs):
         try:
             entry = par(n, **v, **kwargs)
         except:
-            # print(n,v)
+            print(n,v)
             entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n], **kwargs)}}
         d.update(entry)
     return d
@@ -270,7 +271,7 @@ def pars_to_tree(name):
 
 def conf_to_tree(conf, id=''):
     from lib.gui.aux.elements import GuiTreeData
-    entries = tree_dict(d=conf, parent_key=id, sep='.')
+    entries = dNl.tree_dict(d=conf, parent_key=id, sep='.')
     return GuiTreeData(entries=entries, headings=['value'], col_widths=[40, 20])
 
 
@@ -280,7 +281,7 @@ def multiconf_to_tree(ids, conftype):
     dfs = []
     for i, id in enumerate(ids):
         conf = expandConf(id, conftype)
-        entries = tree_dict(d=conf, parent_key=id)
+        entries = dNl.tree_dict(d=conf, parent_key=id)
         df = pd.DataFrame.from_records(entries, index=['parent', 'key', 'text'])
         dfs.append(df)
     ind0 = []
@@ -335,7 +336,7 @@ def null_dict(name, key='initial_value', **kwargs):
     dic2 = v0(dic)
     if name not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
-        return AttrDict.from_nested_dicts(dic2)
+        return dNl.NestDict(dic2)
     else:
         for k, v in dic2.items():
             if k in list(kwargs.keys()):
@@ -344,7 +345,7 @@ def null_dict(name, key='initial_value', **kwargs):
                 for k0, v0 in v.items():
                     if k0 in list(kwargs.keys()):
                         dic2[k][k0] = kwargs[k0]
-        return AttrDict.from_nested_dicts(dic2)
+        return dNl.NestDict(dic2)
 
 
 def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):

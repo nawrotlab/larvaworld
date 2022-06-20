@@ -12,6 +12,7 @@ from lib.calibration.model_fit import adapt_crawler, adapt_intermitter, adapt_in
 
 from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.pars import getPar, ParDict
+from lib.plot.table import modelConfTable
 from lib.process.aux import compute_interference
 
 from lib.process.calibration import comp_stride_variation, comp_segmentation
@@ -108,7 +109,7 @@ class LarvaDataset:
                       'source_xy': source_xy,
                       'life_history': life_history
                       }
-        self.config = dNl.AttrDict.from_nested_dicts(config)
+        self.config = dNl.NestDict(config)
         self.config.dir_dict = self.dir_dict
         self.__dict__.update(self.config)
 
@@ -407,7 +408,7 @@ class LarvaDataset:
         return df
 
     def inspect_aux(self, save=True):
-        aux_pars=dNl.AttrDict.from_nested_dicts({'distro' : [], 'dispersion' : [], 'other' : []})
+        aux_pars=dNl.NestDict({'distro' : [], 'dispersion' : [], 'other' : []})
         distro_ps, dsp_ps,other_ps = [],[],[]
         store = pd.HDFStore(self.dir_dict.aux_h5)
         ks=store.keys()
@@ -624,7 +625,7 @@ class LarvaDataset:
         self.plot_dir = os.path.join(dir, 'plots')
         self.vis_dir = os.path.join(dir, 'visuals')
         self.aux_dir = os.path.join(dir, 'aux')
-        dir_dict = {
+        self.dir_dict = dNl.NestDict({
             'parent': self.dir,
             'data': self.data_dir,
             'plot': self.plot_dir,
@@ -650,8 +651,7 @@ class LarvaDataset:
             'contour_h5': os.path.join(self.data_dir, 'contour.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
             'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
-        }
-        self.dir_dict = dNl.AttrDict.from_nested_dicts(dir_dict)
+        })
         for k in ['parent', 'data']:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
@@ -882,12 +882,11 @@ class LarvaDataset:
 
         saveConf(id=new_id, conf=m, conf_type='Model')
         if 'modelConfs' not in c.keys():
-            c.modelConfs = dNl.AttrDict.from_nested_dicts({'average': {}, 'variable': {}, 'individual': {}})
+            c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
         c.modelConfs.average[new_id] = m
         self.save_config(add_reference=True)
 
         if model_table:
-            from lib.anal.plot_aux import modelConfTable
             modelConfTable(new_id, save_to=self.dir_dict.model_tables)
         return m
 

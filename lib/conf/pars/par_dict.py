@@ -77,7 +77,7 @@ def preparePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, la
         'v0': v0,
 
     }
-    return dNl.AttrDict.from_nested_dicts(kws)
+    return dNl.NestDict(kws)
 
 
 
@@ -85,7 +85,7 @@ def preparePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, la
 class BaseParDict:
     def __init__(self, func_dict, in_rad=True, in_m=True):
         self.func_dict = func_dict
-        self.dict = dNl.AttrDict.from_nested_dicts({})
+        self.dict = dNl.NestDict()
         self.dict_entries=[]
         self.build_initial()
         self.build_angular(in_rad)

@@ -12,6 +12,7 @@ def dict_depth(d):
         return 1 + (max(map(dict_depth, d.values())) if d else 0)
     return 0
 
+
 def flatten_tuple(test_tuple):
     res = []
     if isinstance(test_tuple, tuple):
@@ -41,7 +42,7 @@ def flatten_dict(d, parent_key='', sep='.'):
                 items.append((new_key, 'empty_dict'))
         else:
             items.append((new_key, v))
-    return AttrDict(items)
+    return NestDict(items)
 
 
 def tree_dict(d, parent_key='', sep='.'):
@@ -149,7 +150,7 @@ def load_dict(file, use_pickle=True):
     else:
         with open(file) as tfp:
             d = json.load(tfp)
-    return AttrDict.from_nested_dicts(d)
+    return NestDict(d)
 
 
 def save_dict(d, file, use_pickle=True):
@@ -241,11 +242,11 @@ def merge(item):
             merged[key].append(val)
     return {**item, 'ref': dict(merged)}
 
-def update_nestdict(dic0,dic) :
+
+def update_nestdict(dic0, dic):
     dic0_f = flatten_dict(dic0)
     dic0_f.update(dic)
-    dic0_new = AttrDict.from_nested_dicts(unflatten(dic0_f))
-    return dic0_new
+    return NestDict(unflatten(dic0_f))
 
 
 def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):
@@ -261,22 +262,21 @@ def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):
 
 
 class AttrDict(dict):
-
     '''
     Dictionary subclass whose entries can be accessed by attributes (as well as normally).
-    # >>> obj = AttrDict()
-    # >>> obj['test'] = 'hi'
-    # >>> print obj.test
-    hi
-    # >>> del obj.test
-    # >>> obj.test = 'bye'
-    # >>> print obj['test']
-    bye
-    # >>> print len(obj)
-    1
-    # >>> obj.clear()
-    # >>> print len(obj)
-    0
+    obj = AttrDict()
+    obj['test'] = 'hi'
+    print obj.test
+    >> hi
+    del obj.test
+    obj.test = 'bye'
+    print obj['test']
+    >> bye
+    print len(obj)
+    >> 1
+    obj.clear()
+    print len(obj)
+    >> 0
     '''
 
     def __init__(self, *args, **kwargs):
@@ -292,19 +292,9 @@ class AttrDict(dict):
             return cls({key: cls.from_nested_dicts(data[key]) for key in data})
 
 
-if __name__ == '__main__':
-    data = {
-        "a": "aval",
-        "b": {
-            "b1": {
-                "b2b": "b2bval",
-                "b2a": {
-                    "b3a": "b3aval",
-                    "b3b": "b3bval"
-                }
-            }
-        }
-    }
+def NestDict(data=None):
+    if data is None:
+        return AttrDict()
+    else:
+        return AttrDict.from_nested_dicts(data)
 
-    data1 = AttrDict.from_nested_dicts(data)
-    print(data1.b.b1.b2a.b3b)  # -> b3bval

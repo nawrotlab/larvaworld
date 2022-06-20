@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.aux.dictsNlists import AttrDict
+import lib.aux.dictsNlists as dNl
 from lib.conf.pars.pars import getPar
 
 
@@ -93,7 +93,7 @@ def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
     return {'title': title, 'plotID': 'deb', 'args': args}
 
 
-analysis_dict = AttrDict.from_nested_dicts({
+analysis_dict = dNl.NestDict({
     'tactile': [
         end(['on_food_tr'], 'time ratio on food (final)'),
         time('on_food_tr', 'time ratio on food', u='min'),

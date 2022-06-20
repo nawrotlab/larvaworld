@@ -214,7 +214,7 @@ class GAbuilder(GAselector):
     def init_step_df(self):
 
 
-        c = dNl.AttrDict.from_nested_dicts(
+        c = dNl.NestDict(
             {'id': self.model.id, 'group_id': 'GA_robots', 'dt': self.model.dt, 'fr': 1 / self.model.dt,
              'agent_ids': np.arange(self.Nagents), 'duration': self.model.Nsteps * self.model.dt,
              'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': self.Nagents, 'Nticks': self.model.Nsteps,
@@ -232,7 +232,7 @@ class GAbuilder(GAselector):
         e['num_ticks'] = c.Nticks
         e['length'] = [robot.real_length for robot in self.robots]
 
-        self.dataset=dNl.AttrDict.from_nested_dicts({'step_data' : None, 'endpoint_data' : e, 'config' : c})
+        self.dataset=dNl.NestDict({'step_data' : None, 'endpoint_data' : e, 'config' : c})
 
         return step_df
 
@@ -266,7 +266,7 @@ class GAbuilder(GAselector):
             if g.fitness is None :
                 # t0 = time.time()
                 ss = self.dataset.step_data.xs(i, level='AgentID')
-                gdict=dNl.AttrDict.from_nested_dicts({k:[] for k in dic0.keys()})
+                gdict=dNl.NestDict({k:[] for k in dic0.keys()})
                 gdict['step']=ss
                 if cycle_ks:
                     from lib.process.aux import cycle_curve_dict
@@ -285,7 +285,7 @@ class GAbuilder(GAselector):
 
 
     def build_generation(self):
-        self.genome_dict = dNl.AttrDict.from_nested_dicts(
+        self.genome_dict = dNl.NestDict(
             {'generation': self.generation_num, 'genomes': {i: g for i, g in enumerate(self.genomes)}})
         self.genome_dicts.append(self.genome_dict)
 
@@ -407,7 +407,7 @@ class GAbuilder(GAselector):
                 self.destroy_robot(robot, excluded=True)
 
     def arrange_fitness(self, fitness_func, fitness_target_refID, fitness_target_kws):
-        robot_dict=dNl.AttrDict.from_nested_dicts({})
+        robot_dict=dNl.NestDict()
         if fitness_target_refID is not None:
             d = loadRef(fitness_target_refID)
             if 'eval_shorts' in fitness_target_kws.keys():
@@ -433,7 +433,7 @@ class GAbuilder(GAselector):
             fitness_target = None
         if 'source_xy' in fitness_target_kws.keys():
             fitness_target_kws['source_xy'] = self.model.source_xy
-        return dNl.AttrDict.from_nested_dicts({'func': fitness_func, 'target_refID': fitness_target_refID,
+        return dNl.NestDict({'func': fitness_func, 'target_refID': fitness_target_refID,
                                                'target_kws': fitness_target_kws, 'target': fitness_target, 'robot_dict' : robot_dict})
 
 

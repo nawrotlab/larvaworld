@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 import lib.aux.sim_aux
-from lib.aux.dictsNlists import AttrDict
+from lib.aux.dictsNlists import NestDict
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
@@ -30,7 +30,7 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0,0
         self.cum_food_detected = 0
-        self.foraging_dict = AttrDict.from_nested_dicts({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+        self.foraging_dict = NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
                               self.model.foodtypes.keys()})
 
     def update_larva(self):
@@ -135,7 +135,7 @@ class LarvaSim(BodySim, Larva):
         return self.feed_success
 
     def update_behavior_dict(self):
-        d = AttrDict.from_nested_dicts(self.null_behavior_dict.copy())
+        d = NestDict(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter
         if inter is not None:
             s, f, p, r = inter.active_bouts

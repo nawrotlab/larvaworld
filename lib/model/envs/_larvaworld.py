@@ -46,7 +46,7 @@ class LarvaWorld(BaseLarvaWorld):
 
         if vis_kwargs is None:
             vis_kwargs = null_dict('visualization', mode=None)
-        self.vis_kwargs = dNl.AttrDict.from_nested_dicts(vis_kwargs)
+        self.vis_kwargs = dNl.NestDict(vis_kwargs)
         self.__dict__.update(self.vis_kwargs.draw)
         self.__dict__.update(self.vis_kwargs.color)
         self.__dict__.update(self.vis_kwargs.aux)
@@ -671,7 +671,7 @@ def generate_larvae(N, sample_dict, base_model, RefPars=None):
             for p, vs in sample_dict.items():
                 p=RefPars[p] if p in RefPars.keys() else p
                 lF.update({p: vs[i]})
-            dic=dNl.AttrDict.from_nested_dicts(unflatten(lF))
+            dic=dNl.NestDict(unflatten(lF))
             all_pars.append(dic)
     else:
         all_pars = [base_model] * N
@@ -684,7 +684,7 @@ def get_sample_bout_distros(model, sample):
         'stridechain_dist' : ['stride', 'run_count'],
         'run_dist' : ['run', 'run_dur'],
          }
-    m = dNl.AttrDict.from_nested_dicts(copy.deepcopy(model))
+    m = dNl.NestDict(copy.deepcopy(model))
     Im=m.brain.intermitter_params
     if Im and sample != {}:
 

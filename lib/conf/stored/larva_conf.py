@@ -4,7 +4,7 @@ The larva model parameters
 import copy
 import numpy as np
 
-from lib.aux.dictsNlists import AttrDict
+from lib.aux.dictsNlists import NestDict
 from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
 
 ''' Default exploration model'''
@@ -113,7 +113,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo
-    return AttrDict.from_nested_dicts(d)
+    return NestDict(d)
 
 
 def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None, gut_kws={}, **deb_kws):
@@ -232,7 +232,7 @@ def create_mod_dict():
     M0 = mod()
 
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
-        M1 = AttrDict.from_nested_dicts(copy.deepcopy(M0))
+        M1 = NestDict(copy.deepcopy(M0))
         M1.brain = brain
         M1.body.update(**bod)
         M1.physics.update(**phys)
@@ -252,12 +252,12 @@ def create_mod_dict():
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
-        B1 = AttrDict.from_nested_dicts(copy.deepcopy(B0))
+        B1 = NestDict(copy.deepcopy(B0))
         B1.olfactor_params.odor_dict = OD
         return B1
 
     def add_Im(Im, B0=LOFM):
-        B1 = AttrDict.from_nested_dicts(copy.deepcopy(B0))
+        B1 = NestDict(copy.deepcopy(B0))
         B1.intermitter_params = Im
         return B1
 
@@ -355,7 +355,7 @@ if __name__ == '__main__':
 
 
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
-        M1 = AttrDict.from_nested_dicts(copy.deepcopy(M0))
+        M1 = NestDict(copy.deepcopy(M0))
         M1.brain = brain
         M1.body.update(**bod)
         M1.physics.update(**phys)

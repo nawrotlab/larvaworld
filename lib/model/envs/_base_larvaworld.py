@@ -41,8 +41,8 @@ class BaseLarvaWorld:
         self.larva_collisions = larva_collisions
         self.borders, self.border_xy, self.border_lines, self.border_bodies, self.border_walls = [], [], [], [], []
         os.makedirs(save_to, exist_ok=True)
-        self.env_pars = dNl.AttrDict.from_nested_dicts(env_params)
-        self.larva_groups = dNl.AttrDict.from_nested_dicts(larva_groups)
+        self.env_pars = dNl.NestDict(env_params)
+        self.larva_groups = dNl.NestDict(larva_groups)
         self.create_arena(**self.env_pars.arena)
         self.space = self.create_space()
 

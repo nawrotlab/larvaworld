@@ -68,7 +68,7 @@ class EvalRun :
 
 
         self.loco_dict = {}
-        self.figs = dNl.AttrDict.from_nested_dicts({'errors':{}, 'hist':{}, 'boxplot':{}, 'stride_cycle' : {}, 'loco' : {},'epochs' : {}, 'models' : {}})
+        self.figs = dNl.NestDict({'errors':{}, 'hist':{}, 'boxplot':{}, 'stride_cycle' : {}, 'loco' : {},'epochs' : {}, 'models' : {}})
         self.refDataset=loadRef(refID)
         self.refDataset.pooled_epochs = self.refDataset.load_pooled_epochs()
         self.N=N
@@ -119,7 +119,7 @@ class EvalRun :
         self.data_dir = os.path.join(dir, 'data')
         self.plot_dir = os.path.join(dir, 'plots')
         self.error_dir = os.path.join(dir, 'errors')
-        dir_dict = {
+        self.dir_dict = dNl.NestDict({
             'parent': self.dir,
             'data': self.data_dir,
             'models': os.path.join(dir, 'models'),
@@ -131,8 +131,7 @@ class EvalRun :
             'error_dicts': os.path.join(self.error_dir, 'error_dicts.txt'),
             'sim_data': os.path.join(self.data_dir, 'sim_data.txt'),
             'target_data': os.path.join(self.data_dir, 'target_data.txt'),
-        }
-        self.dir_dict = dNl.AttrDict.from_nested_dicts(dir_dict)
+        })
         for k in ['plot', 'data', 'error', 'models']+ [f'error_{norm}'  for norm in self.norm_modes]:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
@@ -143,11 +142,11 @@ class EvalRun :
         if self.locomotor_models is not None and self.modelIDs is None :
             d.load(contour=False)
             s, e, c = prepare_dataset(d, N)
-            target = dNl.AttrDict.from_nested_dicts(
+            target = dNl.NestDict(
                 {'step_data': s, 'endpoint_data': e, 'config': c, 'pooled_epochs': d.pooled_epochs})
             if self.cross_validation and N <= d.config.N / 2:
                 s_val, e_val, c_val = prepare_validation_dataset(d, N)
-                target_val = dNl.AttrDict.from_nested_dicts(
+                target_val = dNl.NestDict(
                     {'step_data': s_val, 'endpoint_data': e_val, 'config': c_val, 'pooled_epochs': d.pooled_epochs})
 
             self.sim_mode='loco'
@@ -190,7 +189,7 @@ class EvalRun :
         s_symbols = dNl.flatten_list(ev['step']['symbols'].values.tolist())
         self.e_pars = dNl.flatten_list(ev['end']['pars'].values.tolist())
         e_symbols = dNl.flatten_list(ev['end']['symbols'].values.tolist())
-        self.eval_symbols = dNl.AttrDict.from_nested_dicts(
+        self.eval_symbols = dNl.NestDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
         self.tor_durs, self.dsp_starts, self.dsp_stops = torsNdsps(self.s_pars + self.e_pars)
 
@@ -218,7 +217,7 @@ class EvalRun :
             ee, cc = prepare_sim_dataset(e, c, loco_id, col)
             ss = sim_dataset(ee, cc, func, conf, adapted)
             pooled_epochs = enrich_dataset(ss, ee, cc, tor_durs=self.tor_durs, dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops)
-            dd = dNl.AttrDict.from_nested_dicts({'id': loco_id, 'step_data': ss, 'endpoint_data': ee, 'config': cc, 'pooled_epochs': pooled_epochs})
+            dd = dNl.NestDict({'id': loco_id, 'step_data': ss, 'endpoint_data': ee, 'config': cc, 'pooled_epochs': pooled_epochs})
             self.datasets.append(dd)
 
 
@@ -271,7 +270,7 @@ class EvalRun :
             k=f'{mode}_{suf}'
             self.error_dicts[k] = eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode, min_size=min_size)
 
-        self.error_dicts = dNl.AttrDict.from_nested_dicts(self.error_dicts)
+        self.error_dicts = dNl.NestDict(self.error_dicts)
 
         self.store()
 
@@ -306,10 +305,9 @@ class EvalRun :
 
 
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
-            # bars['summary'] = self.summary_plot(norm_mode=norm, eval_mode=mode, error_dict=error_dict0, **kws)
 
-            dic[norm] = dNl.AttrDict.from_nested_dicts({'tables': tabs, 'barplots': bars})
-        return dNl.AttrDict.from_nested_dicts(dic)
+            dic[norm] = {'tables': tabs, 'barplots': bars}
+        return dNl.NestDict(dic)
 
 
 
@@ -324,14 +322,14 @@ class EvalRun :
             elif mode == 'std':
                 df = std_norm(df)
             dic[k]=df
-        return dNl.AttrDict.from_nested_dicts(dic)
+        return dNl.NestDict(dic)
 
 
     def plot_models(self):
         save_to=self.dir_dict.models
-        self.figs.models.tables = dNl.AttrDict.from_nested_dicts(
+        self.figs.models.tables = dNl.NestDict(
             {mID: modelConfTable(mID, save_to=save_to, figsize=(14, 11)) for mID in self.modelIDs})
-        self.figs.models.summaries = dNl.AttrDict.from_nested_dicts(
+        self.figs.models.summaries = dNl.NestDict(
             {mID: model_summary(refID=self.refID, mID=mID, save_to=save_to) for mID in self.modelIDs})
 
     def plot_results(self, plots=['hists','trajectories','dispersion','bouts']):
@@ -373,7 +371,7 @@ class EvalRun :
                 fig1=plot_dispersion(range=(r0, r1),subfolder=None, **kws)
                 fig2=plot_trajectories(name=f'traj_{r0}_{r1}', range=(r0, r1),subfolder=None,mode='origin', **kws)
                 fig3=dsp_summary(range=(r0, r1),**kws2)
-                self.figs.loco[k] = dNl.AttrDict.from_nested_dicts({'plot': fig1, 'traj': fig2, 'summary' : fig3})
+                self.figs.loco[k] = dNl.NestDict({'plot': fig1, 'traj': fig2, 'summary' : fig3})
 
         self.figs.summary = result_summary(**kws2)
         self.figs.stride_cycle.norm = stride_cycle(shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
@@ -384,8 +382,7 @@ class EvalRun :
             Ddata[p] = {d.id: d.step_data[p].dropna() for d in self.datasets}
         for p in self.e_pars:
             Edata[p] = {d.id: d.endpoint_data[p]  for d in self.datasets}
-        sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
-        return sim_data
+        return dNl.NestDict({'step': Ddata, 'end': Edata})
 
     def preprocess(self):
         Ddata,Edata = {},{}
@@ -393,8 +390,7 @@ class EvalRun :
             Ddata[p] = {d.id: ParDict.get(sh, d) for d in self.datasets}
         for p, sh in zip(self.e_pars, self.e_shorts):
             Edata[p] = {d.id: ParDict.get(sh, d) for d in self.datasets}
-        sim_data = dNl.AttrDict.from_nested_dicts({'step': Ddata, 'end': Edata})
-        return sim_data
+        return dNl.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm = []):
         if mode=='step' :

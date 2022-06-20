@@ -3,8 +3,7 @@ from argparse import ArgumentParser
 from typing import List
 
 from lib.aux.colsNstr import N_colors
-from lib.aux.dictsNlists import AttrDict
-
+import lib.aux.dictsNlists as dNl
 
 from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict
@@ -116,7 +115,7 @@ class MultiParser:
         return parser
 
     def get(self, input):
-        return AttrDict.from_nested_dicts({k: v.get(input) for k, v in self.parsers.items()})
+        return dNl.NestDict({k: v.get(input) for k, v in self.parsers.items()})
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     from lib.conf.stored.conf import expandConf
@@ -149,13 +148,13 @@ def update_exp_models(exp_conf, models, N=None):
     gConf0 = list(exp_conf.larva_groups.values())[0]
     if isinstance(models, dict):
         for i, ((gID, m), col) in enumerate(zip(models.items(), colors)):
-            gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
+            gConf = dNl.NestDict(copy.deepcopy(gConf0))
             gConf.default_color = col
             gConf.model = m
             larva_groups[gID] = gConf
     elif isinstance(models, list):
         for i, (m, col) in enumerate(zip(models, colors)):
-            gConf = AttrDict.from_nested_dicts(copy.deepcopy(gConf0))
+            gConf = dNl.NestDict(copy.deepcopy(gConf0))
             gConf.default_color = col
             if isinstance(m, dict):
                 gConf.model = m

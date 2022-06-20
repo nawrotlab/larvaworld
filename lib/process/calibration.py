@@ -9,10 +9,10 @@ from scipy.stats import stats
 from sklearn.linear_model import LinearRegression
 
 import lib.aux.naming as nam
-from lib.anal.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
+import lib.aux.dictsNlists as dNl
+from lib.conf.pars.pars import getPar
+from lib.plot.plotting import plot_spatiotemporal_variation, plot_bend2orientation_analysis, \
     plot_sliding_window_analysis
-from lib.aux.dictsNlists import AttrDict
-from lib.conf.base.pars import getPar, ParDict
 from lib.process.angular import comp_orientations, comp_angles, comp_angular
 from lib.process.aux import interpolate_nans
 from lib.process.basic import comp_extrema
@@ -291,7 +291,7 @@ def comp_stride_variation(d, component_vels=True):
 
     sNt_cv = str_var[[sstr_d_var, str_t_var]].sum(axis=1)
     best_idx = sNt_cv.argmin()
-    c.metric_definition.spatial.fitted = AttrDict.from_nested_dicts(
+    c.metric_definition.spatial.fitted = dNl.NestDict(
         {'point_idx': int(str_var['point_idx'].iloc[best_idx]),
          'use_component_vel': bool(str_var['use_component_vel'].iloc[best_idx])})
     print('Stride variability analysis complete!')
@@ -361,7 +361,7 @@ def comp_segmentation(d):
     best_combo_max = np.max(best_combo)
     front_body_ratio = best_combo_max / N
 
-    c.metric_definition.angular.fitted = AttrDict.from_nested_dicts(
+    c.metric_definition.angular.fitted = dNl.NestDict(
         {'best_combo': str(best_combo), 'front_body_ratio': front_body_ratio,
          'bend': 'from_vectors'})
     print('Angular velocity definition analysis complete!')
@@ -369,7 +369,7 @@ def comp_segmentation(d):
 
 def fit_ang_pars(refID) :
     from lib.conf.stored.conf import loadRef
-    from lib.conf.base.opt_par import ParDict
+    from lib.conf.pars.pars import ParDict
     from lib.model.modules.turner import NeuralOscillator
     from scipy.optimize import minimize, rosen, rosen_der
 

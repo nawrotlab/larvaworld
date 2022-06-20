@@ -65,7 +65,7 @@ class LarvaReplay(Larva, BodyReplay):
             self.cen_pos = self.cen_ar[i]
         self.pos = self.pos_ar[i]
         self.trajectory = self.pos_ar[:i, :].tolist()
-        self.beh_dict = dNl.AttrDict.from_nested_dicts(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
+        self.beh_dict = dNl.NestDict(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
         # if self.Nsegs is not None:
         self.angles = self.ang_ar[i]
         self.orients = self.or_ar[i]

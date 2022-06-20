@@ -21,7 +21,7 @@ def chunk_func(kc, store=False):
     else:
         func = None
         required_ks = []
-    return dNl.AttrDict.from_nested_dicts({'func': func, 'required_ks' :required_ks})
+    return dNl.NestDict({'func': func, 'required_ks' :required_ks})
 
 
 def dsp_func(range):
@@ -113,7 +113,7 @@ def func_v_spatial(p_d, p_v):
     return func
 
 def build_func_dict() :
-    func_dict = dNl.AttrDict.from_nested_dicts({
+    func_dict = dNl.NestDict({
             'chunk': chunk_func,
             'tor': tor_func,
             'dsp': dsp_func,
