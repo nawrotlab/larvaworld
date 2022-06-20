@@ -4,7 +4,7 @@ from lib.plot.dataplot import plot_odor_concentration, plot_sensed_odor_concentr
     plot_turn_amp, plot_stride_Dbend, plot_marked_strides, plot_sample_tracks, plot_stride_Dorient, plot_interference, \
     plot_dispersion, powerspectrum, plot_navigation_index, plot_stridesNpauses, plot_endpoint_params, \
     plot_chunk_Dorient2source, plot_turn_Dorient2center
-from lib.plot.traj import plot_trajectories
+from lib.plot.traj import traj_grouped
 
 graph_dict = {
     'crawl pars': plot_crawl_pars,
@@ -20,7 +20,7 @@ graph_dict = {
     'turn amplitude': plot_turns,
     'marked strides': plot_marked_strides,
     'sample tracks': plot_sample_tracks,
-    'trajectories': plot_trajectories,
+    'trajectories': traj_grouped,
     'turn amplitude VS Y pos': plot_turn_amp,
     'turn Dbearing to center': plot_turn_Dorient2center,
     'chunk Dbearing to source': plot_chunk_Dorient2source,

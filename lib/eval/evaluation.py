@@ -23,7 +23,7 @@ from lib.plot.base import AutoPlot
 from lib.plot.grid import model_summary, dsp_summary, result_summary, eval_summary
 from lib.plot.epochs import plot_bouts, plot_fft_multi
 from lib.plot.stridecycle import stride_cycle
-from lib.plot.traj import plot_trajectories
+from lib.plot.traj import traj_grouped
 from lib.plot.dataplot import plot_ang_pars, plot_crawl_pars, plot_dispersion
 from lib.plot.table import modelConfTable, error_table, error_barplot
 
@@ -358,7 +358,7 @@ class EvalRun :
             self.figs.hist.ang = plot_ang_pars(half_circles=False, absolute=False, Nbins=100, Npars=5,include_rear=False, subfolder=None, **kws)
             self.figs.hist.crawl = plot_crawl_pars(subfolder=None, pvalues=False, **kws)
         if 'trajectories' in plots:
-            self.figs.loco.trajectories = plot_trajectories(subfolder=None, **kws)
+            self.figs.loco.trajectories = traj_grouped(subfolder=None, **kws)
         if 'boxplots' in plots:
             lib.plot.plot_datasets.boxplot.end = self.plot_data(mode='end', type='box')
             lib.plot.plot_datasets.boxplot.step = self.plot_data(mode='step', type='box')
@@ -369,7 +369,7 @@ class EvalRun :
             for r0, r1 in itertools.product(self.dsp_starts, self.dsp_stops):
                 k=f'dsp_{r0}_{r1}'
                 fig1=plot_dispersion(range=(r0, r1),subfolder=None, **kws)
-                fig2=plot_trajectories(name=f'traj_{r0}_{r1}', range=(r0, r1),subfolder=None,mode='origin', **kws)
+                fig2=traj_grouped(name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
                 fig3=dsp_summary(range=(r0, r1),**kws2)
                 self.figs.loco[k] = dNl.NestDict({'plot': fig1, 'traj': fig2, 'summary' : fig3})
 

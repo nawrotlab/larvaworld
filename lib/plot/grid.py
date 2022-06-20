@@ -13,7 +13,7 @@ from lib.plot.metric import plot_segmentation_definition, plot_stride_variabilit
 from lib.plot.table import modelConfTable, error_table, error_barplot
 from lib.plot.epochs import plot_bouts
 from lib.plot.stridecycle import stride_cycle
-from lib.plot.traj import plot_trajectories, annotated_strideplot, annotated_turnplot
+from lib.plot.traj import traj_grouped, track_annotated
 
 
 def calibration_plot(save_to=None, files=None):
@@ -154,7 +154,7 @@ def dsp_summary(datasets, target,range=(0,40), **kwargs):
     }
     # plot_dispersion(range=(r0, r1), subfolder=None, **kws)
 
-    P.plot(func=plot_trajectories, kws={'mode' : 'origin','range': range, **kws}, N=Nds,  x0=True, y0=True, **kws2)
+    P.plot(func=traj_grouped, kws={'mode' : 'origin', 'range': range, **kws}, N=Nds, x0=True, y0=True, **kws2)
     P.plot(func=plot_dispersion, kws={'range': range, **kws}, N=1, w=16, h0=14, x0=True, **kws2)
     # P.plot(func=plot_bouts, kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)
 
@@ -185,7 +185,7 @@ def result_summary(datasets, target, **kwargs):
 
     dur=int(np.min([d.config.duration for d in ds]))
     # print([d.config.duration for d in ds])
-    P.plot(func=plot_trajectories, kws={'mode' : 'origin','range': (0,dur), **kws}, N=Nds,  x0=True, y0=True, **kws2)
+    P.plot(func=traj_grouped, kws={'mode' : 'origin', 'range': (0, dur), **kws}, N=Nds, x0=True, y0=True, **kws2)
     P.plot(func=plot_bouts, kws={'stridechain_duration' : True, **kws}, N=2, w=18, h0=12, x0=True, **kws2)
     P.plot(func=plot_bouts, kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)
 
@@ -214,12 +214,12 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, fig=fig, axs=axs)
     a_v = ss[getPar('v')].values
     a_fov = ss[getPar('fov')].values
-    annotated_strideplot(a_v, dt, ax=P.axs[0])
-    annotated_strideplot(a_v, dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1), show_extrema=False)
+    track_annotated(epoch='stride', a=a_v, dt=dt, ax=P.axs[0])
+    track_annotated(epoch='stride', a=a_v, dt=dt, a2plot=ss[pars[1]].values, ax=P.axs[1], ylim=(0, 1), show_extrema=False)
 
-    annotated_turnplot(a_fov, dt, a2plot=ss[pars[2]].values, ax=P.axs[2], min_amp=min_turn_amp)
-    annotated_turnplot(a_fov, dt, ax=P.axs[3], min_amp=min_turn_amp)
-    annotated_turnplot(a_fov, dt, a2plot=ss[pars[4]].values, ax=P.axs[4], min_amp=min_turn_amp)
+    track_annotated(epoch='turn', a=a_fov, dt=dt, a2plot=ss[pars[2]].values, ax=P.axs[2], min_amp=min_turn_amp)
+    track_annotated(epoch='turn', a=a_fov, dt=dt, ax=P.axs[3], min_amp=min_turn_amp)
+    track_annotated(epoch='turn', a=a_fov, dt=dt, a2plot=ss[pars[4]].values, ax=P.axs[4], min_amp=min_turn_amp)
 
     for i in range(Nrows):
         P.conf_ax(i, xlim=(0, trange[-1] + 10 * dt), ylab=labs[i], xlab='time (sec)',
