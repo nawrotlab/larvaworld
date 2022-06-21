@@ -1222,8 +1222,8 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
         Nbins = int(e.index.values.shape[0] / 10)
     yy = int(e.index.values.shape[0] / 7)
     from lib.conf.base.dtypes import par
-    from lib.conf.base.init_pars import init_pars
-    d0 = init_pars().get(module, None)
+    # from lib.conf.base.init_pars import InitDict
+    d0 = ParDict.init_dict[module]
     N = len(valid)
 
     P = BasePlot(name=f'{module}_endpoint_hists', **kwargs)

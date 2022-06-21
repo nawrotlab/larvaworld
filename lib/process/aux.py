@@ -12,7 +12,7 @@ import statsmodels.api as sm
 # from lib.aux.dictsNlists import AttrDict, save_dict
 
 from lib.aux.sim_aux import fft_max, fft_freqs
-from lib.conf.pars.pars import getPar, ParDict
+from lib.conf.pars.pars import getPar
 from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.process.store import store_aux_dataset
@@ -810,35 +810,6 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
 
-
-def comp_bend_correction(refID='None.150controls'):
-    from lib.conf.stored.conf import loadRef
-    from lib.conf.base.opt_par import ParDict
-    import copy
-    import numpy as np
-    d = loadRef(refID)
-    d.load(contour=False)
-    s, e, c = d.step_data, d.endpoint_data, d.config
-
-    dic = ParDict(mode='load').dict
-    fov, bv, b, sv = [dic[k]['d'] for k in ['fov', 'bv', 'b', 'sv']]
-
-    ss = copy.deepcopy(s[[fov, bv, b, sv]].dropna())
-    ss = ss.loc[ss[sv] > 0]
-    ss = ss.loc[ss[fov] * ss[bv] > 0]
-    ss = ss.loc[ss[fov].abs() - ss[bv].abs() > 0]
-    ss['db'] = ss[fov] * c.dt - ss[bv] * c.dt
-    ss['b0'] = ss[b] + ss['db']
-    ss = ss.loc[ss['b0'] * ss['db'] > 0]
-    ss['db0'] = ss['db'] / ss['b0']
-    ss = ss.loc[ss['db0'] < 1]
-
-    ddb = ss['db0']
-    ddd = (2 * ss[sv]) * c.dt
-    m, k = np.polyfit(ddd, ddb, 1)
-    m = np.round(m, 2)
-    k = np.round(k, 2)
-    return m
 
 
 class FuncParHelper:

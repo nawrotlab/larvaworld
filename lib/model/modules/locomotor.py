@@ -4,7 +4,7 @@ from lib.aux.dictsNlists import NestDict
 from lib.model.modules.crawl_bend_interference import Coupling
 from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
-from lib.model.modules.intermitter import ChoiceIntermitter
+
 from lib.model.modules.turner import Turner
 
 
@@ -115,6 +115,7 @@ class DefaultLocomotor(Locomotor):
         if m['intermitter']:
             if 'mode' not in c.intermitter_params.keys():
                 c.intermitter_params.mode = 'default'
+            from lib.model.modules.intermitter import ChoiceIntermitter
             self.intermitter = ChoiceIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
 
             # mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'

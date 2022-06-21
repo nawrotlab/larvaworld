@@ -1,4 +1,4 @@
-from lib.conf.base.init_pars import substrate_dict
+from lib.conf.pars.init_pars import substrate_dict
 
 
 

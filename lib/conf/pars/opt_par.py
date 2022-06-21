@@ -16,8 +16,9 @@ def base_dtype(dtype):
 
 
 def init2opt_dict(name):
-    from lib.conf.base.init_pars import init_pars
-    init_dic = init_pars()[name]
+    from lib.conf.pars.pars import ParDict
+    init_dic = ParDict.init_dict[name]
+    # init_dic = init_pars()[name]
     opt_dict = {}
     for k, v in init_dic.items():
         if 't' not in v.keys():

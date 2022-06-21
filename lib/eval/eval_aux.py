@@ -439,8 +439,8 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         if not use_LarvaConfDict :
             mbrain=m.brain
         else :
-            from lib.conf.pars.parConfs import LarvaConfDict
-            mConfDict=LarvaConfDict()
+            # from lib.conf.pars.parConfs import LarvaConfDict
+            mConfDict=ParDict.larva_conf_dict
             mParbrain = mConfDict.mIDbconf(m=m.brain)
             mbrain=mConfDict.multibconf(mParbrain)
         DL = DefaultLocomotor(dt=dt, conf=mbrain)

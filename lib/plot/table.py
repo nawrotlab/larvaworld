@@ -7,132 +7,17 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 
 from lib.aux import dictsNlists as dNl
+
 from lib.plot.base import BasePlot
 
 
-def modelConfTable(mID, save_to=None, save_as=None, columns=['Parameter', 'Symbol', 'Value', 'Unit'], rows=None,
-                   figsize=(14, 11), **kwargs):
-    from lib.conf.base.dtypes import par
-    from lib.conf.base.init_pars import init_pars
-    from lib.conf.stored.conf import loadConf
-    m = loadConf(mID, "Model")
-    if rows is None:
-        rows = ['physics', 'body'] + [k for k, v in m.brain.modules.items() if v]
+def modelConfTable(mID, **kwargs):
+    # from lib.conf.base.dtypes import par
+    # from lib.conf.stored.conf import loadConf
+    from lib.conf.pars.pars import ParDict
 
-    rowDicts = []
-    for k in rows:
-        try:
-            rowDicts.append(m[k])
-        except:
-            rowDicts.append(m.brain[f'{k}_params'])
-    rowColors0 = ['lightskyblue', 'lightsteelblue', 'lightcoral', 'indianred', 'lightsalmon', '#a55af4', 'palegreen',
-                  'plum', 'pink'][:len(rows)]
-    Nrows = {rowLab: 0 for rowLab in rows}
+    return ParDict.larva_conf_dict.mIDtable(mID, **kwargs)
 
-    def register(vs, rowColor):
-        data.append(vs)
-        rowColors.append(rowColor)
-        Nrows[vs[0]] += 1
-
-    rowColors = [None]
-    data = []
-
-    dvalid = dNl.NestDict({'interference': {
-        'square': ['crawler_phi_range', 'attenuation', 'attenuation_max'],
-        'phasic': ['max_attenuation_phase', 'attenuation', 'attenuation_max'],
-        'default': ['attenuation']
-    },
-        'turner': {
-            'neural': ['base_activation', 'activation_range', 'n', 'tau'],
-            'constant': ['initial_amp'],
-            'sinusoidal': ['initial_amp', 'initial_freq']
-        },
-        'crawler': {
-            'realistic': ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std'],
-            'constant': ['initial_amp']
-        },
-        'physics': ['ang_damping', 'torque_coef', 'body_spring_k', 'bend_correction_coef'],
-        'body': ['initial_length', 'Nsegs'],
-        'olfactor': ['decay_coef'],
-    })
-
-    def dist_lab(v):
-        n = v.name
-        if n == 'exponential':
-            return f'Exp(b={v.beta})'
-        elif n == 'powerlaw':
-            return f'Powerlaw(a={v.alpha})'
-        elif n == 'levy':
-            return f'Levy(m={v.mu}, s={v.sigma})'
-        elif n == 'uniform':
-            return f'Uniform()'
-        elif n == 'lognormal':
-            return f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'
-        else:
-            raise
-
-    for l, dd, rowColor in zip(rows, rowDicts, rowColors0):
-        d0 = init_pars().get(l, None)
-        if l in ['physics', 'body', 'olfactor']:
-            rowValid = dvalid[l]
-        elif l == 'interference':
-            rowValid = dvalid[l][dd.mode]
-        elif l == 'turner':
-            rowValid = dvalid[l][dd.mode]
-        elif l == 'crawler':
-            rowValid = dvalid[l][dd.waveform]
-        elif l == 'intermitter':
-            rowValid = [n for n in ['stridechain_dist', 'pause_dist'] if dd[n] is not None and dd[n].name is not None]
-
-        if len(rowValid) == 0:
-            Nrows.pop(l, None)
-            continue
-        for n, vv in d0.items():
-            if n not in rowValid:
-                continue
-            v = dd[n]
-            if n in ['stridechain_dist', 'pause_dist']:
-
-                dist_v = dist_lab(v)
-
-                if n == 'stridechain_dist':
-                    vs1 = [l, 'run length distribution', '$N_{R}$', dist_v, '-']
-                    vs2 = [l, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', v.range, '# $strides$']
-                elif n == 'pause_dist':
-                    vs1 = [l, 'pause duration distribution', '$t_{P}$', dist_v, '-']
-                    vs2 = [l, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', v.range, '$sec$']
-                register(vs1, rowColor)
-                register(vs2, rowColor)
-            else:
-                p = par(n, **vv)
-
-                if n == 'initial_length':
-                    v *= 1000
-                elif n == 'suppression_mode':
-                    if v == 'both':
-                        v = '$I_{T}$ & $\omega$'
-                    elif v == 'amplitude':
-                        v = fr'$\omega$'
-                    elif v == 'oscillation':
-                        v = '$I_{T}$'
-
-                else:
-                    try:
-                        v = np.round(v, 2)
-                    except:
-                        pass
-                vs = [l, p[n]['label'], p[n]['symbol'], v, p[n]['unit']]
-                register(vs, rowColor)
-
-    fig = render_conf_table(data, rowColors, Nrows, columns=columns, figsize=figsize, **kwargs)
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-        if save_as is None:
-            save_as = mID
-        filename = f'{save_to}/{save_as}.pdf'
-        fig.savefig(filename, dpi=300)
-    plt.close()
-    return fig
 
 def render_conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
 

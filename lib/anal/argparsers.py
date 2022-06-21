@@ -1,89 +1,29 @@
 import copy
 from argparse import ArgumentParser
-from typing import List
 
 from lib.aux.colsNstr import N_colors
 import lib.aux.dictsNlists as dNl
-
+from lib.conf.pars.pars import ParDict
 from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict
 
-def build_ParsArg(name,k=None,h='',t=float,v=None,vs=None, **kwargs):
-    if k is None :
-        k = name
-    d = {
-        'key': name,
-        'short': k,
-        'help': h,
-    }
-    if t == bool:
-        d['action'] = 'store_true' if not v else 'store_false'
-    elif t == List[str]:
-        d['type'] = str
-        d['nargs'] = '+'
-        if vs is not None:
-            d['choices'] = vs
-    else:
-        d['type'] = t
-        if vs is not None:
-            d['choices'] = vs
-        if v is not None:
-            d['default'] = v
-            d['nargs'] = '?'
-    return {name: d}
-
-def build_ParsDict(dic_name) :
-    from lib.conf.base.init_pars import init_pars
-    d0 = init_pars().get(dic_name, None)
-    dic = {}
-    for n, ndic in d0.items():
-        entry = build_ParsArg(name=n, **ndic)
-        dic.update(entry)
-    parsargs = {k: ParsArg(**v) for k, v in dic.items()}
-    return parsargs
-
-def build_ParsDict2(dic_name) :
-    from lib.conf.base.dtypes import par_dict
-    dic = par_dict(dic_name, argparser=True)
-    try:
-        parsargs = {k: ParsArg(**v) for k, v in dic.items()}
-    except:
-        parsargs = {}
-        for k, v in dic.items():
-            for kk, vv in v['content'].items():
-                parsargs[kk] = ParsArg(**vv)
-    return parsargs
-
-class ParsArg:
-    """
-    Create a single parser argument
-    This is a class used to populate a parser with arguments and get their values.
-    """
-
-    def __init__(self, short, key, **kwargs):
-        self.key = key
-        self.args = [f'-{short}', f'--{key}']
-        self.kwargs = kwargs
-
-    def add(self, p):
-        p.add_argument(*self.args, **self.kwargs)
-        return p
-
-    def get(self, input):
-        return getattr(input, self.key)
-
-
+# 
 class Parser:
     """
     Create an argument parser for a group of arguments (normally from a dict).
     """
 
+    # def __init__(self, name):
+    #     self.name = name
+    #     d0 = ParDict.init_dict[name]
+    #     try :
+    #         self.parsargs =build_ParsDict2(d0)
+    #     except :
+    #         self.parsargs = build_ParsDict(d0)
+
     def __init__(self, name):
         self.name = name
-        try :
-            self.parsargs =build_ParsDict2(name)
-        except :
-            self.parsargs = build_ParsDict(name)
+        self.parsargs =ParDict.parser_dict[name]
 
 
     def add(self, parser=None):

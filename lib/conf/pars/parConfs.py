@@ -5,11 +5,8 @@ import numpy as np
 import pandas as pd
 import param
 from matplotlib import pyplot as plt
-
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
-
-from lib.conf.stored.conf import loadConf
 
 
 def dist_lab(v):
@@ -27,18 +24,11 @@ def dist_lab(v):
     else:
         raise
 
-def init2par(d0=None, d=None, k=None, aux_args={}):
+def init2par(d0, d=None,pre_d=None, aux_args={}):
     from lib.conf.pars.par_dict import preparePar
     from lib.conf.pars.pars import v_descriptor
-    if d0 is None:
-        from lib.conf.base.init_pars import init_pars
-        if k is None:
-            d0 = init_pars()
-        else:
-            d0 = init_pars()[k]
-
-    if d is None:
-        d = {}
+    if d is None and pre_d is None:
+        d, pre_d = {},{}
     from lib.conf.base.dtypes import par
     for n, v in d0.items():
         depth = dNl.dict_depth(v)
@@ -48,6 +38,7 @@ def init2par(d0=None, d=None, k=None, aux_args={}):
             try:
                 pkws = par(name=n, **v, convert2par=True)
                 prepar = preparePar(**pkws)
+                pre_d[prepar.k] = prepar
                 p = v_descriptor(**prepar)
                 if p is not None:
                     for kk, vv in aux_args.items():
@@ -56,31 +47,20 @@ def init2par(d0=None, d=None, k=None, aux_args={}):
             except:
                 continue
         elif depth > 1:
-            d[n] = init2par(v)
-    return d
+            d[n], pre_d[n] = init2par(d0=v)
+    return d, pre_d
 
-
-def mIDrows():
-    pass
 
 
 class LarvaConfDict:
-    def __init__(self):
-        from lib.model.modules import crawler, turner, intermitter, crawl_bend_interference, sensor, memory, feeder, \
-            locomotor, brain
-        self.mfunc = {
-            'crawler': crawler.Crawler,
-            'turner': turner.Turner,
-            'interference': crawl_bend_interference.Coupling,
-            'intermitter': intermitter.ChoiceIntermitter,
-            'olfactor': sensor.Olfactor,
-            'windsensor': sensor.WindSensor,
-            'toucher': sensor.Toucher,
-            'feeder': feeder.Feeder,
-            'memory': memory.RLmemory,
-            # 'locomotor': locomotor.DefaultLocomotor,
-        }
-
+    def __init__(self, init_dict=None, mfunc=None):
+        if init_dict is None :
+            from lib.conf.pars.pars import ParDict
+            init_dict=ParDict.init_dict
+        if mfunc is None :
+            from lib.conf.pars.par_funcs import module_func_dict
+            mfunc=module_func_dict()
+        self.mfunc=mfunc
         self.mcolor = dNl.NestDict({
             'body' : 'lightskyblue',
             'physics' : 'lightsteelblue',
@@ -100,19 +80,47 @@ class LarvaConfDict:
 
 
 
-        self.mbkeys = list(self.mfunc.keys())
+        self.mbkeys = list(init_dict['modules'].keys())
+        # self.mbkeys = list(self.mfunc.keys())
         self.mpref = {k: f'brain.{k}_params.' for k in self.mbkeys}
-        self.mdicts = dNl.NestDict()
+        self.mbdicts = dNl.NestDict()
+        self.mbpredicts = dNl.NestDict()
 
-        self.mfunc['locomotor'] = locomotor.DefaultLocomotor
-        self.mfunc['brain'] = brain.DefaultBrain
+
+        # self.mfunc['locomotor'] = locomotor.DefaultLocomotor
+        # self.mfunc['brain'] = brain.DefaultBrain
         for k in self.mbkeys:
-            self.mdicts[k] = init2par(k=k, aux_args={'pref': self.mpref[k]})
+            self.mbdicts[k],self.mbpredicts[k] = init2par(d0 = init_dict[k], aux_args={'pref': self.mpref[k]})
 
-        self.aux_keys = ['body', 'physics', 'energetics', 'Box2D_params']
+        self.aux_keys = ['body', 'physics', 'energetics']
+        # self.aux_keys = ['body', 'physics', 'energetics', 'Box2D_params']
         self.aux_dicts = dNl.NestDict()
+        self.aux_predicts = dNl.NestDict()
         for k in self.aux_keys:
-            self.aux_dicts[k] = init2par(k=k)
+            self.aux_dicts[k],self.aux_predicts[k] = init2par(d0 = init_dict[k])
+
+        self.mkeys=self.aux_keys+self.mbkeys
+        self.mdicts = dNl.NestDict({**self.aux_dicts, **self.mbdicts})
+        self.mpredicts = dNl.NestDict({**self.aux_predicts, **self.mbpredicts})
+
+        def build_mpredfs(mpredicts):
+            mpredfs=dNl.NestDict()
+            for k,predict in mpredicts.items() :
+                if predict is not None :
+                    entries=[]
+                    for kk,vv in predict.items() :
+                        if 'k' in vv.keys() :
+                            entries.append(vv)
+                        else :
+                            for kkk, vvv in vv.items():
+                                if 'k' in vvv.keys():
+                                    entries.append(vvv)
+                                else :
+                                    raise ValueError(kkk,kk,k)
+                    mpredfs[k]=pd.DataFrame.from_records(entries, index='k')
+                else :
+                    mpredfs[k] = None
+            return mpredfs
 
 
 
@@ -156,7 +164,7 @@ class LarvaConfDict:
         return mc
 
     def module(self, mkey, **kwargs):
-        mdict = self.mdicts[mkey]
+        mdict = self.mbdicts[mkey]
         conf0 = self.conf(mdict, prefix=False)
         func = self.mfunc[mkey]
         m = func(**conf0, **kwargs)
@@ -167,18 +175,15 @@ class LarvaConfDict:
         return dNl.update_nestdict(mconf, conf0)
 
     def crossover(self, mdict, mdict2):
-        # mdict = self.mdicts[mkey]
         for d, p in mdict.items():
             if random.random() < 0.5:
                 p.v = mdict2[d].v
 
     def mutate(self, mdict, Pmut, Cmut):
-        # mdict = self.mdicts[mkey]
         for d, p in mdict.items():
             p.mutate(Pmut, Cmut)
 
     def randomize(self, mdict):
-        # mdict = self.mdicts[mkey]
         for d, p in mdict.items():
             p.randomize()
 
@@ -197,7 +202,7 @@ class LarvaConfDict:
     def compile_pdict(self, dic):
         pdict = dNl.NestDict()
         for mkey, ds in dic.items():
-            mdict = self.mdicts[mkey]
+            mdict = self.mbdicts[mkey]
             for d in ds:
                 pdict[d] = mdict[d]
         return pdict
@@ -209,7 +214,7 @@ class LarvaConfDict:
         conf = dNl.NestDict({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
         for mkey in mkeys0:
             if mkey in mkeys:
-                mdict = self.mdicts[mkey]
+                mdict = self.mbdicts[mkey]
                 conf[f'{mkey}_params'] = self.conf(mdict, prefix=False)
             else:
                 conf[f'{mkey}_params'] = None
@@ -228,7 +233,7 @@ class LarvaConfDict:
         conf = dNl.NestDict({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
         for mkey in mkeys0:
             if mkey in mkeys:
-                mdict = self.mdicts[mkey]
+                mdict = self.mbdicts[mkey]
                 conf[f'{mkey}_params'] = self.conf(mdict, prefix=False)
             else:
                 conf[f'{mkey}_params'] = None
@@ -241,10 +246,11 @@ class LarvaConfDict:
 
     def mIDbconf(self, mID=None, m=None):
         if m is None:
+            from lib.conf.stored.conf import loadConf
             m = loadConf(mID, 'Model').brain
         mIDconf = dNl.NestDict()
         mIDconf.modules = m.modules
-        for mkey, mdic in self.mdicts.items():
+        for mkey, mdic in self.mbdicts.items():
             if m.modules[mkey]:
                 mmdic = m[f'{mkey}_params']
                 mdic = self.copyID(mdic, mmdic)
@@ -255,6 +261,7 @@ class LarvaConfDict:
 
     def mIDconf(self, mID=None, m=None):
         if m is None:
+            from lib.conf.stored.conf import loadConf
             m = loadConf(mID, 'Model')
         mc = dNl.NestDict()
         mc.brain =self.mIDbconf(self, m=m.brain)
@@ -286,7 +293,6 @@ class LarvaConfDict:
     def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
         mConf = self.mIDconf(mID)
         m = self.multiconf(mConf)
-        ks = self.aux_keys + self.mbkeys
         data = []
 
         def mvalid(k, dic):
@@ -330,7 +336,7 @@ class LarvaConfDict:
                 vals = dvalid[k]
             return vals
 
-        for k in ks:
+        for k in self.mkeys:
             if k in self.aux_keys:
                 dic = m[k]
                 dic0 = mConf[k]
@@ -357,14 +363,16 @@ class LarvaConfDict:
                     else:
                         ddd=[getattr(dic0[n], pname) for pname in columns]
                         data.append([k]+ddd)
-        row_colors = [None] + [self.mcolor[row[0]] for row in data]
+
         df = pd.DataFrame(data, columns=['field'] + columns)
         df.set_index(['field'], inplace=True)
-        return df,row_colors
+
+        return df
 
     def mIDtable(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], figsize=(14, 11), **kwargs):
         from lib.plot.table import render_conf_table
-        df,row_colors=self.mIDtable_data(mID, columns=columns)
+        df=self.mIDtable_data(mID, columns=columns)
+        row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
         return render_conf_table(df, row_colors, figsize=figsize, **kwargs)
 
 
@@ -384,10 +392,10 @@ def confID_dict():
         dic[K0] = vparfunc()
     return dic
 
-
-if __name__ == '__main__':
-    #
-    dd = LarvaConfDict()
-    dd.mIDtable(mID='PHIonNEU', show=True)
-    # print(dd.aux_keys)
-    # raise
+#
+# if __name__ == '__main__':
+#     #
+#     dd = LarvaConfDict()
+#     dd.mIDtable(mID='PHIonNEU', show=True)
+#     # print(dd.aux_keys)
+#     # raise

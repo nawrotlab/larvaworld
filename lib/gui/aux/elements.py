@@ -11,6 +11,7 @@ from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
+# from lib.conf.base.init_pars import InitDict
 from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
 import lib.aux.colsNstr as fun
 from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree, conf_to_tree, \
@@ -940,7 +941,9 @@ class CollapsibleDict(Collapsible):
                  subdict_state=False, **kwargs):
         if type_dict is None:
             entry = par(name=as_entry, t=str, v='Unnamed') if as_entry is not None else {}
-            dic = par_dict(name if dict_name is None else dict_name)
+            nn=name if dict_name is None else dict_name
+            # from lib.conf.pars.pars import ParDict
+            dic = par_dict(d0 = ParDict.init_dict[nn])
             type_dict = {**entry, **dic}
         self.as_entry = as_entry
         self.subdict_state = subdict_state
@@ -1065,7 +1068,7 @@ class PadDict(PadElement):
         if col_idx is not None:
             Ncols = len(col_idx)
         if type_dict is None:
-            type_dict = par_dict(self.dict_name)
+            type_dict = par_dict(d0 = ParDict.init_dict[self.dict_name])
         self.type_dict = type_dict
         if content is None:
             content = self.build(name)

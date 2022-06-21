@@ -134,3 +134,21 @@ def build_func_dict() :
             'vel': func_v_spatial,
         })
     return func_dict
+
+def module_func_dict() :
+    from lib.model.modules import crawler, turner, intermitter, crawl_bend_interference, sensor, memory, feeder, \
+        locomotor, brain
+    mfunc = {
+        'crawler': crawler.Crawler,
+        'turner': turner.Turner,
+        'interference': crawl_bend_interference.Coupling,
+        'intermitter': intermitter.ChoiceIntermitter,
+        'olfactor': sensor.Olfactor,
+        'windsensor': sensor.WindSensor,
+        'toucher': sensor.Toucher,
+        'feeder': feeder.Feeder,
+        'memory': memory.RLmemory,
+        'locomotor': locomotor.DefaultLocomotor,
+        'brain': brain.DefaultBrain
+    }
+    return mfunc

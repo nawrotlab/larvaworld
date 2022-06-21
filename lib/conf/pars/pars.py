@@ -210,6 +210,17 @@ class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=True):
         from lib.conf.pars.par_dict import BaseParDict
         from lib.conf.pars.par_funcs import build_func_dict
+        from lib.conf.pars.init_pars import ParInitDict
+        self.init_dict = ParInitDict().dict
+
+        from lib.conf.pars.par_funcs import module_func_dict
+        self.mfunc = module_func_dict()
+        from lib.conf.pars.parConfs import LarvaConfDict
+        self.larva_conf_dict = LarvaConfDict(init_dict=self.init_dict,mfunc=self.mfunc)
+        from lib.conf.pars.parser_dict import ParserDict
+        self.parser_dict = ParserDict(init_dict=self.init_dict).dict
+
+
         if load_funcs :
             self.func_dict = dNl.load_dict(paths.path('ParFuncDict'))
         else :
@@ -317,5 +328,9 @@ def runtime_pars(PF=ParDict.dict):
 
 if __name__ == '__main__':
     # # p.param.trigger('disp', 'd')
-    #d=ParDict.dict['ba'].param.d
+    d=ParDict.dict['ba'].param.d
+    print(d)
+
+    ParDict.larva_conf_dict.mIDtable(mID='PHIonNEU', show=True)
+
     pass

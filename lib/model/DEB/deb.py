@@ -10,7 +10,7 @@ import numpy as np
 from lib.aux.dictsNlists import save_dict
 from lib.model.DEB.deb_aux import beta0, simplex
 from lib.conf.base.dtypes import null_dict
-from lib.conf.base.init_pars import substrate_dict
+from lib.conf.pars.init_pars import substrate_dict
 from lib.conf.stored.conf import loadConf
 import lib.aux.naming as nam
 from lib.model.DEB.gut import Gut

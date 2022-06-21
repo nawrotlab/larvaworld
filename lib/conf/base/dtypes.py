@@ -1,15 +1,10 @@
 import numpy as np
 import pandas as pd
 
-
-
-
 import numpy as np
 from typing import TypedDict, List, Tuple
 import lib.aux.dictsNlists as dNl
 
-#from lib.aux.dictsNlists import AttrDict, tree_dict
-from lib.conf.base.init_pars import init_pars
 from lib.conf.pars.units import ureg
 
 
@@ -28,6 +23,7 @@ def base_dtype(t):
     else:
         base_t = t
     return base_t
+
 
 def define_dv(dv, cur_dtype):
     if dv is None:
@@ -50,6 +46,7 @@ def define_vs(vs, dv, lim, cur_dtype):
 
         vs = vs.tolist()
     return vs
+
 
 def define_lim(lim, vs, min, max, u, wrap_mode, cur_dtype):
     if lim is not None:
@@ -77,6 +74,7 @@ def define_lim(lim, vs, min, max, u, wrap_mode, cur_dtype):
                 lim = (min, max)
     return lim
 
+
 def define_range(dtype, lim, vs, dv, min, max, u, wrap_mode):
     cur_dtype = base_dtype(dtype)
     dv = define_dv(dv, cur_dtype)
@@ -84,14 +82,16 @@ def define_range(dtype, lim, vs, dv, min, max, u, wrap_mode):
     vs = define_vs(vs, dv, lim, cur_dtype)
     return dv, lim, vs
 
-def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None, h='', k=None,symbol='',
-        u=ureg.dimensionless, u_name=None, label='',combo=None, argparser=False, entry=None, codename=None,vfunc=None,vparfunc=None, convert2par=False):
-    if argparser :
-        from lib.anal.argparsers import build_ParsArg
-        return build_ParsArg(name,k,h,t,v,vs)
+
+def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
+        h='', k=None, symbol='',
+        u=ureg.dimensionless, u_name=None, label='', combo=None, argparser=False, entry=None, codename=None, vfunc=None,
+        vparfunc=None, convert2par=False):
+    if argparser:
+        from lib.conf.pars.parser_dict import build_ParsArg
+        return build_ParsArg(name, k, h, t, v, vs)
     if t == TypedDict:
         return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
-
 
     if k is None:
         k = name
@@ -105,49 +105,48 @@ def par(name, t=float, v=None, vs=None, lim=None,min=None, max=None, dv=None, au
 
     if convert2par:
         # from lib.conf.base.par_dict import preparePar
-        p_kws={
-        'p' : name,
-        'k' : k,
-        'lim' : lim,
-        'dv' : dv,
-        'vs' : vs,
-        'v0' : v,
-        'dtype' : t,
-        'disp' : label,
-        'h' : h,
-        'u_name' : u_name,
-        'u' : u,
-        'sym' : symbol,
-        'codename' : codename,
-        'vfunc' : vfunc,
-        'vparfunc' : vparfunc,
-    }
+        p_kws = {
+            'p': name,
+            'k': k,
+            'lim': lim,
+            'dv': dv,
+            'vs': vs,
+            'v0': v,
+            'dtype': t,
+            'disp': label,
+            'h': h,
+            'u_name': u_name,
+            'u': u,
+            'sym': symbol,
+            'codename': codename,
+            'vfunc': vfunc,
+            'vparfunc': vparfunc,
+        }
         return p_kws
-
 
     if vs not in [None, []]:
         Ndigits = maxNdigits(np.array(vs), 4)
     if aux_vs is not None and vs is not None:
         vs += aux_vs
-    d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': symbol, 'unit': u_name, 'label': label,
-         'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h, 'codename':codename, 'step':dv}
+    d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': symbol, 'unit': u_name,
+         'label': label,
+         'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h, 'codename': codename, 'step': dv}
 
     return {name: d}
 
 
-
-
-
 def ga_dict(name=None, suf='', excluded=None, only=None):
-    dic=par_dict(name)
-    keys=list(dic.keys())
-    if only is not None :
-        keys=[k for k in keys if k in only]
-    elif excluded is not None :
+    from lib.conf.pars.pars import ParDict
+    d0 = ParDict.init_dict[name]
+    dic = par_dict(d0=d0)
+    keys = list(dic.keys())
+    if only is not None:
+        keys = [k for k in keys if k in only]
+    elif excluded is not None:
         keys = [k for k in keys if k not in excluded]
     d = {}
     for k in keys:
-        vs=dic[k]
+        vs = dic[k]
         k0 = f'{suf}{k}'
         kws = {
             'initial_value': vs['initial_value'],
@@ -164,7 +163,8 @@ def ga_dict(name=None, suf='', excluded=None, only=None):
         d[k0] = kws
     return dNl.NestDict(d)
 
-def interference_ga_dict(mID, suf='brain.interference_params.') :
+
+def interference_ga_dict(mID, suf='brain.interference_params.'):
     from lib.conf.stored.conf import loadConf
     m = loadConf(mID, 'Model')
     IFmod = m.brain.interference_params.mode
@@ -179,11 +179,7 @@ def interference_ga_dict(mID, suf='brain.interference_params.') :
     return space_dict
 
 
-
-
-def par_dict(name=None, d0=None, **kwargs):
-    if d0 is None:
-        d0 = init_pars().get(name, None)
+def par_dict(d0, **kwargs):
     if d0 is None:
         return None
     d = {}
@@ -191,7 +187,7 @@ def par_dict(name=None, d0=None, **kwargs):
         try:
             entry = par(n, **v, **kwargs)
         except:
-            entry = {n: {'dtype': dict, 'content': par_dict(n, d0=d0[n], **kwargs)}}
+            entry = {n: {'dtype': dict, 'content': par_dict(d0=v, **kwargs)}}
         d.update(entry)
     return d
 
@@ -205,25 +201,29 @@ def par_dict_from_df(name, df):
     return {name: d}
 
 
-def pars_to_df(names, d0=None):
-    from lib.conf.base import paths
-    dic = {}
-    for name in names:
-        d = par_dict(name, d0)
-        df = pd.DataFrame.from_dict(d, orient='index', columns=['dtype', 'initial_value', 'tooltip'])
-        df.index.name = 'parameter'
-        df = df.where(pd.notnull(df), None)
-        dic[name] = df
-    ddf = pd.DataFrame.from_dict(dic, orient='index')
-    ddf.index.name = 'group'
-    ddf.to_csv(paths.path('ParGlossary'))
+#
+# def pars_to_df(names, d0=None):
+#     from lib.conf.base import paths
+#     dic = {}
+#     for name in names:
+#         d = par_dict(name, d0)
+#         df = pd.DataFrame.from_dict(d, orient='index', columns=['dtype', 'initial_value', 'tooltip'])
+#         df.index.name = 'parameter'
+#         df = df.where(pd.notnull(df), None)
+#         dic[name] = df
+#     ddf = pd.DataFrame.from_dict(dic, orient='index')
+#     ddf.index.name = 'group'
+#     ddf.to_csv(paths.path('ParGlossary'))
 
 
 def pars_to_tree(name):
+    from lib.conf.pars.pars import ParDict
+
     from lib.aux.par_aux import dtype_name
 
     invalid = []
     valid = []
+
     def add_entry(k4, v4, parent):
         key = f'{parent}.{k4}'
         if 'content' in v4.keys():
@@ -249,7 +249,10 @@ def pars_to_tree(name):
     data = []
     columns = ['parent', 'key', 'text', 'initial_value', 'dtype', 'tooltip', 'disp']
     columns2 = ['parent', 'key', 'text', 'default_value', 'dtype', 'description', 'name']
-    P = init_pars()[name]
+    P = ParDict.init_dict[name]
+    # from lib.conf.base.init_pars import InitDict
+    # P = InitDict[name]
+    # P = init_pars()[name]
     data.append(['root', name, name, None, dict, None, name])
     valid.append(name)
     for k0, v0 in P.items():
@@ -258,7 +261,10 @@ def pars_to_tree(name):
             d = par(k0, **v0)
             add_entry(k0, d[k0], name)
         except:
-            d = par_dict(k0, d0)
+            if d0 is None:
+                # from lib.conf.base.init_pars import InitDict
+                d0 = ParDict.init_dict[k0]
+            d = par_dict(d0=d0)
             add_multientry0(d, k0, name)
     ddf = pd.DataFrame(data, columns=columns2)
     if 'dtype' in columns2:
@@ -322,6 +328,8 @@ null_Box2D_params = {
 
 
 def null_dict(name, key='initial_value', **kwargs):
+    from lib.conf.pars.pars import ParDict
+    # from lib.conf.base.init_pars import InitDict
     def v0(d):
         null = {}
         for k, v in d.items():
@@ -331,7 +339,7 @@ def null_dict(name, key='initial_value', **kwargs):
                 null[k] = v0(v['content'])
         return null
 
-    dic = par_dict(name)
+    dic = par_dict(d0 = ParDict.init_dict[name])
     dic2 = v0(dic)
     if name not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
@@ -360,8 +368,9 @@ def metric_def(ang={}, sp={}, **kwargs):
                      )
 
 
-def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={},metric_definition=None, **kwargs):
-    from lib.conf.base.init_pars import proc_type_keys, bout_keys, to_drop_keys
+def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={}, metric_definition=None,
+             **kwargs):
+    from lib.conf.pars.init_pars import proc_type_keys, bout_keys, to_drop_keys
 
     if metric_definition is None:
         metric_definition = metric_def(**def_kws)
@@ -370,7 +379,8 @@ def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False
     annot = null_dict('annotation', **{k: True if k in bouts else False for k in bout_keys}, fits=fits,
                       on_food=on_food)
     to_drop = null_dict('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
-    dic = null_dict('enrichment', metric_definition=metric_definition, preprocessing=pre, processing=proc, annotation=annot,
+    dic = null_dict('enrichment', metric_definition=metric_definition, preprocessing=pre, processing=proc,
+                    annotation=annot,
                     to_drop=to_drop, **kwargs)
     return dic
 
@@ -538,9 +548,8 @@ def oD(c=1, id='Odor'):
 
 
 if __name__ == '__main__':
-    #d=init2par()
-    #print(d.keys())
-
+    # d=init2par()
+    # print(d.keys())
 
     store_controls()
     store_RefPars()

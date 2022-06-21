@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.anal.fitting import gaussian
+
 
 
 class DefaultCoupling:
@@ -56,6 +56,7 @@ class SquareCoupling(DefaultCoupling):
 
 
 class PhasicCoupling(DefaultCoupling):
+
     def __init__(self, max_attenuation_phase=3.4, **kwargs):
         super().__init__(**kwargs)
         self.max_attenuation_phase = max_attenuation_phase
@@ -64,6 +65,7 @@ class PhasicCoupling(DefaultCoupling):
         A = 1
         c_on, f_on = self.active_effectors
         if c_on:
+            from lib.anal.fitting import gaussian
             A = gaussian(self.locomotor.crawler.phi, self.max_attenuation_phase,
                          1) * self.attenuation_max + self.attenuation
             if A >= 1:

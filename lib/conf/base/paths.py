@@ -36,6 +36,8 @@ def path(n) :
         'ParShelve': f'{CF}/ParShelve',
         'ParDict': f'{CF}/ParDict.csv',
         'ParFuncDict': f'{CF}/ParFuncDict.csv',
+        'ParInitDict': f'{CF}/ParInitDict.csv',
+        'LarvaConfDict': f'{CF}/LarvaConfDict.csv',
         'ParDf': f'{CF}/ParDf.csv',
         'ParPdf': f'{CF}/ParPdf.pdf',
         'Unit': f'{CF}/UnitDict.csv',
