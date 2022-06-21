@@ -1,7 +1,7 @@
 import os
 import PySimpleGUI as sg
 
-
+from lib.conf.pars.pars import ParDict
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.base import paths
 
@@ -13,7 +13,7 @@ class IntroTab(GuiTab):
                'pad': (20, 5),
                'justification': 'center'
                }
-        f0 = paths.path('intro')
+        f0 = ParDict.path_dict["intro"]
         fs = sorted(os.listdir(f0))
         bl = [sg.B(image_filename=os.path.join(f0, f), image_subsample=3, pad=(15, 70)) for f in fs]
         l = [[sg.Col([[sg.T('', size=(5, 5))],

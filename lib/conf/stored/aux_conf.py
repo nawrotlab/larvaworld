@@ -2,6 +2,7 @@ import numpy as np
 from lib.conf.base.dtypes import null_dict
 
 
+
 def trial_conf(durs=[], qs=[]):
     cumdurs = np.cumsum([0] + durs)
     return {i: null_dict('epoch', start=t0, stop=t1, substrate=null_dict('substrate', quality=q)) for i, (t0, t1, q) in
@@ -152,7 +153,7 @@ def store_controls():
 
 def store_RefPars():
     from lib.aux.dictsNlists import save_dict
-    from lib.conf.base import paths
+    from lib.conf.pars.pars import ParDict
     import lib.aux.naming as nam
     d = {
         'length': 'body.initial_length',
@@ -162,7 +163,7 @@ def store_RefPars():
         nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
     }
-    save_dict(d, paths.path('ParRef'), use_pickle=False)
+    save_dict(d, ParDict.path_dict["ParRef"], use_pickle=False)
 
 if __name__ == '__main__':
     # d=init2par()

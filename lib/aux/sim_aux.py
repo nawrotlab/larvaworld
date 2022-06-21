@@ -260,13 +260,10 @@ def get_source_xy(food_params):
     return {**sources_u, **sources_g}
 
 
-def generate_larvae(N, sample_dict, base_model, RefPars=None):
+def generate_larvae(N, sample_dict, base_model, RefPars):
     from unflatten import unflatten
     from lib.aux.dictsNlists import load_dict, flatten_dict
-    if RefPars is None:
-        RefPars = load_dict(paths.path('ParRef'), use_pickle=False)
     if len(sample_dict) > 0:
-        # print(sample_dict)
         all_pars = []
         modF = flatten_dict(base_model)
         for i in range(N):

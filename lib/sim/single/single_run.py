@@ -7,7 +7,6 @@ import numpy as np
 from lib.aux import naming as nam,dictsNlists as dNl
 from lib.aux.sim_aux import get_source_xy
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
-from lib.conf.base import paths
 
 
 class SingleRun:
@@ -23,7 +22,8 @@ class SingleRun:
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:
-            save_to = paths.path("SIM")
+            from lib.conf.pars.pars import ParDict
+            save_to = ParDict.path_dict["SIM"]
         self.save_to = save_to
         self.storage_path = f'{sim_params.path}/{self.id}'
         self.dir_path = f'{save_to}/{self.storage_path}'

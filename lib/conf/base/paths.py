@@ -9,8 +9,7 @@ def get_parent_dir():
     # p = os.path.join(p, '../..')
     return p
 
-
-def path(n) :
+def build_path_dict() :
     F0 = get_parent_dir()
     RF = f'{F0}/run'
     GF = f'{F0}/lib/gui'
@@ -84,5 +83,10 @@ def path(n) :
         'GUITEST': f'{GF}/gui_speed_test.csv',
     }
 
-    paths={**par_paths, **conf_paths, **exp_paths, **media_paths, **data_paths}
-    return paths[n]
+    dic = {**par_paths, **conf_paths, **exp_paths, **media_paths, **data_paths}
+    dic['parent']=F0
+    return dic
+
+path_dict=build_path_dict()
+# def path(n) :
+#     return path_dict[n]

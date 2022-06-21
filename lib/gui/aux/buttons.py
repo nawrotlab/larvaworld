@@ -1,14 +1,11 @@
-import base64
 import copy
-import os
 import webbrowser
 
 import PySimpleGUI as sg
-from PySimpleGUI import Button, BUTTON_TYPE_COLOR_CHOOSER
 
-from lib.gui.aux import graphics
-from lib.gui.aux.functions import b6_kws, t_kws
-from lib.conf.base import paths
+from lib.conf.pars.pars import ParDict
+from lib.gui.aux import functions as gui_fun
+
 
 sg.theme('LightGreen')
 b_kws = {
@@ -20,6 +17,7 @@ b_kws = {
 
 
 def button_row(name, buttons, button_args={}):
+    from lib.conf.pars.pars import ParDict
     but_tips = {
         'import': 'Build a dataset from raw files.',
         'enrich': 'Enrich the dataset.',
@@ -52,9 +50,9 @@ def button_row(name, buttons, button_args={}):
         'conf_tree': 'kinesis-data-firehose',
     }
     but_kws = {
-        'browse': {'initial_folder': paths.path('DATA'), 'enable_events': True,
+        'browse': {'initial_folder': ParDict.path_dict["DATA"], 'enable_events': True,
                    'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FOLDER},
-        'browse_figs': {'initial_folder': paths.path('exp_figs'), 'enable_events': True,
+        'browse_figs': {'initial_folder': ParDict.path_dict["exp_figs"], 'enable_events': True,
                         'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FILES,
                         'file_types': (("png Files", "*.png"),)},
     }
@@ -80,28 +78,31 @@ def named_bool_button(name, state, toggle_name=None, text_kws={}, **kwargs):
     return [sg.T(f'{name} :', **text_kws), BoolButton(toggle_name, state, **kwargs)]
 
 
-class GraphButton(Button):
+class GraphButton(sg.Button):
     def __init__(self, name, key,from_bs64=True, **kwargs):
         if from_bs64 :
+            from lib.gui.aux import graphics
             bs64 = getattr(graphics, name)
             super().__init__(image_data=bs64, k=key, **b_kws, **kwargs)
         else :
             for i in range(3) :
                 try :
+                    # ff = ParDict.path_dict["icons"]
+                    # from lib.conf.base import paths
                     image_subsample=1 if i!=2 else 10
-                    filename = f'{paths.path("icons")}/icons{i+1}/{name}.png'
+                    filename = f'{ParDict.path_dict["icons"]}/icons{i+1}/{name}.png'
                     super().__init__(image_filename=filename, k=key,image_subsample=image_subsample, **b_kws, **kwargs)
                 except :
                     continue
 
 
-class BoolButton(Button):
+class BoolButton(sg.Button):
     def __init__(self, name, state, disabled=False, **kwargs):
         self.name = name
         self.state = state
         self.disabled = disabled
         super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}',
-                         metadata=BtnInfo(state=self.state), **b6_kws, **b_kws, **kwargs)
+                         metadata=BtnInfo(state=self.state), **gui_fun.b6_kws, **b_kws, **kwargs)
 
     def toggle(self):
         if not self.disabled:
@@ -118,6 +119,7 @@ class BoolButton(Button):
         self.update(image_data=self.get_image(self.state, self.disabled))
 
     def get_image(self, state, disabled):
+        from lib.gui.aux import graphics
         if not disabled:
             image = graphics.on_image if state else graphics.off_image
         else:
@@ -135,7 +137,7 @@ class BtnLink:
         self.link = link
 
 
-class ClickableImage(Button):
+class ClickableImage(sg.Button):
     def __init__(self, name, link, **kwargs):
         self.name = name
         self.link = link
@@ -147,11 +149,11 @@ class ClickableImage(Button):
 
 
 def color_pick_layout(name, color=None, show_text=False):
-    t = [sg.T('', **t_kws(5)), sg.T('color', **t_kws(5))] if show_text else []
+    t = [sg.T('', **gui_fun.t_kws(5)), sg.T('color', **gui_fun.t_kws(5))] if show_text else []
     return [*t,
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,
-                     **t_kws(10)),
-            GraphButton('Button_Color_Circle', f'PICK {name}_color', button_type=BUTTON_TYPE_COLOR_CHOOSER,
+                     **gui_fun.t_kws(10)),
+            GraphButton('Button_Color_Circle', f'PICK {name}_color', button_type=sg.BUTTON_TYPE_COLOR_CHOOSER,
                         target=f'{name}_color', enable_events=True)]
 
 

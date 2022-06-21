@@ -1,13 +1,7 @@
 import os
 
-from lib.conf.base.dtypes import null_dict
-
-from lib.gui.aux.elements import GraphList, SelectionList, DataList, ButtonGraphList, PadDict
-from lib.gui.aux.functions import gui_cols, t_kws, col_size
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single.single_run import run_essay
-from lib.sim.single.analysis import essay_analysis
-from lib.conf.stored.conf import loadConf, next_idx
+from lib.gui.aux import functions as gui_fun, elements as gui_el
 
 
 class EssayTab(GuiTab):
@@ -17,26 +11,29 @@ class EssayTab(GuiTab):
         self.exp_figures_key = 'Essay_exp_figures'
 
     def build(self):
-        kws={'list_size' : (25,15), 'canvas_size' : col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
-        s1 = PadDict('essay_params', disp_name='Configuration', background_color='orange', text_kws=t_kws(10),
+        kws={'list_size' : (25,15), 'canvas_size' : gui_fun.col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
+        s1 = gui_el.PadDict('essay_params', disp_name='Configuration', background_color='orange', text_kws=gui_fun.t_kws(10),
                      header_width=25)
-        sl1 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
-        dl1 = DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None, size=(24,10))
-        g1 = GraphList(self.name, list_header='Simulated', **kws)
-        g2 = ButtonGraphList(self.exp_figures_key, list_header='Observed',fig_dict={}, **kws,
+        sl1 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
+        dl1 = gui_el.DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None, size=(24,10))
+        g1 = gui_el.GraphList(self.name, list_header='Simulated', **kws)
+        g2 = gui_el.ButtonGraphList(self.exp_figures_key, list_header='Observed',fig_dict={}, **kws,
                              buttons=['browse_figs'],button_args={'browse_figs': {'target': (2, -1)}}
                              )
-        l = gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.55, 0.25],
+        l = gui_fun.gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.55, 0.25],
                      as_pane=True, pad=(20,10))
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
+        from lib.conf.stored.conf import loadConf
         conf = loadConf(id, self.conftype)
         for essay_exp in list(conf['experiments'].keys()):
             d, g = self.run_essay_exp(v, w, c, d, g, essay_exp)
         return d, g
 
     def update(self, w, c, conf, id):
+        from lib.conf.base.dtypes import null_dict
+        from lib.conf.stored.conf import next_idx
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
         essay = null_dict('essay_params', essay_ID=f'{id}_{next_idx(id, "Essay")}', path=f'essays/{id}')
@@ -67,6 +64,9 @@ class EssayTab(GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
+        from lib.sim.single.single_run import run_essay
+        from lib.sim.single.analysis import essay_analysis
+        from lib.conf.stored.conf import loadConf
         pars = c['essay_params'].get_dict(v, w)
         essay_type = self.current_ID(v)
         essay = loadConf(essay_type, self.conftype)['experiments'][essay_exp]

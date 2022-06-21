@@ -3,14 +3,16 @@ import webbrowser
 
 import PySimpleGUI as sg
 
+from lib.conf.pars.pars import ParDict
 from lib.gui.tabs.tab import GuiTab
-from lib.conf.base.paths import path
+# from lib.conf.base.paths import path
 
 
 class TutorialTab(GuiTab):
 
     def build(self):
-        f0=path('tutorials')
+        f0=ParDict.path_dict["tutorials"]
+        # f0=path('tutorials')
         c2 = {'size': (80, 1),
               'pad': (20, 5),
               'justification': 'left'
@@ -53,7 +55,7 @@ class TutorialTab(GuiTab):
         return l_tut, {}, {}, {}
 
     def eval(self, e, v, w, c, d, g):
-        f0 = path('tutorials')
+        f0=ParDict.path_dict["tutorials"]
         if 'BUTTON 1' in e:
             webbrowser.open_new(f0 + "/1.mp4")
         if 'BUTTON 2' in e:

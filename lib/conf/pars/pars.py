@@ -9,12 +9,10 @@ from lib.conf.base import paths
 
 from lib.conf.pars.units import ureg
 
-
-
-
 from lib.aux import naming as nam, dictsNlists as dNl
 
-def v_descriptor(vparfunc,v0=None,dv=None, **kws):
+
+def v_descriptor(vparfunc, v0=None, dv=None, **kws):
     class LarvaworldParNew(param.Parameterized):
         p = param.String(default='', doc='Name of the parameter')
         d = param.String(default='', doc='Dataset name of the parameter')
@@ -205,11 +203,13 @@ def v_descriptor(vparfunc,v0=None,dv=None, **kws):
     return par
 
 
-
 class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=True):
         from lib.conf.pars.par_dict import BaseParDict
         from lib.conf.pars.par_funcs import build_func_dict
+        from lib.conf.base.paths import build_path_dict
+        self.path_dict = build_path_dict()
+
         from lib.conf.pars.init_pars import ParInitDict
         self.init_dict = ParInitDict().dict
 
@@ -222,24 +222,24 @@ class ParRegistry:
         from lib.conf.pars.dist_dict import DistDict
         self.dist_dict = DistDict().dict
         from lib.conf.pars.parConfs import LarvaConfDict
-        self.larva_conf_dict = LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc,dist_dict=self.dist_dict)
+        self.larva_conf_dict = LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc, dist_dict=self.dist_dict)
 
-        if load_funcs :
-            self.func_dict = dNl.load_dict(paths.path('ParFuncDict'))
-        else :
+        if load_funcs:
+            self.func_dict = dNl.load_dict(self.path_dict['ParFuncDict'])
+        else:
             self.func_dict = build_func_dict()
 
-        if mode=='load' :
+        if mode == 'load':
 
-            self.dict =self.load()
-        elif mode=='build' :
+            self.dict = self.load()
+        elif mode == 'build':
             self.dict_entries = BaseParDict(func_dict=self.func_dict).dict_entries
 
             self.dict = self.finalize_dict(self.dict_entries)
 
-            self.ddict=dNl.NestDict({p.d:p for k,p in self.dict.items()})
-            self.pdict=dNl.NestDict({p.p:p for k,p in self.dict.items()})
-            if save :
+            self.ddict = dNl.NestDict({p.d: p for k, p in self.dict.items()})
+            self.pdict = dNl.NestDict({p.p: p for k, p in self.dict.items()})
+            if save:
                 self.save()
 
     def finalize_dict(self, entries):
@@ -250,37 +250,35 @@ class ParRegistry:
         return dic
 
     def save(self):
-        dNl.save_dict(self.func_dict, paths.path('ParFuncDict'))
+        dNl.save_dict(self.func_dict, self.path_dict['ParFuncDict'])
         df = pd.DataFrame.from_records(self.dict_entries, index='k')
-        df.to_csv(paths.path('ParDf'))
+        df.to_csv(self.path_dict['ParDf'])
 
     def load(self):
         # FIXME Not working
-        df = pd.read_csv(paths.path('ParDf'),index_col=0)
-        entries=df.to_dict(orient='records')
+        df = pd.read_csv(self.path_dict['ParDf'], index_col=0)
+        entries = df.to_dict(orient='records')
         dict = self.finalize_dict(entries)
         return dict
-
 
     def get(self, k, d, compute=True):
         p = self.dict[k]
         res = p.exists(d)
 
         if res['step']:
-            if hasattr(d, 'step_data') :
+            if hasattr(d, 'step_data'):
                 return d.step_data[p.d]
-            else :
+            else:
                 return d.read(key='step')[p.d]
         elif res['end']:
-            if hasattr(d, 'endpoint_data') :
+            if hasattr(d, 'endpoint_data'):
                 return d.endpoint_data[p.d]
-            else :
+            else:
                 return d.read(key='end', file='endpoint_h5')[p.d]
-        else :
-            for key in res.keys() :
-                if key not in ['step', 'end'] and res[key] :
+        else:
+            for key in res.keys():
+                if key not in ['step', 'end'] and res[key]:
                     return d.read(key=f'{key}.{p.d}', file='aux_h5')
-
 
         if compute:
             self.compute(k, d)
@@ -294,18 +292,17 @@ class ParRegistry:
         if not any(list(res.values())):
             k0s = p.required_ks
             for k0 in k0s:
-                self.compute(k0,d)
+                self.compute(k0, d)
             p.compute(d)
 
 
-
-ParDict=ParRegistry()
+ParDict = ParRegistry()
 
 
 def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
     if k is not None:
-        d0=PF.dict
-        k0=k
+        d0 = PF.dict
+        k0 = k
     elif d is not None:
         d0 = PF.ddict
         k0 = d
@@ -326,12 +323,14 @@ def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
         elif type(to_return) == str:
             return [getattr(par, to_return) for par in pars]
 
+
 def runtime_pars(PF=ParDict.dict):
     return [v.d for k, v in PF.items()]
 
+
 if __name__ == '__main__':
     # # p.param.trigger('disp', 'd')
-    d=ParDict.dict['ba'].param.d
+    d = ParDict.dict['ba'].param.d
     print(d)
 
     ParDict.larva_conf_dict.mIDtable(mID='PHIonNEU', show=True)

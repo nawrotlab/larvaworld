@@ -742,8 +742,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
               datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True, **kwargs):
     warnings.filterwarnings('ignore')
     if save_to is None:
-        from lib.conf.base import paths
-        save_to = paths.path('DEB')
+        save_to = ParDict.path_dict["DEB"]
     os.makedirs(save_to, exist_ok=True)
     if save_as is None:
         save_as = f'debs.{suf}'

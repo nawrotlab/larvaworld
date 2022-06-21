@@ -2,19 +2,19 @@ import copy
 import PySimpleGUI as sg
 
 from lib.aux.collecting import output_keys
-from lib.gui.aux.elements import SelectionList, DataList, PadDict, PadTable, GraphList
-from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width
+# from lib.gui.aux.elements import SelectionList, DataList, PadDict, PadTable, GraphList
+# from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
 from lib.conf.stored.conf import next_idx, expandConf, loadConf
 from run.exec_run import Exec
-
+from lib.gui.aux import functions as gui_fun, elements as gui_el
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.canvas_size = col_size(0.5,0.8)
+        self.canvas_size = gui_fun.col_size(0.5,0.8)
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
 
@@ -46,15 +46,15 @@ class SimTab(GuiTab):
     def build_RUN(self):
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
-        g1 = GraphList(self.name, tab=self, canvas_size=self.canvas_size,list_size = (default_list_width, 15))
-        dl1 = DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations',size=(default_list_width, 6))
-        dl2 = DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations',size=(default_list_width, 6))
-        l = gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.53, 0.25],as_pane=True, pad=(10,10))
+        g1 = gui_el.GraphList(self.name, tab=self, canvas_size=self.canvas_size,list_size = (gui_fun.default_list_width, 15))
+        dl1 = gui_el.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations',size=(gui_fun.default_list_width, 6))
+        dl2 = gui_el.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations',size=(gui_fun.default_list_width, 6))
+        l = gui_fun.gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.53, 0.25],as_pane=True, pad=(10,10))
         return l, {}, {g1.name: g1}, d
 
     def build_conf(self):
         kws = {'background_color': 'lightgreen'}
-        s1 = PadTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
+        s1 = gui_el.PadTable('larva_groups', buttons=['add', 'remove'], index='Group ID', col_widths=[10, 3, 7, 10],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'model': 'model'},
                               dict_name='LarvaGroup')
         self.envtab = EnvTab(name='environment', gui=self.gui, conftype='Env')
@@ -62,25 +62,25 @@ class SimTab(GuiTab):
         sl1 = self.envtab.selectionlists[self.envtab.conftype]
         self.selectionlists[sl1.conftype] = sl1
 
-        s2 = PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
+        s2 = gui_el.PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
                                             'type': 'substrate.type'},dict_name='epoch')
-        sl3 = SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree', 'conf_tree'], progress=True,root_key='exp_conf',
-                            sublists={'env_params': sl1, 'larva_groups': s1},text_kws=t_kws(10), width=28)
-        sl4 = SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
-                            width=15, text_kws=t_kws(12),sublists={'simulations': sl3})
+        sl3 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree', 'conf_tree'], progress=True,root_key='exp_conf',
+                            sublists={'env_params': sl1, 'larva_groups': s1},text_kws=gui_fun.t_kws(10), width=28)
+        sl4 = gui_el.SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
+                            width=15, text_kws=gui_fun.t_kws(12),sublists={'simulations': sl3})
 
-        c1 = PadDict('sim_params', disp_name='Configuration',text_kws= t_kws(10),header_width=30, **kws)
-        c2 = PadDict('output',text_kws= t_kws(7), Ncols=2,header_width=30, **kws)
+        c1 = gui_el.PadDict('sim_params', disp_name='Configuration',text_kws= gui_fun.t_kws(10),header_width=30, **kws)
+        c2 = gui_el.PadDict('output',text_kws= gui_fun.t_kws(7), Ncols=2,header_width=30, **kws)
 
-        ll3 = gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
+        ll3 = gui_fun.gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
         l1 = [self.envtab.layout[0]+[ll3]]
 
         c = {}
         for i in [c1, c2, s2, s1]:
             c.update(i.get_subdicts())
         c.update(**tab1_c)
-        l0 = gui_col([sl4, sl3, s1, c['arena']], x_frac=0.2, as_pane=True, pad=(10,10))
+        l0 = gui_fun.gui_col([sl4, sl3, s1, c['arena']], x_frac=0.2, as_pane=True, pad=(10,10))
         return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):

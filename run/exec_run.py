@@ -3,14 +3,13 @@ import sys
 import argparse
 
 
-
 sys.path.insert(0, '..')
 from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
-from lib.conf.base import paths
 import lib.aux.dictsNlists as dNl
 
+from lib.conf.pars.pars import ParDict
 
 
 class Exec:
@@ -29,7 +28,8 @@ class Exec:
             self.process.kill()
 
     def run(self, **kwargs):
-        f0, f1 = paths.path('EXECONF'), paths.path('EXEC')
+        f0, f1 = ParDict.path_dict["EXECONF"],ParDict.path_dict["EXEC"]
+        # f0, f1 = paths.path('EXECONF'), paths.path('EXEC')
         if self.run_externally:
             dNl.save_dict(self.conf, f0)
             self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
@@ -58,7 +58,9 @@ class Exec:
         elif self.mode == 'sim':
             sim_id = self.conf['sim_params']['sim_ID']
             if res is None and self.run_externally:
-                dir0 = f"{paths.path('SIM')}/{self.conf['sim_params']['path']}/{sim_id}"
+                # from lib.conf.pars.pars import ParDict
+                ff = ParDict.path_dict["SIM"]
+                dir0 = f"{ff}/{self.conf['sim_params']['path']}/{sim_id}"
                 res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
             if res is not None:
                 # fig_dict, results = self.process.analyze()

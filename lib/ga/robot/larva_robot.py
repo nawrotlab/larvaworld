@@ -71,7 +71,7 @@ class ObstacleLarvaRobot(LarvaRobot):
                            sensor_max_distance,
                            motor_ctrl_coefficient, motor_ctrl_min_actuator_value):
         from lib.ga.robot.motor_controller import MotorController, Actuator
-        from lib.ga.sensor.proximity_sensor import ProximitySensor
+        from lib.ga.robot.sensor import ProximitySensor
         S_kws = {
             'saturation_value': sensor_saturation_value,
             'error': obstacle_sensor_error,

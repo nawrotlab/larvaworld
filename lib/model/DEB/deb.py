@@ -7,6 +7,7 @@ import os
 import numpy as np
 
 from lib.aux.dictsNlists import save_dict
+from lib.conf.pars.pars import ParDict
 from lib.model.DEB.deb_aux import beta0, simplex
 from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.init_pars import substrate_dict
@@ -38,7 +39,8 @@ class DEB:
 
         # Drosophila model by default
         self.species = species
-        with open(paths.path('DEB_MODS')[species]) as tfp:
+        # fdir = ParDict.path_dict["DEB_MODS"]
+        with open(ParDict.path_dict["DEB_MODS"][species]) as tfp:
             self.species_dict = json.load(tfp)
         self.__dict__.update(self.species_dict)
 

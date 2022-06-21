@@ -6,10 +6,7 @@ import time
 
 import pandas as pd
 
-from lib.conf.base.dtypes import null_dict
-from lib.gui.tabs import intro_tab, life_tab, sim_tab, batch_tab, essay_tab, import_tab, \
-    analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab
-from lib.conf.base import paths
+from lib.conf.pars.pars import ParDict
 from lib.gui.aux.functions import col_size, window_size, w_kws
 
 matplotlib.use('TkAgg')
@@ -17,6 +14,8 @@ matplotlib.use('TkAgg')
 
 class LarvaworldGui:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+        from lib.gui.tabs import intro_tab, life_tab, sim_tab, batch_tab, essay_tab, import_tab, \
+            analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab
         cls.tab_dict = {
             'introduction': (intro_tab.IntroTab, None, None),
             'larva-model': (model_tab.ModelTab, 'Model', 'model_conf'),
@@ -83,12 +82,14 @@ class LarvaworldGui:
         return l0, cs, ds, gs, ts
 
     def get_vis_kwargs(self, v, **kwargs):
+        from lib.conf.base.dtypes import null_dict
         c = self.collapsibles
         w = self.window
         return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else null_dict('visualization',
                                                                                                      **kwargs)
 
     def get_replay_kwargs(self, v):
+        from lib.conf.base.dtypes import null_dict
         c = self.collapsibles
         w = self.window
         return c['replay'].get_dict(v, w) if 'replay' in c.keys() else null_dict('replay')
@@ -144,6 +145,7 @@ def gui_terminal(size=col_size(y_frac=0.3)):
 
 def speed_test():
     import numpy as np
+    from lib.conf.base import paths
     ns0 = ['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay',
            'batch-run', 'analysis', 'import', 'videos', 'settings']
     ns = [[n] for n in ns0]
@@ -159,4 +161,5 @@ def speed_test():
         r = [n0, np.round(s1 - s0, 1), np.round(s2 - s1, 1)]
         res.append(r)
     df = pd.DataFrame(res)
-    df.to_csv(paths.path('GUITEST'), index=0, header=['Tabs', 'Open', 'Close'])
+    # fdir = ParDict.path_dict["GUITEST"]
+    df.to_csv(ParDict.path_dict["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])

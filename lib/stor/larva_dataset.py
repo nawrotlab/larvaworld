@@ -940,7 +940,7 @@ class LarvaDataset:
         if sample_ks is None:
             modF = dNl.flatten_dict(m)
             sample_ks = [p for p in modF if modF[p] == 'sample']
-        RefPars = dNl.load_dict(paths.path('ParRef'), use_pickle=False)
+        RefPars = dNl.load_dict(ParDict.path_dict["ParRef"], use_pickle=False)
         invRefPars = {v: k for k, v in RefPars.items()}
         sample_ps = [invRefPars[p] for p in sample_ks]
         sample_dict = sample_group(e=self.read(key='end', file='endpoint_h5'), N=N, sample_ps=sample_ps) if len(

@@ -1,10 +1,11 @@
 import PySimpleGUI as sg
 
-from lib.gui.aux.elements import ButtonGraphList, DataList, SelectionList, PadDict
-from lib.gui.aux.functions import t_kws, gui_row, gui_col
+from lib.conf.pars.pars import ParDict
+from lib.gui.aux import functions as gui_fun, elements as gui_el
+
 from lib.gui.tabs.tab import GuiTab
-from lib.sim.single.single_run import SingleRun
-from lib.conf.base import paths
+
+
 
 
 class ImportTab(GuiTab):
@@ -16,9 +17,10 @@ class ImportTab(GuiTab):
         self.fields = ['tracker', 'enrichment']
 
     def update(self, w, c, conf, id=None):
+        ff=ParDict.path_dict["DATA"]
         path = conf['path']
-        w[f'BROWSE {self.raw_key}'].InitialFolder = f'{paths.path("DATA")}/{path}/raw'
-        w[f'BROWSE {self.proc_key}'].InitialFolder = f'{paths.path("DATA")}/{path}/processed'
+        w[f'BROWSE {self.raw_key}'].InitialFolder = f'{ff}/{path}/raw'
+        w[f'BROWSE {self.proc_key}'].InitialFolder = f'{ff}/{path}/processed'
         for n in self.fields:
             c[n].update(w, conf[n])
 
@@ -27,28 +29,28 @@ class ImportTab(GuiTab):
         x1=0.35
         kR, kP = self.raw_key, self.proc_key
         d = {kR: {}, kP: {}}
-        sl1 = SelectionList(tab=self, disp='Data format/lab', buttons=['load'])
-        dl1 = DataList(kR, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'change_ID', 'browse'],
+        sl1 = gui_el.SelectionList(tab=self, disp='Data format/lab', buttons=['load'])
+        dl1 = gui_el.DataList(kR, tab=self, dict=d[kR], buttons=['import', 'select_all', 'remove', 'change_ID', 'browse'],
                        raw=True, size=(50, 10))
-        dl2 = DataList(kP, tab=self, dict=d[kP],
+        dl2 = gui_el.DataList(kP, tab=self, dict=d[kP],
                        buttons=['replay', 'imitate', 'enrich', 'select_all', 'remove', 'change_ID', 'save_ref','browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(55, 9))
-        pd1 = PadDict('tracker', background_color=self.Ctrac, text_kws=t_kws(8),header_width=22,
-                     subconfs={'filesystem': {'header_width': 20, 'value_kws': t_kws(5)},
-                               'resolution': {'header_width': 20, 'text_kws': t_kws(13)},
-                               'arena': {'header_width': 20, 'text_kws': t_kws(7)}}
+        pd1 = gui_el.PadDict('tracker', background_color=self.Ctrac, text_kws=gui_fun.t_kws(8),header_width=22,
+                     subconfs={'filesystem': {'header_width': 20, 'value_kws': gui_fun.t_kws(5)},
+                               'resolution': {'header_width': 20, 'text_kws': gui_fun.t_kws(13)},
+                               'arena': {'header_width': 20, 'text_kws': gui_fun.t_kws(7)}}
                      )
-        pd2 = PadDict('enrichment', background_color=self.Cenr, header_width=125,
-                     subconfs={'preprocessing': {'text_kws': t_kws(14)},
-                               'to_drop': {'Ncols': 2, 'text_kws': t_kws(9)},
-                               'processing': {'Ncols': 2, 'text_kws': t_kws(9)},
-                               'metric_definition': {'header_width': 60,'text_kws': t_kws(9)}}
+        pd2 = gui_el.PadDict('enrichment', background_color=self.Cenr, header_width=125,
+                     subconfs={'preprocessing': {'text_kws': gui_fun.t_kws(14)},
+                               'to_drop': {'Ncols': 2, 'text_kws': gui_fun.t_kws(9)},
+                               'processing': {'Ncols': 2, 'text_kws': gui_fun.t_kws(9)},
+                               'metric_definition': {'header_width': 60,'text_kws': gui_fun.t_kws(9)}}
                      )
-        dd1 = gui_col([sl1, pd1], x_frac=x, as_pane=True, pad=(0,0))
-        dd2 = gui_row([dl1, dl2], x_frac=1 - x - x1, y_frac=y, x_fracs=[x1, 1 - x1 - x], as_pane=True, pad = None)
+        dd1 = gui_fun.gui_col([sl1, pd1], x_frac=x, as_pane=True, pad=(0,0))
+        dd2 = gui_fun.gui_row([dl1, dl2], x_frac=1 - x - x1, y_frac=y, x_fracs=[x1, 1 - x1 - x], as_pane=True, pad = None)
         dd3 = pd2.get_layout()
         dd5 = sg.Col([dd2, dd3[0]])
-        g1 = ButtonGraphList(self.name, tab=self, fig_dict={})
+        g1 = gui_el.ButtonGraphList(self.name, tab=self, fig_dict={})
         l = [[dd1, dd5]]
         c = {}
         for s in [pd1, pd2]:
@@ -60,6 +62,7 @@ class ImportTab(GuiTab):
 
     def imitate(self, conf):
         from lib.anal.comparing import ExpFitter
+        from lib.sim.single.single_run import SingleRun
         dd = SingleRun(**conf).run()
         for d in dd:
             f = ExpFitter(d.config['sample'])

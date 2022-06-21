@@ -1,25 +1,27 @@
 import os
 import PySimpleGUI as sg
 
-from lib.gui.aux.buttons import ClickableImage
-from lib.gui.aux.functions import window_size
+# from lib.gui.aux.buttons import ClickableImage
+# from lib.gui.aux.functions import window_size
+from lib.conf.pars.pars import ParDict
 from lib.gui.tabs.tab import GuiTab
-from lib.conf.base.paths import path
+from lib.gui.aux import buttons as gui_but, functions as gui_fun
 
 
 class VideoTab(GuiTab):
 
     def build(self):
+
         link0 = "http://computational-systems-neuroscience.de/wp-content/uploads/2021/04/"
-        f0 = path('videos')
+        f0 = ParDict.path_dict["videos"]
         fs = [f for f in os.listdir(f0) if f.endswith('png')]
         ns=[f.split(".")[0] for f in fs]
         ffs=[os.path.join(f0, f) for f in fs]
-        bl = [ClickableImage(name=n, link=f'{link0}{n}.mp4',image_filename=ff,
+        bl = [gui_but.ClickableImage(name=n, link=f'{link0}{n}.mp4',image_filename=ff,
                              image_subsample=5, pad=(25, 40)) for ff,n in zip(ffs, ns)]
         n = 3
         bl = [bl[i * n:(i + 1) * n] for i in range((len(bl) + n - 1) // n)]
-        l = [[sg.Col(bl, vertical_scroll_only=True, scrollable=True, size=window_size)]]
+        l = [[sg.Col(bl, vertical_scroll_only=True, scrollable=True, size=gui_fun.window_size)]]
 
         return l, {}, {}, {}
 

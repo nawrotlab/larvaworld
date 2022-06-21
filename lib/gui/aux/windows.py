@@ -1,43 +1,34 @@
 import copy
 import operator
 import os
-
 import PySimpleGUI as sg
-import pandas as pd
-from PySimpleGUI import TITLE_LOCATION_TOP
 
-from lib.aux.dictsNlists import flatten_list
-from lib.aux.colsNstr import remove_prefix, remove_suffix
-from lib.conf.stored.conf import saveConf, loadConf, kConfDict, deleteConf
-from lib.conf.base.dtypes import null_dict
-from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size, get_disp_name
-from lib.gui.aux.buttons import named_bool_button
-from lib.conf.base import paths
-
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
+from lib.gui.aux import buttons as gui_but, functions as gui_fun
 
 def get_table(v, pars_dict, Nagents):
     data = []
     for i in range(Nagents):
         dic = {}
         for j, (p, t) in enumerate(pars_dict.items()):
-            dic[p] = retrieve_value(v[(i, p)], t)
+            dic[p] = gui_fun.retrieve_value(v[(i, p)], t)
         data.append(dic)
     return data
 
 
 def table_window(data, pars_dict, title, return_layout=False):
     d = pars_dict
-    t12_kws_c = {**t_kws(12),
+    t12_kws_c = {**gui_fun.t_kws(12),
                  'justification': 'center'}
 
     ps = list(d.keys())
     Nagents, Npars = len(data), len(ps)
 
-    l0 = [sg.T(' ', **t_kws(2))] + [sg.T(p, k=p, enable_events=True, **t12_kws_c) for p in ps]
-    l1 = [[sg.T(i + 1, **t_kws(2))] + [sg.In(data[i][p], k=(i, p), **t12_kws_c) if type(d[p]) != list else sg.Combo(
+    l0 = [sg.T(' ', **gui_fun.t_kws(2))] + [sg.T(p, k=p, enable_events=True, **t12_kws_c) for p in ps]
+    l1 = [[sg.T(i + 1, **gui_fun.t_kws(2))] + [sg.In(data[i][p], k=(i, p), **t12_kws_c) if type(d[p]) != list else sg.Combo(
         d[p], default_value=data[i][p], k=(i, p), enable_events=True, readonly=True,
-        **t_kws(12)) for p in ps] for i in range(Nagents)]
-    l2 = [sg.B(ii, **b6_kws) for ii in ['Add', 'Remove', 'Ok', 'Cancel']]
+        **gui_fun.t_kws(12)) for p in ps] for i in range(Nagents)]
+    l2 = [sg.B(ii, **gui_fun.b6_kws) for ii in ['Add', 'Remove', 'Ok', 'Cancel']]
 
     l = [l0, *l1, l2]
 
@@ -168,7 +159,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
     sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
     l = sec_dict.layout
     l.append([sg.Ok(), sg.Cancel()])
-    w = sg.Window(title, l, **w_kws, **kwargs)
+    w = sg.Window(title, l, **gui_fun.w_kws, **kwargs)
     while True:
         e, v = w.read()
         if e == 'Ok':
@@ -184,6 +175,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
 
 
 def set_agent_kwargs(agent, **kwargs):
+    from lib.conf.base.dtypes import null_dict
     class_name = type(agent).__name__
     type_dict = null_dict('agent', 'dtype')
     title = f'{class_name} args'
@@ -201,6 +193,7 @@ def set_agent_kwargs(agent, **kwargs):
 
 def save_conf_window(conf, conftype, disp=None):
     from lib.gui.aux.elements import NamedList
+    from lib.conf.stored.conf import saveConf, kConfDict
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
@@ -218,6 +211,7 @@ def save_conf_window(conf, conftype, disp=None):
         return None
 
 def delete_conf_window(id, conftype, disp=None) :
+    from lib.conf.stored.conf import deleteConf
     if disp is None:
         disp = conftype
     l = [[sg.Col([[sg.Text(f'Are you sure you want to delete \n '
@@ -235,6 +229,7 @@ def delete_conf_window(id, conftype, disp=None) :
 def add_ref_window():
     from lib.gui.aux.elements import NamedList
     from lib.stor.larva_dataset import LarvaDataset
+    from lib.conf.stored.conf import loadConf, kConfDict
     k = 'ID'
     temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
@@ -261,8 +256,10 @@ def save_ref_window(d):
 def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import PadDict
+    from lib.conf.stored.conf import loadConf
+    from lib.conf.pars.pars import ParDict
     g = loadConf(datagroup_id, 'Group')
-    group_dir = f'{paths.path("DATA")}/{g["path"]}'
+    group_dir = f'{ParDict.path_dict["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
 
@@ -272,28 +269,28 @@ def import_window(datagroup_id, raw_dic):
     N = len(raw_dic)
     raw_ids = list(raw_dic.keys())
     raw_dirs = list(raw_dic.values())
-    temp = remove_prefix(raw_dirs[0], f'{raw_folder}/')
-    groupID0 = remove_suffix(temp, f'/{raw_ids[0]}')
+    temp = cNs.remove_prefix(raw_dirs[0], f'{raw_folder}/')
+    groupID0 = cNs.remove_suffix(temp, f'/{raw_ids[0]}')
     if N == 0:
         return proc_dir
     w_size = (1200, 800)
-    h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **t_kws(30)}
-    l00 = sg.Col([[sg.T('Group ID :', **t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **t_kws(20))],
-                  [*named_bool_button(name=M, state=False, toggle_name=None),
-                   *named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
+    h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **gui_fun.t_kws(30)}
+    l00 = sg.Col([[sg.T('Group ID :', **gui_fun.t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **gui_fun.t_kws(20))],
+                  [*gui_but.named_bool_button(name=M, state=False, toggle_name=None),
+                   *gui_but.named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
                   [sg.Ok(), sg.Cancel()]])
 
-    l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
-                   *[[sg.T(id, **t_kws(30)), sg.T('  -->  ', **t_kws(8)), sg.In(id, k=f'new_{id}', **t_kws(30))] for id
+    l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**gui_fun.t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
+                   *[[sg.T(id, **gui_fun.t_kws(30)), sg.T('  -->  ', **gui_fun.t_kws(8)), sg.In(id, k=f'new_{id}', **gui_fun.t_kws(30))] for id
                      in raw_ids]],
                   vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
-                  size=col_size(y_frac=0.4, win_size=w_size))]
+                  size=gui_fun.col_size(y_frac=0.4, win_size=w_size))]
 
-    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=t_kws(20), header_width=30,
+    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=gui_fun.t_kws(20), header_width=30,
                  background_color='purple')
 
     l2 = [[sg.Frame(title='Options', layout=[[sg.Col(s1.layout), l00]], title_color='green', background_color='blue',
-                    border_width=8, pad=(40, 40), element_justification='center', title_location=TITLE_LOCATION_TOP)]]
+                    border_width=8, pad=(40, 40), element_justification='center', title_location=sg.TITLE_LOCATION_TOP)]]
 
     c = {}
     for s in [s1]:
@@ -322,6 +319,7 @@ def import_window(datagroup_id, raw_dic):
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
             if e == 'Ok':
+                from lib.conf.base.dtypes import null_dict
                 conf = s1.get_dict(v, w)
                 kws = {
                     'datagroup_id': datagroup_id,
@@ -364,7 +362,7 @@ def import_window(datagroup_id, raw_dic):
 
                     if datagroup_id in ['Berni lab', 'Arguello lab']:
                         target0 = f'{targets[0]}/{target_id0}'
-                        source_files = flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
+                        source_files = dNl.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
                                                       n.startswith(source_id)] for source_id, source in
                                                      raw_dic.items()])
                         dd = build_dataset(id=target_id0, target_dir=target0, source_files=source_files, **kws)
@@ -398,13 +396,13 @@ def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
     from lib.gui.aux.elements import PadDict
     c0 = PadDict(dict_name)
     l0 = c0.get_layout(pad=(20, 20))
-    lID = [sg.T(f'{index}:', **t_kws(10), tooltip='The ID of the new entry'),
-           sg.In(key='kID', **t_kws(30), pad=((0, 100), (0, 0)))]
+    lID = [sg.T(f'{index}:', **gui_fun.t_kws(10), tooltip='The ID of the new entry'),
+           sg.In(key='kID', **gui_fun.t_kws(30), pad=((0, 100), (0, 0)))]
     l1 = sg.Pane([sg.Col([[*lID, sg.Ok(), sg.Cancel()]])], border_width=8, pad=(20, 20))
     l = [[l0], [l1]]
-    kws = w_kws
+    kws = gui_fun.w_kws
     kws['default_element_size'] = (16, 1)
-    w = sg.Window(get_disp_name(dict_name), l, size=col_size(0.8, 0.5), **kws, **kwargs)
+    w = sg.Window(gui_fun.get_disp_name(dict_name), l, size=gui_fun.col_size(0.8, 0.5), **kws, **kwargs)
     if id is not None:
         c0.update(w, base_dict[id])
         w.Element('kID').Update(value=id)

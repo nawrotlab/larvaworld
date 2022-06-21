@@ -1,13 +1,14 @@
 import time
 import PySimpleGUI as sg
 
-import lib.aux.dictsNlists
+import lib.aux.dictsNlists as dNl
 from lib.conf.stored.conf import saveConfDict, loadConfDict
 from lib.conf.stored.aux_conf import store_controls
-from lib.gui.aux.elements import PadDict
-from lib.gui.aux.functions import t_kws, gui_cols, get_pygame_key
-from lib.gui.aux.buttons import GraphButton
+# from lib.gui.aux.elements import PadDict
+# from lib.gui.aux.functions import t_kws, gui_cols, get_pygame_key
+# from lib.gui.aux.buttons import GraphButton
 from lib.gui.tabs.tab import GuiTab
+from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 
 
 class SettingsTab(GuiTab):
@@ -33,26 +34,26 @@ class SettingsTab(GuiTab):
     @property
     def used_keys(self):
         d=self.controls_dict['keys']
-        return lib.aux.dictsNlists.flatten_list([list(k.values()) for k in list(d.values())])
+        return dNl.flatten_list([list(k.values()) for k in list(d.values())])
 
     def single_control_layout(self, k, v, prefix=None, editable=True):
         k0=f'{prefix} {k}' if prefix is not None else k
-        l = [sg.T(k, **t_kws(14)),
+        l = [sg.T(k, **gui_fun.t_kws(14)),
                sg.In(default_text=v, key=self.control_k(k0), disabled=True,
                      disabled_readonly_background_color='black', enable_events=True,
-                     text_color='white', **t_kws(8), justification='center')]
+                     text_color='white', **gui_fun.t_kws(8), justification='center')]
         if editable :
-            l+=[GraphButton('Document_2_Edit', f'{self.k_edit} {k0}', tooltip=f'Edit shortcut for {k}')]
+            l+=[gui_but.GraphButton('Document_2_Edit', f'{self.k_edit} {k0}', tooltip=f'Edit shortcut for {k}')]
         return l
 
     def single_control_collapsible(self, name, dic, editable=True, **kwargs) :
         l = [self.single_control_layout(k, v, prefix=name, editable=editable) for k, v in dic.items()]
-        c = PadDict(f'{self.k}_{name}', content=l, disp_name=name,**kwargs)
+        c = gui_el.PadDict(f'{self.k}_{name}', content=l, disp_name=name,**kwargs)
         return c
 
     def build_controls_collapsible(self, c):
         kws={'background_color':self.Ccon}
-        b_reset=GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
+        b_reset=gui_but.GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
         conf = loadConfDict('Settings')
         # print(conf['keys'].keys())
@@ -62,7 +63,7 @@ class SettingsTab(GuiTab):
         for cc in cs :
             c.update(cc.get_subdicts())
             l += cc.get_layout(as_col=False)
-        c_controls = PadDict('Controls', content=l, after_header=[b_reset],Ncols=3, header_width=90, **kws)
+        c_controls = gui_el.PadDict('Controls', content=l, after_header=[b_reset],Ncols=3, header_width=90, **kws)
         d=self.inti_control_dict(conf)
         return c_controls, d
 
@@ -72,14 +73,14 @@ class SettingsTab(GuiTab):
         return d
 
     def build(self):
-        kws = {'background_color': self.Cvis, 'header_width' : 55, 'Ncols' : 2, 'text_kws' : t_kws(14), 'value_kws' : t_kws(12)}
+        kws = {'background_color': self.Cvis, 'header_width' : 55, 'Ncols' : 2, 'text_kws' : gui_fun.t_kws(14), 'value_kws' : gui_fun.t_kws(12)}
         c = {}
-        c1 = PadDict('visualization',**kws)
-        c2 = PadDict('replay',**kws)
+        c1 = gui_el.PadDict('visualization',**kws)
+        c2 = gui_el.PadDict('replay',**kws)
         c3, d = self.build_controls_collapsible(c)
         for s in [c1, c2, c3]:
             c.update(s.get_subdicts())
-        l = gui_cols(cols=[[c1, c2], [c3]], x_fracs=[0.4,0.6])
+        l = gui_fun.gui_cols(cols=[[c1, c2], [c3]], x_fracs=[0.4,0.6])
         return l, c, {}, d
 
     def update_controls(self, v, w):
@@ -91,7 +92,7 @@ class SettingsTab(GuiTab):
         w[k_cur].update(disabled=True, value=v_cur)
         d0['keys'][p1][p2] = v_cur
         # d0['keys'][cur] = v_cur
-        d0['pygame_keys'][cur] = get_pygame_key(v_cur)
+        d0['pygame_keys'][cur] = gui_fun.get_pygame_key(v_cur)
         d0['cur'] = None
         saveConfDict(d0, 'Settings')
 

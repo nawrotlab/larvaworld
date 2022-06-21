@@ -5,6 +5,7 @@ from itertools import product
 
 
 import lib.aux.dictsNlists
+from lib.conf.pars.pars import ParDict
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
 from lib.conf.stored.conf import *
@@ -34,13 +35,11 @@ def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploratio
     group = null_dict('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
     group.distribution.N = N
 
-    # gID = 'exploration'
-    # datagroup_id = 'Schleyer lab'
     if id is None :
         id = f'{N}controls'
 
     g = loadConf(datagroup_id, 'Group')
-    group_dir = f'{paths.path("DATA")}/{g["path"]}'
+    group_dir = f'{ParDict.path_dict["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
     # parent_dir = 'no_odor'
@@ -121,7 +120,7 @@ def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
     warnings.filterwarnings('ignore')
     g = loadConf(datagroup_id, 'Group')
     build_conf = g['tracker']['filesystem']
-    group_dir=f'{paths.path("DATA")}/{g["path"]}'
+    group_dir=f'{ParDict.path_dict["DATA"]}/{g["path"]}'
     raw_dir=f'{group_dir}/raw'
 
     ds = get_datasets(datagroup_id=datagroup_id, last_common='processed', names=names,
@@ -165,12 +164,15 @@ def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
 
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
                  mode='load', load_data=True, ids=None, **kwargs):
+    from lib.conf.pars.pars import ParDict
+    # ff = ParDict.path_dict["DATA"]
+
     g = loadConf(datagroup_id, 'Group')
     data_conf = g.tracker.resolution
     spatial_def = g.enrichment.metric_definition.spatial
     arena_pars = g.tracker.arena
     par_conf = g['parameterization']
-    group_dir = f'{paths.path("DATA")}/{g["path"]}'
+    group_dir = f'{ParDict.path_dict["DATA"]}/{g["path"]}'
 
     last_common = f'{group_dir}/{last_common}'
     if folders is None:

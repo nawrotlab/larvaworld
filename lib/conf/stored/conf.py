@@ -38,16 +38,18 @@ def expandConf(id, conf_type, **kwargs):
 
 
 def loadConfDict(conf_type, use_pickle=False):
+    # from lib.conf.pars.pars import ParDict
+    # path = ParDict.path_dict[conf_type]
+    path = paths.path_dict[conf_type]
     if conf_type=='Ga' :
         use_pickle=True
     try:
         if use_pickle:
-            with open(paths.path(conf_type), 'rb') as tfp:
+            with open(path, 'rb') as tfp:
                 d = pickle.load(tfp)
         else:
-            with open(paths.path(conf_type)) as f:
+            with open(path) as f:
                 d = json.load(f)
-        # return dNl.NestDict(d)
     except:
         d={}
     return dNl.NestDict(d)
@@ -102,13 +104,16 @@ def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
 
 
 def saveConfDict(ConfDict, conf_type, use_pickle=False):
+    # from lib.conf.pars.pars import ParDict
+    # path = ParDict.path_dict[conf_type]
+    path = paths.path_dict[conf_type]
     if conf_type=='Ga' :
         use_pickle=True
     if use_pickle:
-        with open(paths.path(conf_type), 'wb') as fp:
+        with open(path, 'wb') as fp:
             pickle.dump(ConfDict, fp, protocol=pickle.HIGHEST_PROTOCOL)
     else:
-        with open(paths.path(conf_type), "w") as f:
+        with open(path, "w") as f:
             json.dump(ConfDict, f)
 
 
@@ -130,7 +135,9 @@ def deleteConf(id, conf_type):
 
 
 def next_idx(exp, type='Exp'):
-    F0 = paths.path('SimIdx')
+    # from lib.conf.pars.pars import ParDict
+    # F0 = ParDict.path_dict["SimIdx"]
+    F0 = paths.path_dict["SimIdx"]
     try:
         with open(F0) as f:
             d = json.load(f)
@@ -164,8 +171,9 @@ def next_idx(exp, type='Exp'):
 def store_reference_data_confs():
     from lib.stor.larva_dataset import LarvaDataset
     from lib.aux.dictsNlists import flatten_list
-
-    DATA = paths.path('DATA')
+    from lib.conf.pars.pars import ParDict
+    DATA = ParDict.path_dict["DATA"]
+    # DATA = paths.path('DATA')
 
     dds = [
         [f'{DATA}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g

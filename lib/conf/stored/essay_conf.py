@@ -7,10 +7,9 @@ from lib.conf.base.dtypes import enr_dict, null_dict, arena, base_enrich
 from lib.conf.pars.pars import getPar
 from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
-from lib.conf.base import paths
 from lib.conf.stored.conf import next_idx
 from lib.sim.single.single_run import SingleRun
-
+from lib.conf.pars.pars import ParDict
 
 class Essay:
     def __init__(self, type, enrichment=base_enrich(), collections=['pose'], **kwargs):
@@ -19,8 +18,10 @@ class Essay:
         self.collections = collections
         self.essay_id = f'{type}_{next_idx(type, "Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
-        self.full_path = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/data'
-        self.plot_dir = f'{paths.path("ESSAY")}/{type}/{self.essay_id}/plots'
+        path=ParDict.path_dict["ESSAY"]
+        # path=paths.path("ESSAY")
+        self.full_path = f'{path}/{type}/{self.essay_id}/data'
+        self.plot_dir = f'{path}/{type}/{self.essay_id}/plots'
         self.exp_dict = {}
         self.figs = {}
         self.results = {}
@@ -237,7 +238,7 @@ rover_sitter_essay = {
             'durations': [120]
         }
     },
-    'exp_fig_folder': paths.path('RvsS')}
+    'exp_fig_folder': ParDict.path_dict["RvsS"]}
 
 essay_dict = {
     'roversVSsitters': rover_sitter_essay,

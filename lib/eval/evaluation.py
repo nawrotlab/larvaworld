@@ -34,8 +34,7 @@ class EvalRun :
             id = f'evaluation_run_{next_idx("dispersion", "Eval")}'
         self.id=id
         if save_to is None:
-            from lib.conf.base import paths
-            save_to = paths.path("SIM")
+            save_to = ParDict.path_dict["SIM"]
         self.path=f'eval_runs'
         self.bout_annotation = bout_annotation
         self.enrichment = enrichment

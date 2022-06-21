@@ -7,11 +7,12 @@ from mesa.datacollection import DataCollector
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import generate_xy_distro
 from lib.aux.colsNstr import N_colors
+from lib.conf.pars.pars import ParDict
 
 from lib.model.envs._larvaworld import LarvaWorld
 from lib.aux.sim_aux import generate_larvae, get_sample_bout_distros, sample_group
 from lib.sim.single.conditions import get_exp_condition
-from lib.conf.base import paths
+# from lib.conf.base import paths
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -85,7 +86,7 @@ class LarvaWorldSim(LarvaWorld):
 
             modF = dNl.flatten_dict(mod)
             sample_ks = [p for p in modF if modF[p] == 'sample']
-            RefPars = dNl.load_dict(paths.path('ParRef'), use_pickle=False)
+            RefPars = dNl.load_dict(ParDict.path_dict["ParRef"], use_pickle=False)
             invRefPars = {v: k for k, v in RefPars.items()}
 
             if gConf['imitation'] and sample != {}:
@@ -156,7 +157,6 @@ class LarvaWorldSim(LarvaWorld):
         return False
 
     def create_collectors(self, output):
-        from lib.conf.pars.pars import ParDict
         from lib.aux.collecting import TargetedDataCollector
         kws0 = {'par_dict': ParDict.dict}
         if output is None:

@@ -1,10 +1,6 @@
-import subprocess
-import numpy as np
-from ast import literal_eval
-from pydoc import locate
-from typing import List, Tuple, Union, Type
+
+
 import PySimpleGUI as sg
-from PySimpleGUI import Element
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'
@@ -56,7 +52,7 @@ def get_disp_name(name) -> str:
 
 
 def retrieve_value(v, t):
-    # print(v, type(v))
+    from typing import List, Tuple, Union, Type
 
     if v in ['', 'None', None, ('', ''), ('', '')]:
         vv = None
@@ -119,9 +115,11 @@ def retrieve_value(v, t):
         elif 'int' in v:
             vv = int
         else:
+            from pydoc import locate
             vv = locate(v)
     elif t == tuple or t == list:
         try:
+            from ast import literal_eval
             vv = literal_eval(v)
         except:
             vv = [float(x) for x in v.split()]
