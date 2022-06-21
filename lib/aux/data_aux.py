@@ -35,3 +35,10 @@ def concat_datasets(ds, key='end', unit='sec'):
             dic = {'sec': 1, 'min': 60, 'hour': 60 * 60, 'day': 24 * 60 * 60}
             df0['Step'] *= dt / dic[unit]
     return df0
+
+
+def moving_average(a, n=3):
+    # ret = np.cumsum(a, dtype=float)
+    # ret[n:] = ret[n:] - ret[:-n]
+    return np.convolve(a, np.ones((n,)) / n, mode='same')
+    # return ret[n - 1:] / n

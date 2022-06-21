@@ -17,7 +17,8 @@ from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.pars import getPar, ParDict
 from lib.conf.stored.conf import expandConf
 
-from lib.process.aux import annotation, suppress_stdout, compute_interference
+from lib.process.aux import annotation, compute_interference
+from lib.aux.stdout import suppress_stdout
 from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, store_spatial
 
 

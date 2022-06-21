@@ -87,7 +87,7 @@ def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
 
 
 def get_powerlaw_alpha(dur, dur0=None, dur1=None, discrete=False):
-    from lib.process.aux import suppress_stdout, suppress_stdout_stderr
+    from lib.aux.stdout import suppress_stdout_stderr
     if dur0 is None :
         dur0=np.min(dur)
     if dur1 is None :
@@ -225,7 +225,7 @@ def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id
 
 def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=False,
                      dataset_id='dataset', bout='pause', combine=True, fit_by='pdf', eval_func_id='KS2'):
-    from lib.process.aux import suppress_stdout, suppress_stdout_stderr
+    from lib.aux.stdout import suppress_stdout
     eval_func_dic={
         'MSE':MSE,
         'KS':KS,

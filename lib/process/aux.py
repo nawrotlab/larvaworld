@@ -1,230 +1,14 @@
 import os
-import sys
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
 import pandas as pd
 import numpy as np
-import scipy as sp
-from matplotlib import pyplot as plt
-from scipy.signal import sosfiltfilt, find_peaks, argrelextrema
-from scipy.spatial import ConvexHull
-import statsmodels.api as sm
-
-# from lib.aux.dictsNlists import AttrDict, save_dict
+from scipy.signal import find_peaks
 
 from lib.aux.sim_aux import fft_max, fft_freqs
 from lib.conf.pars.pars import getPar
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import dictsNlists as dNl
+
 
 from lib.process.store import store_aux_dataset
-
-
-def compute_centroid(points):
-    x = [p[0] for p in points]
-    y = [p[1] for p in points]
-    centroid = (sum(x) / len(points), sum(y) / len(points))
-    return centroid
-
-
-def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
-    Nrows, Ncols = xs.shape
-    xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
-    ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
-    ps = [np.vstack((xs[i], ys[i])).T for i in range(Nrows)]
-    xxs = np.zeros((Nrows, N))
-    xxs[:] = np.nan
-    yys = np.zeros((Nrows, N))
-    yys[:] = np.nan
-
-    for i, p in enumerate(ps):
-        if len(p) > 0:
-            try:
-                b = p[ConvexHull(p).vertices]
-                s = np.min([b.shape[0], N])
-                xxs[i, :s] = b[:s, 0]
-                yys[i, :s] = b[:s, 1]
-                if interp_nans:
-                    xxs[i] = interpolate_nans(xxs[i])
-                    yys[i] = interpolate_nans(yys[i])
-            except:
-                pass
-    return xxs, yys
-
-
-def sign_changes(df, col):
-    a = df[col].values
-    u = np.sign(df[col])
-    m = np.flatnonzero(u.diff().abs().eq(2))
-
-    g = np.stack([m - 1, m], axis=1)
-    v = np.abs(a[g]).argmin(1)
-
-    res = df.iloc[g[np.arange(g.shape[0]), v]]
-    return res
-
-
-@contextmanager
-def suppress_stdout_stderr():
-    """A context manager that redirects stdout and stderr to devnull"""
-    with open(os.devnull, 'w') as fnull:
-        with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
-            yield (err, out)
-
-
-@contextmanager
-def suppress_stdout(show_output):
-    with open(os.devnull, "w") as devnull:
-        old_stdout = sys.stdout
-        old_stderr = sys.stderr
-        if not show_output:
-            sys.stdout = devnull
-        try:
-            yield
-        finally:
-            sys.stdout = old_stdout
-            sys.stderr = old_stderr
-        # else :
-        #     pass
-
-
-def nan_helper(y):
-    """Helper to handle indices and logical indices of NaNs.
-
-    Input:
-        - y, 1d numpy array with possible NaNs
-    Output:
-        - nans, logical indices of NaNs
-        - index, a function, with signature indices= index(logical_indices),
-          to convert logical indices of NaNs to 'equivalent' indices
-    Example:
-        >>> # linear interpolation of NaNs
-        >>> nans, x= nan_helper(y)
-        >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
-    """
-
-    return np.isnan(y), lambda z: z.nonzero()[0]
-
-
-def interpolate_nans(y):
-    nans, x = nan_helper(y)
-    y[nans] = np.interp(x(nans), x(~nans), y[~nans])
-    return y
-
-
-def downsample_2d_array(a, step):
-    return a[::step, ::step]
-
-
-def compute_velocity(xy, dt, return_dst=False):
-    x = xy[:, 0]
-    y = xy[:, 1]
-
-    dx = np.diff(x)
-    dy = np.diff(y)
-    d = np.sqrt(dx ** 2 + dy ** 2)
-    v = d / dt
-    v = np.insert(v, 0, np.nan)
-    d = np.insert(d, 0, np.nan)
-    if return_dst:
-        return v, d
-    else:
-        return v
-
-
-def compute_component_velocity(xy, angles, dt, return_dst=False):
-    x = xy[:, 0]
-    y = xy[:, 1]
-    dx = np.diff(x, prepend=[np.nan])
-    dy = np.diff(y, prepend=[np.nan])
-    d_temp = np.sqrt(dx ** 2 + dy ** 2)
-    # This is the angle of the displacement vector relative to x-axis
-    rads = np.arctan2(dy, dx)
-    # And this is the angle of the displacement vector relative to the front-segment orientation vector
-    angles2ref = rads - angles
-    angles2ref %= 2 * np.pi
-    d = d_temp * np.cos(angles2ref)
-    v = d / dt
-    if return_dst:
-        return v, d
-    else:
-        return v
-
-
-def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
-    x0, y0 = loc
-    dxs = x0 - np.array(xs)
-    dys = y0 - np.array(ys)
-    rads = np.arctan2(dys, dxs)
-    drads = (ors - np.rad2deg(rads)) % 360
-    drads[drads > 180] -= 360
-    return drads if in_deg else np.deg2rad(rads)
-
-
-def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
-    if max_v is None:
-        max_v = np.nanmax(v)
-    bins = np.linspace(0, max_v, Nbins)
-    hist, bin_edges = np.histogram(v, bins=bins, density=True)
-    vals = bin_edges[0:-1] + 0.5 * np.diff(bin_edges)
-    hist += 1 / len(v)
-    hist /= np.sum(hist)
-    plt.figure()
-    plt.semilogy(vals, hist)
-    ker = sp.signal.gaussian(len(vals), kernel_width * Nbins / max_v)
-    ker /= np.sum(ker)
-
-    density = np.exp(np.convolve(np.log(hist), ker, 'same'))
-    plt.semilogy(vals, density)
-
-    mi, ma = argrelextrema(density, np.less)[0], argrelextrema(density, np.greater)[0]
-    try:
-        minimum = vals[mi][0]
-    except:
-        minimum = np.nan
-    return minimum
-
-
-def moving_average(a, n=3):
-    # ret = np.cumsum(a, dtype=float)
-    # ret[n:] = ret[n:] - ret[:-n]
-    return np.convolve(a, np.ones((n,)) / n, mode='same')
-    # return ret[n - 1:] / n
-
-
-def slow_freq(a, dt, tmax=60.0):
-    """
-    Dominant slow frequency of signal.
-
-    Compute the dominant frequency of a timeseries after smoothing it by a moving average over several (long) intervals.
-
-    Parameters
-    ----------
-    a : array
-        1D np.array : velocity timeseries
-    dt : float
-        Timestep of the timeseries
-    tmax : float
-        Maximum time interval over which to apply moving average in secs. Default is 60.0
-
-    Returns
-    -------
-    fr_median : float
-       The median of the dominant frequencies over all time intervals
-
-    """
-    lags = int(2 * tmax / dt)
-    frs = []
-    ts = np.arange(1, 60, 0.5)
-    for t in ts:
-        aa = moving_average(a, n=int(t / dt))
-        autocor = sm.tsa.acf(aa, nlags=lags, missing="conservative")
-        try:
-            fr = 1 / (find_peaks(autocor)[0][0] * dt)
-        except:
-            fr = np.nan
-        frs.append(fr)
-    fr_median = np.nanmedian(frs)
-    return fr_median
-
 
 
 def process_epochs(a, epochs, dt, return_idx=True):
@@ -457,46 +241,27 @@ def detect_turns(a, dt, min_dur=None):
     return Lturns, Rturns
 
 #
-# def stride_interference(a_sv, a_fov, strides, Nbins=64, strict=True, absolute=True):
+# def stride_max_vel_phis(s, e, c, Nbins=64):
+#     import lib.aux.naming as nam
+#     points = nam.midline(c.Npoints, type='point')
+#     l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'])
 #     x = np.linspace(0, 2 * np.pi, Nbins)
+#     phis = np.zeros([c.Npoints, c.N]) * np.nan
+#     for j, id in enumerate(c.agent_ids):
+#         ss = s.xs(id, level='AgentID')
+#         strides = detect_strides(ss[sv], c.dt, return_runs=False, return_extrema=False)
+#         strides = strides.tolist()
+#         for i, p in enumerate(points):
+#             ar_v = np.zeros([strides, Nbins])
+#             v_p = nam.vel(p)
+#             a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
+#             for ii, (s0, s1) in enumerate(strides):
+#                 ar_v[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
+#             ar_v_mu = np.nanquantile(ar_v, q=0.5, axis=0)
+#             phis[i, j] = x[np.argmax(ar_v_mu)]
+#     for i, p in enumerate(points):
+#         e[nam.max(f'phi_{nam.vel(p)}')] = phis[i, :]
 #
-#     if strict:
-#         strides = [(s0, s1) for s0, s1 in strides if all(np.sign(a_fov[s0:s1]) >= 0) or all(np.sign(a_fov[s0:s1]) <= 0)]
-#
-#     ar_sv = np.zeros([len(strides), Nbins])
-#     ar_fov = np.zeros([len(strides), Nbins])
-#     for ii, (s0, s1) in enumerate(strides):
-#         ar_fov[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_fov[s0:s1])
-#         ar_sv[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a_sv[s0:s1])
-#     if absolute:
-#         ar_fov = np.abs(ar_fov)
-#     ar_fov_mu = np.nanquantile(ar_fov, q=0.5, axis=0)
-#     ar_sv_mu = np.nanquantile(ar_sv, q=0.5, axis=0)
-#
-#     return ar_sv_mu, ar_fov_mu, x
-
-
-def stride_max_vel_phis(s, e, c, Nbins=64):
-    import lib.aux.naming as nam
-    points = nam.midline(c.Npoints, type='point')
-    l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'])
-    x = np.linspace(0, 2 * np.pi, Nbins)
-    phis = np.zeros([c.Npoints, c.N]) * np.nan
-    for j, id in enumerate(c.agent_ids):
-        ss = s.xs(id, level='AgentID')
-        strides = detect_strides(ss[sv], c.dt, return_runs=False, return_extrema=False)
-        strides = strides.tolist()
-        for i, p in enumerate(points):
-            ar_v = np.zeros([strides, Nbins])
-            v_p = nam.vel(p)
-            a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
-            for ii, (s0, s1) in enumerate(strides):
-                ar_v[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
-            ar_v_mu = np.nanquantile(ar_v, q=0.5, axis=0)
-            phis[i, j] = x[np.argmax(ar_v_mu)]
-    for i, p in enumerate(points):
-        e[nam.max(f'phi_{nam.vel(p)}')] = phis[i, :]
-
 
 def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     wvane_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in run_idx for tt in t])]
@@ -530,25 +295,12 @@ def comp_pooled_epochs(d,chunk_dicts=None,store=False,**kwargs):
 
 
 def annotation(s, e, cc, **kwargs):
+    from lib.process.patch import comp_patch
     chunk_dicts = comp_chunk_dicts(s=s,e=e,c=cc, **kwargs)
     turn_mode_annotation(e, chunk_dicts)
     comp_patch(s, e, cc)
     return chunk_dicts
 
-def comp_patch(s,e,c):
-    from lib.process.bouts import comp_patch_metrics, comp_chunk_bearing
-    try:
-        comp_patch_metrics(s, e)
-    except :
-        pass
-    for b in ['stride', 'pause', 'turn']:
-        try:
-            comp_chunk_bearing(s, c, chunk=b)
-            if b == 'turn':
-                comp_chunk_bearing(s,  c, chunk='Lturn')
-                comp_chunk_bearing(s, c, chunk='Rturn')
-        except:
-            pass
 
 def stride_interp(a, strides,Nbins=64) :
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -809,169 +561,3 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l','str_d','str_sd'])
         store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
-
-
-
-class FuncParHelper:
-
-    def __init__(self) :
-
-        self.func_df=self.inspect_funcs()
-
-    def get_func(self, func):
-        module=self.func_df['module'].loc[func]
-        return getattr(module, func)
-
-    def apply_func(self,func,s,**kwargs):
-        f=self.get_func(func)
-        kws={k:kwargs[k] for k in kwargs.keys() if k in self.func_df['args'].loc[func]}
-        f(s=s,**kws)
-        return s
-
-    def assemble_func_df(self,arg='s'):
-        from lib.process import angular, spatial, bouts, basic
-        arg_dicts = {}
-        for module in [angular, spatial, bouts, basic]:
-            dic = self.get_arg_dict(module, arg)
-            arg_dicts.update(dic)
-        df = pd.DataFrame.from_dict(arg_dicts,orient='index')
-
-        return df
-
-    def get_arg_dict(self, module, arg):
-        from inspect import getmembers, isfunction, signature
-
-
-        # funcnames = []
-        arg_dict={}
-        funcs = getmembers(module, isfunction)
-        for k, f in funcs:
-            args = signature(f)
-            args = list(args.parameters.keys())
-            if arg in args:
-                if k!='store_aux_dataset' :
-                    # funcnames.append(k)
-                    arg_dict[k]= {'args' : args, 'module':module}
-        return arg_dict
-
-    def inspect_funcs(self, arg='s'):
-        df=self.assemble_func_df(arg)
-        new_cols=['requires', 'depends', 'computes']
-        for col in new_cols :
-            df[col]=np.nan
-
-        df[new_cols]=self.manual_fill(df[new_cols])
-        return df
-
-    def manual_fill(self,df):
-        df.loc['comp_ang_from_xy'] = ['x', 'y'], ['ang_from_xy'], ['fov', 'foa']
-        df.loc['angular_processing'] = [], ['comp_orientations', 'comp_bend', 'comp_ang_from_xy', 'comp_angular',
-                                            'comp_extrema', 'compute_LR_bias', 'store_aux_dataset'], []
-        df.loc['comp_angular'] = ['fo', 'ro', 'b'], ['unwrap_orientations'], ['fov', 'foa', 'rov', 'roa', 'bv', 'ba']
-        df.loc['unwrap_orientations'] = ['fo', 'ro'], [], ['fou', 'rou']
-        df.loc['comp_orientation_1point'] = ['x', 'y'], [], ['fov']
-        df.loc['compute_LR_bias'] = ['b', 'bv', 'fov'], [], []
-        df.loc['comp_orientations'] = ['xys'], ['comp_orientation_1point'], ['fo', 'ro']
-        df.loc['comp_bend'] = ['fo', 'ro'], ['comp_angles'], ['b']
-        df.loc['comp_angles'] = ['xys'], [], ['angles']
-        return df
-
-    def is_computed_by(self, short):
-        return [k for k in self.func_df.index if short in self.func_df['computes'].loc[k]]
-
-    def requires(self, func):
-        return self.func_df['requires'].loc[func]
-
-    def depends(self,func):
-        return self.func_df['depends'].loc[func]
-
-    def requires_all(self, func):
-        import lib.aux.dictsNlists as dNl
-        shorts=[]
-        shorts.append(self.requires(func))
-        for f in self.depends(func) :
-            shorts.append(self.requires_all(func))
-        shorts=dNl.unique_list(shorts)
-        return shorts
-
-    def get_options(self, short):
-        options={}
-        for func in self.is_computed_by(short):
-            options[func]=self.requires(func)
-        return options
-
-    def how_to_compute(self, s, par=None, short=None, **kwargs):
-        if par is None :
-            par = getPar(short)
-        elif short is None :
-            short=getPar(d=par, to_return='k')
-        if par in s.columns :
-            return True
-        else :
-            options=self.get_options(short)
-            available= []
-            for i,(func, shorts) in enumerate(options.items()) :
-                pars = getPar(shorts)
-                if all([p in s.columns for p in pars]):
-
-                    available.append(func)
-            if len(available)==0 :
-                return False
-            else :
-                return available
-
-    def compute(self,s,**kwargs):
-        res=self.how_to_compute(s=s,**kwargs)
-        if res in [True, False]:
-            return res
-        else:
-            self.apply_func(res[0],s=s, **kwargs)
-            return self.compute(s=s,**kwargs)
-
-def finalize_eval(s, l, traj, ks, dt):
-    from lib.process.spatial import straightness_index
-    s.v = np.array(s.v)
-    s.sv = s.v / l
-    s.b = np.rad2deg(s.b)
-    s.fov = np.rad2deg(s.fov)
-    s.rov = np.rad2deg(s.rov)
-    s.bv = np.diff(s.b, prepend=[np.nan]) / dt
-    # self.eval.rov = self.eval.fov - self.eval.bv
-    if 'ba' in ks:
-        s.ba = np.diff(s.bv, prepend=[np.nan]) / dt
-    if 'a' in ks:
-        s.a = np.diff(s.v, prepend=[np.nan]) / dt
-    if 'foa' in ks:
-        s.foa = np.diff(s.fov, prepend=[np.nan]) / dt
-    if 'tor5' in ks:
-        s.tor5 = straightness_index(traj, int(5 / dt / 2), match_shape=False)
-    if 'tor2' in ks:
-        s.tor2 = straightness_index(traj, int(2 / dt / 2), match_shape=False)
-    if 'tor1' in ks:
-        s.tor1 = straightness_index(traj, int(1 / dt / 2), match_shape=False)
-    if 'tor10' in ks:
-        s.tor10 = straightness_index(traj, int(10 / dt / 2), match_shape=False)
-    if 'tor20' in ks:
-        s.tor20 = straightness_index(traj, int(20 / dt / 2), match_shape=False)
-    if 'tur_fou' in ks:
-        a_fov = pd.Series(s.fov)
-        Lturns, Rturns = detect_turns(a_fov, dt)
-
-        Ldurs, Lamps, Lmaxs = process_epochs(a_fov.values, Lturns, dt, return_idx=False)
-        Rdurs, Ramps, Rmaxs = process_epochs(a_fov.values, Rturns, dt, return_idx=False)
-        s.tur_fou = np.concatenate([Lamps, Ramps])
-        s.tur_t = np.concatenate([Ldurs, Rdurs])
-        s.tur_fov_max = np.concatenate([Lmaxs, Rmaxs])
-    if 'run_t' in ks:
-        a_sv = pd.Series(s.sv)
-        fv = fft_max(a_sv, dt, fr_range=(1.0, 2.5), return_amps=False)
-        strides, runs, run_counts = detect_strides(a_sv, dt, fr=fv, return_extrema=False)
-        pauses = detect_pauses(a_sv, dt, runs=runs)
-        pause_durs, pause_dsts, pause_maxs = process_epochs(a_sv, pauses, dt, return_idx=False)
-        run_durs, run_dsts, run_maxs = process_epochs(a_sv, runs, dt, return_idx=False)
-        s.run_d = run_dsts
-        s.run_t = run_durs
-        s.pau_t = pause_durs
-    for k, vs in s.items():
-        s[k] = vs[~np.isnan(vs)]
-    return s

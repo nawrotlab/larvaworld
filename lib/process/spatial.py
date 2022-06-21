@@ -3,13 +3,13 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from lib.process.aux import compute_component_velocity, compute_velocity, compute_centroid
+from lib.aux.vel_aux import compute_velocity, compute_component_velocity
 from lib.aux.ang_aux import rotate_multiple_points, angle_dif
 from lib.aux.dictsNlists import group_list_by_n, flatten_list
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 from lib.conf.pars.pars import getPar, ParDict
-from lib.aux.xy_aux import eudi5x, raw_or_filtered_xy
+from lib.aux.xy_aux import eudi5x, raw_or_filtered_xy, compute_centroid
 
 
 def comp_linear(s, e, c, mode='minimal'):

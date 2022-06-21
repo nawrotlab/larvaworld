@@ -181,7 +181,8 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
 
 def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=True, maxNpoints=5, save_to=None,
                             axs=None, fig=None, axx=None):
-    from lib.process.aux import detect_strides, stride_interp,compute_velocity
+    from lib.process.aux import detect_strides, stride_interp
+    from lib.aux.vel_aux import compute_velocity
     l, sv, pau_fov_mu, fv, fov = getPar(['l', 'sv', 'pau_fov_mu', 'fv', 'fov'])
     att = 'attenuation'
     att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')

@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from scipy.spatial import ConvexHull
 
 from lib.aux import naming as nam
 
@@ -81,23 +82,6 @@ def xy_projection(point, angle: float, distance: float):
         point[1] + math.sin(angle) * distance]
 
 
-def comp_rate(s,c, p, pv=None):
-    if pv is None :
-        pv = nam.vel(p)
-    V = np.zeros([c.Nticks, c.N]) * np.nan
-    # print(V.shape)
-    # print(V.flatten().shape)
-    # print(s[p].values.shape)
-    for i, id in enumerate(c.agent_ids):
-        # print(np.diff(s[p].xs(id, level='AgentID').values).shape)
-        V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
-
-    s[pv] = V.flatten()
-
-
-
-
-
 def raw_or_filtered_xy(s, points):
     r = nam.xy(points, flat=True)
     f = nam.filt(r)
@@ -118,3 +102,69 @@ def comp_dst(s,c,point):
         xy=s[xy_params].xs(id, level='AgentID').values
         D[1:, i] = np.sqrt(np.diff(xy[:, 0]) ** 2 + np.diff(xy[:, 1]) ** 2)
     s[nam.dst(point)] = D.flatten()
+
+
+def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
+    Nrows, Ncols = xs.shape
+    xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
+    ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
+    ps = [np.vstack((xs[i], ys[i])).T for i in range(Nrows)]
+    xxs = np.zeros((Nrows, N))
+    xxs[:] = np.nan
+    yys = np.zeros((Nrows, N))
+    yys[:] = np.nan
+
+    for i, p in enumerate(ps):
+        if len(p) > 0:
+            try:
+                b = p[ConvexHull(p).vertices]
+                s = np.min([b.shape[0], N])
+                xxs[i, :s] = b[:s, 0]
+                yys[i, :s] = b[:s, 1]
+                if interp_nans:
+                    xxs[i] = interpolate_nans(xxs[i])
+                    yys[i] = interpolate_nans(yys[i])
+            except:
+                pass
+    return xxs, yys
+
+
+def nan_helper(y):
+    """Helper to handle indices and logical indices of NaNs.
+
+    Input:
+        - y, 1d numpy array with possible NaNs
+    Output:
+        - nans, logical indices of NaNs
+        - index, a function, with signature indices= index(logical_indices),
+          to convert logical indices of NaNs to 'equivalent' indices
+    Example:
+        >>> # linear interpolation of NaNs
+        >>> nans, x= nan_helper(y)
+        >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+    """
+
+    return np.isnan(y), lambda z: z.nonzero()[0]
+
+
+def interpolate_nans(y):
+    nans, x = nan_helper(y)
+    y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    return y
+
+
+def compute_centroid(points):
+    x = [p[0] for p in points]
+    y = [p[1] for p in points]
+    centroid = (sum(x) / len(points), sum(y) / len(points))
+    return centroid
+
+
+def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
+    x0, y0 = loc
+    dxs = x0 - np.array(xs)
+    dys = y0 - np.array(ys)
+    rads = np.arctan2(dys, dxs)
+    drads = (ors - np.rad2deg(rads)) % 360
+    drads[drads > 180] -= 360
+    return drads if in_deg else np.deg2rad(rads)

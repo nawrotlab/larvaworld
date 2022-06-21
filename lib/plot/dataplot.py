@@ -19,8 +19,7 @@ from lib.conf.pars.units import ureg
 from lib.plot.base import Plot, AutoPlot, ParPlot, BasePlot
 from lib.plot.aux import dataset_legend, label_diff, annotate_plot, plot_quantiles, \
     plot_mean_and_range, process_plot, circNarrow, circular_hist, scatter_hist, suf
-from lib.aux.data_aux import boolean_indexing, concat_datasets
-
+from lib.aux.data_aux import boolean_indexing, concat_datasets, moving_average
 
 
 def plot_ethogram(subfolder='timeplots', **kwargs):
@@ -1662,7 +1661,6 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
 def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
                   Nids=None, **kwargs):
     from scipy.fft import fft, fftfreq
-    from lib.process.aux import moving_average
 
     if len(pars) == 0:
         if len(par_shorts) == 0:
@@ -1731,7 +1729,8 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
 
 def plot_navigation_index(subfolder='source', **kwargs):
     P = AutoPlot(name='nav_index', subfolder=subfolder, Nrows=2, figsize=(20, 20), sharex=True, sharey=True, **kwargs)
-    from lib.process.aux import compute_component_velocity, compute_velocity
+    from lib.aux.vel_aux import compute_component_velocity
+    from lib.aux.vel_aux import compute_velocity
 
     for d, c, g in zip(P.datasets, P.colors, P.labels):
         dt = 1 / d.fr

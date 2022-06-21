@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from lib.aux.colsNstr import N_colors
 import lib.aux.dictsNlists as dNl
 from lib.conf.pars.pars import ParDict
-from lib.conf.stored.conf import kConfDict
 from lib.conf.base.dtypes import null_dict
 
 # 
@@ -81,7 +80,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
 
 
 def update_exp_models(exp_conf, models, N=None):
-    from lib.conf.stored.conf import expandConf
+    from lib.conf.stored.conf import expandConf, kConfDict
     larva_groups = {}
     Nmodels = len(models)
     colors = N_colors(Nmodels)

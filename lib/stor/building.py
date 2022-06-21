@@ -2,6 +2,7 @@ import os.path
 import numpy as np
 import pandas as pd
 
+import lib.aux.xy_aux
 import lib.process.aux
 import lib.aux.dictsNlists
 import lib.aux.par_aux
@@ -120,7 +121,7 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
 
         xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
         ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-        xcs,ycs= lib.process.aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
+        xcs,ycs= lib.aux.xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
         xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
         ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
 

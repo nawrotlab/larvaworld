@@ -245,7 +245,7 @@ class BaseParDict:
 
         if func_v is None:
             def func_v(d):
-                from lib.aux.xy_aux import comp_rate
+                from lib.aux.vel_aux import comp_rate
                 s, e, c = d.step_data, d.endpoint_data, d.config
                 comp_rate(s, c, p=b.d, pv=d_v)
 
@@ -255,7 +255,7 @@ class BaseParDict:
                'func': func_v})
 
         def func_a(d):
-            from lib.aux.xy_aux import comp_rate
+            from lib.aux.vel_aux import comp_rate
             s, e, c = d.step_data, d.endpoint_data, d.config
             comp_rate(s, c, p=d_v, pv=d_a)
 

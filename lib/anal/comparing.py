@@ -5,10 +5,10 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
-import lib.aux.dictsNlists
+import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-from lib.conf.pars.pars import getPar
+
 
 class ExpFitter:
     from lib.stor.larva_dataset import LarvaDataset
@@ -31,7 +31,7 @@ class ExpFitter:
         key = 's' if use_symbols else 'd'
         self.valid_fields = valid_fields
         self.df = self.multicol_df(key)
-        columns = lib.aux.dictsNlists.flatten_list(self.df['cols'].values.tolist())
+        columns = dNl.flatten_list(self.df['cols'].values.tolist())
         self.m_col = pd.MultiIndex.from_tuples(columns, names=['Field', 'Pars'])
 
         if overwrite:
@@ -90,6 +90,7 @@ class ExpFitter:
         self.sample.save_ExpFitter(temp, )
 
     def multicol_df(self, key='s'):
+        from lib.conf.pars.pars import getPar
         shorts = [
             ['fov', 'foa', 'b', 'bv', 'ba'],
             ['str_N', 'str_tr', 'cum_d', 'v_mu'],

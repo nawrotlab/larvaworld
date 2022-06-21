@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from pypet import ObjectTable
 
-from lib.process.aux import suppress_stdout
+from lib.aux.stdout import suppress_stdout
 from lib.aux.dictsNlists import reconstruct_dict
 import lib.aux.sim_aux
 # from lib.anal.plotting import plot_endpoint_scatter, plot_endpoint_params
