@@ -9,7 +9,7 @@ from PySimpleGUI import TITLE_LOCATION_TOP
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.colsNstr import remove_prefix, remove_suffix
 from lib.conf.stored.conf import saveConf, loadConf, kConfDict, deleteConf
-from lib.conf.base.dtypes import null_dict, col_idx_dict
+from lib.conf.base.dtypes import null_dict
 from lib.gui.aux.functions import retrieve_value, t_kws, b6_kws, w_kws, col_size, get_disp_name
 from lib.gui.aux.buttons import named_bool_button
 from lib.conf.base import paths
@@ -433,43 +433,3 @@ def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
             break
     w.close()
     return entry
-
-# def tree_window(save=True):
-#     df=pd.read_csv(paths.path('ParGlossary'), index_col=0)
-#     headings =df.columns.values.tolist()[3:]
-#     t=sg.TreeData()
-#     for _,row in df.iterrows() :
-#         d=row.to_dict()
-#         dd={}
-#         dd['parent']=d['parent'] if d['parent']!='root' else ''
-#         dd['key'] = d['key']
-#         dd['text'] = d['text']
-#         dd['values'] = [d[h] for h in headings]
-#         t.insert(**dd)
-#     if save :
-#         def _NodeStr(tree, node_key='', level=1):
-#             node=tree.tree_dict[node_key]
-#             return '\n'.join(
-#                 [str(node.text) + ' : ' + str(node.description)] +
-#                 [' ' * 4 * level + self._NodeStr(child, level + 1) for child in node.children])
-#
-#         with open(paths.path('ParGlossaryTxT'), 'w') as f:
-#             f.write(t.__repr__())
-#         # t.__repr__()
-#     tt=sg.Tree(t, headings=headings,auto_size_columns=False,show_expanded=True,
-#                 max_col_width=1000,def_col_width=20,row_height=50,num_rows=30, col_widths=[60,20,20],col0_width=20)
-#     l=[[sg.Col([[tt]],size=col_size(1,1))]]
-#     w = sg.Window('Par tree', l,size=col_size(1, 1))
-#     while True:
-#         e, v = w.read()
-#         if e == 'Ok':
-#             pass
-#         elif e in ['Cancel', None]:
-#             break
-#     w.close()
-
-if __name__ == "__main__":
-    # tree_window()
-    res = delete_conf_window(id='ID', conftype='Ref')
-    # dic = entry_window(index='ID', dict_name='LarvaGroup', base_dict={'dd': 'ss'})
-    # print(col_idx_dict.get('Larvaroup', None))

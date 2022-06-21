@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from shapely.geometry import Point, Polygon, LineString
-from unflatten import unflatten
+
 
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.conf.base import paths
@@ -114,25 +114,22 @@ def rearrange_contour(ps0):
     ps_minus.sort(key=lambda x: x[0], reverse=False)
     return ps_plus + ps_minus
 
-def compute_dst(point1, point2):
-    x1, y1 = point1
-    x2, y2 = point2
-    return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
-def freq(d, dt, range=[0.7, 1.8]) :
-    from scipy.signal import spectrogram
-    try:
-        f, t, Sxx = spectrogram(d, fs=1 / dt)
-        # keep only frequencies of interest
-        f0, f1 = range
-        valid = np.where((f >= f0) & (f <= f1))
-        f = f[valid]
-        Sxx = Sxx[valid, :][0]
-        max_freq = f[np.argmax(np.nanmedian(Sxx, axis=1))]
-    except:
-        max_freq = np.nan
-    return max_freq
+
+# def freq(d, dt, range=[0.7, 1.8]) :
+#     from scipy.signal import spectrogram
+#     try:
+#         f, t, Sxx = spectrogram(d, fs=1 / dt)
+#         # keep only frequencies of interest
+#         f0, f1 = range
+#         valid = np.where((f >= f0) & (f <= f1))
+#         f = f[valid]
+#         Sxx = Sxx[valid, :][0]
+#         max_freq = f[np.argmax(np.nanmedian(Sxx, axis=1))]
+#     except:
+#         max_freq = np.nan
+#     return max_freq
 
 def get_tank_polygon(c, k=0.97, return_polygon=True):
     X, Y = c.env_params.arena.arena_dims
@@ -264,7 +261,7 @@ def get_source_xy(food_params):
 
 
 def generate_larvae(N, sample_dict, base_model, RefPars=None):
-
+    from unflatten import unflatten
     from lib.aux.dictsNlists import load_dict, flatten_dict
     if RefPars is None:
         RefPars = load_dict(paths.path('ParRef'), use_pickle=False)

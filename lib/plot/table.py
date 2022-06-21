@@ -12,10 +12,7 @@ from lib.plot.base import BasePlot
 
 
 def modelConfTable(mID, **kwargs):
-    # from lib.conf.base.dtypes import par
-    # from lib.conf.stored.conf import loadConf
     from lib.conf.pars.pars import ParDict
-
     return ParDict.larva_conf_dict.mIDtable(mID, **kwargs)
 
 
@@ -51,7 +48,6 @@ def render_conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, sa
         plt.show()
     plt.close()
     return fig
-    # return fig
 
 
 def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,

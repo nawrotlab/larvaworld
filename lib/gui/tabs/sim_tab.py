@@ -2,7 +2,7 @@ import copy
 import PySimpleGUI as sg
 
 from lib.aux.collecting import output_keys
-from lib.gui.aux.elements import SelectionList, DataList, PadDict, PadTable
+from lib.gui.aux.elements import SelectionList, DataList, PadDict, PadTable, GraphList
 from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab

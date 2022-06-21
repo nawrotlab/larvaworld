@@ -1,7 +1,7 @@
 from lib.gui.aux.elements import ButtonGraphList, DataList
 from lib.gui.aux.functions import col_size, gui_cols
 from lib.gui.tabs.tab import GuiTab
-from lib.anal.plotting import graph_dict
+from lib.plot.dict import graph_dict
 
 
 

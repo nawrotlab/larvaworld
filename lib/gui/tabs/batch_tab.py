@@ -15,6 +15,7 @@ from lib.gui.aux.buttons import named_bool_button
 
 from lib.conf.stored.conf import loadConf, next_idx
 from lib.gui.tabs.tab import GuiTab
+from lib.sim.batch.aux import delete_traj, stored_trajs
 from lib.sim.batch.functions import retrieve_results
 from run.exec_run import Exec
 
@@ -67,7 +68,7 @@ class BatchTab(GuiTab):
         batch_conf = [[sg.T('Batch id:', **t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **t_kws(16))],
                       named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
-        s0 = PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration', **kws)
+        s0 = PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration',dict_name='batch_setup', **kws)
         s1 = PadDict('batch_methods',value_kws=t_kws(13), **kws)
         s2 = PadDict('optimization', toggle=True, disabled=True, **kws)
         s3 = CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},

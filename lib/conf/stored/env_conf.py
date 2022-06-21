@@ -1,7 +1,26 @@
 import numpy as np
 
 from lib.aux.colsNstr import col_range, N_colors
-from lib.conf.base.dtypes import null_dict, arena, oG, oD, vborder
+from lib.conf.base.dtypes import null_dict, arena, oG, oD
+
+
+def border(ps, c='black', w=0.01, id=None):
+    b = null_dict('Border', points=ps, default_color=c, width=w)
+    if id is not None:
+        return {id: b}
+    else:
+        return b
+
+
+def hborder(y, xs, **kwargs):
+    ps = [(x, y) for x in xs]
+    return border(ps, **kwargs)
+
+
+def vborder(x, ys, **kwargs):
+    ps = [(x, y) for y in ys]
+    return border(ps, **kwargs)
+
 
 
 def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=null_dict('odor'), **kwargs):

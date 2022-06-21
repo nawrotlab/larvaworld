@@ -1,5 +1,18 @@
 from lib.aux import naming as nam
-from lib.conf.base.dtypes import base_enrich, enr_dict, arena, metric_def
+from lib.conf.base.dtypes import base_enrich, enr_dict, arena, null_dict
+
+
+def metric_def(ang={}, sp={}, **kwargs):
+    def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):
+        return null_dict('ang_definition', bend=b, front_vector=fv, rear_vector=rv, **kwargs)
+
+    # def metric_def(ang={}, sp={}, dsp={}, tor={}, str={}, pau={}, tur={}) :
+    return null_dict('metric_definition',
+                     angular=ang_def(**ang),
+                     spatial=null_dict('spatial_definition', **sp),
+                     **kwargs
+                     )
+
 
 import_par_confs = {
     'SchleyerParConf': metric_def(ang={'b': 'from_vectors', 'fv': (2, 6), 'rv': (7, 11)}, sp={'point_idx': 9}),

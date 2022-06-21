@@ -45,34 +45,6 @@ def flatten_dict(d, parent_key='', sep='.'):
     return NestDict(dict(items))
 
 
-def tree_dict(d, parent_key='', sep='.'):
-    cols = ['parent', 'key', 'text', 'values']
-    entries = []
-    keys = []
-
-    def add(item):
-        entry = dict(zip(cols, item))
-        if not entry['key'] in keys:
-            entries.append(entry)
-            keys.append(entry['key'])
-
-    add(['', parent_key, parent_key, [' ']])
-
-    def tree_dict0(d, parent_key='', sep='.'):
-        import collections
-
-        for k, v in d.items():
-            new_key = parent_key + sep + k
-            if isinstance(v, collections.MutableMapping):
-                add([parent_key, new_key, k, [' ']])
-                if len(v) > 0:
-                    tree_dict0(v, new_key, sep=sep)
-            else:
-                add([parent_key, new_key, k, [v]])
-        return entries
-
-    return tree_dict0(d, parent_key, sep)
-
 
 def reconstruct_dict(param_group, **kwargs):
     from pypet import ParameterGroup, Parameter

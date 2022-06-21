@@ -1,7 +1,19 @@
 import numpy as np
 
 from lib.conf.stored.conf import imitation_exp, loadConf
-from lib.conf.base.dtypes import enr_dict, null_dict, oG, oD, prestarved
+from lib.conf.base.dtypes import enr_dict, null_dict, oG, oD
+
+
+def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
+    sub0 = null_dict('substrate', type=substrate_type, quality=q)
+    ep0 = {0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0)}
+    if h == 0.0:
+        return ep0
+    else:
+        sub1 = null_dict('substrate', type=substrate_type, quality=0.0)
+        ep1 = {1: null_dict('epoch', start=age - h, stop=age, substrate=sub1)}
+    return {**ep0, **ep1}
+
 
 
 def lgs(models, ids=None, **kwargs):

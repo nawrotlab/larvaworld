@@ -11,18 +11,23 @@ from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from lib.aux.dictsNlists import flatten_dict, group_list_by_n
-# from lib.conf.base.init_pars import InitDict
+
 from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
 import lib.aux.colsNstr as fun
-from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par, col_idx_dict, pars_to_tree, conf_to_tree, \
-    multiconf_to_tree
+from lib.conf.base.dtypes import par_dict, base_dtype, null_dict, par
 from lib.gui.aux.functions import SYMBOL_UP, SYMBOL_DOWN, w_kws, t_kws, get_disp_name, retrieve_value, collapse, \
     col_kws, default_list_width
 from lib.gui.aux.buttons import named_bool_button, BoolButton, GraphButton, button_row
 from lib.gui.aux.windows import set_kwargs, save_conf_window, import_window, change_dataset_id, save_ref_window, \
     add_ref_window, delete_conf_window
 from lib.conf.base import paths
-from lib.conf.pars.pars import getPar, ParDict,runtime_pars
+from lib.conf.pars.pars import getPar, ParDict, runtime_pars
+
+col_idx_dict = {
+    'LarvaGroup': [[0, 1, 2, 3, 6], [4], [5]],
+    'enrichment': [[0], [5, 1, 3], [6, 2, 4]],
+    'metric_definition': [[0, 1, 4], [2, 3, 5]],
+}
 
 
 class SectionDict:
@@ -386,9 +391,11 @@ class SelectionList(GuiElement):
             self.tab.update(w, c, new_conf, id=None)
         elif e == f'TREE {n}' and self.tree is not None:
             self.tree.test()
-        elif e == f'CONF_TREE {n}'and id != '':
+        elif e == f'CONF_TREE {n}' and id != '':
+            from lib.conf.pars.par_tree import tree_dict
             conf = self.get(w, v, c, as_entry=False)
-            tree = conf_to_tree(conf, id)
+            entries = tree_dict(d=conf, parent_key=id, sep='.')
+            tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40, 20])
             tree.test()
 
         elif self.collapsible is not None and e == self.collapsible.header_key:
@@ -941,9 +948,9 @@ class CollapsibleDict(Collapsible):
                  subdict_state=False, **kwargs):
         if type_dict is None:
             entry = par(name=as_entry, t=str, v='Unnamed') if as_entry is not None else {}
-            nn=name if dict_name is None else dict_name
+            nn = name if dict_name is None else dict_name
             # from lib.conf.pars.pars import ParDict
-            dic = par_dict(d0 = ParDict.init_dict[nn])
+            dic = par_dict(d0=ParDict.init_dict[nn])
             type_dict = {**entry, **dic}
         self.as_entry = as_entry
         self.subdict_state = subdict_state
@@ -1067,8 +1074,8 @@ class PadDict(PadElement):
             col_idx = col_idx_dict.get(self.dict_name, None)
         if col_idx is not None:
             Ncols = len(col_idx)
-        if type_dict is None:
-            type_dict = par_dict(d0 = ParDict.init_dict[self.dict_name])
+        if type_dict is None and self.dict_name in ParDict.init_dict.keys():
+            type_dict = par_dict(d0=ParDict.init_dict[self.dict_name])
         self.type_dict = type_dict
         if content is None:
             content = self.build(name)
@@ -1093,17 +1100,18 @@ class PadDict(PadElement):
             s = s1 + s2
             return (s + 1) * Ncols
 
-    def arrange_content(self, l, col_idx=None, row_idx=None, Ncols=1):
+    def arrange_content(self, content, col_idx=None, row_idx=None, Ncols=1):
+        # print(len(content), col_idx, self.name, self.dict_name)
         if col_idx is not None:
-            l = [[l[i] for i in idx] for idx in col_idx]
-            l = [[sg.Col(ii, **col_kws) for ii in l]]
+            content = [[content[i] for i in idx] for idx in col_idx]
+            content = [[sg.Col(ii, **col_kws) for ii in content]]
         elif row_idx is not None:
-            l = [[l[i] for i in idx] for idx in row_idx]
+            content = [[content[i] for i in idx] for idx in row_idx]
             # l = [[sg.Col(*l, **col_kws)]]
         elif Ncols > 1:
-            l = group_list_by_n([*l], int(np.ceil(len(l) / Ncols)))
-            l = [[sg.Col(ii, **col_kws) for ii in l]]
-        return l
+            content = group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
+            content = [[sg.Col(ii, **col_kws) for ii in content]]
+        return content
 
     def get_dict(self, v, w):
         if self.toggle is not None:
@@ -1285,9 +1293,12 @@ class PadTable(PadElement):
                 self.dict.pop(id, None)
             self.update(w)
         elif e == f'CONF_TREE {self.name}':
-            tree = multiconf_to_tree([ff['model']for ff in list(self.dict.values())], 'Model')
-            tree.test()
+            from lib.conf.pars.par_tree import multiconf_to_tree
+            ids = [ff['model'] for ff in list(self.dict.values())]
+            entries = multiconf_to_tree(ids, 'Model')
+            tree = GuiTreeData(entries=entries, headings=[ids], col_widths=[40] + [20] * len(ids))
 
+            tree.test()
 
 
 class Table(sg.Table):
@@ -1613,7 +1624,7 @@ class DynamicGraph:
 
 
 class GuiTreeData(sg.TreeData):
-    def __init__(self, name='larva_conf', root_key=None, build_tree=False,entries=None, headings=None,
+    def __init__(self, name='larva_conf', root_key=None, build_tree=False, entries=None, headings=None,
                  col_widths=[20, 10, 80], **kwargs):
         super().__init__()
         if root_key is None:
@@ -1623,7 +1634,7 @@ class GuiTreeData(sg.TreeData):
         self.w_width = np.sum(col_widths)
         self.root_key = root_key
         self.build_tree = build_tree
-        self.headings =headings
+        self.headings = headings
         self.entries = self.get_entries() if entries is None else entries
         self.build()
 
@@ -1644,11 +1655,11 @@ class GuiTreeData(sg.TreeData):
         def str_pair(node, k, v, max_l=50):
             k0 = str(self.get_value_arg(node, k))
             v0 = str(self.get_value_arg(node, v))
-            if v0==' ' :
+            if v0 == ' ':
                 return k0
-            if max_l is not None :
-                b = '{:<' + str(max_l-4 * (level-1)) + '}'
-                k0= b.format(k0)
+            if max_l is not None:
+                b = '{:<' + str(max_l - 4 * (level - 1)) + '}'
+                k0 = b.format(k0)
             kv0 = k0 + ' : ' + v0
             return kv0
 
@@ -1668,14 +1679,14 @@ class GuiTreeData(sg.TreeData):
         if not self.build_tree and self.root_key in kConfDict('Tree'):
             df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
         else:
-            from lib.conf.base.dtypes import pars_to_tree
+            from lib.conf.pars.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
             saveConf(df.to_dict(), 'Tree', self.root_key)
         return df
 
     def get_entries(self):
         self.df = self.get_df()
-        if self.headings is None :
+        if self.headings is None:
             self.headings = self.df.columns.values.tolist()[3:]
         entries = []
         for _, row in self.df.iterrows():
@@ -1689,7 +1700,7 @@ class GuiTreeData(sg.TreeData):
         return entries
 
     def build(self):
-        for entry in self.entries :
+        for entry in self.entries:
             self.insert(**entry)
 
     def save(self, **kwargs):
@@ -1703,7 +1714,7 @@ class GuiTreeData(sg.TreeData):
                      col0_width=20)]]
 
     def test(self):
-        w = sg.Window('Parameter tree', self.build_layout(), size=(self.w_width*20, 800))
+        w = sg.Window('Parameter tree', self.build_layout(), size=(self.w_width * 20, 800))
         while True:
             e, v = w.read()
             if e == 'Ok':

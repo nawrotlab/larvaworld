@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-from lib.conf.base.dtypes import null_dict, ga_dict
+from lib.conf.base.dtypes import null_dict
+from lib.conf.pars.ga_dict import ga_dict, interference_ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.conf.pars.pars import getPar
 from lib.plot.base import BasePlot
@@ -187,7 +188,6 @@ def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
     from lib.ga.robot.larva_offline import LarvaOffline
     from lib.conf.stored.ga_conf import distro_KS_interference_evaluation
     from lib.ga.util.ga_launcher import GAlauncher
-    from lib.conf.base.dtypes import interference_ga_dict
 
     d = loadRef(refID)
     c=d.config

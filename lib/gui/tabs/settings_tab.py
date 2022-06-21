@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 import lib.aux.dictsNlists
 from lib.conf.stored.conf import saveConfDict, loadConfDict
-from lib.conf.base.dtypes import store_controls
+from lib.conf.stored.aux_conf import store_controls
 from lib.gui.aux.elements import PadDict
 from lib.gui.aux.functions import t_kws, gui_cols, get_pygame_key
 from lib.gui.aux.buttons import GraphButton
@@ -55,6 +55,7 @@ class SettingsTab(GuiTab):
         b_reset=GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
         conf = loadConfDict('Settings')
+        # print(conf['keys'].keys())
         cs = [self.single_control_collapsible(k, v,header_width=26, **kws) for k, v in conf['keys'].items()]
         cs.append(self.single_control_collapsible('mouse', conf['mouse'], editable=False,header_width=26, **kws))
         l=[]

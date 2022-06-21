@@ -1,6 +1,11 @@
 import numpy as np
 import pandas as pd
 
+def maxNdigits(array, Min=None):
+    N = len(max(array.astype(str), key=len))
+    if Min is not None:
+        N = max([N, Min])
+    return N
 
 def boolean_indexing(v, fillval=np.nan):
     lens = np.array([len(item) for item in v])

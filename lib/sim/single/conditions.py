@@ -172,11 +172,15 @@ class CaptureFlagCondition:
         env.r_dst0 = env.flag.radius * 2 + env.r_base.radius * 2
 
     def check(self, env):
+        def compute_dst(point1, point2):
+            x1, y1 = point1
+            x2, y2 = point2
+            return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         if env.Nticks == 0:
             env.input_box.flash_text('Capture the flag')
         flag_p = env.flag.get_position()
-        l_dst = -env.l_dst0 + lib.aux.sim_aux.compute_dst(flag_p, env.l_base_p)
-        r_dst = -env.r_dst0 + lib.aux.sim_aux.compute_dst(flag_p, env.r_base_p)
+        l_dst = -env.l_dst0 + compute_dst(flag_p, env.l_base_p)
+        r_dst = -env.r_dst0 + compute_dst(flag_p, env.r_base_p)
         l_dst = np.round(l_dst * 1000, 2)
         r_dst = np.round(r_dst * 1000, 2)
         if l_dst < 0:
