@@ -8,18 +8,14 @@ from scipy.stats import ks_2samp
 from shapely.geometry import Point
 
 
-from lib.anal.fitting import fit_bouts
-from lib.aux import naming as nam, dictsNlists as dNl
-from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-from lib.aux.colsNstr import N_colors
-from lib.aux.sim_aux import get_tank_polygon
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.pars import getPar, ParDict
-from lib.conf.stored.conf import expandConf
 
-from lib.process.aux import annotation, compute_interference
-from lib.aux.stdout import suppress_stdout
-from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, store_spatial
+from lib.aux import naming as nam, dictsNlists as dNl
+from lib.conf.pars.pars import getPar, ParDict
+
+
+
+
+
 
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,str_sd_mu, str_sd_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= getPar(['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'str_sd_mu', 'str_sd_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t'])
@@ -195,6 +191,7 @@ def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_f
 
 
 def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
+    from lib.aux.sim_aux import get_tank_polygon
     df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     Ncols = len(df_cols)
 
@@ -226,6 +223,8 @@ def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
 
 
 def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stops=[40]):
+    from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
+        store_spatial
     strides_enabled = True if cc.Npoints > 1 else False
     vel_thr = cc.vel_thr if cc.Npoints == 1 else 0.2
 
@@ -242,9 +241,10 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
 
     comp_dispersion(ss, ee, cc,dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss,  ee,cc, dt,tor_durs=tor_durs)
-
-    chunk_dicts= annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    cycle_curves = compute_interference(ss, ee, cc, chunk_dicts=chunk_dicts)
+    from lib.process import aux
+    chunk_dicts= aux.annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    cycle_curves = aux.compute_interference(ss, ee, cc, chunk_dicts=chunk_dicts)
+    from lib.anal.fitting import fit_bouts
     pooled_epochs = fit_bouts(c=cc, chunk_dicts=chunk_dicts, s=ss, e=ee, id=cc.id)
 
     return pooled_epochs
@@ -280,21 +280,6 @@ def arrange_evaluation(d, evaluation_metrics):
             dic.step.groups.append(g)
     eval_data = dNl.NestDict({'step':Ddata, 'end': Edata})
     return dic,eval_data
-
-def arrange_evaluation2(s, e, evaluation_metrics):
-    d = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
-    for g, shs in evaluation_metrics.items():
-        ps = getPar(shs)
-        Eshorts = [sh for sh, p in zip(shs, ps) if p in e.columns]
-        Dshorts = [sh for sh, p in zip(shs, ps) if p in s.columns]
-        Dshorts = [sh for sh in Dshorts if sh not in Eshorts]
-        if len(Eshorts) > 0:
-            d.end.shorts.append(Eshorts)
-            d.end.groups.append(g)
-        if len(Dshorts) > 0:
-            d.step.shorts.append(Dshorts)
-            d.step.groups.append(g)
-    return d
 
 
 def prepare_sim_dataset(e, c, id, color):
@@ -381,6 +366,7 @@ def torsNdsps(pars):
 def sim_models(mIDs,colors=None,dataset_ids=None,data_dir=None, **kwargs):
     N=len(mIDs)
     if colors is None :
+        from lib.aux.colsNstr import N_colors
         colors=N_colors(N)
     if dataset_ids is None :
         dataset_ids=mIDs
@@ -394,10 +380,13 @@ def sim_models(mIDs,colors=None,dataset_ids=None,data_dir=None, **kwargs):
 def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs=[],dsp_starts=[0],dsp_stops=[40],env_params={},dir=None,
               bout_annotation=True,enrichment=True,refDataset=None,sample_ks=None,store=False,use_LarvaConfDict=False, **kwargs):
     from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.conf.stored.conf import loadConf
+    from lib.conf.stored.conf import loadConf,expandConf
     from lib.process.angular import angular_processing
     from lib.model.body.controller import PhysicsController
-
+    from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
+        store_spatial
+    from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
+    from lib.conf.base.dtypes import null_dict
     if dataset_id is None:
         dataset_id = mID
     if refDataset is not None :
@@ -484,6 +473,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
             {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
     scale_to_length(s, e, c, pars=None, keys=['v'])
     if enrichment :
+        from lib.aux.stdout import suppress_stdout
         with suppress_stdout(False):
             comp_spatial(s, e, c, mode='minimal')
             store_spatial(s, e, c,store=store)
@@ -495,8 +485,9 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
 
         if bout_annotation:
             from lib.process import aux
+            from lib.anal.fitting import fit_bouts
             d.chunk_dicts = aux.annotation(s, e, c, store=store)
-            d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
+            d.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
             d.pooled_epochs = fit_bouts(c=c, chunk_dicts=d.chunk_dicts, s=s, e=e, id=c.id, store=store)
 
     return d
@@ -541,9 +532,6 @@ def RSS_dic(dd, d):
     dd.config.pooled_cycle_curves_errors=dNl.NestDict({'dict' : dic, 'stat':stat})
     return stat
 
-if __name__ == '__main__':
-    mID = 'forager'
-    d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=False, use_ModuleConfDict=True)
 
 
 def std_norm(df) :
@@ -558,3 +546,8 @@ def minmax(df) :
 
     df_minmax = MinMaxScaler().fit(df).transform(df)
     return pd.DataFrame(df_minmax, index=df.index, columns=df.columns)
+
+
+if __name__ == '__main__':
+    mID = 'forager'
+    d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=False, use_ModuleConfDict=True)

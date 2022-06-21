@@ -116,108 +116,99 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
+#
+# def plot_stridechains(dataset, save_to=None):
+#     d = dataset
+#
+#     if save_to is None:
+#         save_to = os.path.join(d.plot_dir, 'plot_stridechains')
+#     if not os.path.exists(save_to):
+#         os.makedirs(save_to)
+#     filepath_MLE = os.path.join(save_to, f'stridechain_distribution_MLE.{suf}')
+#     filepath_r = os.path.join(save_to, f'stridechain_distribution_r.{suf}')
+#
+#     s = d.step_data[nam.length(nam.chain('stride'))].dropna()
+#     u, c = np.unique(s, return_counts=True)
+#     c = c / np.sum(c)
+#     c = 1 - np.cumsum(c)
+#
+#     alpha = 1 + len(s) / np.sum(np.log(s))
+#     beta = len(s) / np.sum(s - 1)
+#     mu = np.mean(np.log(s))
+#     sigma = np.std(np.log(s))
+#
+#     fig, axs = plt.subplots(1, 1, figsize=(10, 10), sharex=True, sharey=True)
+#     fig.suptitle('Stridechain distribution', fontsize=25)
+#
+#     axs.loglog(u, c, 'or', label='stridechains')
+#     axs.loglog(u, 1 - ParDict.dist_dict['powerlaw']['cdf'](u, 1, alpha), 'r', lw=2, label='powerlaw MLE')
+#     axs.loglog(u, 1 - ParDict.dist_dict['exponential']['cdf'](u, 1, beta), 'g', lw=2, label='exponential MLE')
+#     axs.loglog(u, 1 - ParDict.dist_dict['lognormal']['cdf'](u, mu, sigma), 'b', lw=2, label='lognormal MLE')
+#
+#     axs.legend(loc='lower left', fontsize=15)
+#     axs.axis([1, np.max(s), 10 ** -4.0, 10 ** 0])
+#     plt.xlabel(r'Stridechain  length, $l$', fontsize=15)
+#     plt.ylabel(r'Probability Density, $P_l$', fontsize=15)
+#
+#     fig.savefig(filepath_MLE, dpi=300)
+#     print(f'Image saved as {filepath_MLE}')
+#
+#     fig, axs = plt.subplots(1, 1, figsize=(10, 10), sharex=True, sharey=True)
+#     fig.suptitle('Stridechain distribution', fontsize=25)
+#
+#     axs.loglog(u, c, 'or', label='stridechains')
+#
+#     for r in np.round(np.arange(0.8, 1, 0.025), 3):
+#         x = np.arange(1, np.max(s), 1)
+#         y = (1 - r) * r ** (x - 1)
+#         y = 1 - np.cumsum(y)
+#         plt.plot(x, y)
+#         plt.loglog(x, y, label=r)
+#
+#     axs.legend(loc='lower left', fontsize=15)
+#     axs.axis([1, np.max(s), 10 ** -4.0, 10 ** 0])
+#
+#     plt.xlabel(r'Stridechain  length, $l$', fontsize=15)
+#     plt.ylabel(r'Probability Density, $P_l$', fontsize=15)
+#
+#     fig.savefig(filepath_r, dpi=300)
+#     print(f'Image saved as {filepath_r}')
 
-def plot_stridechains(dataset, save_to=None):
-    from lib.anal.fitting import powerlaw_cdf, exponential_cdf, lognorm_cdf
-    d = dataset
-
-    if save_to is None:
-        save_to = os.path.join(d.plot_dir, 'plot_stridechains')
-    if not os.path.exists(save_to):
-        os.makedirs(save_to)
-    filepath_MLE = os.path.join(save_to, f'stridechain_distribution_MLE.{suf}')
-    filepath_r = os.path.join(save_to, f'stridechain_distribution_r.{suf}')
-
-    s = d.step_data[nam.length(nam.chain('stride'))].dropna()
-    u, c = np.unique(s, return_counts=True)
-    c = c / np.sum(c)
-    c = 1 - np.cumsum(c)
-
-    alpha = 1 + len(s) / np.sum(np.log(s))
-    beta = len(s) / np.sum(s - 1)
-    mu = np.mean(np.log(s))
-    sigma = np.std(np.log(s))
-
-    fig, axs = plt.subplots(1, 1, figsize=(10, 10), sharex=True, sharey=True)
-    fig.suptitle('Stridechain distribution', fontsize=25)
-
-    axs.loglog(u, c, 'or', label='stridechains')
-    # axs.loglog(u, 1 - powerlaw_cdf_2(u, P[0], P[1]), 'k', lw=2, label='powerlaw linear')
-    axs.loglog(u, 1 - powerlaw_cdf(u, 1, alpha), 'r', lw=2, label='powerlaw MLE')
-    axs.loglog(u, 1 - exponential_cdf(u, 1, beta), 'g', lw=2, label='exponential MLE')
-    axs.loglog(u, 1 - lognorm_cdf(u, mu, sigma), 'b', lw=2, label='lognormal MLE')
-
-    axs.legend(loc='lower left', fontsize=15)
-    axs.axis([1, np.max(s), 10 ** -4.0, 10 ** 0])
-    # axs.text(25, 10 ** - 1.5, r'$\alpha=' + str(np.round(alpha * 100) / 100) + '$',
-    #          {'color': 'k', 'fontsize': 16})
-
-    plt.xlabel(r'Stridechain  length, $l$', fontsize=15)
-    plt.ylabel(r'Probability Density, $P_l$', fontsize=15)
-
-    fig.savefig(filepath_MLE, dpi=300)
-    print(f'Image saved as {filepath_MLE}')
-
-    fig, axs = plt.subplots(1, 1, figsize=(10, 10), sharex=True, sharey=True)
-    fig.suptitle('Stridechain distribution', fontsize=25)
-
-    axs.loglog(u, c, 'or', label='stridechains')
-
-    for r in np.round(np.arange(0.8, 1, 0.025), 3):
-        x = np.arange(1, np.max(s), 1)
-        y = (1 - r) * r ** (x - 1)
-        y = 1 - np.cumsum(y)
-        plt.plot(x, y)
-        plt.loglog(x, y, label=r)
-        # plt.ylim(10 ** -4.5, 10 ** -0.2)
-    # axs.loglog(u, 1 - pareto.cdf(u, b=my_b, loc=loc, scale=scale), 'y', lw=2, label=my_label)
-
-    axs.legend(loc='lower left', fontsize=15)
-    axs.axis([1, np.max(s), 10 ** -4.0, 10 ** 0])
-    # axs.text(25, 10 ** - 1.5, r'$\alpha=' + str(np.round(alpha * 100) / 100) + '$',
-    #          {'color': 'k', 'fontsize': 16})
-
-    plt.xlabel(r'Stridechain  length, $l$', fontsize=15)
-    plt.ylabel(r'Probability Density, $P_l$', fontsize=15)
-
-    fig.savefig(filepath_r, dpi=300)
-    print(f'Image saved as {filepath_r}')
-
-
-def plot_bend_pauses(dataset, save_to=None):
-    from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf
-    d = dataset
-    if save_to is None:
-        save_to = os.path.join(d.plot_dir, 'plot_bend_pauses')
-    if not os.path.exists(save_to):
-        os.makedirs(save_to)
-    filepath = os.path.join(save_to, f'bend_pause_distribution.{suf}')
-
-    s = d.step_data[nam.dur('bend_pause')].dropna()
-    durmin, durmax = np.min(s), np.max(s)
-    u, uu, c, ccum = compute_density(s, durmin, durmax)
-    alpha = 1 + len(s) / np.sum(np.log(s / durmin))
-    beta = len(s) / np.sum(s - durmin)
-    mu = np.mean(np.log(s))
-    sigma = np.std(np.log(s))
-
-    fig, axs = plt.subplots(1, 1, figsize=(10, 10), sharex=True, sharey=True)
-    fig.suptitle('Bend-pause distribution', fontsize=25)
-
-    axs.loglog(u, ccum, 'or', label='bend_pauses')
-    axs.loglog(u, 1 - powerlaw_cdf(u, durmin, alpha), 'r', lw=2, label='powerlaw MLE')
-    axs.loglog(u, 1 - exponential_cdf(u, durmin, beta), 'g', lw=2, label='exponential MLE')
-    axs.loglog(u, 1 - lognorm_cdf(u, mu, sigma), 'b', lw=2, label='lognormal MLE')
-
-    axs.legend(loc='lower left', fontsize=15)
-    axs.axis([durmin, durmax, 10 ** -4.0, 10 ** 0])
-
-    plt.xlabel(r'Bend pause duration, $(sec)$', fontsize=15)
-    plt.ylabel(r'Probability Density, $P_d$', fontsize=15)
-
-    fig.savefig(filepath, dpi=300)
-    print(f'Image saved as {filepath}')
-
+#
+# def plot_bend_pauses(dataset, save_to=None):
+#     from lib.anal.fitting import compute_density, powerlaw_cdf, exponential_cdf, lognorm_cdf
+#     d = dataset
+#     if save_to is None:
+#         save_to = os.path.join(d.plot_dir, 'plot_bend_pauses')
+#     if not os.path.exists(save_to):
+#         os.makedirs(save_to)
+#     filepath = os.path.join(save_to, f'bend_pause_distribution.{suf}')
+#
+#     s = d.step_data[nam.dur('bend_pause')].dropna()
+#     durmin, durmax = np.min(s), np.max(s)
+#     u, uu, c, ccum = compute_density(s, durmin, durmax)
+#     alpha = 1 + len(s) / np.sum(np.log(s / durmin))
+#     beta = len(s) / np.sum(s - durmin)
+#     mu = np.mean(np.log(s))
+#     sigma = np.std(np.log(s))
+#
+#     fig, axs = plt.subplots(1, 1, figsize=(10, 10), sharex=True, sharey=True)
+#     fig.suptitle('Bend-pause distribution', fontsize=25)
+#
+#     axs.loglog(u, ccum, 'or', label='bend_pauses')
+#     axs.loglog(u, 1 - powerlaw_cdf(u, durmin, alpha), 'r', lw=2, label='powerlaw MLE')
+#     axs.loglog(u, 1 - exponential_cdf(u, durmin, beta), 'g', lw=2, label='exponential MLE')
+#     axs.loglog(u, 1 - lognorm_cdf(u, mu, sigma), 'b', lw=2, label='lognormal MLE')
+#
+#     axs.legend(loc='lower left', fontsize=15)
+#     axs.axis([durmin, durmax, 10 ** -4.0, 10 ** 0])
+#
+#     plt.xlabel(r'Bend pause duration, $(sec)$', fontsize=15)
+#     plt.ylabel(r'Probability Density, $P_d$', fontsize=15)
+#
+#     fig.savefig(filepath, dpi=300)
+#     print(f'Image saved as {filepath}')
+#
 
 def plot_fft(s, c, palette=None, axx=None, ax=None, fig=None, **kwargs):
     from scipy.fft import fftfreq

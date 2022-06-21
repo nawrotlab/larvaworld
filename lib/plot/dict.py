@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # from lib.plot.grid import model_summary
     # from lib.anal.fitting import test_boutGens
     # print('dddddddddddd')
-    # test_boutGens(refID='None.150controls', mID='explorer', show=True)
-    _=ModelGraphDict['configuration'](mID='PHIonNEU', show=True)
+    # _ = test_boutGens(refID='None.150controls', mID='explorer', show=True)
+    _=ModelGraphDict['summary'](refID='None.150controls', mID='PHIonNEU', show=True)
     # test_model(mID='explorer', dur=2.1 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, show=True)
 

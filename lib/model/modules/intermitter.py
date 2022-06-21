@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 
 import lib.aux.dictsNlists as dNl
-from lib.anal.fitting import BoutGenerator, critical_bout, exp_bout, get_exp_beta
+
+
 from lib.aux import naming as nam
 from lib.conf.stored.conf import loadConf
 from lib.model.modules.basic import Effector
@@ -266,6 +267,7 @@ class BaseIntermitter(Effector):
 class Intermitter(BaseIntermitter):
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist= None, run_mode='stridechain',**kwargs):
         super().__init__(**kwargs)
+        from lib.anal.fitting import BoutGenerator
         if pause_dist.range is None and stridechain_dist.range is None:
             conf=loadConf('None.150controls', 'Ref').bout_distros
             pause_dist=conf.pause_dur
@@ -415,6 +417,7 @@ class BranchIntermitter(BaseIntermitter):
             self.beta=beta
         elif sample is not None :
             from lib.conf.stored.conf import loadRef
+            from lib.anal.fitting import get_exp_beta
             d = loadRef(sample)
             l_run = d.load_aux('distro', nam.length('stridechain'))
             self.beta = get_exp_beta(l_run)
@@ -427,9 +430,11 @@ class BranchIntermitter(BaseIntermitter):
         self.disinhibit_locomotion()
 
     def generate_stridechain(self):
+        from lib.anal.fitting import exp_bout
         return exp_bout(beta=self.beta, tmax=self.stridechain_max, tmin=self.stridechain_min)
 
     def generate_pause(self):
+        from lib.anal.fitting import critical_bout
         return critical_bout(c=self.c, sigma=self.sigma, N=1000, tmax=self.pau_max, tmin=self.pau_min)*self.dt
 
 

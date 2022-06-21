@@ -7,77 +7,11 @@ from scipy.special import erf
 from lib.aux import naming as nam
 #from lib.aux.dictsNlists import AttrDict, save_dict, NestDict
 import lib.aux.dictsNlists as dNl
-
+from lib.conf.pars.pars import ParDict
 
 
 def gaussian(x, mu, sig):
     return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
-
-def powerlaw_cdf(x, xmin, alpha):
-    return 1 - (x / xmin) ** (1 - alpha)
-
-
-def powerlaw_pdf(x, xmin, alpha):
-    return (alpha - 1) / xmin * (x / xmin) ** (-alpha)
-
-
-def levy_pdf(x, mu, sigma):
-    return np.sqrt(sigma / (2 * np.pi)) * np.exp(-sigma / (2 * (x - mu))) / (x - mu) ** 1.5
-
-
-def levy_cdf(x, mu, sigma):
-    res = 1 - erf(np.sqrt(sigma / (2 * (x - mu))))
-    if np.isnan(res[0]):
-        res[0] = 0
-    return res
-
-
-def norm_pdf(x, mu, sigma):
-    return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
-
-
-def norm_cdf(x, mu, sigma):
-    res = 0.5 * (1 + erf((x - mu) / (sigma * np.sqrt(2))))
-    if np.isnan(res[0]):
-        res[0] = 0
-    return res
-
-
-def uniform_pdf(x, xmin, xmax):
-    return uniform.pdf(x, xmin, xmin + xmax)
-
-
-def uniform_cdf(x, xmin, xmax):
-    return uniform.cdf(x, xmin, xmin + xmax)
-
-
-def exponential_cdf(x, xmin, beta):
-    return 1 - np.exp(-beta * (x - xmin))
-
-
-def exponential_pdf(x, xmin, beta):
-    return beta * np.exp(-beta * (x - xmin))
-
-
-def lognorm_cdf(x, mu, sigma):
-    return 0.5 + 0.5 * erf((np.log(x) - mu) / np.sqrt(2) / sigma)
-
-
-def lognormal_pdf(x, mu, sigma):
-    return 1 / (x * sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((np.log(x) - mu) / sigma) ** 2)
-
-
-def logNpow_pdf(x, mu, sigma, alpha, switch, ratio):
-    log_pdf = lognormal_pdf(x[x < switch], mu, sigma) * ratio
-    pow_pdf = powerlaw_pdf(x[x >= switch], switch, alpha) * (1 - ratio)
-    return np.hstack([log_pdf, pow_pdf])
-
-
-def logNpow_cdf(x, mu, sigma, alpha, switch, ratio):
-    log_cdf = 1 - lognorm_cdf(x[x < switch], mu, sigma)
-    pow_cdf = (1 - powerlaw_cdf(x[x >= switch], switch, alpha)) * (1 - ratio)
-    return 1 - np.hstack([log_cdf, pow_cdf])
-
 
 def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
     r = len(x[x < xmid]) / len(x)
@@ -141,14 +75,15 @@ def KS2(a1, a2):
 
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
+    from lib.conf.pars.pars import ParDict
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     temp = np.ones([len(xmids), len(overlaps)])
     for i, xmid in enumerate(xmids):
         for j, ov in enumerate(overlaps):
             mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=ov)
-            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmid, r)
-            lp_pdf = logNpow_pdf(du2, mm, ss, aa, xmid, r)
+            lp_cdf = 1 - ParDict.dist_dict['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
+            lp_pdf = ParDict.dist_dict['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
             if fit_by == 'cdf':
                 temp[i, j] = MSE(c2cum, lp_cdf)
             elif fit_by == 'pdf':
@@ -218,13 +153,12 @@ def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id
         c['EEB_poly1d'] = get_EEB_poly1d(**c.intermitter).c.tolist()
     except :
         pass
-    # config['EEB_poly1d'] = {config['dt']: get_EEB_poly1d(**config['intermitter']).c.tolist()}
-
     return dic
 
 
 def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=False,
                      dataset_id='dataset', bout='pause', combine=True, fit_by='pdf', eval_func_id='KS2'):
+    from lib.conf.pars.pars import ParDict
     from lib.aux.stdout import suppress_stdout
     eval_func_dic={
         'MSE':MSE,
@@ -247,35 +181,35 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
 
         a2 = 1 + len(x) / np.sum(np.log(x / xmin))
         a = get_powerlaw_alpha(x, xmin, xmax, discrete=discrete)
-        p_cdf = 1 - powerlaw_cdf(u2, xmin, a)
-        p_pdf = powerlaw_pdf(du2, xmin, a)
+        p_cdf = 1 - ParDict.dist_dict['powerlaw']['cdf'](u2, xmin, a)
+        p_pdf = ParDict.dist_dict['powerlaw']['pdf'](du2, xmin, a)
 
         b = get_exp_beta(x, xmin)
-        e_cdf = 1 - exponential_cdf(u2, xmin, b)
-        e_pdf = exponential_pdf(du2, xmin, b)
+        e_cdf = 1 - ParDict.dist_dict['exponential']['cdf'](u2, xmin, b)
+        e_pdf = ParDict.dist_dict['exponential']['pdf'](du2, xmin, b)
 
         m, s = get_lognormal(x)
-        l_cdf = 1 - lognorm_cdf(u2, m, s)
-        l_pdf = lognormal_pdf(du2, m, s)
+        l_cdf = 1 - ParDict.dist_dict['lognormal']['cdf'](u2, m, s)
+        l_pdf = ParDict.dist_dict['lognormal']['pdf'](du2, m, s)
 
         m_lev, s_lev = levy.fit(x)
-        lev_cdf = 1 - levy_cdf(u2, m_lev, s_lev)
-        lev_pdf = levy_pdf(du2, m_lev, s_lev)
+        lev_cdf = 1 - ParDict.dist_dict['levy']['cdf'](u2, m_lev, s_lev)
+        lev_pdf = ParDict.dist_dict['levy']['pdf'](du2, m_lev, s_lev)
 
         m_nor, s_nor = norm.fit(x)
-        nor_cdf = 1 - norm_cdf(u2, m_nor, s_nor)
-        nor_pdf = norm_pdf(du2, m_nor, s_nor)
+        nor_cdf = 1 - ParDict.dist_dict['normal']['cdf'](u2, m_nor, s_nor)
+        nor_pdf = ParDict.dist_dict['normal']['pdf'](du2, m_nor, s_nor)
 
-        uni_cdf = 1 - uniform_cdf(u2, xmin, xmin + xmax)
-        uni_pdf = uniform_pdf(du2, xmin, xmin + xmax)
+        uni_cdf = 1 - ParDict.dist_dict['uniform']['cdf'](u2, xmin, xmin + xmax)
+        uni_pdf = ParDict.dist_dict['uniform']['pdf'](du2, xmin, xmin + xmax)
 
         if np.isnan(xmid) and combine:
             xmid, overlap = logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete, fit_by)
 
         if not np.isnan(xmid):
             mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=overlap)
-            lp_cdf = 1 - logNpow_cdf(u2, mm, ss, aa, xmid, r)
-            lp_pdf = logNpow_pdf(du2, mm, ss, aa, xmid, r)
+            lp_cdf = 1 - ParDict.dist_dict['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
+            lp_pdf = ParDict.dist_dict['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
         else:
             mm, ss, aa, r = np.nan, np.nan, np.nan, np.nan
             lp_cdf, lp_pdf = None, None
@@ -491,19 +425,11 @@ def exp_bout(beta=0.01, tmax=1100, tmin=1) :
 
 class BoutGenerator:
     def __init__(self, name, range, dt, **kwargs):
+        from lib.conf.pars.pars import ParDict
         self.name = name
         self.dt = dt
         self.range = range
-        self.ddfs = {
-            'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha']},
-            'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['xmin', 'beta']},
-            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma']},
-            'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
-                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio']},
-            'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma']},
-            'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma']},
-            'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': ['xmin', 'xmax']},
-        }
+        self.ddfs = ParDict.dist_dict
         self.xmin, self.xmax = range
         kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
         self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}

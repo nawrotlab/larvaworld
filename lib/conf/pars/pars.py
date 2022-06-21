@@ -220,6 +220,9 @@ class ParRegistry:
         from lib.conf.pars.parser_dict import ParserDict
         self.parser_dict = ParserDict(init_dict=self.init_dict).dict
 
+        from lib.conf.pars.dist_dict import build_dist_dict
+        self.dist_dict = build_dist_dict()
+
 
         if load_funcs :
             self.func_dict = dNl.load_dict(paths.path('ParFuncDict'))
