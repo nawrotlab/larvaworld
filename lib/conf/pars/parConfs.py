@@ -17,6 +17,8 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
     from lib.conf.base.dtypes import par
     for n, v in d0.items():
         depth = dNl.dict_depth(v)
+
+
         if depth == 0:
             continue
         if depth == 1:
@@ -33,6 +35,9 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
                 continue
         elif depth > 1:
             d[n], pre_d[n] = init2par(d0=v)
+            # if n == 'stridechain_dist':
+            #     print(d[n].keys())
+            #     raise
     return d, pre_d
 
 
@@ -79,7 +84,9 @@ class LarvaConfDict:
         # self.mfunc['locomotor'] = locomotor.DefaultLocomotor
         # self.mfunc['brain'] = brain.DefaultBrain
         for k in self.mbkeys:
-            self.mbdicts[k],self.mbpredicts[k] = init2par(d0 = init_dict[k], aux_args={'pref': self.mpref[k]})
+            d0 = init_dict[k]
+
+            self.mbdicts[k],self.mbpredicts[k] = init2par(d0 = d0, aux_args={'pref': self.mpref[k]})
 
         self.aux_keys = ['body', 'physics', 'energetics']
         # self.aux_keys = ['body', 'physics', 'energetics', 'Box2D_params']
@@ -338,7 +345,9 @@ class LarvaConfDict:
                 valid = mvalid(k, dic)
             if len(valid) > 0:
                 for n in valid:
+
                     if n in ['stridechain_dist', 'pause_dist']:
+                        # print(dic0[n].keys())
                         vv=dic[n]
                         dist_v = self.dist_dict[vv.name].lab_func(vv)
                         if n == 'stridechain_dist':
@@ -356,7 +365,8 @@ class LarvaConfDict:
 
         df = pd.DataFrame(data, columns=['field'] + columns)
         df.set_index(['field'], inplace=True)
-
+        # print(df.head())
+        # raise
         return df
 
     def mIDtable(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], figsize=(14, 11), **kwargs):
