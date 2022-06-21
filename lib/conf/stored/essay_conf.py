@@ -1,6 +1,6 @@
 import shutil
 
-from lib.anal.plot_datasets import barplot, boxplot_double_patch, timeplot, plot_pathlength, plot_food_amount, lineplot, \
+from lib.plot.dataplot import barplot, boxplot_double_patch, timeplot, plot_pathlength, plot_food_amount, lineplot, \
     plot_debs
 from lib.aux.dictsNlists import flatten_list
 from lib.conf.base.dtypes import enr_dict, null_dict, arena, base_enrich

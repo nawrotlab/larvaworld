@@ -63,17 +63,6 @@ class Substrate:
         w_X=sum([ds[c] * ws[c] for c in compounds])/d_X
         return w_X
 
-    # def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose'], return_sum=True):
-    #     if quality is None :
-    #         quality=self.quality
-    #     Xs=[]
-    #     for c in compounds :
-    #         # Xi=self.d_dict[c]/self.w_dict[c]*quality
-    #         Xi=self.d_dict[c]/self.w_dict[c]*self.Cmol_dict[c]*quality
-    #         # print(c,self.w_dict[c],self.Cmol_dict[c], Xi)
-    #         Xs.append(Xi)
-    #     return sum(Xs) if return_sum else Xs
-
     def get_X(self, quality=None, compounds = ['glucose', 'dextrose', 'yeast', 'cornmeal', 'saccharose']):
         if quality is None :
             quality=self.quality

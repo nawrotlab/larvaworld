@@ -191,14 +191,14 @@ def par_dict(d0, **kwargs):
         d.update(entry)
     return d
 
-
-def par_dict_from_df(name, df):
-    df = df.where(pd.notnull(df), None)
-    d = {}
-    for n in df.index:
-        entry = par(n, **df.loc[n])
-        d.update(entry)
-    return {name: d}
+#
+# def par_dict_from_df(name, df):
+#     df = df.where(pd.notnull(df), None)
+#     d = {}
+#     for n in df.index:
+#         entry = par(n, **df.loc[n])
+#         d.update(entry)
+#     return {name: d}
 
 
 #
@@ -327,20 +327,24 @@ null_Box2D_params = {
 }
 
 
-def null_dict(name, key='initial_value', **kwargs):
-    from lib.conf.pars.pars import ParDict
-    # from lib.conf.base.init_pars import InitDict
+def null_dict(name, key='v', **kwargs):
     def v0(d):
-        null = {}
+        if d is None:
+            return None
+        null = dNl.NestDict()
         for k, v in d.items():
-            if key in v:
-                null[k] = v[key]
+            # print(k,v)
+            if 'k' in v.keys() or 'h' in v.keys() or 't' in v.keys():
+                null[k] = None if key not in v.keys() else v[key]
             else:
-                null[k] = v0(v['content'])
+                null[k] = v0(v)
         return null
 
-    dic = par_dict(d0 = ParDict.init_dict[name])
-    dic2 = v0(dic)
+    if key!='v' :
+        raise
+    from lib.conf.pars.pars import ParDict
+    d0 = ParDict.init_dict[name]
+    dic2 = v0(d0)
     if name not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
         return dNl.NestDict(dic2)
@@ -353,6 +357,37 @@ def null_dict(name, key='initial_value', **kwargs):
                     if k0 in list(kwargs.keys()):
                         dic2[k][k0] = kwargs[k0]
         return dNl.NestDict(dic2)
+
+
+
+
+#
+# def null_dict0(name, key='initial_value', **kwargs):
+#     from lib.conf.pars.pars import ParDict
+#     # from lib.conf.base.init_pars import InitDict
+#     def v0(d):
+#         null = {}
+#         for k, v in d.items():
+#             if key in v:
+#                 null[k] = v[key]
+#             else:
+#                 null[k] = v0(v['content'])
+#         return null
+#
+#     dic = par_dict(d0 = ParDict.init_dict[name])
+#     dic2 = v0(dic)
+#     if name not in ['visualization', 'enrichment']:
+#         dic2.update(kwargs)
+#         return dNl.NestDict(dic2)
+#     else:
+#         for k, v in dic2.items():
+#             if k in list(kwargs.keys()):
+#                 dic2[k] = kwargs[k]
+#             elif isinstance(v, dict):
+#                 for k0, v0 in v.items():
+#                     if k0 in list(kwargs.keys()):
+#                         dic2[k][k0] = kwargs[k0]
+#         return dNl.NestDict(dic2)
 
 
 def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):

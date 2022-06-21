@@ -9,7 +9,7 @@ from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 from lib.conf.base import paths
-import lib.aux.dictsNlists
+import lib.aux.dictsNlists as dNl
 
 
 
@@ -31,7 +31,7 @@ class Exec:
     def run(self, **kwargs):
         f0, f1 = paths.path('EXECONF'), paths.path('EXEC')
         if self.run_externally:
-            lib.aux.dictsNlists.save_dict(self.conf, f0)
+            dNl.save_dict(self.conf, f0)
             self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
         else:
             res = self.exec_run()
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                         help='Whether we are running a single simulation or a batch-run')
     parser.add_argument('conf_file', type=str, help='The configuration file of the batch-run/simulation')
     args = parser.parse_args()
-    conf = lib.aux.dictsNlists.load_dict(args.conf_file)
+    conf = dNl.load_dict(args.conf_file)
     k = Exec(args.mode, conf)
     k.exec_run()
 
