@@ -73,13 +73,17 @@ def logNpow_cdf(x, mu, sigma, alpha, switch, ratio):
 
 def build_dist_dict() :
     d = dNl.NestDict({
-            'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha']},
-            'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['xmin', 'beta']},
-            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma']},
+            'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha'], 'lab_func' : lambda v : f'Powerlaw(a={np.round(v.alpha, 2)})'},
+            'exponential': {'cdf': exponential_cdf, 'pdf': exponential_pdf, 'args': ['xmin', 'beta'], 'lab_func' : lambda v : f'Exp(b={np.round(v.beta, 2)})'},
+            'lognormal': {'cdf': lognorm_cdf, 'pdf': lognormal_pdf, 'args': ['mu', 'sigma'], 'lab_func' : lambda v : f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'},
             'logNpow': {'cdf': logNpow_cdf, 'pdf': logNpow_pdf,
-                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio']},
-            'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma']},
-            'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma']},
-            'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': ['xmin', 'xmax']},
+                        'args': ['alpha', 'mu', 'sigma', 'switch', 'ratio'], 'lab_func' : lambda v : f'Lognormal-Powerlaw(a={np.round(v.alpha, 2)}, m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'},
+            'levy': {'cdf': levy_cdf, 'pdf': levy_pdf, 'args': ['mu', 'sigma'], 'lab_func' : lambda v : f'Levy(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'},
+            'normal': {'cdf': norm_cdf, 'pdf': norm_pdf, 'args': ['mu', 'sigma'], 'lab_func' : lambda v : f'N(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'},
+            'uniform': {'cdf': uniform_cdf, 'pdf': uniform_pdf, 'args': ['xmin', 'xmax'], 'lab_func' : lambda v : f'Uniform()'},
         })
     return d
+
+class DistDict :
+    def __init__(self):
+        self.dict=build_dist_dict()

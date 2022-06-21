@@ -9,21 +9,6 @@ from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 
 
-def dist_lab(v):
-    n = v.name
-    if n == 'exponential':
-        return f'Exp(b={v.beta})'
-    elif n == 'powerlaw':
-        return f'Powerlaw(a={v.alpha})'
-    elif n == 'levy':
-        return f'Levy(m={v.mu}, s={v.sigma})'
-    elif n == 'uniform':
-        return f'Uniform()'
-    elif n == 'lognormal':
-        return f'Lognormal(m={np.round(v.mu, 2)}, s={np.round(v.sigma, 2)})'
-    else:
-        raise
-
 def init2par(d0, d=None,pre_d=None, aux_args={}):
     from lib.conf.pars.par_dict import preparePar
     from lib.conf.pars.pars import v_descriptor
@@ -53,13 +38,17 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
 
 
 class LarvaConfDict:
-    def __init__(self, init_dict=None, mfunc=None):
+    def __init__(self, init_dict=None, mfunc=None,dist_dict=None):
         if init_dict is None :
             from lib.conf.pars.pars import ParDict
             init_dict=ParDict.init_dict
         if mfunc is None :
             from lib.conf.pars.par_funcs import module_func_dict
             mfunc=module_func_dict()
+        if dist_dict is None :
+            from lib.conf.pars.pars import ParDict
+            dist_dict=ParDict.dist_dict
+        self.dist_dict=dist_dict
         self.mfunc=mfunc
         self.mcolor = dNl.NestDict({
             'body' : 'lightskyblue',
@@ -350,14 +339,15 @@ class LarvaConfDict:
             if len(valid) > 0:
                 for n in valid:
                     if n in ['stridechain_dist', 'pause_dist']:
-                        dist_v = dist_lab(dic[n])
+                        vv=dic[n]
+                        dist_v = self.dist_dict[vv.name].lab_func(vv)
                         if n == 'stridechain_dist':
                             vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
-                            vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', dic[n].range,
+                            vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', vv.range,
                                    '# $strides$']
                         elif n == 'pause_dist':
                             vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
-                            vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', dic[n].range, '$sec$']
+                            vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
                         data.append(vs1)
                         data.append(vs2)
                     else:

@@ -215,14 +215,14 @@ class ParRegistry:
 
         from lib.conf.pars.par_funcs import module_func_dict
         self.mfunc = module_func_dict()
-        from lib.conf.pars.parConfs import LarvaConfDict
-        self.larva_conf_dict = LarvaConfDict(init_dict=self.init_dict,mfunc=self.mfunc)
+
         from lib.conf.pars.parser_dict import ParserDict
         self.parser_dict = ParserDict(init_dict=self.init_dict).dict
 
-        from lib.conf.pars.dist_dict import build_dist_dict
-        self.dist_dict = build_dist_dict()
-
+        from lib.conf.pars.dist_dict import DistDict
+        self.dist_dict = DistDict().dict
+        from lib.conf.pars.parConfs import LarvaConfDict
+        self.larva_conf_dict = LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc,dist_dict=self.dist_dict)
 
         if load_funcs :
             self.func_dict = dNl.load_dict(paths.path('ParFuncDict'))

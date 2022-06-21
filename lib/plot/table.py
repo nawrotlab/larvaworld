@@ -30,6 +30,7 @@ def render_conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, sa
     cumNks0=np.cumsum(Nks.values)
     cumNks= {k : int(cumNks0[i]-Nk/2) for i,(k,Nk) in enumerate(Nks.items())}
     for (k0,k1), cell in mpl._cells.items():
+        # print((k0,k1))
         if k1 == -1:
             k=cell._text._text
             cell._linewidth = 0
