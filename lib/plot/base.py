@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import pyplot as plt, ticker
+from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
 
 
@@ -50,9 +50,9 @@ class BasePlot:
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
                 ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
                 xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
-                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, leg_loc=None,
+                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
                 leg_handles=None, xvis=None, yvis=None, zvis=None,
-                title=None):
+                title=None, title_y=None, titlefontsize=None):
         ax = self.axs[idx]
         if equal_aspect is not None:
             ax.set_aspect('equal', adjustable='box')
@@ -101,6 +101,10 @@ class BasePlot:
             ax.ticklabel_format(useMathText=True, scilimits=tickMath)
         if ytickMath is not None:
             ax.ticklabel_format(axis='y', useMathText=True, scilimits=ytickMath, useOffset=True)
+        if xMaxFix:
+            ticks_loc = ax.get_xticks().tolist()
+            ax.xaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
+            # ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if xMaxN is not None:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if yMaxN is not None:
@@ -114,7 +118,7 @@ class BasePlot:
         if xtickpos is not None:
             ax.xaxis.set_ticks_position(xtickpos)
         if title is not None:
-            ax.set_title(title)
+            ax.set_title(title, fontsize=titlefontsize, y=title_y)
         if xtickpad is not None:
             ax.xaxis.set_tick_params(pad=xtickpad)
         if ytickpad is not None:
@@ -270,9 +274,30 @@ class Plot(BasePlot):
                     fontsize=15, transform=ax.transAxes)
         return res
 
+    def data_leg(self,idx=None, labels=None, colors=None, anchor=None, handlelength=0.5, handleheight=0.5, **kwargs):
+        if labels is None :
+            labels=self.labels
+        if colors is None :
+            colors=self.colors
+        kws = {
+            'handles': [patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
+            'handlelength': handlelength,
+            'handleheight': handleheight,
+            'labels': labels,
+            'bbox_to_anchor': anchor,
+            **kwargs
+        }
+        if idx is None:
+            leg = plt.legend(**kws)
+        else:
+            ax = self.axs[idx]
+            leg = ax.legend(**kws)
+            ax.add_artist(leg)
+        return leg
+
     @property
     def Nticks(self):
-        Nticks_list = [len(d.step_data.index.unique('Step')) for d in self.datasets]
+        Nticks_list = [d.config.Nticks for d in self.datasets]
         return np.max(dNl.unique_list(Nticks_list))
 
     @property
@@ -361,11 +386,7 @@ class GridPlot(BasePlot):
         self.fig = plt.figure(constrained_layout=False, figsize=figsize)
         self.grid = GridSpec(height, width, figure=self.fig)
         self.cur_w, self.cur_h = 0, 0
-        # self.cur_idx = 0
-        # self.text_x0, self.text_y0=0.05, 0.98
-        # self.letters=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-        # self.letter_dict={}
-        # self.x0s, self.y0s=[],[]
+
 
     def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True,
             x0=False, y0=False):
@@ -404,11 +425,16 @@ class GridPlot(BasePlot):
         if axs is None:
             axs = self.add(**kwargs)
         if isinstance(func, str) :
-            from lib.plot.dict import graph_dict, ModelGraphDict
-            if func in graph_dict.keys() :
-                func=graph_dict[func]
-            elif func in ModelGraphDict.keys() :
-                func = ModelGraphDict[func]
+            from lib.plot.dict import graph_dict
+            dic0=graph_dict.dict
+            dic1=graph_dict.mod_dict
+            dic2=graph_dict.error_dict
+            if func in dic0.keys() :
+                func=dic0[func]
+            elif func in dic1.keys() :
+                func = dic1[func]
+            elif func in dic2.keys() :
+                func = dic2[func]
             else :
                 raise
         _ = func(fig=self.fig, axs=axs, **kws)

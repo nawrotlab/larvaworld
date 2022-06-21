@@ -19,7 +19,7 @@ class LifeTab(GuiTab):
         self.K = 'EPOCHS'
 
     def build(self):
-        from lib.plot.dataplot import plot_debs
+        from lib.plot.deb import plot_debs
         from lib.conf.pars.init_pars import substrate_dict
         sl1_kws = {
             'size': (30, 20),
@@ -110,7 +110,7 @@ class LifeTab(GuiTab):
         elif e == 'Draw':
             if q > 0:
                 from lib.model.DEB.deb import deb_default
-                from lib.plot.dataplot import plot_debs
+                from lib.plot.deb import plot_debs
 
                 D = deb_default(**self.get(w, v, c))
                 for Sii in [S0, S1, Sa]:

@@ -1,69 +1,120 @@
-
 from lib.aux import dictsNlists as dNl
 
-from lib.plot import dataplot as dplt,traj as traj, stridecycle as cycle, table as tab, grid as grid, epochs as epochs
-# from lib.anal.fitting import test_boutGens
 
-graph_dict = dNl.NestDict({
-    'crawl pars': dplt.plot_crawl_pars,
-    'angular pars': dplt.plot_ang_pars,
-    'endpoint params': dplt.plot_endpoint_params,
-    'powerspectrum': dplt.powerspectrum,
-    'stride Dbend': dplt.plot_stride_Dbend,
-    'stride Dor': dplt.plot_stride_Dorient,
-    'stride cycle': cycle.stride_cycle,
-    'interference': dplt.plot_interference,
-    'dispersal': dplt.plot_dispersion,
-    'dispersal summary': grid.dsp_summary,
-    'runs & pauses': dplt.plot_stridesNpauses,
-    'epochs': epochs.plot_bouts,
-    'fft': epochs.plot_fft_multi,
-    'turn duration': dplt.plot_turn_duration,
-    'turn amplitude': dplt.plot_turns,
-    'stride track': traj.annotated_strideplot,
-    'turn track': traj.annotated_turnplot,
-    'marked strides': traj.plot_marked_strides,
-    'sample tracks': traj.plot_sample_tracks,
-    'trajectories': traj.traj_grouped,
-    'turn amplitude VS Y pos': dplt.plot_turn_amp,
-    'turn Dbearing to center': dplt.plot_turn_Dorient2center,
-    'chunk Dbearing to source': dplt.plot_chunk_Dorient2source,
-    'C odor (real)': dplt.plot_odor_concentration,
-    'C odor (perceived)': dplt.plot_sensed_odor_concentration,
-    'navigation index': dplt.plot_navigation_index,
-    'Y pos': dplt.plot_Y_pos,
-    'PI (boxplot)': dplt.boxplot_PI,
-    'pathlength': dplt.plot_pathlength,
-    'food intake (timeplot)': dplt.plot_food_amount,
-    'gut': dplt.plot_gut,
-    'food intake (barplot)': dplt.intake_barplot,
-    'deb': dplt.plot_debs,
-    'timeplot': dplt.timeplot,
-    'ethogram': dplt.plot_ethogram,
-    'foraging': dplt.plot_foraging,
-    'barplot': dplt.barplot,
-    'scatter': dplt.plot_2pars,
-    'nengo': dplt.plot_nengo_network,
-    'ggboxplot': dplt.ggboxplot
-})
+# from lib.plot import *
+
+def build_mod_dict():
+    from lib.plot import table, hist, grid
+    d = dNl.NestDict({
+        'configuration': table.modelConfTable,
+        'sample track': grid.test_model,
+        # 'sample epochs': test_boutGens,
+        'module hists': hist.module_endpoint_hists,
+        'summary': grid.model_summary,
+    })
+    return d
 
 
-ModelGraphDict = dNl.NestDict({
-    'configuration': tab.modelConfTable,
-    'sample track': grid.test_model,
-    # 'sample epochs': test_boutGens,
-    'module hists': dplt.module_endpoint_hists,
-    'summary': grid.model_summary,
+def build():
+    from lib.plot import bar, bearing, box, deb, epochs, freq, grid, hist, stridecycle, time, traj
+    d = dNl.NestDict()
+    d['bar'] = dNl.NestDict({
+        'food intake (barplot)': bar.intake_barplot,
+        'barplot': bar.barplot,
+    })
+    d['bearing'] = dNl.NestDict({
+        'bearing/turn': bearing.plot_turn_Dbearing,
+        'bearing to center/turn': bearing.plot_turn_Dorient2center,
+        'bearing to source/epoch': bearing.plot_chunk_Dorient2source,
 
-})
+    })
+    d['box'] = dNl.NestDict({
+        'lineplot': box.lineplot,
+        'PI (combo)': box.boxplot_PI,
+        'PI (simple)': box.PIboxplot,
+        'boxplot (grouped)': box.boxplot,
+        'boxplot (simple)': box.boxplots,
+        'foraging': box.plot_foraging,
+        'ggboxplot': box.ggboxplot,
+        'double patch': box.boxplot_double_patch,
+    })
+    d['deb'] = dNl.NestDict({
+        'food intake (timeplot)': deb.plot_food_amount,
+        'gut': deb.plot_gut,
+        'deb': deb.plot_debs,
+    })
+    d['epochs'] = dNl.NestDict({
+        'runs & pauses': epochs.plot_stridesNpauses,
+        'epochs': epochs.plot_bouts,
+    })
+    d['freq'] = dNl.NestDict({
+        'powerspectrum': freq.powerspectrum,
+        'fft': freq.plot_fft_multi,
+
+    })
+    d['grid'] = dNl.NestDict({
+        'dispersal summary': grid.dsp_summary,
+        'eval summary': grid.result_summary
+    })
+    d['hist'] = dNl.NestDict({
+        'crawl pars': hist.plot_crawl_pars,
+        'angular pars': hist.plot_ang_pars,
+        'angular/epoch': hist.plot_bout_ang_pars,
+        'endpoint pars (hist)': hist.plot_endpoint_params,
+        'endpoint pars (scatter)': hist.plot_endpoint_scatter,
+        'turn duration': hist.plot_turn_duration,
+        'turn amplitude': hist.plot_turns,
+        'turn amplitude VS Y pos': hist.plot_turn_amp,
+    })
+    d['stridecycle'] = dNl.NestDict({
+        'stride Dbend': stridecycle.plot_stride_Dbend,
+        'stride Dor': stridecycle.plot_stride_Dorient,
+        'stride cycle': stridecycle.stride_cycle,
+        'interference': stridecycle.plot_interference,
+    })
+    d['time'] = dNl.NestDict({
+        'dispersal': time.plot_dispersion,
+        'C odor (real)': time.plot_odor_concentration,
+        'C odor (perceived)': time.plot_sensed_odor_concentration,
+        'navigation index': time.plot_navigation_index,
+        'Y pos': time.plot_Y_pos,
+        'pathlength': time.plot_pathlength,
+        'timeplot': time.timeplot,
+        'ethogram': time.plot_ethogram,
+        'nengo': time.plot_nengo_network,
+    })
+    d['traj'] = dNl.NestDict({
+        'stride track': traj.annotated_strideplot,
+        'turn track': traj.annotated_turnplot,
+        'marked strides': traj.plot_marked_strides,
+        'sample tracks': traj.plot_sample_tracks,
+        'trajectories': traj.traj_grouped
+    })
+    return d
 
 
-if __name__ == "__main__":
-    # from lib.plot.grid import test_model
-    # from lib.plot.grid import model_summary
-    # from lib.anal.fitting import test_boutGens
-    # print('dddddddddddd')
-    # _ = test_boutGens(refID='None.150controls', mID='explorer', show=True)
-    _=ModelGraphDict['summary'](refID='None.150controls', mID='PHIonNEU', show=True)
-    # test_model(mID='explorer', dur=2.1 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, show=True)
+def build_error_dict():
+    from lib.plot import table, bar, grid
+    d = dNl.NestDict({
+        'error table': table.error_table,
+        'error summary': grid.eval_summary,
+        'error barplot': bar.error_barplot,
+        # 'sample epochs': test_boutGens,
+        # 'module hists': hist.module_endpoint_hists,
+        # 'summary': grid.model_summary,
+    })
+    return d
 
+
+class GraphDict:
+    def __init__(self):
+        self.grouped_dic = build()
+        self.flat_dict = dNl.flatten_dict(self.grouped_dic)
+        self.dict = dNl.NestDict(dNl.merge_dicts([dic for k, dic in self.grouped_dic.items()]))
+        self.mod_dict = build_mod_dict()
+        self.error_dict = build_error_dict()
+
+graph_dict=GraphDict()
+
+if __name__ == '__main__':
+    print(graph_dict.dict)

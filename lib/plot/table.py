@@ -1,12 +1,8 @@
 import os
 
 import numpy as np
-import pandas as pd
 import six
 from matplotlib import pyplot as plt
-from matplotlib.patches import Patch
-
-from lib.aux import dictsNlists as dNl
 
 from lib.plot.base import BasePlot
 
@@ -16,10 +12,10 @@ def modelConfTable(mID, **kwargs):
     return ParDict.larva_conf_dict.mIDtable(mID, **kwargs)
 
 
-def render_conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
+def conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
 
 
-    ax, fig, mpl = render_mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
+    ax, fig, mpl = mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
                                     figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
                                     row_colors=row_colors, return_table=True, **kwargs)
 
@@ -50,7 +46,7 @@ def render_conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, sa
     return fig
 
 
-def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
+def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
                      name='mpl_table',
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
                      adjust_kws=None,
@@ -131,38 +127,11 @@ def render_mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=
 
 
 def error_table(data, k='', title=None, **kwargs):
-    from lib.plot.table import render_mpl_table
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
-    fig = render_mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
+    fig = mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
                            adjust_kws={'left': 0.3, 'right': 0.95},
                            name=f'error_table_{k}', **kwargs)
     return fig
 
 
-def error_barplot(error_dict, evaluation, axs=None, fig=None, labels=None, name='error_barplots',
-                  titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
-    def build_legend(ax, eval_df):
-        h, l = ax.get_legend_handles_labels()
-        empty = Patch(color='none')
-        counter = 0
-        for g in eval_df.index:
-            h.insert(counter, empty)
-            l.insert(counter, eval_df['group_label'].loc[g])
-            counter += (len(eval_df['shorts'].loc[g]) + 1)
-        ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
-
-    P = BasePlot(name=name, **kwargs)
-    Nplots = len(error_dict)
-    P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
-    P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
-    for ii, (k, eval_df) in enumerate(evaluation.items()):
-        lab = labels[k] if labels is not None else k
-        # ax = P.axs[ii] if axs is None else axs[ii]
-        df = error_dict[k]
-        color = dNl.flatten_list(eval_df['par_colors'].values.tolist())
-        df = df[dNl.flatten_list(eval_df['symbols'].values.tolist())]
-        df.plot(kind='bar', ax=P.axs[ii], ylabel=lab, rot=0, legend=False, color=color, width=0.6)
-        build_legend(P.axs[ii], eval_df)
-        P.conf_ax(ii, title=titles[ii], xlab='', yMaxN=4)
-    return P.get()

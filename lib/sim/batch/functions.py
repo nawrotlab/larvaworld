@@ -6,11 +6,11 @@ import pandas as pd
 from pypet import ObjectTable
 
 from lib.aux.stdout import suppress_stdout
-from lib.aux.dictsNlists import reconstruct_dict
+import lib.aux.dictsNlists as dNl
 import lib.aux.sim_aux
-# from lib.anal.plotting import plot_endpoint_scatter, plot_endpoint_params
-from lib.plot.dataplot import plot_debs, plot_heatmap_PI, plot_3pars, plot_2d, plot_endpoint_scatter, \
-    plot_endpoint_params
+from lib.plot.hist import plot_endpoint_params, plot_endpoint_scatter
+from lib.plot.deb import plot_debs
+from lib.plot.scape import plot_3pars, plot_heatmap_PI, plot_2d
 from lib.sim.batch.aux import load_traj, retrieve_exp_conf
 from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset
@@ -134,9 +134,10 @@ def end_scatter_generation(traj):
     for i in [1, 2, 3]:
         l = f'end_parshorts_{i}'
         par_shorts = getattr(traj.config, l)
-        f = plot_endpoint_scatter(**kwargs, keys=par_shorts)
         p1, p2 = par_shorts
-        fig_dict[f'{p1}VS{p2}'] = f
+        fig_dict[f'{p1}VS{p2}'] = plot_endpoint_scatter(**kwargs, keys=par_shorts)
+
+        # fig_dict[f'{p1}VS{p2}'] = f
     return df, fig_dict
 
 
@@ -164,7 +165,7 @@ def deb_analysis(traj):
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=save_to)
     # deb_dicts = fun.flatten_list(
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
-    deb_dicts = lib.aux.dictsNlists.flatten_list([d.load_dicts('deb') for d in ds])
+    deb_dicts = dNl.flatten_list([d.load_dicts('deb') for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full']:
         f = plot_debs(deb_dicts=deb_dicts, save_to=save_to, save_as=f'deb_{m}.pdf', mode=m)

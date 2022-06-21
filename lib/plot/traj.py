@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from lib.aux import naming as nam
+from lib.aux import naming as nam, dictsNlists as dNl
 from lib.conf.pars.pars import getPar
 
 from lib.plot.base import BasePlot, Plot
@@ -48,7 +48,6 @@ def traj_grouped(axs=None, fig=None, unit='mm', name=f'comparative_trajectories'
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 6), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
-        print(d.id,mode,range, ii)
         s = get_traj(d, mode)
         c = d.config
         if range is not None:
@@ -61,118 +60,6 @@ def traj_grouped(axs=None, fig=None, unit='mm', name=f'comparative_trajectories'
             P.axs[ii].yaxis.set_visible(False)
     P.adjust((0.07, 0.95), (0.1, 0.95), 0.05, 0.005)
     return P.get()
-
-#
-# def plot_marked_turns(dataset, agent_ids=None, agent_idx=[0], turn_epochs=['Rturn', 'Lturn'],
-#                       vertical_boundaries=False, min_turn_angle=0, slices=[], subfolder='individuals',
-#                       save_to=None, return_fig=False, show=False, sizes=['short', 'long']):
-#     Ndatasets, colors, save_to, labels = plot_config(datasets=[dataset], labels=[dataset.id], save_to=save_to,
-#                                                      subfolder=subfolder)
-#     # We plot the complete or a slice of the timeseries of scal centroid velocity. The grey areas are stridechains
-#     d = dataset
-#
-#     if agent_ids is None:
-#         if agent_idx is None:
-#             agent_ids = d.agent_ids
-#         else:
-#             agent_ids = [d.agent_ids[idx] for idx in agent_idx]
-#
-#     xx = f'marked_turns_min_angle_{min_turn_angle}'
-#     filepath_full = f'{xx}_full.{suf}'
-#     filepath_full_long = f'{xx}_full_long.{suf}'
-#     filepath_slices = []
-#     for i, slice in enumerate(slices):
-#         filepath_slices.append(f'{xx}_slice_{i}.{suf}')
-#     generic_filepaths = [filepath_full_long] + filepath_slices
-#
-#     figsize_short = (20, 5)
-#     figsize_long = (15 * 6, 5)
-#     figsizes = [figsize_long] + [figsize_short] * len(generic_filepaths)
-#
-#     xlims = [(0, d.duration)] + slices
-#
-#     # ymax=1.0
-#
-#     b = 'bend'
-#     bv = nam.vel(b)
-#     ho = nam.orient('front')
-#     hov = nam.vel(ho)
-#     fig_dict = {}
-#     for agent_id in agent_ids:
-#         filepaths = [f'{agent_id}_{f}' for f in generic_filepaths]
-#
-#         s = d.step_data.xs(agent_id, level='AgentID', drop_level=True)
-#         s.set_index(s.index.values / d.fr, inplace=True)
-#
-#         b0 = s[b]
-#         bv0 = s[bv]
-#         ho0 = s[ho]
-#         hov0 = s[hov]
-#
-#         for idx, (filepath, figsize, xlim) in enumerate(zip(filepaths, figsizes, xlims)):
-#             fig, axs = plt.subplots(1, 1, figsize=figsize)
-#
-#             if turn_epochs is not None:
-#                 cmap = cm.get_cmap('Pastel2')
-#                 num_chunks = len(turn_epochs)
-#                 colors = [cmap(i) for i in np.arange(num_chunks)]
-#                 epoch_handles = []
-#                 temp = None
-#                 for i, (chunk, color) in enumerate(zip(turn_epochs, colors)):
-#                     try:
-#                         idx01 = d.load_chunk_dicts()[agent_id][chunk] / d.fr
-#                         if min_turn_angle > 0:
-#                             angles = np.abs([np.trapz(hov0[s0:s1 + 1], dx=d.dt) for s0, s1 in idx01])
-#                             idx01 = idx01[angles >= min_turn_angle]
-#                         start_indexes, stop_indexes = idx01[:, 0], idx01[:, 1]
-#                     except:
-#                         start_flag = f'{chunk}_start'
-#                         stop_flag = f'{chunk}_stop'
-#                         stop_indexes = s.index[s[stop_flag] == True]
-#                         start_indexes = s.index[s[start_flag] == True]
-#                         if min_turn_angle > 0:
-#                             angle_flag = nam.chunk_track(chunk, nam.unwrap(nam.orient('front')))
-#                             angles = np.abs(s[angle_flag].dropna().values)
-#                             stop_indexes = stop_indexes[angles > min_turn_angle]
-#                             start_indexes = start_indexes[angles > min_turn_angle]
-#
-#                     for start, stop in zip(start_indexes, stop_indexes):
-#                         temp = plt.axvspan(start, stop, color=color, alpha=1.0)
-#
-#                         if vertical_boundaries:
-#                             plt.axvline(start, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-#                             plt.axvline(stop, color=f'{0.4 * (i + 1)}', alpha=0.6, linestyle='dashed', linewidth=1)
-#                     if temp is not None:
-#                         epoch_handles.append(temp)
-#             ax1 = b0.plot(label=r'$\theta_{b}$', lw=2, color='blue')
-#             ax1.set_ylabel(r'angle $(deg)$')
-#             ax1.set_xlabel(r'time $(sec)$')
-#             ax1.set_ylim([-100, 100])
-#             ax1.set_xlim(xlim)
-#             # print(xlim)
-#             # plt.legend(loc= 'upper left')
-#             ax2 = bv0.plot(secondary_y=True, label=r'$\dot{\theta}_{b}$', lw=2, color='green')
-#             ax2.plot(hov0, label=r'$\dot{\theta}_{or}$', lw=3, color='black')
-#             ax2.set_ylabel(r'angular velocity $(deg/sec)$')
-#             ax2.set_ylim([-500, 500])
-#
-#             plt.axhline(0, color='black', alpha=0.4, linestyle='dashed', linewidth=1)
-#
-#             handles, labels = [], []
-#             for ax in fig.axes:
-#                 for h, l in zip(*ax.get_legend_handles_labels()):
-#                     handles.append(h)
-#                     labels.append(l)
-#             par_legend = plt.legend(handles, labels, loc=2)
-#             plt.legend(epoch_handles, turn_epochs, loc=1)
-#             plt.gca().add_artist(par_legend)
-#             plt.subplots_adjust(hspace=0.05, top=0.95, bottom=0.2, left=0.08, right=0.92)
-#             filename = f'{save_to}/{filepath}'
-#             fig.savefig(filename, dpi=300)
-#             print(f'Image saved as {filename}')
-#             fig_dict[f'turns_{agent_id}_{i}'] = fig
-#     # return process_plot(fig, save_to, filename, return_fig, show)
-#     return fig_dict
 
 def track_annotated(epoch='stride',a=None, dt=0.1, a2plot=None, fig=None, ax=None, ylab =None, ylim=None, xlim=None,slice=None,agent_idx=0, agent_id=None,
                          subfolder='tracks', moving_average_interval=None,epoch_boundaries=True, show_extrema=True, min_amp=None, **kwargs) :
@@ -341,3 +228,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
             ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
     P.adjust((0.08, 0.95), (0.12, 0.95), H=0.2)
     return P.get()
+
+
+
+

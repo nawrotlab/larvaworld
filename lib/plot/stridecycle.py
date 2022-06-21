@@ -3,10 +3,10 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
-from lib.aux import naming as nam
+from lib.aux import naming as nam, dictsNlists as dNl
 from lib.conf.pars.pars import getPar
 from lib.plot.aux import plot_quantiles, suf
-from lib.plot.base import AutoPlot
+from lib.plot.base import AutoPlot, Plot
 from lib.process.aux import compute_interference
 
 
@@ -270,3 +270,88 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=T
         pass
     if save_to is not None:
         fig.savefig(f'{save_to}/stride_cycle_all_points.pdf', dpi=300)
+
+
+def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
+    P = Plot(name='stride_bend_change', subfolder=subfolder, **kwargs)
+    P.build()
+    ax = P.axs[0]
+
+    fits = {}
+    for i, (d, l, c) in enumerate(zip(P.datasets, P.labels, P.colors)):
+        b0 = d.get_par(nam.at('bend', nam.start('stride'))).dropna().values.flatten()[:500]
+        b1 = d.get_par(nam.at('bend', nam.stop('stride'))).dropna().values.flatten()[:500]
+        sign_b = np.sign(b0)
+        b0 *= sign_b
+        b1 *= sign_b
+        db = b1 - b0
+        ax.scatter(x=b0, y=db, marker='o', s=2.0, alpha=0.6, color=c, label=l)
+        m, k = np.polyfit(b0, db, 1)
+        m = np.round(m, 2)
+        k = np.round(k, 2)
+        fits[l] = [m, k]
+        ax.plot(b0, m * b0 + k, linewidth=4, color=c)
+        if show_text:
+            ax.text(0.3, 0.9 - i * 0.1, rf'${l} : \Delta\theta_{{b}}={m} \cdot \theta_{{b}}$', fontsize=12,
+                    transform=ax.transAxes)
+            print(f'Bend correction during strides for {l} fitted as : db={m}*b + {k}')
+    P.conf_ax(xlab=r'$\theta_{bend}$ at stride start $(deg)$', ylab=r'$\Delta\theta_{bend}$ over stride $(deg)$',
+              xlim=[0, 85], ylim=[-60, 60], yMaxN=5)
+    P.adjust((0.25, 0.95), (0.2, 0.95), 0.01)
+    return P.get()
+
+
+def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
+    P = Plot(name='stride_orient_change', subfolder=subfolder, **kwargs)
+    shorts = ['str_fo', 'str_ro']
+    P.build(1, len(shorts))
+    for i, sh in enumerate(shorts):
+        p, sl, xlab = getPar(sh, to_return=['d', 's', 'l'])
+        bins, xlim = P.angrange(80, absolute, 200)
+        P.plot_par(p, bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
+        P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, yMaxN=4, leg_loc='upper left')
+    P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
+    return P.get()
+
+
+def plot_interference(mode='orientation', agent_idx=None, subfolder='interference', **kwargs):
+    name = f'interference_{mode}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}'
+
+    shorts = ['sv']
+    if mode == 'orientation':
+        shorts.append('fov')
+    elif mode == 'orientation_x2':
+        shorts.append('fov')
+        shorts.append('rov')
+    elif mode == 'bend':
+        shorts.append('bv')
+    elif mode == 'spinelength':
+        shorts.append('l')
+    Npars = len(shorts)
+
+    pars, ylabs = getPar(shorts, to_return=['d', 'l'])
+    P = AutoPlot(name=name, subfolder=subfolder, Nrows=Npars, figsize=(10, Npars * 5), sharex=True, **kwargs)
+
+    ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
+
+    if agent_idx is not None:
+        data = [[d.load_aux(type='stride', par=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
+                d in P.datasets]
+    else:
+        data = [[d.load_aux(type='stride', par=p).values for p in pars] for d in P.datasets]
+    Npoints = data[0][0].shape[1] - 1
+    for d0, c, l in zip(data, P.colors, P.labels):
+        if mode in ['bend', 'orientation']:
+            d0 = [np.abs(d) for d in d0]
+        for i, (p, ylab, df) in enumerate(zip(pars, ylabs, d0)):
+            plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
+            P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right')
+
+    P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
+              xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+    P.adjust((0.12, 0.95), (0.2 / Npars, 0.97), 0.05, 0.1)
+    return P.get()
+
+
+
+

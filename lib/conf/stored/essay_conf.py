@@ -1,7 +1,9 @@
 import shutil
 
-from lib.plot.dataplot import barplot, boxplot_double_patch, timeplot, plot_pathlength, plot_food_amount, lineplot, \
-    plot_debs
+from lib.plot.dataplot import timeplot, plot_pathlength
+from lib.plot.deb import plot_food_amount, plot_debs
+from lib.plot.bar import barplot
+from lib.plot.box import boxplot_double_patch, lineplot
 from lib.aux.dictsNlists import flatten_list
 from lib.conf.base.dtypes import enr_dict, null_dict, arena, base_enrich
 from lib.conf.pars.pars import getPar

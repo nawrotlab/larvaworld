@@ -234,8 +234,6 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
 
 
 def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**kwargs):
-    from lib.plot.table import error_table, error_barplot
-
     label_dic = {
         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
         'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
@@ -247,14 +245,17 @@ def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**k
     w,h=36,56
     P = GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45), **kwargs)
 
-    P.plot(func=error_barplot, kws={'error_dict': error_dict, 'evaluation' : evaluation,'labels' : labels},
+    P.plot(func='error barplot', kws={'error_dict': error_dict, 'evaluation' : evaluation,'labels' : labels},
            N=2,share_w=True, dh=3, h=23,w=24, x0=True, y0=True)
     for i, (k, df) in enumerate(error_dict.items()):
         h0 = 28 + i * 14
-        P.plot(func=error_table, kws={'data': df,'k' : k,  'bbox': [0.5, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
+        P.plot(func='error table', kws={'data': df,'k' : k,  'bbox': [0.5, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
     P.annotate()
     return P.get()
+
+
+
 
 
 

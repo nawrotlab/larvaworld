@@ -120,9 +120,8 @@ class BatchTab(GuiTab):
         self.DL0.remove(w, complete)
 
     def draw(self, df, fig_dict, w):
-        from lib.plot.table import render_mpl_table
-        df_fig = render_mpl_table(df)
-        fig_dict['dataframe'] = df_fig
+        from lib.plot.table import mpl_table
+        fig_dict['dataframe'] = mpl_table(df)
         self.base_dict['df'] = df
         self.base_dict['fig_dict'] = fig_dict
         self.graph_list.update(w, fig_dict)

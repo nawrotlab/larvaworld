@@ -3,12 +3,13 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, patches, transforms, ticker
 
-
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from lib.aux import dictsNlists as dNl
 from lib.aux.colsNstr import N_colors
+
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
             'figure.titlesize': 25,
@@ -18,6 +19,7 @@ plt_conf = {'axes.labelsize': 20,
             'legend.title_fontsize': 20}
 plt.rcParams.update(plt_conf)
 suf = 'pdf'
+
 
 def plot_quantiles(df, from_np=False, x=None, **kwargs):
     if from_np:
@@ -127,8 +129,8 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
     return n, bins, patches
 
 
-def circNarrow(ax, data, alpha, label, color):
-    circular_hist(ax, data, bins=16, alpha=alpha, label=label, color=color, offset=np.pi / 2)
+def circNarrow(ax, data, alpha, label, color, Nbins=16):
+    circular_hist(ax, data, bins=Nbins, alpha=alpha, label=label, color=color, offset=np.pi / 2)
     arrow = patches.FancyArrowPatch((0, 0), (np.mean(data), 0.3), zorder=2, mutation_scale=30, alpha=alpha,
                                     facecolor=color, edgecolor='black', fill=True, linewidth=0.5)
     ax.add_patch(arrow)
@@ -187,18 +189,20 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
     return ax.add_patch(ellipse)
 
 
-def dataset_legend(labels, colors, ax=None, loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5,
-                   **kwargs):
+def dataset_legend(labels, colors, ax=None, anchor=None, handlelength=0.5, handleheight=0.5, **kwargs):
+    kws = {
+        'handles': [patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
+        'handlelength': handlelength,
+        'handleheight': handleheight,
+        'labels': labels,
+        'bbox_to_anchor': anchor,
+        **kwargs
+    }
+
     if ax is None:
-        leg = plt.legend(
-            bbox_to_anchor=anchor,
-            handles=[patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
-            labels=labels, loc=loc, handlelength=handlelength, handleheight=handleheight, fontsize=fontsize, **kwargs)
+        leg = plt.legend(**kws)
     else:
-        leg = ax.legend(
-            bbox_to_anchor=anchor,
-            handles=[patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
-            labels=labels, loc=loc, handlelength=handlelength, handleheight=handleheight, fontsize=fontsize, **kwargs)
+        leg = ax.legend(**kws)
         ax.add_artist(leg)
     return leg
 
@@ -213,6 +217,7 @@ def label_diff(i, j, text, X, Y, ax):
     ax.annotate(text, xy=(X[i], y), zorder=10)
     # ax.annotate(text, xy=(X[i], y), zorder=10)
     ax.annotate('', xy=(X[i], y), xytext=(X[j], y), arrowprops=props)
+
 
 def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs):
     from statannotations.Annotator import Annotator

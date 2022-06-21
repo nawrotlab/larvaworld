@@ -7,11 +7,16 @@ import numpy as np
 from lib.aux.combining import combine_pdfs
 from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.anal.comparing import ExpFitter
-from lib.plot.dataplot import plot_turn_Dbearing, plot_turn_amp, plot_turns, plot_navigation_index, \
-    plot_endpoint_params, plot_chunk_Dorient2source, plot_stridesNpauses, \
-    plot_interference, plot_dispersion, plot_stride_Dbend, plot_stride_Dorient, plot_ang_pars, \
-    plot_crawl_pars, boxplot, timeplot, plot_food_amount, plot_pathlength, plot_nengo_network, plot_2pars, barplot, \
-    plot_debs, lineplot, boxplot_double_patch
+from lib.plot.dataplot import plot_navigation_index, \
+    plot_dispersion, timeplot, plot_pathlength, plot_nengo_network
+from lib.plot.bearing import plot_turn_Dbearing, plot_chunk_Dorient2source
+from lib.plot.scape import plot_2pars
+from lib.plot.hist import plot_ang_pars, plot_crawl_pars, plot_turn_amp, plot_endpoint_params, plot_turns
+from lib.plot.deb import plot_food_amount, plot_debs
+from lib.plot.stridecycle import plot_stride_Dbend, plot_stride_Dorient, plot_interference
+from lib.plot.epochs import plot_stridesNpauses
+from lib.plot.bar import barplot
+from lib.plot.box import boxplot, boxplot_double_patch, lineplot
 from lib.conf.stored.conf import loadConf
 from lib.conf.base.dtypes import null_dict
 from lib.conf.pars.pars import getPar, ParDict

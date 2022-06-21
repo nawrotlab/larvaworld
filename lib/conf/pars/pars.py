@@ -224,6 +224,8 @@ class ParRegistry:
         from lib.conf.pars.parConfs import LarvaConfDict
         self.larva_conf_dict = LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc, dist_dict=self.dist_dict)
 
+
+
         if load_funcs:
             self.func_dict = dNl.load_dict(self.path_dict['ParFuncDict'])
         else:
@@ -241,6 +243,8 @@ class ParRegistry:
             self.pdict = dNl.NestDict({p.p: p for k, p in self.dict.items()})
             if save:
                 self.save()
+
+
 
     def finalize_dict(self, entries):
         dic = dNl.NestDict()
@@ -297,7 +301,8 @@ class ParRegistry:
 
 
 ParDict = ParRegistry()
-
+# from lib.plot.dict import GraphDict
+# ParDict.graph_dict = GraphDict()
 
 def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
     if k is not None:
@@ -330,9 +335,9 @@ def runtime_pars(PF=ParDict.dict):
 
 if __name__ == '__main__':
     # # p.param.trigger('disp', 'd')
-    d = ParDict.dict['ba'].param.d
-    print(d)
-
-    ParDict.larva_conf_dict.mIDtable(mID='PHIonNEU', show=True)
+    # d = ParDict.dict['ba'].param.d
+    # print(ParDict.graph_dict.dict)
+    #
+    # ParDict.larva_conf_dict.mIDtable(mID='PHIonNEU', show=True)
 
     pass

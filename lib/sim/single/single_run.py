@@ -157,7 +157,7 @@ class SingleRun:
     def run_analysis(self, anal_params,save_to=None,**kwargs) :
         from lib.sim.single.analysis import targeted_analysis,source_analysis, deb_analysis, comparative_analysis, foraging_analysis
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
-        from lib.anal.plotting import graph_dict
+        from lib.plot.dict import graph_dict
         figs, results = {}, {}
         for entry in anal_params:
             if entry == 'source_analysis':

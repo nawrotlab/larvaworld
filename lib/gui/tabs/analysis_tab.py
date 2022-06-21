@@ -17,7 +17,7 @@ class AnalysisTab(GuiTab):
                       buttons=['replay', 'add_ref', 'select_all', 'remove', 'change_ID', 'browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(28,20)
                        )
-        g1 = gui_el.ButtonGraphList(self.name, tab=self, fig_dict=graph_dict, canvas_size=gui_fun.col_size(x_frac=0.5, y_frac=0.8))
+        g1 = gui_el.ButtonGraphList(self.name, tab=self, fig_dict=graph_dict.dict, canvas_size=gui_fun.col_size(x_frac=0.5, y_frac=0.8))
         l = gui_fun.gui_cols(cols=[[dl1], [g1.canvas], [g1]], x_fracs=[0.25, 0.52, 0.2], as_pane=True, pad=(10,20))
         return l, {}, {g1.name: g1}, d
 

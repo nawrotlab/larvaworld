@@ -370,10 +370,10 @@ class LarvaConfDict:
         return df
 
     def mIDtable(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], figsize=(14, 11), **kwargs):
-        from lib.plot.table import render_conf_table
+        from lib.plot.table import conf_table
         df=self.mIDtable_data(mID, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
-        return render_conf_table(df, row_colors, figsize=figsize, **kwargs)
+        return conf_table(df, row_colors, figsize=figsize, **kwargs)
 
 
 
