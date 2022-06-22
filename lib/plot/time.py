@@ -197,12 +197,14 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
         name=f'timeplot_x{Nks}'
     P = AutoLoadPlot(ks=ks,name=name, subfolder=subfolder, figsize=(15,5*Nks),Ncols=1,Nrows=Nks,sharex=True, **kwargs)
     x=P.trange(unit)
-    for i,(k,dic) in enumerate(P.kdict.items()) :
+    for i,k in enumerate(P.ks) :
+        dic,p=P.kpdict[k]
+    # for i,(k,(dic,p)) in enumerate(P.kpdict.items()) :
         ax=P.axs[i]
-        p=P.pdict[k]
         P.conf_ax(i, xlab=f'time, ${unit}$', ylab=p.label, ylim=p.lim, yMaxN=4,xvis=False if i!=Nks-1 else True)
-        for j,(did,df) in enumerate(dic.items()):
-            c=P.colors[j]
+        for j,l in enumerate(P.labels):
+            df=dic[l].df
+            c=dic[l].col
             if individuals:
                 df_m = df.groupby(level='Step').quantile(q=0.5)
                 for id in df.index.get_level_values('AgentID').unique():

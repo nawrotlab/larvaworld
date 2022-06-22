@@ -21,6 +21,7 @@ def build():
     d['bar'] = dNl.NestDict({
         'food intake (barplot)': bar.intake_barplot,
         'barplot': bar.barplot,
+        'auto_barplot': bar.auto_barplot,
     })
     d['bearing'] = dNl.NestDict({
         'bearing/turn': bearing.plot_turn_Dbearing,

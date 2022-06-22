@@ -1,10 +1,12 @@
+import time
+
 import numpy as np
-from matplotlib import ticker
+from matplotlib import ticker, cm
 
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
 from lib.conf.pars.pars import getPar
 from lib.plot.aux import plot_quantiles
-from lib.plot.base import BasePlot, Plot, AutoPlot
+from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot
 
 
 def plot_fft(s, c, palette=None, axx=None, ax=None, fig=None, **kwargs):
@@ -63,7 +65,7 @@ def plot_fft_multi(axx=None, ax=None, fig=None, **kwargs):
     return P.get()
 
 
-def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
+def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
                   Nids=None, **kwargs):
     from scipy.fft import fft, fftfreq
 
@@ -135,3 +137,60 @@ def powerspectrum(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspe
 
 
 
+#
+def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums', **kwargs):
+    Nks=len(ks)
+
+    if name is None :
+        name=f'fft_powerspectrum_x{Nks}'
+    P = AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, figsize=(10, 8), **kwargs)
+    P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0, 3.5),ylim=(0, 5))
+    ax = P.axs[0]
+    from scipy.fft import fft, fftfreq
+    # Nticks=P.Nticks
+    kcols=['Greens','Reds']
+
+    #
+    cols=[[cm.get_cmap(kcols[j])(i) for i in np.linspace(0.6, 0.9, P.Ndatasets)]for j,k in enumerate(ks)]
+    # elif P.Ndatasets :
+
+    # print(xf.shape)
+    # print(P.Nticks, P.datasets[0].Nticks,P.datasets[1].Nticks)
+
+
+    def proc(df, ids,ax, d_col, label) :
+        Nticks = len(df.index.get_level_values('Step').unique())
+        xf = fftfreq(Nticks, 1 / P.fr)[:Nticks // 2]
+        yf0 = np.zeros(Nticks // 2)
+        for id in ids:
+            dc_single = df.xs(id, level='AgentID').values
+            dc_single = np.nan_to_num(dc_single)
+            yf = fft(dc_single)
+            yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
+            yf = 1000 * yf / np.sum(yf)
+            yf = data_aux.moving_average(yf, n=21)
+            ax.plot(xf, yf, color=d_col, alpha=0.2)
+            yf0 += yf
+        yf0 = 1000 * yf0 / np.sum(yf0)
+        ax.plot(xf, yf0, color=d_col, label=label)
+        ymax = np.max(yf0[xf > thr])
+        xpos = np.argmax(yf0[xf > thr])
+        xmax = xf[xf > thr][xpos]
+        ax.plot(xmax, ymax, color=d_col, marker='o')
+        ax.annotate(np.round(xmax, 2), xy=(xmax, ymax), xytext=(xmax + 0.2, ymax + 0.1), color=d_col, fontsize=25)
+
+    for j,k in enumerate(P.ks) :
+        dic,p=P.kpdict[k]
+        for i,l in enumerate(P.labels) :
+            ids=P.datasets[l].config.agent_ids
+            df = dic[l].df
+            col = cols[j][i]
+            proc(df, ids, ax, col, p.disp)
+
+
+    if P.Ndatasets > 1:
+        P.data_leg(0,colors=[ii[0] for ii in cols],loc='upper left', fontsize=15)
+    # elif Nks > 1:
+    #     ax.legend()
+    P.adjust((0.2, 0.95), (0.15, 0.95))
+    return P.get()

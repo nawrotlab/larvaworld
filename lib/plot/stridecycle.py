@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt, ticker, cm
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.conf.pars.pars import getPar
 from lib.plot.aux import plot_quantiles, suf
-from lib.plot.base import AutoPlot, Plot
+from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
 from lib.process.aux import compute_interference
 
 
@@ -327,6 +327,9 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
         shorts.append('bv')
     elif mode == 'spinelength':
         shorts.append('l')
+
+
+
     Npars = len(shorts)
 
     pars, ylabs = getPar(shorts, to_return=['d', 'l'])
@@ -351,7 +354,57 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
               xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
     P.adjust((0.12, 0.95), (0.2 / Npars, 0.97), 0.05, 0.1)
     return P.get()
-
-
-
-
+#
+#
+# def plot_interference(mode='orientation', agent_idx=None, subfolder='interference', **kwargs):
+#     name = f'interference_{mode}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}'
+#
+#     ks = ['sv']
+#     if mode == 'orientation':
+#         ks.append('fov')
+#     elif mode == 'orientation_x2':
+#         ks.append('fov')
+#         ks.append('rov')
+#     elif mode == 'bend':
+#         ks.append('bv')
+#     elif mode == 'spinelength':
+#         ks.append('l')
+#
+#     Nks = len(ks)
+#
+#     # pars, ylabs = getPar(shorts, to_return=['d', 'l'])
+#     P = AutoLoadPlot(ks=ks,name=name, subfolder=subfolder, Nrows=Nks, figsize=(10, Nks * 5), sharex=True, **kwargs)
+#     if agent_idx is not None:
+#         ids= {d.id: d.config.agent_ids[agent_idx] for d in P.datasets}
+#
+#     for i, (k, dic) in enumerate(P.kdict.items()):
+#         p = P.pdict[k]
+#         for j, (did, df) in enumerate(dic.items()):
+#             if agent_idx is not None:
+#                 df=df.loc[ids[did]].values
+#             plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=P.colors[j], label=did)
+#             P.conf_ax(i, ylab=p.label, ylim=p.lim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right')
+#
+#     ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
+#
+#     if agent_idx is not None:
+#         data = [[d.load_aux(type='stride', par=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
+#                 d in P.datasets]
+#     else:
+#         data = [[d.load_aux(type='stride', par=p).values for p in pars] for d in P.datasets]
+#     Npoints = data[0][0].shape[1] - 1
+#     for d0, c, l in zip(data, P.colors, P.labels):
+#         if mode in ['bend', 'orientation']:
+#             d0 = [np.abs(d) for d in d0]
+#         for i, (p, ylab, df) in enumerate(zip(pars, ylabs, d0)):
+#             plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
+#             P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right')
+#
+#     P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
+#               xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+#     P.adjust((0.12, 0.95), (0.2 / Nks, 0.97), 0.05, 0.1)
+#     return P.get()
+#
+#
+#
+#

@@ -378,13 +378,13 @@ class AutoPlot(Plot):
         self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs, sharex=sharex, sharey=sharey)
 
 
-def load_ks(ks, datasets, d0):
+def load_ks(ks, ds,ls,cols, d0):
     dic = {}
     for k in ks:
         dic[k] = {}
-        for d in datasets:
+        for d,l,col in zip(ds,ls,cols):
             vs = d0.get(k=k, d=d, compute=True)
-            dic[k][d.id] = vs
+            dic[k][l] = dNl.NestDict({'df':vs, 'col':col})
     return dNl.NestDict(dic)
 
 
@@ -393,8 +393,11 @@ class AutoLoadPlot(AutoPlot) :
         from lib.conf.pars.pars import ParDict
         super().__init__(**kwargs)
         d0 = ParDict
-        self.kdict= load_ks(ks, self.datasets, d0)
+        self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, d0)
         self.pdict=dNl.NestDict({k:d0.dict[k] for k in ks})
+        self.kpdict=dNl.NestDict({k:[self.kdict[k],self.pdict[k]] for k in ks})
+        self.ks=ks
+        self.pars=[self.pdict[k].d for k in ks]
 
 
 class GridPlot(BasePlot):

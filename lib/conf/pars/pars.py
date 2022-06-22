@@ -121,8 +121,20 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
 
         def exists(self, dataset):
             par = self.d
-            s, e, c = dataset.step_data, dataset.endpoint_data, dataset.config
-            dic = {'step': par in s.columns, 'end': par in e.columns}
+            d=dataset
+            dic = dNl.NestDict({'step': False, 'end': False})
+            if hasattr(d,'step_data'):
+                s=d.step_data
+                if par in s.columns :
+                    dic.step=True
+            if hasattr(d, 'endpoint_data'):
+                e = d.endpoint_data
+                if par in e.columns:
+                    dic.end = True
+
+
+
+            c=d.config
             if 'aux_pars' in c.keys():
                 for k, ps in c.aux_pars.items():
                     dic[k] = par in ps

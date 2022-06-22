@@ -1,4 +1,5 @@
 import itertools
+import time
 
 import numpy as np
 from matplotlib.patches import Patch
@@ -7,7 +8,7 @@ from scipy.stats import ttest_ind
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import label_diff
-from lib.plot.base import BasePlot, Plot
+from lib.plot.base import BasePlot, Plot, AutoLoadPlot
 
 
 def error_barplot(error_dict, evaluation, axs=None, fig=None, labels=None, name='error_barplots',
@@ -43,9 +44,22 @@ def intake_barplot(**kwargs):
 
 
 def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+    Nks = len(par_shorts)
+    maxNrows = 3
+    if Nks > maxNrows:
+        Ncols = int(np.ceil(Nks / maxNrows))
+        Nrows = maxNrows
+        figsize = (Ncols * 6, Nrows * 5)
+    else:
+        Nrows = Nks
+        Ncols = 1
+        figsize = (9, 6)
+
+
     P = Plot(name=par_shorts[0], **kwargs)
+    P.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize)
     Nds = P.Ndatasets
-    Npars = len(par_shorts)
+    # Npars = len(par_shorts)
     w = 0.15
 
     if coupled_labels is not None:
@@ -66,13 +80,13 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
     bar_kwargs = {'width': w, 'color': colors, 'linewidth': 2, 'zorder': 5, 'align': 'center', 'edgecolor': 'black'}
     err_kwargs = {'zorder': 20, 'fmt': 'none', 'linewidth': 4, 'ecolor': 'k', 'barsabove': True, 'capsize': 10}
-    P.build(Npars, 1, figsize=(9, 6))
+
+
     for ii, sh in enumerate(par_shorts):
         ax = P.axs[ii]
         from lib.conf.pars.pars import getPar
         p, u = getPar(sh, to_return=['d', 'l'])
         vs = [d.get_par(key='end', par=p) for d in P.datasets]
-        # vs = [d.endpoint_data[p] for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]
         ax.p1 = ax.bar(ind, means, **bar_kwargs)
@@ -92,11 +106,90 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
             P.data_leg(ii,labels=leg_ids, colors=leg_cols, loc='upper left', handlelength=1, handleheight=1)
             # dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
 
-        h = 2 * (np.nanmax(means) + np.nanmax(stds))
         P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,
                   ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), xticks=xticks, xticklabels=xticklabels)
     P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
+    P.fig.align_ylabels(P.axs[:])
     return P.get()
+
+
+
+
+def auto_barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+    Nks = len(par_shorts)
+    maxNrows=3
+    if Nks>maxNrows:
+        Ncols=int(np.ceil(Nks/maxNrows))
+        Nrows = maxNrows
+        figsize = (Ncols * 6, Nrows * 5)
+    else :
+        Nrows = Nks
+        Ncols = 1
+        figsize = (9, 6)
+    P = AutoLoadPlot(ks=par_shorts,name=par_shorts[0],Nrows=Nrows,Ncols=Ncols, figsize=figsize, **kwargs)
+    Nds = P.Ndatasets
+
+    w = 0.15
+
+    if coupled_labels is not None:
+        Npairs = len(coupled_labels)
+        N = int(Nds / Npairs)
+        if leg_cols is None:
+            leg_cols = cNs.N_colors(N)
+        colors = leg_cols * Npairs
+        leg_ids = P.labels[:N]
+        ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
+        new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
+        xticks, xticklabels = new_ind, coupled_labels
+        ijs=[(kk * N, kk * N + 1) for kk in range(Npairs)]
+
+        ij_pairs = ijs
+        finfuncN = 2
+
+    else:
+        ind = np.arange(0, w * Nds, w)
+        colors = P.colors
+        leg_ids = P.labels
+        xticks, xticklabels = ind, P.labels
+        ijs =[]
+        for i, j in itertools.combinations(np.arange(Nds).tolist(), 2):
+            ijs.append((i,j))
+
+        ij_pairs=ijs
+        finfuncN=1
+
+
+    bar_kwargs = {'width': w, 'color': colors, 'linewidth': 2, 'zorder': 5, 'align': 'center', 'edgecolor': 'black'}
+    err_kwargs = {'zorder': 20, 'fmt': 'none', 'linewidth': 4, 'ecolor': 'k', 'barsabove': True, 'capsize': 10}
+
+    for ii,k in enumerate(P.ks) :
+        ax = P.axs[ii]
+        dic,p=P.kpdict[k]
+        vs=[ddic.df for l,ddic in dic.items()]
+        means = [v.mean() for v in vs]
+        stds = [v.std() for v in vs]
+        ax.p1 = ax.bar(ind, means, **bar_kwargs)
+        ax.errs = ax.errorbar(ind, means, yerr=stds, **err_kwargs)
+
+        for i, j in ij_pairs:
+            st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
+            pv = np.round(pv, 4)
+
+
+            if finfuncN==1:
+                label_diff(i, j, f'p={pv}', ind, means, P.axs[ii])
+
+            elif finfuncN==2:
+                if pv <= 0.05:
+                    P.axs[ii].text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
+                P.data_leg(ii, labels=leg_ids, colors=leg_cols, loc='upper left', handlelength=1, handleheight=1)
+
+        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=p.label if ylabel is None else ylabel,
+                  ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), xticks=xticks, xticklabels=xticklabels)
+    P.adjust((0.15, 0.95), (0.15, 0.95), W=0.1,H=0.1)
+    P.fig.align_ylabels(P.axs[:])
+    return P.get()
+
 
 
 

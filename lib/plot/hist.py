@@ -1,4 +1,5 @@
 import itertools
+import time
 import warnings
 
 import numpy as np
@@ -7,7 +8,7 @@ import pandas as pd
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.conf.pars.pars import ParDict, getPar
 from lib.plot.aux import scatter_hist
-from lib.plot.base import BasePlot, AutoPlot, Plot
+from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
 def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
@@ -185,7 +186,7 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     return P.get()
 
 
-def plot_endpoint_params(axs=None, fig=None, mode='basic', par_shorts=None, subfolder='endpoint',
+def plot_endpoint_params2(axs=None, fig=None, mode='basic', par_shorts=None, subfolder='endpoint',
                          plot_fit=True, nbins=20, Ncols=None, use_title=True, **kwargs):
     warnings.filterwarnings('ignore')
     P = Plot(name=f'endpoint_params_{mode}', subfolder=subfolder, **kwargs)
@@ -346,6 +347,150 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
+def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
+                         plot_fit=True, nbins=20, Ncols=None, use_title=True, **kwargs):
+    #warnings.filterwarnings('ignore')
+
+    ylim = [0.0, 0.25]
+    nbins = nbins
+    l_par = 'l'  # 'l_mu
+    if par_shorts is None:
+        dic = {
+            'basic': [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
+                      'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
+                      'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu'],
+            'minimal': [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
+                        'cum_t', 'str_tr', 'pau_tr', 'tor',
+                        'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+                        'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'tiny': ['fsv', 'sv_mu', 'str_tr', 'pau_tr',
+                     'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'stride_def': [l_par, 'fsv', 'sstr_d_mu', 'sstr_d_std'],
+            'reorientation': ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std'],
+            'tortuosity': ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu'],
+            'result': ['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu'],
+            'limited': [l_par, 'fsv', 'sv_mu', 'sstr_d_mu',
+                        'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
+                        'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
+                        'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
+                        'b_mu', 'b_std', 'bv_mu', 'bv_std',
+                        'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu'],
+            'full': [l_par, 'str_N', 'fsv',
+                     'cum_d', 'cum_sd', 'v_mu', 'sv_mu',
+                     'str_d_mu', 'str_d_std', 'sstr_d_mu', 'sstr_d_std',
+                     'str_std_mu', 'str_std_std', 'sstr_std_mu', 'sstr_std_std',
+                     'str_fo_mu', 'str_fo_std', 'str_ro_mu', 'str_ro_std',
+                     'str_b_mu', 'str_b_std', 'str_t_mu', 'str_t_std',
+                     'cum_t', 'str_tr', 'pau_tr',
+                     'pau_N', 'pau_t_mu', 'pau_t_std', 'tor',
+                     'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
+                     'tor2_std', 'tor5_std', 'tor10_std', 'tor20_std',
+                     'dsp_mu', 'dsp_fin', 'dsp_0_40_fin', 'dsp_0_40_max',
+                     'sdsp_mu', 'sdsp_fin', 'sdsp_0_40_fin', 'sdsp_0_40_max',
+                     'Ltur_t_mu', 'Ltur_t_std', 'cum_Ltur_t', 'Ltur_tr',
+                     'Rtur_t_mu', 'Rtur_t_std', 'cum_Rtur_t', 'Rtur_tr',
+                     'Ltur_fou_mu', 'Ltur_fou_std', 'Rtur_fou_mu', 'Rtur_fou_std',
+                     'b_mu', 'b_std', 'bv_mu', 'bv_std',
+                     ],
+            'deb': [
+                'deb_f_mu', 'hunger', 'reserve_density', 'puppation_buffer',
+                'cum_d', 'cum_sd', 'str_N', 'fee_N',
+                'str_tr', 'pau_tr', 'fee_tr', 'f_am',
+                l_par, 'm'
+                # 'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
+                # 'v_mu', 'sv_mu',
+
+            ]
+        }
+        if mode in dic.keys():
+            par_shorts = dic[mode]
+        else:
+            raise ValueError('Provide parameter shortcuts or define a mode')
+
+    Nks = len(par_shorts)
+    maxNrows = 3
+    if Nks > maxNrows:
+        Ncols = int(np.ceil(Nks / maxNrows))
+        Nrows = maxNrows
+        figsize = (Ncols * 6, Nrows * 5)
+    else:
+        Nrows = Nks
+        Ncols = 1
+        figsize = (9, 6)
+
+    P = AutoLoadPlot(ks=par_shorts,name=f'endpoint_params_{mode}', subfolder=subfolder,sharey=True,
+                     Nrows=Nrows,Ncols=Ncols, figsize=figsize, **kwargs)
+
+    def build_df(vs, ax, bins):
+        Nvalues = [len(i) for i in vs]
+        a = np.empty((np.max(Nvalues), len(vs),)) * np.nan
+        for ll in range(len(vs)):
+            a[:Nvalues[ll], ll] = vs[ll]
+        df = pd.DataFrame(a, columns=P.labels)
+        for j, (col, lab) in enumerate(zip(df.columns, P.labels)):
+
+            v = df[[col]].dropna().values
+            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)),
+                                    color=P.colors[j], alpha=0.5)
+            if plot_fit:
+                x = x[:-1] + (x[1] - x[0]) / 2
+                y_smooth = np.polyfit(x, y, 5)
+                poly_y = np.poly1d(y_smooth)(x)
+                ax.plot(x, poly_y, color=P.colors[j], label=lab, linewidth=3)
 
 
+
+
+    P.init_fits(P.pars)
+    for i,k in enumerate(P.ks) :
+        dic,p=P.kpdict[k]
+        par=p.d
+        P.conf_ax(i, ylab='probability' if i % Ncols == 0 else None, xlab=p.label, xlim=p.lim, ylim=ylim,
+                  xMaxN=4, yMaxN=4, xMath=True, title=p.disp if use_title else None)
+        print(i,k)
+        bins = nbins if p.lim is None else np.linspace(p.lim[0], p.lim[1], nbins)
+        ax = P.axs[i]
+        vs=[ddic.df for l,ddic in dic.items()]
+        P.comp_pvalues(vs, par)
+        P.plot_half_circles(par, i)
+
+
+        try :
+            build_df(vs, ax, bins)
+        except:
+            pass
+
+    P.adjust((0.1, 0.97), (0.17 / Nrows, 1 - (0.1 / Nrows)), 0.1, 0.2 * Nrows)
+    P.data_leg(0, loc='upper right', fontsize=15)
+    return P.get()
+
+
+
+if __name__ == '__main__':
+    from lib.conf.stored.conf import loadConf, kConfDict, loadRef
+
+    ds=[]
+    for refID in ['None.100controls','None.150controls' ] :
+
+    # refID = 'None.100controls'
+    # refID='None.Sims2019_controls'
+
+        d = loadRef(refID)
+        d.load(contour=False,step=False)
+        ds.append(d)
+    # s, e, c = d.step_data, d.endpoint_data, d.config
+    ks=['fv', 'sv_mu', 'str_d_mu',
+                        'cum_t', 'run_tr', 'pau_tr',
+                        'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+                        'b_mu', 'bv_mu']
+
+    kws={'datasets' : ds, 'show':True, 'par_shorts' : ks}
+    # kws={'datasets' : ds, 'show':True, 'par_shorts' : ks}
+
+    t0=time.time()
+    _ = plot_endpoint_params(**kws)
+    t1 = time.time()
+    _=plot_endpoint_params2(**kws)
+    t2= time.time()
+    print(t1-t0,t2-t1)
 

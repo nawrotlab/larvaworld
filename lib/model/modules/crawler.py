@@ -18,34 +18,77 @@ class Crawler(Oscillator):
         self.max_vel_phase = max_vel_phase
         self.stride_dst_mean, self.stride_dst_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
         self.step_to_length = self.new_stride
+        self.square_signal_duty = self.square_signal_duty
+
+
 
 
         # if waveform == 'square':
-        #     self.square_signal_duty = square_signal_duty
+        #     self.phi_func = square_signal_duty
         # elif waveform == 'gaussian':
-        #     self.gaussian_window_std = gaussian_window_std
+        self.gaussian_window_std = gaussian_window_std
         # elif waveform == 'realistic':
         #     self.max_vel_phase = max_vel_phase
 
-        # waveform_func_dict = {
-        #     'square': lambda phi,c: c*(1+self.amp*signal.square(phi, duty=square_signal_duty)),
-        #     'gaussian': lambda phi,c: c*(1+self.amp*signal.gaussian(360, gaussian_window_std * 360, sym=False)[int(np.rad2deg(phi))]),
-        #     'realistic': lambda phi,c: c*(1+max_scaled_vel*np.cos(phi - self.max_vel_phase)),
-        #     'constant': lambda phi,c: self.amp,
+        # phi_funcs = {
+        #     'square': lambda phi: signal.square(phi, duty=square_signal_duty),
+        #     'gaussian': lambda phi: signal.gaussian(360, gaussian_window_std * 360, sym=False)[int(np.rad2deg(phi))],
+        #     'realistic': lambda phi: np.cos(phi - self.max_vel_phase),
+        #     'constant': lambda phi: 1,
         # }
-        #
-        waveform_func_dict = {
+        # self.phi_func = phi_funcs[waveform]
+
+
+            # def defineAfunc(waveform):
+            #
+            #     phi_func = phi_funcs[waveform]
+            #     coef_funcs = {
+            #             'square': self.amp,
+            #             'gaussian': self.amp,
+            #             'realistic': self.max_scaled_vel,
+            #             'constant': self.amp,
+            #         }
+            #
+            # def coef
+
+        # #
+        waveform_funcs = {
             'square': self.square_oscillator,
             'gaussian': self.gaussian_oscillator,
             'realistic': self.realistic_oscillator,
             'constant': self.constant_crawler,
         }
-        self.waveform_func = waveform_func_dict[waveform]
+        # # self.
+        self.waveform_func = waveform_funcs[waveform]
         self.start_effector()
+
+
+
+
+    # @property
+    # def coef(self):
+    #     if self.waveform in ['square', 'gaussian'] :
+    #         c=self.amp
+    #     elif self.waveform in ['realistic'] :
+    #         c=self.max_scaled_vel
+    #     elif self.waveform in ['constant'] :
+    #         c=self.amp
+    #
+    # @property
+    # def coef1(self):
+    #     return self.max_scaled_vel
+
+    # @property
+    # def coef0(self):
+    #     return self.freq * self.step_to_length
 
     @property
     def new_stride(self):
         return np.random.normal(loc=self.stride_dst_mean, scale=self.stride_dst_std)
+
+    # @property
+    # def Afunc(self):
+    #     c0=self.coef0
 
     def step(self):
         if self.effector:
@@ -54,11 +97,16 @@ class Crawler(Oscillator):
                 self.step_to_length = self.new_stride
 
             # self.activity = self.waveform_func(phi=self.phi, c=self.freq * self.step_to_length)
+            # self.activity = self.Afunc()
             self.activity = self.freq * self.step_to_length * (1 + self.max_scaled_vel * self.waveform_func())
         else:
 
             self.activity = 0
         return self.activity
+
+
+
+
 
     def gaussian_oscillator(self):
         # A=self.timesteps_per_iteration
