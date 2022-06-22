@@ -7,7 +7,7 @@ import numpy as np
 from lib.aux.combining import combine_pdfs
 from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.anal.comparing import ExpFitter
-from lib.plot.dataplot import plot_navigation_index, \
+from lib.plot.time import plot_navigation_index, \
     plot_dispersion, timeplot, plot_pathlength, plot_nengo_network
 from lib.plot.bearing import plot_turn_Dbearing, plot_chunk_Dorient2source
 from lib.plot.scape import plot_2pars
@@ -151,22 +151,26 @@ def source_analysis(source_xy, **kwargs):
         for p in [nam.bearing2(n), nam.dst2(n), nam.scal(nam.dst2(n))]:
             figs[p] = timeplot(pars=[p], **kwargs)
 
-        for chunk in ['turn', 'stride', 'pause']:
+        for ref_angle,save_as in zip([None,270],[f'bearing to {n}','bearing to 270deg']) :
+            figs[save_as] = plot_turn_Dbearing(min_angle=5.0, ref_angle=ref_angle, source_ID=n,save_as=save_as, **kwargs)
+
+        for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
             for dur in [0.0, 0.5, 1.0]:
-                try:
-                    figs[f'{chunk}_bearing2_{n}_min_{dur}_sec'] = plot_chunk_Dorient2source(chunk=chunk,
-                                                                                            source_ID=n,
-                                                                                            min_dur=dur, **kwargs)
-                except:
-                    pass
+                save_as=f'{chunk}_bearing2_{n}_min_{dur}_sec'
+                figs[save_as] = plot_chunk_Dorient2source(chunk=chunk, source_ID=n, min_dur=dur, save_as=save_as,
+                                                          **kwargs)
+                # try:
+                #
+                # except:
+                #     pass
     return figs
 
 
 def foraging_analysis(sources, **kwargs):
     figs = {}
     for n, pos in sources.items():
-        figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None, source_ID=n, **kwargs)
-        figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, source_ID=n, **kwargs)
+        for ref_angle, save_as in zip([None, 270], [f'bearing to {n}', 'bearing to 270deg']):
+            figs[save_as] = plot_turn_Dbearing(min_angle=5.0, ref_angle=ref_angle, source_ID=n, save_as=save_as,**kwargs)
     figs['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **kwargs)
     figs['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **kwargs)
     figs['turn angle VS Y pos (scatter)'] = plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)

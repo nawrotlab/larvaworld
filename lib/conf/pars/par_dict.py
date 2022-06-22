@@ -205,22 +205,32 @@ class BaseParDict:
             self.addPar(**{'p': pl, 'k': kl, 'sym': sub('l', kc), 'dtype': int, 'vfunc': param.Integer, **f_kws})
             self.add_operators(k0=kl)
 
-    def add_chunk_track(self, kc, k, extrema=True, func=None, required_ks=[]):
+    def add_chunk_track(self, kc, k):
         bc = self.dict[kc]
         b = self.dict[k]
         b0, b1 = self.dict[f'{kc}0'], self.dict[f'{kc}1']
         p0, p1 = nam.at(b.p, b0.p), nam.at(b.p, b1.p)
+        p01 = nam.chunk_track(bc.p, b.p)
+        # print(p01,p0,p1)
+        k01 = f'{kc}_{k}'
+        k0,k1=f'{k01}0',f'{k01}1'
+        disp01 = f'{b.disp} during {bc.p}s'
+        disp0,disp1 =f'{b.disp} at {bc.p} start',f'{b.disp} at {bc.p} stop'
 
-        k00 = f'{kc}_{k}'
-        disp = f'{b.disp} during {bc.p}s'
-        self.addPar(
-            **{'p': nam.chunk_track(bc.p, b.p), 'k': k00, 'u': b.u, 'sym': sub(Delta(b.sym), kc),
-               'disp': disp, 'vfunc': param.Number, 'func': func, 'required_ks': required_ks})
-        self.add_operators(k0=k00)
+        sym01=sub(Delta(b.sym), kc)
+        sym0,sym1=subsup(b.sym, kc, 0),subsup(b.sym, kc, 1)
+        # func=self.func_dict.track_par(bc.p, b.p)
+        kws={
+            'vfunc': param.Number,
+            'func': self.func_dict.track_par(bc.p, b.p),
+            'u': b.u
+        }
+        self.addPar(**{'p': p01, 'k': k01, 'sym': sym01, 'disp': disp01, **kws})
+        self.addPar(**{'p': p0, 'k': k0, 'sym': sym0, 'disp': disp0, **kws})
+        self.addPar(**{'p': p1, 'k': k1, 'sym': sym1, 'disp': disp1, **kws})
+        self.add_operators(k0=k01)
 
-        if extrema:
-            self.addPar(**{'p': p0, 'k': f'{kc}_{k}0', 'u': b.u, 'sym': subsup(b.sym, kc, 0), 'vfunc': param.Number})
-            self.addPar(**{'p': p1, 'k': f'{kc}_{k}1', 'u': b.u, 'sym': subsup(b.sym, kc, 1), 'vfunc': param.Number})
+
 
     def add_velNacc(self, k0, p_v=None, k_v=None, d_v=None, sym_v=None, disp_v=None, p_a=None, k_a=None, d_a=None,
                     sym_a=None, disp_a=None, func_v=None):
@@ -485,7 +495,7 @@ class BaseParDict:
             self.add_chunk(pc=pc, kc=kc, func=func, required_ks=required_ks)
             for k in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a',
                       'sa', 'd', 'sd']:
-                self.add_chunk_track(kc=kc, k=k, func=func, required_ks=required_ks)
+                self.add_chunk_track(kc=kc, k=k)
         self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score', d='handedness_score',
                       sym=sub('H', 'tur'), lim=(0.0, 1.0), disp='Handedness score')
         self.addPar(**{'p': f'handedness_score_on_food', 'k': 'tur_H_on_food'})
@@ -513,3 +523,11 @@ class BaseParDict:
                        'sym': sub('A', 'wind'), 'vfunc': param.Number, **kws})
         self.addPar(**{'p': 'brain.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance',
                        'disp': 'exploitVSexplore_balance', 'sym': 'EEB', 'vfunc': param.Magnitude, **kws})
+
+        for ii,jj in (['1', '2'], ['first', 'second']) :
+            k=f'c_odor{ii}'
+            dk=f'd{k}'
+            self.addPar(**{'p': f'brain.olfactor.{jj}_odor_concentration', 'k': k, 'd': k,
+                           'disp': f'Odor {ii} concentration', 'sym': subsup('C', 'od',ii), 'vfunc': param.Number, **kws})
+            self.addPar(**{'p': f'brain.olfactor.{jj}_odor_concentration_change', 'k': dk, 'd': dk,
+                           'disp': f'Odor {ii} concentration change', 'sym': subsup(Delta('C'), 'od',ii), 'vfunc': param.Number, **kws})

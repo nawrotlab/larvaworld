@@ -204,7 +204,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
 
 
 class ParRegistry:
-    def __init__(self, mode='build', object=None, save=True, load_funcs=True):
+    def __init__(self, mode='build', object=None, save=True, load_funcs=False):
         from lib.conf.pars.par_dict import BaseParDict
         from lib.conf.pars.par_funcs import build_func_dict
         from lib.conf.base.paths import build_path_dict
@@ -230,6 +230,7 @@ class ParRegistry:
             self.func_dict = dNl.load_dict(self.path_dict['ParFuncDict'])
         else:
             self.func_dict = build_func_dict()
+            dNl.save_dict(self.func_dict, self.path_dict['ParFuncDict'])
 
         if mode == 'load':
 
@@ -254,7 +255,7 @@ class ParRegistry:
         return dic
 
     def save(self):
-        dNl.save_dict(self.func_dict, self.path_dict['ParFuncDict'])
+
         df = pd.DataFrame.from_records(self.dict_entries, index='k')
         df.to_csv(self.path_dict['ParDf'])
 
@@ -332,11 +333,22 @@ def getPar(k=None, p=None, d=None, to_return='d', PF=ParDict):
 def runtime_pars(PF=ParDict.dict):
     return [v.d for k, v in PF.items()]
 
+def auto_load(ks,datasets, PF=ParDict):
+    dic= {}
+    for k in ks :
+        dic[k]={}
+        for d in datasets :
+            vs=PF.get(k=k, d=d, compute=True)
+            dic[k][d.id]=vs
+    return dNl.NestDict(dic)
+
+
 
 if __name__ == '__main__':
     # # p.param.trigger('disp', 'd')
-    # d = ParDict.dict['ba'].param.d
-    # print(ParDict.graph_dict.dict)
+    d = ParDict.dict['tur_y0']
+    print(d)
+    print(d.func)
     #
     # ParDict.larva_conf_dict.mIDtable(mID='PHIonNEU', show=True)
 

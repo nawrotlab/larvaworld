@@ -5,7 +5,7 @@ from scipy.signal import find_peaks
 
 from lib.aux.sim_aux import fft_max, fft_freqs
 from lib.conf.pars.pars import getPar
-from lib.aux import dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, naming as nam
 
 
 from lib.process.store import store_aux_dataset
@@ -540,7 +540,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
             np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
         ]
         crawl_dict[id] = {'stride': strides,'stride_Dor': stride_Dor, 'run': runs, 'pause': pauses,
-                          'run_idx': run_idx, 'pause_idx': pause_idx,
+                          'run_idx': run_idx, 'pause_idx': pause_idx,'stride_dur': stride_durs,
                           'run_count': str_chain_ls, 'run_dur': run_durs, 'run_dst': run_dsts, 'pause_dur': pause_durs}
     s[run_ps] = run_vs.reshape([c.Nticks * c.N, len(run_ps)])
     e[lin_ps] = lin_vs
@@ -561,3 +561,28 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l','str_d','str_sd'])
         store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
+
+def track_par_in_chunk(d,chunk,par) :
+    c0 = nam.start(chunk)
+    c1 = nam.stop(chunk)
+    b0_par = nam.at(par, c0)
+    b1_par = nam.at(par, c1)
+    db_par = nam.chunk_track(chunk, par)
+    bpars = [b0_par, b1_par, db_par]
+    s, c = d.step_data, d.config
+    A = np.zeros([c.Nticks, c.N, len(bpars)]) * np.nan
+
+    dic0 = d.load_chunk_dicts()
+    for i, id in enumerate(c.agent_ids):
+        epochs = dic0[id][chunk]
+        ss = s[par].xs(id, level='AgentID')
+        Nepochs = epochs.shape[0]
+        if Nepochs > 0:
+            t0s, t1s = epochs[:, 0], epochs[:, 1]
+            b0s = ss.loc[t0s].values
+            b1s = ss.loc[t1s].values
+            # dbs=b1s-b0s
+            A[t0s, i, 0] = b0s
+            A[t1s, i, 1] = b1s
+            A[t1s, i, 2] = b1s - b0s
+    s[bpars] = A.reshape([c.Nticks * c.N, len(bpars)])

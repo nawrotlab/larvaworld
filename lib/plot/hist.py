@@ -97,6 +97,8 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, pvalues=False,type='
     P.adjust((0.25 / Ncols, 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
+def plot_turn_amp_VS_Ypos(**kwargs):
+    return plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
 
 def plot_turn_duration(absolute=True, **kwargs):
     return plot_turn_amp(par_short='tur_t', mode='scatter', absolute=absolute, **kwargs)

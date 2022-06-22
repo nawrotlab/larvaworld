@@ -37,7 +37,7 @@ class Calibration:
         s, e, c = d.step_data, d.endpoint_data, d.config
         self.absolute = absolute
         self.shorts = shorts
-        self.target = {sh : d.get_chunk_par_distro(chunk='pause', short=sh, min_dur=3) for sh in self.shorts}
+        self.target = {sh : d.get_chunk_par(chunk='pause', short=sh, min_dur=3, mode='distro') for sh in self.shorts}
         self.N = self.target[self.shorts[0]].shape[0]
         self.dt = c.dt
         self.best = None

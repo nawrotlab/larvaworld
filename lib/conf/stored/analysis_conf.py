@@ -23,6 +23,20 @@ def time(short, title=None, u='sec', f1=False, abs=False, **kwargs):
     }
     return {'title': title, 'plotID': 'timeplot', 'args': args}
 
+def autotime(ks, title=None, u='sec', f1=True,ind=True, **kwargs):
+    if title is None:
+        title = f'autoplot_x{len(ks)}'
+        # name =f'{short} timeplot'
+    args = {
+        'ks': ks,
+        # 'show_first': f1,
+        'unit': u,
+        'show_first': f1,
+        'individuals': ind,
+        **kwargs
+    }
+    return {'title': title, 'plotID': 'autoplot', 'args': args}
+
 
 def end(shorts=None, title=None, **kwargs):
     if title is None:
@@ -33,14 +47,7 @@ def end(shorts=None, title=None, **kwargs):
         # 'unit': u,
         **kwargs
     }
-    return {'title': title, 'plotID': 'endpoint params', 'args': args}
-
-    if 'chemo' in exp_type:
-        for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
-            figs[p] = timeplot([p], **cc)
-        figs['turns'] = plot_turns(**cc)
-        figs['ang_pars'] = plot_ang_pars(Npars=5, **cc)
-        figs.update(**source_analysis(d.config['sources'], **cc))
+    return {'title': title, 'plotID': 'endpoint pars (hist)', 'args': args}
 
 
 def bar(short, title=None, **kwargs):
@@ -93,6 +100,21 @@ def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
     return {'title': title, 'plotID': 'deb', 'args': args}
 
 
+def foraging_list(sources):
+    d0 = [time('y', 'Y position', legend_loc='lower left'),
+          entry('navigation index'),
+          entry('turn amplitude'),
+          entry('turn duration'),
+          entry('turn amplitude VS Y pos', 'turn angle VS Y pos (scatter)', mode='scatter'),
+          entry('turn amplitude VS Y pos', 'turn angle VS Y pos (hist)', mode='hist'),
+          entry('turn amplitude VS Y pos', 'bearing correction VS Y pos', mode='hist',  ref_angle=270),
+          ]
+    for n, pos in sources.items():
+        d0 += [entry('bearing/turn', f'bearing to {n}', min_angle=5.0, ref_angle=None, source_ID=n),
+               entry('bearing/turn', 'bearing to 270deg', min_angle=5.0, ref_angle=270, source_ID=n)]
+    return d0
+
+
 analysis_dict = dNl.NestDict({
     'tactile': [
         end(['on_food_tr'], 'time ratio on food (final)'),
@@ -104,8 +126,10 @@ analysis_dict = dNl.NestDict({
         entry('ethogram'),
     ],
     'chemo': [
+
+        autotime(['sv', 'fov', 'b', 'x', 'a']),
         entry('trajectories'),
-        #*[time(p) for p in ['c_odor1']],
+        # *[time(p) for p in ['c_odor1']],
         *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']],
         'source_analysis',
         entry('turn amplitude'),
@@ -115,20 +139,20 @@ analysis_dict = dNl.NestDict({
     ],
     'intake': [
         'deb_analysis',
-        *[time(p) for p in ['sf_faeces_M', 'f_faeces_M', 'sf_abs_M', 'f_abs_M', 'f_am']],
+        # *[time(p) for p in ['sf_faeces_M', 'f_faeces_M', 'sf_abs_M', 'f_abs_M', 'f_am']],
         entry('food intake (timeplot)', 'food intake (raw)'),
         entry('food intake (timeplot)', 'food intake (filtered)', filt_amount=True),
         entry('pathlength', scaled=False),
         bar('f_am', 'food intake (barplot)'),
-        entry('ethogram'),
+        entry('ethogram')
 
     ],
     'anemotaxis': [
         *[nengo(p, same_plot=True if p == 'anemotaxis' else False) for p in
           ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V',
            'wind_effect_on_Fr']],
-        *[time(p) for p in ['A_wind', 'anemotaxis', 'o_wind']],
-        *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
+        *[time(p) for p in ['A_wind', 'anemotaxis']],
+        # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
         end(['anemotaxis'], 'final anemotaxis')
 
     ],
@@ -153,6 +177,8 @@ analysis_dict = dNl.NestDict({
         time('g_odor1', 'best_gains_table', save_as='best_gains.pdf', table='best_gains'),
         time(*['g_odor1', 'g_odor2'], 'best_gains_table_x2', save_as='best_gains_x2.pdf', table='best_gains'),
     ],
+    'patch': [
+        'foraging_analysis'],
     'survival': [
         entry('foraging'),
         time('on_food_tr', 'time ratio on food', u='min'),

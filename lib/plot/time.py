@@ -4,7 +4,7 @@ from matplotlib import collections as mc
 from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl
 from lib.conf.pars.pars import getPar, ParDict
 
-from lib.plot.base import Plot, AutoPlot
+from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
 from lib.plot.aux import plot_quantiles
 
 
@@ -189,6 +189,34 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         P.data_leg(0, loc=legend_loc, fontsize=leg_fontsize)
         # dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=leg_fontsize)
     P.adjust((0.1, 0.95), (0.15, 0.95))
+    return P.get()
+
+def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True,individuals=True,**kwargs):
+    Nks=len(ks)
+    if name is None :
+        name=f'timeplot_x{Nks}'
+    P = AutoLoadPlot(ks=ks,name=name, subfolder=subfolder, figsize=(15,5*Nks),Ncols=1,Nrows=Nks,sharex=True, **kwargs)
+    x=P.trange(unit)
+    for i,(k,dic) in enumerate(P.kdict.items()) :
+        ax=P.axs[i]
+        p=P.pdict[k]
+        P.conf_ax(i, xlab=f'time, ${unit}$', ylab=p.label, ylim=p.lim, yMaxN=4,xvis=False if i!=Nks-1 else True)
+        for j,(did,df) in enumerate(dic.items()):
+            c=P.colors[j]
+            if individuals:
+                df_m = df.groupby(level='Step').quantile(q=0.5)
+                for id in df.index.get_level_values('AgentID'):
+                    dc_single = df.xs(id, level='AgentID')
+                    ax.plot(x, dc_single, color=c, linewidth=1)
+                ax.plot(x, df_m, color=c, linewidth=2)
+            else:
+                plot_quantiles(df=df, x=x, axis=ax, color_shading=c, linewidth=2)
+                if show_first:
+                    dc0 = df.xs(df.index.get_level_values('AgentID')[0], level='AgentID')
+                    ax.plot(x, dc0, color=c, linestyle='dashed', linewidth=1)
+    P.data_leg(0)
+    P.adjust((0.1, 0.95), (0.15, 0.95))
+    P.fig.align_ylabels(P.axs[:])
     return P.get()
 
 

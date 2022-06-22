@@ -6,6 +6,7 @@ import time
 import numpy as np
 from lib.aux import naming as nam,dictsNlists as dNl
 from lib.aux.sim_aux import get_source_xy
+
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
 
@@ -121,9 +122,12 @@ class SingleRun:
 
     def analyze(self, **kwargs):
         exp=self.experiment
-
+        # print(exp)
+        # raise
         from lib.conf.stored.analysis_conf import analysis_dict
+        # print('kkkkk')
         dic={
+            'patch' : analysis_dict.patch,
             'tactile' : analysis_dict.tactile,
             'RvsS' : analysis_dict.intake,
             'growth' : analysis_dict.intake,
@@ -164,6 +168,10 @@ class SingleRun:
                 figs.update(**source_analysis(self.source_xy, **kws))
             elif entry == 'foraging_analysis':
                 figs.update(**foraging_analysis(self.source_xy, **kws))
+            elif entry == 'foraging_list':
+                from lib.conf.stored.analysis_conf import foraging_list
+                for_l=foraging_list(sources=self.source_xy)
+                figs=plot_entries(for_l, figs,graph_dict, **kws)
             elif entry == 'deb_analysis':
                 figs.update(**deb_analysis(**kws))
             elif entry == 'targeted_analysis':
@@ -178,12 +186,29 @@ class SingleRun:
                 kkws['datasets'] = self.datasets + targets
                 figs.update(**comparative_analysis(**kkws))
             else:
-               try :
-                    figs[entry['title']] = graph_dict[entry['plotID']](**entry['args'], **kws)
-               except :
-                   pass
+                figs=plot_entry(entry, figs,graph_dict, **kws)
+               # try :
+               #      func = graph_dict.get(entry['plotID'])
+               #      figs[entry['title']] = func(**entry['args'], **kws)
+               # except :
+               #     pass
+
+
+
         return figs, results
 
+def plot_entries(entries, figs,graph_dict, **kws) :
+    for entry in entries :
+        figs = plot_entry(entry, figs, graph_dict, **kws)
+    return figs
+
+def plot_entry(entry, figs,graph_dict, **kws) :
+    try:
+        func = graph_dict.get(entry['plotID'])
+        figs[entry['title']] = func(**entry['args'], **kws)
+    except:
+        pass
+    return figs
 
 def set_output(collections, Nsegs=2, Ncontour=0):
     from lib.aux.collecting import output_dict

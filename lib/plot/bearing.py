@@ -27,13 +27,18 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
     for i, (d, c) in enumerate(zip(P.datasets, P.colors)):
         ii = Nplots * i
         for k, (chunk, side) in enumerate(zip(['Lturn', 'Rturn'], ['left', 'right'])):
-            b0_par = nam.at(p, nam.start(chunk))
-            b1_par = nam.at(p, nam.stop(chunk))
-            bd_par = nam.chunk_track(chunk, p)
-            # print(b0_par)
-            b0 = d.get_par(b0_par).dropna().values.flatten() - ang0
-            b1 = d.get_par(b1_par).dropna().values.flatten() - ang0
-            db = d.get_par(bd_par).dropna().values.flatten()
+            try :
+                b0_par = nam.at(p, nam.start(chunk))
+                b1_par = nam.at(p, nam.stop(chunk))
+                bd_par = nam.chunk_track(chunk, p)
+                # print(b0_par)
+                b0 = d.get_par(b0_par).dropna().values.flatten()
+                b1 = d.get_par(b1_par).dropna().values.flatten()
+                db = d.get_par(bd_par).dropna().values.flatten()
+            except :
+                b0, b1, db = d.get_chunk_par(chunk=chunk, par=p, mode='extrema')
+            b0-=ang0
+            b1-=ang0
             if norm:
                 b0 %= 360
                 b1 = b0 + db
@@ -86,60 +91,51 @@ def plot_chunk_Dorient2source(source_ID, subfolder='bouts', chunk='stride', Nbin
     Ncols = int(np.ceil(np.sqrt(P.Ndatasets)))
     Nrows = Ncols - 1 if P.Ndatasets < Ncols ** 2 - Ncols else Ncols
     P.build(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows), subplot_kw=dict(projection='polar'), sharey=True)
-
-    durs = [d.get_par(nam.dur(chunk)).dropna().values for d in P.datasets]
-    c0 = nam.start(chunk)
-    c1 = nam.stop(chunk)
+    c_dur=nam.dur(chunk)
     b = nam.bearing2(source_ID)
-    b0_par = nam.at(b, c0)
-    b1_par = nam.at(b, c1)
-    db_par = nam.chunk_track(chunk, b)
-    b0s = [d.get_par(b0_par).dropna().values for d in P.datasets]
-    b1s = [d.get_par(b1_par).dropna().values for d in P.datasets]
-    dbs = [d.get_par(db_par).dropna().values for d in P.datasets]
+    b0s, b1s, dbs= [], [], []
+    try :
+        c0 = nam.start(chunk)
+        c1 = nam.stop(chunk)
+        b0_par = nam.at(b, c0)
+        b1_par = nam.at(b, c1)
+        db_par = nam.chunk_track(chunk, b)
+        for d in P.datasets :
+            dur=d.get_par(c_dur).dropna().values
+            b0=d.get_par(b0_par).dropna().values
+            b0=b0[dur > min_dur]
+            b0s.append(b0)
+            b1 = d.get_par(b1_par).dropna().values
+            b1 = b1[dur > min_dur]
+            b1s.append(b1)
+            db = d.get_par(db_par).dropna().values
+            db = db[dur > min_dur]
+            dbs.append(db)
+    except :
+        for d in P.datasets:
+            b0, b1, db= d.get_chunk_par(chunk=chunk, par=b, min_dur=min_dur, mode='extrema')
+            b0s.append(b0)
+            b1s.append(b1)
+            dbs.append(db)
 
     if plot_merged:
         b0s.insert(0, np.vstack(b0s))
         b1s.insert(0, np.vstack(b1s))
         dbs.insert(0, np.vstack(dbs))
-        durs.insert(0, np.vstack(durs))
 
-    for i, (b0, b1, db, dur, label, c) in enumerate(zip(b0s, b1s, dbs, durs, P.labels, P.colors)):
+
+    for i, (b0, b1, db, label, c) in enumerate(zip(b0s, b1s, dbs, P.labels, P.colors)):
         ax = P.axs[i]
-        b0 = b0[dur > min_dur]
-        b1 = b1[dur > min_dur]
-        db = db[dur > min_dur]
-        b0m, b1m = np.mean(b0), np.mean(b1)
-        dbm = np.round(np.mean(db), 2)
-        if np.isnan([dbm, b0m, b1m]).any():
-            continue
+        dbm = np.round(np.mean(np.deg2rad(db)), 2)
         circNarrow(ax, np.deg2rad(b0), alpha=0.3, label='start', color=c)
         circNarrow(ax, np.deg2rad(b1), alpha=0.6, label='stop', color=c)
-        # circular_hist(ax, b0, bins=Nbins, alpha=0.3, label='start', color=c, offset=np.pi / 2)
-        # circular_hist(ax, b1, bins=Nbins, alpha=0.6, label='stop', color=c, offset=np.pi / 2)
-        # arrow0 = patches.FancyArrowPatch((0, 0), (np.deg2rad(b0m), 0.3), zorder=2, mutation_scale=30, alpha=0.3,
-        #                                  facecolor=c, edgecolor='black', fill=True, linewidth=0.5)
-        #
-        # ax.add_patch(arrow0)
-        # arrow1 = patches.FancyArrowPatch((0, 0), (np.deg2rad(b1m), 0.3), zorder=2, mutation_scale=30, alpha=0.6,
-        #                                  facecolor=c, edgecolor='black', fill=True, linewidth=0.5)
-        # ax.add_patch(arrow1)
-
         text_x = -0.3
         text_y = 1.2
-        ax.text(text_x, text_y, f'Dataset : {label}', transform=ax.transAxes)
-        ax.text(text_x, text_y - 0.1, f'Chunk (#) : {chunk} ({len(b0)})', transform=ax.transAxes)
-        ax.text(text_x, text_y - 0.2, f'Min duration : {min_dur} sec', transform=ax.transAxes)
-        ax.text(text_x, text_y - 0.3, fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$',
-                transform=ax.transAxes)
+        for dy,text in zip([0,0.1,0.2,0.3],
+                           [f'Dataset : {label}',f'Chunk (#) : {chunk} ({len(b0)})',f'Min duration : {min_dur} sec',fr'Correction $\Delta\theta_{{{"or"}}} : {dbm}^{{{"o"}}}$']):
+            ax.text(text_x, text_y-dy, text, transform=ax.transAxes)
         P.conf_ax(i,leg_loc=[0.9, 0.9], title=f'Bearing before and after a {chunk}.', title_y=-0.2,titlefontsize=15,
                   xticklabels = [0, '', +90, '', 180, '', -90, ''],xMaxFix=True)
-        # ax.legend(loc=[0.9, 0.9])
-        # ax.set_title(f'Bearing before and after a {chunk}.', fontsize=15, y=-0.2)
-    # for ax in P.axs:
-    #     ticks_loc = ax.get_xticks().tolist()
-    #     ax.xaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
-    #     ax.set_xticklabels([0, '', +90, '', 180, '', -90, ''])
     P.adjust((0.05 * Ncols / 2, 0.9), (0.2, 0.8), 0.8, 0.3)
     return P.get()
 

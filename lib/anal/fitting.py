@@ -117,13 +117,18 @@ def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id
 
     dic, best = {}, {}
     for k, v in aux_dic.items():
+        # print(k, v.shape)
         # print(k,v.shape)
         if k=='stridechain_length':
             k='run_count'
         discr = True if k == 'run_count' else False
         if v is not None and v.shape[0]>0 :
-            dic[k] = fit_bout_distros(np.abs(v), dataset_id=id, bout=k, combine=False, discrete=discr)
-            best[k] = dic[k]['best'][k]['best']
+            try :
+                dic[k] = fit_bout_distros(np.abs(v), dataset_id=id, bout=k, combine=False, discrete=discr)
+                best[k] = dic[k]['best'][k]['best']
+            except :
+                dic[k] = None
+                best[k] = None
         else:
             dic[k] = None
             best[k] = None
@@ -171,13 +176,14 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmin=np.nanmin(x0)
     if xmax is None :
         xmax=np.nanmax(x0)
-    with suppress_stdout(True):
+    with suppress_stdout(False):
         warnings.filterwarnings('ignore')
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
 
         u2, du2, c2, c2cum = compute_density(x, xmin, xmax, Nbins=Nbins)
         values = [u2, du2, c2, c2cum]
+        print(bout, )
 
         a2 = 1 + len(x) / np.sum(np.log(x / xmin))
         a = get_powerlaw_alpha(x, xmin, xmax, discrete=discrete)

@@ -64,7 +64,7 @@ def build():
         'endpoint pars (scatter)': hist.plot_endpoint_scatter,
         'turn duration': hist.plot_turn_duration,
         'turn amplitude': hist.plot_turns,
-        'turn amplitude VS Y pos': hist.plot_turn_amp,
+        'turn amplitude VS Y pos': hist.plot_turn_amp_VS_Ypos,
     })
     d['stridecycle'] = dNl.NestDict({
         'stride Dbend': stridecycle.plot_stride_Dbend,
@@ -80,6 +80,7 @@ def build():
         'Y pos': time.plot_Y_pos,
         'pathlength': time.plot_pathlength,
         'timeplot': time.timeplot,
+        'autoplot': time.auto_timeplot,
         'ethogram': time.plot_ethogram,
         'nengo': time.plot_nengo_network,
     })
@@ -114,7 +115,21 @@ class GraphDict:
         self.mod_dict = build_mod_dict()
         self.error_dict = build_error_dict()
 
+    def get(self,f):
+        if isinstance(f, str) :
+            if f in self.dict.keys() :
+                f=self.dict[f]
+            elif f in self.mod_dict.keys() :
+                f = self.mod_dict[f]
+            elif f in self.flat_dict.keys() :
+                f = self.flat_dict[f]
+            elif f in self.error_dict.keys() :
+                f = self.error_dict[f]
+            else :
+                raise
+        return f
+
 graph_dict=GraphDict()
 
 if __name__ == '__main__':
-    print(graph_dict.dict)
+    print(graph_dict.get('endpoint plot'))

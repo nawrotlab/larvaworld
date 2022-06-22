@@ -11,13 +11,14 @@ from matplotlib.gridspec import GridSpec
 
 
 from lib.aux import dictsNlists as dNl
+
 from lib.plot.aux import dual_half_circle, plot_config, process_plot
 
 
 class BasePlot:
     def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),
                  **kwargs):
-        self.filename = f'{name}.{suf}' if save_as is None else save_as
+        self.filename = f'{name}.{suf}' if save_as is None else f'{save_as}.{suf}'
         self.return_fig = return_fig
         self.show = show
         self.fit_df = None
@@ -377,6 +378,25 @@ class AutoPlot(Plot):
         self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs, sharex=sharex, sharey=sharey)
 
 
+def load_ks(ks, datasets, d0):
+    dic = {}
+    for k in ks:
+        dic[k] = {}
+        for d in datasets:
+            vs = d0.get(k=k, d=d, compute=True)
+            dic[k][d.id] = vs
+    return dNl.NestDict(dic)
+
+
+class AutoLoadPlot(AutoPlot) :
+    def __init__(self, ks, **kwargs):
+        from lib.conf.pars.pars import ParDict
+        super().__init__(**kwargs)
+        d0 = ParDict
+        self.kdict= load_ks(ks, self.datasets, d0)
+        self.pdict=dNl.NestDict({k:d0.dict[k] for k in ks})
+
+
 class GridPlot(BasePlot):
     def __init__(self, name, width, height, scale=(1, 1), **kwargs):
         super().__init__(name, **kwargs)
@@ -424,17 +444,6 @@ class GridPlot(BasePlot):
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:
             axs = self.add(**kwargs)
-        if isinstance(func, str) :
-            from lib.plot.dict import graph_dict
-            dic0=graph_dict.dict
-            dic1=graph_dict.mod_dict
-            dic2=graph_dict.error_dict
-            if func in dic0.keys() :
-                func=dic0[func]
-            elif func in dic1.keys() :
-                func = dic1[func]
-            elif func in dic2.keys() :
-                func = dic2[func]
-            else :
-                raise
+        from lib.plot.dict import graph_dict
+        func=graph_dict.get(func)
         _ = func(fig=self.fig, axs=axs, **kws)

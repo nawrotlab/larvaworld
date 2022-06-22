@@ -4,6 +4,13 @@ from lib.aux import naming as nam, dictsNlists as dNl
 
 
 
+def track_par_func(chunk, par) :
+    def func(d):
+        from lib.process.aux import track_par_in_chunk
+        track_par_in_chunk(d, chunk, par)
+    return func
+
+
 def chunk_func(kc, store=False):
     if kc in ['str', 'pau', 'run', 'str_c']:
         def func(d):
@@ -115,6 +122,7 @@ def func_v_spatial(p_d, p_v):
 def build_func_dict() :
     func_dict = dNl.NestDict({
             'chunk': chunk_func,
+            'track_par': track_par_func,
             'tor': tor_func,
             'dsp': dsp_func,
             'ops': {

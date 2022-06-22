@@ -325,7 +325,8 @@ class LarvaDataset:
                     ids = self.endpoint_data.index.values
                 except:
                     ids = self.read('end', file='endpoint_h5').index.values
-            self.config.agent_ids = ids
+
+            self.config.agent_ids = list(ids)
             self.config.N = len(ids)
         if 't0' not in self.config.keys():
             try:
@@ -358,7 +359,7 @@ class LarvaDataset:
     def save_config(self, add_reference=False, refID=None):
         self.update_config()
         for k, v in self.config.items():
-            if type(v) == np.ndarray:
+            if isinstance(v, np.ndarray):
                 self.config[k] = v.tolist()
         dNl.save_dict(self.config, self.dir_dict.conf, use_pickle=False)
         if add_reference:
@@ -709,7 +710,8 @@ class LarvaDataset:
         }
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
-        if bout_annotation :
+        # print(annotation, any([annotation[kk] for kk in ['stride', 'pause', 'turn']]))
+        if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
             from lib.process import aux
             self.chunk_dicts = aux.annotation(s, e, c, **kwargs)
             self.cycle_curves = aux.compute_interference(s=s,e=e,c=c, chunk_dicts=self.chunk_dicts, **kwargs)
@@ -889,31 +891,56 @@ class LarvaDataset:
         self.save_config(add_reference=True)
         return m
 
-    def get_chunk_par_distro(self, chunk, short=None, par=None, min_dur=0):
+    def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
         if par is None:
             par = getPar(short)
-        chunk_idx = f'{chunk}_idx'
-        chunk_dur = f'{chunk}_dur'
+
         dic0 = self.load_chunk_dicts()
-        vs = []
-        for id in self.agent_ids:
-            ss = self.step_data[par].xs(id, level='AgentID')
-            dic = dic0[id]
-            if min_dur == 0:
-                idx = dic[chunk_idx]
-            else:
-                epochs = dic[chunk][dic[chunk_dur] >= min_dur]
-                Nepochs = epochs.shape[0]
-                if Nepochs == 0:
-                    idx = []
-                elif Nepochs == 1:
-                    idx = np.arange(epochs[0][0], epochs[0][1] + 1, 1)
+        dics=[dic0[id] for id in self.agent_ids]
+        sss=[self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
+
+        if mode=='distro' :
+            chunk_idx = f'{chunk}_idx'
+            chunk_dur = f'{chunk}_dur'
+            vs = []
+            for ss,dic in zip(sss,dics):
+                if min_dur == 0:
+                    idx = dic[chunk_idx]
                 else:
-                    slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
-                    idx = np.concatenate(slices)
-            vs.append(ss.loc[idx].values)
-        vs = np.concatenate(vs)
-        return vs
+                    epochs = dic[chunk][dic[chunk_dur] >= min_dur]
+                    Nepochs = epochs.shape[0]
+                    if Nepochs == 0:
+                        idx = []
+                    elif Nepochs == 1:
+                        idx = np.arange(epochs[0][0], epochs[0][1] + 1, 1)
+                    else:
+                        slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
+                        idx = np.concatenate(slices)
+                vs.append(ss.loc[idx].values)
+            vs = np.concatenate(vs)
+            return vs
+        elif mode=='extrema' :
+            cc0s,cc1s,cc01s = [],[],[]
+            for ss, dic in zip(sss, dics):
+                epochs = dic[chunk]
+                # for id in self.agent_ids:
+                #     ss = self.step_data[par].xs(id, level='AgentID')
+                #     dic = dic0[id]
+                if min_dur != 0:
+                    chunk_dur = f'{chunk}_dur'
+                    epochs = epochs[dic[chunk_dur] >= min_dur]
+                Nepochs = epochs.shape[0]
+                if Nepochs > 0:
+                    c0s = ss.loc[epochs[:,0]].values
+                    c1s = ss.loc[epochs[:,1]].values
+                    cc0s.append(c0s)
+                    cc1s.append(c1s)
+            cc0s = np.concatenate(cc0s)
+            cc1s = np.concatenate(cc1s)
+            cc01s=cc1s-cc0s
+            return cc0s,cc1s,cc01s
+
+
 
     def existing(self, key='end', return_shorts=True):
         if key == 'end':

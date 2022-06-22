@@ -113,7 +113,7 @@ def get_all_foodtypes(food_params):
     ids = {**gr, **su, **sg}
     ks = dNl.unique_list(list(ids.keys()))
     try:
-        ids = {k: np.array(ids[k]) / 255 for k in ks}
+        ids = {k: list(np.array(ids[k]) / 255) for k in ks}
     except:
         ids = {k: ids[k] for k in ks}
     return ids
