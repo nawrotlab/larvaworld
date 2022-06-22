@@ -136,10 +136,10 @@ def nengo_brain(module_shorts, EEB, OD=None):
     else:
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
     return brain(module_shorts,
-                 turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=1.85, activation_noise=0.8,
+                 turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=0.1, activation_noise=0.8,
                                   freq_range=(0.2, 0.4)),
                  crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
-                                   waveform=None, stride_dst_mean=0.25, stride_dst_std=0.01),
+                                   waveform='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
                  intermitter=Im(EEB, mode='nengo'),
@@ -245,10 +245,14 @@ def create_mod_dict():
     LO_brute = brain(['L', 'O'], olfactor=null_dict('olfactor', brute_force=True))
     LW = brain(['L', 'W'])
     L = brain(['L'])
-    LTo = brain(['L', 'To'], turner=Tno_noise)
-    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, memory=RL_touch_memory)
-    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, memory=gRL_touch_memory)
-    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', brute_force=True))
+    LTo = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= []))
+    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= []),memory=RL_touch_memory)
+    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= []),memory=gRL_touch_memory)
+    LTo2M = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+                 memory=RL_touch_memory)
+    LTo2Mg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+                  memory=gRL_touch_memory)
+    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= [], brute_force=True))
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
@@ -298,12 +302,12 @@ def create_mod_dict():
     }
 
     touchers = {
-        'toucher': add_brain(LTo, bod={'touch_sensors': []}),
-        'toucher_brute': add_brain(LTo_brute, bod={'touch_sensors': []}),
-        'RL_toucher_0': add_brain(LToM, bod={'touch_sensors': []}),
-        'gRL_toucher_0': add_brain(LToMg, bod={'touch_sensors': []}),
-        'RL_toucher_2': add_brain(LToM, bod={'touch_sensors': [0, 2]}),
-        'gRL_toucher_2': add_brain(LToMg, bod={'touch_sensors': [0, 2]}),
+        'toucher': add_brain(LTo),
+        'toucher_brute': add_brain(LTo_brute),
+        'RL_toucher_0': add_brain(LToM),
+        'gRL_toucher_0': add_brain(LToMg),
+        'RL_toucher_2': add_brain(LTo2M),
+        'gRL_toucher_2': add_brain(LTo2Mg),
     }
 
     other = {
@@ -331,7 +335,6 @@ def create_mod_dict():
         'zebrafish': add_brain(L,
                                bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2,
                                     'shape': 'zebrafish_larva'},
-                               phys={'ang_damping': 1.0, 'body_spring_k': 1.0, 'torque_coef': 0.3},
                                Box2D={
                                    'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
     }
@@ -349,25 +352,3 @@ def create_mod_dict():
 
     return grouped_mod_dict
 
-
-if __name__ == '__main__':
-    M0 = mod()
-
-
-    def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
-        M1 = NestDict(copy.deepcopy(M0))
-        M1.brain = brain
-        M1.body.update(**bod)
-        M1.physics.update(**phys)
-        M1.Box2D_params.update(**Box2D)
-        return M1
-
-
-    zebrafish = {
-        'continuous_navigator': add_brain(brain(['C', 'T', 'O'], OD=OD1, turner=Tno_noise, crawler=Ccon_no_noise),
-                                          bod={'Nsegs': 1}),
-    }
-    from lib.conf.stored.conf import saveConf
-
-    for k, v in zebrafish.items():
-        saveConf(v, 'Model', k)

@@ -251,13 +251,13 @@ if __name__ == '__main__':
         BB.brain.intermitter_params = v.intermitter_params
         BB.body.length_std = 0.0
         BB.body.initial_length = 0.005
-        if k == 'Sakagiannis2022':
-            BB.physics = null_dict('physics', **{'torque_coef': 1.78,
-                                                 'ang_vel_coef': 1.0,
-                                                 'ang_damping': 2.6,
-                                                 'body_spring_k': 50,
-                                                 'bend_correction_coef': 1.6,
-                                                 'ang_mode': 'torque'})
+        # if k == 'Sakagiannis2022':
+        #     BB.physics = null_dict('physics', **{'torque_coef': 1.78,
+        #                                          'ang_vel_coef': 1.0,
+        #                                          'ang_damping': 2.6,
+        #                                          'body_spring_k': 50,
+        #                                          'bend_correction_coef': 1.6,
+        #                                          'ang_mode': 'torque'})
         saveConf(BB, 'Model', k)
 
     print(loadConf('Sakagiannis2022','Model'))

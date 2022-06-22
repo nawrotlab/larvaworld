@@ -288,9 +288,9 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None,imitatio
 if __name__ == '__main__':
     # print(next_idx('dispersion', 'Eval'))
     # raise
-    # store_confs(['Model'])
-    # store_confs(['Aux'])
-    # store_confs(['Env'])
+    store_confs(['Model'])
+    store_confs(['Aux'])
+    store_confs(['Env'])
     store_confs(['Exp'])
     # store_confs(['Data'])
     store_confs(['Ga'])

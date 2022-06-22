@@ -95,9 +95,9 @@ class LarvaConfDict:
         for k in self.aux_keys:
             self.aux_dicts[k],self.aux_predicts[k] = init2par(d0 = init_dict[k])
 
-        self.mkeys=self.aux_keys+self.mbkeys
-        self.mdicts = dNl.NestDict({**self.aux_dicts, **self.mbdicts})
-        self.mpredicts = dNl.NestDict({**self.aux_predicts, **self.mbpredicts})
+        self.mkeys=self.mbkeys+self.aux_keys
+        self.mdicts = dNl.NestDict({**self.mbdicts**self.aux_dicts})
+        self.mpredicts = dNl.NestDict({**self.mbpredicts,**self.aux_predicts})
 
         def build_mpredfs(mpredicts):
             mpredfs=dNl.NestDict()
@@ -256,17 +256,22 @@ class LarvaConfDict:
         return mIDconf
 
     def mIDconf(self, mID=None, m=None):
+
         if m is None:
             from lib.conf.stored.conf import loadConf
             m = loadConf(mID, 'Model')
+        # print(m.brain.olfactor_params)
+
         mc = dNl.NestDict()
         mc.brain =self.mIDbconf(self, m=m.brain)
         for mkey, mdic in self.aux_dicts.items():
+
             mmdic = m[mkey]
-            if mmdic:
-                mc[mkey] = self.copyID(mdic, mmdic)
-            else:
-                mc[mkey]= None
+            mc[mkey] = self.copyID(mdic, mmdic)
+            # if mmdic:
+            #
+            # else:
+            #     mc[mkey]= None
         return mc
 
     def mIDmodule(self, mID, module='brain', **kwargs):
@@ -275,22 +280,25 @@ class LarvaConfDict:
         return self.mfunc[module](conf=multibconf, **kwargs)
 
     def copyID(self, mdic, mmdic):
-        for d, p in mdic.items():
-            if isinstance(p, param.Parameterized):
-                new_v = mmdic[d] if d in mmdic.keys() else None
-                if type(new_v) == list:
-                    if p.parclass == param.Range:
-                        new_v = tuple(new_v)
-                p.v = new_v
-            else:
-                self.copyID(mdic=mdic[d], mmdic=mmdic[d])
-        return mdic
+        if mmdic is None :
+            return None
+        else :
+            for d, p in mdic.items():
+                if isinstance(p, param.Parameterized):
+                    new_v = mmdic[d] if d in mmdic.keys() else None
+                    if type(new_v) == list:
+                        if p.parclass == param.Range:
+                            new_v = tuple(new_v)
+                    p.v = new_v
+                else:
+                    self.copyID(mdic=mdic[d], mmdic=mmdic[d])
+            return mdic
 
     def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
         mConf = self.mIDconf(mID)
         m = self.multiconf(mConf)
         data = []
-
+        # print(mID,m.energetics)
         def mvalid(k, dic):
             dvalid = dNl.NestDict({
                 'interference': {
@@ -310,12 +318,12 @@ class LarvaConfDict:
                 },
                 'physics': ['ang_damping', 'torque_coef', 'body_spring_k', 'bend_correction_coef'],
                 'body': ['initial_length', 'Nsegs'],
-                'energetics': [],
+                'energetics': ['DEB'],
                 'Box2D_params': [],
-                'olfactor': ['decay_coef'],
+                'olfactor': ['decay_coef', 'perception'],
                 'windsensor': [],
-                'toucher': [],
-                'feeder': [],
+                'toucher': ['touch_sensors','decay_coef', 'perception', 'initial_gain'],
+                'feeder': ['initial_freq', 'feed_radius', 'V_bite'],
                 'memory': []
             })
 
@@ -330,15 +338,16 @@ class LarvaConfDict:
                             dic[n] is not None and dic[n].name is not None]
             else:
                 vals = dvalid[k]
+
             return vals
 
         for k in self.mkeys:
-            if k in self.aux_keys:
-                dic = m[k]
-                dic0 = mConf[k]
-            elif k in self.mbkeys:
+            if k in self.mbkeys:
                 dic = m['brain'][f'{k}_params']
                 dic0 = mConf['brain'][f'{k}_params']
+            elif k in self.aux_keys:
+                dic = m[k]
+                dic0 = mConf[k]
             if dic is None:
                 valid = []
             else :
@@ -359,6 +368,15 @@ class LarvaConfDict:
                             vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
                         data.append(vs1)
                         data.append(vs2)
+
+                    elif n=='DEB':
+                        vv = dic[n]
+
+                        vs1 = [k, 'hunger sensitivity to reserve reduction', sub('G', 'hunger'), vv['hunger_gain'], '-']
+                        vs2 = [k, 'DEB functional response decay coef', sub('c', 'DEB'), vv['f_decay'],'-']
+                        data.append(vs1)
+                        data.append(vs2)
+
                     else:
                         ddd=[getattr(dic0[n], pname) for pname in columns]
                         data.append([k]+ddd)
@@ -373,8 +391,7 @@ class LarvaConfDict:
         from lib.plot.table import conf_table
         df=self.mIDtable_data(mID, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
-        return conf_table(df, row_colors, figsize=figsize, **kwargs)
-
+        return conf_table(df, row_colors,mID=mID, figsize=figsize, **kwargs)
 
 
 

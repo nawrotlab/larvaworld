@@ -205,7 +205,7 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
             c=P.colors[j]
             if individuals:
                 df_m = df.groupby(level='Step').quantile(q=0.5)
-                for id in df.index.get_level_values('AgentID'):
+                for id in df.index.get_level_values('AgentID').unique():
                     dc_single = df.xs(id, level='AgentID')
                     ax.plot(x, dc_single, color=c, linewidth=1)
                 ax.plot(x, df_m, color=c, linewidth=2)

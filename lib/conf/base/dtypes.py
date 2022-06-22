@@ -152,10 +152,13 @@ def null_dict(name, key='v', **kwargs):
     def v0(d):
         if d is None:
             return None
+
         null = dNl.NestDict()
         for k, v in d.items():
+            if not isinstance(v, dict):
+                null[k] = v
             # print(k,v)
-            if 'k' in v.keys() or 'h' in v.keys() or 't' in v.keys():
+            elif 'k' in v.keys() or 'h' in v.keys() or 't' in v.keys():
                 null[k] = None if key not in v.keys() else v[key]
             else:
                 null[k] = v0(v)

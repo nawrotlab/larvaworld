@@ -136,15 +136,22 @@ class SingleRun:
                     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
 
-        entry_list = None
+        entry_list = []
+        sources = self.source_xy
+        if len(sources) > 0 and len(sources) < 10:
+            from lib.conf.stored.analysis_conf import source_anal_list
+            entry_list += source_anal_list(sources=sources)
+
         from lib.conf.stored.analysis_conf import analysis_dict
         if exp in ['random_food']:
-            entry_list = analysis_dict.survival
+            entry_list += analysis_dict.survival
         else:
             dic = {
                 'patch': analysis_dict.patch,
                 'tactile': analysis_dict.tactile,
+                'RvsS': analysis_dict.deb,
                 'RvsS': analysis_dict.intake,
+                'growth': analysis_dict.deb,
                 'growth': analysis_dict.intake,
                 'anemo': analysis_dict.anemotaxis,
                 'puff': analysis_dict.puff,
@@ -155,41 +162,36 @@ class SingleRun:
             }
             for k, v in dic.items():
                 if k in exp:
-                    entry_list = v
-        if entry_list is None:
-            return None, None
-        else:
-            return self.run_analysis(entry_list, **kws)
+                    entry_list += v
+
+        return self.run_analysis(entry_list, **kws)
 
     def run_analysis(self, entry_list, **kws):
-        from lib.sim.single.analysis import targeted_analysis, deb_analysis, comparative_analysis
-
+        exp = self.experiment
         figs, results = {}, {}
-        entries = []
-        for entry in entry_list:
-            if entry == 'source_anal_list':
-                from lib.conf.stored.analysis_conf import source_anal_list
-                entries += source_anal_list(sources=self.source_xy)
-            elif entry == 'deb_analysis':
-                figs.update(**deb_analysis(**kws))
-            elif entry == 'targeted_analysis':
+        if len(entry_list) > 0:
+            from lib.plot.dict import graph_dict
+            graph_entries = graph_dict.eval(entry_list, **kws)
+            figs.update(graph_entries)
 
-                figs.update(**targeted_analysis(**kws))
-            elif entry == 'comparative_analysis':
-                from lib.conf.stored.conf import loadRef
-
-                samples = dNl.unique_list([d.config.sample for d in self.datasets])
-                targets = [loadRef(sd) for sd in samples]
-                kkws = copy.deepcopy(kws)
-                kkws['datasets'] = self.datasets + targets
-                figs.update(**comparative_analysis(**kkws))
-            else:
-                entries.append(entry)
-
-        from lib.plot.dict import graph_dict
-        graph_entries = graph_dict.eval(entries, **kws)
-        figs.update(graph_entries)
-        return figs, results
+        if 'disp' in exp:
+            from lib.conf.stored.conf import loadRef
+            from lib.sim.single.analysis import comparative_analysis
+            samples = dNl.unique_list([d.config.sample for d in self.datasets])
+            targets = [loadRef(sd) for sd in samples]
+            kkws = copy.deepcopy(kws)
+            kkws['datasets'] = self.datasets + targets
+            figs.update(**comparative_analysis(**kkws))
+        if 'dish' in exp:
+            from lib.sim.single.analysis import targeted_analysis
+            figs.update(**targeted_analysis(**kws))
+        # if 'RvsS' in exp or 'growth' in exp:
+        #     from lib.sim.single.analysis import deb_analysis
+        #     figs.update(**deb_analysis(**kws))
+        if len(figs)==0 and len(results)==0 :
+            return None,None
+        else :
+            return figs, results
 
 
 def set_output(collections, Nsegs=2, Ncontour=0):

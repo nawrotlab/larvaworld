@@ -4,6 +4,7 @@ import numpy as np
 import six
 from matplotlib import pyplot as plt
 
+
 from lib.plot.base import BasePlot
 
 
@@ -12,16 +13,19 @@ def modelConfTable(mID, **kwargs):
     return ParDict.larva_conf_dict.mIDtable(mID, **kwargs)
 
 
-def conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
+def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
 
 
     ax, fig, mpl = mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
                                     figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
                                     row_colors=row_colors, return_table=True, **kwargs)
 
+    mmID = mID.replace("_", "-")
+    ax.set_title(f'Model ID : '+ rf'$\bf{mmID}$', y=1.05, fontsize=30)
+
     Nks=df.index.value_counts(sort=False)
     cumNks0=np.cumsum(Nks.values)
-    cumNks= {k : int(cumNks0[i]-Nk/2) for i,(k,Nk) in enumerate(Nks.items())}
+    cumNks= {k : int(cumNks0[i]-Nk/2.5) for i,(k,Nk) in enumerate(Nks.items())}
     for (k0,k1), cell in mpl._cells.items():
         if k1 == -1:
             k=cell._text._text
@@ -37,7 +41,7 @@ def conf_table(df,row_colors,figsize=(14, 11),show=False,save_to=None, save_as=N
     if save_to is not None:
         os.makedirs(save_to, exist_ok=True)
         if save_as is None:
-            save_as = 'model_conf'
+            save_as = mID
         filename = f'{save_to}/{save_as}.pdf'
         fig.savefig(filename, dpi=300)
     if show :
@@ -135,3 +139,18 @@ def error_table(data, k='', title=None, **kwargs):
     return fig
 
 
+def store_model_tables() :
+    from lib.conf.pars.pars import ParDict
+    from lib.conf.stored.conf import kConfDict
+    save_to = ParDict.path_dict['model_tables']
+    for mID in kConfDict('Model'):
+        try :
+            _=modelConfTable(mID,save_to =save_to)
+        except :
+            print(mID)
+    from lib.aux.combining import combine_pdfs
+    combine_pdfs(file_dir=save_to)
+
+if __name__ == '__main__':
+    pass
+    #store_model_tables()

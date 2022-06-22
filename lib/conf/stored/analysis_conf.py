@@ -92,7 +92,6 @@ def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
         **kwargs
     }
     return entry('deb', title=title, **args)
-    # return {'title': title, 'plotID': 'deb', 'args': args}
 
 def source_anal_list(sources, **kwargs):
     d0=[]
@@ -186,10 +185,10 @@ analysis_dict = dNl.NestDict({
         entry('food intake (timeplot)', 'food intake (raw)'),
         entry('pathlength', scaled=False)
 
+    ],
+    'deb' : [
+        *[deb(m, pref='DEB') for m in ['energy', 'growth', 'full']],
+        *[deb(m, pref='FEED') for m in ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
+                  'food_mass_2', 'hunger', 'EEB','fs']],
     ]
-    # 'DEB' : [
-    #     *[deb(m, pref='DEB') for m in ['energy', 'growth', 'full']],
-    #     *[deb(m, pref='FEED') for m in ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
-    #               'food_mass_2', 'hunger', 'EEB','fs']],
-    # ]
 })

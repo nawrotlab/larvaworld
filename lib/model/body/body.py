@@ -214,7 +214,7 @@ class LarvaShape:
 
 
 class LarvaBody(LarvaShape):
-    def __init__(self, model, pos=None, orientation=None, touch_sensors=False, joint_types=None, **kwargs):
+    def __init__(self, model, pos=None, orientation=None, joint_types=None, **kwargs):
         super().__init__(initial_orientation=orientation, initial_pos=pos,scaling_factor=model.scaling_factor, **kwargs)
         self.model = model
 
@@ -230,9 +230,9 @@ class LarvaBody(LarvaShape):
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-        self.touch_sensors = touch_sensors
-        if touch_sensors:
-            self.add_touch_sensors(touch_sensors)
+        #self.touch_sensors = touch_sensors
+        # if touch_sensors:
+        #     self.add_touch_sensors(touch_sensors)
 
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2

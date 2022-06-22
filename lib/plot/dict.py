@@ -147,7 +147,7 @@ class GraphDict:
 
     def entry(self, ID, title=None, **kwargs):
         assert self.get(ID)
-        print(ID)
+        # print(ID)
         if title is None:
             title = ID
         else:
@@ -159,6 +159,7 @@ class GraphDict:
 graph_dict = GraphDict()
 
 if __name__ == '__main__':
+
     # print(graph_dict.get('endpoint plot'))
     # print(graph_dict.get('endpoint plot'))
     # f='fff'
