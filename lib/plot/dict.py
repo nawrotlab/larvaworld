@@ -115,21 +115,54 @@ class GraphDict:
         self.mod_dict = build_mod_dict()
         self.error_dict = build_error_dict()
 
-    def get(self,f):
-        if isinstance(f, str) :
-            if f in self.dict.keys() :
-                f=self.dict[f]
-            elif f in self.mod_dict.keys() :
+    def get(self, f):
+        if isinstance(f, str):
+            if f in self.dict.keys():
+                f = self.dict[f]
+            elif f in self.mod_dict.keys():
                 f = self.mod_dict[f]
-            elif f in self.flat_dict.keys() :
+            elif f in self.flat_dict.keys():
                 f = self.flat_dict[f]
-            elif f in self.error_dict.keys() :
+            elif f in self.error_dict.keys():
                 f = self.error_dict[f]
-            else :
+            else:
                 raise
         return f
 
-graph_dict=GraphDict()
+    def eval0(self, entry, **kws):
+        try:
+            func = self.get(entry['plotID'])
+            d = {entry['title']: func(**entry['args'], **kws)}
+            # figs[entry['title']] = func(**entry['args'], **kws)
+        except:
+            d = {}
+        return d
+
+    def eval(self, entries, **kws):
+        ds = {}
+        for entry in entries:
+            d = self.eval0(entry, **kws)
+            ds.update(d)
+        return ds
+
+    def entry(self, ID, title=None, **kwargs):
+        assert self.get(ID)
+        print(ID)
+        if title is None:
+            title = ID
+        else:
+            if 'save_as' not in kwargs.keys():
+                kwargs['save_as'] = title
+        return {'title': title, 'plotID': ID, 'args': kwargs}
+
+
+graph_dict = GraphDict()
 
 if __name__ == '__main__':
-    print(graph_dict.get('endpoint plot'))
+    # print(graph_dict.get('endpoint plot'))
+    # print(graph_dict.get('endpoint plot'))
+    # f='fff'
+    # assert graph_dict.get('turn amplitude VS Y pos')
+    print('DDDDD')
+    # assert graph_dict.get(f)
+    # print('DDDfffDD')

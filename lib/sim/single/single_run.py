@@ -4,8 +4,8 @@ import datetime
 import random
 import time
 import numpy as np
-from lib.aux import naming as nam,dictsNlists as dNl
-from lib.aux.sim_aux import get_source_xy
+from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
+# from lib.aux.sim_aux import get_source_xy
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
@@ -32,7 +32,7 @@ class SingleRun:
         self.data_dir = f'{self.dir_path}/data'
         self.param_dict = locals()
         self.start = time.time()
-        self.source_xy = get_source_xy(env_params['food_params'])
+        self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
         output = set_output(collections=collections, Nsegs=list(larva_groups.values())[0]['model']['body']['Nsegs'])
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
                                  env_params=env_params, larva_groups=larva_groups, trials=trials,
@@ -41,7 +41,7 @@ class SingleRun:
                                  **kwargs)
 
     def run(self):
-        if self.show_output :
+        if self.show_output:
             print()
             print(f'---- Simulation {self.id} ----')
         # Run the simulation
@@ -64,7 +64,7 @@ class SingleRun:
             #     fig_dict, results = sim_analysis(ds, env.experiment)
             # else :
             #     fig_dict, results = None, None
-            if self.show_output :
+            if self.show_output:
                 print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
         self.env.close()
         return self.datasets
@@ -102,13 +102,15 @@ class SingleRun:
 
         ds = split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
                            source_xy=self.source_xy,
-                           fr=1 / self.env.dt, dir=self.data_dir, id=self.id, plot_dir=self.plot_dir, show_output=self.show_output)
+                           fr=1 / self.env.dt, dir=self.data_dir, id=self.id, plot_dir=self.plot_dir,
+                           show_output=self.show_output)
         for d in ds:
-            if self.show_output :
+            if self.show_output:
                 print()
                 print(f'--- Enriching dataset {self.id} with derived parameters ---')
             if self.enrichment:
-                d.enrich(**self.enrichment, is_last=False, show_output=self.show_output, store=self.sim_params.store_data)
+                d.enrich(**self.enrichment, is_last=False, show_output=self.show_output,
+                         store=self.sim_params.store_data)
             d.get_larva_dicts(env)
             d.get_larva_tables(env)
         return ds
@@ -120,58 +122,54 @@ class SingleRun:
             d.save_larva_tables()
             dNl.dict_to_file(self.param_dict, d.dir_dict.sim)
 
-    def analyze(self, **kwargs):
-        exp=self.experiment
-        # print(exp)
-        # raise
-        from lib.conf.stored.analysis_conf import analysis_dict
-        # print('kkkkk')
-        dic={
-            'patch' : analysis_dict.patch,
-            'tactile' : analysis_dict.tactile,
-            'RvsS' : analysis_dict.intake,
-            'growth' : analysis_dict.intake,
-            'anemo' : analysis_dict.anemotaxis,
-            'puff' : analysis_dict.puff,
-            'chemo' : analysis_dict.chemo,
-            'RL' : analysis_dict.RL,
-            'dispersion' :  ['comparative_analysis'],
-            'dish' :  ['targeted_analysis'],
-        }
-        for k,v in dic.items() :
-            if k in exp :
-                return self.run_analysis(v, **kwargs)
-        if exp in ['food_at_bottom']:
-            return self.run_analysis(['foraging_analysis'], **kwargs)
-        elif exp in ['random_food']:
-            return self.run_analysis(analysis_dict.survival, **kwargs)
-        elif 'PI' in exp:
+    def analyze(self, save_to=None, **kwargs):
+        kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
+        exp = self.experiment
+        if 'PI' in exp:
             PIs = {}
             PI2s = {}
-            for d in self.datasets :
-                PIs[d.id]=d.config.PI["PI"]
-                PI2s[d.id]=d.config.PI2
-                if self.show_output :
+            for d in self.datasets:
+                PIs[d.id] = d.config.PI["PI"]
+                PI2s[d.id] = d.config.PI2
+                if self.show_output:
                     print(f'Group {d.id} -> PI : {PIs[d.id]}')
                     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
-        else:
-            return None, None
 
-    def run_analysis(self, anal_params,save_to=None,**kwargs) :
-        from lib.sim.single.analysis import targeted_analysis,source_analysis, deb_analysis, comparative_analysis, foraging_analysis
-        kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
-        from lib.plot.dict import graph_dict
+        entry_list = None
+        from lib.conf.stored.analysis_conf import analysis_dict
+        if exp in ['random_food']:
+            entry_list = analysis_dict.survival
+        else:
+            dic = {
+                'patch': analysis_dict.patch,
+                'tactile': analysis_dict.tactile,
+                'RvsS': analysis_dict.intake,
+                'growth': analysis_dict.intake,
+                'anemo': analysis_dict.anemotaxis,
+                'puff': analysis_dict.puff,
+                'chemo': analysis_dict.chemo,
+                'RL': analysis_dict.RL,
+                # 'dispersion': ['comparative_analysis'],
+                # 'dish': ['targeted_analysis'],
+            }
+            for k, v in dic.items():
+                if k in exp:
+                    entry_list = v
+        if entry_list is None:
+            return None, None
+        else:
+            return self.run_analysis(entry_list, **kws)
+
+    def run_analysis(self, entry_list, **kws):
+        from lib.sim.single.analysis import targeted_analysis, deb_analysis, comparative_analysis
+
         figs, results = {}, {}
-        for entry in anal_params:
-            if entry == 'source_analysis':
-                figs.update(**source_analysis(self.source_xy, **kws))
-            elif entry == 'foraging_analysis':
-                figs.update(**foraging_analysis(self.source_xy, **kws))
-            elif entry == 'foraging_list':
-                from lib.conf.stored.analysis_conf import foraging_list
-                for_l=foraging_list(sources=self.source_xy)
-                figs=plot_entries(for_l, figs,graph_dict, **kws)
+        entries = []
+        for entry in entry_list:
+            if entry == 'source_anal_list':
+                from lib.conf.stored.analysis_conf import source_anal_list
+                entries += source_anal_list(sources=self.source_xy)
             elif entry == 'deb_analysis':
                 figs.update(**deb_analysis(**kws))
             elif entry == 'targeted_analysis':
@@ -186,29 +184,13 @@ class SingleRun:
                 kkws['datasets'] = self.datasets + targets
                 figs.update(**comparative_analysis(**kkws))
             else:
-                figs=plot_entry(entry, figs,graph_dict, **kws)
-               # try :
-               #      func = graph_dict.get(entry['plotID'])
-               #      figs[entry['title']] = func(**entry['args'], **kws)
-               # except :
-               #     pass
+                entries.append(entry)
 
-
-
+        from lib.plot.dict import graph_dict
+        graph_entries = graph_dict.eval(entries, **kws)
+        figs.update(graph_entries)
         return figs, results
 
-def plot_entries(entries, figs,graph_dict, **kws) :
-    for entry in entries :
-        figs = plot_entry(entry, figs, graph_dict, **kws)
-    return figs
-
-def plot_entry(entry, figs,graph_dict, **kws) :
-    try:
-        func = graph_dict.get(entry['plotID'])
-        figs[entry['title']] = func(**entry['args'], **kws)
-    except:
-        pass
-    return figs
 
 def set_output(collections, Nsegs=2, Ncontour=0):
     from lib.aux.collecting import output_dict
@@ -248,4 +230,3 @@ def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
         d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()
         ds.append(d)
     return ds
-

@@ -440,7 +440,7 @@ def turn_annotation(s, e, c, store=False):
             turn_vs[Rturns[:, 1], jj, 1] = Rdurs
             turn_vs[Rturns[:, 1], jj, 2] = Rmaxs
         turn_dict[id] = {'Lturn': Lturns, 'Rturn': Rturns, 'turn_slice': Tslices, 'turn_amp': Tamps,
-                         'turn_dur': Tdurs, 'turn_vel_max': Tmaxs}
+                         'turn_dur': Tdurs,'Lturn_dur': Ldurs,'Rturn_dur': Rdurs, 'turn_vel_max': Tmaxs}
     s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
     if store :
         turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])

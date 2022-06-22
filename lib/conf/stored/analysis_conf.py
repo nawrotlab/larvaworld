@@ -1,27 +1,30 @@
 import numpy as np
 
 import lib.aux.dictsNlists as dNl
+import lib.aux.naming as nam
 from lib.conf.pars.pars import getPar
+from lib.plot.dict import graph_dict
 
 
-def entry(plotID, title=None, **kwargs):
+def entry(ID, title=None, **kwargs):
+    return graph_dict.entry(ID,title=title,**kwargs)
+
+
+
+def time(short=None,par=None, title=None, u='sec', f1=False, abs=False, **kwargs):
+
     if title is None:
-        title = plotID
-    return {'title': title, 'plotID': plotID, 'args': kwargs}
-
-
-def time(short, title=None, u='sec', f1=False, abs=False, **kwargs):
-    if title is None:
-        title = getPar(short)
+        title = par if par is not None else getPar(short)
         # name =f'{short} timeplot'
     args = {
-        'par_shorts': [short],
-        # 'show_first': f1,
+        'par_shorts': [short] if short is not None else [],
+        'pars' : [par] if par is not None else [],
+             # 'show_first': f1,
         'unit': u,
         'absolute': abs,
         **kwargs
     }
-    return {'title': title, 'plotID': 'timeplot', 'args': args}
+    return entry('timeplot', title=title, **args)
 
 def autotime(ks, title=None, u='sec', f1=True,ind=True, **kwargs):
     if title is None:
@@ -35,7 +38,7 @@ def autotime(ks, title=None, u='sec', f1=True,ind=True, **kwargs):
         'individuals': ind,
         **kwargs
     }
-    return {'title': title, 'plotID': 'autoplot', 'args': args}
+    return entry('autoplot', title=title, **args)
 
 
 def end(shorts=None, title=None, **kwargs):
@@ -47,7 +50,7 @@ def end(shorts=None, title=None, **kwargs):
         # 'unit': u,
         **kwargs
     }
-    return {'title': title, 'plotID': 'endpoint pars (hist)', 'args': args}
+    return entry('endpoint pars (hist)', title=title, **args)
 
 
 def bar(short, title=None, **kwargs):
@@ -58,18 +61,9 @@ def bar(short, title=None, **kwargs):
         'par_shorts': [short],
         **kwargs
     }
-    return {'title': title, 'plotID': 'barplot', 'args': args}
+    return entry('barplot', title=title, **args)
 
 
-def scat(shorts, title=None, **kwargs):
-    if title is None:
-        d1, d2 = getPar(shorts)
-        title = f'{d1} VS {d2}'
-    args = {
-        'shorts': shorts,
-        **kwargs
-    }
-    return {'title': title, 'plotID': 'scatter', 'args': args}
 
 
 def nengo(group, title=None, **kwargs):
@@ -79,7 +73,7 @@ def nengo(group, title=None, **kwargs):
         'group': group,
         **kwargs
     }
-    return {'title': title, 'plotID': 'nengo', 'args': args}
+    return entry('nengo', title=title, **args)
 
 
 def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
@@ -97,22 +91,23 @@ def deb(mode, title=None, u='hours', pref='FEED', **kwargs):
         'sim_only': sim_only,
         **kwargs
     }
-    return {'title': title, 'plotID': 'deb', 'args': args}
+    return entry('deb', title=title, **args)
+    # return {'title': title, 'plotID': 'deb', 'args': args}
 
-
-def foraging_list(sources):
-    d0 = [time('y', 'Y position', legend_loc='lower left'),
-          entry('navigation index'),
-          entry('turn amplitude'),
-          entry('turn duration'),
-          entry('turn amplitude VS Y pos', 'turn angle VS Y pos (scatter)', mode='scatter'),
-          entry('turn amplitude VS Y pos', 'turn angle VS Y pos (hist)', mode='hist'),
-          entry('turn amplitude VS Y pos', 'bearing correction VS Y pos', mode='hist',  ref_angle=270),
-          ]
+def source_anal_list(sources, **kwargs):
+    d0=[]
     for n, pos in sources.items():
-        d0 += [entry('bearing/turn', f'bearing to {n}', min_angle=5.0, ref_angle=None, source_ID=n),
-               entry('bearing/turn', 'bearing to 270deg', min_angle=5.0, ref_angle=270, source_ID=n)]
+        for ref_angle, title in zip([None, 270], [f'bearing to {n}', 'bearing to 270deg']):
+            d0.append(entry('bearing/turn', title, min_angle=5.0, ref_angle=ref_angle, source_ID=n, **kwargs))
+
+        d0+=[time(par = p, **kwargs) for p in [nam.bearing2(n), nam.dst2(n), nam.scal(nam.dst2(n))]],
+
+        for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
+            for dur in [0.0, 0.5, 1.0]:
+                title =f'{chunk}_bearing2_{n}_min_{dur}_sec'
+                d0.append(entry('bearing to source/epoch', title, min_dur=dur, chunk=chunk, source_ID=n, **kwargs))
     return d0
+
 
 
 analysis_dict = dNl.NestDict({
@@ -131,14 +126,14 @@ analysis_dict = dNl.NestDict({
         entry('trajectories'),
         # *[time(p) for p in ['c_odor1']],
         *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']],
-        'source_analysis',
+        # 'source_anal_list',
         entry('turn amplitude'),
         entry('angular pars', Npars=5),
         entry('ethogram'),
 
     ],
     'intake': [
-        'deb_analysis',
+        # 'deb_analysis',
         # *[time(p) for p in ['sf_faeces_M', 'f_faeces_M', 'sf_abs_M', 'f_abs_M', 'f_am']],
         entry('food intake (timeplot)', 'food intake (raw)'),
         entry('food intake (timeplot)', 'food intake (filtered)', filt_amount=True),
@@ -177,10 +172,16 @@ analysis_dict = dNl.NestDict({
         time('g_odor1', 'best_gains_table', save_as='best_gains.pdf', table='best_gains'),
         time(*['g_odor1', 'g_odor2'], 'best_gains_table_x2', save_as='best_gains_x2.pdf', table='best_gains'),
     ],
-    'patch': [
-        'foraging_analysis'],
+    'patch': [time('y', 'Y position', legend_loc='lower left'),
+          entry('navigation index'),
+          entry('turn amplitude'),
+          entry('turn duration'),
+          entry('turn amplitude VS Y pos', 'turn angle VS Y pos (scatter)', mode='scatter'),
+          entry('turn amplitude VS Y pos', 'turn angle VS Y pos (hist)', mode='hist'),
+          entry('turn amplitude VS Y pos', 'bearing correction VS Y pos', mode='hist',  ref_angle=270),
+          ],
     'survival': [
-        entry('foraging'),
+        # 'foraging_list',
         time('on_food_tr', 'time ratio on food', u='min'),
         entry('food intake (timeplot)', 'food intake (raw)'),
         entry('pathlength', scaled=False)
