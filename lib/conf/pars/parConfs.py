@@ -96,7 +96,7 @@ class LarvaConfDict:
             self.aux_dicts[k],self.aux_predicts[k] = init2par(d0 = init_dict[k])
 
         self.mkeys=self.mbkeys+self.aux_keys
-        self.mdicts = dNl.NestDict({**self.mbdicts**self.aux_dicts})
+        self.mdicts = dNl.NestDict({**self.mbdicts,**self.aux_dicts})
         self.mpredicts = dNl.NestDict({**self.mbpredicts,**self.aux_predicts})
 
         def build_mpredfs(mpredicts):
@@ -356,7 +356,6 @@ class LarvaConfDict:
                 for n in valid:
 
                     if n in ['stridechain_dist', 'pause_dist']:
-                        # print(dic0[n].keys())
                         vv=dic[n]
                         dist_v = self.dist_dict[vv.name].lab_func(vv)
                         if n == 'stridechain_dist':

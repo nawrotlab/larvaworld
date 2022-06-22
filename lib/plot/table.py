@@ -25,7 +25,9 @@ def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_
 
     Nks=df.index.value_counts(sort=False)
     cumNks0=np.cumsum(Nks.values)
-    cumNks= {k : int(cumNks0[i]-Nk/2.5) for i,(k,Nk) in enumerate(Nks.items())}
+    cumNks0=np.insert(cumNks0,0,0)
+    cumNks= {k : cumNks0[i]+1 for i,(k,Nk) in enumerate(Nks.items())}
+    # cumNks= {k : int(cumNks0[i]-Nk/2.5) for i,(k,Nk) in enumerate(Nks.items())}
     for (k0,k1), cell in mpl._cells.items():
         if k1 == -1:
             k=cell._text._text
@@ -149,8 +151,8 @@ def store_model_tables() :
         except :
             print(mID)
     from lib.aux.combining import combine_pdfs
-    combine_pdfs(file_dir=save_to)
+    combine_pdfs(file_dir=save_to,save_as="___ALL_MODELS___.pdf")
 
 if __name__ == '__main__':
     pass
-    #store_model_tables()
+    store_model_tables()
