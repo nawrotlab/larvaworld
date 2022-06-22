@@ -247,14 +247,17 @@ class ParInitDict:
                 },
                 'windsensor': {
                     'weights': {
-                        'hunch_lin': {'v': 10.0, 'lim': (-100.0, 100.0), 'disp': 'HUNCH->CRAWLER',
-                                      'vfunc': param.Number,
+                        'hunch_lin': {'v': 10.0, 'lim': (-100.0, 100.0), 'label': 'HUNCH->CRAWLER',
+                                      'vfunc': param.Number,'symbol' : sub('w', 'HC'), 'k':'w_HC',
                                       'h': 'The connection weight between the HUNCH neuron ensemble and the CRAWLER module.'},
-                        'hunch_ang': {'v': 0.0, 'lim': (-100.0, 100.0), 'disp': 'HUNCH->TURNER', 'vfunc': param.Number,
+                        'hunch_ang': {'v': 0.0, 'lim': (-100.0, 100.0), 'label': 'HUNCH->TURNER',
+                                      'symbol' : sub('w', 'HT'), 'k':'w_HT','vfunc': param.Number,
                                       'h': 'The connection weight between the HUNCH neuron ensemble and the TURNER module.'},
-                        'bend_lin': {'v': 0.0, 'lim': (-100.0, 100.0), 'disp': 'BEND->CRAWLER', 'vfunc': param.Number,
+                        'bend_lin': {'v': 0.0, 'lim': (-100.0, 100.0), 'label': 'BEND->CRAWLER',
+                                     'symbol' : sub('w', 'BC'), 'k':'w_BC','vfunc': param.Number,
                                      'h': 'The connection weight between the BEND neuron ensemble and the CRAWLER module.'},
-                        'bend_ang': {'v': -10.0, 'lim': (-100.0, 100.0), 'disp': 'BEND->TURNER', 'vfunc': param.Number,
+                        'bend_ang': {'v': -10.0, 'lim': (-100.0, 100.0), 'label': 'BEND->TURNER',
+                                     'symbol' : sub('w', 'BT'), 'k':'w_BT','vfunc': param.Number,
                                      'h': 'The connection weight between the BEND neuron ensemble and the TURNER module.'},
                     }
                 },

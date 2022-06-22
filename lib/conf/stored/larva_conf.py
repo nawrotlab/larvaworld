@@ -127,7 +127,7 @@ def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=No
     gut = null_dict('gut', **gut_kws)
     deb = null_dict('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
     return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
-                     energetics={'DEB': deb, 'gut': gut})
+                     energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
 
 def nengo_brain(module_shorts, EEB, OD=None):

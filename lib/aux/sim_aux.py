@@ -7,7 +7,6 @@ from shapely.geometry import Point, Polygon, LineString
 
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.conf.base import paths
 
 
 def LvsRtoggle(side):

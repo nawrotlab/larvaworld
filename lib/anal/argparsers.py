@@ -56,9 +56,32 @@ class MultiParser:
     def get(self, input):
         return dNl.NestDict({k: v.get(input) for k, v in self.parsers.items()})
 
+
+def adjust_sim(exp, conf_type, sim):
+    if exp is not None and conf_type is not None:
+        from lib.conf.stored.conf import loadConf, next_idx
+        if sim.duration is None:
+            try:
+                exp_conf = loadConf(exp, conf_type)
+                sim.duration = exp_conf.sim_params.duration
+            except:
+                sim.duration = 3.0
+        if sim.sim_ID is None:
+            sim.sim_ID = f'{exp}_{next_idx(exp, conf_type)}'
+        if sim.path is None:
+            if conf_type == 'Exp':
+                sim.path = f'single_runs/{exp}'
+            elif conf_type == 'Ga':
+                sim.path = f'ga_runs/{exp}'
+            elif conf_type == 'Batch':
+                sim.path = f'batch_runs/{exp}'
+            elif conf_type == 'Eval':
+                sim.path = f'eval_runs/{exp}'
+        return sim
+
+
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     from lib.conf.stored.conf import expandConf
-    from lib.conf.pars.opt_par import SimParConf
     try :
         exp_conf = expandConf(exp, conf_type)
     except :
@@ -67,7 +90,10 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         exp_conf.env_params.arena = arena
     if d is None:
         d = {'sim_params': null_dict('sim_params')}
-    exp_conf.sim_params = SimParConf(exp=exp, conf_type=conf_type, **d['sim_params']).dict
+
+    exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
+    print(exp_conf.sim_params)
+    # exp_conf.sim_params = SimParConf(exp=exp, conf_type=conf_type, **d['sim_params']).dict
     if models is not None:
         if conf_type in ['Exp', 'Eval'] :
             exp_conf = update_exp_models(exp_conf, models)

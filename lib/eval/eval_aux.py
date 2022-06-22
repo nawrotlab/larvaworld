@@ -397,6 +397,12 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         m = loadConf(mID, "Model")
         ms = [m] * Nids
 
+    if use_LarvaConfDict:
+        mConfDict = ParDict.larva_conf_dict
+
+        mConfs = [mConfDict.mIDconf(m) for m in ms]
+        ms = [mConfDict.multiconf(mConf) for mConf in mConfs]
+
     ids=[f'Agent{j}' for j in range(Nids)]
 
     larva_groups = {dataset_id: null_dict('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
@@ -423,17 +429,14 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
 
     for j,id in enumerate(ids) :
         m=ms[j]
+        mConf=mConfs[j]
+
+
+
         controller = PhysicsController(**m.physics)
-        l=e['length'].loc[id]
+        l = e['length'].loc[id]
         bend_errors = 0
-        if not use_LarvaConfDict :
-            mbrain=m.brain
-        else :
-            # from lib.conf.pars.parConfs import LarvaConfDict
-            mConfDict=ParDict.larva_conf_dict
-            mParbrain = mConfDict.mIDbconf(m=m.brain)
-            mbrain=mConfDict.multibconf(mParbrain)
-        DL = DefaultLocomotor(dt=dt, conf=mbrain)
+        DL = DefaultLocomotor(dt=dt, conf=m.brain)
         for qq in range(100):
             if random.uniform(0, 1) < 0.5:
                 DL.step(A_in=0, length=l)

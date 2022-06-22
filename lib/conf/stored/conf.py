@@ -38,8 +38,6 @@ def expandConf(id, conf_type, **kwargs):
 
 
 def loadConfDict(conf_type, use_pickle=False):
-    # from lib.conf.pars.pars import ParDict
-    # path = ParDict.path_dict[conf_type]
     path = paths.path_dict[conf_type]
     if conf_type=='Ga' :
         use_pickle=True
@@ -187,6 +185,43 @@ def store_reference_data_confs():
         d.save_config(add_reference=True)
 
 
+def modshort(vv):
+    mm=vv.brain.modules
+    module_dict = {
+        'T': 'turner',
+        'C': 'crawler',
+        'If': 'interference',
+        'Im': 'intermitter',
+        'O': 'olfactor',
+        'To': 'toucher',
+        'W': 'windsensor',
+        'F': 'feeder',
+        'M': 'memory',
+    }
+    mms=[k for k,v in module_dict.items() if mm[v]]
+    pairs=[(['T', 'C', 'If', 'Im'], 'L'), (['L', 'O', 'F'], 'LOF'), (['L', 'O'], 'LO'),(['L', 'F'], 'LF'),(['L', 'W'], 'LW'),
+           (['LOF', 'M'], 'LOFM'),(['L', 'To', 'M'], 'LToM'),(['L', 'To'], 'LTo'), (['T', 'C', 'If'], 'T:C'),]
+    for (ls,l0) in pairs :
+        if all([k in mms for k in ls]):
+            for k in ls :
+                mms.remove(k)
+            mms.append(l0)
+    from lib.conf.base.dtypes import null_Box2D_params
+
+    if vv.Box2D_params != null_Box2D_params :
+        mms = ['B'] + mms
+    if vv.brain.nengo :
+        mms=['N']+mms
+
+    if vv.energetics is not None :
+        mms.append('E')
+
+    def joinStrings(stringList):
+        return ''.join(string for string in stringList)
+    fmm=joinStrings(mms)
+    return fmm
+
+
 def store_confs(keys=None):
     if keys is None:
         keys = ['Ref', 'Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga']
@@ -212,7 +247,7 @@ def store_confs(keys=None):
         from lib.aux.dictsNlists import merge_dicts
         d=mod.create_mod_dict()
         mod_dict = merge_dicts(list(d.values()))
-        mod_group_dict = {k: {'model families': list(v.keys())} for k, v in d.items()}
+        mod_group_dict = {k: {kk : modshort(vv) for kk,vv in v.items()} for k, v in d.items()}
         for k, v in mod_dict.items():
             saveConf(v, 'Model', k)
         for k, v in mod_group_dict.items():

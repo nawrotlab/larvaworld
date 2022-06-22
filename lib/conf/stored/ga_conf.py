@@ -1,3 +1,7 @@
+
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
 from scipy.stats import ks_2samp
 

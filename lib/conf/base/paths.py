@@ -27,6 +27,7 @@ def build_path_dict() :
         'tutorials': f'{MF}/tutorial_slides',
         'model': f'{MF}/model_figures',
         'model_tables': f'{MF}/model_tables',
+        'model_summaries': f'{MF}/model_summaries',
         'exp_figs': f'{MF}/exp_figures',
         'icons': f'{MF}/icons',
     }

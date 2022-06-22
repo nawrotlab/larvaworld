@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from lib.plot.base import BasePlot
 
 
+
 def modelConfTable(mID, **kwargs):
     from lib.conf.pars.pars import ParDict
     return ParDict.larva_conf_dict.mIDtable(mID, **kwargs)
@@ -141,18 +142,26 @@ def error_table(data, k='', title=None, **kwargs):
     return fig
 
 
-def store_model_tables() :
+def store_model_graphs() :
     from lib.conf.pars.pars import ParDict
     from lib.conf.stored.conf import kConfDict
-    save_to = ParDict.path_dict['model_tables']
+    from lib.aux.combining import combine_pdfs
+    from lib.plot.grid import model_summary
+    f1 = ParDict.path_dict['model_tables']
+    f2 = ParDict.path_dict['model_summaries']
     for mID in kConfDict('Model'):
         try :
-            _=modelConfTable(mID,save_to =save_to)
+            _=modelConfTable(mID,save_to =f1)
         except :
-            print(mID)
-    from lib.aux.combining import combine_pdfs
-    combine_pdfs(file_dir=save_to,save_as="___ALL_MODELS___.pdf")
+            print('TABLE FAIL', mID)
+        try :
+            _=model_summary(refID='None.150controls', mID=mID,Nids=10,save_to =f2)
+        except :
+            print('SUMMARY FAIL',mID)
+
+    combine_pdfs(file_dir=f1,save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
+    combine_pdfs(file_dir=f2,save_as="___ALL_MODEL_SUMMARIES___.pdf")
 
 if __name__ == '__main__':
     pass
-    store_model_tables()
+    # store_model_graphs()

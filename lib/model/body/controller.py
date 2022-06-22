@@ -89,7 +89,7 @@ class BodySim(BodyManager, PhysicsController):
     def detect_food(self, pos):
         t0 = []
         item, foodtype = None, None
-        if self.brain.locomotor.feeder is not None or self.touch_sensors is not None:
+        if self.brain.locomotor.feeder is not None or self.brain.toucher is not None:
             grid = self.model.food_grid
             if grid:
                 cell = grid.get_grid_cell(pos)

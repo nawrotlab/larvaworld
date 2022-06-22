@@ -260,7 +260,6 @@ class LarvaConfDict:
         if m is None:
             from lib.conf.stored.conf import loadConf
             m = loadConf(mID, 'Model')
-        # print(m.brain.olfactor_params)
 
         mc = dNl.NestDict()
         mc.brain =self.mIDbconf(self, m=m.brain)
@@ -299,7 +298,29 @@ class LarvaConfDict:
         m = self.multiconf(mConf)
         data = []
         # print(mID,m.energetics)
-        def mvalid(k, dic):
+        def gen_rows(mdic, mConf_dic, parent,data0,suf_keys=False):
+
+            for n in mdic:
+                p = mConf_dic[n]
+                if isinstance(p, param.Parameterized):
+                    ddd = [getattr(p, pname) for pname in columns]
+                    row = [parent] + ddd
+                    data0.append(row)
+                else:
+                    if suf_keys :
+                        new_parent=f'{parent}.{n}'
+                    else :
+                        new_parent=parent
+                    print(p)
+                    print(isinstance(p,dict))
+                    print(k, p == mConf_dic[n])
+                    for ii in p :
+                        iii=mConf_dic[n][ii]
+                        print(ii==iii)
+                    data0 =gen_rows(p, mConf_dic[n], new_parent,data0, suf_keys=suf_keys)
+            return data0
+
+        def mvalid(k, dic, data0):
             dvalid = dNl.NestDict({
                 'interference': {
                     'square': ['crawler_phi_range', 'attenuation', 'attenuation_max'],
@@ -321,10 +342,11 @@ class LarvaConfDict:
                 'energetics': ['DEB'],
                 'Box2D_params': [],
                 'olfactor': ['decay_coef', 'perception'],
-                'windsensor': [],
+                'windsensor': ['weights'],
                 'toucher': ['touch_sensors','decay_coef', 'perception', 'initial_gain'],
                 'feeder': ['initial_freq', 'feed_radius', 'V_bite'],
-                'memory': []
+                'memory': [],
+                # 'intermitter': ['stridechain_dist', 'pause_dist']
             })
 
             if k == 'interference':
@@ -334,51 +356,46 @@ class LarvaConfDict:
             elif k == 'crawler':
                 vals = dvalid[k][dic.waveform]
             elif k == 'intermitter':
-                vals = [n for n in ['stridechain_dist', 'pause_dist'] if
-                            dic[n] is not None and dic[n].name is not None]
+                for kkk in ['stridechain_dist', 'pause_dist'] :
+                    if dic[kkk] is not None :
+                        vv = dic[kkk]
+                        if vv.name is not None :
+                            dist_v = self.dist_dict[vv.name].lab_func(vv)
+                            if kkk == 'stridechain_dist':
+                                vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
+                                vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', vv.range,
+                                       '# $strides$']
+                            elif kkk == 'pause_dist':
+                                vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
+                                vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
+                            data0.append(vs1)
+                            data0.append(vs2)
+
+                vals = []
             else:
                 vals = dvalid[k]
 
-            return vals
+            return vals, data0
 
         for k in self.mkeys:
             if k in self.mbkeys:
                 dic = m['brain'][f'{k}_params']
                 dic0 = mConf['brain'][f'{k}_params']
+
+
             elif k in self.aux_keys:
                 dic = m[k]
                 dic0 = mConf[k]
+
+
+
             if dic is None:
                 valid = []
             else :
-                valid = mvalid(k, dic)
+                valid, data = mvalid(k, dic, data)
+
             if len(valid) > 0:
-                for n in valid:
-
-                    if n in ['stridechain_dist', 'pause_dist']:
-                        vv=dic[n]
-                        dist_v = self.dist_dict[vv.name].lab_func(vv)
-                        if n == 'stridechain_dist':
-                            vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
-                            vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', vv.range,
-                                   '# $strides$']
-                        elif n == 'pause_dist':
-                            vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
-                            vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
-                        data.append(vs1)
-                        data.append(vs2)
-
-                    elif n=='DEB':
-                        vv = dic[n]
-
-                        vs1 = [k, 'hunger sensitivity to reserve reduction', sub('G', 'hunger'), vv['hunger_gain'], '-']
-                        vs2 = [k, 'DEB functional response decay coef', sub('c', 'DEB'), vv['f_decay'],'-']
-                        data.append(vs1)
-                        data.append(vs2)
-
-                    else:
-                        ddd=[getattr(dic0[n], pname) for pname in columns]
-                        data.append([k]+ddd)
+                data=gen_rows(valid, dic0, k, data)
 
         df = pd.DataFrame(data, columns=['field'] + columns)
         df.set_index(['field'], inplace=True)

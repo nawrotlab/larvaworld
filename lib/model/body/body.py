@@ -230,9 +230,7 @@ class LarvaBody(LarvaShape):
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-        #self.touch_sensors = touch_sensors
-        # if touch_sensors:
-        #     self.add_touch_sensors(touch_sensors)
+
 
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
