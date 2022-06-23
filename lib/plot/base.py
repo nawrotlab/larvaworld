@@ -232,11 +232,14 @@ class Plot(BasePlot):
         from scipy.stats import ttest_ind
         st, pv = ttest_ind(v1, v2, equal_var=False)
         if not pv <= 0.01:
-            self.fit_df[p].loc[ind] = 0
-        else:
-            self.fit_df[p].loc[ind] = 1 if np.nanmean(v1) < np.nanmean(v2) else -1
-        self.fit_df[f'S_{p}'].loc[ind] = st
-        self.fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
+            t = 0
+        elif np.nanmean(v1) < np.nanmean(v2):
+            t = 1
+        else :
+            t=-1
+        self.fit_df.loc[ind, [p,f'S_{p}',f'P_{p}']]=[t,st,np.round(pv, 11)]
+        # self.fit_df[f'S_{p}'].loc[ind] = st
+        # self.fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
 
     def plot_half_circles(self, p, i):
         if self.fit_df is not None:
@@ -309,7 +312,6 @@ class Plot(BasePlot):
     @property
     def dt(self):
         dt_list = dNl.unique_list([d.dt for d in self.datasets])
-        # print(dt_list)
         return np.max(dt_list)
 
     @property
@@ -324,8 +326,6 @@ class Plot(BasePlot):
             T = 1
         t0, t1 = self.tlim
         x = np.linspace(t0 / T, t1 / T, self.Nticks)
-        # print(t1, self.fr, self.dt, T, t1/T, self.Nticks)
-        # raise
         return x
 
     def angrange(self, r, absolute=False, nbins=200):
