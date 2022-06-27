@@ -16,8 +16,7 @@ class ParRegistry:
         self.dist_dict = dist_dict.DistDict().dict
         self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc, dist_dict=self.dist_dict)
 
-        from lib.plot.dict import graph_dict
-        self.graph_dict = graph_dict
+
 
 
 
@@ -36,6 +35,11 @@ class ParRegistry:
             self.pdict = dNl.NestDict({p.p: p for k, p in self.dict.items()})
             if save:
                 self.save()
+
+    @ property
+    def graph_dict(self):
+        from lib.plot.dict import graph_dict
+        return graph_dict
 
     def finalize_dict(self, entries):
         dic = dNl.NestDict()

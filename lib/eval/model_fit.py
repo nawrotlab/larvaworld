@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-# from lib.registry.dtypes import null_dict
 from lib.registry.ga_dict import ga_dict, interference_ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.registry.pars import preg
@@ -19,48 +18,46 @@ class Calibration:
         if physics_keys is None:
             physics_keys = []
         if turner_mode == 'neural':
-            turner_keys =['base_activation','n','tau']
+            turner_keys = ['base_activation', 'n', 'tau']
         elif turner_mode == 'sinusoidal':
-            turner_keys = ['initial_amp','initial_freq']
+            turner_keys = ['initial_amp', 'initial_freq']
         PH = ga_dict(name='physics', only=physics_keys)
         TUR = ga_dict(name='turner', only=turner_keys)
-        space_dict={**PH, **TUR}
+        space_dict = {**PH, **TUR}
 
         self.turner_mode = turner_mode
-        self.base_turner= {**preg.get_null('base_turner', mode=self.turner_mode),  **preg.get_null(f'{self.turner_mode}_turner')}
+        self.base_turner = {**preg.get_null('base_turner', mode=self.turner_mode),
+                            **preg.get_null(f'{self.turner_mode}_turner')}
         self.space_dict = space_dict
         self.turner_keys = turner_keys
         self.physics_keys = physics_keys
-        self.refID=refID
-        self.refDataset =d= loadRef(refID)
+        self.refID = refID
+        self.refDataset = d = loadRef(refID)
         d.load(contour=False)
         s, e, c = d.step_data, d.endpoint_data, d.config
         self.absolute = absolute
         self.shorts = shorts
-        self.target = {sh : d.get_chunk_par(chunk='pause', short=sh, min_dur=3, mode='distro') for sh in self.shorts}
+        self.target = {sh: d.get_chunk_par(chunk='pause', short=sh, min_dur=3, mode='distro') for sh in self.shorts}
         self.N = self.target[self.shorts[0]].shape[0]
         self.dt = c.dt
         self.best = None
         self.KS_dic = None
 
-    def build_modelConf(self,new_id=None, **kwargs) :
-        if new_id is None :
-            new_id =f'fitted_{self.turner_mode}_turner'
-        m= self.refDataset.average_modelConf(new_id=new_id, **self.best, **kwargs)
-        return {new_id : m}
+    def build_modelConf(self, new_id=None, **kwargs):
+        if new_id is None:
+            new_id = f'fitted_{self.turner_mode}_turner'
+        m = self.refDataset.average_modelConf(new_id=new_id, **self.best, **kwargs)
+        return {new_id: m}
 
-
-
-
-    def plot_turner_distros(self, sim, fig=None, axs=None,in_deg=False,**kwargs):
+    def plot_turner_distros(self, sim, fig=None, axs=None, in_deg=False, **kwargs):
         Nps = len(self.shorts)
-        P=BasePlot(name='turner_distros',**kwargs)
-        P.build(Ncols=Nps, fig=fig, axs=axs,figsize=(5 * Nps, 5), sharey=True)
+        P = BasePlot(name='turner_distros', **kwargs)
+        P.build(Ncols=Nps, fig=fig, axs=axs, figsize=(5 * Nps, 5), sharey=True)
         for i, sh in enumerate(self.shorts):
             p, lab = preg.getPar(sh, to_return=['d', 'lab'])
             vs = self.target[sh]
-            if in_deg :
-                vs=np.rad2deg(vs)
+            if in_deg:
+                vs = np.rad2deg(vs)
             lim = np.nanquantile(vs, 0.99)
             bins = np.linspace(-lim, lim, 100)
 
@@ -68,13 +65,13 @@ class Calibration:
             P.axs[i].hist(vs, weights=ws, label='experiment', bins=bins, color='red', alpha=0.5)
 
             vs0 = sim[sh]
-            if in_deg :
-                vs0=np.rad2deg(vs0)
+            if in_deg:
+                vs0 = np.rad2deg(vs0)
             ws0 = np.ones_like(vs0) / float(len(vs0))
             P.axs[i].hist(vs0, weights=ws0, label='model', bins=bins, color='blue', alpha=0.5)
             P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=lab,
-                      xMaxN=4, yMaxN=4, leg_loc='upper left'if i == 0 else None)
-        P.adjust(LR=(0.1,0.95), BT=(0.15,0.95), W=0.01, H=0.1)
+                      xMaxN=4, yMaxN=4, leg_loc='upper left' if i == 0 else None)
+        P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.01, H=0.1)
         return P.get()
 
     def sim_turner(self, turner, physics, N=2000):
@@ -92,14 +89,14 @@ class Calibration:
         b = 0
         fov = 0
         for i in range(N):
-            ang=L.step(0)
+            ang = L.step(0)
             fov = compute_ang_vel(b, physics.torque_coef * ang, fov)
             b = wrap_angle_to_0(b + fov * self.dt)
             simFOV[i] = fov
             simB[i] = b
 
-        simB=np.rad2deg(simB)
-        simFOV=np.rad2deg(simFOV)
+        simB = np.rad2deg(simB)
+        simFOV = np.rad2deg(simFOV)
         simFOA = np.diff(simFOV, prepend=[0]) / self.dt
 
         if 'tur_t' in self.shorts or 'tur_fou' in self.shorts:
@@ -111,13 +108,11 @@ class Calibration:
             Tamps = np.concatenate([Lamps, Ramps])
             Tdurs = np.concatenate([Ldurs, Rdurs])
 
+            sim = {'b': simB, 'fov': simFOV, 'foa': simFOA, 'tur_t': Tdurs, 'tur_fou': Tamps}
 
-            sim = {'b': simB, 'fov': simFOV, 'foa': simFOA, 'tur_t' : Tdurs, 'tur_fou' : Tamps}
-
-        else :
+        else:
             sim = {'b': simB, 'fov': simFOV, 'foa': simFOA}
         return sim
-
 
     def eval_turner(self, sim):
         from scipy.stats import ks_2samp
@@ -129,14 +124,14 @@ class Calibration:
         err = np.sum(list(Ks_dic.values()))
         return err, Ks_dic
 
-    def retrieve_modules(self,q, Ndec=None):
+    def retrieve_modules(self, q, Ndec=None):
         dic = dNl.NestDict({k: q0 for (k, dic), q0 in zip(self.space_dict.items(), q)})
         turner = dNl.NestDict(copy.deepcopy(self.base_turner))
 
-        if Ndec is not None :
+        if Ndec is not None:
             physics = preg.get_null('physics', **{k: np.round(dic[k], Ndec) for k in self.physics_keys})
             turner.update({k: np.round(dic[k], Ndec) for k in self.turner_keys})
-        else :
+        else:
             physics = preg.get_null('physics', **{k: dic[k] for k in self.physics_keys})
             turner.update({k: dic[k] for k in self.turner_keys})
         # print(q, physics)
@@ -146,20 +141,20 @@ class Calibration:
 
         physics, turner = self.retrieve_modules(q)
         sim = self.sim_turner(turner, physics, N=N)
-        if return_sim :
+        if return_sim:
             return sim
-        else :
+        else:
             err, Ks_dic = self.eval_turner(sim)
             return err
 
-    def run(self, method='Nelder-Mead',**kwargs):
+    def run(self, method='Nelder-Mead', **kwargs):
         from scipy.optimize import minimize
 
         print(f'Calibrating parameters {list(self.space_dict.keys())}')
-        bnds = [(dic['min'], dic['max']) for k,dic in self.space_dict.items()]
-        init = np.array([dic['initial_value'] for k,dic in self.space_dict.items()])
+        bnds = [(dic['min'], dic['max']) for k, dic in self.space_dict.items()]
+        init = np.array([dic['initial_value'] for k, dic in self.space_dict.items()])
 
-        #print(bnds)
+        # print(bnds)
         res = minimize(self.optimize_turner, init, method=method, bounds=bnds, **kwargs)
         self.best, self.KS_dic = self.plot_turner(q=res.x)
 
@@ -178,25 +173,26 @@ class Calibration:
         print(Ks_dic)
         ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
         print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
-        _=self.plot_turner_distros(sim)
+        _ = self.plot_turner_distros(sim)
         best = dNl.NestDict({'turner': turner, 'physics': physics})
 
         return best, Ks_dic
         # pass
 
-def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
+
+def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs):
     from lib.ga.robot.larva_offline import LarvaOffline
     from lib.conf.stored.ga_conf import distro_KS_interference_evaluation
     from lib.ga.util.ga_launcher import GAlauncher
 
     d = loadRef(refID)
-    c=d.config
-    if dur is None :
-        dur=c.Nticks*c.dt/60
+    c = d.config
+    if dur is None:
+        dur = c.Nticks * c.dt / 60
 
     build_kws = {
         'fitness_target_refID': refID,
-        'fitness_target_kws': {'eval_shorts': ['fov', 'foa','b'], 'pooled_cycle_curves': ['fov', 'foa','b']},
+        'fitness_target_kws': {'eval_shorts': ['fov', 'foa', 'b'], 'pooled_cycle_curves': ['fov', 'foa', 'b']},
         'base_model': mID,
         'bestConfID': mID,
         'exclude_func': None,
@@ -210,13 +206,13 @@ def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
     kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=c.dt),
            'scene': 'no_boxes',
            'experiment': 'realism',
-           'env_params':expandConf('arena_200mm', 'Env'),
-           'offline' : True,
-           'show_screen' : False
+           'env_params': expandConf('arena_200mm', 'Env'),
+           'offline': True,
+           'show_screen': False,
+           'ga_select_kws': preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, Ngenerations=Ngen),
+           'ga_build_kws': preg.get_null('ga_build_kws', **build_kws),
            }
 
-    kws['ga_select_kws'] = preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, Ngenerations=Ngen)
-    kws['ga_build_kws'] = preg.get_null('ga_build_kws', **build_kws)
     kws.update(kwargs)
 
     conf = preg.get_null('GAconf', **kws)
@@ -224,42 +220,47 @@ def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
     GA = GAlauncher(**conf)
     best_genome = GA.run()
 
-    mm=loadConf(mID, 'Model')
-    IF =mm.brain.interference_params
-    if IF.attenuation + IF.attenuation_max > 1 :
-        mm.brain.interference_params.attenuation_max = np.round(1-IF.attenuation,2)
+    mm = loadConf(mID, 'Model')
+    IF = mm.brain.interference_params
+    if IF.attenuation + IF.attenuation_max > 1:
+        mm.brain.interference_params.attenuation_max = np.round(1 - IF.attenuation, 2)
         saveConf(id=mID, conf_type='Model', conf=mm)
 
     return {mID: mm}
 
+
 def adapt_crawler(ee, waveform='realistic', average=True):
-    if waveform=='realistic':
+    D = preg.dict
+    if waveform == 'realistic':
         if average:
-            crawler = preg.get_null('crawler',waveform='realistic',
-                                initial_freq=np.round(ee[preg.getPar('fsv')].median(), 2),
-                                stride_dst_mean=np.round(ee[preg.getPar('str_sd_mu')].median(), 2),
-                                stride_dst_std=np.round(ee[preg.getPar('str_sd_std')].median(), 2),
-                                max_vel_phase=np.round(ee['phi_scaled_velocity_max'].median(), 2),
-                                max_scaled_vel=np.round(ee[preg.getPar('str_sv_max')].median(), 2))
+            crawler = preg.get_null('crawler', waveform='realistic',
+                                    initial_freq=np.round(ee[D.fsv.d].median(), 2),
+                                    stride_dst_mean=np.round(ee[D.str_sd_mu.d].median(), 2),
+                                    stride_dst_std=np.round(ee[D.str_sd_std.d].median(), 2),
+                                    max_vel_phase=np.round(ee['phi_scaled_velocity_max'].median(), 2),
+                                    max_scaled_vel=np.round(ee[D.str_sv_max.d].median(), 2))
 
         else:
-            crawler = preg.get_null('crawler',waveform='realistic',
-                                initial_freq=ee[preg.getPar('fsv')],
-                                stride_dst_mean=ee[preg.getPar('str_sd_mu')],
-                                stride_dst_std=ee[preg.getPar('str_sd_std')],
-                                max_vel_phase=ee['phi_scaled_velocity_max'],
-                                max_scaled_vel=ee[preg.getPar('str_sv_max')])
-    elif waveform=='constant':
+            crawler = preg.get_null('crawler', waveform='realistic',
+                                    initial_freq=ee[D.fsv.d],
+                                    stride_dst_mean=ee[D.str_sd_mu.d],
+                                    stride_dst_std=ee[D.str_sd_std.d],
+                                    max_vel_phase=ee['phi_scaled_velocity_max'],
+                                    max_scaled_vel=ee[D.str_sv_max.d])
+    elif waveform == 'constant':
         if average:
-            crawler = preg.get_null('crawler',waveform='constant',
-                                initial_amp=np.round(ee[preg.getPar('run_v_mu')].median(), 2))
+            crawler = preg.get_null('crawler', waveform='constant',
+                                    initial_amp=np.round(ee[D.run_v_mu.d].median(), 2))
         else:
-            crawler = preg.get_null('crawler',waveform='constant',
-                                initial_amp=ee[preg.getPar('run_v_mu')]
-                                )
+            crawler = preg.get_null('crawler', waveform='constant',
+                                    initial_amp=ee[D.run_v_mu.d]
+                                    )
     return crawler
 
-def adapt_intermitter(c, e, **kwargs) :
+
+def adapt_intermitter(c, e, **kwargs):
+    D = preg.dict
+
     intermitter = preg.get_null('intermitter')
     intermitter.stridechain_dist = c.bout_distros.run_count
     try:
@@ -280,66 +281,81 @@ def adapt_intermitter(c, e, **kwargs) :
         intermitter.pause_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
     except:
         pass
-    intermitter.crawl_freq = np.round(e[preg.getPar('fsv')].median(), 2)
+    intermitter.crawl_freq = np.round(e[D.fsv.d].median(), 2)
     return intermitter
 
-def adapt_interference(c, e, mode='phasic', average=True) :
-    if average :
+
+def adapt_interference(c, e, mode='phasic', average=True):
+    D = preg.dict
+    if average:
+
+
         at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
 
-        pau_fov_mu=e[preg.getPar('pau_fov_mu')]
+        pau_fov_mu = e[D.pau_fov_mu.d]
 
-        att0 = np.clip(np.round((e[preg.getPar('run_fov_mu')] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
+        att0 = np.clip(np.round((e[D.run_fov_mu.d] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
         fov_curve = c.pooled_cycle_curves['fov']['abs']
-        #print(fov_curve)
-        # att0=np.round(np.clip(np.nanmean(att0s),a_min=0, a_max=1),2)
         att1 = np.min(fov_curve) / pau_fov_mu.median()
         att2 = np.max(fov_curve) / pau_fov_mu.median() - att1
         att1 = np.round(np.clip(att1, a_min=0, a_max=1), 2)
         att2 = np.round(np.clip(att2, a_min=0, a_max=1 - att1), 2)
 
-        if mode=='phasic':
+        if mode == 'phasic':
+            kws = {
+                'mode': mode,
+                'suppression_mode': 'amplitude',
+                'attenuation_max': att2,
+                'attenuation': att1
+            }
+            bkws = preg.get_null('base_interference', **kws)
 
-            interference = {**preg.get_null('base_interference', mode='phasic',suppression_mode='amplitude', attenuation_max=att2, attenuation=att1),
-                      **preg.get_null('phasic_interference', max_attenuation_phase=at_phiM)}
+            interference = {
+                **bkws,
+                **preg.get_null('phasic_interference', max_attenuation_phase=at_phiM)}
 
-            # interference = null_dict('interference', mode='phasic', suppression_mode='amplitude', max_attenuation_phase=at_phiM,
-            #                      attenuation_max=att2, attenuation=att1)
         elif mode == 'square':
-            interference = {**preg.get_null('base_interference', mode='square',suppression_mode='amplitude', attenuation_max=att2, attenuation=att0),
-                            **preg.get_null('square_interference',  crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
+            kws = {
+                'mode': mode,
+                'suppression_mode': 'amplitude',
+                'attenuation_max': att2,
+                'attenuation': att0
+            }
+            bkws=preg.get_null('base_interference', **kws)
 
-            # interference = null_dict('interference', mode='square', suppression_mode='amplitude', attenuation_max=att2,
-            #                       max_attenuation_phase=None,
-            #                       crawler_phi_range=(at_phiM - 1, at_phiM + 1),
-            #                       attenuation=att0)
-    else :
-        raise ValueError ('Not implemented')
+            interference = {
+                **bkws,
+                **preg.get_null('square_interference', crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
+
+    else:
+        raise ValueError('Not implemented')
     return interference
 
-def adapt_turner(e, mode = 'neural', average=True) :
+
+def adapt_turner(e, mode='neural', average=True):
+    D = preg.dict
     if mode == 'neural':
         if average:
-            fr_mu = e[preg.getPar('ffov')].median()
+            fr_mu = e[D.ffov.d].median()
             coef, intercept = 0.024, 5
             A_in_mu = np.round(fr_mu / coef + intercept)
 
             turner = {**preg.get_null('base_turner', mode='neural'),
-            **preg.get_null('neural_turner', base_activation=A_in_mu,
-                      activation_range=(10.0, 40.0)
-                      )}
+                      **preg.get_null('neural_turner', base_activation=A_in_mu,
+                                      activation_range=(10.0, 40.0)
+                                      )}
         else:
             raise ValueError('Not implemented')
     elif mode == 'sinusoidal':
         if average:
-            fr_mu = e[preg.getPar('ffov')].median()
+            fr_mu = e[D.ffov.d].median()
             turner = {**preg.get_null('base_turner', mode='sinusoidal'),
-            **preg.get_null('sinusoidal_turner',
-                        initial_freq=np.round(fr_mu, 2),
-                               freq_range = (0.1,0.8),
-                               initial_amp = np.round(e[preg.getPar('pau_foa_mu')].median(), 2)/10,
-                               amp_range = (0.0,100.0)
-                      )}
+                      **preg.get_null('sinusoidal_turner',
+                                      initial_freq=np.round(fr_mu, 2),
+                                      freq_range=(0.1, 0.8),
+                                      initial_amp=np.round(e[preg.getPar('pau_foa_mu')].median(), 2) / 10,
+                                      amp_range=(0.0, 100.0)
+                                      )}
 
         else:
             raise ValueError('Not implemented')
@@ -347,18 +363,18 @@ def adapt_turner(e, mode = 'neural', average=True) :
         if average:
             turner = {**preg.get_null('base_turner', mode='constant'),
                       **preg.get_null('constant_turner',
-                                  initial_amp=np.round(e[preg.getPar('pau_foa_mu')].median(), 2),
-                                  # amp_range=(-1000.0, 1000.0)
-                                  )}
+                                      initial_amp=np.round(e[D.pau_foa_mu.d].median(), 2),
+                                      )}
         else:
             raise ValueError('Not implemented')
     return turner
 
-def adapt_locomotor(c,e,average=True):
+
+def adapt_locomotor(c, e, average=True):
     if average:
-        m=preg.get_null('locomotor')
-        m.turner_params = adapt_turner(e, mode='neural',average=True)
-        m.crawler_params = adapt_crawler(e, waveform='realistic',average=True)
+        m = preg.get_null('locomotor')
+        m.turner_params = adapt_turner(e, mode='neural', average=True)
+        m.crawler_params = adapt_crawler(e, waveform='realistic', average=True)
         m.intermitter_params = adapt_intermitter(c, e)
         m.interference_params = adapt_interference(c, e, mode='phasic', average=True)
         m.feeder_params = None
@@ -367,14 +383,15 @@ def adapt_locomotor(c,e,average=True):
         raise ValueError('Not implemented')
     return m
 
-def calibrate_4models(refID='None.150controls') :
-    mIDs=[]
-    mdict={}
-    for Tmod, Tlab in zip(['neural', 'sinusoidal'], ['NEU', 'SIN']) :
+
+def calibrate_4models(refID='None.150controls'):
+    mIDs = []
+    mdict = {}
+    for Tmod, Tlab in zip(['neural', 'sinusoidal'], ['NEU', 'SIN']):
         C = Calibration(refID=refID, turner_mode=Tmod)
         C.run()
-        for IFmod, IFlab in zip(['phasic', 'square'], ['PHI', 'SQ']) :
-            mID=f'{IFlab}on{Tlab}'
+        for IFmod, IFlab in zip(['phasic', 'square'], ['PHI', 'SQ']):
+            mID = f'{IFlab}on{Tlab}'
             mIDs.append(mID)
             m = C.build_modelConf(new_id=mID, interference_mode=IFmod)
             mm = calibrate_interference(mID=mID, refID=refID)
@@ -382,6 +399,7 @@ def calibrate_4models(refID='None.150controls') :
 
     update_modelConfs(d=loadRef(refID), mIDs=mIDs)
     return mdict
+
 
 def update_modelConfs(d, mIDs):
     save_to = f'{d.dir_dict.model_tables}/4models'
@@ -392,7 +410,6 @@ def update_modelConfs(d, mIDs):
 
 
 if __name__ == '__main__':
-
     refID = 'None.150controls'
     # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
     # for mID in mIDs:

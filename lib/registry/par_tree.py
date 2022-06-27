@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from lib.aux import dictsNlists as dNl
-
 
 def tree_dict(d, parent_key='', sep='.'):
     cols = ['parent', 'key', 'text', 'values']

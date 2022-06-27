@@ -2,13 +2,14 @@ import random
 import pandas as pd
 import param
 from lib.aux import dictsNlists as dNl
-from lib.aux.par_aux import sub, define_range
+from lib.aux.par_aux import sub
 from lib.registry.units import ureg
 
 
 def init2par(d0, d=None,pre_d=None, aux_args={}):
     def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, disp=None, h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', codename=None,
             vfunc=None,vparfunc=None, **kwargs):
+        from lib.aux.par_aux import define_range
         if k is None:
             k = name
         dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)

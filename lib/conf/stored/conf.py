@@ -7,7 +7,6 @@ import param
 
 import lib.aux.dictsNlists as dNl
 from lib.registry import paths
-from lib.registry.pars import preg
 
 
 def loadConf(id, conf_type, **kwargs):
@@ -299,6 +298,8 @@ def store_confs(keys=None):
 
 
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
+    from lib.registry.pars import preg
+
     sample_conf = loadConf(sample, 'Ref')
 
     # env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
