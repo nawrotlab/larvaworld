@@ -228,38 +228,41 @@ def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs)
 
     return {mID: mm}
 
+def epar(e, k, par=None,average=True):
+    if par is None :
+        D = preg.dict
+        par=D[k].d
+    vs=e[par]
+    if average :
+        return np.round(vs.median(), 2)
+    else :
+        return vs
+
 
 def adapt_crawler(ee, waveform='realistic', average=True):
-    D = preg.dict
-    if waveform == 'realistic':
-        if average:
-            crawler = preg.get_null('crawler', waveform='realistic',
-                                    initial_freq=np.round(ee[D.fsv.d].median(), 2),
-                                    stride_dst_mean=np.round(ee[D.str_sd_mu.d].median(), 2),
-                                    stride_dst_std=np.round(ee[D.str_sd_std.d].median(), 2),
-                                    max_vel_phase=np.round(ee['phi_scaled_velocity_max'].median(), 2),
-                                    max_scaled_vel=np.round(ee[D.str_sv_max.d].median(), 2))
 
-        else:
-            crawler = preg.get_null('crawler', waveform='realistic',
-                                    initial_freq=ee[D.fsv.d],
-                                    stride_dst_mean=ee[D.str_sd_mu.d],
-                                    stride_dst_std=ee[D.str_sd_std.d],
-                                    max_vel_phase=ee['phi_scaled_velocity_max'],
-                                    max_scaled_vel=ee[D.str_sv_max.d])
+    if waveform == 'realistic':
+        kws = {
+            'waveform': waveform,
+            'initial_freq': epar(ee, 'fsv', average=average),
+            'stride_dst_mean': epar(ee, 'str_sd_mu', average=average),
+            'stride_dst_std': epar(ee, 'str_sd_std', average=average),
+            'max_vel_phase': epar(ee, par='phi_scaled_velocity_max', average=average),
+            'max_scaled_vel': epar(ee, 'str_sv_max', average=average)
+        }
+
     elif waveform == 'constant':
-        if average:
-            crawler = preg.get_null('crawler', waveform='constant',
-                                    initial_amp=np.round(ee[D.run_v_mu.d].median(), 2))
-        else:
-            crawler = preg.get_null('crawler', waveform='constant',
-                                    initial_amp=ee[D.run_v_mu.d]
-                                    )
+        kws = {
+            'waveform': waveform,
+            'initial_amp': epar(ee, 'run_v_mu', average=average)
+        }
+    else :
+        raise
+    crawler = preg.larva_conf_dict.conf(mkey='crawler', **kws)
     return crawler
 
 
 def adapt_intermitter(c, e, **kwargs):
-    D = preg.dict
 
     intermitter = preg.get_null('intermitter')
     intermitter.stridechain_dist = c.bout_distros.run_count
@@ -281,7 +284,7 @@ def adapt_intermitter(c, e, **kwargs):
         intermitter.pause_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
     except:
         pass
-    intermitter.crawl_freq = np.round(e[D.fsv.d].median(), 2)
+    intermitter.crawl_freq = epar(e, 'fsv', average=True)
     return intermitter
 
 
@@ -333,54 +336,43 @@ def adapt_interference(c, e, mode='phasic', average=True):
 
 
 def adapt_turner(e, mode='neural', average=True):
-    D = preg.dict
+
     if mode == 'neural':
-        if average:
-            fr_mu = e[D.ffov.d].median()
-            coef, intercept = 0.024, 5
-            A_in_mu = np.round(fr_mu / coef + intercept)
+        coef, intercept = 0.024, 5
 
-            turner = {**preg.get_null('base_turner', mode='neural'),
-                      **preg.get_null('neural_turner', base_activation=A_in_mu,
-                                      activation_range=(10.0, 40.0)
-                                      )}
-        else:
-            raise ValueError('Not implemented')
+        turner = {**preg.get_null('base_turner', mode='neural'),
+                  **preg.get_null('neural_turner',
+                                  base_activation=epar(e, 'ffov', average=average) / coef + intercept,
+                                  activation_range=(10.0, 40.0)
+                                  )}
     elif mode == 'sinusoidal':
-        if average:
-            fr_mu = e[D.ffov.d].median()
-            turner = {**preg.get_null('base_turner', mode='sinusoidal'),
-                      **preg.get_null('sinusoidal_turner',
-                                      initial_freq=np.round(fr_mu, 2),
-                                      freq_range=(0.1, 0.8),
-                                      initial_amp=np.round(e[preg.getPar('pau_foa_mu')].median(), 2) / 10,
-                                      amp_range=(0.0, 100.0)
-                                      )}
 
-        else:
-            raise ValueError('Not implemented')
+        turner = {**preg.get_null('base_turner', mode='sinusoidal'),
+                  **preg.get_null('sinusoidal_turner',
+                                  initial_freq=epar(e, 'ffov', average=average),
+                                  # freq_range=(0.1, 0.8),
+                                  initial_amp=epar(e, 'pau_foa_mu', average=average),
+                                  # amp_range=(0.0, 100.0)
+                                  )}
+
     elif mode == 'constant':
-        if average:
-            turner = {**preg.get_null('base_turner', mode='constant'),
-                      **preg.get_null('constant_turner',
-                                      initial_amp=np.round(e[D.pau_foa_mu.d].median(), 2),
-                                      )}
-        else:
-            raise ValueError('Not implemented')
+        turner = {**preg.get_null('base_turner', mode='constant'),
+                  **preg.get_null('constant_turner',
+                                  initial_amp=epar(e, 'pau_foa_mu', average=average),
+                                )}
+    else :
+        raise ValueError('Not implemented')
+
     return turner
 
 
 def adapt_locomotor(c, e, average=True):
-    if average:
-        m = preg.get_null('locomotor')
-        m.turner_params = adapt_turner(e, mode='neural', average=True)
-        m.crawler_params = adapt_crawler(e, waveform='realistic', average=True)
-        m.intermitter_params = adapt_intermitter(c, e)
-        m.interference_params = adapt_interference(c, e, mode='phasic', average=True)
-        m.feeder_params = None
-
-    else:
-        raise ValueError('Not implemented')
+    m = preg.get_null('locomotor')
+    m.turner_params = adapt_turner(e, mode='neural', average=average)
+    m.crawler_params = adapt_crawler(e, waveform='realistic', average=average)
+    m.intermitter_params = adapt_intermitter(c, e)
+    m.interference_params = adapt_interference(c, e, mode='phasic', average=average)
+    m.feeder_params = None
     return m
 
 

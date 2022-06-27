@@ -407,25 +407,23 @@ class ParInitDict:
             }
 
             d['sinusoidal_turner'] = {
-                'initial_amp': {'v': 19.27, 'min': 0.1, 'max': 100.0, 'lim': (0.0, 100.0), 'disp': 'initial',
+                'initial_amp': {'v': 19.27,  'lim': (0.0, 100.0), 'disp': 'initial',
                                 'combo': 'amplitude',
                                 'label': 'output amplitude', 'symbol': '$A_{T}^{0}$', 'u_name': None, 'k': 'A_T0',
                                 'vfunc': param.Number,
                                 'h': 'The initial activity amplitude of the TURNER module.'},
-                'amp_range': {'t': Tuple[float], 'min': 0.1, 'max': 100.0, 'lim': (0.0, 100.0), 'v': (10.0, 30.0),
+                'amp_range': {'t': Tuple[float],'lim': (0.0, 1000.0), 'v': (0.0, 100.0),
                               'disp': 'range', 'combo': 'amplitude',
                               'label': 'output amplitude range', 'symbol': r'$[A_{T}^{min},A_{T}^{max}]$',
                               'vfunc': param.Range,
                               'u_name': None, 'k': 'A_T_r',
                               'h': 'The activity amplitude range of the TURNER module.'},
-                'initial_freq': {'v': 0.58, 'min': 0.01, 'max': 2.0, 'dv': 0.01, 'disp': 'initial',
-                                 'combo': 'frequency',
+                'initial_freq': {'v': 0.58, 'lim': (0.01, 2.0), 'dv': 0.01, 'disp': 'initial','combo': 'frequency',
                                  'k': 'f_T0',
                                  'label': 'bending frequency', 'symbol': sub('f', 'T'), 'u_name': '$Hz$', 'u': ureg.Hz,
                                  'vfunc': param.Number,
                                  'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).'},
-                'freq_range': {'t': Tuple[float], 'min': 0.01, 'max': 2.0, 'lim': (0.01, 2.0), 'dv': 0.01,
-                               'disp': 'range',
+                'freq_range': {'t': Tuple[float], 'lim': (0.01, 2.0), 'dv': 0.01, 'disp': 'range',
                                'combo': 'frequency',
                                'label': 'bending frequency range', 'k': 'f_T_r', 'v': (0.1, 0.8), 'vfunc': param.Range,
                                'symbol': r'$[f_{T}^{min},f_{T}^{max}]$', 'u_name': '$Hz$', 'u': ureg.Hz,
@@ -433,13 +431,10 @@ class ParInitDict:
             }
 
             d['constant_turner'] = {
-                'initial_amp': {'min': 0.1, 'lim': (0.1, 20.0), 'disp': 'initial', 'combo': 'amplitude', 'k': 'A_T0',
+                'initial_amp': {'lim': (0.1, 20.0), 'disp': 'initial', 'combo': 'amplitude', 'k': 'A_T0',
                                 'label': 'output amplitude', 'symbol': '$A_{T}^{0}$', 'u_name': None,
                                 'vfunc': param.Number,
                                 'h': 'The initial activity amplitude of the TURNER module.'},
-                # 'amp_range': {'t': Tuple[float],'min': 0.1, 'max': 20.0,'lim' : (0.1,20.0), 'disp': 'range', 'combo': 'amplitude',
-                #               'label': 'output amplitude range', 'symbol': '$[A_{T}^{min},A_{T}^{max}]$','k' : 'A_T_r','vfunc': param.Range,
-                #               'h': 'The activity amplitude range of the TURNER module.'}
             }
 
             d['base_turner'] = {

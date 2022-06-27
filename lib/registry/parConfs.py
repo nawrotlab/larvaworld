@@ -131,14 +131,20 @@ class LarvaConfDict:
                     mpredfs[k] = None
             return mpredfs
 
+    # def fit_conf(self, e, mkey, mode=None, average=True):
+    #     conf0=self.conf(mkey = mkey)
 
 
 
 
 
-
-    def conf(self, mdict, prefix=False, **kwargs):
+    def conf(self, mdict = None, mkey = None, prefix=False, **kwargs):
         conf0 = dNl.NestDict()
+        if mdict is None :
+            if mkey is not None :
+                mdict=self.mdicts[mkey]
+            else :
+                raise ValueError('Module dictionary or key must be defined')
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
                 d0 = f'{p.pref}{d}' if prefix else d
