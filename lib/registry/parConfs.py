@@ -131,12 +131,6 @@ class LarvaConfDict:
                     mpredfs[k] = None
             return mpredfs
 
-    # def fit_conf(self, e, mkey, mode=None, average=True):
-    #     conf0=self.conf(mkey = mkey)
-
-
-
-
 
     def conf(self, mdict = None, mkey = None, prefix=False, **kwargs):
         conf0 = dNl.NestDict()

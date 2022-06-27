@@ -10,36 +10,25 @@ from lib.registry.pars import preg
 
 ''' Default exploration model'''
 
-Cbas = preg.get_null('crawler', initial_freq=1.5, stride_dst_mean=0.25, stride_dst_std=0.0)
+Ccon = preg.larva_conf_dict.conf(mkey='crawler', waveform='constant', initial_amp=0.0012)
+
+
+# T = preg.larva_conf_dict.conf(mkey='turner')
+Tsin = preg.get_null('turner',
+                          mode='sinusoidal',
+                          initial_amp=15.0,
+                          amp_range=[0.0, 50.0],
+                          initial_freq=0.3,
+                          freq_range=[0.1, 1.0]
+                         )
+
+
+
 base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
                           attenuation=0.1)
 phasic_coupling = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
 null_coupling = preg.get_null('interference', mode='default', attenuation=1.0)
 
-Tsin = preg.get_null('turner',
-                 mode='sinusoidal',
-                 initial_amp=15.0,
-                 amp_range=[0.0, 50.0],
-                 initial_freq=0.3,
-                 freq_range=[0.1, 1.0],
-                 noise=0.15,
-                 activation_noise=0.5,
-                 )
-Tsin_no_noise = preg.get_null('turner',
-                          mode='sinusoidal',
-                          initial_amp=15.0,
-                          amp_range=[0.0, 50.0],
-                          initial_freq=0.3,
-                          freq_range=[0.1, 1.0],
-                          noise=0.0,
-                          activation_noise=0.0,
-                          )
-
-Tno_noise = preg.get_null('turner', activation_noise=0.0, noise=0.0)
-
-Ccon = preg.get_null('crawler', waveform='constant', initial_amp=0.0012)
-
-Ccon_no_noise = preg.get_null('crawler', waveform='constant', initial_amp=0.0012, noise=0.0)
 
 RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                           gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
@@ -122,8 +111,7 @@ def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=No
         ms = ['L', 'F']
     else:
         ms = ['LOF']
-    b = brain(ms, OD=OD, crawler=Cbas, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],
-                                                                                   intermitter=Im(EEB))
+    b = brain(ms, OD=OD, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],intermitter=Im(EEB))
 
     gut = preg.get_null('gut', **gut_kws)
     deb = preg.get_null('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
@@ -210,7 +198,6 @@ brain_3c = brain(['L'],
 brain_phasic = brain(['L'],
                      crawler=preg.get_null('crawler', stride_dst_mean=0.224, stride_dst_std=0.033, initial_freq=1.418,
                                        max_vel_phase=3.6),
-                     turner=Tno_noise,
                      interference=phasic_coupling,
                      intermitter=ImFitted)
 
@@ -262,16 +249,16 @@ def create_mod_dict():
     LO_brute = brain(['L', 'O'], olfactor=preg.get_null('olfactor', brute_force=True))
     LW = brain(['L', 'W'])
     L = brain(['L'])
-    LTo = brain(['L', 'To'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[]))
-    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[]),
+    LTo = brain(['L', 'To'], toucher=preg.get_null('toucher', touch_sensors=[]))
+    LToM = brain(['L', 'To', 'M'], toucher=preg.get_null('toucher', touch_sensors=[]),
                  memory=RL_touch_memory)
-    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[]),
+    LToMg = brain(['L', 'To', 'M'], toucher=preg.get_null('toucher', touch_sensors=[]),
                   memory=gRL_touch_memory)
-    LTo2M = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[0, 2]),
+    LTo2M = brain(['L', 'To', 'M'], toucher=preg.get_null('toucher', touch_sensors=[0, 2]),
                   memory=RL_touch_memory)
-    LTo2Mg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[0, 2]),
+    LTo2Mg = brain(['L', 'To', 'M'], toucher=preg.get_null('toucher', touch_sensors=[0, 2]),
                    memory=gRL_touch_memory)
-    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[], brute_force=True))
+    LTo_brute = brain(['L', 'To'], toucher=preg.get_null('toucher', touch_sensors=[], brute_force=True))
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
@@ -305,8 +292,7 @@ def create_mod_dict():
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-        'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1,
-                                                turner=Tno_noise, crawler=Ccon_no_noise,
+        'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1,crawler=Ccon,
                                                 interference=null_coupling),
                                           bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
