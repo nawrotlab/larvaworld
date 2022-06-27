@@ -10,7 +10,7 @@ from shapely.geometry import Point
 
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.pars import preg
 
 
 
@@ -18,15 +18,15 @@ from lib.conf.pars.pars import getPar, ParDict
 
 
 
-dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,str_sd_mu, str_sd_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= getPar(['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'str_sd_mu', 'str_sd_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t'])
+dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,str_sd_mu, str_sd_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= preg.getPar(['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'str_sd_mu', 'str_sd_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t'])
 
 
 
 def eval_endpoint(ee,e,e_shorts=None,e_pars=None,e_labs=None, mode = 'pooled'):
     if e_pars is None :
-        e_pars = getPar(e_shorts)
+        e_pars = preg.getPar(e_shorts)
     if e_labs is None :
-        e_labs = getPar(d=e_pars, to_return=['lab'])
+        e_labs = preg.getPar(d=e_pars, to_return=['lab'])
     Eend= {}
     for p, pl in zip(e_pars, e_labs):
         Eend[pl] = None
@@ -52,9 +52,9 @@ def eval_end_fast(ee,e_data,e_sym, mode = 'pooled'):
 
 def eval_distro(ss,s,s_shorts=None,s_pars=None,s_labs=None, mode = 'pooled', min_size=20):
     if s_pars is None :
-        s_pars = getPar(s_shorts)
+        s_pars = preg.getPar(s_shorts)
     if s_labs is None :
-        s_labs = getPar(d=s_pars, to_return=['lab'])
+        s_labs = preg.getPar(d=s_pars, to_return=['lab'])
 
     Edistro = {}
     for p, pl in zip(s_pars, s_labs):
@@ -98,10 +98,10 @@ def eval_distro_fast(ss,s_data,s_sym, mode = 'pooled', min_size=20):
 def eval_multi(datasets,s=None,e=None, s_shorts=None,e_shorts=None, mode='pooled', min_size=20):
     GEend, GEdistro = {}, {}
     if e is not None and e_shorts is not None:
-        e_pars, e_labs = getPar(e_shorts, to_return=['d', 'lab'])
+        e_pars, e_labs = preg.getPar(e_shorts, to_return=['d', 'lab'])
         GEend = {d.id : eval_endpoint(d.endpoint_data,e,e_pars=e_pars,e_labs=e_labs, mode = mode) for d in datasets}
     if s is not None and s_shorts is not None:
-        s_pars, s_labs = getPar(s_shorts, to_return=['d', 'lab'])
+        s_pars, s_labs = preg.getPar(s_shorts, to_return=['d', 'lab'])
         GEdistro= {d.id : eval_distro(d.step_data,s,s_pars=s_pars,s_labs=s_labs, mode = mode, min_size=min_size) for d in datasets}
     if mode == '1:1':
         labels = ['RSS error', r'median 1:1 distribution KS$_{D}$']
@@ -134,7 +134,7 @@ def eval_fast(datasets,data,symbols,mode='pooled', min_size=20):
 
 
 def adapt_conf(conf0, ee, cc):
-    run_t_max, pau_t_min, pau_t_max,fsv,l, v_mu,cum_d, sv_mu, fov_mu, b_mu = getPar(['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv','l', 'v_mu', "cum_d", "sv_mu",'fov_mu','b_mu'])
+    run_t_max, pau_t_min, pau_t_max,fsv,l, v_mu,cum_d, sv_mu, fov_mu, b_mu = preg.getPar(['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv','l', 'v_mu', "cum_d", "sv_mu",'fov_mu','b_mu'])
 
 
     conf = copy.deepcopy(conf0)
@@ -173,7 +173,7 @@ def adapt_conf(conf0, ee, cc):
 
 def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
     if df_cols is None:
-        df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
+        df_cols = preg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     aL = np.ones([N, len(df_cols)]) * np.nan
     for i in range(N):
         lin, ang, feed = L.step(A_in=0, length=length)
@@ -192,7 +192,7 @@ def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_f
 
 def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
     from lib.aux.sim_aux import get_tank_polygon
-    df_cols = getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
+    df_cols = preg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     Ncols = len(df_cols)
 
     Ls = {}
@@ -256,7 +256,7 @@ def arrange_evaluation(d, evaluation_metrics):
     dic = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         Eshorts, Dshorts = [], []
-        ps = getPar(shs)
+        ps = preg.getPar(shs)
         for sh, p in zip(shs, ps) :
             try:
                 data=d.read(key='end', file='endpoint_h5')[p]
@@ -386,7 +386,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
         store_spatial
     from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-    from lib.conf.base.dtypes import null_dict
+    from lib.registry.dtypes import null_dict
     if dataset_id is None:
         dataset_id = mID
     if refDataset is not None :
@@ -398,7 +398,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
         ms = [m] * Nids
 
     if use_LarvaConfDict:
-        mConfDict = ParDict.larva_conf_dict
+        mConfDict = preg.larva_conf_dict
 
         mConfs = [mConfDict.mIDconf(m) for m in ms]
         ms = [mConfDict.multiconf(mConf) for mConf in mConfs]
@@ -421,7 +421,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     e['num_ticks'] = c.Nticks
     e['length'] = [m.body.initial_length for m in ms]
 
-    df_columns = getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur', 'c_CT'])
+    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur', 'c_CT'])
     AA = np.ones([c.Nticks, Nids, len(df_columns)]) * np.nan
 
 

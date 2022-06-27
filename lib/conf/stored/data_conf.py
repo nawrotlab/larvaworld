@@ -1,5 +1,5 @@
 from lib.aux import naming as nam
-from lib.conf.base.dtypes import base_enrich, enr_dict, arena, null_dict
+from lib.registry.dtypes import base_enrich, enr_dict, arena, null_dict
 
 
 def metric_def(ang={}, sp={}, **kwargs):

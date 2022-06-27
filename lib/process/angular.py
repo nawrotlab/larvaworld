@@ -270,11 +270,3 @@ def comp_ang_from_xy(s, e, dt):
     e[nam.mean(p_vel)] = s[p_vel].dropna().groupby('AgentID').mean()
     e[nam.mean(p_acc)] = s[p_acc].dropna().groupby('AgentID').mean()
 
-
-
-
-
-
-if __name__ == '__main__':
-    f=FuncParHelper()
-    print(f.func_df['module'])

@@ -7,6 +7,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')
+#
+# from lib.registry.pars import ParDict
+# print(ParDict.dict['b'].d)
+# raise
 # from run.exec_run import Exec
 from lib.sim.single.single_run import SingleRun
 # from lib.sim.single.analysis import sim_analysis

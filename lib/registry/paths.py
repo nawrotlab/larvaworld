@@ -5,7 +5,7 @@ def get_parent_dir():
     p = os.path.dirname(p)
     p = os.path.dirname(p)
     p = os.path.dirname(p)
-    p = os.path.dirname(p)
+    #p = os.path.dirname(p)
     # p = os.path.join(p, '../..')
     return p
 
@@ -78,8 +78,6 @@ def build_path_dict() :
         'ESSAY': f'{F0}/data/SimGroup/essays',
         'RUN': f'{F0}/data/SimGroup/single_runs',
         'SIM': f'{F0}/data/SimGroup',
-        # 'EVAL': f'{F0}/data/SimGroup/eval_runs',
-        # 'GA': f'{F0}/data/SimGroup/ga_runs',
         'GA_SCENE': f'{F0}/lib/ga/saved_scenes',
         'DATA': f'{F0}/data',
         'GUITEST': f'{GF}/gui_speed_test.csv',
@@ -90,5 +88,6 @@ def build_path_dict() :
     return dic
 
 path_dict=build_path_dict()
-# def path(n) :
-#     return path_dict[n]
+#
+# if __name__ == '__main__':
+#     print(path_dict['parent'])

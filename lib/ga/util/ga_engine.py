@@ -11,7 +11,7 @@ import numpy as np
 
 import lib.aux.dictsNlists as dNl
 
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.pars import preg
 
 from lib.conf.stored.conf import kConfDict, loadRef, saveConf, loadConf
 from lib.ga.robot.larva_robot import LarvaRobot
@@ -223,7 +223,7 @@ class GAbuilder(GAselector):
 
         self.my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), c.agent_ids],
                                                    names=['Step', 'AgentID'])
-        self.df_columns = getPar(['b', 'fov', 'rov', 'v', 'x', 'y'])
+        self.df_columns = preg.getPar(['b', 'fov', 'rov', 'v', 'x', 'y'])
         self.df_Ncols=len(self.df_columns)
         step_df = np.ones([c.Nticks, c.N, self.df_Ncols]) * np.nan
 
@@ -260,7 +260,7 @@ class GAbuilder(GAselector):
             ks +=cycle_ks
         ks=dNl.unique_list(ks)
         for k in ks:
-            ParDict.compute(k, self.dataset)
+            preg.compute(k, self.dataset)
 
         for i, g in self.genome_dict.genomes.items():
             if g.fitness is None :
@@ -273,7 +273,7 @@ class GAbuilder(GAselector):
 
                     gdict['cycle_curves'] = cycle_curve_dict(s=ss, dt=self.model.dt, shs=cycle_ks)
                 if eval_ks:
-                    gdict['eval']={sh: ss[getPar(sh)].dropna().values for sh in eval_ks}
+                    gdict['eval']={sh: ss[preg.getPar(sh)].dropna().values for sh in eval_ks}
                     # t1 = time.time()
                     # print('--1--', t1 - t0)
                     # t00 = time.time()
@@ -412,7 +412,7 @@ class GAbuilder(GAselector):
             d = loadRef(fitness_target_refID)
             if 'eval_shorts' in fitness_target_kws.keys():
                 shs = fitness_target_kws['eval_shorts']
-                eval_pars, eval_lims, eval_labels = getPar(shs, to_return=['d', 'lim', 'lab'])
+                eval_pars, eval_lims, eval_labels = preg.getPar(shs, to_return=['d', 'lim', 'lab'])
                 fitness_target_kws['eval'] = {sh: d.get_par(p, key='distro').dropna().values for p, sh in
                                               zip(eval_pars, shs)}
                 robot_dict['eval']= {sh: [] for p, sh in zip(eval_pars, shs)}

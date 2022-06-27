@@ -39,7 +39,7 @@ class BatchTab(GuiTab):
         except:
             from lib.conf.stored.conf import loadConf
             enrichment = loadConf(v[self.selectionlists['Exp'].k], 'Exp')['enrichment']
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         conf = null_dict('batch_conf',
                          save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
                          exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},

@@ -84,8 +84,8 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
     for ii, sh in enumerate(par_shorts):
         ax = P.axs[ii]
-        from lib.conf.pars.pars import getPar
-        p, u = getPar(sh, to_return=['d', 'l'])
+        from lib.registry.pars import preg
+        p, u = preg.getPar(sh, to_return=['d', 'l'])
         vs = [d.get_par(key='end', par=p) for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]

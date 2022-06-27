@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 from lib.aux.dictsNlists import NestDict
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.plot.aux import save_plot
 from lib.plot.base import GridPlot, Plot
 
@@ -203,9 +203,9 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     s, e, c = d.step_data, d.endpoint_data, d.config
     Nticks = int(dur * 60 / dt)
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
-    a_sv = ss[getPar('sv')].values
-    a_fov = ss[getPar('fov')].values
-    pars, labs = getPar(['sv', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+    a_sv = ss[preg.getPar('sv')].values
+    a_fov = ss[preg.getPar('fov')].values
+    pars, labs = preg.getPar(['sv', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
     P = Plot(name=f'{mID}_test', **kws0, **kwargs)

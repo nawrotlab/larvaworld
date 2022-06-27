@@ -20,7 +20,7 @@ class LifeTab(GuiTab):
 
     def build(self):
         from lib.plot.deb import plot_debs
-        from lib.conf.pars.init_pars import substrate_dict
+        from lib.registry.init_pars import substrate_dict
         sl1_kws = {
             'size': (30, 20),
             'enable_events': True,
@@ -82,7 +82,7 @@ class LifeTab(GuiTab):
         w.write_event_value('Draw', 'Draw the initial plot')
 
     def get(self, w, v, c, as_entry=False):
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         rows = w.Element(self.K).get()
         return {
             'epochs': {i : {'start': r[0], 'stop': r[1], 'substrate': null_dict('substrate', type=r[3], quality=r[2])} for

@@ -1,8 +1,6 @@
 from lib.aux import dictsNlists as dNl
 
 
-# from lib.plot import *
-
 def build_mod_dict():
     from lib.plot import table, hist, grid
     d = dNl.NestDict({

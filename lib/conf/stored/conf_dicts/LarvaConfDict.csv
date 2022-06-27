@@ -1,8 +1,8 @@
-k,name,p,d,disp,sym,codename,dtype,func,u,required_ks,vparfunc,dv,v0
-torque_coef,torque_coef,torque_coef,torque_coef,torque coefficient,${c}_{T}$,torque_coef,<class 'float'>,,1/s²,[],<param.Number object at 0x7f2755ce7b80>,0.01,0.5
-ang_vel_coef,ang_vel_coef,ang_vel_coef,ang_vel_coef,angular velocity coefficient,,ang_vel_coef,<class 'float'>,,,[],<param.Number object at 0x7f2755ce7ac0>,0.01,1.0
-ang_damping,ang_damping,ang_damping,ang_damping,angular damping,z,ang_damping,<class 'float'>,,1/s,[],<param.Number object at 0x7f2755ce7c40>,0.1,1.0
-lin_damping,lin_damping,lin_damping,lin_damping,linear damping,zl,lin_damping,<class 'float'>,,1/s,[],<param.Number object at 0x7f2755ce7d00>,0.1,1.0
-body_spring_k,body_spring_k,body_spring_k,body_spring_k,body spring constant,k,body_spring_k,<class 'float'>,,1/s²,[],<param.Number object at 0x7f2755ce7dc0>,0.1,1.0
-bend_correction_coef,bend_correction_coef,bend_correction_coef,bend_correction_coef,bend correction coefficient,${c}_{b}$,bend_correction_coef,<class 'float'>,,,[],<param.Number object at 0x7f2755ce7e80>,0.1,1.0
-ang_mode,ang_mode,ang_mode,ang_mode,angular mode,,ang_mode,<class 'str'>,,,[],<param.Selector object at 0x7f2756130b40>,,torque
+k                   ,name                ,p                   ,d                   ,disp                        ,sym      ,codename            ,dtype          ,func,u   ,required_ks,vparfunc                                 ,dv  ,v0
+torque_coef         ,torque_coef         ,torque_coef         ,torque_coef         ,torque coefficient          ,${c}_{T}$,torque_coef         ,<class 'float'>,    ,1/s²,[]         ,<param.Number object at 0x7f2755ce7b80>  ,0.01,0.5
+ang_vel_coef        ,ang_vel_coef        ,ang_vel_coef        ,ang_vel_coef        ,angular velocity coefficient,         ,ang_vel_coef        ,<class 'float'>,    ,    ,[]         ,<param.Number object at 0x7f2755ce7ac0>  ,0.01,1.0
+ang_damping         ,ang_damping         ,ang_damping         ,ang_damping         ,angular damping             ,z        ,ang_damping         ,<class 'float'>,    ,1/s ,[]         ,<param.Number object at 0x7f2755ce7c40>  ,0.1 ,1.0
+lin_damping         ,lin_damping         ,lin_damping         ,lin_damping         ,linear damping              ,zl       ,lin_damping         ,<class 'float'>,    ,1/s ,[]         ,<param.Number object at 0x7f2755ce7d00>  ,0.1 ,1.0
+body_spring_k       ,body_spring_k       ,body_spring_k       ,body_spring_k       ,body spring constant        ,k        ,body_spring_k       ,<class 'float'>,    ,1/s²,[]         ,<param.Number object at 0x7f2755ce7dc0>  ,0.1 ,1.0
+bend_correction_coef,bend_correction_coef,bend_correction_coef,bend_correction_coef,bend correction coefficient ,${c}_{b}$,bend_correction_coef,<class 'float'>,    ,    ,[]         ,<param.Number object at 0x7f2755ce7e80>  ,0.1 ,1.0
+ang_mode            ,ang_mode            ,ang_mode            ,ang_mode            ,angular mode                ,         ,ang_mode            ,<class 'str'>  ,    ,    ,[]         ,<param.Selector object at 0x7f2756130b40>,    ,torque

@@ -390,9 +390,9 @@ def load_ks(ks, ds,ls,cols, d0):
 
 class AutoLoadPlot(AutoPlot) :
     def __init__(self, ks, **kwargs):
-        from lib.conf.pars.pars import ParDict
+        from lib.registry.pars import preg
         super().__init__(**kwargs)
-        d0 = ParDict
+        d0 = preg
         self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, d0)
         self.pdict=dNl.NestDict({k:d0.dict[k] for k in ks})
         self.kpdict=dNl.NestDict({k:[self.kdict[k],self.pdict[k]] for k in ks})

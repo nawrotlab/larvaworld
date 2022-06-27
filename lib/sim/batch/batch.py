@@ -14,8 +14,8 @@ import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
 from lib.aux.dictsNlists import flatten_dict
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.pars import ParDict
+from lib.registry.dtypes import null_dict
+from lib.registry.pars import preg
 from lib.sim.batch.aux import grid_search_dict, delete_traj
 from lib.sim.batch.functions import single_run, batch_method_unpack
 
@@ -51,7 +51,7 @@ class BatchRun:
         self.s0 = time.time()
         self.id = batch_id
         self.type = batch_type
-        self.parent_dir = f'{ParDict.path_dict["BATCH"]}/{self.type}'
+        self.parent_dir = f'{preg.path_dict["BATCH"]}/{self.type}'
         self.dir = f'{self.parent_dir}/{self.id}'
         self.filename = f'{self.parent_dir}/{self.type}.hdf5'
         bm=batch_method_unpack(**batch_methods)

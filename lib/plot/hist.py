@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.conf.pars.pars import ParDict, getPar
+from lib.registry.pars import preg
 from lib.plot.aux import scatter_hist
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
@@ -21,9 +21,9 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
     if Nbins is None:
         Nbins = int(e.index.values.shape[0] / 10)
     yy = int(e.index.values.shape[0] / 7)
-    from lib.conf.base.dtypes import par
+    from lib.registry.dtypes import par
     # from lib.conf.base.init_pars import InitDict
-    d0 = ParDict.init_dict[module]
+    d0 = preg.init_dict[module]
     N = len(valid)
 
     P = BasePlot(name=f'{module}_endpoint_hists', **kwargs)
@@ -65,10 +65,10 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
 
     Nps = len(shorts)
     P = AutoPlot(name='ang_pars', subfolder=subfolder, Ncols=Nps, figsize=(Nps * 8, 8), sharey=True, **kwargs)
-    P.init_fits(getPar(shorts))
+    P.init_fits(preg.getPar(shorts))
     for i, (k,r) in enumerate(zip(shorts, rs)):
-        p=ParDict.dict[k]
-        vs=[ParDict.get(k,d) for d in P.datasets]
+        p=preg.dict[k]
+        vs=[preg.get(k,d) for d in P.datasets]
         bins, xlim = P.angrange(r, absolute, Nbins)
         P.plot_par(vs=vs, bins=bins, i=i, absolute=absolute, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
                    pvalues=False, half_circles=half_circles)
@@ -84,11 +84,11 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, pvalues=False,type='
     sns_kws={'kde' : kde, 'stat' : "probability", 'element': "step", 'fill':True, 'multiple' : "layer", 'shrink' :1}
     P = Plot(name='crawl_pars', subfolder=subfolder, **kwargs)
     Ncols=len(shorts)
-    P.init_fits(getPar(shorts))
+    P.init_fits(preg.getPar(shorts))
     P.build(1, Ncols, figsize=(Ncols * 5, 5), sharey=True, fig=fig, axs=axs)
     for i, k in enumerate(shorts):
-        p=ParDict.dict[k]
-        vs=[ParDict.get(k,d) for d in P.datasets]
+        p=preg.dict[k]
+        vs=[preg.get(k,d) for d in P.datasets]
         P.plot_par(vs=vs, bins='broad', nbins=40, labels=p.disp, i=i, sns_kws = sns_kws,
                    type=type, pvalues=pvalues, half_circles=half_circles, key='end')
         P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, xlim=p.lim, yMaxN=4,
@@ -109,11 +109,11 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
     nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
     name = f'{nn}_VS_{par_short}_{mode}'
     P = Plot(name=name, subfolder=subfolder, **kwargs)
-    ypar, ylab, ylim = getPar('tur_fou', to_return=['d', 'l', 'lim'])
+    ypar, ylab, ylim = preg.getPar('tur_fou', to_return=['d', 'l', 'lim'])
 
     if ref_angle is not None:
         A0 = float(ref_angle)
-        p_ref = getPar(['tur_fo0', 'tur_fo1'])
+        p_ref = preg.getPar(['tur_fo0', 'tur_fo1'])
         ys = []
         ylab = r'$\Delta\theta_{bearing} (deg)$'
         cumylab = r'$\bar{\Delta\theta}_{bearing} (deg)$'
@@ -132,7 +132,7 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
         ys = [d.get_par(ypar).dropna().values.flatten() for d in P.datasets]
         if absolute:
             ys = [np.abs(y) for y in ys]
-    xpar, xlab = getPar(par_short, to_return=['d', 'l'])
+    xpar, xlab = preg.getPar(par_short, to_return=['d', 'l'])
     xs = [d.get_par(xpar).dropna().values.flatten() for d in P.datasets]
 
     if mode == 'scatter':
@@ -154,7 +154,7 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
 
-    pars, sim_ls, xlabels, disps = getPar(shorts, to_return=['d', 's', 'l', 'd'])
+    pars, sim_ls, xlabels, disps = preg.getPar(shorts, to_return=['d', 's', 'l', 'd'])
     Ncols = int(len(pars) / 2)
     chunks = ['stride', 'pause']
     chunk_cols = ['green', 'purple']
@@ -308,7 +308,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(Nx, Ny, figsize=(10 * Ny, 10 * Nx))
     for i, (p0, p1) in enumerate(pairs):
-        pars, labs = getPar([p0, p1], to_return=['d', 'l'])
+        pars, labs = preg.getPar([p0, p1], to_return=['d', 'l'])
 
         v0_all = [d.endpoint_data[pars[0]].values for d in P.datasets]
         v1_all = [d.endpoint_data[pars[1]].values for d in P.datasets]
@@ -327,7 +327,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P = Plot(name='turn_amplitude', subfolder=subfolder, **kwargs)
     P.build()
-    p, xlab = getPar('tur_fou', to_return=['d', 'l'])
+    p, xlab = preg.getPar('tur_fou', to_return=['d', 'l'])
     bins, xlim = P.angrange(150, absolute, 30)
     P.plot_par(p, bins, i=0, absolute=absolute, alpha=1.0, histtype='step')
     P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')

@@ -2,13 +2,12 @@ import copy
 import json
 import pickle
 import shutil
-import time
 
 import param
-import lib.aux.dictsNlists as dNl
 
-from lib.conf.base.dtypes import null_dict, base_enrich
-from lib.conf.base import paths
+import lib.aux.dictsNlists as dNl
+from lib.registry import paths
+from lib.registry.dtypes import null_dict, base_enrich
 
 
 def loadConf(id, conf_type, **kwargs):
@@ -39,8 +38,8 @@ def expandConf(id, conf_type, **kwargs):
 
 def loadConfDict(conf_type, use_pickle=False):
     path = paths.path_dict[conf_type]
-    if conf_type=='Ga' :
-        use_pickle=True
+    if conf_type == 'Ga':
+        use_pickle = True
     try:
         if use_pickle:
             with open(path, 'rb') as tfp:
@@ -49,36 +48,40 @@ def loadConfDict(conf_type, use_pickle=False):
             with open(path) as f:
                 d = json.load(f)
     except:
-        d={}
+        d = {}
     return dNl.NestDict(d)
 
-def kConfDict(conf_type, **kwargs) :
+
+def kConfDict(conf_type, **kwargs):
     return list(loadConfDict(conf_type, **kwargs).keys())
 
-def ConfSelector(conf_type, default=None,single_choice=True, **kwargs) :
+
+def ConfSelector(conf_type, default=None, single_choice=True, **kwargs):
     def func():
 
-        kws={
+        kws = {
             'objects': kConfDict(conf_type),
-            'default':default,
-            'allow_None':True,
-            'empty_default':True,
+            'default': default,
+            'allow_None': True,
+            'empty_default': True,
         }
-        if single_choice :
-            func0=param.Selector
-        else :
+        if single_choice:
+            func0 = param.Selector
+        else:
             func0 = param.ListSelector
         return func0(**kws, **kwargs)
+
     return func
 
 
-def loadRef(id) :
+def loadRef(id):
     from lib.stor.larva_dataset import LarvaDataset
     return LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
 
 
-def copyConf(id, conf_type) :
+def copyConf(id, conf_type):
     return dNl.NestDict(copy.deepcopy(expandConf(id, conf_type)))
+
 
 def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
     try:
@@ -97,7 +100,7 @@ def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
     else:
         d[id] = conf
     saveConfDict(d, conf_type, **kwargs)
-    if verbose>=1 :
+    if verbose >= 1:
         print(f'{conf_type} Configuration saved under the id : {id}')
 
 
@@ -105,8 +108,8 @@ def saveConfDict(ConfDict, conf_type, use_pickle=False):
     # from lib.conf.pars.pars import ParDict
     # path = ParDict.path_dict[conf_type]
     path = paths.path_dict[conf_type]
-    if conf_type=='Ga' :
-        use_pickle=True
+    if conf_type == 'Ga':
+        use_pickle = True
     if use_pickle:
         with open(path, 'wb') as fp:
             pickle.dump(ConfDict, fp, protocol=pickle.HIGHEST_PROTOCOL)
@@ -155,9 +158,9 @@ def next_idx(exp, type='Exp'):
              'Batch': dBatch,
              'Essay': dEssay,
              'Eval': dEval,
-             'Ga':dGA}
+             'Ga': dGA}
     if not type in d.keys():
-        d[type]={}
+        d[type] = {}
     if not exp in d[type].keys():
         d[type][exp] = 0
     d[type][exp] += 1
@@ -169,8 +172,8 @@ def next_idx(exp, type='Exp'):
 def store_reference_data_confs():
     from lib.stor.larva_dataset import LarvaDataset
     from lib.aux.dictsNlists import flatten_list
-    from lib.conf.pars.pars import ParDict
-    DATA = ParDict.path_dict["DATA"]
+    from lib.registry.pars import preg
+    DATA = preg.path_dict["DATA"]
     # DATA = paths.path('DATA')
 
     dds = [
@@ -186,7 +189,7 @@ def store_reference_data_confs():
 
 
 def modshort(vv):
-    mm=vv.brain.modules
+    mm = vv.brain.modules
     module_dict = {
         'T': 'turner',
         'C': 'crawler',
@@ -198,27 +201,29 @@ def modshort(vv):
         'F': 'feeder',
         'M': 'memory',
     }
-    mms=[k for k,v in module_dict.items() if mm[v]]
-    pairs=[(['T', 'C', 'If', 'Im'], 'L'), (['L', 'O', 'F'], 'LOF'), (['L', 'O'], 'LO'),(['L', 'F'], 'LF'),(['L', 'W'], 'LW'),
-           (['LOF', 'M'], 'LOFM'),(['L', 'To', 'M'], 'LToM'),(['L', 'To'], 'LTo'), (['T', 'C', 'If'], 'T:C'),]
-    for (ls,l0) in pairs :
+    mms = [k for k, v in module_dict.items() if mm[v]]
+    pairs = [(['T', 'C', 'If', 'Im'], 'L'), (['L', 'O', 'F'], 'LOF'), (['L', 'O'], 'LO'), (['L', 'F'], 'LF'),
+             (['L', 'W'], 'LW'),
+             (['LOF', 'M'], 'LOFM'), (['L', 'To', 'M'], 'LToM'), (['L', 'To'], 'LTo'), (['T', 'C', 'If'], 'T:C'), ]
+    for (ls, l0) in pairs:
         if all([k in mms for k in ls]):
-            for k in ls :
+            for k in ls:
                 mms.remove(k)
             mms.append(l0)
-    from lib.conf.base.dtypes import null_Box2D_params
+    from lib.registry.dtypes import null_Box2D_params
 
-    if vv.Box2D_params != null_Box2D_params :
+    if vv.Box2D_params != null_Box2D_params:
         mms = ['B'] + mms
-    if vv.brain.nengo :
-        mms=['N']+mms
+    if vv.brain.nengo:
+        mms = ['N'] + mms
 
-    if vv.energetics is not None :
+    if vv.energetics is not None:
         mms.append('E')
 
     def joinStrings(stringList):
         return ''.join(string for string in stringList)
-    fmm=joinStrings(mms)
+
+    fmm = joinStrings(mms)
     return fmm
 
 
@@ -245,9 +250,9 @@ def store_confs(keys=None):
     if 'Model' in keys:
         import lib.conf.stored.larva_conf as mod
         from lib.aux.dictsNlists import merge_dicts
-        d=mod.create_mod_dict()
+        d = mod.create_mod_dict()
         mod_dict = merge_dicts(list(d.values()))
-        mod_group_dict = {k: {kk : modshort(vv) for kk,vv in v.items()} for k, v in d.items()}
+        mod_group_dict = {k: {kk: modshort(vv) for kk, vv in v.items()} for k, v in d.items()}
         for k, v in mod_dict.items():
             saveConf(v, 'Model', k)
         for k, v in mod_group_dict.items():
@@ -287,22 +292,23 @@ def store_confs(keys=None):
             saveConf(v, 'Ga', k, use_pickle=True)
 
 
-def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None,imitation=True, **kwargs):
+def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
     sample_conf = loadConf(sample, 'Ref')
 
     # env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
     base_larva = expandConf(model, 'Model')
-    if imitation :
-        exp='imitation'
+    if imitation:
+        exp = 'imitation'
         larva_groups = {
-            'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue', imitation=True,
+            'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+                                        imitation=True,
                                         distribution={'N': N})}
-    else :
-        exp='evaluation'
+    else:
+        exp = 'evaluation'
         larva_groups = {
-           sample: null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
-                                        imitation=False,
-                                        distribution={'N': N})}
+            sample: null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+                              imitation=False,
+                              distribution={'N': N})}
     id = sample_conf.id
 
     if duration is None:
@@ -315,9 +321,6 @@ def imitation_exp(sample, model='explorer', idx=0, N=None,duration=None,imitatio
     exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)
     return exp_conf
-
-
-
 
 
 if __name__ == '__main__':

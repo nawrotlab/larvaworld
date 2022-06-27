@@ -10,7 +10,7 @@ import PySimpleGUI as sg
 
 import matplotlib.pyplot as plt
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 
 from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
 from lib.gui.aux import windows as gui_win, buttons as gui_but, functions as gui_fun
@@ -386,7 +386,7 @@ class SelectionList(GuiElement):
         elif e == f'TREE {n}' and self.tree is not None:
             self.tree.test()
         elif e == f'CONF_TREE {n}' and id != '':
-            from lib.conf.pars.par_tree import tree_dict
+            from lib.registry.par_tree import tree_dict
             conf = self.get(w, v, c, as_entry=False)
             entries = tree_dict(d=conf, parent_key=id, sep='.')
             tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40, 20])
@@ -773,7 +773,7 @@ class CollapsibleTable(Collapsible):
         self.index = index
         self.dict_name = dict_name
         self.key = f'TABLE {name}'
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
 
         self.null_dict = null_dict(dict_name)
         if heading_dict is None:
@@ -860,7 +860,7 @@ class CollapsibleTable(Collapsible):
 
 
 def v_layout(k0, args, value_kws0={}, **kwargs):
-    from lib.conf.base.dtypes import base_dtype
+    from lib.registry.dtypes import base_dtype
     t = args['dtype']
     v = args['initial_value']
     vs = args['values']
@@ -901,7 +901,7 @@ def v_layout(k0, args, value_kws0={}, **kwargs):
 
 
 def combo_layout(name, title, dic, **kwargs):
-    from lib.conf.base.dtypes import base_dtype
+    from lib.registry.dtypes import base_dtype
     d = {p: [] for p in ['mu', 'std', 'r', 'noise']}
     for k, args in dic.items():
         kws = {
@@ -945,11 +945,10 @@ class CollapsibleDict(Collapsible):
     def __init__(self, name, dict_name=None, type_dict=None, value_kws={}, text_kws={}, as_entry=None,
                  subdict_state=False, **kwargs):
         if type_dict is None:
-            from lib.conf.base.dtypes import par,par_dict
+            from lib.registry.dtypes import par,par_dict
             entry = par(name=as_entry, t=str, v='Unnamed') if as_entry is not None else {}
             nn = name if dict_name is None else dict_name
-            from lib.conf.pars.pars import ParDict
-            dic = par_dict(d0=ParDict.init_dict[nn])
+            dic = par_dict(d0=preg.init_dict[nn])
             type_dict = {**entry, **dic}
         self.as_entry = as_entry
         self.subdict_state = subdict_state
@@ -966,7 +965,7 @@ class CollapsibleDict(Collapsible):
         return {self.name: self, **subdicts}
 
     def get_dict(self, v, w, check_toggle=True):
-        from lib.conf.base.dtypes import base_dtype
+        from lib.registry.dtypes import base_dtype
         if self.state is None or (check_toggle and self.toggle == False):
             return None
         else:
@@ -1075,9 +1074,9 @@ class PadDict(PadElement):
         if col_idx is not None:
             Ncols = len(col_idx)
         if type_dict is None :
-            from lib.conf.base.dtypes import par_dict,ParDict
-            if self.dict_name in ParDict.init_dict.keys() :
-                type_dict = par_dict(d0=ParDict.init_dict[self.dict_name])
+            from lib.registry.dtypes import par_dict
+            if self.dict_name in preg.init_dict.keys() :
+                type_dict = par_dict(d0=preg.init_dict[self.dict_name])
         self.type_dict = type_dict
         if content is None:
             content = self.build(name)
@@ -1115,7 +1114,7 @@ class PadDict(PadElement):
         return content
 
     def get_dict(self, v, w):
-        from lib.conf.base.dtypes import base_dtype
+        from lib.registry.dtypes import base_dtype
         if self.toggle is not None:
             if not w[self.toggle_key].get_state():
                 return None
@@ -1174,7 +1173,7 @@ class PadDict(PadElement):
         return l
 
     def update(self, w, d):
-        from lib.conf.base.dtypes import base_dtype
+        from lib.registry.dtypes import base_dtype
         if d is not None:
             for k, t in self.dtypes.items():
                 k0 = f'{self.name}_{k}'
@@ -1210,7 +1209,7 @@ class PadTable(PadElement):
         self.index = index
         self.key = f'TABLE {self.name}'
         if heading_dict is None:
-            from lib.conf.base.dtypes import null_dict
+            from lib.registry.dtypes import null_dict
 
             heading_dict = {k: k for k in null_dict(self.dict_name).keys()}
         self.heading_dict = heading_dict
@@ -1298,7 +1297,7 @@ class PadTable(PadElement):
                 self.dict.pop(id, None)
             self.update(w)
         elif e == f'CONF_TREE {self.name}':
-            from lib.conf.pars.par_tree import multiconf_to_tree
+            from lib.registry.par_tree import multiconf_to_tree
             ids = [ff['model'] for ff in list(self.dict.values())]
             entries = multiconf_to_tree(ids, 'Model')
             tree = GuiTreeData(entries=entries, headings=[ids], col_widths=[40] + [20] * len(ids))
@@ -1445,7 +1444,7 @@ class ButtonGraphList(GraphList):
             l = [
                 [sg.T('Filename', **gui_fun.t_kws(10)), sg.In(default_text=self.save_as, k=kDir, **gui_fun.t_kws(80))],
                 [sg.T('Directory', **gui_fun.t_kws(10)), sg.In(self.save_to, k=kFil, **gui_fun.t_kws(80)),
-                 sg.FolderBrowse(initial_folder=ParDict.path_dict["parent"], key=kFil, change_submits=True)],
+                 sg.FolderBrowse(initial_folder=preg.path_dict["parent"], key=kFil, change_submits=True)],
                 [sg.Ok(), sg.Cancel()]]
             e, v = sg.Window('Save figure', l).read(close=True)
             if e == 'Ok':
@@ -1526,8 +1525,7 @@ class DynamicGraph:
         sg.theme('DarkBlue15')
         self.agent = agent
         if available_pars is None:
-            from lib.conf.pars.pars import runtime_pars
-            available_pars = runtime_pars()
+            available_pars = preg.runtime_pars()
         self.available_pars = available_pars
         self.pars = pars
         self.dt = self.agent.model.dt
@@ -1607,8 +1605,8 @@ class DynamicGraph:
 
     def update_pars(self):
         from matplotlib import ticker
-        from lib.conf.pars.pars import getPar
-        self.pars, syms, us, lims, pcs = getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
+        from lib.registry.pars import preg
+        self.pars, syms, us, lims, pcs = preg.getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
         self.Npars = len(self.pars)
         self.yranges = {}
         self.fig, axs = plt.subplots(self.Npars, 1, figsize=self.figsize, dpi=self.my_dpi, sharex=True)
@@ -1690,7 +1688,7 @@ class GuiTreeData(sg.TreeData):
         if not self.build_tree and self.root_key in kConfDict('Tree'):
             df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
         else:
-            from lib.conf.pars.par_tree import pars_to_tree
+            from lib.registry.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
             saveConf(df.to_dict(), 'Tree', self.root_key)
         return df
@@ -1715,7 +1713,7 @@ class GuiTreeData(sg.TreeData):
             self.insert(**entry)
 
     def save(self, **kwargs):
-        with open(ParDict.path_dict["ParGlossaryTxT"], 'w') as f:
+        with open(preg.path_dict["ParGlossaryTxT"], 'w') as f:
             f.write(self._NodeStr(**kwargs))
 
     def build_layout(self):

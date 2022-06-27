@@ -18,7 +18,7 @@ class Crawler(Oscillator):
         self.max_vel_phase = max_vel_phase
         self.stride_dst_mean, self.stride_dst_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
         self.step_to_length = self.new_stride
-        self.square_signal_duty = self.square_signal_duty
+        self.square_signal_duty = square_signal_duty
 
 
 

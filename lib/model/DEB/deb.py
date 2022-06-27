@@ -7,14 +7,13 @@ import os
 import numpy as np
 
 from lib.aux.dictsNlists import save_dict
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.init_pars import substrate_dict
+from lib.registry.dtypes import null_dict
+from lib.registry.init_pars import substrate_dict
 from lib.conf.stored.conf import loadConf
 import lib.aux.naming as nam
 from lib.model.DEB.gut import Gut
-from lib.conf.base import paths
 from lib.model.DEB.substrate import Substrate
 
 '''
@@ -40,7 +39,7 @@ class DEB:
         # Drosophila model by default
         self.species = species
         # fdir = ParDict.path_dict["DEB_MODS"]
-        with open(ParDict.path_dict["DEB_MODS"][species]) as tfp:
+        with open(preg.path_dict["DEB_MODS"][species]) as tfp:
             self.species_dict = json.load(tfp)
         self.__dict__.update(self.species_dict)
 

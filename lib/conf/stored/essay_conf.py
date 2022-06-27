@@ -1,17 +1,19 @@
 import shutil
 
-from lib.plot.time import timeplot, plot_pathlength
-from lib.plot.deb import plot_food_amount, plot_debs
-from lib.plot.bar import barplot
-from lib.plot.box import boxplot_double_patch, lineplot
+# from lib.conf.pars.pars import ParDict
+
 from lib.aux.dictsNlists import flatten_list
-from lib.conf.base.dtypes import enr_dict, null_dict, arena, base_enrich
-from lib.conf.pars.pars import getPar
+from lib.conf.stored.conf import next_idx
 from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
-from lib.conf.stored.conf import next_idx
+from lib.plot.bar import barplot
+from lib.plot.box import boxplot_double_patch, lineplot
+from lib.plot.deb import plot_food_amount, plot_debs
+from lib.plot.time import timeplot, plot_pathlength
+from lib.registry.dtypes import enr_dict, null_dict, arena, base_enrich
+from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
-from lib.conf.pars.pars import ParDict
+
 
 class Essay:
     def __init__(self, type, enrichment=base_enrich(), collections=['pose'], **kwargs):
@@ -20,7 +22,7 @@ class Essay:
         self.collections = collections
         self.essay_id = f'{type}_{next_idx(type, "Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
-        path=ParDict.path_dict["ESSAY"]
+        path = preg.path_dict["ESSAY"]
         # path=paths.path("ESSAY")
         self.full_path = f'{path}/{type}/{self.essay_id}/data'
         self.plot_dir = f'{path}/{type}/{self.essay_id}/plots'
@@ -52,13 +54,13 @@ class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, **kwargs):
         super().__init__(type='RvsS', enrichment=enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
-        self.qs=[1.0, 0.75, 0.5, 0.25, 0.15]
-        self.hs=[0, 1, 2, 3, 4]
-        self.durs=[10, 15, 20]
-        self.dur=5
-        self.substrates=['Agar', 'Yeast']
+        self.qs = [1.0, 0.75, 0.5, 0.25, 0.15]
+        self.hs = [0, 1, 2, 3, 4]
+        self.durs = [10, 15, 20]
+        self.dur = 5
+        self.substrates = ['Agar', 'Yeast']
         self.exp_dict = {**self.intake_exp(), **self.starvation_exp(),
-                         **self.quality_exp(), **self.refeeding_exp(),**self.pathlength_exp()}
+                         **self.quality_exp(), **self.refeeding_exp(), **self.pathlength_exp()}
         self.all_figs = all_figs
 
     def RvsS_env(self, on_food=True):
@@ -75,14 +77,16 @@ class RvsS_Essay(Essay):
             exp: [self.conf2(exp=exp, id=f'{exp}_{n}_{dur}min', dur=dur, on_food=nb) for n, nb in
                   zip(self.substrates, [False, True])]}
 
-    def intake_exp(self,  exp='intake'):
+    def intake_exp(self, exp='intake'):
         return {exp: [self.conf2(exp=exp, id=f'{exp}_{dur}min', dur=dur) for dur in self.durs]}
 
     def starvation_exp(self, exp='starvation'):
-        return {exp: [self.conf2(exp=exp, id=f'{exp}_{h}h_{self.dur}min', dur=self.dur, l_kws={'h_starved': h}) for h in self.hs]}
+        return {exp: [self.conf2(exp=exp, id=f'{exp}_{h}h_{self.dur}min', dur=self.dur, l_kws={'h_starved': h}) for h in
+                      self.hs]}
 
     def quality_exp(self, exp='quality'):
-        return {exp: [self.conf2(exp=exp, id=f'{exp}_{q}_{self.dur}min', dur=self.dur, l_kws={'q': q}) for q in self.qs]}
+        return {
+            exp: [self.conf2(exp=exp, id=f'{exp}_{q}_{self.dur}min', dur=self.dur, l_kws={'q': q}) for q in self.qs]}
 
     def refeeding_exp(self, h=3, dur=120, exp='refeeding'):
         return {exp: [self.conf2(exp=exp, id=f'{exp}_{h}h_{dur}min', dur=dur, l_kws={'h_starved': h}) for h in [h]]}
@@ -121,7 +125,7 @@ class RvsS_Essay(Essay):
             self.figs[f'2_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
@@ -129,15 +133,15 @@ class RvsS_Essay(Essay):
                       'coupled_labels': self.hs,
                       'xlabel': r'Food deprivation $(h)$'}
             self.figs[f'3_{exp}'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
-                                                 ylabel='Food intake', scale=1000, **kwargs)
+                                             ylabel='Food intake', scale=1000, **kwargs)
             if self.all_figs:
                 for ii in ['feeding']:
                     self.figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
                                               label_epochs=False, **kwargs)
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     self.figs[f'{exp} {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
-                                                                 **kwargs)
+                                                       **kwargs)
 
         elif exp == 'quality':
             kwargs = {**dsNls(ds0),
@@ -147,7 +151,7 @@ class RvsS_Essay(Essay):
             self.figs[f'4_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
@@ -155,18 +159,18 @@ class RvsS_Essay(Essay):
             n = f'5_REFEEDING_after_{h}h_starvation_'
             kwargs = dsNls(ds0)
             self.figs[f'5_{exp}'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
-                                                        **kwargs)
+                                                     **kwargs)
 
             if self.all_figs:
-                self.figs[f'{exp} food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',**kwargs)
+                self.figs[f'{exp} food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',
+                                                                   **kwargs)
                 self.figs[f'{exp} food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
-                                                                             save_as=f'{n}scaled_intake_filt.pdf',
-                                                                             **kwargs)
+                                                                         save_as=f'{n}scaled_intake_filt.pdf',
+                                                                         **kwargs)
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     self.figs[f'{exp} {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
-                                                           save_as=f'{n}{p}.pdf', **kwargs)
-
+                                                       save_as=f'{n}{p}.pdf', **kwargs)
 
 
 class Patch_Essay(Essay):
@@ -200,7 +204,6 @@ class Patch_Essay(Essay):
                       'save_as': f'{exp}.pdf',
                       'show': True}
             self.figs[exp] = boxplot_double_patch(**kwargs)
-
 
 
 rover_sitter_essay = {
@@ -240,7 +243,7 @@ rover_sitter_essay = {
             'durations': [120]
         }
     },
-    'exp_fig_folder': ParDict.path_dict["RvsS"]}
+    'exp_fig_folder': preg.path_dict["RvsS"]}
 
 essay_dict = {
     'roversVSsitters': rover_sitter_essay,

@@ -15,7 +15,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import lib.aux.dictsNlists as dNl
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-from lib.conf.base.dtypes import null_dict
+from lib.registry.dtypes import null_dict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.aux.collecting import NamedRandomActivation
 from lib.model.envs._space import FoodGrid, WindScape

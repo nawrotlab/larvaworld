@@ -7,6 +7,7 @@ import pandas as pd
 
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
+from lib.registry.pars import preg
 
 
 
@@ -90,7 +91,6 @@ class ExpFitter:
         self.sample.save_ExpFitter(temp, )
 
     def multicol_df(self, key='s'):
-        from lib.conf.pars.pars import getPar
         shorts = [
             ['fov', 'foa', 'b', 'bv', 'ba'],
             ['str_N', 'str_tr', 'cum_d', 'v_mu'],
@@ -113,8 +113,8 @@ class ExpFitter:
              'group_color': group_cols
              })
 
-        df['pars'] = df['shorts'].apply(lambda row: getPar(row))
-        df['symbols'] = df['shorts'].apply(lambda row: getPar(row, to_return=key))
+        df['pars'] = df['shorts'].apply(lambda row: preg.getPar(row))
+        df['symbols'] = df['shorts'].apply(lambda row: preg.getPar(row, to_return=key))
         df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
         df['par_colors'] = df.apply(
             lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)

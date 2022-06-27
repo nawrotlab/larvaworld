@@ -3,7 +3,7 @@ from typing import TypedDict, List, Tuple
 import lib.aux.dictsNlists as dNl
 
 
-from lib.conf.pars.units import ureg
+from lib.registry.units import ureg
 
 
 
@@ -80,7 +80,7 @@ def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, a
         u=ureg.dimensionless, u_name=None, label='', combo=None, argparser=False, entry=None, codename=None, vfunc=None,
         vparfunc=None, convert2par=False):
     if argparser:
-        from lib.conf.pars.parser_dict import build_ParsArg
+        from lib.registry.parser_dict import build_ParsArg
         return build_ParsArg(name, k, h, t, v, vs)
     if t == TypedDict:
         return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
@@ -166,8 +166,8 @@ def null_dict(name, key='v', **kwargs):
 
     if key!='v' :
         raise
-    from lib.conf.pars.pars import ParDict
-    d0 = ParDict.init_dict[name]
+    from lib.registry.pars import preg
+    d0 = preg.init_dict[name]
     dic2 = v0(d0)
     if name not in ['visualization', 'enrichment']:
         dic2.update(kwargs)
@@ -218,7 +218,7 @@ def null_dict(name, key='v', **kwargs):
 
 def enr_dict(proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={}, metric_definition=None,
              **kwargs):
-    from lib.conf.pars.init_pars import proc_type_keys, bout_keys, to_drop_keys
+    from lib.registry.init_pars import proc_type_keys, bout_keys, to_drop_keys
 
     if metric_definition is None:
         from lib.conf.stored.data_conf import metric_def

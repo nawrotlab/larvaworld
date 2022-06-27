@@ -1,20 +1,16 @@
-import os
 import random
-
-import numpy as np
 import pandas as pd
 import param
-from matplotlib import pyplot as plt
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 
 
 def init2par(d0, d=None,pre_d=None, aux_args={}):
-    from lib.conf.pars.par_dict import preparePar
-    from lib.conf.pars.pars import v_descriptor
+    from lib.registry.par_dict import preparePar
+    from lib.registry.par import v_descriptor
     if d is None and pre_d is None:
         d, pre_d = {},{}
-    from lib.conf.base.dtypes import par
+    from lib.registry.dtypes import par
     for n, v in d0.items():
         depth = dNl.dict_depth(v)
 
@@ -40,19 +36,17 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
             #     raise
     return d, pre_d
 
-
-
 class LarvaConfDict:
     def __init__(self, init_dict=None, mfunc=None,dist_dict=None):
         if init_dict is None :
-            from lib.conf.pars.pars import ParDict
-            init_dict=ParDict.init_dict
+            from lib.registry.pars import preg
+            init_dict=preg.init_dict
         if mfunc is None :
-            from lib.conf.pars.par_funcs import module_func_dict
+            from lib.registry.par_funcs import module_func_dict
             mfunc=module_func_dict()
         if dist_dict is None :
-            from lib.conf.pars.pars import ParDict
-            dist_dict=ParDict.dist_dict
+            from lib.registry.pars import preg
+            dist_dict=preg.dist_dict
         self.dist_dict=dist_dict
         self.mfunc=mfunc
         self.mcolor = dNl.NestDict({
@@ -410,10 +404,6 @@ class LarvaConfDict:
         return conf_table(df, row_colors,mID=mID, figsize=figsize, **kwargs)
 
 
-
-
-
-
 def confID_dict():
     from lib.conf.stored.conf import kConfDict, ConfSelector
     dic = dNl.NestDict()
@@ -424,11 +414,3 @@ def confID_dict():
         vparfunc = ConfSelector(K0, doc=f'The stored {K0} configurations as a list of IDs', label=sub('ID', k0))
         dic[K0] = vparfunc()
     return dic
-
-#
-# if __name__ == '__main__':
-#     #
-#     dd = LarvaConfDict()
-#     dd.mIDtable(mID='PHIonNEU', show=True)
-#     # print(dd.aux_keys)
-#     # raise

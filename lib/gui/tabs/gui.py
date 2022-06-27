@@ -6,7 +6,7 @@ import time
 
 import pandas as pd
 
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 from lib.gui.aux.functions import col_size, window_size, w_kws
 
 matplotlib.use('TkAgg')
@@ -82,14 +82,14 @@ class LarvaworldGui:
         return l0, cs, ds, gs, ts
 
     def get_vis_kwargs(self, v, **kwargs):
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
         return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else null_dict('visualization',
                                                                                                      **kwargs)
 
     def get_replay_kwargs(self, v):
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
         return c['replay'].get_dict(v, w) if 'replay' in c.keys() else null_dict('replay')
@@ -145,7 +145,6 @@ def gui_terminal(size=col_size(y_frac=0.3)):
 
 def speed_test():
     import numpy as np
-    from lib.conf.base import paths
     ns0 = ['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay',
            'batch-run', 'analysis', 'import', 'videos', 'settings']
     ns = [[n] for n in ns0]
@@ -162,4 +161,4 @@ def speed_test():
         res.append(r)
     df = pd.DataFrame(res)
     # fdir = ParDict.path_dict["GUITEST"]
-    df.to_csv(ParDict.path_dict["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])
+    df.to_csv(preg.path_dict["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])

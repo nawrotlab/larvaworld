@@ -2,14 +2,11 @@ import numpy as np
 
 from lib.aux import naming as nam, dictsNlists as dNl
 
-
-
 def track_par_func(chunk, par) :
     def func(d):
         from lib.process.aux import track_par_in_chunk
         track_par_in_chunk(d, chunk, par)
     return func
-
 
 def chunk_func(kc, store=False):
     if kc in ['str', 'pau', 'run', 'str_c']:
@@ -29,7 +26,6 @@ def chunk_func(kc, store=False):
         func = None
         required_ks = []
     return dNl.NestDict({'func': func, 'required_ks' :required_ks})
-
 
 def dsp_func(range):
     r0, r1 = range

@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 from lib.aux.sim_aux import get_source_xy
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 
 from lib.ga.scene.scene import Scene
 from lib.ga.util.color import Color
@@ -32,8 +32,7 @@ class BaseGAlauncher(BaseLarvaWorld):
         dt = sim_params.timestep
         Nsteps = int(sim_params.duration * 60 / dt)
         if save_to is None:
-            # from lib.conf.pars.pars import ParDict
-            save_to = ParDict.path_dict["SIM"]
+            save_to = preg.path_dict["SIM"]
         self.save_to = save_to
         self.dir_path = f'{save_to}/{sim_params.path}/{id}'
         self.plot_dir = f'{self.dir_path}/plots'
@@ -59,8 +58,7 @@ class BaseGAlauncher(BaseLarvaWorld):
         if caption is None:
             caption = f'GA {experiment} : {self.id}'
         self.caption = caption
-        self.scene_file = f'{ParDict.path_dict["GA_SCENE"]}/{scene}.txt'
-        # self.scene_file = f'{paths.path("GA_SCENE")}/{scene}.txt'
+        self.scene_file = f'{preg.path_dict["GA_SCENE"]}/{scene}.txt'
         self.scene_speed = scene_speed
         self.obstacles = []
 

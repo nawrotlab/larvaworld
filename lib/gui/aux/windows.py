@@ -175,7 +175,7 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
 
 
 def set_agent_kwargs(agent, **kwargs):
-    from lib.conf.base.dtypes import null_dict
+    from lib.registry.dtypes import null_dict
     class_name = type(agent).__name__
     type_dict = null_dict('agent', 'dtype')
     title = f'{class_name} args'
@@ -257,9 +257,9 @@ def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import PadDict
     from lib.conf.stored.conf import loadConf
-    from lib.conf.pars.pars import ParDict
+    from lib.registry.pars import preg
     g = loadConf(datagroup_id, 'Group')
-    group_dir = f'{ParDict.path_dict["DATA"]}/{g["path"]}'
+    group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
 
@@ -319,7 +319,7 @@ def import_window(datagroup_id, raw_dic):
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
             if e == 'Ok':
-                from lib.conf.base.dtypes import null_dict
+                from lib.registry.dtypes import null_dict
                 conf = s1.get_dict(v, w)
                 kws = {
                     'datagroup_id': datagroup_id,

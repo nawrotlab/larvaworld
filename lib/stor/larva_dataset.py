@@ -9,8 +9,8 @@ import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
 
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.dtypes import null_dict
+from lib.registry.pars import preg
 
 
 
@@ -560,7 +560,7 @@ class LarvaDataset:
             s0, e0 = self.load_agent(id)
         env_params = self.env_params
         if close_view:
-            from lib.conf.base.dtypes import null_dict
+            from lib.registry.dtypes import null_dict
             env_params.arena = null_dict('arena', arena_dims=(0.01, 0.01))
         # else:
         #     env_params = self.env_params
@@ -579,7 +579,7 @@ class LarvaDataset:
             save_to = self.vis_dir
         replay_id = f'{id}_fixed_at_{fix_point}'
         if vis_kwargs is None:
-            from lib.conf.base.dtypes import null_dict
+            from lib.registry.dtypes import null_dict
             vis_kwargs = null_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
         base_kws = {
             'vis_kwargs': vis_kwargs,
@@ -831,7 +831,7 @@ class LarvaDataset:
 
     def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf, idx=None):
         min_ticks = int(min_dur / self.config.dt)
-        pars = getPar(shorts)
+        pars = preg.getPar(shorts)
         ss = self.step_data[pars]
 
         dic = self.load_chunk_dicts()
@@ -893,7 +893,7 @@ class LarvaDataset:
 
     def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
         if par is None:
-            par = getPar(short)
+            par = preg.getPar(short)
 
         dic0 = self.load_chunk_dicts()
         dics=[dic0[id] for id in self.agent_ids]
@@ -955,19 +955,18 @@ class LarvaDataset:
         if not return_shorts:
             return sorted(pars)
         else:
-            shorts = getPar(d=pars, to_return='k')
+            shorts = preg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
     def sample_modelConf(self, N, mID, sample_ks=None):
         from lib.conf.stored.conf import loadConf, saveConf
-        from lib.conf.base import paths
         from lib.aux.sim_aux import sample_group
         from lib.aux.sim_aux import generate_larvae
         m = loadConf(mID, 'Model')
         if sample_ks is None:
             modF = dNl.flatten_dict(m)
             sample_ks = [p for p in modF if modF[p] == 'sample']
-        RefPars = dNl.load_dict(ParDict.path_dict["ParRef"], use_pickle=False)
+        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
         invRefPars = {v: k for k, v in RefPars.items()}
         sample_ps = [invRefPars[p] for p in sample_ks]
         sample_dict = sample_group(e=self.read(key='end', file='endpoint_h5'), N=N, sample_ps=sample_ps) if len(

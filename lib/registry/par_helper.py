@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 
 
 class FuncParHelper:
@@ -21,9 +21,9 @@ class FuncParHelper:
         return s
 
     def assemble_func_df(self,arg='s'):
-        from lib.process import angular, spatial, bouts, basic
+        from lib.process import angular, spatial, basic,aux
         arg_dicts = {}
-        for module in [angular, spatial, bouts, basic]:
+        for module in [angular, spatial, aux, basic]:
             dic = self.get_arg_dict(module, arg)
             arg_dicts.update(dic)
         df = pd.DataFrame.from_dict(arg_dicts,orient='index')
@@ -94,16 +94,16 @@ class FuncParHelper:
 
     def how_to_compute(self, s, par=None, short=None, **kwargs):
         if par is None :
-            par = getPar(short)
+            par = preg.getPar(short)
         elif short is None :
-            short=getPar(d=par, to_return='k')
+            short=preg.getPar(d=par, to_return='k')
         if par in s.columns :
             return True
         else :
             options=self.get_options(short)
             available= []
             for i,(func, shorts) in enumerate(options.items()) :
-                pars = getPar(shorts)
+                pars = preg.getPar(shorts)
                 if all([p in s.columns for p in pars]):
 
                     available.append(func)

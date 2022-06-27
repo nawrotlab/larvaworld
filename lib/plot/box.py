@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
 
 from lib.aux import dictsNlists as dNl, data_aux, colsNstr as cNs
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.plot.aux import label_diff
 
 from lib.plot.base import AutoPlot, Plot
@@ -15,7 +15,7 @@ from lib.plot.base import AutoPlot, Plot
 
 def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=True, grouped=False, ylims=None,
              in_mm=[], target_only=None, **kwargs):
-    pars, labs, units, symbols = getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
+    pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
     Npars = len(pars)
     Ncols = Ncols
     Nrows = int(np.ceil(Npars / Ncols))
@@ -37,7 +37,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
         palette = dict(zip(group_ids, cNs.N_colors(Ngroups)))
         data = data[pars + [x, hue]]
     for sh in in_mm:
-        data[getPar(sh)] *= 1000
+        data[preg.getPar(sh)] *= 1000
 
     for ii in range(Npars):
         kws = {
@@ -70,7 +70,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
 
 def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None, **kwargs):
     P = Plot(name=par_shorts[0], **kwargs)
-    pars, sim_labels, exp_labels, labs, lims = getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
+    pars, sim_labels, exp_labels, labs, lims = preg.getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
     Npars = len(pars)
 
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
@@ -234,7 +234,7 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
     Cmods = dict(zip(ModIDs, temp))
 
     shorts = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
-    pars, labs, lims = getPar(shorts, to_return=['d', 'l', 'lim'])
+    pars, labs, lims = preg.getPar(shorts, to_return=['d', 'l', 'lim'])
     Npars = len(pars)
 
     P.build(Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3))
@@ -329,7 +329,7 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
 
 
 def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
-    pars, syms, labs, lims = getPar(shorts, to_return=['d', 's', 'lab', 'lim'])
+    pars, syms, labs, lims = preg.getPar(shorts, to_return=['d', 's', 'lab', 'lim'])
     from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
     Npars = len(pars)
     if Npars == 1:
@@ -364,7 +364,7 @@ def plot_foraging(**kwargs):
             df['Group'] = d.id
             dfs.append(df)
         df0 = pd.concat(dfs)
-        par = getPar(action, to_return='lab')
+        par = preg.getPar(action, to_return='lab')
         mdf = pd.melt(df0, id_vars=['Group'], var_name='foodtype', value_name=par)
         with sns.plotting_context('notebook', font_scale=1.4):
             kws = {
@@ -408,7 +408,7 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
 
     for ii, sh in enumerate(par_shorts):
         ax = P.axs[ii]
-        p, u = getPar(sh, to_return=['d', 'l'])
+        p, u = preg.getPar(sh, to_return=['d', 'l'])
         vs = [d.endpoint_data[p] * scale for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]

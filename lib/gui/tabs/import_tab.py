@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 
 from lib.gui.tabs.tab import GuiTab
@@ -17,7 +17,7 @@ class ImportTab(GuiTab):
         self.fields = ['tracker', 'enrichment']
 
     def update(self, w, c, conf, id=None):
-        ff=ParDict.path_dict["DATA"]
+        ff=preg.path_dict["DATA"]
         path = conf['path']
         w[f'BROWSE {self.raw_key}'].InitialFolder = f'{ff}/{path}/raw'
         w[f'BROWSE {self.proc_key}'].InitialFolder = f'{ff}/{path}/processed'

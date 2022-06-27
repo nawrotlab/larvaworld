@@ -1,6 +1,6 @@
 import numpy as np
-from lib.conf.base.dtypes import null_dict
 
+from lib.registry.dtypes import null_dict
 
 
 def trial_conf(durs=[], qs=[]):
@@ -164,6 +164,7 @@ def store_RefPars():
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
     }
     save_dict(d, ParDict.path_dict["ParRef"], use_pickle=False)
+
 
 if __name__ == '__main__':
     # d=init2par()

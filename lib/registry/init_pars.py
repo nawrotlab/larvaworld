@@ -80,7 +80,7 @@ class ParInitDict:
         from types import FunctionType
         import numpy as np
         import param
-        from lib.conf.pars.units import ureg
+        from lib.registry.units import ureg
         from lib.aux import dictsNlists as dNl
         from lib.aux.collecting import output_keys
         from lib.conf.stored.conf import ConfSelector, kConfDict

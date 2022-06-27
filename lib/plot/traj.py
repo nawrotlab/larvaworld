@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt, patches
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 
 from lib.plot.base import BasePlot, Plot
 from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
@@ -141,7 +141,7 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
 
     chunks = ['stride', 'pause']
     chunk_cols = ['lightblue', 'grey']
-    p, ylab = getPar('sv', to_return=['d', 'l'])
+    p, ylab = preg.getPar('sv', to_return=['d', 'l'])
     figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
     figy = 5
 
@@ -196,7 +196,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
                 chunks = ['stride', 'pause']
                 chunk_cols = ['lightblue', 'grey']
 
-                p, ylab, ylim = getPar('sv', to_return=['d', 'l', 'lim'])
+                p, ylab, ylim = preg.getPar('sv', to_return=['d', 'l', 'lim'])
                 ylim = (0.0, 1.0)
             elif key == 'turns':
                 chunks = ['Rturn', 'Lturn']
@@ -206,7 +206,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
                 bv = nam.vel(b)
                 ho = nam.orient('front')
                 hov = nam.vel(ho)
-                p, ylab, ylim = getPar('fov', to_return=['d', 'l', 'lim'])
+                p, ylab, ylim = preg.getPar('fov', to_return=['d', 'l', 'lim'])
 
             handles = [patches.Patch(color=col, label=n) for n, col in zip(chunks, chunk_cols)]
             P.conf_ax(kk, xlab=r'time $(sec)$' if jj == Nrows - 1 else None, ylab=ylab, ylim=ylim, xlim=slice,

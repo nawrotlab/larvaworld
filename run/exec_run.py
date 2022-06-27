@@ -9,7 +9,7 @@ from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 import lib.aux.dictsNlists as dNl
 
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 
 
 class Exec:
@@ -28,7 +28,7 @@ class Exec:
             self.process.kill()
 
     def run(self, **kwargs):
-        f0, f1 = ParDict.path_dict["EXECONF"],ParDict.path_dict["EXEC"]
+        f0, f1 = preg.path_dict["EXECONF"],preg.path_dict["EXEC"]
         # f0, f1 = paths.path('EXECONF'), paths.path('EXEC')
         if self.run_externally:
             dNl.save_dict(self.conf, f0)
@@ -59,7 +59,7 @@ class Exec:
             sim_id = self.conf['sim_params']['sim_ID']
             if res is None and self.run_externally:
                 # from lib.conf.pars.pars import ParDict
-                ff = ParDict.path_dict["SIM"]
+                ff = preg.path_dict["SIM"]
                 dir0 = f"{ff}/{self.conf['sim_params']['path']}/{sim_id}"
                 res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
             if res is not None:

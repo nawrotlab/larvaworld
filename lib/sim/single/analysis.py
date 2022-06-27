@@ -18,10 +18,9 @@ from lib.plot.epochs import plot_stridesNpauses
 from lib.plot.bar import barplot
 from lib.plot.box import boxplot, boxplot_double_patch, lineplot
 from lib.conf.stored.conf import loadConf
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.dtypes import null_dict
+from lib.registry.pars import preg
 from lib.model.DEB.deb import deb_default
-from lib.conf.base import paths
 from lib.plot.grid import calibration_plot
 from lib.plot.traj import plot_marked_strides
 from lib.stor.larva_dataset import LarvaDataset
@@ -204,7 +203,7 @@ def double_patch_analysis(sources, **kwargs):
 def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
     if path is None:
         parent_dir = f'essays/{essay_type}/global_test'
-        plot_dir = f'{ParDict.path_dict["SIM"]}/{parent_dir}/plots'
+        plot_dir = f'{preg.path_dict["SIM"]}/{parent_dir}/plots'
     else:
         plot_dir = f'{path}/plots'
     ccc = {'show': False}
@@ -253,7 +252,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
             figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if all_figs:
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
@@ -268,7 +267,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                     figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
                                          label_epochs=False, **kwargs)
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
                                                             **kwargs)
 
@@ -282,7 +281,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
             figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if all_figs:
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
@@ -298,7 +297,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                 figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
                                                                         save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
                 for s in shorts:
-                    p = getPar(s)
+                    p = preg.getPar(s)
                     figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
                                                       save_as=f'{n}{p}.pdf', **kwargs)
         # for d in kwargs['datasets'] :

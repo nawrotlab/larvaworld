@@ -5,7 +5,6 @@ import random
 import time
 import numpy as np
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
-# from lib.aux.sim_aux import get_source_xy
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 
@@ -23,8 +22,8 @@ class SingleRun:
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:
-            from lib.conf.pars.pars import ParDict
-            save_to = ParDict.path_dict["SIM"]
+            from lib.registry.pars import preg
+            save_to = preg.path_dict["SIM"]
         self.save_to = save_to
         self.storage_path = f'{sim_params.path}/{self.id}'
         self.dir_path = f'{save_to}/{self.storage_path}'
@@ -222,7 +221,7 @@ def set_output(collections, Nsegs=2, Ncontour=0):
 
 def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
     from lib.conf.stored.conf import expandConf
-    from lib.conf.base.dtypes import null_dict
+    from lib.registry.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
         conf = expandConf(exp, 'Exp')

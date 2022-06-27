@@ -7,9 +7,8 @@ import copy
 import numpy as np
 
 import lib.aux.dictsNlists as dNl
-from lib.conf.base.dtypes import null_dict
 from lib.conf.stored.conf import loadConf
-
+from lib.registry.dtypes import null_dict
 
 # Crawl-bend interference
 
@@ -227,7 +226,6 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
 
 
 if __name__ == '__main__':
-    from lib.model.modules.locomotor import DefaultLocomotor
     # for k, v in loco_dict.items() :
     # #     print(v)
     # # raise
@@ -238,7 +236,7 @@ if __name__ == '__main__':
     # raise
 
     # print(kConfDict('Brain'))
-    from lib.conf.stored.conf import saveConf, loadRef, copyConf
+    from lib.conf.stored.conf import saveConf, copyConf
 
     # print(loadConf('None.200_controls', 'Ref').bout_distros.stride.keys())
     for k, v in loco_dict.items():
@@ -260,4 +258,4 @@ if __name__ == '__main__':
         #                                          'ang_mode': 'torque'})
         saveConf(BB, 'Model', k)
 
-    print(loadConf('Sakagiannis2022','Model'))
+    print(loadConf('Sakagiannis2022', 'Model'))

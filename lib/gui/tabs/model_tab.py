@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 import copy
 import os
 
-from lib.conf.pars.pars import ParDict
+from lib.registry.pars import preg
 from lib.gui.tabs.draw_body_tab import DrawBodyTab
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
@@ -11,7 +11,7 @@ from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gu
 class ModelTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         self.fields = ['physics', 'body']
         self.module_keys = list(null_dict('modules').keys())
         self.energetics_keys = list(null_dict('energetics').keys())
@@ -127,7 +127,7 @@ class ModelTab(GuiTab):
         return l, c
 
     def build_architecture_tab(self):
-        fdir = ParDict.path_dict["model"]
+        fdir = preg.path_dict["model"]
         # from lib.conf.base import paths
         # fdir = paths.path('model')
         fig_dict = {f: f'{fdir}/{f}' for f in sorted(os.listdir(fdir))}

@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import ticker, cm
 
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot
 
@@ -20,7 +20,7 @@ def plot_fft(s, c, palette=None, axx=None, ax=None, fig=None, **kwargs):
         axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
 
-    l, v, fov = getPar(['l', 'v', 'fov'])
+    l, v, fov = preg.getPar(['l', 'v', 'fov'])
     fvs = np.zeros(c.N) * np.nan
     ffovs = np.zeros(c.N) * np.nan
     v_ys = np.zeros([c.N, c.Nticks // 2])
@@ -73,7 +73,7 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims = getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
+            pars, symbols, ylabs, ylims = preg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
     else:
         symbols = pars
         ylabs = pars

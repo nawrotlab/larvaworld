@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import collections as mc
 
 from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.pars import preg
 
 from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
 from lib.plot.aux import plot_quantiles
@@ -119,7 +119,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims, ylabs0 = getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
+            pars, symbols, ylabs, ylims, ylabs0 = preg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
 
             # ylabs=[]
             # for ii in range(len(pars)) :
@@ -257,7 +257,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
             lb = dsp['upper'].values[t0:t1]
             ub = dsp['lower'].values[t0:t1]
         except :
-            dsp = ParDict.get(k, d)
+            dsp = preg.get(k, d)
             mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]
             ub = dsp.groupby(level='Step').quantile(q=0.75).values[t0:t1]
             lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]
@@ -314,12 +314,12 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         xlabel = 'time, $min$'
     P.build(figsize=(7, 6))
 
-    dst_par, dst_u = getPar('cum_d', to_return=['d', 'u'])
+    dst_par, dst_u = preg.getPar('cum_d', to_return=['d', 'u'])
     x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.step_data[dst_par]
         if not scaled and unit == 'cm':
-            from lib.conf.pars.units import ureg
+            from lib.registry.units import ureg
             if dst_u == ureg.m:
                 df *= 100
         plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)

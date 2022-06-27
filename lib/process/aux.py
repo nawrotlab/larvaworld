@@ -4,7 +4,7 @@ import numpy as np
 from scipy.signal import find_peaks
 
 from lib.aux.sim_aux import fft_max, fft_freqs
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, naming as nam
 
 
@@ -324,9 +324,9 @@ def mean_stride_curve(a, strides,da,Nbins=64) :
     return dic
 
 def cycle_curve_dict(s,dt, shs=['sv', 'fov', 'rov', 'foa', 'b']) :
-    strides = detect_strides(s[getPar('sv')], dt, return_extrema=False, return_runs=False)
-    da = np.array([np.trapz(s[getPar('fov')][s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-    dic = {sh: mean_stride_curve(s[getPar(sh)], strides, da) for sh in shs}
+    strides = detect_strides(s[preg.getPar('sv')], dt, return_extrema=False, return_runs=False)
+    da = np.array([np.trapz(s[preg.getPar('fov')][s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+    dic = {sh: mean_stride_curve(s[preg.getPar(sh)], strides, da) for sh in shs}
     return dNl.NestDict(dic)
 
 
@@ -344,8 +344,8 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
         for jj, id in enumerate(c.agent_ids):
 
             ss= sss[id]
-            stride_dic[id] = detect_strides(ss[getPar('sv')].values, c.dt, return_runs=False, return_extrema=False)
-            a_fov=ss[getPar('fov')].values
+            stride_dic[id] = detect_strides(ss[preg.getPar('sv')].values, c.dt, return_runs=False, return_extrema=False)
+            a_fov=ss[preg.getPar('fov')].values
             stride_dic_dfo[id]=np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(stride_dic[id])])
     else :
         stride_dic ={id:chunk_dicts[id]['stride'] for id in c.agent_ids}
@@ -356,7 +356,7 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
     cycle_curves={}
     mean_curves_abs={}
     for sh in ['sv','fov','rov','foa', 'b'] :
-        par=getPar(sh)
+        par=preg.getPar(sh)
         curves_abs =np.zeros([c.N, Nbins]) * np.nan
         curves_plus =np.zeros([c.N, Nbins]) * np.nan
         curves_minus =np.zeros([c.N, Nbins]) * np.nan
@@ -389,11 +389,11 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
     att0s, att1s = np.min(mean_curves_abs['fov'], axis=1), np.max(mean_curves_abs['fov'], axis=1)
 
     e[nam.max('phi_attenuation')] = x[np.argmax(mean_curves_abs['fov'], axis=1)]
-    e[nam.max(f'phi_{getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
-    e[getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
+    e[nam.max(f'phi_{preg.getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
+    e[preg.getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
     try :
-        e[nam.min('attenuation')] = att0s / e[getPar('pau_fov_mu')]
-        e[nam.max('attenuation')] = (att1s - att0s) / e[getPar('pau_fov_mu')]
+        e[nam.min('attenuation')] = att0s / e[preg.getPar('pau_fov_mu')]
+        e[nam.max('attenuation')] = (att1s - att0s) / e[preg.getPar('pau_fov_mu')]
     except :
         pass
 
@@ -415,9 +415,9 @@ def turn_mode_annotation(e, chunk_dicts):
 
 
 def turn_annotation(s, e, c, store=False):
-    fov, foa = getPar(['fov', 'foa'])
+    fov, foa = preg.getPar(['fov', 'foa'])
 
-    turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
+    turn_ps = preg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
     turn_vs = np.zeros([c.Nticks, c.N, len(turn_ps)]) * np.nan
     turn_dict = {}
 
@@ -443,7 +443,7 @@ def turn_annotation(s, e, c, store=False):
                          'turn_dur': Tdurs,'Lturn_dur': Ldurs,'Rturn_dur': Rdurs, 'turn_vel_max': Tmaxs}
     s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
     if store :
-        turn_ps = getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
+        turn_ps = preg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
         store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
     return turn_dict
 
@@ -452,10 +452,10 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     if vel_thr is None:
         vel_thr = c.vel_thr
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
-        getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
+        preg.getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
 
-    str_ps = getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'])
-    lin_ps = getPar(['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
+    str_ps = preg.getPar(['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'])
+    lin_ps = preg.getPar(['run_v_mu', 'pau_v_mu', 'run_a_mu', 'pau_a_mu', 'run_fov_mu', 'run_fov_std', 'pau_fov_mu', 'pau_fov_std',
          'run_foa_mu', 'pau_foa_mu', 'pau_b_mu', 'pau_b_std', 'pau_bv_mu', 'pau_bv_std', 'pau_ba_mu', 'pau_ba_std',
          'cum_run_t', 'cum_pau_t', 'run_t_min', 'run_t_max', 'pau_t_min', 'pau_t_max'])
 
@@ -463,7 +463,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     lin_vs = np.zeros([c.N, len(lin_ps)]) * np.nan
     str_vs = np.zeros([c.N, len(str_ps)]) * np.nan
 
-    run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_t', 'str_d', 'str_sd'])
+    run_ps = preg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_t', 'str_d', 'str_sd'])
     run_vs = np.zeros([c.Nticks, c.N, len(run_ps)]) * np.nan
 
     crawl_dict = {}
@@ -546,7 +546,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     e[lin_ps] = lin_vs
 
     str_d_mu, str_d_std, str_sd_mu, str_sd_std, run_tr, pau_tr, cum_run_t, cum_pau_t, cum_t = \
-        getPar(
+        preg.getPar(
             ['str_d_mu', 'str_d_std', 'str_sd_mu', 'str_sd_std', 'run_tr', 'pau_tr', 'cum_run_t', 'cum_pau_t', 'cum_t'])
 
     e[run_tr] = e[cum_run_t] / e[cum_t]
@@ -558,7 +558,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         e[str_sd_mu] = e[str_d_mu] / e[l]
         e[str_sd_std] = e[str_d_std] / e[l]
     if store :
-        run_ps = getPar(['pau_t', 'run_t', 'run_d', 'str_c_l','str_d','str_sd'])
+        run_ps = preg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l','str_d','str_sd'])
         store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
     return crawl_dict
 

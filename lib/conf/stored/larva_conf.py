@@ -2,10 +2,11 @@
 The larva model parameters
 '''
 import copy
+
 import numpy as np
 
 from lib.aux.dictsNlists import NestDict
-from lib.conf.base.dtypes import null_dict, null_Box2D_params, Box2Djoints
+from lib.registry.dtypes import null_dict, null_Box2D_params, Box2Djoints
 
 ''' Default exploration model'''
 
@@ -245,14 +246,16 @@ def create_mod_dict():
     LO_brute = brain(['L', 'O'], olfactor=null_dict('olfactor', brute_force=True))
     LW = brain(['L', 'W'])
     L = brain(['L'])
-    LTo = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= []))
-    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= []),memory=RL_touch_memory)
-    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= []),memory=gRL_touch_memory)
-    LTo2M = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+    LTo = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[]))
+    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[]),
                  memory=RL_touch_memory)
-    LTo2Mg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[]),
                   memory=gRL_touch_memory)
-    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher',touch_sensors= [], brute_force=True))
+    LTo2M = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+                  memory=RL_touch_memory)
+    LTo2Mg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+                   memory=gRL_touch_memory)
+    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[], brute_force=True))
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
@@ -283,7 +286,7 @@ def create_mod_dict():
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-        'continuous_navigator': add_brain(brain(['C', 'T','If', 'O'], OD=OD1,
+        'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1,
                                                 turner=Tno_noise, crawler=Ccon_no_noise,
                                                 interference=null_coupling),
                                           bod={'Nsegs': 1}),
@@ -351,4 +354,3 @@ def create_mod_dict():
     }
 
     return grouped_mod_dict
-

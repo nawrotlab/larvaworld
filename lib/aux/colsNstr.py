@@ -99,7 +99,7 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
 
 
 def col_df(shorts, groups):
-    from lib.conf.pars.pars import getPar, ParDict
+    from lib.registry.pars import preg
 
     group_col_dic = {
         'angular kinematics': 'Blues',
@@ -125,8 +125,8 @@ def col_df(shorts, groups):
         {'group': groups,
          'group_label': [group_label_dic[g] for g in groups],
          'shorts': shorts,
-         'pars': [getPar(sh) for sh in shorts],
-         'symbols': [getPar(sh, to_return='l') for sh in shorts],
+         'pars': [preg.getPar(sh) for sh in shorts],
+         'symbols': [preg.getPar(sh, to_return='l') for sh in shorts],
          'group_color': [group_col_dic[g] for g in groups]
          })
 

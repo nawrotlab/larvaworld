@@ -3,10 +3,11 @@ from argparse import ArgumentParser
 
 from lib.aux.colsNstr import N_colors
 import lib.aux.dictsNlists as dNl
-from lib.conf.pars.pars import ParDict
-from lib.conf.base.dtypes import null_dict
+from lib.registry.pars import preg
+from lib.registry.dtypes import null_dict
 
-# 
+
+#
 class Parser:
     """
     Create an argument parser for a group of arguments (normally from a dict).
@@ -22,8 +23,7 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        self.parsargs =ParDict.parser_dict[name]
-
+        self.parsargs = preg.parser_dict[name]
 
     def add(self, parser=None):
         if parser is None:
@@ -82,11 +82,11 @@ def adjust_sim(exp, conf_type, sim):
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     from lib.conf.stored.conf import expandConf
-    try :
+    try:
         exp_conf = expandConf(exp, conf_type)
-    except :
+    except:
         exp_conf = expandConf(exp, conf_type='Exp')
-    if arena is not None :
+    if arena is not None:
         exp_conf.env_params.arena = arena
     if d is None:
         d = {'sim_params': null_dict('sim_params')}
@@ -95,7 +95,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     print(exp_conf.sim_params)
     # exp_conf.sim_params = SimParConf(exp=exp, conf_type=conf_type, **d['sim_params']).dict
     if models is not None:
-        if conf_type in ['Exp', 'Eval'] :
+        if conf_type in ['Exp', 'Eval']:
             exp_conf = update_exp_models(exp_conf, models)
     if N is not None:
         if conf_type == 'Exp':

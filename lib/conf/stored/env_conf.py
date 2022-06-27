@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.aux.colsNstr import col_range, N_colors
-from lib.conf.base.dtypes import null_dict, arena, oG, oD
+from lib.registry.dtypes import null_dict, arena, oG, oD
 
 
 def border(ps, c='black', w=0.01, id=None):
@@ -20,7 +20,6 @@ def hborder(y, xs, **kwargs):
 def vborder(x, ys, **kwargs):
     ps = [(x, y) for y in ys]
     return border(ps, **kwargs)
-
 
 
 def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=null_dict('odor'), **kwargs):
@@ -163,8 +162,10 @@ env_dict = {
 
     'windy_arena': env(arena(0.3, 0.3), w={'wind_speed': 10.0}),
     'windy_blob_arena': env(arena(0.128, 0.014),
-                            f_pars(sg=sgs(1, qs=np.ones(4),cs=N_colors(4), N=1, s=(0.0, 0.0),loc=(0.005,0.0), m='uniform', shape='rectangular', can_be_displaced=True,
-                                          regeneration=True, regeneration_pos={'loc' : (0.005,0.0), 'scale': (0.0, 0.0)})),
+                            f_pars(sg=sgs(1, qs=np.ones(4), cs=N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
+                                          m='uniform', shape='rectangular', can_be_displaced=True,
+                                          regeneration=True,
+                                          regeneration_pos={'loc': (0.005, 0.0), 'scale': (0.0, 0.0)})),
                             w={'wind_speed': 1.0}),
     'windy_arena_bordered': env(arena(0.3, 0.3), w={'wind_speed': 10.0},
                                 bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),

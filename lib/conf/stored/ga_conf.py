@@ -1,20 +1,16 @@
-
 import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
 from scipy.stats import ks_2samp
 
-
-
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.ga_dict import ga_dict
+from lib.registry.dtypes import null_dict
+from lib.registry.ga_dict import ga_dict
 from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 from lib.eval.eval_aux import RSS
-
 
 ga_spaces = dNl.NestDict({
     'interference': ga_dict(name='interference', suf='brain.interference_params.',

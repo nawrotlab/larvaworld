@@ -438,7 +438,7 @@ class BodySim(BodyManager, PhysicsController):
         def avoid_border(ang_vel, counter, dd=0.01):
             if math.isinf(ang_vel):
                 ang_vel = 1.0
-            if self.touch_sensors is None or any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
+            if any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
                 counter += 1
                 ang_vel *= -(1 + dd * counter)
                 return ang_vel, counter

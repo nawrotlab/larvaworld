@@ -16,7 +16,7 @@ from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, p
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
 
 
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.pars import preg
 from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
 
@@ -31,7 +31,7 @@ class EvalRun:
             id = f'evaluation_run_{next_idx("dispersion", "Eval")}'
         self.id = id
         if save_to is None:
-            save_to = ParDict.path_dict["SIM"]
+            save_to = preg.path_dict["SIM"]
         self.path = f'eval_runs'
         self.bout_annotation = bout_annotation
         self.enrichment = enrichment
@@ -207,7 +207,7 @@ class EvalRun:
             self.datasets.append(dd)
 
     def prepare_exp_conf(self, dur, video=False, **kwargs):
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         exp = 'dispersion'
         exp_conf = expandConf(exp, 'Exp')
         c = self.target.config
@@ -373,9 +373,9 @@ class EvalRun:
     def preprocess(self):
         Ddata, Edata = {}, {}
         for p, sh in zip(self.s_pars, self.s_shorts):
-            Ddata[p] = {d.id: ParDict.get(sh, d) for d in self.datasets}
+            Ddata[p] = {d.id: preg.get(sh, d) for d in self.datasets}
         for p, sh in zip(self.e_pars, self.e_shorts):
-            Edata[p] = {d.id: ParDict.get(sh, d) for d in self.datasets}
+            Edata[p] = {d.id: preg.get(sh, d) for d in self.datasets}
         return dNl.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
@@ -439,7 +439,7 @@ class EvalRun:
             data = data_aux.concat_datasets(P.datasets, key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
-                data[getPar(sh)] *= 1000
+                data[preg.getPar(sh)] *= 1000
 
             for i, (p, sym) in enumerate(symbols.items()):
                 kws = {

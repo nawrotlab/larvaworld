@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, spectrogram
 
-from lib.conf.pars.pars import getPar, ParDict
+from lib.registry.pars import preg
 from lib.aux.xy_aux import interpolate_nans
 from lib.aux.stdout import suppress_stdout
 from lib.aux.sim_aux import apply_filter_to_array_with_nans_multidim
@@ -119,7 +119,7 @@ def exclude_rows(s, e, dt, flag, accepted=None, rejected=None, **kwargs):
         s.loc[s[flag] == rejected[0]] = np.nan
 
     for id in s.index.unique('AgentID').values:
-        e.loc[id, getPar('cum_t')] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * dt
+        e.loc[id, preg.getPar('cum_t')] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * dt
 
     print(f'Rows excluded according to {flag}.')
 
@@ -153,9 +153,9 @@ def preprocess(s, e, c, rescale_by=None, drop_collisions=False, interpolate_nans
 def generate_traj_colors(s, sp_vel=None, ang_vel=None):
     N = len(s.index.unique('Step'))
     if sp_vel is None:
-        sp_vel = getPar('sv')
+        sp_vel = preg.getPar('sv')
     if ang_vel is None:
-        ang_vel = getPar('fov')
+        ang_vel = preg.getPar('fov')
     pars = [sp_vel, ang_vel]
     edge_colors = [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]]
     labels = ['lin_color', 'ang_color']

@@ -1,12 +1,12 @@
 import numpy as np
 
 from lib.aux import dictsNlists as dNl
-from lib.conf.base.dtypes import par_dict
+from lib.registry.dtypes import par_dict
 
 
 def ga_dict(name=None, suf='', excluded=None, only=None):
-    from lib.conf.pars.pars import ParDict
-    d0 = ParDict.init_dict[name]
+    from lib.registry.pars import preg
+    d0 = preg.init_dict[name]
     dic = par_dict(d0=d0)
     keys = list(dic.keys())
     if only is not None:

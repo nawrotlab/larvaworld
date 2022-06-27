@@ -10,8 +10,8 @@ from lib.plot.base import BasePlot
 
 
 def modelConfTable(mID, **kwargs):
-    from lib.conf.pars.pars import ParDict
-    return ParDict.larva_conf_dict.mIDtable(mID, **kwargs)
+    from lib.registry.pars import preg
+    return preg.larva_conf_dict.mIDtable(mID, **kwargs)
 
 
 def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
@@ -143,12 +143,12 @@ def error_table(data, k='', title=None, **kwargs):
 
 
 def store_model_graphs() :
-    from lib.conf.pars.pars import ParDict
+    from lib.registry.pars import preg
     from lib.conf.stored.conf import kConfDict
     from lib.aux.combining import combine_pdfs
     from lib.plot.grid import model_summary
-    f1 = ParDict.path_dict['model_tables']
-    f2 = ParDict.path_dict['model_summaries']
+    f1 = preg.path_dict['model_tables']
+    f2 = preg.path_dict['model_summaries']
     for mID in kConfDict('Model'):
         try :
             _=modelConfTable(mID,save_to =f1)

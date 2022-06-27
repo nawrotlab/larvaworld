@@ -32,7 +32,7 @@ class EssayTab(GuiTab):
         return d, g
 
     def update(self, w, c, conf, id):
-        from lib.conf.base.dtypes import null_dict
+        from lib.registry.dtypes import null_dict
         from lib.conf.stored.conf import next_idx
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)

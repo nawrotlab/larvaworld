@@ -5,7 +5,7 @@ from matplotlib import cm, pyplot as plt
 from scipy.stats import multivariate_normal
 
 from lib.aux import colsNstr as cNs
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.plot.base import ParPlot, Plot
 
 
@@ -203,8 +203,8 @@ def plot_2d(df, labels, **kwargs):
 
 
 def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
-    ypar, ylab, ylim = getPar(shorts[1], to_return=['d', 'l', 'lim'])
-    xpar, xlab, xlim = getPar(shorts[0], to_return=['d', 'l', 'lim'])
+    ypar, ylab, ylim = preg.getPar(shorts[1], to_return=['d', 'l', 'lim'])
+    xpar, xlab, xlim = preg.getPar(shorts[0], to_return=['d', 'l', 'lim'])
     P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
     P.build()
     ax = P.axs[0]

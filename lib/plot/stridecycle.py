@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles, suf
 from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
 from lib.process.aux import compute_interference
@@ -92,7 +92,7 @@ def stride_cycle(shorts=['sv', 'fov', 'rov', 'foa'], modes=None, Nbins=64, indiv
     Nsh = len(shorts)
     P = AutoPlot(name=f'pooled_norm_average_curves', Nrows=Nsh, sharex=True, figsize=(10, 4 * Nsh), **kwargs)
     for ii, sh in enumerate(shorts):
-        par, lab, sym = getPar(sh, to_return=['d', 'lab', 'symbol'])
+        par, lab, sym = preg.getPar(sh, to_return=['d', 'lab', 'symbol'])
         if modes is None:
             mode = 'abs' if sh == 'sv' else 'norm'
         else:
@@ -140,7 +140,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
                             absolute=False, save_to=None, pooled=False,
                             ylim=None, axs=None, fig=None, show=False):
     from lib.process.aux import detect_strides
-    p, sv, fv = getPar([short, 'sv', 'fv'])
+    p, sv, fv = preg.getPar([short, 'sv', 'fv'])
     if ss is None:
         id = c.agent_ids[idx]
         ee = e.loc[id]
@@ -183,7 +183,7 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=T
                             axs=None, fig=None, axx=None):
     from lib.process.aux import detect_strides, stride_interp
     from lib.aux.vel_aux import compute_velocity
-    l, sv, pau_fov_mu, fv, fov = getPar(['l', 'sv', 'pau_fov_mu', 'fv', 'fov'])
+    l, sv, pau_fov_mu, fv, fov = preg.getPar(['l', 'sv', 'pau_fov_mu', 'fv', 'fov'])
     att = 'attenuation'
     att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
 
@@ -203,9 +203,9 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=T
         axx = fig.add_axes([0.64, 0.4, 0.25, 0.12])
         fig.subplots_adjust(hspace=0.1, left=0.15, right=0.9, bottom=0.2, top=0.9)
     if short is not None:
-        par, lab = getPar(short, to_return=['d', 'lab'])
+        par, lab = preg.getPar(short, to_return=['d', 'lab'])
         a_sh = ss[par].values
-        a_fov = ss[getPar('fov')].values
+        a_fov = ss[preg.getPar('fov')].values
         da = np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
 
         aa = stride_interp(a_sh, strides, Nbins)
@@ -306,7 +306,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     shorts = ['str_fo', 'str_ro']
     P.build(1, len(shorts))
     for i, sh in enumerate(shorts):
-        p, sl, xlab = getPar(sh, to_return=['d', 's', 'l'])
+        p, sl, xlab = preg.getPar(sh, to_return=['d', 's', 'l'])
         bins, xlim = P.angrange(80, absolute, 200)
         P.plot_par(p, bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, yMaxN=4, leg_loc='upper left')
@@ -332,7 +332,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
 
     Npars = len(shorts)
 
-    pars, ylabs = getPar(shorts, to_return=['d', 'l'])
+    pars, ylabs = preg.getPar(shorts, to_return=['d', 'l'])
     P = AutoPlot(name=name, subfolder=subfolder, Nrows=Npars, figsize=(10, Npars * 5), sharex=True, **kwargs)
 
     ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None

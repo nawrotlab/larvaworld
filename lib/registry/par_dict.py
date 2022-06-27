@@ -6,7 +6,7 @@ import param
 
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring
-from lib.conf.pars.units import ureg
+from lib.registry.units import ureg
 
 func_dic = {
     # SupportsFloat: param.Number,

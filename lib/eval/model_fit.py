@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-from lib.conf.base.dtypes import null_dict
-from lib.conf.pars.ga_dict import ga_dict, interference_ga_dict
+from lib.registry.dtypes import null_dict
+from lib.registry.ga_dict import ga_dict, interference_ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
-from lib.conf.pars.pars import getPar
+from lib.registry.pars import preg
 from lib.plot.base import BasePlot
 
 
@@ -57,7 +57,7 @@ class Calibration:
         P=BasePlot(name='turner_distros',**kwargs)
         P.build(Ncols=Nps, fig=fig, axs=axs,figsize=(5 * Nps, 5), sharey=True)
         for i, sh in enumerate(self.shorts):
-            p, lab = getPar(sh, to_return=['d', 'lab'])
+            p, lab = preg.getPar(sh, to_return=['d', 'lab'])
             vs = self.target[sh]
             if in_deg :
                 vs=np.rad2deg(vs)
@@ -236,26 +236,26 @@ def adapt_crawler(ee, waveform='realistic', average=True):
     if waveform=='realistic':
         if average:
             crawler = null_dict('crawler',waveform='realistic',
-                                initial_freq=np.round(ee[getPar('fsv')].median(), 2),
-                                stride_dst_mean=np.round(ee[getPar('str_sd_mu')].median(), 2),
-                                stride_dst_std=np.round(ee[getPar('str_sd_std')].median(), 2),
+                                initial_freq=np.round(ee[preg.getPar('fsv')].median(), 2),
+                                stride_dst_mean=np.round(ee[preg.getPar('str_sd_mu')].median(), 2),
+                                stride_dst_std=np.round(ee[preg.getPar('str_sd_std')].median(), 2),
                                 max_vel_phase=np.round(ee['phi_scaled_velocity_max'].median(), 2),
-                                max_scaled_vel=np.round(ee[getPar('str_sv_max')].median(), 2))
+                                max_scaled_vel=np.round(ee[preg.getPar('str_sv_max')].median(), 2))
 
         else:
             crawler = null_dict('crawler',waveform='realistic',
-                                initial_freq=ee[getPar('fsv')],
-                                stride_dst_mean=ee[getPar('str_sd_mu')],
-                                stride_dst_std=ee[getPar('str_sd_std')],
+                                initial_freq=ee[preg.getPar('fsv')],
+                                stride_dst_mean=ee[preg.getPar('str_sd_mu')],
+                                stride_dst_std=ee[preg.getPar('str_sd_std')],
                                 max_vel_phase=ee['phi_scaled_velocity_max'],
-                                max_scaled_vel=ee[getPar('str_sv_max')])
+                                max_scaled_vel=ee[preg.getPar('str_sv_max')])
     elif waveform=='constant':
         if average:
             crawler = null_dict('crawler',waveform='constant',
-                                initial_amp=np.round(ee[getPar('run_v_mu')].median(), 2))
+                                initial_amp=np.round(ee[preg.getPar('run_v_mu')].median(), 2))
         else:
             crawler = null_dict('crawler',waveform='constant',
-                                initial_amp=ee[getPar('run_v_mu')]
+                                initial_amp=ee[preg.getPar('run_v_mu')]
                                 )
     return crawler
 
@@ -280,16 +280,16 @@ def adapt_intermitter(c, e, **kwargs) :
         intermitter.pause_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
     except:
         pass
-    intermitter.crawl_freq = np.round(e[getPar('fsv')].median(), 2)
+    intermitter.crawl_freq = np.round(e[preg.getPar('fsv')].median(), 2)
     return intermitter
 
 def adapt_interference(c, e, mode='phasic', average=True) :
     if average :
         at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
 
-        pau_fov_mu=e[getPar('pau_fov_mu')]
+        pau_fov_mu=e[preg.getPar('pau_fov_mu')]
 
-        att0 = np.clip(np.round((e[getPar('run_fov_mu')] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
+        att0 = np.clip(np.round((e[preg.getPar('run_fov_mu')] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
         fov_curve = c.pooled_cycle_curves['fov']['abs']
         #print(fov_curve)
         # att0=np.round(np.clip(np.nanmean(att0s),a_min=0, a_max=1),2)
@@ -320,7 +320,7 @@ def adapt_interference(c, e, mode='phasic', average=True) :
 def adapt_turner(e, mode = 'neural', average=True) :
     if mode == 'neural':
         if average:
-            fr_mu = e[getPar('ffov')].median()
+            fr_mu = e[preg.getPar('ffov')].median()
             coef, intercept = 0.024, 5
             A_in_mu = np.round(fr_mu / coef + intercept)
 
@@ -332,12 +332,12 @@ def adapt_turner(e, mode = 'neural', average=True) :
             raise ValueError('Not implemented')
     elif mode == 'sinusoidal':
         if average:
-            fr_mu = e[getPar('ffov')].median()
+            fr_mu = e[preg.getPar('ffov')].median()
             turner = {**null_dict('base_turner', mode='sinusoidal'),
             **null_dict('sinusoidal_turner',
                         initial_freq=np.round(fr_mu, 2),
                                freq_range = (0.1,0.8),
-                               initial_amp = np.round(e[getPar('pau_foa_mu')].median(), 2)/10,
+                               initial_amp = np.round(e[preg.getPar('pau_foa_mu')].median(), 2)/10,
                                amp_range = (0.0,100.0)
                       )}
 
@@ -347,7 +347,7 @@ def adapt_turner(e, mode = 'neural', average=True) :
         if average:
             turner = {**null_dict('base_turner', mode='constant'),
                       **null_dict('constant_turner',
-                                  initial_amp=np.round(e[getPar('pau_foa_mu')].median(), 2),
+                                  initial_amp=np.round(e[preg.getPar('pau_foa_mu')].median(), 2),
                                   # amp_range=(-1000.0, 1000.0)
                                   )}
         else:

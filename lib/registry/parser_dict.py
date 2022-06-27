@@ -45,7 +45,6 @@ def build_ParsArg(name, k=None, h='', t=float, v=None, vs=None, **kwargs):
             d['nargs'] = '?'
     return {name: d}
 
-
 def build_ParsDict(d0):
     dic = {}
     for n, ndic in d0.items():
@@ -54,10 +53,8 @@ def build_ParsDict(d0):
     return {k: ParsArg(**v) for k, v in dic.items()}
     # return parsargs
 
-
-
 def build_ParsDict2(d0):
-    from lib.conf.base.dtypes import par_dict
+    from lib.registry.dtypes import par_dict
     dic = par_dict(d0=d0, argparser=True)
     try:
         parsargs = {k: ParsArg(**v) for k, v in dic.items()}
@@ -72,8 +69,8 @@ def build_ParsDict2(d0):
 class ParserDict:
     def __init__(self, init_dict=None, names=['sim_params', 'batch_setup','eval_conf','visualization','ga_select_kws'] ):
         if init_dict is None :
-            from lib.conf.pars.pars import ParDict
-            init_dict=ParDict.init_dict
+            from lib.registry.pars import preg
+            init_dict=preg.init_dict
         self.init_dict=init_dict
         self.dict=self.build_parser_dict(names)
 
