@@ -92,7 +92,7 @@ class DistDict :
     def __init__(self):
         self.dict=build_dist_dict()
 
-    def get_dist(self,v, k, k0='intermitter',return_entries=False):
+    def get_dist(self,v, k, k0='intermitter',return_tabrows=False):
         dict0 = {
             'stridechain_dist': ('run length',('N','R'),ureg.dimensionless, '# $strides$'),
             'pause_dist':('pause duration',('t','P'),ureg.s, '$sec$'),
@@ -111,7 +111,7 @@ class DistDict :
         pD={'disp' : dispD, 'k' :kD, 'label' : dist_v, 'sym' : symD}
         pR={'disp' : dispR, 'k' :kR, 'u_name' : uname,'u' : u, 'sym' : symR, 'v0':v.range, 'dtype' : Tuple[float]}
 
-        if return_entries:
+        if return_tabrows:
             vs1 = [k0, dispD, symD, dist_v, '-']
             vs2 = [k0, dispR, symR, v.range,uname]
             return vs1,vs2

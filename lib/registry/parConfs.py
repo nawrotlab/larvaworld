@@ -406,18 +406,10 @@ class LarvaConfDict:
             elif k == 'crawler':
                 vals = dvalid[k][dic.waveform]
             elif k == 'intermitter':
-                for kkk in ['stridechain_dist', 'pause_dist']:
+                for kkk in ['stridechain_dist', 'pause_dist', 'run_dist']:
                     if dic[kkk] is not None:
                         if dic[kkk].name is not None:
-                            vs1, vs2 = self.dist_dict0.get_dist(v=dic[kkk], k=kkk, k0=k,return_entries=True)
-                            # dist_v = self.dist_dict[vv.name].lab_func(vv)
-                            # if kkk == 'stridechain_dist':
-                            #     vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
-                            #     vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', vv.range,
-                            #            '# $strides$']
-                            # elif kkk == 'pause_dist':
-                            #     vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
-                            #     vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
+                            vs1, vs2 = self.dist_dict0.get_dist(v=dic[kkk], k=kkk, k0=k,return_tabrows=True)
                             data0.append(vs1)
                             data0.append(vs2)
 
