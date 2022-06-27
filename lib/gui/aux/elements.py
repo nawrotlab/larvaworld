@@ -861,6 +861,7 @@ class CollapsibleTable(Collapsible):
 
 
 def v_layout(k0, args, value_kws0={}, **kwargs):
+    # print(k0,kwargs)
     # from lib.registry.dtypes import base_dtype
     t = args['dtype']
     v = args['initial_value']
@@ -1137,10 +1138,7 @@ class PadDict(PadElement):
         combos = {}
         l = []
         for k, args in self.type_dict.items():
-            if k in self.subconfs.keys():
-                subconfkws = self.subconfs[k]
-            else:
-                subconfkws = {}
+            subconfkws = self.subconfs[k] if k in self.subconfs.keys() else {}
             if args['dtype'] in [dict, TypedDict]:
                 k0 = f'{name}_{k}'
                 subkws = {
@@ -1165,6 +1163,9 @@ class PadDict(PadElement):
                 text_kws = {**self.text_kws}
                 if 'text_kws' in subconfkws.keys():
                     text_kws.update(subconfkws['text_kws'])
+                # # FIXME temporary solution
+                # if 'header_width' in subconfkws.keys():
+                #     subconfkws.pop('header_width' , None)
                 disp = args['disp']
                 ii = [sg.T(f'{gui_fun.get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
                       v_layout(f'{name}_{k}', args, self.value_kws, **subconfkws)]
@@ -1174,7 +1175,6 @@ class PadDict(PadElement):
         return l
 
     def update(self, w, d):
-        # from lib.registry.dtypes import base_dtype
         if d is not None:
             for k, t in self.dtypes.items():
                 k0 = f'{self.name}_{k}'

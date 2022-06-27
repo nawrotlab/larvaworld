@@ -13,8 +13,9 @@ class ParRegistry:
         self.init_dict = init_pars.ParInitDict().dict
         self.mfunc = par_funcs.module_func_dict()
         self.parser_dict = parser_dict.ParserDict(init_dict=self.init_dict).dict
-        self.dist_dict = dist_dict.DistDict().dict
-        self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc, dist_dict=self.dist_dict)
+        self.dist_dict0 = dist_dict.DistDict()
+        self.dist_dict = self.dist_dict0.dict
+        self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc, dist_dict0=self.dist_dict0)
 
 
 
@@ -177,8 +178,7 @@ class ParRegistry:
             return self.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
 
     def enr_dict(self, proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={},
-                 metric_definition=None,
-                 **kwargs):
+                 metric_definition=None,**kwargs):
         from lib.registry.init_pars import proc_type_keys, bout_keys, to_drop_keys
 
         if metric_definition is None:

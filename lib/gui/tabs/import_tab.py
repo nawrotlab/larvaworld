@@ -35,17 +35,18 @@ class ImportTab(GuiTab):
         dl2 = gui_el.DataList(kP, tab=self, dict=d[kP],
                        buttons=['replay', 'imitate', 'enrich', 'select_all', 'remove', 'change_ID', 'save_ref','browse'],
                        aux_cols=['N', 'duration', 'quality'], size=(55, 9))
-        pd1 = gui_el.PadDict('tracker', background_color=self.Ctrac, text_kws=gui_fun.t_kws(8),header_width=22,
-                     subconfs={'filesystem': {'header_width': 20, 'value_kws': gui_fun.t_kws(5)},
-                               'resolution': {'header_width': 20, 'text_kws': gui_fun.t_kws(13)},
-                               'arena': {'header_width': 20, 'text_kws': gui_fun.t_kws(7)}}
-                     )
+
         pd2 = gui_el.PadDict('enrichment', background_color=self.Cenr, header_width=125,
                      subconfs={'preprocessing': {'text_kws': gui_fun.t_kws(14)},
                                'to_drop': {'Ncols': 2, 'text_kws': gui_fun.t_kws(9)},
                                'processing': {'Ncols': 2, 'text_kws': gui_fun.t_kws(9)},
                                'metric_definition': {'header_width': 60,'text_kws': gui_fun.t_kws(9)}}
                      )
+        pd1 = gui_el.PadDict('tracker', background_color=self.Ctrac, text_kws=gui_fun.t_kws(8), header_width=22,
+                             subconfs={'filesystem': {'header_width': 20, 'value_kws': gui_fun.t_kws(5)},
+                                       'resolution': {'header_width': 20, 'text_kws': gui_fun.t_kws(13)},
+                                       'arena': {'header_width': 20, 'text_kws': gui_fun.t_kws(7)}}
+                             )
         dd1 = gui_fun.gui_col([sl1, pd1], x_frac=x, as_pane=True, pad=(0,0))
         dd2 = gui_fun.gui_row([dl1, dl2], x_frac=1 - x - x1, y_frac=y, x_fracs=[x1, 1 - x1 - x], as_pane=True, pad = None)
         dd3 = pd2.get_layout()

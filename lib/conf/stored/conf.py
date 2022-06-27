@@ -257,17 +257,12 @@ def store_confs(keys=None):
         from lib.aux.dictsNlists import merge_dicts
         d = mod.create_mod_dict()
         mod_dict = merge_dicts(list(d.values()))
-        mod_group_dict = {k: {kk: modshort(vv) for kk, vv in v.items()} for k, v in d.items()}
+        mod_group_dict = {k: {'model families' : list(v.keys())} for k, v in d.items()}
+        # mod_group_dict = {k: {kk: modshort(vv) for kk, vv in v.items()} for k, v in d.items()}
         for k, v in mod_dict.items():
             saveConf(v, 'Model', k)
         for k, v in mod_group_dict.items():
             saveConf(v, 'ModelGroup', k)
-
-        # from lib.conf.stored.larva_conf import create_mod_dict
-        # for k, v in create_mod_dict().items():
-        #     # if k=='zebrafish' :
-        #     #     saveConf(v, 'Model', k)
-        #     saveConf(v, 'Model', k)
     if 'Env' in keys:
         from lib.conf.stored.env_conf import env_dict
         for k, v in env_dict.items():

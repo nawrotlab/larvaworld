@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 
 
 class Effector:
@@ -38,6 +39,8 @@ class Effector:
         self.total_t = 0
 
 
+
+
 class Oscillator(Effector):
     def __init__(self, initial_freq=None, initial_freq_std=0, random_phi=True, **kwargs):
         super().__init__(**kwargs)
@@ -70,5 +73,100 @@ class Oscillator(Effector):
         self.phi = 0
         self.complete_iteration = False
         self.iteration_counter = 0
+
+class StepOscillator(Oscillator) :
+    def __init__(self, initial_amp, amp_range=None, **kwargs):
+        super().__init__(**kwargs)
+        self.initial_amp = initial_amp
+        self.amp = initial_amp
+        self.amp_range = amp_range
+
+    @property
+    def Act(self):
+        c=self.Act_coef
+        Aphi=self.Act_Phi
+        return c*Aphi
+
+    @property
+    def Act_Phi(self):
+        return np.sin(self.phi)
+
+    @property
+    def Act_coef(self):
+        return self.amp
+
+
+
+    def step(self,**kwargs):
+        self.complete_iteration = False
+        super().oscillate()
+        return self.Act
+
+class StrideOscillator(StepOscillator) :
+    def __init__(self, stride_dst_mean=None, stride_dst_std=0.0, **kwargs):
+        super().__init__(**kwargs)
+        self.stride_dst_mean, self.stride_dst_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
+        self.step_to_length = self.new_stride
+
+    @property
+    def new_stride(self):
+        return np.random.normal(loc=self.stride_dst_mean, scale=self.stride_dst_std)
+
+    def step(self,**kwargs):
+        self.complete_iteration = False
+        super().oscillate()
+        if self.complete_iteration:
+            self.step_to_length = self.new_stride
+        return self.freq * self.step_to_length * (1 + self.Act)
+
+
+
+class GaussOscillator(StrideOscillator):
+    def __init__(self, gaussian_window_std,**kwargs):
+        super().__init__(**kwargs)
+
+        self.gauss_w=signal.gaussian(360, std=gaussian_window_std * 360, sym=False)
+
+    @property
+    def Act_Phi(self):
+        idx = [int(np.rad2deg(self.phi))]
+        return self.gauss_w[idx]
+
+
+class SquareOscillator(StrideOscillator):
+    def __init__(self, square_signal_duty, **kwargs):
+        super().__init__(**kwargs)
+        self.square_signal_duty = square_signal_duty
+
+    @ property
+    def Act_Phi(self):
+        return signal.square(self.phi, duty=self.square_signal_duty)
+
+class PhaseOscillator(StrideOscillator):
+        def __init__(self, max_vel_phase,max_scaled_vel, **kwargs):
+            super().__init__(**kwargs)
+            self.max_vel_phase = max_vel_phase
+            self.max_scaled_vel = max_scaled_vel
+
+        @property
+        def Act_Phi(self):
+            return np.cos(self.phi - self.max_vel_phase)
+
+        @property
+        def Act_coef(self):
+            return self.max_scaled_vel
+
+
+
+class ConEffector(Effector):
+    def __init__(self, initial_amp, **kwargs):
+        super().__init__(**kwargs)
+        self.initial_amp = initial_amp
+        self.amp = initial_amp
+
+    def step(self,**kwargs):
+        super().count_time()
+        return self.amp
+
 
 

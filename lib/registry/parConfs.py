@@ -1,46 +1,49 @@
+import copy
 import random
+from typing import Tuple
+
 import pandas as pd
 import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
+
 from lib.registry.units import ureg
 
 
-def init2par(d0, d=None,pre_d=None, aux_args={}):
-    def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, disp=None, h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', codename=None,
-            vfunc=None,vparfunc=None, **kwargs):
+def init2par(d0, d=None, pre_d=None, aux_args={}):
+    def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, disp=None, h='', k=None, symbol='',
+            u=ureg.dimensionless, u_name=None, label='', codename=None,
+            vfunc=None, vparfunc=None, **kwargs):
         from lib.aux.par_aux import define_range
         if k is None:
             k = name
         dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
 
         p_kws = {
-                'p': name,
-                'k': k,
-                'lim': lim,
-                'dv': dv,
-                'vs': vs,
-                'v0': v,
-                'dtype': t,
-                'disp': label,
-                'h': h,
-                'u_name': u_name,
-                'u': u,
-                'sym': symbol,
-                'codename': codename,
-                'vfunc': vfunc,
-                'vparfunc': vparfunc,
-            }
+            'p': name,
+            'k': k,
+            'lim': lim,
+            'dv': dv,
+            'vs': vs,
+            'v0': v,
+            'dtype': t,
+            'disp': label,
+            'h': h,
+            'u_name': u_name,
+            'u': u,
+            'sym': symbol,
+            'codename': codename,
+            'vfunc': vfunc,
+            'vparfunc': vparfunc,
+        }
         return p_kws
-
 
     from lib.registry.par_dict import preparePar
     from lib.registry.par import v_descriptor
     if d is None and pre_d is None:
-        d, pre_d = {},{}
+        d, pre_d = {}, {}
     for n, v in d0.items():
         depth = dNl.dict_depth(v)
-
 
         if depth == 0:
             continue
@@ -60,23 +63,25 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
             d[n], pre_d[n] = init2par(d0=v)
     return d, pre_d
 
+
 class LarvaConfDict:
-    def __init__(self, init_dict=None, mfunc=None,dist_dict=None):
-        if init_dict is None :
+    def __init__(self, init_dict=None, mfunc=None, dist_dict0=None):
+        if init_dict is None:
             from lib.registry.pars import preg
-            init_dict=preg.init_dict
-        if mfunc is None :
+            init_dict = preg.init_dict
+        if mfunc is None:
             from lib.registry.par_funcs import module_func_dict
-            mfunc=module_func_dict()
-        if dist_dict is None :
+            mfunc = module_func_dict()
+        if dist_dict0 is None:
             from lib.registry.pars import preg
-            dist_dict=preg.dist_dict
-        self.dist_dict=dist_dict
-        self.mfunc=mfunc
+            dist_dict0 = preg.dist_dict0
+        self.dist_dict0 = dist_dict0
+        self.dist_dict = self.dist_dict0.dict
+        self.mfunc = mfunc
         self.mcolor = dNl.NestDict({
-            'body' : 'lightskyblue',
-            'physics' : 'lightsteelblue',
-            'energetics' : 'lightskyblue',
+            'body': 'lightskyblue',
+            'physics': 'lightsteelblue',
+            'energetics': 'lightskyblue',
             'Box2D_params': 'lightcoral',
             'crawler': 'lightcoral',
             'turner': 'indianred',
@@ -90,8 +95,6 @@ class LarvaConfDict:
             # 'locomotor': locomotor.DefaultLocomotor,
         })
 
-
-
         self.mbkeys = list(init_dict['modules'].keys())
         self.mpref = {k: f'brain.{k}_params.' for k in self.mbkeys}
         self.mbdicts = dNl.NestDict()
@@ -100,44 +103,78 @@ class LarvaConfDict:
         for k in self.mbkeys:
             d0 = init_dict[k]
 
-            self.mbdicts[k],self.mbpredicts[k] = init2par(d0 = d0, aux_args={'pref': self.mpref[k]})
+            self.mbdicts[k], self.mbpredicts[k] = init2par(d0=d0, aux_args={'pref': self.mpref[k]})
 
         self.aux_keys = ['body', 'physics', 'energetics']
         self.aux_dicts = dNl.NestDict()
         self.aux_predicts = dNl.NestDict()
         for k in self.aux_keys:
-            self.aux_dicts[k],self.aux_predicts[k] = init2par(d0 = init_dict[k])
+            self.aux_dicts[k], self.aux_predicts[k] = init2par(d0=init_dict[k])
 
-        self.mkeys=self.mbkeys+self.aux_keys
-        self.mdicts = dNl.NestDict({**self.mbdicts,**self.aux_dicts})
-        self.mpredicts = dNl.NestDict({**self.mbpredicts,**self.aux_predicts})
+        self.mkeys = self.mbkeys + self.aux_keys
+        self.mdicts = dNl.NestDict({**self.mbdicts, **self.aux_dicts})
+        self.mpredicts = dNl.NestDict({**self.mbpredicts, **self.aux_predicts})
+
+        from lib.registry.modConfs import build_modConf_dict
+        self.init_dicts2, self.mpredicts2, self.mdicts2 = build_modConf_dict()
 
         def build_mpredfs(mpredicts):
-            mpredfs=dNl.NestDict()
-            for k,predict in mpredicts.items() :
-                if predict is not None :
-                    entries=[]
-                    for kk,vv in predict.items() :
-                        if 'k' in vv.keys() :
+            mpredfs = dNl.NestDict()
+            for k, predict in mpredicts.items():
+                if predict is not None:
+                    entries = []
+                    for kk, vv in predict.items():
+                        if 'k' in vv.keys():
                             entries.append(vv)
-                        else :
+                        else:
                             for kkk, vvv in vv.items():
                                 if 'k' in vvv.keys():
                                     entries.append(vvv)
-                                else :
-                                    raise ValueError(kkk,kk,k)
-                    mpredfs[k]=pd.DataFrame.from_records(entries, index='k')
-                else :
+                                else:
+                                    raise ValueError(kkk, kk, k)
+                    mpredfs[k] = pd.DataFrame.from_records(entries, index='k')
+                else:
                     mpredfs[k] = None
             return mpredfs
 
-
-    def conf(self, mdict = None, mkey = None, prefix=False, **kwargs):
+    def conf2(self, mdict=None, mkey=None, prefix=False, mode=None, **kwargs):
         conf0 = dNl.NestDict()
-        if mdict is None :
-            if mkey is not None :
-                mdict=self.mdicts[mkey]
-            else :
+        if mdict is None:
+            if mkey is not None:
+                if mode is None:
+                    mdict = self.mdicts2[mkey].args
+                else:
+                    mdict = self.mdicts2[mkey].mode[mode].args
+            else:
+                raise ValueError('Module dictionary or key must be defined')
+        for d, p in mdict.items():
+            if isinstance(p, param.Parameterized):
+                d0 = f'{p.pref}{d}' if prefix else d
+                conf0[d0] = p.v
+            else:
+                conf0[d] = self.conf2(mdict=p, prefix=False)
+
+        conf0.update(kwargs)
+        return conf0
+
+    def module2(self, mkey, mode=None, **kwargs):
+        if mode is None:
+            mdict = self.mdicts2[mkey]
+        else:
+            mdict = self.mdicts2[mkey].mode[mode]
+        mkws = self.mdicts2[mkey].kwargs
+        conf0 = self.conf2(mdict=mdict.args, prefix=False)
+        func = mdict.class_func
+        mkws.update(kwargs)
+        m = func(**conf0, **mkws)
+        return m
+
+    def conf(self, mdict=None, mkey=None, prefix=False, **kwargs):
+        conf0 = dNl.NestDict()
+        if mdict is None:
+            if mkey is not None:
+                mdict = self.mdicts[mkey]
+            else:
                 raise ValueError('Module dictionary or key must be defined')
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
@@ -164,7 +201,7 @@ class LarvaConfDict:
         mc = dNl.NestDict()
         mc.brain = self.multibconf(mConf['brain'])
         for mkey, mdict in mConf.items():
-            if mkey=='brain':
+            if mkey == 'brain':
                 continue
             if mdict is None:
                 mc[mkey] = None
@@ -275,9 +312,8 @@ class LarvaConfDict:
             m = loadConf(mID, 'Model')
 
         mc = dNl.NestDict()
-        mc.brain =self.mIDbconf(self, m=m.brain)
+        mc.brain = self.mIDbconf(self, m=m.brain)
         for mkey, mdic in self.aux_dicts.items():
-
             mmdic = m[mkey]
             mc[mkey] = self.copyID(mdic, mmdic)
             # if mmdic:
@@ -292,9 +328,9 @@ class LarvaConfDict:
         return self.mfunc[module](conf=multibconf, **kwargs)
 
     def copyID(self, mdic, mmdic):
-        if mmdic is None :
+        if mmdic is None:
             return None
-        else :
+        else:
             for d, p in mdic.items():
                 if isinstance(p, param.Parameterized):
                     new_v = mmdic[d] if d in mmdic.keys() else None
@@ -310,8 +346,9 @@ class LarvaConfDict:
         mConf = self.mIDconf(mID)
         m = self.multiconf(mConf)
         data = []
+
         # print(mID,m.energetics)
-        def gen_rows(mdic, mConf_dic, parent,data0,suf_keys=False):
+        def gen_rows(mdic, mConf_dic, parent, data0, suf_keys=False):
 
             for n in mdic:
                 p = mConf_dic[n]
@@ -320,17 +357,17 @@ class LarvaConfDict:
                     row = [parent] + ddd
                     data0.append(row)
                 else:
-                    if suf_keys :
-                        new_parent=f'{parent}.{n}'
-                    else :
-                        new_parent=parent
+                    if suf_keys:
+                        new_parent = f'{parent}.{n}'
+                    else:
+                        new_parent = parent
                     print(p)
-                    print(isinstance(p,dict))
+                    print(isinstance(p, dict))
                     print(k, p == mConf_dic[n])
-                    for ii in p :
-                        iii=mConf_dic[n][ii]
-                        print(ii==iii)
-                    data0 =gen_rows(p, mConf_dic[n], new_parent,data0, suf_keys=suf_keys)
+                    for ii in p:
+                        iii = mConf_dic[n][ii]
+                        print(ii == iii)
+                    data0 = gen_rows(p, mConf_dic[n], new_parent, data0, suf_keys=suf_keys)
             return data0
 
         def mvalid(k, dic, data0):
@@ -356,7 +393,7 @@ class LarvaConfDict:
                 'Box2D_params': [],
                 'olfactor': ['decay_coef', 'perception'],
                 'windsensor': ['weights'],
-                'toucher': ['touch_sensors','decay_coef', 'perception', 'initial_gain'],
+                'toucher': ['touch_sensors', 'decay_coef', 'perception', 'initial_gain'],
                 'feeder': ['initial_freq', 'feed_radius', 'V_bite'],
                 'memory': [],
                 # 'intermitter': ['stridechain_dist', 'pause_dist']
@@ -369,18 +406,18 @@ class LarvaConfDict:
             elif k == 'crawler':
                 vals = dvalid[k][dic.waveform]
             elif k == 'intermitter':
-                for kkk in ['stridechain_dist', 'pause_dist'] :
-                    if dic[kkk] is not None :
-                        vv = dic[kkk]
-                        if vv.name is not None :
-                            dist_v = self.dist_dict[vv.name].lab_func(vv)
-                            if kkk == 'stridechain_dist':
-                                vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
-                                vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', vv.range,
-                                       '# $strides$']
-                            elif kkk == 'pause_dist':
-                                vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
-                                vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
+                for kkk in ['stridechain_dist', 'pause_dist']:
+                    if dic[kkk] is not None:
+                        if dic[kkk].name is not None:
+                            vs1, vs2 = self.dist_dict0.get_dist(v=dic[kkk], k=kkk, k0=k,return_entries=True)
+                            # dist_v = self.dist_dict[vv.name].lab_func(vv)
+                            # if kkk == 'stridechain_dist':
+                            #     vs1 = [k, 'run length distribution', '$N_{R}$', dist_v, '-']
+                            #     vs2 = [k, 'run length range', '$[N_{R}^{min},N_{R}^{max}]$', vv.range,
+                            #            '# $strides$']
+                            # elif kkk == 'pause_dist':
+                            #     vs1 = [k, 'pause duration distribution', '$t_{P}$', dist_v, '-']
+                            #     vs2 = [k, 'pause duration range', '$[t_{P}^{min},t_{P}^{max}]$', vv.range, '$sec$']
                             data0.append(vs1)
                             data0.append(vs2)
 
@@ -400,27 +437,23 @@ class LarvaConfDict:
                 dic = m[k]
                 dic0 = mConf[k]
 
-
-
             if dic is None:
                 valid = []
-            else :
+            else:
                 valid, data = mvalid(k, dic, data)
 
             if len(valid) > 0:
-                data=gen_rows(valid, dic0, k, data)
+                data = gen_rows(valid, dic0, k, data)
 
         df = pd.DataFrame(data, columns=['field'] + columns)
         df.set_index(['field'], inplace=True)
-        # print(df.head())
-        # raise
         return df
 
     def mIDtable(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], figsize=(14, 11), **kwargs):
         from lib.plot.table import conf_table
-        df=self.mIDtable_data(mID, columns=columns)
+        df = self.mIDtable_data(mID, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
-        return conf_table(df, row_colors,mID=mID, figsize=figsize, **kwargs)
+        return conf_table(df, row_colors, mID=mID, figsize=figsize, **kwargs)
 
 
 def confID_dict():

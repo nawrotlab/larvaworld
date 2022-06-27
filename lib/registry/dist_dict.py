@@ -1,8 +1,12 @@
+from typing import Tuple
+
 import numpy as np
 from scipy.special import erf
 from scipy.stats import uniform
 
 import lib.aux.dictsNlists as dNl
+from lib.aux.par_aux import sub, subsup
+from lib.registry.units import ureg
 
 
 def powerlaw_cdf(x, xmin, alpha):
@@ -87,3 +91,29 @@ def build_dist_dict() :
 class DistDict :
     def __init__(self):
         self.dict=build_dist_dict()
+
+    def get_dist(self,v, k, k0='intermitter',return_entries=False):
+        dict0 = {
+            'stridechain_dist': ('run length',('N','R'),ureg.dimensionless, '# $strides$'),
+            'pause_dist':('pause duration',('t','P'),ureg.s, '$sec$'),
+            'run_dist': ('run duration',('t','R'), ureg.s,'$sec$')
+        }
+        ll0,(tt0,tt1), u, uname=dict0[k]
+        dispD,dispR=f'{ll0} distribution',f'{ll0} range'
+        symD=sub(tt0,tt1)
+        kD=f'{tt0}_{tt1}'
+        kR=f'{kD}_r'
+        sym1,sym2=subsup(tt0,tt1,'min'),subsup(tt0,tt1,'max')
+        symR=f'[{sym1},{sym2}]'
+
+        dist_v = self.dict[v.name].lab_func(v)
+
+        pD={'disp' : dispD, 'k' :kD, 'label' : dist_v, 'sym' : symD}
+        pR={'disp' : dispR, 'k' :kR, 'u_name' : uname,'u' : u, 'sym' : symR, 'v0':v.range, 'dtype' : Tuple[float]}
+
+        if return_entries:
+            vs1 = [k0, dispD, symD, dist_v, '-']
+            vs2 = [k0, dispR, symR, v.range,uname]
+            return vs1,vs2
+        else :
+            return pD,pR

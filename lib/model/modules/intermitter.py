@@ -12,15 +12,12 @@ from lib.model.modules.basic import Effector
 
 
 class BaseIntermitter(Effector):
-    def __init__(self, locomotor=None, crawl_bouts=False, feed_bouts=False,
+    def __init__(self, crawl_bouts=False, feed_bouts=False,
                  feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
                  EEB_decay=1, save_to=None, EEB=0.5, **kwargs):
         super().__init__(**kwargs)
-        self.locomotor = locomotor
+
         self.save_to = save_to
-        self.crawler = locomotor.crawler if locomotor is not None else None
-        self.feeder = locomotor.feeder if locomotor is not None else None
-        self.turner = locomotor.turner if locomotor is not None else None
         self.EEB = EEB
         self.base_EEB = EEB
         self.cur_state = None
@@ -76,9 +73,9 @@ class BaseIntermitter(Effector):
 
         self.stride_stop = False
 
-    def step(self):
+    def step(self, locomotor=None):
         super().count_time()
-        self.update_state()
+        self.update_state(locomotor)
         return self.cur_state
 
     def generate_stridechain(self):
@@ -87,54 +84,52 @@ class BaseIntermitter(Effector):
     def generate_pause(self):
         pass
 
-    def disinhibit_locomotion(self):
+
+    def disinhibit_locomotion(self, L):
         if np.random.uniform(0, 1, 1) >= self.EEB:
             if self.crawl_bouts:
                 self.run_initiation()
-                if self.crawler is not None:
-                    self.crawler.start_effector()
-                if self.feeder is not None:
-                    self.feeder.stop_effector()
+                if L.crawler is not None:
+                    L.crawler.start_effector()
+                if L.feeder is not None:
+                    L.feeder.stop_effector()
         else:
             if self.feed_bouts:
                 self.current_feedchain_length = 1
-                if self.feeder is not None:
-                    self.feeder.start_effector()
-                if self.crawler is not None:
-                    self.crawler.stop_effector()
+                if L.feeder is not None:
+                    L.feeder.start_effector()
+                if L.crawler is not None:
+                    L.crawler.stop_effector()
                 self.cur_state = 'feed'
 
     def run_initiation(self) :
         self.cur_state='run'
 
-    def inhibit_locomotion(self):
-        # print('ffff')
+    def inhibit_locomotion(self, L):
         self.current_pause_duration = self.generate_pause()
         self.cur_state='pause'
-        if self.crawl_bouts and self.crawler is not None:
-            self.crawler.stop_effector()
+        if self.crawl_bouts and L.crawler is not None:
+            L.crawler.stop_effector()
             try :
                 self.complete_iteration = False
-                self.crawler.phi=0
+                L.crawler.phi=0
             except :
                 pass
-            # self.crawler.
-        if self.feed_bouts and self.feeder is not None:
-            self.feeder.stop_effector()
+        if self.feed_bouts and L.feeder is not None:
+            L.feeder.stop_effector()
 
-    def update_state(self):
+    def update_state(self, L):
         self.stride_stop = False
         if self.current_stridechain_length is not None:
-            if self.crawler.complete_iteration:
+            if L.crawler.complete_iteration:
                 self.current_numstrides += 1
                 self.stride_stop = True
-                # self.stride_counter += 1
                 if self.current_numstrides >= self.current_stridechain_length:
                     self.register_stridechain()
                     self.inhibit_locomotion()
 
         elif self.current_feedchain_length is not None:
-            if self.feeder.complete_iteration:
+            if L.feeder.complete_iteration:
                 self.current_numfeeds += 1
                 self.feed_counter += 1
                 if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
@@ -146,12 +141,12 @@ class BaseIntermitter(Effector):
         elif self.current_pause_duration is not None:
             if self.t > self.current_pause_duration and self.pause_termination_allowed:
                 self.register_pause()
-                self.disinhibit_locomotion()
+                self.disinhibit_locomotion(L)
 
         elif self.current_run_duration is not None:
             if self.t > self.current_run_duration and self.run_termination_allowed:
                 self.register_run()
-                self.inhibit_locomotion()
+                self.inhibit_locomotion(L)
 
     def register_stridechain(self):
         self.stridechain_counter += 1
@@ -301,9 +296,7 @@ class Intermitter(BaseIntermitter):
             self.current_numstrides = 0
         elif self.run_dist is not None:
             self.current_run_duration = self.run_dist.sample()
-            # self.cur_run_dur = 0
         self.cur_state = 'run'
-        # self.locomotor.crawler.effector = True
 
     def generate_pause(self):
         return self.pause_dist.sample()
@@ -318,13 +311,12 @@ class OfflineIntermitter(Intermitter):
         self.crawl_ticks = np.round(1 / (crawl_freq * self.dt)).astype(int)
         self.feed_ticks = np.round(1 / (feed_freq * self.dt)).astype(int)
 
-    def step(self):
+    def step(self, locomotor=None):
         super().count_ticks()
         t = self.ticks
         self.stride_stop = False
         if self.current_stridechain_length and t >= self.current_crawl_ticks:
             self.current_numstrides += 1
-            # self.stride_counter += 1
             self.stride_stop = True
             if self.current_numstrides >= self.current_stridechain_length:
                 self.register('stride')
@@ -346,7 +338,7 @@ class OfflineIntermitter(Intermitter):
             self.current_pause_ticks = None
             self.disinhibit_locomotion()
 
-    def disinhibit_locomotion(self):
+    def disinhibit_locomotion(self, L=None):
         if np.random.uniform(0, 1, 1) >= self.EEB:
             if self.crawl_bouts:
                 self.current_stridechain_length = self.generate_stridechain()
@@ -354,7 +346,7 @@ class OfflineIntermitter(Intermitter):
             if self.feed_bouts:
                 self.current_feedchain_length = 1
 
-    def inhibit_locomotion(self):
+    def inhibit_locomotion(self, L=None):
         pass
 
     def register(self, bout):
@@ -392,22 +384,22 @@ class NengoIntermitter(OfflineIntermitter):
         super().__init__(**kwargs)
         self.current_stridechain_length = self.generate_stridechain()
 
-    def disinhibit_locomotion(self):
+    def disinhibit_locomotion(self, L=None):
         if np.random.uniform(0, 1, 1) >= self.EEB:
-            self.crawler.set_freq(self.crawler.default_freq)
-            if self.feeder is not None:
-                self.feeder.set_freq(0)
+            L.crawler.set_freq(L.crawler.default_freq)
+            if L.feeder is not None:
+                L.feeder.set_freq(0)
             self.current_stridechain_length = self.generate_stridechain()
         else:
-            if self.feeder is not None:
-                self.feeder.set_freq(self.feeder.default_freq)
-            self.crawler.set_freq(0)
+            if L.feeder is not None:
+                L.feeder.set_freq(L.feeder.default_freq)
+            L.crawler.set_freq(0)
             self.current_feedchain_length = 1
 
-    def inhibit_locomotion(self):
-        self.crawler.set_freq(0)
-        if self.feeder is not None:
-            self.feeder.set_freq(0)
+    def inhibit_locomotion(self, L=None):
+        L.crawler.set_freq(0)
+        if L.feeder is not None:
+            L.feeder.set_freq(0)
 
 
 class BranchIntermitter(BaseIntermitter):

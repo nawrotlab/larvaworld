@@ -203,7 +203,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     elif 'LOF' in module_shorts:
         module_shorts.remove('LOF')
         module_shorts += ['T', 'C', 'If', 'Im', 'O', 'F']
-    # module_shorts.append('W')
+    # ks.append('W')
     modules = [module_dict[k] for k in module_shorts]
 
     modules = preg.get_null('modules', **{m: True for m in modules})

@@ -8,64 +8,24 @@ import numpy as np
 from lib.aux.dictsNlists import NestDict
 from lib.registry.pars import preg
 
-''' Default exploration model'''
 
-Ccon = preg.larva_conf_dict.conf(mkey='crawler', waveform='constant', initial_amp=0.0012)
-
-
-# T = preg.larva_conf_dict.conf(mkey='turner')
-Tsin = preg.get_null('turner',
-                          mode='sinusoidal',
-                          initial_amp=15.0,
-                          amp_range=[0.0, 50.0],
-                          initial_freq=0.3,
-                          freq_range=[0.1, 1.0]
-                         )
-
-
-
-base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
-                          attenuation=0.1)
-phasic_coupling = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
-null_coupling = preg.get_null('interference', mode='default', attenuation=1.0)
-
-
-RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
-                          gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
-
-RL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
-                            gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
-
-gRL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
-                             gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
-
-OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
-OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
 
 
 def Im(EEB, **kwargs):
-    if EEB > 0:
-        return preg.get_null('intermitter', feed_bouts=True, EEB=EEB, **kwargs)
-    else:
-        return preg.get_null('intermitter', feed_bouts=False, EEB=0.0, **kwargs)
-
-
-def ImD(pau, str, run=None, **kwargs):
-    return preg.get_null('intermitter', pause_dist=pau, stridechain_dist=str, run_dist=run, **kwargs)
-
-
-ImFitted = ImD(
-    run_mode='run',
-    pau={'fit': False, 'range': (0.125, 15.875), 'name': 'lognormal', 'mu': -0.24223, 'sigma': 0.96498},
-    str={'fit': False, 'range': (1, 157), 'name': 'lognormal', 'mu': 1.34411, 'sigma': 1.16138},
-    run={'fit': False, 'range': (0.375, 115.9375), 'name': 'powerlaw', 'alpha': 1.48249},
-)
-
+    return preg.get_null('intermitter', feed_bouts= EEB > 0, EEB=0.0, **kwargs)
 
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 
 
-def brain(module_shorts, nengo=False, OD=None, **kwargs):
+def brain(ks, nengo=False, OD=None, **kwargs):
+    base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(0.45, 1.0),
+                                  feeder_phi_range=(0.0, 0.0),
+                                  attenuation=0.1)
+
+    RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
+                                  gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
+
+
     module_dict = {
         'T': 'turner',
         'C': 'crawler',
@@ -77,14 +37,13 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
         'F': 'feeder',
         'M': 'memory',
     }
-    if 'L' in module_shorts:
-        module_shorts.remove('L')
-        module_shorts += ['T', 'C', 'If', 'Im']
-    elif 'LOF' in module_shorts:
-        module_shorts.remove('LOF')
-        module_shorts += ['T', 'C', 'If', 'Im', 'O', 'F']
-    # module_shorts.append('W')
-    modules = [module_dict[k] for k in module_shorts]
+    if 'L' in ks:
+        ks.remove('L')
+        ks += ['T', 'C', 'If', 'Im']
+    elif 'LOF' in ks:
+        ks.remove('LOF')
+        ks += ['T', 'C', 'If', 'Im', 'O', 'F']
+    modules = [module_dict[k] for k in ks]
 
     modules = preg.get_null('modules', **{m: True for m in modules})
     d = {'modules': modules}
@@ -146,61 +105,6 @@ def nengo_brain(module_shorts, EEB, OD=None):
                  )
 
 
-# -------------------------------------------WHOLE LARVA MODES---------------------------------------------------------
-
-
-odors3 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base']]
-odors5 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
-odors2 = [f'{i}_odor' for i in ['Left', 'Right']]
-
-freq_Fed = np.random.normal(1.244, 0.13)
-freq_Deprived = np.random.normal(1.4, 0.14)
-freq_Starved = np.random.normal(1.35, 0.15)
-
-pause_dist_Fed = {'range': (0.22, 69.0),
-                  'name': 'lognormal',
-                  'mu': -0.488,
-                  'sigma': 0.705}
-pause_dist_Deprived = {'range': (0.22, 91.0),
-                       'name': 'lognormal',
-                       'mu': -0.431,
-                       'sigma': 0.79}
-pause_dist_Starved = {'range': (0.22, 22.0),
-                      'name': 'lognormal',
-                      'mu': -0.534,
-                      'sigma': 0.733}
-
-stridechain_dist_Fed = {'range': (1, 63),
-                        'name': 'lognormal',
-                        'mu': 0.987,
-                        'sigma': 0.885}
-stridechain_dist_Deprived = {'range': (1, 99),
-                             'name': 'lognormal',
-                             'mu': 1.052,
-                             'sigma': 0.978}
-stridechain_dist_Starved = {'range': (1, 191),
-                            'name': 'lognormal',
-                            'mu': 1.227,
-                            'sigma': 1.052}
-
-Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
-                   interference=preg.get_null('interference', attenuation=0.0),
-                   intermitter=ImD({'fit': False, 'range': (0.01, 3.0), 'name': 'uniform', 'mu': None, 'sigma': None},
-                                   {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
-                   )
-
-brain_3c = brain(['L'],
-                 crawler=preg.get_null('crawler', stride_dst_mean=0.18, stride_dst_std=0.055, initial_freq=1.35,
-                                   freq_std=0.14),
-                 intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
-                                 preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
-
-brain_phasic = brain(['L'],
-                     crawler=preg.get_null('crawler', stride_dst_mean=0.224, stride_dst_std=0.033, initial_freq=1.418,
-                                       max_vel_phase=3.6),
-                     interference=phasic_coupling,
-                     intermitter=ImFitted)
-
 
 def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
     if Box2D == {}:
@@ -233,6 +137,39 @@ def OD(ids: list, means: list, stds=None) -> dict:
 
 
 def create_mod_dict():
+    Ccon = preg.larva_conf_dict.conf(mkey='crawler', waveform='constant', initial_amp=0.0012)
+    Tsin = preg.get_null('turner',
+                         mode='sinusoidal',
+                         initial_amp=15.0,
+                         amp_range=[0.0, 50.0],
+                         initial_freq=0.3,
+                         freq_range=[0.1, 1.0]
+                         )
+
+    phasic_coupling = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
+    null_coupling = preg.get_null('interference', mode='default', attenuation=1.0)
+
+    RL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30,
+                                    update_dt=0.5,
+                                    gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
+
+    gRL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30,
+                                     update_dt=0.5,
+                                     gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
+
+    OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
+    OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
+
+    def ImD(pau, str, run=None, **kwargs):
+        return preg.get_null('intermitter', pause_dist=pau, stridechain_dist=str, run_dist=run, **kwargs)
+
+    ImFitted = ImD(
+        run_mode='run',
+        pau={'fit': False, 'range': (0.125, 15.875), 'name': 'lognormal', 'mu': -0.24223, 'sigma': 0.96498},
+        str={'fit': False, 'range': (1, 157), 'name': 'lognormal', 'mu': 1.34411, 'sigma': 1.16138},
+        run={'fit': False, 'range': (0.375, 115.9375), 'name': 'powerlaw', 'alpha': 1.48249},
+    )
+
     M0 = mod()
 
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
@@ -260,6 +197,19 @@ def create_mod_dict():
                    memory=gRL_touch_memory)
     LTo_brute = brain(['L', 'To'], toucher=preg.get_null('toucher', touch_sensors=[], brute_force=True))
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
+
+    Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
+                       interference=preg.get_null('interference', attenuation=0.0),
+                       intermitter=ImD(
+                           {'fit': False, 'range': (0.01, 3.0), 'name': 'uniform', 'mu': None, 'sigma': None},
+                           {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
+                       )
+
+    brain_3c = brain(['L'],
+                     intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
+                                     preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
+
+    brain_phasic = brain(['L'], interference=phasic_coupling, intermitter=ImFitted)
 
     def add_OD(OD, B0=LOF):
         B1 = NestDict(copy.deepcopy(B0))
@@ -332,6 +282,10 @@ def create_mod_dict():
         'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
         'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
     }
+
+    odors3 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base']]
+    odors5 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base', 'Left', 'Right']]
+    odors2 = [f'{i}_odor' for i in ['Left', 'Right']]
 
     gamers = {
         'gamer': add_brain(add_OD(OD(odors3, [150.0, 0.0, 0.0]))),

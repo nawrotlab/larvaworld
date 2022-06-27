@@ -153,7 +153,7 @@ env_dict = {
     'arena_500mm': env(preg.arena(0.5, 0.5)),
 
     'odor_gradient': env(preg.arena(0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=preg.oG(2))), 'G'),
-    'mid_odor_gaussian': env(preg.arena(0.1, 0.06), f_pars(su=su(o=preg.preg.oG())), 'G'),
+    'mid_odor_gaussian': env(preg.arena(0.1, 0.06), f_pars(su=su(o=preg.oG())), 'G'),
     'mid_odor_diffusion': env(preg.arena(0.3, 0.3), f_pars(su=su(r=0.03, o=preg.oD())), 'D'),
     '4corners': env(preg.arena(0.2, 0.2), f_pars(su=foodNodor_4corners()), 'D'),
     'food_at_bottom': env(preg.arena(0.2, 0.2),

@@ -297,13 +297,11 @@ class NengoBrain(Network, Brain):
 
     def step(self, pos=None, reward=False):
         length = self.agent.sim_length
-        # if length is None :
-        #     length=self.agent.sim_length
         if self.olfactor:
             self.olfactor.X = self.sense_odors(pos)
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
-        self.locomotor.intermitter.step()
+        self.locomotor.intermitter.step(self.locomotor)
         self.sim.run_steps(self.Nsteps, progress_bar=False)
         d = self.sim.data
 
@@ -370,9 +368,9 @@ class NengoLocomotor(Locomotor):
         if m['turner'] and m['crawler']:
             self.turner = NengoEffector(**c['turner_params'])
             self.crawler = NengoEffector(**c['crawler_params'])
-            self.osc_coupling = SquareCoupling(locomotor=self, **c['interference_params'])
+            self.osc_coupling = SquareCoupling(**c['interference_params'])
         if m['intermitter']:
-            self.intermitter = NengoIntermitter(dt=self.dt, locomotor=self, **c['intermitter_params'])
+            self.intermitter = NengoIntermitter(dt=self.dt, **c['intermitter_params'])
             self.intermitter.start_effector()
         else:
             self.intermitter = None

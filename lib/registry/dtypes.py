@@ -6,12 +6,11 @@ from lib.aux.par_aux import define_range
 from lib.registry.units import ureg
 
 def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
-        h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', combo=None, entry=None, codename=None):
+        h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', combo=None, entry=None, codename=None,
+        **kwargs):
     if t == TypedDict:
         return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
 
-    if k is None:
-        k = name
     dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
 
     if vs not in [None, []]:
@@ -31,9 +30,11 @@ def par_dict(d0, **kwargs):
         return None
     d = {}
     for n, v in d0.items():
-        try:
+        if 't' in v.keys() or 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys() :
+        # try:
             entry = par(n, **v, **kwargs)
-        except:
+        else:
+        # except:
             entry = {n: {'dtype': dict, 'content': par_dict(d0=v, **kwargs)}}
         d.update(entry)
     return d
