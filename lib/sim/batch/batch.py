@@ -14,7 +14,7 @@ import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
 from lib.aux.dictsNlists import flatten_dict
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
 from lib.sim.batch.aux import grid_search_dict, delete_traj
 from lib.sim.batch.functions import single_run, batch_method_unpack
@@ -73,7 +73,7 @@ class BatchRun:
             'save_hdf5': save_hdf5,
             'exp_kws': {**exp_kws,
                         'save_to': self.dir,
-                        'vis_kwargs': null_dict('visualization', mode=None),
+                        'vis_kwargs': preg.get_null('visualization', mode=None),
                         'collections': exp['collections']
                         },
             'proc_kws': proc_kws

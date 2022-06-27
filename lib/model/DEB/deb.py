@@ -9,7 +9,7 @@ import numpy as np
 from lib.aux.dictsNlists import save_dict
 from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.registry.init_pars import substrate_dict
 from lib.conf.stored.conf import loadConf
 import lib.aux.naming as nam
@@ -95,7 +95,7 @@ class DEB:
         # self.gut_p_A = 0
         # print(substrate)
         if substrate is None:
-            substrate = null_dict('substrate')
+            substrate = preg.get_null('substrate')
         # print(substrate)
         if isinstance(substrate, dict):
             self.substrate = Substrate(type=substrate['type'], quality=substrate['quality'])
@@ -108,7 +108,7 @@ class DEB:
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
         if gut_params is None:
-            gut_params = null_dict('gut')
+            gut_params = preg.get_null('gut')
             # gut_params=null_dict('gut_params')
 
         self.gut = Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None

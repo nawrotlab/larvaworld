@@ -7,7 +7,7 @@ import param
 
 import lib.aux.dictsNlists as dNl
 from lib.registry import paths
-from lib.registry.dtypes import null_dict, base_enrich
+from lib.registry.pars import preg
 
 
 def loadConf(id, conf_type, **kwargs):
@@ -210,7 +210,13 @@ def modshort(vv):
             for k in ls:
                 mms.remove(k)
             mms.append(l0)
-    from lib.registry.dtypes import null_Box2D_params
+    null_Box2D_params = {
+        'joint_types': {
+            'friction': {'N': 0, 'args': {}},
+            'revolute': {'N': 0, 'args': {}},
+            'distance': {'N': 0, 'args': {}}
+        }
+    }
 
     if vv.Box2D_params != null_Box2D_params:
         mms = ['B'] + mms
@@ -300,24 +306,24 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
     if imitation:
         exp = 'imitation'
         larva_groups = {
-            'ImitationGroup': null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+            'ImitationGroup': preg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
                                         imitation=True,
                                         distribution={'N': N})}
     else:
         exp = 'evaluation'
         larva_groups = {
-            sample: null_dict('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+            sample: preg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
                               imitation=False,
                               distribution={'N': N})}
     id = sample_conf.id
 
     if duration is None:
         duration = sample_conf.duration / 60
-    sim_params = null_dict('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
+    sim_params = preg.get_null('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
                            path=f'single_runs/{exp}', sim_ID=f'{id}_{exp}_{idx}')
     env_params = sample_conf.env_params
-    exp_conf = null_dict('exp_conf', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
-                         trials={}, enrichment=base_enrich())
+    exp_conf = preg.get_null('exp_conf', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
+                         trials={}, enrichment=preg.base_enrich())
     exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)
     return exp_conf

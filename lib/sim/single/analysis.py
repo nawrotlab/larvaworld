@@ -7,18 +7,15 @@ import numpy as np
 from lib.aux.combining import combine_pdfs
 from lib.aux.dictsNlists import flatten_list, unique_list
 from lib.anal.comparing import ExpFitter
-from lib.plot.time import plot_navigation_index, \
-    plot_dispersion, timeplot, plot_pathlength, plot_nengo_network
+from lib.plot.time import plot_navigation_index, plot_dispersion
 from lib.plot.bearing import plot_turn_Dbearing, plot_chunk_Dorient2source
 from lib.plot.scape import plot_2pars
 from lib.plot.hist import plot_ang_pars, plot_crawl_pars, plot_turn_amp, plot_endpoint_params, plot_turns
-from lib.plot.deb import plot_food_amount, plot_debs
 from lib.plot.stridecycle import plot_stride_Dbend, plot_stride_Dorient, plot_interference
 from lib.plot.epochs import plot_stridesNpauses
 from lib.plot.bar import barplot
-from lib.plot.box import boxplot, boxplot_double_patch, lineplot
 from lib.conf.stored.conf import loadConf
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
 from lib.model.DEB.deb import deb_default
 from lib.plot.grid import calibration_plot
@@ -43,12 +40,12 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'tactile' in exp_type:
         tact_kws={'unit' : 'min',**cc}
-        figs['time ratio on food (final)'] = plot_endpoint_params(par_shorts=['on_food_tr'], **cc)
-        figs['time ratio on food'] = timeplot(['on_food_tr'], **tact_kws)
-        figs['time on food'] = timeplot(['cum_f_det'], **tact_kws)
-        figs['turner input'] = timeplot(['A_tur'], show_first=True, **tact_kws)
-        figs['turner output'] = timeplot(['Act_tur'], show_first=True, **tact_kws)
-        figs['tactile activation'] = timeplot(['A_touch'], show_first=True, **tact_kws)
+        figs['time ratio on food (final)'] = preg.graph_dict['endpoint pars (hist)'](par_shorts=['on_food_tr'], **cc)
+        figs['time ratio on food'] = preg.graph_dict['timeplot'](['on_food_tr'], **tact_kws)
+        figs['time on food'] = preg.graph_dict['timeplot'](['cum_f_det'], **tact_kws)
+        figs['turner input'] = preg.graph_dict['timeplot'](['A_tur'], show_first=True, **tact_kws)
+        figs['turner output'] = preg.graph_dict['timeplot'](['Act_tur'], show_first=True, **tact_kws)
+        figs['tactile activation'] = preg.graph_dict['timeplot'](['A_touch'], show_first=True, **tact_kws)
 
     if 'RvsS' in exp_type:
         figs.update(**intake_analysis(**cc))
@@ -64,11 +61,11 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
         }
 
         g_keys = ['g_odor1'] if exp_type == 'chemotaxis_RL' else ['g_odor1', 'g_odor2']
-        figs['best_gains_table'] = timeplot(g_keys, save_as='best_gains.pdf', **c)
-        figs['olfactor_decay_table'] = timeplot(['D_olf'], save_as='olfactor_decay.pdf', **c)
-        figs['olfactor_decay_table_inds'] = timeplot(['D_olf'], save_as='olfactor_decay_inds.pdf',
+        figs['best_gains_table'] = preg.graph_dict['timeplot'](g_keys, save_as='best_gains.pdf', **c)
+        figs['olfactor_decay_table'] = preg.graph_dict['timeplot'](['D_olf'], save_as='olfactor_decay.pdf', **c)
+        figs['olfactor_decay_table_inds'] = preg.graph_dict['timeplot'](['D_olf'], save_as='olfactor_decay_inds.pdf',
                                                      individuals=True, **c)
-        figs['reward_table'] = timeplot(['cum_reward'], save_as='reward.pdf', **c)
+        figs['reward_table'] = preg.graph_dict['timeplot'](['cum_reward'], save_as='reward.pdf', **c)
     elif exp_type == 'realistic_imitation':
         d.save_agents(pars=flatten_list(d.points_xy) + flatten_list(d.contour_xy))
     if exp_type == 'dish':
@@ -86,14 +83,14 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'anemo' in exp_type:
         for group in ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V', 'wind_effect_on_Fr'] :
-            figs[group] = plot_nengo_network(group,same_plot=True if group=='anemotaxis' else False, **cc)
-        figs['anemotaxis'] = timeplot(['anemotaxis'], show_first=False, **cc)
-        figs['final anemotaxis'] = plot_endpoint_params(par_shorts=['anemotaxis'], **cc)
+            figs[group] = preg.graph_dict['nengo'](group,same_plot=True if group=='anemotaxis' else False, **cc)
+        figs['anemotaxis'] = preg.graph_dict['timeplot'](['anemotaxis'], show_first=False, **cc)
+        figs['final anemotaxis'] = preg.graph_dict['endpoint pars (hist)'](par_shorts=['anemotaxis'], **cc)
 
         figs['wind activation VS bearing to wind'] = plot_2pars(['o_wind','A_wind'], **cc)
-        figs['wind activation'] = timeplot(['A_wind'], show_first=False, **cc)
+        figs['wind activation'] = preg.graph_dict['timeplot'](['A_wind'], show_first=False, **cc)
         figs['anemotaxis VS bearing to wind'] = plot_2pars(['anemotaxis','o_wind'], **cc)
-        figs['bearing to wind direction'] = timeplot(['o_wind'], show_first=False, **cc)
+        figs['bearing to wind direction'] = preg.graph_dict['timeplot'](['o_wind'], show_first=False, **cc)
 
 
 
@@ -107,12 +104,12 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'chemo' in exp_type:
         for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']:
-            figs[p] = timeplot([p], **cc)
-        figs['turns'] = plot_turns(**cc)
-        figs['ang_pars'] = plot_ang_pars(Npars=5,**cc)
+            figs[p] = preg.graph_dict['timeplot']([p], **cc)
+        figs['turns'] = preg.graph_dict['turn amplitude'](**cc)
+        figs['ang_pars'] = preg.graph_dict['angular pars'](Npars=5,**cc)
         figs.update(**source_analysis(d.config['source_xy'], **cc))
 
-        vis_kwargs = null_dict('visualization', mode='image', image_mode='final', show_display=False,
+        vis_kwargs = preg.get_null('visualization', mode='image', image_mode='final', show_display=False,
                                random_colors=True, trails=True,
                                visible_clock=False, visible_scale=False, media_name='single_trajectory')
         d.visualize(agent_ids=[d.agent_ids[0]], vis_kwargs=vis_kwargs)
@@ -126,17 +123,15 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 def intake_analysis(**kwargs):
     kwargs0 = {'show_first': False, 'legend_loc': 'upper left', **kwargs}
     figs = {}
-    figs['faeces ratio'] = timeplot(['sf_faeces_M'], **kwargs0)
-    figs['faeces amount'] = timeplot(['f_faeces_M'], **kwargs0)
-    figs['food absorption efficiency'] = timeplot(['sf_abs_M'], **kwargs0)
-    figs['food absorbed'] = timeplot(['f_abs_M'], **kwargs0)
-    figs['food intake (timeplot)'] = timeplot(['f_am'], **kwargs0)
+    figs['faeces ratio'] = preg.graph_dict['timeplot'](['sf_faeces_M'], **kwargs0)
+    figs['faeces amount'] = preg.graph_dict['timeplot'](['f_faeces_M'], **kwargs0)
+    figs['food absorption efficiency'] = preg.graph_dict['timeplot'](['sf_abs_M'], **kwargs0)
+    figs['food absorbed'] = preg.graph_dict['timeplot'](['f_abs_M'], **kwargs0)
+    figs['food intake (timeplot)'] = preg.graph_dict['timeplot'](['f_am'], **kwargs0)
 
-    figs['food intake'] = plot_food_amount(**kwargs)
-    figs['food intake (filt)'] = plot_food_amount(filt_amount=True, **kwargs)
-    # figs['gut occupancy'] = plot_gut(**kwargs)
-    figs['pathlength'] = plot_pathlength(scaled=False, **kwargs)
-    # figs['endpoint'] = plot_endpoint_params(mode='deb', **kwargs)
+    figs['food intake'] = preg.graph_dict['food intake (timeplot)'](**kwargs)
+    figs['food intake (filt)'] = preg.graph_dict['food intake (timeplot)'](filt_amount=True, **kwargs)
+    figs['pathlength'] = preg.graph_dict['pathlength'](scaled=False, **kwargs)
     try:
         figs['food intake (barplot)'] = barplot(par_shorts=['f_am'], **kwargs)
     except:
@@ -148,7 +143,7 @@ def source_analysis(source_xy, **kwargs):
     figs = {}
     for n, pos in source_xy.items():
         for p in [nam.bearing2(n), nam.dst2(n), nam.scal(nam.dst2(n))]:
-            figs[p] = timeplot(pars=[p], **kwargs)
+            figs[p] = preg.graph_dict['timeplot'](pars=[p], **kwargs)
 
         for ref_angle,save_as in zip([None,270],[f'bearing to {n}','bearing to 270deg']) :
             figs[save_as] = plot_turn_Dbearing(min_angle=5.0, ref_angle=ref_angle, source_ID=n,save_as=save_as, **kwargs)
@@ -176,28 +171,11 @@ def foraging_analysis(sources, **kwargs):
     figs['turn duration'] = plot_turn_amp(par_short='tur_t', mode='scatter', absolute=True, **kwargs)
     # figs['turn amplitude'] = TurnPlot(**kwargs).get()
     figs['turn amplitude'] = plot_turns(**kwargs)
-    figs['Y position'] = timeplot(['y'], legend_loc='lower left', **kwargs)
+    figs['Y position'] = preg.graph_dict['timeplot'](['y'], legend_loc='lower left', **kwargs)
     figs['navigation index'] = plot_navigation_index(**kwargs)
 
     return figs
 
-
-def double_patch_analysis(sources, **kwargs):
-    figs = {}
-    figs['time_inside_patches'] = boxplot(par_short='on_food_tr',
-                                          xlabel='substrate', **kwargs)
-    # figs['bearing correction VS Y pos'] = plot_turn_amp(par_short='tur_y0', mode='hist', ref_angle=270, **kwargs)
-    # figs['turn angle VS Y pos (hist)'] = plot_turn_amp(par_short='tur_y0', mode='hist', **kwargs)
-    # figs['turn angle VS Y pos (scatter)'] = plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
-    # figs['turn duration'] = plot_turn_amp(par_short='tur_t', mode='scatter', absolute=True, **kwargs)
-    # # figs['turn amplitude'] = TurnPlot(**kwargs).get()
-    # figs['turn amplitude'] = plot_turns(**kwargs)
-    # figs['Y position'] = timeplot(['y'], legend_loc='lower left', **kwargs)
-    # figs['navigation index'] = plot_navigation_index(**kwargs)
-    # for n, pos in sources.items():
-    #     figs[f'bearing to {n}'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=None,source_ID=n, **kwargs)
-    #     figs['bearing to 270deg'] = plot_turn_Dbearing(min_angle=5.0, ref_angle=270, source_ID=n, **kwargs)
-    return figs
 
 
 def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
@@ -217,6 +195,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
         markers = ['D', 's']
         ls = [r'$for^{R}$', r'$for^{S}$']
         shorts = ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']
+        pars = preg.getPar(shorts)
 
         def dsNls(ds0, lls=None):
             if lls is None:
@@ -243,32 +222,30 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                 **dsNls(ds0, lls),
                 'xlabel': r'time on substrate_type $(min)$',
             }
-            figs['1_pathlength'] = plot_pathlength(scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
+            figs['1_pathlength'] = preg.graph_dict['pathlength'](scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
 
         elif exp == 'intake':
             kwargs = {**dsNls(ds0),
                       'coupled_labels': [10, 15, 20],
                       'xlabel': r'Time spent on food $(min)$'}
-            figs['2_intake'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
+            figs['2_intake'] = preg.graph_dict['barplot'](par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if all_figs:
-                for s in shorts:
-                    p = preg.getPar(s)
-                    figs[f'intake {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
+                for s,p in zip(shorts,pars):
+                    figs[f'intake {p}'] = preg.graph_dict['barplot'](par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
             hs = [0, 1, 2, 3, 4]
             kwargs = {**dsNls(ds0),
                       'coupled_labels': hs,
                       'xlabel': r'Food deprivation $(h)$'}
-            figs['3_starvation'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
+            figs['3_starvation'] = preg.graph_dict['lineplot'](par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
                                             ylabel='Food intake', scale=1000, **kwargs)
             if all_figs:
                 for ii in ['feeding']:
-                    figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
+                    figs[ii] = preg.graph_dict['deb'](mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
                                          label_epochs=False, **kwargs)
-                for s in shorts:
-                    p = preg.getPar(s)
-                    figs[f'post-starvation {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
+                for s,p in zip(shorts,pars):
+                    figs[f'post-starvation {p}'] = preg.graph_dict['lineplot'](par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
                                                             **kwargs)
 
         elif exp == 'quality':
@@ -278,30 +255,26 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                       'coupled_labels': qs_labels,
                       'xlabel': 'Food quality (%)'
                       }
-            figs['4_quality'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
+            figs['4_quality'] = preg.graph_dict['barplot'](par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if all_figs:
-                for s in shorts:
-                    p = preg.getPar(s)
-                    figs[f'rearing-quality {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
+                for s,p in zip(shorts,pars):
+                    figs[f'rearing-quality {p}'] = preg.graph_dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
             h = 3
             n = f'5_REFEEDING_after_{h}h_starvation_'
             kwargs = dsNls(ds0)
-            figs['5_refeeding'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
+            figs['5_refeeding'] = preg.graph_dict['food intake (timeplot)'](scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
                                                    **kwargs)
 
             if all_figs:
-                figs[f'refeeding food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',
+                figs[f'refeeding food-intake'] = preg.graph_dict['food intake (timeplot)'](scaled=True, save_as=f'{n}scaled_intake.pdf',
                                                                   **kwargs)
-                figs[f'refeeding food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
+                figs[f'refeeding food-intake(filt)'] = preg.graph_dict['food intake (timeplot)'](scaled=True, filt_amount=True,
                                                                         save_as=f'{n}scaled_intake_filt.pdf', **kwargs)
-                for s in shorts:
-                    p = preg.getPar(s)
-                    figs[f'refeeding {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
+                for s,p in zip(shorts,pars):
+                    figs[f'refeeding {p}'] = preg.graph_dict['timeplot'](par_shorts=[s], show_first=False, subfolder=None,
                                                       save_as=f'{n}{p}.pdf', **kwargs)
-        # for d in kwargs['datasets'] :
-        #     d.delete()
 
     if essay_type in ['double_patch']:
         if exp == 'double_patch':
@@ -316,7 +289,7 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
                       # 'pair_colors': dict(zip(['sucrose', 'standard', 'cornmeal'], ['green', 'orange', 'magenta'])),
                       # 'common_color_prefs': dict(zip(['Rover', 'Sitter'], ['dark', 'light'])),
                       }
-            figs['double_patch'] = boxplot_double_patch(**kwargs)
+            figs['double_patch'] = preg.graph_dict['double patch'](**kwargs)
 
     print(f'    Analysis complete!')
     return figs, results
@@ -421,13 +394,13 @@ def deb_analysis(datasets,**kwargs) :
 
     for m in ['energy', 'growth', 'full']:
         save_as = f'{m}_vs_model.pdf'
-        figs[f'DEB.{m} vs model'] = plot_debs(deb_dicts=deb_dicts+ [deb_model], save_as=save_as, mode=m, **kws)
+        figs[f'DEB.{m} vs model'] = preg.graph_dict['deb'](deb_dicts=deb_dicts+ [deb_model], save_as=save_as, mode=m, **kws)
     for m in ['feeding', 'reserve_density', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
               'food_mass_2', 'hunger', 'EEB','fs']:
         for t in ['hours']:
             try :
                 save_as = f'{m}_in_{t}.pdf'
-                figs[f'FEED.{m} ({t})'] = plot_debs(deb_dicts=deb_dicts,sim_only=True,save_as=save_as, mode=m, time_unit=t, **kws)
+                figs[f'FEED.{m} ({t})'] = preg.graph_dict['deb'](deb_dicts=deb_dicts,sim_only=True,save_as=save_as, mode=m, time_unit=t, **kws)
             except :
                 pass
 

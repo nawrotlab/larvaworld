@@ -4,6 +4,7 @@ import copy
 import PySimpleGUI as sg
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
+from lib.registry.pars import preg
 
 
 class BatchTab(GuiTab):
@@ -39,8 +40,8 @@ class BatchTab(GuiTab):
         except:
             from lib.conf.stored.conf import loadConf
             enrichment = loadConf(v[self.selectionlists['Exp'].k], 'Exp')['enrichment']
-        from lib.registry.dtypes import null_dict
-        conf = null_dict('batch_conf',
+        # from lib.registry.dtypes import null_dict
+        conf = preg.get_null('batch_conf',
                          save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
                          exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},
                          batch_methods=c['batch_methods'].get_dict(v, w),

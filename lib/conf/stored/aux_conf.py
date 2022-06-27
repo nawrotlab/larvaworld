@@ -1,11 +1,12 @@
 import numpy as np
 
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
+from lib.registry.pars import preg
 
 
 def trial_conf(durs=[], qs=[]):
     cumdurs = np.cumsum([0] + durs)
-    return {i: null_dict('epoch', start=t0, stop=t1, substrate=null_dict('substrate', quality=q)) for i, (t0, t1, q) in
+    return {i: preg.get_null('epoch', start=t0, stop=t1, substrate=preg.get_null('substrate', quality=q)) for i, (t0, t1, q) in
             enumerate(zip(cumdurs[:-1], cumdurs[1:], qs))}
 
 
@@ -21,7 +22,7 @@ trial_dict = {
 
 
 def life_conf(durs=[], qs=[], age=0.0):
-    return null_dict('life_history', epochs=trial_conf(durs, qs), age=age)
+    return preg.get_null('life_history', epochs=trial_conf(durs, qs), age=age)
 
 
 life_dict = {
@@ -31,7 +32,7 @@ life_dict = {
 
 
 def body_conf(ps, symmetry='bilateral', **kwargs):
-    return null_dict('body_shape', points=ps, symmetry=symmetry, **kwargs)
+    return preg.get_null('body_shape', points=ps, symmetry=symmetry, **kwargs)
 
 
 body_dict = {
@@ -153,7 +154,7 @@ def store_controls():
 
 def store_RefPars():
     from lib.aux.dictsNlists import save_dict
-    from lib.conf.pars.pars import ParDict
+    # from lib.conf.pars.pars import ParDict
     import lib.aux.naming as nam
     d = {
         'length': 'body.initial_length',
@@ -163,7 +164,7 @@ def store_RefPars():
         nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
     }
-    save_dict(d, ParDict.path_dict["ParRef"], use_pickle=False)
+    save_dict(d, preg.path_dict["ParRef"], use_pickle=False)
 
 
 if __name__ == '__main__':

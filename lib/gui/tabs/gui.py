@@ -82,17 +82,17 @@ class LarvaworldGui:
         return l0, cs, ds, gs, ts
 
     def get_vis_kwargs(self, v, **kwargs):
-        from lib.registry.dtypes import null_dict
+        # from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
-        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else null_dict('visualization',
+        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else preg.get_null('visualization',
                                                                                                      **kwargs)
 
     def get_replay_kwargs(self, v):
-        from lib.registry.dtypes import null_dict
+        # from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
-        return c['replay'].get_dict(v, w) if 'replay' in c.keys() else null_dict('replay')
+        return c['replay'].get_dict(v, w) if 'replay' in c.keys() else preg.get_null('replay')
 
     def run0(self, e, v):
         w = self.window

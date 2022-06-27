@@ -1,22 +1,16 @@
 import shutil
 
-# from lib.conf.pars.pars import ParDict
 
 from lib.aux.dictsNlists import flatten_list
 from lib.conf.stored.conf import next_idx
 from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
-from lib.plot.bar import barplot
-from lib.plot.box import boxplot_double_patch, lineplot
-from lib.plot.deb import plot_food_amount, plot_debs
-from lib.plot.time import timeplot, plot_pathlength
-from lib.registry.dtypes import enr_dict, null_dict, arena, base_enrich
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 
 
 class Essay:
-    def __init__(self, type, enrichment=base_enrich(), collections=['pose'], **kwargs):
+    def __init__(self, type, enrichment=preg.base_enrich(), collections=['pose'], **kwargs):
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
@@ -31,8 +25,8 @@ class Essay:
         self.results = {}
 
     def conf(self, exp, id, dur, lgs, env, **kwargs):
-        sim = null_dict('sim_params', sim_ID=id, path=self.path, duration=dur)
-        return null_dict('exp_conf', sim_params=sim, env_params=env, trials={},
+        sim = preg.get_null('sim_params', sim_ID=id, path=self.path, duration=dur)
+        return preg.get_null('exp_conf', sim_params=sim, env_params=env, trials={},
                          larva_groups=lgs, experiment=exp, enrichment=self.enrichment,
                          collections=self.collections, **kwargs)
 
@@ -52,7 +46,7 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, **kwargs):
-        super().__init__(type='RvsS', enrichment=enr_dict(proc=['spatial']),
+        super().__init__(type='RvsS', enrichment=preg.enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
         self.qs = [1.0, 0.75, 0.5, 0.25, 0.15]
         self.hs = [0, 1, 2, 3, 4]
@@ -64,9 +58,9 @@ class RvsS_Essay(Essay):
         self.all_figs = all_figs
 
     def RvsS_env(self, on_food=True):
-        grid = null_dict('food_grid') if on_food else None
-        return null_dict('env_conf', arena=arena(0.02, 0.02),
-                         food_params=null_dict('food_params', food_grid=grid),
+        grid = preg.get_null('food_grid') if on_food else None
+        return preg.get_null('env_conf', arena=preg.arena(0.02, 0.02),
+                         food_params=preg.get_null('food_params', food_grid=grid),
                          )
 
     def conf2(self, on_food=True, l_kws={}, **kwargs):
@@ -96,6 +90,7 @@ class RvsS_Essay(Essay):
         markers = ['D', 's']
         ls = [r'$for^{R}$', r'$for^{S}$']
         shorts = ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']
+        pars=preg.getPar(shorts)
 
         def dsNls(ds0, lls=None):
             if lls is None:
@@ -116,31 +111,29 @@ class RvsS_Essay(Essay):
                 **dsNls(ds0, lls),
                 'xlabel': r'time on substrate $(min)$',
             }
-            self.figs[f'1_{exp}'] = plot_pathlength(scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
+            self.figs[f'1_{exp}'] = preg.graph_dict['pathlength'](scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm', **kwargs)
 
         elif exp == 'intake':
             kwargs = {**dsNls(ds0),
                       'coupled_labels': self.durs,
                       'xlabel': r'Time spent on food $(min)$'}
-            self.figs[f'2_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
+            self.figs[f'2_{exp}'] = preg.graph_dict['barplot'](par_shorts=['sf_am_V'], save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if self.all_figs:
-                for s in shorts:
-                    p = preg.getPar(s)
-                    self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
+                for s,p in zip(shorts,pars):
+                    self.figs[f'{exp} {p}'] = preg.graph_dict['barplot'](par_shorts=[s], save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
             kwargs = {**dsNls(ds0),
                       'coupled_labels': self.hs,
                       'xlabel': r'Food deprivation $(h)$'}
-            self.figs[f'3_{exp}'] = lineplot(par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
+            self.figs[f'3_{exp}'] = preg.graph_dict['lineplot'](par_shorts=['f_am_V'], save_as='3_POST-STARVATION_INTAKE.pdf',
                                              ylabel='Food intake', scale=1000, **kwargs)
             if self.all_figs:
                 for ii in ['feeding']:
-                    self.figs[ii] = plot_debs(mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
+                    self.figs[ii] = preg.graph_dict['deb'](mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf', include_egg=False,
                                               label_epochs=False, **kwargs)
-                for s in shorts:
-                    p = preg.getPar(s)
-                    self.figs[f'{exp} {p}'] = lineplot(par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
+                for s,p in zip(shorts,pars):
+                    self.figs[f'{exp} {p}'] = preg.graph_dict['lineplot'](par_shorts=[s], save_as=f'3_POST-STARVATION_{p}.pdf',
                                                        **kwargs)
 
         elif exp == 'quality':
@@ -148,34 +141,32 @@ class RvsS_Essay(Essay):
                       'coupled_labels': [int(q * 100) for q in self.qs],
                       'xlabel': 'Food quality (%)'
                       }
-            self.figs[f'4_{exp}'] = barplot(par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
+            self.figs[f'4_{exp}'] = preg.graph_dict['barplot'](par_shorts=['sf_am_V'], save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if self.all_figs:
-                for s in shorts:
-                    p = preg.getPar(s)
-                    self.figs[f'{exp} {p}'] = barplot(par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
+                for s,p in zip(shorts,pars):
+                    self.figs[f'{exp} {p}'] = preg.graph_dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf', **kwargs)
 
         elif exp == 'refeeding':
             h = 3
             n = f'5_REFEEDING_after_{h}h_starvation_'
             kwargs = dsNls(ds0)
-            self.figs[f'5_{exp}'] = plot_food_amount(scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
+            self.figs[f'5_{exp}'] = preg.graph_dict['food intake (timeplot)'](scaled=True, filt_amount=True, save_as='5_REFEEDING_INTAKE.pdf',
                                                      **kwargs)
 
             if self.all_figs:
-                self.figs[f'{exp} food-intake'] = plot_food_amount(scaled=True, save_as=f'{n}scaled_intake.pdf',
+                self.figs[f'{exp} food-intake'] = preg.graph_dict['food intake (timeplot)'](scaled=True, save_as=f'{n}scaled_intake.pdf',
                                                                    **kwargs)
-                self.figs[f'{exp} food-intake(filt)'] = plot_food_amount(scaled=True, filt_amount=True,
+                self.figs[f'{exp} food-intake(filt)'] = preg.graph_dict['food intake (timeplot)'](scaled=True, filt_amount=True,
                                                                          save_as=f'{n}scaled_intake_filt.pdf',
                                                                          **kwargs)
-                for s in shorts:
-                    p = preg.getPar(s)
-                    self.figs[f'{exp} {p}'] = timeplot(par_shorts=[s], show_first=False, subfolder=None,
+                for s,p in zip(shorts,pars):
+                    self.figs[f'{exp} {p}'] = preg.graph_dict['timeplot'](par_shorts=[s], show_first=False, subfolder=None,
                                                        save_as=f'{n}{p}.pdf', **kwargs)
 
 
 class Patch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=5, dur=5.0, **kwargs):
-        super().__init__(type='Patch', enrichment=enr_dict(proc=['spatial', 'angular', 'source'],
+        super().__init__(type='Patch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                            bouts=['stride', 'pause', 'turn'],
                                                            fits=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
@@ -185,7 +176,7 @@ class Patch_Essay(Essay):
         self.exp_dict = {**self.time_ratio_exp()}
 
     def patch_env(self, type='standard'):
-        return env(arena(0.24, 0.24),
+        return env(preg.arena(0.24, 0.24),
                    f_pars(su=double_patches(type)),
                    'G')
 
@@ -203,7 +194,7 @@ class Patch_Essay(Essay):
                       'save_to': self.plot_dir,
                       'save_as': f'{exp}.pdf',
                       'show': True}
-            self.figs[exp] = boxplot_double_patch(**kwargs)
+            self.figs[exp] = preg.graph_dict['double patch'](**kwargs)
 
 
 rover_sitter_essay = {

@@ -1,15 +1,15 @@
 from lib.aux import naming as nam
-from lib.registry.dtypes import base_enrich, enr_dict, arena, null_dict
+from lib.registry.pars import preg
 
 
 def metric_def(ang={}, sp={}, **kwargs):
     def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):
-        return null_dict('ang_definition', bend=b, front_vector=fv, rear_vector=rv, **kwargs)
+        return preg.get_null('ang_definition', bend=b, front_vector=fv, rear_vector=rv, **kwargs)
 
     # def metric_def(ang={}, sp={}, dsp={}, tor={}, str={}, pau={}, tur={}) :
-    return null_dict('metric_definition',
+    return preg.get_null('metric_definition',
                      angular=ang_def(**ang),
-                     spatial=null_dict('spatial_definition', **sp),
+                     spatial=preg.get_null('spatial_definition', **sp),
                      **kwargs
                      )
 
@@ -44,10 +44,10 @@ importformats = [
                 'file': {'pref': None, 'suf': None, 'sep': None}
                 # }
             },
-            'arena': arena(0.15)
+            'arena': preg.arena(0.15)
         },
         # 'parameterization': parconf(rear_vector=(7, 11)),
-        'enrichment': base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001},
+        'enrichment': preg.base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001},
                                   metric_definition=import_par_confs['SchleyerParConf']),
 
     },
@@ -65,10 +65,10 @@ importformats = [
                 'folder': {'pref': None, 'suf': None},
                 'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
             },
-            'arena': arena(0.193, 0.193)
+            'arena': preg.arena(0.193, 0.193)
         },
         # 'parameterization': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
-        'enrichment': base_enrich(pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'},
+        'enrichment': preg.base_enrich(pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'},
                                   metric_definition=import_par_confs['JovanicParConf']),
     },
     {
@@ -88,10 +88,10 @@ importformats = [
                 # }
 
             },
-            'arena': arena(0.24, 0.24)
+            'arena': preg.arena(0.24, 0.24)
         },
         # 'parameterization': parconf(bend=None, point_idx=0),
-        'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
+        'enrichment': preg.enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
                                metric_definition=import_par_confs['SinglepointParConf']),
     },
 
@@ -114,10 +114,10 @@ importformats = [
                 # }
 
             },
-            'arena': arena(0.17, 0.17)
+            'arena': preg.arena(0.17, 0.17)
         },
         # 'parameterization': parconf(bend=None, point_idx=0),
-        'enrichment': enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
+        'enrichment': preg.enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
                                metric_definition=import_par_confs['SinglepointParConf']),
     }
 ]

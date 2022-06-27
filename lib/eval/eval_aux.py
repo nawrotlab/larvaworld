@@ -386,7 +386,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
         store_spatial
     from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-    from lib.registry.dtypes import null_dict
+    # from lib.registry.dtypes import null_dict
     if dataset_id is None:
         dataset_id = mID
     if refDataset is not None :
@@ -405,9 +405,9 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
 
     ids=[f'Agent{j}' for j in range(Nids)]
 
-    larva_groups = {dataset_id: null_dict('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
+    larva_groups = {dataset_id: preg.get_null('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
                                    default_color=color,
-                                   distribution=null_dict('larva_distro', N=Nids))}
+                                   distribution=preg.get_null('larva_distro', N=Nids))}
 
     c = dNl.NestDict(
         {'dir': dir, 'id': dataset_id,'larva_groups' : larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1/dt, 'agent_ids': ids, 'duration': dur * 60,

@@ -15,7 +15,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import lib.aux.dictsNlists as dNl
 import lib.aux.sim_aux
 import lib.aux.xy_aux
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.aux.collecting import NamedRandomActivation
 from lib.model.envs._space import FoodGrid, WindScape
@@ -44,7 +44,7 @@ class LarvaWorld(BaseLarvaWorld):
         self.progress_bar = progress_bar
 
         if vis_kwargs is None:
-            vis_kwargs = null_dict('visualization', mode=None)
+            vis_kwargs = preg.get_null('visualization', mode=None)
         self.vis_kwargs = dNl.NestDict(vis_kwargs)
         self.__dict__.update(self.vis_kwargs.draw)
         self.__dict__.update(self.vis_kwargs.color)
@@ -566,7 +566,7 @@ class LarvaWorld(BaseLarvaWorld):
             agents = self.get_flies()
         elif class_name == 'Border':
             agents = self.borders
-        pars = list(null_dict(class_name).keys())
+        pars = list(preg.get_null(class_name).keys())
         data = {}
         for f in agents:
             dic = {}

@@ -2,15 +2,41 @@ import random
 import pandas as pd
 import param
 from lib.aux import dictsNlists as dNl
-from lib.aux.par_aux import sub
+from lib.aux.par_aux import sub, define_range
+from lib.registry.units import ureg
 
 
 def init2par(d0, d=None,pre_d=None, aux_args={}):
+    def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, disp=None, h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', codename=None,
+            vfunc=None,vparfunc=None, **kwargs):
+        if k is None:
+            k = name
+        dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
+
+        p_kws = {
+                'p': name,
+                'k': k,
+                'lim': lim,
+                'dv': dv,
+                'vs': vs,
+                'v0': v,
+                'dtype': t,
+                'disp': label,
+                'h': h,
+                'u_name': u_name,
+                'u': u,
+                'sym': symbol,
+                'codename': codename,
+                'vfunc': vfunc,
+                'vparfunc': vparfunc,
+            }
+        return p_kws
+
+
     from lib.registry.par_dict import preparePar
     from lib.registry.par import v_descriptor
     if d is None and pre_d is None:
         d, pre_d = {},{}
-    from lib.registry.dtypes import par
     for n, v in d0.items():
         depth = dNl.dict_depth(v)
 
@@ -19,7 +45,7 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
             continue
         if depth == 1:
             try:
-                pkws = par(name=n, **v, convert2par=True)
+                pkws = par(name=n, **v)
                 prepar = preparePar(**pkws)
                 pre_d[prepar.k] = prepar
                 p = v_descriptor(**prepar)
@@ -31,9 +57,6 @@ def init2par(d0, d=None,pre_d=None, aux_args={}):
                 continue
         elif depth > 1:
             d[n], pre_d[n] = init2par(d0=v)
-            # if n == 'stridechain_dist':
-            #     print(d[n].keys())
-            #     raise
     return d, pre_d
 
 class LarvaConfDict:
@@ -69,21 +92,16 @@ class LarvaConfDict:
 
 
         self.mbkeys = list(init_dict['modules'].keys())
-        # self.mbkeys = list(self.mfunc.keys())
         self.mpref = {k: f'brain.{k}_params.' for k in self.mbkeys}
         self.mbdicts = dNl.NestDict()
         self.mbpredicts = dNl.NestDict()
 
-
-        # self.mfunc['locomotor'] = locomotor.DefaultLocomotor
-        # self.mfunc['brain'] = brain.DefaultBrain
         for k in self.mbkeys:
             d0 = init_dict[k]
 
             self.mbdicts[k],self.mbpredicts[k] = init2par(d0 = d0, aux_args={'pref': self.mpref[k]})
 
         self.aux_keys = ['body', 'physics', 'energetics']
-        # self.aux_keys = ['body', 'physics', 'energetics', 'Box2D_params']
         self.aux_dicts = dNl.NestDict()
         self.aux_predicts = dNl.NestDict()
         for k in self.aux_keys:

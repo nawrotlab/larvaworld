@@ -7,6 +7,7 @@ import numpy as np
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
+from lib.registry.pars import preg
 
 
 class SingleRun:
@@ -221,11 +222,11 @@ def set_output(collections, Nsegs=2, Ncontour=0):
 
 def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
     from lib.conf.stored.conf import expandConf
-    from lib.registry.dtypes import null_dict
+    # from lib.registry.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
         conf = expandConf(exp, 'Exp')
-        conf.sim_params = null_dict('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf.sim_params = preg.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf.experiment = exp
         conf.update(**kwargs)
         d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()

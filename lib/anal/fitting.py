@@ -74,14 +74,15 @@ def KS2(a1, a2):
 
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
+    D=preg.dist_dict['logNpow']
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     temp = np.ones([len(xmids), len(overlaps)])
     for i, xmid in enumerate(xmids):
         for j, ov in enumerate(overlaps):
             mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=ov)
-            lp_cdf = 1 - preg.dist_dict['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
-            lp_pdf = preg.dist_dict['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
+            lp_cdf = 1 - D['cdf'](u2, mm, ss, aa, xmid, r)
+            lp_pdf = D['pdf'](du2, mm, ss, aa, xmid, r)
             if fit_by == 'cdf':
                 temp[i, j] = MSE(c2cum, lp_cdf)
             elif fit_by == 'pdf':
@@ -175,6 +176,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmax=np.nanmax(x0)
     with suppress_stdout(False):
         warnings.filterwarnings('ignore')
+        DD=preg.dist_dict
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
 
@@ -184,35 +186,35 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
 
         a2 = 1 + len(x) / np.sum(np.log(x / xmin))
         a = get_powerlaw_alpha(x, xmin, xmax, discrete=discrete)
-        p_cdf = 1 - preg.dist_dict['powerlaw']['cdf'](u2, xmin, a)
-        p_pdf = preg.dist_dict['powerlaw']['pdf'](du2, xmin, a)
+        p_cdf = 1 - DD['powerlaw']['cdf'](u2, xmin, a)
+        p_pdf = DD['powerlaw']['pdf'](du2, xmin, a)
 
         b = get_exp_beta(x, xmin)
-        e_cdf = 1 - preg.dist_dict['exponential']['cdf'](u2, xmin, b)
-        e_pdf = preg.dist_dict['exponential']['pdf'](du2, xmin, b)
+        e_cdf = 1 - DD['exponential']['cdf'](u2, xmin, b)
+        e_pdf = DD['exponential']['pdf'](du2, xmin, b)
 
         m, s = get_lognormal(x)
-        l_cdf = 1 - preg.dist_dict['lognormal']['cdf'](u2, m, s)
-        l_pdf = preg.dist_dict['lognormal']['pdf'](du2, m, s)
+        l_cdf = 1 - DD['lognormal']['cdf'](u2, m, s)
+        l_pdf = DD['lognormal']['pdf'](du2, m, s)
 
         m_lev, s_lev = levy.fit(x)
-        lev_cdf = 1 - preg.dist_dict['levy']['cdf'](u2, m_lev, s_lev)
-        lev_pdf = preg.dist_dict['levy']['pdf'](du2, m_lev, s_lev)
+        lev_cdf = 1 - DD['levy']['cdf'](u2, m_lev, s_lev)
+        lev_pdf = DD['levy']['pdf'](du2, m_lev, s_lev)
 
         m_nor, s_nor = norm.fit(x)
-        nor_cdf = 1 - preg.dist_dict['normal']['cdf'](u2, m_nor, s_nor)
-        nor_pdf = preg.dist_dict['normal']['pdf'](du2, m_nor, s_nor)
+        nor_cdf = 1 - DD['normal']['cdf'](u2, m_nor, s_nor)
+        nor_pdf = DD['normal']['pdf'](du2, m_nor, s_nor)
 
-        uni_cdf = 1 - preg.dist_dict['uniform']['cdf'](u2, xmin, xmin + xmax)
-        uni_pdf = preg.dist_dict['uniform']['pdf'](du2, xmin, xmin + xmax)
+        uni_cdf = 1 - DD['uniform']['cdf'](u2, xmin, xmin + xmax)
+        uni_pdf = DD['uniform']['pdf'](du2, xmin, xmin + xmax)
 
         if np.isnan(xmid) and combine:
             xmid, overlap = logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete, fit_by)
 
         if not np.isnan(xmid):
             mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=overlap)
-            lp_cdf = 1 - preg.dist_dict['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
-            lp_pdf = preg.dist_dict['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
+            lp_cdf = 1 - DD['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
+            lp_pdf = DD['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
         else:
             mm, ss, aa, r = np.nan, np.nan, np.nan, np.nan
             lp_cdf, lp_pdf = None, None
@@ -459,7 +461,6 @@ class BoutGenerator:
 
 def test_boutGens(mID,refID, **kwargs):
     from lib.conf.stored.conf import loadConf, loadRef
-    from lib.plot.epochs import plot_bouts
     from lib.aux.sim_aux import get_sample_bout_distros
 
     d = loadRef(refID)
@@ -485,7 +486,5 @@ def test_boutGens(mID,refID, **kwargs):
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'}, {'id' : 'experiment', 'pooled_epochs': d.load_pooled_epochs(), 'color': 'red'}]
     datasets = [dNl.NestDict(dd) for dd in datasets]
-    # print(datasets)
     return datasets
-    # return plot_bouts(datasets=datasets, plot_fits='none', **kwargs)
 

@@ -5,6 +5,8 @@ import PySimpleGUI as sg
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.gui.aux import buttons as gui_but, functions as gui_fun
+from lib.registry.pars import preg
+
 
 def get_table(v, pars_dict, Nagents):
     data = []
@@ -175,9 +177,9 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
 
 
 def set_agent_kwargs(agent, **kwargs):
-    from lib.registry.dtypes import null_dict
+    # from lib.registry.dtypes import null_dict
     class_name = type(agent).__name__
-    type_dict = null_dict('agent', 'dtype')
+    type_dict = preg.get_null('agent', 'dtype')
     title = f'{class_name} args'
     dic = {}
     for p in list(type_dict.keys()):
@@ -319,11 +321,11 @@ def import_window(datagroup_id, raw_dic):
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
             if e == 'Ok':
-                from lib.registry.dtypes import null_dict
+                # from lib.registry.dtypes import null_dict
                 conf = s1.get_dict(v, w)
                 kws = {
                     'datagroup_id': datagroup_id,
-                    'larva_groups': {gID: null_dict('LarvaGroup', sample=None)},
+                    'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
                 from lib.stor.managing import build_dataset

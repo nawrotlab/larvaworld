@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 from lib.gui.tabs.tab import GuiTab
 
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
+from lib.registry.pars import preg
 
 
 class LifeTab(GuiTab):
@@ -82,10 +83,10 @@ class LifeTab(GuiTab):
         w.write_event_value('Draw', 'Draw the initial plot')
 
     def get(self, w, v, c, as_entry=False):
-        from lib.registry.dtypes import null_dict
+        # from lib.registry.dtypes import null_dict
         rows = w.Element(self.K).get()
         return {
-            'epochs': {i : {'start': r[0], 'stop': r[1], 'substrate': null_dict('substrate', type=r[3], quality=r[2])} for
+            'epochs': {i : {'start': r[0], 'stop': r[1], 'substrate': preg.get_null('substrate', type=r[3], quality=r[2])} for
                         i, r in enumerate(rows)},
             'age': v[self.Sa],
         }

@@ -207,26 +207,26 @@ class EvalRun:
             self.datasets.append(dd)
 
     def prepare_exp_conf(self, dur, video=False, **kwargs):
-        from lib.registry.dtypes import null_dict
+        # from lib.registry.dtypes import null_dict
         exp = 'dispersion'
         exp_conf = expandConf(exp, 'Exp')
         c = self.target.config
 
-        exp_conf.larva_groups = {dID: null_dict('LarvaGroup', sample=self.refID, model=expandConf(mID, 'Model'),
+        exp_conf.larva_groups = {dID: preg.get_null('LarvaGroup', sample=self.refID, model=expandConf(mID, 'Model'),
                                                 default_color=self.model_colors[dID],
-                                                distribution=null_dict('larva_distro', N=self.N)) for mID, dID in
+                                                distribution=preg.get_null('larva_distro', N=self.N)) for mID, dID in
                                  zip(self.modelIDs, self.dataset_ids)}
         exp_conf.env_params = c.env_params
 
         # if dur is None :
         #     dur = c.Nticks * c.dt / 60
 
-        exp_conf.sim_params = null_dict('sim_params', timestep=c.dt, duration=dur,
+        exp_conf.sim_params = preg.get_null('sim_params', timestep=c.dt, duration=dur,
                                         path=self.path, sim_ID=self.id, store_data=self.store_data)
         if video:
-            exp_conf.vis_kwargs = null_dict('visualization', mode='video', video_speed=60)
+            exp_conf.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
         else:
-            exp_conf.vis_kwargs = null_dict('visualization', mode=None)
+            exp_conf.vis_kwargs = preg.get_null('visualization', mode=None)
         exp_conf.save_to = self.save_to
         exp_conf.update(kwargs)
         print(f'Preparing simulation {self.id} for {dur} minutes')

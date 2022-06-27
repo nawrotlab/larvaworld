@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from lib.aux.colsNstr import N_colors
 import lib.aux.dictsNlists as dNl
 from lib.registry.pars import preg
-from lib.registry.dtypes import null_dict
 
 
 #
@@ -35,7 +34,7 @@ class Parser:
     def get(self, input):
         dic = {k: v.get(input) for k, v in self.parsargs.items()}
         # print(dic)
-        return null_dict(self.name, **dic)
+        return preg.get_null(self.name, **dic)
 
 
 class MultiParser:
@@ -89,11 +88,10 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     if arena is not None:
         exp_conf.env_params.arena = arena
     if d is None:
-        d = {'sim_params': null_dict('sim_params')}
+        d = {'sim_params': preg.get_null('sim_params')}
 
     exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
-    print(exp_conf.sim_params)
-    # exp_conf.sim_params = SimParConf(exp=exp, conf_type=conf_type, **d['sim_params']).dict
+
     if models is not None:
         if conf_type in ['Exp', 'Eval']:
             exp_conf = update_exp_models(exp_conf, models)

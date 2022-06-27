@@ -8,16 +8,17 @@ import numpy as np
 
 import lib.aux.dictsNlists as dNl
 from lib.conf.stored.conf import loadConf
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 
 # Crawl-bend interference
+from lib.registry.pars import preg
 
-CT_exclusive = null_dict('interference', mode='default', attenuation=0.0)
-CT_continuous = null_dict('interference', mode='default', attenuation=1.0)
-CT_constant = null_dict('interference', mode='default', attenuation=0.25)
-CT_phasic = null_dict('interference', mode='phasic', attenuation=0.4, attenuation_max=0.2,
+CT_exclusive = preg.get_null('interference', mode='default', attenuation=0.0)
+CT_continuous = preg.get_null('interference', mode='default', attenuation=1.0)
+CT_constant = preg.get_null('interference', mode='default', attenuation=0.25)
+CT_phasic = preg.get_null('interference', mode='phasic', attenuation=0.4, attenuation_max=0.2,
                       max_attenuation_phase=2.4)
-CT_Sak = null_dict('interference', mode='phasic', suppression_mode='both', attenuation=0.4, attenuation_max=0.1,
+CT_Sak = preg.get_null('interference', mode='phasic', suppression_mode='both', attenuation=0.4, attenuation_max=0.1,
                    max_attenuation_phase=4.71)
 
 CT_dict = {
@@ -28,13 +29,13 @@ CT_dict = {
     'Sak': CT_Sak
 }
 
-T = null_dict('turner')
+T = preg.get_null('turner')
 # Ttemp={k:None for k,v in T.items()}
 
 # Tcon = Ttemp.update({'mode':'constant', 'initial_amp':0.964, 'noise':0.1, 'activation_noise':0.1})
 # Tcon_no_noise = Ttemp.update({'mode':'constant', 'initial_amp':0.964, 'noise':0.0, 'activation_noise':0.0})
 # Turner module
-Tcon_no_noise = null_dict('turner',
+Tcon_no_noise = preg.get_null('turner',
                           mode='constant',
                           initial_amp=0.964,
                           amp_range=None,
@@ -46,11 +47,11 @@ Tcon_no_noise = null_dict('turner',
                           activation_range=None
                           )
 
-Tno_noise = null_dict('turner', activation_noise=0.0, noise=0.0)
-T_Sak = null_dict('turner', mode='neural', activation_noise=0.0, noise=0.0, base_activation=12.94,
+Tno_noise = preg.get_null('turner', activation_noise=0.0, noise=0.0)
+T_Sak = preg.get_null('turner', mode='neural', activation_noise=0.0, noise=0.0, base_activation=12.94,
                   activation_range=[10.0, 40.0])
 
-Tsin = null_dict('turner',
+Tsin = preg.get_null('turner',
                  mode='sinusoidal',
                  initial_amp=15.0,
                  amp_range=[0.0, 50.0],
@@ -59,7 +60,7 @@ Tsin = null_dict('turner',
                  noise=0.15,
                  activation_noise=0.5,
                  )
-Tsin_no_noise = null_dict('turner',
+Tsin_no_noise = preg.get_null('turner',
                           mode='sinusoidal',
                           initial_amp=15.0,
                           amp_range=[0.0, 50.0],
@@ -80,17 +81,17 @@ T_dict = {
 }
 
 # Crawler module
-C = null_dict('crawler')
-C_no_noise = null_dict('crawler', noise=0.0)
-C_Sak = null_dict('crawler', waveform='realistic', noise=0.0, initial_freq=1.37, freq_std=0.0,  # freq_std=0.18,
+C = preg.get_null('crawler')
+C_no_noise = preg.get_null('crawler', noise=0.0)
+C_Sak = preg.get_null('crawler', waveform='realistic', noise=0.0, initial_freq=1.37, freq_std=0.0,  # freq_std=0.18,
                   stride_dst_mean=0.24, stride_dst_std=0.07, max_vel_phase=3.6)
 
 # Ctemp={k:None for k,v in C.items()}
 # Ccon = Ctemp.update({'waveform':'constant', 'initial_amp':0.323, 'noise':0.1})
-Ccon = null_dict('crawler', waveform='constant', initial_amp=0.323)
+Ccon = preg.get_null('crawler', waveform='constant', initial_amp=0.323)
 
 # Ccon_no_noise = Ctemp.update({'waveform':'constant', 'initial_amp':0.323, 'noise':0.0})
-Ccon_no_noise = null_dict('crawler', waveform='constant', initial_amp=0.323, noise=0.0)
+Ccon_no_noise = preg.get_null('crawler', waveform='constant', initial_amp=0.323, noise=0.0)
 
 C_dict = {
     'default': C,
@@ -101,20 +102,20 @@ C_dict = {
 }
 
 # Intermittency module
-Im = null_dict('intermitter')
-Im_Levy = null_dict('intermitter', run_mode='run', stridechain_dist=None,
+Im = preg.get_null('intermitter')
+Im_Levy = preg.get_null('intermitter', run_mode='run', stridechain_dist=None,
                     run_dist={'range': [0.44, 133.0], 'name': 'powerlaw', 'alpha': 1.53},
                     pause_dist={'range': [0.125, 16], 'name': 'uniform'})
-Im_Davies = null_dict('intermitter', run_mode='run', stridechain_dist=None,
+Im_Davies = preg.get_null('intermitter', run_mode='run', stridechain_dist=None,
                       run_dist={'range': [0.44, 133.0], 'name': 'exponential', 'beta': 0.148},
                       pause_dist={'range': [0.125, 16], 'name': 'exponential', 'beta': 2.0})
-Im_Sak = null_dict('intermitter', run_mode='stridechain', run_dist=None,
+Im_Sak = preg.get_null('intermitter', run_mode='stridechain', run_dist=None,
                    stridechain_dist={'range': [1, 178], 'name': 'exponential', 'beta': 0.14},
                    pause_dist={'range': [0.125, 16.0], 'name': 'lognormal', 'mu': -0.23, 'sigma': 0.97}
                    )
-Im_sampled = null_dict('intermitter')
-Im_branch = null_dict('intermitter', mode='branch')
-Im_nengo = null_dict('intermitter', mode='nengo')
+Im_sampled = preg.get_null('intermitter')
+Im_branch = preg.get_null('intermitter', mode='branch')
+Im_nengo = preg.get_null('intermitter', mode='nengo')
 
 Im_dict = {
     'default': Im,
@@ -154,7 +155,7 @@ loco_combs = {
 
 def build_loco(c, t, ct, im, B=None):
     if B is None:
-        B = null_dict('brain')
+        B = preg.get_null('brain')
     else:
         B = copy.deepcopy(B)
     if c is not None:
@@ -178,9 +179,9 @@ def build_loco(c, t, ct, im, B=None):
 
 loco_dict = {k: build_loco(*v) for k, v in loco_combs.items()}
 
-base_coupling = null_dict('interference', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0), attenuation=0.1)
+base_coupling = preg.get_null('interference', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0), attenuation=0.1)
 
-RL_olf_memory = null_dict('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
+RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                           gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
 
 
@@ -205,7 +206,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     # module_shorts.append('W')
     modules = [module_dict[k] for k in module_shorts]
 
-    modules = null_dict('modules', **{m: True for m in modules})
+    modules = preg.get_null('modules', **{m: True for m in modules})
     d = {'modules': modules}
     for k, v in modules.items():
         p = f'{k}_params'
@@ -218,7 +219,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
         elif k == 'memory':
             d[p] = RL_olf_memory
         else:
-            d[p] = null_dict(k)
+            d[p] = preg.get_null(k)
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo

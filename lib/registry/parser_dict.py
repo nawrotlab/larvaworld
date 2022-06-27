@@ -54,8 +54,23 @@ def build_ParsDict(d0):
     # return parsargs
 
 def build_ParsDict2(d0):
-    from lib.registry.dtypes import par_dict
-    dic = par_dict(d0=d0, argparser=True)
+    def par(name, t=float, v=None, vs=None, h='', k=None):
+        return build_ParsArg(name, k, h, t, v, vs)
+
+    def par_dict(d0, **kwargs):
+        if d0 is None:
+            return None
+        d = {}
+        for n, v in d0.items():
+            try:
+                entry = par(n, **v, **kwargs)
+            except:
+                entry = {n: {'dtype': dict, 'content': par_dict(d0=v, **kwargs)}}
+            d.update(entry)
+        return d
+
+
+    dic = par_dict(d0=d0)
     try:
         parsargs = {k: ParsArg(**v) for k, v in dic.items()}
     except:

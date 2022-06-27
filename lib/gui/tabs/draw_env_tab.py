@@ -7,6 +7,7 @@ import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import DrawTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
+from lib.registry.pars import preg
 
 
 class DrawEnvTab(DrawTab):
@@ -238,14 +239,14 @@ class DrawEnvTab(DrawTab):
                                 else:
                                     info.update(value=f"Draw a sample item for the distribution")
                             elif v[f'{o}_group']:
-                                from lib.registry.dtypes import null_dict
+                                # from lib.registry.dtypes import null_dict
 
                                 self.update_window_distro(v, w, o)
                                 temp_dic = {
                                     'distribution': c[f'{S}_DISTRO'].get_dict(v, w),
                                     **dic['sample_pars']
                                 }
-                                dic['current'] = {v[f'{S}_group_id']: null_dict('SourceGroup', **temp_dic)}
+                                dic['current'] = {v[f'{S}_group_id']: preg.get_null('SourceGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                     p2=p2, line_color=color)
                         elif v[L] and not self.check_abort(L, w, v, db[self.Lu]['items'], db[self.Lg]['items']):
@@ -255,7 +256,7 @@ class DrawEnvTab(DrawTab):
                                                  'odor': c[f'{o}_ODOR'].get_dict(v, w),
                                                  }
                             if v[f'{o}_group']:
-                                from lib.registry.dtypes import null_dict
+                                # from lib.registry.dtypes import null_dict
 
                                 self.update_window_distro(v, w, o)
                                 temp = c[f'{o}_DISTRO'].get_dict(v, w)
@@ -266,7 +267,7 @@ class DrawEnvTab(DrawTab):
                                     'distribution': temp,
                                     **sample_larva_pars
                                 }
-                                dic['current'] = {v[f'{o}_group_id']: null_dict('LarvaGroup', **temp_dic)}
+                                dic['current'] = {v[f'{o}_group_id']: preg.get_null('LarvaGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                     p2=p2, line_color=color)
 
@@ -552,10 +553,10 @@ class DrawEnvTab(DrawTab):
 
     def set_env_db(self, env=None, lg={}, store=True):
         if env is None:
-            from lib.registry.dtypes import null_dict
+            # from lib.registry.dtypes import null_dict
 
             env = {self.Bg: {},
-                   'arena': null_dict('arena'),
+                   'arena': preg.get_null('arena'),
                    'food_params': {self.Su: {}, self.Sg: {}, 'food_grid': None},
                    # self.Lg: {}
                    }

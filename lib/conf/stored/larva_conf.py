@@ -6,17 +6,17 @@ import copy
 import numpy as np
 
 from lib.aux.dictsNlists import NestDict
-from lib.registry.dtypes import null_dict, null_Box2D_params, Box2Djoints
+from lib.registry.pars import preg
 
 ''' Default exploration model'''
 
-Cbas = null_dict('crawler', initial_freq=1.5, stride_dst_mean=0.25, stride_dst_std=0.0)
-base_coupling = null_dict('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
+Cbas = preg.get_null('crawler', initial_freq=1.5, stride_dst_mean=0.25, stride_dst_std=0.0)
+base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(0.45, 1.0), feeder_phi_range=(0.0, 0.0),
                           attenuation=0.1)
-phasic_coupling = null_dict('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
-null_coupling = null_dict('interference', mode='default', attenuation=1.0)
+phasic_coupling = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
+null_coupling = preg.get_null('interference', mode='default', attenuation=1.0)
 
-Tsin = null_dict('turner',
+Tsin = preg.get_null('turner',
                  mode='sinusoidal',
                  initial_amp=15.0,
                  amp_range=[0.0, 50.0],
@@ -25,7 +25,7 @@ Tsin = null_dict('turner',
                  noise=0.15,
                  activation_noise=0.5,
                  )
-Tsin_no_noise = null_dict('turner',
+Tsin_no_noise = preg.get_null('turner',
                           mode='sinusoidal',
                           initial_amp=15.0,
                           amp_range=[0.0, 50.0],
@@ -35,19 +35,19 @@ Tsin_no_noise = null_dict('turner',
                           activation_noise=0.0,
                           )
 
-Tno_noise = null_dict('turner', activation_noise=0.0, noise=0.0)
+Tno_noise = preg.get_null('turner', activation_noise=0.0, noise=0.0)
 
-Ccon = null_dict('crawler', waveform='constant', initial_amp=0.0012)
+Ccon = preg.get_null('crawler', waveform='constant', initial_amp=0.0012)
 
-Ccon_no_noise = null_dict('crawler', waveform='constant', initial_amp=0.0012, noise=0.0)
+Ccon_no_noise = preg.get_null('crawler', waveform='constant', initial_amp=0.0012, noise=0.0)
 
-RL_olf_memory = null_dict('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
+RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                           gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
 
-RL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
+RL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
                             gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
 
-gRL_touch_memory = null_dict('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
+gRL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30, update_dt=0.5,
                              gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
 
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
@@ -56,13 +56,13 @@ OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
 
 def Im(EEB, **kwargs):
     if EEB > 0:
-        return null_dict('intermitter', feed_bouts=True, EEB=EEB, **kwargs)
+        return preg.get_null('intermitter', feed_bouts=True, EEB=EEB, **kwargs)
     else:
-        return null_dict('intermitter', feed_bouts=False, EEB=0.0, **kwargs)
+        return preg.get_null('intermitter', feed_bouts=False, EEB=0.0, **kwargs)
 
 
 def ImD(pau, str, run=None, **kwargs):
-    return null_dict('intermitter', pause_dist=pau, stridechain_dist=str, run_dist=run, **kwargs)
+    return preg.get_null('intermitter', pause_dist=pau, stridechain_dist=str, run_dist=run, **kwargs)
 
 
 ImFitted = ImD(
@@ -97,7 +97,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     # module_shorts.append('W')
     modules = [module_dict[k] for k in module_shorts]
 
-    modules = null_dict('modules', **{m: True for m in modules})
+    modules = preg.get_null('modules', **{m: True for m in modules})
     d = {'modules': modules}
     for k, v in modules.items():
         p = f'{k}_params'
@@ -110,7 +110,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
         elif k == 'memory':
             d[p] = RL_olf_memory
         else:
-            d[p] = null_dict(k)
+            d[p] = preg.get_null(k)
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo
@@ -125,9 +125,18 @@ def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=No
     b = brain(ms, OD=OD, crawler=Cbas, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],
                                                                                    intermitter=Im(EEB))
 
-    gut = null_dict('gut', **gut_kws)
-    deb = null_dict('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
-    return null_dict('larva_conf', brain=b, body=null_dict('body', initial_length=0.001, Nsegs=Nsegs),
+    gut = preg.get_null('gut', **gut_kws)
+    deb = preg.get_null('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
+
+    null_Box2D_params = {
+        'joint_types': {
+            'friction': {'N': 0, 'args': {}},
+            'revolute': {'N': 0, 'args': {}},
+            'distance': {'N': 0, 'args': {}}
+        }
+    }
+
+    return preg.get_null('larva_conf', brain=b, body=preg.get_null('body', initial_length=0.001, Nsegs=Nsegs),
                      energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
 
@@ -137,11 +146,11 @@ def nengo_brain(module_shorts, EEB, OD=None):
     else:
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
     return brain(module_shorts,
-                 turner=null_dict('turner', initial_freq=0.3, initial_amp=30.0, noise=0.1, activation_noise=0.8,
+                 turner=preg.get_null('turner', initial_freq=0.3, initial_amp=30.0, noise=0.1, activation_noise=0.8,
                                   freq_range=(0.2, 0.4)),
-                 crawler=null_dict('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
+                 crawler=preg.get_null('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
                                    waveform='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
-                 feeder=null_dict('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
+                 feeder=preg.get_null('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
                  intermitter=Im(EEB, mode='nengo'),
                  nengo=True,
@@ -187,19 +196,19 @@ stridechain_dist_Starved = {'range': (1, 191),
                             'sigma': 1.052}
 
 Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
-                   interference=null_dict('interference', attenuation=0.0),
+                   interference=preg.get_null('interference', attenuation=0.0),
                    intermitter=ImD({'fit': False, 'range': (0.01, 3.0), 'name': 'uniform', 'mu': None, 'sigma': None},
                                    {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
                    )
 
 brain_3c = brain(['L'],
-                 crawler=null_dict('crawler', stride_dst_mean=0.18, stride_dst_std=0.055, initial_freq=1.35,
+                 crawler=preg.get_null('crawler', stride_dst_mean=0.18, stride_dst_std=0.055, initial_freq=1.35,
                                    freq_std=0.14),
-                 intermitter=ImD(null_dict('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
-                                 null_dict('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
+                 intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
+                                 preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
 
 brain_phasic = brain(['L'],
-                     crawler=null_dict('crawler', stride_dst_mean=0.224, stride_dst_std=0.033, initial_freq=1.418,
+                     crawler=preg.get_null('crawler', stride_dst_mean=0.224, stride_dst_std=0.033, initial_freq=1.418,
                                        max_vel_phase=3.6),
                      turner=Tno_noise,
                      interference=phasic_coupling,
@@ -208,13 +217,20 @@ brain_phasic = brain(['L'],
 
 def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
     if Box2D == {}:
+        null_Box2D_params = {
+            'joint_types': {
+                'friction': {'N': 0, 'args': {}},
+                'revolute': {'N': 0, 'args': {}},
+                'distance': {'N': 0, 'args': {}}
+            }
+        }
         Box2D_params = null_Box2D_params
     else:
-        Box2D_params = null_dict('Box2D_params', **Box2D)
-    return null_dict('larva_conf', brain=brain,
+        Box2D_params = preg.get_null('Box2D_params', **Box2D)
+    return preg.get_null('larva_conf', brain=brain,
                      energetics=energetics,
-                     body=null_dict('body', **bod),
-                     physics=null_dict('physics', **phys),
+                     body=preg.get_null('body', **bod),
+                     physics=preg.get_null('physics', **phys),
                      Box2D_params=Box2D_params
                      )
 
@@ -243,19 +259,19 @@ def create_mod_dict():
     LOF = brain(['LOF'])
     LOFM = brain(['LOF', 'M'])
     LO = brain(['L', 'O'])
-    LO_brute = brain(['L', 'O'], olfactor=null_dict('olfactor', brute_force=True))
+    LO_brute = brain(['L', 'O'], olfactor=preg.get_null('olfactor', brute_force=True))
     LW = brain(['L', 'W'])
     L = brain(['L'])
-    LTo = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[]))
-    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[]),
+    LTo = brain(['L', 'To'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[]))
+    LToM = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[]),
                  memory=RL_touch_memory)
-    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[]),
+    LToMg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[]),
                   memory=gRL_touch_memory)
-    LTo2M = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+    LTo2M = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[0, 2]),
                   memory=RL_touch_memory)
-    LTo2Mg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[0, 2]),
+    LTo2Mg = brain(['L', 'To', 'M'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[0, 2]),
                    memory=gRL_touch_memory)
-    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=null_dict('toucher', touch_sensors=[], brute_force=True))
+    LTo_brute = brain(['L', 'To'], turner=Tno_noise, toucher=preg.get_null('toucher', touch_sensors=[], brute_force=True))
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
 
     def add_OD(OD, B0=LOF):
@@ -267,6 +283,9 @@ def create_mod_dict():
         B1 = NestDict(copy.deepcopy(B0))
         B1.intermitter_params = Im
         return B1
+
+    def Box2Djoints(N, **kwargs):
+        return {'N': N, 'args': kwargs}
 
     explorers = {
         'explorer': add_brain(LW),

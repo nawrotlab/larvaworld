@@ -9,7 +9,7 @@ import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
 
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
 
 
@@ -490,7 +490,7 @@ class LarvaDataset:
                   transposition=None, fix_point=None, fix_segment=None, **kwargs):
         from lib.model.envs._larvaworld_replay import LarvaWorldReplay
         if vis_kwargs is None:
-            vis_kwargs = null_dict('visualization', mode='video')
+            vis_kwargs = preg.get_null('visualization', mode='video')
         if s0 is None and e0 is None:
             if not hasattr(self, 'step_data'):
                 self.load()
@@ -560,8 +560,8 @@ class LarvaDataset:
             s0, e0 = self.load_agent(id)
         env_params = self.env_params
         if close_view:
-            from lib.registry.dtypes import null_dict
-            env_params.arena = null_dict('arena', arena_dims=(0.01, 0.01))
+            # from lib.registry.dtypes import null_dict
+            env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
         # else:
         #     env_params = self.env_params
 
@@ -579,8 +579,8 @@ class LarvaDataset:
             save_to = self.vis_dir
         replay_id = f'{id}_fixed_at_{fix_point}'
         if vis_kwargs is None:
-            from lib.registry.dtypes import null_dict
-            vis_kwargs = null_dict('visualization', mode='video', video_speed=60, media_name=replay_id)
+            # from lib.registry.dtypes import null_dict
+            vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60, media_name=replay_id)
         base_kws = {
             'vis_kwargs': vis_kwargs,
             'env_params': env_params,
@@ -865,7 +865,7 @@ class LarvaDataset:
         c = self.config
 
         b_kws = {
-            'modules': null_dict('modules', turner=True, crawler=True, interference=True, intermitter=True),
+            'modules': preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True),
             'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
             'crawler_params': adapt_crawler(e, waveform=crawler_mode, average=True),
             'intermitter_params': adapt_intermitter(c, e, average=True),
@@ -873,14 +873,14 @@ class LarvaDataset:
         }
 
         kws = {
-            'brain': null_dict('brain', **b_kws),
-            'body': null_dict('body', initial_length=np.round(e['length'].median(), 3)),
-            'physics': null_dict('physics') if physics is None else physics,
+            'brain': preg.get_null('brain', **b_kws),
+            'body': preg.get_null('body', initial_length=np.round(e['length'].median(), 3)),
+            'physics': preg.get_null('physics') if physics is None else physics,
             'energetics': None,
             # 'Box2D_params' : None,
         }
 
-        m = null_dict('larva_conf', **kws)
+        m = preg.get_null('larva_conf', **kws)
 
         from lib.conf.stored.conf import copyConf, saveConf
 

@@ -1,12 +1,14 @@
 import warnings
 
+from lib.registry.pars import preg
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
 from scipy.stats import ks_2samp
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.registry.ga_dict import ga_dict
 from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
@@ -94,7 +96,7 @@ def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, du
         'space_dict': space_dict,
     }
 
-    kws = {'sim_params': null_dict('sim_params', duration=dur, timestep=dt),
+    kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=dt),
            'scene': scene,
            'experiment': name,
            }
@@ -106,11 +108,11 @@ def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, du
     if fitID is not None:
         build_kws['fitness_func'] = fitness_funcs[fitID]
 
-    kws['ga_select_kws'] = null_dict('ga_select_kws', Nagents=N, Nelits=Nel, **sel)
-    kws['ga_build_kws'] = null_dict('ga_build_kws', **build_kws, **build)
+    kws['ga_select_kws'] = preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, **sel)
+    kws['ga_build_kws'] = preg.get_null('ga_build_kws', **build_kws, **build)
     kws.update(kwargs)
 
-    conf = null_dict('GAconf', **kws)
+    conf = preg.get_null('GAconf', **kws)
     return {name: conf}
 
 

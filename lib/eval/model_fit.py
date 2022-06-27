@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-from lib.registry.dtypes import null_dict
+# from lib.registry.dtypes import null_dict
 from lib.registry.ga_dict import ga_dict, interference_ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.registry.pars import preg
@@ -27,7 +27,7 @@ class Calibration:
         space_dict={**PH, **TUR}
 
         self.turner_mode = turner_mode
-        self.base_turner= {**null_dict('base_turner', mode=self.turner_mode),  **null_dict(f'{self.turner_mode}_turner')}
+        self.base_turner= {**preg.get_null('base_turner', mode=self.turner_mode),  **preg.get_null(f'{self.turner_mode}_turner')}
         self.space_dict = space_dict
         self.turner_keys = turner_keys
         self.physics_keys = physics_keys
@@ -134,10 +134,10 @@ class Calibration:
         turner = dNl.NestDict(copy.deepcopy(self.base_turner))
 
         if Ndec is not None :
-            physics = null_dict('physics', **{k: np.round(dic[k], Ndec) for k in self.physics_keys})
+            physics = preg.get_null('physics', **{k: np.round(dic[k], Ndec) for k in self.physics_keys})
             turner.update({k: np.round(dic[k], Ndec) for k in self.turner_keys})
         else :
-            physics = null_dict('physics', **{k: dic[k] for k in self.physics_keys})
+            physics = preg.get_null('physics', **{k: dic[k] for k in self.physics_keys})
             turner.update({k: dic[k] for k in self.turner_keys})
         # print(q, physics)
         return physics, turner
@@ -207,7 +207,7 @@ def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
         'plot_func': None,
     }
 
-    kws = {'sim_params': null_dict('sim_params', duration=dur, timestep=c.dt),
+    kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=c.dt),
            'scene': 'no_boxes',
            'experiment': 'realism',
            'env_params':expandConf('arena_200mm', 'Env'),
@@ -215,11 +215,11 @@ def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
            'show_screen' : False
            }
 
-    kws['ga_select_kws'] = null_dict('ga_select_kws', Nagents=N, Nelits=Nel, Ngenerations=Ngen)
-    kws['ga_build_kws'] = null_dict('ga_build_kws', **build_kws)
+    kws['ga_select_kws'] = preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, Ngenerations=Ngen)
+    kws['ga_build_kws'] = preg.get_null('ga_build_kws', **build_kws)
     kws.update(kwargs)
 
-    conf = null_dict('GAconf', **kws)
+    conf = preg.get_null('GAconf', **kws)
 
     GA = GAlauncher(**conf)
     best_genome = GA.run()
@@ -235,7 +235,7 @@ def calibrate_interference(mID,refID, dur=None, N=10, Nel=2, Ngen=20,**kwargs):
 def adapt_crawler(ee, waveform='realistic', average=True):
     if waveform=='realistic':
         if average:
-            crawler = null_dict('crawler',waveform='realistic',
+            crawler = preg.get_null('crawler',waveform='realistic',
                                 initial_freq=np.round(ee[preg.getPar('fsv')].median(), 2),
                                 stride_dst_mean=np.round(ee[preg.getPar('str_sd_mu')].median(), 2),
                                 stride_dst_std=np.round(ee[preg.getPar('str_sd_std')].median(), 2),
@@ -243,7 +243,7 @@ def adapt_crawler(ee, waveform='realistic', average=True):
                                 max_scaled_vel=np.round(ee[preg.getPar('str_sv_max')].median(), 2))
 
         else:
-            crawler = null_dict('crawler',waveform='realistic',
+            crawler = preg.get_null('crawler',waveform='realistic',
                                 initial_freq=ee[preg.getPar('fsv')],
                                 stride_dst_mean=ee[preg.getPar('str_sd_mu')],
                                 stride_dst_std=ee[preg.getPar('str_sd_std')],
@@ -251,16 +251,16 @@ def adapt_crawler(ee, waveform='realistic', average=True):
                                 max_scaled_vel=ee[preg.getPar('str_sv_max')])
     elif waveform=='constant':
         if average:
-            crawler = null_dict('crawler',waveform='constant',
+            crawler = preg.get_null('crawler',waveform='constant',
                                 initial_amp=np.round(ee[preg.getPar('run_v_mu')].median(), 2))
         else:
-            crawler = null_dict('crawler',waveform='constant',
+            crawler = preg.get_null('crawler',waveform='constant',
                                 initial_amp=ee[preg.getPar('run_v_mu')]
                                 )
     return crawler
 
 def adapt_intermitter(c, e, **kwargs) :
-    intermitter = null_dict('intermitter')
+    intermitter = preg.get_null('intermitter')
     intermitter.stridechain_dist = c.bout_distros.run_count
     try:
         ll1, ll2 = intermitter.stridechain_dist.range
@@ -300,14 +300,14 @@ def adapt_interference(c, e, mode='phasic', average=True) :
 
         if mode=='phasic':
 
-            interference = {**null_dict('base_interference', mode='phasic',suppression_mode='amplitude', attenuation_max=att2, attenuation=att1),
-                      **null_dict('phasic_interference', max_attenuation_phase=at_phiM)}
+            interference = {**preg.get_null('base_interference', mode='phasic',suppression_mode='amplitude', attenuation_max=att2, attenuation=att1),
+                      **preg.get_null('phasic_interference', max_attenuation_phase=at_phiM)}
 
             # interference = null_dict('interference', mode='phasic', suppression_mode='amplitude', max_attenuation_phase=at_phiM,
             #                      attenuation_max=att2, attenuation=att1)
         elif mode == 'square':
-            interference = {**null_dict('base_interference', mode='square',suppression_mode='amplitude', attenuation_max=att2, attenuation=att0),
-                            **null_dict('square_interference',  crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
+            interference = {**preg.get_null('base_interference', mode='square',suppression_mode='amplitude', attenuation_max=att2, attenuation=att0),
+                            **preg.get_null('square_interference',  crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
 
             # interference = null_dict('interference', mode='square', suppression_mode='amplitude', attenuation_max=att2,
             #                       max_attenuation_phase=None,
@@ -324,8 +324,8 @@ def adapt_turner(e, mode = 'neural', average=True) :
             coef, intercept = 0.024, 5
             A_in_mu = np.round(fr_mu / coef + intercept)
 
-            turner = {**null_dict('base_turner', mode='neural'),
-            **null_dict('neural_turner', base_activation=A_in_mu,
+            turner = {**preg.get_null('base_turner', mode='neural'),
+            **preg.get_null('neural_turner', base_activation=A_in_mu,
                       activation_range=(10.0, 40.0)
                       )}
         else:
@@ -333,8 +333,8 @@ def adapt_turner(e, mode = 'neural', average=True) :
     elif mode == 'sinusoidal':
         if average:
             fr_mu = e[preg.getPar('ffov')].median()
-            turner = {**null_dict('base_turner', mode='sinusoidal'),
-            **null_dict('sinusoidal_turner',
+            turner = {**preg.get_null('base_turner', mode='sinusoidal'),
+            **preg.get_null('sinusoidal_turner',
                         initial_freq=np.round(fr_mu, 2),
                                freq_range = (0.1,0.8),
                                initial_amp = np.round(e[preg.getPar('pau_foa_mu')].median(), 2)/10,
@@ -345,8 +345,8 @@ def adapt_turner(e, mode = 'neural', average=True) :
             raise ValueError('Not implemented')
     elif mode == 'constant':
         if average:
-            turner = {**null_dict('base_turner', mode='constant'),
-                      **null_dict('constant_turner',
+            turner = {**preg.get_null('base_turner', mode='constant'),
+                      **preg.get_null('constant_turner',
                                   initial_amp=np.round(e[preg.getPar('pau_foa_mu')].median(), 2),
                                   # amp_range=(-1000.0, 1000.0)
                                   )}
@@ -356,7 +356,7 @@ def adapt_turner(e, mode = 'neural', average=True) :
 
 def adapt_locomotor(c,e,average=True):
     if average:
-        m=null_dict('locomotor')
+        m=preg.get_null('locomotor')
         m.turner_params = adapt_turner(e, mode='neural',average=True)
         m.crawler_params = adapt_crawler(e, waveform='realistic',average=True)
         m.intermitter_params = adapt_intermitter(c, e)

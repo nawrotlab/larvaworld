@@ -1,17 +1,17 @@
 import numpy as np
 
 from lib.conf.stored.conf import imitation_exp, loadConf
-from lib.registry.dtypes import enr_dict, null_dict, oG, oD
+from lib.registry.pars import preg
 
 
 def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
-    sub0 = null_dict('substrate', type=substrate_type, quality=q)
-    ep0 = {0: null_dict('epoch', start=0.0, stop=age - h, substrate=sub0)}
+    sub0 = preg.get_null('substrate', type=substrate_type, quality=q)
+    ep0 = {0: preg.get_null('epoch', start=0.0, stop=age - h, substrate=sub0)}
     if h == 0.0:
         return ep0
     else:
-        sub1 = null_dict('substrate', type=substrate_type, quality=0.0)
-        ep1 = {1: null_dict('epoch', start=age - h, stop=age, substrate=sub1)}
+        sub1 = preg.get_null('substrate', type=substrate_type, quality=0.0)
+        ep1 = {1: preg.get_null('epoch', start=age - h, stop=age, substrate=sub1)}
     return {**ep0, **ep1}
 
 
@@ -29,20 +29,20 @@ def lgs(models, ids=None, **kwargs):
 
 
 def lg(group='Larva', c='black', N=1, mode='uniform', sh='circle', p=(0.0, 0.0), ors=(0.0, 360.0),
-       s=(0.0, 0.0), m='explorer', o=null_dict('odor'), expand=False, **kwargs):
+       s=(0.0, 0.0), m='explorer', o=preg.get_null('odor'), expand=False, **kwargs):
     if expand:
         m = loadConf(m, 'Model')
     if type(s) == float:
         s = (s, s)
         # print(s)
-    dist = null_dict('larva_distro', N=N, mode=mode, shape=sh, loc=p, orientation_range=ors, scale=s)
-    g = null_dict('LarvaGroup', distribution=dist, default_color=c, model=m, odor=o, **kwargs)
+    dist = preg.get_null('larva_distro', N=N, mode=mode, shape=sh, loc=p, orientation_range=ors, scale=s)
+    g = preg.get_null('LarvaGroup', distribution=dist, default_color=c, model=m, odor=o, **kwargs)
     return {group: g}
 
 
 def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, **kwargs):
     kw = {
-        'sim_params': null_dict('sim_params', **sim),
+        'sim_params': preg.get_null('sim_params', **sim),
         'env_params': env_name,
         'larva_groups': l,
         'collections': ['pose'] + c,
@@ -50,11 +50,11 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
     }
     kw.update(kwargs)
     if en:
-        exp_conf = null_dict('exp_conf',
-                             enrichment=enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+        exp_conf = preg.get_null('exp_conf',
+                             enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
                                                  bouts=['stride', 'pause', 'turn']), **kw)
     else:
-        exp_conf = null_dict('exp_conf', **kw)
+        exp_conf = preg.get_null('exp_conf', **kw)
     if not as_entry:
         return exp_conf
     else:
@@ -65,7 +65,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
 
 def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c,
-               enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
+               enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
                                    fits=False), **kwargs)
 
 
@@ -77,7 +77,7 @@ def game_exp(name, c=[], dur=20.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, **kwargs)
 
 
-def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=enr_dict(proc=['spatial']), **kwargs):
+def deb_exp(name, c=['feeder', 'gut'], dur=5.0, enrichment=preg.enr_dict(proc=['spatial']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
@@ -85,23 +85,23 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
-def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
+def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=preg.enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
 def chemanemo_exp(name, dur=5.0, c=['olfactor', 'wind'], en=False,
-                  enrichment=enr_dict(proc=['spatial', 'angular', 'source', 'wind'], bouts=['stride', 'pause', 'turn'],
+                  enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source', 'wind'], bouts=['stride', 'pause', 'turn'],
                                       fits=False), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
-def pref_exp(name, dur=5.0, c=[], enrichment=enr_dict(proc=['PI']), **kwargs):
+def pref_exp(name, dur=5.0, c=[], enrichment=preg.enr_dict(proc=['PI']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
 def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='AttP2.Fed', substrate_type='standard', pref='',
                 navigator=False, **kwargs):
-    l = null_dict('life_history', age=age, epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
+    l = preg.get_null('life_history', age=age, epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
     group_kws = {
         'sample': sample,
         'life_history': l,
@@ -117,14 +117,14 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     x = np.round(x * dim, 3)
     y = np.round(y * dim, 3)
     if mode == 'king':
-        l = {**lg('Left', N=N, p=(-x, y), m='gamer-5x', c='darkblue', o=oG(id='Left_odor')),
-             **lg('Right', N=N, p=(+x, y), m='gamer-5x', c='darkred', o=oG(id='Right_odor'))}
+        l = {**lg('Left', N=N, p=(-x, y), m='gamer-5x', c='darkblue', o=preg.oG(id='Left_odor')),
+             **lg('Right', N=N, p=(+x, y), m='gamer-5x', c='darkred', o=preg.oG(id='Right_odor'))}
     elif mode == 'flag':
         l = {**lg('Left', N=N, p=(-x, y), m='gamer', c='darkblue'),
              **lg('Right', N=N, p=(+x, y), m='gamer', c='darkred')}
     elif mode == 'catch_me':
-        l = {**lg('Left', N=1, p=(-0.01, 0.0), m='follower-L', c='darkblue', o=oD(id='Left_odor')),
-             **lg('Right', N=1, p=(+0.01, 0.0), m='follower-R', c='darkred', o=oD(id='Right_odor'))}
+        l = {**lg('Left', N=1, p=(-0.01, 0.0), m='follower-L', c='darkblue', o=preg.oD(id='Left_odor')),
+             **lg('Right', N=1, p=(+0.01, 0.0), m='follower-R', c='darkred', o=preg.oD(id='Right_odor'))}
     return l
 
 
@@ -181,7 +181,7 @@ grouped_exp_dict = {
         'random_food': food_exp('random_food', c=['feeder', 'toucher'], l=lgs(models=['Orco_forager', 'RL_forager'],
                                                                               ids=['Orco', 'RL'], N=5, mode='uniform',
                                                                               shape='rectangular', s=0.04),
-                                enrichment=enr_dict(proc=['spatial'], bouts=[]), en=False),
+                                enrichment=preg.enr_dict(proc=['spatial'], bouts=[]), en=False),
         'uniform_food': food_exp('uniform_food', l=lg(m='Orco_forager', N=5, s=0.005)),
         'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
         'single_odor_patch': food_exp('single_odor_patch',
@@ -189,7 +189,7 @@ grouped_exp_dict = {
                                             ids=['Orco', 'control'], N=5, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
                                  c=['toucher', 'feeder', 'olfactor'],
-                                 enrichment=enr_dict(proc=['spatial', 'angular', 'source']), en=False),
+                                 enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source']), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
                                       l=lg(m='toucher', N=15, mode='periphery', s=0.03), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],

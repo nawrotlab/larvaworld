@@ -10,6 +10,7 @@ import PySimpleGUI as sg
 
 import matplotlib.pyplot as plt
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
+from lib.aux.par_aux import base_dtype
 from lib.registry.pars import preg
 
 from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
@@ -773,9 +774,9 @@ class CollapsibleTable(Collapsible):
         self.index = index
         self.dict_name = dict_name
         self.key = f'TABLE {name}'
-        from lib.registry.dtypes import null_dict
+        # from lib.registry.dtypes import null_dict
 
-        self.null_dict = null_dict(dict_name)
+        self.null_dict = preg.get_null(dict_name)
         if heading_dict is None:
             heading_dict = {k: k for k in self.null_dict.keys()}
         self.heading_dict = heading_dict
@@ -860,7 +861,7 @@ class CollapsibleTable(Collapsible):
 
 
 def v_layout(k0, args, value_kws0={}, **kwargs):
-    from lib.registry.dtypes import base_dtype
+    # from lib.registry.dtypes import base_dtype
     t = args['dtype']
     v = args['initial_value']
     vs = args['values']
@@ -901,7 +902,7 @@ def v_layout(k0, args, value_kws0={}, **kwargs):
 
 
 def combo_layout(name, title, dic, **kwargs):
-    from lib.registry.dtypes import base_dtype
+    # from lib.registry.dtypes import base_dtype
     d = {p: [] for p in ['mu', 'std', 'r', 'noise']}
     for k, args in dic.items():
         kws = {
@@ -965,7 +966,7 @@ class CollapsibleDict(Collapsible):
         return {self.name: self, **subdicts}
 
     def get_dict(self, v, w, check_toggle=True):
-        from lib.registry.dtypes import base_dtype
+        # from lib.registry.dtypes import base_dtype
         if self.state is None or (check_toggle and self.toggle == False):
             return None
         else:
@@ -1114,7 +1115,7 @@ class PadDict(PadElement):
         return content
 
     def get_dict(self, v, w):
-        from lib.registry.dtypes import base_dtype
+        # from lib.registry.dtypes import base_dtype
         if self.toggle is not None:
             if not w[self.toggle_key].get_state():
                 return None
@@ -1173,7 +1174,7 @@ class PadDict(PadElement):
         return l
 
     def update(self, w, d):
-        from lib.registry.dtypes import base_dtype
+        # from lib.registry.dtypes import base_dtype
         if d is not None:
             for k, t in self.dtypes.items():
                 k0 = f'{self.name}_{k}'
@@ -1209,9 +1210,9 @@ class PadTable(PadElement):
         self.index = index
         self.key = f'TABLE {self.name}'
         if heading_dict is None:
-            from lib.registry.dtypes import null_dict
+            # from lib.registry.dtypes import null_dict
 
-            heading_dict = {k: k for k in null_dict(self.dict_name).keys()}
+            heading_dict = {k: k for k in preg.get_null(self.dict_name).keys()}
         self.heading_dict = heading_dict
         self.headings = list(heading_dict.keys())
         self.dict = dict
