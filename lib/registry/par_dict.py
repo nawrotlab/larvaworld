@@ -1,4 +1,5 @@
-from typing import Tuple
+from types import FunctionType
+from typing import Tuple, List
 
 import numpy as np
 import param
@@ -8,7 +9,8 @@ from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring
 from lib.registry.units import ureg
 
-func_dic = {
+def get_vfunc(dtype,lim,vs) :
+    func_dic = {
     # SupportsFloat: param.Number,
     float: param.Number,
     int: param.Integer,
@@ -16,9 +18,21 @@ func_dic = {
     bool: param.Boolean,
     dict: param.Dict,
     list: param.List,
+    type: param.ClassSelector,
+    List[int]: param.List,
+    List[str]: param.List,
+    List[float]: param.List,
+    List[Tuple[float]]: param.List,
+    FunctionType: param.Callable,
     Tuple[float]: param.Range,
     Tuple[int]: param.NumericTuple,
 }
+    if dtype==float and lim==(0.0,1.0) :
+        return param.Magnitude
+    if type(vs)==list and dtype in [str,int]:
+        return param.Selector
+    else :
+        return func_dic[dtype]
 
 
 def vpar(vfunc, v0, h, lab, lim, dv,vs):
@@ -56,7 +70,7 @@ def preparePar(p, k, dtype=float, d=None, disp=None, sym=None, codename=None, la
     h = lab if h is None else h
     if vparfunc is None:
         if vfunc is None:
-            vfunc = func_dic[dtype]
+            vfunc = get_vfunc(dtype=dtype,lim=lim,vs=vs)
         vparfunc = vpar(vfunc, v0, h, lab, lim, dv,vs)
     else:
         vparfunc = vparfunc()
