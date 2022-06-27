@@ -615,11 +615,11 @@ class ParInitDict:
                 'optimization': {
                     'fit_par': {'t': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
                     'minimize': {**bT, 'h': 'Whether to minimize or maximize the utility parameter.'},
-                    'threshold': {'v': 0.001, 'max': 0.01, 'dv': 0.0001,
+                    'threshold': {'v': 0.001, 'lim': (0.0,0.01), 'dv': 0.0001,
                                   'h': 'The utility threshold to reach before terminating the batch-run.'},
-                    'max_Nsims': {'t': int, 'v': 7, 'max': 100,
+                    'max_Nsims': {'t': int, 'v': 7, 'lim': (0,100),
                                   'h': 'The maximum number of single runs before terminating the batch-run.'},
-                    'Nbest': {'t': int, 'v': 3, 'max': 10,
+                    'Nbest': {'t': int, 'v': 3, 'lim': (0,20),
                               'h': 'The number of best parameter combinations to use for generating the next generation.'},
                     'operations': {
                         'mean': {**bT, 'h': 'Whether to use the mean of the utility across individuals'},
@@ -638,19 +638,19 @@ class ParInitDict:
                               'h': 'The method to be applied once the batch-run is complete to plot/save the results.'}
                 },
                 'space_search_par': {
-                    'range': {'t': Tuple[float], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
+                    'range': {'t': Tuple[float], 'lim': (-100.0,100.0), 'dv': 1.0,
                               'k': 'ss.range',
                               'h': 'The parameter range to perform the space-search.'},
-                    'Ngrid': {'t': int, 'max': 100, 'disp': '# steps', 'k': 'ss.Ngrid',
+                    'Ngrid': {'t': int, 'lim': (0,100), 'disp': '# steps', 'k': 'ss.Ngrid',
                               'h': 'The number of equally-distanced values to parse the parameter range.'},
                     'values': {'t': List[float], 'lim': (-100.0, 100.0), 'k': 'ss.vs',
                                'h': 'A list of values of the parameter to space-search. Once this is filled no range/# steps parameters are taken into account.'}
                 },
                 'space_search': {
                     'pars': {'t': List[str], 'h': 'The parameters for space search.', 'k': 'ss.pars'},
-                    'ranges': {'t': List[Tuple[float]], 'max': 100.0, 'min': -100.0, 'dv': 1.0,
+                    'ranges': {'t': List[Tuple[float]], 'lim': (-100.0, 100.0), 'dv': 1.0,
                                'h': 'The range of the parameters for space search.', 'k': 'ss.ranges'},
-                    'Ngrid': {'t': int, 'max': 100, 'h': 'The number of steps for space search.',
+                    'Ngrid': {'t': int,  'lim': (0,100), 'h': 'The number of steps for space search.',
                               'k': 'ss.Ngrid'}},
                 'batch_setup': {
                     'batch_id': pID('batch-run', k='b_id'),
@@ -674,7 +674,7 @@ class ParInitDict:
                                      'h': 'The fraction of the body considered front, relevant for bend computation from angles.'}
             }
             d['spatial_definition'] = {
-                'point_idx': {'t': int, 'min': -1, 'max': 12,
+                'point_idx': {'t': int, 'lim': (-1, 12),
                               'h': 'The index of the segment used as the larva spatial position (-1 means using the centroid).'},
                 'use_component_vel': {**bF, 'disp': 'vel_component',
                                       'h': 'Whether to use the component velocity ralative to the axis of forward motion.'}
@@ -684,13 +684,13 @@ class ParInitDict:
                 'angular': d['ang_definition'],
                 'spatial': d['spatial_definition'],
                 'dispersion': {
-                    'dsp_starts': {'t': List[int], 'v': [0], 'max': 200, 'dv': 1, 'disp': 'starts',
+                    'dsp_starts': {'t': List[int], 'v': [0], 'lim': (0,200), 'dv': 1, 'disp': 'starts',
                                    'h': 'The timepoints to start calculating dispersion in seconds.'},
-                    'dsp_stops': {'t': List[int], 'v': [40], 'max': 200, 'dv': 1, 'disp': 'stops',
+                    'dsp_stops': {'t': List[int], 'v': [40], 'lim': (0,200), 'dv': 1, 'disp': 'stops',
                                   'h': 'The timepoints to stop calculating dispersion in seconds.'},
                 },
                 'tortuosity': {
-                    'tor_durs': {'t': List[int], 'v': [5, 10], 'max': 100, 'dv': 1, 'disp': 't (sec)',
+                    'tor_durs': {'t': List[int], 'v': [5, 10], 'lim': (0,200), 'dv': 1, 'disp': 't (sec)',
                                  'h': 'The time windows to use when calculating tortuosity in seconds.'}
                 },
                 'stride': {
@@ -698,7 +698,7 @@ class ParInitDict:
                                     'h': 'The midline point to use when detecting the strides. When none is provided, the default position of the larva is used (see spatial definition).'},
                     'use_scaled_vel': {**bT, 'disp': 'vel_scaled',
                                        'h': 'Whether to use the velocity scaled to the body length.'},
-                    'vel_threshold': {'v': 0.3, 'max': 1.0, 'disp': 'vel_thr',
+                    'vel_threshold': {'v': 0.3, 'lim': (0.0,2.0), 'disp': 'vel_thr',
                                       'h': 'The velocity threshold to be reached in every stride cycle.'},
                 },
                 # 'pause': {
@@ -717,11 +717,11 @@ class ParInitDict:
             }
 
             d['preprocessing'] = {
-                'rescale_by': {'max': 10.0,
+                'rescale_by': {'lim': (0.0,10.0),
                                'h': 'Whether to rescale spatial coordinates by a scalar in meters.'},
                 'drop_collisions': {**bF, 'h': 'Whether to drop timepoints where larva collisions are detected.'},
                 'interpolate_nans': {**bF, 'h': 'Whether to interpolate missing values.'},
-                'filter_f': {'max': 10.0, 'disp': 'filter frequency',
+                'filter_f': {'lim': (0.0,10.0), 'disp': 'filter frequency',
                              'h': 'Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.'},
                 'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center'],
                                   'h': 'Whether to transpose spatial coordinates.'}
@@ -766,9 +766,9 @@ class ParInitDict:
             }
 
             d['food'] = {
-                'radius': {'v': 0.003, 'max': 0.1, 'dv': 0.001,
+                'radius': {'v': 0.003, 'lim': (0.0,0.1), 'dv': 0.001,
                            'h': 'The spatial radius of the source in meters.'},
-                'amount': {'v': 0.0, 'max': 1.0, 'h': 'The food amount in the source.'},
+                'amount': {'v': 0.0, 'lim': (0.0,10.0), 'h': 'The food amount in the source.'},
                 'can_be_carried': {**bF, 'disp': 'carriable', 'h': 'Whether the source can be carried around.'},
                 'can_be_displaced': {**bF, 'disp': 'displaceable',
                                      'h': 'Whether the source can be displaced by wind/water.'},
@@ -780,7 +780,7 @@ class ParInitDict:
                 'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'lim': (10, 200), 'disp': 'XY dims',
                               'vfunc': param.Tuple,
                               'h': 'The spatial resolution of the food grid.'},
-                'initial_value': {'v': 0.1, 'max': 1.0, 'dv': 0.01, 'disp': 'Initial amount',
+                'initial_value': {'v': 0.1, 'lim': (0.0,10.0), 'dv': 0.01, 'disp': 'Initial amount',
                                   'h': 'The initial amount of food in each cell of the grid.'},
                 'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform'],
                                  'h': 'The distribution of food in the grid.'},
@@ -789,14 +789,14 @@ class ParInitDict:
             }
 
             d['epoch'] = {
-                'start': {'max': 200.0, 'h': 'The beginning of the epoch in hours post-hatch.'},
-                'stop': {'max': 200.0, 'h': 'The end of the epoch in hours post-hatch.'},
+                'start': {'lim': (0.0,250.0), 'h': 'The beginning of the epoch in hours post-hatch.'},
+                'stop': {'lim': (0.0,250.0), 'h': 'The end of the epoch in hours post-hatch.'},
                 'substrate': d['substrate']
 
             }
 
             d['life_history'] = {
-                'age': {'v': 0.0, 'max': 250.0, 'dv': 1.0,
+                'age': {'v': 0.0, 'lim': (0.0,250.0), 'dv': 1.0,
                         'h': 'The larva age in hours post-hatch.'},
                 'epochs': {'t': TypedDict, 'v': {}, 'entry': 'epoch', 'disp': 'life epochs',
                            'h': 'The feeding epochs comprising life-history.'}
@@ -814,7 +814,7 @@ class ParInitDict:
                          'h': 'The wa to place agents in the distribution shape.'},
                 'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'],
                           'h': 'The space of the spatial distribution.'},
-                'N': {'t': int, 'v': 10, 'max': 1000,
+                'N': {'t': int, 'v': 10, 'lim': (0,1000),
                       'h': 'The number of agents in the group.'},
                 'loc': d['xy'],
                 'scale': d['xy'],
@@ -822,8 +822,7 @@ class ParInitDict:
 
             d['larva_distro'] = {
                 **d['spatial_distro'],
-                'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'min': 0.0,
-                                      'max': 360.0,
+                'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'lim': (0.0, 360.0),
                                       'dv': 1.0,
                                       'disp': 'heading',
                                       'h': 'The range of larva body orientations to sample from, in degrees.'}
@@ -876,14 +875,14 @@ class ParInitDict:
 
             d['Border'] = {
                 'default_color': pCol('black', 'border'),
-                'width': {'v': 0.001, 'min': 0.0, 'h': 'The width of the border.'},
-                'points': {'t': List[Tuple[float]], 'min': -1.0, 'max': 1.0,
+                'width': {'v': 0.001, 'lim': (0.0,10.0), 'h': 'The width of the border.'},
+                'points': {'t': List[Tuple[float]], 'lim': (-10.0,10.0),
                            'h': 'The XY coordinates of the consecutive border segments.'},
             }
 
             d['border_list'] = {
                 'default_color': pCol('black', 'border'),
-                'points': {'t': List[Tuple[float]], 'lim': (-1.0, 1.0),
+                'points': {'t': List[Tuple[float]], 'lim': (-10.0,10.0),
                            'h': 'The XY coordinates of the consecutive border segments.'},
             }
             d['Source_DISTRO'] = d['spatial_distro']
