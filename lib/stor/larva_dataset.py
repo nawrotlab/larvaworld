@@ -864,23 +864,33 @@ class LarvaDataset:
         e = self.endpoint_data
         c = self.config
 
+        mods=preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True)
         b_kws = {
-            'modules': preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True),
+            'modules': mods,
             'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
-            'crawler_params': adapt_crawler(e, waveform=crawler_mode, average=True),
+            'crawler_params': adapt_crawler(e, mode=crawler_mode, average=True),
             'intermitter_params': adapt_intermitter(c, e, average=True),
             'interference_params': adapt_interference(c, e, mode=interference_mode, average=True),
         }
+        for k in mods.keys():
+            if not mods[k]:
+                b_kws[f'{k}_params']=None
+
+
+
+
 
         kws = {
             'brain': preg.get_null('brain', **b_kws),
             'body': preg.get_null('body', initial_length=np.round(e['length'].median(), 3)),
             'physics': preg.get_null('physics') if physics is None else physics,
             'energetics': None,
-            # 'Box2D_params' : None,
+            'Box2D_params' : None,
         }
 
         m = preg.get_null('larva_conf', **kws)
+        # print(m.Box2D)
+        # raise
 
         from lib.conf.stored.conf import copyConf, saveConf
 

@@ -461,17 +461,6 @@ class FittedIntermitter(OfflineIntermitter):
         # print(kwargs)
         super().__init__(**stored_conf)
 
-class ChoiceIntermitter:
-    def __new__(cls, mode='default', **kwargs):
-        class_dic={
-            'default' : Intermitter,
-            'branch' : BranchIntermitter,
-            # 'phasic' : PhasicCoupling,
-        }
-
-        return class_dic[mode](**kwargs)
-
-
 def get_EEB_poly1d(sample=None, dt=None, **kwargs):
     if sample is not None:
         if type(sample) == str:

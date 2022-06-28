@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from lib.model.modules.basic import Effector, Oscillator, ConEffector, StepOscillator, StepEffector
+from lib.model.modules.basic import StepEffector
 
 
 
@@ -89,39 +89,3 @@ class NeuralOscillator(StepEffector):
         return state
 
 
-
-
-class Turner:
-    def __init__(self, mode='neural', continuous=True, rebound=False, dt=0.1,
-                 **kwargs):
-        from lib.registry.pars import preg
-        D = preg.larva_conf_dict
-        self.continuous = continuous
-        self.rebound = rebound
-        self.buildup = 0
-        self.ef0 = D.mdicts2['turner'].mode[mode].class_func(**kwargs, dt=dt)
-        # self.ef0.start_effector()
-
-    def step(self, A_in=0.0):
-        self.activation = A_in
-        self.activity = self.ef0.step(A_in)
-        return self.activity
-
-
-if __name__ == '__main__':
-    O = NeuralOscillator(dt=0.1)
-    N = 10000
-    a = np.zeros([N, 8]) * np.nan
-    for i in range(N):
-        a[i, :] = O.get_state()
-        O.step(A=20)
-    print(a.shape)
-    Nbins = 1000
-    import pyinform
-
-    a0, nbins, l = pyinform.utils.bin_series(a, b=Nbins)
-    print(a0.shape)
-    d0 = [pyinform.Dist(a0[:, i]) for i in range(a0.shape[1])]
-
-    h0 = [pyinform.shannon.entropy(d0[i], b=2.0) for i in range(len(d0))]
-    print(h0)

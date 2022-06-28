@@ -3,9 +3,11 @@ import os
 
 import numpy as np
 import pandas as pd
+import param
 
 from lib.aux import dictsNlists as dNl
-from lib.registry.ga_dict import ga_dict, interference_ga_dict
+from lib.model.body.controller import PhysicsController
+from lib.registry.ga_dict import interference_ga_dict
 from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
 from lib.registry.pars import preg
 from lib.plot.base import BasePlot
@@ -13,33 +15,44 @@ from lib.plot.base import BasePlot
 
 class Calibration:
     def __init__(self, refID, turner_mode='neural', physics_keys=None, absolute=True, shorts=None):
+        self.refID = refID
+        self.refDataset = d = loadRef(refID)
+        d.load(contour=False)
+        s, e, c = d.step_data, d.endpoint_data, d.config
         if shorts is None:
             shorts = ['b', 'fov', 'foa']
+        self.shorts = shorts
+        self.target = {sh: d.get_chunk_par(chunk='pause', short=sh, min_dur=3, mode='distro') for sh in self.shorts}
+        self.N = self.target[self.shorts[0]].shape[0]
+        self.dt = c.dt
+
+
         if physics_keys is None:
             physics_keys = []
         if turner_mode == 'neural':
             turner_keys = ['base_activation', 'n', 'tau']
         elif turner_mode == 'sinusoidal':
             turner_keys = ['initial_amp', 'initial_freq']
-        PH = ga_dict(name='physics', only=physics_keys)
-        TUR = ga_dict(name='turner', only=turner_keys)
-        space_dict = {**PH, **TUR}
 
+        self.mkeys = dNl.NestDict({
+            'turner': turner_keys,
+            'physics': physics_keys,
+            'all' : physics_keys+turner_keys
+        })
+
+        self.D = preg.larva_conf_dict
+        self.mdicts = dNl.NestDict({
+            'turner': self.D.dict2.model.m['turner'].mode[turner_mode].args,
+            'physics': self.D.dict2.model.m['physics'].args
+        })
+        self.mconfs = dNl.NestDict({
+            'turner': None,
+            'physics': None
+        })
+        self.Tfunc=self.D.dict2.model.m['turner'].mode[turner_mode].class_func
         self.turner_mode = turner_mode
-        self.base_turner = {**preg.get_null('base_turner', mode=self.turner_mode),
-                            **preg.get_null(f'{self.turner_mode}_turner')}
-        self.space_dict = space_dict
-        self.turner_keys = turner_keys
-        self.physics_keys = physics_keys
-        self.refID = refID
-        self.refDataset = d = loadRef(refID)
-        d.load(contour=False)
-        s, e, c = d.step_data, d.endpoint_data, d.config
         self.absolute = absolute
-        self.shorts = shorts
-        self.target = {sh: d.get_chunk_par(chunk='pause', short=sh, min_dur=3, mode='distro') for sh in self.shorts}
-        self.N = self.target[self.shorts[0]].shape[0]
-        self.dt = c.dt
+
         self.best = None
         self.KS_dic = None
 
@@ -74,23 +87,18 @@ class Calibration:
         P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.01, H=0.1)
         return P.get()
 
-    def sim_turner(self, turner, physics, N=2000):
-        from lib.model.modules.turner import Turner
+    def sim_turner(self, N=2000):
         from lib.aux.ang_aux import wrap_angle_to_0
-
-        L = Turner(dt=self.dt, **turner)
-
-        def compute_ang_vel(b, torque, fov):
-            dv = -physics.ang_damping * fov - physics.body_spring_k * b + torque
-            return fov + dv * self.dt
-
+        T = self.Tfunc(self.mconfs.turner, dt=self.dt)
+        PH = PhysicsController(self.mconfs.physics)
         simFOV = np.zeros(N) * np.nan
         simB = np.zeros(N) * np.nan
         b = 0
         fov = 0
         for i in range(N):
-            ang = L.step(0)
-            fov = compute_ang_vel(b, physics.torque_coef * ang, fov)
+            ang = T.step(0)
+            fov = PH.compute_ang_vel(torque=PH.torque_coef * ang,v=fov, b=b,
+                                           c=PH.ang_damping, k=PH.body_spring_k, dt=T.dt)
             b = wrap_angle_to_0(b + fov * self.dt)
             simFOV[i] = fov
             simB[i] = b
@@ -125,22 +133,19 @@ class Calibration:
         return err, Ks_dic
 
     def retrieve_modules(self, q, Ndec=None):
-        dic = dNl.NestDict({k: q0 for (k, dic), q0 in zip(self.space_dict.items(), q)})
-        turner = dNl.NestDict(copy.deepcopy(self.base_turner))
-
         if Ndec is not None:
-            physics = preg.get_null('physics', **{k: np.round(dic[k], Ndec) for k in self.physics_keys})
-            turner.update({k: np.round(dic[k], Ndec) for k in self.turner_keys})
-        else:
-            physics = preg.get_null('physics', **{k: dic[k] for k in self.physics_keys})
-            turner.update({k: dic[k] for k in self.turner_keys})
-        # print(q, physics)
-        return physics, turner
+            q=[np.round(q0,Ndec) for q0 in q]
+        dic = dNl.NestDict({k:q0 for k,q0 in zip(self.mkeys.all, q)})
+
+
+        for k,mdict in self.mdicts.items() :
+            kwargs= {kk : dic[kk] for kk in self.mkeys[k]}
+            self.mconfs[k]=self.D.conf2(mdict=mdict,**kwargs)
+        # return mconfs
 
     def optimize_turner(self, q=None, return_sim=False, N=4000):
-
-        physics, turner = self.retrieve_modules(q)
-        sim = self.sim_turner(turner, physics, N=N)
+        self.retrieve_modules(q)
+        sim = self.sim_turner(N=N)
         if return_sim:
             return sim
         else:
@@ -161,20 +166,20 @@ class Calibration:
     def plot_turner(self, q):
         from lib.aux.sim_aux import fft_max
 
-        physics, turner = self.retrieve_modules(q, Ndec=2)
-        sim = self.sim_turner(turner, physics, N=self.N)
+        self.retrieve_modules(q,Ndec=2)
+        sim = self.sim_turner(N=self.N)
         err, Ks_dic = self.eval_turner(sim)
 
-        for key, val in turner.items():
+        for key, val in self.mconfs.turner.items():
             print(key, ' : ', val)
-        for key, val in physics.items():
+        for key, val in self.mconfs.physics.items():
             print(key, ' : ', val)
 
         print(Ks_dic)
         ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
         print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
         _ = self.plot_turner_distros(sim)
-        best = dNl.NestDict({'turner': turner, 'physics': physics})
+        best = self.mconfs
 
         return best, Ks_dic
         # pass
@@ -228,42 +233,35 @@ def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs)
 
     return {mID: mm}
 
-def epar(e, k, par=None,average=True):
-    if par is None :
+
+def epar(e, k=None, par=None, average=True):
+    if par is None:
         D = preg.dict
-        par=D[k].d
-    vs=e[par]
-    if average :
+        par = D[k].d
+    vs = e[par]
+    if average:
         return np.round(vs.median(), 2)
-    else :
+    else:
         return vs
 
 
-def adapt_crawler(ee, waveform='realistic', average=True):
+def adapt_crawler(ee, mode='realistic', average=True):
+    # print(ee.columns.values[:40])
+    # raise
+    # D = preg.larva_conf_dict
+    mdict=preg.larva_conf_dict.dict2.model.m['crawler'].mode[mode].args
+    conf0 = dNl.NestDict({'mode':mode})
+    for d, p in mdict.items():
+        print(d,p.codename)
+        if isinstance(p, param.Parameterized):
+            conf0[d] = epar(ee, par=p.codename, average=average)
+        else:
+            raise
 
-    if waveform == 'realistic':
-        kws = {
-            'waveform': waveform,
-            'initial_freq': epar(ee, 'fsv', average=average),
-            'stride_dst_mean': epar(ee, 'str_sd_mu', average=average),
-            'stride_dst_std': epar(ee, 'str_sd_std', average=average),
-            'max_vel_phase': epar(ee, par='phi_scaled_velocity_max', average=average),
-            'max_scaled_vel': epar(ee, 'str_sv_max', average=average)
-        }
-
-    elif waveform == 'constant':
-        kws = {
-            'waveform': waveform,
-            'initial_amp': epar(ee, 'run_v_mu', average=average)
-        }
-    else :
-        raise
-    crawler = preg.larva_conf_dict.conf(mkey='crawler', **kws)
-    return crawler
+    return conf0
 
 
 def adapt_intermitter(c, e, **kwargs):
-
     intermitter = preg.get_null('intermitter')
     intermitter.stridechain_dist = c.bout_distros.run_count
     try:
@@ -291,7 +289,6 @@ def adapt_intermitter(c, e, **kwargs):
 def adapt_interference(c, e, mode='phasic', average=True):
     D = preg.dict
     if average:
-
 
         at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
 
@@ -324,7 +321,7 @@ def adapt_interference(c, e, mode='phasic', average=True):
                 'attenuation_max': att2,
                 'attenuation': att0
             }
-            bkws=preg.get_null('base_interference', **kws)
+            bkws = preg.get_null('base_interference', **kws)
 
             interference = {
                 **bkws,
@@ -336,7 +333,6 @@ def adapt_interference(c, e, mode='phasic', average=True):
 
 
 def adapt_turner(e, mode='neural', average=True):
-
     if mode == 'neural':
         coef, intercept = 0.024, 5
 
@@ -359,8 +355,8 @@ def adapt_turner(e, mode='neural', average=True):
         turner = {**preg.get_null('base_turner', mode='constant'),
                   **preg.get_null('constant_turner',
                                   initial_amp=epar(e, 'pau_foa_mu', average=average),
-                                )}
-    else :
+                                  )}
+    else:
         raise ValueError('Not implemented')
 
     return turner
@@ -369,7 +365,7 @@ def adapt_turner(e, mode='neural', average=True):
 def adapt_locomotor(c, e, average=True):
     m = preg.get_null('locomotor')
     m.turner_params = adapt_turner(e, mode='neural', average=average)
-    m.crawler_params = adapt_crawler(e, waveform='realistic', average=average)
+    m.crawler_params = adapt_crawler(e, mode='realistic', average=average)
     m.intermitter_params = adapt_intermitter(c, e)
     m.interference_params = adapt_interference(c, e, mode='phasic', average=average)
     m.feeder_params = None

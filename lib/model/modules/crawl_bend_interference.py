@@ -37,12 +37,12 @@ class SquareCoupling(DefaultCoupling):
         c_on, f_on = self.active_effectors(crawler, feeder)
         if c_on:
             A = self.attenuation
-            if crawler.waveform in ['realistic', 'gaussian'] and (
+            if crawler.mode in ['realistic', 'gaussian'] and (
                     self.crawler_phi_range[0] < crawler.phi < self.crawler_phi_range[1]):
                 A += self.attenuation_max
-            elif crawler.waveform == 'square' and crawler.phi <= 2 * np.pi * crawler.square_signal_duty:
+            elif crawler.mode == 'square' and crawler.phi <= 2 * np.pi * crawler.square_signal_duty:
                 A += self.attenuation_max
-            elif crawler.waveform == 'constant':
+            elif crawler.mode == 'constant':
                 pass
         elif f_on:
             A = self.attenuation
@@ -72,12 +72,3 @@ class PhasicCoupling(DefaultCoupling):
         return A
 
 
-class Coupling:
-    def __new__(cls, mode='default', **kwargs):
-        class_dic={
-            'default' : DefaultCoupling,
-            'square' : SquareCoupling,
-            'phasic' : PhasicCoupling,
-        }
-
-        return class_dic[mode](**kwargs)

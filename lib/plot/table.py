@@ -163,5 +163,11 @@ def store_model_graphs() :
     combine_pdfs(file_dir=f2,save_as="___ALL_MODEL_SUMMARIES___.pdf")
 
 if __name__ == '__main__':
-    pass
+    from lib.conf.stored.conf import kConfDict
+    # for mID in kConfDict('Model'):
+    #     print(mID)
+    # raise
+    # pass
+    mID='basic_navigator'
+    _ = modelConfTable(mID, show=True)
     # store_model_graphs()

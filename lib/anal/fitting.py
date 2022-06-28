@@ -184,7 +184,6 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
 
         u2, du2, c2, c2cum = compute_density(x, xmin, xmax, Nbins=Nbins)
         values = [u2, du2, c2, c2cum]
-        print(bout, )
 
         a2 = 1 + len(x) / np.sum(np.log(x / xmin))
         a = get_powerlaw_alpha(x, xmin, xmax, discrete=discrete)

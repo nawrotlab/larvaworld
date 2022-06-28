@@ -11,11 +11,11 @@ class ParRegistry:
 
         self.path_dict = paths.build_path_dict()
         self.init_dict = init_pars.ParInitDict().dict
-        self.mfunc = par_funcs.module_func_dict()
+        # self.mfunc = par_funcs.module_func_dict()
         self.parser_dict = parser_dict.ParserDict(init_dict=self.init_dict).dict
         self.dist_dict0 = dist_dict.DistDict()
         self.dist_dict = self.dist_dict0.dict
-        self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, mfunc=self.mfunc, dist_dict0=self.dist_dict0)
+        self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, dist_dict0=self.dist_dict0)
 
 
 

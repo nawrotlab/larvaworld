@@ -114,6 +114,8 @@ class BaseParDict:
         self.add(
             **{'p': 'cum_dur', 'k': nam.cum('t'), 'sym': sub('t', 'cum'), 'lim': (0.0, None), 'dv': 0.1, 'v0': 0.0,
                **kws})
+        self.add(
+            **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'),'dtype':int, 'lim': (0, None), 'dv': 1})
 
     def add(self, **kwargs):
         prepar = preparePar(**kwargs)
@@ -487,8 +489,7 @@ class BaseParDict:
             self.add_unwrap(k0=ko)
 
             self.add_velNacc(k0=kou, k_v=f'{suf}ov', k_a=f'{suf}oa', p_v=p_v, d_v=p_v, p_a=p_a, d_a=p_a,
-                             sym_v=omega(ksuf),
-                             sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
+                             sym_v=omega(ksuf),sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
                              disp_a=f'{lsuf}angular acceleration')
         for k0 in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'fo', 'ro']:
             self.add_freq(k0=k0)
@@ -509,9 +510,7 @@ class BaseParDict:
         self.add(**{'p': 'y', 'disp': 'Y position', 'sym': 'Y', **kws})
         self.add(
             **{'p': 'real_length', 'k': 'l', 'd': 'length', 'disp': 'body length',
-               'sym': '$l$',
-               'v0': 0.004 * s,
-               'lim': (0.0005 * s, 0.01 * s), 'dv': 0.0005 * s, **kws})
+               'sym': '$l$','v0': 0.004 * s, 'lim': (0.0005 * s, 0.01 * s), 'dv': 0.0005 * s, **kws})
 
         self.add(
             **{'p': 'dispersion', 'k': 'dsp', 'sym': circledast('d'), 'disp': 'dispersal', **kws})

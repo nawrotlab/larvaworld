@@ -65,9 +65,7 @@ def init2par(d0, d=None, pre_d=None, aux_args={}):
 
 
 class LarvaConfDict:
-    def __init__(self, init_dict=None, mfunc=None, dist_dict0=None):
-
-
+    def __init__(self, init_dict=None, dist_dict0=None):
 
         if dist_dict0 is None:
             from lib.registry.pars import preg
@@ -100,13 +98,8 @@ class LarvaConfDict:
         self.aux_keys = ['body', 'physics', 'energetics']
         self.mkeys = self.mbkeys + self.aux_keys
 
-        self.dict1=self.build_mode1(init_dict=init_dict, mfunc=mfunc)
-        self.dict2=self.build_mode2()
-
-
-
-
-
+        self.dict1 = self.build_mode1(init_dict=init_dict)
+        self.dict2 = self.build_mode2()
 
     def build_mode2(self):
         from lib.registry.modConfs import build_modConf_dict, build_aux_dict
@@ -117,23 +110,19 @@ class LarvaConfDict:
         mpredicts2 = dNl.NestDict({**mbpredicts2, **aux_predicts2})
         init_dicts2 = dNl.NestDict({**init_bdicts2, **init_auxdicts2})
 
-        bd={'init' : init_bdicts2, 'pre' : mbpredicts2, 'm' : mbdicts2}
-        auxd={'init' : init_auxdicts2, 'pre' : aux_predicts2, 'm' : aux_dicts2}
-        d={'init' : init_dicts2, 'pre' : mpredicts2, 'm' : mdicts2}
+        bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2}
+        auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2}
+        d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2}
 
-        dd={'brain' : bd, 'aux' : auxd, 'model' : d}
+        dd = {'brain': bd, 'aux': auxd, 'model': d}
         return dNl.NestDict(dd)
 
+    def build_mode1(self, init_dict):
 
-
-
-    def build_mode1(self, init_dict, mfunc=None):
-
-
-        if mfunc is None:
-            from lib.registry.par_funcs import module_func_dict
-            mfunc = module_func_dict()
-        self.mfunc = mfunc
+        # if mfunc is None:
+        #     from lib.registry.par_funcs import module_func_dict
+        #     mfunc = module_func_dict()
+        # self.mfunc = mfunc
 
         mpref = {k: f'brain.{k}_params.' for k in self.mbkeys}
         init_bdicts = dNl.NestDict()
@@ -144,14 +133,12 @@ class LarvaConfDict:
             init_bdicts[k] = init_dict[k]
             mbdicts[k], mbpredicts[k] = init2par(d0=init_bdicts[k], aux_args={'pref': mpref[k]})
 
-
         init_auxdicts = dNl.NestDict()
         aux_dicts = dNl.NestDict()
         aux_predicts = dNl.NestDict()
         for k in self.aux_keys:
             init_auxdicts[k] = init_dict[k]
             aux_dicts[k], aux_predicts[k] = init2par(d0=init_auxdicts[k])
-
 
         mdicts = dNl.NestDict({**mbdicts, **aux_dicts})
         mpredicts = dNl.NestDict({**mbpredicts, **aux_predicts})
@@ -183,17 +170,23 @@ class LarvaConfDict:
         dd = {'brain': bd, 'aux': auxd, 'model': d}
         return dNl.NestDict(dd)
 
+    def get_mdict2(self, mkey,mode=None):
+        if mkey is not None:
+            if mkey in self.aux_keys:
+                mdict = self.dict2.model.m[mkey].args
+            elif mkey in self.mbkeys:
+                if mode is None:
+                    mode = 'default'
+                mdict = self.dict2.model.m[mkey].mode[mode].args
+            return mdict
+        else:
+            raise ValueError('Module dictionary or key must be defined')
 
     def conf2(self, mdict=None, mkey=None, prefix=False, mode=None, refID=None, **kwargs):
-        conf0 = dNl.NestDict()
+
         if mdict is None:
-            if mkey is not None:
-                if mode is None:
-                    mdict = self.dict2.model.m[mkey].args
-                else:
-                    mdict = self.dict2.model.m[mkey].mode[mode].args
-            else:
-                raise ValueError('Module dictionary or key must be defined')
+            mdict = self.get_mdict2(mkey, mode)
+        conf0 = dNl.NestDict()
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
                 d0 = f'{p.pref}{d}' if prefix else d
@@ -216,15 +209,15 @@ class LarvaConfDict:
             # bout_distros = sample.bout_distros
         return dNl.NestDict(conf0)
 
-    def module2(self, mkey, mode=None, refID=None, **kwargs):
+    def module2(self, mkey, mode=None, refID=None, mkwargs={}, **kwargs):
         if mode is None:
             mdict = self.dict2.brain.m[mkey]
         else:
             mdict = self.dict2.brain.m[mkey].mode[mode]
         mkws = self.dict2.brain.m[mkey].kwargs
-        conf0 = self.conf2(mdict=mdict.args, prefix=False, refID=refID)
+        conf0 = self.conf2(mdict=mdict.args, prefix=False, refID=refID, **kwargs)
         func = mdict.class_func
-        mkws.update(kwargs)
+        mkws.update(mkwargs)
         m = func(**conf0, **mkws)
         return m
 
@@ -274,13 +267,6 @@ class LarvaConfDict:
                     mc[mkey] = self.conf2(mdict)
                 # mc[mkey] = self.conf(mdict)
         return mc
-
-    def module(self, mkey, **kwargs):
-        mdict = self.dict1.brain.m[mkey]
-        conf0 = self.conf(mdict, prefix=False)
-        func = self.mfunc[mkey]
-        m = func(**conf0, **kwargs)
-        return m
 
     def update_modelConf(self, mconf, mdict, **kwargs):
         conf0 = self.conf(mdict, prefix=True, **kwargs)
@@ -333,8 +319,10 @@ class LarvaConfDict:
         return conf
 
     def loco_module(self, mkeys=None, **kwargs):
+        from lib.model.modules.locomotor import DefaultLocomotor
+
         conf = self.loco_conf(mkeys)
-        L = self.mfunc['locomotor'](conf=conf, **kwargs)
+        L = DefaultLocomotor(conf=conf, **kwargs)
         return L
 
     def brain_conf(self, mkeys=None):
@@ -352,8 +340,9 @@ class LarvaConfDict:
         return conf
 
     def brain_module(self, mkeys=None, **kwargs):
+        from lib.model.modules.brain import DefaultBrain
         conf = self.brain_conf(mkeys)
-        L = self.mfunc['brain'](conf=conf, **kwargs)
+        L = DefaultBrain(conf=conf, **kwargs)
         return L
 
     def mIDbconf(self, mID=None, m=None):
@@ -388,10 +377,6 @@ class LarvaConfDict:
             #     mc[mkey]= None
         return mc
 
-    def mIDmodule(self, mID, module='brain', **kwargs):
-        mbConf = self.mIDbconf(mID)
-        multibconf = self.multibconf(mbConf)
-        return self.mfunc[module](conf=multibconf, **kwargs)
 
     def copyID(self, mdic, mmdic):
         if mmdic is None:
@@ -413,7 +398,6 @@ class LarvaConfDict:
         m = self.multiconf(mConf, **kwargs)
         data = []
 
-        # print(mID,m.energetics)
         def gen_rows(mdic, mConf_dic, parent, data0, suf_keys=False):
 
             for n in mdic:
@@ -437,6 +421,7 @@ class LarvaConfDict:
             return data0
 
         def mvalid(k, dic, data0):
+
             dvalid = dNl.NestDict({
                 'interference': {
                     'square': ['crawler_phi_range', 'attenuation', 'attenuation_max'],
@@ -465,12 +450,8 @@ class LarvaConfDict:
                 # 'intermitter': ['stridechain_dist', 'pause_dist']
             })
 
-            if k == 'interference':
+            if k in ['crawler', 'turner', 'interference']:
                 vals = dvalid[k][dic.mode]
-            elif k == 'turner':
-                vals = dvalid[k][dic.mode]
-            elif k == 'crawler':
-                vals = dvalid[k][dic.waveform]
             elif k == 'intermitter':
                 for kkk in ['stridechain_dist', 'pause_dist', 'run_dist']:
                     if dic[kkk] is not None:
@@ -482,7 +463,6 @@ class LarvaConfDict:
                 vals = []
             else:
                 vals = dvalid[k]
-
             return vals, data0
 
         for k in self.mkeys:
@@ -491,14 +471,15 @@ class LarvaConfDict:
                 dic0 = mConf['brain'][f'{k}_params']
 
 
+
+
+
             elif k in self.aux_keys:
                 dic = m[k]
                 dic0 = mConf[k]
-
             if dic is None:
-                valid = []
-            else:
-                valid, data = mvalid(k, dic, data)
+                continue
+            valid, data = mvalid(k, dic, data)
 
             if len(valid) > 0:
                 data = gen_rows(valid, dic0, k, data)
@@ -518,18 +499,16 @@ class LarvaConfDict:
         for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
             if conf.modules[k]:
                 m = conf[f'{k}_params']
-                if k == 'crawler' :
-                    mode = m.waveform
-                elif k == 'feeder' :
+                if k == 'feeder':
                     mode = 'default'
-                else :
+                else:
                     mode = m.mode
                 kws = {kw: getattr(L, kw) for kw in D[k].kwargs.keys()}
                 M = D[k].mode[mode].class_func(**m, **kws)
                 if k == 'intermitter':
                     M.disinhibit_locomotion(L)
                 if k == 'crawler':
-                    M.waveform = m.waveform
+                    M.mode = m.mode
             else:
                 M = None
             setattr(L, k, M)
@@ -541,7 +520,7 @@ class LarvaConfDict:
             if conf.modules[k]:
                 m = conf[f'{k}_params']
                 if k == 'windsensor':
-                    m.gain_dict={'windsensor': 1.0}
+                    m.gain_dict = {'windsensor': 1.0}
                 mode = 'default'
                 kws = {kw: getattr(B, kw) for kw in D[k].kwargs.keys()}
                 M = D[k].mode[mode].class_func(**m, **kws)
@@ -556,39 +535,12 @@ class LarvaConfDict:
         B.memory = None
         if conf.modules['memory']:
             mm = conf['memory_params']
-            mode= mm['modality']
+            mode = mm['modality']
             kws = {kw: getattr(B, kw) for kw in D['memory'].kwargs.keys()}
-            if mode=='olfaction' and B.olfactor :
-                mm.gain=B.olfactor.gain
+            if mode == 'olfaction' and B.olfactor:
+                mm.gain = B.olfactor.gain
                 B.memory = D['memory'].mode[mode].class_func(**mm, **kws)
-            elif mode=='touch' and B.toucher :
-                mm.gain=B.toucher.gain
+            elif mode == 'touch' and B.toucher:
+                mm.gain = B.toucher.gain
                 B.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
         return B
-
-    def init_loco_mID(self, mID):
-        from lib.conf.stored.conf import loadConf
-        m = loadConf(mID, 'Model')
-        from lib.model.modules.locomotor import DefaultLocomotor
-        L = DefaultLocomotor(conf=m.brain)
-        return L
-
-    def init_brain_mID(self, mID):
-        from lib.conf.stored.conf import loadConf
-        m = loadConf(mID, 'Model')
-        from lib.model.modules.brain import DefaultBrain
-        # L = DefaultLocomotor(conf=m.brain)
-        B = DefaultBrain(conf=m.brain)
-        return B
-
-
-def confID_dict():
-    from lib.conf.stored.conf import kConfDict, ConfSelector
-    dic = dNl.NestDict()
-    keys = ['Ref', 'Model', 'Env', 'Exp', 'Ga']
-    for K0 in keys:
-        k0 = K0.lower()
-        k = f'{k0}ID'
-        vparfunc = ConfSelector(K0, doc=f'The stored {K0} configurations as a list of IDs', label=sub('ID', k0))
-        dic[K0] = vparfunc()
-    return dic

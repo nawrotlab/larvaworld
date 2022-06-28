@@ -83,15 +83,13 @@ T_dict = {
 # Crawler module
 C = preg.get_null('crawler')
 C_no_noise = preg.get_null('crawler', noise=0.0)
-C_Sak = preg.get_null('crawler', waveform='realistic', noise=0.0, initial_freq=1.37, freq_std=0.0,  # freq_std=0.18,
+C_Sak = preg.get_null('crawler', mode='realistic', noise=0.0, initial_freq=1.37, freq_std=0.0,  # freq_std=0.18,
                   stride_dst_mean=0.24, stride_dst_std=0.07, max_vel_phase=3.6)
 
-# Ctemp={k:None for k,v in C.items()}
-# Ccon = Ctemp.update({'waveform':'constant', 'initial_amp':0.323, 'noise':0.1})
-Ccon = preg.get_null('crawler', waveform='constant', initial_amp=0.323)
 
-# Ccon_no_noise = Ctemp.update({'waveform':'constant', 'initial_amp':0.323, 'noise':0.0})
-Ccon_no_noise = preg.get_null('crawler', waveform='constant', initial_amp=0.323, noise=0.0)
+Ccon = preg.get_null('crawler', mode='constant', initial_amp=0.323)
+
+Ccon_no_noise = preg.get_null('crawler', mode='constant', initial_amp=0.323, noise=0.0)
 
 C_dict = {
     'default': C,

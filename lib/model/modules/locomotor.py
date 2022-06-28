@@ -1,12 +1,6 @@
 import numpy as np
 
-from lib.aux.dictsNlists import NestDict
 from lib.model.body.controller import PhysicsController
-from lib.model.modules.crawl_bend_interference import Coupling
-from lib.model.modules.crawler import Crawler
-from lib.model.modules.feeder import Feeder
-
-from lib.model.modules.turner import Turner
 
 
 class Locomotor:
@@ -88,13 +82,6 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
             Locomotor.__init__(self, **kwargs)
         from lib.registry.pars import preg
         preg.larva_conf_dict.init_loco(conf, self)
-
-    # def output(self, length):
-    #     if self.offline :
-    #         self.update_body(length)
-    #         return self.lin_vel, self.ang_vel, self.feed_motion
-    #     else :
-    #         return self.lin_activity, self.ang_activity, self.feed_motion
 
     def step(self, A_in=0, length=1):
         if self.intermitter:

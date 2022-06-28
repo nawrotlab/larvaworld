@@ -95,7 +95,7 @@ def nengo_brain(module_shorts, EEB, OD=None):
                  turner=preg.get_null('turner', initial_freq=0.3, initial_amp=30.0, noise=0.1, activation_noise=0.8,
                                       freq_range=(0.2, 0.4)),
                  crawler=preg.get_null('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
-                                       waveform='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
+                                       mode='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=preg.get_null('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
                  intermitter=Im(EEB, mode='nengo'),
@@ -135,7 +135,7 @@ def OD(ids: list, means: list, stds=None) -> dict:
 
 
 def create_mod_dict():
-    Ccon = preg.larva_conf_dict.conf(mkey='crawler', waveform='constant', initial_amp=0.0012)
+    Ccon = preg.larva_conf_dict.conf(mkey='crawler', mode='constant', initial_amp=0.0012)
     Tsin = preg.get_null('turner',
                          mode='sinusoidal',
                          initial_amp=15.0,

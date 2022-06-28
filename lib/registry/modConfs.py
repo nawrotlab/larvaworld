@@ -52,7 +52,7 @@ def init_mods():
                          'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
         },
         'crawler': {
-            'waveform': {'t': str, 'v': 'realistic', 'k': 'Cr_mod',
+            'mode': {'t': str, 'v': 'realistic', 'k': 'Cr_mod',
                          'vs': ['realistic', 'square', 'gaussian', 'constant'],
                          'symbol': subsup('A', 'C', 'mode'),
                          'label': 'crawler waveform',
@@ -498,12 +498,12 @@ def init_mods():
 
 
 def Tur0():
-    from lib.model.modules.basic import ConEffector, StepOscillator
+    from lib.model.modules.basic import StepEffector, StepOscillator
     from lib.model.modules.turner import NeuralOscillator
 
     NEUargs = {
         'base_activation': {'dtype': float, 'v0': 20.0, 'lim': (10.0, 40.0), 'dv': 0.1,
-                            'disp': 'tonic input', 'sym': '$I_{T}^{0}$', 'k': 'I_T0',
+                            'disp': 'tonic input', 'sym': '$I_{T}^{0}$', 'k': 'I_T0','codename':'turner_input_constant',
                             'h': 'The baseline activation/input of the TURNER module.'},
         'activation_range': {'dtype': Tuple[float], 'v0': (10.0, 40.0),
                              'lim': (0.0, 100.0), 'dv': 0.1,
@@ -524,71 +524,73 @@ def Tur0():
               'h': 'The neuron spike-rate response steepness coefficient.'},
 
     }
-    SINargs = {'initial_amp': {'v0': 20.0, 'lim': (0.0, 100.0), 'dv': 0.1,
-                               'disp': 'output amplitude', 'sym': '$A_{T}^{0}$', 'k': 'A_T0',
-                               'h': 'The initial activity amplitude of the TURNER module.'},
+
+    Tamp = {'initial_amp': {'lim': (0.1, 20.0), 'dv': 0.1, 'v0': 20.0,
+                            'k': 'A_T0','codename': 'pause_front_orientation_velocity_mean',
+                            'disp': 'output amplitude', 'sym': '$A_{T}^{0}$',
+                            'h': 'The initial activity amplitude of the TURNER module.'},
+            }
+
+
+
+    SINargs = {**Tamp,
                'initial_freq': {'v0': 0.58, 'lim': (0.01, 2.0), 'dv': 0.01,
                                 'k': 'f_T0',
                                 'disp': 'bending frequency', 'sym': sub('f', 'T'), 'u_name': '$Hz$',
-                                'u': ureg.Hz,
+                                'u': ureg.Hz,'codename': 'front_orientation_velocity_freq',
                                 'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).'},
                }
-    CONargs = {'initial_amp': {'lim': (0.1, 20.0), 'dv': 0.1, 'v0': 20.0,
-                               'k': 'A_T0',
-                               'disp': 'output amplitude', 'sym': '$A_{T}^{0}$',
-                               'h': 'The initial activity amplitude of the TURNER module.'},
-               }
+
 
     d = {'neural': {'args': NEUargs, 'class_func': NeuralOscillator},
          'sinusoidal': {'args': SINargs, 'class_func': StepOscillator},
-         'constant': {'args': CONargs, 'class_func': ConEffector}
+         'constant': {'args': Tamp, 'class_func': StepEffector}
          }
     return dNl.NestDict(d)
 
 
 def Cr0():
-    from lib.model.modules.basic import StrideOscillator, SquareOscillator, PhaseOscillator, GaussOscillator, \
-        ConEffector
+    from lib.model.modules.basic import StepEffector
+    from lib.model.modules.crawler import SquareOscillator, PhaseOscillator, GaussOscillator
     str_kws = {'stride_dst_mean': {'v0': 0.224, 'lim': (0.0, 1.0), 'dv': 0.01,
-                                   'k': 'sstr_d_mu',
+                                   'k': 'str_sd_mu',
                                    'disp': r'stride distance mean', 'sym': sub(bar(circle('d')), 'S'),
                                    'u_name': '$body-lengths$', 'codename': 'scaled_stride_dst_mean',
                                    'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                'stride_dst_std': {'v0': 0.033, 'lim': (0.0, 1.0),
-                                  'k': 'sstr_d_std',
+                                  'k': 'str_sd_std',
                                   'disp': 'stride distance std', 'sym': sub(tilde(circle('d')), 'S'),
-                                  'u_name': '$body-lengths$',
-                                  'combo': 'scaled distance / stride', 'codename': 'scaled_stride_dst_std',
+                                  'u_name': '$body-lengths$','codename': 'scaled_stride_dst_std',
                                   'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'}}
 
     Camp = {'initial_amp': {'lim': (0.0, 2.0), 'dv': 0.1, 'v0': 0.5,
-                            'k': 'A_C0',
-                            'disp': 'output amplitude', 'sym': '$A_{C}^{0}$',
-                            'h': 'The initial activity amplitude of the CRAWLER module.'}}
+                            'k': 'A_C0','codename': 'stride_scaled_velocity_mean',
+                            'disp': 'output amplitude', 'sym': subsup('A', 'C', 0),
+                            'h': 'The initial output amplitude of the CRAWLER module.'}}
     Cfr = {'initial_freq': {'v0': 1.418, 'lim': (0.5, 2.5), 'dv': 0.1,
                             'k': 'f_C0',
-                            'disp': 'crawling frequency', 'sym': sub('f', 'C'), 'u': ureg.Hz,
+                            'disp': 'crawling frequency', 'sym': subsup('f', 'C', 0), 'u': ureg.Hz,
                             'codename': 'scaled_velocity_freq',
                             'h': 'The initial frequency of the repetitive crawling behavior.'}}
 
     SQargs = {
-        'square_signal_duty': {'v0': 0.6, 'lim': (0.0, 1.0), 'dv': 0.1,
+        'duty': {'v0': 0.6, 'lim': (0.0, 1.0), 'dv': 0.1,
                                'k': 'r_C',
-                               'disp': 'crawling square_signal_duty', 'sym': sub('r', 'C'),
-                               'h': 'square_signal_duty.'},
+                               'disp': 'square signal duty', 'sym': sub('r', 'C'),
+                               'h': 'The duty parameter(%time at the upper end) of the square signal.'},
         **Cfr, **Camp
 
     }
     GAUargs = {
-        'gaussian_window_std': {'v0': 0.6, 'lim': (0.0, 1.0), 'dv': 0.1,
+        'std': {'v0': 0.6, 'lim': (0.0, 1.0), 'dv': 0.1,
                                 'k': 'r_C',
-                                'disp': 'gaussian_window_std', 'sym': sub('r', 'C'),
-                                'h': 'gaussian_window_std.'},
+                                'disp': 'gaussian window std', 'sym': sub('r', 'C'),
+                                'h': 'The std of the gaussian window.'},
 
         **Cfr, **Camp
     }
     Rargs = {'max_scaled_vel': {'v0': 0.6, 'lim': (0.0, 1.5), 'disp': 'maximum scaled velocity',
-                                'codename': 'stride_scaled_velocity_max', 'k': 'sstr_v_max', 'dv': 0.1,
+                                'codename': 'stride_scaled_velocity_max', 'k': 'str_sv_max', 'dv': 0.1,
                                 'sym': sub(circle('v'), 'max'), 'u': ureg.s ** -1,
                                 'u_name': '$body-lengths/sec$',
                                 'h': 'The maximum scaled forward velocity.'},
@@ -598,7 +600,7 @@ def Cr0():
                                'sym': subsup('$\phi$', 'C', 'v'), 'u_name': 'rad', 'u': ureg.rad,
                                'codename': 'phi_scaled_velocity_max',
                                'h': 'The phase of the crawling oscillation cycle where forward velocity is maximum.'},
-             **Cfr, **Camp
+             **Cfr
              }
 
     d = {
@@ -606,7 +608,7 @@ def Cr0():
         'gaussian': {'args': {**GAUargs, **str_kws}, 'class_func': GaussOscillator},
         'square': {'args': {**SQargs, **str_kws}, 'class_func': SquareOscillator},
         'realistic': {'args': {**Rargs, **str_kws}, 'class_func': PhaseOscillator},
-        'constant': {'args': Camp, 'class_func': ConEffector}
+        'constant': {'args': Camp, 'class_func': StepEffector}
     }
     return dNl.NestDict(d)
 
@@ -620,16 +622,16 @@ def If0():
                              'disp': 'suppression target', 'sym': '-',
                              'h': 'CRAWLER:TURNER suppression target.'},
         'attenuation': {'v0': 1.0, 'lim': (0.0, 1.0), 'disp': 'suppression coefficient',
-                        'sym': '$c_{CT}^{0}$', 'k': 'c_CT0',
+                        'sym': '$c_{CT}^{0}$', 'k': 'c_CT0','codename': 'attenuation_min',
                         'h': 'CRAWLER:TURNER baseline suppression coefficient'},
         'attenuation_max': {'v0': 0.0, 'lim': (0.0, 1.0),
                             'disp': 'suppression relief coefficient',
-                            'sym': '$c_{CT}^{1}$', 'k': 'c_CT1',
+                            'sym': '$c_{CT}^{1}$', 'k': 'c_CT1','codename': 'attenuation_max',
                             'h': 'CRAWLER:TURNER suppression relief coefficient.'}
     }
 
     PHIargs = {
-        'max_attenuation_phase': {'v0': 3.4, 'lim': (0.0, 2 * np.pi), 'disp': 'max relief phase',
+        'max_attenuation_phase': {'v0': 3.4, 'lim': (0.0, 2 * np.pi), 'disp': 'max relief phase','codename':'phi_attenuation_max',
                                   'sym': '$\phi_{C}^{\omega}$', 'u': ureg.rad, 'k': 'phi_fov_max',
                                   'h': 'CRAWLER phase of minimum TURNER suppression.'},
         **IFargs
@@ -1031,7 +1033,6 @@ def build_modConf_dict():
     for mkey in d0.keys():
         for m, mdic in d0[mkey].mode.items():
             for arg, vs in mdic.args.items():
-                # print(mkey,m,arg)
                 pre_p = preparePar(p=arg, **vs)
                 p = v_descriptor(**pre_p)
                 pre_d00[mkey].mode[m].args[arg] = pre_p
@@ -1041,11 +1042,23 @@ def build_modConf_dict():
 
 if __name__ == '__main__':
     from lib.conf.stored.conf import kConfDict
-    from lib.conf.stored.conf import loadConf
-    mID='thermo_navigator'
-    m=loadConf(mID,'Model')
-    print(m)
+    from lib.conf.stored.conf import loadConf,loadRef
+
+    refID = 'None.150controls'
+    d = loadRef(refID)
+    d.load(step=False,contour=False)
+    e, c = d.endpoint_data, d.config
+    print(d.existing(key='end', return_shorts=False))
     raise
+
+
+    m=d.average_modelConf(new_id='test99', turner_mode='neural', crawler_mode='constant', interference_mode='phasic')
+    conf=m.brain.crawler_params
+
+    # mID='thermo_navigator'
+    # m=loadConf(mID,'Model')
+    # print()
+    # raise
 
     #
     # for mID in kConfDict('Model'):
@@ -1058,9 +1071,18 @@ if __name__ == '__main__':
     # from lib.aux.sim_aux import get_sample_bout_distros0
     # from lib.conf.stored.conf import loadConf
 
-    # refID = 'None.150controls'
+    #
     # sample = loadConf(refID, 'Ref')
     dd = preg.larva_conf_dict
+
+    M=dd.module2(mkey='crawler',mode=conf['waveform'], **conf)
+    for i in range(1000):
+        AA=M.step()
+        print(AA)
+
+    # f=dd.mdicts2.crawler.mode[conf['waveform']].class_func
+    # print(f)
+    raise
 
     d = dd.mdicts2aux.energetics
     for k, v in d.items():
