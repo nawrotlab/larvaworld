@@ -4,48 +4,47 @@ from typing import Tuple, List
 import numpy as np
 import param
 
-
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring
 from lib.registry.units import ureg
 
-def get_vfunc(dtype,lim,vs) :
+
+def get_vfunc(dtype, lim, vs):
     func_dic = {
-    # SupportsFloat: param.Number,
-    float: param.Number,
-    int: param.Integer,
-    str: param.String,
-    bool: param.Boolean,
-    dict: param.Dict,
-    list: param.List,
-    type: param.ClassSelector,
-    List[int]: param.List,
-    List[str]: param.List,
-    List[float]: param.List,
-    List[Tuple[float]]: param.List,
-    FunctionType: param.Callable,
-    Tuple[float]: param.Range,
-    Tuple[int]: param.NumericTuple,
-}
-    if dtype==float and lim==(0.0,1.0) :
+        float: param.Number,
+        int: param.Integer,
+        str: param.String,
+        bool: param.Boolean,
+        dict: param.Dict,
+        list: param.List,
+        type: param.ClassSelector,
+        List[int]: param.List,
+        List[str]: param.List,
+        List[float]: param.List,
+        List[Tuple[float]]: param.List,
+        FunctionType: param.Callable,
+        Tuple[float]: param.Range,
+        Tuple[int]: param.NumericTuple,
+    }
+    if dtype == float and lim == (0.0, 1.0):
         return param.Magnitude
-    if type(vs)==list and dtype in [str,int]:
+    if type(vs) == list and dtype in [str, int]:
         return param.Selector
-    else :
+    else:
         return func_dic[dtype]
 
 
-def vpar(vfunc, v0, h, lab, lim, dv,vs):
+def vpar(vfunc, v0, h, lab, lim, dv, vs):
     f_kws = {
         'default': v0,
         'doc': h,
         'label': lab,
         'allow_None': True
     }
-    if vfunc in [param.List,param.Number, param.Range]:
+    if vfunc in [param.List, param.Number, param.Range]:
         if lim is not None:
             f_kws['bounds'] = lim
-    if vfunc in [param.Range,param.Number]:
+    if vfunc in [param.Range, param.Number]:
         if dv is not None:
             f_kws['step'] = dv
     if vfunc in [param.Selector]:
@@ -55,25 +54,24 @@ def vpar(vfunc, v0, h, lab, lim, dv,vs):
 
 
 def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, codename=None, lab=None, h=None, u_name=None,
-                 required_ks=[], u=ureg.dimensionless, v0=None, lim=None, dv=None,vs=None,
-                 vfunc=None, vparfunc=None, func=None, **kwargs):
-
+               required_ks=[], u=ureg.dimensionless, v0=None, lim=None, dv=None, vs=None,
+               vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
     disp = d if disp is None else disp
     k = k if k is not None else d
     sym = k if sym is None else sym
-    if lab is None :
-        if u==ureg.dimensionless :
+    if lab is None:
+        if u == ureg.dimensionless:
             lab = f'{disp}'
-        else :
+        else:
             lab = fr'{disp} ({u})'
 
     h = lab if h is None else h
     if vparfunc is None:
         if vfunc is None:
-            vfunc = get_vfunc(dtype=dtype,lim=lim,vs=vs)
-        vparfunc = vpar(vfunc, v0, h, lab, lim, dv,vs)
+            vfunc = get_vfunc(dtype=dtype, lim=lim, vs=vs)
+        vparfunc = vpar(vfunc, v0, h, lab, lim, dv, vs)
     else:
         vparfunc = vparfunc()
 
@@ -97,35 +95,30 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, codename=Non
     return dNl.NestDict(kws)
 
 
-
-
 class BaseParDict:
     def __init__(self, func_dict, in_rad=True, in_m=True):
         self.func_dict = func_dict
         self.dict = dNl.NestDict()
-        self.dict_entries=[]
+        self.dict_entries = []
         self.build_initial()
         self.build_angular(in_rad)
         self.build_spatial(in_m)
         self.build_chunks()
         self.build_sim_pars()
 
-
     def build_initial(self):
-        kws = {'u': ureg.s, 'vfunc': param.Number}
-        self.addPar(**{'p': 'model.dt', 'k': 'dt', 'd': 'timestep', 'sym': '$dt$', 'codename': 'model.dt',
-                       'lim': (0.01, 0.5), 'dv': 0.01, 'v0': 0.1, **kws})
-        self.addPar(
-            **{'p': 'cum_dur', 'k': nam.cum('t'), 'd': nam.cum('dur'), 'sym': sub('t', 'cum'), 'lim': (0.0, None),
-               'dv': 0.1, 'v0': 0.0, **kws})
+        kws = {'u': ureg.s}
+        self.add(
+            **{'p': 'model.dt', 'k': 'dt', 'd': 'timestep', 'sym': '$dt$', 'lim': (0.01, 0.5), 'dv': 0.01, 'v0': 0.1,
+               **kws})
+        self.add(
+            **{'p': 'cum_dur', 'k': nam.cum('t'), 'sym': sub('t', 'cum'), 'lim': (0.0, None), 'dv': 0.1, 'v0': 0.0,
+               **kws})
 
-    def addPar(self, **kwargs):
+    def add(self, **kwargs):
         prepar = preparePar(**kwargs)
-        self.dict[prepar.k]=prepar
+        self.dict[prepar.k] = prepar
         self.dict_entries.append(prepar)
-
-
-
 
     def add_rate(self, k0=None, k_time='t', p=None, k=None, d=None, sym=None, k_num=None, k_den=None, **kwargs):
         if k0 is not None:
@@ -145,14 +138,23 @@ class BaseParDict:
 
         b_num = self.dict[k_num]
         b_den = self.dict[k_den]
-        u = b_num.u / b_den.u
-        self.addPar(
-            **{'p': p, 'k': k, 'd': d, 'sym': sym, 'u': u, 'required_ks': [k_num, k_den], 'vfunc': param.Number},
-            **kwargs)
+        # u = b_num.u / b_den.u
+
+        kws = {
+            'p': p,
+            'k': k,
+            'd': d,
+            'sym': sym,
+            'u': b_num.u / b_den.u,
+            'required_ks': [k_num, k_den],
+            # **kwargs
+        }
+        kws.update(kwargs)
+        self.add(**kws)
 
     def add_operators(self, k0):
         b = self.dict[k0]
-        kws0 = {'vfunc': param.Number, 'u': b.u, 'required_ks': [k0]}
+        kws0 = {'u': b.u, 'required_ks': [k0]}
 
         funcs = self.func_dict.ops
 
@@ -179,75 +181,122 @@ class BaseParDict:
                    'func': funcs.cum(b.d), 'k': nam.cum(b.k)}
 
         for kws in [mu_kws, std_kws, min_kws, max_kws, fin_kws, init_kws, cum_kws]:
-            self.addPar(**kws, **kws0)
+            self.add(**kws, **kws0)
 
     def add_chunk(self, pc, kc, func=None, required_ks=[]):
         f_kws = {'func': func, 'required_ks': required_ks}
 
-        p0, p1, pt, pid, ptr, pN, pl = nam.start(pc), nam.stop(pc), nam.dur(pc), nam.id(pc), nam.dur_ratio(pc), nam.num(
-            pc), nam.length(pc)
+        ptr = nam.dur_ratio(pc)
+        pl = nam.length(pc)
+        pN = nam.num(pc)
         pN_mu = nam.mean(pN)
-
-        k0, k1, kid, ktr, kN, kt, kl = f'{kc}0', f'{kc}1', f'{kc}_id', f'{kc}_tr', f'{kc}_N', f'{kc}_t', f'{kc}_l'
+        ktr = f'{kc}_tr'
+        kl = f'{kc}_l'
+        kN = f'{kc}_N'
         kN_mu = f'{kN}_mu'
+        kt = f'{kc}_t'
 
-        self.addPar(**{'p': pc, 'k': kc, 'sym': f'${kc}$', 'disp': pc})
-        self.addPar(
-            **{'p': p0, 'k': k0, 'u': ureg.s, 'sym': subsup('t', kc, 0), 'disp': f'{pc} start', 'vfunc': param.Number,
-               **f_kws})
-        self.addPar(
-            **{'p': p1, 'k': k1, 'u': ureg.s, 'sym': subsup('t', kc, 1), 'disp': f'{pc} end', 'vfunc': param.Number,
-               **f_kws})
-        self.addPar(
-            **{'p': pid, 'k': kid, 'sym': sub('idx', kc), 'dtype': str, 'disp': f'{pc} idx', 'vfunc': param.String})
+        kwlist = [
+            {
+                'p': pc,
+                'k': kc,
+                'sym': f'${kc}$',
+                'disp': pc
+            },
+            {
+                'p': nam.start(pc),
+                'k': f'{kc}0',
+                'u': ureg.s,
+                'sym': subsup('t', kc, 0),
+                'disp': f'{pc} start',
+                **f_kws
+            },
+            {'p': nam.stop(pc),
+             'k': f'{kc}1',
+             'u': ureg.s,
+             'sym': subsup('t', kc, 1),
+             'disp': f'{pc} end',
+             **f_kws},
+            {
+                'p': nam.id(pc),
+                'k': f'{kc}_id',
+                'sym': sub('idx', kc),
+                'disp': f'{pc} idx',
+                'dtype': str
+            },
+            {'p': ptr,
+             'k': ktr,
+             'sym': sub('r', kc),
+             'disp': f'% time in {pc}s',
+             'lim': (0.0, 1.0),
+             'required_ks': [nam.cum(nam.dur(pc)), nam.cum(nam.dur(''))],
+             'func': self.func_dict.tr(pc)},
+            {
+                'p': pN,
+                'k': kN,
+                'sym': sub('N', f'{pc}s'),
+                'disp': f'# {pc}s',
+                'dtype': int,
+                **f_kws
+            },
+            {
+                'p': nam.dur(pc),
+                'k': kt,
+                'sym': sub(Delta('t'), kc),
+                'disp': f'{pc} duration',
+                'u': ureg.s,
+                **f_kws
+            }]
 
-        self.addPar(
-            **{'p': ptr, 'k': ktr, 'sym': sub('r', kc), 'disp': f'% time in {pc}s', 'vfunc': param.Magnitude,
-               'required_ks': [nam.cum(pt), nam.cum(nam.dur(''))], 'func': self.func_dict.tr(pc)})
-        self.addPar(
-            **{'p': pN, 'k': kN, 'sym': sub('N', f'{pc}s'), 'dtype': int, 'disp': f'# {pc}s', 'vfunc': param.Integer,
-               **f_kws})
+        for kws in kwlist:
+            self.add(**kws)
 
         for ii in ['on', 'off']:
-            self.addPar(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food', 'vfunc': param.Number})
-            self.addPar(**{'p': f'{ptr}_{ii}_food', 'k': f'{ktr}_{ii}_food', 'vfunc': param.Magnitude})
+            self.add(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food'})
+            self.add(**{'p': f'{ptr}_{ii}_food', 'k': f'{ktr}_{ii}_food', 'lim': (0.0, 1.0)})
 
-        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, d=pN_mu, sym=bar(kN), disp=f' mean # {pc}s/sec',
-                      func=func)
-        self.addPar(**{'p': pt, 'k': kt, 'u': ureg.s, 'sym': sub(Delta('t'), kc), 'disp': f'{pc} duration',
-                       'vfunc': param.Number, **f_kws})
+        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f' mean # {pc}s/sec', func=func)
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
-            self.addPar(**{'p': pl, 'k': kl, 'sym': sub('l', kc), 'dtype': int, 'vfunc': param.Integer, **f_kws})
+            self.add(**{'p': pl, 'k': kl, 'sym': sub('l', kc), 'dtype': int, **f_kws})
             self.add_operators(k0=kl)
 
     def add_chunk_track(self, kc, k):
         bc = self.dict[kc]
         b = self.dict[k]
         b0, b1 = self.dict[f'{kc}0'], self.dict[f'{kc}1']
-        p0, p1 = nam.at(b.p, b0.p), nam.at(b.p, b1.p)
-        p01 = nam.chunk_track(bc.p, b.p)
-        # print(p01,p0,p1)
-        k01 = f'{kc}_{k}'
-        k0,k1=f'{k01}0',f'{k01}1'
-        disp01 = f'{b.disp} during {bc.p}s'
-        disp0,disp1 =f'{b.disp} at {bc.p} start',f'{b.disp} at {bc.p} stop'
-
-        sym01=sub(Delta(b.sym), kc)
-        sym0,sym1=subsup(b.sym, kc, 0),subsup(b.sym, kc, 1)
-        # func=self.func_dict.track_par(bc.p, b.p)
-        kws={
-            'vfunc': param.Number,
+        kws = {
             'func': self.func_dict.track_par(bc.p, b.p),
             'u': b.u
         }
-        self.addPar(**{'p': p01, 'k': k01, 'sym': sym01, 'disp': disp01, **kws})
-        self.addPar(**{'p': p0, 'k': k0, 'sym': sym0, 'disp': disp0, **kws})
-        self.addPar(**{'p': p1, 'k': k1, 'sym': sym1, 'disp': disp1, **kws})
+        k01 = f'{kc}_{k}'
+        kws0 = {
+            'p': nam.at(b.p, b0.p),
+            'k': f'{kc}_{k}0',
+            'disp': f'{b.disp} at {bc.p} start',
+            'sym': subsup(b.sym, kc, 0),
+            **kws
+        }
+        kws1 = {
+            'p': nam.at(b.p, b1.p),
+            'k': f'{kc}_{k}1',
+            'disp': f'{b.disp} at {bc.p} stop',
+            'sym': subsup(b.sym, kc, 1),
+            **kws
+        }
+
+        kws01 = {
+            'p': nam.chunk_track(bc.p, b.p),
+            'k': k01,
+            'disp': f'{b.disp} during {bc.p}s',
+            'sym': sub(Delta(b.sym), kc),
+            **kws
+        }
+        self.add(**kws0)
+        self.add(**kws1)
+        self.add(**kws01)
         self.add_operators(k0=k01)
-
-
 
     def add_velNacc(self, k0, p_v=None, k_v=None, d_v=None, sym_v=None, disp_v=None, p_a=None, k_a=None, d_a=None,
                     sym_a=None, disp_a=None, func_v=None):
@@ -276,9 +325,8 @@ class BaseParDict:
                 s, e, c = d.step_data, d.endpoint_data, d.config
                 comp_rate(s, c, p=b.d, pv=d_v)
 
-        self.addPar(
-            **{'p': p_v, 'k': k_v, 'd': d_v, 'u': b.u / b_dt.u, 'sym': sym_v, 'disp': disp_v, 'vfunc': param.Number,
-               'required_ks': [k0],
+        self.add(
+            **{'p': p_v, 'k': k_v, 'd': d_v, 'u': b.u / b_dt.u, 'sym': sym_v, 'disp': disp_v, 'required_ks': [k0],
                'func': func_v})
 
         def func_a(d):
@@ -286,56 +334,58 @@ class BaseParDict:
             s, e, c = d.step_data, d.endpoint_data, d.config
             comp_rate(s, c, p=d_v, pv=d_a)
 
-        self.addPar(
+        self.add(
             **{'p': p_a, 'k': k_a, 'd': d_a, 'u': b.u / b_dt.u ** 2, 'sym': sym_a, 'disp': disp_a, 'required_ks': [k_v],
-               'vfunc': param.Number, 'func': func_a})
+               'func': func_a})
 
-    def add_scaled(self, k0, sym=None, disp=None, **kwargs):
+    def add_scaled(self, k0, **kwargs):
         b = self.dict[k0]
         b_l = self.dict['l']
-        u = b.u / b_l.u
-
-        d = nam.scal(b.d)
-        p = nam.scal(b.p)
-        k = f's{k0}'
-
-        if sym is None:
-            sym = mathring(b.sym)
-        if disp is None:
-            disp = f'scaled {b.disp}'
 
         def func(d):
             from lib.process.spatial import scale_to_length
             s, e, c = d.step_data, d.endpoint_data, d.config
             scale_to_length(s, e, c, pars=[b.d], keys=None)
 
-        self.addPar(
-            **{'p': p, 'k': k, 'd': d, 'u': u, 'sym': sym, 'disp': disp, 'required_ks': [k0], 'vfunc': param.Number,
-               'func': func},
-            **kwargs)
+        kws = {
+            'p': nam.scal(b.p),
+            'k': f's{k0}',
+            'd': nam.scal(b.d),
+            'u': b.u / b_l.u,
+            'sym': mathring(b.sym),
+            'disp': f'scaled {b.disp}',
+            'required_ks': [k0],
+            'func': func
+        }
 
-    def add_unwrap(self, k0, k=None, d=None, p=None, disp=None, sym=None):
+        kws.update(kwargs)
+        self.add(**kws)
+
+    def add_unwrap(self, k0, **kwargs):
         b = self.dict[k0]
-        if k is None:
-            k = f'{b.k}u'
-        if sym is None:
-            sym = b.sym
-        if d is None:
-            d = nam.unwrap(b.d)
-        if p is None:
-            p = nam.unwrap(b.p)
-        if disp is None:
-            disp = b.disp
         if b.u == ureg.deg:
             in_deg = True
         elif b.u == ureg.rad:
             in_deg = False
 
-        self.addPar(**{'p': p, 'd': d, 'k': k, 'u': b.u, 'sym': sym, 'disp': disp, 'lim': None, 'required_ks': [k0],
-                       'vfunc': param.Number, 'dv': b.dv, 'v0': b.v0,
-                       'func': self.func_dict.unwrap(b.d, in_deg)})
+        kws = {
+            'p': nam.unwrap(b.p),
+            'd': nam.unwrap(b.d),
+            'k': f'{b.k}u',
+            'u': b.u,
+            'sym': b.sym,
+            'disp': b.disp,
+            'lim': None,
+            'required_ks': [k0],
+            'dv': b.dv,
+            'v0': b.v0,
+            'func': self.func_dict.unwrap(b.d, in_deg)
+        }
+        kws.update(kwargs)
 
-    def add_dst(self, k=None, d=None, p=None, disp=None, sym=None, point=''):
+        self.add(**kws)
+
+    def add_dst(self, point='', **kwargs):
         xd, yd = nam.xy(point)
         xk, bx = [(k, p) for k, p in self.dict.items() if p.d == xd][0]
         yk, by = [(k, p) for k, p in self.dict.items() if p.d == yd][0]
@@ -349,37 +399,37 @@ class BaseParDict:
         else:
             raise
 
-        if k is None:
-            k = f'{point}d'
-        if sym is None:
-            sym = sub('d', point)
-        if d is None:
-            d = nam.dst(point)
-        if p is None:
-            p = nam.dst(point)
-        if disp is None:
-            disp = f'{point} distance'
+        kws = {
+            'p': nam.dst(point),
+            'd': nam.dst(point),
+            'k': f'{point}d',
+            'u': u,
+            'sym': sub('d', point),
+            'disp': f'{point} distance',
+            'lim': (0.0, None),
+            'required_ks': [xk, yk],
+            'dv': dv,
+            'v0': 0.0,
+            'func': self.func_dict.dst(point=point)
+        }
+        kws.update(kwargs)
 
-        self.addPar(
-            **{'p': p, 'd': d, 'k': k, 'u': u, 'sym': sym, 'disp': disp, 'lim': (0.0, None), 'required_ks': [xk, yk],
-               'vfunc': param.Number, 'dv': dv, 'v0': 0.0, 'func': self.func_dict.dst(point=point)})
+        self.add(**kws)
 
-    def add_freq(self, k0, k=None, d=None, p=None, disp=None, sym=None, **kwargs):
+    def add_freq(self, k0, **kwargs):
         b = self.dict[k0]
-        if k is None:
-            k = f'f{b.k}'
-        if sym is None:
-            sym = sub(b.sym, 'freq')
-        if d is None:
-            d = nam.freq(b.d)
-        if p is None:
-            p = nam.freq(b.p)
-        if disp is None:
-            disp = f'{b.disp} dominant frequency'
-        self.addPar(
-            **{'p': p, 'k': k, 'd': d, 'u': ureg.Hz, 'sym': sym, 'disp': disp, 'required_ks': [k0],
-               'vfunc': param.Number, 'func': self.func_dict.freq(b.d)},
-            **kwargs)
+        kws = {
+            'p': nam.freq(b.p),
+            'd': nam.freq(b.d),
+            'k': f'f{b.k}',
+            'u': ureg.Hz,
+            'sym': sub(b.sym, 'freq'),
+            'disp': f'{b.disp} dominant frequency',
+            'required_ks': [k0],
+            'func': self.func_dict.freq(b.d)
+        }
+        kws.update(kwargs)
+        self.add(**kws)
 
     def add_dsp(self, range=(0, 40), u=ureg.m):
         a = 'dispersion'
@@ -390,21 +440,19 @@ class BaseParDict:
         p = f'{a}_{r0}_{r1}'
         k = f'{k0}_{r0}_{r1}'
 
-        self.addPar(**{'p': p, 'k': k, 'u': u, 'sym': subsup(s0, f'{r0}', f'{r1}'), 'vfunc': param.Number,
-                       'func': self.func_dict.dsp(range), 'required_ks': ['x', 'y'],
-                       'lab': f"dispersal in {dur}''"})
+        self.add(**{'p': p, 'k': k, 'u': u, 'sym': subsup(s0, f'{r0}', f'{r1}'),
+                    'func': self.func_dict.dsp(range), 'required_ks': ['x', 'y'],
+                    'lab': f"dispersal in {dur}''"})
         self.add_scaled(k0=k)
         self.add_operators(k0=k)
         self.add_operators(k0=f's{k}')
 
     def add_tor(self, dur):
         p0 = 'tortuosity'
-        p = f'{p0}_{dur}'
         k0 = 'tor'
         k = f'{k0}{dur}'
-        disp = f"{p0} over {dur}''"
-        self.addPar(
-            **{'p': p, 'k': k, 'd': p, 'lim': (0.0, 1.0), 'sym': sub(k0, dur), 'disp': disp, 'vfunc': param.Magnitude,
+        self.add(
+            **{'p': f'{p0}_{dur}', 'k': k, 'lim': (0.0, 1.0), 'sym': sub(k0, dur), 'disp': f"{p0} over {dur}''",
                'func': self.func_dict.tor(dur)})
         self.add_operators(k0=k)
 
@@ -415,10 +463,9 @@ class BaseParDict:
         else:
             u = ureg.deg
             amax = 180
-        kws = {'dv': np.round(amax / 180, 2), 'u': u, 'v0': 0.0, 'vfunc': param.Number}
-        self.addPar(
-            **{'p': 'bend', 'codename': 'bend', 'k': 'b', 'sym': th('b'), 'disp': 'bending angle', 'lim': (-amax, amax),
-               **kws})
+        kws = {'dv': np.round(amax / 180, 2), 'u': u, 'v0': 0.0}
+        self.add(
+            **{'p': 'bend', 'k': 'b', 'sym': th('b'), 'disp': 'bending angle', 'lim': (-amax, amax), **kws})
         self.add_velNacc(k0='b', sym_v=omega('b'), sym_a=dot(omega('b')), disp_v='bending angular speed',
                          disp_a='bending angular acceleration')
 
@@ -431,12 +478,11 @@ class BaseParDict:
 
         for suf, psuf, ksuf, lsuf in angs:
             p0 = nam.orient(psuf)
-            pou = nam.unwrap(p0)
             p_v, p_a = nam.vel(p0), nam.acc(p0)
             ko = f'{suf}o'
             kou = f'{ko}u'
-            self.addPar(**{'p': p0, 'k': ko, 'sym': th(ksuf), 'disp': f'{lsuf}orientation',
-                           'lim': (0, 2 * amax), **kws})
+            self.add(**{'p': p0, 'k': ko, 'sym': th(ksuf), 'disp': f'{lsuf}orientation',
+                        'lim': (0, 2 * amax), **kws})
 
             self.add_unwrap(k0=ko)
 
@@ -458,17 +504,17 @@ class BaseParDict:
             u = ureg.mm
             s = 1000
 
-        kws = {'u': u, 'vfunc': param.Number}
-        self.addPar(**{'p': 'x', 'k': 'x', 'd': 'x', 'disp': 'X position', 'sym': 'X', **kws})
-        self.addPar(**{'p': 'y', 'k': 'y', 'd': 'y', 'disp': 'Y position', 'sym': 'Y', **kws})
-        self.addPar(
-            **{'p': 'real_length', 'k': 'l', 'd': 'length', 'codename': 'real_length', 'disp': 'body length',
+        kws = {'u': u}
+        self.add(**{'p': 'x', 'disp': 'X position', 'sym': 'X', **kws})
+        self.add(**{'p': 'y', 'disp': 'Y position', 'sym': 'Y', **kws})
+        self.add(
+            **{'p': 'real_length', 'k': 'l', 'd': 'length', 'disp': 'body length',
                'sym': '$l$',
                'v0': 0.004 * s,
                'lim': (0.0005 * s, 0.01 * s), 'dv': 0.0005 * s, **kws})
 
-        self.addPar(
-            **{'p': 'dispersion', 'k': 'dsp', 'd': 'dispersion', 'sym': circledast('d'), 'disp': 'dispersal', **kws})
+        self.add(
+            **{'p': 'dispersion', 'k': 'dsp', 'sym': circledast('d'), 'disp': 'dispersal', **kws})
 
         d_d, d_v, d_a = nam.dst(''), nam.vel(''), nam.acc('')
         d_sd, d_sv, d_sa = nam.scal([d_d, d_v, d_a])
@@ -486,11 +532,10 @@ class BaseParDict:
 
         for i in dsp_ranges:
             self.add_dsp(range=i, u=u)
-        self.addPar(**{'p': 'tortuosity', 'k': 'tor', 'd': 'tortuosity', 'lim': (0.0, 1.0), 'sym': 'tor',
-                       'vfunc': param.Magnitude})
+        self.add(**{'p': 'tortuosity', 'k': 'tor', 'lim': (0.0, 1.0), 'sym': 'tor'})
         for dur in tor_durs:
             self.add_tor(dur=dur)
-        self.addPar(**{'p': 'anemotaxis', 'k': 'anemotaxis', 'd': 'anemotaxis', 'sym': 'anemotaxis'})
+        self.add(**{'p': 'anemotaxis', 'sym': 'anemotaxis'})
 
     def build_chunks(self):
         d0 = {
@@ -513,48 +558,41 @@ class BaseParDict:
             for k in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a',
                       'sa', 'd', 'sd']:
                 self.add_chunk_track(kc=kc, k=k)
-        self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score', d='handedness_score',
+        self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score',
                       sym=sub('H', 'tur'), lim=(0.0, 1.0), disp='Handedness score')
-        self.addPar(**{'p': f'handedness_score_on_food', 'k': 'tur_H_on_food'})
-        self.addPar(**{'p': f'handedness_score_off_food', 'k': 'tur_H_off_food'})
+        for ii in ['on', 'off']:
+            self.add(**{'p': f'handedness_score_{ii}_food', 'k': f'tur_H_{ii}_food'})
 
     def build_sim_pars(self):
-        kws = {}
-        self.addPar(
-            **{'p': 'brain.locomotor.crawler.output', 'k': 'Act_cr', 'd': 'crawler output', 'disp': 'crawler output',
-               'sym': sub('A', 'C'), 'vfunc': param.Number, **kws})
-        self.addPar(
-            **{'p': 'brain.locomotor.turner.output', 'k': 'Act_tur', 'd': 'turner output', 'disp': 'turner output',
-               'sym': sub('A', 'T'), 'vfunc': param.Number, **kws})
-        self.addPar(
-            **{'p': 'brain.locomotor.turner.input', 'k': 'A_tur', 'd': 'crawler input', 'disp': 'crawler input',
-               'sym': sub('I', 'T'), 'vfunc': param.Number, **kws})
-        self.addPar(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
-                       'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'vfunc': param.Magnitude, **kws})
+        for ii, jj in zip(['C', 'T'], ['crawler', 'turner']):
+            self.add(**{'p': f'brain.locomotor.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output', 'sym': sub('A', ii)})
+            self.add(**{'p': f'brain.locomotor.{jj}.input', 'k': f'I_{ii}', 'd': f'{jj} input', 'sym': sub('I', ii)})
 
-        self.addPar(**{'p': 'brain.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance',
-                       'disp': 'exploitVSexplore_balance', 'sym': 'EEB', 'vfunc': param.Magnitude, **kws})
+        self.add(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
+                    'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'lim': (0.0, 1.0)})
 
-        for ii,jj in zip(['1', '2'], ['first', 'second']) :
-            k=f'c_odor{ii}'
-            dk=f'd{k}'
-            self.addPar(**{'p': f'brain.olfactor.{jj}_odor_concentration', 'k': k, 'd': k,
-                           'disp': f'Odor {ii} concentration', 'sym': subsup('C', 'od',ii), 'vfunc': param.Number, **kws})
-            self.addPar(**{'p': f'brain.olfactor.{jj}_odor_concentration_change', 'k': dk, 'd': dk,
-                           'disp': f'Odor {ii} concentration change', 'sym': subsup(Delta('C'), 'od',ii), 'vfunc': param.Number, **kws})
+        self.add(**{'p': 'brain.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance', 'lim': (0.0, 1.0),
+                    'disp': 'exploitVSexplore_balance', 'sym': 'EEB'})
 
-        for ii,jj in zip(['W', 'C'], ['warm', 'cool']) :
-            k=f'temp_{ii}'
-            dk=f'd{k}'
+        for ii, jj in zip(['1', '2'], ['first', 'second']):
+            k = f'c_odor{ii}'
+            dk = f'd{k}'
+            self.add(**{'p': f'brain.olfactor.{jj}_odor_concentration', 'k': k, 'd': k,
+                        'disp': f'Odor {ii} concentration', 'sym': subsup('C', 'od', ii)})
+            self.add(**{'p': f'brain.olfactor.{jj}_odor_concentration_change', 'k': dk, 'd': dk,
+                        'disp': f'Odor {ii} concentration change', 'sym': subsup(Delta('C'), 'od', ii)})
 
-            self.addPar(**{'p': f'brain.thermosensor.{jj}_sensor_input', 'k': k, 'd': k,
-                           'disp': f'{jj} sensor input', 'sym': sub('Temp', ii), 'vfunc': param.Number, **kws})
-            self.addPar(**{'p': f'brain.thermosensor.{jj}_sensor_perception', 'k': dk, 'd': dk,
-                           'disp': f'{jj} sensor perception', 'sym': sub(Delta('Temp'), ii), 'vfunc': param.Number, **kws})
+        for ii, jj in zip(['W', 'C'], ['warm', 'cool']):
+            k = f'temp_{ii}'
+            dk = f'd{k}'
 
-        for ii,jj in zip(['olf', 'tou', 'wind', 'therm'], ['olfactor', 'toucher', 'windsensor', 'thermosensor']):
-            self.addPar(
+            self.add(**{'p': f'brain.thermosensor.{jj}_sensor_input', 'k': k, 'd': k,
+                        'disp': f'{jj} sensor input', 'sym': sub('Temp', ii)})
+            self.add(**{'p': f'brain.thermosensor.{jj}_sensor_perception', 'k': dk, 'd': dk, 'lim': (-0.1, 0.1),
+                        'disp': f'{jj} sensor perception', 'sym': sub(Delta('Temp'), ii)})
+
+        for ii, jj in zip(['olf', 'tou', 'wind', 'therm'], ['olfactor', 'toucher', 'windsensor', 'thermosensor']):
+            self.add(
                 **{'p': f'brain.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output',
-                   'disp':f'{jj} output',
-                   'sym': sub('A', ii), 'vfunc': param.Number, **kws})
-
+                   'disp': f'{jj} output', 'lim': (0.0, 1.0),
+                   'sym': sub('A', ii)})

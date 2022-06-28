@@ -88,8 +88,8 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
 def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=preg.enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
-def thermo_exp(name, dur=5.0, c=['thermo'], en=True, **kwargs):
-    return exp(name, sim={'duration': dur}, c=c, en=en, **kwargs)
+def thermo_exp(name, dur=10.0, c=['thermo'], en=False, enrichment=None, **kwargs):
+    return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
 def chemanemo_exp(name, dur=5.0, c=['olfactor', 'wind'], en=False,
@@ -170,7 +170,7 @@ grouped_exp_dict = {
         #                                                        ids=['nengo', 'control'], N=10))
     },
 'thermotaxis': {
-        'thermotaxis': thermo_exp('thermo_arena', dur=10.0, l=lg(m='thermo_navigator', N=10)),
+        'thermotaxis': thermo_exp('thermo_arena', l=lg(m='thermo_navigator', N=10)),
 
     },
 
