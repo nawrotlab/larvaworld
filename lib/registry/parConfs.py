@@ -7,6 +7,7 @@ import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 
+
 from lib.registry.units import ureg
 
 
@@ -466,6 +467,24 @@ class LarvaConfDict:
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
         return conf_table(df, row_colors, mID=mID, figsize=figsize, **kwargs)
 
+    def init_loco(self,conf,L=None):
+        if L is None :
+            from lib.model.modules.locomotor import Locomotor
+            L=Locomotor()
+        D = self.mdicts2
+        for k in ['crawler','turner','interference','feeder','intermitter'] :
+            if conf.modules[k]:
+                m = conf[f'{k}_params']
+                mode=m.waveform if k=='crawler' else m.mode
+                dic=D[k].mode[mode]
+                kws={kw:getattr(L,kw) for kw in dic.kwargs.keys()}
+                M = dic.class_func(**m, **kws)
+                if k == 'intermitter' :
+                    M.disinhibit_locomotion(L)
+            else :
+                M=None
+            setattr(L, k, M)
+        return L
 
 def confID_dict():
     from lib.conf.stored.conf import kConfDict, ConfSelector

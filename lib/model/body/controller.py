@@ -158,29 +158,12 @@ class BodySim(BodyManager, PhysicsController):
         self.food_detected, self.current_foodtype = self.detect_food(pos)
         lin, ang, self.feeder_motion = self.brain.step(pos, reward= self.food_detected is not None)
 
-
-
-
-        # Trying restoration for any number of segments
-        # if self.Nsegs == 1:
-        # if self.Nsegs > 0:
-        #     # Angular component
-        #     # Restore body bend due to forward motion of the previous step
-        #     # pass
-        #     # ... apply the torque against the restorative powers to the body,
-        #     # to update the angular velocity (for the physics engine) and the body_bend (for body state calculations) ...
-        # else:
-        #     # Default mode : apply torque
-        #     # self.get_head()._body.ApplyTorque(self.torque, wake=True)
-        #     pass
         if self.model.Box2D:
             self.Box2D_kinematics(lin, ang)
         else:
             lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(),self.head.get_linearvelocity(),
                                              self.body_bend, dt=self.model.dt,
                                              ang_suppression=self.brain.locomotor.cur_ang_suppression)
-            # lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
-
             self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
             self.compute_body_bend()
             self.trajectory.append(self.pos)

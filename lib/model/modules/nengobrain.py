@@ -18,17 +18,6 @@ class NengoBrain(Network, Brain):
         c = self.conf
         self.food_feedback = False
         self.locomotor = NengoLocomotor(dt=self.dt, c=self.conf)
-        # if m['feeder']:
-        #     self.feeder = NengoEffector(**c['feeder_params'])
-        # if m['turner'] and m['crawler']:
-        #     self.turner = NengoEffector(**c['turner_params'])
-        #     self.crawler = NengoEffector(**c['crawler_params'])
-        #     self.osc_coupling = DefaultCoupling(brain=self, **c['interference_params'])
-        # if m['intermitter']:
-        #     self.intermitter = NengoIntermitter(dt=self.dt, brain=self, **c['intermitter_params'])
-        #     self.intermitter.start_effector()
-        # else:
-        #     self.intermitter = None
         self.build()
         self.sim = Simulator(self, dt=0.01, progress_bar=False)
         self.Nsteps = int(self.dt / self.sim.dt)
@@ -368,7 +357,7 @@ class NengoLocomotor(Locomotor):
         if m['turner'] and m['crawler']:
             self.turner = NengoEffector(**c['turner_params'])
             self.crawler = NengoEffector(**c['crawler_params'])
-            self.osc_coupling = SquareCoupling(**c['interference_params'])
+            self.interference = SquareCoupling(**c['interference_params'])
         if m['intermitter']:
             self.intermitter = NengoIntermitter(dt=self.dt, **c['intermitter_params'])
             self.intermitter.disinhibit_locomotion(self)
