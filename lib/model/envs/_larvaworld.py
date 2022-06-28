@@ -43,6 +43,9 @@ class LarvaWorld(BaseLarvaWorld):
             progress_bar.start()
         self.progress_bar = progress_bar
 
+        # print(vis_kwargs)
+        # raise
+
         if vis_kwargs is None:
             vis_kwargs = preg.get_null('visualization', mode=None)
         self.vis_kwargs = dNl.NestDict(vis_kwargs)

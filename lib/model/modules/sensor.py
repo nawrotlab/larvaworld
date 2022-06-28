@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.model.modules.basic import Effector
-
+from lib.aux import naming as nam, dictsNlists as dNl
 
 class Sensor(Effector):
     def __init__(self, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
@@ -174,3 +174,32 @@ class WindSensor(Sensor):
     def __init__(self, weights, perception='null', **kwargs):
         super().__init__(perception=perception, **kwargs)
         self.weights = weights
+
+
+# @todo add class Thermosensor(Sensor) here with a double gain dict
+class Thermosensor(Sensor):
+    def __init__(self, cool_gain=0.0,warm_gain=0.0, **kwargs): #thermodict={"cool", "warm"}
+        thermo_dict = dNl.NestDict({'warm': warm_gain, 'cool': cool_gain})
+        super().__init__(gain_dict=thermo_dict, **kwargs)
+
+    # def affect_locomotion(self):
+    #     if self.activation<0:
+    #         self.brain.intermitter.inhibit_locomotion()
+    #     elif self.activation>0:
+    #         self.brain.intermitter.trigger_locomotion()
+
+    @property
+    def warm_sensor_input(self):
+        return self.X['warm'] #@todo do I need to make self.thermoX.values? same for dX.
+
+    @property
+    def warm_sensor_perception(self):
+        return self.dX['warm']
+
+    @property
+    def cool_sensor_input(self):
+        return self.X['cool']  # @todo do I need to make self.thermoX.values? same for dX.
+
+    @property
+    def cool_sensor_perception(self):
+        return self.dX['cool']

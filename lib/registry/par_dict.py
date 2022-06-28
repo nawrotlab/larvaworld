@@ -126,6 +126,7 @@ class BaseParDict:
 
 
 
+
     def add_rate(self, k0=None, k_time='t', p=None, k=None, d=None, sym=None, k_num=None, k_den=None, **kwargs):
         if k0 is not None:
             b = self.dict[k0]
@@ -540,10 +541,19 @@ class BaseParDict:
         self.addPar(**{'p': 'brain.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance',
                        'disp': 'exploitVSexplore_balance', 'sym': 'EEB', 'vfunc': param.Magnitude, **kws})
 
-        for ii,jj in (['1', '2'], ['first', 'second']) :
+        for ii,jj in zip(['1', '2'], ['first', 'second']) :
             k=f'c_odor{ii}'
             dk=f'd{k}'
             self.addPar(**{'p': f'brain.olfactor.{jj}_odor_concentration', 'k': k, 'd': k,
                            'disp': f'Odor {ii} concentration', 'sym': subsup('C', 'od',ii), 'vfunc': param.Number, **kws})
             self.addPar(**{'p': f'brain.olfactor.{jj}_odor_concentration_change', 'k': dk, 'd': dk,
                            'disp': f'Odor {ii} concentration change', 'sym': subsup(Delta('C'), 'od',ii), 'vfunc': param.Number, **kws})
+
+        for ii,jj in zip(['W', 'C'], ['warm', 'cool']) :
+            k=f'temp_{ii}'
+            dk=f'd{k}'
+
+            self.addPar(**{'p': f'brain.thermosensor.{jj}_sensor_input', 'k': k, 'd': k,
+                           'disp': f'{jj} sensor input', 'sym': sub('Temp', ii), 'vfunc': param.Number, **kws})
+            self.addPar(**{'p': f'brain.thermosensor.{jj}_sensor_perception', 'k': dk, 'd': dk,
+                           'disp': f'{jj} sensor perception', 'sym': sub(Delta('Temp'), ii), 'vfunc': param.Number, **kws})

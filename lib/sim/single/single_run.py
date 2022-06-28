@@ -149,6 +149,7 @@ class SingleRun:
             dic = {
                 'patch': analysis_dict.patch,
                 'tactile': analysis_dict.tactile,
+                'thermo': analysis_dict.thermo,
                 'RvsS': analysis_dict.deb,
                 'RvsS': analysis_dict.intake,
                 'growth': analysis_dict.deb,

@@ -15,7 +15,7 @@ def time(short=None, par=None, title=None, u='sec', f1=False, abs=False, **kwarg
     args = {
         'par_shorts': [short] if short is not None else [],
         'pars': [par] if par is not None else [],
-        # 'show_first': f1,
+        'show_first': f1,
         'unit': u,
         'absolute': abs,
         **kwargs
@@ -143,6 +143,13 @@ analysis_dict = dNl.NestDict({
         *[time(p) for p in ['A_wind', 'anemotaxis']],
         # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
         end(['anemotaxis'], 'final anemotaxis')
+
+    ],
+    'thermo': [
+        entry('trajectories'),
+        *[time(p, f1=True) for p in ['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C']],
+        # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
+        # end(['anemotaxis'], 'final anemotaxis')
 
     ],
     'puff': [

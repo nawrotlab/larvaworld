@@ -537,7 +537,7 @@ class LarvaConfDict:
 
     def init_brain(self, conf, B):
         D = self.dict2.model.m
-        for k in ['olfactor', 'toucher', 'windsensor']:
+        for k in ['olfactor', 'toucher', 'windsensor', 'thermosensor']:
             if conf.modules[k]:
                 m = conf[f'{k}_params']
                 if k == 'windsensor':

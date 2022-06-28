@@ -11,6 +11,7 @@ class Brain():
         self.sensor_dict = dNl.NestDict({
             'olfactor': {'func': self.sense_odors, 'A': 0.0, 'mem': 'memory'},
             'toucher': {'func': self.sense_food, 'A': 0.0, 'mem': 'touch_memory'},
+            'thermosensor': {'func': self.sense_thermo, 'A': 0.0, 'mem': None},
             'windsensor': {'func': self.sense_wind, 'A': 0.0, 'mem': None}
         })
 
@@ -47,6 +48,20 @@ class Brain():
             else:
                 v = w.get_value(self.agent)
         return {'windsensor': v}
+
+    def sense_thermo(self, pos=None):
+        a = self.agent
+        if a is None:
+            return {'cool': 0, 'warm': 0}
+        if pos is None:
+            pos = a.pos
+        ad = a.model.arena_dims
+        pos_adj = [(pos[0] + (ad[0] * 0.5)) / ad[0], (pos[1] + (ad[1] * 0.5)) / ad[1]]
+        try:
+            cons = a.model.thermo_layers.get_thermo_value(pos_adj)
+        except AttributeError:
+            return {'cool': 0, 'warm': 0}
+        return cons
 
     def sense(self, reward=False, **kwargs):
         for k in self.sensor_dict.keys():

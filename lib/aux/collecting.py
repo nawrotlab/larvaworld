@@ -11,6 +11,7 @@ from mesa.time import RandomActivation
 import lib.aux.naming as nam
 from lib.aux.colsNstr import rgetattr
 
+
 class NamedRandomActivation(RandomActivation):
     from lib.model.agents._agent import LarvaworldAgent
     def __init__(self, id, model, **kwargs):
@@ -99,11 +100,15 @@ output_dict = {
         'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'Act_tur', 'A_tur', 'Act_cr'],
         'endpoint': []},
 
+    'thermo': {
+        'step': ['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C'],
+        'endpoint': []},
+
     'toucher': {
-        'step': ['A_touch', 'A_tur','Act_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
+        'step': ['A_touch', 'A_tur', 'Act_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
         'endpoint': ['on_food_tr']},
 
-    'wind' : {
+    'wind': {
         'step': ['A_wind'],
         'endpoint': []},
 
@@ -112,8 +117,10 @@ output_dict = {
         'endpoint': ['l', 'm', 'f_am', 'sf_am', 'on_food_tr']
     },
 
-    'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M', 'f_faeces_M','f_am'],
-            'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M', 'f_faeces_M', 'f_am']},
+    'gut': {'step': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M', 'f_faeces_M',
+                     'f_am'],
+            'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M',
+                         'f_faeces_M', 'f_am']},
     'pose': {'step': ['x', 'y', 'b', 'fo', 'ro'],
              'endpoint': ['l', 'cum_t', 'x']},
     'memory': {'step': [],

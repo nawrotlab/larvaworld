@@ -9,10 +9,9 @@ from lib.aux.dictsNlists import NestDict
 from lib.registry.pars import preg
 
 
-
-
 def Im(EEB, **kwargs):
-    return preg.get_null('intermitter', feed_bouts= EEB > 0, EEB=0.0, **kwargs)
+    return preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=0.0, **kwargs)
+
 
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 
@@ -25,7 +24,6 @@ def brain(ks, nengo=False, OD=None, **kwargs):
     RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                                   gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
 
-
     module_dict = {
         'T': 'turner',
         'C': 'crawler',
@@ -34,6 +32,7 @@ def brain(ks, nengo=False, OD=None, **kwargs):
         'O': 'olfactor',
         'To': 'toucher',
         'W': 'windsensor',
+        'Th': 'thermosensor',
         'F': 'feeder',
         'M': 'memory',
     }
@@ -70,7 +69,7 @@ def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=No
         ms = ['L', 'F']
     else:
         ms = ['LOF']
-    b = brain(ms, OD=OD, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'],intermitter=Im(EEB))
+    b = brain(ms, OD=OD, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'], intermitter=Im(EEB))
 
     gut = preg.get_null('gut', **gut_kws)
     deb = preg.get_null('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
@@ -84,7 +83,7 @@ def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=No
     }
 
     return preg.get_null('larva_conf', brain=b, body=preg.get_null('body', initial_length=0.001, Nsegs=Nsegs),
-                     energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
+                         energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
 
 def nengo_brain(module_shorts, EEB, OD=None):
@@ -94,16 +93,15 @@ def nengo_brain(module_shorts, EEB, OD=None):
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
     return brain(module_shorts,
                  turner=preg.get_null('turner', initial_freq=0.3, initial_amp=30.0, noise=0.1, activation_noise=0.8,
-                                  freq_range=(0.2, 0.4)),
+                                      freq_range=(0.2, 0.4)),
                  crawler=preg.get_null('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
-                                   waveform='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
+                                       waveform='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=preg.get_null('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
                  intermitter=Im(EEB, mode='nengo'),
                  nengo=True,
                  OD=OD
                  )
-
 
 
 def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
@@ -119,11 +117,11 @@ def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
     else:
         Box2D_params = preg.get_null('Box2D_params', **Box2D)
     return preg.get_null('larva_conf', brain=brain,
-                     energetics=energetics,
-                     body=preg.get_null('body', **bod),
-                     physics=preg.get_null('physics', **phys),
-                     Box2D_params=Box2D_params
-                     )
+                         energetics=energetics,
+                         body=preg.get_null('body', **bod),
+                         physics=preg.get_null('physics', **phys),
+                         Box2D_params=Box2D_params
+                         )
 
 
 def OD(ids: list, means: list, stds=None) -> dict:
@@ -197,6 +195,7 @@ def create_mod_dict():
                    memory=gRL_touch_memory)
     LTo_brute = brain(['L', 'To'], toucher=preg.get_null('toucher', touch_sensors=[], brute_force=True))
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
+    LTh = brain(['L', 'Th'])
 
     Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
                        interference=preg.get_null('interference', attenuation=0.0),
@@ -242,12 +241,13 @@ def create_mod_dict():
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-        'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1,crawler=Ccon,
+        'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1, crawler=Ccon,
                                                 interference=null_coupling),
                                           bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),
         'nengo_navigator_x2': add_brain(add_OD(OD2, nLO)),
+        'thermo_navigator': add_brain(LTh),
     }
 
     foragers = {

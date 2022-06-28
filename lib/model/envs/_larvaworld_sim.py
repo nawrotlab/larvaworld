@@ -30,6 +30,9 @@ class LarvaWorldSim(LarvaWorld):
         if self.env_pars.odorscape is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape, sources = self.get_food() + self.get_flies())
 
+        if 'thermoscape' in self.env_pars.keys() and self.env_pars.thermoscape is not None:
+            self.Ntemps, self.thermo_layers = self._create_thermo_layers(self.env_pars.thermoscape)
+
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         self.create_collectors(output)
@@ -196,6 +199,29 @@ class LarvaWorldSim(LarvaWorld):
                 except:
                     pass
 
+    # @todo use _create_thermo_layers
+    def _create_thermo_layers(self, pars):
+        from lib.model.envs._space import ThermoScape
+        print(pars['thermo_sources'])
+        sources = pars['thermo_sources']  # dictionary
+
+        N = 1;
+        id = 'temp'
+        cols = N_colors(N, as_rgb=True)
+        layers = {}
+        plate_temp = pars['plate_temp']  # int/float
+        source_temp_diff = pars['thermo_source_dTemps']  # dict
+        kwargs = {
+            'model': self,
+            'unique_id': id,
+            'default_color': 'green',
+            'space_range': self.space_edges_for_screen,
+        }
+        kwargs = {}
+        tlayers = ThermoScape(pTemp=plate_temp, spread=None, origins=sources, tempDiff=source_temp_diff, **kwargs)
+        tlayers.generate_thermoscape()
+        return N, tlayers
+
 
 def imitate_group(config, sample_pars=[], N=None):
     from lib.stor.larva_dataset import LarvaDataset
@@ -213,6 +239,10 @@ def imitate_group(config, sample_pars=[], N=None):
         ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
     dic = {p: [e[p].loc[id] for id in ids] for p in sample_pars}
     return ids, ps, ors, dic
+
+
+
+
 
 
 

@@ -54,7 +54,7 @@ def build_ParsDict(d0):
     # return parsargs
 
 def build_ParsDict2(d0):
-    def par(name, t=float, v=None, vs=None, h='', k=None):
+    def par(name, t=float, v=None, vs=None, h='', k=None, **kwargs):
         return build_ParsArg(name, k, h, t, v, vs)
 
     def par_dict(d0, **kwargs):
@@ -62,9 +62,11 @@ def build_ParsDict2(d0):
             return None
         d = {}
         for n, v in d0.items():
-            try:
+            if 't' in v.keys() or 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+            # try:
                 entry = par(n, **v, **kwargs)
-            except:
+            else:
+            # except:
                 entry = {n: {'dtype': dict, 'content': par_dict(d0=v, **kwargs)}}
             d.update(entry)
         return d
@@ -93,9 +95,12 @@ class ParserDict:
         d=dNl.NestDict()
         for name in names:
             d0 = self.init_dict[name]
+            # parsargs = build_ParsDict2(d0)
             try:
                 parsargs = build_ParsDict2(d0)
+
             except:
                 parsargs = build_ParsDict(d0)
+
             d[name]=parsargs
         return d

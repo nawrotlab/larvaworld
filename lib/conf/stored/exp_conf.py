@@ -88,6 +88,9 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
 def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=preg.enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
+def thermo_exp(name, dur=5.0, c=['thermo'], en=True, **kwargs):
+    return exp(name, sim={'duration': dur}, c=c, en=en, **kwargs)
+
 
 def chemanemo_exp(name, dur=5.0, c=['olfactor', 'wind'], en=False,
                   enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source', 'wind'], bouts=['stride', 'pause', 'turn'],
@@ -165,6 +168,10 @@ grouped_exp_dict = {
         'single_puff': chemanemo_exp('single_puff', dur=2.5, l=lg(m='nengo_explorer', N=20, sample='Puff.Starved')),
         # 'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
         #                                                        ids=['nengo', 'control'], N=10))
+    },
+'thermotaxis': {
+        'thermotaxis': thermo_exp('thermo_arena', dur=3.0, l=lg(m='thermo_navigator', N=20)),
+
     },
 
     'odor_preference': {

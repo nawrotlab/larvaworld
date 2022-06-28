@@ -21,6 +21,7 @@ class Parser:
     #         self.parsargs = build_ParsDict(d0)
 
     def __init__(self, name):
+
         self.name = name
         self.parsargs = preg.parser_dict[name]
 
@@ -33,8 +34,10 @@ class Parser:
 
     def get(self, input):
         dic = {k: v.get(input) for k, v in self.parsargs.items()}
+        #print(self.parsargs)
+        d=preg.get_null(self.name, **dic)
         # print(dic)
-        return preg.get_null(self.name, **dic)
+        return d
 
 
 class MultiParser:
@@ -117,6 +120,7 @@ def update_exp_models(exp_conf, models, N=None):
             larva_groups[gID] = gConf
     elif isinstance(models, list):
         for i, (m, col) in enumerate(zip(models, colors)):
+            # print(i,m,col)
             gConf = dNl.NestDict(copy.deepcopy(gConf0))
             gConf.default_color = col
             if isinstance(m, dict):

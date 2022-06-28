@@ -105,6 +105,24 @@ def init_mods():
                            'h': 'The linear decay coefficient of the olfactory sensory activation.'},
             'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'}
         },
+        'thermosensor': {
+            'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'],
+                           'label': 'olfaction sensing transduction mode',
+                           'k': 'mod_O',
+                           'symbol': sub('mod', 'O'), 'u_name': None,
+                           'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
+            'input_noise': {'v': 0.0, 'lim': (0.0, 1.0), 'h': 'The intrinsic noise of the sensory input.'},
+            'decay_coef': {'v': 0.0, 'lim': (0.0, 2.0), 'label': 'olfactory decay coef',
+                           'symbol': sub('c', 'O'), 'k': 'c_O',
+                           'h': 'The linear decay coefficient of the olfactory sensory activation.'},
+            'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'},
+            'cool_gain': {'v': 0.0, 'lim': (-100.0, 100.0),
+                          'label': 'tactile cool_gain coef', 'symbol': sub('G', 'C'), 'k': 'G_C',
+                          'h': 'The initial gain of the tactile sensor.'},
+            'warm_gain': {'v': 0.0, 'lim': (-100.0, 100.0),
+                          'label': 'warm_gain', 'symbol': sub('G', 'W'), 'k': 'G_W',
+                          'h': 'The initial gain of the tactile sensor.'},
+        },
         'windsensor': {
             'weights': {
                 'hunch_lin': {'v': 10.0, 'lim': (-100.0, 100.0), 'label': 'HUNCH->CRAWLER',
@@ -175,15 +193,16 @@ def init_mods():
                           'h': 'The duration of the training period after which no further learning will take place.'}
         },
         'modules': {
-            'crawler': {**bF, 'k':'C'},
-            'turner': {**bF, 'k':'T'},
-            'interference': {**bF, 'k':'If'},
-            'intermitter': {**bF, 'k':'Im'},
-            'feeder': {**bF, 'k':'F'},
-            'olfactor': {**bF, 'k':'O'},
-            'windsensor': {**bF, 'k':'W'},
-            'toucher': {**bF, 'k':'To'},
-            'memory': {**bF, 'k':'O_mem'},
+            'crawler': {**bF, 'k': 'C'},
+            'turner': {**bF, 'k': 'T'},
+            'interference': {**bF, 'k': 'If'},
+            'intermitter': {**bF, 'k': 'Im'},
+            'feeder': {**bF, 'k': 'F'},
+            'olfactor': {**bF, 'k': 'O'},
+            'windsensor': {**bF, 'k': 'W'},
+            'toucher': {**bF, 'k': 'To'},
+            'thermosensor': {**bF, 'k': 'Th'},
+            'memory': {**bF, 'k': 'O_mem'},
             # 'touch_memory': {**bF, 'k':'To_mem'},
         },
         'square_interference': {
@@ -394,7 +413,7 @@ def init_mods():
     d['brain'] = {
         'modules': d['modules'],
         **{f'{m}_params': d[m] for m in d['modules'].keys()},
-        'nengo': {**bF, 'k':'nengo'}
+        'nengo': {**bF, 'k': 'nengo'}
     }
 
     d['gut'] = {
@@ -698,12 +717,12 @@ def Im0():
 def sensor_kws(k0, l0):
     d = {
         'perception': {'dtype': str, 'v0': 'log', 'vs': ['log', 'linear', 'null'],
-                        'disp': f'{l0} sensing transduction mode',
-                        'k': f'mod_{k0}',
-                        'sym': sub('mod', k0),
-                        'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
+                       'disp': f'{l0} sensing transduction mode',
+                       'k': f'mod_{k0}',
+                       'sym': sub('mod', k0),
+                       'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
         'decay_coef': {'v0': 0.1, 'lim': (0.0, 2.0), 'disp': f'{l0} decay coef',
-                       'sym': sub('c', k0), 'k':f'c_{k0}',
+                       'sym': sub('c', k0), 'k': f'c_{k0}',
                        'h': f'The exponential decay coefficient of the {l0} sensory activation.'},
         'brute_force': {**bF, 'disp': 'ability to interrupt locomotion', 'sym': sub('bf', k0),
                         'k': f'bf_{k0}',
@@ -726,11 +745,11 @@ def Tou0():
     from lib.model.modules.sensor import Toucher
     args = {
         **sensor_kws(k0='T', l0='tactile'),
-         'state_specific_best': {**bT, 'disp': 'state-specific or the global highest evaluated gain',
+        'state_specific_best': {**bT, 'disp': 'state-specific or the global highest evaluated gain',
                                 'sym': sub('state_specific', 'T'),
                                 'k': 'state_specific',
                                 'h': 'Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period.'},
-         'initial_gain': {'v0': 40.0, 'lim': (-100.0, 100.0),
+        'initial_gain': {'v0': 40.0, 'lim': (-100.0, 100.0),
                          'disp': 'tactile sensitivity coef', 'sym': sub('G', 'T'), 'k': 'G_T',
                          'h': 'The initial gain of the tactile sensor.'},
         'touch_sensors': {'dtype': List[int], 'lim': (0, 8), 'k': 'sens_touch',
@@ -765,6 +784,24 @@ def W0():
         **sensor_kws(k0='W', l0='windsensor'),
     }
     d = {'default': {'args': args, 'class_func': WindSensor},
+         # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
+    return dNl.NestDict(d)
+
+
+def Th0():
+    from lib.model.modules.sensor import Thermosensor
+    args = {'cool_gain': {'v0': 0.0, 'lim': (-1000.0, 1000.0),
+                          'disp': 'cool thermosensing gain', 'sym': sub('G', 'cool'), 'k': 'G_cool',
+                          'h': 'The gain of the cool thermosensor.'},
+            'warm_gain': {'v0': 0.0, 'lim': (-1000.0, 1000.0),
+                          'disp': 'warm thermosensing gain', 'sym': sub('G', 'warm'), 'k': 'G_warm',
+                          'h': 'The gain of the warm thermosensor.'},
+
+            **sensor_kws(k0='Th', l0='thermosensor'),
+            }
+    d = {'default': {'args': args, 'class_func': Thermosensor},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -830,20 +867,22 @@ def Mem0():
 
 
 def dict0():
-    kws={'kwargs': {'dt': 0.1}}
+    kws = {'kwargs': {'dt': 0.1}}
     d0 = {}
     d0['turner'] = {'mode': Tur0(), **kws}
     d0['crawler'] = {'mode': Cr0(), **kws}
     d0['intermitter'] = {'mode': Im0(), **kws}
     d0['interference'] = {'mode': If0(), 'kwargs': {}}
-    d0['feeder'] = {'mode': Fee0(),**kws}
+    d0['feeder'] = {'mode': Fee0(), **kws}
     d0['olfactor'] = {'mode': Olf0(), **kws}
     d0['toucher'] = {'mode': Tou0(), **kws}
+    d0['thermosensor'] = {'mode': Th0(), **kws}
     d0['windsensor'] = {'mode': W0(), **kws}
     d0['memory'] = {'mode': Mem0(), **kws}
     return dNl.NestDict(d0)
 
-def Phy0() :
+
+def Phy0():
     args = {
         'torque_coef': {'v0': 0.5, 'lim': (0.1, 1.0), 'dv': 0.01, 'disp': 'torque coefficient',
                         'sym': sub('c', 'T'), 'u_name': sup('sec', -2), 'u': ureg.s ** -2,
@@ -869,7 +908,7 @@ def Phy0() :
     return dNl.NestDict(d)
 
 
-def Bod0() :
+def Bod0():
     args = {
         'initial_length': {'v0': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001,
                            'disp': 'length', 'sym': '$l$', 'u': ureg.m, 'k': 'l0', 'h': 'The initial body length.'},
@@ -887,37 +926,38 @@ def Bod0() :
     d = {'args': args}
     return dNl.NestDict(d)
 
-def DEB0() :
+
+def DEB0():
     gut_args = {
-        'M_gm': {'v0': 10 ** -2, 'lim': (0.0,10.0), 'disp': 'gut scaled capacity',
+        'M_gm': {'v0': 10 ** -2, 'lim': (0.0, 10.0), 'disp': 'gut scaled capacity',
                  'sym': 'M_gm',
                  'k': 'M_gm',
                  'h': 'Gut capacity in C-moles per unit of gut volume.'},
         'y_P_X': {'v0': 0.9, 'disp': 'food->product yield',
                   'sym': 'y_P_X', 'k': 'y_P_X',
                   'h': 'Yield of product per unit of food.'},
-        'J_g_per_cm2': {'v0': 10 ** -2 / (24 * 60 * 60), 'lim': (0.0,10.0), 'disp': 'digestion secretion rate',
+        'J_g_per_cm2': {'v0': 10 ** -2 / (24 * 60 * 60), 'lim': (0.0, 10.0), 'disp': 'digestion secretion rate',
                         'sym': 'J_g_per_cm2', 'k': 'J_g_per_cm2',
                         'h': 'Secretion rate of enzyme per unit of gut surface per second.'},
-        'k_g': {'v0': 1.0,'lim': (0.0,10.0), 'disp': 'digestion decay rate', 'sym': 'k_g',
+        'k_g': {'v0': 1.0, 'lim': (0.0, 10.0), 'disp': 'digestion decay rate', 'sym': 'k_g',
                 'k': 'k_g',
                 'h': 'Decay rate of digestive enzyme.'},
-        'k_dig': {'v0': 1.0, 'lim': (0.0,10.0), 'disp': 'digestion rate', 'sym': 'k_dig',
+        'k_dig': {'v0': 1.0, 'lim': (0.0, 10.0), 'disp': 'digestion rate', 'sym': 'k_dig',
                   'k': 'k_dig',
                   'h': 'Rate constant for digestion : k_X * y_Xg.'},
         'f_dig': {'v0': 1.0, 'disp': 'digestion response',
                   'sym': 'f_dig', 'k': 'f_dig',
                   'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
-        'M_c_per_cm2': {'v0': 5 * 10 ** -8, 'lim': (0.0,10.0), 'disp': 'carrier density',
+        'M_c_per_cm2': {'v0': 5 * 10 ** -8, 'lim': (0.0, 10.0), 'disp': 'carrier density',
                         'sym': 'M_c_per_cm2', 'k': 'M_c_per_cm2',
                         'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
         'constant_M_c': {**bT, 'disp': 'constant carrier density', 'sym': 'constant_M_c',
                          'k': 'constant_M_c',
                          'h': 'Whether to assume a constant amount of carrier enzymes on the gut surface.'},
-        'k_c': {'v0': 1.0,'lim': (0.0,10.0), 'disp': 'carrier release rate', 'sym': 'k_c',
+        'k_c': {'v0': 1.0, 'lim': (0.0, 10.0), 'disp': 'carrier release rate', 'sym': 'k_c',
                 'k': 'gut_k_c',
                 'h': 'Release rate of carrier enzymes.'},
-        'k_abs': {'v0': 1.0, 'lim': (0.0,10.0),'disp': 'absorption rate', 'sym': 'k_abs',
+        'k_abs': {'v0': 1.0, 'lim': (0.0, 10.0), 'disp': 'absorption rate', 'sym': 'k_abs',
                   'k': 'gut_k_abs',
                   'h': 'Rate constant for absorption : k_P * y_Pc.'},
         'f_abs': {'v0': 1.0, 'lim': (0.0, 1.0), 'disp': 'absorption response',
@@ -928,13 +968,13 @@ def DEB0() :
     DEB_args = {'species': {'dtype': str, 'v0': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
                             'k': 'species',
                             'h': 'The phenotype/species-specific fitted DEB model to use.'},
-                'f_decay': {'v0': 0.1, 'lim': (0.0,1.0), 'dv': 0.1, 'sym': sub('c', 'DEB'), 'k': 'c_DEB',
+                'f_decay': {'v0': 0.1, 'lim': (0.0, 1.0), 'dv': 0.1, 'sym': sub('c', 'DEB'), 'k': 'c_DEB',
                             'disp': 'DEB functional response decay coef',
                             'h': 'The exponential decay coefficient of the DEB functional response.'},
                 'absorption': {'v0': 0.5, 'lim': (0.0, 1.0), 'sym': sub('c', 'abs'),
                                'k': 'c_abs',
                                'h': 'The absorption ration for consumed food.'},
-                'V_bite': {'v0': 0.0005, 'lim': (0.0,0.1), 'dv': 0.0001,
+                'V_bite': {'v0': 0.0005, 'lim': (0.0, 0.1), 'dv': 0.0001,
                            'sym': sub('V', 'bite'),
                            'k': 'V_bite',
                            'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
@@ -947,24 +987,25 @@ def DEB0() :
                 'assimilation_mode': {'dtype': str, 'v0': 'gut', 'vs': ['sim', 'gut', 'deb'],
                                       'sym': sub('m', 'ass'), 'k': 'ass_mod',
                                       'h': 'The method used to calculate the DEB assimilation energy flow.'},
-                'DEB_dt': {'lim': (0.0, 1000.0), 'disp': 'DEB timestep (sec)','v0' : None,
+                'DEB_dt': {'lim': (0.0, 1000.0), 'disp': 'DEB timestep (sec)', 'v0': None,
                            'sym': sub('dt', 'DEB'),
                            'k': 'DEB_dt',
                            'h': 'The timestep of the DEB energetics module in seconds.'},
                 # 'gut_params':d['gut_params']
                 }
 
-    args={**gut_args,**DEB_args}
+    args = {**gut_args, **DEB_args}
     d = {'args': args}
     return dNl.NestDict(d)
 
 
 def dict_aux():
     d0 = {}
-    d0['physics'] =Phy0()
-    d0['body'] =Bod0()
-    d0['energetics'] =DEB0()
+    d0['physics'] = Phy0()
+    d0['body'] = Bod0()
+    d0['energetics'] = DEB0()
     return dNl.NestDict(d0)
+
 
 def build_aux_dict():
     from lib.registry.par import v_descriptor
@@ -999,7 +1040,19 @@ def build_modConf_dict():
 
 
 if __name__ == '__main__':
+    from lib.conf.stored.conf import kConfDict
+    from lib.conf.stored.conf import loadConf
+    mID='thermo_navigator'
+    m=loadConf(mID,'Model')
+    print(m)
+    raise
+
+    #
+    # for mID in kConfDict('Model'):
+    #     print(mID)
+    #     B = dd.init_brain_mID(mID=mID)
     from lib.registry.pars import preg
+
     # from lib.registry.parConfs import init_loco
 
     # from lib.aux.sim_aux import get_sample_bout_distros0
@@ -1009,9 +1062,9 @@ if __name__ == '__main__':
     # sample = loadConf(refID, 'Ref')
     dd = preg.larva_conf_dict
 
-    d=dd.mdicts2aux.energetics
-    for k,v in d.items():
-        print(k,v.keys())
+    d = dd.mdicts2aux.energetics
+    for k, v in d.items():
+        print(k, v.keys())
     # from lib.conf.stored.conf import kConfDict
     #
     # for mID in kConfDict('Model'):
