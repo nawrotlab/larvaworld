@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 from lib.model.modules.basic import Effector, Oscillator, ConEffector, StepOscillator, StepEffector
-from lib.registry.pars import preg
+
 
 
 class NeuralOscillator(StepEffector):
@@ -21,7 +21,7 @@ class NeuralOscillator(StepEffector):
         self.base_activation = base_activation
         self.r1 = activation_range[1] - base_activation
         self.r0 = base_activation - activation_range[0]
-        # self.activation = self.base_activation
+        # self.output = self.base_activation
 
         # Neural populations
         self.E_r = 0  # 28
@@ -94,6 +94,7 @@ class NeuralOscillator(StepEffector):
 class Turner:
     def __init__(self, mode='neural', continuous=True, rebound=False, dt=0.1,
                  **kwargs):
+        from lib.registry.pars import preg
         D = preg.larva_conf_dict
         self.continuous = continuous
         self.rebound = rebound

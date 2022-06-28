@@ -11,13 +11,11 @@ from lib.model.modules.locomotor import Locomotor
 
 class NengoBrain(Network, Brain):
 
-    def __init__(self, conf, agent=None, modules=None, dt=None, **kwargs):
+    def __init__(self, conf, agent=None, dt=None, **kwargs):
         super().__init__(**kwargs)
-        Brain.__init__(self, conf=conf, agent=agent, modules=modules, dt=dt)
-        m = self.modules
-        c = self.conf
+        Brain.__init__(self, agent=agent, dt=dt)
         self.food_feedback = False
-        self.locomotor = NengoLocomotor(dt=self.dt, c=self.conf)
+        self.locomotor = NengoLocomotor(dt=self.dt, c=conf)
         self.build()
         self.sim = Simulator(self, dt=0.01, progress_bar=False)
         self.Nsteps = int(self.dt / self.sim.dt)
@@ -187,7 +185,7 @@ class NengoBrain(Network, Brain):
 
 
             if ws is not None:
-                Ch = Node(ws.get_activation, size_out=1, label='Ch')
+                Ch = Node(ws.get_output, size_out=1, label='Ch')
                 LNa = Ensemble(N2, 1, neuron_type=Direct(), label='LNa')
                 LNb = Ensemble(N2, 1, neuron_type=Direct(), label='LNb')
                 Ha = Ensemble(N2, 1, neuron_type=Direct(), label='Ha')
@@ -309,13 +307,10 @@ class NengoBrain(Network, Brain):
             save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt', use_pickle=False)
 
 class NengoEffector:
-    def __init__(self, initial_freq=None, default_freq=None, freq_range=None, initial_amp=None, amp_range=None,
+    def __init__(self, initial_freq=None, freq_range=None, initial_amp=None, amp_range=None,
                  noise=0.0, **kwargs):
         self.initial_freq = initial_freq
         self.freq = initial_freq
-        if default_freq is None:
-            default_freq = initial_freq
-        self.default_freq = default_freq
         self.freq_range = freq_range
         self.initial_amp = initial_amp
         self.amp = initial_amp
@@ -338,9 +333,9 @@ class NengoEffector:
     def set_amp(self, v):
         self.amp = v
 
-    def set_default_freq(self, value):
+    def set_initial_freq(self, value):
         value = np.clip(value, self.freq_range[0], self.freq_range[1])
-        self.default_freq = value
+        self.initial_freq = value
 
     def active(self):
         if self.freq != 0:

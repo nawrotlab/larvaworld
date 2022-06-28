@@ -458,7 +458,7 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
             x+=dst*np.cos(fo)
             y+=dst*np.sin(fo)
 
-            AA[i,j,:]=[b,fo,ro,fov,DL.turner.activity,x,y,dst, v,DL.turner.activation,DL.cur_ang_suppression]
+            AA[i,j,:]=[b, fo, ro, fov, DL.turner.activity, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
     AA[:, :, :4] = np.rad2deg(AA[:, :, :4])
     AA=AA.reshape(c.Nticks*Nids, len(df_columns))
     s = pd.DataFrame(AA,index=my_index, columns=df_columns)

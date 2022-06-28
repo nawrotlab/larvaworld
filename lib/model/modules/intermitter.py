@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 import lib.aux.dictsNlists as dNl
-
+from lib.anal.fitting import BoutGenerator
 
 from lib.aux import naming as nam
 from lib.conf.stored.conf import loadConf
@@ -125,12 +125,13 @@ class BaseIntermitter(Effector):
     def update_state(self, L):
         self.stride_stop = False
         if self.current_stridechain_length is not None:
-            if L.crawler.complete_iteration:
-                self.current_numstrides += 1
-                self.stride_stop = True
-                if self.current_numstrides >= self.current_stridechain_length:
-                    self.register_stridechain()
-                    self.inhibit_locomotion()
+            if hasattr(L.crawler, 'complete_iteration'):
+                if L.crawler.complete_iteration:
+                    self.current_numstrides += 1
+                    self.stride_stop = True
+                    if self.current_numstrides >= self.current_stridechain_length:
+                        self.register_stridechain()
+                        self.inhibit_locomotion(L)
 
         elif self.current_feedchain_length is not None:
             if L.feeder.complete_iteration:
@@ -138,7 +139,7 @@ class BaseIntermitter(Effector):
                 self.feed_counter += 1
                 if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
                     self.register_feedchain()
-                    self.inhibit_locomotion()
+                    self.inhibit_locomotion(L)
                 else:
                     self.current_feedchain_length += 1
 
@@ -327,20 +328,20 @@ class OfflineIntermitter(Intermitter):
                 self.current_numstrides = 0
                 self.current_stridechain_length = None
                 self.current_pause_ticks = int(self.generate_pause() / self.dt)
-                self.inhibit_locomotion()
+                self.inhibit_locomotion(L=locomotor)
         elif self.current_feedchain_length and t >= self.current_feed_ticks:
             self.feed_counter += 1
             if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
                 self.register('feed')
                 self.current_feedchain_length = None
                 self.current_pause_ticks = int(self.generate_pause() / self.dt)
-                self.inhibit_locomotion()
+                self.inhibit_locomotion(L=locomotor)
             else:
                 self.current_feedchain_length += 1
         elif self.current_pause_ticks and t > self.current_pause_ticks:
             self.register('pause')
             self.current_pause_ticks = None
-            self.disinhibit_locomotion()
+            self.disinhibit_locomotion(L=locomotor)
 
     def disinhibit_locomotion(self, L=None):
         if np.random.uniform(0, 1, 1) >= self.EEB:
@@ -390,13 +391,13 @@ class NengoIntermitter(OfflineIntermitter):
 
     def disinhibit_locomotion(self, L=None):
         if np.random.uniform(0, 1, 1) >= self.EEB:
-            L.crawler.set_freq(L.crawler.default_freq)
+            L.crawler.set_freq(L.crawler.initial_freq)
             if L.feeder is not None:
                 L.feeder.set_freq(0)
             self.current_stridechain_length = self.generate_stridechain()
         else:
             if L.feeder is not None:
-                L.feeder.set_freq(L.feeder.default_freq)
+                L.feeder.set_freq(L.feeder.initial_freq)
             L.crawler.set_freq(0)
             self.current_feedchain_length = 1
 
@@ -420,17 +421,19 @@ class BranchIntermitter(BaseIntermitter):
             if stridechain_dist is not None:
                 # print(stridechain_dist.range)
                 self.stridechain_min, self.stridechain_max = stridechain_dist.range
-                # self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
+                self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
                 self.run_dist = None
             else:
                 run_mode = 'run'
         if run_mode == 'run':
             if run_dist is not None:
+                self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
                 self.stridechain_min, self.stridechain_max = run_dist.range
                 self.stridechain_dist = None
             else:
                 raise ValueError('None of stidechain or run distribution exist')
         self.pau_min, self.pau_max = (np.array(pause_dist.range)/self.dt).astype(int)
+        self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
 
     def generate_stridechain(self):
         from lib.anal.fitting import exp_bout

@@ -6,7 +6,7 @@ from scipy.special import erf
 
 from lib.aux import naming as nam
 import lib.aux.dictsNlists as dNl
-from lib.registry.pars import preg
+
 
 
 def gaussian(x, mu, sig):
@@ -74,6 +74,7 @@ def KS2(a1, a2):
 
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
+    from lib.registry.pars import preg
     D=preg.dist_dict['logNpow']
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
@@ -176,6 +177,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmax=np.nanmax(x0)
     with suppress_stdout(False):
         warnings.filterwarnings('ignore')
+        from lib.registry.pars import preg
         DD=preg.dist_dict
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
@@ -355,44 +357,6 @@ def pvalue_star(pv):
             return v
     return "ns"
 
-#
-# def fit2d_matrix(x, N):
-#     degrees = [(i, j) for i in range(N) for j in range(N)]  # list of monomials x**i * y**j to use
-#     matrix = np.stack([np.prod(x ** d, axis=1) for d in degrees], axis=-1)  # stack monomials like columns
-#     return matrix
-#
-# def fit2d_coeff(df, vars, target,N=3, show=True):
-#     x = df[vars].values
-#     z = df[target].values
-#     matrix = fit2d_matrix(x, N)
-#     coeff = np.linalg.lstsq(matrix, z, rcond=None)[0]  # lstsq returns some additional info we ignore
-#     fit = np.dot(matrix, coeff)
-#     if show:
-#         from lib.plot.dataplot import plot_3d, plot_surface
-#         import matplotlib.pyplot as plt
-#         plot_3d(df, vars=vars, target=target, show=show, surface=True)
-#         plt.plot(fit, color='red', label='fitted')
-#         plt.plot(z, color='green', label='original')
-#         plt.legend()
-#         plt.show()
-#     return coeff
-#
-#
-# def fit2d_predict(coeff, ranges,  Ngrid=100, target=None,vars=None,  show=True):
-#     (r00, r01), (r10, r11) = ranges
-#     y0 = np.linspace(r00, r01, Ngrid)
-#     y1 = np.linspace(r10, r11, Ngrid)
-#     yy0, yy1 = np.meshgrid(y0, y1)
-#     yy0f, yy1f = np.array(yy0).flatten(), np.array(yy1).flatten()
-#     x = np.stack((yy0f, yy1f), axis=-1)
-#     N = int(np.sqrt(len(coeff)))
-#     matrix = fit2d_matrix(x, N)
-#     predict = np.dot(matrix, coeff)
-#     if show:
-#         import matplotlib.pyplot as plt
-#         from lib.plot.dataplot import plot_3d, plot_surface
-#         z0 = predict.reshape(yy0.shape)
-#         fig3 = plot_surface(yy0, yy1, z0, vars=vars, target=target, show=show)
 
 def critical_bout(c=0.9, sigma=1, N=1000, tmax=1100, tmin=1) :
     t = 0
@@ -433,6 +397,7 @@ class BoutGenerator:
         self.name = name
         self.dt = dt
         self.range = range
+        from lib.registry.pars import preg
         self.ddfs = preg.dist_dict
         self.xmin, self.xmax = range
         kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})

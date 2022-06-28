@@ -44,17 +44,23 @@ class Effector:
 class Oscillator(Effector):
     def __init__(self, initial_freq=None, initial_freq_std=0, random_phi=True, **kwargs):
         super().__init__(**kwargs)
-        # self.freq = initial_freq
-        self.freq = float(np.random.normal(loc=initial_freq, scale=initial_freq_std, size=1))
+        self.initial_freq = float(np.random.normal(loc=initial_freq, scale=initial_freq_std, size=1))
+        self.freq = self.initial_freq
         self.complete_iteration = False
         self.iteration_counter = 0
         self.d_phi = 2 * np.pi * self.dt * self.freq
         self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
         self.phi = np.random.rand() * 2 * np.pi if random_phi else 0
 
-    def set_frequency(self, freq):
-        self.freq = freq
-        self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
+    def set_freq(self, v):
+        self.freq = v
+        if self.freq!=0 :
+            self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
+        else :
+            self.timesteps_per_iteration = None
+
+    def get_freq(self, t):
+        return self.freq
 
     def oscillate(self):
         super().count_time()
@@ -118,11 +124,19 @@ class StepModule:
     def update(self):
         pass
 
+    def set_amp(self, v):
+        self.amp = v
+
+    def get_amp(self, t):
+        return self.amp
+
 
 class StepEffector(Effector, StepModule):
-    def __init__(self, initial_amp, amp_range=None,input_noise=0,output_noise=0, **kwargs):
-        super(Effector, self).__init__(**kwargs)
-        super(StepModule, self).__init__(initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
+    def __init__(self, initial_amp=1, amp_range=None,input_noise=0,output_noise=0, **kwargs):
+        Effector.__init__(self,**kwargs)
+        # super(Effector, self).__init__(**kwargs)
+        StepModule.__init__(self,initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
+        # super(StepModule, self).__init__(initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
         self.start_effector()
 
     def update(self):
@@ -137,8 +151,10 @@ class StepEffector(Effector, StepModule):
 
 class StepOscillator(Oscillator, StepModule) :
     def __init__(self, initial_amp, amp_range=None,input_noise=0,output_noise=0, **kwargs):
-        super(Oscillator, self).__init__(**kwargs)
-        super(StepModule, self).__init__(initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
+        Oscillator.__init__(self,**kwargs)
+        # super(Oscillator, self).__init__(**kwargs)
+        StepModule.__init__(self,initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
+        # super(StepModule, self).__init__(initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
         self.start_effector()
 
     def update(self):

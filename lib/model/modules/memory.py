@@ -52,7 +52,7 @@ class RLmemory(Effector):
         return state
 
     def step(self, dx, reward, brain=None):
-        if self.table == False and brain is not None:
+        if self.table == False and brain is not None and brain.agent is not None:
             temp = brain.agent.model.table_collector
             if temp is not None:
                 self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None

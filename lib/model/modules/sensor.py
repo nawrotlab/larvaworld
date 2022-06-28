@@ -13,7 +13,7 @@ class Sensor(Effector):
         self.noise = input_noise
         self.brute_force = brute_force
         self.A0, self.A1 = [-1.0, 1.0]
-        self.activation = 0
+        self.output = 0
         self.exp_decay_coef = np.exp(- self.dt * self.decay_coef)
 
         self.init_gain(gain_dict)
@@ -27,19 +27,19 @@ class Sensor(Effector):
     def step(self, input, brain=None):
         self.update_gain(brain)
         if len(input) == 0:
-            self.activation = 0
+            self.output = 0
         else:
             self.compute_dX(input)
-            self.activation *= self.exp_decay_coef
-            self.activation += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
-            if self.activation > self.A1:
-                self.activation = self.A1
-            elif self.activation < self.A0:
-                self.activation = self.A0
+            self.output *= self.exp_decay_coef
+            self.output += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
+            if self.output > self.A1:
+                self.output = self.A1
+            elif self.output < self.A0:
+                self.output = self.A0
             if self.brute_force:
                 self.affect_locomotion(brain)
                 return 0
-        return self.activation
+        return self.output
 
     def affect_locomotion(self, brain=None):
         pass
@@ -71,8 +71,8 @@ class Sensor(Effector):
     def get_gain(self):
         return self.gain
 
-    def get_activation(self, t):
-        return self.activation
+    def get_output(self, t):
+        return self.output
 
     def set_gain(self, value, gain_id):
         self.gain[gain_id] = value
@@ -119,8 +119,8 @@ class Olfactor(Sensor):
                     # print(self.brain.agent.unique_id, id, 'new')
 
     def affect_locomotion(self, brain=None):
-        if self.activation < 0 and brain.locomotor.crawler.complete_iteration:
-            if np.random.uniform(0, 1, 1) <= np.abs(self.activation):
+        if self.output < 0 and brain.locomotor.crawler.complete_iteration:
+            if np.random.uniform(0, 1, 1) <= np.abs(self.output):
                 brain.locomotor.intermitter.inhibit_locomotion()
 
     @property

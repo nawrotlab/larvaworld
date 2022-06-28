@@ -8,7 +8,7 @@ from lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
 from lib.registry.units import ureg
 from lib.aux import dictsNlists as dNl
 
-bF, bT = {'dtype': bool, 'v0': False}, {'dtype': bool, 'v0': True}
+bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}
 
 
 def init_mods():
@@ -175,15 +175,17 @@ def init_mods():
                           'h': 'The duration of the training period after which no further learning will take place.'}
         },
         'modules': {
-            'crawler': bF,
-            'turner': bF,
-            'interference': bF,
-            'intermitter': bF,
-            'feeder': bF,
-            'olfactor': bF,
-            'windsensor': bF,
-            'toucher': bF,
-            'memory': bF},
+            'crawler': {**bF, 'k':'C'},
+            'turner': {**bF, 'k':'T'},
+            'interference': {**bF, 'k':'If'},
+            'intermitter': {**bF, 'k':'Im'},
+            'feeder': {**bF, 'k':'F'},
+            'olfactor': {**bF, 'k':'O'},
+            'windsensor': {**bF, 'k':'W'},
+            'toucher': {**bF, 'k':'To'},
+            'memory': {**bF, 'k':'O_mem'},
+            # 'touch_memory': {**bF, 'k':'To_mem'},
+        },
         'square_interference': {
             'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2 * np.pi,
                                   'label': 'suppression relief phase interval',
@@ -392,7 +394,7 @@ def init_mods():
     d['brain'] = {
         'modules': d['modules'],
         **{f'{m}_params': d[m] for m in d['modules'].keys()},
-        'nengo': bF
+        'nengo': {**bF, 'k':'nengo'}
     }
 
     d['gut'] = {
@@ -759,6 +761,7 @@ def W0():
                          'sym': sub('w', 'BT'), 'k': 'w_BT',
                          'h': 'The connection weight between the BEND neuron ensemble and the TURNER module.'},
         },
+
         **sensor_kws(k0='W', l0='windsensor'),
     }
     d = {'default': {'args': args, 'class_func': WindSensor},
@@ -840,6 +843,143 @@ def dict0():
     d0['memory'] = {'mode': Mem0(), **kws}
     return dNl.NestDict(d0)
 
+def Phy0() :
+    args = {
+        'torque_coef': {'v0': 0.5, 'lim': (0.1, 1.0), 'dv': 0.01, 'disp': 'torque coefficient',
+                        'sym': sub('c', 'T'), 'u_name': sup('sec', -2), 'u': ureg.s ** -2,
+                        'h': 'Conversion coefficient from TURNER output to torque-per-inertia-unit.'},
+        'ang_vel_coef': {'v0': 1.0, 'lim': (0.0, 5.0), 'dv': 0.01, 'disp': 'angular velocity coefficient',
+                         'h': 'Conversion coefficient from TURNER output to angular velocity.'},
+        'ang_damping': {'v0': 1.0, 'lim': (0.1, 2.0), 'disp': 'angular damping', 'sym': 'z',
+                        'u_name': sup('sec', -1), 'u': ureg.s ** -1,
+                        'h': 'Angular damping exerted on angular velocity.'},
+        'lin_damping': {'v0': 1.0, 'lim': (0.0, 10.0), 'disp': 'linear damping', 'sym': 'zl',
+                        'u_name': sup('sec', -1), 'u': ureg.s ** -1,
+                        'h': 'Linear damping exerted on forward velocity.'},
+        'body_spring_k': {'v0': 1.0, 'lim': (0.0, 10.0), 'dv': 0.1, 'disp': 'body spring constant',
+                          'sym': 'k', 'u_name': sup('sec', -2), 'u': ureg.s ** -2,
+                          'h': 'Larva-body torsional spring constant reflecting deformation resistance.'},
+        'bend_correction_coef': {'v0': 1.0, 'lim': (0.8, 1.5), 'disp': 'bend correction coefficient',
+                                 'sym': sub('c', 'b'),
+                                 'h': 'Correction coefficient of bending angle during forward motion.'},
+        'ang_mode': {'dtype': str, 'v0': 'torque', 'vs': ['torque', 'velocity'], 'disp': 'angular mode',
+                     'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
+    }
+    d = {'args': args}
+    return dNl.NestDict(d)
+
+
+def Bod0() :
+    args = {
+        'initial_length': {'v0': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001,
+                           'disp': 'length', 'sym': '$l$', 'u': ureg.m, 'k': 'l0', 'h': 'The initial body length.'},
+        'length_std': {'v0': 0.0, 'lim': (0.0, 0.001), 'dv': 0.0001, 'u': ureg.m, 'k': 'l_std',
+                       'h': 'The standard deviation of the initial body length.'},
+        'Nsegs': {'dtype': int, 'v0': 2, 'lim': (1, 12), 'disp': 'number of body segments', 'sym': sub('N', 'segs'),
+                  'u_name': '# $segments$', 'k': 'Nsegs',
+                  'h': 'The number of segments comprising the larva body.'},
+        'seg_ratio': {'k': 'seg_r', 'lim': (0.0, 1.0),
+                      'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
+
+        'shape': {'dtype': str, 'v0': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
+                  'k': 'body_shape', 'h': 'The body shape.'},
+    }
+    d = {'args': args}
+    return dNl.NestDict(d)
+
+def DEB0() :
+    gut_args = {
+        'M_gm': {'v0': 10 ** -2, 'lim': (0.0,10.0), 'disp': 'gut scaled capacity',
+                 'sym': 'M_gm',
+                 'k': 'M_gm',
+                 'h': 'Gut capacity in C-moles per unit of gut volume.'},
+        'y_P_X': {'v0': 0.9, 'disp': 'food->product yield',
+                  'sym': 'y_P_X', 'k': 'y_P_X',
+                  'h': 'Yield of product per unit of food.'},
+        'J_g_per_cm2': {'v0': 10 ** -2 / (24 * 60 * 60), 'lim': (0.0,10.0), 'disp': 'digestion secretion rate',
+                        'sym': 'J_g_per_cm2', 'k': 'J_g_per_cm2',
+                        'h': 'Secretion rate of enzyme per unit of gut surface per second.'},
+        'k_g': {'v0': 1.0,'lim': (0.0,10.0), 'disp': 'digestion decay rate', 'sym': 'k_g',
+                'k': 'k_g',
+                'h': 'Decay rate of digestive enzyme.'},
+        'k_dig': {'v0': 1.0, 'lim': (0.0,10.0), 'disp': 'digestion rate', 'sym': 'k_dig',
+                  'k': 'k_dig',
+                  'h': 'Rate constant for digestion : k_X * y_Xg.'},
+        'f_dig': {'v0': 1.0, 'disp': 'digestion response',
+                  'sym': 'f_dig', 'k': 'f_dig',
+                  'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
+        'M_c_per_cm2': {'v0': 5 * 10 ** -8, 'lim': (0.0,10.0), 'disp': 'carrier density',
+                        'sym': 'M_c_per_cm2', 'k': 'M_c_per_cm2',
+                        'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
+        'constant_M_c': {**bT, 'disp': 'constant carrier density', 'sym': 'constant_M_c',
+                         'k': 'constant_M_c',
+                         'h': 'Whether to assume a constant amount of carrier enzymes on the gut surface.'},
+        'k_c': {'v0': 1.0,'lim': (0.0,10.0), 'disp': 'carrier release rate', 'sym': 'k_c',
+                'k': 'gut_k_c',
+                'h': 'Release rate of carrier enzymes.'},
+        'k_abs': {'v0': 1.0, 'lim': (0.0,10.0),'disp': 'absorption rate', 'sym': 'k_abs',
+                  'k': 'gut_k_abs',
+                  'h': 'Rate constant for absorption : k_P * y_Pc.'},
+        'f_abs': {'v0': 1.0, 'lim': (0.0, 1.0), 'disp': 'absorption response',
+                  'sym': 'f_abs', 'k': 'f_abs',
+                  'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
+    }
+
+    DEB_args = {'species': {'dtype': str, 'v0': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
+                            'k': 'species',
+                            'h': 'The phenotype/species-specific fitted DEB model to use.'},
+                'f_decay': {'v0': 0.1, 'lim': (0.0,1.0), 'dv': 0.1, 'sym': sub('c', 'DEB'), 'k': 'c_DEB',
+                            'disp': 'DEB functional response decay coef',
+                            'h': 'The exponential decay coefficient of the DEB functional response.'},
+                'absorption': {'v0': 0.5, 'lim': (0.0, 1.0), 'sym': sub('c', 'abs'),
+                               'k': 'c_abs',
+                               'h': 'The absorption ration for consumed food.'},
+                'V_bite': {'v0': 0.0005, 'lim': (0.0,0.1), 'dv': 0.0001,
+                           'sym': sub('V', 'bite'),
+                           'k': 'V_bite',
+                           'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'},
+                'hunger_as_EEB': {**bT,
+                                  'h': 'Whether the DEB-generated hunger drive informs the exploration-exploitation balance.',
+                                  'sym': 'hunger_as_EEB', 'k': 'hunger_as_EEB'},
+                'hunger_gain': {'v0': 0.0, 'lim': (0.0, 1.0), 'sym': sub('G', 'hunger'),
+                                'k': 'G_hunger', 'disp': 'hunger sensitivity to reserve reduction',
+                                'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
+                'assimilation_mode': {'dtype': str, 'v0': 'gut', 'vs': ['sim', 'gut', 'deb'],
+                                      'sym': sub('m', 'ass'), 'k': 'ass_mod',
+                                      'h': 'The method used to calculate the DEB assimilation energy flow.'},
+                'DEB_dt': {'lim': (0.0, 1000.0), 'disp': 'DEB timestep (sec)','v0' : None,
+                           'sym': sub('dt', 'DEB'),
+                           'k': 'DEB_dt',
+                           'h': 'The timestep of the DEB energetics module in seconds.'},
+                # 'gut_params':d['gut_params']
+                }
+
+    args={**gut_args,**DEB_args}
+    d = {'args': args}
+    return dNl.NestDict(d)
+
+
+def dict_aux():
+    d0 = {}
+    d0['physics'] =Phy0()
+    d0['body'] =Bod0()
+    d0['energetics'] =DEB0()
+    return dNl.NestDict(d0)
+
+def build_aux_dict():
+    from lib.registry.par import v_descriptor
+    from lib.registry.par_dict import preparePar
+    d0 = dict_aux()
+    d00 = dNl.NestDict(copy.deepcopy(d0))
+    pre_d00 = dNl.NestDict(copy.deepcopy(d0))
+    for mkey in d0.keys():
+        for arg, vs in d0[mkey].args.items():
+            pre_p = preparePar(p=arg, **vs)
+            p = v_descriptor(**pre_p)
+            pre_d00[mkey].args[arg] = pre_p
+            d00[mkey].args[arg] = p
+    return d0, pre_d00, d00
+
 
 def build_modConf_dict():
     from lib.registry.par import v_descriptor
@@ -860,19 +1000,42 @@ def build_modConf_dict():
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
-    from lib.aux.sim_aux import get_sample_bout_distros0
-    from lib.conf.stored.conf import loadConf
+    # from lib.registry.parConfs import init_loco
+
+    # from lib.aux.sim_aux import get_sample_bout_distros0
+    # from lib.conf.stored.conf import loadConf
 
     # refID = 'None.150controls'
     # sample = loadConf(refID, 'Ref')
     dd = preg.larva_conf_dict
+
+    d=dd.mdicts2aux.energetics
+    for k,v in d.items():
+        print(k,v.keys())
+    # from lib.conf.stored.conf import kConfDict
     #
-    mkey = 'intermitter'
-    mm = 'default'
+    # for mID in kConfDict('Model'):
+    #     print(mID)
+    #     B = dd.init_brain_mID(mID=mID)
+    #     # print(B.locomotor.intermitter.stridechain_dist)
+    #     for i in range(1000):
+    #         AA = B.step()
     #
-    conf0 = dd.init_dicts2[mkey].mode[mm].args
-    preconf0 = dd.mpredicts2[mkey].mode[mm].args
-    mconf0 = dd.mdicts2[mkey].mode[mm].args
+    #     # try :
+    #     #     for i in range(1000) :
+    #     #         AA=B.step()
+    #     #
+    #     # except:
+    #     #     print('-----------', mID)
+    #         # print()
+    # raise
+    # #
+    # mkey = 'intermitter'
+    # mm = 'default'
+    # #
+    # conf0 = dd.init_dicts2[mkey].mode[mm].args
+    # preconf0 = dd.mpredicts2[mkey].mode[mm].args
+    # mconf0 = dd.mdicts2[mkey].mode[mm].args
     #
     # mconf = dd.conf2(mkey=mkey, mode=mm, refID=refID)
     #

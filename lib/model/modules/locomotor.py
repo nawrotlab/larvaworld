@@ -7,7 +7,6 @@ from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
 
 from lib.model.modules.turner import Turner
-from lib.registry.pars import preg
 
 
 class Locomotor:
@@ -80,39 +79,22 @@ class OfflineLocomotor(Locomotor):
         self.update_body(length)
         return self.lin_vel, self.ang_vel, self.feed_motion
 
-
-class DefaultLocomotor(Locomotor, OfflineLocomotor):
+class DefaultLocomotor(OfflineLocomotor, Locomotor):
     def __init__(self, conf, offline=False, **kwargs):
         self.offline = offline
         if offline:
             OfflineLocomotor.__init__(self, **kwargs)
         else:
             Locomotor.__init__(self, **kwargs)
-        # self.output = None
+        from lib.registry.pars import preg
         preg.larva_conf_dict.init_loco(conf, self)
-        # self.coupling = self.interference
-        # D = preg.larva_conf_dict.mdicts2
-        # k = 'crawler'
-        # if conf.modules[k]:
-        #     m = conf[f'{k}_params']
-        #     self.crawler = D['crawler'].mode[m.waveform].class_func(**m, dt=self.dt)
-        # k = 'turner'
-        # if conf.modules[k]:
-        #     m = conf[f'{k}_params']
-        #     self.turner = D[k].mode[m.mode].class_func(**m, dt=self.dt)
-        # k = 'feeder'
-        # if conf.modules[k]:
-        #     m = conf[f'{k}_params']
-        #     self.feeder = D[k].mode['default'].class_func(**m, dt=self.dt)
-        # k = 'interference'
-        # if conf.modules[k]:
-        #     m = conf[f'{k}_params']
-        #     self.coupling = D[k].mode[m.mode].class_func(**m)
-        # k = 'intermitter'
-        # if conf.modules[k]:
-        #     m = conf[f'{k}_params']
-        #     self.intermitter = D.mdicts2[k].mode[m.mode].class_func(**m, dt=self.dt)
-        #     self.intermitter.disinhibit_locomotion(self)
+
+    # def output(self, length):
+    #     if self.offline :
+    #         self.update_body(length)
+    #         return self.lin_vel, self.ang_vel, self.feed_motion
+    #     else :
+    #         return self.lin_activity, self.ang_activity, self.feed_motion
 
     def step(self, A_in=0, length=1):
         if self.intermitter:
@@ -124,16 +106,24 @@ class DefaultLocomotor(Locomotor, OfflineLocomotor):
                 self.on_new_run()
         self.feed_motion = self.feeder.step() if self.feeder else False
         self.lin_activity = self.crawler.step() * length if self.crawler else 0
-        cT0 = self.interference.step(self.crawler, self.feeder)
+        if self.interference:
+            cT0 = self.interference.step(self.crawler, self.feeder)
 
-        mm = self.interference.suppression_mode
-        if mm == 'oscillation':
-            A_in -= (1 - cT0)
-            self.cur_ang_suppression = 1
-        elif mm == 'amplitude':
-            self.cur_ang_suppression = cT0
-        elif mm == 'both':
-            A_in -= (1 - cT0)
-            self.cur_ang_suppression = cT0
+            mm = self.interference.suppression_mode
+            if mm == 'oscillation':
+                A_in -= (1 - cT0)
+                cT = 1
+            elif mm == 'amplitude':
+                cT = cT0
+            elif mm == 'both':
+                A_in -= (1 - cT0)
+                cT = cT0
+        else :
+            cT = 1
+        self.cur_ang_suppression=cT
         self.ang_activity = self.turner.step(A_in=A_in) if self.turner else 0
-        return self.output(length=length)
+        if self.offline:
+            self.update_body(length)
+            return self.lin_vel, self.ang_vel, self.feed_motion
+        else:
+            return self.lin_activity, self.ang_activity, self.feed_motion

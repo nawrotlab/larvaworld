@@ -1,15 +1,16 @@
-import numpy as np
-from scipy import signal
+# import numpy as np
+# from scipy import signal
 
-from lib.model.modules.basic import Oscillator, Effector
-from lib.registry.pars import preg
+# from lib.model.modules.basic import Oscillator, Effector
+# from lib.registry.pars import preg
 
 
 class Crawler:
     def __init__(self, dt,waveform, **kwargs):
+        from lib.registry.pars import preg
         D = preg.larva_conf_dict
         # self.activity = 0
-        # self.activation = 0
+        # self.output = 0
         # self.noise = crawler_noise
         self.ef0 = D.mdicts2['crawler'].mode[waveform].class_func(**kwargs, dt=dt)
         # self.ef0.start_effector()

@@ -170,6 +170,8 @@ def build_loco(c, t, ct, im, B=None):
     if im is not None:
         B.modules.intermitter = True
         B.intermitter_params = Im_dict[im]
+    else :
+        B.modules.intermitter = False
     for k, v in B.modules.items():
         if not v:
             B[f'{k}_params'] = None
@@ -207,6 +209,8 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
     modules = [module_dict[k] for k in module_shorts]
 
     modules = preg.get_null('modules', **{m: True for m in modules})
+    # print(modules)
+    # raise
     d = {'modules': modules}
     for k, v in modules.items():
         p = f'{k}_params'
@@ -227,36 +231,17 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
 
 
 if __name__ == '__main__':
-    # for k, v in loco_dict.items() :
-    # #     print(v)
-    # # raise
-    # for k, v in loco_dict.items():
-    #     L = DefaultLocomotor(dt=0.1, conf=v)
-    #     for i in range(5000):
-    #         v, fov, feed = L.step(length=0.004)
-    # raise
-
-    # print(kConfDict('Brain'))
     from lib.conf.stored.conf import saveConf, copyConf
-
-    # print(loadConf('None.200_controls', 'Ref').bout_distros.stride.keys())
     for k, v in loco_dict.items():
-        # print(v.intermitter_params.mode)
         saveConf(v, 'Brain', k)
         BB = copyConf('navigator', 'Model')
+        BB.brain.modules=v.modules
         BB.brain.crawler_params = v.crawler_params
         BB.brain.turner_params = v.turner_params
         BB.brain.interference_params = v.interference_params
         BB.brain.intermitter_params = v.intermitter_params
         BB.body.length_std = 0.0
         BB.body.initial_length = 0.005
-        # if k == 'Sakagiannis2022':
-        #     BB.physics = null_dict('physics', **{'torque_coef': 1.78,
-        #                                          'ang_vel_coef': 1.0,
-        #                                          'ang_damping': 2.6,
-        #                                          'body_spring_k': 50,
-        #                                          'bend_correction_coef': 1.6,
-        #                                          'ang_mode': 'torque'})
         saveConf(BB, 'Model', k)
 
     print(loadConf('Sakagiannis2022', 'Model'))
