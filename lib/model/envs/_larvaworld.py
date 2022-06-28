@@ -7,7 +7,7 @@ import webcolors
 import pygame
 from shapely.affinity import affine_transform
 
-
+from lib.registry.pars import preg
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 

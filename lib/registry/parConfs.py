@@ -137,7 +137,7 @@ class LarvaConfDict:
                     mpredfs[k] = None
             return mpredfs
 
-    def conf2(self, mdict=None, mkey=None, prefix=False, mode=None, **kwargs):
+    def conf2(self, mdict=None, mkey=None, prefix=False, mode=None, refID=None, **kwargs):
         conf0 = dNl.NestDict()
         if mdict is None:
             if mkey is not None:
@@ -155,6 +155,18 @@ class LarvaConfDict:
                 conf0[d] = self.conf2(mdict=p, prefix=False)
 
         conf0.update(kwargs)
+        if refID is not None and mkey == 'intermitter':
+            try:
+                from lib.aux.sim_aux import get_sample_bout_distros0
+                from lib.conf.stored.conf import loadConf
+                kkkws = {
+                    'Im': conf0,
+                    'bout_distros': loadConf(refID, 'Ref').bout_distros,
+                }
+                conf0 = get_sample_bout_distros0(**kkkws)
+            except:
+                pass
+            # bout_distros = sample.bout_distros
         return conf0
 
     def module2(self, mkey, mode=None, **kwargs):
@@ -409,7 +421,7 @@ class LarvaConfDict:
                 for kkk in ['stridechain_dist', 'pause_dist', 'run_dist']:
                     if dic[kkk] is not None:
                         if dic[kkk].name is not None:
-                            vs1, vs2 = self.dist_dict0.get_dist(v=dic[kkk], k=kkk, k0=k,return_tabrows=True)
+                            vs1, vs2 = self.dist_dict0.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
                             data0.append(vs1)
                             data0.append(vs2)
 

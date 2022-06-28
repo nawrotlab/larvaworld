@@ -4,11 +4,8 @@ import numpy as np
 from scipy import signal
 
 from lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
-# from lib.model.modules.basic import Oscillator, Effector, SinOscillator, ConEffector, GaussOscillator, SquareOscillator, \
-#     PhaseOscillator
 
-from lib.registry.par import v_descriptor
-from lib.registry.par_dict import preparePar
+
 from lib.registry.units import ureg
 from lib.aux import dictsNlists as dNl
 
@@ -643,33 +640,15 @@ def If0():
 def Im0():
     from lib.model.modules.intermitter import Intermitter, BranchIntermitter
     from lib.model.modules.intermitter import NengoIntermitter
+    from lib.registry.dist_dict import build_dist_dict,get_dist
+    d0 = build_dist_dict()
 
-    d = dNl.NestDict({
-        'bout_distro': {
-            'fit': {**bT, 'h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
-            'range': {'t': Tuple[float], 'lim': (-500.0, 500.0), 'h': 'The distribution range.'},
-            'name': {'t': str,
-                     'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal',
-                            'uniform'],
-                     'combo': 'distro', 'h': 'The distribution name.'},
-            'mu': {'lim': (-1000.0, 1000.0), 'disp': 'mean', 'combo': 'distro',
-                   'h': 'The "mean" argument for constructing the distribution.'},
-            'sigma': {'lim': (-1000.0, 1000.0), 'disp': 'std', 'combo': 'distro',
-                      'h': 'The "sigma" argument for constructing the distribution.'},
-            'alpha': {'lim': (-1000.0, 1000.0), 'disp': 'alpha', 'combo': 'distro',
-                      'h': 'The "alpha" argument for constructing the distribution.'},
-            'beta': {'lim': (-1000.0, 1000.0), 'disp': 'beta', 'combo': 'distro',
-                     'h': 'The "beta" argument for constructing the distribution.'},
-        }})
-
+    dist_args={k: get_dist(k= k, d0=d0) for k in ['stridechain_dist','run_dist','pause_dist']}
 
 
     IMargs = {
         'run_mode': {'dtype': str, 'v0': 'stridechain', 'vs': ['stridechain', 'run'],
                      'h': 'The generation mode of run epochs.'},
-        'stridechain_dist': d['bout_distro'],
-        'run_dist': d['bout_distro'],
-        'pause_dist': d['bout_distro'],
         'EEB': {'v0': 0.0, 'lim': (0.0, 1.0), 'sym': 'EEB', 'k': 'EEB','disp': 'Exploitation:Exploration balance',
                 'h': 'The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.'},
         'EEB_decay': {'v0': 1.0, 'lim': (0.0, 2.0), 'sym': sub('c', 'EEB'),
@@ -687,7 +666,8 @@ def Im0():
                       'disp': 'feeding frequency',
                       'h': 'The default frequency of the FEEDER oscillator when simulating offline.'},
         'feeder_reoccurence_rate': {'lim': (0.0, 1.0), 'disp': 'feed reoccurence', 'sym': sub('r', 'F'),
-                                    'h': 'The default reoccurence rate of the feeding motion.'}
+                                    'h': 'The default reoccurence rate of the feeding motion.'},
+        **dist_args
 
     }
 
@@ -741,6 +721,35 @@ def build_modConf_dict():
                 pre_d00[mkey].mode[m].args[arg] = pre_p
                 d00[mkey].mode[m].args[arg] = p
     return d0, pre_d00, d00
-#
-# d0 = dict0()
-# d0, pre_d00, d00=build_modConf_dict()
+
+
+
+if __name__ == '__main__':
+    from lib.registry.pars import preg
+    from lib.aux.sim_aux import get_sample_bout_distros0
+    from lib.conf.stored.conf import loadConf
+    # refID = 'None.150controls'
+    # sample = loadConf(refID, 'Ref')
+    # dd = preg.larva_conf_dict
+    #
+    # mkey = 'intermitter'
+    # mm = 'default'
+    #
+    # conf0 = dd.init_dicts2[mkey].mode[mm].args
+    # preconf0 = dd.mpredicts2[mkey].mode[mm].args
+    # mconf0 = dd.mdicts2[mkey].mode[mm].args
+    #
+    # mconf = dd.conf2(mkey=mkey, mode=mm, refID=refID)
+    #
+    # # print(conf0.stridechain_dist)
+    # # print()
+    # # print(preconf0.stridechain_dist)
+    # # print()
+    # # print(mconf0.stridechain_dist)
+    # # print()
+    # print(mconf['stridechain_dist'])
+    #
+    # # mcconf=get_sample_bout_distros0(Im=mconf, bout_distros=sample.bout_distros)
+    # #
+    # # print()
+    # # print(mcconf['stridechain_dist'])

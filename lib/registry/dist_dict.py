@@ -88,32 +88,41 @@ def build_dist_dict() :
         })
     return d
 
-class DistDict :
-    def __init__(self):
-        self.dict=build_dist_dict()
+def get_dist(k, k0='intermitter',v=None, return_tabrows=False,d0=None,return_all=False):
+    if d0 is None :
 
-    def get_dist(self,v, k, k0='intermitter',return_tabrows=False):
-        dict0 = {
+        d0=build_dist_dict()
+    dict0 = {
             'stridechain_dist': ('run length',('N','R'),ureg.dimensionless, '# $strides$'),
             'pause_dist':('pause duration',('t','P'),ureg.s, '$sec$'),
             'run_dist': ('run duration',('t','R'), ureg.s,'$sec$')
         }
-        ll0,(tt0,tt1), u, uname=dict0[k]
-        dispD,dispR=f'{ll0} distribution',f'{ll0} range'
-        symD=sub(tt0,tt1)
-        kD=f'{tt0}_{tt1}'
-        kR=f'{kD}_r'
-        sym1,sym2=subsup(tt0,tt1,'min'),subsup(tt0,tt1,'max')
-        symR=f'[{sym1},{sym2}]'
+    disp,(tt0,tt1), u, uname=dict0[k]
+    dispD,dispR=f'{disp} distribution',f'{disp} range'
+    symD=sub(tt0,tt1)
+    kD=f'{tt0}_{tt1}'
+    kR=f'{kD}_r'
+    sym1,sym2=subsup(tt0,tt1,'min'),subsup(tt0,tt1,'max')
+    symR=f'[{sym1},{sym2}]'
+    p = {'disp': disp, 'k': kD, 'sym': symD, 'u_name': uname, 'u': u, 'dtype': dict, 'v0' : {'fit' : True,'name' : None, 'range' : None}}
 
-        dist_v = self.dict[v.name].lab_func(v)
 
-        pD={'disp' : dispD, 'k' :kD, 'label' : dist_v, 'sym' : symD}
-        pR={'disp' : dispR, 'k' :kR, 'u_name' : uname,'u' : u, 'sym' : symR, 'v0':v.range, 'dtype' : Tuple[float]}
+    if return_tabrows:
+        dist_v = d0[v.name].lab_func(v)
+        vs1 = [k0, dispD, symD, dist_v, '-']
+        vs2 = [k0, dispR, symR, v.range,uname]
+        return vs1,vs2
+    elif return_all:
+        pD = {'disp': dispD, 'k': kD, 'v0': None, 'vs': list(d0.keys()), 'sym': symD, 'dtype': str}
+        pR = {'disp': dispR, 'k': kR, 'u_name': uname, 'u': u, 'sym': symR, 'v0': None, 'dtype': Tuple[float]}
+        return p,pD,pR
+    else :
+        return p
 
-        if return_tabrows:
-            vs1 = [k0, dispD, symD, dist_v, '-']
-            vs2 = [k0, dispR, symR, v.range,uname]
-            return vs1,vs2
-        else :
-            return pD,pR
+
+class DistDict :
+    def __init__(self):
+        self.dict=build_dist_dict()
+
+    def get_dist(self,**kwargs):
+        return get_dist(d0=self.dict,**kwargs)
