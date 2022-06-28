@@ -167,15 +167,15 @@ class LarvaConfDict:
             except:
                 pass
             # bout_distros = sample.bout_distros
-        return conf0
+        return dNl.NestDict(conf0)
 
-    def module2(self, mkey, mode=None, **kwargs):
+    def module2(self, mkey, mode=None, refID=None, **kwargs):
         if mode is None:
             mdict = self.mdicts2[mkey]
         else:
             mdict = self.mdicts2[mkey].mode[mode]
         mkws = self.mdicts2[mkey].kwargs
-        conf0 = self.conf2(mdict=mdict.args, prefix=False)
+        conf0 = self.conf2(mdict=mdict.args, prefix=False, refID=refID)
         func = mdict.class_func
         mkws.update(kwargs)
         m = func(**conf0, **mkws)
@@ -198,7 +198,7 @@ class LarvaConfDict:
         conf0.update(kwargs)
         return conf0
 
-    def multibconf(self, mbConf):
+    def multibconf(self, mbConf, mode=1):
         multiconf = dNl.NestDict()
         for mkey, mdict in mbConf.items():
             if mkey == 'modules':
@@ -206,19 +206,26 @@ class LarvaConfDict:
             elif mdict is None:
                 multiconf[mkey] = None
             else:
-                multiconf[mkey] = self.conf(mdict)
+                if mode==1 :
+                    multiconf[mkey] = self.conf(mdict)
+                elif mode==2 :
+                    multiconf[mkey] = self.conf2(mdict)
         return multiconf
 
-    def multiconf(self, mConf):
+    def multiconf(self, mConf, mode=1):
         mc = dNl.NestDict()
-        mc.brain = self.multibconf(mConf['brain'])
+        mc.brain = self.multibconf(mConf['brain'], mode=mode)
         for mkey, mdict in mConf.items():
             if mkey == 'brain':
                 continue
             if mdict is None:
                 mc[mkey] = None
             else:
-                mc[mkey] = self.conf(mdict)
+                if mode==1 :
+                    mc[mkey] = self.conf(mdict)
+                elif mode==2 :
+                    mc[mkey] = self.conf2(mdict)
+                # mc[mkey] = self.conf(mdict)
         return mc
 
     def module(self, mkey, **kwargs):
@@ -354,9 +361,9 @@ class LarvaConfDict:
                     self.copyID(mdic=mdic[d], mmdic=mmdic[d])
             return mdic
 
-    def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
-        mConf = self.mIDconf(mID)
-        m = self.multiconf(mConf)
+    def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], **kwargs):
+        mConf = self.mIDconf(mID, **kwargs)
+        m = self.multiconf(mConf, **kwargs)
         data = []
 
         # print(mID,m.energetics)

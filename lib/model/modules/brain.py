@@ -23,9 +23,9 @@ class Brain():
         m = self.modules
         c = self.conf
         if m['windsensor']:
-            self.windsensor = WindSensor(brain=self, dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
+            self.windsensor = WindSensor(dt=dt, gain_dict={'windsensor': 1.0}, **c['windsensor_params'])
         if m['olfactor']:
-            self.olfactor = Olfactor(brain=self, dt=dt, **c['olfactor_params'])
+            self.olfactor = Olfactor(dt=dt, **c['olfactor_params'])
 
         # self.crawler, self.turner, self.feeder, self.olfactor, self.intermitter = None, None, None, None, None
 
@@ -73,22 +73,23 @@ class DefaultBrain(Brain):
         self.locomotor=DefaultLocomotor(dt=self.dt, conf=self.conf,**kwargs)
 
         if m['memory'] and c['memory_params']['modality'] == 'olfaction':
-            self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
+            self.memory = RLOlfMemory(dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
         if m['toucher']:
-            t = self.toucher = Toucher(brain=self, dt=self.dt, **c['toucher_params'])
+            t = self.toucher = Toucher(dt=self.dt, **c['toucher_params'])
+            self.toucher.init_sensors(brain=self)
         if m['memory'] and c['memory_params']['modality'] == 'touch':
-            self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
+            self.touch_memory = RLTouchMemory(dt=self.dt, gain=t.gain, **c['memory_params'])
 
     def step(self, pos, reward=False,**kwargs):
         if self.memory:
-            self.olfactor.gain = self.memory.step(self.olfactor.get_dX(), reward)
+            self.olfactor.gain = self.memory.step(self.olfactor.get_dX(), reward, brain=self)
         if self.olfactor:
-            self.olfactory_activation = self.olfactor.step(self.sense_odors(pos))
+            self.olfactory_activation = self.olfactor.step(self.sense_odors(pos), brain=self)
         if self.touch_memory:
-            self.toucher.gain = self.touch_memory.step(self.toucher.get_dX(), reward)
+            self.toucher.gain = self.touch_memory.step(self.toucher.get_dX(), reward, brain=self)
         if self.toucher:
-            self.touch_activation = self.toucher.step(self.sense_food())
+            self.touch_activation = self.toucher.step(self.sense_food(), brain=self)
         if self.windsensor:
-            self.wind_activation = self.windsensor.step(self.sense_wind())
+            self.wind_activation = self.windsensor.step(self.sense_wind(), brain=self)
         length = self.agent.real_length if self.agent is not None else 1
         return self.locomotor.step(A_in=self.activation, length = length)

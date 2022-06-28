@@ -74,33 +74,86 @@ class Oscillator(Effector):
         self.complete_iteration = False
         self.iteration_counter = 0
 
-class StepOscillator(Oscillator) :
-    def __init__(self, initial_amp, amp_range=None, **kwargs):
-        super().__init__(**kwargs)
+class StepModule:
+    def __init__(self, initial_amp, amp_range=None,input_noise=0,output_noise=0, **kwargs):
+        self.active = True
         self.initial_amp = initial_amp
         self.amp = initial_amp
         self.amp_range = amp_range
-
-    @property
-    def Act(self):
-        c=self.Act_coef
-        Aphi=self.Act_Phi
-        return c*Aphi
-
-    @property
-    def Act_Phi(self):
-        return np.sin(self.phi)
+        self.input_noise = input_noise
+        self.output_noise = output_noise
+        self.input = 0
+        self.output = 0
 
     @property
     def Act_coef(self):
         return self.amp
 
+    @property
+    def Act_Phi(self):
+
+        return 1
+
+    @property
+    def Act(self):
+        c = self.Act_coef
+        Aphi = self.Act_Phi
+        return c*Aphi
+
+    def update_input(self,A_in=0):
+        return A_in
+
+    def step(self,A_in=0, **kwargs):
+        self.update()
+        A=self.update_input(A_in)
+        self.input = A* (1 + np.random.normal(scale=self.input_noise))
+        if self.active :
+
+            a= self.Act
+        else :
+            a=0
+        self.output = a*(1 + np.random.normal(scale=self.output_noise))
+        return self.output
+
+    def update(self):
+        pass
 
 
-    def step(self,**kwargs):
-        self.complete_iteration = False
-        super().oscillate()
-        return self.Act
+class StepEffector(Effector, StepModule):
+    def __init__(self, initial_amp, amp_range=None,input_noise=0,output_noise=0, **kwargs):
+        super(Effector, self).__init__(**kwargs)
+        super(StepModule, self).__init__(initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
+        self.start_effector()
+
+    def update(self):
+        if self.effector :
+            self.active=True
+            super().count_time()
+        else :
+            self.active = False
+
+
+
+
+class StepOscillator(Oscillator, StepModule) :
+    def __init__(self, initial_amp, amp_range=None,input_noise=0,output_noise=0, **kwargs):
+        super(Oscillator, self).__init__(**kwargs)
+        super(StepModule, self).__init__(initial_amp=initial_amp, amp_range=amp_range,input_noise=input_noise,output_noise=output_noise)
+        self.start_effector()
+
+    def update(self):
+        if self.effector :
+            self.active=True
+            self.complete_iteration = False
+            super().oscillate()
+        else :
+            self.active = False
+
+
+    @property
+    def Act_Phi(self):
+        return np.sin(self.phi)
+
 
 class StrideOscillator(StepOscillator) :
     def __init__(self, stride_dst_mean=None, stride_dst_std=0.0, **kwargs):
@@ -112,12 +165,13 @@ class StrideOscillator(StepOscillator) :
     def new_stride(self):
         return np.random.normal(loc=self.stride_dst_mean, scale=self.stride_dst_std)
 
-    def step(self,**kwargs):
-        self.complete_iteration = False
-        super().oscillate()
+    @property
+    def Act(self):
+        c = self.Act_coef
+        Aphi = self.Act_Phi
         if self.complete_iteration:
             self.step_to_length = self.new_stride
-        return self.freq * self.step_to_length * (1 + self.Act)
+        return self.freq * self.step_to_length * (1 + c*Aphi)
 
 
 
@@ -158,15 +212,11 @@ class PhaseOscillator(StrideOscillator):
 
 
 
-class ConEffector(Effector):
-    def __init__(self, initial_amp, **kwargs):
-        super().__init__(**kwargs)
-        self.initial_amp = initial_amp
-        self.amp = initial_amp
+class ConEffector(StepEffector):
 
-    def step(self,**kwargs):
+    def step00(self,**kwargs):
         super().count_time()
-        return self.amp
+        return None
 
 
 

@@ -2,13 +2,14 @@ import random
 
 import numpy as np
 
-from lib.model.modules.basic import Effector, Oscillator, ConEffector, StepOscillator
+from lib.model.modules.basic import Effector, Oscillator, ConEffector, StepOscillator, StepEffector
+from lib.registry.pars import preg
 
 
-class NeuralOscillator(Effector):
-    def __init__(self, dt, base_activation=20, activation_range=(10.0, 40.0), tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0,
+class NeuralOscillator(StepEffector):
+    def __init__(self, base_activation=20, activation_range=(10.0, 40.0), tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0,
                  w_cc=4.0, m=100.0, n=2.0, warm_up=True, **kwargs):
-        Effector.__init__(self, dt=dt)
+        super().__init__(**kwargs)
         self.tau = tau
         self.w_ee = w_ee
         self.w_ce = w_ce
@@ -17,14 +18,10 @@ class NeuralOscillator(Effector):
         self.m = m
         self.n = n
 
-        # Variable parameters
-        # self.g = None
-        # self.tau_h = None
-        self.activity = 0.0
         self.base_activation = base_activation
-        self.r1 = activation_range[1] - self.base_activation
-        self.r0 = self.base_activation - activation_range[0]
-        self.activation = self.base_activation
+        self.r1 = activation_range[1] - base_activation
+        self.r0 = base_activation - activation_range[0]
+        # self.activation = self.base_activation
 
         # Neural populations
         self.E_r = 0  # 28
@@ -44,9 +41,9 @@ class NeuralOscillator(Effector):
         if warm_up:
             for i in range(100):
                 if random.uniform(0, 1) < 0.5:
-                    self.step(self.base_activation)
+                    self.step()
 
-    def update_activation(self, A_in):
+    def update_input(self,A_in=0):
         if A_in == 0:
             a = 0
         elif A_in < 0:
@@ -55,8 +52,9 @@ class NeuralOscillator(Effector):
             a = self.r1 * A_in
         return self.base_activation + a
 
-    def step(self, A_in=0):
-        A = self.activation = self.update_activation(A_in)
+    @property
+    def Act_Phi(self):
+        A=self.input
         # print(A)
         t = self.scaled_tau
         tau_h = 3 / (1 + (0.04 * A) ** 2)
@@ -76,8 +74,8 @@ class NeuralOscillator(Effector):
                 -self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l, 64 + g * self.H_C_r))
         self.H_C_l += t_h * (-self.H_C_l + self.E_l)
         self.H_C_r += t_h * (-self.H_C_r + self.E_r)
-        self.activity = self.E_r - self.E_l
-        return self.activity
+        a = self.E_r - self.E_l
+        return a
 
     def compute_R(self, x, h):
         if x > 0:
@@ -94,43 +92,18 @@ class NeuralOscillator(Effector):
 
 
 class Turner:
-    def __init__(self, mode='neural', activation_noise=0.0, noise=0.0, continuous=True, rebound=False, dt=0.1,
+    def __init__(self, mode='neural', continuous=True, rebound=False, dt=0.1,
                  **kwargs):
-        self.mode = mode
-        self.activation_noise = activation_noise
-        self.noise = noise
+        D = preg.larva_conf_dict
         self.continuous = continuous
         self.rebound = rebound
         self.buildup = 0
-
-        self.activation = 0
-        self.activity = 0
-
-        if mode == 'neural':
-            self.ef0 = NeuralOscillator(dt=dt, **kwargs)
-
-        elif mode == 'sinusoidal':
-            self.ef0 = StepOscillator(dt=dt, **kwargs)
-
-        elif mode == 'constant':
-            self.ef0 = ConEffector(dt=dt, **kwargs)
-
-        self.ef0.start_effector()
+        self.ef0 = D.mdicts2['turner'].mode[mode].class_func(**kwargs, dt=dt)
+        # self.ef0.start_effector()
 
     def step(self, A_in=0.0):
         self.activation = A_in
-        if self.ef0.effector:
-            a = self.ef0.step(A_in)
-            if self.rebound:
-                a += self.buildup
-                self.buildup = 0
-        else:
-            if self.continuous:
-                aa = self.ef0.step(A_in)
-                if self.rebound:
-                    self.buildup += aa
-            a = 0.0
-        self.activity = a * (1 + np.random.normal(scale=self.noise))
+        self.activity = self.ef0.step(A_in)
         return self.activity
 
 

@@ -5,7 +5,6 @@ from scipy import signal
 
 from lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
 
-
 from lib.registry.units import ureg
 from lib.aux import dictsNlists as dNl
 
@@ -546,10 +545,10 @@ def Cr0():
                             'disp': 'output amplitude', 'sym': '$A_{C}^{0}$',
                             'h': 'The initial activity amplitude of the CRAWLER module.'}}
     Cfr = {'initial_freq': {'v0': 1.418, 'lim': (0.5, 2.5), 'dv': 0.1,
-            'k': 'f_C0',
-            'disp': 'crawling frequency', 'sym': sub('f', 'C'), 'u': ureg.Hz,
-            'codename': 'scaled_velocity_freq',
-            'h': 'The initial frequency of the repetitive crawling behavior.'}}
+                            'k': 'f_C0',
+                            'disp': 'crawling frequency', 'sym': sub('f', 'C'), 'u': ureg.Hz,
+                            'codename': 'scaled_velocity_freq',
+                            'h': 'The initial frequency of the repetitive crawling behavior.'}}
 
     SQargs = {
         'square_signal_duty': {'v0': 0.6, 'lim': (0.0, 1.0), 'dv': 0.1,
@@ -583,11 +582,11 @@ def Cr0():
 
     d = {
 
-         'gaussian': {'args': {**GAUargs, **str_kws}, 'class_func': GaussOscillator},
+        'gaussian': {'args': {**GAUargs, **str_kws}, 'class_func': GaussOscillator},
         'square': {'args': {**SQargs, **str_kws}, 'class_func': SquareOscillator},
-         'realistic': {'args': {**Rargs, **str_kws}, 'class_func': PhaseOscillator},
-         'constant': {'args': Camp, 'class_func': ConEffector}
-         }
+        'realistic': {'args': {**Rargs, **str_kws}, 'class_func': PhaseOscillator},
+        'constant': {'args': Camp, 'class_func': ConEffector}
+    }
     return dNl.NestDict(d)
 
 
@@ -609,11 +608,11 @@ def If0():
     }
 
     PHIargs = {
-            'max_attenuation_phase': {'v0': 3.4,'lim': (0.0, 2 * np.pi), 'disp': 'max relief phase',
-                                      'sym': '$\phi_{C}^{\omega}$', 'u': ureg.rad, 'k': 'phi_fov_max',
-                                      'h': 'CRAWLER phase of minimum TURNER suppression.'},
+        'max_attenuation_phase': {'v0': 3.4, 'lim': (0.0, 2 * np.pi), 'disp': 'max relief phase',
+                                  'sym': '$\phi_{C}^{\omega}$', 'u': ureg.rad, 'k': 'phi_fov_max',
+                                  'h': 'CRAWLER phase of minimum TURNER suppression.'},
         **IFargs
-        }
+    }
     SQargs = {
         'crawler_phi_range': {'dtype': Tuple[float], 'v0': (0.0, 0.0), 'lim': (0.0, 2 * np.pi),
                               'disp': 'suppression relief phase interval',
@@ -629,7 +628,6 @@ def If0():
 
     }
 
-
     d = {'default': {'args': IFargs, 'class_func': DefaultCoupling},
          'square': {'args': SQargs, 'class_func': SquareCoupling},
          'phasic': {'args': PHIargs, 'class_func': PhasicCoupling}
@@ -640,23 +638,23 @@ def If0():
 def Im0():
     from lib.model.modules.intermitter import Intermitter, BranchIntermitter
     from lib.model.modules.intermitter import NengoIntermitter
-    from lib.registry.dist_dict import build_dist_dict,get_dist
+    from lib.registry.dist_dict import build_dist_dict, get_dist
     d0 = build_dist_dict()
 
-    dist_args={k: get_dist(k= k, d0=d0) for k in ['stridechain_dist','run_dist','pause_dist']}
-
+    dist_args = {k: get_dist(k=k, d0=d0) for k in ['stridechain_dist', 'run_dist', 'pause_dist']}
 
     IMargs = {
         'run_mode': {'dtype': str, 'v0': 'stridechain', 'vs': ['stridechain', 'run'],
                      'h': 'The generation mode of run epochs.'},
-        'EEB': {'v0': 0.0, 'lim': (0.0, 1.0), 'sym': 'EEB', 'k': 'EEB','disp': 'Exploitation:Exploration balance',
+        'EEB': {'v0': 0.0, 'lim': (0.0, 1.0), 'sym': 'EEB', 'k': 'EEB', 'disp': 'Exploitation:Exploration balance',
                 'h': 'The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.'},
         'EEB_decay': {'v0': 1.0, 'lim': (0.0, 2.0), 'sym': sub('c', 'EEB'),
-                      'k': 'c_EEB','disp': 'EEB decay coefficient',
+                      'k': 'c_EEB', 'disp': 'EEB decay coefficient',
                       'h': 'The exponential decay coefficient of the exploitation-exploration balance when no food is detected.'},
-        'crawl_bouts': {**bT, 'disp': 'crawling bouts','k': 'epochs_C',
+        'crawl_bouts': {**bT, 'disp': 'crawling bouts', 'k': 'epochs_C',
                         'h': 'Whether crawling bouts (runs/stridechains) are generated.'},
-        'feed_bouts': {**bF, 'disp': 'feeding bouts','k': 'epochs_F', 'h': 'Whether feeding bouts (feedchains) are generated.'},
+        'feed_bouts': {**bF, 'disp': 'feeding bouts', 'k': 'epochs_F',
+                       'h': 'Whether feeding bouts (feedchains) are generated.'},
         'crawl_freq': {'v0': 1.43, 'lim': (0.5, 2.5), 'k': 'f_C', 'dv': 0.01, 'u': ureg.Hz,
                        'sym': sub('f', 'C'),
                        'disp': 'crawling frequency',
@@ -671,24 +669,22 @@ def Im0():
 
     }
 
-
     BRargs = {
         'c': {'v0': 0.7, 'lim': (0.0, 1.0),
-                              'disp': 'branch coefficient',
-                              'sym': subsup('c', 'Im', 'br'),
-                              'h': 'The ISING branching coef.'},
+              'disp': 'branch coefficient',
+              'sym': subsup('c', 'Im', 'br'),
+              'h': 'The ISING branching coef.'},
         'sigma': {'v0': 1.0, 'lim': (0.0, 10.0),
-                             'disp': 'branch sigma',
-                             'sym': subsup('s', 'Im', 'br'),
-                             'h': 'The ISING branching coef.'},
-        'beta': {'v0':0.15, 'lim': (0.0, 10.0),
-                             'disp': 'Exp beta',
-                             'sym': subsup('b', 'Im', 'br'),
-                             'h': 'The beta coef for the exponential bout generation.'},
+                  'disp': 'branch sigma',
+                  'sym': subsup('s', 'Im', 'br'),
+                  'h': 'The ISING branching coef.'},
+        'beta': {'v0': 0.15, 'lim': (0.0, 10.0),
+                 'disp': 'Exp beta',
+                 'sym': subsup('b', 'Im', 'br'),
+                 'h': 'The beta coef for the exponential bout generation.'},
         **IMargs
 
     }
-
 
     d = {'default': {'args': IMargs, 'class_func': Intermitter},
          'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
@@ -697,12 +693,151 @@ def Im0():
     return dNl.NestDict(d)
 
 
+def sensor_kws(k0, l0):
+    d = {
+        'perception': {'dtype': str, 'v0': 'log', 'vs': ['log', 'linear', 'null'],
+                        'disp': f'{l0} sensing transduction mode',
+                        'k': f'mod_{k0}',
+                        'sym': sub('mod', k0),
+                        'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
+        'decay_coef': {'v0': 0.1, 'lim': (0.0, 2.0), 'disp': f'{l0} decay coef',
+                       'sym': sub('c', k0), 'k':f'c_{k0}',
+                       'h': f'The exponential decay coefficient of the {l0} sensory activation.'},
+        'brute_force': {**bF, 'disp': 'ability to interrupt locomotion', 'sym': sub('bf', k0),
+                        'k': f'bf_{k0}',
+                        'h': 'Whether to apply direct rule-based modulation on locomotion or not.'},
+    }
+    return d
+
+
+def Olf0():
+    from lib.model.modules.sensor import Olfactor
+    args = sensor_kws(k0='O', l0='olfaction')
+    d = {'default': {'args': args, 'class_func': Olfactor},
+         # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
+    return dNl.NestDict(d)
+
+
+def Tou0():
+    from lib.model.modules.sensor import Toucher
+    args = {
+        **sensor_kws(k0='T', l0='tactile'),
+         'state_specific_best': {**bT, 'disp': 'state-specific or the global highest evaluated gain',
+                                'sym': sub('state_specific', 'T'),
+                                'k': 'state_specific',
+                                'h': 'Whether to use the state-specific or the global highest evaluated gain after the end of the memory training period.'},
+         'initial_gain': {'v0': 40.0, 'lim': (-100.0, 100.0),
+                         'disp': 'tactile sensitivity coef', 'sym': sub('G', 'T'), 'k': 'G_T',
+                         'h': 'The initial gain of the tactile sensor.'},
+        'touch_sensors': {'dtype': List[int], 'lim': (0, 8), 'k': 'sens_touch',
+                          'sym': sub('N', 'T'), 'disp': 'tactile sensor contour locations',
+                          'h': 'The number of touch sensors existing on the larva body.'},
+    }
+    d = {'default': {'args': args, 'class_func': Toucher},
+         # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
+    return dNl.NestDict(d)
+
+
+def W0():
+    from lib.model.modules.sensor import WindSensor
+    args = {
+        'weights': {
+            'hunch_lin': {'v0': 10.0, 'lim': (-100.0, 100.0), 'disp': 'HUNCH->CRAWLER',
+                          'sym': sub('w', 'HC'), 'k': 'w_HC',
+                          'h': 'The connection weight between the HUNCH neuron ensemble and the CRAWLER module.'},
+            'hunch_ang': {'v0': 0.0, 'lim': (-100.0, 100.0), 'disp': 'HUNCH->TURNER',
+                          'sym': sub('w', 'HT'), 'k': 'w_HT',
+                          'h': 'The connection weight between the HUNCH neuron ensemble and the TURNER module.'},
+            'bend_lin': {'v0': 0.0, 'lim': (-100.0, 100.0), 'disp': 'BEND->CRAWLER',
+                         'sym': sub('w', 'BC'), 'k': 'w_BC',
+                         'h': 'The connection weight between the BEND neuron ensemble and the CRAWLER module.'},
+            'bend_ang': {'v0': -10.0, 'lim': (-100.0, 100.0), 'disp': 'BEND->TURNER',
+                         'sym': sub('w', 'BT'), 'k': 'w_BT',
+                         'h': 'The connection weight between the BEND neuron ensemble and the TURNER module.'},
+        },
+        **sensor_kws(k0='W', l0='windsensor'),
+    }
+    d = {'default': {'args': args, 'class_func': WindSensor},
+         # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
+    return dNl.NestDict(d)
+
+
+def Fee0():
+    from lib.model.modules.feeder import Feeder
+
+    Fargs = {
+        'initial_freq': {'v0': 2.0, 'lim': (0.0, 4.0), 'k': 'f_F0',
+                         'disp': 'feeding frequency', 'sym': sub('f', 'F'), 'u': ureg.Hz,
+                         'h': 'The initial default frequency of the repetitive feeding behavior'},
+        'feed_radius': {'v0': 0.1, 'lim': (0.1, 10.0), 'sym': sub('rad', 'F'),
+                        'disp': 'feeding radius', 'k': 'rad_F',
+                        'h': 'The radius around the mouth in which food is consumable as a fraction of the body length.'},
+        'V_bite': {'v0': 0.0005, 'lim': (0.0001, 0.01), 'dv': 0.0001,
+                   'sym': sub('V', 'F'), 'disp': 'feeding volume ratio', 'k': 'V_F',
+                   'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
+    }
+
+    d = {'default': {'args': Fargs, 'class_func': Feeder},
+         # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
+    return dNl.NestDict(d)
+
+
+def Mem0():
+    from lib.model.modules.memory import RLmemory, RLOlfMemory, RLTouchMemory
+
+    RLargs = {
+        # 'modality': {'dtype': str, 'v0': 'olfaction', 'vs': ['olfaction', 'touch'],
+        #              'h': 'The modality for which the memory module is used.'},
+        'Delta': {'v0': 0.1, 'lim': (0.0, 10.0), 'h': 'The input sensitivity of the memory.'},
+        'state_spacePerSide': {'dtype': int, 'v0': 0, 'lim': (0, 20), 'disp': 'state space dim',
+                               'h': 'The number of discrete states to parse the state space on either side of 0.'},
+        'gain_space': {'dtype': List[float], 'v0': [-300.0, -50.0, 50.0, 300.0], 'lim': (-1000.0, 1000.0),
+                       'dv': 1.0, 'h': 'The possible values for memory gain to choose from.'},
+        'update_dt': {'v0': 1.0, 'lim': (0.0, 10.0), 'dv': 1.0,
+                      'h': 'The interval duration between gain switches.'},
+        'alpha': {'v0': 0.05, 'lim': (0.0, 2.0), 'dv': 0.01,
+                  'h': 'The alpha parameter of reinforcement learning algorithm.'},
+        'gamma': {'v0': 0.6, 'lim': (0.0, 2.0),
+                  'h': 'The probability of sampling a random gain rather than exploiting the currently highest evaluated gain for the current state.'},
+        'epsilon': {'v0': 0.3, 'lim': (0.0, 2.0),
+                    'h': 'The epsilon parameter of reinforcement learning algorithm.'},
+        'train_dur': {'v0': 20.0, 'lim': (0.0, 100.0),
+                      'h': 'The duration of the training period after which no further learning will take place.'}
+    }
+
+    MBargs = {}
+
+    # d = {'RL': {'args': RLargs, 'class_func': RLmemory},
+    #      'MB': {'args': MBargs, 'class_func': RLmemory},
+    #      # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+    #      }
+    d = {'olfaction': {'args': RLargs, 'class_func': RLOlfMemory},
+         'touch': {'args': MBargs, 'class_func': RLTouchMemory},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
+    return dNl.NestDict(d)
+
+
 def dict0():
+    kws={'kwargs': {'dt': 0.1}}
     d0 = {}
-    d0['turner'] = {'mode': Tur0(), 'kwargs': {'dt': 0.1}}
-    d0['crawler'] = {'mode': Cr0(), 'kwargs': {'dt': 0.1}}
-    d0['intermitter'] = {'mode': Im0(), 'kwargs': {'dt': 0.1}}
+    d0['turner'] = {'mode': Tur0(), **kws}
+    d0['crawler'] = {'mode': Cr0(), **kws}
+    d0['intermitter'] = {'mode': Im0(), **kws}
     d0['interference'] = {'mode': If0(), 'kwargs': {}}
+    d0['feeder'] = {'mode': Fee0(),**kws}
+    d0['olfactor'] = {'mode': Olf0(), **kws}
+    d0['toucher'] = {'mode': Tou0(), **kws}
+    d0['windsensor'] = {'mode': W0(), **kws}
+    d0['memory'] = {'mode': Mem0(), **kws}
     return dNl.NestDict(d0)
 
 
@@ -723,21 +858,21 @@ def build_modConf_dict():
     return d0, pre_d00, d00
 
 
-
 if __name__ == '__main__':
     from lib.registry.pars import preg
     from lib.aux.sim_aux import get_sample_bout_distros0
     from lib.conf.stored.conf import loadConf
+
     # refID = 'None.150controls'
     # sample = loadConf(refID, 'Ref')
-    # dd = preg.larva_conf_dict
+    dd = preg.larva_conf_dict
     #
-    # mkey = 'intermitter'
-    # mm = 'default'
+    mkey = 'intermitter'
+    mm = 'default'
     #
-    # conf0 = dd.init_dicts2[mkey].mode[mm].args
-    # preconf0 = dd.mpredicts2[mkey].mode[mm].args
-    # mconf0 = dd.mdicts2[mkey].mode[mm].args
+    conf0 = dd.init_dicts2[mkey].mode[mm].args
+    preconf0 = dd.mpredicts2[mkey].mode[mm].args
+    mconf0 = dd.mdicts2[mkey].mode[mm].args
     #
     # mconf = dd.conf2(mkey=mkey, mode=mm, refID=refID)
     #

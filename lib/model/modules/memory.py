@@ -7,11 +7,10 @@ from lib.model.modules.basic import Effector
 
 
 class RLmemory(Effector):
-    def __init__(self, brain, gain_space, gain, Delta=0.1, state_spacePerSide=0, update_dt=2, train_dur=30, alpha=0.05,
+    def __init__(self, gain_space=[], gain={}, Delta=0.1, state_spacePerSide=0, update_dt=2, train_dur=30, alpha=0.05,
                  gamma=0.6, epsilon=0.15, state_specific_best=True, **kwargs):
         super().__init__(**kwargs)
         self.state_specific_best=state_specific_best
-        self.brain = brain
         self.effector = True
         self.alpha = alpha
         self.gamma = gamma
@@ -52,9 +51,9 @@ class RLmemory(Effector):
         state = np.where((self.state_space == stateV).all(axis=1))[0][0]
         return state
 
-    def step(self, dx, reward):
-        if self.table == False:
-            temp = self.brain.agent.model.table_collector
+    def step(self, dx, reward, brain=None):
+        if self.table == False and brain is not None:
+            temp = brain.agent.model.table_collector
             if temp is not None:
                 self.table = temp.tables['best_gains'] if 'best_gains' in list(temp.tables.keys()) else None
         self.count_time()
@@ -73,7 +72,7 @@ class RLmemory(Effector):
                 if self.table:
                     for col in list(self.table.keys()):
                         try:
-                            self.table[col].append(getattr(self.brain.agent, col))
+                            self.table[col].append(getattr(brain.agent, col))
                         except:
                             self.table[col].append(np.nan)
                 self.rewardSum = 0
@@ -121,8 +120,8 @@ class RLmemory(Effector):
 
 
 class RLOlfMemory(RLmemory):
-    def __init__(self, mode='olf', **kwargs):
-        super().__init__(**kwargs)
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
 
     @property
     def first_odor_best_gain(self):
@@ -136,9 +135,8 @@ class RLOlfMemory(RLmemory):
 
 
 class RLTouchMemory(RLmemory):
-    def __init__(self, mode='touch', **kwargs):
-        # gain = {s: 0.0 for s in brain.agent.get_sensors()}
-        super().__init__(**kwargs)
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
 
 
     def condition(self,dx):

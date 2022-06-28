@@ -371,6 +371,7 @@ class NengoLocomotor(Locomotor):
             self.osc_coupling = SquareCoupling(**c['interference_params'])
         if m['intermitter']:
             self.intermitter = NengoIntermitter(dt=self.dt, **c['intermitter_params'])
+            self.intermitter.disinhibit_locomotion(self)
             self.intermitter.start_effector()
         else:
             self.intermitter = None

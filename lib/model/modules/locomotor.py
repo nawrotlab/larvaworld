@@ -6,6 +6,7 @@ from lib.model.modules.crawler import Crawler
 from lib.model.modules.feeder import Feeder
 
 from lib.model.modules.turner import Turner
+from lib.registry.pars import preg
 
 
 class Locomotor:
@@ -42,7 +43,6 @@ class Locomotor:
         self.cur_run_dur = 0
         self.cur_pause_dur = None
 
-        # self.new_run, self.new_pause=False, False
 
     def update(self):
         if self.cur_state == 'run':
@@ -98,38 +98,28 @@ class Locomotor:
 class DefaultLocomotor(Locomotor):
     def __init__(self, conf, **kwargs):
         super().__init__(**kwargs)
-        m, c = conf.modules, conf
-        if m['crawler']:
-            self.crawler = Crawler(dt=self.dt, **c.crawler_params)
-        if m['turner']:
-            self.turner = Turner(dt=self.dt, **c.turner_params)
-        if m['feeder']:
-            self.feeder = Feeder(dt=self.dt, **c.feeder_params)
-        if c.interference_params is None or not m['interference']:
-            c.interference_params = NestDict({'mode': 'default', 'attenuation': 1})
-        self.coupling = Coupling(**c.interference_params)
-
-        #     self.coupling = DefaultCoupling(locomotor=self, attenuation=1)
-        # else:
-        #     mode = c.interference_params.mode if 'mode' in c.interference_params.keys() else 'default'
-        #     if mode == 'default':
-        #         self.coupling = DefaultCoupling(locomotor=self, **c.interference_params)
-        #     elif mode == 'square':
-        #         self.coupling = SquareCoupling(locomotor=self, **c.interference_params)
-        #     elif mode == 'phasic':
-        #         self.coupling = PhasicCoupling(locomotor=self, **c.interference_params)
-
-        if m['intermitter']:
-            if 'mode' not in c.intermitter_params.keys():
-                c.intermitter_params.mode = 'default'
-            from lib.model.modules.intermitter import ChoiceIntermitter
-            self.intermitter = ChoiceIntermitter(dt=self.dt, **c.intermitter_params)
-
-            # mode = c.intermitter_params.mode if 'mode' in c.intermitter_params.keys() else 'default'
-            # if mode == 'default':
-            #     self.intermitter = Intermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
-            # elif mode == 'branch':
-            #     self.intermitter = BranchIntermitter(locomotor=self, dt=self.dt, **c.intermitter_params)
+        D = preg.larva_conf_dict.mdicts2
+        k = 'crawler'
+        if conf.modules[k]:
+            m = conf[f'{k}_params']
+            self.crawler = D['crawler'].mode[m.waveform].class_func(**m, dt=self.dt)
+        k = 'turner'
+        if conf.modules[k]:
+            m = conf[f'{k}_params']
+            self.turner = D[k].mode[m.mode].class_func(**m, dt=self.dt)
+        k = 'feeder'
+        if conf.modules[k]:
+            m = conf[f'{k}_params']
+            self.feeder = D[k].mode['default'].class_func(**m, dt=self.dt)
+        k = 'interference'
+        if conf.modules[k]:
+            m = conf[f'{k}_params']
+            self.coupling = D[k].mode[m.mode].class_func(**m)
+        k = 'intermitter'
+        if conf.modules[k]:
+            m = conf[f'{k}_params']
+            self.intermitter = D.mdicts2[k].mode[m.mode].class_func(**m, dt=self.dt)
+            self.intermitter.disinhibit_locomotion(self)
 
     def step(self, A_in=0, length=1):
         self.lin_activity, self.ang_activity, self.feed_motion = 0, 0, False

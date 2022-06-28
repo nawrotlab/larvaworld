@@ -4,10 +4,10 @@ from lib.model.modules.basic import Effector
 
 
 class Sensor(Effector):
-    def __init__(self, brain, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
+    def __init__(self, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
                  brute_force=False, **kwargs):
         super().__init__(**kwargs)
-        self.brain = brain
+        # self.brain = brain
         self.perception = perception
         self.decay_coef = decay_coef
         self.noise = input_noise
@@ -21,7 +21,11 @@ class Sensor(Effector):
     def compute_dif(self, input):
         pass
 
-    def step(self, input):
+    def update_gain(self, brain=None):
+        pass
+
+    def step(self, input, brain=None):
+        self.update_gain(brain)
         if len(input) == 0:
             self.activation = 0
         else:
@@ -32,12 +36,12 @@ class Sensor(Effector):
                 self.activation = self.A1
             elif self.activation < self.A0:
                 self.activation = self.A0
-            if self.brute_force :
-                self.affect_locomotion()
+            if self.brute_force:
+                self.affect_locomotion(brain)
                 return 0
         return self.activation
 
-    def affect_locomotion(self):
+    def affect_locomotion(self, brain=None):
         pass
 
     def init_gain(self, gain_dict):
@@ -105,23 +109,19 @@ class Sensor(Effector):
 class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
-        if self.brain.agent is not None :
-            for id in self.brain.agent.model.odor_ids:
-                if id not in self.gain_ids:
-                    self.add_novel_gain(id)
-                # print(self.brain.agent.unique_id, id, 'new')
-        # print(self.brain.agent.unique_id, self.gain)
-            # except:
-            #     pass
 
-    def affect_locomotion(self):
-        # if self.activation < 0 :
-        #     self.brain.locomotor.intermitter.inhibit_locomotion()
-        # elif self.activation>0:
-        #     self.brain.locomotor.intermitter.trigger_locomotion()
-        if self.activation < 0 and self.brain.locomotor.crawler.complete_iteration:
-            if np.random.uniform(0, 1, 1)<=np.abs(self.activation):
-                self.brain.locomotor.intermitter.inhibit_locomotion()
+    def update_gain(self, brain=None):
+        if brain is not None:
+            if brain.agent is not None:
+                for id in brain.agent.model.odor_ids:
+                    if id not in self.gain_ids:
+                        self.add_novel_gain(id)
+                    # print(self.brain.agent.unique_id, id, 'new')
+
+    def affect_locomotion(self, brain=None):
+        if self.activation < 0 and brain.locomotor.crawler.complete_iteration:
+            if np.random.uniform(0, 1, 1) <= np.abs(self.activation):
+                brain.locomotor.intermitter.inhibit_locomotion()
 
     @property
     def first_odor_concentration(self):
@@ -139,29 +139,38 @@ class Olfactor(Sensor):
     def second_odor_concentration_change(self):
         return list(self.dX.values())[1]
 
+
 class Toucher(Sensor):
-    def __init__(self,initial_gain, brain, touch_sensors=None, **kwargs):
-        self.brain.agent.touch_sensors = touch_sensors
-        if touch_sensors is not None :
+    def __init__(self, initial_gain, touch_sensors=None, **kwargs):
+
+        if touch_sensors is not None:
             gain_dict = {s: initial_gain for s in touch_sensors}
 
-            self.brain.agent.add_touch_sensors(touch_sensors)
-        else :
-            gain_dict={}
+            # self.brain.agent.add_touch_sensors(touch_sensors)
+        else:
+            gain_dict = {}
 
-        super().__init__(brain=brain, gain_dict=gain_dict, **kwargs)
+        super().__init__(gain_dict=gain_dict, **kwargs)
+        self.touch_sensors = touch_sensors
 
-    def affect_locomotion(self):
+    def init_sensors(self, brain=None):
+        if brain is not None:
+            if brain.agent is not None:
+                brain.agent.touch_sensors = self.touch_sensors
+                if self.touch_sensors is not None:
+                    brain.agent.add_touch_sensors(self.touch_sensors)
+
+    def affect_locomotion(self, brain=None):
         for id in self.gain_ids:
-            if self.dX[id]==1:
-                self.brain.intermitter.trigger_locomotion()
+            if self.dX[id] == 1:
+                brain.intermitter.trigger_locomotion()
                 break
-            elif self.dX[id]==-1:
-                self.brain.intermitter.interrupt_locomotion()
+            elif self.dX[id] == -1:
+                brain.intermitter.interrupt_locomotion()
                 break
+
 
 class WindSensor(Sensor):
-    def __init__(self,weights, perception='null', **kwargs):
+    def __init__(self, weights, perception='null', **kwargs):
         super().__init__(perception=perception, **kwargs)
-        self.weights=weights
-
+        self.weights = weights

@@ -85,7 +85,9 @@ class BaseIntermitter(Effector):
         pass
 
 
-    def disinhibit_locomotion(self, L):
+    def disinhibit_locomotion(self, L=None):
+        if L is None :
+            return
         if np.random.uniform(0, 1, 1) >= self.EEB:
             if self.crawl_bouts:
                 self.run_initiation()
@@ -105,7 +107,9 @@ class BaseIntermitter(Effector):
     def run_initiation(self) :
         self.cur_state='run'
 
-    def inhibit_locomotion(self, L):
+    def inhibit_locomotion(self, L=None):
+        if L is None :
+            return
         self.current_pause_duration = self.generate_pause()
         self.cur_state='pause'
         if self.crawl_bouts and L.crawler is not None:
@@ -282,7 +286,7 @@ class Intermitter(BaseIntermitter):
                 raise ValueError ('None of stidechain or run distribution exist')
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
         # print(stridechain_dist)
-        self.disinhibit_locomotion()
+
 
     def generate_stridechain(self):
         return self.stridechain_dist.sample()
@@ -403,23 +407,30 @@ class NengoIntermitter(OfflineIntermitter):
 
 
 class BranchIntermitter(BaseIntermitter):
-    def __init__(self,pause_dist=None, stridechain_dist=None,sample=None,beta=None,c=0.7,sigma=1, **kwargs):
+    def __init__(self,run_dist=None,pause_dist=None, stridechain_dist=None,sample=None,beta=None,c=0.7,sigma=1,run_mode='stridechain', **kwargs):
         super().__init__(**kwargs)
-        if beta is not None :
-            self.beta=beta
-        elif sample is not None :
-            from lib.conf.stored.conf import loadRef
-            from lib.anal.fitting import get_exp_beta
-            d = loadRef(sample)
-            l_run = d.load_aux('distro', nam.length('stridechain'))
-            self.beta = get_exp_beta(l_run)
-        else :
-            self.beta=0.15
-        self.c=c
-        self.sigma=sigma
-        self.stridechain_min, self.stridechain_max = stridechain_dist['range']
-        self.pau_min, self.pau_max = (np.array(pause_dist['range'])/self.dt).astype(int)
-        self.disinhibit_locomotion()
+        self.c = c
+        self.beta = beta
+        self.sigma = sigma
+        if pause_dist.range is None and stridechain_dist.range is None:
+            conf=loadConf('None.150controls', 'Ref').bout_distros
+            pause_dist=conf.pause_dur
+            stridechain_dist=conf.run_count
+        if run_mode == 'stridechain':
+            if stridechain_dist is not None:
+                # print(stridechain_dist.range)
+                self.stridechain_min, self.stridechain_max = stridechain_dist.range
+                # self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
+                self.run_dist = None
+            else:
+                run_mode = 'run'
+        if run_mode == 'run':
+            if run_dist is not None:
+                self.stridechain_min, self.stridechain_max = run_dist.range
+                self.stridechain_dist = None
+            else:
+                raise ValueError('None of stidechain or run distribution exist')
+        self.pau_min, self.pau_max = (np.array(pause_dist.range)/self.dt).astype(int)
 
     def generate_stridechain(self):
         from lib.anal.fitting import exp_bout
