@@ -521,23 +521,17 @@ class BaseParDict:
     def build_sim_pars(self):
         kws = {}
         self.addPar(
-            **{'p': 'brain.locomotor.crawler.activity', 'k': 'Act_cr', 'd': 'crawler output', 'disp': 'crawler output',
+            **{'p': 'brain.locomotor.crawler.output', 'k': 'Act_cr', 'd': 'crawler output', 'disp': 'crawler output',
                'sym': sub('A', 'C'), 'vfunc': param.Number, **kws})
         self.addPar(
-            **{'p': 'brain.locomotor.turner.activity', 'k': 'Act_tur', 'd': 'turner output', 'disp': 'turner output',
+            **{'p': 'brain.locomotor.turner.output', 'k': 'Act_tur', 'd': 'turner output', 'disp': 'turner output',
                'sym': sub('A', 'T'), 'vfunc': param.Number, **kws})
         self.addPar(
-            **{'p': 'brain.locomotor.turner.activation', 'k': 'A_tur', 'd': 'crawler input', 'disp': 'crawler input',
+            **{'p': 'brain.locomotor.turner.input', 'k': 'A_tur', 'd': 'crawler input', 'disp': 'crawler input',
                'sym': sub('I', 'T'), 'vfunc': param.Number, **kws})
         self.addPar(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
                        'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'vfunc': param.Magnitude, **kws})
-        self.addPar(**{'p': 'brain.olfactory_activation', 'k': 'A_olf', 'd': 'olfactory activation',
-                       'disp': 'olfactory activation', 'sym': sub('A', 'olf'), 'vfunc': param.Number, **kws})
-        self.addPar(
-            **{'p': 'brain.touch_activation', 'k': 'A_touch', 'd': 'tactile activation', 'disp': 'tactile activation',
-               'sym': sub('A', 'touch'), 'vfunc': param.Number, **kws})
-        self.addPar(**{'p': 'brain.wind_activation', 'k': 'A_wind', 'd': 'wind activation', 'disp': 'wind activation',
-                       'sym': sub('A', 'wind'), 'vfunc': param.Number, **kws})
+
         self.addPar(**{'p': 'brain.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance',
                        'disp': 'exploitVSexplore_balance', 'sym': 'EEB', 'vfunc': param.Magnitude, **kws})
 
@@ -557,3 +551,10 @@ class BaseParDict:
                            'disp': f'{jj} sensor input', 'sym': sub('Temp', ii), 'vfunc': param.Number, **kws})
             self.addPar(**{'p': f'brain.thermosensor.{jj}_sensor_perception', 'k': dk, 'd': dk,
                            'disp': f'{jj} sensor perception', 'sym': sub(Delta('Temp'), ii), 'vfunc': param.Number, **kws})
+
+        for ii,jj in zip(['olf', 'tou', 'wind', 'therm'], ['olfactor', 'toucher', 'windsensor', 'thermosensor']):
+            self.addPar(
+                **{'p': f'brain.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output',
+                   'disp':f'{jj} output',
+                   'sym': sub('A', ii), 'vfunc': param.Number, **kws})
+

@@ -101,7 +101,7 @@ output_dict = {
         'endpoint': []},
 
     'thermo': {
-        'step': ['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C'],
+        'step': ['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C', 'A_therm'],
         'endpoint': []},
 
     'toucher': {

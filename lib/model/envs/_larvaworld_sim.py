@@ -202,7 +202,7 @@ class LarvaWorldSim(LarvaWorld):
     # @todo use _create_thermo_layers
     def _create_thermo_layers(self, pars):
         from lib.model.envs._space import ThermoScape
-        print(pars['thermo_sources'])
+        # print(pars['thermo_sources'])
         sources = pars['thermo_sources']  # dictionary
 
         N = 1;

@@ -147,10 +147,7 @@ analysis_dict = dNl.NestDict({
     ],
     'thermo': [
         entry('trajectories'),
-        *[time(p, f1=True) for p in ['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C']],
-        # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
-        # end(['anemotaxis'], 'final anemotaxis')
-
+        autotime(['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C', 'A_therm'], f1=True, ind=False),
     ],
     'puff': [
 

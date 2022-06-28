@@ -121,13 +121,6 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         else:
             pars, symbols, ylabs, ylims, ylabs0 = preg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
 
-            # ylabs=[]
-            # for ii in range(len(pars)) :
-            #     if ylabs0[ii] is not None :
-            #         ylabs.append(ylabs0[ii])
-            #     else :
-            #         ylabs.append(ylabs1[ii])
-            # print(ylabs1, ylabs0, ylabs)
     else:
         symbols = pars
         ylabs = pars
@@ -176,8 +169,9 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                 else:
                     plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol, linewidth=2)
                     if show_first:
+                        cc='red' if P.Ndatasets == 1 else c
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
-                        ax.plot(x, dc0, color=c, linestyle='dashed', linewidth=1)
+                        ax.plot(x, dc0, color=cc, linestyle='dashed', linewidth=1)
                 counter += 1
             except:
                 pass
@@ -188,7 +182,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     if P.Ndatasets > 1 and show_legend:
         P.data_leg(0, loc=legend_loc, fontsize=leg_fontsize)
         # dataset_legend(P.labels, P.colors, ax=ax, loc=legend_loc, fontsize=leg_fontsize)
-    P.adjust((0.1, 0.95), (0.15, 0.95))
+    P.adjust((0.15, 0.95), (0.15, 0.95))
     return P.get()
 
 def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True,individuals=True,**kwargs):
@@ -214,8 +208,10 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
             else:
                 plot_quantiles(df=df, x=x, axis=ax, color_shading=c, linewidth=2)
                 if show_first:
+                    cc = 'red' if P.Ndatasets == 1 else c
+
                     dc0 = df.xs(df.index.get_level_values('AgentID')[0], level='AgentID')
-                    ax.plot(x, dc0, color=c, linestyle='dashed', linewidth=1)
+                    ax.plot(x, dc0, color=cc, linestyle='dashed', linewidth=1)
     P.data_leg(0)
     P.adjust((0.1, 0.95), (0.15, 0.95))
     P.fig.align_ylabels(P.axs[:])

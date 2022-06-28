@@ -170,7 +170,7 @@ grouped_exp_dict = {
         #                                                        ids=['nengo', 'control'], N=10))
     },
 'thermotaxis': {
-        'thermotaxis': thermo_exp('thermo_arena', dur=3.0, l=lg(m='thermo_navigator', N=20)),
+        'thermotaxis': thermo_exp('thermo_arena', dur=10.0, l=lg(m='thermo_navigator', N=10)),
 
     },
 
