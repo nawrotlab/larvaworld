@@ -12,7 +12,8 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     P = Plot(name='ethogram', subfolder=subfolder, **kwargs)
     P.build(P.Ndatasets, 2, sharex=True)
     Cbouts = {
-        'lin': {'stridechain': 'green',
+        # 'lin': {'stridechain': 'green',
+        'lin': {'run': 'green',
                 'pause': 'red',
                 'feedchain': 'blue'},
         'ang': {'Lturn': 'cyan',
@@ -32,7 +33,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
             idx = 2 * i + k
             ax = P.axs[idx]
             P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, c.N + 2),
-                      xlim=(0, d.config['Nticks'] * d.dt), title=title if i == 0 else None)
+                      xlim=(0, c.Nticks * d.dt), title=title if i == 0 else None)
             for b, bcol in Cbouts[n].items():
                 try :
                     # bp0, bp1 = nam.start(b), nam.stop(b)
