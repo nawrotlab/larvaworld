@@ -61,6 +61,19 @@ def bar(short, title=None, **kwargs):
     return entry('barplot', title=title, **args)
 
 
+def box(ks, title=None, ns=False, **kwargs):
+    if title is None:
+        Nks = len(ks)
+        title = f'boxplot_x{Nks}'
+        # name =f'{short} timeplot'
+    args = {
+        'shorts': ks,
+        'show_ns': ns,
+        **kwargs
+    }
+    return entry('boxplot (simple)', title=title, **args)
+
+
 def nengo(group, title=None, **kwargs):
     if title is None:
         title = group
@@ -119,7 +132,7 @@ analysis_dict = dNl.NestDict({
         autotime(['sv', 'fov', 'b', 'x', 'a']),
         entry('trajectories'),
         # *[time(p) for p in ['c_odor1']],
-        *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_tur', 'Act_tur']],
+        *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']],
         # 'source_anal_list',
         entry('turn amplitude'),
         entry('angular pars', Npars=5),
@@ -151,12 +164,9 @@ analysis_dict = dNl.NestDict({
     ],
     'puff': [
 
-        # *[nengo(p, same_plot=True if p == 'anemotaxis' else False) for p in
-        #           ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V',
-        #            'wind_effect_on_Fr']],
-        # entry('ethogram', add_samples=True),
-        entry('ethogram', add_samples=False),
-        # *[time(p) for p in ['A_wind', 'anemotaxis', 'o_wind']],
+        # entry('trajectories'),
+        # entry('ethogram', add_samples=False),
+        entry('pathlength', scaled=False),
         *[time(p, abs=True) for p in ['fov', 'foa']],
         # *[time(p, abs=True) for p in ['fov', 'foa','b', 'bv', 'ba']],
         *[time(p) for p in ['sv', 'sa']],
@@ -190,5 +200,21 @@ analysis_dict = dNl.NestDict({
         *[deb(m, pref='FEED') for m in
           ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
            'food_mass_2', 'hunger', 'EEB', 'fs']],
+    ],
+    'general': [
+        box(ks=['l', 'str_N', 'dsp_0_60_max', 'run_tr', 'fsv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
+                'tor20_mu', 'tor20_std']),
+        box(ks=['l', 'fsv', 'str_sd_mu', 'str_sd_std', 'run_tr', 'ffov']),
+        entry('angular pars', Npars=5),
+        entry('crawl pars'),
+        entry('trajectories'),
+        entry('trajectories', title='aligned2origin', mode='origin'),
+        entry('ethogram', add_samples=False),
+        entry('pathlength', scaled=False),
+        entry('dispersal', range=(0, 60)),
+        entry( 'dispersal summary', range=(0, 60)),
+        entry('navigation index'),
+        entry('epochs', stridechain_duration=True),
+        entry('stride cycle'),
     ]
 })

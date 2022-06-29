@@ -136,10 +136,10 @@ def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', com
     fig.subplots_adjust(hspace=0.1, wspace=0.5, bottom=0.1, top=0.9, left=0.07, right=0.95)
     fig.savefig(f'{save_to}/{save_as}', dpi=300)
 
-def dsp_summary(datasets, target,range=(0,40), **kwargs):
+def dsp_summary(datasets, target=None,range=(0,40), **kwargs):
     w, h = 54,26
     P = GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
-    ds=[target]+datasets
+    ds=[target]+datasets if target is not None else datasets
     Nds=len(ds)
     kws = {
         'datasets': ds,

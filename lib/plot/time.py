@@ -10,7 +10,7 @@ from lib.plot.aux import plot_quantiles
 
 def plot_ethogram(subfolder='timeplots', **kwargs):
     P = Plot(name='ethogram', subfolder=subfolder, **kwargs)
-    P.build(P.Ndatasets, 2, sharex=True)
+    P.build(Nrows=P.Ndatasets, Ncols=2, sharex=True)
     Cbouts = {
         # 'lin': {'stridechain': 'green',
         'lin': {'run': 'green',
@@ -20,41 +20,63 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
                 'Rturn': 'orange'}
 
     }
-    for i, d in enumerate(P.datasets):
+    for i, (d, dlab) in enumerate(zip(P.datasets, P.labels)):
         c=d.config
 
-        dic = d.load_chunk_dicts()
-        # N = d.config['N']
-        # try:
-        #     s = d.step_data
-        # except:
-        #     s = d.read('step')
-        for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
-            idx = 2 * i + k
-            ax = P.axs[idx]
-            P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, c.N + 2),
-                      xlim=(0, c.Nticks * d.dt), title=title if i == 0 else None)
-            for b, bcol in Cbouts[n].items():
-                try :
-                    # bp0, bp1 = nam.start(b), nam.stop(b)
-                    # if not {bp0, bp1}.issubset(s.columns.values):
-                    #     continue
-                    for j, id in enumerate(c.agent_ids):
-                        bbs = dic[id][b]
-                        bbs*=d.dt
-                        b0s, b1s=bbs[:,0], bbs[:,1]
-                    # for j, id in enumerate(s.index.unique('AgentID').values):
-                    #     bbs = s[[bp0, bp1]].xs(id, level='AgentID')
-                    #     b0s = bbs[bp0].dropna().index.values * d.dt
-                    #     b1s = bbs[bp1].dropna().index.values * d.dt
+        dic0 = d.load_chunk_dicts()
+        for j, (id, dic) in enumerate(dic0.items()):
+            for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
+                idx = 2 * i + k
+                ax = P.axs[idx]
+
+                # legdic=dNl.NestDict({'labels': [], 'colors': []})
+                for b, bcol in Cbouts[n].items():
+                    try :
+                        bbs = dic[b] * c.dt
+                        # bbs*=c.dt
+                        b0s, b1s = bbs[:, 0], bbs[:, 1]
+
                         lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
                         lc = mc.LineCollection(lines, colors=bcol, linewidths=2)
                         ax.add_collection(lc)
-                except:
-                    pass
-            P.data_leg(idx, labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()))
-    P.adjust((0.1, 0.95), (0.15, 0.92), 0.15, 0.1)
+
+                        # legdic.labels.append(b)
+                        # legdic.colors.append(bcol)
+                    except:
+                        pass
+                P.conf_ax(idx, xlab='time $(sec)$' if i == P.Ndatasets - 1 else None,
+                          ylab=f'{dlab} Individuals $(idx)$' if k == 0 else None, ylim=(0, c.N + 2),
+                          xlim=(0, c.Nticks * d.dt), title=title if i == 0 else None)
+                P.data_leg(idx, labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()))
+    P.adjust((0.1, 0.95), (0.15, 0.92), 0.05, 0.05)
     return P.get()
+
+    #     # N = d.config['N']
+    #     # try:
+    #     #     s = d.step_data
+    #     # except:
+    #     #     s = d.read('step')
+    #     for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
+    #         idx = 2 * i + k
+    #         ax = P.axs[idx]
+    #         P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, c.N + 2),
+    #                   xlim=(0, c.Nticks * d.dt), title=title if i == 0 else None)
+    #         for b, bcol in Cbouts[n].items():
+    #             try :
+    #
+    #                 for j, (id, dic) in enumerate(dic0.items()):
+    #                     bbs = dic[b]*c.dt
+    #                     # bbs*=c.dt
+    #                     b0s, b1s=bbs[:,0], bbs[:,1]
+    #
+    #                     lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
+    #                     lc = mc.LineCollection(lines, colors=bcol, linewidths=2)
+    #                     ax.add_collection(lc)
+    #             except:
+    #                 pass
+    #         P.data_leg(idx, labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()))
+    # P.adjust((0.1, 0.95), (0.15, 0.92), 0.15, 0.1)
+    # return P.get()
 
 
 

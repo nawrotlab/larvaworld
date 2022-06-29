@@ -170,8 +170,10 @@ class LarvaDataset:
 
     def load(self, step=True, end=True, food=False, contour=True, midline=True):
         store = pd.HDFStore(self.dir_dict.data_h5)
+
         if step:
             self.step_data = store['step']
+            # print(self.step_data.columns)
             if contour:
                 try:
                     contour_ps = dNl.flatten_list(self.contour_xy)

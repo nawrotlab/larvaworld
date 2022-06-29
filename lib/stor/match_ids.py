@@ -3,7 +3,7 @@ import numpy as np
 from lib.aux.dictsNlists import common_member
 
 
-def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, Nidx=20, **kwargs):
+def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, **kwargs):
     pairs= {}
 
     def eval(t0, xy0, l0, t1, xy1, l1):
@@ -12,6 +12,7 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=1, ws=0.5, max_error=600, Nidx=2
             return max_error * 2
         ll = np.abs(l1 - l0)
         dd = np.sqrt(np.sum((xy1 - xy0) ** 2))
+        # print(tt,ll,dd)
         return wt * tt + wl * ll + ws * dd
 
     ls = e['length']

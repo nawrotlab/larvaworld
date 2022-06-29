@@ -222,7 +222,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
     if store:
         store_aux_dataset(s, pars=preg.getPar(shorts), type='distro', file=c.aux_dir)
         store_aux_dataset(s, pars=['x', 'y'], type='trajectories', file=c.aux_dir)
-        store_aux_dataset(s, pars=[dst,cdst, sdst, csdst], type='trajectories', file=c.aux_dir)
+        store_aux_dataset(s, pars=[dst,cdst, sdst, csdst], type='pathlength', file=c.aux_dir)
 
 
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
@@ -231,6 +231,7 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c, store=store)
+    align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=c, store=store, **kwargs)
 
     print(f'Completed {mode} spatial processing.')
 

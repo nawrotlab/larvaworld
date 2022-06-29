@@ -49,7 +49,7 @@ def store_aux_dataset(s, pars, type, file, verbose=0):
     elif type == 'trajectories':
         store['trajectories'] = s[['x', 'y']]
     elif type == 'pathlength':
-        store['pathlength'] = {p: s[p] for p in ps}
+        store['pathlength'] = s[ps]
     elif type == 'dispersion':
         for p in ps:
             d = get_dsp(s, p)
