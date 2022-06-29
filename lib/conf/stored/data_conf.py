@@ -57,7 +57,7 @@ importformats = [
         'tracker': {
             'resolution': {'fr': 11.27,
                            'Npoints': 11,
-                           'Ncontour': 30},
+                           'Ncontour': 0},
 
             'filesystem': {
                 'read_sequence': None,

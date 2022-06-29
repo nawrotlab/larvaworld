@@ -1,4 +1,5 @@
 import os
+import shutil
 import warnings
 from itertools import product
 
@@ -8,31 +9,31 @@ import lib.aux.dictsNlists
 from lib.registry.pars import preg
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
-from lib.conf.stored.conf import *
+from lib.conf.stored.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
 
-def import_Jovanic_datasets(parent_dir, **kwargs) :
+def import_Jovanic_datasets(parent_dir,source_ids=['Fed', 'Deprived', 'Starved'], **kwargs) :
     datagroup_id = 'Jovanic lab'
     group_id = parent_dir
     merged = False
     N = None
     ds={}
-    for source_id in ['Fed', 'Deprived', 'Starved'] :
-        try:
-            id = source_id
-            d = import_dataset(N=N, id=id, datagroup_id=datagroup_id, group_id=group_id, parent_dir=parent_dir,
-                               source_id=source_id,
-                               merged=merged, **kwargs)
-            ds[d.config.RefID : d]
-        except :
-            pass
+    for source_id in source_ids :
+        # try:
+        id = source_id
+        d = import_dataset(N=N, id=id, datagroup_id=datagroup_id, group_id=group_id, parent_dir=parent_dir,
+                           source_id=source_id,
+                           merged=merged, **kwargs)
+        ds[d.id]=d
+        # except :
+        #     pass
     return ds
 
 
 def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploration',min_duration_in_sec = 180,
                    age=96.0,parent_dir='no_odor',merged=True,enrich=True,add_reference=True, **kwargs):
     # N = 150
-    group = null_dict('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
+    group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
     group.distribution.N = N
 
     if id is None :
@@ -43,29 +44,29 @@ def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploratio
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
     # parent_dir = 'no_odor'
-    target_dir = f'{proc_folder}/{group_id}/{id}'
+    # target_dir = f'{proc_folder}/{group_id}/{id}'
     source_dir = f'{raw_folder}/{parent_dir}'
 
-    # target = f'{target}/{target_id}'
-    # dd = build_dataset(id=target_id, target_dir=target, source_dir=source, source_id=source_id, **kws)
 
 
     if merged :
         source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
-    # conf = s1.get_dict(v, w)
     kws = {
         'datagroup_id': datagroup_id,
         'larva_groups': {group_id: group},
-        'target_dir': target_dir,
+        'target_dir': f'{proc_folder}/{group_id}/{id}',
         'source_dir': source_dir,
         'max_Nagents': N,
         'min_duration_in_sec': min_duration_in_sec,
         # 'build_conf':g.tracker
         **kwargs
     }
+    # print(kws['Ncontour'])
+    # raise
     d = build_dataset(id=id, **kws)
+    d.save(add_reference=add_reference)
     if enrich :
-        d.enrich(**g.enrichment, add_reference=add_reference)
+        d.enrich(**g.enrichment,store=True, add_reference=add_reference)
     else :
         d.save(add_reference=add_reference)
 
@@ -77,8 +78,8 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
     build_conf = g.tracker.filesystem
     data_conf = g.tracker.resolution
     metric_definition = g.enrichment.metric_definition
-    env_params=null_dict('env_conf', arena=g.tracker.arena)
-
+    env_params=preg.get_null('env_conf', arena=g.tracker.arena)
+    data_conf.Ncontour=0
 
     try:
         shutil.rmtree(target_dir)

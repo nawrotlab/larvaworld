@@ -168,7 +168,7 @@ class LarvaDataset:
     def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False, contour=True):
+    def load(self, step=True, end=True, food=False, contour=True, midline=True):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             self.step_data = store['step']
@@ -177,6 +177,14 @@ class LarvaDataset:
                     contour_ps = dNl.flatten_list(self.contour_xy)
                     temp = pd.HDFStore(self.dir_dict.contour_h5)
                     self.step_data[contour_ps] = temp['contour']
+                    temp.close()
+                except:
+                    pass
+            if midline:
+                try:
+                    midline_ps = dNl.flatten_list(self.points_xy)
+                    temp = pd.HDFStore(self.dir_dict.midline_h5)
+                    self.step_data[midline_ps] = temp['midline']
                     temp.close()
                 except:
                     pass
@@ -222,7 +230,7 @@ class LarvaDataset:
         except:
             raise ValueError('Not found')
 
-    def save(self, step=True, end=True, food=False, contour=True, add_reference=False):
+    def save(self, step=True, end=True, food=False, contour=True, midline=True, add_reference=False):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
             contour_ps = dNl.flatten_list(self.contour_xy)
@@ -230,8 +238,13 @@ class LarvaDataset:
                 temp = pd.HDFStore(self.dir_dict.contour_h5)
                 temp['contour'] = self.step_data[contour_ps]
                 temp.close()
+            midline_ps = dNl.flatten_list(self.points_xy)
+            if midline:
+                temp = pd.HDFStore(self.dir_dict.midline_h5)
+                temp['midline'] = self.step_data[midline_ps]
+                temp.close()
 
-            store['step'] = self.step_data.drop(contour_ps, axis=1, errors='ignore')
+            store['step'] = self.step_data.drop(contour_ps+midline_ps, axis=1, errors='ignore')
         if end:
             endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
             endpoint['end'] = self.endpoint_data
@@ -649,6 +662,7 @@ class LarvaDataset:
             'data_h5': os.path.join(self.data_dir, 'data.h5'),
             'endpoint_h5': os.path.join(self.data_dir, 'endpoint.h5'),
             'derived_h5': os.path.join(self.data_dir, 'derived.h5'),
+            'midline_h5': os.path.join(self.data_dir, 'midline.h5'),
             'contour_h5': os.path.join(self.data_dir, 'contour.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
             'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
@@ -952,7 +966,7 @@ class LarvaDataset:
 
 
 
-    def existing(self, key='end', return_shorts=True):
+    def existing(self, key='end', return_shorts=False):
         if key == 'end':
             e=self.endpoint_data if hasattr(self, 'endpoint_data') else self.read(key='end', file='endpoint_h5')
             pars = e.columns.values.tolist()

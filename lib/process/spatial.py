@@ -10,6 +10,7 @@ import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 from lib.registry.pars import preg
 from lib.aux.xy_aux import eudi5x, raw_or_filtered_xy, compute_centroid
+import lib.aux.dictsNlists as dNl
 
 
 def comp_linear(s, e, c, mode='minimal'):
@@ -52,8 +53,8 @@ def comp_linear(s, e, c, mode='minimal'):
             v, d = compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
-            D[1:, i] = d
-            Dcum[1:, i] = cum_d
+            D[:, i] = d
+            Dcum[:, i] = cum_d
             V[1:, i] = v
             A[2:, i] = a
 
@@ -117,7 +118,7 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
-    N=c.Npoints
+    N = c.Npoints
     points = nam.midline(N, type='point')
     xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
@@ -170,14 +171,13 @@ def comp_centroid(s, c, recompute=False):
 
 
 def store_spatial(s, e, c, store=False, also_in_mm=False):
-    point=c.point
+    point = c.point
     dst = nam.dst('')
     sdst = nam.scal(dst)
     cdst = nam.cum(dst)
     csdst = nam.cum(sdst)
-    v=nam.vel('')
-    a=nam.acc('')
-
+    v = nam.vel('')
+    a = nam.acc('')
 
     dic = {
         'x': nam.xy(point)[0],
@@ -193,56 +193,61 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
         except:
             pass
 
-
-
     e[cdst] = s[dst].dropna().groupby('AgentID').sum()
-
+    s[cdst] = s[dst].groupby('AgentID').cumsum()
 
     for i in ['x', 'y']:
         e[nam.final(i)] = s[i].dropna().groupby('AgentID').last()
         e[nam.initial(i)] = s[i].dropna().groupby('AgentID').first()
     e[nam.mean(v)] = e[cdst] / e[nam.cum('dur')]
 
-
     scale_to_length(s, e, c, pars=[dst, v, a])
 
-    if sdst in s.columns :
+    if sdst in s.columns:
+        s[csdst] = s[sdst].groupby('AgentID').cumsum()
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
         e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
     shorts = ['v', 'a', 'sv', 'sa']
 
-    if also_in_mm :
+    if also_in_mm:
         d_in_mm, v_in_mm, a_in_mm = preg.getPar(['d_in_mm', 'v_in_mm', 'a_in_mm'])
         s[d_in_mm] = s[dst] * 1000
         s[v_in_mm] = s[v] * 1000
         s[a_in_mm] = s[a] * 1000
         e[nam.cum(d_in_mm)] = e[cdst] * 1000
         e[nam.mean(v_in_mm)] = e[nam.mean(v)] * 1000
-        shorts +=['v_in_mm', 'a_in_mm']
+        shorts += ['v_in_mm', 'a_in_mm']
 
-    if store :
+    if store:
         store_aux_dataset(s, pars=preg.getPar(shorts), type='distro', file=c.aux_dir)
         store_aux_dataset(s, pars=['x', 'y'], type='trajectories', file=c.aux_dir)
+        store_aux_dataset(s, pars=[dst,cdst, sdst, csdst], type='trajectories', file=c.aux_dir)
 
-def spatial_processing(s, e, c, mode='minimal', recompute=False,store=False, **kwargs):
+
+def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
-    comp_linear(s, e, c, mode=mode)
-    store_spatial(s, e, c,store=store)
+    # comp_linear(s, e, c, mode=mode)
+    store_spatial(s, e, c, store=store)
 
     print(f'Completed {mode} spatial processing.')
 
 
-def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40],store=False, **kwargs):
-    dt=c.dt
-    point=c.point
+def comp_dispersion(s=None, e=None, c=None, recompute=False, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
+    dt = c.dt
+    point = c.point
     if dsp_starts is None or dsp_stops is None:
         return
-    dsp_starts=[int(t) for t in dsp_starts]
-    dsp_stops=[int(t) for t in dsp_stops]
+    dsp_starts = [int(t) for t in dsp_starts]
+    dsp_stops = [int(t) for t in dsp_stops]
 
+    if s is None:
+        ss = pd.read_hdf(c.dir_dict['data_h5'], 'step')[['x', 'y']]
+        s = ss
+    else:
+        ss = s[['x', 'y']]
     ids = s.index.unique('AgentID').values
     ps = []
     pps = []
@@ -255,30 +260,32 @@ def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40],sto
         mp = nam.max(p)
         mup = nam.mean(p)
         pps += [fp, mp, mup]
-
+        # pars = ps + pps
+        AA = np.zeros([c.Nticks, len(ids)]) * np.nan
         if set([mp]).issubset(e.columns.values) and not recompute:
             print(
                 f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
             continue
-        #print(f'Computing dispersion in {s0}-{s1} sec based on {point}')
-        for id in ids:
-            xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True)
+        for i, id in (enumerate(ids)):
+            xy = ss.xs(id, level='AgentID', drop_level=True)
             try:
                 origin_xy = xy.dropna().values[t0]
             except:
                 print(f'No values to set origin point for {id}')
-                s.loc[(slice(None), id), p] = np.empty(len(xy)) * np.nan
+                AA[:, i] = np.empty(len(xy)) * np.nan
                 continue
             d = eudi5x(xy.values, origin_xy)
             d[:t0] = np.nan
-            s.loc[(slice(None), id), p] = d
-            e.loc[id, mp] = np.nanmax(d)
-            e.loc[id, mup] = np.nanmean(d)
-            e.loc[id, fp] = s[p].xs(id, level='AgentID').dropna().values[-1]
+            AA[:, i] = d
+        s[p] = AA.flatten()
+        e[mp] = s[p].groupby('AgentID').max()
+        e[mup] = s[p].groupby('AgentID').mean()
+        e[fp] = s[p].dropna().groupby('AgentID').last()
+
     scale_to_length(s, e, c, pars=ps + pps)
     if c is not None and store:
         store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
-    #print('Dispersions computed')
+
 
 
 def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
@@ -359,7 +366,7 @@ def tortuosity(xy):
     if xy.shape[0] < 2:
         return np.nan
     D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
-    if D==0 :
+    if D == 0:
         return np.nan
     else:
         L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
@@ -403,49 +410,52 @@ def tortuosity(xy):
 #     return SI
 
 
-
 def straightness_index(xy, w, match_shape=True):
-
     # Compute tortuosity over intervals of duration w
     xys = rolling_window_xy(xy, w)
-    k0,k1=xy.shape[0], xys.shape[0]
-    if match_shape :
-        dk = int((k0-k1) / 2)
+    k0, k1 = xy.shape[0], xys.shape[0]
+    if match_shape:
+        dk = int((k0 - k1) / 2)
         SI = np.zeros(k0) * np.nan
         for i in range(k1):
-            SI[dk+i]=tortuosity(xys[i, :])
-    else :
+            SI[dk + i] = tortuosity(xys[i, :])
+    else:
         SI = np.zeros(k1) * np.nan
         for i in range(k1):
             SI[i] = tortuosity(xys[i, :])
     return SI
 
 
-def comp_straightness_index(s,  e=None, c=None,dt=None, tor_durs=[1,2, 5, 10, 20],store=False, **kwargs):
-    if dt is None :
-        dt=c.dt
+def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], store=False, **kwargs):
+    if dt is None:
+        dt = c.dt
+
+    if s is None:
+        ss = pd.read_hdf(c.dir_dict['data_h5'], 'step')[['x', 'y']]
+        s = ss
+    else:
+        ss = s[['x', 'y']]
+    #print(s.columns.values)
     Nticks = len(s.index.unique('Step'))
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
-    pars=[preg.getPar(f'tor{dur}') for dur in tor_durs]
-    for dur, par in zip(tor_durs, pars):
-        # par = f'tortuosity_{dur}'
-        par_m, par_s = nam.mean(par), nam.std(par)
+    pars = [preg.getPar(f'tor{dur}') for dur in tor_durs]
+    for dur, p in zip(tor_durs, pars):
         r = int(dur / dt / 2)
         T = np.zeros([Nticks, Nids]) * np.nan
-        T_m = np.ones(Nids) * np.nan
-        T_s = np.ones(Nids) * np.nan
+        # T_m = np.ones(Nids) * np.nan
+        # T_s = np.ones(Nids) * np.nan
         for j, id in enumerate(ids):
-            xy = s[['x', 'y']].xs(id, level='AgentID').values
+            xy = ss.xs(id, level='AgentID').values
             T[:, j] = straightness_index(xy, r)
-            T_m[j] = np.nanmean(T[:, j])
-            T_s[j] = np.nanstd(T[:, j])
-        s[par] = T.flatten()
+        s[p] = T.flatten()
 
         if e is not None:
-            e[par_m] = T_m
-            e[par_s] = T_s
-    if store :
+            e[nam.mean(p)] = s[p].groupby('AgentID').mean()
+            e[nam.std(p)] = s[p].groupby('AgentID').std()
+
+
+    if store:
         store_aux_dataset(s, pars=pars, type='distro', file=c.aux_dir)
 
 
@@ -520,7 +530,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         # print(e['anemotaxis'])
 
 
-def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None,store=False, **kwargs):
+def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None, store=False, **kwargs):
     ids = s.index.unique(level='AgentID').values
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
@@ -557,7 +567,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=No
             for x, y in xy_pairs:
                 s.loc[(slice(None), id), x] -= p[0]
                 s.loc[(slice(None), id), y] -= p[1]
-        if store :
+        if store:
             storage = pd.HDFStore(c.aux_dir)
             storage[f'traj_aligned2{mode}'] = s
             storage.close()
@@ -654,10 +664,10 @@ def comp_PI(arena_xdim, xs, return_num=False, return_all=False):
         return pI
 
 
-def scale_to_length(s, e,c, pars=None, keys=None):
+def scale_to_length(s, e, c, pars=None, keys=None):
     l_par = 'length'
     if l_par not in e.keys():
-        comp_length(s, e,c, mode='minimal', recompute=True)
+        comp_length(s, e, c, mode='minimal', recompute=True)
         # return
     l = e[l_par]
     if pars is None:

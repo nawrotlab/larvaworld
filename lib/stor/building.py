@@ -118,27 +118,33 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
         xs = pd.read_csv(f'{pref}_x_spine.txt', header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(f'{pref}_y_spine.txt', header=None, sep='\t', names=y_pars)
         ts = pd.read_csv(f'{pref}_t.txt', header=None, sep='\t', names=['Step'])
-
-        xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
-        ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-        xcs,ycs= lib.aux.xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
-        xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
-        ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
-
+        ids = pd.read_csv(f'{pref}_larvaid.txt', header=None, sep='\t', names=['AgentID'])
+        ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
+        par_list = [ids, ts, xs, ys]
         try:
             states = pd.read_csv(f'{pref}_global_state_large_state.txt', header=None, sep='\t', names=['state'])
+            par_list.append(states)
         except:
             states = None
 
-        ids = pd.read_csv(f'{pref}_larvaid.txt', header=None, sep='\t', names=['AgentID'])
-        ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
+
+        if d.Ncontour>0 :
+            xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
+            ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
+            xcs,ycs= lib.aux.xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
+            xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
+            ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
+            par_list += [xcs, ycs]
+
+
+
+
 
         min_t, max_t = float(ts.min()), float(ts.max())
 
-        par_list = [ids, ts, xs, ys, xcs,ycs]
 
-        if states is not None:
-            par_list.append(states)
+
+
 
         temp = pd.concat(par_list, axis=1, sort=False)
         temp.set_index(keys=['AgentID'], inplace=True, drop=True)

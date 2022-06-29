@@ -220,11 +220,11 @@ class ParInitDict:
                 'dispersion': {
                     'dsp_starts': {'t': List[int], 'v': [0], 'lim': (0, 200), 'dv': 1, 'disp': 'starts',
                                    'h': 'The timepoints to start calculating dispersion in seconds.'},
-                    'dsp_stops': {'t': List[int], 'v': [40], 'lim': (0, 200), 'dv': 1, 'disp': 'stops',
+                    'dsp_stops': {'t': List[int], 'v': [40,60], 'lim': (0, 200), 'dv': 1, 'disp': 'stops',
                                   'h': 'The timepoints to stop calculating dispersion in seconds.'},
                 },
                 'tortuosity': {
-                    'tor_durs': {'t': List[int], 'v': [5, 10], 'lim': (0, 200), 'dv': 1, 'disp': 't (sec)',
+                    'tor_durs': {'t': List[int], 'v': [5, 20], 'lim': (0, 200), 'dv': 1, 'disp': 't (sec)',
                                  'h': 'The time windows to use when calculating tortuosity in seconds.'}
                 },
                 'stride': {

@@ -20,31 +20,38 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
 
     }
     for i, d in enumerate(P.datasets):
-        N = d.config['N']
-        try:
-            s = d.step_data
-        except:
-            s = d.read('step')
+        c=d.config
+
+        dic = d.load_chunk_dicts()
+        # N = d.config['N']
+        # try:
+        #     s = d.step_data
+        # except:
+        #     s = d.read('step')
         for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
             idx = 2 * i + k
             ax = P.axs[idx]
-            P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, N + 2),
+            P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, c.N + 2),
                       xlim=(0, d.config['Nticks'] * d.dt), title=title if i == 0 else None)
-            for b, c in Cbouts[n].items():
-                bp0, bp1 = nam.start(b), nam.stop(b)
-                if not {bp0, bp1}.issubset(s.columns.values):
-                    continue
-                for j, id in enumerate(s.index.unique('AgentID').values):
-                    bbs = s[[bp0, bp1]].xs(id, level='AgentID')
-                    b0s = bbs[bp0].dropna().index.values * d.dt
-                    b1s = bbs[bp1].dropna().index.values * d.dt
-                    lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
-                    lc = mc.LineCollection(lines, colors=c, linewidths=2)
-                    ax.add_collection(lc)
+            for b, bcol in Cbouts[n].items():
+                try :
+                    # bp0, bp1 = nam.start(b), nam.stop(b)
+                    # if not {bp0, bp1}.issubset(s.columns.values):
+                    #     continue
+                    for j, id in enumerate(c.agent_ids):
+                        bbs = dic[id][b]
+                        bbs*=d.dt
+                        b0s, b1s=bbs[:,0], bbs[:,1]
+                    # for j, id in enumerate(s.index.unique('AgentID').values):
+                    #     bbs = s[[bp0, bp1]].xs(id, level='AgentID')
+                    #     b0s = bbs[bp0].dropna().index.values * d.dt
+                    #     b1s = bbs[bp1].dropna().index.values * d.dt
+                        lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
+                        lc = mc.LineCollection(lines, colors=bcol, linewidths=2)
+                        ax.add_collection(lc)
+                except:
+                    pass
             P.data_leg(idx, labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()))
-            # dataset_legend(labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()), ax=ax,
-            #                loc=None, anchor=None, fontsize=None, handlelength=0.5, handleheight=0.5)
-
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.15, 0.1)
     return P.get()
 
@@ -297,6 +304,32 @@ def plot_navigation_index(subfolder='source', **kwargs):
     return P.get()
 
 
+def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
+    t_unit='min'
+    ylab0 = 'pathlength'
+    if scaled:
+        name = f'scaled_{ylab0}'
+        ylab = f'scaled {ylab0} $(-)$'
+        k='cum_sd'
+    else:
+        name = f'{ylab0}'
+        ylab = f'{ylab0} $({unit})$'
+        k = 'cum_d'
+    p=preg.dict[k]
+    print(k)
+    P = AutoPlot(ks=[k], name=name, subfolder=subfolder, figsize=(15, 5),**kwargs)
+    x = P.trange(t_unit)
+    # dic,p=P.kpdict[k]
+    P.conf_ax(0, xlab=f'time, ${t_unit}$', ylab=ylab, xlim=(x[0], x[-1]), ylim=[0, None], xMaxN=5, leg_loc='upper left')
+    for d, lab, c in zip(P.datasets, P.labels, P.colors):
+        df = d.read(key='pathlength', file='aux_h5')[p.d]
+        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
+
+    P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
+    return P.get()
+
+
+
 def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
     lab = 'pathlength'
     if scaled:
@@ -310,13 +343,15 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         xlabel = 'time, $min$'
     P.build(figsize=(7, 6))
 
-    dst_par, dst_u = preg.getPar('cum_d', to_return=['d', 'u'])
+    p=preg.dict['cum_d']
+
+    # dst_par, dst_u = preg.getPar('cum_d', to_return=['d', 'u'])
     x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-        df = d.step_data[dst_par]
+        df = d.get_par(p.d, key='step')
         if not scaled and unit == 'cm':
             from lib.registry.units import ureg
-            if dst_u == ureg.m:
+            if p.u == ureg.m:
                 df *= 100
         plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 

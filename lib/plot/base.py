@@ -383,6 +383,8 @@ def load_ks(ks, ds,ls,cols, d0):
     for k in ks:
         dic[k] = {}
         for d,l,col in zip(ds,ls,cols):
+            # print(d0.get(k=k, d=d, compute=True))
+
             vs = d0.get(k=k, d=d, compute=True)
             dic[k][l] = dNl.NestDict({'df':vs, 'col':col})
     return dNl.NestDict(dic)
