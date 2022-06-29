@@ -1,3 +1,4 @@
+import copy
 import os.path
 import numpy as np
 import pandas as pd
@@ -85,7 +86,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     return step, end
 
 
-def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, min_duration_in_sec=0.0,
+def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
                   match_ids=True,**kwargs):
 
     pref=f'{source_dir}/{source_id}'
@@ -213,6 +214,19 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
         selected = end[end['cum_dur'] >= min_duration_in_sec].index.values
         step = step.loc[(slice(None), selected), :]
         end = end.loc[selected]
+    if time_slice is not None :
+        tmin,tmax=time_slice
+        tickmin,tickmax=int(tmin/d.dt),int(tmax/d.dt)
+        print(tickmin,tickmax, step.index.unique('Step').values[0])
+        # raise
+        step = copy.deepcopy(step.loc[(slice(tickmin,tickmax), slice(None)),:])
+        ids = step.index.unique('AgentID').values
+        end = end.loc[ids]
+        end['num_ticks'] = step['head_x'].dropna().groupby('AgentID').count().to_frame()
+        selected = end[end['num_ticks'] > 0].index.values
+        step = step.loc[(slice(None), selected), :]
+        end = end.loc[selected]
+        end['cum_dur'] = end['num_ticks'] / fr
     return step, end
 
 def build_Berni(dataset, build_conf, source_files, max_Nagents=None, min_duration_in_sec=0.0,
