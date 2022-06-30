@@ -55,7 +55,7 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
         s[p_min] = min_array[:, i, :].flatten()
         s[p_max] = max_array[:, i, :].flatten()
 
-def filter(s, dt, Npoints, c, freq=2, N=1, inplace=True, recompute=False, **kwargs):
+def filter(s, c, freq=2, inplace=True, recompute=False, **kwargs):
     if freq in ['', None, np.nan]:
         return
     if 'filtered_at' in c and not recompute:
@@ -64,22 +64,20 @@ def filter(s, dt, Npoints, c, freq=2, N=1, inplace=True, recompute=False, **kwar
         return
     c['filtered_at'] = freq
 
-    points = nam.midline(Npoints, type='point') + ['centroid', '']
+    points = nam.midline(c.Npoints, type='point') + ['centroid', '']
     pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
-    f_array = apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / dt, N=N)
+    f_array = apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / c.dt)
     fpars = nam.filt(pars) if not inplace else pars
     for j, p in enumerate(fpars):
         s[p] = f_array[:, j, :].flatten()
     print(f'All spatial parameters filtered at {freq} Hz')
 
 
-def interpolate_nan_values(s, config, pars=None, **kwargs):
+def interpolate_nan_values(s, c, pars=None, **kwargs):
     if pars is None:
-        N = config['Npoints'],
-        Nc = config['Ncontour'],
-        points = nam.midline(N[0], type='point') + ['centroid', ''] + nam.contour(Nc[0]) # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
+        points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour) # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
         pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     for p in pars:
@@ -88,11 +86,11 @@ def interpolate_nan_values(s, config, pars=None, **kwargs):
     print('All parameters interpolated')
 
 
-def rescale(s, e, c, Npoints=None, Ncontour=None, recompute=False, scale=1.0, **kwargs):
-    if Npoints is None:
-        Npoints = c['Npoints']
-    if Ncontour is None:
-        Ncontour = c['Ncontour']
+def rescale(s, e, c, recompute=False, scale=1.0, **kwargs):
+    # if Npoints is None:
+    #     Npoints = c['Npoints']
+    # if Ncontour is None:
+    #     Ncontour = c['Ncontour']
     if scale in ['', None, np.nan]:
         return
     if 'rescaled_by' in c and not recompute:
@@ -100,8 +98,8 @@ def rescale(s, e, c, Npoints=None, Ncontour=None, recompute=False, scale=1.0, **
             f'Dataset already rescaled by {c["rescaled_by"]}. If you want to rescale again set recompute to True')
         return
     c['rescaled_by'] = scale
-    points = nam.midline(Npoints, type='point') + ['centroid', '']
-    contour_pars = nam.xy(nam.contour(Ncontour), flat=True)
+    points = nam.midline(c.Npoints, type='point') + ['centroid', '']
+    contour_pars = nam.xy(nam.contour(c.Ncontour), flat=True)
     pars = nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + [
         'spinelength'] + contour_pars
     lin_pars = [p for p in pars if p in s.columns]

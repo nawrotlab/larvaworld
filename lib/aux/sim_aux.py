@@ -5,7 +5,6 @@ import numpy as np
 
 from shapely.geometry import Point, Polygon, LineString
 
-
 from lib.aux import naming as nam, dictsNlists as dNl
 
 
@@ -41,8 +40,13 @@ def circle_to_polygon(sides, radius, rotation=0, translation=None):
 def inside_polygon(points, tank_polygon):
     return all([tank_polygon.contains(Point(x, y)) for x, y in points])
 
-def body(points, start=[1, 0], stop=[0, 0]):
-    xy = np.zeros([len(points) * 2+2, 2]) * np.nan
+
+def body(points, start=None, stop=None):
+    if start is None:
+        start = [1, 0]
+    if stop is None:
+        stop = [0, 0]
+    xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
     xy[0, :] = start
     xy[len(points) + 1, :] = stop
     for i in range(len(points)):
@@ -95,16 +99,18 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
             ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
         _, idx = np.unique(ps[i], axis=0, return_index=True)
         ps[i] = ps[i][np.sort(idx)]
-        if closed :
-            ps[i]=np.concatenate([ps[i], [ps[i][0]]])
+        if closed:
+            ps[i] = np.concatenate([ps[i], [ps[i][0]]])
     return ps
 
-def generate_seg_shapes(Nsegs,  points,seg_ratio=None, centered=True, closed=False, **kwargs):
-    if seg_ratio is None :
+
+def generate_seg_shapes(Nsegs, points, seg_ratio=None, centered=True, closed=False, **kwargs):
+    if seg_ratio is None:
         seg_ratio = np.array([1 / Nsegs] * Nsegs)
     ps = segment_body(Nsegs, np.array(points), seg_ratio=seg_ratio, centered=centered, closed=closed)
     seg_vertices = [np.array([p]) for p in ps]
     return seg_vertices
+
 
 def rearrange_contour(ps0):
     ps_plus = [p for p in ps0 if p[1] >= 0]
@@ -112,8 +118,6 @@ def rearrange_contour(ps0):
     ps_minus = [p for p in ps0 if p[1] < 0]
     ps_minus.sort(key=lambda x: x[0], reverse=False)
     return ps_plus + ps_minus
-
-
 
 
 # def freq(d, dt, range=[0.7, 1.8]) :
@@ -142,9 +146,9 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
                                (-X / 2, Y / 2),
                                (X / 2, Y / 2),
                                (X / 2, -Y / 2)])
-    if return_polygon :
+    if return_polygon:
         return Polygon(tank_shape * k)
-    else :
+    else:
         # tank_shape=np.insert(tank_shape,-1,tank_shape[0,:])
         return tank_shape
 
@@ -158,46 +162,67 @@ def parse_array_at_nans(a):
     return ds, de
 
 
-def apply_sos_filter_to_array_with_nans(array, sos, padlen=6):
+def apply_sos_filter_to_array_with_nans(sos, x, padlen=6):
     from scipy.signal import sosfiltfilt
     try:
-        array_filt = np.full_like(array, np.nan)
-        ds, de = parse_array_at_nans(array)
+        array_filt = np.full_like(x, np.nan)
+        ds, de = parse_array_at_nans(x)
         for s, e in zip(ds, de):
-            k = array[s:e]
+            k = x[s:e]
             if len(k) > padlen:
-                k_filt = sosfiltfilt(sos, k, padlen=padlen)
-                array_filt[s:e] = k_filt
+                array_filt[s:e] = sosfiltfilt(sos, x[s:e], padlen=padlen)
         return array_filt
     except:
-        array_filt = sosfiltfilt(sos, array, padlen=padlen)
-        return array_filt
+        return sosfiltfilt(sos, x, padlen=padlen)
 
 
-def apply_filter_to_array_with_nans_multidim(array, freq, fr, N=1):
+def apply_filter_to_array_with_nans_multidim(a, freq, fr, N=1):
+    """
+    Power-spectrum of signal.
+
+    Compute the power spectrum of a signal and its dominant frequency within some range.
+
+    Parameters
+    ----------
+    a : array
+        1D,2D or 3D Array : the array of timeseries to be filtered
+    freq : float
+        The cut-off frequency to set for the butter filter
+    fr : float
+        The framerate of the dataset
+    N: int
+        order of the butter filter
+
+    Returns
+    -------
+    yf : array
+        Filtered array of same shape as a
+
+    """
     from scipy.signal import butter
 
-    sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
-    # The array chunks must be longer than padlen=6
-    padlen = 6
+
+
     # 2-dimensional array must have each timeseries in different column
-    if array.ndim == 1:
-        return apply_sos_filter_to_array_with_nans(array=array, sos=sos, padlen=padlen)
-    elif array.ndim == 2:
-        return np.array([apply_sos_filter_to_array_with_nans(array=array[:, i], sos=sos, padlen=padlen) for i in
-                         range(array.shape[1])]).T
-    elif array.ndim == 3:
-        return np.transpose([apply_filter_to_array_with_nans_multidim(array[:, :, i], freq, fr, N=1) for i in
-                             range(array.shape[2])], (1, 2, 0))
+    if a.ndim == 1:
+        sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
+        return apply_sos_filter_to_array_with_nans(sos=sos, x=a)
+    elif a.ndim == 2:
+        sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
+        return np.array([apply_sos_filter_to_array_with_nans(sos=sos, x=a[:, i]) for i in
+                         range(a.shape[1])]).T
+    elif a.ndim == 3:
+        return np.transpose([apply_filter_to_array_with_nans_multidim(a[:, :, i], freq, fr, N=1) for i in
+                             range(a.shape[2])], (1, 2, 0))
     else:
         raise ValueError('Method implement for up to 3-dimensional array')
 
 
 def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
     """
-    Powerspectrum of signal.
+    Power-spectrum of signal.
 
-    Compute the powerspectrum of a signal abd its dominant frequency within some range.
+    Compute the power spectrum of a signal and its dominant frequency within some range.
 
     Parameters
     ----------
@@ -207,14 +232,14 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
         Timestep of the timeseries
     fr_range : Tuple[float,float]
         Frequency range allowed. Default is (0.0, +np.inf)
+    return_amps: bool
+        whether to return the whole array of frequency powers
 
     Returns
     -------
-    xf : array
-        Array of computed frequencies.
     yf : array
         Array of computed frequency powers.
-    xmax : float
+    fr : float
         Dominant frequency within range.
 
     """
@@ -237,8 +262,8 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
 
 
 def fft_freqs(s, e, c):
-    v,fov=nam.vel(['', nam.orient('front')])
-    fv,fsv, ffov = nam.freq([v,nam.scal(v), fov])
+    v, fov = nam.vel(['', nam.orient('front')])
+    fv, fsv, ffov = nam.freq([v, nam.scal(v), fov])
 
     try:
         e[fv] = s[v].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=(1.0, 2.5))
@@ -249,9 +274,10 @@ def fft_freqs(s, e, c):
     e['turner_input_constant'] = (e[ffov] / 0.024) + 5
 
 
-def get_freq(d, par, fr_range=(0.0, +np.inf)) :
+def get_freq(d, par, fr_range=(0.0, +np.inf)):
     s, e, c = d.step_data, d.endpoint_data, d.config
-    e[nam.freq(par)]=s[par].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=fr_range)
+    e[nam.freq(par)] = s[par].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=fr_range)
+
 
 def get_source_xy(food_params):
     sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
@@ -268,13 +294,14 @@ def generate_larvae(N, sample_dict, base_model, RefPars):
         for i in range(N):
             lF = copy.deepcopy(modF)
             for p, vs in sample_dict.items():
-                p=RefPars[p] if p in RefPars.keys() else p
+                p = RefPars[p] if p in RefPars.keys() else p
                 lF.update({p: vs[i]})
-            dic=dNl.NestDict(unflatten(lF))
+            dic = dNl.NestDict(unflatten(lF))
             all_pars.append(dic)
     else:
         all_pars = [base_model] * N
     return all_pars
+
 
 def get_sample_bout_distros0(Im, bout_distros):
     dic = {
@@ -283,25 +310,26 @@ def get_sample_bout_distros0(Im, bout_distros):
         'run_dist': ['run', 'run_dur'],
     }
 
-
-    ds=[ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
-    for d in ds :
-        for sample_d in dic[d] :
-            if sample_d in bout_distros.keys() and bout_distros[sample_d] is not None :
-                Im[d]=bout_distros[sample_d]
+    ds = [ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if
+          (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
+    for d in ds:
+        for sample_d in dic[d]:
+            if sample_d in bout_distros.keys() and bout_distros[sample_d] is not None:
+                Im[d] = bout_distros[sample_d]
     return Im
 
-def get_sample_bout_distros(model, sample):
 
+def get_sample_bout_distros(model, sample):
     m = dNl.NestDict(copy.deepcopy(model))
     if m.brain.intermitter_params and sample != {}:
-        m.brain.intermitter_params=get_sample_bout_distros0(Im=m.brain.intermitter_params, bout_distros=sample.bout_distros)
+        m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
+                                                              bout_distros=sample.bout_distros)
 
     return m
 
 
 def sample_group(sample=None, N=1, sample_ps=[], e=None):
-    if e is None :
+    if e is None:
         from lib.stor.larva_dataset import LarvaDataset
         d = LarvaDataset(sample['dir'], load_data=False)
         e = d.read(key='end', file='endpoint_h5')
