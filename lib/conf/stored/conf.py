@@ -247,8 +247,10 @@ def store_confs(keys=None):
         from lib.conf.stored.data_conf import importformats, import_par_confs
         for k, v in import_par_confs.items():
             saveConf(v, 'Par', k)
-        for g in importformats:
-            saveConf(g, 'Group')
+        for k, v in importformats.items():
+            saveConf(v, 'Group', k)
+        # for g in importformats:
+        #     saveConf(g, 'Group')
     if 'Ref' in keys:
         store_reference_data_confs()
 
@@ -332,6 +334,6 @@ if __name__ == '__main__':
     # store_confs(['Aux'])
     # store_confs(['Env'])
     # store_confs(['Exp'])
-    # store_confs(['Data'])
-    store_confs(['Ga'])
+    store_confs(['Data'])
+    # store_confs(['Ga'])
     # store_confs(keys = ['Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga'])

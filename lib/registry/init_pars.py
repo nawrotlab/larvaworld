@@ -727,6 +727,6 @@ class ParInitDict:
 
             }
 
-            return d
+            return dNl.NestDict(d)
 
         self.dict = buildInitDict()
