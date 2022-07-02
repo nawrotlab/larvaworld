@@ -37,26 +37,10 @@ class LarvaDataset:
         # try:
         if os.path.exists(self.dir_dict.conf):
             config = dNl.load_dict(self.dir_dict.conf, use_pickle=False)
-            # if metric_definition is None:
-            #     from lib.conf.stored.conf import loadConf
-            #     metric_definition = loadConf('SimParConf', 'Par')
-            # dic={'metric_definition': {
-            #     'spatial': {
-            #         'hardcoded': metric_definition['spatial'],
-            #         'fitted': None,
-            #     },
-            #     'angular': {
-            #         'hardcoded': metric_definition['angular'],
-            #         'fitted': None
-            #     }
-            # }}
-            # config.update(dic)
 
-        # except:
         else:
             if metric_definition is None:
-                from lib.conf.stored.conf import loadConf
-                metric_definition = loadConf('SimParConf', 'Par')
+                metric_definition =preg.get_null('metric_definition')
             group_ids = list(larva_groups.keys())
             samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
             if len(group_ids) == 1:
