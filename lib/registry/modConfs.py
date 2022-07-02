@@ -868,7 +868,7 @@ def Mem0():
     return dNl.NestDict(d)
 
 
-def dict0():
+def init_brain_modules():
     kws = {'kwargs': {'dt': 0.1}}
     d0 = {}
     d0['turner'] = {'mode': Tur0(), **kws}
@@ -1001,7 +1001,7 @@ def DEB0():
     return dNl.NestDict(d)
 
 
-def dict_aux():
+def init_aux_modules():
     d0 = {}
     d0['physics'] = Phy0()
     d0['body'] = Bod0()
@@ -1009,10 +1009,10 @@ def dict_aux():
     return dNl.NestDict(d0)
 
 
-def build_aux_dict():
+def build_aux_module_dict():
     from lib.registry.par import v_descriptor
     from lib.registry.par_dict import preparePar
-    d0 = dict_aux()
+    d0 = init_aux_modules()
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))
     for mkey in d0.keys():
@@ -1024,10 +1024,10 @@ def build_aux_dict():
     return d0, pre_d00, d00
 
 
-def build_modConf_dict():
+def build_brain_module_dict():
     from lib.registry.par import v_descriptor
     from lib.registry.par_dict import preparePar
-    d0 = dict0()
+    d0 = init_brain_modules()
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))
     for mkey in d0.keys():

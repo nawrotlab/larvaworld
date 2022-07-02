@@ -7,27 +7,23 @@ import pandas as pd
 from scipy.stats import ks_2samp
 from shapely.geometry import Point
 
-
-
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry.pars import preg
 
+dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
+    ['d', 'v', 'sv', 'a', 'sa', 'fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',
+     "dsp", "dsp_0_40", "dsp_0_40_mu", "dsp_0_40_max", 'str_fov_mu', 'run_fov_mu', 'pau_fov_mu', 'run_foa_mu',
+     'pau_foa_mu', 'str_fov_std', 'pau_fov_std', 'str_sd_mu', 'str_sd_std', 'str_d_mu', 'str_d_std', 'str_sv_mu',
+     'pau_sv_mu', 'str_v_mu', 'run_v_mu', 'run_sv_mu', 'pau_v_mu', 'str_tr', 'run_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
+     'Ltur_fou', 'Rtur_fou', 'run_t_min', 'cum_t', 'run_t', 'run_d', 'pau_t'])
 
 
-
-
-
-
-dst, v, sv, acc, sa, fou, rou, fo, ro, b,fov, rov, bv,foa, roa, ba, x, y, l,dsp, dsp_0_40,dsp_0_40_mu,dsp_0_40_max,str_fov_mu,run_fov_mu,pau_fov_mu,run_foa_mu,pau_foa_mu, str_fov_std,pau_fov_std,str_sd_mu, str_sd_std,str_d_mu, str_d_std, str_sv_mu, pau_sv_mu,str_v_mu,run_v_mu,run_sv_mu, pau_v_mu, str_tr,run_tr, pau_tr,Ltur_tr,Rtur_tr, Ltur_fou,Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t= preg.getPar(['d','v', 'sv','a','sa','fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',"dsp", "dsp_0_40","dsp_0_40_mu","dsp_0_40_max",'str_fov_mu','run_fov_mu','pau_fov_mu','run_foa_mu','pau_foa_mu', 'str_fov_std','pau_fov_std', 'str_sd_mu', 'str_sd_std','str_d_mu', 'str_d_std', 'str_sv_mu', 'pau_sv_mu','str_v_mu', 'run_v_mu','run_sv_mu', 'pau_v_mu', 'str_tr','run_tr','pau_tr','Ltur_tr','Rtur_tr', 'Ltur_fou','Rtur_fou', 'run_t_min', 'cum_t',  'run_t', 'run_d', 'pau_t'])
-
-
-
-def eval_endpoint(ee,e,e_shorts=None,e_pars=None,e_labs=None, mode = 'pooled'):
-    if e_pars is None :
+def eval_endpoint(ee, e, e_shorts=None, e_pars=None, e_labs=None, mode='pooled'):
+    if e_pars is None:
         e_pars = preg.getPar(e_shorts)
-    if e_labs is None :
+    if e_labs is None:
         e_labs = preg.getPar(d=e_pars, to_return=['lab'])
-    Eend= {}
+    Eend = {}
     for p, pl in zip(e_pars, e_labs):
         Eend[pl] = None
         if p in e.columns and p in ee.columns:
@@ -37,10 +33,11 @@ def eval_endpoint(ee,e,e_shorts=None,e_pars=None,e_labs=None, mode = 'pooled'):
                 Eend[pl] = ks_2samp(e[p].values, ee[p].values)[0]
     return Eend
 
-def eval_end_fast(ee,e_data,e_sym, mode = 'pooled'):
-    Eend= {}
+
+def eval_end_fast(ee, e_data, e_sym, mode='pooled'):
+    Eend = {}
     for p, sym in e_sym.items():
-        e_vs=e_data[p]
+        e_vs = e_data[p]
         # sym=e_sym[p]
         Eend[sym] = None
         if p in ee.columns:
@@ -50,10 +47,11 @@ def eval_end_fast(ee,e_data,e_sym, mode = 'pooled'):
                 Eend[sym] = ks_2samp(e_vs.values, ee[p].values)[0]
     return Eend
 
-def eval_distro(ss,s,s_shorts=None,s_pars=None,s_labs=None, mode = 'pooled', min_size=20):
-    if s_pars is None :
+
+def eval_distro(ss, s, s_shorts=None, s_pars=None, s_labs=None, mode='pooled', min_size=20):
+    if s_pars is None:
         s_pars = preg.getPar(s_shorts)
-    if s_labs is None :
+    if s_labs is None:
         s_labs = preg.getPar(d=s_pars, to_return=['lab'])
 
     Edistro = {}
@@ -63,7 +61,8 @@ def eval_distro(ss,s,s_shorts=None,s_pars=None,s_labs=None, mode = 'pooled', min
             if mode == '1:1':
                 pps = []
                 for id in s.index.unique('AgentID').values:
-                    sp, ssp = s[p].xs(id, level="AgentID").dropna().values, ss[p].xs(id,level="AgentID").dropna().values
+                    sp, ssp = s[p].xs(id, level="AgentID").dropna().values, ss[p].xs(id,
+                                                                                     level="AgentID").dropna().values
                     if sp.shape[0] > min_size and ssp.shape[0] > min_size:
                         pps.append(ks_2samp(sp, ssp)[0])
 
@@ -74,17 +73,18 @@ def eval_distro(ss,s,s_shorts=None,s_pars=None,s_labs=None, mode = 'pooled', min
                     Edistro[pl] = ks_2samp(spp, sspp)[0]
     return Edistro
 
-def eval_distro_fast(ss,s_data,s_sym, mode = 'pooled', min_size=20):
+
+def eval_distro_fast(ss, s_data, s_sym, mode='pooled', min_size=20):
     Edistro = {}
     for p, sym in s_sym.items():
-        s_vs=s_data[p]
+        s_vs = s_data[p]
         # sym=s_sym[p]
         Edistro[sym] = None
         if p in ss.columns:
             if mode == '1:1':
                 pps = []
                 for id in s_data.index:
-                    sp, ssp = s_data[p].loc[id].values, ss[p].xs(id,level="AgentID").dropna().values
+                    sp, ssp = s_data[p].loc[id].values, ss[p].xs(id, level="AgentID").dropna().values
                     if sp.shape[0] > min_size and ssp.shape[0] > min_size:
                         pps.append(ks_2samp(sp, ssp)[0])
 
@@ -95,14 +95,16 @@ def eval_distro_fast(ss,s_data,s_sym, mode = 'pooled', min_size=20):
                     Edistro[sym] = ks_2samp(spp, sspp)[0]
     return Edistro
 
-def eval_multi(datasets,s=None,e=None, s_shorts=None,e_shorts=None, mode='pooled', min_size=20):
+
+def eval_multi(datasets, s=None, e=None, s_shorts=None, e_shorts=None, mode='pooled', min_size=20):
     GEend, GEdistro = {}, {}
     if e is not None and e_shorts is not None:
         e_pars, e_labs = preg.getPar(e_shorts, to_return=['d', 'lab'])
-        GEend = {d.id : eval_endpoint(d.endpoint_data,e,e_pars=e_pars,e_labs=e_labs, mode = mode) for d in datasets}
+        GEend = {d.id: eval_endpoint(d.endpoint_data, e, e_pars=e_pars, e_labs=e_labs, mode=mode) for d in datasets}
     if s is not None and s_shorts is not None:
         s_pars, s_labs = preg.getPar(s_shorts, to_return=['d', 'lab'])
-        GEdistro= {d.id : eval_distro(d.step_data,s,s_pars=s_pars,s_labs=s_labs, mode = mode, min_size=min_size) for d in datasets}
+        GEdistro = {d.id: eval_distro(d.step_data, s, s_pars=s_pars, s_labs=s_labs, mode=mode, min_size=min_size) for d
+                    in datasets}
     if mode == '1:1':
         labels = ['RSS error', r'median 1:1 distribution KS$_{D}$']
     elif mode == 'pooled':
@@ -112,11 +114,12 @@ def eval_multi(datasets,s=None,e=None, s_shorts=None,e_shorts=None, mode='pooled
 
     return error_dict
 
-def eval_fast(datasets,data,symbols,mode='pooled', min_size=20):
+
+def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
     GEend, GEdistro = {}, {}
     GEend = {d.id: eval_end_fast(d.endpoint_data, data.end, symbols.end, mode=mode) for d in datasets}
-    GEdistro = {d.id: eval_distro_fast(d.step_data, data.step, symbols.step,mode=mode, min_size=min_size) for d
-                    in datasets}
+    GEdistro = {d.id: eval_distro_fast(d.step_data, data.step, symbols.step, mode=mode, min_size=min_size) for d
+                in datasets}
     if mode == '1:1':
         labels = ['RSS error', r'median 1:1 distribution KS$_{D}$']
     elif mode == 'pooled':
@@ -128,14 +131,9 @@ def eval_fast(datasets,data,symbols,mode='pooled', min_size=20):
     return error_dict
 
 
-
-
-
-
-
 def adapt_conf(conf0, ee, cc):
-    run_t_max, pau_t_min, pau_t_max,fsv,l, v_mu,cum_d, sv_mu, fov_mu, b_mu = preg.getPar(['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv','l', 'v_mu', "cum_d", "sv_mu",'fov_mu','b_mu'])
-
+    run_t_max, pau_t_min, pau_t_max, fsv, l, v_mu, cum_d, sv_mu, fov_mu, b_mu = preg.getPar(
+        ['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv', 'l', 'v_mu', "cum_d", "sv_mu", 'fov_mu', 'b_mu'])
 
     conf = copy.deepcopy(conf0)
 
@@ -239,10 +237,10 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
 
     scale_to_length(ss, ee, cc, keys=['d', 'v', 'a', 'v_mu'])
 
-    comp_dispersion(ss, ee, cc,dsp_starts=dsp_starts, dsp_stops=dsp_stops)
-    comp_straightness_index(ss,  ee,cc, dt,tor_durs=tor_durs)
+    comp_dispersion(ss, ee, cc, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
+    comp_straightness_index(ss, ee, cc, dt, tor_durs=tor_durs)
     from lib.process import aux
-    chunk_dicts= aux.annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    chunk_dicts = aux.annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
     cycle_curves = aux.compute_interference(ss, ee, cc, chunk_dicts=chunk_dicts)
     from lib.anal.fitting import fit_bouts
     pooled_epochs = fit_bouts(c=cc, chunk_dicts=chunk_dicts, s=ss, e=ee, id=cc.id)
@@ -251,19 +249,18 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
 
 
 def arrange_evaluation(d, evaluation_metrics):
-
-    Edata, Ddata = {},{}
+    Edata, Ddata = {}, {}
     dic = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         Eshorts, Dshorts = [], []
         ps = preg.getPar(shs)
-        for sh, p in zip(shs, ps) :
+        for sh, p in zip(shs, ps):
             try:
-                data=d.read(key='end', file='endpoint_h5')[p]
+                data = d.read(key='end', file='endpoint_h5')[p]
                 if data is not None:
-                    Edata[p]=data
+                    Edata[p] = data
                     Eshorts.append(sh)
-            except :
+            except:
                 data = d.get_par(p, key='distro')
                 if data is not None:
                     Ddata[p] = data.dropna()
@@ -278,8 +275,8 @@ def arrange_evaluation(d, evaluation_metrics):
         if len(Dshorts) > 0:
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
-    eval_data = dNl.NestDict({'step':Ddata, 'end': Edata})
-    return dic,eval_data
+    eval_data = dNl.NestDict({'step': Ddata, 'end': Edata})
+    return dic, eval_data
 
 
 def prepare_sim_dataset(e, c, id, color):
@@ -353,7 +350,7 @@ def prepare_validation_dataset(d, Nids):
 
 def torsNdsps(pars):
     tor_durs = [int(ii[len('tortuosity') + 1:]) for ii in pars if ii.startswith('tortuosity')]
-    tor_durs=np.unique(tor_durs)
+    tor_durs = np.unique(tor_durs)
     tor_shorts = [f'tor{ii}' for ii in tor_durs]
 
     dsp_temp = [ii[len(dsp) + 1:].split('_') for ii in pars if ii.startswith(f'{dsp}_')]
@@ -363,37 +360,76 @@ def torsNdsps(pars):
     dsp_shorts = dNl.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
     return tor_durs, dsp_starts, dsp_stops
 
-def sim_models(mIDs,colors=None,dataset_ids=None,data_dir=None, **kwargs):
-    N=len(mIDs)
-    if colors is None :
+
+def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
+    N = len(mIDs)
+    if colors is None:
         from lib.aux.colsNstr import N_colors
-        colors=N_colors(N)
-    if dataset_ids is None :
-        dataset_ids=mIDs
-    if data_dir is None :
-        dirs=[None]*N
-    else :
-        dirs=[f'{data_dir}/{dID}' for dID in dataset_ids]
-    ds=[sim_model(mID=mIDs[i],color=colors[i],dataset_id=dataset_ids[i],dir=dirs[i], **kwargs) for i in range(N)]
+        colors = N_colors(N)
+    if dataset_ids is None:
+        dataset_ids = mIDs
+    if data_dir is None:
+        dirs = [None] * N
+    else:
+        dirs = [f'{data_dir}/{dID}' for dID in dataset_ids]
+    ds = [sim_model(mID=mIDs[i], color=colors[i], dataset_id=dataset_ids[i], dir=dirs[i], **kwargs) for i in range(N)]
     return ds
 
-def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs=[],dsp_starts=[0],dsp_stops=[40],env_params={},dir=None,
-              bout_annotation=True,enrichment=True,refDataset=None,sample_ks=None,store=False,use_LarvaConfDict=False, **kwargs):
+
+def sim_model_single(m, Nticks=1000, dt=0.1, df_columns=None):
     from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.conf.stored.conf import loadConf,expandConf
-    from lib.process.angular import angular_processing
     from lib.model.body.controller import PhysicsController
+    from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
+
+    if df_columns is None:
+        df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
+    AA = np.ones([Nticks, len(df_columns)]) * np.nan
+
+    controller = PhysicsController(**m.physics)
+    l = m.body.initial_length
+    bend_errors = 0
+    DL = DefaultLocomotor(dt=dt, conf=m.brain)
+    for qq in range(100):
+        if random.uniform(0, 1) < 0.5:
+            DL.step(A_in=0, length=l)
+    b, fo, ro, fov, x, y, dst, v = 0, 0, 0, 0, 0, 0, 0, 0
+
+    for i in range(Nticks):
+        lin, ang, feed = DL.step(A_in=0, length=l)
+        v, fov = controller.get_vels(lin, ang, fov, v, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
+
+        d_or = fov * dt
+        if np.abs(d_or) > np.pi:
+            bend_errors += 1
+        dst = lin * dt
+        d_ro = rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
+        b = wrap_angle_to_0(b + d_or - d_ro)
+        fo = (fo + d_or) % (2 * np.pi)
+        ro = (ro + d_ro) % (2 * np.pi)
+        x += dst * np.cos(fo)
+        y += dst * np.sin(fo)
+
+        AA[i, :] = [b, fo, ro, fov, DL.turner.input, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
+
+    AA[:, :4] = np.rad2deg(AA[:, :4])
+    return AA
+
+
+def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_durs=[], dsp_starts=[0], dsp_stops=[40],
+              env_params={}, dir=None,
+              bout_annotation=True, enrichment=True, refDataset=None, sample_ks=None, store=False,
+              use_LarvaConfDict=False, **kwargs):
+    from lib.conf.stored.conf import loadConf, expandConf
+    from lib.process.angular import angular_processing
     from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
         store_spatial
-    from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-    # from lib.registry.dtypes import null_dict
     if dataset_id is None:
         dataset_id = mID
-    if refDataset is not None :
+    if refDataset is not None:
         refID = refDataset.refID
         ms = refDataset.sample_modelConf(N=Nids, mID=mID, sample_ks=sample_ks)
-    else :
-        refID =None
+    else:
+        refID = None
         m = loadConf(mID, "Model")
         ms = [m] * Nids
 
@@ -402,89 +438,88 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
 
         mConfs = [mConfDict.mIDconf(m) for m in ms]
         ms = [mConfDict.multiconf(mConf) for mConf in mConfs]
+    else:
+        mConfs = ms
 
-    ids=[f'Agent{j}' for j in range(Nids)]
+    ids = [f'Agent{j}' for j in range(Nids)]
 
     larva_groups = {dataset_id: preg.get_null('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
-                                   default_color=color,
-                                   distribution=preg.get_null('larva_distro', N=Nids))}
+                                              default_color=color,
+                                              distribution=preg.get_null('larva_distro', N=Nids))}
 
     c = dNl.NestDict(
-        {'dir': dir, 'id': dataset_id,'larva_groups' : larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1/dt, 'agent_ids': ids, 'duration': dur * 60,
-         'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': int(dur * 60 / dt), 'mID': mID, 'color': color, 'env_params': env_params})
-
-
+        {'dir': dir, 'id': dataset_id, 'larva_groups': larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1 / dt,
+         'agent_ids': ids, 'duration': dur * 60,
+         'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': int(dur * 60 / dt), 'mID': mID, 'color': color,
+         'env_params': env_params})
 
     my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), ids], names=['Step', 'AgentID'])
     e = pd.DataFrame(index=ids)
     e['cum_dur'] = c.duration
     e['num_ticks'] = c.Nticks
     e['length'] = [m.body.initial_length for m in ms]
+    # e['length'] = [np.nan for id in ids]
 
-    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'Act_tur','x', 'y', 'd', 'v', 'A_tur', 'c_CT'])
+    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
     AA = np.ones([c.Nticks, Nids, len(df_columns)]) * np.nan
 
+    for j, id in enumerate(ids):
+        m = ms[j]
+        mConf = mConfs[j]
 
+        AA[:, j, :] = sim_model_single(m, c.Nticks, dt, df_columns=df_columns)
 
+    #
+    #
+    #     controller = PhysicsController(**m.physics)
+    #     l = m.body.initial_length
+    #     # l = e['length'].loc[id]=m.body.initial_length
+    #     bend_errors = 0
+    #     DL = DefaultLocomotor(dt=dt, conf=m.brain)
+    #     for qq in range(100):
+    #         if random.uniform(0, 1) < 0.5:
+    #             DL.step(A_in=0, length=l)
+    #     b, fo, ro, fov, x, y, dst, v = 0, 0, 0, 0, 0, 0, 0, 0
+    #
+    #     for i in range(c.Nticks):
+    #         lin, ang, feed = DL.step(A_in=0, length=l)
+    #         v, fov = controller.get_vels(lin, ang, fov, v, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
+    #
+    #         d_or = fov * dt
+    #         if np.abs(d_or) > np.pi:
+    #             bend_errors += 1
+    #         dst = lin * dt
+    #         d_ro = rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
+    #         b = wrap_angle_to_0(b + d_or - d_ro)
+    #         fo = (fo + d_or) % (2 * np.pi)
+    #         ro = (ro + d_ro) % (2 * np.pi)
+    #         x += dst * np.cos(fo)
+    #         y += dst * np.sin(fo)
+    #
+    #         AA[i, j, :] = [b, fo, ro, fov, DL.turner.input, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
+    # AA[:, :, :4] = np.rad2deg(AA[:, :, :4])
+    AA = AA.reshape(c.Nticks * Nids, len(df_columns))
+    s = pd.DataFrame(AA, index=my_index, columns=df_columns)
+    s = s.astype(float)
 
-    for j,id in enumerate(ids) :
-        m=ms[j]
-        mConf=mConfs[j]
-
-
-
-        controller = PhysicsController(**m.physics)
-        l = e['length'].loc[id]
-        bend_errors = 0
-        DL = DefaultLocomotor(dt=dt, conf=m.brain)
-        for qq in range(100):
-            if random.uniform(0, 1) < 0.5:
-                DL.step(A_in=0, length=l)
-        b, fo, ro, fov, x, y, dst, v = 0,0,0,0,0,0,0,0
-
-
-        for i in range(c.Nticks):
-            lin, ang, feed = DL.step(A_in=0, length=l)
-            v, fov = controller.get_vels(lin, ang, fov, v,b, dt=dt, ang_suppression=DL.cur_ang_suppression)
-
-            d_or =fov * dt
-            if np.abs(d_or) > np.pi:
-                bend_errors += 1
-            dst = lin * dt
-            d_ro = rear_orientation_change(b, dst, l, correction_coef= controller.bend_correction_coef)
-            b = wrap_angle_to_0(b + d_or - d_ro)
-            fo=(fo+d_or)%(2*np.pi)
-            ro=(ro+d_ro)%(2*np.pi)
-            x+=dst*np.cos(fo)
-            y+=dst*np.sin(fo)
-
-            AA[i,j,:]=[b, fo, ro, fov, DL.turner.activity, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
-    AA[:, :, :4] = np.rad2deg(AA[:, :, :4])
-    AA=AA.reshape(c.Nticks*Nids, len(df_columns))
-    s = pd.DataFrame(AA,index=my_index, columns=df_columns)
-    s=s.astype(float)
-
-
-    if c.dir is not None :
+    if c.dir is not None:
         from lib.stor.larva_dataset import LarvaDataset
-        d=LarvaDataset(**c, load_data=False)
-        store=True
+        d = LarvaDataset(**c, load_data=False)
+        store = True
         d.set_data(step=s, end=e)
-        c=d.config
-    else :
+        c = d.config
+    else:
         d = dNl.NestDict(
             {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
     scale_to_length(s, e, c, pars=None, keys=['v'])
-    if enrichment :
+    if enrichment:
         from lib.aux.stdout import suppress_stdout
         with suppress_stdout(False):
             comp_spatial(s, e, c, mode='minimal')
-            store_spatial(s, e, c,store=store)
+            store_spatial(s, e, c, store=store)
             angular_processing(s, e, c, store=store)
             comp_dispersion(s, e, c, dsp_starts=dsp_starts, dsp_stops=dsp_stops, store=store)
             comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=store)
-
-
 
         if bout_annotation:
             from lib.process import aux
@@ -496,24 +531,20 @@ def sim_model(mID, dur=3, dt=1 / 16,Nids=1,color='blue',dataset_id=None,tor_durs
     return d
 
 
-
-
 def RSS(vs0, vs):
     er = (vs - vs0)
 
     r = np.abs(np.max(vs0) - np.min(vs0))
 
-    ee=(er/r)**2
+    ee = (er / r) ** 2
 
     MSE = np.mean(np.sum(ee))
     return np.round(np.sqrt(MSE), 2)
 
 
-
-
 def RSS_dic(dd, d):
-    f=d.config.pooled_cycle_curves
-    ff=dd.config.pooled_cycle_curves
+    f = d.config.pooled_cycle_curves
+    ff = dd.config.pooled_cycle_curves
 
     def RSS0(ff, f, sh, mode):
         vs0 = np.array(f[sh][mode])
@@ -526,25 +557,23 @@ def RSS_dic(dd, d):
             dic[mode] = RSS0(ff, f, sh, mode)
         return dic
 
-
     dic = {}
     for sh in f.keys():
         dic[sh] = RSS1(ff, f, sh)
 
-    stat = np.round(np.mean([dic[sh]['norm'] for sh in f.keys() if sh!='sv']),2)
-    dd.config.pooled_cycle_curves_errors=dNl.NestDict({'dict' : dic, 'stat':stat})
+    stat = np.round(np.mean([dic[sh]['norm'] for sh in f.keys() if sh != 'sv']), 2)
+    dd.config.pooled_cycle_curves_errors = dNl.NestDict({'dict': dic, 'stat': stat})
     return stat
 
 
-
-def std_norm(df) :
+def std_norm(df):
     from sklearn.preprocessing import StandardScaler
 
     df_std = StandardScaler().fit(df).transform(df)
     return pd.DataFrame(df_std, index=df.index, columns=df.columns)
 
 
-def minmax(df) :
+def minmax(df):
     from sklearn.preprocessing import MinMaxScaler
 
     df_minmax = MinMaxScaler().fit(df).transform(df)

@@ -16,6 +16,7 @@ class ParRegistry:
         self.dist_dict0 = dist_dict.DistDict()
         self.dist_dict = self.dist_dict0.dict
         self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, dist_dict0=self.dist_dict0)
+        self.larva_conf_dict2 = parConfs.LarvaConfDict2(dist_dict0=self.dist_dict0)
 
 
 
