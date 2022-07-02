@@ -51,8 +51,8 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
     kw.update(kwargs)
     if en:
         exp_conf = preg.get_null('exp_conf',
-                             enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                                                 bouts=['stride', 'pause', 'turn']), **kw)
+                                 enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                                                          bouts=['stride', 'pause', 'turn']), **kw)
     else:
         exp_conf = preg.get_null('exp_conf', **kw)
     if not as_entry:
@@ -66,7 +66,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
 def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
     return exp(name, sim={'duration': dur}, c=c,
                enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
-                                   fits=False), **kwargs)
+                                        fits=False), **kwargs)
 
 
 def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
@@ -85,16 +85,19 @@ def simple_exp(name, dur=10.0, en=True, **kwargs):
     return exp(name, sim={'duration': dur}, en=en, **kwargs)
 
 
-def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=preg.enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs):
+def anemo_exp(name, dur=5.0, c=['wind'], en=False, enrichment=preg.enr_dict(proc=['spatial', 'angular', 'wind']),
+              **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
+
 
 def thermo_exp(name, dur=10.0, c=['thermo'], en=False, enrichment=None, **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
 def chemanemo_exp(name, dur=5.0, c=['olfactor', 'wind'], en=False,
-                  enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source', 'wind'], bouts=['stride', 'pause', 'turn'],
-                                      fits=False), **kwargs):
+                  enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source', 'wind'],
+                                           bouts=['stride', 'pause', 'turn'],
+                                           fits=False), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
@@ -104,7 +107,8 @@ def pref_exp(name, dur=5.0, c=[], enrichment=preg.enr_dict(proc=['PI']), **kwarg
 
 def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='AttP2.Fed', substrate_type='standard', pref='',
                 navigator=False, **kwargs):
-    l = preg.get_null('life_history', age=age, epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
+    l = preg.get_null('life_history', age=age,
+                      epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
     group_kws = {
         'sample': sample,
         'life_history': l,
@@ -169,7 +173,7 @@ grouped_exp_dict = {
         # 'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(models=['nengo_explorer', 'explorer'],
         #                                                        ids=['nengo', 'control'], N=10))
     },
-'thermotaxis': {
+    'thermotaxis': {
         'thermotaxis': thermo_exp('thermo_arena', l=lg(m='thermo_navigator', N=10)),
 
     },

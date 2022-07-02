@@ -3,10 +3,11 @@ import PySimpleGUI as sg
 
 import lib.aux.dictsNlists as dNl
 from lib.conf.stored.conf import saveConfDict, loadConfDict
-from lib.conf.stored.aux_conf import store_controls
 # from lib.gui.aux.elements import PadDict
 # from lib.gui.aux.functions import t_kws, gui_cols, get_pygame_key
 # from lib.gui.aux.buttons import GraphButton
+
+from lib.registry.controls import store_controls
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 

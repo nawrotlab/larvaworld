@@ -88,8 +88,8 @@ def env(a, f=f_pars(), o=None, bl={}, w=None, th=None):
         else:
             w['puffs'] = {}
         w = preg.get_null('windscape', **w)
-    if th is not None :
-        th=preg.get_null('thermoscape', **th)
+    if th is not None:
+        th = preg.get_null('thermoscape', **th)
     return preg.get_null('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl, windscape=w, thermoscape=th)
 
 
@@ -161,7 +161,7 @@ env_dict = {
     'food_at_bottom': env(preg.arena(0.2, 0.2),
                           f_pars(sg=sg('FoodLine', o=preg.oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
                                        m='periphery')), 'G'),
-'thermo_arena': env(preg.arena(0.3, 0.3), th={}),
+    'thermo_arena': env(preg.arena(0.3, 0.3), th={}),
     'windy_arena': env(preg.arena(0.3, 0.3), w={'wind_speed': 10.0}),
     'windy_blob_arena': env(preg.arena(0.128, 0.014),
                             f_pars(sg=sgs(1, qs=np.ones(4), cs=N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
@@ -195,4 +195,3 @@ env_dict = {
     'game': game_env(),
     'arena_50mm_diffusion': env(preg.arena(0.05), o='D'),
 }
-

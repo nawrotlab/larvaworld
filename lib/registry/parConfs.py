@@ -377,7 +377,6 @@ class LarvaConfDict:
             #     mc[mkey]= None
         return mc
 
-
     def copyID(self, mdic, mmdic):
         if mmdic is None:
             return None
