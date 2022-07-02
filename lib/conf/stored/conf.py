@@ -329,9 +329,9 @@ if __name__ == '__main__':
     # print(next_idx('dispersion', 'Eval'))
     # raise
     # store_confs(['Model'])
-    store_confs(['Aux'])
+    # store_confs(['Aux'])
     # store_confs(['Env'])
     # store_confs(['Exp'])
-    store_confs(['Data'])
-    # store_confs(['Ga'])
+    # store_confs(['Data'])
+    store_confs(['Ga'])
     # store_confs(keys = ['Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga'])

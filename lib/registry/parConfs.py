@@ -921,7 +921,7 @@ class LarvaConfDict2:
         if modes is None:
             modes = {'crawler': 'realistic',
                             'turner': 'neural',
-                            'interference': 'default',
+                            'interference': 'phasic',
                             'intermitter': 'default'}
 
         conf = dNl.NestDict()
@@ -972,7 +972,14 @@ class LarvaConfDict2:
             conf[auxkey] = self.generate_configuration(mdict, **mkws)
 
         #  TODO thsi
-        conf.Box2D_params=None
+        null_Box2D_params = {
+            'joint_types': {
+                'friction': {'N': 0, 'args': {}},
+                'revolute': {'N': 0, 'args': {}},
+                'distance': {'N': 0, 'args': {}}
+            }
+        }
+        conf.Box2D_params=null_Box2D_params
 
         self.saveConf(conf, mID)
 
@@ -994,9 +1001,10 @@ class LarvaConfDict2:
 
 if __name__ == '__main__':
     dd=LarvaConfDict2()
+    m=dd.larvaConf(mID='loco_default')
 
-    print(dd.dict.brain.keys)
-    print(dd.dict.aux.keys)
+    # print(dd.dict.brain.keys)
+    # print(dd.dict.aux.keys)
     # d=dd.dict
     # from lib.conf.stored.conf import kConfDict
     # from lib.conf.stored.conf import loadConf,loadRef

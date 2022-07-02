@@ -1044,7 +1044,7 @@ if __name__ == '__main__':
     # from lib.conf.stored.conf import kConfDict
     # from lib.conf.stored.conf import loadConf,loadRef
     #
-    refID = 'None.150controls'
+    # refID = 'None.150controls'
     # d = loadRef(refID)
     # d.load(step=False,contour=False)
     # e, c = d.endpoint_data, d.config
@@ -1069,12 +1069,12 @@ if __name__ == '__main__':
     # from lib.registry.parConfs import init_loco
 
     # from lib.aux.sim_aux import get_sample_bout_distros0
-    from lib.conf.stored.conf import loadConf
+    # from lib.conf.stored.conf import loadConf
 
     #
     # sample = loadConf(refID, 'Ref')
-    sample = preg.loadConf(mID=refID, conftype='Ref')
-    print(sample)
+    # sample = preg.loadConf(mID=refID, conftype='Ref')
+    print(preg.storedConf('Model'))
     # dd = preg.larva_conf_dict
     #
     # M=dd.module2(mkey='crawler',mode=conf['waveform'], **conf)

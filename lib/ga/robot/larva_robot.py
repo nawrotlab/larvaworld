@@ -20,6 +20,10 @@ class LarvaRobot(BodySim):
         self.unique_id = unique_id
 
         self.pos = self.initial_pos
+        # print(larva_pars.keys())
+        # print()
+        # print(larva_pars)
+        # raise
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
         self.x, self.y = self.model.scene._transform(self.pos)

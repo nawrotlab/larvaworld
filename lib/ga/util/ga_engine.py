@@ -195,9 +195,13 @@ class GAbuilder(GAselector):
         self.scene = scene
         self.robot_class = robot_class
         self.space_dict = space_dict
-        self.mConf0 = preg.loadConf(mID=base_model, conftype='Model')
+        self.mConf0 = preg.loadConf(id=base_model, conftype='Model')
+
 
         gConfs = [initConf(init_mode, space_dict, self.mConf0) for i in range(self.Nagents)]
+
+
+
         self.genomes = [Genome(gConf=gConf,mConf=dNl.update_nestdict(self.mConf0, gConf), space_dict=space_dict, generation_num=self.generation_num) for gConf in gConfs]
 
 
@@ -290,6 +294,8 @@ class GAbuilder(GAselector):
 
         robots = []
         for i, g in self.genome_dict.genomes.items():
+
+
             robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
             robot.genome = g
             robots.append(robot)
