@@ -930,7 +930,6 @@ class LarvaConfDict2:
         for mkey in self.dict.brain.keys:
             mlongkey=f'{mkey}_params'
             if mkey not in modes.keys():
-            # if mode is None :
                 modules[mkey]=False
                 conf[mlongkey] = None
             else :

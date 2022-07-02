@@ -469,35 +469,6 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
 
         AA[:, j, :] = sim_model_single(m, c.Nticks, dt, df_columns=df_columns)
 
-    #
-    #
-    #     controller = PhysicsController(**m.physics)
-    #     l = m.body.initial_length
-    #     # l = e['length'].loc[id]=m.body.initial_length
-    #     bend_errors = 0
-    #     DL = DefaultLocomotor(dt=dt, conf=m.brain)
-    #     for qq in range(100):
-    #         if random.uniform(0, 1) < 0.5:
-    #             DL.step(A_in=0, length=l)
-    #     b, fo, ro, fov, x, y, dst, v = 0, 0, 0, 0, 0, 0, 0, 0
-    #
-    #     for i in range(c.Nticks):
-    #         lin, ang, feed = DL.step(A_in=0, length=l)
-    #         v, fov = controller.get_vels(lin, ang, fov, v, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
-    #
-    #         d_or = fov * dt
-    #         if np.abs(d_or) > np.pi:
-    #             bend_errors += 1
-    #         dst = lin * dt
-    #         d_ro = rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
-    #         b = wrap_angle_to_0(b + d_or - d_ro)
-    #         fo = (fo + d_or) % (2 * np.pi)
-    #         ro = (ro + d_ro) % (2 * np.pi)
-    #         x += dst * np.cos(fo)
-    #         y += dst * np.sin(fo)
-    #
-    #         AA[i, j, :] = [b, fo, ro, fov, DL.turner.input, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
-    # AA[:, :, :4] = np.rad2deg(AA[:, :, :4])
     AA = AA.reshape(c.Nticks * Nids, len(df_columns))
     s = pd.DataFrame(AA, index=my_index, columns=df_columns)
     s = s.astype(float)
