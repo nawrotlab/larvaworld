@@ -117,7 +117,7 @@ def saveConfDict(ConfDict, conf_type, use_pickle=False):
             json.dump(ConfDict, f)
 
 
-def deleteConf(id, conf_type):
+def deleteConf(id, conf_type,**kwargs):
     if conf_type == 'Data':
         DataGroup = loadConf(id, conf_type)
         path = DataGroup['path']

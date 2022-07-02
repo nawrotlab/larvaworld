@@ -1041,88 +1041,90 @@ def build_brain_module_dict():
 
 
 if __name__ == '__main__':
-    from lib.conf.stored.conf import kConfDict
-    from lib.conf.stored.conf import loadConf,loadRef
-
-    refID = 'None.150controls'
-    d = loadRef(refID)
-    d.load(step=False,contour=False)
-    e, c = d.endpoint_data, d.config
-    print(d.existing(key='end', return_shorts=False))
-    raise
-
-
-    m=d.average_modelConf(new_id='test99', turner_mode='neural', crawler_mode='constant', interference_mode='phasic')
-    conf=m.brain.crawler_params
-
-    # mID='thermo_navigator'
-    # m=loadConf(mID,'Model')
-    # print()
-    # raise
-
+    # from lib.conf.stored.conf import kConfDict
+    # from lib.conf.stored.conf import loadConf,loadRef
     #
-    # for mID in kConfDict('Model'):
-    #     print(mID)
-    #     B = dd.init_brain_mID(mID=mID)
+    refID = 'None.150controls'
+    # d = loadRef(refID)
+    # d.load(step=False,contour=False)
+    # e, c = d.endpoint_data, d.config
+    # print(d.existing(key='end', return_shorts=False))
+    # raise
+    #
+    #
+    # m=d.average_modelConf(new_id='test99', turner_mode='neural', crawler_mode='constant', interference_mode='phasic')
+    # conf=m.brain.crawler_params
+    #
+    # # mID='thermo_navigator'
+    # # m=loadConf(mID,'Model')
+    # # print()
+    # # raise
+    #
+    # #
+    # # for mID in kConfDict('Model'):
+    # #     print(mID)
+    # #     B = dd.init_brain_mID(mID=mID)
     from lib.registry.pars import preg
 
     # from lib.registry.parConfs import init_loco
 
     # from lib.aux.sim_aux import get_sample_bout_distros0
-    # from lib.conf.stored.conf import loadConf
+    from lib.conf.stored.conf import loadConf
 
     #
     # sample = loadConf(refID, 'Ref')
-    dd = preg.larva_conf_dict
-
-    M=dd.module2(mkey='crawler',mode=conf['waveform'], **conf)
-    for i in range(1000):
-        AA=M.step()
-        print(AA)
-
-    # f=dd.mdicts2.crawler.mode[conf['waveform']].class_func
-    # print(f)
-    raise
-
-    d = dd.mdicts2aux.energetics
-    for k, v in d.items():
-        print(k, v.keys())
-    # from lib.conf.stored.conf import kConfDict
+    sample = preg.loadConf(mID=refID, conftype='Ref')
+    print(sample)
+    # dd = preg.larva_conf_dict
     #
-    # for mID in kConfDict('Model'):
-    #     print(mID)
-    #     B = dd.init_brain_mID(mID=mID)
-    #     # print(B.locomotor.intermitter.stridechain_dist)
-    #     for i in range(1000):
-    #         AA = B.step()
+    # M=dd.module2(mkey='crawler',mode=conf['waveform'], **conf)
+    # for i in range(1000):
+    #     AA=M.step()
+    #     print(AA)
     #
-    #     # try :
-    #     #     for i in range(1000) :
-    #     #         AA=B.step()
-    #     #
-    #     # except:
-    #     #     print('-----------', mID)
-    #         # print()
+    # # f=dd.mdicts2.crawler.mode[conf['waveform']].class_func
+    # # print(f)
     # raise
-    # #
-    # mkey = 'intermitter'
-    # mm = 'default'
-    # #
-    # conf0 = dd.init_dicts2[mkey].mode[mm].args
-    # preconf0 = dd.mpredicts2[mkey].mode[mm].args
-    # mconf0 = dd.mdicts2[mkey].mode[mm].args
     #
-    # mconf = dd.conf2(mkey=mkey, mode=mm, refID=refID)
-    #
-    # # print(conf0.stridechain_dist)
-    # # print()
-    # # print(preconf0.stridechain_dist)
-    # # print()
-    # # print(mconf0.stridechain_dist)
-    # # print()
-    # print(mconf['stridechain_dist'])
-    #
-    # # mcconf=get_sample_bout_distros0(Im=mconf, bout_distros=sample.bout_distros)
+    # d = dd.mdicts2aux.energetics
+    # for k, v in d.items():
+    #     print(k, v.keys())
+    # # from lib.conf.stored.conf import kConfDict
     # #
-    # # print()
-    # # print(mcconf['stridechain_dist'])
+    # # for mID in kConfDict('Model'):
+    # #     print(mID)
+    # #     B = dd.init_brain_mID(mID=mID)
+    # #     # print(B.locomotor.intermitter.stridechain_dist)
+    # #     for i in range(1000):
+    # #         AA = B.step()
+    # #
+    # #     # try :
+    # #     #     for i in range(1000) :
+    # #     #         AA=B.step()
+    # #     #
+    # #     # except:
+    # #     #     print('-----------', mID)
+    # #         # print()
+    # # raise
+    # # #
+    # # mkey = 'intermitter'
+    # # mm = 'default'
+    # # #
+    # # conf0 = dd.init_dicts2[mkey].mode[mm].args
+    # # preconf0 = dd.mpredicts2[mkey].mode[mm].args
+    # # mconf0 = dd.mdicts2[mkey].mode[mm].args
+    # #
+    # # mconf = dd.conf2(mkey=mkey, mode=mm, refID=refID)
+    # #
+    # # # print(conf0.stridechain_dist)
+    # # # print()
+    # # # print(preconf0.stridechain_dist)
+    # # # print()
+    # # # print(mconf0.stridechain_dist)
+    # # # print()
+    # # print(mconf['stridechain_dist'])
+    # #
+    # # # mcconf=get_sample_bout_distros0(Im=mconf, bout_distros=sample.bout_distros)
+    # # #
+    # # # print()
+    # # # print(mcconf['stridechain_dist'])

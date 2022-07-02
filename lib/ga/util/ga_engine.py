@@ -13,7 +13,6 @@ import lib.aux.dictsNlists as dNl
 
 from lib.registry.pars import preg
 
-from lib.conf.stored.conf import kConfDict, loadRef, saveConf, loadConf
 from lib.ga.robot.larva_robot import LarvaRobot
 
 from lib.ga.util.time_util import TimeUtil
@@ -75,7 +74,7 @@ class GAselector:
             self.best_fitness = self.best_genome.fitness
             self.printd(1, 'New best:', self.best_genome.to_string())
             if self.bestConfID is not None:
-                saveConf(self.best_genome.mConf, 'Model', self.bestConfID, verbose=self.verbose)
+                preg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID, verbose=self.verbose)
 
 
     def ga_selection(self):
@@ -196,7 +195,7 @@ class GAbuilder(GAselector):
         self.scene = scene
         self.robot_class = robot_class
         self.space_dict = space_dict
-        self.mConf0 = loadConf(base_model, 'Model')
+        self.mConf0 = preg.loadConf(mID=base_model, conftype='Model')
 
         gConfs = [initConf(init_mode, space_dict, self.mConf0) for i in range(self.Nagents)]
         self.genomes = [Genome(gConf=gConf,mConf=dNl.update_nestdict(self.mConf0, gConf), space_dict=space_dict, generation_num=self.generation_num) for gConf in gConfs]
@@ -409,7 +408,7 @@ class GAbuilder(GAselector):
     def arrange_fitness(self, fitness_func, fitness_target_refID, fitness_target_kws):
         robot_dict=dNl.NestDict()
         if fitness_target_refID is not None:
-            d = loadRef(fitness_target_refID)
+            d = preg.loadRef(fitness_target_refID)
             if 'eval_shorts' in fitness_target_kws.keys():
                 shs = fitness_target_kws['eval_shorts']
                 eval_pars, eval_lims, eval_labels = preg.getPar(shs, to_return=['d', 'lim', 'lab'])
@@ -578,4 +577,4 @@ class GA_thread(threading.Thread):
 
 if __name__ == '__main__':
     # print(null_dict.__class__)
-    print(kConfDict('Ga'))
+    pass

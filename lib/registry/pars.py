@@ -200,6 +200,30 @@ class ParRegistry:
                         bouts=['stride', 'pause', 'turn'],
                         to_keep=['midline', 'contour'], **kwargs)
 
+    def saveConf(self, conf, conftype, id=None,**kwargs):
+        if id is not None :
+            from lib.conf.stored.conf import saveConf
+            saveConf(conf, conftype, id,**kwargs)
+
+    def loadConf(self, conftype, id=None,**kwargs):
+        if id is not None :
+            from lib.conf.stored.conf import loadConf
+            return loadConf(id, conftype,**kwargs)
+
+    def loadRef(self, id=None):
+        if id is not None :
+            from lib.conf.stored.conf import loadRef
+            return loadRef(id)
+
+    def deleteConf(self, conftype, id=None,**kwargs):
+        if id is not None:
+            from lib.conf.stored.conf import deleteConf
+            return deleteConf(id, conftype,**kwargs)
+
+    def storedConf(self, conftype,**kwargs):
+        from lib.conf.stored.conf import kConfDict
+        return kConfDict(conftype,**kwargs)
+
 
 preg = ParRegistry()
 
