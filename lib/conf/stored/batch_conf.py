@@ -135,12 +135,4 @@ def run_fit_global_batch(sample, **kwargs):
     return k.exec_run()
 
 
-if __name__ == '__main__':
-    # from run.exec_run import Exec
-    # conf=fit_tortuosity_batch(sample='None.200_controls', model='explorer', exp='dish', idx=0)
-    # k = Exec('batch', conf)
-    # k.exec_run()
-    from lib.conf.stored.conf import saveConf
 
-    for k, v in batch_dict.items():
-        saveConf(v, 'Batch', k)

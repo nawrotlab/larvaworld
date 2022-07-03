@@ -1,3 +1,5 @@
+import param
+
 from lib.aux.par_aux import subsup
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
@@ -73,10 +75,27 @@ substrate_dict = {
 
 }
 
+def ConfSelector(conf_type, default=None, single_choice=True, **kwargs):
+    from lib.conf.stored.conf import kConfDict
+    def func():
+
+        kws = {
+            'objects': kConfDict(conf_type),
+            'default': default,
+            'allow_None': True,
+            'empty_default': True,
+        }
+        if single_choice:
+            func0 = param.Selector
+        else:
+            func0 = param.ListSelector
+        return func0(**kws, **kwargs)
+
+    return func
 
 def confID_entry(conftype, default=None, k=None, symbol=None, single_choice=True) :
     from typing import List
-    from lib.conf.stored.conf import ConfSelector, kConfDict
+    from lib.conf.stored.conf import kConfDict
     from lib.aux.par_aux import sub
     from lib.aux import dictsNlists as dNl
     low = conftype.lower()

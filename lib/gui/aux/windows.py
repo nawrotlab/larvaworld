@@ -195,11 +195,10 @@ def set_agent_kwargs(agent, **kwargs):
 
 def save_conf_window(conf, conftype, disp=None):
     from lib.gui.aux.elements import NamedList
-    from lib.conf.stored.conf import saveConf, kConfDict
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
-                     choices=kConfDict(conftype),
+                     choices=preg.storedConf(conftype),
                      readonly=False, enable_events=False, header_kws={'text': f'Store new {disp}'})
     l = [
         temp.get_layout(),
@@ -207,7 +206,7 @@ def save_conf_window(conf, conftype, disp=None):
     e, v = sg.Window(f'{disp} configuration', l).read(close=True)
     if e == 'Ok':
         id = v[f'{disp}_ID']
-        saveConf(conf, conftype, id)
+        preg.saveConf(conf=conf, conftype=conftype, id=id)
         return id
     elif e == 'Cancel':
         return None

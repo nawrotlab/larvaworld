@@ -88,8 +88,9 @@ def init_controls():
 
 def store_controls():
     d = init_controls()
-    from lib.conf.stored.conf import saveConfDict
-    saveConfDict(d, 'Settings')
+    from lib.registry.pars import preg
+    # from lib.conf.stored.conf import saveConfDict
+    preg.saveConfDict(ConfDict=d, conftype='Settings')
 
 
 

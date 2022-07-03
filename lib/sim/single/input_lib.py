@@ -2,11 +2,11 @@ import pygame
 import numpy as np
 
 from lib.anal.rendering import SimulationScale
-from lib.conf.stored.conf import loadConfDict
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
+from lib.registry.pars import preg
 
-shortcuts = loadConfDict('Settings')
+shortcuts = preg.loadConfDict('Settings')
 
 
 def evaluate_input(model, screen):

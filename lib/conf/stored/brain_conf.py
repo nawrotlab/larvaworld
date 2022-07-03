@@ -229,10 +229,9 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
 
 
 if __name__ == '__main__':
-    from lib.conf.stored.conf import saveConf, copyConf
     for k, v in loco_dict.items():
-        saveConf(v, 'Brain', k)
-        BB = copyConf('navigator', 'Model')
+        preg.saveConf(conf=v, conftype='Brain', id=k)
+        BB = preg.loadConf('navigator', 'Model')
         BB.brain.modules=v.modules
         BB.brain.crawler_params = v.crawler_params
         BB.brain.turner_params = v.turner_params
@@ -240,6 +239,5 @@ if __name__ == '__main__':
         BB.brain.intermitter_params = v.intermitter_params
         BB.body.length_std = 0.0
         BB.body.initial_length = 0.005
-        saveConf(BB, 'Model', k)
+        preg.saveConf(conf=BB, conftype='Model',  id=k)
 
-    print(loadConf('Sakagiannis2022', 'Model'))

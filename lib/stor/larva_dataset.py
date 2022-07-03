@@ -8,13 +8,8 @@ import copy
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-
 # from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
-
-
-
-
 
 
 class LarvaDataset:
@@ -40,7 +35,7 @@ class LarvaDataset:
 
         else:
             if metric_definition is None:
-                metric_definition =preg.get_null('metric_definition')
+                metric_definition = preg.get_null('metric_definition')
             group_ids = list(larva_groups.keys())
             samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
             if len(group_ids) == 1:
@@ -228,7 +223,7 @@ class LarvaDataset:
                 temp['midline'] = self.step_data[midline_ps]
                 temp.close()
 
-            store['step'] = self.step_data.drop(contour_ps+midline_ps, axis=1, errors='ignore')
+            store['step'] = self.step_data.drop(contour_ps + midline_ps, axis=1, errors='ignore')
         if end:
             endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
             endpoint['end'] = self.endpoint_data
@@ -360,11 +355,10 @@ class LarvaDataset:
                 self.config[k] = v.tolist()
         dNl.save_dict(self.config, self.dir_dict.conf, use_pickle=False)
         if add_reference:
-            from lib.conf.stored.conf import saveConf
             if refID is None:
                 refID = f'{self.group_id}.{self.id}'
             self.config.refID = refID
-            saveConf(self.config, 'Ref', refID)
+            preg.saveConf(conf=self.config, conftype='Ref', id=refID)
 
     def save_agents(self, ids=None, pars=None):
         if not hasattr(self, 'step_data'):
@@ -406,23 +400,23 @@ class LarvaDataset:
         return df
 
     def inspect_aux(self, save=True):
-        aux_pars=dNl.NestDict({'distro' : [], 'dispersion' : [], 'other' : []})
-        distro_ps, dsp_ps,other_ps = [],[],[]
+        aux_pars = dNl.NestDict({'distro': [], 'dispersion': [], 'other': []})
+        distro_ps, dsp_ps, other_ps = [], [], []
         store = pd.HDFStore(self.dir_dict.aux_h5)
-        ks=store.keys()
-        ks=[k.split('/')[-1] for k in ks]
-        for k in ks :
-            kks=k.split('.')
-            if kks[0].endswith('distro') :
+        ks = store.keys()
+        ks = [k.split('/')[-1] for k in ks]
+        for k in ks:
+            kks = k.split('.')
+            if kks[0].endswith('distro'):
                 aux_pars.distro.append(kks[-1])
             elif kks[0].endswith('dispersion'):
                 aux_pars.dispersion.append(kks[-1])
-            else :
+            else:
                 aux_pars.other.append(kks[-1])
-        self.config.aux_pars=aux_pars
+        self.config.aux_pars = aux_pars
 
         store.close()
-        if save :
+        if save:
             self.save_config(add_reference=True, refID=self.config.refID)
 
     def load_dicts(self, type, ids=None):
@@ -608,10 +602,8 @@ class LarvaDataset:
 
         self.points_xy = nam.xy(self.points)
 
-
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour)
-
 
         ang = ['front_orientation', 'rear_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
@@ -675,8 +667,8 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def enrich(self, metric_definition=None, preprocessing={}, processing={},bout_annotation=True,
-               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True,annotation={},
+    def enrich(self, metric_definition=None, preprocessing={}, processing={}, bout_annotation=True,
+               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True, annotation={},
                add_reference=False, **kwargs):
         c = self.config
         md = metric_definition
@@ -696,7 +688,7 @@ class LarvaDataset:
         # print()
         # print(f'--- Enriching dataset {self.id} with derived parameters ---')
         warnings.filterwarnings('ignore')
-        s,e = self.step_data,self.endpoint_data
+        s, e = self.step_data, self.endpoint_data
         cc = {
             's': s,
             'e': e,
@@ -712,8 +704,8 @@ class LarvaDataset:
         if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
             from lib.process import aux
             self.chunk_dicts = aux.annotation(s, e, c, **kwargs)
-            self.cycle_curves = aux.compute_interference(s=s,e=e,c=c, chunk_dicts=self.chunk_dicts, **kwargs)
-            self.pooled_epochs=self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
+            self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+            self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
 
         self.drop_pars(**to_drop, **cc)
         if is_last:
@@ -724,11 +716,11 @@ class LarvaDataset:
         from lib.anal.fitting import fit_bouts
         s, e, c = self.step_data, self.endpoint_data, self.config
         if chunk_dicts is None:
-            try :
+            try:
                 chunk_dicts = self.chunk_dicts
-            except :
+            except:
                 chunk_dicts = self.load_chunk_dicts()
-        if chunk_dicts is not None :
+        if chunk_dicts is not None:
             self.pooled_epochs = fit_bouts(c=c, chunk_dicts=chunk_dicts, s=s, e=e, id=c.id)
             if store:
                 path = c.dir_dict.pooled_epochs
@@ -736,7 +728,7 @@ class LarvaDataset:
                 dNl.save_dict(self.pooled_epochs, f'{path}/{self.id}.txt', use_pickle=True)
                 print('Pooled group bouts saved')
             return self.pooled_epochs
-        else :
+        else:
             return None
 
     def get_traj_aligned(self, mode='origin'):
@@ -862,7 +854,7 @@ class LarvaDataset:
         e = self.endpoint_data
         c = self.config
 
-        mods=preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True)
+        mods = preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True)
         b_kws = {
             'modules': mods,
             'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
@@ -872,27 +864,21 @@ class LarvaDataset:
         }
         for k in mods.keys():
             if not mods[k]:
-                b_kws[f'{k}_params']=None
-
-
-
-
+                b_kws[f'{k}_params'] = None
 
         kws = {
             'brain': preg.get_null('brain', **b_kws),
             'body': preg.get_null('body', initial_length=np.round(e['length'].median(), 3)),
             'physics': preg.get_null('physics') if physics is None else physics,
             'energetics': None,
-            'Box2D_params' : None,
+            'Box2D_params': None,
         }
 
         m = preg.get_null('larva_conf', **kws)
         # print(m.Box2D)
         # raise
 
-        from lib.conf.stored.conf import copyConf, saveConf
-
-        saveConf(id=new_id, conf=m, conf_type='Model')
+        preg.saveConf(id=new_id, conf=m, conftype='Model')
         if 'modelConfs' not in c.keys():
             c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
         c.modelConfs.average[new_id] = m
@@ -904,14 +890,14 @@ class LarvaDataset:
             par = preg.getPar(short)
 
         dic0 = self.load_chunk_dicts()
-        dics=[dic0[id] for id in self.agent_ids]
-        sss=[self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
+        dics = [dic0[id] for id in self.agent_ids]
+        sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
 
-        if mode=='distro' :
+        if mode == 'distro':
             chunk_idx = f'{chunk}_idx'
             chunk_dur = f'{chunk}_dur'
             vs = []
-            for ss,dic in zip(sss,dics):
+            for ss, dic in zip(sss, dics):
                 if min_dur == 0:
                     idx = dic[chunk_idx]
                 else:
@@ -927,8 +913,8 @@ class LarvaDataset:
                 vs.append(ss.loc[idx].values)
             vs = np.concatenate(vs)
             return vs
-        elif mode=='extrema' :
-            cc0s,cc1s,cc01s = [],[],[]
+        elif mode == 'extrema':
+            cc0s, cc1s, cc01s = [], [], []
             for ss, dic in zip(sss, dics):
                 epochs = dic[chunk]
                 # for id in self.agent_ids:
@@ -939,23 +925,21 @@ class LarvaDataset:
                     epochs = epochs[dic[chunk_dur] >= min_dur]
                 Nepochs = epochs.shape[0]
                 if Nepochs > 0:
-                    c0s = ss.loc[epochs[:,0]].values
-                    c1s = ss.loc[epochs[:,1]].values
+                    c0s = ss.loc[epochs[:, 0]].values
+                    c1s = ss.loc[epochs[:, 1]].values
                     cc0s.append(c0s)
                     cc1s.append(c1s)
             cc0s = np.concatenate(cc0s)
             cc1s = np.concatenate(cc1s)
-            cc01s=cc1s-cc0s
-            return cc0s,cc1s,cc01s
-
-
+            cc01s = cc1s - cc0s
+            return cc0s, cc1s, cc01s
 
     def existing(self, key='end', return_shorts=False):
         if key == 'end':
-            e=self.endpoint_data if hasattr(self, 'endpoint_data') else self.read(key='end', file='endpoint_h5')
+            e = self.endpoint_data if hasattr(self, 'endpoint_data') else self.read(key='end', file='endpoint_h5')
             pars = e.columns.values.tolist()
         elif key == 'step':
-            s=self.step_data if hasattr(self, 'step_data') else self.read(key='step')
+            s = self.step_data if hasattr(self, 'step_data') else self.read(key='step')
             pars = s.columns.values.tolist()
         elif key in ['distro', 'dispersion']:
             self.inspect_aux(save=False)
