@@ -26,8 +26,7 @@ class EssayTab(GuiTab):
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
-        from lib.conf.stored.conf import loadConf
-        conf = loadConf(id, self.conftype)
+        conf = preg.loadConf(id=id, conftype=self.conftype)
         for essay_exp in list(conf['experiments'].keys()):
             d, g = self.run_essay_exp(v, w, c, d, g, essay_exp)
         return d, g
@@ -67,10 +66,9 @@ class EssayTab(GuiTab):
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
         from lib.sim.single.single_run import run_essay
         from lib.sim.single.analysis import essay_analysis
-        from lib.conf.stored.conf import loadConf
         pars = c['essay_params'].get_dict(v, w)
         essay_type = self.current_ID(v)
-        essay = loadConf(essay_type, self.conftype)['experiments'][essay_exp]
+        essay = preg.loadConf(id=essay_type, conftype=self.conftype)['experiments'][essay_exp]
         kws = {
             'id': essay_exp,
             'path': f"{pars['path']}/{pars['essay_ID']}",

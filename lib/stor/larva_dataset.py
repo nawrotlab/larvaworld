@@ -967,10 +967,10 @@ class LarvaDataset:
             return sorted(shorts)
 
     def sample_modelConf(self, N, mID, sample_ks=None):
-        from lib.conf.stored.conf import loadConf, saveConf
         from lib.aux.sim_aux import sample_group
         from lib.aux.sim_aux import generate_larvae
-        m = loadConf(mID, 'Model')
+        m = preg.loadConf(id=mID, conftype='Model')
+        # m = loadConf(mID, 'Model')
         if sample_ks is None:
             modF = dNl.flatten_dict(m)
             sample_ks = [p for p in modF if modF[p] == 'sample']

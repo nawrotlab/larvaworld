@@ -9,7 +9,7 @@ import lib.aux.dictsNlists
 from lib.registry.pars import preg
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
-from lib.conf.stored.conf import loadConf
+# from lib.conf.stored.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
 
 def import_Jovanic_datasets(parent_dir,source_ids=['Fed', 'Deprived', 'Starved'], **kwargs) :
@@ -40,7 +40,7 @@ def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploratio
     if id is None :
         id = f'{N}controls'
 
-    g = loadConf(datagroup_id, 'Group')
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
     group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
@@ -75,7 +75,7 @@ def import_dataset(N,datagroup_id= 'Schleyer lab',id=None, group_id= 'exploratio
 
 def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,larva_groups={}, **kwargs):
     warnings.filterwarnings('ignore')
-    g = loadConf(datagroup_id, 'Group')
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
     build_conf = g.tracker.filesystem
     data_conf = g.tracker.resolution
     metric_definition = g.enrichment.metric_definition
@@ -120,7 +120,7 @@ def build_dataset(datagroup_id,id,target_dir, source_dir=None,source_files=None,
 def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
                        ids=None, names=['raw'], group_ids=None, **kwargs):
     warnings.filterwarnings('ignore')
-    g = loadConf(datagroup_id, 'Group')
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
     build_conf = g['tracker']['filesystem']
     group_dir=f'{preg.path_dict["DATA"]}/{g["path"]}'
     raw_dir=f'{group_dir}/raw'
@@ -166,7 +166,7 @@ def build_datasets_old(datagroup_id, raw_folders, folders=None, suffixes=None,
 
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
                  mode='load', load_data=True, ids=None, **kwargs):
-    g = loadConf(datagroup_id, 'Group')
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
     data_conf = g.tracker.resolution
     spatial_def = g.enrichment.metric_definition.spatial
     arena_pars = g.tracker.arena
@@ -211,7 +211,7 @@ def enrich_datasets(datagroup_id, datasets=None, names=None, enrich_conf=None, *
     if datasets is None and names is not None:
         datasets = get_datasets(datagroup_id, last_common='processed', names=names, mode='load', **kwargs)
     if enrich_conf is None:
-        g = loadConf(datagroup_id, 'Group')
+        g = preg.loadConf(id=datagroup_id, conftype='Group')
         enrich_conf = g['enrichment']
     print()
     print(f'------ Enriching {len(datasets)} datasets ------')
@@ -252,7 +252,7 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
     if folder_path in ['', None]:
         return dic
     if raw:
-        conf = loadConf(datagroup_id, 'Group').tracker.filesystem
+        conf = preg.loadConf(id=datagroup_id, conftype='Group').tracker.filesystem
         # if 'detect' in conf.keys():
         # d = conf['detect']
         dF, df = conf.folder, conf.file

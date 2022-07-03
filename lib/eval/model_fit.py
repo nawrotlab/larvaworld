@@ -8,7 +8,7 @@ import param
 from lib.aux import dictsNlists as dNl
 from lib.model.body.controller import PhysicsController
 from lib.registry.ga_dict import interference_ga_dict
-from lib.conf.stored.conf import loadConf, loadRef, expandConf, saveConf
+# from lib.conf.stored.conf import loadRef
 from lib.registry.pars import preg
 from lib.plot.base import BasePlot
 
@@ -16,7 +16,7 @@ from lib.plot.base import BasePlot
 class Calibration:
     def __init__(self, refID, turner_mode='neural', physics_keys=None, absolute=True, shorts=None):
         self.refID = refID
-        self.refDataset = d = loadRef(refID)
+        self.refDataset = d = preg.loadRef(refID)
         d.load(contour=False)
         s, e, c = d.step_data, d.endpoint_data, d.config
         if shorts is None:
@@ -190,7 +190,7 @@ def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs)
     from lib.conf.stored.ga_conf import distro_KS_interference_evaluation
     from lib.ga.util.ga_launcher import GAlauncher
 
-    d = loadRef(refID)
+    d = preg.loadRef(refID)
     c = d.config
     if dur is None:
         dur = c.Nticks * c.dt / 60
@@ -211,7 +211,7 @@ def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs)
     kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=c.dt),
            'scene': 'no_boxes',
            'experiment': 'realism',
-           'env_params': expandConf('arena_200mm', 'Env'),
+           'env_params': preg.expandConf(id='arena_200mm', conftype='Env'),
            'offline': True,
            'show_screen': False,
            'ga_select_kws': preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, Ngenerations=Ngen),
@@ -225,11 +225,11 @@ def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs)
     GA = GAlauncher(**conf)
     best_genome = GA.run()
 
-    mm = loadConf(mID, 'Model')
+    mm = preg.loadConf(id=mID, conftype='Model')
     IF = mm.brain.interference_params
     if IF.attenuation + IF.attenuation_max > 1:
         mm.brain.interference_params.attenuation_max = np.round(1 - IF.attenuation, 2)
-        saveConf(id=mID, conf_type='Model', conf=mm)
+        preg.saveConf(id=mID, conftype='Model', conf=mm)
 
     return {mID: mm}
 
@@ -385,7 +385,7 @@ def calibrate_4models(refID='None.150controls'):
             mm = calibrate_interference(mID=mID, refID=refID)
             mdict.update(mm)
 
-    update_modelConfs(d=loadRef(refID), mIDs=mIDs)
+    update_modelConfs(d=preg.loadRef(refID), mIDs=mIDs)
     return mdict
 
 
@@ -393,14 +393,11 @@ def update_modelConfs(d, mIDs):
     save_to = f'{d.dir_dict.model_tables}/4models'
     os.makedirs(save_to, exist_ok=True)
     for mID in mIDs:
-        d.config.modelConfs.average[mID] = loadConf(mID, 'Model')
+        d.config.modelConfs.average[mID] = preg.loadConf(id=mID, conftype='Model')
     d.save_config(add_reference=True)
 
 
 if __name__ == '__main__':
     refID = 'None.150controls'
     # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    # for mID in mIDs:
-    #     m=loadConf(mID, 'Model')
-    #     print(m)
     calibrate_4models(refID)

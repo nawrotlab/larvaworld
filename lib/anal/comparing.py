@@ -25,8 +25,7 @@ class ExpFitter:
             if type(sample) == dict:
                 self.sample_conf = sample
             elif type(sample) == str:
-                from lib.conf.stored.conf import loadConf
-                self.sample_conf = loadConf(sample, 'Ref')
+                self.sample_conf = preg.loadConf(id=sample, conftype='Ref')
             self.sample = LarvaDataset(self.sample_conf['dir'], load_data=True)
 
         key = 's' if use_symbols else 'd'

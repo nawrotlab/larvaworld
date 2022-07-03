@@ -419,7 +419,6 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
               env_params={}, dir=None,
               bout_annotation=True, enrichment=True, refDataset=None, sample_ks=None, store=False,
               use_LarvaConfDict=False, **kwargs):
-    from lib.conf.stored.conf import loadConf, expandConf
     from lib.process.angular import angular_processing
     from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
         store_spatial
@@ -430,7 +429,7 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
         ms = refDataset.sample_modelConf(N=Nids, mID=mID, sample_ks=sample_ks)
     else:
         refID = None
-        m = loadConf(mID, "Model")
+        m = preg.loadConf(id=mID, conftype="Model")
         ms = [m] * Nids
 
     if use_LarvaConfDict:
@@ -443,7 +442,7 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
 
     ids = [f'Agent{j}' for j in range(Nids)]
 
-    larva_groups = {dataset_id: preg.get_null('LarvaGroup', sample=refID, model=expandConf(mID, 'Model'),
+    larva_groups = {dataset_id: preg.get_null('LarvaGroup', sample=refID, model=preg.expandConf(id=mID, conftype='Model'),
                                               default_color=color,
                                               distribution=preg.get_null('larva_distro', N=Nids))}
 

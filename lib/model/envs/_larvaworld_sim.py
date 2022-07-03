@@ -83,8 +83,7 @@ class LarvaWorldSim(LarvaWorld):
         for gID, gConf in larva_groups.items():
             mod, sample = gConf['model'], gConf['sample']
             if type(sample) == str:
-                from lib.conf.stored.conf import loadConf
-                sample = loadConf(sample, 'Ref')
+                sample = preg.loadConf(id=sample, conftype='Ref')
             mod = get_sample_bout_distros(mod, sample)
 
             modF = dNl.flatten_dict(mod)

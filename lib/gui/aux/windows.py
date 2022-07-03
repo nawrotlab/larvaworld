@@ -231,9 +231,8 @@ def delete_conf_window(id, conftype, disp=None) :
 def add_ref_window():
     from lib.gui.aux.elements import NamedList
     from lib.stor.larva_dataset import LarvaDataset
-    from lib.conf.stored.conf import loadConf, kConfDict
     k = 'ID'
-    temp = NamedList('Reference ID : ', key=k, choices=kConfDict('Ref'), size=(30, 10),
+    temp = NamedList('Reference ID : ', key=k, choices=preg.storedConf('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
                      readonly=True, enable_events=False, header_kws={'text': 'Select reference datasets'})
     l = [
@@ -241,7 +240,7 @@ def add_ref_window():
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Load reference datasets', l).read(close=True)
     if e == 'Ok':
-        return {id: LarvaDataset(dir=loadConf(id, 'Ref')['dir'], load_data=False) for id in v[k]}
+        return {id: LarvaDataset(dir=preg.loadConf(id=id, conftype='Ref')['dir'], load_data=False) for id in v[k]}
     elif e == 'Cancel':
         return None
 
@@ -258,9 +257,8 @@ def save_ref_window(d):
 def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import PadDict
-    from lib.conf.stored.conf import loadConf
     from lib.registry.pars import preg
-    g = loadConf(datagroup_id, 'Group')
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
     group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'

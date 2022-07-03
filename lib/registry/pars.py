@@ -1,4 +1,7 @@
 import copy
+import json
+import pickle
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -222,32 +225,112 @@ class ParRegistry:
             T0 = dNl.NestDict(copy.deepcopy(expandConf(id0, conftype)))
         T = dNl.update_nestdict(T0, kwargs)
         if id is not None:
-            self.saveConf(T, conftype, id)
+            self.saveConf(conf=T, conftype=conftype, id=id)
         return T
 
-    def saveConf(self, conf, conftype, id=None,**kwargs):
+    def saveConf(self, conf, conftype, id=None, mode='overwrite', verbose=1,**kwargs):
         if id is not None :
-            from lib.conf.stored.conf import saveConf
-            saveConf(conf, conftype, id,**kwargs)
+            try:
+                d = self.loadConfDict(conftype, **kwargs)
+            except:
+                d = {}
+            if id is None:
+                id = conf['id']
+
+            if id in list(d.keys()):
+                for k, v in conf.items():
+                    if type(k) == dict and k in list(d[id].keys()) and mode == 'update':
+                        d[id][k].update(conf[k])
+                    else:
+                        d[id][k] = v
+            else:
+                d[id] = conf
+            self.saveConfDict(d, conftype=conftype, **kwargs)
+            if verbose >= 1:
+                print(f'{conftype} Configuration saved under the id : {id}')
+
 
     def loadConf(self, conftype, id=None,**kwargs):
         if id is not None :
-            from lib.conf.stored.conf import loadConf
-            return loadConf(id, conftype,**kwargs)
+            try:
+                conf_dict = self.loadConfDict(conftype, **kwargs)
+                conf = conf_dict[id]
+                return dNl.NestDict(conf)
+            except:
+                raise ValueError(f'{conftype} Configuration {id} does not exist')
+
+
+    def saveConfDict(self, ConfDict, conftype, use_pickle = False):
+        path = self.path_dict[conftype]
+        if conftype == 'Ga':
+            use_pickle = True
+        if use_pickle:
+            with open(path, 'wb') as fp:
+                pickle.dump(ConfDict, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            with open(path, "w") as f:
+                json.dump(ConfDict, f)
+
+    def loadConfDict(self, conftype, use_pickle = False):
+        path = self.path_dict[conftype]
+        if conftype == 'Ga':
+            use_pickle = True
+        try:
+            if use_pickle:
+                with open(path, 'rb') as tfp:
+                    d = pickle.load(tfp)
+            else:
+                with open(path) as f:
+                    d = json.load(f)
+        except:
+            d = {}
+        return dNl.NestDict(d)
+
+
+    def expandConf(self, conftype, id=None,**kwargs):
+        if id is not None :
+            conf = self.loadConf(id=id, conftype=conftype, **kwargs)
+            try:
+                if conftype == 'Batch':
+                    conf.exp = self.expandConf(id=conf.exp, conftype='Exp', **kwargs)
+                elif conftype == 'Exp':
+                    conf.experiment = id
+                    conf.env_params = self.expandConf(id=conf.env_params,conftype= 'Env', **kwargs)
+                    conf.trials = self.loadConf(id=conf.trials,conftype= 'Trial', **kwargs)
+                    for k, v in conf.larva_groups.items():
+                        if type(v.model) == str:
+                            v.model = self.loadConf(id=v.model,conftype= 'Model', **kwargs)
+            except:
+                pass
+            return conf
+
 
     def loadRef(self, id=None):
         if id is not None :
-            from lib.conf.stored.conf import loadRef
-            return loadRef(id)
+            from lib.stor.larva_dataset import LarvaDataset
+            return LarvaDataset(self.loadConf(id=id, conftype='Ref')['dir'], load_data=False)
 
-    def deleteConf(self, conftype, id=None,**kwargs):
+
+    def deleteConf(self, conftype, id=None):
         if id is not None:
-            from lib.conf.stored.conf import deleteConf
-            return deleteConf(id, conftype,**kwargs)
+            if conftype == 'Data':
+                DataGroup = self.loadConf(id=id, conftype=conftype)
+                path = DataGroup['path']
+                try:
+                    shutil.rmtree(path)
+                except:
+                    pass
+            d = self.loadConfDict(conftype=conftype)
+            try:
+                d.pop(id, None)
+                self.saveConfDict(d, conftype=conftype)
+                print(f'Deleted {conftype} configuration under the id : {id}')
+            except:
+                pass
 
     def storedConf(self, conftype,**kwargs):
-        from lib.conf.stored.conf import kConfDict
-        return kConfDict(conftype,**kwargs)
+        return list(self.loadConfDict(conftype=conftype, **kwargs).keys())
+
 
     # def new_tracker_format(self, id=None, kwargs={}):
     #     T0 = preg.get_null('tracker')

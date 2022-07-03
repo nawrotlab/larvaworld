@@ -34,8 +34,8 @@ def ga_dict(name=None, suf='', excluded=None, only=None):
 
 
 def interference_ga_dict(mID, suf='brain.interference_params.'):
-    from lib.conf.stored.conf import loadConf
-    m = loadConf(mID, 'Model')
+    from lib.registry.pars import preg
+    m = preg.loadConf(id=mID, conftype='Model')
     IFmod = m.brain.interference_params.mode
 
     if IFmod == 'phasic':

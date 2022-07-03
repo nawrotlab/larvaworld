@@ -14,8 +14,6 @@ from lib.plot.hist import plot_ang_pars, plot_crawl_pars, plot_turn_amp, plot_en
 from lib.plot.stridecycle import plot_stride_Dbend, plot_stride_Dorient, plot_interference
 from lib.plot.epochs import plot_stridesNpauses
 from lib.plot.bar import barplot
-from lib.conf.stored.conf import loadConf
-# from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
 from lib.model.DEB.deb import deb_default
 from lib.plot.grid import calibration_plot
@@ -98,7 +96,7 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'dispersion' in exp_type:
         samples = unique_list([d.config['sample'] for d in ds])
-        targets = [LarvaDataset(loadConf(sd, 'Ref')['dir']) for sd in samples]
+        targets = [LarvaDataset(preg.loadConf(id=sd, conftype='Ref')['dir']) for sd in samples]
         figs0 = comparative_analysis(datasets=ds + targets, **ccc)
         figs.update(figs0)
 

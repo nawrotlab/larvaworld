@@ -7,7 +7,8 @@ from lib.aux.collecting import output_keys
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
-from lib.conf.stored.conf import next_idx, expandConf, loadConf
+from lib.conf.stored.conf import next_idx
+from lib.registry.pars import preg
 from run.exec_run import Exec
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 
@@ -89,8 +90,8 @@ class SimTab(GuiTab):
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{next_idx(id)}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
-        c['trials'].update(w, loadConf(conf['trials'], 'Trial'))
-        self.draw_tab.set_env_db(env=expandConf(conf['env_params'], 'Env'), lg=conf['larva_groups'])
+        c['trials'].update(w, preg.loadConf(id=conf['trials'], conftype='Trial'))
+        self.draw_tab.set_env_db(env=preg.expandConf(id=conf['env_params'], conftype='Env'), lg=conf['larva_groups'])
         w.write_event_value('RESET_ARENA', 'Draw the initial arena')
 
     def get(self, w, v, c, as_entry=True):

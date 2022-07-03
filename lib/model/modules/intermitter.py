@@ -6,7 +6,6 @@ import lib.aux.dictsNlists as dNl
 from lib.anal.fitting import BoutGenerator
 
 from lib.aux import naming as nam
-from lib.conf.stored.conf import loadConf
 from lib.model.modules.basic import Effector
 
 
@@ -269,7 +268,8 @@ class Intermitter(BaseIntermitter):
         super().__init__(**kwargs)
         from lib.anal.fitting import BoutGenerator
         if pause_dist.range is None and stridechain_dist.range is None:
-            conf=loadConf('None.150controls', 'Ref').bout_distros
+            from lib.registry.pars import preg
+            conf=preg.loadConf(id='None.150controls', conftype='Ref').bout_distros
             pause_dist=conf.pause_dur
             stridechain_dist=conf.run_count
 
@@ -414,7 +414,8 @@ class BranchIntermitter(BaseIntermitter):
         self.beta = beta
         self.sigma = sigma
         if pause_dist.range is None and stridechain_dist.range is None:
-            conf=loadConf('None.150controls', 'Ref').bout_distros
+            from lib.registry.pars import preg
+            conf=preg.loadConf(id='None.150controls', conftype='Ref').bout_distros
             pause_dist=conf.pause_dur
             stridechain_dist=conf.run_count
         if run_mode == 'stridechain':
@@ -446,7 +447,8 @@ class BranchIntermitter(BaseIntermitter):
 
 class FittedIntermitter(OfflineIntermitter):
     def __init__(self, sample_dataset, **kwargs):
-        sample = loadConf(sample_dataset, 'Ref')
+        from lib.registry.pars import preg
+        sample = preg.loadConf(id=sample_dataset, conftype='Ref')
         stored_conf = {
             'crawl_freq': sample['crawl_freq'],
             'feed_freq': sample['feed_freq'],
@@ -464,7 +466,8 @@ class FittedIntermitter(OfflineIntermitter):
 def get_EEB_poly1d(sample=None, dt=None, **kwargs):
     if sample is not None:
         if type(sample) == str:
-            sample = loadConf(sample, 'Ref')
+            from lib.registry.pars import preg
+            sample = preg.loadConf(id=sample, conftype='Ref')
         kws = sample['intermitter']
     else:
         kws = kwargs
@@ -495,7 +498,8 @@ def get_best_EEB(deb, sample):
 def get_EEB_time_fractions(sample=None, dt=None, **kwargs):
     if sample is not None:
         if type(sample) == str:
-            sample = loadConf(sample, 'Ref')
+            from lib.registry.pars import preg
+            sample = preg.loadConf(id=sample, conftype='Ref')
         kws = sample['intermitter']
     else:
         kws = kwargs
@@ -521,9 +525,10 @@ def get_EEB_time_fractions(sample=None, dt=None, **kwargs):
 
 if __name__ == "__main__":
     from lib.stor.larva_dataset import LarvaDataset
+    from lib.registry.pars import preg
 
     sample = 'None.200_controls'
-    sample = loadConf(sample, 'Ref')
+    sample = preg.loadConf(id=sample, conftype='Ref')
     d = LarvaDataset(sample['dir'])
     d.config['EEB_poly1d'] = get_EEB_poly1d(**d.config['intermitter']).c.tolist()
     d.save_config()

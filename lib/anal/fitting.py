@@ -424,18 +424,17 @@ class BoutGenerator:
 
 
 def test_boutGens(mID,refID, **kwargs):
-    from lib.conf.stored.conf import loadConf, loadRef
     from lib.aux.sim_aux import get_sample_bout_distros
-
-    d = loadRef(refID)
+    from lib.registry.pars import preg
+    d = preg.loadRef(refID)
     d.load(contour=False)
     s, e, c = d.step_data, d.endpoint_data, d.config
     Npau=s['pause_dur'].dropna().values.shape[0]
     Nrun=s['run_dur'].dropna().values.shape[0]
 
     dic={}
-    m=loadConf(mID, 'Model')
-    m=get_sample_bout_distros(m, loadConf(refID, 'Ref'))
+    m=preg.loadConf(id=mID, conftype='Model')
+    m=get_sample_bout_distros(m, preg.loadConf(id=refID, conftype='Ref'))
     dicM=m.brain.intermitter_params
     for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
         N=Npau if n == 'pause' else Nrun

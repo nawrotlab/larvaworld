@@ -7,6 +7,7 @@ from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.plot.base import AutoPlot
 from lib.process.aux import comp_pooled_epochs
+from lib.registry.pars import preg
 
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
@@ -209,8 +210,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, P.colors, P.labels, frs)):
         try:
-            from lib.conf.stored.conf import loadConf
-            ref = loadConf(label, 'Ref')
+            ref = preg.loadConf(id=label, conftype='Ref')
         except:
             ref = None
         for i, (x0, discr, xmin, xmax) in enumerate(

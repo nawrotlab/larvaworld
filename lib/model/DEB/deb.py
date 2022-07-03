@@ -9,9 +9,7 @@ import numpy as np
 from lib.aux.dictsNlists import save_dict
 from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex
-# from lib.registry.dtypes import null_dict
 from lib.registry.init_pars import substrate_dict
-from lib.conf.stored.conf import loadConf
 import lib.aux.naming as nam
 from lib.model.DEB.gut import Gut
 from lib.model.DEB.substrate import Substrate
@@ -713,7 +711,7 @@ def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
 def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=False, model_id=None, save_dict=True,
             **kwargs):
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
-    sample = loadConf(sample, 'Ref')
+    sample = preg.loadConf(id=sample, conftype='Ref')
     kws2 = sample['intermitter']
     if dt is None:
         dt = kws2['dt']

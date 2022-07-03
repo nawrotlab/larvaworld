@@ -13,7 +13,8 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.aux.par_aux import base_dtype
 from lib.registry.pars import preg
 
-from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
+# from lib.conf.stored.conf import loadConfDict
+# from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
 from lib.gui.aux import windows as gui_win, buttons as gui_but, functions as gui_fun
 
 
@@ -330,7 +331,7 @@ class SelectionList(GuiElement):
         if self.with_dict:
             nn = self.tab.gui.tab_dict[n][2]
             self.collapsible = CollapsibleDict(nn, default=True,
-                                               header_list_width=self.width, header_dict=loadConfDict(self.conftype),
+                                               header_list_width=self.width, header_dict=preg.loadConfDict(self.conftype),
                                                next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
@@ -353,7 +354,8 @@ class SelectionList(GuiElement):
         k0 = self.conftype
 
         if e == self.k:
-            conf = loadConf(id, k0)
+            conf = preg.loadConf(id=id, conftype=k0)
+            # conf = loadConf(id, k0)
             for kk, vv in self.sublists.items():
                 if type(conf[kk]) == str:
                     vv.update(w, conf[kk])
@@ -420,7 +422,8 @@ class SelectionList(GuiElement):
         return gui_win.delete_conf_window(id, conftype=k0, disp=self.disp)
 
     def load(self, w, c, id):
-        conf = loadConf(id, self.conftype)
+        conf = preg.loadConf(id=id, conftype=self.conftype)
+        # conf = loadConf(id, self.conftype)
         self.tab.update(w, c, conf, id)
         if self.progressbar is not None:
             self.progressbar.reset(w)
@@ -444,7 +447,8 @@ class SelectionList(GuiElement):
             for kk, vv in self.sublists.items():
                 if isinstance(vv, SelectionList):
                     if not vv.with_dict:
-                        conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
+                        conf[kk] = preg.expandConf(id=v[vv.k], conftype=vv.conftype)
+                        # conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
                     else:
                         conf[kk] = vv.collapsible.get_dict(v, w)
                 else:
@@ -452,7 +456,8 @@ class SelectionList(GuiElement):
                     if kk == 'larva_groups':
                         for n, gr in conf[kk].items():
                             if type(gr['model']) == str:
-                                gr['model'] = loadConf(gr['model'], 'Model')
+                                gr['model'] = preg.loadConf(id=gr['model'], conftype= 'Model')
+                                # gr['model'] = loadConf(gr['model'], 'Model')
         return conf
 
     def get_next(self, k0):
@@ -468,7 +473,8 @@ class SelectionList(GuiElement):
 
     @property
     def confs(self):
-        return kConfDict(self.conftype)
+        return preg.storedConf(self.conftype)
+        # return kConfDict(self.conftype)
 
     @property
     def Nconfs(self):
@@ -1686,12 +1692,15 @@ class GuiTreeData(sg.TreeData):
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def get_df(self):
-        if not self.build_tree and self.root_key in kConfDict('Tree'):
-            df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
+        if not self.build_tree and self.root_key in preg.storedConf('Tree'):
+        # if not self.build_tree and self.root_key in kConfDict('Tree'):
+            df = pd.DataFrame.from_dict(preg.loadConf(id=self.root_key, conftype='Tree'))
+            # df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
         else:
             from lib.registry.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
-            saveConf(df.to_dict(), 'Tree', self.root_key)
+            preg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
+            # saveConf(df.to_dict(), 'Tree', self.root_key)
         return df
 
     def get_entries(self):

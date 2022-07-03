@@ -42,7 +42,7 @@ class ImportTab(GuiTab):
                                'processing': {'Ncols': 2, 'text_kws': gui_fun.t_kws(9)},
                                'metric_definition': {'header_width': 60,'text_kws': gui_fun.t_kws(9)}}
                      )
-        pd1 = gui_el.PadDict('tracker', background_color=self.Ctrac, text_kws=gui_fun.t_kws(8), header_width=22,
+        pd1 = gui_el.PadDict('tracker_conf', disp_name='tracker',background_color=self.Ctrac, text_kws=gui_fun.t_kws(8), header_width=22,
                              subconfs={'filesystem': {'header_width': 20, 'value_kws': gui_fun.t_kws(5)},
                                        'resolution': {'header_width': 20, 'text_kws': gui_fun.t_kws(13)},
                                        'arena': {'header_width': 20, 'text_kws': gui_fun.t_kws(7)}}

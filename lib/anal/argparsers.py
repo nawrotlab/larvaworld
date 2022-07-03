@@ -61,10 +61,10 @@ class MultiParser:
 
 def adjust_sim(exp, conf_type, sim):
     if exp is not None and conf_type is not None:
-        from lib.conf.stored.conf import loadConf, next_idx
+        from lib.conf.stored.conf import next_idx
         if sim.duration is None:
             try:
-                exp_conf = loadConf(exp, conf_type)
+                exp_conf = preg.loadConf(id=exp, conftype=conf_type)
                 sim.duration = exp_conf.sim_params.duration
             except:
                 sim.duration = 3.0

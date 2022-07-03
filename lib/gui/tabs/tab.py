@@ -1,4 +1,5 @@
 from lib.gui.aux.elements import GuiElement
+from lib.registry.pars import preg
 
 
 class GuiTab(GuiElement):
@@ -52,9 +53,8 @@ class GuiTab(GuiElement):
         return v[l.k] if l is not None else None
 
     def current_conf(self, v):
-        from lib.conf.stored.conf import loadConf
         id=self.current_ID(v)
-        return loadConf(id, self.conftype) if id is not None else None
+        return preg.loadConf(id=id, conftype=self.conftype) if id is not None else None
 
     def build(self):
         return None, {}, {}, {}

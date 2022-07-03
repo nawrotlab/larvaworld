@@ -46,7 +46,7 @@ class SquareOscillator(StrideOscillator):
         return signal.square(self.phi, duty=self.duty)
 
 class PhaseOscillator(StrideOscillator):
-    def __init__(self, max_vel_phase,max_scaled_vel, **kwargs):
+    def __init__(self, max_vel_phase,max_scaled_vel,initial_amp=None,  **kwargs):
         self.max_scaled_vel = max_scaled_vel
         super().__init__(initial_amp=max_scaled_vel, **kwargs)
         self.max_vel_phase = max_vel_phase
