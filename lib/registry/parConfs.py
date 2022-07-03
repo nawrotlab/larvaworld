@@ -942,8 +942,8 @@ class LarvaConfDict2:
         conf.nengo = nengo
         return conf
 
-    def larvaConf(self, modes=None, energetics=None, auxkws={}, modkws={}, mID=None):
-        bconf = self.brainConf(modes, modkws)
+    def larvaConf(self, modes=None, energetics=None, auxkws={}, modkws={}, nengo=False, mID=None):
+        bconf = self.brainConf(modes, modkws, nengo=nengo)
 
         conf = dNl.NestDict()
         conf.brain = bconf
@@ -980,6 +980,8 @@ class LarvaConfDict2:
 
     def storeConfs(self):
         self.larvaConf(mID='loco_default')
+        self.larvaConf(mID='RE_NEU_PHI_NENGO', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'nengo'}, nengo=True)
+        self.larvaConf(mID='RE_NEU_PHI_BR', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'branch'})
         self.larvaConf(mID='RE_NEU_PHI_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'default'})
         self.larvaConf(mID='RE_NEU_SQ_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'square','intermitter': 'default'})
         self.larvaConf(mID='RE_NEU_DEF_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'default','intermitter': 'default'})
@@ -989,6 +991,10 @@ class LarvaConfDict2:
         self.larvaConf(mID='CON_NEU_PHI_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'phasic','intermitter': 'default'})
         self.larvaConf(mID='CON_NEU_SQ_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'square','intermitter': 'default'})
         self.larvaConf(mID='CON_NEU_DEF_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'default','intermitter': 'default'})
+        _=self.larvaConf(mID='Levy', modes = {'crawler': 'constant','turner': 'sinusoidal','interference': 'default','intermitter': 'default'},
+                       modkws={'interference':{'attenuation' : 0.0}})
+        # print(m)
+        # raise
         self.larvaConf(mID='RE_SIN_PHI_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'phasic','intermitter': 'default'})
         self.larvaConf(mID='RE_SIN_SQ_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'square','intermitter': 'default'})
         self.larvaConf(mID='RE_SIN_DEF_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'default','intermitter': 'default'})
@@ -1012,10 +1018,10 @@ class LarvaConfDict2:
 
 if __name__ == '__main__':
     dd = LarvaConfDict2()
-    # dd.storeConfs()
+    dd.storeConfs()
     # m = dd.larvaConf(mID='loco_default')
 
-    print(dd.storedConf())
+    # print(dd.storedConf())
     # print(dd.dict.aux.keys)
     # d=dd.dict
     # from lib.conf.stored.conf import kConfDict
