@@ -5,9 +5,11 @@ import shutil
 
 import numpy as np
 import pandas as pd
+import param
 
 from lib.registry.par import v_descriptor
 from lib.aux import dictsNlists as dNl
+
 
 
 class ParRegistry:
@@ -15,6 +17,7 @@ class ParRegistry:
         from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict
 
         self.path_dict = paths.build_path_dict()
+        self.confID_dict = self.confID_dict()
         self.init_dict = init_pars.ParInitDict().dict
         # self.mfunc = par_funcs.module_func_dict()
         self.parser_dict = parser_dict.ParserDict(init_dict=self.init_dict).dict
@@ -321,5 +324,36 @@ class ParRegistry:
     def storedConf(self, conftype):
         return list(self.loadConfDict(conftype=conftype).keys())
 
+    def ConfSelector(self, conftype, default=None, single_choice=True, **kwargs):
+        def func():
+
+            kws = {
+                'objects': self.storedConf(conftype),
+                'default': default,
+                'allow_None': True,
+                'empty_default': True,
+            }
+            if single_choice:
+                func0 = param.Selector
+            else:
+                func0 = param.ListSelector
+            return func0(**kws, **kwargs)
+
+        return func
+
+    def confID_dict(self):
+        from lib.aux.par_aux import sub
+        from lib.registry.par_dict import preparePar
+        d={}
+        for conftype in ['Model', 'Env', 'Exp', 'Essay', 'Trial', 'Tracker', 'Group', 'Life', 'Ga']:
+            low = conftype.lower()
+            k=f'{low}ID'
+            dic = {'dtype': str, 'vparfunc': self.ConfSelector(conftype), 'vs': self.storedConf(conftype),
+                   'sym': sub('ID', low),'k': k, 'h': f'The {conftype} configuration ID', 'p': conftype}
+            prepar = preparePar(**dic)
+            p = v_descriptor(**prepar)
+            d[p.k]=p
+        return dNl.NestDict(d)
 
 preg = ParRegistry()
+

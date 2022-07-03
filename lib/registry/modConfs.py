@@ -1067,11 +1067,18 @@ if __name__ == '__main__':
     # #     B = dd.init_brain_mID(mID=mID)
     from lib.registry.pars import preg
 
+    D=preg.confID_dict
+
+    for k,p in D.items() :
+        print(k,p.d)
+     # f=preg.dict['b']
+    # f=preg.init_dict['GAconf']
+
     # f=preg.newConf('Model')
     # print(f)
 
-    f = preg.newConf('Model', id0='explorer', kwargs={'brain.turner_params.mode': 'constant'})
-    print(f)
+    # f = preg.newConf('Model', id0='explorer', kwargs={'brain.turner_params.mode': 'constant'})
+    # print(f)
     # from lib.registry.parConfs import init_loco
 
     # from lib.aux.sim_aux import get_sample_bout_distros0

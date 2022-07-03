@@ -1,3 +1,7 @@
+
+
+from lib.aux.par_aux import subsup
+
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 bout_keys = ['stride', 'pause', 'turn']
 to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
@@ -72,19 +76,40 @@ substrate_dict = {
 }
 
 
+def confID_entry(conftype, default=None, k=None, symbol=None, single_choice=True) :
+    from typing import List
+    from lib.conf.stored.conf import ConfSelector, kConfDict
+    from lib.aux.par_aux import sub
+    from lib.aux import dictsNlists as dNl
+    low = conftype.lower()
+
+    if single_choice :
+        t=str
+        IDstr='ID'
+    else :
+        t=List[str]
+        IDstr = 'IDs'
+    if k is None :
+        k = f'{low}{IDstr}'
+    if symbol is None :
+        symbol = sub(IDstr, low)
+    d = {'t': t, 'vparfunc': ConfSelector(conftype, default=default, single_choice=single_choice), 'vs': kConfDict(conftype), 'v': default,
+           'symbol': symbol, 'k': k, 'h': f'The {conftype} configuration {IDstr}',
+                                'disp': f'{conftype} {IDstr}'}
+    return dNl.NestDict(d)
+
+
 class ParInitDict:
     def __init__(self):
         import warnings
         warnings.simplefilter(action='ignore', category=FutureWarning)
-        from typing import List, Tuple, Union, TypedDict
+        from typing import List, Tuple, TypedDict
         from types import FunctionType
         import numpy as np
         import param
-        from lib.registry.units import ureg
         from lib.aux import dictsNlists as dNl
         from lib.aux.collecting import output_keys
-        from lib.conf.stored.conf import ConfSelector, kConfDict
-        from lib.aux.par_aux import sub, sup, bar, circle, wave, tilde, subsup
+
         bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
 
         def pCol(v, obj):
@@ -362,10 +387,7 @@ class ParInitDict:
                                       'h': 'The range of larva body orientations to sample from, in degrees.'}
             }
 
-            d['larva_model'] = {'t': str, 'vparfunc': ConfSelector('Model', default='explorer'), 'v': 'explorer',
-                                'vs': kConfDict('Model'), 'symbol': sub('ID', 'mod'),
-                                'k': 'mID', 'h': 'The stored larva model configurations as a list of IDs',
-                                'disp': 'larva-model ID'}
+            d['larva_model']=confID_entry('Model', default='explorer')
 
             d['Larva_DISTRO'] = {
                 'model': d['larva_model'],
@@ -575,15 +597,14 @@ class ParInitDict:
                              'thermoscape': {'t': dict},
                              }
 
-            d['exp_conf'] = {'env_params': {'t': str, 'vparfunc': ConfSelector('Env'), 'vs': kConfDict('Env')},
+            d['exp_conf'] = {
+                'env_params': confID_entry('Env'),
                              'larva_groups': {'t': dict, 'v': {}},
                              'sim_params': d['sim_params'],
-                             'trials': {'t': str, 'vparfunc': ConfSelector('Trial', default='default'), 'v': 'default',
-                                        'vs': kConfDict('Trial')},
+                             'trials': confID_entry('Trial', default='default'),
                              'collections': {'t': List[str], 'v': ['pose']},
                              'enrichment': d['enrichment'],
-                             'experiment': {'t': str, 'vparfunc': ConfSelector('Exp'), 'vs': kConfDict('Exp')},
-
+                             'experiment': confID_entry('Exp'),
                              }
 
             d['tracker_conf'] = {
@@ -614,8 +635,7 @@ class ParInitDict:
             # d.update(init_vis())
 
             d['replay'] = {
-                'env_params': {'t': str, 'vparfunc': ConfSelector('Env'), 'vs': kConfDict('Env'), 'aux_vs': [''],
-                               'h': 'The arena configuration to display the replay on, if not the default one in the dataset configuration.'},
+                'env_params': confID_entry('Env'),
                 'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center'],
                                   'h': 'Whether to transpose the dataset spatial coordinates.'},
                 'agent_ids': {'t': List[str],
@@ -657,17 +677,14 @@ class ParInitDict:
             d['ga_build_kws'] = {
                 'space_dict': {'t': dict, 'h': 'The parameter state space'},
                 'robot_class': {'t': type, 'h': 'The agent class to use in the simulations'},
-                'base_model': {'t': str, 'v': 'navigator', 'vs': kConfDict('Model'),
-                               'vparfunc': ConfSelector('Model', default='navigator'),
-                               'h': 'The model configuration to optimize', 'k': 'mID0'},
+                'base_model': confID_entry('Model', default='navigator', k='mID0', symbol=subsup('ID', 'mod', 0)),
                 'bestConfID': {'t': str,
                                'h': 'The model configuration ID to store the best genome',
                                'k': 'mID1'},
                 'init_mode': {'t': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
                               'h': 'The initialization mode for the first generation', 'k': 'mGA'},
                 'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
-                'fitness_target_refID': {'t': str, 'vparfunc': ConfSelector('Ref'), 'vs': kConfDict('Ref'),
-                                         'h': 'The ID of the reference dataset for comparison', 'k': 'refID'},
+                'fitness_target_refID': confID_entry('Ref'),
                 'fitness_target_kws': {'t': dict, 'v': {},
                                        'h': 'The target data to derive from the reference dataset for evaluation'},
                 'fitness_func': {'t': FunctionType, 'h': 'The method for fitness evaluation'},
@@ -681,12 +698,9 @@ class ParInitDict:
                 'scene': {'t': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
                 'scene_speed': {'t': int, 'v': 0, 'max': 100,
                                 'h': 'The rendering speed of the scene'},
-                'env_params': {'t': str, 'vparfunc': ConfSelector('Env'), 'vs': kConfDict('Env'),
-                               'h': 'The environment configuration ID to use in the simulation'},
+                'env_params': confID_entry('Env'),
                 'sim_params': d['sim_params'],
-                'experiment': {'t': str, 'v': 'exploration', 'vs': kConfDict('Ga'),
-                               'vparfunc': ConfSelector('Ga', default='exploration'),
-                               'h': 'The GA experiment configuration'},
+                'experiment': confID_entry('Ga', default='exploration'),
                 'caption': {'t': str, 'h': 'The screen caption'},
                 'save_to': pPath(v=None, h='The directory to save data and plots'),
                 'show_screen': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
@@ -712,12 +726,8 @@ class ParInitDict:
             }
 
             d['eval_conf'] = {
-                'refID': {'t': str, 'v': 'None.150controls', 'vs': kConfDict('Ref'),
-                          'vparfunc': ConfSelector('Ref', default='None.150controls'),
-                          'h': 'The ID of the reference dataset for comparison', 'k': 'refID'},
-                'modelIDs': {'t': List[str], 'vs': kConfDict('Model'),
-                             'vparfunc': ConfSelector('Model', single_choice=False),
-                             'h': 'The model configurations to evaluate', 'k': 'mIDs'},
+                'refID': confID_entry('Ref', default='None.150controls'),
+                'modelIDs': confID_entry('Model', single_choice=False, k='mIDs'),
                 'dataset_ids': {'t': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
                 'offline': {**bF, 'h': 'Whether to run a full LarvaworldSim environment', 'k': 'offline'},
                 'N': {'t': int, 'v': 5, 'min': 2, 'max': 1000,

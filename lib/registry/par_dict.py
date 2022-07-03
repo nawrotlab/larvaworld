@@ -106,6 +106,9 @@ class BaseParDict:
         self.build_chunks()
         self.build_sim_pars()
 
+    # def confID_dict(self):
+
+
     def build_initial(self):
         kws = {'u': ureg.s}
         self.add(
