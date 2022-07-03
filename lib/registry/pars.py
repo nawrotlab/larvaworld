@@ -203,15 +203,15 @@ class ParRegistry:
                         to_keep=['midline', 'contour'], **kwargs)
 
     def newConf(self, conftype, id=None,kwargs={}, id0=None):
-        # d={
-        #     'Tracker' : 'tracker',
-        #     'Model' : 'larva_conf',
-        #     'Exp' : 'exp_conf',
-        #     'Env' : 'env_conf',
-        #     'Essay' : 'essay_conf',
-        #     'Ga' : 'ga_conf',
-        # }
-        # k0=d[conftype]
+        d={
+            'Tracker' : 'tracker',
+            'Model' : 'larva_conf',
+            'Exp' : 'exp_conf',
+            'Env' : 'env_conf',
+            'Essay' : 'essay_conf',
+            'Ga' : 'ga_conf',
+        }
+        k0=d[conftype]
 
 
         if id0 is None :
