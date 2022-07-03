@@ -17,7 +17,6 @@ from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, p
 
 
 from lib.registry.pars import preg
-from lib.conf.stored.conf import loadRef, expandConf, next_idx
 
 
 
@@ -28,7 +27,7 @@ class EvalRun:
                  enrichment=None,
                  norm_modes=['raw'], eval_modes=['pooled'], offline=False, store_data=True, show=False):
         if id is None:
-            id = f'evaluation_run_{next_idx("dispersion", "Eval")}'
+            id = f'evaluation_run_{preg.next_idx(id="dispersion", conftype="Eval")}'
         self.id = id
         if save_to is None:
             save_to = preg.path_dict["SIM"]
@@ -62,7 +61,7 @@ class EvalRun:
         self.loco_dict = {}
         self.figs = dNl.NestDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
-        self.refDataset = loadRef(refID)
+        self.refDataset = preg.loadRef(refID)
         self.refDataset.pooled_epochs = self.refDataset.load_pooled_epochs()
         self.N = N
         self.show = show
@@ -209,10 +208,10 @@ class EvalRun:
     def prepare_exp_conf(self, dur, video=False, **kwargs):
         # from lib.registry.dtypes import null_dict
         exp = 'dispersion'
-        exp_conf = expandConf(exp, 'Exp')
+        exp_conf = preg.expandConf(id=exp, conftype='Exp')
         c = self.target.config
 
-        exp_conf.larva_groups = {dID: preg.get_null('LarvaGroup', sample=self.refID, model=expandConf(mID, 'Model'),
+        exp_conf.larva_groups = {dID: preg.get_null('LarvaGroup', sample=self.refID, model=preg.expandConf(id=mID, conftype='Model'),
                                                 default_color=self.model_colors[dID],
                                                 distribution=preg.get_null('larva_distro', N=self.N)) for mID, dID in
                                  zip(self.modelIDs, self.dataset_ids)}

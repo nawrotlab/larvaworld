@@ -61,7 +61,7 @@ class MultiParser:
 
 def adjust_sim(exp, conf_type, sim):
     if exp is not None and conf_type is not None:
-        from lib.conf.stored.conf import next_idx
+        # from lib.conf.stored.conf import next_idx
         if sim.duration is None:
             try:
                 exp_conf = preg.loadConf(id=exp, conftype=conf_type)
@@ -69,7 +69,7 @@ def adjust_sim(exp, conf_type, sim):
             except:
                 sim.duration = 3.0
         if sim.sim_ID is None:
-            sim.sim_ID = f'{exp}_{next_idx(exp, conf_type)}'
+            sim.sim_ID = f'{exp}_{preg.next_idx(id=exp, conftype=conf_type)}'
         if sim.path is None:
             if conf_type == 'Exp':
                 sim.path = f'single_runs/{exp}'
@@ -107,7 +107,6 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
 
 
 def update_exp_models(exp_conf, models, N=None):
-    from lib.conf.stored.conf import expandConf, kConfDict
     larva_groups = {}
     Nmodels = len(models)
     colors = N_colors(Nmodels)
@@ -126,11 +125,11 @@ def update_exp_models(exp_conf, models, N=None):
             if isinstance(m, dict):
                 gConf.model = m
                 larva_groups[f'LarvaGroup{i}'] = gConf
-            elif m in kConfDict('Model'):
-                gConf.model = expandConf(m, 'Model')
+            elif m in preg.storedConf('Model'):
+                gConf.model = preg.expandConf(id=m, conftype='Model')
                 larva_groups[m] = gConf
-            elif m in kConfDict('Brain'):
-                gConf.model = expandConf(m, 'Brain')
+            elif m in preg.storedConf('Brain'):
+                gConf.model = preg.expandConf(id=m, conftype='Brain')
                 larva_groups[m] = gConf
             else:
                 raise ValueError(f'{m} larva-model or brain-model does not exist!')

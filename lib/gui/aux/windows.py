@@ -212,7 +212,6 @@ def save_conf_window(conf, conftype, disp=None):
         return None
 
 def delete_conf_window(id, conftype, disp=None) :
-    from lib.conf.stored.conf import deleteConf
     if disp is None:
         disp = conftype
     l = [[sg.Col([[sg.Text(f'Are you sure you want to delete \n '
@@ -220,7 +219,7 @@ def delete_conf_window(id, conftype, disp=None) :
          [sg.Ok(), sg.Cancel()]], justification='center', vertical_alignment='center', element_justification='center',pad=(20,20))]]
     e, v = sg.Window(f'Delete configuration', l, size=(500,250)).read(close=True)
     if e == 'Ok':
-        deleteConf(id, conftype)
+        preg.deleteConf(id=id, conftype=conftype)
         return True
     elif e == 'Cancel':
         return False

@@ -176,10 +176,9 @@ class SingleRun:
             figs.update(graph_entries)
 
         if 'disp' in exp:
-            from lib.conf.stored.conf import loadRef
             from lib.sim.single.analysis import comparative_analysis
             samples = dNl.unique_list([d.config.sample for d in self.datasets])
-            targets = [loadRef(sd) for sd in samples]
+            targets = [preg.loadRef(sd) for sd in samples]
             kkws = copy.deepcopy(kws)
             kkws['datasets'] = self.datasets + targets
             figs.update(**comparative_analysis(**kkws))

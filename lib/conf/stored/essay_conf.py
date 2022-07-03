@@ -2,7 +2,6 @@ import shutil
 
 
 from lib.aux.dictsNlists import flatten_list
-from lib.conf.stored.conf import next_idx
 from lib.conf.stored.env_conf import env, f_pars, double_patches
 from lib.conf.stored.exp_conf import RvsS_groups
 from lib.registry.pars import preg
@@ -14,7 +13,7 @@ class Essay:
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
-        self.essay_id = f'{type}_{next_idx(type, "Essay")}'
+        self.essay_id = f'{type}_{preg.next_idx(id=type, conftype="Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
         path = preg.path_dict["ESSAY"]
         # path=paths.path("ESSAY")

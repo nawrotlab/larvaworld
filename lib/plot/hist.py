@@ -14,8 +14,7 @@ from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
                           **kwargs):
     if e is None and refID is not None:
-        from lib.conf.stored.conf import loadRef
-        d = loadRef(refID)
+        d = preg.loadRef(refID)
         d.load(step=False)
         e = d.endpoint_data
     if Nbins is None:
@@ -439,7 +438,6 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
 
 
 if __name__ == '__main__':
-    from lib.conf.stored.conf import loadConf, kConfDict, loadRef
 
     ds=[]
     for refID in ['None.100controls','None.150controls' ] :
@@ -447,7 +445,7 @@ if __name__ == '__main__':
     # refID = 'None.100controls'
     # refID='None.Sims2019_controls'
 
-        d = loadRef(refID)
+        d = preg.loadRef(refID)
         d.load(contour=False,step=True)
         ds.append(d)
     # s, e, c = d.step_data, d.endpoint_data, d.config

@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import param
 
-
 from lib.registry.par import v_descriptor
 from lib.aux import dictsNlists as dNl
 
@@ -23,17 +22,18 @@ def store_reference_data_confs():
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200_controls')
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/10_controls')
     for dr in dds:
-        try :
+        try:
             d = LarvaDataset(dr, load_data=False)
             d.save_config(add_reference=True)
-        except :
+        except:
             pass
 
 
 class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=False):
         from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict
-        self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker', 'Group', 'Trial',
+        self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
+                          'Group', 'Trial',
                           'Life', 'Body']
         self.path_dict = paths.build_path_dict()
         self.confID_dict = self.build_confID_dict()
@@ -410,12 +410,45 @@ class ParRegistry:
 
             elif conftype == 'Ga':
                 from lib.conf.stored.ga_conf import ga_dic as d
-            else :
+            else:
                 continue
             for id, conf in d.items():
                 self.saveConf(conf=conf, conftype=conftype, id=id)
 
         self.confID_dict = self.build_confID_dict()
+
+    def next_idx(self, id, conftype='Exp'):
+        # from lib.conf.pars.pars import ParDict
+        # F0 = ParDict.path_dict["SimIdx"]
+        F0 = self.path_dict["SimIdx"]
+        try:
+            with open(F0) as f:
+                d = json.load(f)
+        except:
+            ksExp = self.storedConf('Exp')
+            ksBatch = self.storedConf('Batch')
+            ksEssay = self.storedConf('Essay')
+            ksGA = self.storedConf('Ga')
+            ksEval = self.storedConf('Exp')
+            dExp = dict(zip(ksExp, [0] * len(ksExp)))
+            dBatch = dict(zip(ksBatch, [0] * len(ksBatch)))
+            dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))
+            dGA = dict(zip(ksGA, [0] * len(ksGA)))
+            dEval = dict(zip(ksEval, [0] * len(ksEval)))
+            # batch_idx_dict.update(loadConfDict('Batch'))
+            d = {'Exp': dExp,
+                 'Batch': dBatch,
+                 'Essay': dEssay,
+                 'Eval': dEval,
+                 'Ga': dGA}
+        if not conftype in d.keys():
+            d[conftype] = {}
+        if not id in d[conftype].keys():
+            d[conftype][id] = 0
+        d[conftype][id] += 1
+        with open(F0, "w") as fp:
+            json.dump(d, fp)
+        return d[conftype][id]
 
 
 preg = ParRegistry()

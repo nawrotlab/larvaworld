@@ -60,11 +60,10 @@ def calibration_plot(save_to=None, files=None):
 
 
 def model_summary(refID, mID, Nids=1,model_table=False, **kwargs):
-    from lib.conf.stored.conf import loadRef
     from lib.anal.fitting import test_boutGens
     from lib.eval.eval_aux import sim_model
 
-    d = loadRef(refID)
+    d = preg.loadRef(refID)
     d.load(step=False, contour=False)
     d.id = 'experiment'
     d.config.id = 'experiment'

@@ -144,12 +144,11 @@ def error_table(data, k='', title=None, **kwargs):
 
 def store_model_graphs() :
     from lib.registry.pars import preg
-    from lib.conf.stored.conf import kConfDict
     from lib.aux.combining import combine_pdfs
     from lib.plot.grid import model_summary
     f1 = preg.path_dict['model_tables']
     f2 = preg.path_dict['model_summaries']
-    for mID in kConfDict('Model'):
+    for mID in preg.storedConf('Model'):
         try :
             _=modelConfTable(mID,save_to =f1)
         except :
@@ -163,7 +162,6 @@ def store_model_graphs() :
     combine_pdfs(file_dir=f2,save_as="___ALL_MODEL_SUMMARIES___.pdf")
 
 if __name__ == '__main__':
-    from lib.conf.stored.conf import kConfDict
     # for mID in kConfDict('Model'):
     #     print(mID)
     # raise

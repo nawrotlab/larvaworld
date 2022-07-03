@@ -15,6 +15,7 @@ from lib.aux import dictsNlists as dNl
 from lib.plot.aux import dual_half_circle, plot_config, process_plot
 
 
+
 class BasePlot:
     def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),
                  **kwargs):
@@ -197,10 +198,10 @@ class Plot(BasePlot):
                  **kwargs):
 
         if add_samples:
-            from lib.conf.stored.conf import loadRef, kConfDict
+            from lib.registry.pars import preg
             targetIDs = dNl.unique_list([d.config['sample'] for d in datasets])
 
-            targets = [loadRef(id) for id in targetIDs if id in kConfDict('Ref')]
+            targets = [preg.loadRef(id) for id in targetIDs if id in preg.storedConf('Ref')]
             datasets += targets
             if labels is not None:
                 labels += targetIDs

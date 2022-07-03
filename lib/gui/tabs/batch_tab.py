@@ -28,8 +28,7 @@ class BatchTab(GuiTab):
 
     def update(self, w, c, conf, id):
         from lib.sim.batch.aux import stored_trajs
-        from lib.conf.stored.conf import next_idx
-        w.Element(self.batch_id_key).Update(value=f'{id}_{next_idx(id, type="Batch")}')
+        w.Element(self.batch_id_key).Update(value=f'{id}_{preg.next_idx(id=id, conftype="Batch")}')
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
         self.DL1.add(w, stored_trajs(id), replace=True)
