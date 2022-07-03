@@ -12,7 +12,7 @@ from lib.aux import dictsNlists as dNl
 
 class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=False):
-        from lib.registry import paths,init_pars,par_funcs,parser_dict,dist_dict,parConfs,par_dict
+        from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict
 
         self.path_dict = paths.build_path_dict()
         self.init_dict = init_pars.ParInitDict().dict
@@ -22,10 +22,6 @@ class ParRegistry:
         self.dist_dict = self.dist_dict0.dict
         self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, dist_dict0=self.dist_dict0)
         self.larva_conf_dict2 = parConfs.LarvaConfDict2(dist_dict0=self.dist_dict0)
-
-
-
-
 
         if load_funcs:
             self.func_dict = dNl.load_dict(self.path_dict['ParFuncDict'])
@@ -43,7 +39,7 @@ class ParRegistry:
             if save:
                 self.save()
 
-    @ property
+    @property
     def graph_dict(self):
         from lib.plot.dict import graph_dict
         return graph_dict
@@ -184,7 +180,7 @@ class ParRegistry:
             return self.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
 
     def enr_dict(self, proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, def_kws={},
-                 metric_definition=None,**kwargs):
+                 metric_definition=None, **kwargs):
         from lib.registry.init_pars import proc_type_keys, bout_keys, to_drop_keys
 
         if metric_definition is None:
@@ -202,25 +198,24 @@ class ParRegistry:
 
     def base_enrich(self, **kwargs):
         return self.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                        bouts=['stride', 'pause', 'turn'],
-                        to_keep=['midline', 'contour'], **kwargs)
+                             bouts=['stride', 'pause', 'turn'],
+                             to_keep=['midline', 'contour'], **kwargs)
 
-    def newConf(self, conftype, id=None,kwargs={}, id0=None):
-        d={
-            'Tracker' : 'tracker',
-            'Model' : 'larva_conf',
-            'Exp' : 'exp_conf',
-            'Env' : 'env_conf',
-            'Essay' : 'essay_conf',
-            'Ga' : 'ga_conf',
+    def newConf(self, conftype, id=None, kwargs={}, id0=None):
+        d = {
+            'Tracker': 'tracker',
+            'Model': 'larva_conf',
+            'Exp': 'exp_conf',
+            'Env': 'env_conf',
+            'Essay': 'essay_conf',
+            'Ga': 'ga_conf',
         }
-        k0=d[conftype]
+        k0 = d[conftype]
 
-
-        if id0 is None :
+        if id0 is None:
             k0 = f'{conftype.lower()}_conf'
             T0 = preg.get_null(k0)
-        else :
+        else:
             from lib.conf.stored.conf import expandConf
             T0 = dNl.NestDict(copy.deepcopy(expandConf(id0, conftype)))
         T = dNl.update_nestdict(T0, kwargs)
@@ -228,10 +223,10 @@ class ParRegistry:
             self.saveConf(conf=T, conftype=conftype, id=id)
         return T
 
-    def saveConf(self, conf, conftype, id=None, mode='overwrite', verbose=1,**kwargs):
-        if id is not None :
+    def saveConf(self, conf, conftype, id=None, mode='overwrite', verbose=1):
+        if id is not None:
             try:
-                d = self.loadConfDict(conftype, **kwargs)
+                d = self.loadConfDict(conftype)
             except:
                 d = {}
             if id is None:
@@ -245,22 +240,20 @@ class ParRegistry:
                         d[id][k] = v
             else:
                 d[id] = conf
-            self.saveConfDict(d, conftype=conftype, **kwargs)
+            self.saveConfDict(d, conftype=conftype)
             if verbose >= 1:
                 print(f'{conftype} Configuration saved under the id : {id}')
 
-
-    def loadConf(self, conftype, id=None,**kwargs):
-        if id is not None :
+    def loadConf(self, conftype, id=None):
+        if id is not None:
             try:
-                conf_dict = self.loadConfDict(conftype, **kwargs)
+                conf_dict = self.loadConfDict(conftype)
                 conf = conf_dict[id]
                 return dNl.NestDict(conf)
             except:
                 raise ValueError(f'{conftype} Configuration {id} does not exist')
 
-
-    def saveConfDict(self, ConfDict, conftype, use_pickle = False):
+    def saveConfDict(self, ConfDict, conftype, use_pickle=False):
         path = self.path_dict[conftype]
         if conftype == 'Ga':
             use_pickle = True
@@ -271,7 +264,7 @@ class ParRegistry:
             with open(path, "w") as f:
                 json.dump(ConfDict, f)
 
-    def loadConfDict(self, conftype, use_pickle = False):
+    def loadConfDict(self, conftype, use_pickle=False):
         path = self.path_dict[conftype]
         if conftype == 'Ga':
             use_pickle = True
@@ -286,30 +279,27 @@ class ParRegistry:
             d = {}
         return dNl.NestDict(d)
 
-
-    def expandConf(self, conftype, id=None,**kwargs):
-        if id is not None :
-            conf = self.loadConf(id=id, conftype=conftype, **kwargs)
+    def expandConf(self, conftype, id=None):
+        if id is not None:
+            conf = self.loadConf(id=id, conftype=conftype)
             try:
                 if conftype == 'Batch':
-                    conf.exp = self.expandConf(id=conf.exp, conftype='Exp', **kwargs)
+                    conf.exp = self.expandConf(id=conf.exp, conftype='Exp')
                 elif conftype == 'Exp':
                     conf.experiment = id
-                    conf.env_params = self.expandConf(id=conf.env_params,conftype= 'Env', **kwargs)
-                    conf.trials = self.loadConf(id=conf.trials,conftype= 'Trial', **kwargs)
+                    conf.env_params = self.expandConf(id=conf.env_params, conftype='Env')
+                    conf.trials = self.loadConf(id=conf.trials, conftype='Trial')
                     for k, v in conf.larva_groups.items():
                         if type(v.model) == str:
-                            v.model = self.loadConf(id=v.model,conftype= 'Model', **kwargs)
+                            v.model = self.loadConf(id=v.model, conftype='Model')
             except:
                 pass
             return conf
 
-
     def loadRef(self, id=None):
-        if id is not None :
+        if id is not None:
             from lib.stor.larva_dataset import LarvaDataset
             return LarvaDataset(self.loadConf(id=id, conftype='Ref')['dir'], load_data=False)
-
 
     def deleteConf(self, conftype, id=None):
         if id is not None:
@@ -328,13 +318,8 @@ class ParRegistry:
             except:
                 pass
 
-    def storedConf(self, conftype,**kwargs):
-        return list(self.loadConfDict(conftype=conftype, **kwargs).keys())
-
+    def storedConf(self, conftype):
+        return list(self.loadConfDict(conftype=conftype).keys())
 
 
 preg = ParRegistry()
-
-
-
-
