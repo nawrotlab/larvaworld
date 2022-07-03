@@ -352,7 +352,7 @@ class ParRegistry:
                    'sym': sub('ID', low),'k': k, 'h': f'The {conftype} configuration ID', 'p': conftype}
             prepar = preparePar(**dic)
             p = v_descriptor(**prepar)
-            d[p.k]=p
+            d[p.p]=p
         return dNl.NestDict(d)
 
 preg = ParRegistry()

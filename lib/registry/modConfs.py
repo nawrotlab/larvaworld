@@ -583,14 +583,17 @@ if __name__ == '__main__':
     from lib.registry.pars import preg
 
     D=preg.confID_dict
-
-    for k,p in D.items() :
-        print(k,p.d)
+    f=D.Exp.v
+    D.Exp.v='focus'
+    f0 = D.Exp.v
+    # for k,p in D.items() :
+    #     print(k,p.d)
      # f=preg.dict['b']
     # f=preg.init_dict['GAconf']
 
     # f=preg.newConf('Model')
-    # print(f)
+    print(f)
+    print(f0)
 
     # f = preg.newConf('Model', id0='explorer', kwargs={'brain.turner_params.mode': 'constant'})
     # print(f)
