@@ -11,7 +11,6 @@ from lib.registry.par import v_descriptor
 from lib.aux import dictsNlists as dNl
 
 
-
 class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=False):
         from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict
@@ -324,7 +323,7 @@ class ParRegistry:
     def storedConf(self, conftype):
         return list(self.loadConfDict(conftype=conftype).keys())
 
-    def ConfSelector(self, conftype, default=None, single_choice=True, **kwargs):
+    def conf_selector_func(self, conftype, default=None, single_choice=True, **kwargs):
         def func():
 
             kws = {
@@ -344,16 +343,17 @@ class ParRegistry:
     def confID_dict(self):
         from lib.aux.par_aux import sub
         from lib.registry.par_dict import preparePar
-        d={}
+        d = {}
         for conftype in ['Model', 'Env', 'Exp', 'Essay', 'Trial', 'Tracker', 'Group', 'Life', 'Ga']:
             low = conftype.lower()
-            k=f'{low}ID'
-            dic = {'dtype': str, 'vparfunc': self.ConfSelector(conftype), 'vs': self.storedConf(conftype),
-                   'sym': sub('ID', low),'k': k, 'h': f'The {conftype} configuration ID', 'p': conftype}
+            k = f'{low}ID'
+            dic = {'dtype': str, 'vparfunc': self.conf_selector_func(conftype), 'vs': self.storedConf(conftype),
+                   'sym': sub('ID', low), 'k': k, 'h': f'The {conftype} configuration ID', 'p': conftype,
+                   'disp': f'{conftype} ID'}
             prepar = preparePar(**dic)
             p = v_descriptor(**prepar)
-            d[p.p]=p
+            d[p.p] = p
         return dNl.NestDict(d)
 
-preg = ParRegistry()
 
+preg = ParRegistry()
