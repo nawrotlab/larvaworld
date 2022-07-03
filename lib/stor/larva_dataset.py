@@ -85,8 +85,6 @@ class LarvaDataset:
                               'fitted': None
                           }
                       },
-                      # **metric_definition['spatial'],
-                      # **metric_definition['angular'],
                       'env_params': env_params,
                       'larva_groups': larva_groups,
                       'source_xy': source_xy,

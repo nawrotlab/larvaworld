@@ -586,7 +586,7 @@ class ParInitDict:
 
                              }
 
-            d['tracker'] = {
+            d['tracker_conf'] = {
                 'resolution': {
                     'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)',
                            'h': 'The framerate of the tracker recordings.'},

@@ -22,167 +22,77 @@ import_par_confs = {
     'SimParConf': metric_def(),
 }
 
-# importformats2 = [
-#     {
-#         'id': 'Schleyer lab',
-#         'path': 'SchleyerGroup',
-#         'tracker': {
-#             'resolution': {'fr': 16.0,
-#                            'Npoints': 12,
-#                            'Ncontour': 22
-#                            },
-#
-#             'filesystem': {
-#                 'read_sequence': ['Step'] + nam.xy(nam.midline(12)[::-1], flat=True) + nam.xy(nam.contour(22),
-#                                                                                               flat=True) + nam.xy(
-#                     'centroid') + \
-#                                  ['blob_orientation', 'area', 'grey_value', 'raw_spinelength', 'width', 'perimeter',
-#                                   'collision_flag'],
-#                 'read_metadata': True,
-#                 # 'detect': {
-#                 'folder': {'pref': 'box', 'suf': None},
-#                 'file': {'pref': None, 'suf': None, 'sep': None}
-#                 # }
-#             },
-#             'arena': preg.arena(0.15)
-#         },
-#         # 'parameterization': parconf(rear_vector=(7, 11)),
-#         'enrichment': preg.base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001},
-#                                        metric_definition=import_par_confs['SchleyerParConf']),
-#
-#     },
-#     {
-#         'id': 'Jovanic lab',
-#         'path': 'JovanicGroup',
-#         'tracker': {
-#             'resolution': {'fr': 11.27,
-#                            'Npoints': 11,
-#                            'Ncontour': 0},
-#
-#             'filesystem': {
-#                 'read_sequence': None,
-#                 'read_metadata': False,
-#                 'folder': {'pref': None, 'suf': None},
-#                 'file': {'pref': None, 'suf': 'larvaid.txt', 'sep': '_'}
-#             },
-#             'arena': preg.arena(0.193, 0.193)
-#         },
-#         # 'parameterization': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
-#         'enrichment': preg.base_enrich(pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'},
-#                                        metric_definition=import_par_confs['JovanicParConf']),
-#     },
-#     {
-#         'id': 'Berni lab',
-#         'path': 'BerniGroup',
-#         'tracker': {
-#             'resolution': {'fr': 2,
-#                            'Npoints': 1,
-#                            'Ncontour': 0},
-#
-#             'filesystem': {
-#                 'read_sequence': ['Date', 'x', 'y'],
-#                 'read_metadata': False,
-#                 # 'detect': {
-#                 'folder': {'pref': None, 'suf': None},
-#                 'file': {'pref': None, 'suf': None, 'sep': '_-_'}
-#                 # }
-#
-#             },
-#             'arena': preg.arena(0.24, 0.24)
-#         },
-#         # 'parameterization': parconf(bend=None, point_idx=0),
-#         'enrichment': preg.enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
-#                                     metric_definition=import_par_confs['SinglepointParConf']),
-#     },
-#
-#     {
-#         'id': 'Arguello lab',
-#         'path': 'ArguelloGroup',
-#         'tracker': {
-#             'resolution': {'fr': 10,
-#                            'Npoints': 5,
-#                            'Ncontour': 0},
-#
-#             'filesystem': {
-#                 'read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x',
-#                                   'spinepoint_2_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_3_x',
-#                                   'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
-#                 'read_metadata': False,
-#                 # 'detect': {
-#                 'folder': {'pref': None, 'suf': None},
-#                 'file': {'pref': None, 'suf': None, 'sep': '_-_'}
-#                 # }
-#
-#             },
-#             'arena': preg.arena(0.17, 0.17)
-#         },
-#         # 'parameterization': parconf(bend=None, point_idx=0),
-#         'enrichment': preg.enr_dict(pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
-#                                     metric_definition=import_par_confs['SinglepointParConf']),
-#     }
-# ]
-
-Scl_kws = {
-    'resolution.fr': 16.0,
-    'resolution.Npoints': 12,
-    'resolution.Ncontour': 22,
-    'filesystem.read_sequence': ['Step'] + nam.xy(nam.midline(12)[::-1], flat=True) + nam.xy(nam.contour(22),
-                                                                                             flat=True) + nam.xy(
-        'centroid') + \
-                                ['blob_orientation', 'area', 'grey_value', 'raw_spinelength', 'width', 'perimeter',
-                                 'collision_flag'],
-    'filesystem.read_metadata': True,
-    'filesystem.folder.pref': 'box',
-    'arena.arena_shape': 'circular',
-    'arena.arena_dims': (0.15, 0.15),
-
-}
-Jov_kws = {
-    'resolution.fr': 11.27,
-    'resolution.Npoints': 11,
-    'resolution.Ncontour': 0,
-    'filesystem.file.suf': 'larvaid.txt',
-    'filesystem.file.sep': '_',
-    'arena.arena_shape': 'rectangular',
-    'arena.arena_dims': (0.193, 0.193),
-
-}
-Ber_kws = {
-    'resolution.fr': 2.0,
-    'resolution.Npoints': 1,
-    'resolution.Ncontour': 0,
-    'filesystem.read_sequence': ['Date', 'x', 'y'],
-    'filesystem.file.sep': '_-_',
-    'arena.arena_shape': 'rectangular',
-    'arena.arena_dims': (0.24, 0.24),
-
-}
-Arg_kws = {
-    'resolution.fr': 10.0,
-    'resolution.Npoints': 5,
-    'resolution.Ncontour': 0,
-    'filesystem.read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x',
-                                 'spinepoint_2_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_3_x',
-                                 'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
-    # 'filesystem.file.suf': 'larvaid.txt',
-    'filesystem.file.sep': '_-_',
-    'arena.arena_shape': 'rectangular',
-    'arena.arena_dims': (0.17, 0.17),
-
-}
 
 
-T0 = preg.get_null('tracker')
-Jov_T = dNl.update_nestdict(T0, Jov_kws)
-Scl_T = dNl.update_nestdict(T0, Scl_kws)
-Ber_T = dNl.update_nestdict(T0, Ber_kws)
-Arg_T = dNl.update_nestdict(T0, Arg_kws)
+
+
+def build_tracker_formats() :
+    Scl_kws = {
+        'resolution.fr': 16.0,
+        'resolution.Npoints': 12,
+        'resolution.Ncontour': 22,
+        'filesystem.read_sequence': ['Step'] + nam.xy(nam.midline(12)[::-1], flat=True) + nam.xy(nam.contour(22),
+                                                                                                 flat=True) + nam.xy(
+            'centroid') + \
+                                    ['blob_orientation', 'area', 'grey_value', 'raw_spinelength', 'width', 'perimeter',
+                                     'collision_flag'],
+        'filesystem.read_metadata': True,
+        'filesystem.folder.pref': 'box',
+        'arena.arena_shape': 'circular',
+        'arena.arena_dims': (0.15, 0.15),
+
+    }
+    Jov_kws = {
+        'resolution.fr': 11.27,
+        'resolution.Npoints': 11,
+        'resolution.Ncontour': 0,
+        'filesystem.file.suf': 'larvaid.txt',
+        'filesystem.file.sep': '_',
+        'arena.arena_shape': 'rectangular',
+        'arena.arena_dims': (0.193, 0.193),
+
+    }
+    Ber_kws = {
+        'resolution.fr': 2.0,
+        'resolution.Npoints': 1,
+        'resolution.Ncontour': 0,
+        'filesystem.read_sequence': ['Date', 'x', 'y'],
+        'filesystem.file.sep': '_-_',
+        'arena.arena_shape': 'rectangular',
+        'arena.arena_dims': (0.24, 0.24),
+
+    }
+    Arg_kws = {
+        'resolution.fr': 10.0,
+        'resolution.Npoints': 5,
+        'resolution.Ncontour': 0,
+        'filesystem.read_sequence': ['Date', 'head_x', 'head_y', 'spinepoint_1_x', 'spinepoint_1_y', 'spinepoint_2_x',
+                                     'spinepoint_2_y', 'spinepoint_2_x', 'spinepoint_2_y', 'spinepoint_3_x',
+                                     'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
+        # 'filesystem.file.suf': 'larvaid.txt',
+        'filesystem.file.sep': '_-_',
+        'arena.arena_shape': 'rectangular',
+        'arena.arena_dims': (0.17, 0.17),
+
+    }
+
+    T0 = preg.get_null('tracker_conf')
+
+    d = {
+        'Schleyer':  dNl.update_nestdict(T0, Scl_kws),
+        'Jovanic':  dNl.update_nestdict(T0, Jov_kws),
+        'Berni':  dNl.update_nestdict(T0, Ber_kws),
+        'Arguello':  dNl.update_nestdict(T0, Arg_kws)}
+    return dNl.NestDict(d)
+
+tracker_formats = build_tracker_formats()
+
 
 importformats = {
     'Schleyer lab': {
         # 'id': 'Schleyer lab',
         'path': 'SchleyerGroup',
-        'tracker': Scl_T,
+        'tracker': tracker_formats['Schleyer'],
         # 'parameterization': parconf(rear_vector=(7, 11)),
         'enrichment': preg.base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001},
                                        metric_definition=import_par_confs['SchleyerParConf']),
@@ -191,7 +101,7 @@ importformats = {
     'Jovanic lab': {
         # 'id': 'Jovanic lab',
         'path': 'JovanicGroup',
-        'tracker': Jov_T,
+        'tracker': tracker_formats['Jovanic'],
         # 'parameterization': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
         'enrichment': preg.base_enrich(
             pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'},
@@ -200,7 +110,7 @@ importformats = {
     'Berni lab': {
         # 'id': 'Berni lab',
         'path': 'BerniGroup',
-        'tracker': Ber_T,
+        'tracker': tracker_formats['Berni'],
         # 'parameterization': parconf(bend=None, point_idx=0),
         'enrichment': preg.enr_dict(
             pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
@@ -210,7 +120,7 @@ importformats = {
     'Arguello lab': {
         'id': 'Arguello lab',
         'path': 'ArguelloGroup',
-        'tracker': Arg_T,
+        'tracker': tracker_formats['Arguello'],
         # 'parameterization': parconf(bend=None, point_idx=0),
         'enrichment': preg.enr_dict(
             pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},

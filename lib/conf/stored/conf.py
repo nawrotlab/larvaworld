@@ -244,9 +244,13 @@ def store_confs(keys=None):
         for k, v in body_dict.items():
             saveConf(v, 'Body', k)
     if 'Data' in keys:
-        from lib.conf.stored.data_conf import importformats, import_par_confs
+        from lib.conf.stored.data_conf import importformats, import_par_confs,tracker_formats
         for k, v in import_par_confs.items():
             saveConf(v, 'Par', k)
+        for k, v in tracker_formats.items():
+            saveConf(v, 'Tracker', k)
+        for k, v in importformats.items():
+            saveConf(v, 'Group', k)
         for k, v in importformats.items():
             saveConf(v, 'Group', k)
         # for g in importformats:

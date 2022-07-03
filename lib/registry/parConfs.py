@@ -101,8 +101,6 @@ class LarvaConfDict:
         self.dict1 = self.build_mode1(init_dict=init_dict)
         self.dict2 = self.build_mode2()
 
-
-
     def build_mode2(self):
         from lib.registry.modConfs import build_brain_module_dict, build_aux_module_dict
         init_bdicts2, mbpredicts2, mbdicts2 = build_brain_module_dict()
@@ -548,7 +546,7 @@ class LarvaConfDict:
 
 
 class LarvaConfDict2:
-    def __init__(self,dist_dict0=None):
+    def __init__(self, dist_dict0=None):
         if dist_dict0 is None:
             from lib.registry.pars import preg
             dist_dict0 = preg.dist_dict0
@@ -566,12 +564,12 @@ class LarvaConfDict2:
         mpredicts2 = dNl.NestDict({**mbpredicts2, **aux_predicts2})
         init_dicts2 = dNl.NestDict({**init_bdicts2, **init_auxdicts2})
 
-        bkeys=list(init_bdicts2.keys())
-        auxkeys=list(init_auxdicts2.keys())
+        bkeys = list(init_bdicts2.keys())
+        auxkeys = list(init_auxdicts2.keys())
 
-        bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2, 'keys' : bkeys}
-        auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2, 'keys' : auxkeys}
-        d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2, 'keys' : bkeys+auxkeys}
+        bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2, 'keys': bkeys}
+        auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2, 'keys': auxkeys}
+        d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2, 'keys': bkeys + auxkeys}
 
         dd = {'brain': bd, 'aux': auxd, 'model': d}
         return dNl.NestDict(dd)
@@ -595,12 +593,11 @@ class LarvaConfDict2:
         conf.update(kwargs)
         return conf
 
-
     def conf(self, mdict=None, mkey=None, mode=None, refID=None, **kwargs):
         if mdict is None:
             mdict = self.get_mdict(mkey, mode)
         conf0 = self.generate_configuration(mdict, **kwargs)
-        conf0=self.fit2refID(conf0, mkey=mkey, refID=refID)
+        conf0 = self.fit2refID(conf0, mkey=mkey, refID=refID)
         return dNl.NestDict(conf0)
 
     def fit2refID(self, conf, mkey=None, refID=None):
@@ -886,7 +883,6 @@ class LarvaConfDict2:
                 B.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
         return B
 
-
     def locoConf(self, module_modes=None, modkws={}):
 
         if module_modes is None:
@@ -899,69 +895,63 @@ class LarvaConfDict2:
         modules = dNl.NestDict()
 
         for mkey, mode in module_modes.items():
-            mlongkey=f'{mkey}_params'
-            if mode is None :
-                modules[mkey]=False
+            mlongkey = f'{mkey}_params'
+            if mode is None:
+                modules[mkey] = False
                 conf[mlongkey] = None
-            else :
+            else:
                 modules[mkey] = True
-                mdict=self.dict.brain.m[mkey].mode[mode].args
+                mdict = self.dict.brain.m[mkey].mode[mode].args
                 if mkey in modkws.keys():
                     mkws = modkws[mkey]
                 else:
                     mkws = {}
                 conf[mlongkey] = self.generate_configuration(mdict, **mkws)
 
-        conf.modules=modules
+        conf.modules = modules
         return conf
-
 
     def brainConf(self, modes=None, modkws={}, nengo=False):
 
         if modes is None:
             modes = {'crawler': 'realistic',
-                            'turner': 'neural',
-                            'interference': 'phasic',
-                            'intermitter': 'default'}
+                     'turner': 'neural',
+                     'interference': 'phasic',
+                     'intermitter': 'default'}
 
         conf = dNl.NestDict()
         modules = dNl.NestDict()
 
         for mkey in self.dict.brain.keys:
-            mlongkey=f'{mkey}_params'
+            mlongkey = f'{mkey}_params'
             if mkey not in modes.keys():
-                modules[mkey]=False
+                modules[mkey] = False
                 conf[mlongkey] = None
-            else :
-                mode=modes[mkey]
+            else:
+                mode = modes[mkey]
                 modules[mkey] = True
-                mdict=self.dict.brain.m[mkey].mode[mode].args
+                mdict = self.dict.brain.m[mkey].mode[mode].args
                 if mkey in modkws.keys():
                     mkws = modkws[mkey]
                 else:
                     mkws = {}
                 conf[mlongkey] = self.generate_configuration(mdict, **mkws)
-                conf[mlongkey]['mode']=mode
+                conf[mlongkey]['mode'] = mode
 
-        conf.modules=modules
-        conf.nengo=nengo
+        conf.modules = modules
+        conf.nengo = nengo
         return conf
 
-
-
     def larvaConf(self, modes=None, energetics=None, auxkws={}, modkws={}, mID=None):
-        bconf=self.brainConf(modes, modkws)
-
+        bconf = self.brainConf(modes, modkws)
 
         conf = dNl.NestDict()
-        conf.brain=bconf
+        conf.brain = bconf
         # for mkey in self.dict.brain.keys:
 
-
-
         for auxkey in self.dict.aux.keys:
-            if auxkey=='energetics' :
-                if energetics is None :
+            if auxkey == 'energetics':
+                if energetics is None:
                     conf[auxkey] = None
                     continue
             mdict = self.dict.aux.m[auxkey].args
@@ -979,31 +969,53 @@ class LarvaConfDict2:
                 'distance': {'N': 0, 'args': {}}
             }
         }
-        conf.Box2D_params=null_Box2D_params
+        conf.Box2D_params = null_Box2D_params
+
+        #
+        # T0=
 
         self.saveConf(conf, mID)
 
         return conf
 
+    def storeConfs(self):
+        self.larvaConf(mID='loco_default')
+        self.larvaConf(mID='RE_NEU_PHI_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'default'})
+        self.larvaConf(mID='RE_NEU_SQ_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='RE_NEU_DEF_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'default','intermitter': 'default'})
+        self.larvaConf(mID='SQ_NEU_PHI_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'phasic','intermitter': 'default'})
+        self.larvaConf(mID='SQ_NEU_SQ_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='SQ_NEU_DEF_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'default','intermitter': 'default'})
+        self.larvaConf(mID='CON_NEU_PHI_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'phasic','intermitter': 'default'})
+        self.larvaConf(mID='CON_NEU_SQ_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='CON_NEU_DEF_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'default','intermitter': 'default'})
+        self.larvaConf(mID='RE_SIN_PHI_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'phasic','intermitter': 'default'})
+        self.larvaConf(mID='RE_SIN_SQ_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='RE_SIN_DEF_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'default','intermitter': 'default'})
+
+
+
     def saveConf(self, conf, mID=None):
-        if mID is not None :
+        if mID is not None:
             from lib.conf.stored.conf import saveConf
             saveConf(conf, 'Model', mID)
 
     def loadConf(self, mID=None):
-        if mID is not None :
+        if mID is not None:
             from lib.conf.stored.conf import loadConf
             return loadConf(mID, 'Model')
 
-
-
+    def storedConf(self, **kwargs):
+        from lib.conf.stored.conf import kConfDict
+        return kConfDict('Model',**kwargs)
 
 
 if __name__ == '__main__':
-    dd=LarvaConfDict2()
-    m=dd.larvaConf(mID='loco_default')
+    dd = LarvaConfDict2()
+    # dd.storeConfs()
+    # m = dd.larvaConf(mID='loco_default')
 
-    # print(dd.dict.brain.keys)
+    print(dd.storedConf())
     # print(dd.dict.aux.keys)
     # d=dd.dict
     # from lib.conf.stored.conf import kConfDict

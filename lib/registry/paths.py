@@ -49,6 +49,7 @@ def build_path_dict() :
 
     conf_paths = {
         'Group': f'{CF}/DataGroups.txt',
+        'Tracker': f'{CF}/TrackerFormats.txt',
         'Env': f'{CF}/EnvConfs.txt',
         'Par': f'{CF}/ParConfs.txt',
         'Exp': f'{CF}/ExpConfs.txt',
