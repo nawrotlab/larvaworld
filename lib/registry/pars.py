@@ -332,12 +332,6 @@ class ParRegistry:
         return list(self.loadConfDict(conftype=conftype, **kwargs).keys())
 
 
-    # def new_tracker_format(self, id=None, kwargs={}):
-    #     T0 = preg.get_null('tracker')
-    #     T=dNl.update_nestdict(T0, kwargs)
-    #     if id is not None:
-    #         self.saveConf(T,'Tracker', id)
-
 
 preg = ParRegistry()
 
