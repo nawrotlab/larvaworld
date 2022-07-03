@@ -153,24 +153,6 @@ def next_idx(exp, type='Exp'):
     return d[type][exp]
 
 
-def store_reference_data_confs():
-    from lib.stor.larva_dataset import LarvaDataset
-    from lib.aux.dictsNlists import flatten_list
-    from lib.registry.pars import preg
-    DATA = preg.path_dict["DATA"]
-    # DATA = paths.path('DATA')
-
-    dds = [
-        [f'{DATA}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
-         in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
-    dds = flatten_list(dds)
-    dds.append(f'{DATA}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
-    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200_controls')
-    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/10_controls')
-    for dr in dds:
-        d = LarvaDataset(dr, load_data=False)
-        d.save_config(add_reference=True)
-
 
 def modshort(vv):
     mm = vv.brain.modules
@@ -217,72 +199,6 @@ def modshort(vv):
     return fmm
 
 
-def store_confs(keys=None):
-    if keys is None:
-        keys = ['Ref', 'Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga']
-    if 'Aux' in keys:
-        from lib.conf.stored.aux_conf import trial_dict, life_dict, body_dict
-        for k, v in trial_dict.items():
-            saveConf(v, 'Trial', k)
-        for k, v in life_dict.items():
-            saveConf(v, 'Life', k)
-        for k, v in body_dict.items():
-            saveConf(v, 'Body', k)
-    if 'Data' in keys:
-        from lib.conf.stored.data_conf import importformats, import_par_confs,tracker_formats
-        for k, v in import_par_confs.items():
-            saveConf(v, 'Par', k)
-        for k, v in tracker_formats.items():
-            saveConf(v, 'Tracker', k)
-        for k, v in importformats.items():
-            saveConf(v, 'Group', k)
-        for k, v in importformats.items():
-            saveConf(v, 'Group', k)
-        # for g in importformats:
-        #     saveConf(g, 'Group')
-    if 'Ref' in keys:
-        store_reference_data_confs()
-
-    if 'Model' in keys:
-        import lib.conf.stored.larva_conf as mod
-        from lib.aux.dictsNlists import merge_dicts
-        d = mod.create_mod_dict()
-        mod_dict = merge_dicts(list(d.values()))
-        mod_group_dict = {k: {'model families' : list(v.keys())} for k, v in d.items()}
-        # mod_group_dict = {k: {kk: modshort(vv) for kk, vv in v.items()} for k, v in d.items()}
-        for k, v in mod_dict.items():
-            saveConf(v, 'Model', k)
-        for k, v in mod_group_dict.items():
-            saveConf(v, 'ModelGroup', k)
-    if 'Env' in keys:
-        from lib.conf.stored.env_conf import env_dict
-        for k, v in env_dict.items():
-            saveConf(v, 'Env', k)
-    if 'Exp' in keys:
-        import lib.conf.stored.exp_conf as exp
-        import lib.conf.stored.essay_conf as essay
-        import lib.conf.stored.batch_conf as bat
-        from lib.aux.dictsNlists import merge_dicts
-
-        d = exp.grouped_exp_dict
-        exp_dict = merge_dicts(list(d.values()))
-        exp_group_dict = {k: {'simulations': list(v.keys())} for k, v in d.items()}
-        for k, v in exp_dict.items():
-            saveConf(v, 'Exp', k)
-        for k, v in exp_group_dict.items():
-            saveConf(v, 'ExpGroup', k)
-
-        for k, v in essay.essay_dict.items():
-            saveConf(v, 'Essay', k)
-
-        for k, v in bat.batch_dict.items():
-            saveConf(v, 'Batch', k)
-    if 'Ga' in keys:
-        from lib.conf.stored.ga_conf import ga_dic
-        for k, v in ga_dic.items():
-            saveConf(v, 'Ga', k, use_pickle=True)
-
-
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
     from lib.registry.pars import preg
 
@@ -314,15 +230,3 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
     exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)
     return exp_conf
-
-
-if __name__ == '__main__':
-    # print(next_idx('dispersion', 'Eval'))
-    # raise
-    # store_confs(['Model'])
-    # store_confs(['Aux'])
-    # store_confs(['Env'])
-    # store_confs(['Exp'])
-    store_confs(['Data'])
-    # store_confs(['Ga'])
-    # store_confs(keys = ['Data', 'Aux', 'Model', 'Env', 'Exp', 'Ga'])

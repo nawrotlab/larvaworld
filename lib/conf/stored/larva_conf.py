@@ -7,7 +7,7 @@ import numpy as np
 
 from lib.aux.dictsNlists import NestDict
 from lib.registry.pars import preg
-
+from lib.aux import dictsNlists as dNl
 
 def Im(EEB, **kwargs):
     return preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=0.0, **kwargs)
@@ -313,3 +313,7 @@ def create_mod_dict():
     }
 
     return grouped_mod_dict
+
+d = create_mod_dict()
+mod_dict = dNl.merge_dicts(list(d.values()))
+mod_group_dict = {k: {'model families': list(v.keys())} for k, v in d.items()}

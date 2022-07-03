@@ -2,7 +2,7 @@ import numpy as np
 
 from lib.conf.stored.conf import imitation_exp, loadConf
 from lib.registry.pars import preg
-
+from lib.aux import dictsNlists as dNl
 
 def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
     sub0 = preg.get_null('substrate', type=substrate_type, quality=q)
@@ -251,3 +251,6 @@ grouped_exp_dict = {
         'imitation': imitation_exp('None.50controls', model='explorer'),
     }
 }
+
+exp_dict = dNl.merge_dicts(list(grouped_exp_dict.values()))
+exp_group_dict = {k: {'simulations': list(v.keys())} for k, v in grouped_exp_dict.items()}

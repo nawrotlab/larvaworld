@@ -7,16 +7,36 @@ import numpy as np
 import pandas as pd
 import param
 
+
 from lib.registry.par import v_descriptor
 from lib.aux import dictsNlists as dNl
+
+
+def store_reference_data_confs():
+    from lib.stor.larva_dataset import LarvaDataset
+    DATA = preg.path_dict["DATA"]
+    dds = [
+        [f'{DATA}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
+         in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
+    dds = dNl.flatten_list(dds)
+    dds.append(f'{DATA}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
+    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200_controls')
+    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/10_controls')
+    for dr in dds:
+        try :
+            d = LarvaDataset(dr, load_data=False)
+            d.save_config(add_reference=True)
+        except :
+            pass
 
 
 class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=False):
         from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict
-
+        self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker', 'Group', 'Trial',
+                          'Life', 'Body']
         self.path_dict = paths.build_path_dict()
-        self.confID_dict = self.confID_dict()
+        self.confID_dict = self.build_confID_dict()
         self.init_dict = init_pars.ParInitDict().dict
         # self.mfunc = par_funcs.module_func_dict()
         self.parser_dict = parser_dict.ParserDict(init_dict=self.init_dict).dict
@@ -340,11 +360,11 @@ class ParRegistry:
 
         return func
 
-    def confID_dict(self):
+    def build_confID_dict(self):
         from lib.aux.par_aux import sub
         from lib.registry.par_dict import preparePar
         d = {}
-        for conftype in ['Model', 'Env', 'Exp', 'Essay', 'Trial', 'Tracker', 'Group', 'Life', 'Ga']:
+        for conftype in self.conftypes:
             low = conftype.lower()
             k = f'{low}ID'
             dic = {'dtype': str, 'vparfunc': self.conf_selector_func(conftype), 'vs': self.storedConf(conftype),
@@ -354,6 +374,48 @@ class ParRegistry:
             p = v_descriptor(**prepar)
             d[p.p] = p
         return dNl.NestDict(d)
+
+    def storeConfs(self, conftypes=None):
+        if conftypes is None:
+            conftypes = self.conftypes
+
+        for conftype in conftypes:
+            if conftype == 'Ref':
+                store_reference_data_confs()
+                continue
+            elif conftype == 'Trial':
+                from lib.conf.stored.aux_conf import trial_dict as d
+            elif conftype == 'Life':
+                from lib.conf.stored.aux_conf import life_dict as d
+            elif conftype == 'Body':
+                from lib.conf.stored.aux_conf import body_dict as d
+            elif conftype == 'Tracker':
+                from lib.conf.stored.data_conf import tracker_formats as d
+            elif conftype == 'Group':
+                from lib.conf.stored.data_conf import importformats as d
+            elif conftype == 'Model':
+                from lib.conf.stored.larva_conf import mod_dict as d
+            elif conftype == 'ModelGroup':
+                from lib.conf.stored.larva_conf import mod_group_dict as d
+            elif conftype == 'Env':
+                from lib.conf.stored.env_conf import env_dict as d
+            elif conftype == 'Exp':
+                from lib.conf.stored.exp_conf import exp_dict as d
+            elif conftype == 'ExpGroup':
+                from lib.conf.stored.exp_conf import exp_group_dict as d
+            elif conftype == 'Essay':
+                from lib.conf.stored.essay_conf import essay_dict as d
+            elif conftype == 'Batch':
+                from lib.conf.stored.batch_conf import batch_dict as d
+
+            elif conftype == 'Ga':
+                from lib.conf.stored.ga_conf import ga_dic as d
+            else :
+                continue
+            for id, conf in d.items():
+                self.saveConf(conf=conf, conftype=conftype, id=id)
+
+        self.confID_dict = self.build_confID_dict()
 
 
 preg = ParRegistry()
