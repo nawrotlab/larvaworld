@@ -68,7 +68,13 @@ def foodNodor_4corners(d=0.05):
     return dic
 
 
-def env(a, f=f_pars(), o=None, bl={}, w=None, th=None):
+def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None):
+    if type(arenaXY) == float:
+        arena = preg.get_null('arena', arena_shape='circular', arena_dims=(arenaXY, arenaXY))
+    elif type(arenaXY) == tuple:
+        arena = preg.get_null('arena', arena_shape='rectangular', arena_dims=arenaXY)
+    else:
+        raise
     if o == 'D':
         o = {'odorscape': 'Diffusion',
              'grid_dims': [51, 51],
@@ -90,7 +96,8 @@ def env(a, f=f_pars(), o=None, bl={}, w=None, th=None):
         w = preg.get_null('windscape', **w)
     if th is not None:
         th = preg.get_null('thermoscape', **th)
-    return preg.get_null('env_conf', arena=a, food_params=f, odorscape=o, border_list=bl, windscape=w, thermoscape=th)
+    return preg.get_null('env_conf', arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,
+                         thermoscape=th)
 
 
 def CS_UCS(N=2, x=0.04):
@@ -107,8 +114,13 @@ def CS_UCS(N=2, x=0.04):
 
 
 def double_patches(type='standard'):
-    return {**su('Left_patch', pos=(-0.06, 0.0), o=preg.oG(id='Odor'), c='green', r=0.025, a=0.1, type=type),
-            **su('Right_patch', pos=(0.06, 0.0), o=preg.oG(id='Odor'), c='green', r=0.025, a=0.1, type=type)}
+    return {
+            'Left_patch': preg.get_null('source', pos=(-0.06, 0.0), default_color='green', group='Source', radius=0.025,
+                                        amount=0.1, odor=preg.oG(id='Odor'), type=type),
+            'Right_patch': preg.get_null('source', pos=(0.06, 0.0), default_color='green', group='Source', radius=0.025,
+                                         amount=0.1, odor=preg.oG(id='Odor'), type=type)
+            }
+
 
 
 def maze_conf(n, h):
@@ -127,9 +139,12 @@ def maze_conf(n, h):
         else:
             return lines
 
-    return env(preg.arena(h, h),
-
-               f=f_pars(su=su('Target', o=preg.oG(), c='blue')), o='G',
+    return env((h, h),
+               f={'source_groups': {},
+                  'food_grid': None,
+                  'source_units': su('Target', o=preg.oG(), c='blue')},
+               # f=f_pars(su=su('Target', o=preg.oG(), c='blue')),
+               o='G',
                bl={'Maze': {
                    'points': maze(nx=n, ny=n, h=h, return_points=True),
                    'default_color': 'black',
@@ -140,58 +155,60 @@ def game_env(dim=0.1, x=0.4, y=0.0):
     x = np.round(x * dim, 3)
     y = np.round(y * dim, 3)
 
-    return env(preg.arena(dim, dim),
-               f=f_pars(su={
-                   **su('Flag', c='green', can_be_carried=True, a=0.01, o=preg.oG(2, id='Flag_odor')),
-                   **su('Left_base', pos=(-x, y), c='blue', o=preg.oG(id='Left_base_odor')),
-                   **su('Right_base', pos=(+x, y), c='red', o=preg.oG(id='Right_base_odor'))}),
+    sus = {**su('Flag', c='green', can_be_carried=True, a=0.01, o=preg.oG(2, id='Flag_odor')),
+           **su('Left_base', pos=(-x, y), c='blue', o=preg.oG(id='Left_base_odor')),
+           **su('Right_base', pos=(+x, y), c='red', o=preg.oG(id='Right_base_odor'))}
+
+    return env((dim, dim),
+               f={'source_groups': {},
+                  'food_grid': None,
+                  'source_units': sus},
                o='G')
 
 
 env_dict = {
-    'focus': env(preg.arena(0.01, 0.01)),
-    'dish': env(preg.arena(0.1)),
-    'arena_200mm': env(preg.arena(0.2, 0.2)),
-    'arena_500mm': env(preg.arena(0.5, 0.5)),
-
-    'odor_gradient': env(preg.arena(0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=preg.oG(2))), 'G'),
-    'mid_odor_gaussian': env(preg.arena(0.1, 0.06), f_pars(su=su(o=preg.oG())), 'G'),
-    'mid_odor_diffusion': env(preg.arena(0.3, 0.3), f_pars(su=su(r=0.03, o=preg.oD())), 'D'),
-    '4corners': env(preg.arena(0.2, 0.2), f_pars(su=foodNodor_4corners()), 'D'),
-    'food_at_bottom': env(preg.arena(0.2, 0.2),
+    'focus': env((0.01, 0.01)),
+    'dish': env(0.1),
+    'arena_200mm': env((0.2, 0.2)),
+    'arena_500mm': env((0.5, 0.5)),
+    'odor_gradient': env((0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=preg.oG(2))), 'G'),
+    'mid_odor_gaussian': env((0.1, 0.06), f_pars(su=su(o=preg.oG())), 'G'),
+    'mid_odor_diffusion': env((0.3, 0.3), f_pars(su=su(r=0.03, o=preg.oD())), 'D'),
+    '4corners': env((0.2, 0.2), f_pars(su=foodNodor_4corners()), 'D'),
+    'food_at_bottom': env((0.2, 0.2),
                           f_pars(sg=sg('FoodLine', o=preg.oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
                                        m='periphery')), 'G'),
-    'thermo_arena': env(preg.arena(0.3, 0.3), th={}),
-    'windy_arena': env(preg.arena(0.3, 0.3), w={'wind_speed': 10.0}),
-    'windy_blob_arena': env(preg.arena(0.128, 0.014),
+    'thermo_arena': env((0.3, 0.3), th={}),
+    'windy_arena': env((0.3, 0.3), w={'wind_speed': 10.0}),
+    'windy_blob_arena': env((0.128, 0.014),
                             f_pars(sg=sgs(1, qs=np.ones(4), cs=N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
                                           m='uniform', shape='rectangular', can_be_displaced=True,
                                           regeneration=True,
                                           regeneration_pos={'loc': (0.005, 0.0), 'scale': (0.0, 0.0)})),
                             w={'wind_speed': 1.0}),
-    'windy_arena_bordered': env(preg.arena(0.3, 0.3), w={'wind_speed': 10.0},
+    'windy_arena_bordered': env((0.3, 0.3), w={'wind_speed': 10.0},
                                 bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
-    'puff_arena_bordered': env(preg.arena(0.3, 0.3), w={'puffs': {'PuffGroup': {}}},
+    'puff_arena_bordered': env((0.3, 0.3), w={'puffs': {'PuffGroup': {}}},
                                bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),
-    'single_puff': env(preg.arena(0.3, 0.3),
+    'single_puff': env((0.3, 0.3),
                        w={'puffs': {'Puff': {'N': 1, 'duration': 30.0, 'start_time': 55, 'speed': 100}}}),
 
-    'CS_UCS_on_food': env(preg.arena(0.1), f_pars(grid=preg.get_null('food_grid'), su=CS_UCS(1)), 'G'),
-    'CS_UCS_on_food_x2': env(preg.arena(0.1), f_pars(grid=preg.get_null('food_grid'), su=CS_UCS(2)), 'G'),
-    'CS_UCS_off_food': env(preg.arena(0.1), f_pars(su=CS_UCS(1)), 'G'),
+    'CS_UCS_on_food': env(0.1, f_pars(grid=preg.get_null('food_grid'), su=CS_UCS(1)), 'G'),
+    'CS_UCS_on_food_x2': env(0.1, f_pars(grid=preg.get_null('food_grid'), su=CS_UCS(2)), 'G'),
+    'CS_UCS_off_food': env(0.1, f_pars(su=CS_UCS(1)), 'G'),
 
-    'patchy_food': env(preg.arena(0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=preg.oG(2))), 'G'),
-    'random_food': env(preg.arena(0.1, 0.1), f_pars(sg=sgs(4, N=1, s=0.04, m='uniform', shape='rectangular')), 'G'),
-    'uniform_food': env(preg.arena(0.05), f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
-    'food_grid': env(preg.arena(0.02, 0.02), f_pars(grid=preg.get_null('food_grid'))),
-    'single_odor_patch': env(preg.arena(0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=preg.oG())), 'G'),
-    'single_patch': env(preg.arena(0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01))),
-    'multi_patch': env(preg.arena(0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
-    'double_patch': env(preg.arena(0.24, 0.24),
+    'patchy_food': env((0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=preg.oG(2))), 'G'),
+    'random_food': env((0.1, 0.1), f_pars(sg=sgs(4, N=1, s=0.04, m='uniform', shape='rectangular')), 'G'),
+    'uniform_food': env(0.05, f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
+    'food_grid': env((0.02, 0.02), f_pars(grid=preg.get_null('food_grid'))),
+    'single_odor_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=preg.oG())), 'G'),
+    'single_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01))),
+    'multi_patch': env((0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
+    'double_patch': env((0.24, 0.24),
                         f_pars(su=double_patches()),
                         'G'),
 
     'maze': maze_conf(15, 0.1),
     'game': game_env(),
-    'arena_50mm_diffusion': env(preg.arena(0.05), o='D'),
+    'arena_50mm_diffusion': env(0.05, o='D'),
 }

@@ -186,14 +186,13 @@ class ParRegistry:
                             dic2[k][k0] = kwargs[k0]
             return dNl.NestDict(dic2)
 
-    def odor(self, i, s, id='Odor'):
-        return self.get_null('odor', odor_id=id, odor_intensity=i, odor_spread=s)
-
     def oG(self, c=1, id='Odor'):
-        return self.odor(i=2.0 * c, s=0.0002 * np.sqrt(c), id=id)
+        return self.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+        # return self.odor(i=2.0 * c, s=0.0002 * np.sqrt(c), id=id)
 
     def oD(self, c=1, id='Odor'):
-        return self.odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
+        return self.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
+        # return self.odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
 
     def arena(self, x, y=None):
         if y is None:
@@ -452,3 +451,6 @@ class ParRegistry:
 
 
 preg = ParRegistry()
+
+if __name__ == '__main__':
+    preg.storeConfs()

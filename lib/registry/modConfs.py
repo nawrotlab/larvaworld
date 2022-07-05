@@ -581,7 +581,7 @@ if __name__ == '__main__':
     # #     print(mID)
     # #     B = dd.init_brain_mID(mID=mID)
     from lib.registry.pars import preg
-    preg.storeConfs()
+    # preg.storeConfs()
     # D=preg.confID_dict
     # f=D.Exp.v
     # D.Exp.v='focus'
@@ -592,8 +592,8 @@ if __name__ == '__main__':
     # # f=preg.init_dict['GAconf']
     #
     # # f=preg.newConf('Model')
-    # print(f)
-    print(preg.storedConf('Model'))
+    print(preg.get_null('env_conf'))
+    # print(preg.storedConf('Model'))
 
     # f = preg.newConf('Model', id0='explorer', kwargs={'brain.turner_params.mode': 'constant'})
     # print(f)

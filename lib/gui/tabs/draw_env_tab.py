@@ -276,9 +276,8 @@ class DrawEnvTab(DrawTab):
                             if id in list(db[self.Bg]['items'].keys()) or id == '':
                                 info.update(value=f"{B} id {id} already exists or is empty")
                             else:
-                                from lib.conf.stored.env_conf import border
-                                dic['current'] = border(ps=[P1, P2], c=v[f'{B}_color'],
-                                                                             w=float(v[f'{B}_width']), id=id)
+                                dic['current'] = {id:preg.get_null('Border', points=[P1, P2], default_color=v[f'{B}_color'], width=float(v[f'{B}_width']))}
+                                # dic['current'] = border(ps=[P1, P2], c=v[f'{B}_color'],w=float(v[f'{B}_width']), id=id)
                                 dic['prior_rect'] = self.graph.draw_line(p1, p2, color=v[f'{B}_color'],
                                                                          width=int(float(v[f'{B}_width']) * self.s))
         elif e.endswith('+UP'):  # The drawing has ended because mouse up
