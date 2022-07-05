@@ -282,6 +282,6 @@ essay_dict = {
 
 if __name__ == "__main__":
     # figs, results = RvsS_Essay(all_figs=False).run()
-    E = DoublePatch_Essay(video=False)
+    E = DoublePatch_Essay(video=False, N=3, dur=3)
     ds = E.run()
     figs, results = E.anal()

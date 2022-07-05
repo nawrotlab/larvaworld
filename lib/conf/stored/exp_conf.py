@@ -203,7 +203,7 @@ grouped_exp_dict = {
                                             ids=['Orco', 'control'], N=5, mode='periphery', s=0.03)),
         'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
                                  c=['toucher', 'feeder', 'olfactor'],
-                                 enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source']), en=False),
+                                 enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],interference=False, on_food=True, fits=False), en=False),
         'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
                                       l=lg(m='toucher', N=15, mode='periphery', s=0.03), en=False),
         'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],

@@ -314,6 +314,8 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
             mdf = get_df(par)
             plot_p(mdf, ii, 'Model')
         P.conf_ax(ii, xlab=xlabel if ii>3 else None, ylab=ylab, ylim=None)
+    P.fig.align_ylabels(P.axs[:])
+    P.fig.suptitle('Double-patch experiment', size=40, weight='bold')
     P.adjust((0.1,0.95), (0.15,0.9), 0.3,0.3)
     return P.get()
 
