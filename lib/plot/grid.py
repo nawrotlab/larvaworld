@@ -161,15 +161,12 @@ def dsp_summary(datasets, target=None,range=(0,40), **kwargs):
     return P.get()
 
 def chemo_summary(datasets, **kwargs):
-    w, h = 54,26
-    P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
-    # Nplots=2
+    w, h = 30,36
+    P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
     time_ks=['c_odor1', 'dc_odor1']
     Nks=len(time_ks)
     Nexps=len(datasets)
-    # ds=datasets
     h1exp=int(h/Nexps)
-    # h1plot=int(h1exp / Nplots)
     h1k=int(h1exp / (Nks+1))
     for i,(exp,dds) in enumerate(datasets.items()):
         dds=dNl.flatten_list(dds)
@@ -185,7 +182,7 @@ def chemo_summary(datasets, **kwargs):
             'x0': True,
             'w': w,
         }
-        P.plot(func='trajectories', kws=kws1, **kws2, N=Ndds, share_h=True, h=h1k, h0=i * h1exp)
+        P.plot(func='trajectories', kws=kws1, **kws2, N=Ndds, share_h=True, h=h1k-2,y0=True if i==0 else False, h0=i * h1exp)
         P.plot(func='autoplot', kws={
                 'ks': time_ks,
                 # 'ks': ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'],
@@ -193,9 +190,9 @@ def chemo_summary(datasets, **kwargs):
                 'individuals': False,
                 'unit': 'min',
                 **kws1
-            }, **kws2,N=Nks, share_w=True, h=Nks*h1k, h0=i*h1exp+h1k)
+            }, **kws2,N=Nks, share_w=True, dh=0, h=Nks*(h1k-1), h0=i*h1exp+h1k)
 
-    P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)
+    P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
     P.annotate()
     return P.get()
 

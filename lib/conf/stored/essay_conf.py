@@ -45,6 +45,7 @@ class Essay:
 
     def anal(self):
         self.global_anal(self.datasets)
+        # raise
         for exp, ds0 in self.datasets.items():
             if ds0 is not None and len(ds0) != 0 and all([d0 is not None for d0 in ds0]):
                 self.analyze(exp=exp, ds0=ds0)

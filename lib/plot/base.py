@@ -24,7 +24,6 @@ class BasePlot:
         self.show = show
         self.fit_df = None
         self.save_to = save_to
-
         self.cur_idx = 0
         self.text_x0, self.text_y0 = text_xy0
         self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']

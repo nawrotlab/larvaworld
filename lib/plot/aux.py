@@ -352,6 +352,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
 
 def process_plot(fig, save_to, filename, return_fig=False, show=False):
     if show:
+        # raise
         plt.show()
     fig.patch.set_visible(False)
     if return_fig:
