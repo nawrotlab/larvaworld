@@ -105,6 +105,7 @@ class BaseParDict:
         self.build_spatial(in_m)
         self.build_chunks()
         self.build_sim_pars()
+        self.build_deb_pars()
 
     # def confID_dict(self):
 
@@ -622,3 +623,9 @@ class BaseParDict:
                 k0=f'{kk}_{k}'
                 p0=f'{b.p}_{k}'
                 self.add(**{'p': p0, 'k': k0, 'disp' : f'{b.disp} {ii} food'})
+
+    def build_deb_pars(self):
+        ks=['f_am', 'sf_am_Vg', 'f_am_V','sf_am_V', 'sf_am_A', 'sf_am_M']
+        ps=['amount_eaten', 'deb.ingested_gut_volume_ratio', 'deb.gut.ingested_volume','deb.ingested_body_volume_ratio', 'deb.ingested_body_area_ratio', 'deb.ingested_body_mass_ratio']
+        for k,p in zip(ks,ps) :
+            self.add(**{'p': p, 'k': k})

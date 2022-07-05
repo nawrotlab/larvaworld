@@ -70,8 +70,13 @@ class RvsS_Essay(Essay):
         self.durs = [10, 15, 20]
         self.dur = 5
         self.substrates = ['Agar', 'Yeast']
-        self.exp_dict = {**self.intake_exp(), **self.starvation_exp(),
-                         **self.quality_exp(), **self.refeeding_exp(), **self.pathlength_exp()}
+        self.exp_dict = {
+            **self.intake_exp(),
+            **self.starvation_exp(),
+            **self.quality_exp(),
+            **self.refeeding_exp(),
+            **self.pathlength_exp()
+        }
         self.all_figs = all_figs
 
     def RvsS_env(self, on_food=True):
@@ -129,69 +134,69 @@ class RvsS_Essay(Essay):
                 **dsNls(ds0, lls),
                 'xlabel': r'time on substrate $(min)$',
             }
-            self.figs[f'1_{exp}'] = preg.graph_dict['pathlength'](scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm',
-                                                                  **kwargs)
+            self.figs[f'1_{exp}'] = self.G.dict['pathlength'](scaled=False, save_as=f'1_PATHLENGTH.pdf', unit='cm',
+                                                              **kwargs)
 
         elif exp == 'intake':
             kwargs = {**dsNls(ds0),
                       'coupled_labels': self.durs,
                       'xlabel': r'Time spent on food $(min)$'}
-            self.figs[f'2_{exp}'] = preg.graph_dict['barplot'](par_shorts=['sf_am_V'],
-                                                               save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
+            self.figs[f'2_{exp}'] = self.G.dict['barplot'](par_shorts=['sf_am_V'],
+                                                           save_as=f'2_AD_LIBITUM_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = preg.graph_dict['barplot'](par_shorts=[s],
-                                                                         save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
+                    self.figs[f'{exp} {p}'] = self.G.dict['barplot'](par_shorts=[s],
+                                                                     save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
         elif exp == 'starvation':
             kwargs = {**dsNls(ds0),
                       'coupled_labels': self.hs,
                       'xlabel': r'Food deprivation $(h)$'}
-            self.figs[f'3_{exp}'] = preg.graph_dict['lineplot'](par_shorts=['f_am_V'],
-                                                                save_as='3_POST-STARVATION_INTAKE.pdf',
-                                                                ylabel='Food intake', scale=1000, **kwargs)
+            self.figs[f'3_{exp}'] = self.G.dict['lineplot'](par_shorts=['f_am_V'],
+                                                            save_as='3_POST-STARVATION_INTAKE.pdf',
+                                                            ylabel='Food intake', scale=1000, **kwargs)
             if self.all_figs:
                 for ii in ['feeding']:
-                    self.figs[ii] = preg.graph_dict['deb'](mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf',
-                                                           include_egg=False,
-                                                           label_epochs=False, **kwargs)
+                    self.figs[ii] = self.G.dict['deb'](mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf',
+                                                       include_egg=False,
+                                                       label_epochs=False, **kwargs)
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = preg.graph_dict['lineplot'](par_shorts=[s],
-                                                                          save_as=f'3_POST-STARVATION_{p}.pdf',
-                                                                          **kwargs)
+                    self.figs[f'{exp} {p}'] = self.G.dict['lineplot'](par_shorts=[s],
+                                                                      save_as=f'3_POST-STARVATION_{p}.pdf',
+                                                                      **kwargs)
 
         elif exp == 'quality':
             kwargs = {**dsNls(ds0),
                       'coupled_labels': [int(q * 100) for q in self.qs],
                       'xlabel': 'Food quality (%)'
                       }
-            self.figs[f'4_{exp}'] = preg.graph_dict['barplot'](par_shorts=['sf_am_V'],
-                                                               save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
+            self.figs[f'4_{exp}'] = self.G.dict['barplot'](par_shorts=['sf_am_V'],
+                                                           save_as='4_REARING-DEPENDENT_INTAKE.pdf', **kwargs)
             if self.all_figs:
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = preg.graph_dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf',
-                                                                         **kwargs)
+                    self.figs[f'{exp} {p}'] = self.G.dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf',
+                                                                     **kwargs)
 
         elif exp == 'refeeding':
             h = 3
             n = f'5_REFEEDING_after_{h}h_starvation_'
             kwargs = dsNls(ds0)
-            self.figs[f'5_{exp}'] = preg.graph_dict['food intake (timeplot)'](scaled=True, filt_amount=True,
-                                                                              save_as='5_REFEEDING_INTAKE.pdf',
-                                                                              **kwargs)
+            self.figs[f'5_{exp}'] = self.G.dict['food intake (timeplot)'](scaled=True, filt_amount=True,
+                                                                          save_as='5_REFEEDING_INTAKE.pdf',
+                                                                          **kwargs)
 
             if self.all_figs:
-                self.figs[f'{exp} food-intake'] = preg.graph_dict['food intake (timeplot)'](scaled=True,
-                                                                                            save_as=f'{n}scaled_intake.pdf',
-                                                                                            **kwargs)
-                self.figs[f'{exp} food-intake(filt)'] = preg.graph_dict['food intake (timeplot)'](scaled=True,
-                                                                                                  filt_amount=True,
-                                                                                                  save_as=f'{n}scaled_intake_filt.pdf',
-                                                                                                  **kwargs)
+                self.figs[f'{exp} food-intake'] = self.G.dict['food intake (timeplot)'](scaled=True,
+                                                                                        save_as=f'{n}scaled_intake.pdf',
+                                                                                        **kwargs)
+                self.figs[f'{exp} food-intake(filt)'] = self.G.dict['food intake (timeplot)'](scaled=True,
+                                                                                              filt_amount=True,
+                                                                                              save_as=f'{n}scaled_intake_filt.pdf',
+                                                                                              **kwargs)
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = preg.graph_dict['timeplot'](par_shorts=[s], show_first=False,
-                                                                          subfolder=None,
-                                                                          save_as=f'{n}{p}.pdf', **kwargs)
+                    self.figs[f'{exp} {p}'] = self.G.dict['timeplot'](par_shorts=[s], show_first=False,
+                                                                      subfolder=None,
+                                                                      save_as=f'{n}{p}.pdf', **kwargs)
 
 
 class DoublePatch_Essay(Essay):
@@ -251,7 +256,7 @@ class Chemotaxis_Essay(Essay):
                                                                      bouts=[], fits=False, interference=False,
                                                                      on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
-        self.time_ks=['c_odor1', 'dc_odor1']
+        self.time_ks = ['c_odor1', 'dc_odor1']
         self.N = N
         self.dur = dur
         self.gain = gain
@@ -337,8 +342,6 @@ class Chemotaxis_Essay(Essay):
         return {exp1: [e1], exp2: [e2]}
 
     def analyze(self, exp, ds0):
-
-
         kwargs = {'datasets': flatten_list(ds0),
                   'save_to': self.plot_dir,
                   'show': self.show}
@@ -413,7 +416,8 @@ essay_dict = {
 
 if __name__ == "__main__":
     # figs, results = RvsS_Essay(all_figs=False).run()
-    E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
+    E = RvsS_Essay(video=False, all_figs=True)
+    # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
     # E = DoublePatch_Essay(video=False, N=3, dur=3)
     ds = E.run()
     figs, results = E.anal()
