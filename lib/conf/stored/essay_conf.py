@@ -241,12 +241,10 @@ class RvsS_Essay(Essay):
         P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold',
                    horizontalalignment='center')
         for i, entry in enumerate(entrylist):
-            # h0 = i * h1exp
             P.fig.text(x=0.5, y=0.95 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
                        horizontalalignment='center')
             P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,
-                   y0=True if i == 0 else False,
-                   h0=i * h1exp + (i + 1) * 1)
+                   y0=True if i == 0 else False, h0=i * h1exp + (i + 1) * 1)
         P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
         P.annotate()
         return P.get()
