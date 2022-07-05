@@ -53,6 +53,7 @@ def build():
     })
     d['grid'] = dNl.NestDict({
         'dispersal summary': grid.dsp_summary,
+        'chemotaxis summary': grid.chemo_summary,
         'eval summary': grid.result_summary
     })
     d['hist'] = dNl.NestDict({

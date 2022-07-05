@@ -44,15 +44,20 @@ class Essay:
         return self.datasets
 
     def anal(self):
+        self.global_anal(self.datasets)
         for exp, ds0 in self.datasets.items():
             if ds0 is not None and len(ds0) != 0 and all([d0 is not None for d0 in ds0]):
                 self.analyze(exp=exp, ds0=ds0)
+
         shutil.rmtree(self.full_path, ignore_errors=True)
         return self.figs, self.results
 
     def analyze(self, exp, ds0):
         pass
         # return {}, None
+
+    def global_anal(self, datasets):
+        pass
 
 
 class RvsS_Essay(Essay):
@@ -240,7 +245,7 @@ class DoublePatch_Essay(Essay):
 
 
 class Chemotaxis_Essay(Essay):
-    def __init__(self, N=5, dur=5.0, gain=50.0,mID0= 'RE_NEU_SQ_DEF_nav',  **kwargs):
+    def __init__(self, N=5, dur=5.0, gain=50.0, mID0='RE_NEU_PHI_DEF_nav', **kwargs):
         super().__init__(type='Chemotaxis', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                      bouts=[], fits=False, interference=False,
                                                                      on_food=False),
@@ -253,7 +258,7 @@ class Chemotaxis_Essay(Essay):
         self.exp_dict = self.chemo_exps()
 
     def get_models(self, gain, mID0):
-        mW = preg.loadConf('Model',mID0)
+        mW = preg.loadConf('Model', mID0)
         mW.brain.olfactor_params.odor_dict.Odor.mean = gain
 
         mC = dNl.NestDict(copy.deepcopy(mW))
@@ -353,6 +358,16 @@ class Chemotaxis_Essay(Essay):
 
         self.figs[exp] = G.eval(entry_list, **kwargs)
 
+    def global_anal(self, datasets):
+        G = preg.graph_dict
+        entry = G.entry('chemotaxis summary', args={})
+        kwargs = {
+            'datasets': datasets,
+            'save_to': self.plot_dir,
+            'show': self.show}
+
+        self.figs['global'] = G.eval0(entry, **kwargs)
+
 
 rover_sitter_essay = {
     'experiments': {
@@ -400,7 +415,7 @@ essay_dict = {
 
 if __name__ == "__main__":
     # figs, results = RvsS_Essay(all_figs=False).run()
-    E = Chemotaxis_Essay(video=False, N=5, dur=5)
+    E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
     # E = DoublePatch_Essay(video=False, N=3, dur=3)
     ds = E.run()
     figs, results = E.anal()

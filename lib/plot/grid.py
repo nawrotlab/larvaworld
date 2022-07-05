@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
-
+from lib.aux import dictsNlists as dNl
 from lib.aux.dictsNlists import NestDict
 from lib.registry.pars import preg
 from lib.plot.aux import save_plot
@@ -156,6 +156,45 @@ def dsp_summary(datasets, target=None,range=(0,40), **kwargs):
     P.plot(func='trajectories', kws={'mode' : 'origin', 'range': range, **kws}, N=Nds, x0=True, y0=True, **kws2)
     P.plot(func='dispersal', kws={'range': range, **kws}, N=1, w=16, h0=14, x0=True, **kws2)
     P.plot(func='crawl pars', kws={'pvalues' : False,**kws}, N=3,w=30,w0=22, h0=14, **kws2)
+    P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)
+    P.annotate()
+    return P.get()
+
+def chemo_summary(datasets, **kwargs):
+    w, h = 54,26
+    P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
+    # Nplots=2
+    time_ks=['c_odor1', 'dc_odor1']
+    Nks=len(time_ks)
+    Nexps=len(datasets)
+    # ds=datasets
+    h1exp=int(h/Nexps)
+    # h1plot=int(h1exp / Nplots)
+    h1k=int(h1exp / (Nks+1))
+    for i,(exp,dds) in enumerate(datasets.items()):
+        dds=dNl.flatten_list(dds)
+        Ndds=len(dds)
+        kws1 = {
+                'datasets': dds,
+                'save_to': None,
+                'subfolder' : None,
+                'show': False
+
+            }
+        kws2 = {
+            'x0': True,
+            'w': w,
+        }
+        P.plot(func='trajectories', kws=kws1, **kws2, N=Ndds, share_h=True, h=h1k, h0=i * h1exp)
+        P.plot(func='autoplot', kws={
+                'ks': time_ks,
+                # 'ks': ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'],
+                'show_first': False,
+                'individuals': False,
+                'unit': 'min',
+                **kws1
+            }, **kws2,N=Nks, share_w=True, h=Nks*h1k, h0=i*h1exp+h1k)
+
     P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)
     P.annotate()
     return P.get()
