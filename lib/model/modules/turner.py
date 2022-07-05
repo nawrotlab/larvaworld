@@ -9,6 +9,8 @@ from lib.model.modules.basic import StepEffector
 class NeuralOscillator(StepEffector):
     def __init__(self, base_activation=20, activation_range=(10.0, 40.0), tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0,
                  w_cc=4.0, m=100.0, n=2.0, warm_up=True, **kwargs):
+        # print(kwargs)
+        # raise
         super().__init__(**kwargs)
         self.tau = tau
         self.w_ee = w_ee
@@ -44,18 +46,26 @@ class NeuralOscillator(StepEffector):
                     self.step()
 
     def update_input(self,A_in=0):
+
         if A_in == 0:
             a = 0
         elif A_in < 0:
             a = self.r0 * A_in
         elif A_in > 0:
             a = self.r1 * A_in
-        return self.base_activation + a
+        upA_in=self.base_activation + a
+        # print(upA_in)
+        return upA_in
+
+    @property
+    def Act_coef(self):
+        return 1
 
     @property
     def Act_Phi(self):
         A=self.input
         # print(A)
+        # print()
         t = self.scaled_tau
         tau_h = 3 / (1 + (0.04 * A) ** 2)
         t_h = self.dt / tau_h
@@ -75,6 +85,7 @@ class NeuralOscillator(StepEffector):
         self.H_C_l += t_h * (-self.H_C_l + self.E_l)
         self.H_C_r += t_h * (-self.H_C_r + self.E_r)
         a = self.E_r - self.E_l
+        # print(a)
         return a
 
     def compute_R(self, x, h):

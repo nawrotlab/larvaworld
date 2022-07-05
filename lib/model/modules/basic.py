@@ -117,6 +117,8 @@ class StepModule:
         else :
             a=0
         self.output = a*(1 + np.random.normal(scale=self.output_noise))
+        # print(self.output)
+        # print()
         return self.output
 
     def update(self):

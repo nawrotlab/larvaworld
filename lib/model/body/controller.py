@@ -161,9 +161,12 @@ class BodySim(BodyManager, PhysicsController):
         if self.model.Box2D:
             self.Box2D_kinematics(lin, ang)
         else:
+            # print(self.brain.locomotor.cur_ang_suppression, self.head.get_angularvelocity(),self.head.get_linearvelocity())
             lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(),self.head.get_linearvelocity(),
                                              self.body_bend, dt=self.model.dt,
                                              ang_suppression=self.brain.locomotor.cur_ang_suppression)
+            # print(lin_vel, ang_vel)
+            # print()
             self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
             self.compute_body_bend()
             self.trajectory.append(self.pos)
@@ -457,6 +460,8 @@ class BodySim(BodyManager, PhysicsController):
         counter = -1
         while not in_tank:
             ang_vel, counter = avoid_border(ang_vel, counter)
+            if counter>100 :
+                o0+=np.pi
             try :
                 in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
             except :

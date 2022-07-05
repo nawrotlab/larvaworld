@@ -17,9 +17,9 @@ def Im(EEB, **kwargs):
 
 
 def brain(ks, nengo=False, OD=None, **kwargs):
-    base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(0.45, 1.0),
+    base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(np.pi/2, np.pi),
                                   feeder_phi_range=(0.0, 0.0),
-                                  attenuation=0.1)
+                                  attenuation=0.1, attenuation_max=0.6)
 
     RL_olf_memory = preg.get_null('memory', Delta=0.1, state_spacePerSide=1, modality='olfaction',
                                   gain_space=np.arange(-200.0, 200.0, 50.0).tolist())
@@ -144,8 +144,7 @@ def create_mod_dict():
                          freq_range=[0.1, 1.0]
                          )
 
-    phasic_coupling = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
-    null_coupling = preg.get_null('interference', mode='default', attenuation=1.0)
+
 
     RL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30,
                                     update_dt=0.5,
@@ -208,7 +207,13 @@ def create_mod_dict():
                      intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
                                      preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
 
-    brain_phasic = brain(['L'], interference=phasic_coupling, intermitter=ImFitted)
+    IfPHI = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
+    IfNull = preg.get_null('interference', mode='default', attenuation=1.0)
+    IfDef = preg.get_null('interference', mode='default', attenuation=0.0)
+    Lphi = brain(['L'], interference=IfPHI, intermitter=ImFitted)
+    LOphi = brain(['L', 'O'], interference=IfPHI)
+    LOuncoupled = brain(['L', 'O'], interference=IfNull)
+    LOdef = brain(['L', 'O'], interference=IfDef)
 
     def add_OD(OD, B0=LOF):
         B1 = NestDict(copy.deepcopy(B0))
@@ -225,7 +230,9 @@ def create_mod_dict():
 
     explorers = {
         'explorer': add_brain(LW),
-        'phasic_explorer': add_brain(brain_phasic),
+        'phasic_explorer': add_brain(Lphi),
+        'uncoupled_explorer': add_brain(LOuncoupled),
+        'def_coupled_explorer': add_brain(LOdef),
         'branch_explorer': add_brain(add_Im(Im(0.0, mode='branch'), LW)),
         'nengo_explorer': add_brain(nengo_brain(['L', 'W'], EEB=0.0)),
         'Levy-walker': add_brain(Levy_brain),
@@ -237,12 +244,15 @@ def create_mod_dict():
 
     navigators = {
         'navigator': add_brain(add_OD(OD1, LO)),
+        'phasic_navigator': add_brain(add_OD(OD1, LOphi)),
+        'uncoupled_navigator': add_brain(add_OD(OD1, LOuncoupled)),
+        'def_coupled_navigator': add_brain(add_OD(OD1, LOdef)),
         'navigator_brute': add_brain(add_OD(OD1, LO_brute)),
         'navigator_x2': add_brain(add_OD(OD2, LO)),
         'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
         'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
         'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1, crawler=Ccon,
-                                                interference=null_coupling),
+                                                interference=IfNull),
                                           bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),

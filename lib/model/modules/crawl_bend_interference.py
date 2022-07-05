@@ -5,6 +5,7 @@ import numpy as np
 
 class DefaultCoupling:
     def __init__(self, attenuation=0.0, attenuation_max=1.0, suppression_mode='amplitude', **kwargs):
+
         self.attenuation = attenuation
         self.attenuation_max = attenuation_max
         self.cur_attenuation = attenuation
@@ -23,6 +24,7 @@ class DefaultCoupling:
         if c_on or f_on:
             A = self.attenuation
         self.cur_attenuation = A
+        # print(self.attenuation,self.cur_attenuation)
         return A
 
 
