@@ -978,7 +978,14 @@ class LarvaConfDict2:
 
         return conf
 
-    def storeConfs(self):
+    def newConf(self, mID, mID0, kwargs={}):
+        T0 = dNl.NestDict(copy.deepcopy(self.loadConf(mID=mID0)))
+        T = dNl.update_nestdict(T0, kwargs)
+        self.saveConf(conf=T, mID=mID)
+        return T
+
+
+    def baseConfs(self):
         self.larvaConf(mID='loco_default')
         self.larvaConf(mID='RE_NEU_PHI_NENGO', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'nengo'}, nengo=True)
         self.larvaConf(mID='RE_NEU_PHI_BR', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'branch'})
@@ -993,11 +1000,15 @@ class LarvaConfDict2:
         self.larvaConf(mID='CON_NEU_DEF_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'default','intermitter': 'default'})
         _=self.larvaConf(mID='Levy', modes = {'crawler': 'constant','turner': 'sinusoidal','interference': 'default','intermitter': 'default'},
                        modkws={'interference':{'attenuation' : 0.0}})
-        # print(m)
-        # raise
         self.larvaConf(mID='RE_SIN_PHI_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'phasic','intermitter': 'default'})
         self.larvaConf(mID='RE_SIN_SQ_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'square','intermitter': 'default'})
         self.larvaConf(mID='RE_SIN_DEF_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'default','intermitter': 'default'})
+
+        olf_pars=self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args, odor_dict = {'Odor': {'mean': 150.0, 'std': 0.0}})
+        kwargs = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars}
+        self.newConf(mID='RE_NEU_PHI_DEF_nav',mID0='RE_NEU_PHI_DEF',kwargs=kwargs)
+        self.newConf(mID='RE_NEU_SQ_DEF_nav',mID0='RE_NEU_SQ_DEF',kwargs=kwargs)
+        self.newConf(mID='RE_NEU_DEF_DEF_nav',mID0='RE_NEU_DEF_DEF',kwargs=kwargs)
 
 
 

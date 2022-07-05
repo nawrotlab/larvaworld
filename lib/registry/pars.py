@@ -393,6 +393,7 @@ class ParRegistry:
             elif conftype == 'Group':
                 from lib.conf.stored.data_conf import importformats as d
             elif conftype == 'Model':
+                self.larva_conf_dict2.baseConfs()
                 from lib.conf.stored.larva_conf import mod_dict as d
             elif conftype == 'ModelGroup':
                 from lib.conf.stored.larva_conf import mod_group_dict as d
