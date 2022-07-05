@@ -246,11 +246,11 @@ class RvsS_Essay(Essay):
 
     def summary_graph(self, entrylist, **kwargs):
         h_mpl=4
-        w, h = 30, 60+h_mpl
+        w, h = 30, 60+h_mpl*2
         from lib.plot.base import GridPlot
         P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
         Nexps = len(entrylist)
-        h1exp = int((h-h_mpl) / Nexps)
+        h1exp = int((h-h_mpl*2) / Nexps)
         P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold',
                    horizontalalignment='center')
 
@@ -259,7 +259,7 @@ class RvsS_Essay(Essay):
         for i, entry in enumerate(entrylist):
             P.fig.text(x=0.5, y=0.88 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
                        horizontalalignment='center')
-            P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,h0=i * h1exp + (i + 1) * 1+h_mpl)
+            P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,h0=i * h1exp + (i + 1) * 1+h_mpl*2)
         P.adjust((0.1, 0.95), (0.05, 0.96), 0.05, 0.1)
         P.annotate()
         return P.get()
@@ -569,7 +569,7 @@ essay_dict = {
 }
 
 if __name__ == "__main__":
-    E = RvsS_Essay(video=False, all_figs=False, show=True)
+    E = RvsS_Essay(video=False, all_figs=False, show=False, N=3)
     # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
     # E = DoublePatch_Essay(video=False, N=3, dur=3)
     ds = E.run()
