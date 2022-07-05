@@ -20,7 +20,7 @@ def traj_1group(s, c, unit='mm', fig=None, axs=None, **kwargs):
         xy = s[['x', 'y']].xs(id, level="AgentID").values * scale
         P.axs[0].plot(xy[:, 0], xy[:, 1])
     P.axs[0].fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
-    P.conf_ax(xMaxN=3, yMaxN=3, title=c.id, xlab=f'X ({unit})', ylab=f'Y ({unit})', equal_aspect=True)
+    P.conf_ax(xMaxN=3, yMaxN=3, title=c.id, titlefontsize = 25, xlab=f'X ({unit})', ylab=f'Y ({unit})', equal_aspect=True)
     return P.get()
 
 

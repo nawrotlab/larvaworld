@@ -322,13 +322,13 @@ class Chemotaxis_Essay(Essay):
                                                           orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
                                default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()}
 
-        exp1 = 'chemorbit'
+        exp1 = 'Orbiting behavior'
         e1 = self.conf(exp=exp1, env=env_mid,
                        lgs=lgs_mid,
                        dur=self.dur,
                        id=f'{exp1}_exp')
 
-        exp2 = 'chemotax'
+        exp2 = 'Up-gradient navigation'
         e2 = self.conf(exp=exp2, env=env_R,
                        lgs=lgs_R,
                        dur=self.dur,
@@ -337,10 +337,14 @@ class Chemotaxis_Essay(Essay):
         return {exp1: [e1], exp2: [e2]}
 
     def analyze(self, exp, ds0):
+
+
+        kwargs = {'datasets': flatten_list(ds0),
+                  'save_to': self.plot_dir,
+                  'show': self.show}
         entry_list = [
             self.G.entry('autoplot', args={
                 'ks': self.time_ks,
-                # 'ks': ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'],
                 'show_first': False,
                 'individuals': False,
                 'subfolder': None,
@@ -352,11 +356,6 @@ class Chemotaxis_Essay(Essay):
                 'name': f'{exp}_trajectories',
             })
         ]
-
-        kwargs = {'datasets': flatten_list(ds0),
-                  'save_to': self.plot_dir,
-                  'show': self.show}
-
         self.figs[exp] = self.G.eval(entry_list, **kwargs)
 
     def global_anal(self):

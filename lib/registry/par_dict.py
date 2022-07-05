@@ -5,7 +5,7 @@ import numpy as np
 import param
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring
+from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 from lib.registry.units import ureg
 
 
@@ -583,10 +583,13 @@ class BaseParDict:
         for ii, jj in zip(['1', '2'], ['first', 'second']):
             k = f'c_odor{ii}'
             dk = f'd{k}'
+            sym=subsup('C', 'odor', ii)
+            dsym=subsup(delta('C'), 'odor', ii)
+            ddisp=f'{sym} sensed (C/{sub("C",0)} - 1)'
             self.add(**{'p': f'brain.olfactor.{jj}_odor_concentration', 'k': k, 'd': k,
-                        'disp': f'Odor {ii} concentration', 'sym': subsup('C', 'od', ii)})
+                        'disp': sym, 'sym': sym, 'u' : ureg.micromol})
             self.add(**{'p': f'brain.olfactor.{jj}_odor_concentration_change', 'k': dk, 'd': dk,
-                        'disp': f'Odor {ii} concentration change', 'sym': subsup(Delta('C'), 'od', ii)})
+                        'disp': ddisp, 'sym': dsym})
 
         for ii, jj in zip(['W', 'C'], ['warm', 'cool']):
             k = f'temp_{ii}'
