@@ -507,14 +507,13 @@ def get_EEB_time_fractions(sample=None, dt=None, **kwargs):
         kws = kwargs
     if dt is not None:
         kws['dt'] = dt
-
+    max_ticks = int(60 * 60 / kws['dt'])
     rts = {f'{q} ratio': nam.dur_ratio(p) for p, q in
            zip(['stridechain', 'pause', 'feedchain'], ['crawl', 'pause', 'feed'])}
     EEBs = np.round(np.arange(0, 1, 0.02), 2)
     data = []
     for EEB in EEBs:
         inter = OfflineIntermitter(EEB=EEB, **kws)
-        max_ticks = int(1 * 60 * 60 / inter.dt)
         while inter.total_ticks < max_ticks:
             inter.step()
         dic = inter.build_dict()
@@ -530,15 +529,15 @@ if __name__ == "__main__":
     from lib.registry.pars import preg
 
     refID = 'None.150controls'
-    d = preg.loadRef(refID)
-    c=d.config
-    from lib.model.DEB.deb import DEB
-    for mID in ['rover', 'sitter']:
-        m=preg.larva_conf_dict2.loadConf(mID).energetics
-        print(m.gut)
-        deb = DEB(id=mID, gut_params=m.gut, **m.DEB)
-        EEB=get_best_EEB(deb, sample=c)
-        print(mID,EEB)
+    # d = preg.loadRef(refID)
+    # c=d.config
+    # from lib.model.DEB.deb import DEB
+    # for mID in ['rover', 'sitter']:
+    #     m=preg.larva_conf_dict2.loadConf(mID).energetics
+    #     print(m.gut)
+    #     deb = DEB(id=mID, gut_params=m.gut, **m.DEB)
+    #     EEB=get_best_EEB(deb, sample=c)
+    #     print(mID,EEB)
     # print(c['intermitter'])
     # c['EEB_poly1d'] = get_EEB_poly1d(**c['intermitter']).c.tolist()
     # d.save_config(add_reference=True)

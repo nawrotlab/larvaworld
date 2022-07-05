@@ -2,6 +2,7 @@ import copy
 import shutil
 
 from lib.aux.dictsNlists import flatten_list
+from lib.aux.par_aux import sub
 
 from lib.conf.stored.exp_conf import RvsS_groups
 
@@ -88,7 +89,7 @@ class RvsS_Essay(Essay):
         }
         self.all_figs = all_figs
 
-        self.RS_diff=self.get_RS_diff()
+        self.RS_diff, self.RS_diff_str=self.get_RS_diff()
 
 
 
@@ -250,22 +251,13 @@ class RvsS_Essay(Essay):
         h1exp = int(h / Nexps)
         P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold',
                    horizontalalignment='center')
-
-        kstrs=''
-        for k,dic in self.RS_diff.items() :
-            rk=dic['rover']
-            sk=dic['sitter']
-            kstr=f'{k} : r : {rk} VS s : {sk}'
-            kstrs+=kstr
-            # kstrs.append(kstr)
-        # k0str=str.
-        P.fig.text(x=0.5, y=0.97, s=kstrs, size=30, horizontalalignment='center')
+        P.fig.text(x=0.5, y=0.96, s=self.RS_diff_str, size=30, horizontalalignment='center')
         for i, entry in enumerate(entrylist):
-            P.fig.text(x=0.5, y=0.95 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
+            P.fig.text(x=0.5, y=0.94 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
                        horizontalalignment='center')
             P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,
                    y0=True if i == 0 else False, h0=i * h1exp + (i + 1) * 1)
-        P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
+        P.adjust((0.1, 0.95), (0.05, 0.94), 0.05, 0.1)
         P.annotate()
         return P.get()
 
@@ -343,16 +335,21 @@ class RvsS_Essay(Essay):
                                                                       save_as=f'{n}{p}.pdf', **kwargs)
 
     def get_RS_diff(self):
-
-        dic={}
-
-        r=dNl.flatten_dict(preg.loadConf('Model','rover'))
-        s=dNl.flatten_dict(preg.loadConf('Model', 'sitter'))
+        D=preg.larva_conf_dict2
+        r0,s0=D.loadConf('rover'),D.loadConf('sitter')
+        r,s=dNl.flatten_dict(r0),dNl.flatten_dict(s0)
+        k0str=''
+        dic = {}
         for k in r.keys() :
             if r[k]!=s[k]:
-                dic[k]={'rover' : r[k], 'sitter' : s[k]}
-        #         print(k, r[k], s[k])
-        return dNl.NestDict(dic)
+                kk=k.split('.')
+                k0,k1=kk[-1],kk[-2]
+
+                dic[k0]={'rover' : r[k], 'sitter' : s[k]}
+                kstr=f' {sub(k0,"r")}:{r[k]} - {sub(k0,"s")}:{s[k]} '
+                k0str+=kstr
+        dic= dNl.NestDict(dic)
+        return dic, k0str
 
 
 class DoublePatch_Essay(Essay):

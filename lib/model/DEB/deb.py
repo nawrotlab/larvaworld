@@ -746,8 +746,7 @@ def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fal
                 if inter.feeder_reocurrence_as_EEB:
                     inter.feeder_reoccurence_rate = inter.EEB
             if deb.age * 24 > counter:
-                print(counter, int(deb.pupation_buffer * 100))
-                # print(counter, int(deb.pupation_buffer*100), deb.e, deb.time_to_death_by_starvation(), deb.L/deb.Lm)
+                # print(counter, int(deb.pupation_buffer * 100))
                 counter += 24
     deb.finalize_dict()
     d_sim = deb.return_dict()
