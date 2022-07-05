@@ -220,8 +220,8 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
 
 def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kwargs):
     P = AutoPlot(name='double_patch',Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
-    Nlarvae = dNl.unique_list([d.config.N for d in P.datasets])[0]
-    dur = int(np.round(dNl.unique_list([d.config.duration for d in P.datasets])[0]/60))
+    Nlarvae = P.N
+    dur = int(np.round(P.duration/60))
     gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     mIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
     subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])

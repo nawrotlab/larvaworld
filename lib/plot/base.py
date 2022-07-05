@@ -306,6 +306,11 @@ class Plot(BasePlot):
         return np.max(dNl.unique_list(Nticks_list))
 
     @property
+    def N(self):
+        N_list = [d.config.N for d in self.datasets]
+        return np.max(dNl.unique_list(N_list))
+
+    @property
     def fr(self):
         fr_list = [d.fr for d in self.datasets]
         return np.max(dNl.unique_list(fr_list))
@@ -316,9 +321,12 @@ class Plot(BasePlot):
         return np.max(dt_list)
 
     @property
+    def duration(self):
+        return int(self.Nticks * self.dt)
+
+    @property
     def tlim(self):
-        return (0, int(self.Nticks * self.dt))
-        # return (0, int(self.Nticks / self.fr))
+        return (0, self.duration)
 
     def trange(self, unit='min'):
         if unit == 'min':
