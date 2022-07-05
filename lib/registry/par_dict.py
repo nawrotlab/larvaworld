@@ -182,7 +182,13 @@ class BaseParDict:
         init_kws = {'d': nam.initial(b.d), 'p': nam.initial(b.p), 'sym': sub(b.sym, '0'), 'disp': f'initial {b.disp}',
                     'func': funcs.initial(b.d), 'k': f'{b.k}0'}
 
-        cum_kws = {'d': nam.cum(b.d), 'p': nam.cum(b.p), 'sym': sub(b.sym, 'cum'), 'disp': f'total {b.disp}',
+        if k0=='d' :
+            disp='pathlength'
+        elif k0=='sd' :
+            disp = 'scaled pathlength'
+        else :
+            disp = f'total {b.disp}'
+        cum_kws = {'d': nam.cum(b.d), 'p': nam.cum(b.p), 'sym': sub(b.sym, 'cum'), 'disp': disp,
                    'func': funcs.cum(b.d), 'k': nam.cum(b.k)}
 
         for kws in [mu_kws, std_kws, min_kws, max_kws, fin_kws, init_kws, cum_kws]:
@@ -260,7 +266,7 @@ class BaseParDict:
             self.add(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food'})
             self.add(**{'p': f'{ptr}_{ii}_food', 'k': f'{ktr}_{ii}_food', 'lim': (0.0, 1.0)})
 
-        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f' avg. number {pc}s per min', func=func)
+        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f'avg. # {pc}s per sec', func=func)
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
@@ -522,11 +528,11 @@ class BaseParDict:
         d_sd, d_sv, d_sa = nam.scal([d_d, d_v, d_a])
         self.add_dst(point='')
         self.add_velNacc(k0='d', k_v='v', k_a='a', p_v=d_v, d_v=d_v, p_a=d_a, d_a=d_a,
-                         sym_v='v', sym_a=dot('v'), disp_v='speed', disp_a='acceleration',
+                         sym_v='v', sym_a=dot('v'), disp_v='crawling speed', disp_a='crawling acceleration',
                          func_v=self.func_dict.vel(d_d, d_v))
         self.add_scaled(k0='d')
         self.add_velNacc(k0='sd', k_v='sv', k_a='sa', p_v=d_sv, d_v=d_sv, p_a=d_sa, d_a=d_sa, sym_v=mathring('v'),
-                         sym_a=dot(mathring('v')), disp_v='scaled speed', disp_a='scaled acceleration',
+                         sym_a=dot(mathring('v')), disp_v='scaled crawling speed', disp_a='scaled crawling acceleration',
                          func_v=self.func_dict.vel(d_sd, d_sv))
         for k0 in ['l', 'd', 'sd', 'v', 'sv', 'a', 'sa', 'x', 'y']:
             self.add_freq(k0=k0)

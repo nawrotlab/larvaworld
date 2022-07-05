@@ -54,8 +54,8 @@ def comp_patch_metrics(s, e, **kwargs):
 
         e[f'{nam.dur_ratio(c)}_{on}'] = e[f'{cdur}_{on}'] / e[cum_t] / e[on_tr]
         e[f'{nam.dur_ratio(c)}_{off}'] = e[f'{cdur}_{off}'] / e[cum_t] / (1 - e[on_tr])
-        e[f'{nam.mean(N)}_{on}'] = 60*e[f'{N}_{on}'] / e[cum_t] / e[on_tr]
-        e[f'{nam.mean(N)}_{off}'] = 60*e[f'{N}_{off}'] / e[cum_t] / (1 - e[on_tr])
+        e[f'{nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[cum_t] / e[on_tr]
+        e[f'{nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[cum_t] / (1 - e[on_tr])
 
     dst = nam.dst('')
     cdst = nam.cum(dst)

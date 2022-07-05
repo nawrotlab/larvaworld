@@ -218,7 +218,7 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(xlabel='substrate', complex_colors=True, show_ns=False, **kwargs):
+def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kwargs):
     P = AutoPlot(name='double_patch',Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     ModIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
@@ -233,7 +233,7 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, show_ns=False,
     ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
 
     def get_df(par):
-        dic = {id: [d.endpoint_data[par].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
+        dic = {id: [d.endpoint_data[par].values*scale for d in P.datasets if d.config['group_id'] == id] for id in
                gIDs}
 
         pair_dfs = []
@@ -260,12 +260,13 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, show_ns=False,
     def plot_p(data, ii, hue, agar=False):
 
         with sns.plotting_context('notebook', font_scale=1.4):
+            ax=P.axs[ii]
             kws = {
                 'x': "Substrate",
                 'y': "value",
                 'hue': hue,
                 'data': data,
-                'ax': P.axs[ii],
+                'ax': ax,
                 'width': 0.5,
             }
             g1 = sns.boxplot(**kws)  # RUN PLOT
@@ -273,59 +274,48 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, show_ns=False,
 
             annotate_plot(show_ns=show_ns, **kws)
             g1.set(xlabel=None)
-            g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black',
-                               ax=P.axs[ii])  # RUN PLOT
-            g2.get_legend().remove()
-            g2.set(xlabel=None)
+            if stripplot :
+                g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black', ax=ax)
+                g2.get_legend().remove()
+                g2.set(xlabel=None)
 
-            if complex_colors:
-                cols = []
-                if not agar:
-                    for pID, cID in itertools.product(subIDs, ModIDs):
-                        cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
-                else:
-                    for cID, pID in itertools.product(ModIDs, subIDs):
-                        cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
-                        cols.append(f'xkcd:{Cmods[cID]} cyan')
-                    P.axs[ii].set_xticklabels(subIDs * 2)
-                    P.axs[ii].axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
-                    P.axs[ii].text(0.25, 1.1, r'$\bf{Rovers}$', ha='center', va='top', color='k',
-                                   fontsize=25, transform=P.axs[ii].transAxes)
-                    P.axs[ii].text(0.75, 1.1, r'$\bf{Sitters}$', ha='center', va='top', color='k',
-                                   fontsize=25, transform=P.axs[ii].transAxes)
-                for j, patch in enumerate(P.axs[ii].artists):
-                    patch.set_facecolor(cols[j])
-            P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
+            cols = []
+            if not agar:
+                for pID, cID in itertools.product(subIDs, ModIDs):
+                    cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+            else:
+                for pID, cID in itertools.product(subIDs, ModIDs):
+                    cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+                    cols.append(f'xkcd:{Cmods[cID]} cyan')
+                ax.set_xticklabels(subIDs * 2)
+                ax.axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
+                for x_text,text in zip([0.25,0.75], [r'$\bf{Rovers}$', r'$\bf{Sitters}$']) :
+                    ax.text(x_text, 1.1, text, ha='center', va='top', color='k',fontsize=25, transform=ax.transAxes)
+            for j, patch in enumerate(ax.artists):
+                patch.set_facecolor(cols[j])
+
+
 
     for ii, k in enumerate(ks):
         p=preg.dict[k]
         par = p.d
-        ylabel = p.disp
-        ylim = None
+        ylabel = p.label
         scale = 1
-        onVSoff = True if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] else False
-        if k == 'cum_d':
-            ylabel = "pathlength 5' (mm)"
-            scale = 1000
-        elif k == 'v_mu':
-            ylabel = "crawling speed (mm/s)"
-            scale = 1000
-        # elif k == 'tur_N_mu':
-        #     ylabel = "Avg. number turns per min"
-        #     scale = 60
-        # elif k == 'pau_tr':
-        #     ylabel = "Fraction of pauses"
-
-
-
-
-
-        if not onVSoff:
+        if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] :
+            if k == 'v_mu':
+                ylabel = "crawling speed (mm/s)"
+                scale = 1000
+            mdf = get_df_onVSoff(par)
+            plot_p(mdf, ii, 'food', agar=True)
+        else:
+            if k == 'cum_d':
+                ylabel = "pathlength (mm)"
+                scale = 1000
             mdf = get_df(par)
             plot_p(mdf, ii, 'Model')
-        else:
-            mdf=get_df_onVSoff(par)
-            plot_p(mdf, ii, 'food', agar=True)
+
+
+        P.conf_ax(ii, xlab=xlabel if ii>3 else None, ylab=ylabel, ylim=None)
     P.adjust((0.1,0.95), (0.15,0.9), 0.3,0.3)
     return P.get()
 
