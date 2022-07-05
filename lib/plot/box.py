@@ -8,7 +8,7 @@ from scipy.stats import ttest_ind
 
 from lib.aux import dictsNlists as dNl, data_aux, colsNstr as cNs
 from lib.registry.pars import preg
-from lib.plot.aux import label_diff
+from lib.plot.aux import label_diff, annotate_plot
 
 from lib.plot.base import AutoPlot, Plot
 
@@ -57,9 +57,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
             g1.get_legend().remove()
         except:
             pass
-        # print(pars[ii])
         if annotation:
-            from lib.plot.aux import annotate_plot
             annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
                   xvis=False if ii < (Nrows - 1) * Ncols else True)
@@ -220,11 +218,11 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
-    P = Plot(name='double_patch', **kwargs)
-    DataIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
-    ModIDs = dNl.unique_list([l.split('_')[-1] for l in DataIDs])
-    subIDs = dNl.unique_list([l.split('_')[0] for l in DataIDs])
+def boxplot_double_patch(xlabel='substrate', complex_colors=True, show_ns=False, **kwargs):
+    P = AutoPlot(name='double_patch',Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
+    gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
+    ModIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
+    subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])
     Nmods = len(ModIDs)
     Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
     if Nmods == 2:
@@ -232,99 +230,103 @@ def boxplot_double_patch(xlabel='substrate', complex_colors=True, **kwargs):
     elif Nmods == 3:
         temp = ['dark', 'light', '']
     Cmods = dict(zip(ModIDs, temp))
+    ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
 
-    shorts = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
-    pars, labs, lims = preg.getPar(shorts, to_return=['d', 'l', 'lim'])
-    Npars = len(pars)
+    def get_df(par):
+        dic = {id: [d.endpoint_data[par].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
+               gIDs}
 
-    P.build(Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3))
-    for ii in range(Npars):
-        sh = shorts[ii]
-        p = pars[ii]
-        ylabel = labs[ii]
-        ylim = lims[ii]
+        pair_dfs = []
+        for subID in subIDs:
+            subModIDs = [f'{subID}_{ModID}' for ModID in ModIDs]
+            pair_vs = dNl.flatten_list([dic[id] for id in subModIDs])
+            pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=ModIDs).assign(Substrate=subID))
+            cdf = pd.concat(pair_dfs)  # CONCATENATE
+        mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
+        return mdf
+
+    def get_df_onVSoff(par):
+        mdf_on = get_df(f'{par}_on_food')
+        mdf_off = get_df(f'{par}_off_food')
+        mdf_on['food'] = 'on'
+        mdf_off['food'] = 'off'
+        mdf = pd.concat([mdf_on, mdf_off])
+        mdf.sort_index(inplace=True)
+        mdf.sort_values(['Model', 'Substrate', 'food'], ascending=[True, False, False], inplace=True)
+        mdf['Substrate'] = mdf['Model'] + mdf['Substrate']
+        mdf.drop(['Model'], axis=1, inplace=True)
+        return mdf
+
+    def plot_p(data, ii, hue, agar=False):
+
+        with sns.plotting_context('notebook', font_scale=1.4):
+            kws = {
+                'x': "Substrate",
+                'y': "value",
+                'hue': hue,
+                'data': data,
+                'ax': P.axs[ii],
+                'width': 0.5,
+            }
+            g1 = sns.boxplot(**kws)  # RUN PLOT
+            g1.get_legend().remove()
+
+            annotate_plot(show_ns=show_ns, **kws)
+            g1.set(xlabel=None)
+            g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black',
+                               ax=P.axs[ii])  # RUN PLOT
+            g2.get_legend().remove()
+            g2.set(xlabel=None)
+
+            if complex_colors:
+                cols = []
+                if not agar:
+                    for pID, cID in itertools.product(subIDs, ModIDs):
+                        cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+                else:
+                    for cID, pID in itertools.product(ModIDs, subIDs):
+                        cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+                        cols.append(f'xkcd:{Cmods[cID]} cyan')
+                    P.axs[ii].set_xticklabels(subIDs * 2)
+                    P.axs[ii].axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
+                    P.axs[ii].text(0.25, 1.1, r'$\bf{Rovers}$', ha='center', va='top', color='k',
+                                   fontsize=25, transform=P.axs[ii].transAxes)
+                    P.axs[ii].text(0.75, 1.1, r'$\bf{Sitters}$', ha='center', va='top', color='k',
+                                   fontsize=25, transform=P.axs[ii].transAxes)
+                for j, patch in enumerate(P.axs[ii].artists):
+                    patch.set_facecolor(cols[j])
+            P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
+
+    for ii, k in enumerate(ks):
+        p=preg.dict[k]
+        par = p.d
+        ylabel = p.disp
+        ylim = None
         scale = 1
-        onVSoff = True if sh in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] else False
-        if sh == 'cum_d':
-            ylabel = "Pathlength 5' (mm)"
+        onVSoff = True if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] else False
+        if k == 'cum_d':
+            ylabel = "pathlength 5' (mm)"
             scale = 1000
-        elif sh == 'v_mu':
-            ylabel = "Crawling speed (mm/s)"
+        elif k == 'v_mu':
+            ylabel = "crawling speed (mm/s)"
             scale = 1000
-        elif sh == 'tur_N_mu':
-            ylabel = "Avg. number turns per min"
-            scale = 60
-        elif sh == 'pau_tr':
-            ylabel = "Fraction of pauses"
+        # elif k == 'tur_N_mu':
+        #     ylabel = "Avg. number turns per min"
+        #     scale = 60
+        # elif k == 'pau_tr':
+        #     ylabel = "Fraction of pauses"
 
-        def get_df(p):
-            dic = {id: [d.endpoint_data[p].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
-                   DataIDs}
 
-            pair_dfs = []
-            for subID in subIDs:
-                subModIDs = [f'{subID}_{ModID}' for ModID in ModIDs]
-                pair_vs = dNl.flatten_list([dic[id] for id in subModIDs])
-                pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=ModIDs).assign(Substrate=subID))
-                cdf = pd.concat(pair_dfs)  # CONCATENATE
-            mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
-            return mdf
 
-        def plot_p(data, ii, hue, agar=False):
 
-            with sns.plotting_context('notebook', font_scale=1.4):
-                kws = {
-                    'x': "Substrate",
-                    'y': "value",
-                    'hue': hue,
-                    'data': data,
-                    'ax': P.axs[ii],
-                    'width': 0.5,
-                }
-                g1 = sns.boxplot(**kws)  # RUN PLOT
-                g1.get_legend().remove()
-                from lib.plot.aux import annotate_plot
-                annotate_plot(**kws)
-                g1.set(xlabel=None)
-                g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black',
-                                   ax=P.axs[ii])  # RUN PLOT
-                g2.get_legend().remove()
-                g2.set(xlabel=None)
-
-                if complex_colors:
-                    cols = []
-                    if not agar:
-                        for pID, cID in itertools.product(subIDs, ModIDs):
-                            cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
-                    else:
-                        for cID, pID in itertools.product(ModIDs, subIDs):
-                            cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
-                            cols.append(f'xkcd:{Cmods[cID]} cyan')
-                        P.axs[ii].set_xticklabels(subIDs * 2)
-                        P.axs[ii].axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
-                        P.axs[ii].text(0.25, 1.1, r'$\bf{Rovers}$', ha='center', va='top', color='k',
-                                       fontsize=25, transform=P.axs[ii].transAxes)
-                        P.axs[ii].text(0.75, 1.1, r'$\bf{Sitters}$', ha='center', va='top', color='k',
-                                       fontsize=25, transform=P.axs[ii].transAxes)
-                    for j, patch in enumerate(P.axs[ii].artists):
-                        patch.set_facecolor(cols[j])
-                P.conf_ax(ii, xlab=xlabel, ylab=ylabel, ylim=ylim)
 
         if not onVSoff:
-            mdf = get_df(p)
+            mdf = get_df(par)
             plot_p(mdf, ii, 'Model')
         else:
-            mdf_on = get_df(f'{p}_on_food')
-            mdf_off = get_df(f'{p}_off_food')
-            mdf_on['food'] = 'on'
-            mdf_off['food'] = 'off'
-            mdf = pd.concat([mdf_on, mdf_off])
-            mdf.sort_index(inplace=True)
-            mdf.sort_values(['Model', 'Substrate', 'food'], ascending=[True, False, False], inplace=True)
-            mdf['Substrate'] = mdf['Model'] + mdf['Substrate']
-            mdf.drop(['Model'], axis=1, inplace=True)
+            mdf=get_df_onVSoff(par)
             plot_p(mdf, ii, 'food', agar=True)
-    P.fig.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95, hspace=0.3, wspace=0.3)
+    P.adjust((0.1,0.95), (0.15,0.9), 0.3,0.3)
     return P.get()
 
 

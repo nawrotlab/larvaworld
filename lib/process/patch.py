@@ -31,24 +31,31 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
 
 
 def comp_patch_metrics(s, e, **kwargs):
+    # v=nam.vel('')
+    # v_mu=nam.mean(v)
     cum_t = nam.cum('dur')
     on = 'on_food'
     off = 'off_food'
     on_tr = nam.dur_ratio(on)
-    for c in ['Lturn', 'turn', 'pause']:
+    s_on=s[s[on] == True]
+    s_off=s[s[on] == False]
+    # e[f'{v_mu}_{on}'] = s_on[v].dropna().groupby('AgentID').mean()
+    # e[f'{v_mu}_{off}'] = s_off[v].dropna().groupby('AgentID').mean()
+    for c in ['run', 'Lturn','turn', 'pause']:
         dur = nam.dur(c)
         cdur = nam.cum(dur)
         N = nam.num(c)
-        e[f'{N}_{on}'] = s[s[on] == True][dur].groupby('AgentID').count()
-        e[f'{N}_{off}'] = s[s[on] == False][dur].groupby('AgentID').count()
 
-        e[f'{cdur}_{on}'] = s[s[on] == True][dur].groupby('AgentID').sum()
-        e[f'{cdur}_{off}'] = s[s[on] == False][dur].groupby('AgentID').sum()
+        e[f'{N}_{on}'] = s_on[dur].groupby('AgentID').count()
+        e[f'{N}_{off}'] = s_off[dur].groupby('AgentID').count()
+
+        e[f'{cdur}_{on}'] = s_on[dur].groupby('AgentID').sum()
+        e[f'{cdur}_{off}'] = s_off[dur].groupby('AgentID').sum()
 
         e[f'{nam.dur_ratio(c)}_{on}'] = e[f'{cdur}_{on}'] / e[cum_t] / e[on_tr]
         e[f'{nam.dur_ratio(c)}_{off}'] = e[f'{cdur}_{off}'] / e[cum_t] / (1 - e[on_tr])
-        e[f'{nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[cum_t] / e[on_tr]
-        e[f'{nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[cum_t] / (1 - e[on_tr])
+        e[f'{nam.mean(N)}_{on}'] = 60*e[f'{N}_{on}'] / e[cum_t] / e[on_tr]
+        e[f'{nam.mean(N)}_{off}'] = 60*e[f'{N}_{off}'] / e[cum_t] / (1 - e[on_tr])
 
     dst = nam.dst('')
     cdst = nam.cum(dst)
@@ -64,10 +71,9 @@ def comp_patch_metrics(s, e, **kwargs):
 
 
 def comp_patch(s,e,c):
-    try:
+    on = 'on_food'
+    if on in s.columns and nam.dur_ratio(on) in e.columns:
         comp_patch_metrics(s, e)
-    except :
-        pass
     for b in ['stride', 'pause', 'turn']:
         try:
             comp_chunk_bearing(s, c, chunk=b)

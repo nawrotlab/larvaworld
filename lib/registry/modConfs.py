@@ -592,7 +592,10 @@ if __name__ == '__main__':
     # # f=preg.init_dict['GAconf']
     #
     # # f=preg.newConf('Model')
-    print(preg.get_null('env_conf'))
+    print(preg.loadConf('Exp', id='dish').experiment)
+    # print(preg.get_null('env_conf').keys())
+    # print(preg.get_null('exp_conf').keys())
+    # print(preg.get_null('GAconf').keys())
     # print(preg.storedConf('Model'))
 
     # f = preg.newConf('Model', id0='explorer', kwargs={'brain.turner_params.mode': 'constant'})

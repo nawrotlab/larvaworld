@@ -212,18 +212,20 @@ class LarvaDataset:
     def save(self, step=True, end=True, food=False, contour=True, midline=True, add_reference=False):
         store = pd.HDFStore(self.dir_dict.data_h5)
         if step:
+            stored_ps=[]
             contour_ps = dNl.flatten_list(self.contour_xy)
             if contour:
                 temp = pd.HDFStore(self.dir_dict.contour_h5)
                 temp['contour'] = self.step_data[contour_ps]
                 temp.close()
+                stored_ps+=contour_ps
             midline_ps = dNl.flatten_list(self.points_xy)
-            if midline:
+            if midline and all([p in self.step_data.columns for p in midline_ps]):
                 temp = pd.HDFStore(self.dir_dict.midline_h5)
                 temp['midline'] = self.step_data[midline_ps]
                 temp.close()
-
-            store['step'] = self.step_data.drop(contour_ps + midline_ps, axis=1, errors='ignore')
+                stored_ps += midline_ps
+            store['step'] = self.step_data.drop(stored_ps, axis=1, errors='ignore')
         if end:
             endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
             endpoint['end'] = self.endpoint_data

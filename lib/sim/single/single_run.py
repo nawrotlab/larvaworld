@@ -33,7 +33,10 @@ class SingleRun:
         self.param_dict = locals()
         self.start = time.time()
         self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
+
         output = set_output(collections=collections, Nsegs=list(larva_groups.values())[0]['model']['body']['Nsegs'])
+        # print(output)
+        # raise
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
                                  env_params=env_params, larva_groups=larva_groups, trials=trials,
                                  experiment=self.experiment, Nsteps=int(sim_params.duration * 60 / dt),
@@ -100,6 +103,9 @@ class SingleRun:
         else:
             food = None
 
+        # print(step.columns)
+        # print(end.columns)
+        # raise
         ds = split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
                            source_xy=self.source_xy,
                            fr=1 / self.env.dt, dir=self.data_dir, id=self.id, plot_dir=self.plot_dir,

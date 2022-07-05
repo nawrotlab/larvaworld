@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.conf.stored.conf import imitation_exp, loadConf
+from lib.conf.stored.conf import imitation_exp
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
 
@@ -29,12 +29,9 @@ def lgs(models, ids=None, **kwargs):
 
 
 def lg(group='Larva', c='black', N=1, mode='uniform', sh='circle', p=(0.0, 0.0), ors=(0.0, 360.0),
-       s=(0.0, 0.0), m='explorer', o=preg.get_null('odor'), expand=False, **kwargs):
-    if expand:
-        m = loadConf(m, 'Model')
+       s=(0.0, 0.0), m='explorer', o=preg.get_null('odor'), **kwargs):
     if type(s) == float:
         s = (s, s)
-        # print(s)
     dist = preg.get_null('larva_distro', N=N, mode=mode, shape=sh, loc=p, orientation_range=ors, scale=s)
     g = preg.get_null('LarvaGroup', distribution=dist, default_color=c, model=m, odor=o, **kwargs)
     return {group: g}
@@ -105,8 +102,8 @@ def pref_exp(name, dur=5.0, c=[], enrichment=preg.enr_dict(proc=['PI']), **kwarg
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
-def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='AttP2.Fed', substrate_type='standard', pref='',
-                navigator=False, **kwargs):
+def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard', pref='',
+                navigator=False,expand=False, **kwargs):
     l = preg.get_null('life_history', age=age,
                       epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
     group_kws = {
@@ -116,6 +113,12 @@ def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='AttP2.Fed', substra
         **kwargs
     }
     mR, mS = ['rover', 'sitter'] if not navigator else ['navigator_rover', 'navigator_sitter']
+    if expand :
+        mR=preg.expandConf('Model', mR)
+        mS=preg.expandConf('Model', mS)
+    # print(mR.brain.intermitter_params)
+    # raise
+
     return {**lg(f'{pref}Rover', m=mR, c='blue', N=N, **group_kws),
             **lg(f'{pref}Sitter', m=mS, c='red', N=N, **group_kws)}
 

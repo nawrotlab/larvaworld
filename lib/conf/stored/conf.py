@@ -30,6 +30,9 @@ def expandConf(id, conf_type, **kwargs):
             for k, v in conf.larva_groups.items():
                 if type(v.model) == str:
                     v.model = loadConf(v.model, 'Model', **kwargs)
+        elif conf_type == 'Ga':
+            conf.experiment = id
+            conf.env_params = expandConf(conf.env_params, 'Env', **kwargs)
     except:
         pass
     return conf
@@ -202,10 +205,10 @@ def modshort(vv):
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
     from lib.registry.pars import preg
 
-    sample_conf = loadConf(sample, 'Ref')
+    sample_conf = preg.loadConf(id=sample, conftype='Ref')
 
     # env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
-    base_larva = expandConf(model, 'Model')
+    base_larva = preg.expandConf(id=model, conftype='Model')
     if imitation:
         exp = 'imitation'
         larva_groups = {

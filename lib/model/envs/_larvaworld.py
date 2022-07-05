@@ -47,6 +47,7 @@ class LarvaWorld(BaseLarvaWorld):
         # raise
 
         if vis_kwargs is None:
+
             vis_kwargs = preg.get_null('visualization', mode=None)
         self.vis_kwargs = dNl.NestDict(vis_kwargs)
         self.__dict__.update(self.vis_kwargs.draw)

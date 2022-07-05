@@ -425,7 +425,9 @@ def turn_mode_annotation(e, chunk_dicts):
 def turn_annotation(s, e, c, store=False):
     fov, foa = preg.getPar(['fov', 'foa'])
 
-    turn_ps = preg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
+    eTur_ps = preg.getPar( ['Ltur_N', 'Rtur_N', 'tur_N'])
+    eTur_vs = np.zeros([c.N, len(eTur_ps)]) * np.nan
+    turn_ps = preg.getPar(['tur_fou', 'tur_t','Ltur_t','Rtur_t', 'tur_fov_max'])
     turn_vs = np.zeros([c.Nticks, c.N, len(turn_ps)]) * np.nan
     turn_dict = {}
 
@@ -442,14 +444,18 @@ def turn_annotation(s, e, c, store=False):
         if Lturns.shape[0] > 0:
             turn_vs[Lturns[:, 1], jj, 0] = Lamps
             turn_vs[Lturns[:, 1], jj, 1] = Ldurs
-            turn_vs[Lturns[:, 1], jj, 2] = Lmaxs
+            turn_vs[Lturns[:, 1], jj, 2] = Ldurs
+            turn_vs[Lturns[:, 1], jj, 4] = Lmaxs
         if Rturns.shape[0] > 0:
             turn_vs[Rturns[:, 1], jj, 0] = Ramps
             turn_vs[Rturns[:, 1], jj, 1] = Rdurs
-            turn_vs[Rturns[:, 1], jj, 2] = Rmaxs
+            turn_vs[Rturns[:, 1], jj, 3] = Rdurs
+            turn_vs[Rturns[:, 1], jj, 4] = Rmaxs
         turn_dict[id] = {'Lturn': Lturns, 'Rturn': Rturns, 'turn_slice': Tslices, 'turn_amp': Tamps,
                          'turn_dur': Tdurs, 'Lturn_dur': Ldurs, 'Rturn_dur': Rdurs, 'turn_vel_max': Tmaxs}
+        eTur_vs[jj, :] = [Lturns.shape[0],Rturns.shape[0], Lturns.shape[0]+Rturns.shape[0]]
     s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
+    e[eTur_ps] = eTur_vs
     if store:
         turn_ps = preg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
         store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)

@@ -97,6 +97,8 @@ class LarvaWorldSim(LarvaWorld):
                 ids = [f'{gID}_{id}' for id in ids]
                 N = len(ids)
             else:
+                # print(gID,mod.brain.intermitter_params)
+                # raise
                 self.sample_ps = [invRefPars[p] for p in sample_ks]
                 d = gConf['distribution']
                 N = d['N']
@@ -160,17 +162,18 @@ class LarvaWorldSim(LarvaWorld):
 
     def create_collectors(self, output):
         from lib.aux.collecting import TargetedDataCollector
-        kws0 = {'par_dict': preg.dict}
+        # kws0 = {'par_dict': preg.dict}
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']
+
         f=[]#['initial_amount', 'final_amount']
-        self.step_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s, **kws0) if len(
+        self.step_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s) if len(
             s) > 0 else None
-        self.end_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e, **kws0) if len(
+        self.end_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e) if len(
             e) > 0 else None
         self.food_collector = TargetedDataCollector(schedule=self.all_food_schedule,
-                                                    pars=f, **kws0)if len(
+                                                    pars=f)if len(
             f) > 0 else None
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
 

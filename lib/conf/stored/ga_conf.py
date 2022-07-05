@@ -8,9 +8,7 @@ from scipy.stats import ks_2samp
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
-# from lib.registry.dtypes import null_dict
 from lib.registry.ga_dict import ga_dict
-from lib.conf.stored.conf import expandConf
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 from lib.eval.eval_aux import RSS
 
@@ -78,9 +76,8 @@ def bend_error_exclusion(robot):
         return False
 
 
-def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='Sakagiannis2022',
-            m1=None, sel={}, build={}, arena_size=None,
-            envID=None, fitID=None, init='random', excl_func=None, robot_class=LarvaRobot, **kwargs):
+def ga_conf(name, env_params,spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
+            m1=None, sel={}, build={}, fitID=None, init='random', excl_func=None, robot_class=LarvaRobot, **kwargs):
     space_dict = {}
     for spaceID in spaceIDs:
         space_dict.update(ga_spaces[spaceID])
@@ -99,12 +96,9 @@ def ga_conf(name, spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, du
     kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=dt),
            'scene': scene,
            'experiment': name,
+           'env_params': env_params,
            }
 
-    if envID is not None:
-        kws['env_params'] = expandConf(envID, 'Env')
-        if arena_size is not None:
-            kws['env_params'].arena.arena_dims = (arena_size, arena_size)
     if fitID is not None:
         build_kws['fitness_func'] = fitness_funcs[fitID]
 
@@ -121,27 +115,27 @@ ga_dic = dNl.NestDict({
               m1='NEU_PHI',
               fit_kws={'pooled_cycle_curves': ['fov', 'rov', 'foa']}, init='model',
               spaceIDs=['interference', 'turner'], fitID='interference',
-              Nel=2, N=6, envID='arena_200mm'),
+              Nel=2, N=6, env_params='arena_200mm'),
     **ga_conf('exploration', dur=0.5, dt=1 / 16, refID='None.150controls', m0='loco_default',
               m1='NEU_PHI', fit_kws={'eval_shorts': ['b', 'bv', 'ba', 'tur_t', 'tur_fou', 'tor2', 'tor10']},
               spaceIDs=['interference', 'turner'], fitID='distro_KS', init='random',
               excl_func=bend_error_exclusion,
-              Nel=2, N=10, envID='arena_200mm'),
-    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='loco_default', m1='NEU_PHI',
+              Nel=2, N=10, env_params='arena_200mm'),
+    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='phasic_explorer', m1='NEU_PHI',
               fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t'],
                        # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
                        'pooled_cycle_curves': ['fov', 'foa', 'b', 'rov']},
               excl_func=bend_error_exclusion,
               spaceIDs=['interference', 'turner'], fitID='distro_KS_interference',
               init='model',
-              Nel=2, N=10, envID='arena_200mm'),
+              Nel=2, N=10, env_params='arena_200mm'),
     **ga_conf('chemorbit', dur=5, m0='navigator', m1='best_navigator',
               spaceIDs=['olfactor'], fitID='dst2source', fit_kws={'source_xy': None},
-              Nel=5, N=50, envID='mid_odor_gaussian', arena_size=0.2),
+              Nel=5, N=50, env_params='mid_odor_gaussian_square'),
     **ga_conf('obstacle_avoidance', dur=0.5, m0='obstacle_avoider', m1='obstacle_avoider2',
               spaceIDs=['sensorimotor'], fitID='cum_dst', robot_class=ObstacleLarvaRobot,
-              Nel=2, N=15, envID='dish', init='default',
-              scene='obstacle_avoidance_700', arena_size=0.04)
+              Nel=2, N=15, env_params='dish_40mm', init='default',
+              scene='obstacle_avoidance_700')
 })
 
 if __name__ == '__main__':

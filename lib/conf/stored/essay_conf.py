@@ -7,7 +7,12 @@ from lib.sim.single.single_run import SingleRun
 
 
 class Essay:
-    def __init__(self, type, enrichment=preg.base_enrich(), collections=['pose'], **kwargs):
+    def __init__(self, type, enrichment=preg.base_enrich(), collections=['pose'], video=False,show=True, **kwargs):
+        if video :
+            self.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
+        else :
+            self.vis_kwargs = preg.get_null('visualization', mode=None)
+        self.show = show
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
@@ -18,6 +23,7 @@ class Essay:
         self.full_path = f'{path}/{type}/{self.essay_id}/data'
         self.plot_dir = f'{path}/{type}/{self.essay_id}/plots'
         self.exp_dict = {}
+        self.datasets = {}
         self.figs = {}
         self.results = {}
 
@@ -28,9 +34,14 @@ class Essay:
                              collections=self.collections, **kwargs)
 
     def run(self):
-        print(f'Essay {self.essay_id}')
-        for exp, exp_confs in self.exp_dict.items():
-            ds0 = [SingleRun(**c).run() for c in exp_confs]
+        print(f'Running essay "{self.essay_id}"')
+        for exp, cs in self.exp_dict.items():
+            print(f'Running {len(cs)} versions of experiment {exp}')
+            self.datasets[exp] = [SingleRun(**c, vis_kwargs=self.vis_kwargs).run() for c in cs]
+        return self.datasets
+
+    def anal(self):
+        for exp, ds0 in self.datasets.items():
             if ds0 is not None and len(ds0) != 0 and all([d0 is not None for d0 in ds0]):
                 self.analyze(exp=exp, ds0=ds0)
         shutil.rmtree(self.full_path, ignore_errors=True)
@@ -174,9 +185,9 @@ class RvsS_Essay(Essay):
                                                                           save_as=f'{n}{p}.pdf', **kwargs)
 
 
-class Patch_Essay(Essay):
+class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=5, dur=5.0, **kwargs):
-        super().__init__(type='Patch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
+        super().__init__(type='DoublePatch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                 bouts=['stride', 'pause', 'turn'],
                                                                 fits=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
@@ -202,28 +213,27 @@ class Patch_Essay(Essay):
                              odorscape={'odorscape': 'Gaussian'})
 
         return conf
-        # return env(arenaXY=(0.24, 0.24),
-        #            f={'source_groups': {},
-        #               'food_grid': None,
-        #               'source_units': double_patches(type)},
-        #            f_pars(su=double_patches(type)),
-        # o='G')
-
-    def conf2(self, type='standard', l_kws={}, **kwargs):
-        return self.conf(env=self.patch_env(type=type), lgs=RvsS_groups(expand=True, age=72.0, **l_kws), **kwargs)
 
     def time_ratio_exp(self, exp='double_patch'):
-        return {
-            exp: [self.conf2(exp=exp, id=f'{exp}_{n}_{self.dur}min', dur=self.dur, type=n,
-                             l_kws={'N': self.N, 'navigator': True, 'pref': f'{n}_'}) for n in self.substrates]}
+        es=[]
+        for n in self.substrates :
+            lgs = RvsS_groups(expand=True, age=72.0, N=self.N, navigator=True, pref=f'{n}_')
+
+            e=self.conf(exp=exp,env=self.patch_env(type=n),
+                        lgs=lgs,
+                        dur=self.dur,
+                        id=f'{exp}_{n}_{self.dur}min')
+            es.append(e)
+
+        return {exp:es}
 
     def analyze(self, exp, ds0):
         if exp == 'double_patch':
             kwargs = {'datasets': flatten_list(ds0),
                       'save_to': self.plot_dir,
                       'save_as': f'{exp}.pdf',
-                      'show': True}
-            self.figs[exp] = preg.graph_dict['double patch'](**kwargs)
+                      'show': self.show}
+            self.figs[exp] = preg.graph_dict.dict['double patch'](**kwargs)
 
 
 rover_sitter_essay = {
@@ -271,5 +281,7 @@ essay_dict = {
 }
 
 if __name__ == "__main__":
-    figs, results = RvsS_Essay(all_figs=False).run()
-    # figs, results = Patch_Essay().run()
+    # figs, results = RvsS_Essay(all_figs=False).run()
+    E = DoublePatch_Essay(video=False)
+    ds = E.run()
+    figs, results = E.anal()

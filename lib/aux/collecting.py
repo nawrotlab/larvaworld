@@ -12,6 +12,7 @@ import lib.aux.naming as nam
 from lib.aux.colsNstr import rgetattr
 
 
+
 class NamedRandomActivation(RandomActivation):
     from lib.model.agents._agent import LarvaworldAgent
     def __init__(self, id, model, **kwargs):
@@ -26,9 +27,9 @@ class NamedRandomActivation(RandomActivation):
 
 # Extension of DataCollector class so that it only collects from a given schedule
 class TargetedDataCollector(DataCollector):
-    def __init__(self, schedule, pars, par_dict):
+    def __init__(self, schedule, pars):
         self.schedule = schedule
-        super().__init__(agent_reporters=self.valid_reporters(pars, par_dict))
+        super().__init__(agent_reporters=self.valid_reporters(pars))
         pref = [f'model.{self.schedule.id}.steps', 'unique_id']
         self.rep_funcs = self.agent_reporters.values()
         if all([hasattr(r, 'attribute_name') for r in self.rep_funcs]):
@@ -36,11 +37,13 @@ class TargetedDataCollector(DataCollector):
         else:
             self.reports = None
 
-    def valid_reporters(self, pars, par_dict):
-        ks = [k for k in pars if k in par_dict.keys()]
+    def valid_reporters(self, pars):
+        from lib.registry.pars import preg
+        D=preg.dict
+        ks = [k for k in pars if k in D.keys()]
         dic = {}
         for k in ks:
-            d, p = par_dict[k].d, par_dict[k].codename
+            d, p = D[k].d, D[k].codename
             try:
                 temp = [rgetattr(l, p) for l in self.schedule.agents]
                 dic.update({d: p})

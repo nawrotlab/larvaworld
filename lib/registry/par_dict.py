@@ -232,7 +232,7 @@ class BaseParDict:
             {'p': ptr,
              'k': ktr,
              'sym': sub('r', kc),
-             'disp': f'% time in {pc}s',
+             'disp': f'time fraction in {pc}s',
              'lim': (0.0, 1.0),
              'required_ks': [nam.cum(nam.dur(pc)), nam.cum(nam.dur(''))],
              'func': self.func_dict.tr(pc)},
@@ -260,7 +260,7 @@ class BaseParDict:
             self.add(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food'})
             self.add(**{'p': f'{ptr}_{ii}_food', 'k': f'{ktr}_{ii}_food', 'lim': (0.0, 1.0)})
 
-        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f' mean # {pc}s/sec', func=func)
+        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f' avg. number {pc}s per min', func=func)
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
@@ -560,10 +560,8 @@ class BaseParDict:
             for k in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a',
                       'sa', 'd', 'sd']:
                 self.add_chunk_track(kc=kc, k=k)
-        self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score',
-                      sym=sub('H', 'tur'), lim=(0.0, 1.0), disp='Handedness score')
-        for ii in ['on', 'off']:
-            self.add(**{'p': f'handedness_score_{ii}_food', 'k': f'tur_H_{ii}_food'})
+            self.add(**{'p': f'handedness_score_{kc}', 'k': f'tur_H_{kc}'})
+
 
     def build_sim_pars(self):
         for ii, jj in zip(['C', 'T'], ['crawler', 'turner']):
@@ -598,3 +596,18 @@ class BaseParDict:
                 **{'p': f'brain.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output',
                    'disp': f'{jj} output', 'lim': (0.0, 1.0),
                    'sym': sub('A', ii)})
+
+        self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score',
+                      disp=f'handedness score ({sub("N", "Lturns")} / {sub("N", "turns")})',
+                      sym=sub('H', 'tur'), lim=(0.0, 1.0))
+        for ii in ['on', 'off']:
+            k=f'{ii}_food'
+            self.add(**{'p': k, 'k': k, 'dtype': bool})
+            self.add(**{'p': nam.dur_ratio(k), 'k': f'{k}_tr', 'lim': (0.0, 1.0), 'disp' : f'time fraction {ii} food'})
+            self.add(**{'p': f'handedness_score_{k}', 'k': f'tur_H_{k}', 'disp' : f'handedness score {ii} food'})
+            for kk in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a','v_mu', 'sv_mu',
+                      'sa', 'd', 'sd']:
+                b = self.dict[kk]
+                k0=f'{kk}_{k}'
+                p0=f'{b.p}_{k}'
+                self.add(**{'p': p0, 'k': k0, 'disp' : f'{b.disp} {ii} food'})

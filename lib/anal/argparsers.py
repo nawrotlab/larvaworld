@@ -83,11 +83,28 @@ def adjust_sim(exp, conf_type, sim):
 
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
-    from lib.conf.stored.conf import expandConf
+    from lib.conf.stored.conf import expandConf, next_idx, loadConf
+
+    if conf_type=='Batch' :
+        exp_conf = loadConf(exp, conf_type)
+        batch_id = d['batch_setup']['batch_id']
+        if batch_id is None:
+            idx = next_idx(exp, type='Batch')
+            batch_id = f'{exp}_{idx}'
+
+        exp_conf.exp = update_exp_conf(exp_conf.exp, d, N, models)
+        exp_conf.batch_id = batch_id
+        exp_conf.batch_type = exp
+
+        exp_conf.update(**kwargs)
+        return exp_conf
+
     try:
         exp_conf = expandConf(exp, conf_type)
     except:
         exp_conf = expandConf(exp, conf_type='Exp')
+
+
     if arena is not None:
         exp_conf.env_params.arena = arena
     if d is None:
