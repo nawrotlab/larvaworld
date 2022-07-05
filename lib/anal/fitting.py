@@ -144,7 +144,7 @@ def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id
     # return dic
 
     try:
-        c.intermitter = {
+        c['intermitter'] = {
             nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
             nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
             'dt': c.dt,
@@ -155,7 +155,7 @@ def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id
             'run_dist': c.bout_distros.run_dur,
             'feeder_reoccurence_rate': None,
         }
-        c['EEB_poly1d'] = get_EEB_poly1d(**c.intermitter).c.tolist()
+        c['EEB_poly1d'] = get_EEB_poly1d(**c['intermitter']).c.tolist()
     except :
         pass
     return dic

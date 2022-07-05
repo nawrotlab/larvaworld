@@ -343,6 +343,7 @@ class RvsS_Essay(Essay):
                                                                       save_as=f'{n}{p}.pdf', **kwargs)
 
     def get_RS_diff(self):
+
         dic={}
 
         r=dNl.flatten_dict(preg.loadConf('Model','rover'))

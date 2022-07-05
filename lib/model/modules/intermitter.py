@@ -6,6 +6,7 @@ import lib.aux.dictsNlists as dNl
 from lib.anal.fitting import BoutGenerator
 
 from lib.aux import naming as nam
+
 from lib.model.modules.basic import Effector
 
 
@@ -320,6 +321,7 @@ class OfflineIntermitter(Intermitter):
         super().count_ticks()
         t = self.ticks
         self.stride_stop = False
+        # print(self.current_stridechain_length, self.current_feedchain_length, self.current_pause_ticks)
         if self.current_stridechain_length and t >= self.current_crawl_ticks:
             self.current_numstrides += 1
             self.stride_stop = True
@@ -473,12 +475,12 @@ def get_EEB_poly1d(sample=None, dt=None, **kwargs):
         kws = kwargs
     if dt is not None:
         kws['dt'] = dt
-
+    max_ticks = int(60 * 60 / kws['dt'])
     EEBs = np.arange(0, 1.05, 0.05)
     ms = []
     for EEB in EEBs:
         inter = OfflineIntermitter(EEB=EEB, register_bouts=False, **kws)
-        max_ticks = int(60 * 60 / inter.dt)
+        inter.disinhibit_locomotion()
         while inter.total_ticks < max_ticks:
             inter.step()
         ms.append(inter.get_mean_feed_freq())
@@ -527,8 +529,20 @@ if __name__ == "__main__":
     from lib.stor.larva_dataset import LarvaDataset
     from lib.registry.pars import preg
 
-    sample = 'None.200_controls'
-    sample = preg.loadConf(id=sample, conftype='Ref')
-    d = LarvaDataset(sample['dir'])
-    d.config['EEB_poly1d'] = get_EEB_poly1d(**d.config['intermitter']).c.tolist()
-    d.save_config()
+    refID = 'None.150controls'
+    d = preg.loadRef(refID)
+    c=d.config
+    from lib.model.DEB.deb import DEB
+    for mID in ['rover', 'sitter']:
+        m=preg.larva_conf_dict2.loadConf(mID).energetics
+        print(m.gut)
+        deb = DEB(id=mID, gut_params=m.gut, **m.DEB)
+        EEB=get_best_EEB(deb, sample=c)
+        print(mID,EEB)
+    # print(c['intermitter'])
+    # c['EEB_poly1d'] = get_EEB_poly1d(**c['intermitter']).c.tolist()
+    # d.save_config(add_reference=True)
+    # print(c['EEB_poly1d'])
+    # d = LarvaDataset(sample['dir'])
+    # d.config['EEB_poly1d'] = get_EEB_poly1d(**d.config['intermitter']).c.tolist()
+    # d.save_config()
