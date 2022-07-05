@@ -144,12 +144,8 @@ class GraphDict:
 
     def entry(self, ID, title=None, args={}):
         assert self.get(ID)
-        # print(ID)
         if title is None:
             title = ID
-        # else:
-            # if 'save_as' not in args.keys():
-            #     args['save_as'] = title
         return {'title': title, 'plotID': ID, 'args': args}
 
 

@@ -626,6 +626,8 @@ class BaseParDict:
 
     def build_deb_pars(self):
         ks=['f_am', 'sf_am_Vg', 'f_am_V','sf_am_V', 'sf_am_A', 'sf_am_M']
-        ps=['amount_eaten', 'deb.ingested_gut_volume_ratio', 'deb.gut.ingested_volume','deb.ingested_body_volume_ratio', 'deb.ingested_body_area_ratio', 'deb.ingested_body_mass_ratio']
-        for k,p in zip(ks,ps) :
-            self.add(**{'p': p, 'k': k})
+        ps=['amount_eaten', 'deb.ingested_gut_volume_ratio', 'deb.volume_ingested','deb.ingested_body_volume_ratio', 'deb.ingested_body_area_ratio', 'deb.ingested_body_mass_ratio']
+        ds=['amount_eaten', 'ingested_gut_volume_ratio', 'ingested_volume','ingested_body_volume_ratio', 'ingested_body_area_ratio', 'ingested_body_mass_ratio']
+        disps=['food consumed', 'ingested food as gut volume fraction', 'ingested food volume','ingested food as body volume fraction', 'ingested food as body area fraction', 'ingested food as body mass fraction']
+        for k,p,d, disp in zip(ks,ps,ds, disps) :
+            self.add(**{'p': p, 'k': k,'d': d, 'disp': disp})

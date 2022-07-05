@@ -197,6 +197,8 @@ def chemo_summary(datasets, **kwargs):
     P.annotate()
     return P.get()
 
+
+
 def result_summary(datasets, target, **kwargs):
     w, h = 50, 34
     P = GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)

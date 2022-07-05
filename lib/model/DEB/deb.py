@@ -682,6 +682,10 @@ class DEB:
         return self.gut.absorbed_mass('mg')
 
     @property
+    def volume_ingested(self):
+        return self.gut.ingested_volume
+
+    @property
     def deb_f_deviation(self):
         return self.f - 1
 

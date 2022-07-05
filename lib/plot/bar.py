@@ -8,7 +8,7 @@ from scipy.stats import ttest_ind
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import label_diff
-from lib.plot.base import BasePlot, Plot, AutoLoadPlot
+from lib.plot.base import BasePlot, Plot, AutoLoadPlot, AutoPlot
 
 
 def error_barplot(error_dict, evaluation, axs=None, fig=None, labels=None, name='error_barplots',
@@ -56,8 +56,8 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
         figsize = (9, 6)
 
 
-    P = Plot(name=par_shorts[0], **kwargs)
-    P.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize)
+    P = AutoPlot(name=par_shorts[0],Nrows=Nrows, Ncols=Ncols, figsize=figsize, **kwargs)
+    # P.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize)
     Nds = P.Ndatasets
     # Npars = len(par_shorts)
     w = 0.15

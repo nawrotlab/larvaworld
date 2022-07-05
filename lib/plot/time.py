@@ -362,10 +362,11 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
     else:
         name = f'{lab}'
         ylab = f'{lab} $({unit})$'
-    P = Plot(name=name, **kwargs)
     if xlabel is None:
         xlabel = 'time, $min$'
-    P.build(figsize=(7, 6))
+    P = AutoPlot(name=name,figsize=(7, 6), **kwargs)
+
+    # P.build(figsize=(7, 6))
 
     p=preg.dict['cum_d']
 
