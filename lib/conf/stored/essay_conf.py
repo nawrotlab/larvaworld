@@ -65,13 +65,14 @@ class Essay:
 
 
 class RvsS_Essay(Essay):
-    def __init__(self, all_figs=False, **kwargs):
+    def __init__(self, all_figs=False, N=1, **kwargs):
         super().__init__(type='RvsS', enrichment=preg.enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
         self.qs = [1.0, 0.75, 0.5, 0.25, 0.15]
         self.hs = [0, 1, 2, 3, 4]
         self.durs = [10, 15, 20]
         self.dur = 5
+        self.N = N
         self.substrates = ['Agar', 'Yeast']
         self.exp_dict = {
             **self.pathlength_exp(),
@@ -91,7 +92,7 @@ class RvsS_Essay(Essay):
                              )
 
     def conf2(self, on_food=True, l_kws={}, **kwargs):
-        return self.conf(env=self.RvsS_env(on_food=on_food), lgs=RvsS_groups(expand=True, **l_kws), **kwargs)
+        return self.conf(env=self.RvsS_env(on_food=on_food), lgs=RvsS_groups(expand=True, N=self.N,**l_kws), **kwargs)
 
     def pathlength_exp(self, dur=20, exp='PATHLENGTH'):
         return {
@@ -192,10 +193,12 @@ class RvsS_Essay(Essay):
         P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
         Nexps = len(entrylist)
         h1exp = int(h / Nexps)
+        P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold', horizontalalignment='center')
         for i, entry in enumerate(entrylist):
-            P.fig.text(x=0.5, y=0.97 - i / Nexps, s=entry['title'], size=30, weight='bold', horizontalalignment='center')
+            h0=i * h1exp
+            P.fig.text(x=0.5, y=0.95*(1 - i / Nexps), s=entry['title'], size=30, weight='bold', horizontalalignment='center')
             P.plot(func=entry['plotID'], kws=entry['args'], N=1,w=w, x0=True, h=h1exp - 4, y0=True if i == 0 else False,
-                   h0=i * h1exp + (i+1)*1)
+                   h0=h0 + (i+1)*1)
         P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
         P.annotate()
         return P.get()

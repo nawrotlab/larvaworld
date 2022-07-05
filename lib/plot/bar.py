@@ -57,9 +57,7 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
 
     P = AutoPlot(name=par_shorts[0],Nrows=Nrows, Ncols=Ncols, figsize=figsize, **kwargs)
-    # P.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize)
     Nds = P.Ndatasets
-    # Npars = len(par_shorts)
     w = 0.15
 
     if coupled_labels is not None:
