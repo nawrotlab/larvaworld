@@ -74,6 +74,9 @@ class RvsS_Essay(Essay):
         self.hs = [0, 1, 2, 3, 4]
         self.durs = [10, 15, 20]
         self.dur = 5
+        self.h_refeeding=3
+        self.dur_refeeding=120
+        self.dur_pathlength=20
 
         self.substrates = ['Agar', 'Yeast']
         self.exp_dict = {
@@ -93,8 +96,9 @@ class RvsS_Essay(Essay):
                              food_params=preg.get_null('food_params', food_grid=grid),
                              )
 
-
-    def pathlength_exp(self, dur=20, exp='PATHLENGTH'):
+    def pathlength_exp(self):
+        dur=self.dur_pathlength
+        exp = 'PATHLENGTH'
         confs = []
         for n, nb in zip(self.substrates, [False, True]):
             kws = {
@@ -107,7 +111,8 @@ class RvsS_Essay(Essay):
             confs.append(self.conf(**kws))
         return {exp: confs}
 
-    def intake_exp(self, exp='AD LIBITUM INTAKE'):
+    def intake_exp(self):
+        exp = 'AD LIBITUM INTAKE'
         confs = []
         for dur in self.durs:
             kws = {
@@ -120,7 +125,8 @@ class RvsS_Essay(Essay):
             confs.append(self.conf(**kws))
         return {exp: confs}
 
-    def starvation_exp(self, exp='POST-STARVATION INTAKE'):
+    def starvation_exp(self):
+        exp = 'POST-STARVATION INTAKE'
         confs = []
         for h in self.hs:
             kws = {
@@ -133,7 +139,8 @@ class RvsS_Essay(Essay):
             confs.append(self.conf(**kws))
         return {exp: confs}
 
-    def quality_exp(self, exp='REARING-DEPENDENT INTAKE'):
+    def quality_exp(self):
+        exp = 'REARING-DEPENDENT INTAKE'
         confs = []
         for q in self.qs:
             kws = {
@@ -146,18 +153,18 @@ class RvsS_Essay(Essay):
             confs.append(self.conf(**kws))
         return {exp: confs}
 
-    def refeeding_exp(self, h=3, dur=120, exp='REFEEDING INTAKE'):
-        confs = []
-        for h in [h]:
-            kws = {
+    def refeeding_exp(self):
+        exp = 'REFEEDING AFTER 3h STARVED'
+        h=self.h_refeeding
+        dur=self.dur_refeeding
+        kws = {
                 'env': self.RvsS_env(on_food=True),
                 'lgs': RvsS_groups(expand=True, N=self.N, h_starved=h),
                 'id': f'{exp}_{h}h_{dur}min',
                 'dur': dur,
                 'exp': exp
             }
-            confs.append(self.conf(**kws))
-        return {exp: confs}
+        return {exp: [self.conf(**kws)]}
 
     def get_entrylist(self):
         entrylist = []
@@ -211,7 +218,7 @@ class RvsS_Essay(Essay):
                     **kws0
                 }
                 plotID = 'barplot'
-            elif exp == 'REFEEDING INTAKE':
+            elif exp == 'REFEEDING AFTER 3h STARVED':
                 kws = {
                     'scaled': True,
                     'filt_amount': True,
@@ -306,8 +313,8 @@ class RvsS_Essay(Essay):
                     self.figs[f'{exp} {p}'] = self.G.dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf',
                                                                      **kwargs)
 
-            elif exp == 'REFEEDING INTAKE':
-                h = 3
+            elif exp == 'REFEEDING AFTER 3h STARVED':
+                h=self.h_refeeding
                 n = f'5_REFEEDING_after_{h}h_starvation_'
                 kwargs = dsNls(ds0)
                 self.figs[f'{exp} food-intake'] = self.G.dict['food intake (timeplot)'](scaled=True,
@@ -375,9 +382,9 @@ class DoublePatch_Essay(Essay):
 
 class Chemotaxis_Essay(Essay):
     def __init__(self, dur=5.0, gain=50.0, mID0='RE_NEU_PHI_DEF_nav', **kwargs):
-        super().__init__(type='Chemotaxis', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                                     bouts=[], fits=False, interference=False,
-                                                                     on_food=False),
+        super().__init__(type='Chemotaxis',
+                         enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
+                                                  bouts=[], fits=False, interference=False, on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']
         self.dur = dur
@@ -414,22 +421,22 @@ class Chemotaxis_Essay(Essay):
         exp1 = 'Orbiting behavior'
         kws1 = {
             'env': preg.get_null('env_conf',
-                                food_params={'source_groups': {},
-                                             'food_grid': None,
-                                             'source_units': {
-                                                 'Source': preg.get_null('source', pos=(0.0, 0.0),
-                                                                         group='Source',
-                                                                         odor=preg.get_null('odor',
-                                                                                            odor_id='Odor',
-                                                                                            odor_intensity=2.0,
-                                                                                            odor_spread=0.0002)
-                                                                         ),
-                                             }
-                                             }, **kws),
+                                 food_params={'source_groups': {},
+                                              'food_grid': None,
+                                              'source_units': {
+                                                  'Source': preg.get_null('source', pos=(0.0, 0.0),
+                                                                          group='Source',
+                                                                          odor=preg.get_null('odor',
+                                                                                             odor_id='Odor',
+                                                                                             odor_intensity=2.0,
+                                                                                             odor_spread=0.0002)
+                                                                          ),
+                                              }
+                                              }, **kws),
             'lgs': {
-            mID: preg.get_null('LarvaGroup',
-                               distribution=preg.get_null('larva_distro', N=self.N, mode='uniform'),
-                               default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()},
+                mID: preg.get_null('LarvaGroup',
+                                   distribution=preg.get_null('larva_distro', N=self.N, mode='uniform'),
+                                   default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()},
             'id': f'{exp1}_exp',
             'dur': self.dur,
             'exp': exp1
@@ -438,22 +445,23 @@ class Chemotaxis_Essay(Essay):
         exp2 = 'Up-gradient navigation'
         kws2 = {
             'env': preg.get_null('env_conf',
-                              food_params={'source_groups': {},
-                                           'food_grid': None,
-                                           'source_units': {
-                                               'Source': preg.get_null('source', pos=(0.04, 0.0),
-                                                                       group='Source',
-                                                                       odor=preg.get_null('odor',
-                                                                                          odor_id='Odor',
-                                                                                          odor_intensity=8.0,
-                                                                                          odor_spread=0.0004)),
-                                           }
-                                           }, **kws),
+                                 food_params={'source_groups': {},
+                                              'food_grid': None,
+                                              'source_units': {
+                                                  'Source': preg.get_null('source', pos=(0.04, 0.0),
+                                                                          group='Source',
+                                                                          odor=preg.get_null('odor',
+                                                                                             odor_id='Odor',
+                                                                                             odor_intensity=8.0,
+                                                                                             odor_spread=0.0004)),
+                                              }
+                                              }, **kws),
             'lgs': {
-            mID: preg.get_null('LarvaGroup',
-                               distribution=preg.get_null('larva_distro', N=self.N, mode='uniform', loc=(-0.04, 0.0),
-                                                          orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
-                               default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()},
+                mID: preg.get_null('LarvaGroup',
+                                   distribution=preg.get_null('larva_distro', N=self.N, mode='uniform',
+                                                              loc=(-0.04, 0.0),
+                                                              orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
+                                   default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()},
             'id': f'{exp2}_exp',
             'dur': self.dur,
             'exp': exp2
