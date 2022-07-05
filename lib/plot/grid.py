@@ -169,6 +169,7 @@ def chemo_summary(datasets, **kwargs):
     h1exp=int(h/Nexps)
     h1k=int(h1exp / (Nks+1))
     for i,(exp,dds) in enumerate(datasets.items()):
+        h0 = i * h1exp
         dds=dNl.flatten_list(dds)
         Ndds=len(dds)
         kws1 = {
@@ -182,15 +183,14 @@ def chemo_summary(datasets, **kwargs):
             'x0': True,
             'w': w,
         }
-        P.plot(func='trajectories', kws=kws1, **kws2, N=Ndds, share_h=True, h=h1k-2,y0=True if i==0 else False, h0=i * h1exp)
+        P.plot(func='trajectories', kws=kws1, **kws2, N=Ndds, share_h=True, h=h1k-2,y0=True if i==0 else False, h0=h0)
         P.plot(func='autoplot', kws={
                 'ks': time_ks,
-                # 'ks': ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'],
                 'show_first': False,
                 'individuals': False,
                 'unit': 'min',
                 **kws1
-            }, **kws2,N=Nks, share_w=True, dh=0, h=Nks*(h1k-1), h0=i*h1exp+h1k)
+            }, **kws2,N=Nks, share_w=True, dh=0, h=Nks*(h1k-1), h0=h0+h1k)
 
     P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
     P.annotate()

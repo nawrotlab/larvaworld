@@ -15,6 +15,7 @@ class Essay:
             self.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
         else:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
+        self.G = preg.graph_dict
         self.show = show
         self.type = type
         self.enrichment = enrichment
@@ -44,8 +45,7 @@ class Essay:
         return self.datasets
 
     def anal(self):
-        self.global_anal(self.datasets)
-        # raise
+        self.global_anal()
         for exp, ds0 in self.datasets.items():
             if ds0 is not None and len(ds0) != 0 and all([d0 is not None for d0 in ds0]):
                 self.analyze(exp=exp, ds0=ds0)
@@ -57,7 +57,7 @@ class Essay:
         pass
         # return {}, None
 
-    def global_anal(self, datasets):
+    def global_anal(self):
         pass
 
 
@@ -251,6 +251,7 @@ class Chemotaxis_Essay(Essay):
                                                                      bouts=[], fits=False, interference=False,
                                                                      on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
+        self.time_ks=['c_odor1', 'dc_odor1']
         self.N = N
         self.dur = dur
         self.gain = gain
@@ -336,10 +337,9 @@ class Chemotaxis_Essay(Essay):
         return {exp1: [e1], exp2: [e2]}
 
     def analyze(self, exp, ds0):
-        G = preg.graph_dict
         entry_list = [
-            G.entry('autoplot', args={
-                'ks': ['c_odor1', 'dc_odor1'],
+            self.G.entry('autoplot', args={
+                'ks': self.time_ks,
                 # 'ks': ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'],
                 'show_first': False,
                 'individuals': False,
@@ -347,7 +347,7 @@ class Chemotaxis_Essay(Essay):
                 'unit': 'min',
                 'name': f'{exp}_timeplot'
             }),
-            G.entry('trajectories', args={
+            self.G.entry('trajectories', args={
                 'subfolder': None,
                 'name': f'{exp}_trajectories',
             })
@@ -357,17 +357,15 @@ class Chemotaxis_Essay(Essay):
                   'save_to': self.plot_dir,
                   'show': self.show}
 
-        self.figs[exp] = G.eval(entry_list, **kwargs)
+        self.figs[exp] = self.G.eval(entry_list, **kwargs)
 
-    def global_anal(self, datasets):
-        G = preg.graph_dict
-        entry = G.entry('chemotaxis summary', args={})
+    def global_anal(self):
         kwargs = {
-            'datasets': datasets,
+            'datasets': self.datasets,
             'save_to': self.plot_dir,
             'show': self.show}
-
-        self.figs['global'] = G.eval0(entry, **kwargs)
+        entry = self.G.entry('chemotaxis summary', args={})
+        self.figs['global'] = self.G.eval0(entry, **kwargs)
 
 
 rover_sitter_essay = {
