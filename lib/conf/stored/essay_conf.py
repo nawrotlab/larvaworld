@@ -189,7 +189,7 @@ class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=5, dur=5.0, **kwargs):
         super().__init__(type='DoublePatch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                 bouts=['stride', 'pause', 'turn'],
-                                                                fits=False, on_food=True),
+                                                                fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
         self.substrates = substrates
         self.N = N

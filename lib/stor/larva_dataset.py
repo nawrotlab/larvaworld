@@ -9,6 +9,7 @@ import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
 # from lib.registry.dtypes import null_dict
+
 from lib.registry.pars import preg
 
 
@@ -702,12 +703,17 @@ class LarvaDataset:
         }
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
-        # print(annotation, any([annotation[kk] for kk in ['stride', 'pause', 'turn']]))
         if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
             from lib.process import aux
             self.chunk_dicts = aux.annotation(s, e, c, **kwargs)
-            self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
-            self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
+
+            if annotation['on_food']:
+                from lib.process import patch
+                patch.comp_on_food(s, e, c)
+            if annotation['interference']:
+                self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+                self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
+
 
         self.drop_pars(**to_drop, **cc)
         if is_last:

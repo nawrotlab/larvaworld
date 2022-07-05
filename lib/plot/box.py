@@ -221,15 +221,15 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
 def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kwargs):
     P = AutoPlot(name='double_patch',Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
-    ModIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
+    mIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
     subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])
-    Nmods = len(ModIDs)
+    Nmods = len(mIDs)
     Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
     if Nmods == 2:
         temp = ['dark', 'light']
     elif Nmods == 3:
         temp = ['dark', 'light', '']
-    Cmods = dict(zip(ModIDs, temp))
+    Cmods = dict(zip(mIDs, temp))
     ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
 
     def get_df(par):
@@ -238,9 +238,9 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
 
         pair_dfs = []
         for subID in subIDs:
-            subModIDs = [f'{subID}_{ModID}' for ModID in ModIDs]
+            subModIDs = [f'{subID}_{mID}' for mID in mIDs]
             pair_vs = dNl.flatten_list([dic[id] for id in subModIDs])
-            pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=ModIDs).assign(Substrate=subID))
+            pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
             cdf = pd.concat(pair_dfs)  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
         return mdf
@@ -281,12 +281,12 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
 
             cols = []
             if not agar:
-                for pID, cID in itertools.product(subIDs, ModIDs):
-                    cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
+                for subID, mID in itertools.product(subIDs, mIDs):
+                    cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
             else:
-                for pID, cID in itertools.product(subIDs, ModIDs):
-                    cols.append(f'xkcd:{Cmods[cID]} {Csubs[pID]}')
-                    cols.append(f'xkcd:{Cmods[cID]} cyan')
+                for subID, mID in itertools.product(subIDs, mIDs):
+                    cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
+                    cols.append(f'xkcd:{Cmods[mID]} cyan')
                 ax.set_xticklabels(subIDs * 2)
                 ax.axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
                 for x_text,text in zip([0.25,0.75], [r'$\bf{Rovers}$', r'$\bf{Sitters}$']) :
@@ -299,23 +299,21 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
     for ii, k in enumerate(ks):
         p=preg.dict[k]
         par = p.d
-        ylabel = p.label
+        ylab = p.label
         scale = 1
         if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] :
             if k == 'v_mu':
-                ylabel = "crawling speed (mm/s)"
+                ylab = "crawling speed (mm/s)"
                 scale = 1000
             mdf = get_df_onVSoff(par)
             plot_p(mdf, ii, 'food', agar=True)
         else:
             if k == 'cum_d':
-                ylabel = "pathlength (mm)"
+                ylab = "pathlength (mm)"
                 scale = 1000
             mdf = get_df(par)
             plot_p(mdf, ii, 'Model')
-
-
-        P.conf_ax(ii, xlab=xlabel if ii>3 else None, ylab=ylabel, ylim=None)
+        P.conf_ax(ii, xlab=xlabel if ii>3 else None, ylab=ylab, ylim=None)
     P.adjust((0.1,0.95), (0.15,0.9), 0.3,0.3)
     return P.get()
 

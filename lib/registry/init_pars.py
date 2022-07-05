@@ -305,6 +305,7 @@ class ParInitDict:
             d['processing'] = {t: bF for t in proc_type_keys}
             d['annotation'] = {**{b: bF for b in bout_keys},
                                'on_food': bF,
+                               'interference': bT,
                                'fits': bT}
             d['to_drop'] = {kk: bF for kk in to_drop_keys}
             d['enrichment'] = {**{k: d[k] for k in

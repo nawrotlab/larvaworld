@@ -37,43 +37,48 @@ def comp_patch_metrics(s, e, **kwargs):
     on = 'on_food'
     off = 'off_food'
     on_tr = nam.dur_ratio(on)
+    on_cumt=nam.cum(nam.dur(on))
+    off_cumt=nam.cum(nam.dur(off))
     s_on=s[s[on] == True]
     s_off=s[s[on] == False]
-    # e[f'{v_mu}_{on}'] = s_on[v].dropna().groupby('AgentID').mean()
-    # e[f'{v_mu}_{off}'] = s_off[v].dropna().groupby('AgentID').mean()
-    for c in ['run', 'Lturn','turn', 'pause']:
+
+    e[on_cumt] = e[cum_t] * e[on_tr]
+    e[off_cumt] = e[cum_t] * (1-e[on_tr])
+
+    for c in ['Lturn','turn', 'pause']:
         dur = nam.dur(c)
         cdur = nam.cum(dur)
+        cdur_on = f'{cdur}_{on}'
+        cdur_off = f'{cdur}_{off}'
         N = nam.num(c)
 
         e[f'{N}_{on}'] = s_on[dur].groupby('AgentID').count()
         e[f'{N}_{off}'] = s_off[dur].groupby('AgentID').count()
 
-        e[f'{cdur}_{on}'] = s_on[dur].groupby('AgentID').sum()
-        e[f'{cdur}_{off}'] = s_off[dur].groupby('AgentID').sum()
+        e[cdur_on] = s_on[dur].groupby('AgentID').sum()
+        e[cdur_off] = s_off[dur].groupby('AgentID').sum()
 
-        e[f'{nam.dur_ratio(c)}_{on}'] = e[f'{cdur}_{on}'] / e[cum_t] / e[on_tr]
-        e[f'{nam.dur_ratio(c)}_{off}'] = e[f'{cdur}_{off}'] / e[cum_t] / (1 - e[on_tr])
-        e[f'{nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[cum_t] / e[on_tr]
-        e[f'{nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[cum_t] / (1 - e[on_tr])
+        e[f'{nam.dur_ratio(c)}_{on}'] = e[cdur_on] / e[on_cumt]
+        e[f'{nam.dur_ratio(c)}_{off}'] = e[cdur_off] / e[off_cumt]
+        e[f'{nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[on_cumt]
+        e[f'{nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[off_cumt]
 
     dst = nam.dst('')
     cdst = nam.cum(dst)
+    cdst_on = f'{cdst}_{on}'
+    cdst_off = f'{cdst}_{off}'
     v_mu = nam.mean(nam.vel(''))
-    e[f'{cdst}_{on}'] = s[s[on] == True][dst].dropna().groupby('AgentID').sum()
-    e[f'{cdst}_{off}'] = s[s[on] == False][dst].dropna().groupby('AgentID').sum()
+    e[cdst_on] = s_on[dst].dropna().groupby('AgentID').sum()
+    e[cdst_off] = s_off[dst].dropna().groupby('AgentID').sum()
 
-    e[f'{v_mu}_{on}'] = e[f'{cdst}_{on}'] / e[cum_t] / e[on_tr]
-    e[f'{v_mu}_{off}'] = e[f'{cdst}_{off}'] / e[cum_t] / (1 - e[on_tr])
-    e['handedness_score'] = e[nam.num('Lturn')] / e[nam.num('turn')]
+    e[f'{v_mu}_{on}'] = e[cdst_on] / e[on_cumt]
+    e[f'{v_mu}_{off}'] = e[cdst_off] / e[off_cumt]
+    # e['handedness_score'] = e[nam.num('Lturn')] / e[nam.num('turn')]
     e[f'handedness_score_{on}'] = e[f"{nam.num('Lturn')}_{on}"] / e[f"{nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]
 
 
 def comp_patch(s,e,c):
-    on = 'on_food'
-    if on in s.columns and nam.dur_ratio(on) in e.columns:
-        comp_patch_metrics(s, e)
     for b in ['stride', 'pause', 'turn']:
         try:
             comp_chunk_bearing(s, c, chunk=b)
@@ -82,3 +87,8 @@ def comp_patch(s,e,c):
                 comp_chunk_bearing(s, c, chunk='Rturn')
         except:
             pass
+
+def comp_on_food(s,e,c) :
+    on = 'on_food'
+    if on in s.columns and nam.dur_ratio(on) in e.columns:
+        comp_patch_metrics(s, e)

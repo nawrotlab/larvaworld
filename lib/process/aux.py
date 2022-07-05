@@ -425,7 +425,7 @@ def turn_mode_annotation(e, chunk_dicts):
 def turn_annotation(s, e, c, store=False):
     fov, foa = preg.getPar(['fov', 'foa'])
 
-    eTur_ps = preg.getPar( ['Ltur_N', 'Rtur_N', 'tur_N'])
+    eTur_ps = preg.getPar( ['Ltur_N', 'Rtur_N', 'tur_N', 'tur_H'])
     eTur_vs = np.zeros([c.N, len(eTur_ps)]) * np.nan
     turn_ps = preg.getPar(['tur_fou', 'tur_t','Ltur_t','Rtur_t', 'tur_fov_max'])
     turn_vs = np.zeros([c.Nticks, c.N, len(turn_ps)]) * np.nan
@@ -437,23 +437,26 @@ def turn_annotation(s, e, c, store=False):
 
         Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, c.dt)
         Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, c.dt)
+        Lturns_N,Rturns_N = Lturns.shape[0],Rturns.shape[0]
+        turns_N=Lturns_N+Rturns_N
+        tur_H=Lturns_N/turns_N
         Tamps = np.concatenate([Lamps, Ramps])
         Tdurs = np.concatenate([Ldurs, Rdurs])
         Tmaxs = np.concatenate([Lmaxs, Rmaxs])
         Tslices = Lturn_slices + Rturn_slices
-        if Lturns.shape[0] > 0:
+        if Lturns_N > 0:
             turn_vs[Lturns[:, 1], jj, 0] = Lamps
             turn_vs[Lturns[:, 1], jj, 1] = Ldurs
             turn_vs[Lturns[:, 1], jj, 2] = Ldurs
             turn_vs[Lturns[:, 1], jj, 4] = Lmaxs
-        if Rturns.shape[0] > 0:
+        if Rturns_N > 0:
             turn_vs[Rturns[:, 1], jj, 0] = Ramps
             turn_vs[Rturns[:, 1], jj, 1] = Rdurs
             turn_vs[Rturns[:, 1], jj, 3] = Rdurs
             turn_vs[Rturns[:, 1], jj, 4] = Rmaxs
         turn_dict[id] = {'Lturn': Lturns, 'Rturn': Rturns, 'turn_slice': Tslices, 'turn_amp': Tamps,
                          'turn_dur': Tdurs, 'Lturn_dur': Ldurs, 'Rturn_dur': Rdurs, 'turn_vel_max': Tmaxs}
-        eTur_vs[jj, :] = [Lturns.shape[0],Rturns.shape[0], Lturns.shape[0]+Rturns.shape[0]]
+        eTur_vs[jj, :] = [Lturns_N,Rturns_N, turns_N, tur_H]
     s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
     e[eTur_ps] = eTur_vs
     if store:

@@ -609,6 +609,8 @@ class BaseParDict:
         for ii in ['on', 'off']:
             k=f'{ii}_food'
             self.add(**{'p': k, 'k': k, 'dtype': bool})
+            self.add(**{'p': nam.dur(k), 'k': f'{k}_t', 'disp' : f'time {ii} food'})
+            self.add(**{'p': nam.cum(nam.dur(k)), 'k': nam.cum(f'{k}_t'), 'disp' : f'total time {ii} food'})
             self.add(**{'p': nam.dur_ratio(k), 'k': f'{k}_tr', 'lim': (0.0, 1.0), 'disp' : f'time fraction {ii} food'})
             self.add(**{'p': f'handedness_score_{k}', 'k': f'tur_H_{k}', 'disp' : f'handedness score {ii} food'})
             for kk in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a','v_mu', 'sv_mu',
