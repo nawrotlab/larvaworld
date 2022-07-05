@@ -122,7 +122,7 @@ class LarvaSim(BodySim, Larva):
             if self.model.Nticks % self.deb_step_every == 0:
                 X_V = self.temp_cum_V_eaten
                 if X_V > 0:
-                    self.deb.f += self.deb.absorption
+                    self.deb.f += self.deb.gut.k_abs
                 self.deb.f *= self.f_exp_coef
                 self.deb.run(X_V=X_V)
                 self.temp_cum_V_eaten = 0

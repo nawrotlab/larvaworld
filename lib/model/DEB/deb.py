@@ -29,8 +29,7 @@ Larvae were reared from egg-hatch to mid- third-instar (96±2h post-hatch) in 25
 class DEB:
     def __init__(self, id='DEB model', species='default', steps_per_day=24 * 60, cv=0, T=298.15, eb=1.0, substrate=None,
                  aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True,
-                 save_to=None,
-                 V_bite=0.0005, absorption=None, base_hunger=0.5, hunger_gain=0, hunger_as_EEB=False, hours_as_larva=0,
+                 save_to=None,V_bite=0.0005, base_hunger=0.5, hunger_gain=0, hunger_as_EEB=False, hours_as_larva=0,
                  simulation=True, use_gut=True,
                  intermitter=None, gut_params=None, **kwargs):
 
@@ -63,10 +62,6 @@ class DEB:
         self.print_output = print_output
         self.simulation = simulation
         self.assimilation_mode = assimilation_mode
-        self.absorption = absorption
-
-        # if y_E_X is not None :
-        #     self.y_E_X = y_E_X
         self.epochs = []
         self.epoch_fs = []
         self.epoch_qs = []
@@ -701,11 +696,11 @@ def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     N = len(epochs)
     if N == 0:
-        epochs = {0: null_dict('epoch', start=0.0, stop=None)}
+        epochs = {0: preg.get_null('epoch', start=0.0, stop=None)}
     elif str(N - 1) in epochs.keys() and epochs[str(N - 1)]['stop'] is not None:
-        epochs.update({N: null_dict('epoch', start=epochs[str(N - 1)]['stop'], stop=None)})
+        epochs.update({N: preg.get_null('epoch', start=epochs[str(N - 1)]['stop'], stop=None)})
     elif N - 1 in epochs.keys() and epochs[N - 1]['stop'] is not None:
-        epochs.update({N: null_dict('epoch', start=epochs[N - 1]['stop'], stop=None)})
+        epochs.update({N: preg.get_null('epoch', start=epochs[N - 1]['stop'], stop=None)})
     deb.grow_larva(epochs=epochs, age=age)
     deb.finalize_dict()
     d = deb.return_dict()

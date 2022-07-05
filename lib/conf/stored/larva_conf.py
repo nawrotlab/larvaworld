@@ -10,7 +10,7 @@ from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
 
 def Im(EEB, **kwargs):
-    return preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=0.0, **kwargs)
+    return preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=EEB, **kwargs)
 
 
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
@@ -285,12 +285,12 @@ def create_mod_dict():
     RvsS = {
         'rover': RvsS_larva(EEB=0.37, gut_kws={'k_abs': 0.8}),
         'sitter': RvsS_larva(EEB=0.67, gut_kws={'k_abs': 0.4}),
-        'old_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
-        'old_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
-        'navigator_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', OD=OD1),
-        'mock_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover', Nsegs=1, mock=True),
-        'navigator_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', OD=OD1),
-        'mock_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter', Nsegs=1, mock=True),
+        # 'old_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
+        # 'old_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
+        'navigator_rover': RvsS_larva(EEB=0.37,species='rover', OD=OD1, gut_kws={'k_abs': 0.8}),
+        'mock_rover': RvsS_larva(EEB=0.37, species='rover', Nsegs=1, mock=True, gut_kws={'k_abs': 0.8}),
+        'navigator_sitter': RvsS_larva(EEB=0.67,  species='sitter', OD=OD1, gut_kws={'k_abs': 0.4}),
+        'mock_sitter': RvsS_larva(EEB=0.67, species='sitter', Nsegs=1, mock=True, gut_kws={'k_abs': 0.4}),
     }
 
     odors3 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base']]

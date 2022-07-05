@@ -26,7 +26,6 @@ class Essay:
         self.essay_id = f'{type}_{preg.next_idx(id=type, conftype="Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
         path = preg.path_dict["ESSAY"]
-        # path=paths.path("ESSAY")
         self.full_path = f'{path}/{type}/{self.essay_id}/data'
         self.plot_dir = f'{path}/{type}/{self.essay_id}/plots'
         self.exp_dict = {}
@@ -88,6 +87,10 @@ class RvsS_Essay(Essay):
 
         }
         self.all_figs = all_figs
+
+        self.RS_diff=self.get_RS_diff()
+
+
 
     def RvsS_env(self, on_food=True):
         grid = preg.get_null('food_grid') if on_food else None
@@ -247,6 +250,16 @@ class RvsS_Essay(Essay):
         h1exp = int(h / Nexps)
         P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold',
                    horizontalalignment='center')
+
+        kstrs=''
+        for k,dic in self.RS_diff.items() :
+            rk=dic['rover']
+            sk=dic['sitter']
+            kstr=f'{k} : r : {rk} VS s : {sk}'
+            kstrs+=kstr
+            # kstrs.append(kstr)
+        # k0str=str.
+        P.fig.text(x=0.5, y=0.97, s=kstrs, size=30, horizontalalignment='center')
         for i, entry in enumerate(entrylist):
             P.fig.text(x=0.5, y=0.95 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
                        horizontalalignment='center')
@@ -328,6 +341,17 @@ class RvsS_Essay(Essay):
                     self.figs[f'{exp} {p}'] = self.G.dict['timeplot'](par_shorts=[s], show_first=False,
                                                                       subfolder=None,
                                                                       save_as=f'{n}{p}.pdf', **kwargs)
+
+    def get_RS_diff(self):
+        dic={}
+
+        r=dNl.flatten_dict(preg.loadConf('Model','rover'))
+        s=dNl.flatten_dict(preg.loadConf('Model', 'sitter'))
+        for k in r.keys() :
+            if r[k]!=s[k]:
+                dic[k]={'rover' : r[k], 'sitter' : s[k]}
+        #         print(k, r[k], s[k])
+        return dNl.NestDict(dic)
 
 
 class DoublePatch_Essay(Essay):
@@ -543,6 +567,16 @@ essay_dict = {
 }
 
 if __name__ == "__main__":
+    # r0=preg.loadConf('Model','rover')
+    # s0=preg.loadConf('Model', 'sitter')
+    # r=dNl.flatten_dict(preg.loadConf('Model','rover'))
+    # s=dNl.flatten_dict(preg.loadConf('Model', 'sitter'))
+    # # print(r0.brain.intermitter_params.EEB, s0.brain.intermitter_params.EEB)
+    # for k in r.keys() :
+    #     if r[k]!=s[k]:
+    #         print(k, r[k], s[k])
+    #
+    # raise
     # figs, results = RvsS_Essay(all_figs=False).run()
     E = RvsS_Essay(video=False, all_figs=False, show=True)
     # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
