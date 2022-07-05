@@ -220,6 +220,8 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
 
 def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kwargs):
     P = AutoPlot(name='double_patch',Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
+    Nlarvae = dNl.unique_list([d.config.N for d in P.datasets])[0]
+    dur = int(np.round(dNl.unique_list([d.config.duration for d in P.datasets])[0]/60))
     gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     mIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
     subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])
@@ -269,7 +271,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
                 'ax': ax,
                 'width': 0.5,
             }
-            g1 = sns.boxplot(**kws)  # RUN PLOT
+            g1 = sns.boxplot(**kws)
             g1.get_legend().remove()
 
             annotate_plot(show_ns=show_ns, **kws)
@@ -289,7 +291,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
                     cols.append(f'xkcd:{Cmods[mID]} cyan')
                 ax.set_xticklabels(subIDs * 2)
                 ax.axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
-                for x_text,text in zip([0.25,0.75], [r'$\bf{Rovers}$', r'$\bf{Sitters}$']) :
+                for x_text,text in zip([0.25,0.75], [r'$\bf{Rovers}$' + f' (N={Nlarvae})', r'$\bf{Sitters}$'+ f' (N={Nlarvae})']) :
                     ax.text(x_text, 1.1, text, ha='center', va='top', color='k',fontsize=25, transform=ax.transAxes)
             for j, patch in enumerate(ax.artists):
                 patch.set_facecolor(cols[j])
@@ -315,7 +317,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
             plot_p(mdf, ii, 'Model')
         P.conf_ax(ii, xlab=xlabel if ii>3 else None, ylab=ylab, ylim=None)
     P.fig.align_ylabels(P.axs[:])
-    P.fig.suptitle('Double-patch experiment', size=40, weight='bold')
+    P.fig.suptitle(f'Double-patch experiment (duration = {dur} min)', size=40, weight='bold')
     P.adjust((0.1,0.95), (0.15,0.9), 0.3,0.3)
     return P.get()
 
