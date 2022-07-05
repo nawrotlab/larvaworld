@@ -1,6 +1,8 @@
 import copy
 import shutil
 
+import pandas as pd
+
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.par_aux import sub
 
@@ -88,8 +90,7 @@ class RvsS_Essay(Essay):
 
         }
         self.all_figs = all_figs
-
-        self.RS_diff, self.RS_diff_str=self.get_RS_diff()
+        self.RS_diff_df, self.RS_diff_str=self.get_RS_diff()
 
 
 
@@ -244,20 +245,22 @@ class RvsS_Essay(Essay):
         self.figs.update(self.G.eval(self.entrylist, **kwargs))
 
     def summary_graph(self, entrylist, **kwargs):
-        w, h = 30, 60
+        h_mpl=4
+        w, h = 30, 60+h_mpl
         from lib.plot.base import GridPlot
         P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
         Nexps = len(entrylist)
-        h1exp = int(h / Nexps)
+        h1exp = int((h-h_mpl) / Nexps)
         P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold',
                    horizontalalignment='center')
-        P.fig.text(x=0.5, y=0.96, s=self.RS_diff_str, size=30, horizontalalignment='center')
+
+        P.plot(func='mpl', kws={'data': self.RS_diff_df}, w=w, x0=True, y0=True, h=h_mpl,w0=6, h0=0)
+
         for i, entry in enumerate(entrylist):
-            P.fig.text(x=0.5, y=0.94 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
+            P.fig.text(x=0.5, y=0.88 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
                        horizontalalignment='center')
-            P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,
-                   y0=True if i == 0 else False, h0=i * h1exp + (i + 1) * 1)
-        P.adjust((0.1, 0.95), (0.05, 0.94), 0.05, 0.1)
+            P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,h0=i * h1exp + (i + 1) * 1+h_mpl)
+        P.adjust((0.1, 0.95), (0.05, 0.96), 0.05, 0.1)
         P.annotate()
         return P.get()
 
@@ -342,14 +345,15 @@ class RvsS_Essay(Essay):
         dic = {}
         for k in r.keys() :
             if r[k]!=s[k]:
-                kk=k.split('.')
-                k0,k1=kk[-1],kk[-2]
+                p=D.full_dict[k]
+                # kk=k.split('.')
+                # k0,k1=kk[-1],kk[-2]
 
-                dic[k0]={'rover' : r[k], 'sitter' : s[k]}
-                kstr=f' {sub(k0,"r")}:{r[k]} - {sub(k0,"s")}:{s[k]} '
+                dic[p.disp]={'rover' : r[k], 'sitter' : s[k]}
+                kstr=f' {sub(p.disp,"r")}:{r[k]} - {sub(p.disp,"s")}:{s[k]} '
                 k0str+=kstr
-        dic= dNl.NestDict(dic)
-        return dic, k0str
+        df=pd.DataFrame.from_dict(dic).T
+        return df, k0str
 
 
 class DoublePatch_Essay(Essay):
@@ -565,17 +569,6 @@ essay_dict = {
 }
 
 if __name__ == "__main__":
-    # r0=preg.loadConf('Model','rover')
-    # s0=preg.loadConf('Model', 'sitter')
-    # r=dNl.flatten_dict(preg.loadConf('Model','rover'))
-    # s=dNl.flatten_dict(preg.loadConf('Model', 'sitter'))
-    # # print(r0.brain.intermitter_params.EEB, s0.brain.intermitter_params.EEB)
-    # for k in r.keys() :
-    #     if r[k]!=s[k]:
-    #         print(k, r[k], s[k])
-    #
-    # raise
-    # figs, results = RvsS_Essay(all_figs=False).run()
     E = RvsS_Essay(video=False, all_figs=False, show=True)
     # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
     # E = DoublePatch_Essay(video=False, N=3, dur=3)

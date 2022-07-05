@@ -554,6 +554,7 @@ class LarvaConfDict2:
         self.dist_dict = self.dist_dict0.dict
 
         self.dict = self.build()
+        self.full_dict=self.build_full_dict()
 
     def build(self):
         from lib.registry.modConfs import build_brain_module_dict, build_aux_module_dict
@@ -578,10 +579,11 @@ class LarvaConfDict2:
         if mkey is None or mkey not in self.dict.model.keys:
             raise ValueError('Module key must be one of larva-model configuration keys')
         else:
-            if mkey in self.dict.aux.keys:
-                return self.dict.model.m[mkey].args
-            elif mkey in self.dict.brain.keys:
+            if mkey in self.dict.brain.keys+['energetics']:
                 return self.dict.model.m[mkey].mode[mode].args
+            elif mkey in self.dict.aux.keys:
+                return self.dict.model.m[mkey].args
+
 
     def generate_configuration(self, mdict, **kwargs):
         conf = dNl.NestDict()
@@ -950,16 +952,21 @@ class LarvaConfDict2:
         # for mkey in self.dict.brain.keys:
 
         for auxkey in self.dict.aux.keys:
-            if auxkey == 'energetics':
-                if energetics is None:
-                    conf[auxkey] = None
-                    continue
-            mdict = self.dict.aux.m[auxkey].args
             if auxkey in auxkws.keys():
                 mkws = auxkws[auxkey]
             else:
                 mkws = {}
-            conf[auxkey] = self.generate_configuration(mdict, **mkws)
+            if auxkey == 'energetics':
+                if energetics is None:
+                    conf[auxkey] = None
+                    continue
+                else :
+                    for m,mdic in self.dict.aux.m[auxkey].mode.items():
+                        mdict = mdic.args
+                        conf[auxkey][m] = self.generate_configuration(mdict, **mkws[m])
+            else :
+                mdict = self.dict.aux.m[auxkey].args
+                conf[auxkey] = self.generate_configuration(mdict, **mkws)
 
         #  TODO thsi
         null_Box2D_params = {
@@ -1028,10 +1035,78 @@ class LarvaConfDict2:
         from lib.conf.stored.conf import kConfDict
         return kConfDict('Model',**kwargs)
 
+    def build_full_dict(self):
+        D=self.dict
+        def register(dic, k0, full_dic):
+            for k, p in dic.items():
+                kk = f'{k0}.{k}'
+                if isinstance(p, param.Parameterized):
+                    full_dic[kk] = p
+                else:
+                    print(kk)
+                    register(p, kk, full_dic)
+
+        full_dic = dNl.NestDict()
+        for aux_key in D.aux.keys:
+            if aux_key == 'energetics':
+                continue
+            aux_dic = D.aux.m[aux_key]
+            register(aux_dic.args, aux_key, full_dic)
+        for m, mdic in D.aux.m['energetics'].mode.items():
+            k0 = f'energetics.{m}'
+            register(mdic.args, k0, full_dic)
+
+        for bkey in D.brain.keys:
+            bkey0 = f'brain.{bkey}_params'
+            bdic = D.brain.m[bkey]
+            for mod in bdic.mode.keys():
+                mdic = bdic.mode[mod].args
+                register(mdic, bkey0, full_dic)
+
+        return full_dic
+
 
 if __name__ == '__main__':
     dd = LarvaConfDict2()
-    dd.storeConfs()
+    # print(dd.dict.aux.m.energetics.args)
+    # raise
+
+
+
+    def register(dic, k0, full_dic):
+        for k,p in dic.items():
+            kk=f'{k0}.{k}'
+            if isinstance(p, param.Parameterized):
+                full_dic[kk] = p
+            else:
+                print(kk)
+                register(p, kk, full_dic)
+
+
+    full_dic=dNl.NestDict()
+    for aux_key in dd.dict.aux.keys :
+        if aux_key=='energetics':
+            continue
+        aux_dic=dd.dict.aux.m[aux_key]
+        register(aux_dic.args, aux_key, full_dic)
+    for m,mdic in dd.dict.aux.m['energetics'].mode.items():
+        k0=f'energetics.{m}'
+        register(mdic.args, k0, full_dic)
+
+    for bkey in dd.dict.brain.keys :
+        bkey0=f'brain.{bkey}_params'
+        bdic=dd.dict.brain.m[bkey]
+        for mod in bdic.mode.keys():
+            mdic=bdic.mode[mod].args
+            register(mdic, bkey0, full_dic)
+
+
+    for k,v in full_dic.items():
+        print(k,v)
+
+
+
+    # dd.storeConfs()
     # m = dd.larvaConf(mID='loco_default')
 
     # print(dd.storedConf())

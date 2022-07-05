@@ -446,6 +446,7 @@ def Bod0():
 
 
 def DEB0():
+    # from lib.model.DEB import gut,deb
     gut_args = {
         'M_gm': {'v0': 10 ** -2, 'lim': (0.0, 10.0), 'disp': 'gut scaled capacity',
                  'sym': 'M_gm',
@@ -489,9 +490,6 @@ def DEB0():
                 'f_decay': {'v0': 0.1, 'lim': (0.0, 1.0), 'dv': 0.1, 'sym': sub('c', 'DEB'), 'k': 'c_DEB',
                             'disp': 'DEB functional response decay coef',
                             'h': 'The exponential decay coefficient of the DEB functional response.'},
-                'absorption': {'v0': 0.5, 'lim': (0.0, 1.0), 'sym': sub('c', 'abs'),
-                               'k': 'c_abs',
-                               'h': 'The absorption ration for consumed food.'},
                 'V_bite': {'v0': 0.0005, 'lim': (0.0, 0.1), 'dv': 0.0001,
                            'sym': sub('V', 'bite'),
                            'k': 'V_bite',
@@ -512,8 +510,11 @@ def DEB0():
                 # 'gut_params':d['gut_params']
                 }
 
-    args = {**gut_args, **DEB_args}
-    d = {'args': args}
+    # args = {'gut' : gut_args, 'DEB' : DEB_args}
+    d = {'gut': {'args': gut_args},
+         'DEB': {'args': DEB_args},
+         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+         }
     return dNl.NestDict(d)
 
 
@@ -521,7 +522,7 @@ def init_aux_modules():
     d0 = {}
     d0['physics'] = Phy0()
     d0['body'] = Bod0()
-    d0['energetics'] = DEB0()
+    d0['energetics'] = {'mode': DEB0()}
     return dNl.NestDict(d0)
 
 
@@ -532,11 +533,20 @@ def build_aux_module_dict():
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))
     for mkey in d0.keys():
+        if mkey=='energetics':
+            continue
+
         for arg, vs in d0[mkey].args.items():
             pre_p = preparePar(p=arg, **vs)
             p = v_descriptor(**pre_p)
             pre_d00[mkey].args[arg] = pre_p
             d00[mkey].args[arg] = p
+    for m,mdic in d0['energetics'].mode.items():
+        for arg, vs in mdic.args.items():
+            pre_p = preparePar(p=arg, **vs)
+            p = v_descriptor(**pre_p)
+            pre_d00['energetics'].mode[m].args[arg] = pre_p
+            d00['energetics'].mode[m].args[arg] = p
     return d0, pre_d00, d00
 
 

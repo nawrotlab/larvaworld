@@ -14,8 +14,14 @@ def build_mod_dict():
 
 
 def build():
-    from lib.plot import bar, bearing, box, deb, epochs, freq, grid, hist, stridecycle, time, traj
+    from lib.plot import bar, bearing, box, deb, epochs, freq, grid, hist, stridecycle, time, traj, table
     d = dNl.NestDict()
+    d['table'] = dNl.NestDict({
+        'mpl': table.mpl_table,
+        # 'barplot': bar.barplot,
+        # 'auto_barplot': bar.auto_barplot,
+    })
+
     d['bar'] = dNl.NestDict({
         'food intake (barplot)': bar.intake_barplot,
         'barplot': bar.barplot,
