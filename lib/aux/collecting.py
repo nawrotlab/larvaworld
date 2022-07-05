@@ -49,6 +49,8 @@ class TargetedDataCollector(DataCollector):
                 dic.update({d: p})
             except:
                 pass
+        # print(dic)
+        # raise
         return dic
 
     def _record_agents(self, model, schedule):
@@ -100,7 +102,7 @@ def contour_xy_pars(N=22):
 
 output_dict = {
     'olfactor': {
-        'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'Act_tur', 'A_tur', 'Act_cr'],
+        'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'A_T', 'I_T', 'A_C'],
         'endpoint': []},
 
     'thermo': {

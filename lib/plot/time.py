@@ -171,6 +171,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     ax = P.axs[0]
     counter = 0
     for p, symbol, ylab0, ylab, ylim, c in zip(pars, symbols, ylabs0, ylabs, ylims, cols):
+        # print(p, symbol, ylab0, ylab, ylim, c)
         if ylab0 is not None:
             ylab = ylab0
         P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)

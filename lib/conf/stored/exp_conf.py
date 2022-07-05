@@ -110,17 +110,16 @@ def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', 
         'sample': sample,
         'life_history': l,
         's': 0.005,
+        'N': N,
         **kwargs
     }
     mR, mS = ['rover', 'sitter'] if not navigator else ['navigator_rover', 'navigator_sitter']
     if expand :
         mR=preg.expandConf('Model', mR)
         mS=preg.expandConf('Model', mS)
-    # print(mR.brain.intermitter_params)
-    # raise
 
-    return {**lg(f'{pref}Rover', m=mR, c='blue', N=N, **group_kws),
-            **lg(f'{pref}Sitter', m=mS, c='red', N=N, **group_kws)}
+    return {**lg(f'{pref}Rover', m=mR, c='blue', **group_kws),
+            **lg(f'{pref}Sitter', m=mS, c='red', **group_kws)}
 
 
 def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):

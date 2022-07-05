@@ -129,30 +129,27 @@ class GraphDict:
         return f
 
     def eval0(self, entry, **kws):
-        try:
-            func = self.get(entry['plotID'])
-            d = {entry['title']: func(**entry['args'], **kws)}
-            # figs[entry['title']] = func(**entry['args'], **kws)
-        except:
-            d = {}
+        func = self.get(entry['plotID'])
+        d = {entry['title']: func(**entry['args'], **kws)}
         return d
 
     def eval(self, entries, **kws):
         ds = {}
         for entry in entries:
+
             d = self.eval0(entry, **kws)
             ds.update(d)
         return ds
 
-    def entry(self, ID, title=None, **kwargs):
+    def entry(self, ID, title=None, args={}):
         assert self.get(ID)
         # print(ID)
         if title is None:
             title = ID
-        else:
-            if 'save_as' not in kwargs.keys():
-                kwargs['save_as'] = title
-        return {'title': title, 'plotID': ID, 'args': kwargs}
+        # else:
+            # if 'save_as' not in args.keys():
+            #     args['save_as'] = title
+        return {'title': title, 'plotID': ID, 'args': args}
 
 
 graph_dict = GraphDict()

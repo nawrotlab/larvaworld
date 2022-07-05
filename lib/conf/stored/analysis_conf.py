@@ -5,7 +5,7 @@ from lib.registry.pars import preg
 
 
 def entry(ID, title=None, **kwargs):
-    return graph_dict.entry(ID, title=title, **kwargs)
+    return graph_dict.entry(ID, title=title, args=kwargs)
 
 
 def time(short=None, par=None, title=None, u='sec', f1=False, abs=False, **kwargs):
@@ -128,15 +128,11 @@ analysis_dict = dNl.NestDict({
         entry('ethogram'),
     ],
     'chemo': [
-
-        autotime(['sv', 'fov', 'b', 'x', 'a']),
+        # autotime(['sv', 'fov', 'b', 'a']),
+        autotime(['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']),
         entry('trajectories'),
-        # *[time(p) for p in ['c_odor1']],
-        *[time(p) for p in ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']],
-        # 'source_anal_list',
-        entry('turn amplitude'),
-        entry('angular pars', Npars=5),
-        entry('ethogram'),
+        # entry('turn amplitude'),
+        # entry('angular pars', Npars=5),
 
     ],
     'intake': [

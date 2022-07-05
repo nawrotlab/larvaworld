@@ -218,10 +218,11 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kwargs):
-    P = AutoPlot(name='double_patch',Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
-    Nlarvae = P.N
-    dur = int(np.round(P.duration/60))
+def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **kwargs):
+    P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
+    RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
+    # Nlarvae = P.N
+    dur = int(np.round(P.duration / 60))
     gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     mIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
     subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])
@@ -235,7 +236,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
     ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
 
     def get_df(par):
-        dic = {id: [d.endpoint_data[par].values*scale for d in P.datasets if d.config['group_id'] == id] for id in
+        dic = {id: [d.endpoint_data[par].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
                gIDs}
 
         pair_dfs = []
@@ -262,7 +263,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
     def plot_p(data, ii, hue, agar=False):
 
         with sns.plotting_context('notebook', font_scale=1.4):
-            ax=P.axs[ii]
+            ax = P.axs[ii]
             kws = {
                 'x': "Substrate",
                 'y': "value",
@@ -276,7 +277,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
 
             annotate_plot(show_ns=show_ns, **kws)
             g1.set(xlabel=None)
-            if stripplot :
+            if stripplot:
                 g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black', ax=ax)
                 g2.get_legend().remove()
                 g2.set(xlabel=None)
@@ -291,19 +292,17 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
                     cols.append(f'xkcd:{Cmods[mID]} cyan')
                 ax.set_xticklabels(subIDs * 2)
                 ax.axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
-                for x_text,text in zip([0.25,0.75], [r'$\bf{Rovers}$' + f' (N={Nlarvae})', r'$\bf{Sitters}$'+ f' (N={Nlarvae})']) :
-                    ax.text(x_text, 1.1, text, ha='center', va='top', color='k',fontsize=25, transform=ax.transAxes)
+                for x_text, text in zip([0.25, 0.75], RStexts):
+                    ax.text(x_text, 1.1, text, ha='center', va='top', color='k', fontsize=25, transform=ax.transAxes)
             for j, patch in enumerate(ax.artists):
                 patch.set_facecolor(cols[j])
 
-
-
     for ii, k in enumerate(ks):
-        p=preg.dict[k]
+        p = preg.dict[k]
         par = p.d
         ylab = p.label
         scale = 1
-        if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H'] :
+        if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H']:
             if k == 'v_mu':
                 ylab = "crawling speed (mm/s)"
                 scale = 1000
@@ -315,10 +314,10 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False,stripplot=False, **kw
                 scale = 1000
             mdf = get_df(par)
             plot_p(mdf, ii, 'Model')
-        P.conf_ax(ii, xlab=xlabel if ii>3 else None, ylab=ylab, ylim=None)
-    P.fig.align_ylabels(P.axs[:])
+        P.conf_ax(ii, xlab=xlabel if ii > 3 else None, ylab=ylab, ylim=None)
     P.fig.suptitle(f'Double-patch experiment (duration = {dur} min)', size=40, weight='bold')
-    P.adjust((0.1,0.95), (0.15,0.9), 0.3,0.3)
+    P.fig.align_ylabels(P.axs[:])
+    P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()
 
 
@@ -429,7 +428,3 @@ def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, yla
                   yMaxN=4, ytickMath=(-3, 3), leg_loc='upper right', xticks=xticks, xticklabels=xticklabels)
     P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
     return P.get()
-
-
-
-

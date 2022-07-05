@@ -1,16 +1,19 @@
+import copy
 import shutil
 
 from lib.aux.dictsNlists import flatten_list
+
 from lib.conf.stored.exp_conf import RvsS_groups
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
+from lib.aux import dictsNlists as dNl
 
 
 class Essay:
-    def __init__(self, type, enrichment=preg.base_enrich(), collections=['pose'], video=False,show=True, **kwargs):
-        if video :
+    def __init__(self, type, enrichment=preg.base_enrich(), collections=['pose'], video=False, show=False, **kwargs):
+        if video:
             self.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
-        else :
+        else:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
         self.show = show
         self.type = type
@@ -188,8 +191,8 @@ class RvsS_Essay(Essay):
 class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=5, dur=5.0, **kwargs):
         super().__init__(type='DoublePatch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                                bouts=['stride', 'pause', 'turn'],
-                                                                fits=False, interference=False, on_food=True),
+                                                                      bouts=['stride', 'pause', 'turn'],
+                                                                      fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
         self.substrates = substrates
         self.N = N
@@ -197,13 +200,13 @@ class DoublePatch_Essay(Essay):
         self.exp_dict = {**self.time_ratio_exp()}
 
     def patch_env(self, type='standard'):
-        o=preg.get_null('odor', odor_id='Odor', odor_intensity=2.0, odor_spread=0.0002)
+        o = preg.get_null('odor', odor_id='Odor', odor_intensity=2.0, odor_spread=0.0002)
         sus = {
             'Left_patch': preg.get_null('source', pos=(-0.06, 0.0), default_color='green', group='Source', radius=0.025,
                                         amount=0.1, odor=o, type=type),
             'Right_patch': preg.get_null('source', pos=(0.06, 0.0), default_color='green', group='Source', radius=0.025,
                                          amount=0.1, odor=o, type=type)
-            }
+        }
 
         conf = preg.get_null('env_conf',
                              arena=preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.24, 0.24)),
@@ -215,17 +218,17 @@ class DoublePatch_Essay(Essay):
         return conf
 
     def time_ratio_exp(self, exp='double_patch'):
-        es=[]
-        for n in self.substrates :
+        es = []
+        for n in self.substrates:
             lgs = RvsS_groups(expand=True, age=72.0, N=self.N, navigator=True, pref=f'{n}_')
 
-            e=self.conf(exp=exp,env=self.patch_env(type=n),
-                        lgs=lgs,
-                        dur=self.dur,
-                        id=f'{exp}_{n}_{self.dur}min')
+            e = self.conf(exp=exp, env=self.patch_env(type=n),
+                          lgs=lgs,
+                          dur=self.dur,
+                          id=f'{exp}_{n}_{self.dur}min')
             es.append(e)
 
-        return {exp:es}
+        return {exp: es}
 
     def analyze(self, exp, ds0):
         if exp == 'double_patch':
@@ -234,6 +237,120 @@ class DoublePatch_Essay(Essay):
                       'save_as': f'{exp}.pdf',
                       'show': self.show}
             self.figs[exp] = preg.graph_dict.dict['double patch'](**kwargs)
+
+
+class Chemotaxis_Essay(Essay):
+    def __init__(self, N=5, dur=5.0, gain=150.0, **kwargs):
+        super().__init__(type='Chemotaxis', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
+                                                                     bouts=[], fits=False, interference=False,
+                                                                     on_food=False),
+                         collections=['pose', 'olfactor'], **kwargs)
+        self.N = N
+        self.dur = dur
+        self.gain = gain
+        self.models = self.get_models(gain)
+        self.exp_dict = self.chemo_exps()
+
+    def get_models(self, gain):
+        mW = preg.loadConf('Model', 'navigator')
+        mW.brain.olfactor_params.odor_dict.Odor.mean = gain
+
+        mC = dNl.NestDict(copy.deepcopy(mW))
+        mC.brain.olfactor_params.odor_dict.Odor.mean = 0
+
+        mT = dNl.NestDict(copy.deepcopy(mC))
+        mT.brain.olfactor_params.brute_force = True
+
+        models = {
+
+            'Tastekin2018': {'model': mT, 'color': 'red'},
+            'Wystrach2016': {'model': mW, 'color': 'green'},
+            'controls': {'model': mC, 'color': 'blue'},
+
+        }
+        return models
+
+    def chemo_exps(self):
+        kws = {
+            'arena': preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.1, 0.06)),
+            'odorscape': {'odorscape': 'Gaussian'},
+        }
+
+        env_mid = preg.get_null('env_conf',
+                                food_params={'source_groups': {},
+                                             'food_grid': None,
+                                             'source_units': {
+                                                 'Source': preg.get_null('source', pos=(0.0, 0.0),
+                                                                         group='Source',
+                                                                         odor=preg.get_null('odor',
+                                                                                            odor_id='Odor',
+                                                                                            odor_intensity=2.0,
+                                                                                            odor_spread=0.0002)
+                                                                         ),
+                                             }
+                                             }, **kws)
+
+        env_R = preg.get_null('env_conf',
+                              food_params={'source_groups': {},
+                                           'food_grid': None,
+                                           'source_units': {
+                                               'Source': preg.get_null('source', pos=(0.04, 0.0),
+                                                                       group='Source',
+                                                                       odor=preg.get_null('odor',
+                                                                                          odor_id='Odor',
+                                                                                          odor_intensity=8.0,
+                                                                                          odor_spread=0.0004)),
+                                           }
+                                           }, **kws)
+
+        lgs_mid = {
+            mID: preg.get_null('LarvaGroup',
+                               distribution=preg.get_null('larva_distro', N=self.N, mode='uniform'),
+                               default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()}
+
+        lgs_R = {
+            mID: preg.get_null('LarvaGroup',
+                               distribution=preg.get_null('larva_distro', N=self.N, mode='uniform', loc=(-0.04, 0.0),
+                                                          orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
+                               default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()}
+
+        exp1 = 'chemorbit'
+        e1 = self.conf(exp=exp1, env=env_mid,
+                       lgs=lgs_mid,
+                       dur=self.dur,
+                       id=f'{exp1}_exp')
+
+        exp2 = 'chemotax'
+        e2 = self.conf(exp=exp2, env=env_R,
+                       lgs=lgs_R,
+                       dur=self.dur,
+                       id=f'{exp2}_exp')
+
+        return {exp1: [e1], exp2: [e2]}
+
+    def analyze(self, exp, ds0):
+        G = preg.graph_dict
+        entry_list = [
+            G.entry('autoplot', args={
+                'ks': ['c_odor1', 'dc_odor1'],
+                # 'ks': ['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'],
+                'show_first': False,
+                'individuals': False,
+                'subfolder': None,
+                'unit': 'min',
+                'name': f'{exp}_timeplot'
+            }),
+            G.entry('trajectories', args={
+                'subfolder': None,
+                'name': f'{exp}_trajectories',
+            })
+        ]
+
+        kwargs = {'datasets': flatten_list(ds0),
+                  'save_to': self.plot_dir,
+                  'show': self.show}
+
+        self.figs[exp] = G.eval(entry_list, **kwargs)
 
 
 rover_sitter_essay = {
@@ -282,6 +399,7 @@ essay_dict = {
 
 if __name__ == "__main__":
     # figs, results = RvsS_Essay(all_figs=False).run()
-    E = DoublePatch_Essay(video=False, N=3, dur=3)
+    E = Chemotaxis_Essay(video=False, N=5, dur=5)
+    # E = DoublePatch_Essay(video=False, N=3, dur=3)
     ds = E.run()
     figs, results = E.anal()
