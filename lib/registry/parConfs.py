@@ -1006,9 +1006,11 @@ class LarvaConfDict2:
 
         olf_pars=self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args, odor_dict = {'Odor': {'mean': 150.0, 'std': 0.0}})
         kwargs = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars}
-        self.newConf(mID='RE_NEU_PHI_DEF_nav',mID0='RE_NEU_PHI_DEF',kwargs=kwargs)
-        self.newConf(mID='RE_NEU_SQ_DEF_nav',mID0='RE_NEU_SQ_DEF',kwargs=kwargs)
-        self.newConf(mID='RE_NEU_DEF_DEF_nav',mID0='RE_NEU_DEF_DEF',kwargs=kwargs)
+        for Tmod in ['NEU', 'SIN'] :
+            for Ifmod in ['PHI', 'SQ', 'DEF'] :
+                mID0=f'RE_{Tmod}_{Ifmod}_DEF'
+                self.newConf(mID=f'{mID0}_nav',mID0=mID0,kwargs=kwargs)
+
 
 
 

@@ -240,7 +240,7 @@ class DoublePatch_Essay(Essay):
 
 
 class Chemotaxis_Essay(Essay):
-    def __init__(self, N=5, dur=5.0, gain=50.0, **kwargs):
+    def __init__(self, N=5, dur=5.0, gain=50.0,mID0= 'RE_NEU_SQ_DEF_nav',  **kwargs):
         super().__init__(type='Chemotaxis', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                      bouts=[], fits=False, interference=False,
                                                                      on_food=False),
@@ -248,11 +248,12 @@ class Chemotaxis_Essay(Essay):
         self.N = N
         self.dur = dur
         self.gain = gain
-        self.models = self.get_models(gain)
+        self.mID0 = mID0
+        self.models = self.get_models(gain, mID0)
         self.exp_dict = self.chemo_exps()
 
-    def get_models(self, gain):
-        mW = preg.loadConf('Model', 'RE_NEU_SQ_DEF_nav')
+    def get_models(self, gain, mID0):
+        mW = preg.loadConf('Model',mID0)
         mW.brain.olfactor_params.odor_dict.Odor.mean = gain
 
         mC = dNl.NestDict(copy.deepcopy(mW))
