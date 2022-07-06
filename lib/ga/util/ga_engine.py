@@ -1,3 +1,4 @@
+import copy
 import random
 import multiprocessing
 import math
@@ -22,7 +23,7 @@ from lib.ga.util.time_util import TimeUtil
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
                  selection_ratio=0.3, verbose=0, bestConfID = None):
-
+        self.M=preg.larva_conf_dict2
         self.bestConfID = bestConfID
         self.model = model
         self.Ngenerations = Ngenerations
@@ -73,7 +74,7 @@ class GAselector:
         if self.best_genome is None or best_new_genome.fitness > self.best_genome.fitness:
             self.best_genome = best_new_genome
             self.best_fitness = self.best_genome.fitness
-            self.printd(1, 'New best:', self.best_genome.to_string())
+            self.printd(1, 'New best:', self.M.to_string(mdict=self.best_genome.space_dict), f'fittness : {self.best_genome.fitness}')
             if self.bestConfID is not None:
                 preg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID, verbose=self.verbose)
 
@@ -129,9 +130,17 @@ class GAselector:
 
         while num_genomes_to_create > 0:
             parent_a, parent_b = self.choose_parents(parents)
-            new_genome = parent_a.crossover(parent_b, self.generation_num)
-            new_genome.mutation(Pmut=self.Pmutation, Cmut=self.Cmutation)
-            new_genomes.append(new_genome)
+            spdic=dNl.NestDict(copy.deepcopy(parent_a.space_dict))
+            spdic=self.M.crossover(spdic, parent_b.space_dict)
+            spdic = self.M.mutate(spdic, Pmut=self.Pmutation, Cmut=self.Cmutation)
+            gConf=self.M.conf(spdic)
+            mConf = dNl.update_nestdict(parent_a.mConf, gConf)
+            g = Genome(gConf=gConf, mConf=mConf, space_dict=spdic, generation_num=self.generation_num)
+            new_genomes.append(g)
+
+            # new_genome = parent_a.crossover(parent_b, self.generation_num)
+            # new_genome.mutation(Pmut=self.Pmutation, Cmut=self.Cmutation)
+            # new_genomes.append(new_genome)
             num_genomes_to_create -= 1
 
         return new_genomes
@@ -146,32 +155,32 @@ class GAselector:
         return parent_a, parent_b
 
 
-def initConf(init_mode, space_dict, mConf0):
-    if init_mode == 'random':
-        kws = {}
-        for k, vs in space_dict.items():
-            if vs['dtype'] == bool:
-                kws[k] = random.choice([True, False])
-            elif vs['dtype'] == str:
-                kws[k] = random.choice(vs['choices'])
-            elif vs['dtype'] == Tuple[float]:
-                vv0 = random.uniform(vs['min'], vs['max'])
-                vv1 = random.uniform(vv0, vs['max'])
-                kws[k] = (vv0, vv1)
-            elif vs['dtype'] == int:
-                kws[k] = random.randint(vs['min'], vs['max'])
-            else:
-                kws[k] = random.uniform(vs['min'], vs['max'])
-        # initConf = dNl.update_nestdict(mConf0, kws)
-        # return initConf
-    elif init_mode == 'default':
-        kws = {k: vs['initial_value'] for k, vs in space_dict.items()}
-        # initConf = dNl.update_nestdict(mConf0, kws)
-        # return initConf
-    elif init_mode == 'model':
-        # print(mConf0)
-        kws = {k: dNl.flatten_dict(mConf0)[k] for k, vs in space_dict.items()}
-    return kws
+# def initConf(init_mode, space_dict, mConf0):
+#     if init_mode == 'random':
+#         kws = {}
+#         for k, vs in space_dict.items():
+#             if vs['dtype'] == bool:
+#                 kws[k] = random.choice([True, False])
+#             elif vs['dtype'] == str:
+#                 kws[k] = random.choice(vs['choices'])
+#             elif vs['dtype'] == Tuple[float]:
+#                 vv0 = random.uniform(vs['min'], vs['max'])
+#                 vv1 = random.uniform(vv0, vs['max'])
+#                 kws[k] = (vv0, vv1)
+#             elif vs['dtype'] == int:
+#                 kws[k] = random.randint(vs['min'], vs['max'])
+#             else:
+#                 kws[k] = random.uniform(vs['min'], vs['max'])
+#         # initConf = dNl.update_nestdict(mConf0, kws)
+#         # return initConf
+#     elif init_mode == 'default':
+#         kws = {k: vs['initial_value'] for k, vs in space_dict.items()}
+#         # initConf = dNl.update_nestdict(mConf0, kws)
+#         # return initConf
+#     elif init_mode == 'model':
+#         # print(mConf0)
+#         kws = {k: dNl.flatten_dict(mConf0)[k] for k, vs in space_dict.items()}
+#     return kws
 
 
 class GAbuilder(GAselector):
@@ -195,15 +204,24 @@ class GAbuilder(GAselector):
         self.multicore = multicore
         self.scene = scene
         self.robot_class = robot_class
-        self.space_dict = space_dict
+        self.space_dict = self.M.space_dict(mkeys=space_dict,mID0=base_model)
         self.mConf0 = preg.loadConf(id=base_model, conftype='Model')
 
+        for i in range(self.Nagents):
+            spdic=dNl.NestDict(copy.deepcopy(self.space_dict))
+            gConf, spdic=self.M.initConf(init_mode=init_mode, mdict=spdic, mConf0=self.mConf0)
+            mConf = dNl.update_nestdict(self.mConf0, gConf)
 
-        gConfs = [initConf(init_mode, space_dict, self.mConf0) for i in range(self.Nagents)]
+            g=Genome(gConf=gConf,mConf=mConf, space_dict=spdic, generation_num=self.generation_num)
+            self.genomes.append(g)
+
+
+        # gConfs = [self.M.initConf(init_mode=init_mode, mdict=space_dict, mConf0=self.mConf0) for i in range(self.Nagents)]
+        # gConfs = [initConf(init_mode, space_dict, self.mConf0) for i in range(self.Nagents)]
 
 
 
-        self.genomes = [Genome(gConf=gConf,mConf=dNl.update_nestdict(self.mConf0, gConf), space_dict=space_dict, generation_num=self.generation_num) for gConf in gConfs]
+        # self.genomes = [Genome(gConf=gConf,mConf=dNl.update_nestdict(self.mConf0, gConf), space_dict=space_dict, generation_num=self.generation_num) for gConf in gConfs]
 
 
         self.robots = self.build_generation()
@@ -395,7 +413,8 @@ class GAbuilder(GAselector):
         self.is_running = False
         if self.progress_bar:
             self.progress_bar.finish()
-        self.printd(0, 'Best genome:', self.best_genome.to_string())
+        self.printd(0, 'Best genome:', self.M.to_string(mdict= self.best_genome.space_dict))
+        # self.printd(0, 'Best genome:', self.best_genome.to_string())
         self.printd(0, 'Best fittness:', self.best_genome.fitness)
 
     def check(self, robot):

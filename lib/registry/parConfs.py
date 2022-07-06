@@ -594,7 +594,8 @@ class LarvaConfDict2:
                 conf[d] = p.v
             else:
                 conf[d] = self.generate_configuration(mdict=p)
-        conf.update(kwargs)
+        conf=dNl.update_existingdict(conf,kwargs)
+        # conf.update(kwargs)
         return conf
 
     def conf(self, mdict=None, mkey=None, mode=None, refID=None, **kwargs):
@@ -661,29 +662,48 @@ class LarvaConfDict2:
         return dNl.update_nestdict(mconf, conf0)
 
     def crossover(self, mdict, mdict2):
+
         for d, p in mdict.items():
             if random.random() < 0.5:
                 p.v = mdict2[d].v
+        return mdict
+
+
 
     def mutate(self, mdict, Pmut, Cmut):
         for d, p in mdict.items():
             p.mutate(Pmut, Cmut)
+        return mdict
 
     def randomize(self, mdict):
         for d, p in mdict.items():
             p.randomize()
 
-    def initConf(self, init_mode, mdict, mconf0, **kwargs):
+    # def initConf_old(self, init_mode, mdict, mconf0, **kwargs):
+    #     if init_mode == 'model':
+    #         conf = self.conf(mdict, prefix=True, **mconf0)
+    #         # return mconf0
+    #     elif init_mode == 'default':
+    #         conf = self.conf(mdict, prefix=True)
+    #         # return self.update_modelConf(mconf0, mdict,**kwargs)
+    #     elif init_mode == 'random':
+    #         self.randomize(mdict)
+    #         conf = self.conf(mdict, prefix=True)
+    #     return conf
+
+    def initConf(self, init_mode, mdict, mConf0):
         if init_mode == 'model':
-            conf = self.conf(mdict, prefix=True, **mconf0)
+            mdict=self.update_mdict(mdict, dNl.flatten_dict(mConf0))
+            # conf = self.conf(mdict, **dNl.flatten_dict(mConf0))
             # return mconf0
         elif init_mode == 'default':
-            conf = self.conf(mdict, prefix=True)
+            pass
+            # conf = self.conf(mdict)
             # return self.update_modelConf(mconf0, mdict,**kwargs)
         elif init_mode == 'random':
             self.randomize(mdict)
-            conf = self.conf(mdict, prefix=True)
-        return conf
+        conf = self.conf(mdict)
+        return conf,mdict
 
     def compile_pdict(self, dic):
         pdict = dNl.NestDict()
@@ -702,7 +722,7 @@ class LarvaConfDict2:
         for mkey, mdic in self.dict.brain.m.items():
             if m.modules[mkey]:
                 mmdic = m[f'{mkey}_params']
-                mdic = self.copyID(mdic, mmdic)
+                mdic = self.update_mdict(mdic, mmdic)
                 mIDconf[f'{mkey}_params'] = mdic
             else:
                 mIDconf[f'{mkey}_params'] = None
@@ -718,14 +738,14 @@ class LarvaConfDict2:
         mc.brain = self.mIDbconf(self, m=m.brain)
         for mkey, mdic in self.dict.aux.m.items():
             mmdic = m[mkey]
-            mc[mkey] = self.copyID(mdic, mmdic)
+            mc[mkey] = self.update_mdict(mdic, mmdic)
         return mc
 
-    def copyID(self, mdic, mmdic):
+    def update_mdict(self, mdict, mmdic):
         if mmdic is None:
             return None
         else:
-            for d, p in mdic.items():
+            for d, p in mdict.items():
                 if isinstance(p, param.Parameterized):
                     new_v = mmdic[d] if d in mmdic.keys() else None
                     if type(new_v) == list:
@@ -733,8 +753,8 @@ class LarvaConfDict2:
                             new_v = tuple(new_v)
                     p.v = new_v
                 else:
-                    self.copyID(mdic=mdic[d], mmdic=mmdic[d])
-            return mdic
+                    self.update_mdict(mdict=mdict[d], mmdic=mmdic[d])
+            return mdict
 
     def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], **kwargs):
         mConf = self.mIDconf(mID, **kwargs)
@@ -967,6 +987,8 @@ class LarvaConfDict2:
                     for m,mdic in self.dict.aux.m[auxkey].mode.items():
                         mdict = mdic.args
                         conf[auxkey][m] = self.generate_configuration(mdict, **mkws[m])
+            elif auxkey == 'sensorimotor':
+                continue
             else :
                 mdict = self.dict.aux.m[auxkey].args
                 conf[auxkey] = self.generate_configuration(mdict, **mkws)
@@ -1048,6 +1070,9 @@ class LarvaConfDict2:
             mID2 = f'{mID0}_nav_x2'
             self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
 
+        sm_pars=self.generate_configuration(self.dict.aux.m['sensorimotor'].mode['default'].args)
+        self.newConf(mID='obstacle_avoider', mID0='RE_NEU_PHI_DEF_nav', kwargs={'sensorimotor' : sm_pars})
+
 
 
 
@@ -1080,13 +1105,14 @@ class LarvaConfDict2:
 
         full_dic = dNl.NestDict()
         for aux_key in D.aux.keys:
-            if aux_key == 'energetics':
+            if aux_key in ['energetics', 'sensorimotor']:
                 continue
             aux_dic = D.aux.m[aux_key]
             register(aux_dic.args, aux_key, full_dic)
-        for m, mdic in D.aux.m['energetics'].mode.items():
-            k0 = f'energetics.{m}'
-            register(mdic.args, k0, full_dic)
+        for aux_key in ['energetics', 'sensorimotor']:
+            for m, mdic in D.aux.m[aux_key].mode.items():
+                k0 = f'{aux_key}.{m}'
+                register(mdic.args, k0, full_dic)
 
         for bkey in D.brain.keys:
             bkey0 = f'brain.{bkey}_params'
@@ -1250,7 +1276,32 @@ class LarvaConfDict2:
 
         return entries, mIDs
 
+    def space_dict(self, mkeys, mID0):
+        # M = preg.larva_conf_dict2
+        m = self.loadConf(mID0)
+        mF = dNl.flatten_dict(m)
+        dic = {}
+        for mkey in mkeys:
+            d0 = self.dict.model.init[mkey]
+            d00 = self.dict.model.m[mkey]
+            if f'{d0.pref}mode' in mF.keys() :
+                mod_v = mF[f'{d0.pref}mode']
+            else :
+                mod_v = 'default'
+            var_ks = d0.mode[mod_v].variable
+            for k in var_ks:
+                k0 = f'{d0.pref}{k}'
+                dic[k0] = d00.mode[mod_v].args[k]
+                dic[k0].v = mF[k0]
 
+        return dNl.NestDict(dic)
+
+
+    def to_string(self,mdict):
+        s=''
+        for k,p in mdict.items():
+            s=s+f'{p.d} : {p.v}'
+        return s
 
 
 
@@ -1272,8 +1323,7 @@ if __name__ == '__main__':
     d.load(step=False)
     # d.modelConf_analysis()
 
-
-
+    dd = LarvaConfDict2()
     # raise
     c=d.config
     # print(c.Nticks * c.dt / 60)
@@ -1282,10 +1332,15 @@ if __name__ == '__main__':
     #     print(mID, m.brain.crawler_params)
 
 
-    mIDs0=list(c.modelConfs.average.keys())[:3]
+    mIDs0=list(c.modelConfs.average.keys())
+    diff_df_avg = dd.diff_df(mIDs=mIDs0)
+
+    _=preg.graph_dict.dict['mpl'](data=diff_df_avg, show=True, font_size=20,bbox=[0.15, 0, 0.8, 1], figsize=(50,8))
+
+    raise
     mIDs1=[f'{a}_var' for a in mIDs0]
     mIDs=mIDs0+mIDs1
-    evrun=d.eval_model_graphs(mIDs=mIDs,norm_modes=['raw', 'minmax'], id='3mIDs_meanVSvar', N=10, dur=c.duration/60)
+    evrun=d.eval_model_graphs(mIDs=mIDs,norm_modes=['raw', 'minmax'], id='3mIDs_meanVSvar', N=50, dur=c.duration/60)
 
     # raise
     # from lib.eval.evaluation import EvalRun

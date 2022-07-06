@@ -103,11 +103,23 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
 
         @property
         def step(self):
-            try:
-                step = self.param.v.step
-                return step
-            except:
+            if self.parclass in [param.Number, param.Range] :
+                return self.param.v.step
+            elif self.parclass==param.Magnitude:
+                return 0.01
+            elif self.dtype==float:
+                return 0.01
+            else :
                 return None
+
+        @property
+        def Ndec(self):
+            if self.step is not None :
+                return str(self.step)[::-1].find('.')
+            else :
+                return None
+
+
 
         @property
         def get_ParsArg(self):
@@ -156,21 +168,21 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
         def randomize(self):
             if self.parclass == param.Number:
                 vmin, vmax = self.param.v.bounds
-                self.v = random.uniform(vmin, vmax)
+                self.v = np.round(random.uniform(vmin, vmax), self.Ndec)
             elif self.parclass == param.Integer:
                 vmin, vmax = self.param.v.bounds
                 self.v = random.randint(vmin, vmax)
             elif self.parclass == param.Magnitude:
-                self.v = random.uniform(0.0, 1.0)
-
+                self.v = np.round(random.uniform(0.0, 1.0), self.Ndec)
             elif self.parclass == param.Selector:
                 self.v = random.choice(self.param.v.objects)
             elif self.parclass == param.Boolean:
                 self.v = random.choice([True, False])
             elif self.parclass == param.Range:
                 vmin, vmax = self.param.v.bounds
-                vv0 = random.uniform(vmin, vmax)
-                vv1 = random.uniform(vv0, vmax)
+                vv0 = np.round(random.uniform(vmin, vmax), self.Ndec)
+                vv1 = np.round(random.uniform(vv0, vmax), self.Ndec)
+
                 self.v = (vv0, vv1)
 
         def mutate(self, Pmut, Cmut):
@@ -181,7 +193,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
                     vr = np.abs(vmax - vmin)
                     v0 = self.v if self.v is not None else vmin + vr / 2
                     vv = random.gauss(v0, Cmut * vr)
-                    self.v = self.param.v.crop_to_bounds(vv)
+                    self.v = np.round(self.param.v.crop_to_bounds(vv), self.Ndec)
                 elif self.parclass == param.Integer:
                     vmin, vmax = self.param.v.bounds
                     vr = np.abs(vmax - vmin)
@@ -191,7 +203,8 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
                 elif self.parclass == param.Magnitude:
                     v0 = self.v if self.v is not None else 0.5
                     vv = random.gauss(v0, Cmut)
-                    self.v = self.param.v.crop_to_bounds(vv)
+                    self.v = np.round(self.param.v.crop_to_bounds(vv), self.Ndec)
+                    # self.v = np.round(self.v, self.Ndec)
                 elif self.parclass == param.Selector:
                     self.v = random.choice(self.param.v.objects)
                 elif self.parclass == param.Boolean:
@@ -202,8 +215,8 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
                     v0, v1 = self.v if self.v is not None else (vmin, vmax)
                     vv0 = random.gauss(v0, Cmut * vr)
                     vv1 = random.gauss(v1, Cmut * vr)
-                    vv0 = np.clip(vv0, a_min=vmin, a_max=vmax)
-                    vv1 = np.clip(vv1, a_min=vv0, a_max=vmax)
+                    vv0 = np.round(np.clip(vv0, a_min=vmin, a_max=vmax), self.Ndec)
+                    vv1 = np.round(np.clip(vv1, a_min=vv0, a_max=vmax), self.Ndec)
                     self.v = (vv0, vv1)
 
     par = LarvaworldParNew(**kws)

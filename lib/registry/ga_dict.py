@@ -4,6 +4,7 @@ from lib.aux import dictsNlists as dNl
 from lib.registry.dtypes import par_dict
 
 
+
 def ga_dict(name=None, suf='', excluded=None, only=None):
     from lib.registry.pars import preg
     d0 = preg.init_dict[name]
@@ -48,3 +49,20 @@ def interference_ga_dict(mID, suf='brain.interference_params.'):
 
     space_dict = ga_dict(name='interference', suf=suf, only=only)
     return space_dict
+
+if __name__ == '__main__':
+    from lib.registry.parConfs import LarvaConfDict2
+    dd = LarvaConfDict2()
+    mID = 'PHIonNEU'
+    m=dd.loadConf(mID)
+
+    mIf=m.brain.interference_params
+    mTur=m.brain.turner_params
+
+    mdictIf=dd.dict.model.m['interference'].mode[mIf.mode].args
+
+    print(mdictIf.keys())
+    print(mTur)
+
+
+    # d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=False, use_ModuleConfDict=True)

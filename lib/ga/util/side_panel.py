@@ -75,10 +75,10 @@ class SidePanel:
                         self.render_line(font, f'{short}: ' + str(np.round(ks,2)), self.LEFT_MARGIN)
             self.render_line(font, 'Best genome: ' )
             if self.best_genome is not None :
-                dic=self.best_genome.get(rounded=True)
-                sdic=self.best_genome.space_dict
-                for k, vs in sdic.items():
-                    self.render_line(font, f'{vs["name"]}: ' + str(dic[k]), self.LEFT_MARGIN)
+                # dic=self.best_genome.get(rounded=True)
+                # sdic=self.best_genome.space_dict
+                for k, p in self.best_genome.space_dict.items():
+                    self.render_line(font, f'{p.name}: {p.v}', self.LEFT_MARGIN)
             self.render_line(font, '')
             self.render_line(font, 'Controls:')
             self.render_line(font, 'S : save current genomes to file', self.LEFT_MARGIN)

@@ -214,6 +214,10 @@ def merge(item):
             merged[key].append(val)
     return {**item, 'ref': dict(merged)}
 
+def update_existingdict(dic0,dic):
+    dic0.update((k, dic[k]) for k in set(dic).intersection(dic0))
+    return dic0
+
 
 def update_nestdict(dic0, dic):
     dic0_f = flatten_dict(dic0)

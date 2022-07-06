@@ -76,11 +76,53 @@ def bend_error_exclusion(robot):
         return False
 
 
+def space_dic(mkeys,mID0):
+    M = preg.larva_conf_dict2
+    m = M.loadConf(mID0)
+    mF = dNl.flatten_dict(m)
+    dic = {}
+    for mkey in mkeys:
+        d0 = M.dict.model.init[mkey]
+        d00 = M.dict.model.m[mkey]
+        mod_v = mF[f'{d0.pref}mode']
+        var_ks = d0.mode[mod_v].variable
+        for k in var_ks:
+            k0 = f'{d0.pref}{k}'
+            dic[k0] = d00.mode[mod_v].args[k]
+            dic[k0].v=mF[k0]
+
+    return dNl.NestDict(dic)
+
 def ga_conf(name, env_params,spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
             m1=None, sel={}, build={}, fitID=None, init='random', excl_func=None, robot_class=LarvaRobot, **kwargs):
-    space_dict = {}
-    for spaceID in spaceIDs:
-        space_dict.update(ga_spaces[spaceID])
+    M=preg.larva_conf_dict2
+    # m=M.loadConf(m0)
+    # mF=dNl.flatten_dict(m)
+    # dic={}
+    # for mkey in spaceIDs:
+    #     d0=M.dict.model.init[mkey]
+    #     d00=M.dict.model.m[mkey]
+    #     # pref=d0.pref
+    #     # mod_k=f'{d0.pref}mode'
+    #     mod_v=mF[f'{d0.pref}mode']
+    #     var_ks=d0.mode[mod_v].variable
+    #     for k in var_ks :
+    #         k0=f'{d0.pref}{k}'
+    #         p=d00.mode[mod_v].args[k]
+    #         dic[k0]=p
+    #     #     kws={
+    #     #     'initial_value': p['initial_value'],
+    #     #     'tooltip': p['tooltip'],
+    #     #     'dtype': p['dtype'],
+    #     #     'name': k,
+    #     # }
+    #
+    #     # var_fuls=[f'{d0.pref}{k}' for k in var_ks]
+    # dic=dNl.NestDict(dic)
+
+    # space_dict = {}
+    # for spaceID in spaceIDs:
+    #     space_dict.update(ga_spaces[spaceID])
 
     build_kws = {
         'fitness_target_refID': refID,
@@ -90,7 +132,8 @@ def ga_conf(name, env_params,spaceIDs, scene='no_boxes', refID=None, fit_kws={},
         'exclude_func': excl_func,
         'init_mode': init,
         'robot_class': robot_class,
-        'space_dict': space_dict,
+        'space_dict': spaceIDs,
+        # 'space_dict': space_dict,
     }
 
     kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=dt),
@@ -122,7 +165,7 @@ ga_dic = dNl.NestDict({
               excl_func=bend_error_exclusion,
               Nel=2, N=10, env_params='arena_200mm'),
     **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='phasic_explorer', m1='NEU_PHI',
-              fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t'],
+              fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov'],
                        # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
                        'pooled_cycle_curves': ['fov', 'foa', 'b', 'rov']},
               excl_func=bend_error_exclusion,
@@ -139,5 +182,9 @@ ga_dic = dNl.NestDict({
 })
 
 if __name__ == '__main__':
-    print(ga_spaces.interference)
+    mkeys=['interference', 'turner']
+    mID0='PHIonNEU'
+    spdic=space_dic(mkeys,mID0)
+    for k,p in spdic.items():
+        print(k,p.v)
     # print(ga_dict(name='physics', suf='physics.', excluded=None, only=['torque_coef','ang_damping','body_spring_k']))

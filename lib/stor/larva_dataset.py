@@ -1023,6 +1023,7 @@ class LarvaDataset:
         self.save_config(add_reference=True)
         self.store_model_graphs(mIDs=mIDs_avg)
         self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
+        diff_df_avg=M.diff_df(mIDs=mIDs_avg)
 
         entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config, mID0s=mIDs_avg)
         self.config.modelConfs.variable = entries_var
