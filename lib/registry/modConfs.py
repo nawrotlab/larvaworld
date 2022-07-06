@@ -153,7 +153,7 @@ def If0():
         **IFargs
     }
     SQargs = {
-        'crawler_phi_range': {'dtype': Tuple[float], 'v0': (0.0, 0.0), 'lim': (0.0, 2 * np.pi),
+        'crawler_phi_range': {'dtype': Tuple[float], 'v0': (np.pi/2, np.pi), 'lim': (0.0, 2 * np.pi),
                               'disp': 'suppression relief phase interval',
                               'sym': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$',
                               'u': ureg.rad,
@@ -235,11 +235,11 @@ def Im0():
 def sensor_kws(k0, l0):
     d = {
         'perception': {'dtype': str, 'v0': 'log', 'vs': ['log', 'linear', 'null'],
-                       'disp': f'{l0} sensing transduction mode',
+                       'disp': f'{l0} sensory transduction mode',
                        'k': f'mod_{k0}',
                        'sym': sub('mod', k0),
                        'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
-        'decay_coef': {'v0': 0.1, 'lim': (0.0, 2.0), 'disp': f'{l0} decay coef',
+        'decay_coef': {'v0': 0.1, 'lim': (0.0, 2.0), 'disp': f'{l0} output decay coef',
                        'sym': sub('c', k0), 'k': f'c_{k0}',
                        'h': f'The exponential decay coefficient of the {l0} sensory activation.'},
         'brute_force': {**bF, 'disp': 'ability to interrupt locomotion', 'sym': sub('bf', k0),

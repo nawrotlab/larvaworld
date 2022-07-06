@@ -8,6 +8,7 @@ class Sensor(Effector):
                  brute_force=False, **kwargs):
         super().__init__(**kwargs)
         # self.brain = brain
+        self.interruption_counter = 0
         self.perception = perception
         self.decay_coef = decay_coef
         self.noise = input_noise
@@ -92,7 +93,7 @@ class Sensor(Effector):
                 if self.perception == 'log':
                     self.dX[id] = cur / prev - 1 if prev != 0 else 0
                 elif self.perception == 'linear':
-                    self.dX[id] = cur - prev
+                    self.dX[id] = cur - prev if prev != 0 else 0
                 elif self.perception == 'null':
                     self.dX[id] = cur
         self.X = input
@@ -119,9 +120,14 @@ class Olfactor(Sensor):
                     # print(self.brain.agent.unique_id, id, 'new')
 
     def affect_locomotion(self, brain=None):
-        if self.output < 0 and brain.locomotor.crawler.complete_iteration:
+        if brain is None :
+            return
+        L = brain.locomotor
+        if self.output < 0 and L.crawler.complete_iteration:
             if np.random.uniform(0, 1, 1) <= np.abs(self.output):
-                brain.locomotor.intermitter.inhibit_locomotion()
+                L.intermitter.inhibit_locomotion(L=L)
+                self.interruption_counter+=1
+
 
     @property
     def first_odor_concentration(self):
@@ -161,12 +167,16 @@ class Toucher(Sensor):
                     brain.agent.add_touch_sensors(self.touch_sensors)
 
     def affect_locomotion(self, brain=None):
+        if brain is None :
+            return
+        L = brain.locomotor
         for id in self.gain_ids:
             if self.dX[id] == 1:
-                brain.intermitter.trigger_locomotion()
+                L.intermitter.trigger_locomotion(L=L)
                 break
             elif self.dX[id] == -1:
-                brain.intermitter.interrupt_locomotion()
+                L.intermitter.interrupt_locomotion(L=L)
+                self.interruption_counter += 1
                 break
 
 

@@ -3,6 +3,7 @@ import shutil
 
 import pandas as pd
 
+from lib.aux.colsNstr import N_colors
 from lib.aux.dictsNlists import flatten_list
 from lib.aux.par_aux import sub
 
@@ -22,6 +23,7 @@ class Essay:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
         self.N = N
         self.G = preg.graph_dict
+        self.M = preg.larva_conf_dict2
         self.show = show
         self.type = type
         self.enrichment = enrichment
@@ -91,7 +93,7 @@ class RvsS_Essay(Essay):
 
         }
 
-        # self.RS_diff_df, self.RS_diff_str=self.get_RS_diff()
+        self.mdiff_df = self.M.diff_df(mIDs=['rover', 'sitter'])
 
     def RvsS_env(self, on_food=True):
         grid = preg.get_null('food_grid') if on_food else None
@@ -241,7 +243,9 @@ class RvsS_Essay(Essay):
         kwargs = {'save_to': self.plot_dir,
                   'show': self.show}
 
-        entry = self.G.entry('RvsS summary', args={'entrylist': self.entrylist, 'title' : f'ROVERS VS SITTERS ESSAY (N={self.N})'})
+        entry = self.G.entry('RvsS summary',
+                             args={'entrylist': self.entrylist, 'title': f'ROVERS VS SITTERS ESSAY (N={self.N})',
+                                   'mdiff_df' : self.mdiff_df})
         self.figs.update(self.G.eval0(entry, **kwargs))
         self.figs.update(self.G.eval(self.entrylist, **kwargs))
 
@@ -332,25 +336,29 @@ class DoublePatch_Essay(Essay):
         self.substrates = substrates
         self.dur = dur
         self.exp_dict = self.time_ratio_exp()
-
+        mIDs = ['rover', 'sitter']
+        self.mdiff_df = self.M.diff_df(mIDs=mIDs,
+                                       ms=[preg.larva_conf_dict2.loadConf(f'navigator_{mID}') for mID in mIDs])
+        #
+        # RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=mIDs, ms=[preg.larva_conf_dict2.loadConf(f'navigator_{mID}') for mID in mIDs])
 
     def get_larvagroups(self, type='standard'):
         age = 72.0
         kws = {
-            'distribution' : preg.get_null('larva_distro', N=self.N, scale=(0.005, 0.005)),
+            'distribution': preg.get_null('larva_distro', N=self.N, scale=(0.005, 0.005)),
             'life_history': preg.get_null('life_history', age=age,
                                           epochs={0: preg.get_null('epoch', start=0.0, stop=age,
                                                                    substrate=preg.get_null('substrate'))}),
-            'odor' : preg.get_null('odor'),
+            'odor': preg.get_null('odor'),
             'sample': 'None.150controls'
         }
-        lgs={}
+        lgs = {}
         mID0s = ['rover', 'sitter']
         mcols = ['blue', 'red']
         for mID0, mcol in zip(mID0s, mcols):
-            mID=f'navigator_{mID0}'
-            lgs[f'{type}_{mID0}'] = preg.get_null('LarvaGroup',default_color=mcol,
-                                                  model=preg.larva_conf_dict2.loadConf(mID),**kws)
+            mID = f'navigator_{mID0}'
+            lgs[f'{type}_{mID0}'] = preg.get_null('LarvaGroup', default_color=mcol,
+                                                  model=self.M.loadConf(mID), **kws)
         return lgs
 
     def get_sources(self, type='standard'):
@@ -396,6 +404,7 @@ class DoublePatch_Essay(Essay):
             'save_to': self.plot_dir,
             'show': self.show,
             'title': f"DOUBLE PATCH ESSAY (N={self.N}, duration={self.dur}')",
+            'mdiff_df': self.mdiff_df
         }
         # entry = self.G.entry('double-patch summary', args={})
         self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', args={}), **kwargs))
@@ -414,7 +423,7 @@ class DoublePatch_Essay(Essay):
 
 
 class Chemotaxis_Essay(Essay):
-    def __init__(self, dur=5.0, gain=50.0, mID0='RE_NEU_PHI_DEF_nav', **kwargs):
+    def __init__(self, dur=5.0, gain=300.0, **kwargs):
         super().__init__(type='Chemotaxis',
                          enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                   bouts=[], fits=False, interference=False, on_food=False),
@@ -422,30 +431,60 @@ class Chemotaxis_Essay(Essay):
         self.time_ks = ['c_odor1', 'dc_odor1']
         self.dur = dur
         self.gain = gain
-        self.mID0 = mID0
-        self.models = self.get_models(gain, mID0)
+        # self.mID0 = mID0
+        self.models = self.get_models2(gain)
+        self.mdiff_df = self.M.diff_df(mIDs=list(self.models.keys()), ms=[v.model for v in self.models.values()])
         self.exp_dict = self.chemo_exps()
 
-    def get_models(self, gain, mID0):
-        mW = preg.loadConf('Model', mID0)
-        mW.brain.olfactor_params.odor_dict.Odor.mean = gain
+    def get_models(self, gain):
+        mID0='navigator'
+        o='brain.olfactor_params'
+        mW = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+                                               f'{o}.perception': 'log'})
+        mWlin = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+                                                  f'{o}.perception': 'linear'})
+        mC = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': 0})
+        mT = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+                                               f'{o}.perception': 'log',
+                                               f'{o}.brute_force': True})
+        mTlin = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+                                                  f'{o}.brute_force': True,
+                                                  f'{o}.perception': 'linear'})
 
-        mC = dNl.NestDict(copy.deepcopy(mW))
-        mC.brain.olfactor_params.odor_dict.Odor.mean = 0
-
-        mT = dNl.NestDict(copy.deepcopy(mW))
-        mT.brain.olfactor_params.brute_force = True
-
+        T = 'Tastekin'
+        W = 'Wystrach'
         models = {
 
-            'Tastekin2018': {'model': mT, 'color': 'red'},
-            'Wystrach2016': {'model': mW, 'color': 'green'},
-            'controls': {'model': mC, 'color': 'blue'},
+            f'{T} (log)': {'model': mT, 'color': 'red'},
+            f'{T} (lin)': {'model': mTlin, 'color': 'darkred'},
+            f'{W} (log)': {'model': mW, 'color': 'lightgreen'},
+            f'{W} (lin)': {'model': mWlin, 'color': 'darkgreen'},
+            'controls': {'model': mC, 'color': 'magenta'},
 
         }
         return dNl.NestDict(models)
 
+    def get_models2(self, gain):
+        cols=N_colors(6)
+        i=0
+        models={}
+        for Tmod in ['NEU', 'SIN'] :
+            for Ifmod in ['PHI', 'SQ', 'DEF'] :
+                mID0=f'RE_{Tmod}_{Ifmod}_DEF_nav'
+                models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
+                    f'brain.olfactor_params.brute_force': True,
+                    f'brain.olfactor_params.odor_dict.Odor.mean': gain,
+                    f'brain.interference_params.attenuation': 0.1,
+                    f'brain.interference_params.attenuation_max': 0.6,
+                }), 'color': cols[i]}
+                i+=1
+        return dNl.NestDict(models)
+
     def chemo_exps(self):
+        lg_kws = {
+            'odor': preg.get_null('odor'),
+            'sample': 'None.150controls'
+        }
         kws = {
             'arena': preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.1, 0.06)),
             'odorscape': {'odorscape': 'Gaussian'},
@@ -469,7 +508,8 @@ class Chemotaxis_Essay(Essay):
             'lgs': {
                 mID: preg.get_null('LarvaGroup',
                                    distribution=preg.get_null('larva_distro', N=self.N, mode='uniform'),
-                                   default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()},
+                                   default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
+                self.models.items()},
             'id': f'{exp1}_exp',
             'dur': self.dur,
             'exp': exp1
@@ -494,7 +534,8 @@ class Chemotaxis_Essay(Essay):
                                    distribution=preg.get_null('larva_distro', N=self.N, mode='uniform',
                                                               loc=(-0.04, 0.0),
                                                               orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
-                                   default_color=dic['color'], model=dic['model']) for mID, dic in self.models.items()},
+                                   default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
+                self.models.items()},
             'id': f'{exp2}_exp',
             'dur': self.dur,
             'exp': exp2
@@ -503,24 +544,25 @@ class Chemotaxis_Essay(Essay):
         return {exp1: [self.conf(**kws1)], exp2: [self.conf(**kws2)]}
 
     def analyze(self, exp, ds0):
-        kwargs = {'datasets': flatten_list(ds0),
-                  'save_to': self.plot_dir,
-                  'show': self.show}
-        entry_list = [
-            self.G.entry('autoplot', args={
-                'ks': self.time_ks,
-                'show_first': False,
-                'individuals': False,
-                'subfolder': None,
-                'unit': 'min',
-                'name': f'{exp}_timeplot'
-            }),
-            self.G.entry('trajectories', args={
-                'subfolder': None,
-                'name': f'{exp}_trajectories',
-            })
-        ]
-        self.figs[exp] = self.G.eval(entry_list, **kwargs)
+        pass
+        # kwargs = {'datasets': flatten_list(ds0),
+        #           'save_to': self.plot_dir,
+        #           'show': self.show}
+        # entry_list = [
+        #     self.G.entry('autoplot', args={
+        #         'ks': self.time_ks,
+        #         'show_first': False,
+        #         'individuals': False,
+        #         'subfolder': None,
+        #         'unit': 'min',
+        #         'name': f'{exp}_timeplot'
+        #     }),
+        #     self.G.entry('trajectories', args={
+        #         'subfolder': None,
+        #         'name': f'{exp}_trajectories',
+        #     })
+        # ]
+        # self.figs[exp] = self.G.eval(entry_list, **kwargs)
 
     def global_anal(self):
         kwargs = {
@@ -529,7 +571,7 @@ class Chemotaxis_Essay(Essay):
             'show': self.show,
             'title': f'CHEMOTAXIS ESSAY (N={self.N})',
         }
-        entry = self.G.entry('chemotaxis summary', args={'models': self.models})
+        entry = self.G.entry('chemotaxis summary', args={'mdiff_df': self.mdiff_df})
         self.figs.update(self.G.eval0(entry, **kwargs))
 
 
@@ -579,7 +621,7 @@ essay_dict = {
 
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-    # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=False)
-    E = DoublePatch_Essay(video=False, N=5, dur=5)
+    E = Chemotaxis_Essay(video=False, N=5, dur=5)
+    # E = DoublePatch_Essay(video=False, N=5, dur=5)
     ds = E.run()
     figs, results = E.anal()

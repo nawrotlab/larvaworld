@@ -160,8 +160,8 @@ def dsp_summary(datasets, target=None,range=(0,40), **kwargs):
     P.annotate()
     return P.get()
 
-def RvsS_summary(entrylist,title, **kwargs):
-    RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=['rover', 'sitter'])
+def RvsS_summary(entrylist,title,mdiff_df, **kwargs):
+
     h_mpl = 4
     w, h = 30, 60 + h_mpl * 2
     P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
@@ -170,7 +170,7 @@ def RvsS_summary(entrylist,title, **kwargs):
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
                horizontalalignment='center')
 
-    P.plot(func='mpl', kws={'data': RS_diff_df, 'font_size' : 20}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
 
     ax_list=[]
     for i, entry in enumerate(entrylist):
@@ -184,16 +184,14 @@ def RvsS_summary(entrylist,title, **kwargs):
     P.fig.align_ylabels(ax_list)
     return P.get()
 
-def DoublePatch_summary(datasets,title,**kwargs):
-    mIDs = ['rover', 'sitter']
-    RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=mIDs, ms=[preg.larva_conf_dict2.loadConf(f'navigator_{mID}') for mID in mIDs])
-    Nmods = len(mIDs)
+def DoublePatch_summary(datasets,title,mdiff_df,**kwargs):
+    Nmods = len(mdiff_df.columns)
     h_mpl = 4
     w, h = 32, 50 + h_mpl * 2
     P = GridPlot(name=f'DoublePatch_summary', width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
                horizontalalignment='center')
-    P.plot(func='mpl', kws={'data': RS_diff_df, 'font_size' : 20}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+    P.plot(func='mpl', kws={'data':mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4+int(Nmods/2), h0=0)
 
     Nexps = len(datasets)
     h1exp = int((h - h_mpl * 2) / Nexps)
@@ -222,15 +220,16 @@ def DoublePatch_summary(datasets,title,**kwargs):
     P.annotate()
     return P.get()
 
-def chemo_summary(datasets,models,title, **kwargs):
-    mdiff_df = preg.larva_conf_dict2.diff_df(mIDs=list(models.keys()), ms=[v.model for v in models.values()])
-
+def chemo_summary(datasets,mdiff_df,title, **kwargs):
+    # mIDs = list(models.keys())
+    # mdiff_df = preg.larva_conf_dict2.diff_df(mIDs=mIDs, ms=[v.model for v in models.values()])
+    Nmods = len(mdiff_df.columns)
     h_mpl = 4
     w, h = 30,42+ h_mpl * 2
     P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
                horizontalalignment='center')
-    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size' : 20}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4+int(Nmods/2), h0=0)
 
     time_ks=['c_odor1', 'dc_odor1']
     Nks=len(time_ks)
@@ -257,7 +256,7 @@ def chemo_summary(datasets,models,title, **kwargs):
             'unit': 'min',
             **kws1
         }, axs=axs)
-        P.plot(func='trajectories', kws=kws1, w=w, x0=True, N=Ndds, share_h=True, h=h1k-2, h0=h0 + Nks *h1k)
+        P.plot(func='trajectories', kws={**kws1, 'single_color' : True}, w=w, x0=True, N=Ndds, share_h=True, h=h1k-2, h0=h0 + Nks *h1k)
 
 
     P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)

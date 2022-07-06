@@ -248,7 +248,7 @@ class BaseIntermitter(Effector):
     def active_bouts(self):
         return self.current_stridechain_length, self.current_feedchain_length, self.current_pause_duration, self.current_run_duration
 
-    def interrupt_locomotion(self):
+    def interrupt_locomotion(self, L=None):
         if self.current_pause_duration is None:
             if self.current_feedchain_length is not None:
                 self.register_feedchain()
@@ -256,12 +256,12 @@ class BaseIntermitter(Effector):
                 self.register_stridechain()
             elif self.current_run_duration is not None:
                 self.register_run()
-            self.inhibit_locomotion()
+            self.inhibit_locomotion(L=L)
 
-    def trigger_locomotion(self):
+    def trigger_locomotion(self, L=None):
         if self.current_pause_duration is not None:
             self.register_pause()
-            self.disinhibit_locomotion()
+            self.disinhibit_locomotion(L=L)
 #
 
 class Intermitter(BaseIntermitter):

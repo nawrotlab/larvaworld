@@ -243,7 +243,7 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
 
                     dc0 = df.xs(df.index.get_level_values('AgentID')[0], level='AgentID')
                     ax.plot(x, dc0, color=cc, linestyle='dashed', linewidth=1)
-    P.data_leg(0)
+    P.data_leg(0, loc='lower left')
     P.adjust((0.1, 0.95), (0.15, 0.95))
     P.fig.align_ylabels(P.axs[:])
     return P.get()

@@ -986,10 +986,11 @@ class LarvaConfDict2:
 
         return conf
 
-    def newConf(self, mID, mID0, kwargs={}):
+    def newConf(self, mID0,mID=None,  kwargs={}):
         T0 = dNl.NestDict(copy.deepcopy(self.loadConf(mID=mID0)))
         T = dNl.update_nestdict(T0, kwargs)
-        self.saveConf(conf=T, mID=mID)
+        if mID is not None :
+            self.saveConf(conf=T, mID=mID)
         return T
 
 
