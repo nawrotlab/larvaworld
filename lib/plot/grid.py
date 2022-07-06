@@ -184,10 +184,10 @@ def RvsS_summary(entrylist,N, **kwargs):
     P.fig.align_ylabels(ax_list)
     return P.get()
 
-def DoublePatch_summary(datasets,N, dur,**kwargs):
+def DoublePatch_summary(datasets,N, dur,sources,**kwargs):
     RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=['navigator_rover', 'navigator_sitter'])
     h_mpl = 4
-    w, h = 32, 32 + h_mpl * 2
+    w, h = 32, 50 + h_mpl * 2
     P = GridPlot(name=f'DoublePatch_summary', width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=f"DOUBLE PATCH ESSAY (N={N}, duration={dur}')", size=35, weight='bold',
                horizontalalignment='center')
@@ -204,12 +204,14 @@ def DoublePatch_summary(datasets,N, dur,**kwargs):
             'save_to': None,
             'subfolder': None,
             'show': False,
-            'title': False,
+            # 'title': False,
 
         }
-        axs=P.add(w=w, x0=True, N=(3,2), share_h=True,share_w=True, h=h1exp, h0=h0, dh=3,dw=4)
-        P.plot(func='double patch', kws=kws1, axs=axs)
+        axs=P.add(w=w, x0=True, N=(3,2), share_h=True,share_w=True, h=h1exp-10, h0=h0, dh=3,dw=4)
+        P.plot(func='double patch', kws={**kws1, 'title': False}, axs=axs)
         P.fig.align_ylabels(axs)
+        axs = P.add(w=w, x0=True, N=(2, 3), share_h=True, share_w=True, h=16, h0=h0 +h1exp-16, dh=1, dw=1)
+        P.plot(func='trajectories', kws={**kws1, 'sources': sources}, axs=axs)
 
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.2)
     P.annotate()

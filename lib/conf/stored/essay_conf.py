@@ -322,26 +322,37 @@ class RvsS_Essay(Essay):
 
 
 class DoublePatch_Essay(Essay):
-    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0, **kwargs):
+    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0,arena_dims=(0.24, 0.24),patch_x=0.06,patch_radius=0.025, **kwargs):
         super().__init__(type='DoublePatch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                       bouts=['stride', 'pause', 'turn'],
                                                                       fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
+        self.arena_dims = arena_dims
+        self.patch_x = patch_x
+        self.patch_radius = patch_radius
         self.substrates = substrates
         self.dur = dur
         self.exp_dict = self.time_ratio_exp()
 
-    def patch_env(self, type='standard'):
+        # self.sources=
+
+    def get_sources(self, type='standard'):
         o = preg.get_null('odor', odor_id='Odor', odor_intensity=2.0, odor_spread=0.0002)
         sus = {
-            'Left_patch': preg.get_null('source', pos=(-0.06, 0.0), default_color='green', group='Source', radius=0.025,
+            'Left_patch': preg.get_null('source', pos=(-self.patch_x, 0.0), default_color='green', group='Source',
+                                        radius=self.patch_radius,
                                         amount=0.1, odor=o, type=type),
-            'Right_patch': preg.get_null('source', pos=(0.06, 0.0), default_color='green', group='Source', radius=0.025,
+            'Right_patch': preg.get_null('source', pos=(self.patch_x, 0.0), default_color='green', group='Source',
+                                         radius=self.patch_radius,
                                          amount=0.1, odor=o, type=type)
         }
+        return sus
+
+    def patch_env(self, type='standard'):
+        sus=self.get_sources(type=type)
 
         conf = preg.get_null('env_conf',
-                             arena=preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.24, 0.24)),
+                             arena=preg.get_null('arena', arena_shape='rectangular', arena_dims=self.arena_dims),
                              food_params={'source_groups': {},
                                           'food_grid': None,
                                           'source_units': sus},
@@ -368,11 +379,10 @@ class DoublePatch_Essay(Essay):
             'datasets': self.datasets,
             'save_to': self.plot_dir,
             'show': self.show}
-        entry = self.G.entry('double-patch summary', args={'N':self.N, 'dur':self.dur})
+        entry = self.G.entry('double-patch summary', args={'N':self.N, 'dur':self.dur,'sources':self.get_sources()})
         self.figs.update(self.G.eval0(entry, **kwargs))
 
     def analyze(self, exp, ds0):
-        # print(flatten_list(ds0))
         pass
         # kwargs = {'datasets': flatten_list(ds0),
         #           'save_to': self.plot_dir,
