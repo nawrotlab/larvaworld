@@ -34,6 +34,8 @@ class EvalRun:
         self.path = f'eval_runs'
         self.bout_annotation = bout_annotation
         self.enrichment = enrichment
+
+        os.makedirs(save_to, exist_ok=True)
         self.save_to = save_to
         self.store_data = store_data
         self.label_dic = {

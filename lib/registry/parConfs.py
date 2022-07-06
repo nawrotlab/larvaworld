@@ -1199,26 +1199,56 @@ class LarvaConfDict2:
         # d.save_config(add_reference=True)
         return entry
 
-    def adapt_6mIDs(self,refID):
-        from lib.registry.pars import preg
-        d = preg.loadRef(refID)
-        d.load(step=False)
-        e, c = d.endpoint_data, d.config
+    def adapt_6mIDs(self,refID, e=None,c=None):
+        if e is None or c is None:
+            from lib.registry.pars import preg
+            d = preg.loadRef(refID)
+            d.load(step=False)
+            e, c = d.endpoint_data, d.config
         entries={}
         mIDs=[]
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
-                mID=f'{Ifmod}on{Ifmod}'
+                mID=f'{Ifmod}on{Tmod}'
                 entry=self.adapt_mID(refID=refID, mID0=mID0,mID=mID,e=e,c=c)
                 entries.update(entry)
                 mIDs.append(mID)
-        if 'modelConfs' not in c.keys():
-            c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-        c.modelConfs.average=entries
-        d.save_config(add_reference=True)
-        d.store_model_graphs(mIDs=mIDs)
-        return entries
+        return entries, mIDs
+        # if 'modelConfs' not in c.keys():
+        #     c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
+        # c.modelConfs.average=entries
+        # d.save_config(add_reference=True)
+        # d.store_model_graphs(mIDs=mIDs)
+        # return entries
+
+    def add_var_mIDs(self, refID, e=None,c=None, mID0s=None, sample_ks=None):
+        if e is None or c is None:
+            from lib.registry.pars import preg
+            d = preg.loadRef(refID)
+            d.load(step=False)
+            e, c = d.endpoint_data, d.config
+
+        if mID0s is None :
+            mID0s=list(c.modelConfs.average.keys())
+        if sample_ks is None :
+            sample_ks=[
+                'brain.crawler_params.stride_dst_mean',
+                'brain.crawler_params.stride_dst_std',
+                'brain.crawler_params.max_scaled_vel',
+                'brain.crawler_params.max_vel_phase',
+                'brain.crawler_params.initial_freq',
+            ]
+        kwargs={k : 'sample' for k in sample_ks}
+        mIDs=[]
+        entries={}
+        for mID0 in mID0s :
+            mID=f'{mID0}_var'
+            m=self.newConf(mID0=mID0, mID=mID, kwargs=kwargs)
+            mIDs.append(mID)
+            entries[mID]=m
+
+        return entries, mIDs
 
 
 
@@ -1236,11 +1266,52 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         return vs
 
 if __name__ == '__main__':
-    # mID = 'RE_NEU_PHI_DEF'
+    from lib.registry.pars import preg
     refID = 'None.150controls'
+    d = preg.loadRef(refID)
+    d.load(step=False)
+    # d.modelConf_analysis()
 
 
-    dd = LarvaConfDict2()
+
+    # raise
+    c=d.config
+    # print(c.Nticks * c.dt / 60)
+    # raise
+    # for mID,m in c.modelConfs.variable.items() :
+    #     print(mID, m.brain.crawler_params)
+
+
+    mIDs0=list(c.modelConfs.average.keys())[:3]
+    mIDs1=[f'{a}_var' for a in mIDs0]
+    mIDs=mIDs0+mIDs1
+    evrun=d.eval_model_graphs(mIDs=mIDs,norm_modes=['raw', 'minmax'], id='3mIDs_meanVSvar', N=10, dur=c.duration/60)
+
+    # raise
+    # from lib.eval.evaluation import EvalRun
+    # evrun = EvalRun(refID=refID, id='6mIDs', modelIDs=mIDs, dataset_ids=mIDs, N=4,save_to=d.dir_dict.evaluation,
+    #                 bout_annotation=True, enrichment=True, show=False, offline=False)
+    #
+    # evrun.run(video=False)
+    # evrun.eval()
+    # evrun.plot_models()
+    # evrun.plot_results()
+
+    # d.store_model_graphs(mIDs=mIDs)
+
+    # print()
+    # raise
+    # dd = LarvaConfDict2()
+    # for mID in dd.storedConf() :
+    #     mm=dd.loadConf(mID)
+    #     m=mm.brain.crawler_params
+    #     print(m)
+    #     if m is not None :
+    #         for k,v in m.items() :
+    #             if v=='fit' :
+    #                 print(k,v)
+
+    # dd.add_var_mIDs(refID)
     # m=dd.loadConf(mID)
 
     # print(m.brain.intermitter_params)

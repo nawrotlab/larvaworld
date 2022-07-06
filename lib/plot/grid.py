@@ -59,19 +59,20 @@ def calibration_plot(save_to=None, files=None):
 
 
 
-def model_summary(refID, mID, Nids=1,model_table=False, **kwargs):
+def model_summary(mID, refID=None,refDataset=None, Nids=1,model_table=False, **kwargs):
     from lib.anal.fitting import test_boutGens
     from lib.eval.eval_aux import sim_model
+    if refDataset is None:
+        d = preg.loadRef(refID)
+        d.load(step=False, contour=False)
+        refDataset = d
+    # refDataset.id = 'experiment'
+    # refDataset.config.id = 'experiment'
+    refDataset.color = 'red'
+    refDataset.config.color = 'red'
+    e, c = refDataset.endpoint_data, refDataset.config
 
-    d = preg.loadRef(refID)
-    d.load(step=False, contour=False)
-    d.id = 'experiment'
-    d.config.id = 'experiment'
-    d.color = 'red'
-    d.config.color = 'red'
-    e, c = d.endpoint_data, d.config
-
-    dd = sim_model(mID=mID, refDataset=d, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue', dataset_id='model')
+    dd = sim_model(mID=mID, refDataset=refDataset, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue', dataset_id='model')
 
     if model_table :
         hh0 = 30
@@ -91,10 +92,10 @@ def model_summary(refID, mID, Nids=1,model_table=False, **kwargs):
            N=len(valid), h=10, h0=hh0+3, share_h=True, dw=1, x0=True)
 
     shorts=['sv', 'fov', 'foa', 'b']
-    P.plot(func='stride cycle',kws={'datasets': [d, dd], 'shorts': shorts, 'individuals': True, 'save_to': None},
+    P.plot(func='stride cycle',kws={'datasets': [refDataset, dd],'labels': ['experiment', dd.id], 'shorts': shorts, 'individuals': True, 'save_to': None},
            N=len(shorts), w=29, h=32, h0=hh0+18, share_w=True, x0=True)
 
-    ds = test_boutGens(**{'mID': mID, 'refID': refID})
+    ds = test_boutGens(**{'mID': mID, 'refDataset': refDataset})
     P.plot(func='epochs', kws={'datasets': ds, 'save_to': None},
            N=2, w=29, h0=hh0+56, share_h=True, dw=1, x0=True)
 
@@ -309,7 +310,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     ss = s.xs(c.agent_ids[0], level='AgentID').loc[:Nticks]
     a_sv = ss[preg.getPar('sv')].values
     a_fov = ss[preg.getPar('fov')].values
-    pars, labs = preg.getPar(['sv', 'c_CT', 'Act_tur', 'fov', 'b'], to_return=['d', 'symbol'])
+    pars, labs = preg.getPar(['sv', 'c_CT', 'A_T', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
     P = Plot(name=f'{mID}_test', **kws0, **kwargs)

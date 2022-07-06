@@ -357,6 +357,7 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False):
         # raise
         plt.show()
     fig.patch.set_visible(False)
+
     if return_fig:
         res = fig, save_to, filename
     else:

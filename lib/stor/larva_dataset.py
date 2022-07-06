@@ -624,6 +624,7 @@ class LarvaDataset:
             'plot': self.plot_dir,
             'vis': self.vis_dir,
             # 'comp_plot': os.path.join(self.plot_dir, 'comparative'),
+            'evaluation': os.path.join(self.data_dir, 'evaluation'),
             'foraging': os.path.join(self.data_dir, 'foraging_dicts'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
@@ -854,45 +855,45 @@ class LarvaDataset:
                     chunks.append(entry)
         return chunks
 
-    def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic',
-                          turner=None, physics=None):
-        from lib.eval.model_fit import adapt_turner, adapt_crawler, adapt_intermitter, adapt_interference
-
-        if new_id is None:
-            new_id = f'{self.id}_model'
-        e = self.endpoint_data
-        c = self.config
-
-        mods = preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True)
-        b_kws = {
-            'modules': mods,
-            'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
-            'crawler_params': adapt_crawler(e, mode=crawler_mode, average=True),
-            'intermitter_params': adapt_intermitter(c, e, average=True),
-            'interference_params': adapt_interference(c, e, mode=interference_mode, average=True),
-        }
-        for k in mods.keys():
-            if not mods[k]:
-                b_kws[f'{k}_params'] = None
-
-        kws = {
-            'brain': preg.get_null('brain', **b_kws),
-            'body': preg.get_null('body', initial_length=np.round(e['length'].median(), 3)),
-            'physics': preg.get_null('physics') if physics is None else physics,
-            'energetics': None,
-            'Box2D_params': None,
-        }
-
-        m = preg.get_null('larva_conf', **kws)
-        # print(m.Box2D)
-        # raise
-
-        preg.saveConf(id=new_id, conf=m, conftype='Model')
-        if 'modelConfs' not in c.keys():
-            c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-        c.modelConfs.average[new_id] = m
-        self.save_config(add_reference=True)
-        return m
+    # def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic',
+    #                       turner=None, physics=None):
+    #     from lib.eval.model_fit import adapt_turner, adapt_crawler, adapt_intermitter, adapt_interference
+    #
+    #     if new_id is None:
+    #         new_id = f'{self.id}_model'
+    #     e = self.endpoint_data
+    #     c = self.config
+    #
+    #     mods = preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True)
+    #     b_kws = {
+    #         'modules': mods,
+    #         'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
+    #         'crawler_params': adapt_crawler(e, mode=crawler_mode, average=True),
+    #         'intermitter_params': adapt_intermitter(c, e, average=True),
+    #         'interference_params': adapt_interference(c, e, mode=interference_mode, average=True),
+    #     }
+    #     for k in mods.keys():
+    #         if not mods[k]:
+    #             b_kws[f'{k}_params'] = None
+    #
+    #     kws = {
+    #         'brain': preg.get_null('brain', **b_kws),
+    #         'body': preg.get_null('body', initial_length=np.round(e['length'].median(), 3)),
+    #         'physics': preg.get_null('physics') if physics is None else physics,
+    #         'energetics': None,
+    #         'Box2D_params': None,
+    #     }
+    #
+    #     m = preg.get_null('larva_conf', **kws)
+    #     # print(m.Box2D)
+    #     # raise
+    #
+    #     preg.saveConf(id=new_id, conf=m, conftype='Model')
+    #     if 'modelConfs' not in c.keys():
+    #         c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
+    #     c.modelConfs.average[new_id] = m
+    #     self.save_config(add_reference=True)
+    #     return m
 
     def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
         if par is None:
@@ -959,6 +960,9 @@ class LarvaDataset:
             shorts = preg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
+
+
+
     def sample_modelConf(self, N, mID, sample_ks=None):
         from lib.aux.sim_aux import sample_group
         from lib.aux.sim_aux import generate_larvae
@@ -990,9 +994,39 @@ class LarvaDataset:
             except:
                 print('TABLE FAIL', mID)
             try:
-                _ = G['model summary'](refID=self.config.refID, mID=mID, Nids=10, save_to=f2)
+                _ = G['model summary'](refDataset=self, mID=mID, Nids=10, save_to=f2)
             except:
                 print('SUMMARY FAIL', mID)
 
-        combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
-        combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
+        combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
+        combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf", deep=False)
+
+    def eval_model_graphs(self,mIDs,id=None,N=10,enrichment=True, offline=False,dur=None, **kwargs):
+        if id is None :
+            id=f'{len(mIDs)}mIDs'
+        from lib.eval.evaluation import EvalRun
+        evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=mIDs, N=N, save_to=self.dir_dict.evaluation,
+                        bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
+        #
+        evrun.run(video=False, dur=dur)
+        evrun.eval()
+        # evrun.plot_models()
+        evrun.plot_results()
+        return evrun
+
+    def modelConf_analysis(self):
+        if 'modelConfs' not in self.config.keys():
+            self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
+        M=preg.larva_conf_dict2
+        entries_avg, mIDs_avg=M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
+        self.config.modelConfs.average = entries_avg
+        self.save_config(add_reference=True)
+        self.store_model_graphs(mIDs=mIDs_avg)
+        self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
+
+        entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config, mID0s=mIDs_avg)
+        self.config.modelConfs.variable = entries_var
+        self.save_config(add_reference=True)
+        self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
+        self.eval_model_graphs(mIDs=mIDs_avg+mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_avgVSvar', N=10)
+

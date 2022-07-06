@@ -69,6 +69,8 @@ def store_RefPars():
         nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_mean',
         nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
         nam.freq('feed'): 'brain.feeder_params.initial_freq',
+        nam.max(nam.chunk_track('stride', nam.scal(nam.vel('')))): 'brain.crawler_params.max_scaled_vel',
+        'phi_scaled_velocity_max': 'brain.crawler_params.max_vel_phase',
     }
     save_dict(d, preg.path_dict["ParRef"], use_pickle=False)
 

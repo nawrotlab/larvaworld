@@ -423,19 +423,27 @@ class BoutGenerator:
         return func(x=x, **self.args)
 
 
-def test_boutGens(mID,refID, **kwargs):
-    from lib.aux.sim_aux import get_sample_bout_distros
+def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     from lib.registry.pars import preg
-    d = preg.loadRef(refID)
-    d.load(contour=False)
-    s, e, c = d.step_data, d.endpoint_data, d.config
-    Npau=s['pause_dur'].dropna().values.shape[0]
-    Nrun=s['run_dur'].dropna().values.shape[0]
+    if refDataset is None :
 
-    dic={}
+        d = preg.loadRef(refID)
+        d.load(contour=False)
+        # s, e, c = d.step_data, d.endpoint_data, d.config
+        # Npau = s['pause_dur'].dropna().values.shape[0]
+        # Nrun = s['run_dur'].dropna().values.shape[0]
+        refDataset=d
+    c=refDataset.config
+    chunk_dicts = refDataset.load_chunk_dicts()
+    aux_dic = dNl.chunk_dicts_to_aux_dict(chunk_dicts, c)
+    Npau = aux_dic['pause_dur'].shape[0]
+    Nrun = aux_dic['run_dur'].shape[0]
+
+    from lib.aux.sim_aux import get_sample_bout_distros
     m=preg.loadConf(id=mID, conftype='Model')
-    m=get_sample_bout_distros(m, preg.loadConf(id=refID, conftype='Ref'))
+    m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params
+    dic = {}
     for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
         N=Npau if n == 'pause' else Nrun
         discr = True if n == 'stridechain' else False
@@ -447,7 +455,8 @@ def test_boutGens(mID,refID, **kwargs):
             B = BoutGenerator(**kk, dt=dt)
             vs = B.sample(N)
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
-    datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'}, {'id' : 'experiment', 'pooled_epochs': d.load_pooled_epochs(), 'color': 'red'}]
+    datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'},
+              {'id' : 'experiment', 'pooled_epochs': refDataset.load_pooled_epochs(), 'color': 'red'}]
     datasets = [dNl.NestDict(dd) for dd in datasets]
     return datasets
 

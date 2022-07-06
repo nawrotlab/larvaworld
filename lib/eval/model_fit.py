@@ -71,36 +71,36 @@ class Calibration:
         self.best = None
         self.KS_dic = None
 
-    def build_modelConf(self, new_id=None, **kwargs):
-        if new_id is None:
-            new_id = f'fitted_{self.turner_mode}_turner'
-        m = self.refDataset.average_modelConf(new_id=new_id, **self.best, **kwargs)
-        return {new_id: m}
+    # def build_modelConf(self, new_id=None, **kwargs):
+    #     if new_id is None:
+    #         new_id = f'fitted_{self.turner_mode}_turner'
+    #     m = self.refDataset.average_modelConf(new_id=new_id, **self.best, **kwargs)
+    #     return {new_id: m}
 
-    def plot_turner_distros(self, sim, fig=None, axs=None, in_deg=False, **kwargs):
-        Nps = len(self.shorts)
-        P = BasePlot(name='turner_distros', **kwargs)
-        P.build(Ncols=Nps, fig=fig, axs=axs, figsize=(5 * Nps, 5), sharey=True)
-        for i, sh in enumerate(self.shorts):
-            p, lab = preg.getPar(sh, to_return=['d', 'lab'])
-            vs = self.target[sh]
-            if in_deg:
-                vs = np.rad2deg(vs)
-            lim = np.nanquantile(vs, 0.99)
-            bins = np.linspace(-lim, lim, 100)
-
-            ws = np.ones_like(vs) / float(len(vs))
-            P.axs[i].hist(vs, weights=ws, label='experiment', bins=bins, color='red', alpha=0.5)
-
-            vs0 = sim[sh]
-            if in_deg:
-                vs0 = np.rad2deg(vs0)
-            ws0 = np.ones_like(vs0) / float(len(vs0))
-            P.axs[i].hist(vs0, weights=ws0, label='model', bins=bins, color='blue', alpha=0.5)
-            P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=lab,
-                      xMaxN=4, yMaxN=4, leg_loc='upper left' if i == 0 else None)
-        P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.01, H=0.1)
-        return P.get()
+    # def plot_turner_distros(self, sim, fig=None, axs=None, in_deg=False, **kwargs):
+    #     Nps = len(self.shorts)
+    #     P = BasePlot(name='turner_distros', **kwargs)
+    #     P.build(Ncols=Nps, fig=fig, axs=axs, figsize=(5 * Nps, 5), sharey=True)
+    #     for i, sh in enumerate(self.shorts):
+    #         p, lab = preg.getPar(sh, to_return=['d', 'lab'])
+    #         vs = self.target[sh]
+    #         if in_deg:
+    #             vs = np.rad2deg(vs)
+    #         lim = np.nanquantile(vs, 0.99)
+    #         bins = np.linspace(-lim, lim, 100)
+    #
+    #         ws = np.ones_like(vs) / float(len(vs))
+    #         P.axs[i].hist(vs, weights=ws, label='experiment', bins=bins, color='red', alpha=0.5)
+    #
+    #         vs0 = sim[sh]
+    #         if in_deg:
+    #             vs0 = np.rad2deg(vs0)
+    #         ws0 = np.ones_like(vs0) / float(len(vs0))
+    #         P.axs[i].hist(vs0, weights=ws0, label='model', bins=bins, color='blue', alpha=0.5)
+    #         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=lab,
+    #                   xMaxN=4, yMaxN=4, leg_loc='upper left' if i == 0 else None)
+    #     P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.01, H=0.1)
+    #     return P.get()
 
     def sim_turner(self, N=2000):
         from lib.aux.ang_aux import wrap_angle_to_0
@@ -180,28 +180,36 @@ class Calibration:
         # print(self.bounds)
         # raise
         res = minimize(self.optimize_turner, self.init, method=method, bounds=self.bounds, **kwargs)
-        self.best, self.KS_dic = self.plot_turner(q=res.x)
-
-    def plot_turner(self, q):
-        from lib.aux.sim_aux import fft_max
-
-        self.retrieve_modules(q,Ndec=2)
+        self.best, self.KS_dic = self.eval_best(q=res.x)
+        # self.best, self.KS_dic = self.plot_turner(q=res.x)
+    #
+    def eval_best(self,q):
+        self.retrieve_modules(q, Ndec=2)
         sim = self.sim_turner(N=self.N)
         err, Ks_dic = self.eval_turner(sim)
-
-        for key, val in self.mconfs.turner.items():
-            print(key, ' : ', val)
-        for key, val in self.mconfs.physics.items():
-            print(key, ' : ', val)
-
-        # print(Ks_dic)
-        ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
-        print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
-        _ = self.plot_turner_distros(sim)
         best = self.mconfs
-
         return best, Ks_dic
-        # pass
+
+    # def plot_turner(self, q):
+    #     from lib.aux.sim_aux import fft_max
+    #
+    #     self.retrieve_modules(q,Ndec=2)
+    #     sim = self.sim_turner(N=self.N)
+    #     err, Ks_dic = self.eval_turner(sim)
+    #
+    #     for key, val in self.mconfs.turner.items():
+    #         print(key, ' : ', val)
+    #     for key, val in self.mconfs.physics.items():
+    #         print(key, ' : ', val)
+    #
+    #     # print(Ks_dic)
+    #     ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
+    #     print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
+    #     _ = self.plot_turner_distros(sim)
+    #     best = self.mconfs
+    #
+    #     return best, Ks_dic
+    #     # pass
 
 
 def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs):
@@ -390,29 +398,29 @@ def adapt_locomotor(c, e, average=True):
     return m
 
 
-def calibrate_4models(refID='None.150controls'):
-    mIDs = []
-    mdict = {}
-    for Tmod, Tlab in zip(['neural', 'sinusoidal'], ['NEU', 'SIN']):
-        C = Calibration(refID=refID, turner_mode=Tmod)
-        C.run()
-        for IFmod, IFlab in zip(['phasic', 'square'], ['PHI', 'SQ']):
-            mID = f'{IFlab}on{Tlab}'
-            mIDs.append(mID)
-            m = C.build_modelConf(new_id=mID, interference_mode=IFmod)
-            mm = calibrate_interference(mID=mID, refID=refID)
-            mdict.update(mm)
+# def calibrate_4models(refID='None.150controls'):
+#     mIDs = []
+#     mdict = {}
+#     for Tmod, Tlab in zip(['neural', 'sinusoidal'], ['NEU', 'SIN']):
+#         C = Calibration(refID=refID, turner_mode=Tmod)
+#         C.run()
+#         for IFmod, IFlab in zip(['phasic', 'square'], ['PHI', 'SQ']):
+#             mID = f'{IFlab}on{Tlab}'
+#             mIDs.append(mID)
+#             m = C.build_modelConf(new_id=mID, interference_mode=IFmod)
+#             mm = calibrate_interference(mID=mID, refID=refID)
+#             mdict.update(mm)
+#
+#     update_modelConfs(d=preg.loadRef(refID), mIDs=mIDs)
+#     return mdict
 
-    update_modelConfs(d=preg.loadRef(refID), mIDs=mIDs)
-    return mdict
 
-
-def update_modelConfs(d, mIDs):
-    save_to = f'{d.dir_dict.model_tables}/4models'
-    os.makedirs(save_to, exist_ok=True)
-    for mID in mIDs:
-        d.config.modelConfs.average[mID] = preg.loadConf(id=mID, conftype='Model')
-    d.save_config(add_reference=True)
+# def update_modelConfs(d, mIDs):
+#     save_to = f'{d.dir_dict.model_tables}/4models'
+#     os.makedirs(save_to, exist_ok=True)
+#     for mID in mIDs:
+#         d.config.modelConfs.average[mID] = preg.loadConf(id=mID, conftype='Model')
+#     d.save_config(add_reference=True)
 
 
 if __name__ == '__main__':

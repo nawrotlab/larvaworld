@@ -64,14 +64,21 @@ def append_pdf(input, output):
     [output.addPage(input.getPage(page_num)) for page_num in range(input.numPages)]
 
 
-def combine_pdfs(file_dir='.', save_as="final.pdf", pref=''):
+def combine_pdfs(file_dir='.', save_as="final.pdf", pref='', files=None, deep=True):
+    if files is None :
+        files = []
+        if deep :
+            for dirpath, dirnames, filenames in os.walk(file_dir):
+                for filename in [f for f in filenames if (f.endswith(".pdf") and f.startswith(pref))]:
+                    files.append(os.path.join(dirpath, filename))
+        else :
+            for dirpath, dirnames, filenames in os.walk(file_dir):
+                for filename in [f for f in filenames if (f.endswith(".pdf") and f.startswith(pref))]:
+                    files.append(os.path.join(dirpath, filename))
+                break
+
+        files.sort()
     merger = PdfFileMerger()
-    files = []
-    for dirpath, dirnames, filenames in os.walk(file_dir):
-        for filename in [f for f in filenames if (f.endswith(".pdf") and f.startswith(pref))]:
-            files.append(os.path.join(dirpath, filename))
-    # print(files)
-    files.sort()
     for f in files:
         merger.append(PdfFileReader(open(f, 'rb')))
     filepath = os.path.join(file_dir, save_as)
