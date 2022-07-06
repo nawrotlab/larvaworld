@@ -72,6 +72,7 @@ class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, N=1, **kwargs):
         super().__init__(type='RvsS', N=N, enrichment=preg.enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
+        self.all_figs = all_figs
         self.qs = [1.0, 0.75, 0.5, 0.25, 0.15]
         self.hs = [0, 1, 2, 3, 4]
         self.durs = [10, 15, 20]
@@ -89,8 +90,8 @@ class RvsS_Essay(Essay):
             **self.refeeding_exp(),
 
         }
-        self.all_figs = all_figs
-        self.RS_diff_df, self.RS_diff_str=self.get_RS_diff()
+
+        # self.RS_diff_df, self.RS_diff_str=self.get_RS_diff()
 
 
 
@@ -171,15 +172,15 @@ class RvsS_Essay(Essay):
             }
         return {exp: [self.conf(**kws)]}
 
-    def get_entrylist(self):
+    def get_entrylist(self, datasets, substrates, durs, qs, hs, G):
         entrylist = []
-        pathlength_ls = flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in self.substrates])
+        pathlength_ls = flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in substrates])
         ls0 = [r'$for^{R}$', r'$for^{S}$']
         kws00 = {
             'leg_cols': ['black', 'white'],
             'markers': ['D', 's'],
         }
-        for exp, dds in self.datasets.items():
+        for exp, dds in datasets.items():
             Ndds = len(dds)
             ds = flatten_list(dds)
             ls = pathlength_ls if exp == 'PATHLENGTH' else flatten_list([ls0] * Ndds)
@@ -201,7 +202,7 @@ class RvsS_Essay(Essay):
             elif exp == 'AD LIBITUM INTAKE':
                 kws = {
                     'xlabel': r'Time spent on food $(min)$',
-                    'coupled_labels': self.durs,
+                    'coupled_labels': durs,
                     'par_shorts': ['sf_am_V'],
                     **kws0
                 }
@@ -209,7 +210,7 @@ class RvsS_Essay(Essay):
             elif exp == 'POST-STARVATION INTAKE':
                 kws = {
                     'xlabel': r'Food deprivation $(h)$',
-                    'coupled_labels': self.hs,
+                    'coupled_labels': hs,
                     'par_shorts': ['f_am'],
                     'ylabel': 'Food intake',
                     'scale': 1000,
@@ -218,7 +219,7 @@ class RvsS_Essay(Essay):
             elif exp == 'REARING-DEPENDENT INTAKE':
                 kws = {
                     'xlabel': 'Food quality (%)',
-                    'coupled_labels': [int(q * 100) for q in self.qs],
+                    'coupled_labels': [int(q * 100) for q in qs],
                     'par_shorts': ['sf_am_V'],
                     **kws0
                 }
@@ -232,37 +233,19 @@ class RvsS_Essay(Essay):
                 plotID = 'food intake (timeplot)'
             else:
                 raise
-            entry = self.G.entry(ID=plotID, title=exp, args=dNl.NestDict(kws))
+            entry = G.entry(ID=plotID, title=exp, args=dNl.NestDict(kws))
             entrylist.append(entry)
         return entrylist
 
     def global_anal(self):
-        self.entrylist = self.get_entrylist()
+        self.entrylist = self.get_entrylist(datasets=self.datasets, substrates=self.substrates,
+                                            durs=self.durs, qs=self.qs, hs=self.hs, G=self.G)
         kwargs = {'save_to': self.plot_dir,
                   'show': self.show}
 
-        self.figs['RvsS_summary'] = self.summary_graph(self.entrylist, **kwargs)
+        entry=self.G.entry('RvsS summary', args={'entrylist' : self.entrylist, 'N':self.N})
+        self.figs.update(self.G.eval0(entry, **kwargs))
         self.figs.update(self.G.eval(self.entrylist, **kwargs))
-
-    def summary_graph(self, entrylist, **kwargs):
-        h_mpl=4
-        w, h = 30, 60+h_mpl*2
-        from lib.plot.base import GridPlot
-        P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
-        Nexps = len(entrylist)
-        h1exp = int((h-h_mpl*2) / Nexps)
-        P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={self.N})', size=35, weight='bold',
-                   horizontalalignment='center')
-
-        P.plot(func='mpl', kws={'data': self.RS_diff_df}, w=w, x0=True, y0=True, h=h_mpl,w0=6, h0=0)
-
-        for i, entry in enumerate(entrylist):
-            P.fig.text(x=0.5, y=0.88 * (1 - i / Nexps), s=entry['title'], size=30, weight='bold',
-                       horizontalalignment='center')
-            P.plot(func=entry['plotID'], kws=entry['args'], w=w, x0=True, h=h1exp - 4,h0=i * h1exp + (i + 1) * 1+h_mpl*2)
-        P.adjust((0.1, 0.95), (0.05, 0.96), 0.05, 0.1)
-        P.annotate()
-        return P.get()
 
     def analyze(self, exp, ds0):
         if self.all_figs:
@@ -337,24 +320,6 @@ class RvsS_Essay(Essay):
                                                                       subfolder=None,
                                                                       save_as=f'{n}{p}.pdf', **kwargs)
 
-    def get_RS_diff(self):
-        D=preg.larva_conf_dict2
-        r0,s0=D.loadConf('rover'),D.loadConf('sitter')
-        r,s=dNl.flatten_dict(r0),dNl.flatten_dict(s0)
-        k0str=''
-        dic = {}
-        for k in r.keys() :
-            if r[k]!=s[k]:
-                p=D.full_dict[k]
-                # kk=k.split('.')
-                # k0,k1=kk[-1],kk[-2]
-
-                dic[p.disp]={'rover' : r[k], 'sitter' : s[k]}
-                kstr=f' {sub(p.disp,"r")}:{r[k]} - {sub(p.disp,"s")}:{s[k]} '
-                k0str+=kstr
-        df=pd.DataFrame.from_dict(dic).T
-        return df, k0str
-
 
 class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0, **kwargs):
@@ -398,12 +363,16 @@ class DoublePatch_Essay(Essay):
         return {exp: confs}
 
     def analyze(self, exp, ds0):
-        if exp == 'double_patch':
-            kwargs = {'datasets': flatten_list(ds0),
-                      'save_to': self.plot_dir,
-                      'save_as': f'{exp}.pdf',
-                      'show': self.show}
-            self.figs[exp] = preg.graph_dict.dict['double patch'](**kwargs)
+
+        kwargs = {'datasets': flatten_list(ds0),
+                  'save_to': self.plot_dir,
+                  'save_as': exp,
+                  'show': self.show}
+        # entry = self.G.entry(ID='double patch',title=exp, args=kwargs)
+        # self.figs[exp]=self.G.eval0(entry=entry)
+        # self.figs.update(self.G.eval0(entry, **kwargs))
+        # self.figs[exp] = fig
+        self.figs[exp] = self.G.dict['double patch'](**kwargs)
 
 
 class Chemotaxis_Essay(Essay):
@@ -418,6 +387,8 @@ class Chemotaxis_Essay(Essay):
         self.mID0 = mID0
         self.models = self.get_models(gain, mID0)
         self.exp_dict = self.chemo_exps()
+
+
 
     def get_models(self, gain, mID0):
         mW = preg.loadConf('Model', mID0)
@@ -436,7 +407,7 @@ class Chemotaxis_Essay(Essay):
             'controls': {'model': mC, 'color': 'blue'},
 
         }
-        return models
+        return dNl.NestDict(models)
 
     def chemo_exps(self):
         kws = {
@@ -520,8 +491,8 @@ class Chemotaxis_Essay(Essay):
             'datasets': self.datasets,
             'save_to': self.plot_dir,
             'show': self.show}
-        entry = self.G.entry('chemotaxis summary', args={})
-        self.figs['global'] = self.G.eval0(entry, **kwargs)
+        entry = self.G.entry('chemotaxis summary', args={'models' : self.models, 'N':self.N})
+        self.figs.update(self.G.eval0(entry, **kwargs))
 
 
 rover_sitter_essay = {
@@ -569,8 +540,8 @@ essay_dict = {
 }
 
 if __name__ == "__main__":
-    E = RvsS_Essay(video=False, all_figs=False, show=False, N=3)
-    # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=True)
-    # E = DoublePatch_Essay(video=False, N=3, dur=3)
+    # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
+    # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=False)
+    E = DoublePatch_Essay(video=False, N=3, dur=3)
     ds = E.run()
     figs, results = E.anal()

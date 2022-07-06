@@ -160,16 +160,47 @@ def dsp_summary(datasets, target=None,range=(0,40), **kwargs):
     P.annotate()
     return P.get()
 
-def chemo_summary(datasets, **kwargs):
-    w, h = 30,40
+def RvsS_summary(entrylist,N, **kwargs):
+    RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=['rover', 'sitter'])
+    h_mpl = 4
+    w, h = 30, 60 + h_mpl * 2
+    P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
+    Nexps = len(entrylist)
+    h1exp = int((h - h_mpl * 2) / Nexps)
+    P.fig.text(x=0.5, y=0.98, s=f'ROVERS VS SITTERS ESSAY (N={N})', size=35, weight='bold',
+               horizontalalignment='center')
+
+    P.plot(func='mpl', kws={'data': RS_diff_df}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+
+    ax_list=[]
+    for i, entry in enumerate(entrylist):
+        h0 = i * h1exp + (i + 1) * 1 + h_mpl * 2
+        axs = P.add(w=w, x0=True, h=h1exp - 2, h0=h0)
+        P.plot(func=entry['plotID'], kws=entry['args'], axs=axs)
+        axs.set_title(entry['title'], size=30, weight='bold', horizontalalignment='center', pad=15)
+        ax_list.append(axs)
+    P.adjust((0.1, 0.95), (0.05, 0.96), 0.05, 0.1)
+    P.annotate()
+    P.fig.align_ylabels(ax_list)
+    return P.get()
+
+def chemo_summary(datasets,models,N, **kwargs):
+    mdiff_df = preg.larva_conf_dict2.diff_df(mIDs=list(models.keys()), ms=[v.model for v in models.values()])
+
+    h_mpl = 4
+    w, h = 30,42+ h_mpl * 2
     P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
+    P.fig.text(x=0.5, y=0.98, s=f'CHEMOTAXIS ESSAY (N={N})', size=35, weight='bold',
+               horizontalalignment='center')
+    P.plot(func='mpl', kws={'data': mdiff_df}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+
     time_ks=['c_odor1', 'dc_odor1']
     Nks=len(time_ks)
     Nexps=len(datasets)
-    h1exp=int(h/Nexps)
+    h1exp=int((h- h_mpl * 2)/Nexps)
     h1k=int(h1exp / (Nks+1))
     for i,(exp,dds) in enumerate(datasets.items()):
-        h0 = i * h1exp+(i+1)*2
+        h0 = i * h1exp+(i+1)*1+ h_mpl * 2
         dds=dNl.flatten_list(dds)
         Ndds=len(dds)
         kws1 = {
@@ -179,19 +210,17 @@ def chemo_summary(datasets, **kwargs):
                 'show': False
 
             }
-        kws2 = {
-            'x0': True,
-            'w': w,
-        }
-        P.fig.text(x=0.5, y=0.97-i/Nexps, s=exp, size=30, weight='bold', horizontalalignment = 'center')
-        P.plot(func='trajectories', kws=kws1, **kws2, N=Ndds, share_h=True, h=h1k-2,y0=True if i==0 else False, h0=h0)
+        axs = P.add(w=w, x0=True, N=Nks, share_w=True, dh=0, h=Nks * (h1k - 1), h0=h0)
+        axs[0].set_title(exp, size=30, weight='bold', horizontalalignment='center', pad=15)
         P.plot(func='autoplot', kws={
-                'ks': time_ks,
-                'show_first': False,
-                'individuals': False,
-                'unit': 'min',
-                **kws1
-            }, **kws2,N=Nks, share_w=True, dh=0, h=Nks*(h1k-1), h0=h0+h1k)
+            'ks': time_ks,
+            'show_first': False,
+            'individuals': False,
+            'unit': 'min',
+            **kws1
+        }, axs=axs)
+        P.plot(func='trajectories', kws=kws1, w=w, x0=True, N=Ndds, share_h=True, h=h1k-2, h0=h0 + Nks *h1k)
+
 
     P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
     P.annotate()

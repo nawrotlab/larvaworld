@@ -2,6 +2,7 @@ import copy
 import random
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 import param
 from lib.aux import dictsNlists as dNl
@@ -1064,6 +1065,27 @@ class LarvaConfDict2:
                 register(mdic, bkey0, full_dic)
 
         return full_dic
+
+    def diff_df(self, mIDs, ms=None):
+        dic = {}
+        if ms is None :
+            ms=[self.loadConf(mID) for mID in mIDs]
+        ms=[dNl.flatten_dict(m) for m in ms]
+        ks=dNl.unique_list(dNl.flatten_list([list(m.keys()) for m in ms]))
+
+        for k in ks :
+            entry = {mID: m[k] if k in m.keys() else None for mID, m in zip(mIDs, ms)}
+            l=list(entry.values())
+            if all([a==l[0] for a in l]) :
+                continue
+            else :
+                if k in self.full_dict.keys():
+                    k0=self.full_dict[k].disp
+                else :
+                    k0=k.split('.')[-1]
+                dic[k0] = entry
+        df = pd.DataFrame.from_dict(dic).T
+        return df
 
 
 if __name__ == '__main__':
