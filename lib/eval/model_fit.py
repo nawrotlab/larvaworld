@@ -20,7 +20,7 @@ class Calibration:
         d.load(contour=False)
         s, e, c = d.step_data, d.endpoint_data, d.config
         if shorts is None:
-            shorts = ['b', 'fov', 'foa']
+            shorts = ['b', 'fov', 'foa', 'tur_t', 'tur_fou']
         self.shorts = shorts
         self.target = {sh: d.get_chunk_par(chunk='pause', short=sh, min_dur=3, mode='distro') for sh in self.shorts}
         self.N = self.target[self.shorts[0]].shape[0]
@@ -33,6 +33,8 @@ class Calibration:
             turner_keys = ['base_activation', 'n', 'tau']
         elif turner_mode == 'sinusoidal':
             turner_keys = ['initial_amp', 'initial_freq']
+        elif turner_mode == 'constant':
+            turner_keys = ['initial_amp']
 
         self.mkeys = dNl.NestDict({
             'turner': turner_keys,
@@ -40,16 +42,29 @@ class Calibration:
             'all' : physics_keys+turner_keys
         })
 
-        self.D = preg.larva_conf_dict
+        self.D = preg.larva_conf_dict2
         self.mdicts = dNl.NestDict({
-            'turner': self.D.dict2.model.m['turner'].mode[turner_mode].args,
-            'physics': self.D.dict2.model.m['physics'].args
+            'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
+            'physics': self.D.dict.model.m['physics'].args
         })
         self.mconfs = dNl.NestDict({
             'turner': None,
             'physics': None
         })
-        self.Tfunc=self.D.dict2.model.m['turner'].mode[turner_mode].class_func
+
+        init, bounds=[],[]
+        for k in self.mkeys.turner :
+            p=self.mdicts.turner[k]
+            init.append(p.v)
+            bounds.append(p.lim)
+        for k in self.mkeys.physics :
+            p=self.mdicts.physics[k]
+            init.append(p.v)
+            bounds.append(p.lim)
+        self.init=np.array(init)
+        self.bounds=bounds
+
+        self.Tfunc=self.D.dict.model.m['turner'].mode[turner_mode].class_func
         self.turner_mode = turner_mode
         self.absolute = absolute
 
@@ -89,8 +104,8 @@ class Calibration:
 
     def sim_turner(self, N=2000):
         from lib.aux.ang_aux import wrap_angle_to_0
-        T = self.Tfunc(self.mconfs.turner, dt=self.dt)
-        PH = PhysicsController(self.mconfs.physics)
+        T = self.Tfunc(**self.mconfs.turner, dt=self.dt)
+        PH = PhysicsController(**self.mconfs.physics)
         simFOV = np.zeros(N) * np.nan
         simB = np.zeros(N) * np.nan
         b = 0
@@ -140,27 +155,31 @@ class Calibration:
 
         for k,mdict in self.mdicts.items() :
             kwargs= {kk : dic[kk] for kk in self.mkeys[k]}
-            self.mconfs[k]=self.D.conf2(mdict=mdict,**kwargs)
+            self.mconfs[k]=self.D.conf(mdict=mdict,**kwargs)
         # return mconfs
 
-    def optimize_turner(self, q=None, return_sim=False, N=4000):
+    def optimize_turner(self, q=None, return_sim=False, N=2000):
         self.retrieve_modules(q)
         sim = self.sim_turner(N=N)
         if return_sim:
             return sim
         else:
             err, Ks_dic = self.eval_turner(sim)
+            # print(err)
             return err
 
     def run(self, method='Nelder-Mead', **kwargs):
         from scipy.optimize import minimize
 
-        print(f'Calibrating parameters {list(self.space_dict.keys())}')
-        bnds = [(dic['min'], dic['max']) for k, dic in self.space_dict.items()]
-        init = np.array([dic['initial_value'] for k, dic in self.space_dict.items()])
+        # print(f'Calibrating parameters {list(self.space_dict.keys())}')
+        # bnds = [(dic['min'], dic['max']) for k, dic in self.space_dict.items()]
+        # init = np.array([dic['initial_value'] for k, dic in self.space_dict.items()])
 
         # print(bnds)
-        res = minimize(self.optimize_turner, init, method=method, bounds=bnds, **kwargs)
+        # print(self.init)
+        # print(self.bounds)
+        # raise
+        res = minimize(self.optimize_turner, self.init, method=method, bounds=self.bounds, **kwargs)
         self.best, self.KS_dic = self.plot_turner(q=res.x)
 
     def plot_turner(self, q):
@@ -175,7 +194,7 @@ class Calibration:
         for key, val in self.mconfs.physics.items():
             print(key, ' : ', val)
 
-        print(Ks_dic)
+        # print(Ks_dic)
         ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
         print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
         _ = self.plot_turner_distros(sim)
@@ -200,16 +219,15 @@ def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs)
         'fitness_target_kws': {'eval_shorts': ['fov', 'foa', 'b'], 'pooled_cycle_curves': ['fov', 'foa', 'b']},
         'base_model': mID,
         'bestConfID': mID,
-        'exclude_func': None,
+        # 'exclude_func': None,
         'init_mode': 'model',
         'robot_class': LarvaOffline,
         'space_dict': interference_ga_dict(mID),
         'fitness_func': distro_KS_interference_evaluation,
-        'plot_func': None,
     }
 
     kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=c.dt),
-           'scene': 'no_boxes',
+           # 'scene': 'no_boxes',
            'experiment': 'realism',
            'env_params': preg.expandConf(id='arena_200mm', conftype='Env'),
            'offline': True,
@@ -398,6 +416,13 @@ def update_modelConfs(d, mIDs):
 
 
 if __name__ == '__main__':
+    mID = 'RE_NEU_PHI_DEF_fitted'
     refID = 'None.150controls'
+    entry=calibrate_interference(mID, refID=refID)
+
+    print(entry[mID].brain.interference_params)
+    # C=Calibration(refID=refID)
+    # C.run()
+
     # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    calibrate_4models(refID)
+    # calibrate_4models(refID)

@@ -18,6 +18,7 @@ def build():
     d = dNl.NestDict()
     d['table'] = dNl.NestDict({
         'mpl': table.mpl_table,
+        'model table': table.modelConfTable,
         # 'barplot': bar.barplot,
         # 'auto_barplot': bar.auto_barplot,
     })
@@ -62,7 +63,8 @@ def build():
         'RvsS summary': grid.RvsS_summary,
         'dispersal summary': grid.dsp_summary,
         'chemotaxis summary': grid.chemo_summary,
-        'eval summary': grid.result_summary
+        'eval summary': grid.result_summary,
+        'model summary': grid.model_summary,
     })
     d['hist'] = dNl.NestDict({
         'crawl pars': hist.plot_crawl_pars,

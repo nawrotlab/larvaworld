@@ -67,22 +67,22 @@ def Tur0():
 def Cr0():
     from lib.model.modules.basic import StepEffector
     from lib.model.modules.crawler import SquareOscillator, PhaseOscillator, GaussOscillator
-    str_kws = {'stride_dst_mean': {'v0': 0.224, 'lim': (0.0, 1.0), 'dv': 0.01,
+    str_kws = {'stride_dst_mean': {'v0': 0.23, 'lim': (0.0, 1.0), 'dv': 0.01,
                                    'k': 'str_sd_mu',
                                    'disp': r'stride distance mean', 'sym': sub(bar(circle('d')), 'S'),
                                    'u_name': '$body-lengths$', 'codename': 'scaled_stride_dst_mean',
                                    'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
-               'stride_dst_std': {'v0': 0.033, 'lim': (0.0, 1.0),
+               'stride_dst_std': {'v0': 0.04, 'lim': (0.0, 1.0),
                                   'k': 'str_sd_std',
                                   'disp': 'stride distance std', 'sym': sub(tilde(circle('d')), 'S'),
                                   'u_name': '$body-lengths$', 'codename': 'scaled_stride_dst_std',
                                   'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'}}
 
-    Camp = {'initial_amp': {'lim': (0.0, 2.0), 'dv': 0.1, 'v0': 0.5,
+    Camp = {'initial_amp': {'lim': (0.0, 2.0), 'dv': 0.1, 'v0': 0.3,
                             'k': 'A_C0', 'codename': 'stride_scaled_velocity_mean',
                             'disp': 'output amplitude', 'sym': subsup('A', 'C', 0),
                             'h': 'The initial output amplitude of the CRAWLER module.'}}
-    Cfr = {'initial_freq': {'v0': 1.418, 'lim': (0.5, 2.5), 'dv': 0.1,
+    Cfr = {'initial_freq': {'v0': 1.42, 'lim': (0.5, 2.5), 'dv': 0.1,
                             'k': 'f_C0',
                             'disp': 'crawling frequency', 'sym': subsup('f', 'C', 0), 'u': ureg.Hz,
                             'codename': 'scaled_velocity_freq',
@@ -104,13 +104,13 @@ def Cr0():
 
         **Cfr, **Camp
     }
-    Rargs = {'max_scaled_vel': {'v0': 0.6, 'lim': (0.0, 1.5), 'disp': 'maximum scaled velocity',
+    Rargs = {'max_scaled_vel': {'v0': 0.51, 'lim': (0.0, 1.5), 'disp': 'maximum scaled velocity',
                                 'codename': 'stride_scaled_velocity_max', 'k': 'str_sv_max', 'dv': 0.1,
                                 'sym': sub(circle('v'), 'max'), 'u': ureg.s ** -1,
                                 'u_name': '$body-lengths/sec$',
                                 'h': 'The maximum scaled forward velocity.'},
 
-             'max_vel_phase': {'v0': 3.6, 'lim': (0.0, 2 * np.pi), 'disp': 'max velocity phase',
+             'max_vel_phase': {'v0': 3.49, 'lim': (0.0, 2 * np.pi), 'disp': 'max velocity phase',
                                'k': 'phi_v_max', 'dv': 0.1,
                                'sym': subsup('$\phi$', 'C', 'v'), 'u_name': 'rad', 'u': ureg.rad,
                                'codename': 'phi_scaled_velocity_max',

@@ -1186,8 +1186,8 @@ class ParInitDict:
                 'fitness_target_kws': {'t': dict, 'v': {},
                                        'h': 'The target data to derive from the reference dataset for evaluation'},
                 'fitness_func': {'t': FunctionType, 'h': 'The method for fitness evaluation'},
-                'plot_func': {'t': FunctionType,
-                              'h': 'The method for real-time simulation and plotting of the best genome'},
+                # 'plot_func': {'t': FunctionType,
+                #               'h': 'The method for real-time simulation and plotting of the best genome'},
                 'exclude_func': {'t': FunctionType,
                                  'h': 'The method for real-time excluding agents'},
             }

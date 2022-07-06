@@ -43,6 +43,8 @@ def interference_ga_dict(mID, suf='brain.interference_params.'):
 
     elif IFmod == 'square':
         only = ['attenuation', 'attenuation_max', 'crawler_phi_range']
+    elif IFmod == 'default':
+        only = ['attenuation', 'attenuation_max']
 
     space_dict = ga_dict(name='interference', suf=suf, only=only)
     return space_dict

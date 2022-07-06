@@ -630,6 +630,7 @@ class LarvaDataset:
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),
             'bout_dicts': os.path.join(self.data_dir, 'bout_dicts'),
             'model_tables': os.path.join(self.plot_dir, 'model_tables'),
+            'model_summaries': os.path.join(self.plot_dir, 'model_summaries'),
             'pooled_epochs': os.path.join(self.data_dir, 'pooled_epochs'),
             'cycle_curves': os.path.join(self.data_dir, 'cycle_curves.txt'),
             'chunk_dicts': os.path.join(self.data_dir, 'chunk_dicts'),
@@ -973,3 +974,25 @@ class LarvaDataset:
             sample_ps) > 0 else {}
         all_pars = generate_larvae(N, sample_dict, m, RefPars)
         return all_pars
+
+    def store_model_graphs(self, mIDs):
+        # from lib.registry.pars import preg
+        from lib.aux.combining import combine_pdfs
+        G=preg.graph_dict.dict
+        # from lib.plot.grid import model_summary
+        f1 = self.dir_dict.model_tables
+        f2 = self.dir_dict.model_summaries
+        os.makedirs(f1, exist_ok=True)
+        os.makedirs(f2, exist_ok=True)
+        for mID in mIDs:
+            try:
+                _ = G['model table'](mID, save_to=f1)
+            except:
+                print('TABLE FAIL', mID)
+            try:
+                _ = G['model summary'](refID=self.config.refID, mID=mID, Nids=10, save_to=f2)
+            except:
+                print('SUMMARY FAIL', mID)
+
+        combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
+        combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")

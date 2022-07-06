@@ -423,7 +423,7 @@ class DoublePatch_Essay(Essay):
 
 
 class Chemotaxis_Essay(Essay):
-    def __init__(self, dur=5.0, gain=300.0, **kwargs):
+    def __init__(self, dur=5.0, gain=300.0,mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
                          enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                   bouts=[], fits=False, interference=False, on_food=False),
@@ -432,12 +432,17 @@ class Chemotaxis_Essay(Essay):
         self.dur = dur
         self.gain = gain
         # self.mID0 = mID0
-        self.models = self.get_models2(gain)
+        if mode==1 :
+            self.models = self.get_models1(gain)
+        elif mode==2 :
+            self.models = self.get_models2(gain)
+        elif mode==3 :
+            self.models = self.get_models3(gain)
         self.mdiff_df = self.M.diff_df(mIDs=list(self.models.keys()), ms=[v.model for v in self.models.values()])
-        self.exp_dict = self.chemo_exps()
+        self.exp_dict = self.chemo_exps(self.models)
 
-    def get_models(self, gain):
-        mID0='navigator'
+    def get_models1(self, gain):
+        mID0='RE_NEU_SQ_DEF_nav'
         o='brain.olfactor_params'
         mW = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
                                                f'{o}.perception': 'log'})
@@ -480,7 +485,24 @@ class Chemotaxis_Essay(Essay):
                 i+=1
         return dNl.NestDict(models)
 
-    def chemo_exps(self):
+    def get_models3(self, gain):
+        cols=N_colors(6)
+        i=0
+        models={}
+        for Tmod in ['NEU', 'SIN'] :
+            for Ifmod in ['PHI', 'SQ', 'DEF'] :
+                mID0=f'RE_{Tmod}_{Ifmod}_DEF_nav'
+                models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
+                    f'brain.olfactor_params.perception': 'log',
+                    f'brain.olfactor_params.decay_coef': 0.1,
+                    f'brain.olfactor_params.odor_dict.Odor.mean': gain,
+                    f'brain.interference_params.attenuation': 0.1,
+                    f'brain.interference_params.attenuation_max': 0.9,
+                }), 'color': cols[i]}
+                i+=1
+        return dNl.NestDict(models)
+
+    def chemo_exps(self,models):
         lg_kws = {
             'odor': preg.get_null('odor'),
             'sample': 'None.150controls'
@@ -509,7 +531,7 @@ class Chemotaxis_Essay(Essay):
                 mID: preg.get_null('LarvaGroup',
                                    distribution=preg.get_null('larva_distro', N=self.N, mode='uniform'),
                                    default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
-                self.models.items()},
+                models.items()},
             'id': f'{exp1}_exp',
             'dur': self.dur,
             'exp': exp1
@@ -535,7 +557,7 @@ class Chemotaxis_Essay(Essay):
                                                               loc=(-0.04, 0.0),
                                                               orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
                                    default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
-                self.models.items()},
+                models.items()},
             'id': f'{exp2}_exp',
             'dur': self.dur,
             'exp': exp2
@@ -621,7 +643,7 @@ essay_dict = {
 
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-    E = Chemotaxis_Essay(video=False, N=5, dur=5)
+    E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=3)
     # E = DoublePatch_Essay(video=False, N=5, dur=5)
     ds = E.run()
     figs, results = E.anal()

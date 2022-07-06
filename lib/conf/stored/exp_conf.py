@@ -140,26 +140,26 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
 grouped_exp_dict = {
     'exploration': {
         'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
-        'focus': simple_exp('focus', l=lg(m='Levy-walker', N=1, ors=[90.0, 90.0])),
+        'focus': simple_exp('focus', l=lg(m='Levy', N=1, ors=[90.0, 90.0])),
         'dish': simple_exp('dish', l=lg(m='branch_explorer', N=5, s=0.02)),
         # 'dish_x2': simple_exp('dish', l=lgs(models=['explorer', 'branch_explorer'],
         #                                     ids=['default', 'branch'], N=5)),
         # 'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
         'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
-                                    l=lgs(models=['explorer', 'Levy-walker', 'explorer_3con', 'nengo_explorer'],
+                                    l=lgs(models=['explorer', 'Levy', 'explorer_3con', 'nengo_explorer'],
                                           ids=['CoupledOsc', 'Levy', '3con', 'nengo'], N=5)),
     },
 
     'chemotaxis': {
         'chemotaxis': chem_exp('odor_gradient',
-                               l=lg(m='continuous_navigator', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
+                               l=lg(m='NEU_Levy_continuous_nav', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
                                     ors=(-30.0, 30.0))),
-        'chemorbit': chem_exp('mid_odor_gaussian', dur=3.0, l=lg(m='def_coupled_navigator', N=3)),
+        'chemorbit': chem_exp('mid_odor_gaussian', dur=3.0, l=lg(m='RE_NEU_PHI_DEF_nav', N=3)),
         'chemorbit_x3': chem_exp('mid_odor_gaussian', dur=3.0,
-                                 l=lgs(models=['navigator', 'RL_navigator'],
+                                 l=lgs(models=['RE_NEU_PHI_DEF_nav', 'RL_navigator'],
                                        ids=['CoupledOsc', 'RL'], N=10)),
-        'chemotaxis_diffusion': chem_exp('mid_odor_diffusion', dur=10.0, l=lg(m='phasic_navigator', N=30)),
+        'chemotaxis_diffusion': chem_exp('mid_odor_diffusion', dur=10.0, l=lg(m='RE_NEU_PHI_DEF_nav', N=30)),
         'chemotaxis_RL': chem_exp('mid_odor_diffusion', dur=10.0, c=['olfactor', 'memory'],
                                   l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
         'reorientation': chem_exp('mid_odor_diffusion', l=lg(m='immobile', N=200, s=0.05)),
@@ -181,7 +181,7 @@ grouped_exp_dict = {
     },
 
     'odor_preference': {
-        'PItest_off': pref_exp('CS_UCS_off_food', dur=3.0, l=lg(N=25, s=(0.005, 0.02), m='navigator_x2')),
+        'PItest_off': pref_exp('CS_UCS_off_food', dur=3.0, l=lg(N=25, s=(0.005, 0.02), m='RE_NEU_PHI_DEF_nav_x2')),
         'PItest_on': pref_exp('CS_UCS_on_food', l=lg(N=25, s=(0.005, 0.02), m='forager_x2')),
         'PItrain_mini': pref_exp('CS_UCS_on_food_x2', dur=1.0, c=['olfactor', 'memory'],
                                  trials='odor_preference_short', l=lg(N=25, s=(0.005, 0.02), m='RL_forager')),
@@ -237,7 +237,7 @@ grouped_exp_dict = {
                },
 
     'games': {
-        'maze': game_exp('maze', c=['olfactor'], l=lg(N=5, p=(-0.4 * 0.1, 0.0), ors=(-60.0, 60.0), m='navigator')),
+        'maze': game_exp('maze', c=['olfactor'], l=lg(N=5, p=(-0.4 * 0.1, 0.0), ors=(-60.0, 60.0), m='RE_NEU_PHI_DEF_nav')),
         'keep_the_flag': game_exp('game', l=game_groups(mode='king')),
         'capture_the_flag': game_exp('game', l=game_groups(mode='flag')),
         'catch_me': game_exp('arena_50mm_diffusion', l=game_groups(mode='catch_me'))

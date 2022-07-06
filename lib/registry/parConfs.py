@@ -8,6 +8,7 @@ import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 
+
 from lib.registry.units import ureg
 
 
@@ -600,23 +601,24 @@ class LarvaConfDict2:
         if mdict is None:
             mdict = self.get_mdict(mkey, mode)
         conf0 = self.generate_configuration(mdict, **kwargs)
-        conf0 = self.fit2refID(conf0, mkey=mkey, refID=refID)
+        if refID is not None and mkey == 'intermitter':
+            conf0 = self.adapt_intermitter(refID=refID, mode=mode, conf=conf0)
         return dNl.NestDict(conf0)
 
-    def fit2refID(self, conf, mkey=None, refID=None):
-        if refID is not None and mkey == 'intermitter':
-            try:
-                from lib.aux.sim_aux import get_sample_bout_distros0
-                from lib.conf.stored.conf import loadConf
-                kkkws = {
-                    'Im': conf,
-                    'bout_distros': loadConf(refID, 'Ref').bout_distros,
-                }
-                conf = get_sample_bout_distros0(**kkkws)
-            except:
-                pass
-            # bout_distros = sample.bout_distros
-        return conf
+    # def fit2refID(self, conf, mkey=None, refID=None):
+    #     if refID is not None and mkey == 'intermitter':
+    #         try:
+    #             from lib.aux.sim_aux import get_sample_bout_distros0
+    #             from lib.registry.pars import preg
+    #             kkkws = {
+    #                 'Im': conf,
+    #                 'bout_distros': preg.loadConf(id=refID, conftype='Ref').bout_distros,
+    #             }
+    #             conf = get_sample_bout_distros0(**kkkws)
+    #         except:
+    #             pass
+    #         # bout_distros = sample.bout_distros
+    #     return conf
 
     def module(self, mkey, mode=None, refID=None, mkwargs={}, **kwargs):
         if mode is None:
@@ -995,30 +997,58 @@ class LarvaConfDict2:
 
 
     def baseConfs(self):
-        self.larvaConf(mID='loco_default')
-        self.larvaConf(mID='RE_NEU_PHI_NENGO', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'nengo'}, nengo=True)
-        self.larvaConf(mID='RE_NEU_PHI_BR', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'branch'})
-        self.larvaConf(mID='RE_NEU_PHI_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'default'})
-        self.larvaConf(mID='RE_NEU_SQ_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'square','intermitter': 'default'})
+        kws= {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
+        self.larvaConf(mID='loco_default',**kws)
+        self.larvaConf(mID='RE_NEU_PHI_NENGO', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'nengo'}, nengo=True,**kws)
+        self.larvaConf(mID='RE_NEU_PHI_BR', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'branch'},**kws)
+        self.larvaConf(mID='RE_NEU_PHI_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'phasic','intermitter': 'default'},**kws)
+        self.larvaConf(mID='RE_NEU_SQ_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'square','intermitter': 'default'},**kws)
         self.larvaConf(mID='RE_NEU_DEF_DEF', modes = {'crawler': 'realistic','turner': 'neural','interference': 'default','intermitter': 'default'})
-        self.larvaConf(mID='SQ_NEU_PHI_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'phasic','intermitter': 'default'})
-        self.larvaConf(mID='SQ_NEU_SQ_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='SQ_NEU_PHI_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'phasic','intermitter': 'default'},**kws)
+        self.larvaConf(mID='SQ_NEU_SQ_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'square','intermitter': 'default'},**kws)
         self.larvaConf(mID='SQ_NEU_DEF_DEF', modes = {'crawler': 'square','turner': 'neural','interference': 'default','intermitter': 'default'})
-        self.larvaConf(mID='CON_NEU_PHI_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'phasic','intermitter': 'default'})
-        self.larvaConf(mID='CON_NEU_SQ_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='CON_NEU_PHI_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'phasic','intermitter': 'default'},**kws)
+        self.larvaConf(mID='CON_NEU_SQ_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'square','intermitter': 'default'},**kws)
         self.larvaConf(mID='CON_NEU_DEF_DEF', modes = {'crawler': 'constant','turner': 'neural','interference': 'default','intermitter': 'default'})
-        _=self.larvaConf(mID='Levy', modes = {'crawler': 'constant','turner': 'sinusoidal','interference': 'default','intermitter': 'default'},
-                       modkws={'interference':{'attenuation' : 0.0}})
-        self.larvaConf(mID='RE_SIN_PHI_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'phasic','intermitter': 'default'})
-        self.larvaConf(mID='RE_SIN_SQ_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'square','intermitter': 'default'})
+        self.larvaConf(mID='CON_SIN_PHI_DEF',modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'phasic','intermitter': 'default'}, **kws)
+        self.larvaConf(mID='CON_SIN_SQ_DEF', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'square','intermitter': 'default'}, **kws)
+        self.larvaConf(mID='CON_SIN_DEF_DEF', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default','intermitter': 'default'})
+
+        self.larvaConf(mID='RE_SIN_PHI_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'phasic','intermitter': 'default'},**kws)
+        self.larvaConf(mID='RE_SIN_SQ_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'square','intermitter': 'default'},**kws)
         self.larvaConf(mID='RE_SIN_DEF_DEF', modes = {'crawler': 'realistic','turner': 'sinusoidal','interference': 'default','intermitter': 'default'})
 
-        olf_pars=self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args, odor_dict = {'Odor': {'mean': 150.0, 'std': 0.0}})
-        kwargs = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars}
+        kws2 = {'modkws': {'interference': {'attenuation': 0.0}}}
+        self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default', 'intermitter': 'default'},**kws2)
+        self.larvaConf(mID='NEU_Levy', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default', 'intermitter': 'default'},**kws2)
+        self.larvaConf(mID='NEU_Levy_continuous', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default'},**kws2)
+
+        self.larvaConf(mID='CON_SIN',modes={'crawler': 'constant', 'turner': 'sinusoidal'})
+
+        olf_pars1=self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args, odor_dict = {'Odor': {'mean': 150.0, 'std': 0.0}})
+        olf_pars2=self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args, odor_dict = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}})
+        kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
+        kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
         for Tmod in ['NEU', 'SIN'] :
             for Ifmod in ['PHI', 'SQ', 'DEF'] :
                 mID0=f'RE_{Tmod}_{Ifmod}_DEF'
-                self.newConf(mID=f'{mID0}_nav',mID0=mID0,kwargs=kwargs)
+                mID1 = f'{mID0}_nav'
+                self.newConf(mID=mID1,mID0=mID0,kwargs=kwargs1)
+                mID1br = f'{mID1}_brute'
+                self.newConf(mID=mID1br,mID0=mID1,kwargs={'brain.olfactor_params.brute_force': True})
+                mID2 = f'{mID0}_nav_x2'
+                self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
+                mID2br = f'{mID2}_brute'
+                self.newConf(mID=mID2br, mID0=mID2, kwargs={'brain.olfactor_params.brute_force': True})
+
+
+        for mID0 in ['Levy','NEU_Levy','NEU_Levy_continuous', 'CON_SIN']:
+            mID1 = f'{mID0}_nav'
+            self.newConf(mID=mID1, mID0=mID0, kwargs=kwargs1)
+            mID2 = f'{mID0}_nav_x2'
+            self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
+
+
 
 
 
@@ -1088,44 +1118,167 @@ class LarvaConfDict2:
         df = pd.DataFrame.from_dict(dic).T
         return df
 
+    def adapt_crawler(self,refID=None,e=None,mode='realistic',average = True):
+        if e is None :
+            from lib.registry.pars import preg
+            d = preg.loadRef(refID)
+            d.load(step=False)
+            e = d.endpoint_data
+
+        mdict = dd.dict.model.m['crawler'].mode[mode].args
+        crawler_conf = dNl.NestDict({'mode': mode})
+        for d, p in mdict.items():
+            if isinstance(p, param.Parameterized):
+                try:
+                    crawler_conf[d] = epar(e, par=p.codename, average=average)
+                except:
+                    pass
+            else:
+                raise
+        return crawler_conf
+
+    def adapt_intermitter(self,refID=None,e=None,c=None,mode='default', conf=None):
+        if e is None or c is None:
+            from lib.registry.pars import preg
+            d = preg.loadRef(refID)
+            d.load(step=False)
+            e,c = d.endpoint_data, d.config
+
+        if conf is None :
+            mdict = dd.dict.model.m['intermitter'].mode[mode].args
+            conf = self.generate_configuration(mdict)
+        conf.stridechain_dist = c.bout_distros.run_count
+        try:
+            ll1, ll2 = conf.stridechain_dist.range
+            conf.stridechain_dist.range = (int(ll1), int(ll2))
+        except:
+            pass
+
+        conf.run_dist = c.bout_distros.run_dur
+        try:
+            ll1, ll2 = conf.run_dist.range
+            conf.run_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
+        except:
+            pass
+        conf.pause_dist = c.bout_distros.pause_dur
+        try:
+            ll1, ll2 = conf.pause_dist.range
+            conf.pause_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
+        except:
+            pass
+        conf.crawl_freq = epar(e, 'fsv', average=True)
+        conf.mode = mode
+        return conf
+
+    def adapt_mID(self,refID, mID0,mID=None,e=None,c=None):
+        if e is None or c is None:
+            from lib.registry.pars import preg
+            d = preg.loadRef(refID)
+            d.load(step=False)
+            e, c = d.endpoint_data, d.config
+
+        m0=self.loadConf(mID0)
+        m0.brain.crawler_params=self.adapt_crawler(e=e,mode=m0.brain.crawler_params.mode)
+        m0.brain.intermitter_params=self.adapt_intermitter(e=e,c=c,mode=m0.brain.intermitter_params.mode, conf=m0.brain.intermitter_params)
+        m0.body.initial_length=epar(e, 'l', average=True,Nround=5)
+
+        from lib.eval.model_fit import Calibration, calibrate_interference
+        C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
+        C.run()
+        m0.brain.turner_params.update(C.best.turner)
+
+        if mID is None :
+            mID=f'{mID0}_fitted'
+
+        self.saveConf(conf=m0, mID=mID)
+        entry = calibrate_interference(mID=mID, refID=refID)
+        # m0=entry[mID]
+        # if 'modelConfs' not in c.keys():
+        #     c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
+        # c.modelConfs.average[mID] = m
+        # d.save_config(add_reference=True)
+        return entry
+
+    def adapt_6mIDs(self,refID):
+        from lib.registry.pars import preg
+        d = preg.loadRef(refID)
+        d.load(step=False)
+        e, c = d.endpoint_data, d.config
+        entries={}
+        mIDs=[]
+        for Tmod in ['NEU', 'SIN']:
+            for Ifmod in ['PHI', 'SQ', 'DEF']:
+                mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
+                mID=f'{Ifmod}on{Ifmod}'
+                entry=self.adapt_mID(refID=refID, mID0=mID0,mID=mID,e=e,c=c)
+                entries.update(entry)
+                mIDs.append(mID)
+        if 'modelConfs' not in c.keys():
+            c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
+        c.modelConfs.average=entries
+        d.save_config(add_reference=True)
+        d.store_model_graphs(mIDs=mIDs)
+        return entries
+
+
+
+
+
+def epar(e, k=None, par=None, average=True, Nround=2):
+    from lib.registry.pars import preg
+    if par is None:
+        D = preg.dict
+        par = D[k].d
+    vs = e[par]
+    if average:
+        return np.round(vs.median(), Nround)
+    else:
+        return vs
 
 if __name__ == '__main__':
+    # mID = 'RE_NEU_PHI_DEF'
+    refID = 'None.150controls'
+
+
     dd = LarvaConfDict2()
+    # m=dd.loadConf(mID)
+
+    # print(m.brain.intermitter_params)
+
+    # dd.adapt_mID(mID0='RE_NEU_PHI_DEF',mID='RE_NEU_PHI_DEF_fitted',refID = 'None.150controls')
+
+    raise
+
+    from lib.registry.pars import preg
+    refID = 'None.150controls'
+    d=preg.loadRef(refID)
+    d.load(step=False)
+    e=d.endpoint_data
+    average = True
+    mdict0 = dd.dict.model.m['crawler'].mode
+    for m,mdic in mdict0.items():
+
+
+    # [mode].args
+        conf0 = dNl.NestDict({'mode': m})
+        for d, p in mdic.args.items():
+            # print(d, p.codename)
+            if isinstance(p, param.Parameterized):
+                try :
+                    conf0[d] = epar(e, par=p.codename, average=average)
+                except :
+                    pass
+            else:
+                raise
+
+        print(conf0)
+        print()
     # print(dd.dict.aux.m.energetics.args)
     # raise
 
 
 
-    def register(dic, k0, full_dic):
-        for k,p in dic.items():
-            kk=f'{k0}.{k}'
-            if isinstance(p, param.Parameterized):
-                full_dic[kk] = p
-            else:
-                print(kk)
-                register(p, kk, full_dic)
 
-
-    full_dic=dNl.NestDict()
-    for aux_key in dd.dict.aux.keys :
-        if aux_key=='energetics':
-            continue
-        aux_dic=dd.dict.aux.m[aux_key]
-        register(aux_dic.args, aux_key, full_dic)
-    for m,mdic in dd.dict.aux.m['energetics'].mode.items():
-        k0=f'energetics.{m}'
-        register(mdic.args, k0, full_dic)
-
-    for bkey in dd.dict.brain.keys :
-        bkey0=f'brain.{bkey}_params'
-        bdic=dd.dict.brain.m[bkey]
-        for mod in bdic.mode.keys():
-            mdic=bdic.mode[mod].args
-            register(mdic, bkey0, full_dic)
-
-
-    for k,v in full_dic.items():
-        print(k,v)
 
 
 
