@@ -234,6 +234,8 @@ def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs
             dd = data[data[x] == subID]
             dd0 = dd[dd[hue] == h1][y].dropna().values.tolist()
             dd1 = dd[dd[hue] == h2][y].dropna().values.tolist()
+            # print(hue, subID)
+            # print(len(dd0),len(dd1))
             pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
     else:
         if target_only is None:

@@ -218,14 +218,17 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **kwargs):
+def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
-    # Nlarvae = P.N
-    dur = int(np.round(P.duration / 60))
+
     gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     mIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
     subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])
+
+    # print(gIDs,mIDs,subIDs)
+    # raise
+
     Nmods = len(mIDs)
     Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
     if Nmods == 2:
@@ -235,7 +238,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **k
     Cmods = dict(zip(mIDs, temp))
     ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
 
-    def get_df(par):
+    def get_df(par, scale):
         dic = {id: [d.endpoint_data[par].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
                gIDs}
 
@@ -246,11 +249,12 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **k
             pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
             cdf = pd.concat(pair_dfs)  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
+        # print(mdf)
         return mdf
 
-    def get_df_onVSoff(par):
-        mdf_on = get_df(f'{par}_on_food')
-        mdf_off = get_df(f'{par}_off_food')
+    def get_df_onVSoff(par, scale):
+        mdf_on = get_df(f'{par}_on_food', scale)
+        mdf_off = get_df(f'{par}_off_food', scale)
         mdf_on['food'] = 'on'
         mdf_off['food'] = 'off'
         mdf = pd.concat([mdf_on, mdf_off])
@@ -260,10 +264,10 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **k
         mdf.drop(['Model'], axis=1, inplace=True)
         return mdf
 
-    def plot_p(data, ii, hue, agar=False):
+    def plot_p(data, ax, hue, agar=False):
 
         with sns.plotting_context('notebook', font_scale=1.4):
-            ax = P.axs[ii]
+
             kws = {
                 'x': "Substrate",
                 'y': "value",
@@ -274,7 +278,8 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **k
             }
             g1 = sns.boxplot(**kws)
             g1.get_legend().remove()
-
+            # print(data)
+            # print(data.shape)
             annotate_plot(show_ns=show_ns, **kws)
             g1.set(xlabel=None)
             if stripplot:
@@ -298,6 +303,8 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **k
                 patch.set_facecolor(cols[j])
 
     for ii, k in enumerate(ks):
+        # print(ii,k)
+        ax = P.axs[ii]
         p = preg.dict[k]
         par = p.d
         ylab = p.label
@@ -306,16 +313,18 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, **k
             if k == 'v_mu':
                 ylab = "crawling speed (mm/s)"
                 scale = 1000
-            mdf = get_df_onVSoff(par)
-            plot_p(mdf, ii, 'food', agar=True)
+            mdf = get_df_onVSoff(par, scale)
+            plot_p(mdf, ax, 'food', agar=True)
         else:
             if k == 'cum_d':
                 ylab = "pathlength (mm)"
                 scale = 1000
-            mdf = get_df(par)
-            plot_p(mdf, ii, 'Model')
+            mdf = get_df(par, scale)
+            plot_p(mdf, ax, 'Model')
         P.conf_ax(ii, xlab=xlabel if ii > 3 else None, ylab=ylab, ylim=None)
-    P.fig.suptitle(f'Double-patch experiment (duration = {dur} min)', size=40, weight='bold')
+    if title :
+        dur = int(np.round(P.duration / 60))
+        P.fig.suptitle(f'Double-patch experiment (duration = {dur} min)', size=40, weight='bold')
     P.fig.align_ylabels(P.axs[:])
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()

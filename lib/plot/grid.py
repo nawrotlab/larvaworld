@@ -184,6 +184,37 @@ def RvsS_summary(entrylist,N, **kwargs):
     P.fig.align_ylabels(ax_list)
     return P.get()
 
+def DoublePatch_summary(datasets,N, dur,**kwargs):
+    RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=['navigator_rover', 'navigator_sitter'])
+    h_mpl = 4
+    w, h = 32, 32 + h_mpl * 2
+    P = GridPlot(name=f'DoublePatch_summary', width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
+    P.fig.text(x=0.5, y=0.98, s=f"DOUBLE PATCH ESSAY (N={N}, duration={dur}')", size=35, weight='bold',
+               horizontalalignment='center')
+    P.plot(func='mpl', kws={'data': RS_diff_df}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+
+    Nexps = len(datasets)
+    h1exp = int((h - h_mpl * 2) / Nexps)
+    for i, (exp, dds) in enumerate(datasets.items()):
+        h0 = i * h1exp + (i + 1) * 1 + h_mpl * 2
+        dds = dNl.flatten_list(dds)
+        Ndds = len(dds)
+        kws1 = {
+            'datasets': dds,
+            'save_to': None,
+            'subfolder': None,
+            'show': False,
+            'title': False,
+
+        }
+        axs=P.add(w=w, x0=True, N=(3,2), share_h=True,share_w=True, h=h1exp, h0=h0, dh=3,dw=4)
+        P.plot(func='double patch', kws=kws1, axs=axs)
+        P.fig.align_ylabels(axs)
+
+    P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.2)
+    P.annotate()
+    return P.get()
+
 def chemo_summary(datasets,models,N, **kwargs):
     mdiff_df = preg.larva_conf_dict2.diff_df(mIDs=list(models.keys()), ms=[v.model for v in models.values()])
 

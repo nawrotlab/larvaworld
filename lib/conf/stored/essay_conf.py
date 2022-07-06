@@ -362,17 +362,27 @@ class DoublePatch_Essay(Essay):
             confs.append(self.conf(**kws))
         return {exp: confs}
 
-    def analyze(self, exp, ds0):
+    def global_anal(self):
+    #     pass
+        kwargs = {
+            'datasets': self.datasets,
+            'save_to': self.plot_dir,
+            'show': self.show}
+        entry = self.G.entry('double-patch summary', args={'N':self.N, 'dur':self.dur})
+        self.figs.update(self.G.eval0(entry, **kwargs))
 
-        kwargs = {'datasets': flatten_list(ds0),
-                  'save_to': self.plot_dir,
-                  'save_as': exp,
-                  'show': self.show}
+    def analyze(self, exp, ds0):
+        # print(flatten_list(ds0))
+        pass
+        # kwargs = {'datasets': flatten_list(ds0),
+        #           'save_to': self.plot_dir,
+        #           # 'save_as': exp,
+        #           'show': self.show}
         # entry = self.G.entry(ID='double patch',title=exp, args=kwargs)
         # self.figs[exp]=self.G.eval0(entry=entry)
         # self.figs.update(self.G.eval0(entry, **kwargs))
         # self.figs[exp] = fig
-        self.figs[exp] = self.G.dict['double patch'](**kwargs)
+        # self.figs[exp] = self.G.dict['double patch'](**kwargs)
 
 
 class Chemotaxis_Essay(Essay):
@@ -542,6 +552,6 @@ essay_dict = {
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
     # E = Chemotaxis_Essay(video=False, N=3, dur=3, show=False)
-    E = DoublePatch_Essay(video=False, N=3, dur=3)
+    E = DoublePatch_Essay(video=False, N=5, dur=5)
     ds = E.run()
     figs, results = E.anal()

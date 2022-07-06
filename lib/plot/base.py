@@ -442,14 +442,25 @@ class GridPlot(BasePlot):
             #     self.cur_idx += 1
             # return axs
         else:
-            if share_h:
+            if share_h and not share_w:
                 ww = int((w - (N - 1) * dw) / N)
                 axs = [self.fig.add_subplot(self.grid[h0:h0 + h, w0 + dw * i + ww * i:w0 + dw * i + ww * (i + 1)]) for i
                        in range(N)]
-            elif share_w:
+            elif share_w and not share_h:
                 hh = int((h - (N - 1) * dh) / N)
                 axs = [self.fig.add_subplot(self.grid[h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1), w0:w0 + w]) for i
                        in range(N)]
+            elif share_w and share_h:
+                Nrows,Ncols=N
+                hh = int((h - (Nrows - 1) * dh) / Nrows)
+                ww = int((w - (Ncols - 1) * dw) / Ncols)
+                axs=[]
+                for i in range(Nrows):
+                    for j in range(Ncols) :
+                        ax=self.fig.add_subplot(self.grid[
+                                                h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1),
+                                                w0 + dw * j + ww * j:w0 + dw * j + ww * (j + 1)])
+                        axs.append(ax)
             ax_letter = axs[0]
         self.add_letter(ax_letter, letter, x0=x0, y0=y0)
         return axs
