@@ -10,7 +10,8 @@ from lib.plot.base import BasePlot, Plot
 from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
 
 
-def traj_1group(s, c, unit='mm', fig=None, axs=None,sources={}, **kwargs):
+def traj_1group(s, c, unit='mm', fig=None, axs=None,single_color=False, **kwargs):
+    color=c.color if single_color else None
     scale = 1000 if unit == 'mm' else 1
     from lib.aux.sim_aux import get_tank_polygon
     P = BasePlot(name=f'trajectories', **kwargs)
@@ -18,9 +19,10 @@ def traj_1group(s, c, unit='mm', fig=None, axs=None,sources={}, **kwargs):
     tank = get_tank_polygon(c, return_polygon=False) * scale
     for id in c.agent_ids:
         xy = s[['x', 'y']].xs(id, level="AgentID").values * scale
-        P.axs[0].plot(xy[:, 0], xy[:, 1])
+        P.axs[0].plot(xy[:, 0], xy[:, 1], color=color)
     P.axs[0].fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
-    for sid,sdic in sources.items():
+    for sid,sdic in c.env_params.food_params.source_units.items():
+    # for sid,sdic in sources.items():
         px,py=sdic['pos']
         circle = plt.Circle((px* scale,py* scale),sdic['radius']* scale, color=sdic['default_color'])
         P.axs[0].add_patch(circle)
@@ -29,7 +31,7 @@ def traj_1group(s, c, unit='mm', fig=None, axs=None,sources={}, **kwargs):
 
 
 def traj_grouped(axs=None, fig=None, unit='mm', name=f'comparative_trajectories', subfolder='trajectories',
-                 range=None, mode=None,sources={}, **kwargs):
+                 range=None, mode=None,single_color=False, **kwargs):
     def get_traj(d, mode=None):
         if mode == 'origin':
             try:
@@ -59,7 +61,7 @@ def traj_grouped(axs=None, fig=None, unit='mm', name=f'comparative_trajectories'
             tick0, tick1 = int(t0 / c.dt), int(t1 / c.dt)
             s = s.loc[tick0:tick1]
 
-        _ = traj_1group(s, c, unit=unit, fig=P.fig, axs=P.axs[ii],sources=sources, save_to=None)
+        _ = traj_1group(s, c, unit=unit, fig=P.fig, axs=P.axs[ii],single_color=single_color, save_to=None)
         if ii != 0:
             P.axs[ii].yaxis.set_visible(False)
     P.adjust((0.07, 0.95), (0.1, 0.95), 0.05, 0.005)

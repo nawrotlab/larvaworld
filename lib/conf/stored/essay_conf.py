@@ -77,9 +77,9 @@ class RvsS_Essay(Essay):
         self.hs = [0, 1, 2, 3, 4]
         self.durs = [10, 15, 20]
         self.dur = 5
-        self.h_refeeding=3
-        self.dur_refeeding=120
-        self.dur_pathlength=20
+        self.h_refeeding = 3
+        self.dur_refeeding = 120
+        self.dur_pathlength = 20
 
         self.substrates = ['Agar', 'Yeast']
         self.exp_dict = {
@@ -93,8 +93,6 @@ class RvsS_Essay(Essay):
 
         # self.RS_diff_df, self.RS_diff_str=self.get_RS_diff()
 
-
-
     def RvsS_env(self, on_food=True):
         grid = preg.get_null('food_grid') if on_food else None
         return preg.get_null('env_conf',
@@ -103,7 +101,7 @@ class RvsS_Essay(Essay):
                              )
 
     def pathlength_exp(self):
-        dur=self.dur_pathlength
+        dur = self.dur_pathlength
         exp = 'PATHLENGTH'
         confs = []
         for n, nb in zip(self.substrates, [False, True]):
@@ -161,15 +159,15 @@ class RvsS_Essay(Essay):
 
     def refeeding_exp(self):
         exp = 'REFEEDING AFTER 3h STARVED'
-        h=self.h_refeeding
-        dur=self.dur_refeeding
+        h = self.h_refeeding
+        dur = self.dur_refeeding
         kws = {
-                'env': self.RvsS_env(on_food=True),
-                'lgs': RvsS_groups(expand=True, N=self.N, h_starved=h),
-                'id': f'{exp}_{h}h_{dur}min',
-                'dur': dur,
-                'exp': exp
-            }
+            'env': self.RvsS_env(on_food=True),
+            'lgs': RvsS_groups(expand=True, N=self.N, h_starved=h),
+            'id': f'{exp}_{h}h_{dur}min',
+            'dur': dur,
+            'exp': exp
+        }
         return {exp: [self.conf(**kws)]}
 
     def get_entrylist(self, datasets, substrates, durs, qs, hs, G):
@@ -243,7 +241,7 @@ class RvsS_Essay(Essay):
         kwargs = {'save_to': self.plot_dir,
                   'show': self.show}
 
-        entry=self.G.entry('RvsS summary', args={'entrylist' : self.entrylist, 'N':self.N})
+        entry = self.G.entry('RvsS summary', args={'entrylist': self.entrylist, 'title' : f'ROVERS VS SITTERS ESSAY (N={self.N})'})
         self.figs.update(self.G.eval0(entry, **kwargs))
         self.figs.update(self.G.eval(self.entrylist, **kwargs))
 
@@ -305,7 +303,7 @@ class RvsS_Essay(Essay):
                                                                      **kwargs)
 
             elif exp == 'REFEEDING AFTER 3h STARVED':
-                h=self.h_refeeding
+                h = self.h_refeeding
                 n = f'5_REFEEDING_after_{h}h_starvation_'
                 kwargs = dsNls(ds0)
                 self.figs[f'{exp} food-intake'] = self.G.dict['food intake (timeplot)'](scaled=True,
@@ -322,7 +320,8 @@ class RvsS_Essay(Essay):
 
 
 class DoublePatch_Essay(Essay):
-    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0,arena_dims=(0.24, 0.24),patch_x=0.06,patch_radius=0.025, **kwargs):
+    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0, arena_dims=(0.24, 0.24), patch_x=0.06,
+                 patch_radius=0.025, **kwargs):
         super().__init__(type='DoublePatch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                       bouts=['stride', 'pause', 'turn'],
                                                                       fits=False, interference=False, on_food=True),
@@ -334,7 +333,25 @@ class DoublePatch_Essay(Essay):
         self.dur = dur
         self.exp_dict = self.time_ratio_exp()
 
-        # self.sources=
+
+    def get_larvagroups(self, type='standard'):
+        age = 72.0
+        kws = {
+            'distribution' : preg.get_null('larva_distro', N=self.N, scale=(0.005, 0.005)),
+            'life_history': preg.get_null('life_history', age=age,
+                                          epochs={0: preg.get_null('epoch', start=0.0, stop=age,
+                                                                   substrate=preg.get_null('substrate'))}),
+            'odor' : preg.get_null('odor'),
+            'sample': 'None.150controls'
+        }
+        lgs={}
+        mID0s = ['rover', 'sitter']
+        mcols = ['blue', 'red']
+        for mID0, mcol in zip(mID0s, mcols):
+            mID=f'navigator_{mID0}'
+            lgs[f'{type}_{mID0}'] = preg.get_null('LarvaGroup',default_color=mcol,
+                                                  model=preg.larva_conf_dict2.loadConf(mID),**kws)
+        return lgs
 
     def get_sources(self, type='standard'):
         o = preg.get_null('odor', odor_id='Odor', odor_intensity=2.0, odor_spread=0.0002)
@@ -349,7 +366,7 @@ class DoublePatch_Essay(Essay):
         return sus
 
     def patch_env(self, type='standard'):
-        sus=self.get_sources(type=type)
+        sus = self.get_sources(type=type)
 
         conf = preg.get_null('env_conf',
                              arena=preg.get_null('arena', arena_shape='rectangular', arena_dims=self.arena_dims),
@@ -365,7 +382,7 @@ class DoublePatch_Essay(Essay):
         for n in self.substrates:
             kws = {
                 'env': self.patch_env(type=n),
-                'lgs': RvsS_groups(expand=True, N=self.N, navigator=True, pref=f'{n}_'),
+                'lgs': self.get_larvagroups(type=n),
                 'id': f'{exp}_{n}_{self.dur}min',
                 'dur': self.dur,
                 'exp': exp
@@ -374,13 +391,14 @@ class DoublePatch_Essay(Essay):
         return {exp: confs}
 
     def global_anal(self):
-    #     pass
         kwargs = {
             'datasets': self.datasets,
             'save_to': self.plot_dir,
-            'show': self.show}
-        entry = self.G.entry('double-patch summary', args={'N':self.N, 'dur':self.dur,'sources':self.get_sources()})
-        self.figs.update(self.G.eval0(entry, **kwargs))
+            'show': self.show,
+            'title': f"DOUBLE PATCH ESSAY (N={self.N}, duration={self.dur}')",
+        }
+        # entry = self.G.entry('double-patch summary', args={})
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', args={}), **kwargs))
 
     def analyze(self, exp, ds0):
         pass
@@ -407,8 +425,6 @@ class Chemotaxis_Essay(Essay):
         self.mID0 = mID0
         self.models = self.get_models(gain, mID0)
         self.exp_dict = self.chemo_exps()
-
-
 
     def get_models(self, gain, mID0):
         mW = preg.loadConf('Model', mID0)
@@ -510,8 +526,10 @@ class Chemotaxis_Essay(Essay):
         kwargs = {
             'datasets': self.datasets,
             'save_to': self.plot_dir,
-            'show': self.show}
-        entry = self.G.entry('chemotaxis summary', args={'models' : self.models, 'N':self.N})
+            'show': self.show,
+            'title': f'CHEMOTAXIS ESSAY (N={self.N})',
+        }
+        entry = self.G.entry('chemotaxis summary', args={'models': self.models})
         self.figs.update(self.G.eval0(entry, **kwargs))
 
 

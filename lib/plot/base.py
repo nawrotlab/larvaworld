@@ -422,7 +422,7 @@ class GridPlot(BasePlot):
 
 
     def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True,
-            x0=False, y0=False):
+            x0=False, y0=False, cols_first=False):
 
         if w0 is None:
             w0 = self.cur_w
@@ -455,12 +455,20 @@ class GridPlot(BasePlot):
                 hh = int((h - (Nrows - 1) * dh) / Nrows)
                 ww = int((w - (Ncols - 1) * dw) / Ncols)
                 axs=[]
-                for i in range(Nrows):
+                if not cols_first :
+                    for i in range(Nrows):
+                        for j in range(Ncols) :
+                            ax=self.fig.add_subplot(self.grid[
+                                                    h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1),
+                                                    w0 + dw * j + ww * j:w0 + dw * j + ww * (j + 1)])
+                            axs.append(ax)
+                else :
                     for j in range(Ncols) :
-                        ax=self.fig.add_subplot(self.grid[
-                                                h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1),
-                                                w0 + dw * j + ww * j:w0 + dw * j + ww * (j + 1)])
-                        axs.append(ax)
+                        for i in range(Nrows):
+                            ax=self.fig.add_subplot(self.grid[
+                                                    h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1),
+                                                    w0 + dw * j + ww * j:w0 + dw * j + ww * (j + 1)])
+                            axs.append(ax)
             ax_letter = axs[0]
         self.add_letter(ax_letter, letter, x0=x0, y0=y0)
         return axs
