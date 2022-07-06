@@ -475,7 +475,7 @@ class Chemotaxis_Essay(Essay):
                     f'brain.olfactor_params.brute_force': True,
                     f'brain.olfactor_params.odor_dict.Odor.mean': gain,
                     f'brain.interference_params.attenuation': 0.1,
-                    f'brain.interference_params.attenuation_max': 0.6,
+                    f'brain.interference_params.attenuation_max': 0.0,
                 }), 'color': cols[i]}
                 i+=1
         return dNl.NestDict(models)

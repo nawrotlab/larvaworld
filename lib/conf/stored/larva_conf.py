@@ -283,10 +283,8 @@ def create_mod_dict():
     }
 
     RvsS = {
-        'rover': RvsS_larva(EEB=0.37, gut_kws={'k_abs': 0.8}),
-        'sitter': RvsS_larva(EEB=0.67, gut_kws={'k_abs': 0.4}),
-        # 'old_rover': RvsS_larva(EEB=0.37, absorption=0.5, species='rover'),
-        # 'old_sitter': RvsS_larva(EEB=0.67, absorption=0.15, species='sitter'),
+        'rover': RvsS_larva(EEB=0.37,species='rover', gut_kws={'k_abs': 0.8}),
+        'sitter': RvsS_larva(EEB=0.67,species='sitter',  gut_kws={'k_abs': 0.4}),
         'navigator_rover': RvsS_larva(EEB=0.37,species='rover', OD=OD1, gut_kws={'k_abs': 0.8}),
         'mock_rover': RvsS_larva(EEB=0.37, species='rover', Nsegs=1, mock=True, gut_kws={'k_abs': 0.8}),
         'navigator_sitter': RvsS_larva(EEB=0.67,  species='sitter', OD=OD1, gut_kws={'k_abs': 0.4}),

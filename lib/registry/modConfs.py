@@ -153,7 +153,7 @@ def If0():
         **IFargs
     }
     SQargs = {
-        'crawler_phi_range': {'dtype': Tuple[float], 'v0': (np.pi/2, np.pi), 'lim': (0.0, 2 * np.pi),
+        'crawler_phi_range': {'dtype': Tuple[float], 'v0': (1.57, 3.14), 'lim': (0.0, 2 * np.pi),
                               'disp': 'suppression relief phase interval',
                               'sym': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$',
                               'u': ureg.rad,

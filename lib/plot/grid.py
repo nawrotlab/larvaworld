@@ -186,17 +186,18 @@ def RvsS_summary(entrylist,title,mdiff_df, **kwargs):
 
 def DoublePatch_summary(datasets,title,mdiff_df,**kwargs):
     Nmods = len(mdiff_df.columns)
-    h_mpl = 4
-    w, h = 32, 50 + h_mpl * 2
+    h_mpl = len(mdiff_df.index)
+    hh_mpl = h_mpl + 4
+    w, h = 32, 50 + hh_mpl
     P = GridPlot(name=f'DoublePatch_summary', width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
                horizontalalignment='center')
     P.plot(func='mpl', kws={'data':mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4+int(Nmods/2), h0=0)
 
     Nexps = len(datasets)
-    h1exp = int((h - h_mpl * 2) / Nexps)
+    h1exp = int((h - hh_mpl) / Nexps)
     for i, (exp, dds) in enumerate(datasets.items()):
-        h0 = i * h1exp + (i + 1) * 1 + h_mpl * 2
+        h0 = i * h1exp + (i + 1) * 1 + hh_mpl
         dds = dNl.flatten_list(dds)
         Ndds = len(dds)
         kws1 = {
@@ -221,11 +222,10 @@ def DoublePatch_summary(datasets,title,mdiff_df,**kwargs):
     return P.get()
 
 def chemo_summary(datasets,mdiff_df,title, **kwargs):
-    # mIDs = list(models.keys())
-    # mdiff_df = preg.larva_conf_dict2.diff_df(mIDs=mIDs, ms=[v.model for v in models.values()])
     Nmods = len(mdiff_df.columns)
-    h_mpl = 4
-    w, h = 30,42+ h_mpl * 2
+    h_mpl = len(mdiff_df.index)
+    hh_mpl=h_mpl +4
+    w, h = 30,42+ hh_mpl
     P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
                horizontalalignment='center')
@@ -234,10 +234,10 @@ def chemo_summary(datasets,mdiff_df,title, **kwargs):
     time_ks=['c_odor1', 'dc_odor1']
     Nks=len(time_ks)
     Nexps=len(datasets)
-    h1exp=int((h- h_mpl * 2)/Nexps)
+    h1exp=int((h- hh_mpl)/Nexps)
     h1k=int(h1exp / (Nks+1))
     for i,(exp,dds) in enumerate(datasets.items()):
-        h0 = i * h1exp+(i+1)*1+ h_mpl * 2
+        h0 = i * h1exp+(i+1)*1+ hh_mpl
         dds=dNl.flatten_list(dds)
         Ndds=len(dds)
         kws1 = {
