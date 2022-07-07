@@ -691,34 +691,7 @@ class LarvaConfDict2:
     #         conf = self.conf(mdict, prefix=True)
     #     return conf
 
-    def initConf(self, init_mode, mdict, mConf0):
-        if init_mode == 'model':
-            mdict=self.update_mdict(mdict, dNl.flatten_dict(mConf0))
-            # conf = self.conf(mdict, **dNl.flatten_dict(mConf0))
-            # return mconf0
-        elif init_mode == 'default':
-            pass
-            # conf = self.conf(mdict)
-            # return self.update_modelConf(mconf0, mdict,**kwargs)
-        elif init_mode == 'random':
-            self.randomize(mdict)
 
-        return mdict
-
-    def initConf2(self, init_mode, mdict, mConf0):
-        if init_mode == 'model':
-            mdict = self.update_mdict(mdict, dNl.flatten_dict(mConf0))
-            # conf = self.conf(mdict, **dNl.flatten_dict(mConf0))
-            # return mconf0
-        elif init_mode == 'default':
-            pass
-            # conf = self.conf(mdict)
-            # return self.update_modelConf(mconf0, mdict,**kwargs)
-        elif init_mode == 'random':
-            self.randomize(mdict)
-
-        return mdict
-        # return conf,mdict
 
     def compile_pdict(self, dic):
         pdict = dNl.NestDict()
@@ -1213,7 +1186,7 @@ class LarvaConfDict2:
             mID=f'{mID0}_fitted'
         self.saveConf(conf=m0, mID=mID)
 
-        from lib.eval.model_fit import Calibration, calibrate_interference, optimize_mID_turnerNinterference
+        from lib.eval.model_fit import optimize_mID_turnerNinterference
 
         entry = optimize_mID_turnerNinterference(mID0=mID, refID=refID, save_to=c.dir_dict.GAoptimization)
         # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)

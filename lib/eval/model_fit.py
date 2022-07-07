@@ -9,10 +9,8 @@ import param
 from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
-from lib.registry.ga_dict import interference_ga_dict
-# from lib.conf.stored.conf import loadRef
+
 from lib.registry.pars import preg
-from lib.plot.base import BasePlot
 
 
 class Calibration:
@@ -192,76 +190,8 @@ class Calibration:
         best = self.mconfs
         return best, Ks_dic
 
-    # def plot_turner(self, q):
-    #     from lib.aux.sim_aux import fft_max
-    #
-    #     self.retrieve_modules(q,Ndec=2)
-    #     sim = self.sim_turner(N=self.N)
-    #     err, Ks_dic = self.eval_turner(sim)
-    #
-    #     for key, val in self.mconfs.turner.items():
-    #         print(key, ' : ', val)
-    #     for key, val in self.mconfs.physics.items():
-    #         print(key, ' : ', val)
-    #
-    #     # print(Ks_dic)
-    #     ffov = fft_max(sim['fov'], self.dt, fr_range=(0.1, 0.8))
-    #     print('ffov : ', np.round(ffov, 2), 'dt : ', self.dt)
-    #     _ = self.plot_turner_distros(sim)
-    #     best = self.mconfs
-    #
-    #     return best, Ks_dic
-    #     # pass
 
-
-def calibrate_interference(mID, refID, dur=None, N=10, Nel=2, Ngen=20, **kwargs):
-    from lib.ga.robot.larva_offline import LarvaOffline
-    from lib.conf.stored.ga_conf import distro_KS_interference_evaluation
-    from lib.ga.util.ga_launcher import GAlauncher
-
-    d = preg.loadRef(refID)
-    c = d.config
-    if dur is None:
-        dur = c.Nticks * c.dt / 60
-
-    build_kws = {
-        'fitness_target_refID': refID,
-        'fitness_target_kws': {'eval_shorts': ['fov', 'foa', 'b'], 'pooled_cycle_curves': ['fov', 'foa', 'b']},
-        'base_model': mID,
-        'bestConfID': mID,
-        # 'exclude_func': None,
-        'init_mode': 'model',
-        'robot_class': LarvaOffline,
-        'space_dict': interference_ga_dict(mID),
-        'fitness_func': distro_KS_interference_evaluation,
-    }
-
-    kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=c.dt),
-           # 'scene': 'no_boxes',
-           'experiment': 'realism',
-           'env_params': preg.expandConf(id='arena_200mm', conftype='Env'),
-           'offline': True,
-           'show_screen': False,
-           'ga_select_kws': preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, Ngenerations=Ngen),
-           'ga_build_kws': preg.get_null('ga_build_kws', **build_kws),
-           }
-
-    kws.update(kwargs)
-
-    conf = preg.get_null('GAconf', **kws)
-
-    GA = GAlauncher(**conf)
-    best_genome = GA.run()
-
-    mm = preg.loadConf(id=mID, conftype='Model')
-    IF = mm.brain.interference_params
-    if IF.attenuation + IF.attenuation_max > 1:
-        mm.brain.interference_params.attenuation_max = np.round(1 - IF.attenuation, 2)
-        preg.saveConf(id=mID, conftype='Model', conf=mm)
-
-    return {mID: mm}
-
-
+#
 def epar(e, k=None, par=None, average=True):
     if par is None:
         D = preg.dict
@@ -314,91 +244,6 @@ def adapt_intermitter(c, e, **kwargs):
     return intermitter
 
 
-# def adapt_interference(c, e, mode='phasic', average=True):
-#     D = preg.dict
-#     if average:
-#
-#         at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
-#
-#         pau_fov_mu = e[D.pau_fov_mu.d]
-#
-#         att0 = np.clip(np.round((e[D.run_fov_mu.d] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
-#         fov_curve = c.pooled_cycle_curves['fov']['abs']
-#         att1 = np.min(fov_curve) / pau_fov_mu.median()
-#         att2 = np.max(fov_curve) / pau_fov_mu.median() - att1
-#         att1 = np.round(np.clip(att1, a_min=0, a_max=1), 2)
-#         att2 = np.round(np.clip(att2, a_min=0, a_max=1 - att1), 2)
-#
-#         if mode == 'phasic':
-#             kws = {
-#                 'mode': mode,
-#                 'suppression_mode': 'amplitude',
-#                 'attenuation_max': att2,
-#                 'attenuation': att1
-#             }
-#             bkws = preg.get_null('base_interference', **kws)
-#
-#             interference = {
-#                 **bkws,
-#                 **preg.get_null('phasic_interference', max_attenuation_phase=at_phiM)}
-#
-#         elif mode == 'square':
-#             kws = {
-#                 'mode': mode,
-#                 'suppression_mode': 'amplitude',
-#                 'attenuation_max': att2,
-#                 'attenuation': att0
-#             }
-#             bkws = preg.get_null('base_interference', **kws)
-#
-#             interference = {
-#                 **bkws,
-#                 **preg.get_null('square_interference', crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
-#
-#     else:
-#         raise ValueError('Not implemented')
-#     return interference
-
-
-# def adapt_turner(e, mode='neural', average=True):
-#     if mode == 'neural':
-#         coef, intercept = 0.024, 5
-#
-#         turner = {**preg.get_null('base_turner', mode='neural'),
-#                   **preg.get_null('neural_turner',
-#                                   base_activation=epar(e, 'ffov', average=average) / coef + intercept,
-#                                   activation_range=(10.0, 40.0)
-#                                   )}
-#     elif mode == 'sinusoidal':
-#
-#         turner = {**preg.get_null('base_turner', mode='sinusoidal'),
-#                   **preg.get_null('sinusoidal_turner',
-#                                   initial_freq=epar(e, 'ffov', average=average),
-#                                   # freq_range=(0.1, 0.8),
-#                                   initial_amp=epar(e, 'pau_foa_mu', average=average),
-#                                   # amp_range=(0.0, 100.0)
-#                                   )}
-#
-#     elif mode == 'constant':
-#         turner = {**preg.get_null('base_turner', mode='constant'),
-#                   **preg.get_null('constant_turner',
-#                                   initial_amp=epar(e, 'pau_foa_mu', average=average),
-#                                   )}
-#     else:
-#         raise ValueError('Not implemented')
-#
-#     return turner
-
-
-# def adapt_locomotor(c, e, average=True):
-#     m = preg.get_null('locomotor')
-#     m.turner_params = adapt_turner(e, mode='neural', average=average)
-#     m.crawler_params = adapt_crawler(e, mode='realistic', average=average)
-#     m.intermitter_params = adapt_intermitter(c, e)
-#     m.interference_params = adapt_interference(c, e, mode='phasic', average=average)
-#     m.feeder_params = None
-#     return m
-
 def optimize_mID_turnerNinterference(mID0,  refID, mID1=None, **kwargs) :
     if mID1 is None :
         mID1=mID0
@@ -422,46 +267,3 @@ def optimize_mID_turnerNinterference(mID0,  refID, mID1=None, **kwargs) :
     entry={mID1:best_genome.mConf}
     return entry
 
-
-
-
-# def calibrate_4models(refID='None.150controls'):
-#     mIDs = []
-#     mdict = {}
-#     for Tmod, Tlab in zip(['neural', 'sinusoidal'], ['NEU', 'SIN']):
-#         C = Calibration(refID=refID, turner_mode=Tmod)
-#         C.run()
-#         for IFmod, IFlab in zip(['phasic', 'square'], ['PHI', 'SQ']):
-#             mID = f'{IFlab}on{Tlab}'
-#             mIDs.append(mID)
-#             m = C.build_modelConf(new_id=mID, interference_mode=IFmod)
-#             mm = calibrate_interference(mID=mID, refID=refID)
-#             mdict.update(mm)
-#
-#     update_modelConfs(d=preg.loadRef(refID), mIDs=mIDs)
-#     return mdict
-
-
-# def update_modelConfs(d, mIDs):
-#     save_to = f'{d.dir_dict.model_tables}/4models'
-#     os.makedirs(save_to, exist_ok=True)
-#     for mID in mIDs:
-#         d.config.modelConfs.average[mID] = preg.loadConf(id=mID, conftype='Model')
-#     d.save_config(add_reference=True)
-
-
-if __name__ == '__main__':
-
-
-    print(conf)
-    raise
-    mID = 'RE_NEU_PHI_DEF_fitted'
-    refID = 'None.150controls'
-    entry=calibrate_interference(mID, refID=refID)
-
-    print(entry[mID].brain.interference_params)
-    # C=Calibration(refID=refID)
-    # C.run()
-
-    # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    # calibrate_4models(refID)

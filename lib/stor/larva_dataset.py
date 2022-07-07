@@ -1038,7 +1038,7 @@ class LarvaDataset:
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
-    from lib.eval.model_fit import Calibration, calibrate_interference, optimize_mID_turnerNinterference
+    from lib.eval.model_fit import Calibration, optimize_mID_turnerNinterference
     refID = 'None.150controls'
     d = preg.loadRef(refID)
     d.load(step=False)

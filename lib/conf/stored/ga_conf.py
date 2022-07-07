@@ -8,22 +8,8 @@ from scipy.stats import ks_2samp
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
-from lib.registry.ga_dict import ga_dict
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 from lib.eval.eval_aux import RSS
-
-ga_spaces = dNl.NestDict({
-    'interference': ga_dict(name='interference', suf='brain.interference_params.',
-                            excluded=['feeder_phi_range', 'crawler_phi_range', 'mode', 'suppression_mode']),
-    'turner': ga_dict(name='turner', suf='brain.turner_params.', only=['base_activation']),
-    'physics': ga_dict(name='physics', suf='physics.', only=['torque_coef']),
-    'sensorimotor': ga_dict(name='obstacle_avoidance', suf='sensorimotor.', excluded=[]),
-    'olfactor': {**ga_dict(name='olfactor', suf='brain.olfactor_params.', excluded=['input_noise']),
-                 'brain.olfactor_params.odor_dict.Odor.mean': {'initial_value': 0.0, 'tooltip': 'Odor gain',
-                                                               'dtype': float,
-                                                               'name': 'Gain', 'min': -100.0, 'max': 1000.0}}
-})
-
 
 def interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys, **kwargs):
     d1, d2 = gdict['cycle_curves'], pooled_cycle_curves

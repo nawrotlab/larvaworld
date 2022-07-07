@@ -80,7 +80,7 @@ class GAselector:
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
-                preg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID, verbose=self.verbose)
+                self.M.saveConf(conf=self.best_genome.mConf, id=self.bestConfID)
 
 
     def ga_selection(self):
@@ -235,18 +235,6 @@ class GAbuilder(GAselector):
                 self.M.randomize(self.space_dict)
                 gConf = self.M.conf(self.space_dict)
                 self.gConfs.append(gConf)
-
-
-
-
-
-            # self.genomes.append(g)
-            # self.genome_dict[i] = g
-            # gConf=self.M.conf(spdic)
-            # mConf = dNl.update_nestdict(self.mConf0, gConf)
-
-            # g=Genome(gConf=gConf,mConf=mConf, space_dict=spdic, generation_num=self.generation_num)
-            # self.genomes.append(g)
 
         self.robots = self.build_generation()
         self.step_df = self.init_step_df()
