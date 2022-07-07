@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import param
 
+
 from lib.aux import dictsNlists as dNl
+
 from lib.model.body.controller import PhysicsController
 from lib.registry.ga_dict import interference_ga_dict
 # from lib.conf.stored.conf import loadRef
@@ -397,6 +399,34 @@ def adapt_locomotor(c, e, average=True):
     m.feeder_params = None
     return m
 
+def optimize_mID_turnerNinterference(mID0,  refID, mID1=None,) :
+    if mID1 is None :
+        mID1=mID0
+    from lib.anal.argparsers import adjust_sim
+    from lib.ga.util.ga_launcher import GAlauncher
+    conf = preg.expandConf(id='realism', conftype='Ga')
+    conf.show_screen = False
+    conf.ga_select_kws.Pmutation = 0.6
+    conf.ga_select_kws.Cmutation = 0.6
+    conf.ga_select_kws.Ngenerations = 30
+    conf.ga_select_kws.Nagents = 10
+    conf.ga_build_kws.base_model =mID0
+    conf.ga_build_kws.fitness_target_refID =refID
+    conf.ga_build_kws.bestConfID = mID1
+    conf.sim_params = adjust_sim(exp=conf.experiment, conf_type='Ga', sim=conf.sim_params)
+    # conf.sim_params.path = 'ga_runs'
+    conf.sim_params.duration = 0.5
+    # conf.sim_params.sim_ID = 'opt_mID'
+    # conf.env_params=preg.expandConf(id=conf.env_params, conftype='Env')
+    # print(conf.env_params)
+    # raise
+    GA = GAlauncher(**conf)
+    best_genome = GA.run()
+    entry={mID1:best_genome.mConf}
+    return entry
+
+
+
 
 # def calibrate_4models(refID='None.150controls'):
 #     mIDs = []
@@ -424,6 +454,10 @@ def adapt_locomotor(c, e, average=True):
 
 
 if __name__ == '__main__':
+
+
+    print(conf)
+    raise
     mID = 'RE_NEU_PHI_DEF_fitted'
     refID = 'None.150controls'
     entry=calibrate_interference(mID, refID=refID)

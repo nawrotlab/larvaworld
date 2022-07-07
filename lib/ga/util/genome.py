@@ -6,9 +6,9 @@ import lib.aux.dictsNlists as dNl
 
 class Genome:
 
-    def __init__(self, mConf, gConf, space_dict, generation_num=None, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, mConf, gConf, space_dict, generation_num=None):
+        # for k, v in kwargs.items():
+        #     setattr(self, k, v)
         self.gConf = gConf
         self.mConf = mConf
         self.generation_num = generation_num

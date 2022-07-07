@@ -41,7 +41,7 @@ def tor_func(dur):
     def func(d):
         from lib.process.spatial import comp_straightness_index
         s, e, c = d.step_data, d.endpoint_data, d.config
-        comp_straightness_index(s, e=e, c=c, dt=c.dt, tor_durs=[dur], store=True)
+        comp_straightness_index(s, e=e, c=c, dt=c.dt, tor_durs=[dur], store=False)
 
     return func
 

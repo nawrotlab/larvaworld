@@ -313,6 +313,9 @@ class ParRegistry:
                     for k, v in conf.larva_groups.items():
                         if type(v.model) == str:
                             v.model = self.loadConf(id=v.model, conftype='Model')
+                elif conftype == 'Ga':
+                    conf.experiment = id
+                    conf.env_params = self.expandConf(id=conf.env_params, conftype='Env')
             except:
                 pass
             return conf

@@ -274,3 +274,6 @@ def NestDict(data=None):
     else:
         return AttrDict.from_nested_dicts(data)
 
+def copyDict(d):
+    return NestDict(copy.deepcopy(d))
+

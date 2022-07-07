@@ -702,8 +702,9 @@ class LarvaConfDict2:
             # return self.update_modelConf(mconf0, mdict,**kwargs)
         elif init_mode == 'random':
             self.randomize(mdict)
-        conf = self.conf(mdict)
-        return conf,mdict
+
+        return mdict
+        # return conf,mdict
 
     def compile_pdict(self, dic):
         pdict = dNl.NestDict()
@@ -1207,17 +1208,21 @@ class LarvaConfDict2:
         m0.brain.crawler_params=self.adapt_crawler(e=e,mode=m0.brain.crawler_params.mode)
         m0.brain.intermitter_params=self.adapt_intermitter(e=e,c=c,mode=m0.brain.intermitter_params.mode, conf=m0.brain.intermitter_params)
         m0.body.initial_length=epar(e, 'l', average=True,Nround=5)
-
-        from lib.eval.model_fit import Calibration, calibrate_interference
-        C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
-        C.run()
-        m0.brain.turner_params.update(C.best.turner)
-
         if mID is None :
             mID=f'{mID0}_fitted'
-
         self.saveConf(conf=m0, mID=mID)
-        entry = calibrate_interference(mID=mID, refID=refID)
+
+        from lib.eval.model_fit import Calibration, calibrate_interference, optimize_mID_turnerNinterference
+
+        entry = optimize_mID_turnerNinterference(mID0=mID, refID=refID)
+        # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
+        # C.run()
+        # m0.brain.turner_params.update(C.best.turner)
+        #
+        #
+        #
+        #
+        # entry = calibrate_interference(mID=mID, refID=refID)
         # m0=entry[mID]
         # if 'modelConfs' not in c.keys():
         #     c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
@@ -1276,10 +1281,10 @@ class LarvaConfDict2:
 
         return entries, mIDs
 
-    def space_dict(self, mkeys, mID0):
+    def space_dict(self, mkeys, mConf0):
         # M = preg.larva_conf_dict2
-        m = self.loadConf(mID0)
-        mF = dNl.flatten_dict(m)
+        # m = self.loadConf(mID0)
+        mF = dNl.flatten_dict(mConf0)
         dic = {}
         for mkey in mkeys:
             d0 = self.dict.model.init[mkey]
@@ -1324,8 +1329,11 @@ if __name__ == '__main__':
     # d.modelConf_analysis()
 
     dd = LarvaConfDict2()
-    # raise
+    e=d.endpoint_data
     c=d.config
+
+    entry=dd.adapt_mID(refID=refID, mID0='RE_NEU_PHI_DEF',e=e,c=c)
+    raise
     # print(c.Nticks * c.dt / 60)
     # raise
     # for mID,m in c.modelConfs.variable.items() :

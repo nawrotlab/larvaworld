@@ -77,7 +77,7 @@ class SidePanel:
             if self.best_genome is not None :
                 # dic=self.best_genome.get(rounded=True)
                 # sdic=self.best_genome.space_dict
-                for k, p in self.best_genome.space_dict.items():
+                for k, p in self.best_genome.mdict.items():
                     self.render_line(font, f'{p.name}: {p.v}', self.LEFT_MARGIN)
             self.render_line(font, '')
             self.render_line(font, 'Controls:')
