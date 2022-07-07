@@ -8,7 +8,6 @@ import copy
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-# from lib.registry.dtypes import null_dict
 
 from lib.registry.pars import preg
 
