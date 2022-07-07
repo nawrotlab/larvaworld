@@ -164,7 +164,7 @@ ga_dic = dNl.NestDict({
               spaceIDs=['interference', 'turner'], fitID='distro_KS', init='random',
               excl_func=bend_error_exclusion,
               Nel=2, N=10, env_params='arena_200mm'),
-    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='PHIonNEU', m1='PHIonNEU',
+    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='PHIonSIN', m1='PHIonSIN',
               fit_kws={'eval_shorts': ['b', 'fov', 'foa'],
                        # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
                        'pooled_cycle_curves': ['fov', 'foa', 'b']},

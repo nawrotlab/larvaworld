@@ -119,3 +119,7 @@ class FuncParHelper:
         else:
             self.apply_func(res[0],s=s, **kwargs)
             return self.compute(s=s,**kwargs)
+
+if __name__ == '__main__':
+    # preg.storeConfs()
+    preg.storeConfs(conftypes=['Ga'])

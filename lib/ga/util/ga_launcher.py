@@ -195,7 +195,8 @@ class GAlauncher(BaseGAlauncher):
                 self.get_larvaworld_food()
             self.scene.screen = display.set_mode((self.scene.width + self.scene.panel_width, self.scene.height))
             self.screen = self.scene.screen
-            self.side_panel = SidePanel(self.scene)
+            self.side_panel = SidePanel(self.scene, self.engine.space_dict)
             self.side_panel.update_ga_data(self.engine.generation_num, None)
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
+            # self.side_panel.space_dict=self.engine.space_dict

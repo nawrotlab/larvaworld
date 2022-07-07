@@ -13,7 +13,7 @@ class SidePanel:
     DEFAULT_MARGIN = 35
     LEFT_MARGIN = 30
 
-    def __init__(self, scene):
+    def __init__(self, scene, space_dict):
         self.scene = scene
         self.screen = scene.screen
         self.Nagents = None
@@ -24,6 +24,7 @@ class SidePanel:
         self.gen_t = None
         self.line_num = None
         self.line_spacing = None
+        self.space_dict = space_dict
 
     def update_ga_data(self, generation_num, best_genome):
         self.generation_num = generation_num
@@ -75,10 +76,8 @@ class SidePanel:
                         self.render_line(font, f'{short}: ' + str(np.round(ks,2)), self.LEFT_MARGIN)
             self.render_line(font, 'Best genome: ' )
             if self.best_genome is not None :
-                # dic=self.best_genome.get(rounded=True)
-                # sdic=self.best_genome.space_dict
-                for k, p in self.best_genome.mdict.items():
-                    self.render_line(font, f'{p.name}: {p.v}', self.LEFT_MARGIN)
+                for k, p in self.space_dict.items():
+                    self.render_line(font, f'{p.name}: {self.best_genome.gConf[k]}', self.LEFT_MARGIN)
             self.render_line(font, '')
             self.render_line(font, 'Controls:')
             self.render_line(font, 'S : save current genomes to file', self.LEFT_MARGIN)

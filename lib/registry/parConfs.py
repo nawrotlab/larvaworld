@@ -673,7 +673,7 @@ class LarvaConfDict2:
     def mutate(self, mdict, Pmut, Cmut):
         for d, p in mdict.items():
             p.mutate(Pmut, Cmut)
-        return mdict
+        # return mdict
 
     def randomize(self, mdict):
         for d, p in mdict.items():
@@ -694,6 +694,20 @@ class LarvaConfDict2:
     def initConf(self, init_mode, mdict, mConf0):
         if init_mode == 'model':
             mdict=self.update_mdict(mdict, dNl.flatten_dict(mConf0))
+            # conf = self.conf(mdict, **dNl.flatten_dict(mConf0))
+            # return mconf0
+        elif init_mode == 'default':
+            pass
+            # conf = self.conf(mdict)
+            # return self.update_modelConf(mconf0, mdict,**kwargs)
+        elif init_mode == 'random':
+            self.randomize(mdict)
+
+        return mdict
+
+    def initConf2(self, init_mode, mdict, mConf0):
+        if init_mode == 'model':
+            mdict = self.update_mdict(mdict, dNl.flatten_dict(mConf0))
             # conf = self.conf(mdict, **dNl.flatten_dict(mConf0))
             # return mconf0
         elif init_mode == 'default':

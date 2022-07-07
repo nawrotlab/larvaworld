@@ -456,6 +456,3 @@ class ParRegistry:
 
 preg = ParRegistry()
 
-if __name__ == '__main__':
-    # preg.storeConfs()
-    preg.storeConfs(conftypes=['Ga'])

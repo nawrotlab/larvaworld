@@ -333,6 +333,9 @@ class EvalRun:
             'save_to': self.dir_dict.plot,
             'show': self.show
         }
+        self.figs.summary = GD['eval summary'](**kws2)
+
+        self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True, **kws)
 
         if 'fft' in plots:
             self.figs.loco.fft = GD['fft'](**kws)
@@ -346,7 +349,7 @@ class EvalRun:
             self.figs.loco.trajectories = GD['trajectories'](subfolder=None, **kws)
         if 'boxplots' in plots:
             self.figs.boxplot.end = self.plot_data(mode='end', type='box')
-            self.figs.boxplot.step = self.plot_data(mode='step', type='box')
+            # self.figs.boxplot.step = self.plot_data(mode='step', type='box')
         if 'bouts' in plots:
             self.figs.epochs.runNpause = GD['epochs'](stridechain_duration=True, **kws)
             self.figs.epochs.turn = GD['epochs'](turns=True, **kws)
@@ -358,10 +361,6 @@ class EvalRun:
                 fig3 = GD['dispersal summary'](range=(r0, r1), **kws2)
                 self.figs.loco[k] = dNl.NestDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
 
-        self.figs.summary = GD['eval summary'](**kws2)
-
-        self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True,
-                                                         **kws)
 
     def preprocess2(self):
         Ddata, Edata = {}, {}

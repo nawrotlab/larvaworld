@@ -11,7 +11,7 @@ import progressbar
 import numpy as np
 
 import lib.aux.dictsNlists as dNl
-from lib.ga.util.genome import Genome
+# from lib.ga.util.genome import Genome
 
 from lib.registry.pars import preg
 
@@ -34,10 +34,9 @@ class GAselector:
         self.selection_ratio = selection_ratio
         self.verbose = verbose
         self.sorted_genomes = None
-        # self.genomes = []
-        # self.mdicts = {}
+        self.gConfs = []
         self.genome_df = None
-        self.all_genomes_dic = None
+        self.all_genomes_dic = []
         self.genome_dict = {}
         self.genome_dicts = {}
         self.best_genome = None
@@ -58,14 +57,15 @@ class GAselector:
 
             print(msg)
 
-    def create_new_generation(self):
+    def create_new_generation(self, space_dict):
         self.genome_dict={}
+        self.gConfs =None
         self.generation_num += 1
-        genomes_selected = self.ga_selection()  # parents of the new generation
-        self.printd(1, '\ngenomes selected:', genomes_selected)
+        gConfs_selected = self.ga_selection()  # parents of the new generation
+        self.printd(1, '\ngenomes selected:', gConfs_selected)
 
-        genomes = self.ga_crossover_mutation(genomes_selected)
-        self.genome_dict = {i: g for i, g in enumerate(genomes)}
+        self.gConfs = self.ga_crossover_mutation(gConfs_selected, space_dict)
+
         self.generation_step_num = 0
         self.generation_sim_time = 0
         self.start_generation_time = TimeUtil.current_time_millis()
@@ -74,45 +74,37 @@ class GAselector:
     def sort_genomes(self):
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
-        self.genome_dicts[self.generation_num] = self.genome_dict
 
-        best_new_genome = self.sorted_genomes[0]
-        if self.all_genomes_dic is None :
-            self.all_genomes_dic=self.init_all_genomes_dic(best_new_genome)
-        self.all_genomes_dic=self.update_all_genomes_dic(self.sorted_genomes, self.all_genomes_dic)
-
-        if self.best_genome is None or best_new_genome.fitness > self.best_genome.fitness:
-            self.best_genome = best_new_genome
+        if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
+            self.best_genome = self.sorted_genomes[0]
             self.best_fitness = self.best_genome.fitness
-            # print(self.generation_num, self.best_fitness)
-            self.printd(1, 'New best:', self.M.to_string(mdict=self.best_genome.mdict),
-                        f'fittness : {self.best_genome.fitness}')
+
             if self.bestConfID is not None:
-                # mConf=self.get
                 preg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID, verbose=self.verbose)
 
+
     def ga_selection(self):
-        num_genomes_to_select = round(self.Nagents * self.selection_ratio)
-        if num_genomes_to_select < 2:
+        num_gConfs_to_select = round(self.Nagents * self.selection_ratio)
+        if num_gConfs_to_select < 2:
             raise ValueError('The number of parents selected to breed a new generation is < 2. ' +
                              'Please increase population (' + str(self.Nagents) + ') or selection ratio (' +
                              str(self.selection_ratio) + ')')
 
-        genomes_selected = []
+        gConfs_selected = []
 
         # elitism: keep the best genomes in the new generation
         for i in range(self.Nelits):
-            elite_genome = self.sorted_genomes.pop(0)
-            genomes_selected.append(elite_genome)
-            num_genomes_to_select -= 1
+            g = self.sorted_genomes.pop(0)
+            gConfs_selected.append(g.gConf)
+            num_gConfs_to_select -= 1
 
-        while num_genomes_to_select > 0:
-            genome_selected = self.roulette_select(self.sorted_genomes)
-            genomes_selected.append(genome_selected)
-            self.sorted_genomes.remove(genome_selected)
-            num_genomes_to_select -= 1
+        while num_gConfs_to_select > 0:
+            g = self.roulette_select(self.sorted_genomes)
+            gConfs_selected.append(g.gConf)
+            self.sorted_genomes.remove(g)
+            num_gConfs_to_select -= 1
 
-        return genomes_selected
+        return gConfs_selected
 
     def roulette_select(self, genomes):
         fitness_sum = 0
@@ -131,69 +123,50 @@ class GAselector:
 
         return genomes[-1]
 
-    def ga_crossover_mutation(self, parents):
-        num_genomes_to_create = self.Nagents
-        new_genomes = []
+    def ga_crossover_mutation(self, gConfs, space_dict):
+        num_gConfs_to_create = self.Nagents
+        new_gConfs = []
 
         # elitism: keep the best genomes in the new generation
         for i in range(self.Nelits):
-            g=self.new_genome(parents[i].mdict,parents[i].mConf)
 
-            new_genomes.append(g)
-            num_genomes_to_create -= 1
+            new_gConfs.append(gConfs[i])
+            num_gConfs_to_create -= 1
 
-        while num_genomes_to_create > 0:
-            parent_a, parent_b = self.choose_parents(parents)
-            spdic = dNl.copyDict(parent_a.mdict)
-            spdic = self.M.crossover(spdic, parent_b.mdict)
-            spdic = self.M.mutate(spdic, Pmut=self.Pmutation, Cmut=self.Cmutation)
-            g=self.new_genome(spdic,parent_a.mConf)
-            new_genomes.append(g)
-            num_genomes_to_create -= 1
+        while num_gConfs_to_create > 0:
+            gConf_a, gConf_b = self.choose_parents(gConfs)
+            gConf = self.crossover(gConf_a, gConf_b)
+            space_dict=self.M.update_mdict(space_dict,gConf)
+            self.M.mutate(space_dict, Pmut=self.Pmutation, Cmut=self.Cmutation)
+            gConf=self.M.conf(space_dict)
+            new_gConfs.append(gConf)
+            num_gConfs_to_create -= 1
 
-        return new_genomes
+        return new_gConfs
 
-    def choose_parents(self, parents):
-        pos_a = random.randrange(len(parents))
-        parent_a = parents[pos_a]
-        parents.remove(parent_a)  # avoid choosing the same parent two times
-        pos_b = random.randrange(len(parents))
-        parent_b = parents[pos_b]
-        parents.insert(pos_a, parent_a)  # reinsert the first parent in the list
-        return parent_a, parent_b
+    def choose_parents(self, gConfs):
+        pos_a = random.randrange(len(gConfs))
+        gConf_a = gConfs[pos_a]
+        gConfs.remove(gConf_a)  # avoid choosing the same parent two times
+        pos_b = random.randrange(len(gConfs))
+        gConf_b = gConfs[pos_b]
+        gConfs.insert(pos_a, gConf_a)  # reinsert the first parent in the list
+        return gConf_a, gConf_b
 
-    def new_genome(self, mdict, mConf0):
-        gConf = self.M.conf(mdict)
+    def new_genome(self, gConf, mConf0):
         mConf = dNl.update_nestdict(mConf0, gConf)
-        return dNl.NestDict({'mdict': mdict, 'fitness': None, 'fitness_dict': None, 'gConf': gConf, 'mConf': mConf})
+        return dNl.NestDict({'fitness': None, 'fitness_dict': None, 'gConf': gConf, 'mConf': mConf})
 
-    def init_all_genomes_dic(self, g):
-        # cols=[]
-        space_ks=[p.name for k,p in g.mdict.items()]
-        fdic=dNl.flatten_dict(g.fitness_dict)
-        fdic_ks=['fitness']+list(fdic.keys())
-        d=dNl.NestDict({'generation' : [],'space' : {k : [] for k in space_ks}, 'fitness' : {k : [] for k in fdic_ks}})
-        # df=pd.DataFrame.from_dict(dNl.flatten_dict(d))
-        # print(df)
-        # raise
-        return d
-
-    def update_all_genomes_dic(self, gs, df):
-
-        for g in gs:
-            for k, p in g.mdict.items() :
-                df.space[p.name].append(p.v)
-
-            if g.fitness_dict is not None :
-                fdic = dNl.flatten_dict(g.fitness_dict)
-                fdic['fitness']=g.fitness
-                for k,vs in df.fitness.items():
-                    vs.append(fdic[k])
+    def crossover(self, gConf_a, gConf_b):
+        gConf={}
+        for k in gConf_a.keys():
+            if np.random.uniform(0, 1, 1) >= 0.5:
+                gConf[k]=gConf_a[k]
             else :
-                for k,vs in df.fitness.items():
-                    vs.append(None)
-        df.generation+=[self.generation_num]*len(gs)
-        return df
+                gConf[k] = gConf_b[k]
+        return gConf
+
+        pass
 
 
 # def initConf(init_mode, space_dict, mConf0):
@@ -249,10 +222,23 @@ class GAbuilder(GAselector):
         self.mConf0 = self.M.loadConf(base_model)
         self.space_dict = self.M.space_dict(mkeys=space_dict, mConf0=self.mConf0)
 
-        for i in range(self.Nagents):
-            spdic = dNl.copyDict(self.space_dict)
-            spdic = self.M.initConf(init_mode=init_mode, mdict=spdic, mConf0=self.mConf0)
-            self.genome_dict[i] = self.new_genome(spdic, self.mConf0)
+        if init_mode=='default' :
+            gConf=self.M.conf(self.space_dict)
+            self.gConfs=[gConf]*self.Nagents
+        elif init_mode=='model':
+            mF=dNl.flatten_dict(self.mConf0)
+            gConf={k:mF[k] for k,p in self.space_dict.items()}
+            self.gConfs = [gConf] * self.Nagents
+        elif init_mode == 'random':
+            self.gConfs=[]
+            for i in range(self.Nagents):
+                self.M.randomize(self.space_dict)
+                gConf = self.M.conf(self.space_dict)
+                self.gConfs.append(gConf)
+
+
+
+
 
             # self.genomes.append(g)
             # self.genome_dict[i] = g
@@ -262,24 +248,13 @@ class GAbuilder(GAselector):
             # g=Genome(gConf=gConf,mConf=mConf, space_dict=spdic, generation_num=self.generation_num)
             # self.genomes.append(g)
 
-
-        # gConfs = [self.M.initConf(init_mode=init_mode, mdict=space_dict, mConf0=self.mConf0) for i in range(self.Nagents)]
-        # gConfs = [initConf(init_mode, space_dict, self.mConf0) for i in range(self.Nagents)]
-
-        # self.genomes = [Genome(gConf=gConf,mConf=dNl.update_nestdict(self.mConf0, gConf), space_dict=space_dict, generation_num=self.generation_num) for gConf in gConfs]
-
         self.robots = self.build_generation()
         self.step_df = self.init_step_df()
 
-        # print(self.model.Nsteps, self.Nagents)
-        # raise
         self.printd(1, 'Generation', self.generation_num, 'started')
         self.printd(1, 'multicore:', self.multicore, 'num_cpu:', self.num_cpu)
 
-    # def get_mConf(self, mdict):
-    #     gConf = self.M.conf(mdict)
-    #     mConf = dNl.update_nestdict(self.mConf0, gConf)
-    #     return mConf
+
 
     def init_step_df(self):
 
@@ -353,15 +328,12 @@ class GAbuilder(GAselector):
                 # print('--2--', t11 - t00)
 
     def build_generation(self):
-        # self.genome_dict = dNl.NestDict(
-        #     {'generation': self.generation_num, 'genomes': {i: g for i, g in enumerate(self.genomes)}})
-
-
         robots = []
-        for i, g in self.genome_dict.items():
-            # gConf=self.M.conf(mdict)
-            # mConf = dNl.update_nestdict(self.mConf0, gConf)
-            # for i, g in self.genome_dict.genomes.items():
+        for i, gConf in enumerate(self.gConfs):
+            g=self.new_genome(gConf, self.mConf0)
+            self.genome_dict[i] = g
+
+
 
             robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
             robot.genome = g
@@ -426,10 +398,14 @@ class GAbuilder(GAselector):
         if not self.robots:
 
             self.sort_genomes()
+            self.all_genomes_dic += [
+                {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
+                 'fitness': g.fitness, **dNl.flatten_dict(g.fitness_dict)}
+                for g in self.sorted_genomes if g.fitness_dict is not None]
 
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
 
-                self.create_new_generation()
+                self.create_new_generation(self.space_dict)
                 if self.progress_bar:
                     self.progress_bar.update(self.generation_num)
 
@@ -458,12 +434,9 @@ class GAbuilder(GAselector):
         self.is_running = False
         if self.progress_bar:
             self.progress_bar.finish()
-        self.printd(0, 'Best genome:', self.M.to_string(mdict=self.best_genome.mdict))
-        # self.printd(0, 'Best genome:', self.best_genome.to_string())
         self.printd(0, 'Best fittness:', self.best_genome.fitness)
 
-        temp={'generation':self.all_genomes_dic.generation,**self.all_genomes_dic.space, **self.all_genomes_dic.fitness}
-        self.genome_df=pd.DataFrame.from_dict(dNl.flatten_dict(temp))
+        self.genome_df=pd.DataFrame.from_records(self.all_genomes_dic)
         self.genome_df=self.genome_df.round(3)
         self.genome_df.sort_values(by='fitness', ascending=False,inplace=True)
         preg.graph_dict.dict['mpl'](data=self.genome_df,font_size= 18, save_to=self.model.plot_dir, name=self.bestConfID)
