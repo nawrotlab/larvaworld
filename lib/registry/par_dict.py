@@ -66,7 +66,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, codename=Non
             lab = f'{disp}'
         else:
             lab = fr'{disp} ({u})'
-    if dv is None and dtype==float :
+    if dv is None and dtype in [float,List[float], List[Tuple[float]],Tuple[float]] :
         dv=0.01
     h = lab if h is None else h
     if vparfunc is None:

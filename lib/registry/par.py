@@ -1,4 +1,5 @@
 import random
+from typing import List, Tuple
 
 import numpy as np
 import param
@@ -103,11 +104,11 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
 
         @property
         def step(self):
-            if self.parclass in [param.Number, param.Range] :
+            if self.parclass in [param.Number, param.Range] and self.param.v.step is not None :
                 return self.param.v.step
             elif self.parclass==param.Magnitude:
                 return 0.01
-            elif self.dtype==float:
+            elif self.dtype in [float,List[float], List[Tuple[float]],Tuple[float]]:
                 return 0.01
             else :
                 return None

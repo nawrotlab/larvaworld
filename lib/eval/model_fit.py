@@ -314,112 +314,109 @@ def adapt_intermitter(c, e, **kwargs):
     return intermitter
 
 
-def adapt_interference(c, e, mode='phasic', average=True):
-    D = preg.dict
-    if average:
-
-        at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
-
-        pau_fov_mu = e[D.pau_fov_mu.d]
-
-        att0 = np.clip(np.round((e[D.run_fov_mu.d] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
-        fov_curve = c.pooled_cycle_curves['fov']['abs']
-        att1 = np.min(fov_curve) / pau_fov_mu.median()
-        att2 = np.max(fov_curve) / pau_fov_mu.median() - att1
-        att1 = np.round(np.clip(att1, a_min=0, a_max=1), 2)
-        att2 = np.round(np.clip(att2, a_min=0, a_max=1 - att1), 2)
-
-        if mode == 'phasic':
-            kws = {
-                'mode': mode,
-                'suppression_mode': 'amplitude',
-                'attenuation_max': att2,
-                'attenuation': att1
-            }
-            bkws = preg.get_null('base_interference', **kws)
-
-            interference = {
-                **bkws,
-                **preg.get_null('phasic_interference', max_attenuation_phase=at_phiM)}
-
-        elif mode == 'square':
-            kws = {
-                'mode': mode,
-                'suppression_mode': 'amplitude',
-                'attenuation_max': att2,
-                'attenuation': att0
-            }
-            bkws = preg.get_null('base_interference', **kws)
-
-            interference = {
-                **bkws,
-                **preg.get_null('square_interference', crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
-
-    else:
-        raise ValueError('Not implemented')
-    return interference
-
-
-def adapt_turner(e, mode='neural', average=True):
-    if mode == 'neural':
-        coef, intercept = 0.024, 5
-
-        turner = {**preg.get_null('base_turner', mode='neural'),
-                  **preg.get_null('neural_turner',
-                                  base_activation=epar(e, 'ffov', average=average) / coef + intercept,
-                                  activation_range=(10.0, 40.0)
-                                  )}
-    elif mode == 'sinusoidal':
-
-        turner = {**preg.get_null('base_turner', mode='sinusoidal'),
-                  **preg.get_null('sinusoidal_turner',
-                                  initial_freq=epar(e, 'ffov', average=average),
-                                  # freq_range=(0.1, 0.8),
-                                  initial_amp=epar(e, 'pau_foa_mu', average=average),
-                                  # amp_range=(0.0, 100.0)
-                                  )}
-
-    elif mode == 'constant':
-        turner = {**preg.get_null('base_turner', mode='constant'),
-                  **preg.get_null('constant_turner',
-                                  initial_amp=epar(e, 'pau_foa_mu', average=average),
-                                  )}
-    else:
-        raise ValueError('Not implemented')
-
-    return turner
+# def adapt_interference(c, e, mode='phasic', average=True):
+#     D = preg.dict
+#     if average:
+#
+#         at_phiM = np.round(e['phi_attenuation_max'].median(), 1)
+#
+#         pau_fov_mu = e[D.pau_fov_mu.d]
+#
+#         att0 = np.clip(np.round((e[D.run_fov_mu.d] / pau_fov_mu).median(), 2), a_min=0, a_max=1)
+#         fov_curve = c.pooled_cycle_curves['fov']['abs']
+#         att1 = np.min(fov_curve) / pau_fov_mu.median()
+#         att2 = np.max(fov_curve) / pau_fov_mu.median() - att1
+#         att1 = np.round(np.clip(att1, a_min=0, a_max=1), 2)
+#         att2 = np.round(np.clip(att2, a_min=0, a_max=1 - att1), 2)
+#
+#         if mode == 'phasic':
+#             kws = {
+#                 'mode': mode,
+#                 'suppression_mode': 'amplitude',
+#                 'attenuation_max': att2,
+#                 'attenuation': att1
+#             }
+#             bkws = preg.get_null('base_interference', **kws)
+#
+#             interference = {
+#                 **bkws,
+#                 **preg.get_null('phasic_interference', max_attenuation_phase=at_phiM)}
+#
+#         elif mode == 'square':
+#             kws = {
+#                 'mode': mode,
+#                 'suppression_mode': 'amplitude',
+#                 'attenuation_max': att2,
+#                 'attenuation': att0
+#             }
+#             bkws = preg.get_null('base_interference', **kws)
+#
+#             interference = {
+#                 **bkws,
+#                 **preg.get_null('square_interference', crawler_phi_range=(at_phiM - 1, at_phiM + 1))}
+#
+#     else:
+#         raise ValueError('Not implemented')
+#     return interference
 
 
-def adapt_locomotor(c, e, average=True):
-    m = preg.get_null('locomotor')
-    m.turner_params = adapt_turner(e, mode='neural', average=average)
-    m.crawler_params = adapt_crawler(e, mode='realistic', average=average)
-    m.intermitter_params = adapt_intermitter(c, e)
-    m.interference_params = adapt_interference(c, e, mode='phasic', average=average)
-    m.feeder_params = None
-    return m
+# def adapt_turner(e, mode='neural', average=True):
+#     if mode == 'neural':
+#         coef, intercept = 0.024, 5
+#
+#         turner = {**preg.get_null('base_turner', mode='neural'),
+#                   **preg.get_null('neural_turner',
+#                                   base_activation=epar(e, 'ffov', average=average) / coef + intercept,
+#                                   activation_range=(10.0, 40.0)
+#                                   )}
+#     elif mode == 'sinusoidal':
+#
+#         turner = {**preg.get_null('base_turner', mode='sinusoidal'),
+#                   **preg.get_null('sinusoidal_turner',
+#                                   initial_freq=epar(e, 'ffov', average=average),
+#                                   # freq_range=(0.1, 0.8),
+#                                   initial_amp=epar(e, 'pau_foa_mu', average=average),
+#                                   # amp_range=(0.0, 100.0)
+#                                   )}
+#
+#     elif mode == 'constant':
+#         turner = {**preg.get_null('base_turner', mode='constant'),
+#                   **preg.get_null('constant_turner',
+#                                   initial_amp=epar(e, 'pau_foa_mu', average=average),
+#                                   )}
+#     else:
+#         raise ValueError('Not implemented')
+#
+#     return turner
 
-def optimize_mID_turnerNinterference(mID0,  refID, mID1=None,) :
+
+# def adapt_locomotor(c, e, average=True):
+#     m = preg.get_null('locomotor')
+#     m.turner_params = adapt_turner(e, mode='neural', average=average)
+#     m.crawler_params = adapt_crawler(e, mode='realistic', average=average)
+#     m.intermitter_params = adapt_intermitter(c, e)
+#     m.interference_params = adapt_interference(c, e, mode='phasic', average=average)
+#     m.feeder_params = None
+#     return m
+
+def optimize_mID_turnerNinterference(mID0,  refID, mID1=None, **kwargs) :
     if mID1 is None :
         mID1=mID0
     from lib.anal.argparsers import adjust_sim
     from lib.ga.util.ga_launcher import GAlauncher
     conf = preg.expandConf(id='realism', conftype='Ga')
     conf.show_screen = False
-    conf.ga_select_kws.Pmutation = 0.6
-    conf.ga_select_kws.Cmutation = 0.6
-    conf.ga_select_kws.Ngenerations = 30
+    conf.ga_select_kws.Pmutation = 0.3
+    conf.ga_select_kws.Cmutation = 0.3
+    conf.ga_select_kws.Ngenerations = 10
     conf.ga_select_kws.Nagents = 10
+    conf.ga_select_kws.Nelit = 2
     conf.ga_build_kws.base_model =mID0
     conf.ga_build_kws.fitness_target_refID =refID
     conf.ga_build_kws.bestConfID = mID1
     conf.sim_params = adjust_sim(exp=conf.experiment, conf_type='Ga', sim=conf.sim_params)
-    # conf.sim_params.path = 'ga_runs'
     conf.sim_params.duration = 0.5
-    # conf.sim_params.sim_ID = 'opt_mID'
-    # conf.env_params=preg.expandConf(id=conf.env_params, conftype='Env')
-    # print(conf.env_params)
-    # raise
+    conf.update(kwargs)
     GA = GAlauncher(**conf)
     best_genome = GA.run()
     entry={mID1:best_genome.mConf}

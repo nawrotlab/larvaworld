@@ -624,6 +624,7 @@ class LarvaDataset:
             'plot': self.plot_dir,
             'vis': self.vis_dir,
             # 'comp_plot': os.path.join(self.plot_dir, 'comparative'),
+            'GAoptimization': os.path.join(self.data_dir, 'GAoptimization'),
             'evaluation': os.path.join(self.data_dir, 'evaluation'),
             'foraging': os.path.join(self.data_dir, 'foraging_dicts'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
@@ -1024,10 +1025,38 @@ class LarvaDataset:
         self.store_model_graphs(mIDs=mIDs_avg)
         self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
         diff_df_avg=M.diff_df(mIDs=mIDs_avg)
+        preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=self.dir_dict.model_tables, name='avg_mIDs_diffs')
 
         entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config, mID0s=mIDs_avg)
         self.config.modelConfs.variable = entries_var
         self.save_config(add_reference=True)
         self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
-        self.eval_model_graphs(mIDs=mIDs_avg+mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_avgVSvar', N=10)
+        self.eval_model_graphs(mIDs=mIDs_avg[:3]+mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1', N=10)
+        self.eval_model_graphs(mIDs=mIDs_avg[3:]+mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2', N=10)
+
+
+
+if __name__ == '__main__':
+    from lib.registry.pars import preg
+    from lib.eval.model_fit import Calibration, calibrate_interference, optimize_mID_turnerNinterference
+    refID = 'None.150controls'
+    d = preg.loadRef(refID)
+    d.load(step=False)
+    #e, c = d.endpoint_data, d.config
+    #M = preg.larva_conf_dict2
+    # M.add_var_mIDs(refID=refID, e=e, c=c, mID0s=['PHIonNEU'])
+    d.eval_model_graphs(mIDs=['PHIonNEU','PHIonNEU_var'], norm_modes=['raw', 'minmax'], id='PHIonNEU avgVSvar', N=20)
+    raise
+    entries = {}
+    #mIDs = []
+    mID0s=list(c.modelConfs.average.keys())
+    for mID0 in mID0s:
+        entry = optimize_mID_turnerNinterference(mID0=mID0, refID=refID, save_to=c.dir_dict.GAoptimization)
+        entries.update(entry)
+    c.modelConfs.average = entries
+    d.save_config(add_reference=True)
+    d.eval_model_graphs(mIDs=mID0s, norm_modes=['raw', 'minmax'], id='6mIDs_avg_again', N=10)
+    diff_df_avg = preg.larva_conf_dict2.diff_df(mIDs=mID0s)
+    preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=d.dir_dict.model_tables,
+                                name='avg_mIDs_diffs')
 

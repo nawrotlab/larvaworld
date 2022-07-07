@@ -742,20 +742,7 @@ class LarvaConfDict2:
             mc[mkey] = self.update_mdict(mdic, mmdic)
         return mc
 
-    def update_mdict(self, mdict, mmdic):
-        if mmdic is None:
-            return None
-        else:
-            for d, p in mdict.items():
-                if isinstance(p, param.Parameterized):
-                    new_v = mmdic[d] if d in mmdic.keys() else None
-                    if type(new_v) == list:
-                        if p.parclass == param.Range:
-                            new_v = tuple(new_v)
-                    p.v = new_v
-                else:
-                    self.update_mdict(mdict=mdict[d], mmdic=mmdic[d])
-            return mdict
+
 
     def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], **kwargs):
         mConf = self.mIDconf(mID, **kwargs)
@@ -1152,7 +1139,7 @@ class LarvaConfDict2:
             d.load(step=False)
             e = d.endpoint_data
 
-        mdict = dd.dict.model.m['crawler'].mode[mode].args
+        mdict = self.dict.model.m['crawler'].mode[mode].args
         crawler_conf = dNl.NestDict({'mode': mode})
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
@@ -1214,7 +1201,7 @@ class LarvaConfDict2:
 
         from lib.eval.model_fit import Calibration, calibrate_interference, optimize_mID_turnerNinterference
 
-        entry = optimize_mID_turnerNinterference(mID0=mID, refID=refID)
+        entry = optimize_mID_turnerNinterference(mID0=mID, refID=refID, save_to=c.dir_dict.GAoptimization)
         # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
         # C.run()
         # m0.brain.turner_params.update(C.best.turner)
@@ -1281,6 +1268,21 @@ class LarvaConfDict2:
 
         return entries, mIDs
 
+    def update_mdict(self, mdict, mmdic):
+        if mmdic is None:
+            return None
+        else:
+            for d, p in mdict.items():
+                if isinstance(p, param.Parameterized):
+                    new_v = mmdic[d] if d in mmdic.keys() else None
+                    if type(new_v) == list:
+                        if p.parclass == param.Range:
+                            new_v = tuple(new_v)
+                    p.v = new_v
+                else:
+                    self.update_mdict(mdict=mdict[d], mmdic=mmdic[d])
+            return mdict
+
     def space_dict(self, mkeys, mConf0):
         # M = preg.larva_conf_dict2
         # m = self.loadConf(mID0)
@@ -1297,6 +1299,10 @@ class LarvaConfDict2:
             for k in var_ks:
                 k0 = f'{d0.pref}{k}'
                 dic[k0] = d00.mode[mod_v].args[k]
+                if type(mF[k0]) == list:
+                    if dic[k0].parclass == param.Range:
+                        mF[k0] = tuple(mF[k0])
+
                 dic[k0].v = mF[k0]
 
         return dNl.NestDict(dic)
