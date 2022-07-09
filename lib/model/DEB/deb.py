@@ -6,11 +6,10 @@ import math
 import os
 import numpy as np
 
-from lib.aux.dictsNlists import save_dict
 from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex
 from lib.registry.init_pars import substrate_dict
-import lib.aux.naming as nam
+from lib.aux import naming as nam, dictsNlists as dNl
 from lib.model.DEB.gut import Gut
 from lib.model.DEB.substrate import Substrate
 
@@ -638,7 +637,7 @@ class DEB:
                 d = {**self.dict, **self.gut.dict}
             else:
                 d = self.dict
-            save_dict(d, self.dict_file, use_pickle=False)
+            dNl.save_dict(d, self.dict_file, use_pickle=False)
 
     def get_p_A(self, f, assimilation_mode, X_V):
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V

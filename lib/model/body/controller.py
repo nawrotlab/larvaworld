@@ -3,12 +3,10 @@ import random
 
 import numpy as np
 
-from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-from lib.aux.sim_aux import inside_polygon
 from lib.ga.geometry.point import Point
 from lib.ga.geometry.util import detect_nearest_obstacle, radar_tuple
 from lib.model.body.body import LarvaBody
-from lib.aux.ang_aux import angle_dif
+from lib.aux import dictsNlists as dNl, ang_aux, sim_aux
 
 class PhysicsController :
     def __init__(self, lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=0.5,
@@ -213,7 +211,7 @@ class BodySim(BodyManager, PhysicsController):
     def position_body(self, lin_vel, ang_vel, tank_contact=True):
         self.dst = lin_vel * self.model.dt
         self.cum_dst += self.dst
-        self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,
+        self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
                                                                correction_coef=self.bend_correction_coef)
 
 
@@ -244,8 +242,8 @@ class BodySim(BodyManager, PhysicsController):
         seg.update_poseNvertices(p1, o1)
 
     def compute_body_bend(self):
-        self.spineangles = [angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in range(self.Nangles)]
-        self.body_bend = wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
+        self.spineangles = [ang_aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in range(self.Nangles)]
+        self.body_bend = ang_aux.wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
 
 
 
@@ -453,7 +451,7 @@ class BodySim(BodyManager, PhysicsController):
                 hr1 = None
                 hp1 = hp0 + sim_dxy
                 # hf1 = hp1 + k1 * (self.sim_length / 2)
-            in_tank = inside_polygon(points=[hp1 + k1 * l0 / 2], tank_polygon=self.model.tank_polygon)
+            in_tank = sim_aux.inside_polygon(points=[hp1 + k1 * l0 / 2], tank_polygon=self.model.tank_polygon)
             return in_tank, o1, hr1, hp1
 
         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)

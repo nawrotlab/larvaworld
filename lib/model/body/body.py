@@ -5,10 +5,9 @@ from shapely.geometry import Point
 from shapely.ops import cascaded_union
 
 
-import lib.aux.dictsNlists as dNl
-from lib.aux.sim_aux import generate_seg_shapes, circle_to_polygon
-from lib.aux.xy_aux import xy_projection
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
+from lib.aux import dictsNlists as dNl, sim_aux, xy_aux
+from lib.registry.pars import preg
 
 
 class LarvaShape:
@@ -32,7 +31,7 @@ class LarvaShape:
             seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = np.array(seg_ratio)
         self.contour_points = body_dict[shape]['points']
-        self.base_seg_vertices = generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
+        self.base_seg_vertices = sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
         self.seg_lengths = self.sim_length * self.seg_ratio
         self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
 
@@ -341,8 +340,8 @@ class LarvaBody(LarvaShape):
 
     def create_joints(self, Nsegs, segs, joint_types=None):
         if joint_types is None :
-            from lib.conf.base.dtypes import null_dict
-            joint_types = null_dict('Box2D_params').joint_types
+            # from lib.conf.base.dtypes import null_dict
+            joint_types = preg.get_null('Box2D_params').joint_types
         space = self.model.space
         l0 = np.mean(self.seg_lengths)
         self.joints = []
@@ -576,7 +575,7 @@ class LarvaBody(LarvaShape):
         self.rotator.bullet = True
         l0 = np.mean(self.seg_lengths)
         w = l0 / 10
-        rotator_shape = Box2D.b2ChainShape(vertices=circle_to_polygon(5, l0).tolist())
+        rotator_shape = Box2D.b2ChainShape(vertices=sim_aux.circle_to_polygon(5, l0).tolist())
         self.rotator.CreateFixture(shape=rotator_shape)
 
         dist_kws = {'collideConnected': False, 'length': l0 * 0.01}
@@ -700,7 +699,7 @@ def draw_selected_body(viewer, pos, contour_xy, radius, color):
 
 
 def draw_body_orientation(viewer, pos,orientation, radius,color) :
-    viewer.draw_line(pos, xy_projection(pos, orientation, radius * 3),
+    viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
                      color=color, width=radius / 10)
-    # viewer.draw_line(self.midline[-1], xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),
+    # viewer.draw_line(self.midline[-1], xy_aux.xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),
     #                  color=self.color, width=self.radius / 10)

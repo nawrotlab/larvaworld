@@ -3,7 +3,7 @@ import numpy as np
 from shapely import affinity
 from shapely.geometry import Polygon
 
-from lib.aux.ang_aux import rotate_around_center_multi, rotate_around_center
+from lib.aux import ang_aux
 
 
 class BodySegment:
@@ -224,17 +224,17 @@ class DefaultSegment(BodySegment):
         self.ang_acc = 0.0
 
     def update_vertices(self, pos, orient):
-        self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orient)]
+        self.vertices = [pos + ang_aux.rotate_around_center_multi(self.seg_vertices[0], -orient)]
 
     def update_poseNvertices(self, pos, orientation):
         self.pos=pos
         self.orientation=orientation % (np.pi * 2)
-        self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orientation)]
+        self.vertices = [pos + ang_aux.rotate_around_center_multi(self.seg_vertices[0], -orientation)]
 
     def update_all(self, pos, orientation, lin_vel, ang_vel):
         self.pos=pos
         self.orientation=orientation % (np.pi * 2)
-        self.vertices = [pos + rotate_around_center_multi(self.seg_vertices[0], -orientation)]
+        self.vertices = [pos + ang_aux.rotate_around_center_multi(self.seg_vertices[0], -orientation)]
         self.set_lin_vel(lin_vel)
         self.set_ang_vel(ang_vel)
 
@@ -242,7 +242,7 @@ class DefaultSegment(BodySegment):
         return np.array(self.pos), self.orientation
 
     def get_world_point(self, local_point):
-        return self.get_position() + rotate_around_center(point=local_point, radians=-self.get_orientation())
+        return self.get_position() + ang_aux.rotate_around_center(point=local_point, radians=-self.get_orientation())
 
     def get_angularvelocity(self):
         return self.ang_vel

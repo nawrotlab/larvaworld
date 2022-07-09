@@ -1,8 +1,7 @@
 import random
 import numpy as np
 
-import lib.aux.sim_aux
-from lib.aux.dictsNlists import NestDict
+from lib.aux import dictsNlists as dNl, sim_aux
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
 
@@ -27,7 +26,7 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0,0
         self.cum_food_detected = 0
-        self.foraging_dict = NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+        self.foraging_dict = dNl.NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
                               self.model.foodtypes.keys()})
 
     def update_larva(self):
@@ -135,7 +134,7 @@ class LarvaSim(BodySim, Larva):
         return self.feed_success
 
     def update_behavior_dict(self):
-        d = NestDict(self.null_behavior_dict.copy())
+        d = dNl.NestDict(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter
         if inter is not None:
             s, f, p, r = inter.active_bouts
@@ -212,7 +211,7 @@ class LarvaSim(BodySim, Larva):
             elif self.model.experiment == 'keep_the_flag':
                 carrier_group = self.group
                 carrier_group_odor_id = self.odor_id
-                opponent_group = lib.aux.sim_aux.LvsRtoggle(carrier_group)
+                opponent_group = sim_aux.LvsRtoggle(carrier_group)
                 opponent_group_odor_id = f'{opponent_group}_odor'
                 for f in self.model.get_flies():
                     if f.group == carrier_group:

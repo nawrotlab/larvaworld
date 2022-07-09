@@ -2,12 +2,11 @@ from copy import deepcopy
 
 import numpy as np
 
-from lib.aux.ang_aux import rotate_around_point
-import lib.aux.dictsNlists as dNl
+
 from lib.model.agents._larva import Larva
 from lib.model.body.body import draw_body_orientation, draw_body
 from lib.model.body.controller import BodyReplay
-
+from lib.aux import dictsNlists as dNl, ang_aux
 
 class LarvaReplay(Larva, BodyReplay):
     def __init__(self, unique_id, model, length=5, data=None, **kwargs):
@@ -100,8 +99,8 @@ class LarvaReplay(Larva, BodyReplay):
                 x, y = self.pos
                 h_or = self.front_orientation
                 b_or = self.front_orientation - self.bend
-                p_head = np.array(rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
-                p_tail = np.array(rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
+                p_head = np.array(ang_aux.rotate_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
+                p_tail = np.array(ang_aux.rotate_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
                 pos1 = [np.nanmean([p_head[j], [x, y][j]]) for j in [0, 1]]
                 pos2 = [np.nanmean([p_tail[j], [x, y][j]]) for j in [0, 1]]
                 segs[0].update_poseNvertices(pos1, h_or)
