@@ -1,11 +1,12 @@
 import warnings
 
-from lib.registry.pars import preg
+
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np
 from scipy.stats import ks_2samp
 
+from lib.registry.pars import preg
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
@@ -63,7 +64,7 @@ def bend_error_exclusion(robot):
 
 
 def space_dic(mkeys,mID0):
-    M = preg.larva_conf_dict2
+    M = preg.larva_conf_dict
     m = M.loadConf(mID0)
     mF = dNl.flatten_dict(m)
     dic = {}
@@ -81,7 +82,7 @@ def space_dic(mkeys,mID0):
 
 def ga_conf(name, env_params,spaceIDs, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
             m1=None, sel={}, build={}, fitID=None, init='random', excl_func=None, robot_class=LarvaRobot, **kwargs):
-    M=preg.larva_conf_dict2
+    M=preg.larva_conf_dict
     # m=M.loadConf(m0)
     # mF=dNl.flatten_dict(m)
     # dic={}

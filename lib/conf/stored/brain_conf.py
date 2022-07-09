@@ -7,10 +7,6 @@ import copy
 import numpy as np
 
 import lib.aux.dictsNlists as dNl
-from lib.conf.stored.conf import loadConf
-# from lib.registry.dtypes import null_dict
-
-# Crawl-bend interference
 from lib.registry.pars import preg
 
 CT_exclusive = preg.get_null('interference', mode='default', attenuation=0.0)

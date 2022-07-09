@@ -433,12 +433,7 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
         ms = [m] * Nids
 
     if use_LarvaConfDict:
-        mConfDict = preg.larva_conf_dict
-
-        mConfs = [mConfDict.mIDconf(m) for m in ms]
-        ms = [mConfDict.multiconf(mConf) for mConf in mConfs]
-    else:
-        mConfs = ms
+        pass
 
     ids = [f'Agent{j}' for j in range(Nids)]
 

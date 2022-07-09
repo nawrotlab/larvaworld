@@ -1017,7 +1017,7 @@ class LarvaDataset:
     def modelConf_analysis(self):
         if 'modelConfs' not in self.config.keys():
             self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-        M=preg.larva_conf_dict2
+        M=preg.larva_conf_dict
         entries_avg, mIDs_avg=M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
         self.config.modelConfs.average = entries_avg
         self.save_config(add_reference=True)
@@ -1042,7 +1042,7 @@ if __name__ == '__main__':
     d = preg.loadRef(refID)
     d.load(step=False)
     #e, c = d.endpoint_data, d.config
-    #M = preg.larva_conf_dict2
+    #M = preg.larva_conf_dict
     # M.add_var_mIDs(refID=refID, e=e, c=c, mID0s=['PHIonNEU'])
     d.eval_model_graphs(mIDs=['PHIonNEU','PHIonNEU_var'], norm_modes=['raw', 'minmax'], id='PHIonNEU avgVSvar', N=20)
     raise
@@ -1055,7 +1055,7 @@ if __name__ == '__main__':
     c.modelConfs.average = entries
     d.save_config(add_reference=True)
     d.eval_model_graphs(mIDs=mID0s, norm_modes=['raw', 'minmax'], id='6mIDs_avg_again', N=10)
-    diff_df_avg = preg.larva_conf_dict2.diff_df(mIDs=mID0s)
+    diff_df_avg = preg.larva_conf_dict.diff_df(mIDs=mID0s)
     preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=d.dir_dict.model_tables,
                                 name='avg_mIDs_diffs')
 

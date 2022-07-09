@@ -1,5 +1,4 @@
-import lib.aux.dictsNlists as dNl
-import lib.aux.naming as nam
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.plot.dict import graph_dict
 from lib.registry.pars import preg
 

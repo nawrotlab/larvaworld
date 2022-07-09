@@ -23,7 +23,7 @@ from lib.ga.util.time_util import TimeUtil
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
                  selection_ratio=0.3, verbose=0, bestConfID=None):
-        self.M = preg.larva_conf_dict2
+        self.M = preg.larva_conf_dict
         self.bestConfID = bestConfID
         self.model = model
         self.Ngenerations = Ngenerations

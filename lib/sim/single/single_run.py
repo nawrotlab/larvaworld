@@ -201,10 +201,9 @@ class SingleRun:
 
 
 def set_output(collections, Nsegs=2, Ncontour=0):
-    from lib.aux.collecting import output_dict
     if collections is None:
         collections = ['pose']
-    cd = output_dict
+    cd = preg.output_dict
     step = []
     end = []
     tables = {}

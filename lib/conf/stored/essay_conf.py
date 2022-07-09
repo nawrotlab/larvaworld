@@ -3,15 +3,10 @@ import shutil
 
 import pandas as pd
 
-from lib.aux.colsNstr import N_colors
-from lib.aux.dictsNlists import flatten_list
-from lib.aux.par_aux import sub
-
 from lib.conf.stored.exp_conf import RvsS_groups
-
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
-from lib.aux import dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 
 class Essay:
@@ -23,7 +18,7 @@ class Essay:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
         self.N = N
         self.G = preg.graph_dict
-        self.M = preg.larva_conf_dict2
+        self.M = preg.larva_conf_dict
         self.show = show
         self.type = type
         self.enrichment = enrichment
@@ -174,7 +169,7 @@ class RvsS_Essay(Essay):
 
     def get_entrylist(self, datasets, substrates, durs, qs, hs, G):
         entrylist = []
-        pathlength_ls = flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in substrates])
+        pathlength_ls = dNl.flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in substrates])
         ls0 = [r'$for^{R}$', r'$for^{S}$']
         kws00 = {
             'leg_cols': ['black', 'white'],
@@ -182,8 +177,8 @@ class RvsS_Essay(Essay):
         }
         for exp, dds in datasets.items():
             Ndds = len(dds)
-            ds = flatten_list(dds)
-            ls = pathlength_ls if exp == 'PATHLENGTH' else flatten_list([ls0] * Ndds)
+            ds = dNl.flatten_list(dds)
+            ls = pathlength_ls if exp == 'PATHLENGTH' else dNl.flatten_list([ls0] * Ndds)
             kws0 = {
                 'datasets': ds,
                 'labels': ls,
@@ -262,9 +257,9 @@ class RvsS_Essay(Essay):
             #
             def dsNls(ds0, lls=None):
                 if lls is None:
-                    lls = flatten_list([ls] * len(ds0))
-                dds = flatten_list(ds0)
-                deb_dicts = flatten_list([d.load_dicts('deb') for d in dds])
+                    lls = dNl.flatten_list([ls] * len(ds0))
+                dds = dNl.flatten_list(ds0)
+                deb_dicts = dNl.flatten_list([d.load_dicts('deb') for d in dds])
                 return {'datasets': dds,
                         'labels': lls,
                         'deb_dicts': deb_dicts,
@@ -338,9 +333,9 @@ class DoublePatch_Essay(Essay):
         self.exp_dict = self.time_ratio_exp()
         mIDs = ['rover', 'sitter']
         self.mdiff_df = self.M.diff_df(mIDs=mIDs,
-                                       ms=[preg.larva_conf_dict2.loadConf(f'navigator_{mID}') for mID in mIDs])
+                                       ms=[preg.larva_conf_dict.loadConf(f'navigator_{mID}') for mID in mIDs])
         #
-        # RS_diff_df=preg.larva_conf_dict2.diff_df(mIDs=mIDs, ms=[preg.larva_conf_dict2.loadConf(f'navigator_{mID}') for mID in mIDs])
+        # RS_diff_df=preg.larva_conf_dict.diff_df(mIDs=mIDs, ms=[preg.larva_conf_dict.loadConf(f'navigator_{mID}') for mID in mIDs])
 
     def get_larvagroups(self, type='standard'):
         age = 72.0
@@ -470,7 +465,7 @@ class Chemotaxis_Essay(Essay):
         return dNl.NestDict(models)
 
     def get_models2(self, gain):
-        cols=N_colors(6)
+        cols=cNs.N_colors(6)
         i=0
         models={}
         for Tmod in ['NEU', 'SIN'] :
@@ -486,7 +481,7 @@ class Chemotaxis_Essay(Essay):
         return dNl.NestDict(models)
 
     def get_models3(self, gain):
-        cols=N_colors(6)
+        cols=cNs.N_colors(6)
         i=0
         models={}
         for Tmod in ['NEU', 'SIN'] :

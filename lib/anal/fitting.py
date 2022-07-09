@@ -1,11 +1,10 @@
 import os
 import warnings
 import numpy as np
-from scipy.stats import levy, norm, uniform, rv_discrete, ks_2samp
+from scipy.stats import levy, norm, rv_discrete, ks_2samp
 from scipy.special import erf
 
-from lib.aux import naming as nam
-import lib.aux.dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 
 

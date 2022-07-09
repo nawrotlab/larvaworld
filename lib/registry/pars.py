@@ -31,7 +31,7 @@ def store_reference_data_confs():
 
 class ParRegistry:
     def __init__(self, mode='build', object=None, save=True, load_funcs=False):
-        from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict
+        from lib.registry import paths, init_pars, par_funcs, parser_dict, dist_dict, parConfs, par_dict, output
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
                           'Group', 'Trial',
                           'Life', 'Body']
@@ -42,8 +42,8 @@ class ParRegistry:
         self.parser_dict = parser_dict.ParserDict(init_dict=self.init_dict).dict
         self.dist_dict0 = dist_dict.DistDict()
         self.dist_dict = self.dist_dict0.dict
-        self.larva_conf_dict = parConfs.LarvaConfDict(init_dict=self.init_dict, dist_dict0=self.dist_dict0)
-        self.larva_conf_dict2 = parConfs.LarvaConfDict2(dist_dict0=self.dist_dict0)
+        self.output_dict = output.output_dict
+        self.larva_conf_dict = parConfs.LarvaConfDict(dist_dict0=self.dist_dict0)
 
         if load_funcs:
             self.func_dict = dNl.load_dict(self.path_dict['ParFuncDict'])
@@ -396,7 +396,7 @@ class ParRegistry:
             elif conftype == 'Group':
                 from lib.conf.stored.data_conf import importformats as d
             elif conftype == 'Model':
-                self.larva_conf_dict2.baseConfs()
+                self.larva_conf_dict.baseConfs()
                 from lib.conf.stored.larva_conf import mod_dict as d
             elif conftype == 'ModelGroup':
                 from lib.conf.stored.larva_conf import mod_group_dict as d

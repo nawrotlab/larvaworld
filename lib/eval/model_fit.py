@@ -42,7 +42,7 @@ class Calibration:
             'all' : physics_keys+turner_keys
         })
 
-        self.D = preg.larva_conf_dict2
+        self.D = preg.larva_conf_dict
         self.mdicts = dNl.NestDict({
             'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
             'physics': self.D.dict.model.m['physics'].args
@@ -201,47 +201,6 @@ def epar(e, k=None, par=None, average=True):
         return np.round(vs.median(), 2)
     else:
         return vs
-
-
-def adapt_crawler(ee, mode='realistic', average=True):
-    # print(ee.columns.values[:40])
-    # raise
-    # D = preg.larva_conf_dict
-    mdict=preg.larva_conf_dict.dict2.model.m['crawler'].mode[mode].args
-    conf0 = dNl.NestDict({'mode':mode})
-    for d, p in mdict.items():
-        print(d,p.codename)
-        if isinstance(p, param.Parameterized):
-            conf0[d] = epar(ee, par=p.codename, average=average)
-        else:
-            raise
-
-    return conf0
-
-
-def adapt_intermitter(c, e, **kwargs):
-    intermitter = preg.get_null('intermitter')
-    intermitter.stridechain_dist = c.bout_distros.run_count
-    try:
-        ll1, ll2 = intermitter.stridechain_dist.range
-        intermitter.stridechain_dist.range = (int(ll1), int(ll2))
-    except:
-        pass
-
-    intermitter.run_dist = c.bout_distros.run_dur
-    try:
-        ll1, ll2 = intermitter.run_dist.range
-        intermitter.run_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
-    except:
-        pass
-    intermitter.pause_dist = c.bout_distros.pause_dur
-    try:
-        ll1, ll2 = intermitter.pause_dist.range
-        intermitter.pause_dist.range = (np.round(ll1, 2), np.round(ll2, 2))
-    except:
-        pass
-    intermitter.crawl_freq = epar(e, 'fsv', average=True)
-    return intermitter
 
 
 def optimize_mID_turnerNinterference(mID0,  refID, mID1=None, **kwargs) :

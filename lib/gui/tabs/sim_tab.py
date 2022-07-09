@@ -1,9 +1,6 @@
 import copy
 import PySimpleGUI as sg
 
-from lib.aux.collecting import output_keys
-# from lib.gui.aux.elements import SelectionList, DataList, PadDict, PadTable, GraphList
-# from lib.gui.aux.functions import t_kws, gui_col, gui_cols, col_size, default_list_width
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
@@ -84,6 +81,7 @@ class SimTab(GuiTab):
         return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):
+        output_keys=list(preg.output_dict.keys())
         # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
@@ -97,7 +95,8 @@ class SimTab(GuiTab):
         conf = {
 
             'sim_params': c['sim_params'].get_dict(v, w),
-            'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
+            'collections': [k for k in list(preg.output_dict.keys()) if c['output'].get_dict(v, w)[k]],
+            # 'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
             'enrichment': self.current_conf(v)['enrichment'],
             'trials': c['trials'].get_dict(v, w),
         }

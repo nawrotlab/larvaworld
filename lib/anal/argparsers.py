@@ -1,10 +1,8 @@
 import copy
 from argparse import ArgumentParser
 
-from lib.aux.colsNstr import N_colors
-import lib.aux.dictsNlists as dNl
 from lib.registry.pars import preg
-
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 #
 class Parser:
@@ -126,7 +124,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
 def update_exp_models(exp_conf, models, N=None):
     larva_groups = {}
     Nmodels = len(models)
-    colors = N_colors(Nmodels)
+    colors = cNs.N_colors(Nmodels)
     gConf0 = list(exp_conf.larva_groups.values())[0]
     if isinstance(models, dict):
         for i, ((gID, m), col) in enumerate(zip(models.items(), colors)):

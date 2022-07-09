@@ -2,6 +2,7 @@ import param
 
 from lib.aux.par_aux import subsup
 
+
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 bout_keys = ['stride', 'pause', 'turn']
 to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
@@ -125,7 +126,6 @@ class ParInitDict:
         import numpy as np
         import param
         from lib.aux import dictsNlists as dNl
-        from lib.aux.collecting import output_keys
 
         bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
 
@@ -464,6 +464,7 @@ class ParInitDict:
             return d
 
         def init_pars0():
+            from lib.registry.output import output_dict
             d = dNl.NestDict({
 
                 'odorscape': {
@@ -583,7 +584,8 @@ class ParInitDict:
                     'max_Nagents': {'t': int, 'v': 500, 'lim': (0, 5000), 'disp': 'max # larvae'},
                     'save_mode': {'t': str, 'v': 'semifull', 'vs': ['minimal', 'semifull', 'full', 'points']},
                 },
-                'output': {n: bF for n in output_keys}})
+                'output': {n: bF for n in list(output_dict.keys())}
+            })
             return d
 
         def init_mods():

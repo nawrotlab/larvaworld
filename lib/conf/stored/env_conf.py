@@ -1,8 +1,7 @@
 import numpy as np
 
-from lib.aux.colsNstr import col_range, N_colors
 from lib.registry.pars import preg
-
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 def border(ps, c='black', w=0.01, id=None):
     b = preg.get_null('Border', points=ps, default_color=c, width=w)
@@ -45,7 +44,7 @@ def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):
     if qs is None:
         qs = np.linspace(0.1, 1, Ngs)
     if cs is None:
-        cs = [tuple(col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
+        cs = [tuple(cNs.col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
     if os is None:
         os = [preg.oG(id=f'Odor{i}') for i in range(Ngs)]
     l = [sg(id=ids[i], c=cs[i], r=rs[i], a=ams[i], o=os[i], quality=qs[i], **kwargs) for i in range(Ngs)]
@@ -183,7 +182,7 @@ env_dict = {
     'thermo_arena': env((0.3, 0.3), th={}),
     'windy_arena': env((0.3, 0.3), w={'wind_speed': 10.0}),
     'windy_blob_arena': env((0.128, 0.014),
-                            f_pars(sg=sgs(1, qs=np.ones(4), cs=N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
+                            f_pars(sg=sgs(1, qs=np.ones(4), cs=cNs.N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
                                           m='uniform', shape='rectangular', can_be_displaced=True,
                                           regeneration=True,
                                           regeneration_pos={'loc': (0.005, 0.0), 'scale': (0.0, 0.0)})),

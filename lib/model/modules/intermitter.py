@@ -533,7 +533,7 @@ if __name__ == "__main__":
     # c=d.config
     # from lib.model.DEB.deb import DEB
     # for mID in ['rover', 'sitter']:
-    #     m=preg.larva_conf_dict2.loadConf(mID).energetics
+    #     m=preg.larva_conf_dict.loadConf(mID).energetics
     #     print(m.gut)
     #     deb = DEB(id=mID, gut_params=m.gut, **m.DEB)
     #     EEB=get_best_EEB(deb, sample=c)

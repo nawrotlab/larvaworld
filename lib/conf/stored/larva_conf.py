@@ -5,7 +5,6 @@ import copy
 
 import numpy as np
 
-from lib.aux.dictsNlists import NestDict
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
 
@@ -61,7 +60,7 @@ def brain(ks, nengo=False, OD=None, **kwargs):
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo
-    return NestDict(d)
+    return dNl.NestDict(d)
 
 
 def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None, gut_kws={}, **deb_kws):
@@ -135,7 +134,6 @@ def OD(ids: list, means: list, stds=None) -> dict:
 
 
 def create_mod_dict():
-    Ccon = preg.larva_conf_dict.conf(mkey='crawler', mode='constant', initial_amp=0.0012)
     Tsin = preg.get_null('turner',
                          mode='sinusoidal',
                          initial_amp=15.0,
@@ -170,7 +168,7 @@ def create_mod_dict():
     M0 = mod()
 
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
-        M1 = NestDict(copy.deepcopy(M0))
+        M1 = dNl.NestDict(copy.deepcopy(M0))
         M1.brain = brain
         M1.body.update(**bod)
         M1.physics.update(**phys)
@@ -216,12 +214,12 @@ def create_mod_dict():
     # LOdef = brain(['L', 'O'], interference=IfDef)
 
     def add_OD(OD, B0=LOF):
-        B1 = NestDict(copy.deepcopy(B0))
+        B1 = dNl.NestDict(copy.deepcopy(B0))
         B1.olfactor_params.odor_dict = OD
         return B1
 
     def add_Im(Im, B0=LOFM):
-        B1 = NestDict(copy.deepcopy(B0))
+        B1 = dNl.NestDict(copy.deepcopy(B0))
         B1.intermitter_params = Im
         return B1
 

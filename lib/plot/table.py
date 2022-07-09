@@ -28,7 +28,6 @@ def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_
     cumNks0=np.cumsum(Nks.values)
     cumNks0=np.insert(cumNks0,0,0)
     cumNks= {k : cumNks0[i]+1 for i,(k,Nk) in enumerate(Nks.items())}
-    # cumNks= {k : int(cumNks0[i]-Nk/2.5) for i,(k,Nk) in enumerate(Nks.items())}
     for (k0,k1), cell in mpl._cells.items():
         if k1 == -1:
             k=cell._text._text

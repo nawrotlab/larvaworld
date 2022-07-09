@@ -5,10 +5,8 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
-import lib.aux.dictsNlists as dNl
-import lib.aux.naming as nam
 from lib.registry.pars import preg
-
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 
 class ExpFitter:

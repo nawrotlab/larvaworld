@@ -1,6 +1,5 @@
-from lib.aux import naming as nam
 from lib.registry.pars import preg
-from lib.aux import dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 def metric_def(ang={}, sp={}, **kwargs):
     def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):
