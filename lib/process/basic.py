@@ -1,16 +1,12 @@
 import numpy as np
 import pandas as pd
-from scipy.signal import argrelextrema, spectrogram
+from scipy.signal import argrelextrema
 
 from lib.registry.pars import preg
-from lib.aux.xy_aux import interpolate_nans
-from lib.aux.stdout import suppress_stdout
-from lib.aux.sim_aux import apply_filter_to_array_with_nans_multidim
-import lib.aux.naming as nam
 from lib.process.angular import angular_processing
 from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_PI, \
     align_trajectories, comp_wind_metrics, comp_final_anemotaxis, comp_PI2, comp_straightness_index
-
+from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux, stdout
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
     if abs_threshold is None:
@@ -68,7 +64,7 @@ def filter(s, c, freq=2, inplace=True, recompute=False, **kwargs):
     pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
-    f_array = apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / c.dt)
+    f_array = sim_aux.apply_filter_to_array_with_nans_multidim(data, freq=freq, fr=1 / c.dt)
     fpars = nam.filt(pars) if not inplace else pars
     for j, p in enumerate(fpars):
         s[p] = f_array[:, j, :].flatten()
@@ -82,7 +78,7 @@ def interpolate_nan_values(s, c, pars=None, **kwargs):
     pars = [p for p in pars if p in s.columns]
     for p in pars:
         for id in s.index.unique('AgentID').values:
-            s.loc[(slice(None), id), p] = interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
+            s.loc[(slice(None), id), p] = xy_aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
 
@@ -134,7 +130,7 @@ def preprocess(s, e, c, rescale_by=None, drop_collisions=False, interpolate_nans
         'recompute': recompute,
         'c': c,
     }
-    with suppress_stdout(show_output):
+    with stdout.suppress_stdout(show_output):
         if rescale_by is not None:
             rescale(scale=rescale_by, **cc)
         if drop_collisions:
@@ -183,7 +179,7 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
         **kwargs
     }
 
-    with suppress_stdout(show_output):
+    with stdout.suppress_stdout(show_output):
         if processing['angular']:
             angular_processing(**cc)
         if processing['spatial']:

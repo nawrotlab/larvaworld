@@ -3,15 +3,9 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from lib.aux.vel_aux import compute_velocity, compute_component_velocity
-from lib.aux.ang_aux import rotate_multiple_points, angle_dif
-from lib.aux.dictsNlists import group_list_by_n, flatten_list
-import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
 from lib.registry.pars import preg
-from lib.aux.xy_aux import eudi5x, raw_or_filtered_xy, compute_centroid
-import lib.aux.dictsNlists as dNl
-
+from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux
 
 def comp_linear(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -34,8 +28,8 @@ def comp_linear(s, e, c, mode='minimal'):
         print('Required orients not found. Component linear metrics not computed.')
         return
 
-    xy_params = raw_or_filtered_xy(s, points)
-    xy_params = group_list_by_n(xy_params, 2)
+    xy_params = xy_aux.raw_or_filtered_xy(s, points)
+    xy_params = dNl.group_list_by_n(xy_params, 2)
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = nam.lin(nam.dst(points))
@@ -50,7 +44,7 @@ def comp_linear(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
+            v, d = vel_aux.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -63,7 +57,7 @@ def comp_linear(s, e, c, mode='minimal'):
         s[vel] = V.flatten()
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
-    pars = flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     print('All linear parameters computed')
 
@@ -80,8 +74,8 @@ def comp_spatial(s, e, c, mode='minimal'):
     points = np.unique(points).tolist()
     points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
 
-    xy_params = raw_or_filtered_xy(s, points)
-    xy_params = group_list_by_n(xy_params, 2)
+    xy_params = xy_aux.raw_or_filtered_xy(s, points)
+    xy_params = dNl.group_list_by_n(xy_params, 2)
 
     # all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = nam.dst(points)
@@ -96,7 +90,7 @@ def comp_spatial(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, id in enumerate(c.agent_ids):
-            v, d = compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
+            v, d = vel_aux.compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -109,7 +103,7 @@ def comp_spatial(s, e, c, mode='minimal'):
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
 
-    pars = flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
@@ -164,7 +158,7 @@ def comp_centroid(s, c, recompute=False):
         contour = np.reshape(contour, (N, c.Ncontour, 2))
         c = np.zeros([N, 2]) * np.nan
         for i in range(N):
-            c[i, :] = np.array(compute_centroid(contour[i, :, :]))
+            c[i, :] = np.array(xy_aux.compute_centroid(contour[i, :, :]))
         s[nam.xy('centroid')[0]] = c[:, 0]
         s[nam.xy('centroid')[1]] = c[:, 1]
     print('Centroid coordinates computed.')
@@ -275,7 +269,7 @@ def comp_dispersion(s=None, e=None, c=None, recompute=False, dsp_starts=[0], dsp
                 print(f'No values to set origin point for {id}')
                 AA[:, i] = np.empty(len(xy)) * np.nan
                 continue
-            d = eudi5x(xy.values, origin_xy)
+            d = xy_aux.eudi5x(xy.values, origin_xy)
             d[:t0] = np.nan
             AA[:, i] = d
         s[p] = AA.flatten()
@@ -471,7 +465,7 @@ def comp_source_metrics(s, e, c, **kwargs):
         temp = np.array(pos) - s[xy].values
         s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:, 1], temp[:, 0]))) % 360 - 180
         s[pabs] = s[o].abs()
-        s[d] = eudi5x(s[xy].values, np.array(pos))
+        s[d] = xy_aux.eudi5x(s[xy].values, np.array(pos))
         e[pmax] = s[d].groupby('AgentID').max()
         e[pmu] = s[d].groupby('AgentID').mean()
         e[pfin] = s[d].dropna().groupby('AgentID').last()
@@ -504,14 +498,14 @@ def comp_wind_metrics(s, e, c, **kwargs):
         for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
             origin = e[[nam.initial('x'), nam.initial('y')]].loc[id]
-            d = eudi5x(xy, np.array(origin))
+            d = xy_aux.eudi5x(xy, np.array(origin))
             print(d)
             dx = xy[:, 0] - origin[0]
             dy = xy[:, 1] - origin[1]
             angs = np.arctan2(dy, dx)
-            a = np.array([angle_dif(ang, woo) for ang in angs])
+            a = np.array([ang_aux.angle_dif(ang, woo) for ang in angs])
             s.loc[(slice(None), id), 'anemotaxis'] = d * np.cos(a)
-        s[nam.bearing2('wind')] = s.apply(lambda r: angle_dif(r[nam.orient('front')], wo), axis=1)
+        s[nam.bearing2('wind')] = s.apply(lambda r: ang_aux.angle_dif(r[nam.orient('front')], wo), axis=1)
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 
@@ -526,7 +520,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         dy = xy1.values[:, 1] - xy0.values[:, 1]
         d = np.sqrt(dx ** 2 + dy ** 2)
         angs = np.arctan2(dy, dx)
-        a = np.array([angle_dif(ang, woo) for ang in angs])
+        a = np.array([ang_aux.angle_dif(ang, woo) for ang in angs])
         e['anemotaxis'] = d * np.cos(a)
         # print(e['anemotaxis'])
 
@@ -536,7 +530,7 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=No
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-    xy_pairs = group_list_by_n(np.unique(flatten_list(xy_pairs)), 2)
+    xy_pairs = dNl.group_list_by_n(np.unique(dNl.flatten_list(xy_pairs)), 2)
     if mode == 'arena':
         print('Centralizing trajectories in arena center')
         if arena_dims is None:
@@ -607,7 +601,7 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     else:
         raise ValueError(f" The requested {point} is not part of the dataset")
     for id, p in zip(ids, xy):
-        for x, y in group_list_by_n(pars, 2):
+        for x, y in dNl.group_list_by_n(pars, 2):
             s.loc[(slice(None), id), [x, y]] -= p
 
     if fix_segment is not None:
@@ -621,7 +615,7 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
             s.loc[(slice(None), id), pars] = [
-                flatten_list(rotate_multiple_points(points=np.array(group_list_by_n(d[i].tolist(), 2)),
+                dNl.flatten_list(ang_aux.rotate_multiple_points(points=np.array(dNl.group_list_by_n(d[i].tolist(), 2)),
                                                     radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
@@ -640,8 +634,8 @@ def comp_PI2(arena_xdim, xys, x=0.04):
     dLR = np.zeros([N, Nticks]) * np.nan
     for i, id in enumerate(ids):
         xy = xys.xs(id, level='AgentID').values
-        dL = eudi5x(xy, np.array((-x, 0)))
-        dR = eudi5x(xy, np.array((x, 0)))
+        dL = xy_aux.eudi5x(xy, np.array((-x, 0)))
+        dR = xy_aux.eudi5x(xy, np.array((x, 0)))
         dLR[i, :] = (dR - dL) / (2 * x)
     dLR_mu = np.mean(dLR, axis=1)
     mu_dLR_mu = np.mean(dLR_mu)

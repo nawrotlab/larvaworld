@@ -3,12 +3,8 @@ import os.path
 import numpy as np
 import pandas as pd
 
-import lib.aux.xy_aux
-import lib.process.aux
-import lib.aux.dictsNlists
-import lib.aux.par_aux
 from lib.stor.match_ids import match_larva_ids
-from lib.aux import naming as nam
+from lib.aux import naming as nam, dictsNlists as dNl, xy_aux
 
 
 def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
@@ -132,7 +128,7 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
         if d.Ncontour>0 :
             xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
             ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-            xcs,ycs= lib.aux.xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
+            xcs,ycs= xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
             xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
             ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
             par_list += [xcs, ycs]
@@ -170,7 +166,7 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
             xy = data[nam.xy(d.points, flat=True)].values
             spinelength = np.zeros(len(data)) * np.nan
             for j in range(xy.shape[0]):
-                k = np.sum(np.diff(np.array(lib.aux.dictsNlists.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                k = np.sum(np.diff(np.array(dNl.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
                 if not np.isnan(np.sum(k)):
                     sp_l = np.sum([np.sqrt(kk) for kk in k])
                 else:

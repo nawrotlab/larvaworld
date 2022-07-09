@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pypet import cartesian_product, load_trajectory
 
-from lib.aux.dictsNlists import flatten_list, reconstruct_dict
+from lib.aux import dictsNlists as dNl
 from lib.registry.pars import preg
 
 
@@ -12,7 +12,7 @@ def retrieve_exp_conf(traj):
         kws={'sim_ID':f'run_{traj.v_idx}', 'path':traj.config.dataset_path,'store_data':False} if k0=='sim_params' else {}
         try :
             c=traj.f_get(k0)
-            d[k0]=reconstruct_dict(c, **kws)
+            d[k0]=dNl.reconstruct_dict(c, **kws)
         except:
             d[k0]={}
     return d
@@ -58,7 +58,7 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
         for p, vs in zip(additional_params, additional_values):
             Nspace = len(values[0])
             Nv = len(vs)
-            values = [a * Nv for a in values] + flatten_list([[v] * Nspace for v in vs])
+            values = [a * Nv for a in values] + dNl.flatten_list([[v] * Nspace for v in vs])
             returned_params += [p]
 
     space = dict(zip(returned_params, values))

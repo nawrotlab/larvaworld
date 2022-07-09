@@ -8,11 +8,10 @@ from matplotlib import pyplot as plt
 from scipy.stats import stats
 from sklearn.linear_model import LinearRegression
 
-import lib.aux.naming as nam
-import lib.aux.dictsNlists as dNl
+
 from lib.registry.pars import preg
 from lib.process.spatial import comp_centroid
-
+from lib.aux import dictsNlists as dNl, naming as nam
 
 
 def comp_stride_variation(d, component_vels=True):

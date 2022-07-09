@@ -1,15 +1,9 @@
-import copy
-import os
-
 import numpy as np
 import pandas as pd
-import param
 
 
 from lib.aux import dictsNlists as dNl
-
 from lib.model.body.controller import PhysicsController
-
 from lib.registry.pars import preg
 
 
@@ -70,37 +64,6 @@ class Calibration:
 
         self.best = None
         self.KS_dic = None
-
-    # def build_modelConf(self, new_id=None, **kwargs):
-    #     if new_id is None:
-    #         new_id = f'fitted_{self.turner_mode}_turner'
-    #     m = self.refDataset.average_modelConf(new_id=new_id, **self.best, **kwargs)
-    #     return {new_id: m}
-
-    # def plot_turner_distros(self, sim, fig=None, axs=None, in_deg=False, **kwargs):
-    #     Nps = len(self.shorts)
-    #     P = BasePlot(name='turner_distros', **kwargs)
-    #     P.build(Ncols=Nps, fig=fig, axs=axs, figsize=(5 * Nps, 5), sharey=True)
-    #     for i, sh in enumerate(self.shorts):
-    #         p, lab = preg.getPar(sh, to_return=['d', 'lab'])
-    #         vs = self.target[sh]
-    #         if in_deg:
-    #             vs = np.rad2deg(vs)
-    #         lim = np.nanquantile(vs, 0.99)
-    #         bins = np.linspace(-lim, lim, 100)
-    #
-    #         ws = np.ones_like(vs) / float(len(vs))
-    #         P.axs[i].hist(vs, weights=ws, label='experiment', bins=bins, color='red', alpha=0.5)
-    #
-    #         vs0 = sim[sh]
-    #         if in_deg:
-    #             vs0 = np.rad2deg(vs0)
-    #         ws0 = np.ones_like(vs0) / float(len(vs0))
-    #         P.axs[i].hist(vs0, weights=ws0, label='model', bins=bins, color='blue', alpha=0.5)
-    #         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=lab,
-    #                   xMaxN=4, yMaxN=4, leg_loc='upper left' if i == 0 else None)
-    #     P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.01, H=0.1)
-    #     return P.get()
 
     def sim_turner(self, N=2000):
         from lib.aux.ang_aux import wrap_angle_to_0

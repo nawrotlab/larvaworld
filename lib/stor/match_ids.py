@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.aux.dictsNlists import common_member
+from lib.aux import dictsNlists as dNl
 
 
 def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, **kwargs):
@@ -44,7 +44,7 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx
         else :
             Nidx += 1
     print('Finalizing dataset')
-    while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
+    while len(dNl.common_member(list(pairs.keys()), list(pairs.values()))) > 0:
         for id0,id1 in pairs.items() :
             if id1 in pairs.keys() :
                 pairs[id0]=pairs[id1]

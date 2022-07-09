@@ -1,12 +1,7 @@
 import numpy as np
-import pandas as pd
-
-from lib.aux.ang_aux import angle_dif, angle, angle_to_x_axis, unwrap_deg
-from lib.aux.dictsNlists import flatten_list
-import lib.aux.naming as nam
 
 from lib.process.store import store_aux_dataset
-
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux
 
 def comp_angles(s, e, c, mode='full'):
     N=c.Npoints
@@ -25,14 +20,14 @@ def comp_angles(s, e, c, mode='full'):
     elif mode == 'minimal':
         angles = bend_angles
     print(f'Computing {Nangles} angles')
-    xy_pars = flatten_list([xy[i] for i in range(Nangles + 2)])
+    xy_pars = dNl.flatten_list([xy[i] for i in range(Nangles + 2)])
     Axy = s[xy_pars].values
     Npoints = int(Axy.shape[1] / 2)
     Nticks = Axy.shape[0]
     Axy = np.reshape(Axy, (Nticks, Npoints, 2))
     A = np.zeros([Nangles, Nticks]) * np.nan
     for i in range(Nticks):
-        A[:, i] = np.array([angle(Axy[i, j + 2, :], Axy[i, j + 1, :], Axy[i, j, :]) for j in range(Nangles)])
+        A[:, i] = np.array([ang_aux.angle(Axy[i, j + 2, :], Axy[i, j + 1, :], Axy[i, j, :]) for j in range(Nangles)])
     for z, a in enumerate(angles):
         s[a] = A[z].T
     print('All angles computed')
@@ -51,7 +46,7 @@ def comp_bend(s, e, c, mode='minimal'):
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
-        s['bend'] = s.apply(lambda r: angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
+        s['bend'] = s.apply(lambda r: ang_aux.angle_dif(r[nam.orient('front')], r[nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
         bend_angles = comp_angles(s, e, c, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
@@ -93,7 +88,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     pars=nam.orient(['front','rear', 'head', 'tail'])
     Npars=len(pars)
 
-    xy_pars = flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
+    xy_pars = dNl.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
     xy_ar = s[xy_pars].values
     Nticks = xy_ar.shape[0]
     xy_ar = np.reshape(xy_ar, (Nticks, Npars*2, 2))
@@ -103,7 +98,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     cc = np.zeros([Npars, Nticks]) * np.nan
     for i in range(Nticks):
         for j in range(Npars):
-            cc[j, i] = angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
+            cc[j, i] = ang_aux.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
     for z, a in enumerate(pars):
         s[a] = cc[z].T
         e[nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
@@ -113,14 +108,14 @@ def comp_orientations(s, e, c, mode='minimal'):
         N = len(segs)
         print(f'Computing additional orients for {N} spinesegments')
         ors = nam.orient(segs)
-        xy_pars = flatten_list([xy[i] for i in range(N + 1)])
+        xy_pars = dNl.flatten_list([xy[i] for i in range(N + 1)])
         xy_ar = s[xy_pars].values
         # Npoints = int(xy_ar.shape[1] / 2)
         Nticks = xy_ar.shape[0]
         xy_ar = np.reshape(xy_ar, (Nticks, N*2, 2))
         cc = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
-            cc[:, i] = np.array([angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+            cc[:, i] = np.array([ang_aux.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
         for z, a in enumerate(ors):
             s[a] = cc[z].T
     print('All orientations computed')
@@ -138,7 +133,7 @@ def comp_orientation_1point(s, e, c):
     for j, id in enumerate(ids):
         xy = s[['x', 'y']].xs(id, level='AgentID').values
         for i in range(Nticks - 1):
-            c[i + 1, j] = angle_to_x_axis(xy[i, :], xy[i + 1, :], in_deg=True)
+            c[i + 1, j] = ang_aux.angle_to_x_axis(xy[i, :], xy[i + 1, :], in_deg=True)
     s[fov] = c.flatten()
     e[nam.initial(fov)] = s[fov].dropna().groupby('AgentID').first()
     print('All orientations computed')
@@ -150,7 +145,7 @@ def unwrap_orientations(s, segs):
     for p in pars:
         for id in s.index.unique('AgentID').values:
             ts = s.loc[(slice(None), id), p].values
-            s.loc[(slice(None), id), nam.unwrap(p)] = unwrap_deg(ts)
+            s.loc[(slice(None), id), nam.unwrap(p)] = ang_aux.unwrap_deg(ts)
     print('All orients unwrapped')
 
 

@@ -5,11 +5,10 @@ from itertools import product
 
 
 
-import lib.aux.dictsNlists
+from lib.aux import dictsNlists as dNl
 from lib.registry.pars import preg
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
-# from lib.conf.stored.conf import loadConf
 from lib.stor.larva_dataset import LarvaDataset
 
 def import_Jovanic_datasets(parent_dir,source_ids=['Fed', 'Deprived', 'Starved'], **kwargs) :
@@ -286,7 +285,7 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
                 dic[id] = folder_path
         elif df_ is not None:
             fs = os.listdir(folder_path)
-            ids = lib.aux.dictsNlists.unique_list([f.split(df_)[0] for f in fs if df_ in f])
+            ids = dNl.unique_list([f.split(df_)[0] for f in fs if df_ in f])
             for id in ids:
                 dic[id] = folder_path
         return dic

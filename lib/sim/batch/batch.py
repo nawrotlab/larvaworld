@@ -13,8 +13,7 @@ import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
-from lib.aux.dictsNlists import flatten_dict
-# from lib.registry.dtypes import null_dict
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry.pars import preg
 from lib.sim.batch.aux import grid_search_dict, delete_traj
 from lib.sim.batch.functions import single_run, batch_method_unpack
@@ -162,11 +161,11 @@ class BatchRun:
 
     def config(self, traj, optimization, batch_methods):
         if optimization is not None:
-            opt_dict = flatten_dict(optimization, parent_key='optimization', sep='.')
+            opt_dict = dNl.flatten_dict(optimization, parent_key='optimization', sep='.')
             for k, v in opt_dict.items():
                 traj.f_aconf(k, v)
         if batch_methods is not None:
-            opt_dict = flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
+            opt_dict = dNl.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
             for k, v in opt_dict.items():
                 traj.f_aconf(k, v)
         return traj
@@ -185,7 +184,7 @@ class BatchRun:
 
     def load_exp(self, traj, exp):
         for k0 in ['env_params', 'sim_params', 'trials', 'enrichment', 'larva_groups']:
-            dic = flatten_dict(exp[k0], parent_key=k0, sep='.')
+            dic = dNl.flatten_dict(exp[k0], parent_key=k0, sep='.')
             for k, v in dic.items():
                 if type(v) == list:
                     if len(v) == 0:

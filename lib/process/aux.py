@@ -3,9 +3,8 @@ import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks
 
-from lib.aux.sim_aux import fft_max, fft_freqs
 from lib.registry.pars import preg
-from lib.aux import dictsNlists as dNl, naming as nam
+from lib.aux import dictsNlists as dNl, naming as nam, sim_aux
 
 from lib.process.store import store_aux_dataset
 
@@ -157,7 +156,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
 
     """
     if fr is None:
-        fr = fft_max(a, dt, fr_range=(1, 2.5))
+        fr = sim_aux.fft_max(a, dt, fr_range=(1, 2.5))
     tmin = stretch[0] // (fr * dt)
     tmax = stretch[1] // (fr * dt)
     i_min = find_peaks(-a, height=-3 * vel_thr, distance=tmin)[0]
@@ -284,7 +283,7 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
 
 
 def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
-    fft_freqs(s, e, c)
+    sim_aux.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
     chunk_dicts = dNl.NestDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
