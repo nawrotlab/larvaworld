@@ -202,14 +202,16 @@ class ParRegistry:
 
     def enr_dict(self, proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False,interference=True,  def_kws={},
                  metric_definition=None, **kwargs):
-        from lib.registry.init_pars import proc_type_keys, bout_keys, to_drop_keys
+        to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
+                        'unused']
+        proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 
         if metric_definition is None:
             from lib.conf.stored.data_conf import metric_def
             metric_definition = metric_def(**def_kws)
         pre = self.get_null('preprocessing', **pre_kws)
         proc = self.get_null('processing', **{k: True if k in proc else False for k in proc_type_keys})
-        annot = self.get_null('annotation', **{k: True if k in bouts else False for k in bout_keys}, fits=fits,
+        annot = self.get_null('annotation', **{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']}, fits=fits,
                               on_food=on_food,interference=interference)
         to_drop = self.get_null('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
         dic = self.get_null('enrichment', metric_definition=metric_definition, preprocessing=pre, processing=proc,

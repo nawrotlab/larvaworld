@@ -2,80 +2,6 @@ import param
 
 from lib.aux.par_aux import subsup
 
-
-proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
-bout_keys = ['stride', 'pause', 'turn']
-to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
-                'unused']
-
-# Compound densities (g/cm**3)
-substrate_dict = {
-    'agar': {
-        'glucose': 0,
-        'dextrose': 0,
-        'saccharose': 0,
-        'yeast': 0,
-        'agar': 16 / 1000,
-        'cornmeal': 0
-    },
-    'standard': {  # w_X = 20.45 g/mol
-        'glucose': 100 / 1000,
-        'dextrose': 0,
-        'saccharose': 0,
-        'yeast': 50 / 1000,
-        'agar': 16 / 1000,
-        'cornmeal': 0
-        # 'KPO4': 0.1/1000,
-        # 'Na_K_tartrate': 8/1000,
-        # 'NaCl': 0.5/1000,
-        # 'MgCl2': 0.5/1000,
-        # 'Fe2(SO4)3': 0.5/1000,
-    },
-    'cornmeal': {
-        'glucose': 517 / 17000,
-        'dextrose': 1033 / 17000,
-        'saccharose': 0,
-        'yeast': 0,
-        'agar': 93 / 17000,
-        'cornmeal': 1716 / 17000
-    },
-    'PED_tracker': {
-        'glucose': 0,
-        'dextrose': 0,
-        'saccharose': 2 / 200,
-        'yeast': 3 * 0.05 * 0.125 / 0.1,
-        'agar': 500 * 2 / 200,
-        'cornmeal': 0
-    },
-    #     [1] M. E. Wosniack, N. Hu, J. Gjorgjieva, and J. Berni, “Adaptation of Drosophila larva foraging in response to changes in food distribution,” bioRxiv, p. 2021.06.21.449222, 2021.
-    'cornmeal2': {
-        'glucose': 0,
-        'dextrose': 450 / 6400,
-        'saccharose': 0,
-        'yeast': 90 / 6400,
-        'agar': 42 / 6400,
-        'cornmeal': 420 / 6400
-    },
-    'sucrose': {
-        'glucose': 3.42 / 200,
-        'dextrose': 0,
-        'saccharose': 0,
-        'yeast': 0,
-        'agar': 0.8 / 200,
-        'cornmeal': 0
-    }
-    # 'apple_juice': {
-    #         'glucose': 0.342/200,
-    #         'dextrose': 0,
-    #         'saccharose': 0,
-    #         'yeast': 0,
-    #         'agar': 0.8 / 200,
-    #         'cornmeal': 0,
-    #         'apple_juice': 1.05*5/200,
-    #     },
-
-}
-
 def ConfSelector(conf_type, default=None, single_choice=True, **kwargs):
     from lib.conf.stored.conf import kConfDict
     def func():
@@ -237,6 +163,10 @@ class ParInitDict:
             return d
 
         def init_enr_pars():
+            proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
+            to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
+                            'turn',
+                            'unused']
             d = dNl.NestDict()
 
             d['ang_definition'] = {
@@ -303,7 +233,7 @@ class ParInitDict:
                                   'h': 'Whether to transpose spatial coordinates.'}
             }
             d['processing'] = {t: bF for t in proc_type_keys}
-            d['annotation'] = {**{b: bF for b in bout_keys},
+            d['annotation'] = {**{b: bF for b in ['stride', 'pause', 'turn']},
                                'on_food': bF,
                                'interference': bT,
                                'fits': bT}
@@ -316,6 +246,7 @@ class ParInitDict:
             return d
 
         def init_distpars():
+            from lib.model.DEB.substrate import substrate_dict
             d = dNl.NestDict({
                 'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0), 'min': -1.0, 'max': 1.0,
                        'vfunc': param.XYCoordinates,

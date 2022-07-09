@@ -11,9 +11,6 @@ from lib.aux import dictsNlists as dNl
 bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}
 
 
-
-
-
 def Tur0():
     from lib.model.modules.basic import StepEffector, StepOscillator
     from lib.model.modules.turner import NeuralOscillator
@@ -57,9 +54,9 @@ def Tur0():
                                 'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).'},
                }
 
-    d = {'neural': {'args': NEUargs, 'class_func': NeuralOscillator,'variable':['base_activation', 'tau', 'n']},
-         'sinusoidal': {'args': SINargs, 'class_func': StepOscillator,'variable':['initial_amp', 'initial_freq']},
-         'constant': {'args': Tamp, 'class_func': StepEffector,'variable':['initial_amp']}
+    d = {'neural': {'args': NEUargs, 'class_func': NeuralOscillator, 'variable': ['base_activation', 'tau', 'n']},
+         'sinusoidal': {'args': SINargs, 'class_func': StepOscillator, 'variable': ['initial_amp', 'initial_freq']},
+         'constant': {'args': Tamp, 'class_func': StepEffector, 'variable': ['initial_amp']}
          }
     return dNl.NestDict(d)
 
@@ -120,10 +117,14 @@ def Cr0():
 
     d = {
 
-        'gaussian': {'args': {**GAUargs, **str_kws}, 'class_func': GaussOscillator,'variable':['stride_dst_mean', 'stride_dst_std','std', 'initial_amp', 'initial_freq']},
-        'square': {'args': {**SQargs, **str_kws}, 'class_func': SquareOscillator,'variable':['stride_dst_mean', 'stride_dst_std','duty', 'initial_amp', 'initial_freq']},
-        'realistic': {'args': {**Rargs, **str_kws}, 'class_func': PhaseOscillator,'variable':['stride_dst_mean', 'stride_dst_std','max_scaled_vel', 'max_vel_phase', 'initial_freq']},
-        'constant': {'args': Camp, 'class_func': StepEffector,'variable':['initial_amp']}
+        'gaussian': {'args': {**GAUargs, **str_kws}, 'class_func': GaussOscillator,
+                     'variable': ['stride_dst_mean', 'stride_dst_std', 'std', 'initial_amp', 'initial_freq']},
+        'square': {'args': {**SQargs, **str_kws}, 'class_func': SquareOscillator,
+                   'variable': ['stride_dst_mean', 'stride_dst_std', 'duty', 'initial_amp', 'initial_freq']},
+        'realistic': {'args': {**Rargs, **str_kws}, 'class_func': PhaseOscillator,
+                      'variable': ['stride_dst_mean', 'stride_dst_std', 'max_scaled_vel', 'max_vel_phase',
+                                   'initial_freq']},
+        'constant': {'args': Camp, 'class_func': StepEffector, 'variable': ['initial_amp']}
     }
     return dNl.NestDict(d)
 
@@ -167,9 +168,11 @@ def If0():
 
     }
 
-    d = {'default': {'args': IFargs, 'class_func': DefaultCoupling,'variable':['attenuation']},
-         'square': {'args': SQargs, 'class_func': SquareCoupling,'variable':['attenuation', 'attenuation_max','crawler_phi_range']},
-         'phasic': {'args': PHIargs, 'class_func': PhasicCoupling,'variable':['attenuation', 'attenuation_max','max_attenuation_phase']}
+    d = {'default': {'args': IFargs, 'class_func': DefaultCoupling, 'variable': ['attenuation']},
+         'square': {'args': SQargs, 'class_func': SquareCoupling,
+                    'variable': ['attenuation', 'attenuation_max', 'crawler_phi_range']},
+         'phasic': {'args': PHIargs, 'class_func': PhasicCoupling,
+                    'variable': ['attenuation', 'attenuation_max', 'max_attenuation_phase']}
          }
     return dNl.NestDict(d)
 
@@ -225,9 +228,12 @@ def Im0():
 
     }
 
-    d = {'default': {'args': IMargs, 'class_func': Intermitter,'variable':['stridechain_dist', 'run_dist', 'pause_dist']},
-         'nengo': {'args': IMargs, 'class_func': NengoIntermitter,'variable':['stridechain_dist', 'run_dist', 'pause_dist']},
-         'branch': {'args': BRargs, 'class_func': BranchIntermitter,'variable':['c','sigma','beta','stridechain_dist','run_dist', 'pause_dist']},
+    d = {'default': {'args': IMargs, 'class_func': Intermitter,
+                     'variable': ['stridechain_dist', 'run_dist', 'pause_dist']},
+         'nengo': {'args': IMargs, 'class_func': NengoIntermitter,
+                   'variable': ['stridechain_dist', 'run_dist', 'pause_dist']},
+         'branch': {'args': BRargs, 'class_func': BranchIntermitter,
+                    'variable': ['c', 'sigma', 'beta', 'stridechain_dist', 'run_dist', 'pause_dist']},
          }
     return dNl.NestDict(d)
 
@@ -252,7 +258,7 @@ def sensor_kws(k0, l0):
 def Olf0():
     from lib.model.modules.sensor import Olfactor
     args = sensor_kws(k0='O', l0='olfaction')
-    d = {'default': {'args': args, 'class_func': Olfactor,'variable':['perception', 'decay_coef', 'brute_force']},
+    d = {'default': {'args': args, 'class_func': Olfactor, 'variable': ['perception', 'decay_coef', 'brute_force']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -274,7 +280,8 @@ def Tou0():
                           'sym': sub('N', 'T'), 'disp': 'tactile sensor contour locations',
                           'h': 'The number of touch sensors existing on the larva body.'},
     }
-    d = {'default': {'args': args, 'class_func': Toucher,'variable':['perception', 'decay_coef', 'brute_force', 'initial_gain']},
+    d = {'default': {'args': args, 'class_func': Toucher,
+                     'variable': ['perception', 'decay_coef', 'brute_force', 'initial_gain']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -301,7 +308,7 @@ def W0():
 
         **sensor_kws(k0='W', l0='windsensor'),
     }
-    d = {'default': {'args': args, 'class_func': WindSensor,'variable':['perception', 'decay_coef', 'brute_force']},
+    d = {'default': {'args': args, 'class_func': WindSensor, 'variable': ['perception', 'decay_coef', 'brute_force']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -319,7 +326,8 @@ def Th0():
 
             **sensor_kws(k0='Th', l0='thermosensor'),
             }
-    d = {'default': {'args': args, 'class_func': Thermosensor,'variable':['perception', 'decay_coef', 'brute_force','cool_gain','warm_gain']},
+    d = {'default': {'args': args, 'class_func': Thermosensor,
+                     'variable': ['perception', 'decay_coef', 'brute_force', 'cool_gain', 'warm_gain']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -341,7 +349,7 @@ def Fee0():
                    'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
     }
 
-    d = {'default': {'args': Fargs, 'class_func': Feeder,'variable':['initial_freq']},
+    d = {'default': {'args': Fargs, 'class_func': Feeder, 'variable': ['initial_freq']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -377,29 +385,32 @@ def Mem0():
     #      'MB': {'args': MBargs, 'class_func': RLmemory},
     #      # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
     #      }
-    d = {'olfaction': {'args': RLargs, 'class_func': RLOlfMemory,'variable':['Delta', 'update_dt', 'alpha','epsilon']},
-         'touch': {'args': MBargs, 'class_func': RLTouchMemory,'variable':[]},
+    d = {'olfaction': {'args': RLargs, 'class_func': RLOlfMemory,
+                       'variable': ['Delta', 'update_dt', 'alpha', 'epsilon']},
+         'touch': {'args': MBargs, 'class_func': RLTouchMemory, 'variable': []},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
     return dNl.NestDict(d)
 
+
 def SM0():
     args = {
-                'sensor_delta_direction': {'v0': 0.4, 'dv': 0.01, 'lim': (0.2,1.2),'k':'sens_Dor',
-                                           'h': 'Sensor delta_direction'},
-                'sensor_saturation_value': {'dtype': int, 'v0': 40, 'lim': (0,200),'k' : 'sens_c_sat',
-                                            'h': 'Sensor saturation value'},
-                'obstacle_sensor_error': {'v0': 0.35, 'dv': 0.01, 'lim': (0.0,1.0),'k':'sens_err',
-                                          'h': 'Proximity sensor error'},
-                'sensor_max_distance': {'v0': 0.9, 'dv': 0.01,'lim': (0.1,1.5),'k':'sens_dmax',
-                                        'h': 'Sensor max_distance'},
-                'motor_ctrl_coefficient': {'dtype': int, 'v0': 8770, 'lim': (0,10000),'k':'c_mot',
-                                           'h': 'Motor ctrl_coefficient'},
-                'motor_ctrl_min_actuator_value': {'dtype': int, 'v0': 35, 'lim': (0,50),'k':'mot_vmin',
-                                                  'h': 'Motor ctrl_min_actuator_value'},
-            }
-    d = {'default': {'args': args, 'class_func': None, 'variable': ['sensor_delta_direction', 'sensor_saturation_value', 'obstacle_sensor_error',
-                                                                      'sensor_max_distance', 'motor_ctrl_coefficient', 'motor_ctrl_min_actuator_value']},
+        'sensor_delta_direction': {'v0': 0.4, 'dv': 0.01, 'lim': (0.2, 1.2), 'k': 'sens_Dor',
+                                   'h': 'Sensor delta_direction'},
+        'sensor_saturation_value': {'dtype': int, 'v0': 40, 'lim': (0, 200), 'k': 'sens_c_sat',
+                                    'h': 'Sensor saturation value'},
+        'obstacle_sensor_error': {'v0': 0.35, 'dv': 0.01, 'lim': (0.0, 1.0), 'k': 'sens_err',
+                                  'h': 'Proximity sensor error'},
+        'sensor_max_distance': {'v0': 0.9, 'dv': 0.01, 'lim': (0.1, 1.5), 'k': 'sens_dmax',
+                                'h': 'Sensor max_distance'},
+        'motor_ctrl_coefficient': {'dtype': int, 'v0': 8770, 'lim': (0, 10000), 'k': 'c_mot',
+                                   'h': 'Motor ctrl_coefficient'},
+        'motor_ctrl_min_actuator_value': {'dtype': int, 'v0': 35, 'lim': (0, 50), 'k': 'mot_vmin',
+                                          'h': 'Motor ctrl_min_actuator_value'},
+    }
+    d = {'default': {'args': args, 'class_func': None,
+                     'variable': ['sensor_delta_direction', 'sensor_saturation_value', 'obstacle_sensor_error',
+                                  'sensor_max_distance', 'motor_ctrl_coefficient', 'motor_ctrl_min_actuator_value']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -409,16 +420,16 @@ def SM0():
 def init_brain_modules():
     kws = {'kwargs': {'dt': 0.1}}
     d0 = {}
-    d0['turner'] = {'mode': Tur0(),'pref':'brain.turner_params.', **kws}
-    d0['crawler'] = {'mode': Cr0(),'pref':'brain.crawler_params.', **kws}
-    d0['intermitter'] = {'mode': Im0(),'pref':'brain.intermitter_params.', **kws}
-    d0['interference'] = {'mode': If0(),'pref':'brain.interference_params.', 'kwargs': {}}
-    d0['feeder'] = {'mode': Fee0(),'pref':'brain.feeder_params.', **kws}
-    d0['olfactor'] = {'mode': Olf0(),'pref':'brain.olfactor_params.', **kws}
-    d0['toucher'] = {'mode': Tou0(),'pref':'brain.toucher_params.', **kws}
-    d0['thermosensor'] = {'mode': Th0(),'pref':'brain.thermosensor_params.', **kws}
-    d0['windsensor'] = {'mode': W0(),'pref':'brain.windsensor_params.', **kws}
-    d0['memory'] = {'mode': Mem0(),'pref':'brain.memory_params.', **kws}
+    d0['turner'] = {'mode': Tur0(), 'pref': 'brain.turner_params.', **kws}
+    d0['crawler'] = {'mode': Cr0(), 'pref': 'brain.crawler_params.', **kws}
+    d0['intermitter'] = {'mode': Im0(), 'pref': 'brain.intermitter_params.', **kws}
+    d0['interference'] = {'mode': If0(), 'pref': 'brain.interference_params.', 'kwargs': {}}
+    d0['feeder'] = {'mode': Fee0(), 'pref': 'brain.feeder_params.', **kws}
+    d0['olfactor'] = {'mode': Olf0(), 'pref': 'brain.olfactor_params.', **kws}
+    d0['toucher'] = {'mode': Tou0(), 'pref': 'brain.toucher_params.', **kws}
+    d0['thermosensor'] = {'mode': Th0(), 'pref': 'brain.thermosensor_params.', **kws}
+    d0['windsensor'] = {'mode': W0(), 'pref': 'brain.windsensor_params.', **kws}
+    d0['memory'] = {'mode': Mem0(), 'pref': 'brain.memory_params.', **kws}
 
     return dNl.NestDict(d0)
 
@@ -565,8 +576,8 @@ def build_aux_module_dict():
             p = v_descriptor(**pre_p)
             pre_d00[mkey].args[arg] = pre_p
             d00[mkey].args[arg] = p
-    for mkey in  ['energetics', 'sensorimotor']:
-        for m,mdic in d0[mkey].mode.items():
+    for mkey in ['energetics', 'sensorimotor']:
+        for m, mdic in d0[mkey].mode.items():
             for arg, vs in mdic.args.items():
                 pre_p = preparePar(p=arg, **vs)
                 p = v_descriptor(**pre_p)
@@ -591,109 +602,21 @@ def build_brain_module_dict():
     return d0, pre_d00, d00
 
 
-if __name__ == '__main__':
-    # from lib.conf.stored.conf import kConfDict
-    # from lib.conf.stored.conf import loadConf,loadRef
-    #
-    # refID = 'None.150controls'
-    # d = loadRef(refID)
-    # d.load(step=False,contour=False)
-    # e, c = d.endpoint_data, d.config
-    # print(d.existing(key='end', return_shorts=False))
-    # raise
-    #
-    #
-    # m=d.average_modelConf(new_id='test99', turner_mode='neural', crawler_mode='constant', interference_mode='phasic')
-    # conf=m.brain.crawler_params
-    #
-    # # mID='thermo_navigator'
-    # # m=loadConf(mID,'Model')
-    # # print()
-    # # raise
-    #
-    # #
-    # # for mID in kConfDict('Model'):
-    # #     print(mID)
-    # #     B = dd.init_brain_mID(mID=mID)
-    from lib.registry.pars import preg
-    # preg.storeConfs()
-    # D=preg.confID_dict
-    # f=D.Exp.v
-    # D.Exp.v='focus'
-    # f0 = D.Exp.v
-    # # for k,p in D.items() :
-    # #     print(k,p.d)
-    #  # f=preg.dict['b']
-    # # f=preg.init_dict['GAconf']
-    #
-    # # f=preg.newConf('Model')
-    print(preg.loadConf('Exp', id='dish').experiment)
-    # print(preg.get_null('env_conf').keys())
-    # print(preg.get_null('exp_conf').keys())
-    # print(preg.get_null('GAconf').keys())
-    # print(preg.storedConf('Model'))
+def build_LarvaConfDict():
+    # from lib.registry.modConfs import build_brain_module_dict, build_aux_module_dict
+    init_bdicts2, mbpredicts2, mbdicts2 = build_brain_module_dict()
+    init_auxdicts2, aux_predicts2, aux_dicts2 = build_aux_module_dict()
 
-    # f = preg.newConf('Model', id0='explorer', kwargs={'brain.turner_params.mode': 'constant'})
-    # print(f)
-    # from lib.registry.parConfs import init_loco
+    mdicts2 = dNl.NestDict({**mbdicts2, **aux_dicts2})
+    mpredicts2 = dNl.NestDict({**mbpredicts2, **aux_predicts2})
+    init_dicts2 = dNl.NestDict({**init_bdicts2, **init_auxdicts2})
 
-    # from lib.aux.sim_aux import get_sample_bout_distros0
-    # from lib.conf.stored.conf import loadConf
+    bkeys = list(init_bdicts2.keys())
+    auxkeys = list(init_auxdicts2.keys())
 
-    #
-    # sample = loadConf(refID, 'Ref')
-    # sample = preg.loadConf(mID=refID, conftype='Ref')
-    # print(preg.storedConf('Model'))
-    # dd = preg.larva_conf_dict
-    #
-    # M=dd.module2(mkey='crawler',mode=conf['waveform'], **conf)
-    # for i in range(1000):
-    #     AA=M.step()
-    #     print(AA)
-    #
-    # # f=dd.mdicts2.crawler.mode[conf['waveform']].class_func
+    bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2, 'keys': bkeys}
+    auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2, 'keys': auxkeys}
+    d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2, 'keys': bkeys + auxkeys}
 
-    # raise
-    #
-    # d = dd.mdicts2aux.energetics
-    # for k, v in d.items():
-    #     print(k, v.keys())
-    # # from lib.conf.stored.conf import kConfDict
-    # #
-    # # for mID in kConfDict('Model'):
-    # #     print(mID)
-    # #     B = dd.init_brain_mID(mID=mID)
-    # #     # print(B.locomotor.intermitter.stridechain_dist)
-    # #     for i in range(1000):
-    # #         AA = B.step()
-    # #
-    # #     # try :
-    # #     #     for i in range(1000) :
-    # #     #         AA=B.step()
-    # #     #
-    # #     # except:
-    # #     #     print('-----------', mID)
-    # #         # print()
-    # # raise
-    # # #
-    # # mkey = 'intermitter'
-    # # mm = 'default'
-    # # #
-    # # conf0 = dd.init_dicts2[mkey].mode[mm].args
-    # # preconf0 = dd.mpredicts2[mkey].mode[mm].args
-    # # mconf0 = dd.mdicts2[mkey].mode[mm].args
-    # #
-    # # mconf = dd.conf2(mkey=mkey, mode=mm, refID=refID)
-    # #
-    # # # print(conf0.stridechain_dist)
-    # # # print()
-    # # # print(preconf0.stridechain_dist)
-    # # # print()
-    # # # print(mconf0.stridechain_dist)
-    # # # print()
-    # # print(mconf['stridechain_dist'])
-    # #
-    # # # mcconf=get_sample_bout_distros0(Im=mconf, bout_distros=sample.bout_distros)
-    # # #
-    # # # print()
-    # # # print(mcconf['stridechain_dist'])
+    dd = {'brain': bd, 'aux': auxd, 'model': d}
+    return dNl.NestDict(dd)

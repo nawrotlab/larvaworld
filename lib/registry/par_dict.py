@@ -108,9 +108,6 @@ class BaseParDict:
         self.build_sim_pars()
         self.build_deb_pars()
 
-    # def confID_dict(self):
-
-
     def build_initial(self):
         kws = {'u': ureg.s}
         self.add(
@@ -569,7 +566,6 @@ class BaseParDict:
                       'sa', 'd', 'sd']:
                 self.add_chunk_track(kc=kc, k=k)
             self.add(**{'p': f'handedness_score_{kc}', 'k': f'tur_H_{kc}'})
-
 
     def build_sim_pars(self):
         for ii, jj in zip(['C', 'T'], ['crawler', 'turner']):

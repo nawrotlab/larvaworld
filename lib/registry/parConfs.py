@@ -400,33 +400,15 @@ from lib.registry.units import ureg
 
 class LarvaConfDict:
     def __init__(self, dist_dict0=None):
+        from lib.registry.modConfs import build_LarvaConfDict
         if dist_dict0 is None:
             from lib.registry.pars import preg
             dist_dict0 = preg.dist_dict0
         self.dist_dict0 = dist_dict0
         self.dist_dict = self.dist_dict0.dict
 
-        self.dict = self.build()
+        self.dict = build_LarvaConfDict()
         self.full_dict = self.build_full_dict()
-
-    def build(self):
-        from lib.registry.modConfs import build_brain_module_dict, build_aux_module_dict
-        init_bdicts2, mbpredicts2, mbdicts2 = build_brain_module_dict()
-        init_auxdicts2, aux_predicts2, aux_dicts2 = build_aux_module_dict()
-
-        mdicts2 = dNl.NestDict({**mbdicts2, **aux_dicts2})
-        mpredicts2 = dNl.NestDict({**mbpredicts2, **aux_predicts2})
-        init_dicts2 = dNl.NestDict({**init_bdicts2, **init_auxdicts2})
-
-        bkeys = list(init_bdicts2.keys())
-        auxkeys = list(init_auxdicts2.keys())
-
-        bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2, 'keys': bkeys}
-        auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2, 'keys': auxkeys}
-        d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2, 'keys': bkeys + auxkeys}
-
-        dd = {'brain': bd, 'aux': auxd, 'model': d}
-        return dNl.NestDict(dd)
 
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:

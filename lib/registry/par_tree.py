@@ -112,7 +112,6 @@ def multiconf_to_tree(ids, conftype):
     df0['values'] = [df0[id] for id in ids]
     df0.drop(ids, axis=1)
     return df0.to_dict(orient='records')
-    # return comp_entries
 
 
 if __name__ == '__main__':

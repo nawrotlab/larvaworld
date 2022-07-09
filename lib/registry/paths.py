@@ -89,6 +89,4 @@ def build_path_dict() :
     return dic
 
 path_dict=build_path_dict()
-#
-# if __name__ == '__main__':
-#     print(path_dict['parent'])
+

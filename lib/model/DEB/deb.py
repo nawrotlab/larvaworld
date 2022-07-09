@@ -8,10 +8,9 @@ import numpy as np
 
 from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex
-from lib.registry.init_pars import substrate_dict
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.model.DEB.gut import Gut
-from lib.model.DEB.substrate import Substrate
+from lib.model.DEB.substrate import Substrate, substrate_dict
 
 '''
 Standard culture medium

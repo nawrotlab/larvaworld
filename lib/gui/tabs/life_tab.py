@@ -21,7 +21,7 @@ class LifeTab(GuiTab):
 
     def build(self):
         from lib.plot.deb import plot_debs
-        from lib.registry.init_pars import substrate_dict
+        from lib.model.DEB.substrate import substrate_dict
         sl1_kws = {
             'size': (30, 20),
             'enable_events': True,
