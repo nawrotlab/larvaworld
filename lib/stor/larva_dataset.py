@@ -855,46 +855,6 @@ class LarvaDataset:
                     chunks.append(entry)
         return chunks
 
-    # def average_modelConf(self, new_id=None, turner_mode='neural', crawler_mode='realistic', interference_mode='phasic',
-    #                       turner=None, physics=None):
-    #     from lib.eval.model_fit import adapt_turner, adapt_crawler, adapt_intermitter, adapt_interference
-    #
-    #     if new_id is None:
-    #         new_id = f'{self.id}_model'
-    #     e = self.endpoint_data
-    #     c = self.config
-    #
-    #     mods = preg.get_null('modules', turner=True, crawler=True, interference=True, intermitter=True)
-    #     b_kws = {
-    #         'modules': mods,
-    #         'turner_params': adapt_turner(e, mode=turner_mode, average=True) if turner is None else turner,
-    #         'crawler_params': adapt_crawler(e, mode=crawler_mode, average=True),
-    #         'intermitter_params': adapt_intermitter(c, e, average=True),
-    #         'interference_params': adapt_interference(c, e, mode=interference_mode, average=True),
-    #     }
-    #     for k in mods.keys():
-    #         if not mods[k]:
-    #             b_kws[f'{k}_params'] = None
-    #
-    #     kws = {
-    #         'brain': preg.get_null('brain', **b_kws),
-    #         'body': preg.get_null('body', initial_length=np.round(e['length'].median(), 3)),
-    #         'physics': preg.get_null('physics') if physics is None else physics,
-    #         'energetics': None,
-    #         'Box2D_params': None,
-    #     }
-    #
-    #     m = preg.get_null('larva_conf', **kws)
-    #     # print(m.Box2D)
-    #     # raise
-    #
-    #     preg.saveConf(id=new_id, conf=m, conftype='Model')
-    #     if 'modelConfs' not in c.keys():
-    #         c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-    #     c.modelConfs.average[new_id] = m
-    #     self.save_config(add_reference=True)
-    #     return m
-
     def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
         if par is None:
             par = preg.getPar(short)
@@ -959,9 +919,6 @@ class LarvaDataset:
         else:
             shorts = preg.getPar(d=pars, to_return='k')
             return sorted(shorts)
-
-
-
 
     def sample_modelConf(self, N, mID, sample_ks=None):
         from lib.aux.sim_aux import sample_group
@@ -1045,17 +1002,17 @@ if __name__ == '__main__':
     #M = preg.larva_conf_dict
     # M.add_var_mIDs(refID=refID, e=e, c=c, mID0s=['PHIonNEU'])
     d.eval_model_graphs(mIDs=['PHIonNEU','PHIonNEU_var'], norm_modes=['raw', 'minmax'], id='PHIonNEU avgVSvar', N=20)
-    raise
-    entries = {}
-    #mIDs = []
-    mID0s=list(c.modelConfs.average.keys())
-    for mID0 in mID0s:
-        entry = optimize_mID_turnerNinterference(mID0=mID0, refID=refID, save_to=c.dir_dict.GAoptimization)
-        entries.update(entry)
-    c.modelConfs.average = entries
-    d.save_config(add_reference=True)
-    d.eval_model_graphs(mIDs=mID0s, norm_modes=['raw', 'minmax'], id='6mIDs_avg_again', N=10)
-    diff_df_avg = preg.larva_conf_dict.diff_df(mIDs=mID0s)
-    preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=d.dir_dict.model_tables,
-                                name='avg_mIDs_diffs')
+    # raise
+    # entries = {}
+    # #mIDs = []
+    # mID0s=list(c.modelConfs.average.keys())
+    # for mID0 in mID0s:
+    #     entry = optimize_mID_turnerNinterference(mID0=mID0, refID=refID, save_to=c.dir_dict.GAoptimization)
+    #     entries.update(entry)
+    # c.modelConfs.average = entries
+    # d.save_config(add_reference=True)
+    # d.eval_model_graphs(mIDs=mID0s, norm_modes=['raw', 'minmax'], id='6mIDs_avg_again', N=10)
+    # diff_df_avg = preg.larva_conf_dict.diff_df(mIDs=mID0s)
+    # preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=d.dir_dict.model_tables,
+    #                             name='avg_mIDs_diffs')
 
