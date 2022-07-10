@@ -96,6 +96,7 @@ class LarvaDataset:
             self.agent_ids = step.index.unique('AgentID').values
             self.num_ticks = step.index.unique('Step').size
         if end is not None:
+            end.sort_index(inplace=True)
             self.endpoint_data = end
         if food is not None:
             self.food_endpoint_data = food

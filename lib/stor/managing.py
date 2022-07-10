@@ -11,24 +11,22 @@ from lib.stor.larva_dataset import LarvaDataset
 
 
 def import_Jovanic_datasets(parent_dir, source_ids=['Fed', 'Deprived', 'Starved'], **kwargs):
-    datagroup_id = 'Jovanic lab'
-    group_id = parent_dir
-    merged = False
-    N = None
+    # datagroup_id = 'Jovanic lab'
+    # group_id = parent_dir
+    # merged = False
+    # N = None
     ds = {}
     for source_id in source_ids:
-        # try:
         id = source_id
-        # id = f'{source_id}_0_60'
-        d = import_dataset(N=N, id=id, datagroup_id=datagroup_id, group_id=group_id, parent_dir=parent_dir,
+        d = import_dataset(N=None, id=id, datagroup_id='Jovanic lab', group_id=parent_dir, parent_dir=parent_dir,
                            source_id=source_id,
-                           merged=merged, **kwargs)
+                           merged=False, **kwargs)
         ds[d.id] = d
     return ds
 
 
 def import_dataset(N, datagroup_id='Schleyer lab', id=None, group_id='exploration', min_duration_in_sec=180,
-                   age=96.0, parent_dir='no_odor', merged=True, enrich=True, add_reference=True, **kwargs):
+                   age=96.0, parent_dir='no_odor', merged=True, **kwargs):
     # N = 150
     group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
     group.distribution.N = N
@@ -40,8 +38,6 @@ def import_dataset(N, datagroup_id='Schleyer lab', id=None, group_id='exploratio
     group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
-    # parent_dir = 'no_odor'
-    # target_dir = f'{proc_folder}/{group_id}/{id}'
     source_dir = f'{raw_folder}/{parent_dir}'
 
     if merged:
@@ -53,22 +49,19 @@ def import_dataset(N, datagroup_id='Schleyer lab', id=None, group_id='exploratio
         'source_dir': source_dir,
         'max_Nagents': N,
         'min_duration_in_sec': min_duration_in_sec,
-        # 'build_conf':g.tracker
         **kwargs
     }
-    # print(kws['Ncontour'])
-    # raise
     d = build_dataset(id=id, **kws)
-    d.save(add_reference=add_reference)
-    if enrich:
-        d.enrich(**g.enrichment, store=True, add_reference=add_reference)
-    else:
-        d.save(add_reference=add_reference)
+    # d.save(add_reference=add_reference)
+    # if enrich:
+    #     d.enrich(**g.enrichment, store=True, add_reference=add_reference)
+    # else:
+    #     d.save(add_reference=add_reference)
 
     return d
 
 
-def build_dataset(datagroup_id, id, target_dir, source_dir=None, source_files=None, larva_groups={}, **kwargs):
+def build_dataset(datagroup_id, id, target_dir, larva_groups={},enrich=True, add_reference=True, **kwargs):
     func_dict = {
         'Jovanic lab': build_Jovanic,
         'Berni lab': build_Berni,
@@ -76,58 +69,36 @@ def build_dataset(datagroup_id, id, target_dir, source_dir=None, source_files=No
         'Arguello lab': build_Arguello,
     }
 
-
     warnings.filterwarnings('ignore')
-    g = preg.loadConf(id=datagroup_id, conftype='Group')
-    # build_conf = g.tracker.filesystem
-    # data_conf = g.tracker.resolution
-    # metric_definition = g.enrichment.metric_definition
-    # env_params = preg.get_null('env_conf', arena=g.tracker.arena)
-    # data_conf.Ncontour = 0
+    # try:
+    #     shutil.rmtree(target_dir,ignore_errors=True)
+    # except:
+    #     pass
 
     try:
-        shutil.rmtree(target_dir)
-    except:
-        pass
-
-    d = LarvaDataset(dir=target_dir, id=id, metric_definition=g.enrichment.metric_definition,
-                     env_params=preg.get_null('env_conf', arena=g.tracker.arena),
-                     load_data=False, larva_groups=larva_groups, **g.tracker.resolution)
-
-    print(f'Initializing {datagroup_id} format-specific dataset import...')
-    kws0 = {
-        'dataset': d,
-        'build_conf': g.tracker.filesystem,
-        'source_dir': source_dir,
-        'source_files': source_files,
-        **kwargs
-    }
-
-
-    step, end = func_dict[datagroup_id](**kws0)
-
-    # if datagroup_id in ['Jovanic lab']:
-    #     step, end = build_Jovanic(**kws0)
-    # elif datagroup_id in ['Berni lab']:
-    #     step, end = build_Berni(**kws0)
-    # elif datagroup_id in ['Schleyer lab']:
-    #     step, end = build_Schleyer(**kws0)
-    # elif datagroup_id in ['Arguello lab']:
-    #     step, end = build_Arguello(**kws0)
-    # else:
-    #     raise ValueError(f'Configuration for {datagroup_id} is not supported for building new datasets')
-    if step is not None:
-        step.sort_index(level=['Step', 'AgentID'], inplace=True)
-        end.sort_index(inplace=True)
+        print(f'Initializing {datagroup_id} format-specific dataset import...')
+        shutil.rmtree(target_dir, ignore_errors=True)
+        g = preg.loadConf(id=datagroup_id, conftype='Group')
+        d = LarvaDataset(dir=target_dir, id=id, metric_definition=g.enrichment.metric_definition,
+                         env_params=preg.get_null('env_conf', arena=g.tracker.arena),
+                         load_data=False, larva_groups=larva_groups, **g.tracker.resolution)
+        kws0 = {
+            'dataset': d,
+            'build_conf': g.tracker.filesystem,
+            **kwargs
+        }
+        step, end = func_dict[datagroup_id](**kws0)
         d.set_data(step=step, end=end)
-        d.save(food=False)
-        d.agent_ids = d.step_data.index.unique('AgentID').values
-        d.num_ticks = d.step_data.index.unique('Step').size
+        d.save(food=False,add_reference=add_reference)
+        if enrich:
+            d.enrich(**g.enrichment, store=True, add_reference=add_reference)
         print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
-    else:
-        print(f'--- Failed to create dataset {d.id}! ---')
-        d.delete()
-    return d
+        return d
+    except:
+        print(f'--- Failed to create dataset {id}! ---')
+        # d.delete()
+        return None
+
 
 
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
