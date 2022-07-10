@@ -7,14 +7,14 @@ from lib.stor.match_ids import match_larva_ids
 from lib.aux import naming as nam, dictsNlists as dNl, xy_aux
 
 
-def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
+def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode='semifull',
                    max_Nagents=None, min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0, **kwargs):
     d = dataset
     dt=d.dt
     cols0 = build_conf['read_sequence']
     raw_fs = []
     inv_xs = []
-    for i, f in enumerate(raw_folders):
+    for i, f in enumerate(source_dir):
 
         fs = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
         raw_fs += fs
@@ -82,7 +82,7 @@ def build_Schleyer(dataset, build_conf, raw_folders, save_mode='semifull',
     return step, end
 
 
-def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
+def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
                   match_ids=True,**kwargs):
 
     pref=f'{source_dir}/{source_id}'
@@ -225,7 +225,7 @@ def build_Jovanic(dataset, build_conf, source_dir, source_id, max_Nagents=None, 
         end['cum_dur'] = end['num_ticks'] / fr
     return step, end
 
-def build_Berni(dataset, build_conf, source_files, max_Nagents=None, min_duration_in_sec=0.0,
+def build_Berni(dataset, build_conf, source_files, source_dir=None, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):
     d = dataset
     dt = d.dt
@@ -267,7 +267,7 @@ def build_Berni(dataset, build_conf, source_files, max_Nagents=None, min_duratio
     return step, end
 
 
-def build_Arguello(dataset, build_conf, source_files, max_Nagents=None, min_duration_in_sec=0.0,
+def build_Arguello(dataset, build_conf, source_files, source_dir=None, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):
     d = dataset
     dt = d.dt

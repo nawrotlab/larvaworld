@@ -69,34 +69,53 @@ def import_dataset(N, datagroup_id='Schleyer lab', id=None, group_id='exploratio
 
 
 def build_dataset(datagroup_id, id, target_dir, source_dir=None, source_files=None, larva_groups={}, **kwargs):
+    func_dict = {
+        'Jovanic lab': build_Jovanic,
+        'Berni lab': build_Berni,
+        'Schleyer lab': build_Schleyer,
+        'Arguello lab': build_Arguello,
+    }
+
+
     warnings.filterwarnings('ignore')
     g = preg.loadConf(id=datagroup_id, conftype='Group')
-    build_conf = g.tracker.filesystem
-    data_conf = g.tracker.resolution
-    metric_definition = g.enrichment.metric_definition
-    env_params = preg.get_null('env_conf', arena=g.tracker.arena)
-    data_conf.Ncontour = 0
+    # build_conf = g.tracker.filesystem
+    # data_conf = g.tracker.resolution
+    # metric_definition = g.enrichment.metric_definition
+    # env_params = preg.get_null('env_conf', arena=g.tracker.arena)
+    # data_conf.Ncontour = 0
 
     try:
         shutil.rmtree(target_dir)
     except:
         pass
 
-    d = LarvaDataset(dir=target_dir, id=id, metric_definition=metric_definition, env_params=env_params,
-                     load_data=False, larva_groups=larva_groups, **data_conf)
+    d = LarvaDataset(dir=target_dir, id=id, metric_definition=g.enrichment.metric_definition,
+                     env_params=preg.get_null('env_conf', arena=g.tracker.arena),
+                     load_data=False, larva_groups=larva_groups, **g.tracker.resolution)
 
     print(f'Initializing {datagroup_id} format-specific dataset import...')
-    if datagroup_id in ['Jovanic lab']:
-        step, end = build_Jovanic(d, build_conf, source_dir=source_dir, **kwargs)
-    elif datagroup_id in ['Berni lab']:
-        step, end = build_Berni(d, build_conf, source_files=source_files, **kwargs)
-    elif datagroup_id in ['Schleyer lab']:
-        step, end = build_Schleyer(d, build_conf, raw_folders=source_dir, **kwargs)
-    elif datagroup_id in ['Arguello lab']:
-        step, end = build_Arguello(d, build_conf, source_files=source_files, **kwargs)
+    kws0 = {
+        'dataset': d,
+        'build_conf': g.tracker.filesystem,
+        'source_dir': source_dir,
+        'source_files': source_files,
+        **kwargs
+    }
 
-    else:
-        raise ValueError(f'Configuration for {datagroup_id} is not supported for building new datasets')
+
+    step, end = func_dict[datagroup_id](**kws0)
+
+    # if datagroup_id in ['Jovanic lab']:
+    #     step, end = build_Jovanic(**kws0)
+    # elif datagroup_id in ['Berni lab']:
+    #     step, end = build_Berni(**kws0)
+    # elif datagroup_id in ['Schleyer lab']:
+    #     step, end = build_Schleyer(**kws0)
+    # elif datagroup_id in ['Arguello lab']:
+    #     step, end = build_Arguello(**kws0)
+    # else:
+    #     raise ValueError(f'Configuration for {datagroup_id} is not supported for building new datasets')
     if step is not None:
         step.sort_index(level=['Step', 'AgentID'], inplace=True)
         end.sort_index(inplace=True)
@@ -104,7 +123,6 @@ def build_dataset(datagroup_id, id, target_dir, source_dir=None, source_files=No
         d.save(food=False)
         d.agent_ids = d.step_data.index.unique('AgentID').values
         d.num_ticks = d.step_data.index.unique('Step').size
-        # d.starting_tick = d.step_data.index.unique('Step')[0]
         print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
     else:
         print(f'--- Failed to create dataset {d.id}! ---')

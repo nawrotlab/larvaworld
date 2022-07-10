@@ -330,40 +330,34 @@ def import_window(datagroup_id, raw_dic):
                     for target, source_id, source in zip(targets, raw_ids, raw_dirs):
                         target_id = v[f'new_{source_id}']
                         if datagroup_id in ['Berni lab']:
-                            target = f'{target}/{target_id}'
-                            source_files = [os.path.join(source, n) for n in os.listdir(source) if
-                                            n.startswith(source_id)]
                             kws0={
                                 'id' : target_id,
-                                'target_dir' : target,
-                                'source_files' : source_files,
+                                'target_dir' : f'{target}/{target_id}',
+                                'source_files' : [os.path.join(source, n) for n in os.listdir(source) if
+                                            n.startswith(source_id)],
                                 **kws
                             }
                         elif datagroup_id in ['Jovanic lab']:
-                            target = f'{target}/{target_id}'
                             kws0 = {
                                 'id': target_id,
-                                'target_dir': target,
+                                'target_dir': f'{target}/{target_id}',
                                 'source_dir': source,
                                 'source_id': source_id,
                                 **kws
                             }
                         elif datagroup_id in ['Schleyer lab']:
-                            target = target.replace(source_id, target_id)
                             kws0 = {
                                 'id': target_id,
-                                'target_dir': target,
+                                'target_dir': target.replace(source_id, target_id),
                                 'source_dir': [source],
                                 **kws
                             }
                         elif datagroup_id in ['Arguello lab']:
-                            target = f'{target}/{target_id}'
-                            source_files = [os.path.join(source, n) for n in os.listdir(source) if
-                                            n.startswith(source_id)]
                             kws0 = {
                                 'id': target_id,
-                                'target_dir': target,
-                                'source_files': source_files,
+                                'target_dir': f'{target}/{target_id}',
+                                'source_files': [os.path.join(source, n) for n in os.listdir(source) if
+                                            n.startswith(source_id)],
                                 **kws
                             }
                         dd = build_dataset(**kws0)
