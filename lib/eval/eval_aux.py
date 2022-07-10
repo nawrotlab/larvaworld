@@ -239,8 +239,10 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
 
     comp_dispersion(ss, ee, cc, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss, ee, cc, dt, tor_durs=tor_durs)
-    from lib.process import aux
-    chunk_dicts = aux.annotation(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    from lib.process import aux,patch
+    chunk_dicts = aux.comp_chunk_dicts(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
+    aux.turn_mode_annotation(ee, chunk_dicts)
+    patch.comp_patch(ss, ee, cc)
     cycle_curves = aux.compute_interference(ss, ee, cc, chunk_dicts=chunk_dicts)
     from lib.anal.fitting import fit_bouts
     pooled_epochs = fit_bouts(c=cc, chunk_dicts=chunk_dicts, s=ss, e=ee, id=cc.id)
@@ -487,9 +489,12 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
             comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=store)
 
         if bout_annotation:
-            from lib.process import aux
+            from lib.process import aux,patch
             from lib.anal.fitting import fit_bouts
-            d.chunk_dicts = aux.annotation(s, e, c, store=store)
+            d.chunk_dicts = aux.comp_chunk_dicts(s, e, c, store=store)
+            aux.turn_mode_annotation(e, d.chunk_dicts)
+            patch.comp_patch(s, e, c)
+
             d.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
             d.pooled_epochs = fit_bouts(c=c, chunk_dicts=d.chunk_dicts, s=s, e=e, id=c.id, store=store)
 

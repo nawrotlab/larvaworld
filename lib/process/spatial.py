@@ -368,43 +368,6 @@ def tortuosity(xy):
         return 1 - L / D
 
 
-# def straightness_index2(xy, w, match_shape=True):
-#     # xy_int=copy.deepcopy(xy)
-#     # xy_int[:,0]=interpolate_nans(xy[:,0])
-#     # xy_int[:, 1] = interpolate_nans(xy[:, 1])
-#     # print(xy.shape)
-#     all_dsts=np.diff(xy, axis=0)
-#     print(all_dsts.shape)
-#     print(np.diff(xy, axis=1).shape)
-#     raise
-#     # all_dsts[:,0]= interpolate_nans(all_dsts[:,0])
-#     # all_dsts[:,1]= interpolate_nans(all_dsts[:,1])
-#     dsts = rolling_window_xy(all_dsts, w)
-#
-#     # Compute tortuosity over intervals of duration w
-#     xys = rolling_window_xy(xy, w)
-#
-#
-#     k0,k1=xy.shape[0], dsts.shape[0]
-#     temp=np.zeros(k1) * np.nan
-#     for i in range(k1):
-#         D = np.nansum(np.sqrt(np.nansum(dsts[i,:] ** 2, axis=1)))
-#         if D==0 :
-#             temp[i] =np.nan
-#         else :
-#             xy0=xys[i,:]
-#             xy0=xy0[~np.isnan(xy0).any(axis=1)]
-#             L = np.sqrt(np.nansum(np.array(xy0[-1, :] - xy0[0, :]) ** 2))
-#             temp[i] = 1 - L / D
-#     if match_shape :
-#         dk = int((k0-k1) / 2)
-#         SI = np.zeros(k0) * np.nan
-#         SI[dk :dk+k1]=temp
-#     else :
-#         SI = temp
-#     return SI
-
-
 def straightness_index(xy, w, match_shape=True):
     # Compute tortuosity over intervals of duration w
     xys = rolling_window_xy(xy, w)

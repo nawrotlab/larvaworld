@@ -249,29 +249,6 @@ def detect_turns(a, dt, min_dur=None):
     return Lturns, Rturns
 
 
-#
-# def stride_max_vel_phis(s, e, c, Nbins=64):
-#     import lib.aux.naming as nam
-#     points = nam.midline(c.Npoints, type='point')
-#     l, sv, pau_fov_mu = getPar(['l', 'sv', 'pau_fov_mu'])
-#     x = np.linspace(0, 2 * np.pi, Nbins)
-#     phis = np.zeros([c.Npoints, c.N]) * np.nan
-#     for j, id in enumerate(c.agent_ids):
-#         ss = s.xs(id, level='AgentID')
-#         strides = detect_strides(ss[sv], c.dt, return_runs=False, return_extrema=False)
-#         strides = strides.tolist()
-#         for i, p in enumerate(points):
-#             ar_v = np.zeros([strides, Nbins])
-#             v_p = nam.vel(p)
-#             a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
-#             for ii, (s0, s1) in enumerate(strides):
-#                 ar_v[ii, :] = np.interp(x, np.linspace(0, 2 * np.pi, s1 - s0), a[s0:s1])
-#             ar_v_mu = np.nanquantile(ar_v, q=0.5, axis=0)
-#             phis[i, j] = x[np.argmax(ar_v_mu)]
-#     for i, p in enumerate(points):
-#         e[nam.max(f'phi_{nam.vel(p)}')] = phis[i, :]
-#
-
 def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     wvane_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in run_idx for tt in t])]
     cast_idx = [ii for ii, t in enumerate(turn_slices) if all([tt in pause_idx for tt in t])]
@@ -302,15 +279,6 @@ def comp_pooled_epochs(d, chunk_dicts=None, store=False, **kwargs):
         chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
     pooled_epochs = fit_bouts(c=c, chunk_dicts=chunk_dicts, s=s, e=e, id=c.id)
     return pooled_epochs
-
-
-def annotation(s, e, cc, **kwargs):
-    from lib.process.patch import comp_patch
-    chunk_dicts = comp_chunk_dicts(s=s, e=e, c=cc, **kwargs)
-    turn_mode_annotation(e, chunk_dicts)
-    comp_patch(s, e, cc)
-    return chunk_dicts
-
 
 def stride_interp(a, strides, Nbins=64):
     x = np.linspace(0, 2 * np.pi, Nbins)

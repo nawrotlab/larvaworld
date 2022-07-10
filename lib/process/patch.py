@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 
-
 import lib.aux.naming as nam
 from lib.process.store import store_aux_dataset
+
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
     from lib.aux.xy_aux import comp_bearing
@@ -37,15 +37,15 @@ def comp_patch_metrics(s, e, **kwargs):
     on = 'on_food'
     off = 'off_food'
     on_tr = nam.dur_ratio(on)
-    on_cumt=nam.cum(nam.dur(on))
-    off_cumt=nam.cum(nam.dur(off))
-    s_on=s[s[on] == True]
-    s_off=s[s[on] == False]
+    on_cumt = nam.cum(nam.dur(on))
+    off_cumt = nam.cum(nam.dur(off))
+    s_on = s[s[on] == True]
+    s_off = s[s[on] == False]
 
     e[on_cumt] = e[cum_t] * e[on_tr]
-    e[off_cumt] = e[cum_t] * (1-e[on_tr])
+    e[off_cumt] = e[cum_t] * (1 - e[on_tr])
 
-    for c in ['Lturn','turn', 'pause']:
+    for c in ['Lturn', 'turn', 'pause']:
         dur = nam.dur(c)
         cdur = nam.cum(dur)
         cdur_on = f'{cdur}_{on}'
@@ -78,17 +78,18 @@ def comp_patch_metrics(s, e, **kwargs):
     e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]
 
 
-def comp_patch(s,e,c):
+def comp_patch(s, e, c):
     for b in ['stride', 'pause', 'turn']:
         try:
             comp_chunk_bearing(s, c, chunk=b)
             if b == 'turn':
-                comp_chunk_bearing(s,  c, chunk='Lturn')
+                comp_chunk_bearing(s, c, chunk='Lturn')
                 comp_chunk_bearing(s, c, chunk='Rturn')
         except:
             pass
 
-def comp_on_food(s,e,c) :
+
+def comp_on_food(s, e, c):
     on = 'on_food'
     if on in s.columns and nam.dur_ratio(on) in e.columns:
         comp_patch_metrics(s, e)

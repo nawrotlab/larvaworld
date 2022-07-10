@@ -192,10 +192,8 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
             else :
                 comp_final_anemotaxis(**cc)
         if processing['dispersion'] :
-            # raise
             comp_dispersion(**cc)
         if processing['tortuosity'] :
-            # comp_tortuosity(**cc)
             comp_straightness_index(**cc)
         if processing['PI']:
             if 'x' in e.keys():

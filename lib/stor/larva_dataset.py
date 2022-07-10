@@ -684,14 +684,8 @@ class LarvaDataset:
             c.metric_definition.spatial.hardcoded.update(**md['spatial'])
             self.define_linear_metrics()
 
-        # for k, v in md.items():
-        #     if v is None:
-        #         md[k] = {}
-        # # print(md)
 
         from lib.process.basic import preprocess, process
-        # print()
-        # print(f'--- Enriching dataset {self.id} with derived parameters ---')
         warnings.filterwarnings('ignore')
         s, e = self.step_data, self.endpoint_data
         cc = {
@@ -706,9 +700,10 @@ class LarvaDataset:
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
         if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
-            from lib.process import aux
-            self.chunk_dicts = aux.annotation(s, e, c, **kwargs)
-
+            from lib.process import aux,patch
+            self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
+            aux.turn_mode_annotation(e, self.chunk_dicts)
+            patch.comp_patch(s, e, c)
             if annotation['on_food']:
                 from lib.process import patch
                 patch.comp_on_food(s, e, c)
