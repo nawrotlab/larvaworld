@@ -317,7 +317,6 @@ def import_window(datagroup_id, raw_dic):
                     for i, (id, dir) in enumerate(raw_dic.items()):
                         w.Element(f'new_{id}').Update(value=f'{gID}_{i}')
             if e == 'Ok':
-                # from lib.registry.dtypes import null_dict
                 conf = s1.get_dict(v, w)
                 kws = {
                     'datagroup_id': datagroup_id,
@@ -334,20 +333,40 @@ def import_window(datagroup_id, raw_dic):
                             target = f'{target}/{target_id}'
                             source_files = [os.path.join(source, n) for n in os.listdir(source) if
                                             n.startswith(source_id)]
-                            dd = build_dataset(id=target_id, target_dir=target, source_files=source_files, **kws)
+                            kws0={
+                                'id' : target_id,
+                                'target_dir' : target,
+                                'source_files' : source_files,
+                                **kws
+                            }
                         elif datagroup_id in ['Jovanic lab']:
-                            # print(source_id)
                             target = f'{target}/{target_id}'
-                            dd = build_dataset(id=target_id, target_dir=target, source_dir=source,source_id=source_id, **kws)
+                            kws0 = {
+                                'id': target_id,
+                                'target_dir': target,
+                                'source_dir': source,
+                                'source_id': source_id,
+                                **kws
+                            }
                         elif datagroup_id in ['Schleyer lab']:
                             target = target.replace(source_id, target_id)
-                            dd = build_dataset(id=target_id, target_dir=target, source_dir=[source], **kws)
+                            kws0 = {
+                                'id': target_id,
+                                'target_dir': target,
+                                'source_dir': [source],
+                                **kws
+                            }
                         elif datagroup_id in ['Arguello lab']:
                             target = f'{target}/{target_id}'
                             source_files = [os.path.join(source, n) for n in os.listdir(source) if
                                             n.startswith(source_id)]
-                            dd = build_dataset(id=target_id, target_dir=target, source_files=source_files, **kws)
-
+                            kws0 = {
+                                'id': target_id,
+                                'target_dir': target,
+                                'source_files': source_files,
+                                **kws
+                            }
+                        dd = build_dataset(**kws0)
 
                         if dd is not None:
                             proc_dir[target_id] = dd
@@ -359,16 +378,24 @@ def import_window(datagroup_id, raw_dic):
                     target_id0 = v[f'new_{raw_ids[0]}']
 
                     if datagroup_id in ['Berni lab', 'Arguello lab']:
-                        target0 = f'{targets[0]}/{target_id0}'
-                        source_files = dNl.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
+                        kws0 = {
+                            'id': target_id0,
+                            'target_dir':  f'{targets[0]}/{target_id0}',
+                            'source_files': dNl.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
                                                       n.startswith(source_id)] for source_id, source in
-                                                     raw_dic.items()])
-                        dd = build_dataset(id=target_id0, target_dir=target0, source_files=source_files, **kws)
+                                                     raw_dic.items()]),
+                            **kws
+                        }
                     elif datagroup_id in ['Schleyer lab']:
-                        target0 = targets[0].replace(raw_ids[0], target_id0)
-                        dd = build_dataset(id=target_id0, target_dir=target0, source_dir=raw_dirs, **kws)
+                        kws0 = {
+                            'id': target_id0,
+                            'target_dir': targets[0].replace(raw_ids[0], target_id0),
+                            'source_dir': raw_dirs,
+                            **kws
+                        }
                     elif datagroup_id in ['Jovanic lab']:
                         raise NotImplemented
+                    dd = build_dataset(**kws0)
                     proc_dir[dd.id] = dd
                 break
     return proc_dir

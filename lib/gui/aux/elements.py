@@ -9,7 +9,7 @@ import PySimpleGUI as sg
 
 
 import matplotlib.pyplot as plt
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, dir_aux
 from lib.aux.par_aux import base_dtype
 from lib.registry.pars import preg
 
@@ -587,7 +587,7 @@ class DataList(NamedList):
         self.update_window(w)
 
     def eval(self, e, v, w, c, d, g):
-        from lib.stor.managing import detect_dataset
+
         n = self.name
         k = self.key
         d0 = self.dict
@@ -596,7 +596,7 @@ class DataList(NamedList):
         # print(kks)
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
-            new = detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
+            new = dir_aux.detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
             self.add(w, new)
         elif e == f'SELECT_ALL {n}':
             ks = np.arange(len(d0)).tolist()

@@ -4,7 +4,7 @@ import datetime
 import random
 import time
 import numpy as np
-from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
+from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.registry.pars import preg
@@ -88,7 +88,6 @@ class SingleRun:
         return text
 
     def retrieve(self):
-        from lib.stor.managing import split_dataset
         env = self.env
         # Read the data collected during the simulation
         step = env.step_collector.get_agent_vars_dataframe() if env.step_collector else None
@@ -103,10 +102,7 @@ class SingleRun:
         else:
             food = None
 
-        # print(step.columns)
-        # print(end.columns)
-        # raise
-        ds = split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
+        ds = dir_aux.split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
                            source_xy=self.source_xy,
                            fr=1 / self.env.dt, dir=self.data_dir, id=self.id, plot_dir=self.plot_dir,
                            show_output=self.show_output)
