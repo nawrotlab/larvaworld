@@ -492,6 +492,8 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
             from lib.process import aux,patch
             from lib.anal.fitting import fit_bouts
             d.chunk_dicts = aux.comp_chunk_dicts(s, e, c, store=store)
+            if store :
+                d.store_chunk_dicts(d.chunk_dicts)
             aux.turn_mode_annotation(e, d.chunk_dicts)
             patch.comp_patch(s, e, c)
 

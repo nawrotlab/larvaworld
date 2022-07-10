@@ -82,7 +82,6 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
 
         if v is None :
             v = comp_pooled_epochs(d)
-        # print(id,v.keys())
 
         kws = {
             'marker': 'o',

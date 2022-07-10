@@ -264,19 +264,14 @@ def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
     chunk_dicts = dNl.NestDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
-    if store:
-        path = c.dir_dict.chunk_dicts
-        os.makedirs(path, exist_ok=True)
-        dNl.save_dict(chunk_dicts, f'{path}/{c.id}.txt', use_pickle=True)
-        print('Individual larva bouts saved')
     return chunk_dicts
 
 
-def comp_pooled_epochs(d, chunk_dicts=None, store=False, **kwargs):
+def comp_pooled_epochs(d, chunk_dicts=None, **kwargs):
     s, e, c = d.step_data, d.endpoint_data, d.config
     from lib.anal.fitting import fit_bouts
     if chunk_dicts is None:
-        chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
+        chunk_dicts = comp_chunk_dicts(s, e, c, **kwargs)
     pooled_epochs = fit_bouts(c=c, chunk_dicts=chunk_dicts, s=s, e=e, id=c.id)
     return pooled_epochs
 

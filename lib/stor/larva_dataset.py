@@ -553,11 +553,7 @@ class LarvaDataset:
             s0, e0 = self.load_agent(id)
         env_params = self.env_params
         if close_view:
-            # from lib.registry.dtypes import null_dict
             env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
-        # else:
-        #     env_params = self.env_params
-
         if time_range is None:
             s00 = copy.deepcopy(s0)
         else:
@@ -572,7 +568,6 @@ class LarvaDataset:
             save_to = self.vis_dir
         replay_id = f'{id}_fixed_at_{fix_point}'
         if vis_kwargs is None:
-            # from lib.registry.dtypes import null_dict
             vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60, media_name=replay_id)
         base_kws = {
             'vis_kwargs': vis_kwargs,
@@ -702,6 +697,7 @@ class LarvaDataset:
         if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
             from lib.process import aux,patch
             self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
+            self.store_chunk_dicts(self.chunk_dicts)
             aux.turn_mode_annotation(e, self.chunk_dicts)
             patch.comp_patch(s, e, c)
             if annotation['on_food']:
@@ -709,7 +705,8 @@ class LarvaDataset:
                 patch.comp_on_food(s, e, c)
             if annotation['interference']:
                 self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
-                self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts, **kwargs)
+                self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
+                self.store_pooled_epochs(self.pooled_epochs)
 
 
         self.drop_pars(**to_drop, **cc)
@@ -717,7 +714,7 @@ class LarvaDataset:
             self.save(add_reference=add_reference)
         return self
 
-    def compute_pooled_epochs(self, chunk_dicts=None, store=True, **kwargs):
+    def compute_pooled_epochs(self, chunk_dicts=None):
         from lib.anal.fitting import fit_bouts
         s, e, c = self.step_data, self.endpoint_data, self.config
         if chunk_dicts is None:
@@ -727,11 +724,11 @@ class LarvaDataset:
                 chunk_dicts = self.load_chunk_dicts()
         if chunk_dicts is not None:
             self.pooled_epochs = fit_bouts(c=c, chunk_dicts=chunk_dicts, s=s, e=e, id=c.id)
-            if store:
-                path = c.dir_dict.pooled_epochs
-                os.makedirs(path, exist_ok=True)
-                dNl.save_dict(self.pooled_epochs, f'{path}/{self.id}.txt', use_pickle=True)
-                print('Pooled group bouts saved')
+            # if store:
+            #     path = c.dir_dict.pooled_epochs
+            #     os.makedirs(path, exist_ok=True)
+            #     dNl.save_dict(self.pooled_epochs, f'{path}/{self.id}.txt', use_pickle=True)
+            #     print('Pooled group bouts saved')
             return self.pooled_epochs
         else:
             return None
@@ -800,23 +797,43 @@ class LarvaDataset:
         if id is None:
             id = self.id
         path = os.path.join(self.dir_dict.pooled_epochs, f'{id}.txt')
-        try:
-            dic = dNl.load_dict(path, use_pickle=True)
-            print(f'Pooled epochs loaded for dataset {id}')
-            return dic
-        except:
-            try:
-                dic = self.compute_pooled_epochs()
-                return dic
-            except:
-                print(f'Pooled epochs not found for dataset {id}')
-                return None
+        return dNl.load_dict(path, use_pickle=True)
+        # try:
+        #     dic = dNl.load_dict(path, use_pickle=True)
+        #     print(f'Pooled epochs loaded for dataset {id}')
+        #     return dic
+        # except:
+        #     try:
+        #         dic = self.compute_pooled_epochs()
+        #         return dic
+        #     except:
+        #         print(f'Pooled epochs not found for dataset {id}')
+        #         return None
 
     def load_chunk_dicts(self, id=None):
         if id is None:
             id = self.id
         path = os.path.join(self.dir_dict.chunk_dicts, f'{id}.txt')
         return dNl.load_dict(path, use_pickle=True)
+
+    def store_chunk_dicts(self, chunk_dicts, id=None):
+        if id is None:
+            id = self.id
+        path = self.dir_dict.chunk_dicts
+        os.makedirs(path, exist_ok=True)
+        filepath = f'{path}/{id}.txt'
+        dNl.save_dict(chunk_dicts, filepath, use_pickle=True)
+        print('Individual larva bouts saved')
+
+    def store_pooled_epochs(self, pooled_epochs, id=None):
+        if id is None:
+            id = self.id
+        path = self.dir_dict.pooled_epochs
+        os.makedirs(path, exist_ok=True)
+        filepath = f'{path}/{id}.txt'
+        dNl.save_dict(pooled_epochs, filepath, use_pickle=True)
+        print('Pooled group bouts saved')
+
 
     def load_cycle_curves(self):
         try:
