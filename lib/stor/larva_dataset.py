@@ -145,7 +145,7 @@ class LarvaDataset:
     def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial']):
+    def load(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular']):
         D = self.dir_dict
         store = pd.HDFStore(D.data_h5)
 
@@ -210,13 +210,14 @@ class LarvaDataset:
         except:
             raise ValueError('Not found')
 
-    def save(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial'],
+    def save(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular'],
              add_reference=False):
         h5_kdic = dNl.NestDict({
             'contour': dNl.flatten_list(self.contour_xy),
             'midline': dNl.flatten_list(self.points_xy),
             'epochs': self.epochs_ps,
-            'base_spatial': self.base_spatial_ps
+            'base_spatial': self.base_spatial_ps,
+            'angular': dNl.unique_list(self.angles+self.ang_pars),
         })
 
         D = self.dir_dict
@@ -624,8 +625,8 @@ class LarvaDataset:
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour)
 
-        ang = ['front_orientation', 'rear_orientation', 'bend']
-        self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)
+        ang = ['front_orientation', 'rear_orientation','head_orientation', 'tail_orientation', 'bend']
+        self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)+ nam.min(nam.vel(ang))+ nam.max(nam.vel(ang))
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
     def define_paths(self, dir):
@@ -664,6 +665,7 @@ class LarvaDataset:
             'contour': os.path.join(self.data_dir, 'contour.h5'),
             'epochs': os.path.join(self.data_dir, 'epochs.h5'),
             'base_spatial': os.path.join(self.data_dir, 'base_spatial.h5'),
+            'angular': os.path.join(self.data_dir, 'angular.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
             'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
         })
