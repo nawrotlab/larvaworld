@@ -226,27 +226,27 @@ class ParRegistry:
                              bouts=['stride', 'pause', 'turn'],
                              to_keep=['midline', 'contour'], **kwargs)
 
-    def newConf(self, conftype, id=None, kwargs={}, id0=None):
-        d = {
-            'Tracker': 'tracker',
-            'Model': 'larva_conf',
-            'Exp': 'exp_conf',
-            'Env': 'env_conf',
-            'Essay': 'essay_conf',
-            'Ga': 'ga_conf',
-        }
-        k0 = d[conftype]
-
-        if id0 is None:
-            k0 = f'{conftype.lower()}_conf'
-            T0 = preg.get_null(k0)
-        else:
-            from lib.conf.stored.conf import expandConf
-            T0 = dNl.NestDict(copy.deepcopy(expandConf(id0, conftype)))
-        T = dNl.update_nestdict(T0, kwargs)
-        if id is not None:
-            self.saveConf(conf=T, conftype=conftype, id=id)
-        return T
+    # def newConf(self, conftype, id=None, kwargs={}, id0=None):
+    #     d = {
+    #         'Tracker': 'tracker',
+    #         'Model': 'larva_conf',
+    #         'Exp': 'exp_conf',
+    #         'Env': 'env_conf',
+    #         'Essay': 'essay_conf',
+    #         'Ga': 'ga_conf',
+    #     }
+    #     k0 = d[conftype]
+    #
+    #     if id0 is None:
+    #         k0 = f'{conftype.lower()}_conf'
+    #         T0 = preg.get_null(k0)
+    #     else:
+    #         from lib.conf.stored.conf import expandConf
+    #         T0 = dNl.NestDict(copy.deepcopy(expandConf(id0, conftype)))
+    #     T = dNl.update_nestdict(T0, kwargs)
+    #     if id is not None:
+    #         self.saveConf(conf=T, conftype=conftype, id=id)
+    #     return T
 
     def saveConf(self, conf, conftype, id=None, mode='overwrite', verbose=1):
         if id is not None:

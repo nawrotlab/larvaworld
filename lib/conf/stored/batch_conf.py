@@ -38,6 +38,7 @@ def batch(exp, en=None, ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=
                      space_search=ss0,
                      batch_methods=preg.get_null('batch_methods', **bm_kws),
                      **kwargs)
+    print(conf)
     if as_entry:
         return {exp: conf}
     else:

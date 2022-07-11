@@ -52,6 +52,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
                                                           bouts=['stride', 'pause', 'turn']), **kw)
     else:
         exp_conf = preg.get_null('exp_conf', **kw)
+    # print(exp_conf)
     if not as_entry:
         return exp_conf
     else:
@@ -147,8 +148,8 @@ grouped_exp_dict = {
         # 'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
         'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
         'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
-                                    l=lgs(models=['explorer', 'Levy', 'explorer_3con', 'nengo_explorer'],
-                                          ids=['CoupledOsc', 'Levy', '3con', 'nengo'], N=5)),
+                                    l=lgs(models=['explorer', 'Levy', 'nengo_explorer'],
+                                          ids=['CoupledOsc', 'Levy', 'nengo'], N=5)),
     },
 
     'chemotaxis': {
@@ -250,7 +251,7 @@ grouped_exp_dict = {
 
     'other': {
         'realistic_imitation': exp('dish', l=lg(m='imitator', N=25), sim={'Box2D': True}, c=['midline', 'contour']),
-        'imitation': imitation_exp('None.50controls', model='explorer'),
+        # 'imitation': imitation_exp('None.150controls', model='explorer'),
     }
 }
 

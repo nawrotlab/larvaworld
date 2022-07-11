@@ -230,16 +230,16 @@ class ParInitDict:
                 'transposition': {'dtype': str, 'vs': ['', 'origin', 'arena', 'center'],
                                   'h': 'Whether to transpose spatial coordinates.'}
             }
-            d['processing'] = {t: bF for t in proc_type_keys}
-            d['annotation'] = {**{b: bF for b in ['stride', 'pause', 'turn']},
-                               'on_food': bF,
-                               'interference': bT,
-                               'fits': bT}
-            d['to_drop'] = {kk: bF for kk in to_drop_keys}
+            d['processing'] = {t: {**bF, 'h' : f'Whether to apply {t} processing'} for t in proc_type_keys}
+            d['annotation'] = {**{b: {**bF, 'h' : f'Whether to annotate {b} epochs'} for b in ['stride', 'pause', 'turn']},
+                               'on_food': {**bF, 'h' : f'Whether to compute patch residency'},
+                               'interference': {**bT, 'h' : f'Whether to compute interference'},
+                               'fits': {**bT, 'h' : f'Whether to fit epochs'}}
+            d['to_drop'] = {kk: {**bF, 'h' : f'Whether to drop {kk} parameters'} for kk in to_drop_keys}
             d['enrichment'] = {**{k: d[k] for k in
                                   ['metric_definition', 'preprocessing', 'processing', 'annotation', 'to_drop']},
-                               'recompute': bF,
-                               'mode': {'dtype': str, 'v': 'minimal', 'vs': ['minimal', 'full']}
+                               'recompute': {**bF, 'h' : f'Whether to recompute'},
+                               'mode': {'dtype': str, 'v': 'minimal', 'vs': ['minimal', 'full'], 'h' : f'The processing modee'}
                                }
             return d
 
@@ -343,9 +343,9 @@ class ParInitDict:
 
             d['LarvaGroup'] = {
                 'model': d['larva_model'],
-                'sample': {'dtype': str, 'v': 'None.50controls'},
+                'sample': {'dtype': str, 'v': 'None.150controls',  'h': 'The reference dataset to sample from.'},
                 'default_color': pCol('black', 'larva group'),
-                'imitation': bF,
+                'imitation': {**bF, 'h': 'Whether to imitata the reference dataset.'},
                 'distribution': d['larva_distro'],
                 'life_history': d['life_history'],
                 'odor': d['odor']
@@ -1023,9 +1023,9 @@ class ParInitDict:
                                'space_search': d['space_search'],
                                'batch_methods': d['batch_methods'],
                                'optimization': d['optimization'],
-                               'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']}},
-                               'post_kws': {'dtype': dict, 'v': {}},
-                               'proc_kws': {'dtype': dict, 'v': {}},
+                               'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']}, 'h': 'Keywords for the exp run.'},
+                               'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post run.'},
+                               'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc run.'},
                                'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                                }
 
@@ -1112,7 +1112,7 @@ class ParInitDict:
             }
 
             d['ga_build_kws'] = {
-                'space_dict': {'dtype': dict, 'h': 'The parameter state space'},
+                'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
                 'robot_class': {'dtype': type, 'h': 'The agent class to use in the simulations'},
                 'base_model': confID_entry('Model', default='navigator', k='mID0', symbol=subsup('ID', 'mod', 0)),
                 'bestConfID': {'dtype': str,

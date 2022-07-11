@@ -198,7 +198,7 @@ class GAselector:
 
 
 class GAbuilder(GAselector):
-    def __init__(self, scene, side_panel=None, space_dict=None, robot_class=LarvaRobot, base_model='explorer',
+    def __init__(self, scene, side_panel=None, space_mkeys=[], robot_class=LarvaRobot, base_model='explorer',
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,
                  exclude_func=None, plot_func=None, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
@@ -220,7 +220,7 @@ class GAbuilder(GAselector):
         self.robot_class = robot_class
 
         self.mConf0 = self.M.loadConf(base_model)
-        self.space_dict = self.M.space_dict(mkeys=space_dict, mConf0=self.mConf0)
+        self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
 
         if init_mode=='default' :
             gConf=self.M.conf(self.space_dict)

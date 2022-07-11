@@ -201,9 +201,9 @@ def create_mod_dict():
     #                        {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
     #                    )
 
-    brain_3c = brain(['L'],
-                     intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
-                                     preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
+    # brain_3c = brain(['L'],
+    #                  intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
+    #                                  preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
 
     # IfPHI = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
     # IfNull = preg.get_null('interference', mode='default', attenuation=1.0)
@@ -234,7 +234,7 @@ def create_mod_dict():
         'branch_explorer': add_brain(add_Im(Im(0.0, mode='branch'), LW)),
         'nengo_explorer': add_brain(nengo_brain(['L', 'W'], EEB=0.0)),
         # 'Levy-walker': add_brain(Levy_brain),
-        'explorer_3con': add_brain(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
+        # 'explorer_3con': add_brain(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
         'imitator': add_brain(L, bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
                               phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
 

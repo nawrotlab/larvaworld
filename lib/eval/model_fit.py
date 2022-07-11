@@ -166,7 +166,7 @@ def epar(e, k=None, par=None, average=True):
         return vs
 
 
-def optimize_mID_turnerNinterference(mID0,  refID, mID1=None, **kwargs) :
+def optimize_mID(mID0,  refID, mID1=None,space_mkeys=['turner', 'interference'], **kwargs) :
     if mID1 is None :
         mID1=mID0
     from lib.anal.argparsers import adjust_sim
@@ -178,6 +178,7 @@ def optimize_mID_turnerNinterference(mID0,  refID, mID1=None, **kwargs) :
     conf.ga_select_kws.Ngenerations = 10
     conf.ga_select_kws.Nagents = 10
     conf.ga_select_kws.Nelit = 2
+    conf.ga_build_kws.space_mkeys =space_mkeys
     conf.ga_build_kws.base_model =mID0
     conf.ga_build_kws.fitness_target_refID =refID
     conf.ga_build_kws.bestConfID = mID1

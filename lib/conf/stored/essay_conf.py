@@ -632,7 +632,7 @@ rover_sitter_essay = {
     'exp_fig_folder': preg.path_dict["RvsS"]}
 
 essay_dict = {
-    'roversVSsitters': rover_sitter_essay,
+    # 'roversVSsitters': rover_sitter_essay,
     # 'RvsS_essay': {}
 }
 

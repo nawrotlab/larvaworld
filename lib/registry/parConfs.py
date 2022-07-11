@@ -781,54 +781,72 @@ class LarvaConfDict:
         return T
 
     def baseConfs(self):
+        mod_dict={'realistic' : 'RE', 'square' : 'SQ','gaussian' : 'GAU','constant' : 'CON',
+                  'default' : 'DEF','neural' : 'NEU','sinusoidal' : 'SIN','nengo' : 'NENGO','phasic' : 'PHI','branch' : 'BR'}
         kws = {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
         self.larvaConf(mID='loco_default', **kws)
-        self.larvaConf(mID='RE_NEU_PHI_NENGO',
-                       modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
-                              'intermitter': 'nengo'}, nengo=True, **kws)
-        self.larvaConf(mID='RE_NEU_PHI_BR', modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
-                                                   'intermitter': 'branch'}, **kws)
-        self.larvaConf(mID='RE_NEU_PHI_DEF',
-                       modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
-                              'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='RE_NEU_SQ_DEF', modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'square',
-                                                   'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='RE_NEU_DEF_DEF',
-                       modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'default',
-                              'intermitter': 'default'})
-        self.larvaConf(mID='SQ_NEU_PHI_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'phasic',
-                                                    'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='SQ_NEU_SQ_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'square',
-                                                   'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='SQ_NEU_DEF_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'default',
-                                                    'intermitter': 'default'})
-        self.larvaConf(mID='CON_NEU_PHI_DEF',
-                       modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'phasic',
-                              'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='CON_NEU_SQ_DEF', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'square',
-                                                    'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='CON_NEU_DEF_DEF',
-                       modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
-                              'intermitter': 'default'})
-        self.larvaConf(mID='CON_SIN_PHI_DEF',
-                       modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'phasic',
-                              'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='CON_SIN_SQ_DEF',
-                       modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'square',
-                              'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='CON_SIN_DEF_DEF',
-                       modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
-                              'intermitter': 'default'})
 
-        self.larvaConf(mID='RE_SIN_PHI_DEF',
-                       modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'phasic',
-                              'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='RE_SIN_SQ_DEF',
-                       modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'square',
-                              'intermitter': 'default'}, **kws)
-        self.larvaConf(mID='RE_SIN_DEF_DEF',
-                       modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'default',
-                              'intermitter': 'default'})
+
+        for Cmod in ['realistic', 'square', 'gaussian', 'constant']:
+            for Tmod in ['neural', 'sinusoidal', 'constant']:
+                for Ifmod in ['phasic', 'square', 'default']:
+                    for IMmod in ['nengo', 'branch', 'default']:
+                        kkws={
+                            'mID' : f'{mod_dict[Cmod]}_{mod_dict[Tmod]}_{mod_dict[Ifmod]}_{mod_dict[IMmod]}',
+                            'modes' : {'crawler': Cmod, 'turner': Tmod, 'interference': Ifmod,'intermitter': IMmod},
+                            'nengo': True if IMmod=='nengo' else False,
+
+                        }
+                        if Ifmod!='default' :
+                            kkws.update(**kws)
+                        self.larvaConf(**kkws)
+
+        # self.larvaConf(mID='RE_NEU_PHI_NENGO',
+        #                modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
+        #                       'intermitter': 'nengo'}, nengo=True, **kws)
+        # self.larvaConf(mID='RE_NEU_PHI_BR', modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
+        #                                            'intermitter': 'branch'}, **kws)
+        # self.larvaConf(mID='RE_NEU_PHI_DEF',
+        #                modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
+        #                       'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='RE_NEU_SQ_DEF', modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'square',
+        #                                            'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='RE_NEU_DEF_DEF',
+        #                modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'default',
+        #                       'intermitter': 'default'})
+        # self.larvaConf(mID='SQ_NEU_PHI_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'phasic',
+        #                                             'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='SQ_NEU_SQ_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'square',
+        #                                            'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='SQ_NEU_DEF_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'default',
+        #                                             'intermitter': 'default'})
+        # self.larvaConf(mID='CON_NEU_PHI_DEF',
+        #                modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'phasic',
+        #                       'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='CON_NEU_SQ_DEF', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'square',
+        #                                             'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='CON_NEU_DEF_DEF',
+        #                modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
+        #                       'intermitter': 'default'})
+        # self.larvaConf(mID='CON_SIN_PHI_DEF',
+        #                modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'phasic',
+        #                       'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='CON_SIN_SQ_DEF',
+        #                modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'square',
+        #                       'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='CON_SIN_DEF_DEF',
+        #                modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
+        #                       'intermitter': 'default'})
+        #
+        # self.larvaConf(mID='RE_SIN_PHI_DEF',
+        #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'phasic',
+        #                       'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='RE_SIN_SQ_DEF',
+        #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'square',
+        #                       'intermitter': 'default'}, **kws)
+        # self.larvaConf(mID='RE_SIN_DEF_DEF',
+        #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'default',
+        #                       'intermitter': 'default'})
 
         kws2 = {'modkws': {'interference': {'attenuation': 0.0}}}
         self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
@@ -987,7 +1005,7 @@ class LarvaConfDict:
         conf.mode = mode
         return conf
 
-    def adapt_mID(self, refID, mID0, mID=None, e=None, c=None):
+    def adapt_mID(self, refID, mID0, mID=None,space_mkeys=['turner', 'interference'], e=None, c=None):
         if e is None or c is None:
             from lib.registry.pars import preg
             d = preg.loadRef(refID)
@@ -995,17 +1013,19 @@ class LarvaConfDict:
             e, c = d.endpoint_data, d.config
 
         m0 = self.loadConf(mID0)
-        m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
-        m0.brain.intermitter_params = self.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
+        if 'crawler' not in space_mkeys :
+            m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
+        if 'intermitter' not in space_mkeys:
+            m0.brain.intermitter_params = self.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
                                                              conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
         if mID is None:
             mID = f'{mID0}_fitted'
         self.saveConf(conf=m0, mID=mID)
 
-        from lib.eval.model_fit import optimize_mID_turnerNinterference
+        from lib.eval.model_fit import optimize_mID
 
-        entry = optimize_mID_turnerNinterference(mID0=mID, refID=refID, save_to=c.dir_dict.GAoptimization)
+        entry = optimize_mID(mID0=mID, refID=refID,space_mkeys=space_mkeys, save_to=c.dir_dict.GAoptimization)
         # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
         # C.run()
         # m0.brain.turner_params.update(C.best.turner)

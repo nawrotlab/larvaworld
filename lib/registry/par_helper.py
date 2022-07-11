@@ -121,7 +121,7 @@ class FuncParHelper:
             return self.compute(s=s,**kwargs)
 
 if __name__ == '__main__':
-    _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
-    raise
-    # preg.storeConfs()
-    preg.storeConfs(conftypes=['Group'])
+    # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
+    # raise
+    preg.storeConfs()
+    # preg.storeConfs(conftypes=['Batch'])
