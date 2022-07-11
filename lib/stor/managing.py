@@ -25,7 +25,7 @@ def import_Jovanic_datasets(parent_dir, source_ids=['Fed', 'Deprived', 'Starved'
     return ds
 
 
-def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, age=0.0,  merged=True, **kwargs):
+def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, age=0.0,  merged=True,enrich=True,add_reference=True,   **kwargs):
     # N = 150
     group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
     group.distribution.N = N
@@ -52,10 +52,14 @@ def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, a
         **kwargs
     }
     d = build_dataset(id=id, **kws)
+    if d is not None:
+        d.save(food=False, add_reference=add_reference)
+        if enrich :
+            d.enrich(**g.enrichment, store=True, add_reference=add_reference)
     return d
 
 
-def build_dataset(datagroup_id, id, target_dir, larva_groups={},enrich=True, add_reference=True, **kwargs):
+def build_dataset(datagroup_id, id, target_dir, larva_groups={},**kwargs):
     func_dict = {
         'Jovanic lab': build_Jovanic,
         'Berni lab': build_Berni,
@@ -78,9 +82,8 @@ def build_dataset(datagroup_id, id, target_dir, larva_groups={},enrich=True, add
         }
         step, end = func_dict[datagroup_id](**kws0)
         d.set_data(step=step, end=end)
-        d.save(food=False,add_reference=add_reference)
-        if enrich:
-            d.enrich(**g.enrichment, store=True, add_reference=add_reference)
+
+
         print(f'--- Dataset {d.id} created with {len(d.agent_ids)} larvae! ---')
         return d
     except:
