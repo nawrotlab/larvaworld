@@ -42,7 +42,7 @@ class SquareCoupling(DefaultCoupling):
             if crawler.mode in ['realistic', 'gaussian'] and (
                     self.crawler_phi_range[0] < crawler.phi < self.crawler_phi_range[1]):
                 A += self.attenuation_max
-            elif crawler.mode == 'square' and crawler.phi <= 2 * np.pi * crawler.square_signal_duty:
+            elif crawler.mode == 'square' and crawler.phi <= 2 * np.pi * crawler.duty:
                 A += self.attenuation_max
             elif crawler.mode == 'constant':
                 pass

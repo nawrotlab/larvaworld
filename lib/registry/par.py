@@ -173,7 +173,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
         def randomize(self):
             if self.parclass == param.Number:
                 vmin, vmax = self.param.v.bounds
-                self.v = np.round(random.uniform(vmin, vmax), self.Ndec)
+                self.v = self.param.v.crop_to_bounds(np.round(random.uniform(vmin, vmax), self.Ndec))
             elif self.parclass == param.Integer:
                 vmin, vmax = self.param.v.bounds
                 self.v = random.randint(vmin, vmax)

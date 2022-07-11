@@ -166,16 +166,17 @@ def epar(e, k=None, par=None, average=True):
         return vs
 
 
-def optimize_mID(mID0,  refID, mID1=None,space_mkeys=['turner', 'interference'],init='model',sim_ID=None, **kwargs) :
+def optimize_mID(mID0,  refID, mID1=None,space_mkeys=['turner', 'interference'],init='model',
+                 sim_ID=None,fit_dict =None, **kwargs) :
     if mID1 is None :
         mID1=mID0
     from lib.anal.argparsers import adjust_sim
     from lib.ga.util.ga_launcher import GAlauncher
     conf = preg.expandConf(id='realism', conftype='Ga')
     conf.show_screen = False
-    conf.ga_select_kws.Pmutation = 0.3
-    conf.ga_select_kws.Cmutation = 0.3
-    conf.ga_select_kws.Ngenerations = 10
+    # conf.ga_select_kws.Pmutation = 0.3
+    # conf.ga_select_kws.Cmutation = 0.3
+    conf.ga_select_kws.Ngenerations = 5
     conf.ga_select_kws.Nagents = 10
     conf.ga_select_kws.Nelits = 2
     conf.ga_build_kws.init_mode =init
@@ -183,6 +184,7 @@ def optimize_mID(mID0,  refID, mID1=None,space_mkeys=['turner', 'interference'],
     conf.ga_build_kws.base_model =mID0
     conf.ga_build_kws.fitness_target_refID =refID
     conf.ga_build_kws.bestConfID = mID1
+    conf.ga_build_kws.fit_dict = fit_dict
     conf.sim_params.sim_ID=sim_ID
     conf.sim_params = adjust_sim(exp=conf.experiment, conf_type='Ga', sim=conf.sim_params)
     conf.sim_params.duration = 0.5

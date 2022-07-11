@@ -12,6 +12,7 @@ import numpy as np
 
 import lib.aux.dictsNlists as dNl
 # from lib.ga.util.genome import Genome
+from lib.ga.util.functions import arrange_fitness
 
 from lib.registry.pars import preg
 
@@ -74,7 +75,8 @@ class GAselector:
     def sort_genomes(self):
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
-
+        # print()
+        # print(self.generation_num, [g.fitness for g in self.sorted_genomes])
         if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
             self.best_genome = self.sorted_genomes[0]
             self.best_fitness = self.best_genome.fitness
@@ -199,21 +201,22 @@ class GAselector:
 
 class GAbuilder(GAselector):
     def __init__(self, scene, side_panel=None, space_mkeys=[], robot_class=LarvaRobot, base_model='explorer',
-                 multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,
+                 multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
                  exclude_func=None, plot_func=None, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
 
-        if fitness_target_kws is None:
-            fitness_target_kws = {}
+
         self.is_running = True
         if progress_bar and self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
             self.progress_bar.start()
         else:
             self.progress_bar = None
-
-        self.fit_dict = self.arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws)
-
+        if fit_dict is None :
+            if fitness_target_kws is None:
+                fitness_target_kws = {}
+            fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,source_xy=self.model.source_xy)
+        self.fit_dict =fit_dict
         self.exclude_func = exclude_func
         self.multicore = multicore
         self.scene = scene
@@ -221,6 +224,7 @@ class GAbuilder(GAselector):
 
         self.mConf0 = self.M.loadConf(base_model)
         self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
+        self.dataset0=self.init_dataset()
 
         if init_mode=='default' :
             gConf=self.M.conf(self.space_dict)
@@ -244,8 +248,7 @@ class GAbuilder(GAselector):
 
 
 
-    def init_step_df(self):
-
+    def init_dataset(self):
         c = dNl.NestDict(
             {'id': self.model.id, 'group_id': 'GA_robots', 'dt': self.model.dt, 'fr': 1 / self.model.dt,
              'agent_ids': np.arange(self.Nagents), 'duration': self.model.Nsteps * self.model.dt,
@@ -257,63 +260,49 @@ class GAbuilder(GAselector):
                                                    names=['Step', 'AgentID'])
         self.df_columns = preg.getPar(['b', 'fov', 'rov', 'v', 'x', 'y'])
         self.df_Ncols = len(self.df_columns)
-        step_df = np.ones([c.Nticks, c.N, self.df_Ncols]) * np.nan
 
         e = pd.DataFrame(index=c.agent_ids)
         e['cum_dur'] = c.duration
         e['num_ticks'] = c.Nticks
-        e['length'] = [robot.real_length for robot in self.robots]
 
-        self.dataset = dNl.NestDict({'step_data': None, 'endpoint_data': e, 'config': c})
+        return dNl.NestDict({'step_data': None, 'endpoint_data': e, 'config': c})
 
+    def init_step_df(self):
+        self.dataset = dNl.copyDict(self.dataset0)
+
+        step_df = np.ones([self.dataset.config.Nticks, self.dataset.config.N, self.df_Ncols]) * np.nan
+        self.dataset.endpoint_data['length'] = [robot.real_length for robot in self.robots]
         return step_df
 
     def finalize_step_df(self):
         t0 = time.time()
+
         e, c = self.dataset.endpoint_data, self.dataset.config
         self.step_df[:, :, :3] = np.rad2deg(self.step_df[:, :, :3])
         self.step_df = self.step_df.reshape(c.Nticks * c.N, self.df_Ncols)
         s = pd.DataFrame(self.step_df, index=self.my_index, columns=self.df_columns)
         s = s.astype(float)
 
-        cycle_ks, eval_ks = None, None
+
         from lib.process.spatial import scale_to_length
 
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
-        dic0 = self.fit_dict.robot_dict
-
-        ks = []
-        if 'eval' in dic0.keys():
-            eval_ks = self.fit_dict.target_kws.eval_shorts
-            ks += eval_ks
-        if 'cycle_curves' in dic0.keys():
-            cycle_ks = list(self.fit_dict.target_kws.pooled_cycle_curves.keys())
-            ks += cycle_ks
-        ks = dNl.unique_list(ks)
-        for k in ks:
+        FK=self.fit_dict.keys
+        for k in FK.all:
             preg.compute(k, self.dataset)
 
         for i, g in self.genome_dict.items():
             if g.fitness is None:
-                # t0 = time.time()
                 ss = self.dataset.step_data.xs(i, level='AgentID')
-                gdict = dNl.NestDict({k: [] for k in dic0.keys()})
-                gdict['step'] = ss
-                if cycle_ks:
+                gdict = dNl.copyDict(self.fit_dict.robot_dict)
+                gdict.step = ss
+                if FK.cycle:
                     from lib.process.aux import cycle_curve_dict
-
-                    gdict['cycle_curves'] = cycle_curve_dict(s=ss, dt=self.model.dt, shs=cycle_ks)
-                if eval_ks:
-                    gdict['eval'] = {sh: ss[preg.getPar(sh)].dropna().values for sh in eval_ks}
-                    # t1 = time.time()
-                    # print('--1--', t1 - t0)
-                    # t00 = time.time()
+                    gdict.cycle_curves = cycle_curve_dict(s=ss, dt=self.model.dt, shs=FK.cycle)
+                if FK.eval:
+                    gdict.eval = {sh: ss[p].dropna().values for sh,p in FK.eval.items()}
                 g.fitness, g.fitness_dict = self.get_fitness(gdict)
-                # print(g.fitness)
-                # g.fitness
-                # t11 = time.time()
-                # print('--2--', t11 - t00)
 
     def build_generation(self):
         robots = []
@@ -427,10 +416,10 @@ class GAbuilder(GAselector):
         self.genome_df=pd.DataFrame.from_records(self.all_genomes_dic)
         self.genome_df=self.genome_df.round(3)
         self.genome_df.sort_values(by='fitness', ascending=False,inplace=True)
-        preg.graph_dict.dict['mpl'](data=self.genome_df,font_size= 18, save_to=self.model.plot_dir, name=self.bestConfID)
+        preg.graph_dict.dict['mpl'](data=self.genome_df,font_size= 18, save_to=self.model.dir_path, name=self.bestConfID,verbose=self.verbose)
         filepath=f'{self.model.dir_path}/{self.bestConfID}.csv'
         self.genome_df.to_csv(filepath)
-        print(f'GA dataframe saved at {filepath}')
+        # print(f'GA dataframe saved at {filepath}')
 
     def check(self, robot):
         if not self.model.offline:

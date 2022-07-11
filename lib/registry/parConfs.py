@@ -781,23 +781,22 @@ class LarvaConfDict:
         return T
 
     def baseConfs(self):
-        mod_dict={'realistic' : 'RE', 'square' : 'SQ','gaussian' : 'GAU','constant' : 'CON',
-                  'default' : 'DEF','neural' : 'NEU','sinusoidal' : 'SIN','nengo' : 'NENGO','phasic' : 'PHI','branch' : 'BR'}
+        mod_dict = {'realistic': 'RE', 'square': 'SQ', 'gaussian': 'GAU', 'constant': 'CON',
+                    'default': 'DEF', 'neural': 'NEU', 'sinusoidal': 'SIN', 'nengo': 'NENGO', 'phasic': 'PHI',
+                    'branch': 'BR'}
         kws = {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
-
-
 
         for Cmod in ['realistic', 'square', 'gaussian', 'constant']:
             for Tmod in ['neural', 'sinusoidal', 'constant']:
                 for Ifmod in ['phasic', 'square', 'default']:
                     for IMmod in ['nengo', 'branch', 'default']:
-                        kkws={
-                            'mID' : f'{mod_dict[Cmod]}_{mod_dict[Tmod]}_{mod_dict[Ifmod]}_{mod_dict[IMmod]}',
-                            'modes' : {'crawler': Cmod, 'turner': Tmod, 'interference': Ifmod,'intermitter': IMmod},
-                            'nengo': True if IMmod=='nengo' else False,
+                        kkws = {
+                            'mID': f'{mod_dict[Cmod]}_{mod_dict[Tmod]}_{mod_dict[Ifmod]}_{mod_dict[IMmod]}',
+                            'modes': {'crawler': Cmod, 'turner': Tmod, 'interference': Ifmod, 'intermitter': IMmod},
+                            'nengo': True if IMmod == 'nengo' else False,
 
                         }
-                        if Ifmod!='default' :
+                        if Ifmod != 'default':
                             kkws.update(**kws)
                         self.larvaConf(**kkws)
 
@@ -1005,7 +1004,7 @@ class LarvaConfDict:
         conf.mode = mode
         return conf
 
-    def adapt_mID(self, refID, mID0, mID=None,space_mkeys=['turner', 'interference'], e=None, c=None):
+    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], e=None, c=None,fit_dict =None):
         if mID is None:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
@@ -1016,19 +1015,19 @@ class LarvaConfDict:
             e, c = d.endpoint_data, d.config
 
         m0 = self.loadConf(mID0)
-        if 'crawler' not in space_mkeys :
+        if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
         if 'intermitter' not in space_mkeys:
             m0.brain.intermitter_params = self.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
-                                                             conf=m0.brain.intermitter_params)
+                                                                 conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
 
         self.saveConf(conf=m0, mID=mID)
 
         from lib.eval.model_fit import optimize_mID
 
-        entry = optimize_mID(mID0=mID, refID=refID,space_mkeys=space_mkeys,
-                             init='random',save_to=c.dir_dict.GAoptimization,sim_ID=mID )
+        entry = optimize_mID(mID0=mID, refID=refID, space_mkeys=space_mkeys,
+                             init='random', save_to=c.dir_dict.GAoptimization, sim_ID=mID,fit_dict =fit_dict)
         # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
         # C.run()
         # m0.brain.turner_params.update(C.best.turner)
@@ -1073,6 +1072,13 @@ class LarvaConfDict:
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
+
+        from lib.ga.util.functions import arrange_fitness
+        from lib.conf.stored.ga_conf import distro_KS_interference_evaluation
+        fit_dict = arrange_fitness(fitness_func=distro_KS_interference_evaluation, fitness_target_refID=refID,
+                                   fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa'],
+                                                       'pooled_cycle_curves': ['fov', 'foa', 'b']},
+                                   source_xy=None)
         entries = {}
         mIDs = []
         for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
@@ -1081,7 +1087,7 @@ class LarvaConfDict:
                     mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
                     mID = f'{mID0}_fit'
                     entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
-                                        space_mkeys=['crawler', 'turner', 'interference'], )
+                                           space_mkeys=['crawler', 'turner', 'interference'], fit_dict =fit_dict)
                     entries.update(entry)
                     mIDs.append(mID)
         return entries, mIDs
@@ -1137,7 +1143,7 @@ class LarvaConfDict:
     def variable_mdict(self, mkey, mode='default'):
         var_ks = self.variable_keys(mkey, mode=mode)
         d00 = self.dict.model.m[mkey].mode[mode].args
-        mdict=dNl.NestDict({k:d00[k] for k in var_ks})
+        mdict = dNl.NestDict({k: d00[k] for k in var_ks})
         return mdict
 
     def space_dict(self, mkeys, mConf0):
@@ -1149,8 +1155,8 @@ class LarvaConfDict:
                 mod_v = mF[f'{d0.pref}mode']
             else:
                 mod_v = 'default'
-            var_mdict=self.variable_mdict(mkey, mode=mod_v)
-            for k,p in var_mdict.items():
+            var_mdict = self.variable_mdict(mkey, mode=mod_v)
+            for k, p in var_mdict.items():
                 k0 = f'{d0.pref}{k}'
                 dic[k0] = p
                 if type(mF[k0]) == list:
