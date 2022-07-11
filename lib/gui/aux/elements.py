@@ -296,7 +296,7 @@ class SelectionList(GuiElement):
         if name is None:
             name = self.conftype
         super().__init__(name=name)
-        # print(self.conftype, name, disp)
+        # print(name, with_dict)
         self.single_line = single_line
         self.with_dict = with_dict
         self.width = width
@@ -329,8 +329,8 @@ class SelectionList(GuiElement):
     def build(self, bs, **kwargs):
         n = self.disp
         if self.with_dict:
-            nn = self.tab.gui.tab_dict[n][2]
-            self.collapsible = CollapsibleDict(nn, default=True,
+            # print(self.tab.gui.tab_dict[n][2])
+            self.collapsible = CollapsibleDict(name= self.tab.gui.tab_dict[n][2], default=True,
                                                header_list_width=self.width, header_dict=preg.loadConfDict(self.conftype),
                                                next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
@@ -955,9 +955,12 @@ class CollapsibleDict(Collapsible):
         if type_dict is None:
             from lib.registry.dtypes import par,par_dict
             entry = par(name=as_entry, dtype=str, v='Unnamed') if as_entry is not None else {}
-            nn = name if dict_name is None else dict_name
-            dic = par_dict(d0=preg.init_dict[nn])
-            type_dict = {**entry, **dic}
+            if dict_name is None:
+                dict_name = name
+            # print(dict_name)
+            if dict_name in preg.init_dict.keys():
+                dic = par_dict(d0=preg.init_dict[dict_name])
+                type_dict = {**entry, **dic}
         self.as_entry = as_entry
         self.subdict_state = subdict_state
 

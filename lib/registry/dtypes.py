@@ -5,13 +5,14 @@ from lib.aux.par_aux import define_range
 
 from lib.registry.units import ureg
 
+
 def par(name, dtype=float, v=None, vs=None, lim=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
         h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', combo=None, entry=None, codename=None,
         **kwargs):
     if dtype == TypedDict:
         return {name: {'initial_value': v, 'dtype': dtype, 'entry': entry, 'disp': disp, 'tooltip': h}}
 
-    dv, lim, vs = define_range(dtype=dtype, lim=lim, vs=vs, dv=dv,u=u, wrap_mode=None)
+    dv, lim, vs = define_range(dtype=dtype, lim=lim, vs=vs, dv=dv, u=u, wrap_mode=None)
 
     if vs not in [None, []]:
         from lib.aux.data_aux import maxNdigits
@@ -30,11 +31,9 @@ def par_dict(d0, **kwargs):
         return None
     d = {}
     for n, v in d0.items():
-        if 't' in v.keys() or 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys() :
-        # try:
+        if 'dtype' in v.keys() or 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
             entry = par(n, **v, **kwargs)
         else:
-        # except:
             entry = {n: {'dtype': dict, 'content': par_dict(d0=v, **kwargs)}}
         d.update(entry)
     return d

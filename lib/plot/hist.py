@@ -11,7 +11,7 @@ from lib.plot.aux import scatter_hist
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
-def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
+def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
                           **kwargs):
     if e is None and refID is not None:
         d = preg.loadRef(refID)
@@ -19,31 +19,27 @@ def module_endpoint_hists(module, valid, e=None, refID=None, Nbins=None, show_me
         e = d.endpoint_data
     if Nbins is None:
         Nbins = int(e.index.values.shape[0] / 10)
-    yy = int(e.index.values.shape[0] / 7)
-    from lib.registry.dtypes import par
-    # from lib.conf.base.init_pars import InitDict
-    d0 = preg.init_dict[module]
-    N = len(valid)
+    d0 = preg.larva_conf_dict.dict.model.init[mkey].mode[mode]
+    d00 = preg.larva_conf_dict.dict.model.m[mkey].mode[mode]
+    var_ks = d0.variable
+    N = len(var_ks)
 
-    P = BasePlot(name=f'{module}_endpoint_hists', **kwargs)
+    P = BasePlot(name=f'{mkey}_endpoint_hists', **kwargs)
     P.build(1, N, figsize=(7 * N, 6), sharey=True, fig=fig, axs=axs)
 
-    for i, n in enumerate(valid):
-        ax = P.axs[i]
-        p0 = par(n, **d0[n])[n]
-        vs = e[p0['codename']]
-        v_mu = vs.median()
+    for i, k in enumerate(var_ks):
+        p=d00.args[k]
+        vs = e[p.codename]
         P.axs[i].hist(vs.values, bins=Nbins)
-        P.conf_ax(i, xlab=p0['label'], ylab='# larvae' if i == 0 else None, xMaxN=3, xlabelfontsize=18,
-                  xticklabelsize=18,
-                  yvis=False if i != 0 else True)
+        P.conf_ax(i, xlab=p.label, ylab='# larvae' if i == 0 else None, xMaxN=3, xlabelfontsize=18,
+                  xticklabelsize=18,yvis=False if i != 0 else True)
 
         if show_median:
-            text = p0['symbol'] + f' = {np.round(v_mu, 2)}'
+            v_mu = vs.median()
+            text = p.symbol + f' = {np.round(v_mu, 2)}'
             P.axs[i].axvline(v_mu, color='red', alpha=1, linestyle='dashed', linewidth=3)
             P.axs[i].annotate(text, rotation=0, fontsize=15, va='center', ha='left',
-                              xy=(0.55, 0.8), xycoords='axes fraction',
-                              )
+                              xy=(0.55, 0.8), xycoords='axes fraction')
     P.adjust((0.2, 0.9), (0.2, 0.9), 0.01)
     return P.get()
 

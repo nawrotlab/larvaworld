@@ -64,10 +64,10 @@ def pars_to_tree(name):
     data = []
     columns = ['parent', 'key', 'text', 'initial_value', 'dtype', 'tooltip', 'disp']
     columns2 = ['parent', 'key', 'text', 'default_value', 'dtype', 'description', 'name']
-    P = preg.init_dict[name]
+    d0 = preg.init_dict[name]
     data.append(['root', name, name, None, dict, None, name])
     valid.append(name)
-    for k0, v0 in P.items():
+    for k0, v0 in d0.items():
         if v0 is None :
             continue
 
@@ -75,10 +75,6 @@ def pars_to_tree(name):
             d = par(k0, **v0)
             add_entry(k0, d[k0], name)
         except:
-            # d0 = P.get(k0, None)
-            # if d0 is None:
-            #     # from lib.conf.base.init_pars import InitDict
-            #     d0 = ParDict.init_dict[k0]
             d = par_dict(d0=v0)
             add_multientry0(d, k0, name)
     ddf = pd.DataFrame(data, columns=columns2)

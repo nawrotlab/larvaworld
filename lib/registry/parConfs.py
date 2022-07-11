@@ -1088,8 +1088,6 @@ class LarvaConfDict:
             return mdict
 
     def space_dict(self, mkeys, mConf0):
-        # M = preg.larva_conf_dict
-        # m = self.loadConf(mID0)
         mF = dNl.flatten_dict(mConf0)
         dic = {}
         for mkey in mkeys:
