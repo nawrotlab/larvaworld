@@ -80,7 +80,7 @@ class GAselector:
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
-                self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
+                self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID, verbose=self.verbose)
 
 
     def ga_selection(self):

@@ -886,10 +886,10 @@ class LarvaConfDict:
         sm_pars = self.generate_configuration(self.dict.aux.m['sensorimotor'].mode['default'].args)
         self.newConf(mID='obstacle_avoider', mID0='RE_NEU_PHI_DEF_nav', kwargs={'sensorimotor': sm_pars})
 
-    def saveConf(self, conf, mID=None):
+    def saveConf(self, conf, mID=None, verbose=1):
         if mID is not None:
             from lib.conf.stored.conf import saveConf
-            saveConf(conf, 'Model', mID)
+            saveConf(conf, 'Model', mID, verbose=verbose)
 
     def loadConf(self, mID=None):
         if mID is not None:
@@ -1006,6 +1006,9 @@ class LarvaConfDict:
         return conf
 
     def adapt_mID(self, refID, mID0, mID=None,space_mkeys=['turner', 'interference'], e=None, c=None):
+        if mID is None:
+            mID = f'{mID0}_fitted'
+        print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
         if e is None or c is None:
             from lib.registry.pars import preg
             d = preg.loadRef(refID)
@@ -1019,14 +1022,13 @@ class LarvaConfDict:
             m0.brain.intermitter_params = self.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
                                                              conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
-        if mID is None:
-            mID = f'{mID0}_fitted'
+
         self.saveConf(conf=m0, mID=mID)
 
         from lib.eval.model_fit import optimize_mID
 
         entry = optimize_mID(mID0=mID, refID=refID,space_mkeys=space_mkeys,
-                             init='random',save_to=c.dir_dict.GAoptimization)
+                             init='random',save_to=c.dir_dict.GAoptimization,sim_ID=mID )
         # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
         # C.run()
         # m0.brain.turner_params.update(C.best.turner)

@@ -1009,7 +1009,8 @@ class LarvaDataset:
         evrun.plot_results()
         return evrun
 
-    def modelConf_analysis(self, avgVSvar=True, mods3=True):
+    def modelConf_analysis(self, avgVSvar=False, mods3=False):
+        warnings.filterwarnings('ignore')
         if 'modelConfs' not in self.config.keys():
             self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
         M = preg.larva_conf_dict
@@ -1045,24 +1046,15 @@ class LarvaDataset:
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
+    from lib.aux import dictsNlists as dNl
+    import pandas as pd
 
     refID = 'None.150controls'
+    # refID='None.Sims2019_controls'
+    h5_ks = ['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']
+
+    h5_ks = []
+
     d = preg.loadRef(refID)
-    d.load(step=False)
-    # e, c = d.endpoint_data, d.config
-    # M = preg.larva_conf_dict
-    # M.add_var_mIDs(refID=refID, e=e, c=c, mID0s=['PHIonNEU'])
-    d.eval_model_graphs(mIDs=['PHIonNEU', 'PHIonNEU_var'], norm_modes=['raw', 'minmax'], id='PHIonNEU avgVSvar', N=20)
-    # raise
-    # entries = {}
-    # #mIDs = []
-    # mID0s=list(c.modelConfs.average.keys())
-    # for mID0 in mID0s:
-    #     entry = optimize_mID_turnerNinterference(mID0=mID0, refID=refID, save_to=c.dir_dict.GAoptimization)
-    #     entries.update(entry)
-    # c.modelConfs.average = entries
-    # d.save_config(add_reference=True)
-    # d.eval_model_graphs(mIDs=mID0s, norm_modes=['raw', 'minmax'], id='6mIDs_avg_again', N=10)
-    # diff_df_avg = preg.larva_conf_dict.diff_df(mIDs=mID0s)
-    # preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=d.dir_dict.model_tables,
-    #                             name='avg_mIDs_diffs')
+    d.load(h5_ks=h5_ks)
+    d.modelConf_analysis(mods3=True)
