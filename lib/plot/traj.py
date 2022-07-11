@@ -95,7 +95,6 @@ def track_annotated(epoch='stride',a=None, dt=0.1, a2plot=None, fig=None, ax=Non
         epochs1, epochs2, epochs0 = Lturns, Rturns, Lturns.tolist() + Rturns.tolist()
 
     handles = [patches.Patch(color=col, label=n) for n, col in zip(labels, chunk_cols)]
-    # figx = 20 if slice is None else int((slice[1] - slice[0]) / 3)
     P.build(Nds, 1, figsize=(20, 5 * Nds), sharey=True, sharex=True,fig=fig, axs=ax)
 
 

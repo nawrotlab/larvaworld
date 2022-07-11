@@ -12,8 +12,6 @@ from lib.plot.aux import save_plot
 from lib.plot.base import GridPlot, Plot
 
 
-
-
 def calibration_plot(save_to=None, files=None):
     from PIL import Image
     tick_params = {
@@ -58,49 +56,48 @@ def calibration_plot(save_to=None, files=None):
     return fig
 
 
-
-def model_summary(mID, refID=None,refDataset=None, Nids=1,model_table=False, **kwargs):
+def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
     from lib.anal.fitting import test_boutGens
     from lib.eval.eval_aux import sim_model
     if refDataset is None:
         d = preg.loadRef(refID)
         d.load(step=False, contour=False)
         refDataset = d
-    # refDataset.id = 'experiment'
-    # refDataset.config.id = 'experiment'
     refDataset.color = 'red'
     refDataset.config.color = 'red'
     e, c = refDataset.endpoint_data, refDataset.config
 
-    dd = sim_model(mID=mID, refDataset=refDataset, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue', dataset_id='model')
+    dd = sim_model(mID=mID, refDataset=refDataset, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue',
+                   dataset_id='model')
 
-    if model_table :
+    if model_table:
         hh0 = 30
-    else :
-        hh0=0
-    h, w = 67+hh0, 74
-
+    else:
+        hh0 = 0
+    h, w = 67 + hh0, 74
 
     P = GridPlot(name=f'{mID}_summary', width=w, height=h, scale=(0.25, 0.25), **kwargs)
 
     if model_table:
-        P.plot(func='configuration', kws={'mID': mID}, h=hh0,w0=8, x0=True, y0=True)
+        P.plot(func='configuration', kws={'mID': mID}, h=hh0, w0=8, x0=True, y0=True)
 
     # valid = ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
 
-    P.plot(func='module hists',kws={'mkey': 'crawler', 'mode': 'realistic', 'e': e, 'save_to': None},
-           N=5, h=10, h0=hh0+3, share_h=True, dw=1, x0=True)
+    P.plot(func='module hists', kws={'mkey': 'crawler', 'mode': 'realistic', 'e': e, 'save_to': None},
+           N=5, h=10, h0=hh0 + 3, share_h=True, dw=1, x0=True)
 
-    shorts=['sv', 'fov', 'foa', 'b']
-    P.plot(func='stride cycle',kws={'datasets': [refDataset, dd],'labels': ['experiment', dd.id], 'shorts': shorts, 'individuals': True, 'save_to': None},
-           N=len(shorts), w=29, h=32, h0=hh0+18, share_w=True, x0=True)
+    shorts = ['sv', 'fov', 'foa', 'b']
+    P.plot(func='stride cycle',
+           kws={'datasets': [refDataset, dd], 'labels': ['experiment', dd.id], 'shorts': shorts, 'individuals': True,
+                'save_to': None},
+           N=len(shorts), w=29, h=32, h0=hh0 + 18, share_w=True, x0=True)
 
     ds = test_boutGens(**{'mID': mID, 'refDataset': refDataset})
     P.plot(func='epochs', kws={'datasets': ds, 'save_to': None},
-           N=2, w=29, h0=hh0+56, share_h=True, dw=1, x0=True)
+           N=2, w=29, h0=hh0 + 56, share_h=True, dw=1, x0=True)
 
-    P.plot(func='sample track',kws={'mID': mID, 'dur': 0.5, 'd': dd, 'save_to': None},
-           N=5, w0=38, h0=hh0+18, share_w=True, dh=1)
+    P.plot(func='sample track', kws={'mID': mID, 'dur': 0.5, 'd': dd, 'save_to': None},
+           N=5, w0=38, h0=hh0 + 18, share_w=True, dh=1)
     P.adjust((0.1, 0.95), (0.05, 0.98), 0.01, 0.2)
     P.annotate()
     return P.get()
@@ -136,44 +133,44 @@ def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', com
     fig.subplots_adjust(hspace=0.1, wspace=0.5, bottom=0.1, top=0.9, left=0.07, right=0.95)
     fig.savefig(f'{save_to}/{save_as}', dpi=300)
 
-def dsp_summary(datasets, target=None,range=(0,40), **kwargs):
-    w, h = 54,26
+
+def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
+    w, h = 54, 26
     P = GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
-    ds=[target]+datasets if target is not None else datasets
-    Nds=len(ds)
+    ds = [target] + datasets if target is not None else datasets
+    Nds = len(ds)
     kws = {
         'datasets': ds,
         'save_to': None,
-        'subfolder' : None,
+        'subfolder': None,
         'show': False
 
     }
-    kws2= {
-        'dw' : 0,
-        'h' : 8,
-        'share_h' :True
+    kws2 = {
+        'dw': 0,
+        'h': 8,
+        'share_h': True
     }
 
-    P.plot(func='trajectories', kws={'mode' : 'origin', 'range': range, **kws}, N=Nds, x0=True, y0=True, **kws2)
+    P.plot(func='trajectories', kws={'mode': 'origin', 'range': range, **kws}, N=Nds, x0=True, y0=True, **kws2)
     P.plot(func='dispersal', kws={'range': range, **kws}, N=1, w=16, h0=14, x0=True, **kws2)
-    P.plot(func='crawl pars', kws={'pvalues' : False,**kws}, N=3,w=30,w0=22, h0=14, **kws2)
+    P.plot(func='crawl pars', kws={'pvalues': False, **kws}, N=3, w=30, w0=22, h0=14, **kws2)
     P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)
     P.annotate()
     return P.get()
 
-def RvsS_summary(entrylist,title,mdiff_df, **kwargs):
 
+def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     h_mpl = 4
     w, h = 30, 60 + h_mpl * 2
     P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
     Nexps = len(entrylist)
     h1exp = int((h - h_mpl * 2) / Nexps)
-    P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
-               horizontalalignment='center')
+    P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
 
-    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
+    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
 
-    ax_list=[]
+    ax_list = []
     for i, entry in enumerate(entrylist):
         h0 = i * h1exp + (i + 1) * 1 + h_mpl * 2
         axs = P.add(w=w, x0=True, h=h1exp - 2, h0=h0)
@@ -185,15 +182,16 @@ def RvsS_summary(entrylist,title,mdiff_df, **kwargs):
     P.fig.align_ylabels(ax_list)
     return P.get()
 
-def DoublePatch_summary(datasets,title,mdiff_df,**kwargs):
+
+def DoublePatch_summary(datasets, title, mdiff_df, **kwargs):
     Nmods = len(mdiff_df.columns)
     h_mpl = len(mdiff_df.index)
     hh_mpl = h_mpl + 4
     w, h = 32, 50 + hh_mpl
     P = GridPlot(name=f'DoublePatch_summary', width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
-    P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
-               horizontalalignment='center')
-    P.plot(func='mpl', kws={'data':mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4+int(Nmods/2), h0=0)
+    P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
+    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4 + int(Nmods / 2),
+           h0=0)
 
     Nexps = len(datasets)
     h1exp = int((h - hh_mpl) / Nexps)
@@ -209,12 +207,13 @@ def DoublePatch_summary(datasets,title,mdiff_df,**kwargs):
             # 'title': False,
 
         }
-        axs1=P.add(w=w, x0=True, N=(3,2), share_h=True,share_w=True, h=h1exp-18, h0=h0, dh=3,dw=4)
+        axs1 = P.add(w=w, x0=True, N=(3, 2), share_h=True, share_w=True, h=h1exp - 18, h0=h0, dh=3, dw=4)
         P.plot(func='double patch', kws={**kws1, 'title': False}, axs=axs1)
         P.fig.align_ylabels(axs1)
-        axs2 = P.add(w=w, x0=True, N=(Nmods, int(Ndds/Nmods)), share_h=True, share_w=True, h=16, h0=h0 +h1exp-16, dh=2, dw=1, cols_first=True)
-        P.plot(func='trajectories', kws={**kws1, 'single_color' : True}, axs=axs2)
-        for ii,ax in enumerate(axs2) :
+        axs2 = P.add(w=w, x0=True, N=(Nmods, int(Ndds / Nmods)), share_h=True, share_w=True, h=16, h0=h0 + h1exp - 16,
+                     dh=2, dw=1, cols_first=True)
+        P.plot(func='trajectories', kws={**kws1, 'single_color': True}, axs=axs2)
+        for ii, ax in enumerate(axs2):
             ax.yaxis.set_visible(True)
             ax.xaxis.set_visible(True)
 
@@ -222,32 +221,33 @@ def DoublePatch_summary(datasets,title,mdiff_df,**kwargs):
     P.annotate()
     return P.get()
 
-def chemo_summary(datasets,mdiff_df,title, **kwargs):
+
+def chemo_summary(datasets, mdiff_df, title, **kwargs):
     Nmods = len(mdiff_df.columns)
     h_mpl = len(mdiff_df.index)
-    hh_mpl=h_mpl +4
-    w, h = 30,42+ hh_mpl
+    hh_mpl = h_mpl + 4
+    w, h = 30, 42 + hh_mpl
     P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
-    P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold',
-               horizontalalignment='center')
-    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size' : 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4+int(Nmods/2), h0=0)
+    P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
+    P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4 + int(Nmods / 2),
+           h0=0)
 
-    time_ks=['c_odor1', 'dc_odor1']
-    Nks=len(time_ks)
-    Nexps=len(datasets)
-    h1exp=int((h- hh_mpl)/Nexps)
-    h1k=int(h1exp / (Nks+1))
-    for i,(exp,dds) in enumerate(datasets.items()):
-        h0 = i * h1exp+(i+1)*1+ hh_mpl
-        dds=dNl.flatten_list(dds)
-        Ndds=len(dds)
+    time_ks = ['c_odor1', 'dc_odor1']
+    Nks = len(time_ks)
+    Nexps = len(datasets)
+    h1exp = int((h - hh_mpl) / Nexps)
+    h1k = int(h1exp / (Nks + 1))
+    for i, (exp, dds) in enumerate(datasets.items()):
+        h0 = i * h1exp + (i + 1) * 1 + hh_mpl
+        dds = dNl.flatten_list(dds)
+        Ndds = len(dds)
         kws1 = {
-                'datasets': dds,
-                'save_to': None,
-                'subfolder' : None,
-                'show': False
+            'datasets': dds,
+            'save_to': None,
+            'subfolder': None,
+            'show': False
 
-            }
+        }
         axs = P.add(w=w, x0=True, N=Nks, share_w=True, dh=0, h=Nks * (h1k - 1), h0=h0)
         axs[0].set_title(exp, size=30, weight='bold', horizontalalignment='center', pad=15)
         P.plot(func='autoplot', kws={
@@ -257,39 +257,38 @@ def chemo_summary(datasets,mdiff_df,title, **kwargs):
             'unit': 'min',
             **kws1
         }, axs=axs)
-        P.plot(func='trajectories', kws={**kws1, 'single_color' : True}, w=w, x0=True, N=Ndds, share_h=True, h=h1k-2, h0=h0 + Nks *h1k)
-
+        P.plot(func='trajectories', kws={**kws1, 'single_color': True}, w=w, x0=True, N=Ndds, share_h=True, h=h1k - 2,
+               h0=h0 + Nks * h1k)
 
     P.adjust((0.1, 0.95), (0.05, 0.95), 0.05, 0.1)
     P.annotate()
     return P.get()
 
 
-
 def result_summary(datasets, target, **kwargs):
     w, h = 50, 34
     P = GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)
-    ds=[target]+datasets
-    Nds=len(ds)
+    ds = [target] + datasets
+    Nds = len(ds)
     kws = {
         'datasets': ds,
         'save_to': None,
-        'subfolder' : None,
+        'subfolder': None,
         'show': False
 
     }
-    kws2= {
-        'dw' : 1,
-        'h' : 8,
-        'share_h' :True
+    kws2 = {
+        'dw': 1,
+        'h': 8,
+        'share_h': True
     }
 
-    dur=int(np.min([d.config.duration for d in ds]))
-    P.plot(func='trajectories', kws={'mode' : 'origin', 'range': (0, dur), **kws}, N=Nds, x0=True, y0=True, **kws2)
-    P.plot(func='epochs', kws={'stridechain_duration' : True, **kws}, N=2, w=18, h0=12, x0=True, **kws2)
-    P.plot(func='epochs', kws={'turns' : True,**kws}, N=2, w=18, h0=24,  x0=True, **kws2)
-    P.plot(func='crawl pars', kws={'pvalues' : False,**kws}, N=3,w=28,w0=22, h0=12, **kws2)
-    P.plot(func='angular pars', kws={'absolute': False, 'Npars': 3, **kws}, N=3,  w=28, w0=22, h0=24, **kws2)
+    dur = int(np.min([d.config.duration for d in ds]))
+    P.plot(func='trajectories', kws={'mode': 'origin', 'range': (0, dur), **kws}, N=Nds, x0=True, y0=True, **kws2)
+    P.plot(func='epochs', kws={'stridechain_duration': True, **kws}, N=2, w=18, h0=12, x0=True, **kws2)
+    P.plot(func='epochs', kws={'turns': True, **kws}, N=2, w=18, h0=24, x0=True, **kws2)
+    P.plot(func='crawl pars', kws={'pvalues': False, **kws}, N=3, w=28, w0=22, h0=12, **kws2)
+    P.plot(func='angular pars', kws={'absolute': False, 'Npars': 3, **kws}, N=3, w=28, w0=22, h0=24, **kws2)
 
     P.adjust((0.1, 0.9), (0.1, 0.9), 0.1, 0.1)
     P.annotate()
@@ -301,8 +300,8 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     if d is None:
         from lib.eval.eval_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
-    kws0=NestDict({
-        'datasets' : [d],
+    kws0 = NestDict({
+        'datasets': [d],
         # 'labels' : [d],
     })
     s, e, c = d.step_data, d.endpoint_data, d.config
@@ -317,50 +316,43 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, axs=axs, fig=fig)
     kws1 = NestDict({
         'agent_idx': 0,
-        'slice': (0,dur * 60),
-        'dt' : dt,
-        'fig' : P.fig,
-        'show' : False,
+        'slice': (0, dur * 60),
+        'dt': dt,
+        'fig': P.fig,
+        'show': False,
         **kws0
     })
 
-    epochs=['stride']*2+['turn']*3
-    aas=[a_sv]*2+[a_fov]*3
-    a2s=[None, ss[pars[1]].values, ss[pars[2]].values, None, ss[pars[4]].values]
-    extrs=[True, False,False,False,False]
-    min_amps=[None]*2+[min_turn_amp]*3
+    epochs = ['stride'] * 2 + ['turn'] * 3
+    aas = [a_sv] * 2 + [a_fov] * 3
+    a2s = [None, ss[pars[1]].values, ss[pars[2]].values, None, ss[pars[4]].values]
+    extrs = [True, False, False, False, False]
+    min_amps = [None] * 2 + [min_turn_amp] * 3
 
-    for i, (p,l,ep,a, a2,extr,min_amp) in enumerate(zip(pars, labs,epochs,aas, a2s, extrs,min_amps)) :
-        track_annotated(epoch=ep, a=a, a2plot=a2, ax=P.axs[i], min_amp=min_amp, show_extrema=extr,ylab=l, **kws1)
+    for i, (p, l, ep, a, a2, extr, min_amp) in enumerate(zip(pars, labs, epochs, aas, a2s, extrs, min_amps)):
+        track_annotated(epoch=ep, a=a, a2plot=a2, ax=P.axs[i], min_amp=min_amp, show_extrema=extr, ylab=l, **kws1)
         P.conf_ax(i, xvis=True if i == Nrows - 1 else False)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
 
-def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled',**kwargs):
+def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled', **kwargs):
     label_dic = {
         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
         'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
 
     }
-    labels=label_dic[eval_mode]
+    labels = label_dic[eval_mode]
 
-
-    w,h=36,56
+    w, h = 36, 56
     P = GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45), **kwargs)
 
-    P.plot(func='error barplot', kws={'error_dict': error_dict, 'evaluation' : evaluation,'labels' : labels},
-           N=2,share_w=True, dh=3, h=23,w=24, x0=True, y0=True)
+    P.plot(func='error barplot', kws={'error_dict': error_dict, 'evaluation': evaluation, 'labels': labels},
+           N=2, share_w=True, dh=3, h=23, w=24, x0=True, y0=True)
     for i, (k, df) in enumerate(error_dict.items()):
         h0 = 28 + i * 14
-        P.plot(func='error table', kws={'data': df,'k' : k,  'bbox': [0.5, 0, 1, 1]}, h=12,h0=h0,w=24, x0=True)
+        P.plot(func='error table', kws={'data': df, 'k': k, 'bbox': [0.5, 0, 1, 1]}, h=12, h0=h0, w=24, x0=True)
     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
     P.annotate()
     return P.get()
-
-
-
-
-
-
