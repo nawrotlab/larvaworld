@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 import pickle
 import shutil
 
@@ -9,6 +10,7 @@ import param
 
 from lib.registry.par import v_descriptor
 from lib.aux import dictsNlists as dNl
+
 
 
 def store_reference_data_confs():
@@ -454,6 +456,30 @@ class ParRegistry:
         with open(F0, "w") as fp:
             json.dump(d, fp)
         return d[conftype][id]
+
+    def init2mdict(self, k):
+        d0 = self.init_dict[k]
+        from lib.registry.par_dict import preparePar
+        from lib.registry.par import v_descriptor
+        d = {}
+        for kk, vv in d0.items():
+            prepar = preparePar(p=kk, **vv)
+            p = v_descriptor(**prepar)
+            d[p.k] = p
+        return dNl.NestDict(d)
+
+    def mdict2df(self, mdict, columns=['symbol', 'value', 'description']):
+        data = []
+        for k, p in mdict.items():
+            entry = [getattr(p, col) for col in columns]
+            data.append(entry)
+        df = pd.DataFrame(data, columns=columns)
+        df.set_index(columns[0], inplace=True)
+        return df
+
+
+
+
 
 
 preg = ParRegistry()

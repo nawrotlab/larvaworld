@@ -2,8 +2,6 @@ import os
 
 import numpy as np
 import six
-from matplotlib import pyplot as plt
-
 
 from lib.plot.base import BasePlot
 
@@ -14,10 +12,30 @@ def modelConfTable(mID, **kwargs):
     return preg.larva_conf_dict.mIDtable(mID, **kwargs)
 
 
+def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
+           show=False,save_to=None, save_as=None, **kwargs):
+    from lib.registry.pars import preg
+    mdict=preg.init2mdict(k)
+    df=preg.mdict2df(mdict,columns=columns)
+
+    # row_colors = [None] + [None for ii in df.index.values]
+    ax, fig, mpl = mpl_table(df,header0=columns[0],
+                     # colWidths=[0.35, 0.1, 0.25, 0.15],
+                     cellLoc='center', rowLoc='center',
+                             figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
+                             # row_colors=row_colors,
+                             return_table=True,
+                             **kwargs)
+    if save_as is None:
+        save_as = k
+    P = BasePlot('mtable', save_as=save_as, save_to=save_to, show=show)
+    P.set(fig)
+    return P.get()
+
 def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
 
 
-    ax, fig, mpl = mpl_table(df, colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
+    ax, fig, mpl = mpl_table(df, header0='MODULE',colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
                                     figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
                                     row_colors=row_colors, return_table=True, **kwargs)
 
@@ -36,24 +54,17 @@ def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_
                 cell._text._text = ''
             else :
                 cell._text._text = k.upper()
-    mpl.add_cell(0, -1,facecolor='#40466e',loc='center',
-                 width=0.5, height=mpl._approx_text_height(),
-                 text='MODULE')
-    mpl._cells[(0,-1)].set_text_props(weight='bold', color='w', fontsize=16)
-    if save_to is not None:
-        os.makedirs(save_to, exist_ok=True)
-        if save_as is None:
-            save_as = mID
-        filename = f'{save_to}/{save_as}.pdf'
-        fig.savefig(filename, dpi=300)
-    if show :
-        plt.show()
-    plt.close()
-    return fig
+
+    if save_as is None:
+        save_as = mID
+    P=BasePlot('comf_table',save_as=save_as,save_to=save_to,show=show)
+    P.set(fig)
+    return P.get()
+
 
 
 def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
-                     name='mpl_table',
+                     name='mpl_table',header0=None,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
                      adjust_kws=None,
                      bbox=[0, 0, 1, 1], header_columns=0, axs=None, fig=None, highlighted_cells=None,
@@ -122,6 +133,14 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
+
+    if header0 is not None :
+        mpl.add_cell(0, -1, facecolor=header_color, loc='center',
+                     width=0.5, height=mpl._approx_text_height(),
+                     text=header0)
+        mpl._cells[(0, -1)].set_text_props(weight='bold', color='w', fontsize=font_size)
+
+
     ax.set_title(title)
 
     if adjust_kws is not None:

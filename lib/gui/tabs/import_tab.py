@@ -14,14 +14,13 @@ class ImportTab(GuiTab):
         self.raw_key = 'raw_data'
         self.proc_key = 'imported_data'
         self.Ctrac, self.Cenr = 'purple', 'cyan'
-        self.fields = ['tracker', 'enrichment']
 
     def update(self, w, c, conf, id=None):
         ff=preg.path_dict["DATA"]
         path = conf['path']
         w[f'BROWSE {self.raw_key}'].InitialFolder = f'{ff}/{path}/raw'
         w[f'BROWSE {self.proc_key}'].InitialFolder = f'{ff}/{path}/processed'
-        for n in self.fields:
+        for n in ['tracker', 'enrichment']:
             c[n].update(w, conf[n])
 
     def build(self):
@@ -42,7 +41,7 @@ class ImportTab(GuiTab):
                                'processing': {'Ncols': 2, 'text_kws': gui_fun.t_kws(9)},
                                'metric_definition': {'header_width': 60,'text_kws': gui_fun.t_kws(9)}}
                      )
-        pd1 = gui_el.PadDict('tracker_conf', disp_name='tracker',background_color=self.Ctrac, text_kws=gui_fun.t_kws(8), header_width=22,
+        pd1 = gui_el.PadDict('tracker',background_color=self.Ctrac, text_kws=gui_fun.t_kws(8), header_width=22,
                              subconfs={'filesystem': {'header_width': 20, 'value_kws': gui_fun.t_kws(5)},
                                        'resolution': {'header_width': 20, 'text_kws': gui_fun.t_kws(13)},
                                        'arena': {'header_width': 20, 'text_kws': gui_fun.t_kws(7)}}

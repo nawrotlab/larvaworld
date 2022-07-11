@@ -53,14 +53,20 @@ def vpar(vfunc, v0, h, lab, lim, dv, vs):
     return func
 
 
-def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, codename=None, lab=None, h=None, u_name=None,
-               required_ks=[], u=ureg.dimensionless, v0=None, lim=None, dv=None, vs=None,
+def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,codename=None, lab=None, h=None, u_name=None,
+               required_ks=[], u=ureg.dimensionless, v0=None,v=None, lim=None, dv=None, vs=None,
                vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
     disp = d if disp is None else disp
     k = k if k is not None else d
-    sym = k if sym is None else sym
+    v0 = v if v is not None else v0
+    if sym is None:
+        if symbol is not None :
+            sym=symbol
+        else :
+            sym = k
+    # sym = k if sym is None else sym
     if lab is None:
         if u == ureg.dimensionless:
             lab = f'{disp}'

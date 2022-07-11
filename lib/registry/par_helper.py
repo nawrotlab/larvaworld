@@ -121,5 +121,7 @@ class FuncParHelper:
             return self.compute(s=s,**kwargs)
 
 if __name__ == '__main__':
+    _=preg.mtable(k='build_conf', show=True)
+    raise
     # preg.storeConfs()
-    preg.storeConfs(conftypes=['Ga'])
+    preg.storeConfs(conftypes=['Group'])

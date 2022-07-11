@@ -669,7 +669,7 @@ class LarvaDataset:
             self.acceleration = nam.lin(self.acceleration)
 
     def enrich(self, metric_definition=None, preprocessing={}, processing={}, bout_annotation=True,
-               to_drop={}, recompute=False, mode='minimal', show_output=True, is_last=True, annotation={},
+               to_drop={}, recompute=False, mode='minimal', show_output=False, is_last=True, annotation={},
                add_reference=False, **kwargs):
         c = self.config
         md = metric_definition

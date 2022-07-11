@@ -1,6 +1,7 @@
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
+
 def metric_def(ang={}, sp={}, **kwargs):
     def ang_def(b='from_angles', fv=(1, 2), rv=(-2, -1), **kwargs):
         return preg.get_null('ang_definition', bend=b, front_vector=fv, rear_vector=rv, **kwargs)
@@ -22,10 +23,7 @@ import_par_confs = {
 }
 
 
-
-
-
-def build_tracker_formats() :
+def build_tracker_formats():
     Scl_kws = {
         'resolution.fr': 16.0,
         'resolution.Npoints': 12,
@@ -75,17 +73,17 @@ def build_tracker_formats() :
 
     }
 
-    T0 = preg.get_null('tracker_conf')
+    T0 = preg.get_null('tracker')
 
     d = {
-        'Schleyer':  dNl.update_nestdict(T0, Scl_kws),
-        'Jovanic':  dNl.update_nestdict(T0, Jov_kws),
-        'Berni':  dNl.update_nestdict(T0, Ber_kws),
-        'Arguello':  dNl.update_nestdict(T0, Arg_kws)}
+        'Schleyer': dNl.update_nestdict(T0, Scl_kws),
+        'Jovanic': dNl.update_nestdict(T0, Jov_kws),
+        'Berni': dNl.update_nestdict(T0, Ber_kws),
+        'Arguello': dNl.update_nestdict(T0, Arg_kws)}
     return dNl.NestDict(d)
 
-tracker_formats = build_tracker_formats()
 
+tracker_formats = build_tracker_formats()
 
 importformats = {
     'Schleyer lab': {

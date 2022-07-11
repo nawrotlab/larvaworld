@@ -1,6 +1,7 @@
 import param
 
-from lib.aux.par_aux import subsup
+from lib.aux.par_aux import subsup, sub, sup
+
 
 def ConfSelector(conf_type, default=None, single_choice=True, **kwargs):
     from lib.conf.stored.conf import kConfDict
@@ -507,13 +508,22 @@ class ParInitDict:
                 },
                 'build_conf': {
                     'min_duration_in_sec': {'v': 170.0, 'lim': (0.0, 3600.0), 'dv': 1.0,
-                                            'disp': 'min track duration (sec)'},
+                                            'symbol': sub('T', 'min'),'k' : 'dur_min',
+                                            'disp': 'Min track duration (sec)'},
                     'min_end_time_in_sec': {'v': 0.0, 'lim': (0.0, 3600.0), 'dv': 1.0,
-                                            'disp': 'min track termination time (sec)'},
+                                            'symbol': subsup('t', 'min', 1), 'k': 't1_min',
+                                            'disp': 'Min track termination time (sec)'},
                     'start_time_in_sec': {'v': 0.0, 'lim': (0.0, 3600.0), 'dv': 1.0,
-                                          'disp': 'track initiation time (sec)'},
-                    'max_Nagents': {'t': int, 'v': 500, 'lim': (0, 5000), 'disp': 'max # larvae'},
-                    'save_mode': {'t': str, 'v': 'semifull', 'vs': ['minimal', 'semifull', 'full', 'points']},
+                                          'symbol': sup('t', 0), 'k': 't0',
+                                          'disp': 'Track initiation time (sec)'},
+                    'max_Nagents': {'dtype': int,'t': int, 'v': 500, 'lim': (0, 5000),
+                                    'symbol': sub('N', 'max'), 'k': 'N_max',
+                                    'disp': 'Max number of larva tracks'},
+                    'save_mode': {'dtype': str,'t': str, 'v': 'semifull',
+                                  'symbol': sub('mod', 'build'), 'k': 'mod_build',
+                                  'vs': ['minimal', 'semifull', 'full', 'points'],
+                                  'disp': 'Storage mode'
+                                  },
                 },
                 'output': {n: bF for n in list(output_dict.keys())}
             })
@@ -1041,7 +1051,7 @@ class ParInitDict:
                              'experiment': confID_entry('Exp'),
                              }
 
-            d['tracker_conf'] = {
+            d['tracker'] = {
                 'resolution': {
                     'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)',
                            'h': 'The framerate of the tracker recordings.'},

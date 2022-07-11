@@ -71,6 +71,10 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
             return self.param.v.doc
 
         @property
+        def description(self):
+            return self.param.v.doc
+
+        @property
         def help(self):
             return self.param.v.doc
 
