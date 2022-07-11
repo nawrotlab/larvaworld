@@ -954,7 +954,7 @@ class CollapsibleDict(Collapsible):
                  subdict_state=False, **kwargs):
         if type_dict is None:
             from lib.registry.dtypes import par,par_dict
-            entry = par(name=as_entry, t=str, v='Unnamed') if as_entry is not None else {}
+            entry = par(name=as_entry, dtype=str, v='Unnamed') if as_entry is not None else {}
             nn = name if dict_name is None else dict_name
             dic = par_dict(d0=preg.init_dict[nn])
             type_dict = {**entry, **dic}

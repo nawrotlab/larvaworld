@@ -111,9 +111,7 @@ def build_error_dict():
         'error table': table.error_table,
         'error summary': grid.eval_summary,
         'error barplot': bar.error_barplot,
-        # 'sample epochs': test_boutGens,
-        # 'module hists': hist.module_endpoint_hists,
-        # 'summary': grid.model_summary,
+
     })
     return d
 
