@@ -784,7 +784,7 @@ class LarvaConfDict:
         mod_dict={'realistic' : 'RE', 'square' : 'SQ','gaussian' : 'GAU','constant' : 'CON',
                   'default' : 'DEF','neural' : 'NEU','sinusoidal' : 'SIN','nengo' : 'NENGO','phasic' : 'PHI','branch' : 'BR'}
         kws = {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
-        self.larvaConf(mID='loco_default', **kws)
+
 
 
         for Cmod in ['realistic', 'square', 'gaussian', 'constant']:
@@ -847,7 +847,7 @@ class LarvaConfDict:
         # self.larvaConf(mID='RE_SIN_DEF_DEF',
         #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'default',
         #                       'intermitter': 'default'})
-
+        self.larvaConf(mID='loco_default', **kws)
         kws2 = {'modkws': {'interference': {'attenuation': 0.0}}}
         self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
                                           'intermitter': 'default'}, **kws2)
@@ -1025,7 +1025,8 @@ class LarvaConfDict:
 
         from lib.eval.model_fit import optimize_mID
 
-        entry = optimize_mID(mID0=mID, refID=refID,space_mkeys=space_mkeys, save_to=c.dir_dict.GAoptimization)
+        entry = optimize_mID(mID0=mID, refID=refID,space_mkeys=space_mkeys,
+                             init='random',save_to=c.dir_dict.GAoptimization)
         # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
         # C.run()
         # m0.brain.turner_params.update(C.best.turner)
@@ -1063,6 +1064,25 @@ class LarvaConfDict:
         # d.save_config(add_reference=True)
         # d.store_model_graphs(mIDs=mIDs)
         # return entries
+
+    def adapt_3modules(self, refID, e=None, c=None):
+        if e is None or c is None:
+            from lib.registry.pars import preg
+            d = preg.loadRef(refID)
+            d.load(step=False)
+            e, c = d.endpoint_data, d.config
+        entries = {}
+        mIDs = []
+        for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
+            for Tmod in ['NEU', 'SIN', 'CON']:
+                for Ifmod in ['PHI', 'SQ', 'DEF']:
+                    mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
+                    mID = f'{mID0}_fit'
+                    entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                                        space_mkeys=['crawler', 'turner', 'interference'], )
+                    entries.update(entry)
+                    mIDs.append(mID)
+        return entries, mIDs
 
     def add_var_mIDs(self, refID, e=None, c=None, mID0s=None, sample_ks=None):
         if e is None or c is None:

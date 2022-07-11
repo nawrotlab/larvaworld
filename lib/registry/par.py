@@ -198,7 +198,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
                     vr = np.abs(vmax - vmin)
                     v0 = self.v if self.v is not None else vmin + vr / 2
                     vv = random.gauss(v0, Cmut * vr)
-                    self.v = np.round(self.param.v.crop_to_bounds(vv), self.Ndec)
+                    self.v = self.param.v.crop_to_bounds(np.round(vv, self.Ndec))
                 elif self.parclass == param.Integer:
                     vmin, vmax = self.param.v.bounds
                     vr = np.abs(vmax - vmin)
@@ -208,7 +208,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
                 elif self.parclass == param.Magnitude:
                     v0 = self.v if self.v is not None else 0.5
                     vv = random.gauss(v0, Cmut)
-                    self.v = np.round(self.param.v.crop_to_bounds(vv), self.Ndec)
+                    self.v = self.param.v.crop_to_bounds(np.round(vv, self.Ndec))
                     # self.v = np.round(self.v, self.Ndec)
                 elif self.parclass == param.Selector:
                     self.v = random.choice(self.param.v.objects)

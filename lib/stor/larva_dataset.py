@@ -1009,28 +1009,38 @@ class LarvaDataset:
         evrun.plot_results()
         return evrun
 
-    def modelConf_analysis(self):
+    def modelConf_analysis(self, avgVSvar=True, mods3=True):
         if 'modelConfs' not in self.config.keys():
-            self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
+            self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
         M = preg.larva_conf_dict
-        entries_avg, mIDs_avg = M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
-        self.config.modelConfs.average = entries_avg
-        self.save_config(add_reference=True)
-        self.store_model_graphs(mIDs=mIDs_avg)
-        self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
-        diff_df_avg = M.diff_df(mIDs=mIDs_avg)
-        preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=self.dir_dict.model_tables,
-                                    name='avg_mIDs_diffs')
+        if avgVSvar :
+            entries_avg, mIDs_avg = M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
+            self.config.modelConfs.average = entries_avg
+            self.save_config(add_reference=True)
+            self.store_model_graphs(mIDs=mIDs_avg)
+            self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
+            diff_df_avg = M.diff_df(mIDs=mIDs_avg)
+            preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=self.dir_dict.model_tables,
+                                        name='avg_mIDs_diffs')
 
-        entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
-                                               mID0s=mIDs_avg)
-        self.config.modelConfs.variable = entries_var
-        self.save_config(add_reference=True)
-        self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
-        self.eval_model_graphs(mIDs=mIDs_avg[:3] + mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1',
-                               N=10)
-        self.eval_model_graphs(mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
-                               N=10)
+            entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
+                                                   mID0s=mIDs_avg)
+            self.config.modelConfs.variable = entries_var
+            self.save_config(add_reference=True)
+            self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
+            self.eval_model_graphs(mIDs=mIDs_avg[:3] + mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1',
+                                   N=10)
+            self.eval_model_graphs(mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
+                                   N=10)
+        if mods3:
+            entries_3m, mIDs_3m = M.adapt_3modules(refID=self.config.refID, e=self.endpoint_data, c=self.config)
+            self.config.modelConfs['3modules'] = entries_3m
+            self.save_config(add_reference=True)
+            self.store_model_graphs(mIDs=mIDs_3m)
+            # self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
+            diff_df_3m = M.diff_df(mIDs=mIDs_3m)
+            preg.graph_dict.dict['mpl'](data=diff_df_3m, font_size=18, save_to=self.dir_dict.model_tables,
+                                        name='3fitted_modules_diffs')
 
 
 if __name__ == '__main__':
