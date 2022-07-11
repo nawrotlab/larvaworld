@@ -126,8 +126,6 @@ def track_annotated(epoch='stride',a=None, dt=0.1, a2plot=None, fig=None, ax=Non
         ax.axvspan(trange[s0], trange[s1], color=chunk_cols[0], alpha=1.0)
     for s0, s1 in epochs2:
         ax.axvspan(trange[s0], trange[s1], color=chunk_cols[1], alpha=1.0)
-
-    # P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
     return P.get()
 
 

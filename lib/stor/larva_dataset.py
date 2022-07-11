@@ -8,7 +8,6 @@ import copy
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-
 from lib.registry.pars import preg
 
 
@@ -146,34 +145,35 @@ class LarvaDataset:
     def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False, contour=True, midline=True):
-        store = pd.HDFStore(self.dir_dict.data_h5)
+    def load(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial']):
+        D = self.dir_dict
+        store = pd.HDFStore(D.data_h5)
 
         if step:
-            self.step_data = store['step']
-            # print(self.step_data.columns)
-            if contour:
+            s = store['step']
+            # h5_ks=[]
+            # if contour:
+            #     h5_ks.append('contour')
+            # if midline:
+            #     h5_ks.append('midline')
+            # if epochs:
+            #     h5_ks.append('epochs')
+            # if base_spatial:
+            #     h5_ks.append('base_spatial')
+            for h5_k in h5_ks:
                 try:
-                    contour_ps = dNl.flatten_list(self.contour_xy)
-                    temp = pd.HDFStore(self.dir_dict.contour_h5)
-                    self.step_data[contour_ps] = temp['contour']
+                    temp = pd.HDFStore(D[h5_k])
+                    s = s.join(temp[h5_k])
                     temp.close()
                 except:
                     pass
-            if midline:
-                try:
-                    midline_ps = dNl.flatten_list(self.points_xy)
-                    temp = pd.HDFStore(self.dir_dict.midline_h5)
-                    self.step_data[midline_ps] = temp['midline']
-                    temp.close()
-                except:
-                    pass
-            self.step_data.sort_index(level=['Step', 'AgentID'], inplace=True)
-            self.agent_ids = self.step_data.index.unique('AgentID').values
-            self.num_ticks = self.step_data.index.unique('Step').size
+            s.sort_index(level=['Step', 'AgentID'], inplace=True)
+            self.agent_ids = s.index.unique('AgentID').values
+            self.num_ticks = s.index.unique('Step').size
+            self.step_data = s
         if end:
             try:
-                endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
+                endpoint = pd.HDFStore(D.endpoint_h5)
                 self.endpoint_data = endpoint['end']
                 self.endpoint_data.sort_index(inplace=True)
                 endpoint.close()
@@ -210,25 +210,30 @@ class LarvaDataset:
         except:
             raise ValueError('Not found')
 
-    def save(self, step=True, end=True, food=False, contour=True, midline=True, add_reference=False):
-        store = pd.HDFStore(self.dir_dict.data_h5)
+    def save(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial'],
+             add_reference=False):
+        h5_kdic = dNl.NestDict({
+            'contour': dNl.flatten_list(self.contour_xy),
+            'midline': dNl.flatten_list(self.points_xy),
+            'epochs': self.epochs_ps,
+            'base_spatial': self.base_spatial_ps
+        })
+
+        D = self.dir_dict
+        store = pd.HDFStore(D.data_h5)
         if step:
-            stored_ps=[]
-            contour_ps = dNl.flatten_list(self.contour_xy)
-            if contour:
-                temp = pd.HDFStore(self.dir_dict.contour_h5)
-                temp['contour'] = self.step_data[contour_ps]
+            stored_ps = []
+            s = self.step_data
+            for h5_k in h5_ks:
+                pps = [p for p in h5_kdic[h5_k] if p in s.columns]
+                temp = pd.HDFStore(D[h5_k])
+                temp[h5_k] = s[pps]
                 temp.close()
-                stored_ps+=contour_ps
-            midline_ps = dNl.flatten_list(self.points_xy)
-            if midline and all([p in self.step_data.columns for p in midline_ps]):
-                temp = pd.HDFStore(self.dir_dict.midline_h5)
-                temp['midline'] = self.step_data[midline_ps]
-                temp.close()
-                stored_ps += midline_ps
-            store['step'] = self.step_data.drop(stored_ps, axis=1, errors='ignore')
+                stored_ps += pps
+
+            store['step'] = s.drop(stored_ps, axis=1, errors='ignore')
         if end:
-            endpoint = pd.HDFStore(self.dir_dict.endpoint_h5)
+            endpoint = pd.HDFStore(D.endpoint_h5)
             endpoint['end'] = self.endpoint_data
             endpoint.close()
         if food:
@@ -236,6 +241,22 @@ class LarvaDataset:
         self.save_config(add_reference=add_reference)
         store.close()
         print(f'Dataset {self.id} stored.')
+
+    @property
+    def base_spatial_ps(self):
+        p = self.point
+        pars = [nam.xy(p)[0], nam.xy(p)[1], nam.dst(p), nam.vel(p), nam.acc(p), nam.lin(nam.dst(p)),
+                nam.lin(nam.vel(p)), nam.lin(nam.acc(p)),
+                nam.cum(nam.dst(p)), nam.cum(nam.lin(nam.dst(p)))]
+        spars = nam.scal(pars)
+        return pars + spars
+
+    @property
+    def epochs_ps(self):
+        cs = ['turn', 'Lturn', 'Rturn', 'pause', 'run', 'stride', 'stridechain']
+        pars = dNl.flatten_list([[f'{c}_id', f'{c}_start', f'{c}_stop', f'{c}_dur', f'{c}_dst', f'{c}_scaled_dst',
+                                  f'{c}_length', f'{c}_amp', f'{c}_vel_max', f'{c}_count'] for c in cs])
+        return pars
 
     def save_larva_dicts(self):
         for k, vs in self.larva_dicts.items():
@@ -639,8 +660,10 @@ class LarvaDataset:
             'data_h5': os.path.join(self.data_dir, 'data.h5'),
             'endpoint_h5': os.path.join(self.data_dir, 'endpoint.h5'),
             'derived_h5': os.path.join(self.data_dir, 'derived.h5'),
-            'midline_h5': os.path.join(self.data_dir, 'midline.h5'),
-            'contour_h5': os.path.join(self.data_dir, 'contour.h5'),
+            'midline': os.path.join(self.data_dir, 'midline.h5'),
+            'contour': os.path.join(self.data_dir, 'contour.h5'),
+            'epochs': os.path.join(self.data_dir, 'epochs.h5'),
+            'base_spatial': os.path.join(self.data_dir, 'base_spatial.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
             'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
         })
@@ -680,7 +703,6 @@ class LarvaDataset:
             c.metric_definition.spatial.hardcoded.update(**md['spatial'])
             self.define_linear_metrics()
 
-
         from lib.process.basic import preprocess, process
         warnings.filterwarnings('ignore')
         s, e = self.step_data, self.endpoint_data
@@ -696,7 +718,7 @@ class LarvaDataset:
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
         if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
-            from lib.process import aux,patch
+            from lib.process import aux, patch
             self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
             self.store_chunk_dicts(self.chunk_dicts)
             aux.turn_mode_annotation(e, self.chunk_dicts)
@@ -708,7 +730,6 @@ class LarvaDataset:
                 self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
                 self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
                 self.store_pooled_epochs(self.pooled_epochs)
-
 
         self.drop_pars(**to_drop, **cc)
         if is_last:
@@ -835,7 +856,6 @@ class LarvaDataset:
         dNl.save_dict(pooled_epochs, filepath, use_pickle=True)
         print('Pooled group bouts saved')
 
-
     def load_cycle_curves(self):
         try:
             return dNl.load_dict(self.dir_dict.cycle_curves, use_pickle=True)
@@ -952,7 +972,7 @@ class LarvaDataset:
     def store_model_graphs(self, mIDs):
         # from lib.registry.pars import preg
         from lib.aux.combining import combine_pdfs
-        G=preg.graph_dict.dict
+        G = preg.graph_dict.dict
         # from lib.plot.grid import model_summary
         f1 = self.dir_dict.model_tables
         f2 = self.dir_dict.model_summaries
@@ -971,11 +991,12 @@ class LarvaDataset:
         combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
         combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf", deep=False)
 
-    def eval_model_graphs(self,mIDs,id=None,N=10,enrichment=True, offline=False,dur=None, **kwargs):
-        if id is None :
-            id=f'{len(mIDs)}mIDs'
+    def eval_model_graphs(self, mIDs, id=None, N=10, enrichment=True, offline=False, dur=None, **kwargs):
+        if id is None:
+            id = f'{len(mIDs)}mIDs'
         from lib.eval.evaluation import EvalRun
-        evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=mIDs, N=N, save_to=self.dir_dict.evaluation,
+        evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=mIDs, N=N,
+                        save_to=self.dir_dict.evaluation,
                         bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
         #
         evrun.run(video=False, dur=dur)
@@ -987,34 +1008,38 @@ class LarvaDataset:
     def modelConf_analysis(self):
         if 'modelConfs' not in self.config.keys():
             self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-        M=preg.larva_conf_dict
-        entries_avg, mIDs_avg=M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
+        M = preg.larva_conf_dict
+        entries_avg, mIDs_avg = M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
         self.config.modelConfs.average = entries_avg
         self.save_config(add_reference=True)
         self.store_model_graphs(mIDs=mIDs_avg)
         self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
-        diff_df_avg=M.diff_df(mIDs=mIDs_avg)
-        preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=self.dir_dict.model_tables, name='avg_mIDs_diffs')
+        diff_df_avg = M.diff_df(mIDs=mIDs_avg)
+        preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=self.dir_dict.model_tables,
+                                    name='avg_mIDs_diffs')
 
-        entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config, mID0s=mIDs_avg)
+        entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
+                                               mID0s=mIDs_avg)
         self.config.modelConfs.variable = entries_var
         self.save_config(add_reference=True)
         self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
-        self.eval_model_graphs(mIDs=mIDs_avg[:3]+mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1', N=10)
-        self.eval_model_graphs(mIDs=mIDs_avg[3:]+mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2', N=10)
-
+        self.eval_model_graphs(mIDs=mIDs_avg[:3] + mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1',
+                               N=10)
+        self.eval_model_graphs(mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
+                               N=10)
 
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
     from lib.eval.model_fit import Calibration, optimize_mID_turnerNinterference
+
     refID = 'None.150controls'
     d = preg.loadRef(refID)
     d.load(step=False)
-    #e, c = d.endpoint_data, d.config
-    #M = preg.larva_conf_dict
+    # e, c = d.endpoint_data, d.config
+    # M = preg.larva_conf_dict
     # M.add_var_mIDs(refID=refID, e=e, c=c, mID0s=['PHIonNEU'])
-    d.eval_model_graphs(mIDs=['PHIonNEU','PHIonNEU_var'], norm_modes=['raw', 'minmax'], id='PHIonNEU avgVSvar', N=20)
+    d.eval_model_graphs(mIDs=['PHIonNEU', 'PHIonNEU_var'], norm_modes=['raw', 'minmax'], id='PHIonNEU avgVSvar', N=20)
     # raise
     # entries = {}
     # #mIDs = []
@@ -1028,4 +1053,3 @@ if __name__ == '__main__':
     # diff_df_avg = preg.larva_conf_dict.diff_df(mIDs=mID0s)
     # preg.graph_dict.dict['mpl'](data=diff_df_avg, font_size=18, save_to=d.dir_dict.model_tables,
     #                             name='avg_mIDs_diffs')
-
