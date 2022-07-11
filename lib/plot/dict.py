@@ -19,6 +19,7 @@ def build():
     d['table'] = dNl.NestDict({
         'mpl': table.mpl_table,
         'model table': table.modelConfTable,
+        'mtable': table.mtable,
         # 'barplot': bar.barplot,
         # 'auto_barplot': bar.auto_barplot,
     })
