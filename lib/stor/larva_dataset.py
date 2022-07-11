@@ -1,3 +1,4 @@
+import itertools
 import os.path
 import shutil
 import numpy as np
@@ -82,7 +83,8 @@ class LarvaDataset:
                       'env_params': env_params,
                       'larva_groups': larva_groups,
                       'source_xy': source_xy,
-                      'life_history': life_history
+                      'life_history': life_history,
+
                       }
         self.config = dNl.NestDict(config)
         self.config.dir_dict = self.dir_dict
@@ -145,21 +147,12 @@ class LarvaDataset:
     def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular']):
+    def load(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular','dspNtor']):
         D = self.dir_dict
         store = pd.HDFStore(D.data_h5)
 
         if step:
             s = store['step']
-            # h5_ks=[]
-            # if contour:
-            #     h5_ks.append('contour')
-            # if midline:
-            #     h5_ks.append('midline')
-            # if epochs:
-            #     h5_ks.append('epochs')
-            # if base_spatial:
-            #     h5_ks.append('base_spatial')
             for h5_k in h5_ks:
                 try:
                     temp = pd.HDFStore(D[h5_k])
@@ -210,7 +203,7 @@ class LarvaDataset:
         except:
             raise ValueError('Not found')
 
-    def save(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular'],
+    def save(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular','dspNtor'],
              add_reference=False):
         h5_kdic = dNl.NestDict({
             'contour': dNl.flatten_list(self.contour_xy),
@@ -218,6 +211,7 @@ class LarvaDataset:
             'epochs': self.epochs_ps,
             'base_spatial': self.base_spatial_ps,
             'angular': dNl.unique_list(self.angles+self.ang_pars),
+            'dspNtor': self.dspNtor_ps,
         })
 
         D = self.dir_dict
@@ -257,6 +251,13 @@ class LarvaDataset:
         cs = ['turn', 'Lturn', 'Rturn', 'pause', 'run', 'stride', 'stridechain']
         pars = dNl.flatten_list([[f'{c}_id', f'{c}_start', f'{c}_stop', f'{c}_dur', f'{c}_dst', f'{c}_scaled_dst',
                                   f'{c}_length', f'{c}_amp', f'{c}_vel_max', f'{c}_count'] for c in cs])
+        return pars
+
+    @property
+    def dspNtor_ps(self):
+        tor_ps = [f'tortuosity_{dur}' for dur in [1,2,5,10,20,30,60,100,120,240,300]]
+        dsp_ps =[f'dispersion_{t0}_{t1}' for (t0,t1) in itertools.product([0,5,10,20,30,60], [30,40,60,90,120,240,300])]
+        pars=tor_ps+dsp_ps+nam.scal(dsp_ps)
         return pars
 
     def save_larva_dicts(self):
@@ -666,6 +667,7 @@ class LarvaDataset:
             'epochs': os.path.join(self.data_dir, 'epochs.h5'),
             'base_spatial': os.path.join(self.data_dir, 'base_spatial.h5'),
             'angular': os.path.join(self.data_dir, 'angular.h5'),
+            'dspNtor': os.path.join(self.data_dir, 'dspNtor.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
             'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
         })
