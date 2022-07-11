@@ -3,7 +3,7 @@ import lib.aux.dictsNlists as dNl
 
 from lib.registry.pars import preg
 
-def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws, source_xy=None):
+def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt, source_xy=None):
     cycle_ks, eval_kNps = None, None
     ks = []
     robot_dict = dNl.NestDict()
@@ -39,6 +39,16 @@ def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws, sour
         fitness_target_kws['source_xy'] = source_xy
     robot_dict.step=None
     ks = dNl.unique_list(ks)
+
+    def robot_func(ss) :
+        gdict = dNl.NestDict()
+        gdict.step = ss
+        if cycle_ks:
+            from lib.process.aux import cycle_curve_dict
+            gdict.cycle_curves = cycle_curve_dict(s=ss, dt=dt, shs=cycle_ks)
+        if eval_kNps:
+            gdict.eval = {sh: ss[p].dropna().values for sh, p in eval_kNps.items()}
+        return gdict
     # dic0 = self.fit_dict.robot_dict
     # cycle_ks, eval_ks = None, None
     # ks = []
@@ -50,6 +60,6 @@ def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws, sour
     #     ks += cycle_ks
     # ks = dNl.unique_list(ks)
     return dNl.NestDict({'func': fitness_func, 'target_refID': fitness_target_refID,
-                         # 'keys' : ks,
-                         'keys' : {'eval' : eval_kNps, 'cycle':cycle_ks, 'all':ks},
+                         'keys' : ks, 'robot_func' : robot_func,
+                         # 'keys' : {'eval' : eval_kNps, 'cycle':cycle_ks, 'all':ks},
                          'target_kws': fitness_target_kws, 'target': fitness_target, 'robot_dict': robot_dict})

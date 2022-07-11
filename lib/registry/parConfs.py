@@ -1078,6 +1078,7 @@ class LarvaConfDict:
         fit_dict = arrange_fitness(fitness_func=distro_KS_interference_evaluation, fitness_target_refID=refID,
                                    fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa'],
                                                        'pooled_cycle_curves': ['fov', 'foa', 'b']},
+                                   dt=c.dt,
                                    source_xy=None)
         entries = {}
         mIDs = []

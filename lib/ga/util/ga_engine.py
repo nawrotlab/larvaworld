@@ -215,7 +215,7 @@ class GAbuilder(GAselector):
         if fit_dict is None :
             if fitness_target_kws is None:
                 fitness_target_kws = {}
-            fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,source_xy=self.model.source_xy)
+            fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt=self.model.dt,source_xy=self.model.source_xy)
         self.fit_dict =fit_dict
         self.exclude_func = exclude_func
         self.multicore = multicore
@@ -288,20 +288,21 @@ class GAbuilder(GAselector):
 
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
-        FK=self.fit_dict.keys
-        for k in FK.all:
+        # FK=self.fit_dict.keys
+        for k in self.fit_dict.keys:
             preg.compute(k, self.dataset)
 
         for i, g in self.genome_dict.items():
             if g.fitness is None:
                 ss = self.dataset.step_data.xs(i, level='AgentID')
-                gdict = dNl.copyDict(self.fit_dict.robot_dict)
-                gdict.step = ss
-                if FK.cycle:
-                    from lib.process.aux import cycle_curve_dict
-                    gdict.cycle_curves = cycle_curve_dict(s=ss, dt=self.model.dt, shs=FK.cycle)
-                if FK.eval:
-                    gdict.eval = {sh: ss[p].dropna().values for sh,p in FK.eval.items()}
+                gdict =self.fit_dict.robot_func(ss)
+                # gdict = dNl.copyDict(self.fit_dict.robot_dict)
+                # gdict.step = ss
+                # if FK.cycle:
+                #     from lib.process.aux import cycle_curve_dict
+                #     gdict.cycle_curves = cycle_curve_dict(s=ss, dt=self.model.dt, shs=FK.cycle)
+                # if FK.eval:
+                #     gdict.eval = {sh: ss[p].dropna().values for sh,p in FK.eval.items()}
                 g.fitness, g.fitness_dict = self.get_fitness(gdict)
 
     def build_generation(self):
