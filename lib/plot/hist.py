@@ -19,16 +19,18 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
         e = d.endpoint_data
     if Nbins is None:
         Nbins = int(e.index.values.shape[0] / 10)
-    d0 = preg.larva_conf_dict.dict.model.init[mkey].mode[mode]
-    d00 = preg.larva_conf_dict.dict.model.m[mkey].mode[mode]
-    var_ks = d0.variable
-    N = len(var_ks)
+    # d0 = preg.larva_conf_dict.dict.model.init[mkey].mode[mode]
+    # d00 = preg.larva_conf_dict.dict.model.m[mkey].mode[mode]
+    # var_ks = d0.variable
+    var_mdict = preg.larva_conf_dict.variable_mdict(mkey, mode=mode)
+    # var_ks = preg.larva_conf_dict.variable_keys(mkey, mode=mode)
+    N = len(list(var_mdict.keys()))
 
     P = BasePlot(name=f'{mkey}_endpoint_hists', **kwargs)
     P.build(1, N, figsize=(7 * N, 6), sharey=True, fig=fig, axs=axs)
 
-    for i, k in enumerate(var_ks):
-        p=d00.args[k]
+    for i, (k,p) in enumerate(var_mdict.items()):
+        # p=d00.args[k]
         vs = e[p.codename]
         P.axs[i].hist(vs.values, bins=Nbins)
         P.conf_ax(i, xlab=p.label, ylab='# larvae' if i == 0 else None, xMaxN=3, xlabelfontsize=18,
@@ -36,7 +38,7 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
 
         if show_median:
             v_mu = vs.median()
-            text = p.symbol + f' = {np.round(v_mu, 2)}'
+            text = f'{p.symbol} = {np.round(v_mu, 2)}'
             P.axs[i].axvline(v_mu, color='red', alpha=1, linestyle='dashed', linewidth=3)
             P.axs[i].annotate(text, rotation=0, fontsize=15, va='center', ha='left',
                               xy=(0.55, 0.8), xycoords='axes fraction')

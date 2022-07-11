@@ -1087,26 +1087,34 @@ class LarvaConfDict:
                     self.update_mdict(mdict=mdict[d], mmdic=mmdic[d])
             return mdict
 
+    def variable_keys(self, mkey, mode='default'):
+        d0 = self.dict.model.init[mkey]
+        var_ks = d0.mode[mode].variable
+        return var_ks
+
+    def variable_mdict(self, mkey, mode='default'):
+        var_ks = self.variable_keys(mkey, mode=mode)
+        d00 = self.dict.model.m[mkey].mode[mode].args
+        mdict=dNl.NestDict({k:d00[k] for k in var_ks})
+        return mdict
+
     def space_dict(self, mkeys, mConf0):
         mF = dNl.flatten_dict(mConf0)
         dic = {}
         for mkey in mkeys:
             d0 = self.dict.model.init[mkey]
-            d00 = self.dict.model.m[mkey]
             if f'{d0.pref}mode' in mF.keys():
                 mod_v = mF[f'{d0.pref}mode']
             else:
                 mod_v = 'default'
-            var_ks = d0.mode[mod_v].variable
-            for k in var_ks:
+            var_mdict=self.variable_mdict(mkey, mode=mod_v)
+            for k,p in var_mdict.items():
                 k0 = f'{d0.pref}{k}'
-                dic[k0] = d00.mode[mod_v].args[k]
+                dic[k0] = p
                 if type(mF[k0]) == list:
                     if dic[k0].parclass == param.Range:
                         mF[k0] = tuple(mF[k0])
-
                 dic[k0].v = mF[k0]
-
         return dNl.NestDict(dic)
 
     def to_string(self, mdict):
