@@ -25,14 +25,15 @@ def import_Jovanic_datasets(parent_dir, source_ids=['Fed', 'Deprived', 'Starved'
     return ds
 
 
-def import_dataset(N, datagroup_id='Schleyer lab', id=None, group_id='exploration', min_duration_in_sec=180,
-                   age=96.0, parent_dir='no_odor', merged=True, **kwargs):
+def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, age=0.0,  merged=True, **kwargs):
     # N = 150
     group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
     group.distribution.N = N
 
     if id is None:
         id = f'{N}controls'
+    if group_id is None:
+        group_id = parent_dir
 
     g = preg.loadConf(id=datagroup_id, conftype='Group')
     group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
@@ -48,16 +49,9 @@ def import_dataset(N, datagroup_id='Schleyer lab', id=None, group_id='exploratio
         'target_dir': f'{proc_folder}/{group_id}/{id}',
         'source_dir': source_dir,
         'max_Nagents': N,
-        'min_duration_in_sec': min_duration_in_sec,
         **kwargs
     }
     d = build_dataset(id=id, **kws)
-    # d.save(add_reference=add_reference)
-    # if enrich:
-    #     d.enrich(**g.enrichment, store=True, add_reference=add_reference)
-    # else:
-    #     d.save(add_reference=add_reference)
-
     return d
 
 
@@ -70,11 +64,6 @@ def build_dataset(datagroup_id, id, target_dir, larva_groups={},enrich=True, add
     }
 
     warnings.filterwarnings('ignore')
-    # try:
-    #     shutil.rmtree(target_dir,ignore_errors=True)
-    # except:
-    #     pass
-
     try:
         print(f'Initializing {datagroup_id} format-specific dataset import...')
         shutil.rmtree(target_dir, ignore_errors=True)

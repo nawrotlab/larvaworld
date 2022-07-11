@@ -225,7 +225,7 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c, store=store)
-    align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=c, store=store, **kwargs)
+    # align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=c, store=store, **kwargs)
 
     print(f'Completed {mode} spatial processing.')
 
@@ -251,27 +251,30 @@ def comp_dispersion(s=None, e=None, c=None, recompute=False, dsp_starts=[0], dsp
         ps.append(p)
 
         t0 = int(s0 / dt)
+        t1 = int(s1 / dt)
         fp = nam.final(p)
         mp = nam.max(p)
         mup = nam.mean(p)
         pps += [fp, mp, mup]
         # pars = ps + pps
         AA = np.zeros([c.Nticks, len(ids)]) * np.nan
+        sss=ss.loc[(slice(t0, t1), slice(None)), slice(None)]
         if set([mp]).issubset(e.columns.values) and not recompute:
             print(
                 f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
             continue
         for i, id in (enumerate(ids)):
-            xy = ss.xs(id, level='AgentID', drop_level=True)
+            xy = sss.xs(id, level='AgentID', drop_level=True)
             try:
-                origin_xy = xy.dropna().values[t0]
+                origin_xy = xy.dropna().values[0]
+                AA[t0:t1, i] = xy_aux.eudi5x(xy.values, origin_xy)
             except:
                 print(f'No values to set origin point for {id}')
-                AA[:, i] = np.empty(len(xy)) * np.nan
+                # AA[:, i] = np.empty(len(xy)) * np.nan
                 continue
-            d = xy_aux.eudi5x(xy.values, origin_xy)
-            d[:t0] = np.nan
-            AA[:, i] = d
+            # d = xy_aux.eudi5x(xy.values, origin_xy)
+            # d[:t0] = np.nan
+
         s[p] = AA.flatten()
         e[mp] = s[p].groupby('AgentID').max()
         e[mup] = s[p].groupby('AgentID').mean()

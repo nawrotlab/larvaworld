@@ -11,15 +11,17 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
                    max_Nagents=None, min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0, **kwargs):
     d = dataset
     dt=d.dt
-    cols0 = build_conf['read_sequence']
+    cols0 = build_conf.read_sequence
     raw_fs = []
     inv_xs = []
+    if type(source_dir)==str :
+        source_dir=[source_dir]
     for i, f in enumerate(source_dir):
 
         fs = [os.path.join(f, n) for n in os.listdir(f) if n.endswith('.csv')]
         raw_fs += fs
 
-        if build_conf['read_metadata']:
+        if build_conf.read_metadata :
             try :
                 inv_xs += get_invert_x_array(read_Schleyer_metadata(f), len(fs))
             except :
@@ -49,7 +51,6 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
             df.reset_index(inplace=True,drop=True)
         if len(df) >= int(min_duration_in_sec / dt) and df.index.max() >= int(min_end_time_in_sec / dt):
             df = df[df.index >= int(start_time_in_sec / dt)]
-            # cols1=df.columns.values
             df = df[cols1]
             df = df.apply(pd.to_numeric, errors='coerce')
             if inv_x:
