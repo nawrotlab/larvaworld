@@ -5,20 +5,20 @@ from lib.aux.par_aux import define_range
 
 from lib.registry.units import ureg
 
-def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
+def par(name, dtype=float, v=None, vs=None, lim=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
         h='', k=None, symbol='', u=ureg.dimensionless, u_name=None, label='', combo=None, entry=None, codename=None,
         **kwargs):
-    if t == TypedDict:
-        return {name: {'initial_value': v, 'dtype': t, 'entry': entry, 'disp': disp, 'tooltip': h}}
+    if dtype == TypedDict:
+        return {name: {'initial_value': v, 'dtype': dtype, 'entry': entry, 'disp': disp, 'tooltip': h}}
 
-    dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
+    dv, lim, vs = define_range(dtype=dtype, lim=lim, vs=vs, dv=dv,u=u, wrap_mode=None)
 
     if vs not in [None, []]:
         from lib.aux.data_aux import maxNdigits
         Ndigits = maxNdigits(np.array(vs), 4)
     if aux_vs is not None and vs is not None:
         vs += aux_vs
-    d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': t, 'symbol': symbol, 'unit': u_name,
+    d = {'initial_value': v, 'values': vs, 'Ndigits': Ndigits, 'dtype': dtype, 'symbol': symbol, 'unit': u_name,
          'label': label,
          'disp': disp if disp is not None else name, 'combo': combo, 'tooltip': h, 'codename': codename, 'step': dv}
 

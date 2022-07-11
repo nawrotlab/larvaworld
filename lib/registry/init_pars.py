@@ -38,7 +38,7 @@ def confID_entry(conftype, default=None, k=None, symbol=None, single_choice=True
         k = f'{low}{IDstr}'
     if symbol is None :
         symbol = sub(IDstr, low)
-    d = {'t': t, 'vparfunc': ConfSelector(conftype, default=default, single_choice=single_choice), 'vs': kConfDict(conftype), 'v': default,
+    d = {'dtype': t, 'vparfunc': ConfSelector(conftype, default=default, single_choice=single_choice), 'vs': kConfDict(conftype), 'v': default,
            'symbol': symbol, 'k': k, 'h': f'The {conftype} configuration {IDstr}',
                                 'disp': f'{conftype} {IDstr}'}
     return dNl.NestDict(d)
@@ -54,54 +54,54 @@ class ParInitDict:
         import param
         from lib.aux import dictsNlists as dNl
 
-        bF, bT = {'t': bool, 'v': False}, {'t': bool, 'v': True}
+        bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
 
         def pCol(v, obj):
-            return {'t': str, 'vfunc': param.Color, 'v': v, 'disp': 'color',
+            return {'dtype': str, 'vfunc': param.Color, 'v': v, 'disp': 'color',
                     'h': f'The default color of the {obj}.'}
 
         def pPath(v=None, h=None, k=None):
             if h is None: h = f'The relative p ath to store the {v} datasets.'
-            return {'t': str, 'h': h, 'k': k,
+            return {'dtype': str, 'h': h, 'k': k,
                     'vfunc': param.Foldername}
 
         def pID(v=None, h=None, k=None):
             if h is None:
                 h = f'The unique ID   of the {v}.'
-            return {'t': str, 'h': h, 'k': k}
+            return {'dtype': str, 'h': h, 'k': k}
 
         def init_vis():
             d = dNl.NestDict()
             d['render'] = {
-                'mode': {'t': str, 'v': None, 'vs': [None, 'video', 'image'], 'h': 'The visualization mode', 'k': 'm'},
-                'image_mode': {'t': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h': 'The image-render mode',
+                'mode': {'dtype': str, 'v': None, 'vs': [None, 'video', 'image'], 'h': 'The visualization mode', 'k': 'm'},
+                'image_mode': {'dtype': str, 'vs': [None, 'final', 'snapshots', 'overlap'], 'h': 'The image-render mode',
                                'k': 'im'},
-                'video_speed': {'t': int, 'v': 60, 'min': 1, 'max': 100, 'h': 'The video speed', 'k': 'fps'},
-                'media_name': {'t': str,
+                'video_speed': {'dtype': int, 'v': 60, 'lim' : (1,100), 'h': 'The video speed', 'k': 'fps'},
+                'media_name': {'dtype': str,
                                'h': 'Filename for the saved video/image. File extension mp4/png sutomatically added.',
                                'k': 'media'},
-                'show_display': {'t': bool, 'v': True, 'h': 'Hide display', 'k': 'hide'},
+                'show_display': {'dtype': bool, 'v': True, 'h': 'Hide display', 'k': 'hide'},
             }
             d['draw'] = {
-                'draw_head': {'t': bool, 'v': False, 'h': 'Draw the larva head'},
-                'draw_centroid': {'t': bool, 'v': False, 'h': 'Draw the larva centroid'},
-                'draw_midline': {'t': bool, 'v': True, 'h': 'Draw the larva midline'},
-                'draw_contour': {'t': bool, 'v': True, 'h': 'Draw the larva contour'},
-                'draw_sensors': {'t': bool, 'v': False, 'h': 'Draw the larva sensors'},
-                'trails': {'t': bool, 'v': False, 'h': 'Draw the larva trajectories'},
-                'trajectory_dt': {'max': 100.0, 'h': 'Duration of the drawn trajectories'},
+                'draw_head': {'dtype': bool, 'v': False, 'h': 'Draw the larva head'},
+                'draw_centroid': {'dtype': bool, 'v': False, 'h': 'Draw the larva centroid'},
+                'draw_midline': {'dtype': bool, 'v': True, 'h': 'Draw the larva midline'},
+                'draw_contour': {'dtype': bool, 'v': True, 'h': 'Draw the larva contour'},
+                'draw_sensors': {'dtype': bool, 'v': False, 'h': 'Draw the larva sensors'},
+                'trails': {'dtype': bool, 'v': False, 'h': 'Draw the larva trajectories'},
+                'trajectory_dt': {'lim' : (0.0,100.0),'h': 'Duration of the drawn trajectories'},
             }
             d['color'] = {
-                'black_background': {'t': bool, 'v': False, 'h': 'Set the background color to black'},
-                'random_colors': {'t': bool, 'v': False, 'h': 'Color each larva with a random color'},
-                'color_behavior': {'t': bool, 'v': False,
+                'black_background': {'dtype': bool, 'v': False, 'h': 'Set the background color to black'},
+                'random_colors': {'dtype': bool, 'v': False, 'h': 'Color each larva with a random color'},
+                'color_behavior': {'dtype': bool, 'v': False,
                                    'h': 'Color the larvae according to their instantaneous behavior'},
             }
             d['aux'] = {
-                'visible_clock': {'t': bool, 'v': True, 'h': 'Hide/show the simulation clock'},
-                'visible_scale': {'t': bool, 'v': True, 'h': 'Hide/show the simulation scale'},
-                'visible_state': {'t': bool, 'v': False, 'h': 'Hide/show the simulation state'},
-                'visible_ids': {'t': bool, 'v': False, 'h': 'Hide/show the larva IDs'},
+                'visible_clock': {'dtype': bool, 'v': True, 'h': 'Hide/show the simulation clock'},
+                'visible_scale': {'dtype': bool, 'v': True, 'h': 'Hide/show the simulation scale'},
+                'visible_state': {'dtype': bool, 'v': False, 'h': 'Hide/show the simulation state'},
+                'visible_ids': {'dtype': bool, 'v': False, 'h': 'Hide/show the larva IDs'},
             }
             d['visualization'] = {
                 'render': d['render'],
@@ -116,13 +116,13 @@ class ParInitDict:
         def init_batch_pars():
             d = dNl.NestDict({
                 'optimization': {
-                    'fit_par': {'t': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
+                    'fit_par': {'dtype': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
                     'minimize': {**bT, 'h': 'Whether to minimize or maximize the utility parameter.'},
                     'threshold': {'v': 0.001, 'lim': (0.0, 0.01), 'dv': 0.0001,
                                   'h': 'The utility threshold to reach before terminating the batch-run.'},
-                    'max_Nsims': {'t': int, 'v': 7, 'lim': (0, 100),
+                    'max_Nsims': {'dtype': int, 'v': 7, 'lim': (0, 100),
                                   'h': 'The maximum number of single runs before terminating the batch-run.'},
-                    'Nbest': {'t': int, 'v': 3, 'lim': (0, 20),
+                    'Nbest': {'dtype': int, 'v': 3, 'lim': (0, 20),
                               'h': 'The number of best parameter combinations to use for generating the next generation.'},
                     'operations': {
                         'mean': {**bT, 'h': 'Whether to use the mean of the utility across individuals'},
@@ -131,29 +131,29 @@ class ParInitDict:
                     },
                 },
                 'batch_methods': {
-                    'run': {'t': str, 'v': 'default',
+                    'run': {'dtype': str, 'v': 'default',
                             'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'],
                             'h': 'The method to be applied on simulated data derived from every individual run'},
-                    'post': {'t': str, 'v': 'default', 'vs': ['null', 'default'],
+                    'post': {'dtype': str, 'v': 'default', 'vs': ['null', 'default'],
                              'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-run will be terminated.'},
-                    'final': {'t': str, 'v': 'null',
+                    'final': {'dtype': str, 'v': 'null',
                               'vs': ['null', 'scatterplots', 'deb', 'odor_preference'],
                               'h': 'The method to be applied once the batch-run is complete to plot/save the results.'}
                 },
                 'space_search_par': {
-                    'range': {'t': Tuple[float], 'lim': (-100.0, 100.0), 'dv': 1.0,
+                    'range': {'dtype': Tuple[float], 'lim': (-100.0, 100.0), 'dv': 1.0,
                               'k': 'ss.range',
                               'h': 'The parameter range to perform the space-search.'},
-                    'Ngrid': {'t': int, 'lim': (0, 100), 'disp': '# steps', 'k': 'ss.Ngrid',
+                    'Ngrid': {'dtype': int, 'lim': (0, 100), 'disp': '# steps', 'k': 'ss.Ngrid',
                               'h': 'The number of equally-distanced values to parse the parameter range.'},
-                    'values': {'t': List[float], 'lim': (-100.0, 100.0), 'k': 'ss.vs',
+                    'values': {'dtype': List[float], 'lim': (-100.0, 100.0), 'k': 'ss.vs',
                                'h': 'A list of values of the parameter to space-search. Once this is filled no range/# steps parameters are taken into account.'}
                 },
                 'space_search': {
-                    'pars': {'t': List[str], 'h': 'The parameters for space search.', 'k': 'ss.pars'},
-                    'ranges': {'t': List[Tuple[float]], 'lim': (-100.0, 100.0), 'dv': 1.0,
+                    'pars': {'dtype': List[str], 'h': 'The parameters for space search.', 'k': 'ss.pars'},
+                    'ranges': {'dtype': List[Tuple[float]], 'lim': (-100.0, 100.0), 'dv': 1.0,
                                'h': 'The range of the parameters for space search.', 'k': 'ss.ranges'},
-                    'Ngrid': {'t': int, 'lim': (0, 100), 'h': 'The number of steps for space search.',
+                    'Ngrid': {'dtype': int, 'lim': (0, 100), 'h': 'The number of steps for space search.',
                               'k': 'ss.Ngrid'}},
                 'batch_setup': {
                     'batch_id': pID('batch-run', k='b_id'),
@@ -171,17 +171,17 @@ class ParInitDict:
             d = dNl.NestDict()
 
             d['ang_definition'] = {
-                'bend': {'t': str, 'v': 'from_vectors', 'vs': ['from_angles', 'from_vectors'],
+                'bend': {'dtype': str, 'v': 'from_vectors', 'vs': ['from_angles', 'from_vectors'],
                          'h': 'Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.'},
-                'front_vector': {'t': Tuple[int], 'v': (1, 2), 'lim': (-12, 12), 'vfunc': param.Tuple,
+                'front_vector': {'dtype': Tuple[int], 'v': (1, 2), 'lim': (-12, 12), 'vfunc': param.Tuple,
                                  'h': 'The initial & final segment of the front body vector.'},
-                'rear_vector': {'t': Tuple[int], 'v': (-2, -1), 'lim': (-12, 12), 'vfunc': param.Tuple,
+                'rear_vector': {'dtype': Tuple[int], 'v': (-2, -1), 'lim': (-12, 12), 'vfunc': param.Tuple,
                                 'h': 'The initial & final segment of the rear body vector.'},
                 'front_body_ratio': {'v': 0.5, 'lim': (0.0, 1.0), 'disp': 'front_ratio',
                                      'h': 'The fraction of the body considered front, relevant for bend computation from angles.'}
             }
             d['spatial_definition'] = {
-                'point_idx': {'t': int, 'lim': (-1, 12),
+                'point_idx': {'dtype': int, 'lim': (-1, 12),
                               'h': 'The index of the segment used as the larva spatial position (-1 means using the centroid).'},
                 'use_component_vel': {**bF, 'disp': 'vel_component',
                                       'h': 'Whether to use the component velocity ralative to the axis of forward motion.'}
@@ -191,17 +191,17 @@ class ParInitDict:
                 'angular': d['ang_definition'],
                 'spatial': d['spatial_definition'],
                 'dispersion': {
-                    'dsp_starts': {'t': List[int], 'v': [0], 'lim': (0, 200), 'dv': 1, 'disp': 'starts',
+                    'dsp_starts': {'dtype': List[int], 'v': [0], 'lim': (0, 200), 'dv': 1, 'disp': 'starts',
                                    'h': 'The timepoints to start calculating dispersion in seconds.'},
-                    'dsp_stops': {'t': List[int], 'v': [40,60], 'lim': (0, 200), 'dv': 1, 'disp': 'stops',
+                    'dsp_stops': {'dtype': List[int], 'v': [40,60], 'lim': (0, 200), 'dv': 1, 'disp': 'stops',
                                   'h': 'The timepoints to stop calculating dispersion in seconds.'},
                 },
                 'tortuosity': {
-                    'tor_durs': {'t': List[int], 'v': [5, 20], 'lim': (0, 200), 'dv': 1, 'disp': 't (sec)',
+                    'tor_durs': {'dtype': List[int], 'v': [5, 20], 'lim': (0, 200), 'dv': 1, 'disp': 't (sec)',
                                  'h': 'The time windows to use when calculating tortuosity in seconds.'}
                 },
                 'stride': {
-                    'track_point': {'t': str,
+                    'track_point': {'dtype': str,
                                     'h': 'The midline point to use when detecting the strides. When none is provided, the default position of the larva is used (see spatial definition).'},
                     'use_scaled_vel': {**bT, 'disp': 'vel_scaled',
                                        'h': 'Whether to use the velocity scaled to the body length.'},
@@ -209,16 +209,13 @@ class ParInitDict:
                                       'h': 'The velocity threshold to be reached in every stride cycle.'},
                 },
                 # 'pause': {
-                #     'stride_non_overlap': {**bT, 'disp': 'excl. strides',
-                #                            'h': 'Whether pause bouts are required not to overlap with strides.'},
-                #     'min_dur': {'v': 0.4, 'max': 2.0, 'h': 'The minimum duration for detecting a pause, in seconds.'},
-                # },
+
                 'turn': {
-                    'min_ang': {'v': 30.0, 'max': 180.0, 'dv': 1.0,
+                    'min_ang': {'v': 30.0, 'lim': (0.0,180.0), 'dv': 1.0,
                                 'h': 'The minimum orientation angle change required to detect a turn.'},
-                    'min_ang_vel': {'v': 0.0, 'max': 1000.0, 'dv': 1.0,
+                    'min_ang_vel': {'v': 0.0, 'lim': (0.0,1000.0), 'dv': 1.0,
                                     'h': 'The minimum angular velocity maximum required to detect a turn.'},
-                    'chunk_only': {'t': str, 'vs': ['', 'stride', 'pause'],
+                    'chunk_only': {'dtype': str, 'vs': ['', 'stride', 'pause'],
                                    'h': 'Whether to only detect turns whithin a given bout type.'},
                 }
             }
@@ -230,7 +227,7 @@ class ParInitDict:
                 'interpolate_nans': {**bF, 'h': 'Whether to interpolate missing values.'},
                 'filter_f': {'lim': (0.0, 10.0), 'disp': 'filter frequency',
                              'h': 'Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.'},
-                'transposition': {'t': str, 'vs': ['', 'origin', 'arena', 'center'],
+                'transposition': {'dtype': str, 'vs': ['', 'origin', 'arena', 'center'],
                                   'h': 'Whether to transpose spatial coordinates.'}
             }
             d['processing'] = {t: bF for t in proc_type_keys}
@@ -242,32 +239,32 @@ class ParInitDict:
             d['enrichment'] = {**{k: d[k] for k in
                                   ['metric_definition', 'preprocessing', 'processing', 'annotation', 'to_drop']},
                                'recompute': bF,
-                               'mode': {'t': str, 'v': 'minimal', 'vs': ['minimal', 'full']}
+                               'mode': {'dtype': str, 'v': 'minimal', 'vs': ['minimal', 'full']}
                                }
             return d
 
         def init_distpars():
             from lib.model.DEB.substrate import substrate_dict
             d = dNl.NestDict({
-                'xy': {'t': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0), 'min': -1.0, 'max': 1.0,
+                'xy': {'dtype': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0),
                        'vfunc': param.XYCoordinates,
                        'h': 'The xy spatial position coordinates.'},
                 'odor': {
-                    'odor_id': {'t': str, 'disp': 'ID', 'h': 'The unique ID of the odorant.'},
-                    'odor_intensity': {'max': 10.0, 'disp': 'C peak',
+                    'odor_id': {'dtype': str, 'disp': 'ID', 'h': 'The unique ID of the odorant.'},
+                    'odor_intensity': {'lim': (0.0,10.0), 'disp': 'C peak',
                                        'h': 'The peak concentration of the odorant in micromoles.'},
-                    'odor_spread': {'max': 10.0, 'disp': 'spread',
+                    'odor_spread': {'lim': (0.0,10.0), 'disp': 'spread',
                                     'h': 'The spread of the concentration gradient around the peak.'}
                 }
 
             })
             d['substrate_composition'] = {
-                n: {'v': 0.0, 'max': 10.0, 'h': f'{n} density in g/cm**3.'} for
+                n: {'v': 0.0, 'lim': (0.0,10.0), 'h': f'{n} density in g/cm**3.'} for
                 n in
                 ['glucose', 'dextrose', 'saccharose', 'yeast', 'agar', 'cornmeal']}
 
             d['substrate'] = {
-                'type': {'t': str, 'v': 'standard', 'vs': list(substrate_dict.keys()),
+                'type': {'dtype': str, 'v': 'standard', 'vs': list(substrate_dict.keys()),
                          'h': 'The type of substrate.'},
                 'quality': {'v': 1.0, 'lim': (0.0, 1.0),
                             'h': 'The substrate quality as percentage of nutrients relative to the intact substrate type.'}
@@ -284,14 +281,14 @@ class ParInitDict:
                 **d['substrate']
             }
             d['food_grid'] = {
-                'unique_id': {'t': str, 'v': 'Food_grid', 'disp': 'ID',
+                'unique_id': {'dtype': str, 'v': 'Food_grid', 'disp': 'ID',
                               'h': 'The unique ID of the food grid.'},
-                'grid_dims': {'t': Tuple[int], 'v': (50, 50), 'lim': (10, 200), 'disp': 'XY dims',
+                'grid_dims': {'dtype': Tuple[int], 'v': (50, 50), 'lim': (10, 200), 'disp': 'XY dims',
                               'vfunc': param.Tuple,
                               'h': 'The spatial resolution of the food grid.'},
                 'initial_value': {'v': 0.1, 'lim': (0.0, 10.0), 'dv': 0.01, 'disp': 'Initial amount',
                                   'h': 'The initial amount of food in each cell of the grid.'},
-                'distribution': {'t': str, 'v': 'uniform', 'vs': ['uniform'],
+                'distribution': {'dtype': str, 'v': 'uniform', 'vs': ['uniform'],
                                  'h': 'The distribution of food in the grid.'},
                 'default_color': pCol('green', 'food grid'),
                 **d['substrate']
@@ -307,23 +304,23 @@ class ParInitDict:
             d['life_history'] = {
                 'age': {'v': 0.0, 'lim': (0.0, 250.0), 'dv': 1.0,
                         'h': 'The larva age in hours post-hatch.'},
-                'epochs': {'t': TypedDict, 'v': {}, 'entry': 'epoch', 'disp': 'life epochs',
+                'epochs': {'dtype': TypedDict, 'v': {}, 'entry': 'epoch', 'disp': 'life epochs',
                            'h': 'The feeding epochs comprising life-history.'}
 
             }
 
-            d['food_params'] = {'source_groups': {'t': dict, 'v': {}},
-                                'food_grid': {'t': dict},
-                                'source_units': {'t': dict, 'v': {}}
+            d['food_params'] = {'source_groups': {'dtype': dict, 'v': {}},
+                                'food_grid': {'dtype': dict},
+                                'source_units': {'dtype': dict, 'v': {}}
                                 }
 
             d['spatial_distro'] = {
-                'mode': {'t': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform'],
+                'mode': {'dtype': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform'],
                          'disp': 'placing',
                          'h': 'The wa to place agents in the distribution shape.'},
-                'shape': {'t': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'],
+                'shape': {'dtype': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'],
                           'h': 'The space of the spatial distribution.'},
-                'N': {'t': int, 'v': 10, 'lim': (0, 1000),
+                'N': {'dtype': int, 'v': 10, 'lim': (0, 1000),
                       'h': 'The number of agents in the group.'},
                 'loc': d['xy'],
                 'scale': d['xy'],
@@ -331,7 +328,7 @@ class ParInitDict:
 
             d['larva_distro'] = {
                 **d['spatial_distro'],
-                'orientation_range': {'t': Tuple[float], 'v': (0.0, 360.0), 'lim': (0.0, 360.0),
+                'orientation_range': {'dtype': Tuple[float], 'v': (0.0, 360.0), 'lim': (0.0, 360.0),
                                       'dv': 1.0,
                                       'disp': 'heading',
                                       'h': 'The range of larva body orientations to sample from, in degrees.'}
@@ -346,7 +343,7 @@ class ParInitDict:
 
             d['LarvaGroup'] = {
                 'model': d['larva_model'],
-                'sample': {'t': str, 'v': 'None.50controls'},
+                'sample': {'dtype': str, 'v': 'None.50controls'},
                 'default_color': pCol('black', 'larva group'),
                 'imitation': bF,
                 'distribution': d['larva_distro'],
@@ -355,7 +352,7 @@ class ParInitDict:
             }
 
             d['agent'] = {
-                'group': {'t': str, 'v': '', 'h': 'The unique ID of the agent group.'},
+                'group': {'dtype': str, 'v': '', 'h': 'The unique ID of the agent group.'},
 
             }
 
@@ -382,13 +379,13 @@ class ParInitDict:
             d['Border'] = {
                 'default_color': pCol('black', 'border'),
                 'width': {'v': 0.001, 'lim': (0.0, 10.0), 'h': 'The width of the border.'},
-                'points': {'t': List[Tuple[float]], 'lim': (-10.0, 10.0),
+                'points': {'dtype': List[Tuple[float]], 'lim': (-10.0, 10.0),
                            'h': 'The XY coordinates of the consecutive border segments.'},
             }
 
             d['border_list'] = {
                 'default_color': pCol('black', 'border'),
-                'points': {'t': List[Tuple[float]], 'lim': (-10.0, 10.0),
+                'points': {'dtype': List[Tuple[float]], 'lim': (-10.0, 10.0),
                            'h': 'The XY coordinates of the consecutive border segments.'},
             }
             d['Source_DISTRO'] = d['spatial_distro']
@@ -400,28 +397,28 @@ class ParInitDict:
             d = dNl.NestDict({
 
                 'odorscape': {
-                    'odorscape': {'t': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],
+                    'odorscape': {'dtype': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],
                                   'k': 'odorscape_mod',
                                   'h': 'The algorithm used for odorscape generation.'},
-                    'grid_dims': {'t': Tuple[int], 'v': (51, 51), 'lim': (10, 100), 'vfunc': param.Tuple,
+                    'grid_dims': {'dtype': Tuple[int], 'v': (51, 51), 'lim': (10, 100), 'vfunc': param.Tuple,
                                   'k': 'grid_dims',
                                   'h': 'The odorscape grid resolution.'},
                     'evap_const': {'lim': (0.0, 1.0), 'k': 'c_evap',
                                    'h': 'The evaporation constant of the diffusion algorithm.'},
-                    'gaussian_sigma': {'t': Tuple[float], 'lim': (0.0, 1.0), 'vfunc': param.NumericTuple,
+                    'gaussian_sigma': {'dtype': Tuple[float], 'lim': (0.0, 1.0), 'vfunc': param.NumericTuple,
                                        'k': 'gau_sigma',
                                        'h': 'The sigma of the gaussian difusion algorithm.'}
                 },
                 'thermoscape': {
                     'thermo_sources': {'v': [(0.5, 0.05), (0.05, 0.5), (0.5, 0.95), (0.95, 0.5)],
-                                       't': List[Tuple[float]],
+                                       'dtype': List[Tuple[float]],
                                        'lim': (-100.0, 100.0), 'h': 'The xy coordinates of the thermal sources',
                                        'disp': 'thermal sources',
                                        'k': 'temp_sources'},
                     'plate_temp': {'v': 22.0, 'lim': (0.0, 100.0), 'h': 'reference temperature',
                                    'disp': 'reference temperature',
                                    'k': 'temp_0'},
-                    'thermo_source_dTemps': {'v': [8.0, -8.0, 8.0, -8.0], 't': List[float],
+                    'thermo_source_dTemps': {'v': [8.0, -8.0, 8.0, -8.0], 'dtype': List[float],
                                              'lim': (-100.0, 100.0),
                                              'h': 'The relative temperature of the thermal sources',
                                              'disp': 'thermal gradients', 'k': 'dtemp_sources'}
@@ -432,17 +429,17 @@ class ParInitDict:
                     'direction': {'v': 0.0, 'lim': (0.0, 100.0), 'h': 'The directions of the air puff in radians.'},
                     'start_time': {'v': 0.0, 'lim': (0.0, 10000.0), 'dv': 1.0,
                                    'h': 'The starting time of the air-puff in seconds.'},
-                    'N': {'t': int, 'lim': (0, 10000),
+                    'N': {'dtype': int, 'lim': (0, 10000),
                           'h': 'The number of repetitions of the puff. If N>1 an interval must be provided'},
                     'interval': {'v': 5.0, 'lim': (0.0, 10000.0),
                                  'h': 'Whether the puff will reoccur at constant time intervals in seconds. Ignored if N=1'},
                 },
                 'windscape': {
-                    'wind_direction': {'t': float, 'v': np.pi, 'lim': (0.0, 2 * np.pi), 'dv': 0.1,
+                    'wind_direction': {'dtype': float, 'v': np.pi, 'lim': (0.0, 2 * np.pi), 'dv': 0.1,
                                        'h': 'The absolute polar direction of the wind/air puff.'},
-                    'wind_speed': {'t': float, 'v': 0.0, 'lim': (0.0, 100.0), 'dv': 1.0,
+                    'wind_speed': {'dtype': float, 'v': 0.0, 'lim': (0.0, 100.0), 'dv': 1.0,
                                    'h': 'The speed of the wind/air puff.'},
-                    'puffs': {'t': TypedDict, 'v': {}, 'entry': 'air_puff', 'disp': 'air-puffs',
+                    'puffs': {'dtype': TypedDict, 'v': {}, 'entry': 'air_puff', 'disp': 'air-puffs',
                               'h': 'Repetitive or single air-puff stimuli.'}
                 },
                 'odor_gains': {
@@ -453,17 +450,17 @@ class ParInitDict:
                 },
 
                 'arena': {
-                    'arena_dims': {'t': Tuple[float], 'v': (0.1, 0.1), 'lim': (0.0, 2.0), 'dv': 0.01, 'disp': 'X,Y (m)',
+                    'arena_dims': {'dtype': Tuple[float], 'v': (0.1, 0.1), 'lim': (0.0, 2.0), 'dv': 0.01, 'disp': 'X,Y (m)',
                                    'vfunc': param.NumericTuple,
                                    'h': 'The arena dimensions in meters.'},
-                    'arena_shape': {'t': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape',
+                    'arena_shape': {'dtype': str, 'v': 'circular', 'vs': ['circular', 'rectangular'], 'disp': 'shape',
                                     'h': 'The arena shape.'}
                 },
 
                 'essay_params': {
                     'essay_ID': pID('essay'),
                     'path': pPath('essay'),
-                    'N': {'t': int, 'lim': (1, 100), 'disp': '# larvae', 'h': 'The number of larvae per larva-group.'}
+                    'N': {'dtype': int, 'lim': (1, 100), 'disp': '# larvae', 'h': 'The number of larvae per larva-group.'}
                 },
                 'sim_params': {
                     'sim_ID': pID('simulation', k='id'),
@@ -477,34 +474,34 @@ class ParInitDict:
                     'store_data': {**bT, 'h': 'Whether to store the simulation data or not.', 'k': 'no_store'},
                 },
                 'logn_dist': {
-                    'range': {'t': Tuple[float], 'v': (0.0, 2.0), 'lim': (0.0, 10.0), 'dv': 1.0},
-                    'name': {'t': str, 'v': 'lognormal', 'vs': ['lognormal']},
+                    'range': {'dtype': Tuple[float], 'v': (0.0, 2.0), 'lim': (0.0, 10.0), 'dv': 1.0},
+                    'name': {'dtype': str, 'v': 'lognormal', 'vs': ['lognormal']},
                     'mu': {'v': 1.0, 'lim': (0.0, 10.0)},
                     'sigma': {'v': 0.0, 'lim': (0.0, 10.0)},
                     'fit': bF
                 },
                 'par': {
-                    'p': {'t': str},
-                    'u': {'t': str},
-                    'k': {'t': str},
-                    's': {'t': str},
-                    'symbol': {'t': str},
-                    'codename': {'t': str},
-                    'o': {'t': type},
-                    'lim': {'t': Tuple[float]},
-                    'd': {'t': str},
-                    'l': {'t': str},
+                    'p': {'dtype': str},
+                    'u': {'dtype': str},
+                    'k': {'dtype': str},
+                    's': {'dtype': str},
+                    'symbol': {'dtype': str},
+                    'codename': {'dtype': str},
+                    'o': {'dtype': type},
+                    'lim': {'dtype': Tuple[float]},
+                    'd': {'dtype': str},
+                    'l': {'dtype': str},
                     'exists': bF,
-                    'func': {'t': str},
-                    'const': {'t': str},
-                    'operator': {'t': str, 'vs': [None, 'diff', 'cum', 'max', 'min', 'mean', 'std', 'final']},
-                    'k0': {'t': str},
-                    'k_num': {'t': str},
-                    'k_den': {'t': str},
-                    'dst2source': {'t': Tuple[float], 'min': -100.0, 'max': 100.0},
-                    'or2source': {'t': Tuple[float], 'min': -180.0, 'max': 180.0},
-                    'dispersion': {'t': bool, 'v': False},
-                    'wrap_mode': {'t': str, 'vs': [None, 'zero', 'positive']}
+                    'func': {'dtype': str},
+                    'const': {'dtype': str},
+                    'operator': {'dtype': str, 'vs': [None, 'diff', 'cum', 'max', 'min', 'mean', 'std', 'final']},
+                    'k0': {'dtype': str},
+                    'k_num': {'dtype': str},
+                    'k_den': {'dtype': str},
+                    'dst2source': {'dtype': Tuple[float], 'lim' : (-100.0,100.0)},
+                    'or2source': {'dtype': Tuple[float], 'lim' : (-180.0, 180.0)},
+                    'dispersion': {'dtype': bool, 'v': False},
+                    'wrap_mode': {'dtype': str, 'vs': [None, 'zero', 'positive']}
                 },
                 'build_conf': {
                     'min_duration_in_sec': {'v': 170.0, 'lim': (0.0, 3600.0), 'dv': 1.0,
@@ -516,10 +513,10 @@ class ParInitDict:
                     'start_time_in_sec': {'v': 0.0, 'lim': (0.0, 3600.0), 'dv': 1.0,
                                           'symbol': sup('t', 0), 'k': 't0',
                                           'disp': 'Track initiation time (sec)'},
-                    'max_Nagents': {'dtype': int,'t': int, 'v': 500, 'lim': (0, 5000),
+                    'max_Nagents': {'dtype': int, 'v': 500, 'lim': (0, 5000),
                                     'symbol': sub('N', 'max'), 'k': 'N_max',
                                     'disp': 'Max number of larva tracks'},
-                    'save_mode': {'dtype': str,'t': str, 'v': 'semifull',
+                    'save_mode': {'dtype': str, 'v': 'semifull',
                                   'symbol': sub('mod', 'build'), 'k': 'mod_build',
                                   'vs': ['minimal', 'semifull', 'full', 'points'],
                                   'disp': 'Storage mode'
@@ -536,8 +533,8 @@ class ParInitDict:
                 'bout_distro': {
                     'fit': {**bT, 'combo': 'distro',
                             'h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
-                    'range': {'t': Tuple[float], 'max': 500.0, 'combo': 'distro', 'h': 'The distribution range.'},
-                    'name': {'t': str,
+                    'range': {'dtype': Tuple[float],'lim': (0.0,500.0), 'combo': 'distro', 'h': 'The distribution range.'},
+                    'name': {'dtype': str,
                              'vs': ['powerlaw', 'exponential', 'lognormal', 'lognormal-powerlaw', 'levy', 'normal',
                                     'uniform'],
                              'combo': 'distro', 'h': 'The distribution name.'},
@@ -568,11 +565,11 @@ class ParInitDict:
                     'bend_correction_coef': {'v': 1.0, 'lim': (0.8, 1.5), 'label': 'bend correction coefficient',
                                              'symbol': sub('c', 'b'),
                                              'h': 'Correction coefficient of bending angle during forward motion.'},
-                    'ang_mode': {'t': str, 'v': 'torque', 'vs': ['torque', 'velocity'], 'label': 'angular mode',
+                    'ang_mode': {'dtype': str, 'v': 'torque', 'vs': ['torque', 'velocity'], 'label': 'angular mode',
                                  'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
                 },
                 'crawler': {
-                    'mode': {'t': str, 'v': 'realistic', 'k': 'Cr_mod',
+                    'mode': {'dtype': str, 'v': 'realistic', 'k': 'Cr_mod',
                              'vs': ['realistic', 'square', 'gaussian', 'constant'],
                              'symbol': subsup('A', 'C', 'mode'),
                              'label': 'crawler waveform',
@@ -614,7 +611,7 @@ class ParInitDict:
                                       'h': 'The phase of the crawling oscillation cycle where forward velocity is maximum.'}
                 },
                 'olfactor': {
-                    'perception': {'t': str, 'v': 'log', 'vs': ['log', 'linear', 'null'],
+                    'perception': {'dtype': str, 'v': 'log', 'vs': ['log', 'linear', 'null'],
                                    'label': 'olfaction sensing transduction mode',
                                    'k': 'mod_O',
                                    'symbol': sub('mod', 'O'), 'u_name': None,
@@ -626,7 +623,7 @@ class ParInitDict:
                     'brute_force': {**bF, 'h': 'Whether to apply direct rule-based modulation on locomotion or not.'}
                 },
                 'thermosensor': {
-                    'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear', 'null'],
+                    'perception': {'dtype': str, 'v': 'linear', 'vs': ['log', 'linear', 'null'],
                                    'label': 'thermosensing transduction mode',
                                    'k': 'mod_th',
                                    'symbol': sub('mod', 'th'), 'u_name': None,
@@ -660,7 +657,7 @@ class ParInitDict:
                     }
                 },
                 'toucher': {
-                    'perception': {'t': str, 'v': 'linear', 'vs': ['log', 'linear'],
+                    'perception': {'dtype': str, 'v': 'linear', 'vs': ['log', 'linear'],
                                    'symbol': sub('mod', 'T'),
                                    'k': 'mod_T', 'label': 'tactile sensing transduction mode',
                                    'h': 'The method used to calculate the perceived sensory activation from the current and previous sensory input.'},
@@ -674,12 +671,12 @@ class ParInitDict:
                     'initial_gain': {'v': 40.0, 'lim': (-100.0, 100.0),
                                      'label': 'tactile sensitivity coef', 'symbol': sub('G', 'T'), 'k': 'G_T',
                                      'h': 'The initial gain of the tactile sensor.'},
-                    'touch_sensors': {'t': List[int], 'lim': (0, 8), 'k': 'sens_touch',
+                    'touch_sensors': {'dtype': List[int], 'lim': (0, 8), 'k': 'sens_touch',
                                       'symbol': sub('N', 'T'), 'label': 'tactile sensor contour locations',
                                       'h': 'The number of touch sensors existing on the larva body.'},
                 },
                 'feeder': {
-                    'freq_range': {'t': Tuple[float], 'v': (1.0, 3.0), 'lim': (0.0, 4.0), 'disp': 'range',
+                    'freq_range': {'dtype': Tuple[float], 'v': (1.0, 3.0), 'lim': (0.0, 4.0), 'disp': 'range',
                                    'combo': 'frequency',
                                    'h': 'The frequency range of the repetitive feeding behavior.'},
                     'initial_freq': {'v': 2.0, 'lim': (0.0, 4.0), 'disp': 'initial', 'combo': 'frequency',
@@ -694,12 +691,12 @@ class ParInitDict:
                                'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
                 },
                 'memory': {
-                    'modality': {'t': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'],
+                    'modality': {'dtype': str, 'v': 'olfaction', 'vs': ['olfaction', 'touch'],
                                  'h': 'The modality for which the memory module is used.'},
                     'Delta': {'v': 0.1, 'lim': (0.0, 10.0), 'h': 'The input sensitivity of the memory.'},
-                    'state_spacePerSide': {'t': int, 'v': 0, 'max': 20, 'disp': 'state space dim',
+                    'state_spacePerSide': {'dtype': int, 'v': 0, 'lim': (0,20), 'disp': 'state space dim',
                                            'h': 'The number of discrete states to parse the state space on either side of 0.'},
-                    'gain_space': {'t': List[float], 'v': [-300.0, -50.0, 50.0, 300.0], 'lim': (-1000.0, 1000.0),
+                    'gain_space': {'dtype': List[float], 'v': [-300.0, -50.0, 50.0, 300.0], 'lim': (-1000.0, 1000.0),
                                    'dv': 1.0, 'h': 'The possible values for memory gain to choose from.'},
                     'update_dt': {'v': 1.0, 'lim': (0.0, 10.0), 'dv': 1.0,
                                   'h': 'The interval duration between gain switches.'},
@@ -726,12 +723,12 @@ class ParInitDict:
                     # 'touch_memory': {**bF, 'k':'To_mem'},
                 },
                 'square_interference': {
-                    'crawler_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2 * np.pi,
+                    'crawler_phi_range': {'dtype': Tuple[float], 'v': (0.0, 0.0), 'lim': (0.0,2 * np.pi),
                                           'label': 'suppression relief phase interval',
                                           'symbol': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$',
                                           'u': ureg.rad,
                                           'h': 'CRAWLER phase range for TURNER suppression lift.'},
-                    'feeder_phi_range': {'t': Tuple[float], 'v': (0.0, 0.0), 'max': 2 * np.pi,
+                    'feeder_phi_range': {'dtype': Tuple[float], 'v': (0.0, 0.0),'lim': (0.0,2 * np.pi),
                                          'label': 'feeder suppression relief phase interval',
                                          'symbol': '$[\phi_{F}^{\omega_{0}},\phi_{F}^{\omega_{1}}]$',
                                          'u': ureg.rad,
@@ -739,15 +736,14 @@ class ParInitDict:
 
                 },
                 'phasic_interference': {
-                    'max_attenuation_phase': {'v': 3.4, 'max': 2 * np.pi, 'label': 'max relief phase',
-                                              'lim': (0.0, 2 * np.pi),
+                    'max_attenuation_phase': {'v': 3.4, 'lim': (0.0,2 * np.pi), 'label': 'max relief phase',
                                               'symbol': '$\phi_{C}^{\omega}$', 'u': ureg.rad, 'k': 'phi_fov_max',
                                               'h': 'CRAWLER phase of minimum TURNER suppression.'}
                 },
                 'base_interference': {
-                    'mode': {'t': str, 'v': 'square', 'k': 'IF_mod', 'vs': ['default', 'square', 'phasic'],
+                    'mode': {'dtype': str, 'v': 'square', 'k': 'IF_mod', 'vs': ['default', 'square', 'phasic'],
                              'h': 'CRAWLER:TURNER suppression phase mode.'},
-                    'suppression_mode': {'t': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],
+                    'suppression_mode': {'dtype': str, 'v': 'amplitude', 'vs': ['amplitude', 'oscillation', 'both'],
                                          'k': 'IF_target',
                                          'label': 'suppression target', 'symbol': '-', 'u_name': None,
                                          'h': 'CRAWLER:TURNER suppression target.'},
@@ -768,23 +764,23 @@ class ParInitDict:
             }
 
             d['neural_turner'] = {
-                'base_activation': {'v': 20.0, 'min': 10.0, 'max': 40.0, 'lim': (10.0, 40.0), 'dv': 0.1, 'disp': 'mean',
+                'base_activation': {'v': 20.0, 'lim': (10.0, 40.0), 'dv': 0.1, 'disp': 'mean',
                                     'combo': 'activation',
                                     'label': 'tonic input', 'symbol': '$I_{T}^{0}$', 'k': 'I_T0',
                                     'h': 'The baseline activation/input of the TURNER module.'},
-                'activation_range': {'t': Tuple[float], 'v': (10.0, 40.0), 'lim': (0.0, 100.0), 'dv': 0.1,
+                'activation_range': {'dtype': Tuple[float], 'v': (10.0, 40.0), 'lim': (0.0, 100.0), 'dv': 0.1,
                                      'disp': 'range',
                                      'k': 'I_T_r',
                                      'label': 'input range', 'symbol': r'$[I_{T}^{min},I_{T}^{max}]$',
                                      'combo': 'activation', 'h': 'The activation/input range of the TURNER module.'},
 
-                'tau': {'v': 0.1, 'min': 0.05, 'max': 0.5, 'dv': 0.01, 'label': 'time constant',
+                'tau': {'v': 0.1,'lim': (0.05, 0.5), 'dv': 0.01, 'label': 'time constant',
                         'symbol': r'$\tau_{T}$',
                         'u': ureg.s,
                         'h': 'The time constant of the neural oscillator.'},
-                'm': {'t': int, 'v': 100, 'min': 50, 'max': 200, 'label': 'maximum spike-rate', 'symbol': '$SR_{max}$',
+                'm': {'dtype': int, 'v': 100, 'lim': (50, 200), 'label': 'maximum spike-rate', 'symbol': '$SR_{max}$',
                       'h': 'The maximum allowed spike rate.'},
-                'n': {'v': 2.0, 'min': 1.5, 'max': 3.0, 'dv': 0.01, 'label': 'spike response steepness',
+                'n': {'v': 2.0,  'lim': (1.5, 3.0),'dv': 0.01, 'label': 'spike response steepness',
                       'symbol': '$n_{T}$',
                       'h': 'The neuron spike-rate response steepness coefficient.'}
 
@@ -795,7 +791,7 @@ class ParInitDict:
                                 'combo': 'amplitude',
                                 'label': 'output amplitude', 'symbol': '$A_{T}^{0}$', 'k': 'A_T0',
                                 'h': 'The initial activity amplitude of the TURNER module.'},
-                'amp_range': {'t': Tuple[float], 'lim': (0.0, 1000.0), 'v': (0.0, 100.0),
+                'amp_range': {'dtype': Tuple[float], 'lim': (0.0, 1000.0), 'v': (0.0, 100.0),
                               'disp': 'range', 'combo': 'amplitude',
                               'label': 'output amplitude range', 'symbol': r'$[A_{T}^{min},A_{T}^{max}]$',
                               'k': 'A_T_r',
@@ -804,7 +800,7 @@ class ParInitDict:
                                  'k': 'f_T0',
                                  'label': 'bending frequency', 'symbol': sub('f', 'T'), 'u_name': '$Hz$', 'u': ureg.Hz,
                                  'h': 'The initial frequency of the repetitive lateral bending behavior if this is hardcoded (e.g. sinusoidal mode).'},
-                'freq_range': {'t': Tuple[float], 'lim': (0.01, 2.0), 'dv': 0.01, 'disp': 'range',
+                'freq_range': {'dtype': Tuple[float], 'lim': (0.01, 2.0), 'dv': 0.01, 'disp': 'range',
                                'combo': 'frequency',
                                'label': 'bending frequency range', 'k': 'f_T_r', 'v': (0.1, 0.8),
                                'symbol': r'$[f_{T}^{min},f_{T}^{max}]$', 'u_name': '$Hz$', 'u': ureg.Hz,
@@ -818,7 +814,7 @@ class ParInitDict:
             }
 
             d['base_turner'] = {
-                'mode': {'t': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'], 'k': 'Tur_mod',
+                'mode': {'dtype': str, 'v': 'neural', 'vs': ['', 'neural', 'sinusoidal', 'constant'], 'k': 'Tur_mod',
                          'h': 'The implementation mode of the lateral oscillator (TURNER) module.'},
 
                 'noise': {'v': 0.0, 'disp': 'noise', 'combo': 'amplitude', 'k': 'A_Tnoise', 'lim': (0.0, 1.0),
@@ -834,19 +830,19 @@ class ParInitDict:
                 **d['sinusoidal_turner']
             }
 
-            d['Box2D_joint_N'] = {'t': int, 'v': 0, 'max': 2}
+            d['Box2D_joint_N'] = {'dtype': int, 'v': 0, 'lim': (0,2)}
 
-            d['friction_joint'] = {'N': d['Box2D_joint_N'], 'args': {'maxForce': {'v': 10 ** 0, 'max': 10 ** 5},
-                                                                     'maxTorque': {'v': 10 ** 0, 'max': 10 ** 5}
+            d['friction_joint'] = {'N': d['Box2D_joint_N'], 'args': {'maxForce': {'v': 10 ** 0, 'lim': (0.0,10 ** 5)},
+                                                                     'maxTorque': {'v': 10 ** 0, 'lim': (0.0,10 ** 5)}
                                                                      }}
             d['revolute_joint'] = {'N': d['Box2D_joint_N'], 'args': {
                 'enableMotor': bT,  # )
-                'maxMotorTorque': {'v': 0.0, 'max': 10 ** 5},
-                'motorSpeed': {'v': 0.0, 'max': 10 ** 5}
+                'maxMotorTorque': {'v': 0.0,'lim': (0.0,10 ** 5)},
+                'motorSpeed': {'v': 0.0, 'lim': (0.0,10 ** 5)}
             }}
             d['distance_joint'] = {'N': d['Box2D_joint_N'], 'args': {
-                'frequencyHz': {'v': 5.0, 'max': 20.0},
-                'dampingRatio': {'v': 1.0, 'max': 10 ** 5},
+                'frequencyHz': {'v': 5.0,'lim': (0.0,10 ** 5)},
+                'dampingRatio': {'v': 1.0,'lim': (0.0,10 ** 5)},
             }}
 
             d['Box2D_params'] = {
@@ -858,19 +854,19 @@ class ParInitDict:
             }
 
             d['body_shape'] = {
-                'symmetry': {'t': str, 'v': 'bilateral', 'vs': ['bilateral', 'radial'],
+                'symmetry': {'dtype': str, 'v': 'bilateral', 'vs': ['bilateral', 'radial'],
                              'h': 'The body symmetry.'},
-                'Nsegs': {'t': int, 'v': 2, 'min': 1, 'max': 12,
+                'Nsegs': {'dtype': int, 'v': 2,'lim': (1, 12),
                           'h': 'The number of segments comprising the larva body.'},
                 'seg_ratio': {'lim': (0.0, 1.0),
                               'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
 
-                'olfaction_sensors': {'t': List[int], 'lim': (0, 16), 'v': [0], 'disp': 'olfaction',
+                'olfaction_sensors': {'dtype': List[int], 'lim': (0, 16), 'v': [0], 'disp': 'olfaction',
                                       'h': 'The indexes of the contour points bearing olfaction sensors.'},
 
-                'touch_sensors': {'t': List[int], 'lim': (0, 16), 'disp': 'touch',
+                'touch_sensors': {'dtype': List[int], 'lim': (0, 16), 'disp': 'touch',
                                   'h': 'The indexes of the contour points bearing touch sensors.'},
-                'points': {'t': List[Tuple[float]], 'lim': (-1.0, 1.0), 'disp': 'contour',
+                'points': {'dtype': List[Tuple[float]], 'lim': (-1.0, 1.0), 'disp': 'contour',
                            'h': 'The XY coordinates of the body contour.'},
             }
 
@@ -882,20 +878,20 @@ class ParInitDict:
                 'length_std': {'v': 0.0, 'lim': (0.0, 0.001), 'dv': 0.0001, 'u': ureg.m, 'aux_vs': ['sample'],
                                'disp': 'std', 'k': 'l_std',
                                'combo': 'length', 'h': 'The standard deviation of the initial body length.'},
-                'Nsegs': {'t': int, 'v': 2, 'lim': (1, 12), 'label': 'number of body segments', 'symbol': '-',
+                'Nsegs': {'dtype': int, 'v': 2, 'lim': (1, 12), 'label': 'number of body segments', 'symbol': '-',
                           'u_name': '# $segments$', 'k': 'Nsegs',
                           'h': 'The number of segments comprising the larva body.'},
                 'seg_ratio': {'k': 'seg_r', 'lim': (0.0, 1.0),
                               'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
 
-                'shape': {'t': str, 'v': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
+                'shape': {'dtype': str, 'v': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
                           'k': 'body_shape', 'h': 'The body shape.'},
             }
 
             d['intermitter'] = {
-                'mode': {'t': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo'],
+                'mode': {'dtype': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo'],
                          'h': 'The implementation mode of the intermittency (INTERMITTER) module.'},
-                'run_mode': {'t': str, 'v': 'stridechain', 'vs': ['stridechain', 'run'],
+                'run_mode': {'dtype': str, 'v': 'stridechain', 'vs': ['stridechain', 'run'],
                              'h': 'The generation mode of run epochs.'},
                 'stridechain_dist': d['bout_distro'],
                 'run_dist': d['bout_distro'],
@@ -937,14 +933,14 @@ class ParInitDict:
             }
 
             d['gut'] = {
-                'M_gm': {'v': 10 ** -2, 'min': 0.0, 'disp': 'gut scaled capacity',
+                'M_gm': {'v': 10 ** -2,'lim': (0.0, 0.1), 'disp': 'gut scaled capacity',
                          'symbol': subsup('M', 'm', 'gut'),
                          'k': 'gut_M_m',
                          'h': 'Gut capacity in C-moles per unit of gut volume.'},
                 'y_P_X': {'v': 0.9,'lim': (0.0, 1.0), 'disp': 'food->product yield',
                           'symbol': sub('y', 'PX'), 'k': 'y_P_X',
                           'h': 'Yield of product per unit of food.'},
-                'J_g_per_cm2': {'v': 10 ** -2 / (24 * 60 * 60), 'min': 0.0, 'disp': 'digestion secretion rate',
+                'J_g_per_cm2': {'v': 10 ** -2 / (24 * 60 * 60),'lim': (0.0, 0.1), 'disp': 'digestion secretion rate',
                                 'symbol': subsup('J', 'g', 'gut'), 'k': 'gut_J_g',
                                 'h': 'Secretion rate of enzyme per unit of gut surface per second.'},
                 'k_g': {'v': 1.0, 'lim': (0.0, 1.0), 'disp': 'digestion decay rate', 'symbol': subsup('k', 'g', 'gut'),
@@ -956,7 +952,7 @@ class ParInitDict:
                 'f_dig': {'v': 1.0,'lim': (0.0, 1.0), 'disp': 'digestion response',
                           'symbol': subsup('f', 'dig', 'gut'), 'k': 'gut_f_dig',
                           'h': 'Scaled functional response for digestion : M_X/(M_X+M_K_X)'},
-                'M_c_per_cm2': {'v': 5 * 10 ** -8, 'min': 0.0, 'disp': 'carrier density',
+                'M_c_per_cm2': {'v': 5 * 10 ** -8, 'lim': (0.0, 0.1), 'disp': 'carrier density',
                                 'symbol': subsup('M', 'c', 'gut'), 'k': 'gut_M_c',
                                 'h': 'Area specific amount of carriers in the gut per unit of gut surface.'},
                 'constant_M_c': {**bT, 'disp': 'constant carrier density', 'symbol': subsup('M_c', 'con', 'gut'),
@@ -973,7 +969,7 @@ class ParInitDict:
                           'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
             }
 
-            d['DEB'] = {'species': {'t': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
+            d['DEB'] = {'species': {'dtype': str, 'v': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
                                     'k': 'species',
                                     'h': 'The phenotype/species-specific fitted DEB model to use.'},
                         'f_decay': {'v': 0.1,'lim': (0.0, 2.0), 'dv': 0.1, 'symbol': sub('c', 'DEB'), 'k': 'c_DEB',
@@ -989,7 +985,7 @@ class ParInitDict:
                         'hunger_gain': {'v': 0.0, 'lim': (0.0, 1.0), 'symbol': sub('G', 'H'),
                                         'k': 'G_H', 'label': 'hunger sensitivity to reserve reduction',
                                         'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
-                        'assimilation_mode': {'t': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
+                        'assimilation_mode': {'dtype': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
                                               'symbol': sub('m', 'ass'), 'k': 'ass_mod',
                                               'h': 'The method used to calculate the DEB assimilation energy flow.'},
                         'DEB_dt': {'lim': (0.0, 1000.0), 'disp': 'DEB timestep (sec)',
@@ -1023,55 +1019,55 @@ class ParInitDict:
             ddist = init_distpars()
             d = dNl.NestDict({**d0, **dvis, **dmod, **dbatch, **denr, **ddist})
 
-            d['batch_conf'] = {'exp': {'t': str},
+            d['batch_conf'] = {'exp': {'dtype': str},
                                'space_search': d['space_search'],
                                'batch_methods': d['batch_methods'],
                                'optimization': d['optimization'],
-                               'exp_kws': {'t': dict, 'v': {'enrichment': d['enrichment']}},
-                               'post_kws': {'t': dict, 'v': {}},
-                               'proc_kws': {'t': dict, 'v': {}},
+                               'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']}},
+                               'post_kws': {'dtype': dict, 'v': {}},
+                               'proc_kws': {'dtype': dict, 'v': {}},
                                'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                                }
 
             d['env_conf'] = {'arena': d['arena'],
-                             'border_list': {'t': dict, 'v': {}},
+                             'border_list': {'dtype': dict, 'v': {}},
                              'food_params': d['food_params'],
-                             'odorscape': {'t': dict},
-                             'windscape': {'t': dict},
-                             'thermoscape': {'t': dict},
+                             'odorscape': {'dtype': dict},
+                             'windscape': {'dtype': dict},
+                             'thermoscape': {'dtype': dict},
                              }
 
             d['exp_conf'] = {
                 'env_params': confID_entry('Env'),
-                             'larva_groups': {'t': dict, 'v': {}},
+                             'larva_groups': {'dtype': dict, 'v': {}},
                              'sim_params': d['sim_params'],
                              'trials': confID_entry('Trial', default='default'),
-                             'collections': {'t': List[str], 'v': ['pose']},
+                             'collections': {'dtype': List[str], 'v': ['pose']},
                              'enrichment': d['enrichment'],
                              'experiment': confID_entry('Exp'),
                              }
 
             d['tracker'] = {
                 'resolution': {
-                    'fr': {'v': 10.0, 'max': 100.0, 'disp': 'framerate (Hz)',
+                    'fr': {'v': 10.0, 'lim': (0.0,100.0), 'disp': 'framerate (Hz)',
                            'h': 'The framerate of the tracker recordings.'},
-                    'Npoints': {'t': int, 'v': 1, 'max': 20, 'disp': '# midline xy',
+                    'Npoints': {'dtype': int, 'v': 1, 'lim': (0,20), 'disp': '# midline xy',
                                 'h': 'The number of points tracked along the larva midline.'},
-                    'Ncontour': {'t': int, 'v': 0, 'max': 100, 'disp': '# contour xy',
+                    'Ncontour': {'dtype': int, 'v': 0, 'lim': (0,100), 'disp': '# contour xy',
                                  'h': 'The number of points tracked around the larva contour.'}
                 },
                 'arena': d['arena'],
                 'filesystem': {
-                    'read_sequence': {'t': List[str], 'disp': 'columns',
+                    'read_sequence': {'dtype': List[str], 'disp': 'columns',
                                       'h': 'The sequence of columns in the tracker-exported files.'},
                     'read_metadata': {**bF, 'disp': 'metadata',
                                       'h': 'Whether metadata files are available for the tracker-exported files/folders.'},
                     'folder': {
-                        'pref': {'t': str, 'h': 'A prefix for detecting a raw-data folder.'},
-                        'suf': {'t': str, 'h': 'A suffix for detecting a raw-data folder.'}},
-                    'file': {'pref': {'t': str, 'h': 'A prefix for detecting a raw-data file.'},
-                             'suf': {'t': str, 'h': 'A suffix for detecting a raw-data file.'},
-                             'sep': {'t': str, 'h': 'A separator for detecting a raw-data file.'}}
+                        'pref': {'dtype': str, 'h': 'A prefix for detecting a raw-data folder.'},
+                        'suf': {'dtype': str, 'h': 'A suffix for detecting a raw-data folder.'}},
+                    'file': {'pref': {'dtype': str, 'h': 'A prefix for detecting a raw-data file.'},
+                             'suf': {'dtype': str, 'h': 'A suffix for detecting a raw-data file.'},
+                             'sep': {'dtype': str, 'h': 'A separator for detecting a raw-data file.'}}
                 },
 
             }
@@ -1079,70 +1075,70 @@ class ParInitDict:
 
             d['replay'] = {
                 'env_params': confID_entry('Env'),
-                'transposition': {'t': str, 'vs': [None, 'origin', 'arena', 'center'],
+                'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'],
                                   'h': 'Whether to transpose the dataset spatial coordinates.'},
-                'agent_ids': {'t': List[str],
+                'agent_ids': {'dtype': List[str],
                               'h': 'Whether to only display some larvae of the dataset, defined by their indexes.'},
-                'dynamic_color': {'t': str, 'vs': [None, 'lin_color', 'ang_color'],
+                'dynamic_color': {'dtype': str, 'vs': [None, 'lin_color', 'ang_color'],
                                   'h': 'Whether to display larva tracks according to the instantaneous forward or angular velocity.'},
-                'time_range': {'t': Tuple[float], 'max': 1000.0, 'dv': 1.0,
+                'time_range': {'dtype': Tuple[float], 'lim': (0.0,1000.0),'dv': 1.0,
                                'h': 'Whether to only replay a defined temporal slice of the dataset.'},
-                'track_point': {'t': int, 'v': -1, 'min': -1, 'max': 12,
+                'track_point': {'dtype': int, 'v': -1,'lim': (-1,12),
                                 'h': 'The midline point to use for defining the larva position.'},
-                'draw_Nsegs': {'t': int, 'min': 1, 'max': 12,
+                'draw_Nsegs': {'dtype': int, 'lim': (1,12),
                                'h': 'Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.'},
-                'fix_point': {'t': int, 'min': 1, 'max': 12,
+                'fix_point': {'dtype': int, 'lim': (1,12),
                               'h': 'Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.'},
-                'fix_segment': {'t': int, 'vs': [-1, 1],
+                'fix_segment': {'dtype': int, 'vs': [-1, 1],
                                 'h': 'Whether to additionally fixate the above or below body segment.'},
                 'use_background': {**bF,
                                    'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
             }
 
             d['ga_select_kws'] = {
-                'Nagents': {'t': int, 'v': 30, 'min': 2, 'max': 1000,
+                'Nagents': {'dtype': int, 'v': 30, 'lim' : (2,1000),
                             'h': 'Number of agents per generation', 'k': 'N'},
-                'Nelits': {'t': int, 'v': 3, 'min': 0, 'max': 1000,
+                'Nelits': {'dtype': int, 'v': 3,  'lim' : (0,1000),
                            'h': 'Number of elite agents preserved per generation', 'k': 'Nel'},
-                'Ngenerations': {'t': int, 'max': 1000, 'h': 'Number of generations to run',
+                'Ngenerations': {'dtype': int, 'lim' : (0,1000), 'h': 'Number of generations to run',
                                  'k': 'Ngen'},
                 'Pmutation': {'v': 0.3, 'lim': (0.0, 1.0), 'h': 'Probability of genome mutation',
                               'k': 'Pmut'},
                 'Cmutation': {'v': 0.1, 'lim': (0.0, 1.0), 'h': 'Mutation coefficient', 'k': 'Cmut'},
                 'selection_ratio': {'v': 0.3, 'lim': (0.0, 1.0),
                                     'h': 'Fraction of agents to be selected for the next generation', 'k': 'Rsel'},
-                'verbose': {'t': int, 'v': 0, 'vs': [0, 1, 2, 3],
+                'verbose': {'dtype': int, 'v': 0, 'vs': [0, 1, 2, 3],
                             'h': 'Verbose argument for GA launcher', 'k': 'verb'}
             }
 
             d['ga_build_kws'] = {
-                'space_dict': {'t': dict, 'h': 'The parameter state space'},
-                'robot_class': {'t': type, 'h': 'The agent class to use in the simulations'},
+                'space_dict': {'dtype': dict, 'h': 'The parameter state space'},
+                'robot_class': {'dtype': type, 'h': 'The agent class to use in the simulations'},
                 'base_model': confID_entry('Model', default='navigator', k='mID0', symbol=subsup('ID', 'mod', 0)),
-                'bestConfID': {'t': str,
+                'bestConfID': {'dtype': str,
                                'h': 'The model configuration ID to store the best genome',
                                'k': 'mID1'},
-                'init_mode': {'t': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
+                'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
                               'h': 'The initialization mode for the first generation', 'k': 'mGA'},
                 'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
                 'fitness_target_refID': confID_entry('Ref'),
-                'fitness_target_kws': {'t': dict, 'v': {},
+                'fitness_target_kws': {'dtype': dict, 'v': {},
                                        'h': 'The target data to derive from the reference dataset for evaluation'},
-                'fitness_func': {'t': FunctionType, 'h': 'The method for fitness evaluation'},
-                # 'plot_func': {'t': FunctionType,
+                'fitness_func': {'dtype': FunctionType, 'h': 'The method for fitness evaluation'},
+                # 'plot_func': {'dtype': FunctionType,
                 #               'h': 'The method for real-time simulation and plotting of the best genome'},
-                'exclude_func': {'t': FunctionType,
+                'exclude_func': {'dtype': FunctionType,
                                  'h': 'The method for real-time excluding agents'},
             }
 
             d['GAconf'] = {
-                'scene': {'t': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
-                'scene_speed': {'t': int, 'v': 0, 'max': 100,
+                'scene': {'dtype': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
+                'scene_speed': {'dtype': int, 'v': 0, 'lim' : (0,1000),
                                 'h': 'The rendering speed of the scene'},
                 'env_params': confID_entry('Env'),
                 'sim_params': d['sim_params'],
                 'experiment': confID_entry('Ga', default='exploration'),
-                'caption': {'t': str, 'h': 'The screen caption'},
+                'caption': {'dtype': str, 'h': 'The screen caption'},
                 'save_to': pPath(v=None, h='The directory to save data and plots'),
                 'show_screen': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
                 'offline': {**bF, 'h': 'Whether to run a full LarvaworldSim environment', 'k': 'offline'},
@@ -1152,26 +1148,26 @@ class ParInitDict:
             }
 
             d['obstacle_avoidance'] = {
-                'sensor_delta_direction': {'v': 0.4, 'dv': 0.01, 'min': 0.2, 'max': 1.2,
+                'sensor_delta_direction': {'v': 0.4, 'dv': 0.01, 'lim' : (0.2,1.2),
                                            'h': 'Sensor delta_direction'},
-                'sensor_saturation_value': {'t': int, 'v': 40, 'min': 0, 'max': 200,
+                'sensor_saturation_value': {'dtype': int, 'v': 40, 'lim' : (0,200),
                                             'h': 'Sensor saturation value'},
-                'obstacle_sensor_error': {'v': 0.35, 'dv': 0.01, 'max': 1.0,
+                'obstacle_sensor_error': {'v': 0.35, 'dv': 0.01,  'lim' : (0.0,1.0),
                                           'h': 'Proximity sensor error'},
-                'sensor_max_distance': {'v': 0.9, 'dv': 0.01, 'min': 0.1, 'max': 1.5,
+                'sensor_max_distance': {'v': 0.9, 'dv': 0.01, 'lim' : (0.1,1.5),
                                         'h': 'Sensor max_distance'},
-                'motor_ctrl_coefficient': {'t': int, 'v': 8770, 'max': 10000,
+                'motor_ctrl_coefficient': {'dtype': int, 'v': 8770, 'lim' : (0,10000),
                                            'h': 'Motor ctrl_coefficient'},
-                'motor_ctrl_min_actuator_value': {'t': int, 'v': 35, 'min': 0, 'max': 50,
+                'motor_ctrl_min_actuator_value': {'dtype': int, 'v': 35,  'lim' : (0,50),
                                                   'h': 'Motor ctrl_min_actuator_value'},
             }
 
             d['eval_conf'] = {
                 'refID': confID_entry('Ref', default='None.150controls'),
                 'modelIDs': confID_entry('Model', single_choice=False, k='mIDs'),
-                'dataset_ids': {'t': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
+                'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
                 'offline': {**bF, 'h': 'Whether to run a full LarvaworldSim environment', 'k': 'offline'},
-                'N': {'t': int, 'v': 5, 'min': 2, 'max': 1000,
+                'N': {'dtype': int, 'v': 5, 'lim' : (2,1000),
                       'h': 'Number of agents per model ID',
                       'k': 'N'},
                 'id': pID('evaluation run', k='id'),
