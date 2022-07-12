@@ -983,6 +983,7 @@ class LarvaDataset:
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
         for mID in mIDs:
+            # _ = G['model table'](mID, save_to=f1)
             try:
                 _ = G['model table'](mID, save_to=f1)
             except:
@@ -1057,4 +1058,9 @@ if __name__ == '__main__':
 
     d = preg.loadRef(refID)
     d.load(h5_ks=h5_ks)
-    d.modelConf_analysis(mods3=True)
+    entries_3m=d.config.modelConfs['3modules']
+    mIDs_3m = list(entries_3m.keys())
+    # for mID,m in entries_3m.items():
+    #     print(mID, m)
+    d.store_model_graphs(mIDs=mIDs_3m)
+    # d.modelConf_analysis(mods3=True)

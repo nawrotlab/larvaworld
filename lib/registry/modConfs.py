@@ -456,7 +456,9 @@ def Phy0():
         'ang_mode': {'dtype': str, 'v0': 'torque', 'vs': ['torque', 'velocity'], 'disp': 'angular mode',
                      'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
     }
-    d = {'args': args}
+    d = {'args': args,
+         'variable': ['torque_coef', 'ang_damping', 'body_spring_k','bend_correction_coef']
+         }
     return dNl.NestDict(d)
 
 
@@ -475,7 +477,7 @@ def Bod0():
         'shape': {'dtype': str, 'v0': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
                   'k': 'body_shape', 'h': 'The body shape.'},
     }
-    d = {'args': args}
+    d = {'args': args, 'variable': ['initial_length', 'Nsegs']}
     return dNl.NestDict(d)
 
 
@@ -545,8 +547,8 @@ def DEB0():
                 }
 
     # args = {'gut' : gut_args, 'DEB' : DEB_args}
-    d = {'gut': {'args': gut_args},
-         'DEB': {'args': DEB_args},
+    d = {'gut': {'args': gut_args, 'variable': ['k_abs', 'k_g']},
+         'DEB': {'args': DEB_args, 'variable': ['DEB_dt', 'hunger_gain']},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
     return dNl.NestDict(d)

@@ -48,6 +48,8 @@ def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_
     cumNks= {k : cumNks0[i]+1 for i,(k,Nk) in enumerate(Nks.items())}
     for (k0,k1), cell in mpl._cells.items():
         if k1 == -1:
+            if k0==0 :
+                continue
             k=cell._text._text
             cell._linewidth = 0
             if k0 != cumNks[k]:

@@ -410,6 +410,23 @@ class LarvaConfDict:
         self.dict = build_LarvaConfDict()
         self.full_dict = self.build_full_dict()
 
+        self.mcolor = dNl.NestDict({
+                    'body': 'lightskyblue',
+                    'physics': 'lightsteelblue',
+                    'energetics': 'lightskyblue',
+                    'Box2D_params': 'lightcoral',
+                    'crawler': 'lightcoral',
+                    'turner': 'indianred',
+                    'interference': 'lightsalmon',
+                    'intermitter': '#a55af4',
+                    'olfactor': 'palegreen',
+                    'windsensor': 'plum',
+                    'toucher': 'pink',
+                    'feeder': 'pink',
+                    'memory': 'pink',
+                    # 'locomotor': locomotor.DefaultLocomotor,
+                })
+
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:
             raise ValueError('Module key must be one of larva-model configuration keys')
@@ -509,8 +526,8 @@ class LarvaConfDict:
     def mIDconf(self, mID=None, m=None):
 
         if m is None:
-            from lib.conf.stored.conf import loadConf
-            m = loadConf(mID, 'Model')
+            # from lib.conf.stored.conf import loadConf
+            m = self.loadConf(mID)
 
         mc = dNl.NestDict()
         mc.brain = self.mIDbconf(self, m=m.brain)
@@ -519,9 +536,59 @@ class LarvaConfDict:
             mc[mkey] = self.update_mdict(mdic, mmdic)
         return mc
 
-    def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], **kwargs):
-        mConf = self.mIDconf(mID, **kwargs)
-        m = self.multiconf(mConf, **kwargs)
+    def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
+        def gen_rows2(var_mdict, parent, columns, data) :
+            for k, p in var_mdict.items():
+                if isinstance(p, param.Parameterized):
+                    ddd = [getattr(p, pname) for pname in columns]
+                    row = [parent] + ddd
+                    data.append(row)
+        m = self.loadConf(mID)
+        mF = dNl.flatten_dict(m)
+        data = []
+        dic = {}
+        for mkey in self.dict.brain.keys:
+            if m.brain.modules[mkey] :
+                d0 = self.dict.model.init[mkey]
+                if f'{d0.pref}mode' in mF.keys():
+                    mod_v = mF[f'{d0.pref}mode']
+                else:
+                    mod_v = 'default'
+                var_mdict = self.variable_mdict(mkey, mode=mod_v)
+                var_mdict = self.update_mdict(var_mdict, m.brain[f'{mkey}_params'])
+                gen_rows2(var_mdict, mkey, columns, data)
+        for aux_key in self.dict.aux.keys:
+            if aux_key not in ['energetics', 'sensorimotor']:
+                var_ks = self.dict.aux.init[aux_key].variable
+                var_mdict =dNl.NestDict({k:self.dict.aux.m[aux_key].args[k] for k in var_ks})
+                var_mdict = self.update_mdict(var_mdict, m[aux_key])
+                gen_rows2(var_mdict, aux_key, columns, data)
+        if m['energetics'] :
+            for mod, dic in self.dict.aux.init['energetics'].mode.items() :
+                var_ks = dic.variable
+                var_mdict = dNl.NestDict({k: self.dict.aux.m['energetics'].mode[mod].args[k] for k in var_ks})
+                var_mdict = self.update_mdict(var_mdict, m['energetics'].mod)
+                gen_rows2(var_mdict, f'energetics.{mod}', columns, data)
+        if 'sensorimotor' in m.keys():
+            for mod, dic in self.dict.aux.init['sensorimotor'].mode.items() :
+                var_ks = dic.variable
+                var_mdict = dNl.NestDict({k: self.dict.aux.m['sensorimotor'].mode[mod].args[k] for k in var_ks})
+                var_mdict = self.update_mdict(var_mdict, m['sensorimotor'])
+                gen_rows2(var_mdict, 'sensorimotor', columns, data)
+        df = pd.DataFrame(data, columns=['field'] + columns)
+        df.set_index(['field'], inplace=True)
+        return df
+
+    def mIDtable_data2(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
+
+
+
+
+
+
+        mConf = self.mIDconf(mID)
+        # m = self.loadConf(mID)
+        m = self.multiconf(mConf)
         data = []
 
         def gen_rows(mdic, mConf_dic, parent, data0, suf_keys=False):
@@ -1075,11 +1142,11 @@ class LarvaConfDict:
                 for Ifmod in ['PHI', 'SQ', 'DEF']:
                     mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
                     mID = f'{mID0}_fit'
-                    if mID in self.storedConf():
-                        entry ={mID : self.loadConf(mID)}
-                        print(mID)
-                    else :
-                        entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                    # if mID in self.storedConf():
+                    #     entry ={mID : self.loadConf(mID)}
+                    #     print(mID)
+                    # else :
+                    entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
                                            space_mkeys=['crawler', 'turner', 'interference'],
                                            fit_dict =fit_dict)
                     entries.update(entry)
