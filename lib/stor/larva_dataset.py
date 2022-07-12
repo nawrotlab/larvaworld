@@ -1000,19 +1000,21 @@ class LarvaDataset:
         combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
         combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf", deep=False)
 
-    def eval_model_graphs(self, mIDs, dIDs=None,id=None, N=10, enrichment=True, offline=False, dur=None, **kwargs):
+    def eval_model_graphs(self, mIDs, dIDs=None,id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None, **kwargs):
         if id is None:
             id = f'{len(mIDs)}mIDs'
         if dIDs is None:
             dIDs = mIDs
+        if save_to is None:
+            save_to=self.dir_dict.evaluation
         from lib.eval.evaluation import EvalRun
         evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
-                        save_to=self.dir_dict.evaluation,
+                        save_to=save_to,
                         bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
         #
         evrun.run(video=False, dur=dur)
         evrun.eval()
-        # evrun.plot_models()
+        evrun.plot_models()
         evrun.plot_results()
         return evrun
 
@@ -1030,8 +1032,9 @@ class LarvaDataset:
             preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs_avg), font_size=18, save_to=self.dir_dict.model_tables,
                                         name='avg_mIDs_diffs')
 
-            entries_var, mIDs_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
+            entries_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
                                                    mID0s=mIDs_avg)
+            mIDs_var=list(entries_var.keys())
             self.config.modelConfs.variable = entries_var
             self.save_config(add_reference=True)
             self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
@@ -1061,6 +1064,7 @@ if __name__ == '__main__':
     from lib.aux import dictsNlists as dNl
     import pandas as pd
 
+    M = preg.larva_conf_dict
     refID = 'None.150controls'
     # refID='None.Sims2019_controls'
     h5_ks = ['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']
@@ -1071,12 +1075,40 @@ if __name__ == '__main__':
     d.load(h5_ks=h5_ks)
     # entries_3m = d.config.modelConfs['3modules']
 
-    dIDs = ['NEU', 'SIN', 'CON']
-    for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
-        for Ifmod in ['PHI', 'SQ', 'DEF']:
-            mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
-            id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
-            d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=5)
+    # dIDs = ['NEU', 'SIN', 'CON']
+    # for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
+    #     for Ifmod in ['PHI', 'SQ', 'DEF']:
+    #         mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
+    #         id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
+    #         d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=5)
+
+    dIDs,mIDs = [], []
+    for Tmod in ['NEU', 'SIN']:
+        for Ifmod in ['PHI', 'SQ']:
+            mID=f'RE_{Tmod}_{Ifmod}_DEF_fit'
+            dID=f'{Tmod} {Ifmod}'
+            mIDs.append(mID)
+            dIDs.append(dID)
+    # id = f'NEU-SIN_x_PHI-SQ_Cmod_RE_50l'
+    # # d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=50)
+    # preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs), font_size=18, save_to=d.dir_dict.model_tables,
+    #                             name=id)
+    entries_var = M.add_var_mIDs(refID=refID, e=d.endpoint_data, c=d.config, mID0s=mIDs)
+
+
+    # dIDs_avg=[f'{dID} avg' for dID in dIDs]
+    # dIDs_var=[f'{dID} var' for dID in dIDs]
+    #
+    # mIDs1=[mIDs[0], mIDs_var[0],mIDs[1],mIDs_var[1]]
+    # dIDs1=[dIDs_avg[0], dIDs_var[0],dIDs_avg[1],dIDs_var[1]]
+    # id1 = f'PHIvsSQ_avgVSvar_NEU_RE_50l'
+    # d.eval_model_graphs(mIDs=mIDs1, dIDs=dIDs1, norm_modes=['raw', 'minmax'], id=id1, N=50)
+    #
+    # mIDs2 = [mIDs[2], mIDs_var[2], mIDs[3], mIDs_var[3]]
+    # dIDs2 = [dIDs_avg[2], dIDs_var[2], dIDs_avg[3], dIDs_var[3]]
+    # id2 = f'PHIvsSQ_avgVSvar_SIN_RE_50l'
+    # d.eval_model_graphs(mIDs=mIDs2, dIDs=dIDs2, norm_modes=['raw', 'minmax'], id=id2, N=50)
+
     # for mID,m in entries_3m.items():
     #     print(mID, m)
     # d.store_model_graphs(mIDs=mIDs_3m)

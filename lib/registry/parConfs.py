@@ -1164,7 +1164,7 @@ class LarvaConfDict:
                     mIDs.append(mID)
         return entries, mIDs
 
-    def add_var_mIDs(self, refID, e=None, c=None, mID0s=None, sample_ks=None):
+    def add_var_mIDs(self, refID, e=None, c=None, mID0s=None,mIDs=None, sample_ks=None):
         if e is None or c is None:
             from lib.registry.pars import preg
             d = preg.loadRef(refID)
@@ -1173,6 +1173,8 @@ class LarvaConfDict:
 
         if mID0s is None:
             mID0s = list(c.modelConfs.average.keys())
+        if mIDs is None:
+            mIDs = [f'{mID0}_var' for mID0 in mID0s]
         if sample_ks is None:
             sample_ks = [
                 'brain.crawler_params.stride_dst_mean',
@@ -1182,15 +1184,14 @@ class LarvaConfDict:
                 'brain.crawler_params.initial_freq',
             ]
         kwargs = {k: 'sample' for k in sample_ks}
-        mIDs = []
+        # mIDs = []
         entries = {}
-        for mID0 in mID0s:
-            mID = f'{mID0}_var'
+        for mID0, mID in zip(mID0s, mIDs):
             m = self.newConf(mID0=mID0, mID=mID, kwargs=kwargs)
-            mIDs.append(mID)
+            # mIDs.append(mID)
             entries[mID] = m
 
-        return entries, mIDs
+        return entries
 
     def update_mdict(self, mdict, mmdic):
         if mmdic is None:

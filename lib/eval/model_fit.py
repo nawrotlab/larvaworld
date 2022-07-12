@@ -169,7 +169,7 @@ def epar(e, k=None, par=None, average=True):
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
                  offline=False,
-                 sim_ID=None, dt=1 / 16, dur=1, save_to=None, store_data=False, Nagents=8, Nelits=2, Ngenerations=5,
+                 sim_ID=None, dt=1 / 16, dur=1, save_to=None, store_data=False, Nagents=24, Nelits=5, Ngenerations=20,
                  **kwargs):
     warnings.filterwarnings('ignore')
     if mID1 is None:
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     import pandas as pd
 
     refID = 'None.150controls'
-    mID0 = 'GAU_CON_DEF_DEF_fit'
+    mID0 = 'RE_NEU_SQ_DEF_fit'
     space_mkeys = ['crawler', 'turner', 'interference']
 
     entry = optimize_mID(mID0=mID0, refID=refID, space_mkeys=space_mkeys, init='model',

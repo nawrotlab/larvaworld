@@ -10,7 +10,7 @@ import pandas as pd
 import progressbar
 import numpy as np
 
-import lib.aux.dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, naming as nam
 # from lib.ga.util.genome import Genome
 
 
@@ -283,7 +283,6 @@ class GAbuilder(GAselector):
         return step_df
 
     def finalize_step_df(self):
-        # t0 = time.time()
 
         e, c = self.dataset.endpoint_data, self.dataset.config
         self.step_df[:, :, :3] = np.rad2deg(self.step_df[:, :, :3])
@@ -291,21 +290,21 @@ class GAbuilder(GAselector):
         s = pd.DataFrame(self.step_df, index=self.my_index, columns=self.df_columns)
         s = s.astype(float)
 
+        # s[nam.scal('velocity')] = pd.concat([g / e['length'].loc[id] for id, g in s['velocity'].groupby('AgentID')])
+        # s[preg.getPar('sv')] = (s[preg.getPar('v')].values.T / ls).T
+
 
         from lib.process.spatial import scale_to_length
 
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
-        # FK=self.fit_dict.keys
         for k in self.fit_dict.keys:
             preg.compute(k, self.dataset)
 
         for i, g in self.genome_dict.items():
             if g.fitness is None:
-                # ss = self.dataset.step_data.xs(i, level='AgentID')
                 gdict =self.fit_dict.robot_func(ss=self.dataset.step_data.xs(i, level='AgentID'))
                 g.fitness, g.fitness_dict = self.get_fitness(gdict)
-                # print(i,g.fitness, g.fitness_dict )
 
     def build_generation(self):
         robots = []
@@ -353,7 +352,7 @@ class GAbuilder(GAselector):
         if not self.robots:
 
             self.sort_genomes()
-            # print(self.generation_num, self.best_fitness)
+            print(self.generation_num, self.best_fitness)
 
             if self.model.sim_params.store_data:
                 self.all_genomes_dic += [
@@ -399,8 +398,6 @@ class GAbuilder(GAselector):
 
 
     def check(self, robot):
-        # print(self.model.sim_params.store_data)
-        # raise
         if not self.model.offline:
             if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
                 # if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
