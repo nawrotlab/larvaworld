@@ -1152,10 +1152,6 @@ class LarvaConfDict:
                 for Ifmod in ['PHI', 'SQ', 'DEF']:
                     mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
                     mID = f'{mID0}_fit'
-                    # if mID in self.storedConf():
-                    #     entry ={mID : self.loadConf(mID)}
-                    #     print(mID)
-                    # else :
                     entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
                                            space_mkeys=['crawler', 'turner', 'interference'],
                                            fit_dict =fit_dict)
