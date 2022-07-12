@@ -1086,7 +1086,7 @@ class LarvaConfDict:
         conf.mode = mode
         return conf
 
-    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], e=None, c=None,fit_dict =None):
+    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], e=None, c=None,**kwargs):
         if mID is None:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
@@ -1108,8 +1108,8 @@ class LarvaConfDict:
 
         from lib.eval.model_fit import optimize_mID
 
-        entry = optimize_mID(fit_dict =fit_dict, mID0=mID, space_mkeys=space_mkeys,store_data=False,dt=c.dt,dur=0.5,
-                             init='random', save_to=c.dir_dict.GAoptimization, sim_ID=mID)
+        entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys,dt=c.dt,
+                             save_to=c.dir_dict.GAoptimization, sim_ID=mID, **kwargs)
         return entry
 
     def adapt_6mIDs(self, refID, e=None, c=None):

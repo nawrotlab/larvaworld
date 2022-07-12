@@ -169,7 +169,7 @@ def epar(e, k=None, par=None, average=True):
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
                  offline=False,
-                 sim_ID=None, dt=1 / 16, dur=1, save_to=None, store_data=False, Nagents=24, Nelits=5, Ngenerations=20,
+                 sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=10, Nelits=3, Ngenerations=10,
                  **kwargs):
     warnings.filterwarnings('ignore')
     if mID1 is None:

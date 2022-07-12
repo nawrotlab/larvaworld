@@ -461,7 +461,7 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
 
     for j, id in enumerate(ids):
         m = ms[j]
-        mConf = mConfs[j]
+        # mConf = mConfs[j]
 
         AA[:, j, :] = sim_model_single(m, c.Nticks, dt, df_columns=df_columns)
 

@@ -61,7 +61,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     from lib.eval.eval_aux import sim_model
     if refDataset is None:
         d = preg.loadRef(refID)
-        d.load(step=False, contour=False)
+        d.load(step=False)
         refDataset = d
     refDataset.color = 'red'
     refDataset.config.color = 'red'

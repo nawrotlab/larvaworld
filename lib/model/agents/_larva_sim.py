@@ -110,10 +110,10 @@ class LarvaSim(BodySim, Larva):
     def build_brain(self, conf):
         if conf.nengo:
             from lib.model.modules.nengobrain import NengoBrain
-            return NengoBrain(agent=self, conf=conf)
+            return NengoBrain(agent=self, conf=conf, dt=self.model.dt)
         else:
             from lib.model.modules.brain import DefaultBrain
-            return DefaultBrain(agent=self, conf=conf)
+            return DefaultBrain(agent=self, conf=conf, dt=self.model.dt)
 
     def run_energetics(self, V_eaten):
         if self.deb is not None:

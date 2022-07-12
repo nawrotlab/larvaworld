@@ -24,7 +24,7 @@ from lib.registry.pars import preg
 class EvalRun:
     def __init__(self, refID, id=None, expVSsimIDs=False, eval_metrics=None, save_to=None, N=None, bout_annotation=True,
                  locomotor_models=None, modelIDs=None, dataset_ids=None, cross_validation=False, mode='load',
-                 enrichment=None,
+                 enrichment=None,progress_bar=False,
                  norm_modes=['raw'], eval_modes=['pooled'], offline=False, store_data=True, show=False):
         if id is None:
             id = f'evaluation_run_{preg.next_idx(id="dispersion", conftype="Eval")}'
@@ -34,6 +34,7 @@ class EvalRun:
         self.path = f'eval_runs'
         self.bout_annotation = bout_annotation
         self.enrichment = enrichment
+        self.progress_bar = progress_bar
 
         os.makedirs(save_to, exist_ok=True)
         self.save_to = save_to
@@ -346,7 +347,7 @@ class EvalRun:
         if 'hists' in plots:
             self.figs.hist.step = self.plot_data(mode='step', type='hist')
             self.figs.hist.end = self.plot_data(mode='end', type='hist')
-            self.figs.hist.ang = GD['angular pars'](half_circles=False, absolute=False, Nbins=100, Npars=5,
+            self.figs.hist.ang = GD['angular pars'](half_circles=False, absolute=False, Nbins=100, Npars=3,
                                                     include_rear=False, subfolder=None, **kws)
             self.figs.hist.crawl = GD['crawl pars'](subfolder=None, pvalues=False, **kws)
         if 'trajectories' in plots:
@@ -413,7 +414,7 @@ class EvalRun:
             sharex = True
             sharey = False
 
-        P = AutoPlot(name=filename, subfolder=None, Nrows=Nrows, Ncols=Ncols, figsize=(5 * Ncols, 5 * Nrows),
+        P = AutoPlot(name=filename, subfolder=None, Nrows=Nrows, Ncols=Ncols, figsize=(5 * Ncols, 8 * Nrows),
                      sharex=sharex, sharey=sharey, show=self.show, save_to=self.plot_dir,
                      datasets=[self.target] + self.datasets)
 
@@ -511,7 +512,7 @@ class EvalRun:
                 self.exp_conf.enrichment.bout_annotation = self.bout_annotation
 
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
-            run = SingleRun(**self.exp_conf)
+            run = SingleRun(**self.exp_conf, progress_bar=self.progress_bar)
             self.datasets += run.run()
         try:
             for dd in self.datasets:

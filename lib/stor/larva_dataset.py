@@ -35,7 +35,17 @@ class LarvaDataset:
 
         else:
             if metric_definition is None:
-                metric_definition = preg.get_null('metric_definition')
+                md=preg.get_null('metric_definition')
+                metric_definition =dNl.NestDict({
+                    'spatial': {
+                        'hardcoded': md['spatial'],
+                        'fitted': None,
+                    },
+                    'angular': {
+                        'hardcoded': md['angular'],
+                        'fitted': None
+                    }
+                })
             group_ids = list(larva_groups.keys())
             samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
             if len(group_ids) == 1:
@@ -70,22 +80,15 @@ class LarvaDataset:
                       'Ncontour': Ncontour,
                       'sample': sample,
                       'color': color,
-                      'metric_definition': {
-                          'spatial': {
-                              'hardcoded': metric_definition['spatial'],
-                              'fitted': None,
-                          },
-                          'angular': {
-                              'hardcoded': metric_definition['angular'],
-                              'fitted': None
-                          }
-                      },
+
+                      'metric_definition': metric_definition,
                       'env_params': env_params,
                       'larva_groups': larva_groups,
                       'source_xy': source_xy,
                       'life_history': life_history,
 
                       }
+
         self.config = dNl.NestDict(config)
         self.config.dir_dict = self.dir_dict
         self.__dict__.update(self.config)
@@ -679,7 +682,9 @@ class LarvaDataset:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
     def define_linear_metrics(self):
+
         sp_conf = self.config.metric_definition.spatial
+        # print(sp_conf)
         if sp_conf.fitted is None:
             point_idx = sp_conf.hardcoded.point_idx
             use_component_vel = sp_conf.hardcoded.use_component_vel
