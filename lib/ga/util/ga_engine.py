@@ -12,7 +12,7 @@ import numpy as np
 
 import lib.aux.dictsNlists as dNl
 # from lib.ga.util.genome import Genome
-from lib.ga.util.functions import arrange_fitness
+
 
 from lib.registry.pars import preg
 
@@ -81,6 +81,11 @@ class GAselector:
 
             if self.bestConfID is not None:
                 self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID, verbose=self.verbose)
+        end_generation_time = TimeUtil.current_time_millis()
+        total_generation_time=end_generation_time-self.start_generation_time
+
+        if self.verbose >= 2:
+            print(f'Generation {self.generation_num} duration',total_generation_time)
 
 
     def ga_selection(self):
@@ -213,6 +218,7 @@ class GAbuilder(GAselector):
         if fit_dict is None :
             if fitness_target_kws is None:
                 fitness_target_kws = {}
+            from lib.ga.util.functions import arrange_fitness
             fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt=self.model.dt,source_xy=self.model.source_xy)
         self.fit_dict =fit_dict
         self.exclude_func = exclude_func
@@ -313,47 +319,20 @@ class GAbuilder(GAselector):
             robot.genome = g
             robots.append(robot)
             self.scene.put(robot)
+
+        if self.multicore:
+            self.threads=self.build_threads(robots)
+
         return robots
 
     def step(self):
-        start_time = TimeUtil.current_time_millis()
 
         if self.multicore:
 
-            threads = []
-            num_robots = len(self.robots)
-            num_robots_per_cpu = math.floor(num_robots / self.num_cpu)
+            for thr in self.threads:
+                thr.step()
 
-            self.printd(2, 'num_robots_per_cpu:', num_robots_per_cpu)
 
-            for i in range(self.num_cpu - 1):
-                start_pos = i * num_robots_per_cpu
-                end_pos = (i + 1) * num_robots_per_cpu
-                self.printd(2, 'core:', i + 1, 'positions:', start_pos, ':', end_pos)
-                robot_list = self.robots[start_pos:end_pos]
-
-                thread = GA_thread(robot_list)
-                thread.start()
-                self.printd(2, 'thread', i + 1, 'started')
-                threads.append(thread)
-
-            # last sublist of robots
-            start_pos = (self.num_cpu - 1) * num_robots_per_cpu
-            self.printd(2, 'last core, start_pos', start_pos)
-            robot_list = self.robots[start_pos:]
-
-            thread = GA_thread(robot_list)
-            thread.start()
-            self.printd(2, 'last thread started')
-            threads.append(thread)
-
-            for t in threads:
-                t.join()
-
-            if self.verbose >= 2:
-                end_time = TimeUtil.current_time_millis()
-                partial_duration = end_time - start_time
-                print('Step partial duration', partial_duration)
 
             for robot in self.robots[:]:
                 self.check(robot)
@@ -361,6 +340,7 @@ class GAbuilder(GAselector):
             for robot in self.robots[:]:
                 robot.sense_and_act()
                 self.check(robot)
+
         self.generation_sim_time += self.model.dt
         self.generation_step_num += 1
         if self.generation_step_num == self.model.Nsteps:
@@ -373,6 +353,8 @@ class GAbuilder(GAselector):
         if not self.robots:
 
             self.sort_genomes()
+            # print(self.generation_num, self.best_fitness)
+
             if self.model.sim_params.store_data:
                 self.all_genomes_dic += [
                 {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
@@ -441,6 +423,39 @@ class GAbuilder(GAselector):
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
         # print(f'GA dataframe saved at {filepath}')
 
+    def build_threads(self, robots):
+        # if self.multicore:
+
+        threads = []
+        num_robots = len(robots)
+        num_robots_per_cpu = math.floor(num_robots / self.num_cpu)
+
+        self.printd(2, 'num_robots_per_cpu:', num_robots_per_cpu)
+
+        for i in range(self.num_cpu - 1):
+            start_pos = i * num_robots_per_cpu
+            end_pos = (i + 1) * num_robots_per_cpu
+            self.printd(2, 'core:', i + 1, 'positions:', start_pos, ':', end_pos)
+            robot_list = robots[start_pos:end_pos]
+
+            thread = GA_thread(robot_list)
+            thread.start()
+            self.printd(2, 'thread', i + 1, 'started')
+            threads.append(thread)
+
+        # last sublist of robots
+        start_pos = (self.num_cpu - 1) * num_robots_per_cpu
+        self.printd(2, 'last core, start_pos', start_pos)
+        robot_list = robots[start_pos:]
+
+        thread = GA_thread(robot_list)
+        thread.start()
+        self.printd(2, 'last thread started')
+        threads.append(thread)
+
+        for t in threads:
+            t.join()
+        return threads
 
 
 class GA_thread(threading.Thread):
@@ -448,7 +463,7 @@ class GA_thread(threading.Thread):
         threading.Thread.__init__(self)
         self.robots = robots
 
-    def run(self):
+    def step(self):
         for robot in self.robots:
             robot.sense_and_act()
 

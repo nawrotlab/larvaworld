@@ -57,9 +57,9 @@ def plot_fft_multi(axx=None, ax=None, fig=None, **kwargs):
         axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
     for d in P.datasets:
         try:
-            s = d.read(key='step', file='data_h5')
-        except:
             s = d.step_data
+        except:
+            s = d.read(key='step', file='data_h5')
         c = d.config
         _ = plot_fft(s, c, axx=axx, ax=P.axs[0], fig=P.fig, palette={'v': d.color, 'fov': d.color}, return_fig=True)
     return P.get()

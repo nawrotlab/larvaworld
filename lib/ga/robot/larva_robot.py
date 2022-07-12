@@ -49,6 +49,8 @@ class LarvaRobot(BodySim):
 
     def sense_and_act(self):
         self.step()
+        # print()
+        # print(self.unique_id, self.Nticks)
 
     def draw_label(self, screen):
         import pygame

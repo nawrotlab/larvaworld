@@ -129,7 +129,7 @@ class EvalRun:
     def define_target(self, d, N):
         target_val = None
         if self.locomotor_models is not None and self.modelIDs is None:
-            d.load(contour=False)
+            d.load(h5_ks=['epochs', 'angular', 'dspNtor'])
             s, e, c = prepare_dataset(d, N)
             target = dNl.NestDict(
                 {'step_data': s, 'endpoint_data': e, 'config': c, 'pooled_epochs': d.pooled_epochs})
@@ -319,8 +319,12 @@ class EvalRun:
 
         print('Generating comparative graphs')
 
-        self.target.load(contour=False)
+        self.target.load(h5_ks=['epochs', 'angular', 'dspNtor'])
         ds = [self.target] + self.datasets
+
+        # for d in ds:
+        #     print(d.id)
+        #     print(d.step_data.columns)
 
         kws = {
             'datasets': ds,

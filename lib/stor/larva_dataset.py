@@ -147,7 +147,8 @@ class LarvaDataset:
     def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular','dspNtor']):
+    def load(self, step=True, end=True, food=False,
+             h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
         D = self.dir_dict
         store = pd.HDFStore(D.data_h5)
 
@@ -203,14 +204,15 @@ class LarvaDataset:
         except:
             raise ValueError('Not found')
 
-    def save(self, step=True, end=True, food=False, h5_ks=['contour', 'midline', 'epochs', 'base_spatial','angular','dspNtor'],
+    def save(self, step=True, end=True, food=False,
+             h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'],
              add_reference=False):
         h5_kdic = dNl.NestDict({
             'contour': dNl.flatten_list(self.contour_xy),
             'midline': dNl.flatten_list(self.points_xy),
             'epochs': self.epochs_ps,
             'base_spatial': self.base_spatial_ps,
-            'angular': dNl.unique_list(self.angles+self.ang_pars),
+            'angular': dNl.unique_list(self.angles + self.ang_pars),
             'dspNtor': self.dspNtor_ps,
         })
 
@@ -255,9 +257,10 @@ class LarvaDataset:
 
     @property
     def dspNtor_ps(self):
-        tor_ps = [f'tortuosity_{dur}' for dur in [1,2,5,10,20,30,60,100,120,240,300]]
-        dsp_ps =[f'dispersion_{t0}_{t1}' for (t0,t1) in itertools.product([0,5,10,20,30,60], [30,40,60,90,120,240,300])]
-        pars=tor_ps+dsp_ps+nam.scal(dsp_ps)
+        tor_ps = [f'tortuosity_{dur}' for dur in [1, 2, 5, 10, 20, 30, 60, 100, 120, 240, 300]]
+        dsp_ps = [f'dispersion_{t0}_{t1}' for (t0, t1) in
+                  itertools.product([0, 5, 10, 20, 30, 60], [30, 40, 60, 90, 120, 240, 300])]
+        pars = tor_ps + dsp_ps + nam.scal(dsp_ps)
         return pars
 
     def save_larva_dicts(self):
@@ -626,8 +629,9 @@ class LarvaDataset:
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour)
 
-        ang = ['front_orientation', 'rear_orientation','head_orientation', 'tail_orientation', 'bend']
-        self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang)+ nam.min(nam.vel(ang))+ nam.max(nam.vel(ang))
+        ang = ['front_orientation', 'rear_orientation', 'head_orientation', 'tail_orientation', 'bend']
+        self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang) + nam.min(nam.vel(ang)) + nam.max(
+            nam.vel(ang))
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
     def define_paths(self, dir):
@@ -996,11 +1000,13 @@ class LarvaDataset:
         combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
         combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf", deep=False)
 
-    def eval_model_graphs(self, mIDs, id=None, N=10, enrichment=True, offline=False, dur=None, **kwargs):
+    def eval_model_graphs(self, mIDs, dIDs=None,id=None, N=10, enrichment=True, offline=False, dur=None, **kwargs):
         if id is None:
             id = f'{len(mIDs)}mIDs'
+        if dIDs is None:
+            dIDs = mIDs
         from lib.eval.evaluation import EvalRun
-        evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=mIDs, N=N,
+        evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
                         save_to=self.dir_dict.evaluation,
                         bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
         #
@@ -1015,7 +1021,7 @@ class LarvaDataset:
         if 'modelConfs' not in self.config.keys():
             self.config.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
         M = preg.larva_conf_dict
-        if avgVSvar :
+        if avgVSvar:
             entries_avg, mIDs_avg = M.adapt_6mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config)
             self.config.modelConfs.average = entries_avg
             self.save_config(add_reference=True)
@@ -1042,6 +1048,13 @@ class LarvaDataset:
             preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs_3m), font_size=18, save_to=self.dir_dict.model_tables,
                                         name='3fitted_modules_diffs')
 
+            dIDs = ['NEU', 'SIN', 'CON']
+            for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
+                for Ifmod in ['PHI', 'SQ', 'DEF']:
+                    mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
+                    id=f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
+                    d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'],id=id, N=10)
+
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
@@ -1051,15 +1064,19 @@ if __name__ == '__main__':
     refID = 'None.150controls'
     # refID='None.Sims2019_controls'
     h5_ks = ['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']
-
-    h5_ks = []
+    h5_ks = ['epochs', 'angular', 'dspNtor']
+    # h5_ks = []
 
     d = preg.loadRef(refID)
     d.load(h5_ks=h5_ks)
-    entries_3m=d.config.modelConfs['3modules']
-    mIDs_Cmod_RE=[mID for mID,m in entries_3m.items() if m.brain.crawler_params.mode=='realistic']
+    # entries_3m = d.config.modelConfs['3modules']
 
-    d.eval_model_graphs(mIDs=mIDs_Cmod_RE, norm_modes=['raw', 'minmax'], id='Cmod_RE_avg', N=10)
+    dIDs = ['NEU', 'SIN', 'CON']
+    for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
+        for Ifmod in ['PHI', 'SQ', 'DEF']:
+            mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
+            id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
+            d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=5)
     # for mID,m in entries_3m.items():
     #     print(mID, m)
     # d.store_model_graphs(mIDs=mIDs_3m)

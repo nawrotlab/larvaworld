@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -165,9 +167,11 @@ def epar(e, k=None, par=None, average=True):
         return vs
 
 
-def optimize_mID(fit_dict, mID0, mID1=None, space_mkeys=['turner', 'interference'], init='model',offline=False,
-                 sim_ID=None, dt=1 / 16,dur=1, save_to=None, store_data=True, **kwargs):
-
+def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
+                 offline=False,
+                 sim_ID=None, dt=1 / 16, dur=1, save_to=None, store_data=False, Nagents=8, Nelits=2, Ngenerations=5,
+                 **kwargs):
+    warnings.filterwarnings('ignore')
     if mID1 is None:
         mID1 = mID0
     kws = {
@@ -177,21 +181,38 @@ def optimize_mID(fit_dict, mID0, mID1=None, space_mkeys=['turner', 'interference
         'save_to': save_to,
         'experiment': 'exploration',
         'env_params': 'arena_200mm',
-        'ga_select_kws': preg.get_null('ga_select_kws', Nagents=8, Nelits=2, Ngenerations=5),
-        'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0, bestConfID=mID1)
+        'ga_select_kws': preg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations),
+        'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,
+                                      bestConfID=mID1, fitness_target_refID=refID)
     }
 
     conf = preg.get_null('GAconf', **kws)
     conf.env_params = preg.expandConf(id=conf.env_params, conftype='Env')
-    conf.ga_build_kws.fit_dict = fit_dict
 
+    if fit_dict is None and refID is not None:
+        from lib.ga.util.functions import approximate_fit_dict
+        fit_dict = approximate_fit_dict(refID, space_mkeys)
+
+    conf.ga_build_kws.fit_dict = fit_dict
 
     from lib.anal.argparsers import adjust_sim
     conf.sim_params = adjust_sim(exp=conf.experiment, conf_type='Ga', sim=conf.sim_params)
     from lib.ga.util.ga_launcher import GAlauncher
 
-
     GA = GAlauncher(**conf)
     best_genome = GA.run()
     entry = {mID1: best_genome.mConf}
     return entry
+
+
+if __name__ == '__main__':
+    from lib.registry.pars import preg
+    from lib.aux import dictsNlists as dNl
+    import pandas as pd
+
+    refID = 'None.150controls'
+    mID0 = 'GAU_CON_DEF_DEF_fit'
+    space_mkeys = ['crawler', 'turner', 'interference']
+
+    entry = optimize_mID(mID0=mID0, refID=refID, space_mkeys=space_mkeys, init='model',
+                         sim_ID=mID0, Nagents=24, Nelits=5, Ngenerations=20)

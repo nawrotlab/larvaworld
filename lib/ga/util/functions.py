@@ -3,7 +3,8 @@ import lib.aux.dictsNlists as dNl
 
 from lib.registry.pars import preg
 
-def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt, source_xy=None):
+
+def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws, dt, source_xy=None):
     cycle_ks, eval_kNps = None, None
     ks = []
     robot_dict = dNl.NestDict()
@@ -16,7 +17,7 @@ def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt, s
             fitness_target_kws['eval'] = {sh: d.get_par(p, key='distro').dropna().values for p, sh in
                                           zip(eval_pars, shs)}
             ks += shs
-            eval_kNps={sh: p for p, sh in zip(eval_pars, shs)}
+            eval_kNps = {sh: p for p, sh in zip(eval_pars, shs)}
             robot_dict.eval = {sh: [] for p, sh in zip(eval_pars, shs)}
             fitness_target_kws['eval_labels'] = eval_labels
         if 'pooled_cycle_curves' in fitness_target_kws.keys():
@@ -37,10 +38,10 @@ def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt, s
         fitness_target = None
     if 'source_xy' in fitness_target_kws.keys():
         fitness_target_kws['source_xy'] = source_xy
-    robot_dict.step=None
+    robot_dict.step = None
     ks = dNl.unique_list(ks)
 
-    def robot_func(ss) :
+    def robot_func(ss):
         gdict = dNl.NestDict()
         gdict.step = ss
         if cycle_ks:
@@ -49,6 +50,7 @@ def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt, s
         if eval_kNps:
             gdict.eval = {sh: ss[p].dropna().values for sh, p in eval_kNps.items()}
         return gdict
+
     # dic0 = self.fit_dict.robot_dict
     # cycle_ks, eval_ks = None, None
     # ks = []
@@ -60,9 +62,10 @@ def arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt, s
     #     ks += cycle_ks
     # ks = dNl.unique_list(ks)
     return dNl.NestDict({'func': fitness_func, 'target_refID': fitness_target_refID,
-                         'keys' : ks, 'robot_func' : robot_func,
+                         'keys': ks, 'robot_func': robot_func,
                          # 'keys' : {'eval' : eval_kNps, 'cycle':cycle_ks, 'all':ks},
                          'target_kws': fitness_target_kws, 'target': fitness_target, 'robot_dict': robot_dict})
+
 
 import numpy as np
 from scipy.stats import ks_2samp
@@ -72,6 +75,7 @@ import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
 # from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 from lib.eval.eval_aux import RSS
+
 
 def interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys, **kwargs):
     d1, d2 = gdict['cycle_curves'], pooled_cycle_curves
@@ -115,3 +119,35 @@ fitness_funcs = dNl.NestDict({
     'dst2source': dst2source_evaluation,
     'cum_dst': cum_dst,
 })
+
+
+def approximate_fit_dict(refID, space_mkeys):
+    target_kws = dNl.NestDict()
+    eval_shorts = []
+    if 'turner' in space_mkeys:
+        eval_shorts += ['b', 'fov', 'foa']
+    if 'crawler' in space_mkeys:
+        eval_shorts += ['sv', 'sa']
+    if len(eval_shorts) > 0:
+        target_kws.eval_shorts = eval_shorts
+    if 'interference' in space_mkeys:
+        target_kws.pooled_cycle_curves = ['fov', 'foa', 'b']
+    if 'eval_shorts' in target_kws.keys() :
+        if 'pooled_cycle_curves' in target_kws.keys():
+            fitness_func = fitness_funcs['distro_KS_interference']
+        else :
+            fitness_func = fitness_funcs['distro_KS']
+    elif 'pooled_cycle_curves' in target_kws.keys():
+        fitness_func = fitness_funcs['interference']
+    else :
+        raise
+    from lib.registry.pars import preg
+    d = preg.loadRef(refID)
+    d.load(step=False)
+    e, c = d.endpoint_data, d.config
+
+    fit_dict = arrange_fitness(fitness_func=fitness_func, fitness_target_refID=refID,
+                               fitness_target_kws=target_kws,
+                               dt=c.dt)
+    return fit_dict
+

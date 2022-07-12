@@ -130,10 +130,10 @@ class GAlauncher(BaseGAlauncher):
         while True and self.engine.is_running:
             from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, K_e, QUIT,event, Rect, draw, display
 
-            t0 = TimeUtil.current_time_millis()
+            # t0 = TimeUtil.current_time_millis()
             self.engine.step()
-            t1 = TimeUtil.current_time_millis()
-            self.printd(2, 'Step duration: ', t1 - t0)
+            # t1 = TimeUtil.current_time_millis()
+            # self.printd(2, 'Step duration: ', t1 - t0)
             if self.show_screen:
                 for e in event.get():
                     if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):

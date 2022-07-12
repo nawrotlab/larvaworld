@@ -401,7 +401,7 @@ def turn_annotation(s, e, c, store=False):
         Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, c.dt)
         Lturns_N,Rturns_N = Lturns.shape[0],Rturns.shape[0]
         turns_N=Lturns_N+Rturns_N
-        tur_H=Lturns_N/turns_N
+        tur_H=Lturns_N/turns_N if turns_N!=0 else 0
         Tamps = np.concatenate([Lamps, Ramps])
         Tdurs = np.concatenate([Ldurs, Rdurs])
         Tmaxs = np.concatenate([Lmaxs, Rmaxs])
