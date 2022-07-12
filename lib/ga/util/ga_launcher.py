@@ -112,6 +112,9 @@ class GAlauncher(BaseGAlauncher):
             from lib.ga.robot.larva_offline import LarvaOffline
             ga_build_kws.robot_class = LarvaOffline
             show_screen = False
+        elif ga_build_kws.robot_class is None :
+            from lib.ga.robot.larva_robot import LarvaRobot
+            ga_build_kws.robot_class = LarvaRobot
         self.ga_build_kws = ga_build_kws
         self.ga_select_kws = ga_select_kws
         self.show_screen = show_screen

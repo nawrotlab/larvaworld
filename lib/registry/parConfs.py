@@ -1022,25 +1022,12 @@ class LarvaConfDict:
                                                                  conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
 
-        self.saveConf(conf=m0, mID=mID)
+        self.saveConf(conf=m0, mID=mID, verbose=0)
 
         from lib.eval.model_fit import optimize_mID
 
-        entry = optimize_mID(mID0=mID, refID=refID, space_mkeys=space_mkeys,
-                             init='random', save_to=c.dir_dict.GAoptimization, sim_ID=mID,fit_dict =fit_dict)
-        # C=Calibration(refID=refID,turner_mode=m0.brain.turner_params.mode, physics_keys=None)
-        # C.run()
-        # m0.brain.turner_params.update(C.best.turner)
-        #
-        #
-        #
-        #
-        # entry = calibrate_interference(mID=mID, refID=refID)
-        # m0=entry[mID]
-        # if 'modelConfs' not in c.keys():
-        #     c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-        # c.modelConfs.average[mID] = m
-        # d.save_config(add_reference=True)
+        entry = optimize_mID(fit_dict =fit_dict, mID0=mID, space_mkeys=space_mkeys,store_data=False,dt=c.dt,dur=0.5,
+                             init='random', save_to=c.dir_dict.GAoptimization, sim_ID=mID)
         return entry
 
     def adapt_6mIDs(self, refID, e=None, c=None):
@@ -1049,22 +1036,25 @@ class LarvaConfDict:
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
+
+        from lib.ga.util.functions import arrange_fitness, fitness_funcs
+        fit_dict = arrange_fitness(fitness_func=fitness_funcs['distro_KS_interference'], fitness_target_refID=refID,
+                                   fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa'],
+                                                       'pooled_cycle_curves': ['fov', 'foa', 'b']
+                                                       },
+                                   dt=c.dt)
         entries = {}
         mIDs = []
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
                 mID = f'{Ifmod}on{Tmod}'
-                entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c)
+                entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                                           space_mkeys=['turner', 'interference'],
+                                           fit_dict =fit_dict)
                 entries.update(entry)
                 mIDs.append(mID)
         return entries, mIDs
-        # if 'modelConfs' not in c.keys():
-        #     c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}})
-        # c.modelConfs.average=entries
-        # d.save_config(add_reference=True)
-        # d.store_model_graphs(mIDs=mIDs)
-        # return entries
 
     def adapt_3modules(self, refID, e=None, c=None):
         if e is None or c is None:
@@ -1073,22 +1063,25 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
-        from lib.ga.util.functions import arrange_fitness
-        from lib.conf.stored.ga_conf import distro_KS_interference_evaluation
-        fit_dict = arrange_fitness(fitness_func=distro_KS_interference_evaluation, fitness_target_refID=refID,
-                                   fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa'],
-                                                       'pooled_cycle_curves': ['fov', 'foa', 'b']},
-                                   dt=c.dt,
-                                   source_xy=None)
+        from lib.ga.util.functions import arrange_fitness,fitness_funcs
+        fit_dict = arrange_fitness(fitness_func=fitness_funcs['distro_KS'], fitness_target_refID=refID,
+                                   fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa', 'sa', 'sv']},
+                                   dt=c.dt)
         entries = {}
         mIDs = []
+        # for Cmod in ['GAU', 'CON']:
         for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
             for Tmod in ['NEU', 'SIN', 'CON']:
                 for Ifmod in ['PHI', 'SQ', 'DEF']:
                     mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
                     mID = f'{mID0}_fit'
-                    entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
-                                           space_mkeys=['crawler', 'turner', 'interference'], fit_dict =fit_dict)
+                    if mID in self.storedConf():
+                        entry ={mID : self.loadConf(mID)}
+                        print(mID)
+                    else :
+                        entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                                           space_mkeys=['crawler', 'turner', 'interference'],
+                                           fit_dict =fit_dict)
                     entries.update(entry)
                     mIDs.append(mID)
         return entries, mIDs

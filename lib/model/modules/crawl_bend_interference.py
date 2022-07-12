@@ -65,7 +65,11 @@ class PhasicCoupling(DefaultCoupling):
         c_on, f_on = self.active_effectors(crawler, feeder)
         if c_on:
             from lib.anal.fitting import gaussian
-            A = gaussian(crawler.phi, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
+            if hasattr(crawler, 'phi') :
+                x=crawler.phi
+            else :
+                x=0
+            A = gaussian(x, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
             if A >= 1:
                 A = 1
             elif A <= 0:

@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-
 from lib.aux import dictsNlists as dNl
+
 from lib.model.body.controller import PhysicsController
 from lib.registry.pars import preg
 
@@ -20,7 +20,6 @@ class Calibration:
         self.N = self.target[self.shorts[0]].shape[0]
         self.dt = c.dt
 
-
         if physics_keys is None:
             physics_keys = []
         if turner_mode == 'neural':
@@ -33,7 +32,7 @@ class Calibration:
         self.mkeys = dNl.NestDict({
             'turner': turner_keys,
             'physics': physics_keys,
-            'all' : physics_keys+turner_keys
+            'all': physics_keys + turner_keys
         })
 
         self.D = preg.larva_conf_dict
@@ -46,19 +45,19 @@ class Calibration:
             'physics': None
         })
 
-        init, bounds=[],[]
-        for k in self.mkeys.turner :
-            p=self.mdicts.turner[k]
+        init, bounds = [], []
+        for k in self.mkeys.turner:
+            p = self.mdicts.turner[k]
             init.append(p.v)
             bounds.append(p.lim)
-        for k in self.mkeys.physics :
-            p=self.mdicts.physics[k]
+        for k in self.mkeys.physics:
+            p = self.mdicts.physics[k]
             init.append(p.v)
             bounds.append(p.lim)
-        self.init=np.array(init)
-        self.bounds=bounds
+        self.init = np.array(init)
+        self.bounds = bounds
 
-        self.Tfunc=self.D.dict.model.m['turner'].mode[turner_mode].class_func
+        self.Tfunc = self.D.dict.model.m['turner'].mode[turner_mode].class_func
         self.turner_mode = turner_mode
         self.absolute = absolute
 
@@ -75,8 +74,8 @@ class Calibration:
         fov = 0
         for i in range(N):
             ang = T.step(0)
-            fov = PH.compute_ang_vel(torque=PH.torque_coef * ang,v=fov, b=b,
-                                           c=PH.ang_damping, k=PH.body_spring_k, dt=T.dt)
+            fov = PH.compute_ang_vel(torque=PH.torque_coef * ang, v=fov, b=b,
+                                     c=PH.ang_damping, k=PH.body_spring_k, dt=T.dt)
             b = wrap_angle_to_0(b + fov * self.dt)
             simFOV[i] = fov
             simB[i] = b
@@ -112,13 +111,12 @@ class Calibration:
 
     def retrieve_modules(self, q, Ndec=None):
         if Ndec is not None:
-            q=[np.round(q0,Ndec) for q0 in q]
-        dic = dNl.NestDict({k:q0 for k,q0 in zip(self.mkeys.all, q)})
+            q = [np.round(q0, Ndec) for q0 in q]
+        dic = dNl.NestDict({k: q0 for k, q0 in zip(self.mkeys.all, q)})
 
-
-        for k,mdict in self.mdicts.items() :
-            kwargs= {kk : dic[kk] for kk in self.mkeys[k]}
-            self.mconfs[k]=self.D.conf(mdict=mdict,**kwargs)
+        for k, mdict in self.mdicts.items():
+            kwargs = {kk: dic[kk] for kk in self.mkeys[k]}
+            self.mconfs[k] = self.D.conf(mdict=mdict, **kwargs)
         # return mconfs
 
     def optimize_turner(self, q=None, return_sim=False, N=2000):
@@ -145,8 +143,9 @@ class Calibration:
         res = minimize(self.optimize_turner, self.init, method=method, bounds=self.bounds, **kwargs)
         self.best, self.KS_dic = self.eval_best(q=res.x)
         # self.best, self.KS_dic = self.plot_turner(q=res.x)
+
     #
-    def eval_best(self,q):
+    def eval_best(self, q):
         self.retrieve_modules(q, Ndec=2)
         sim = self.sim_turner(N=self.N)
         err, Ks_dic = self.eval_turner(sim)
@@ -166,31 +165,33 @@ def epar(e, k=None, par=None, average=True):
         return vs
 
 
-def optimize_mID(mID0,  refID, mID1=None,space_mkeys=['turner', 'interference'],init='model',
-                 sim_ID=None,fit_dict =None, **kwargs) :
-    if mID1 is None :
-        mID1=mID0
-    from lib.anal.argparsers import adjust_sim
-    from lib.ga.util.ga_launcher import GAlauncher
-    conf = preg.expandConf(id='realism', conftype='Ga')
-    conf.show_screen = False
-    # conf.ga_select_kws.Pmutation = 0.3
-    # conf.ga_select_kws.Cmutation = 0.3
-    conf.ga_select_kws.Ngenerations = 5
-    conf.ga_select_kws.Nagents = 10
-    conf.ga_select_kws.Nelits = 2
-    conf.ga_build_kws.init_mode =init
-    conf.ga_build_kws.space_mkeys =space_mkeys
-    conf.ga_build_kws.base_model =mID0
-    conf.ga_build_kws.fitness_target_refID =refID
-    conf.ga_build_kws.bestConfID = mID1
+def optimize_mID(fit_dict, mID0, mID1=None, space_mkeys=['turner', 'interference'], init='model',offline=False,
+                 sim_ID=None, dt=1 / 16,dur=1, save_to=None, store_data=True, **kwargs):
+
+    if mID1 is None:
+        mID1 = mID0
+    kws = {
+        'sim_params': preg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt),
+        'show_screen': False,
+        'offline': offline,
+        'save_to': save_to,
+        'experiment': 'exploration',
+        'env_params': 'arena_200mm',
+        'ga_select_kws': preg.get_null('ga_select_kws', Nagents=8, Nelits=2, Ngenerations=5),
+        'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0, bestConfID=mID1)
+    }
+
+    conf = preg.get_null('GAconf', **kws)
+    conf.env_params = preg.expandConf(id=conf.env_params, conftype='Env')
     conf.ga_build_kws.fit_dict = fit_dict
-    conf.sim_params.sim_ID=sim_ID
+
+
+    from lib.anal.argparsers import adjust_sim
     conf.sim_params = adjust_sim(exp=conf.experiment, conf_type='Ga', sim=conf.sim_params)
-    conf.sim_params.duration = 0.5
-    conf.update(kwargs)
+    from lib.ga.util.ga_launcher import GAlauncher
+
+
     GA = GAlauncher(**conf)
     best_genome = GA.run()
-    entry={mID1:best_genome.mConf}
+    entry = {mID1: best_genome.mConf}
     return entry
-

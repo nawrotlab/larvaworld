@@ -12,49 +12,6 @@ from lib.aux.xy_aux import eudi5x
 from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 from lib.eval.eval_aux import RSS
 
-def interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys, **kwargs):
-    d1, d2 = gdict['cycle_curves'], pooled_cycle_curves
-    RSS_dic = {sh: RSS(d1[sh][mode], np.array(d2[sh][mode])) for sh, mode in cycle_curve_keys.items()}
-    return -np.mean(list(RSS_dic.values())), RSS_dic
-
-
-def distro_KS_evaluation(gdict, eval_shorts, eval_labels, eval, **kwargs):
-    ks_dic = {s: ks_2samp(eval[s], gdict['eval'][s])[0] for s, l in zip(eval_shorts, eval_labels)}
-    return -np.mean(list(ks_dic.values())), ks_dic
-
-
-def distro_KS_interference_evaluation(gdict, eval_shorts, eval_labels, eval, pooled_cycle_curves, cycle_curve_keys):
-    r1, ks_dic = distro_KS_evaluation(gdict, eval_shorts, eval_labels, eval)
-    r2, RSS_dic = interference_evaluation(gdict, pooled_cycle_curves, cycle_curve_keys)
-    dic = dNl.NestDict({'KS': ks_dic, 'RSS': RSS_dic})
-    if np.isinf(r1) or np.isinf(r2):
-        return -np.inf, dic
-    else:
-        return r1 * 10 + r2, dic
-
-
-def dst2source_evaluation(gdict, source_xy):
-    traj = gdict['step'][['x', 'y']].values
-    dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
-    cum_dst = np.sum(dst)
-    for label, pos in source_xy.items():
-        dst2source = eudi5x(traj, np.array(pos))
-        break
-    return -np.mean(dst2source) / cum_dst, {}
-
-
-def cum_dst(robot):
-    return robot.cum_dst / robot.real_length
-
-
-fitness_funcs = dNl.NestDict({
-    'interference': interference_evaluation,
-    'distro_KS': distro_KS_evaluation,
-    'distro_KS_interference': distro_KS_interference_evaluation,
-    'dst2source': dst2source_evaluation,
-    'cum_dst': cum_dst,
-})
-
 
 def bend_error_exclusion(robot):
     if robot.body_bend_errors >= 2:
@@ -63,53 +20,10 @@ def bend_error_exclusion(robot):
         return False
 
 
-def space_dic(mkeys,mID0):
-    M = preg.larva_conf_dict
-    m = M.loadConf(mID0)
-    mF = dNl.flatten_dict(m)
-    dic = {}
-    for mkey in mkeys:
-        d0 = M.dict.model.init[mkey]
-        d00 = M.dict.model.m[mkey]
-        mod_v = mF[f'{d0.pref}mode']
-        var_ks = d0.mode[mod_v].variable
-        for k in var_ks:
-            k0 = f'{d0.pref}{k}'
-            dic[k0] = d00.mode[mod_v].args[k]
-            dic[k0].v=mF[k0]
-
-    return dNl.NestDict(dic)
 
 def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
             m1=None, sel={}, build={}, fitID=None, init='random', excl_func=None, robot_class=LarvaRobot, **kwargs):
-    M=preg.larva_conf_dict
-    # m=M.loadConf(m0)
-    # mF=dNl.flatten_dict(m)
-    # dic={}
-    # for mkey in spaceIDs:
-    #     d0=M.dict.model.init[mkey]
-    #     d00=M.dict.model.m[mkey]
-    #     # pref=d0.pref
-    #     # mod_k=f'{d0.pref}mode'
-    #     mod_v=mF[f'{d0.pref}mode']
-    #     var_ks=d0.mode[mod_v].variable
-    #     for k in var_ks :
-    #         k0=f'{d0.pref}{k}'
-    #         p=d00.mode[mod_v].args[k]
-    #         dic[k0]=p
-    #     #     kws={
-    #     #     'initial_value': p['initial_value'],
-    #     #     'tooltip': p['tooltip'],
-    #     #     'dtype': p['dtype'],
-    #     #     'name': k,
-    #     # }
-    #
-    #     # var_fuls=[f'{d0.pref}{k}' for k in var_ks]
-    # dic=dNl.NestDict(dic)
-
-    # space_dict = {}
-    # for spaceID in spaceIDs:
-    #     space_dict.update(ga_spaces[spaceID])
+    from lib.ga.util.functions import fitness_funcs
 
     build_kws = {
         'fitness_target_refID': refID,
@@ -158,7 +72,7 @@ ga_dic = dNl.NestDict({
               excl_func=bend_error_exclusion,
               space_mkeys=['interference', 'turner'], fitID='distro_KS_interference',
               init='model',
-              Nel=5, N=20, env_params='arena_200mm'),
+              Nel=3, N=10, env_params='arena_200mm'),
     **ga_conf('chemorbit', dur=5, m0='navigator', m1='best_navigator',
               space_mkeys=['olfactor'], fitID='dst2source', fit_kws={'source_xy': None},
               Nel=5, N=50, env_params='mid_odor_gaussian_square'),
