@@ -546,7 +546,6 @@ class LarvaConfDict:
         m = self.loadConf(mID)
         mF = dNl.flatten_dict(m)
         data = []
-        dic = {}
         for mkey in self.dict.brain.keys:
             if m.brain.modules[mkey] :
                 d0 = self.dict.model.init[mkey]
@@ -554,9 +553,20 @@ class LarvaConfDict:
                     mod_v = mF[f'{d0.pref}mode']
                 else:
                     mod_v = 'default'
-                var_mdict = self.variable_mdict(mkey, mode=mod_v)
-                var_mdict = self.update_mdict(var_mdict, m.brain[f'{mkey}_params'])
-                gen_rows2(var_mdict, mkey, columns, data)
+
+                if mkey == 'intermitter':
+                    var_ks = d0.mode[mod_v].variable
+                    for var_k in var_ks :
+                        v=m.brain[f'{mkey}_params'][var_k]
+                        if v is not None :
+                            if v.name is not None:
+                                vs1, vs2 = self.dist_dict0.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
+                                data.append(vs1)
+                                data.append(vs2)
+                else :
+                    var_mdict = self.variable_mdict(mkey, mode=mod_v)
+                    var_mdict = self.update_mdict(var_mdict, m.brain[f'{mkey}_params'])
+                    gen_rows2(var_mdict, mkey, columns, data)
         for aux_key in self.dict.aux.keys:
             if aux_key not in ['energetics', 'sensorimotor']:
                 var_ks = self.dict.aux.init[aux_key].variable
