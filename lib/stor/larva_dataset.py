@@ -1057,10 +1057,9 @@ if __name__ == '__main__':
     d = preg.loadRef(refID)
     d.load(h5_ks=h5_ks)
     entries_3m=d.config.modelConfs['3modules']
-    mIDs_3m = list(entries_3m.keys())
-    diff_df_3m = preg.larva_conf_dict.diff_df(mIDs=mIDs_3m)
-    preg.graph_dict.dict['mpl'](data=diff_df_3m, font_size=18, save_to=d.dir_dict.model_tables,
-                                name='3fitted_modules_diffs')
+    mIDs_Cmod_RE=[mID for mID,m in entries_3m.items() if m.brain.crawler_params.mode=='realistic']
+
+    d.eval_model_graphs(mIDs=mIDs_Cmod_RE, norm_modes=['raw', 'minmax'], id='Cmod_RE_avg', N=10)
     # for mID,m in entries_3m.items():
     #     print(mID, m)
     # d.store_model_graphs(mIDs=mIDs_3m)
