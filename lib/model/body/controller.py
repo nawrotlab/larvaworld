@@ -72,6 +72,7 @@ class BodySim(BodyManager, PhysicsController):
 
         self.body_bend = 0
         self.body_bend_errors = 0
+        self.ang_vel_over_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
         self.rear_orientation_change = 0
@@ -227,7 +228,7 @@ class BodySim(BodyManager, PhysicsController):
 
 
 
-    def go_forward(self,lin_vel,k, hf01, delta=10**-6, counter=0):
+    def go_forward(self,lin_vel,k, hf01, delta=0.00011, counter=0):
         if np.isnan(lin_vel):
             return 0,0,hf01
         d = lin_vel * self.model.dt
@@ -239,14 +240,14 @@ class BodySim(BodyManager, PhysicsController):
             if lin_vel < 0:
                 return 0, 0, hf01
             counter += 1
-
+            print(counter, lin_vel)
             return self.go_forward(lin_vel, k, hf01, delta, counter)
         else:
             return lin_vel, d,hf1
 
 
 
-    def turn_head(self,ang_vel, hr0, ho0, l0, delta=np.pi/180, counter=0):
+    def turn_head(self,ang_vel, hr0, ho0, l0, ang_range, delta=np.pi/180, counter=0):
         if np.isnan(ang_vel):
             ang_vel=0
         ho1 = ho0 + ang_vel * self.model.dt
@@ -255,29 +256,45 @@ class BodySim(BodyManager, PhysicsController):
         # return hf1
         if not self.in_tank([hf01]):
             print(counter, ang_vel, hf01)
-            # if delta is None:
-            #     if np.abs(ang_vel)>=0.1:
-            #         delta=0.011*ang_vel
-            #     else:
-            #         delta=0.011
+            if counter==0:
+                delta*=np.sign(ang_vel)
+            ang_vel -=delta
 
+            if ang_vel<ang_range[0]:
+                ang_vel=ang_range[0]
+                delta=np.abs(delta)
+            elif ang_vel>ang_range[1]:
+                ang_vel=ang_range[1]
+                delta-=np.abs(delta)
             counter+=1
-            if counter>100:
-                ang_vel=0
-            else :
-                ang_vel -= delta
-            return self.turn_head(ang_vel, hr0, ho0, l0, delta, counter)
+
+            return self.turn_head(ang_vel, hr0, ho0, l0, ang_range, delta, counter)
         else:
             return ang_vel, ho1,k,hf01
 
     def position_body(self, lin_vel, ang_vel, tank_contact=True):
-        # print(lin_vel, ang_vel)
+
+
         hp0, ho0 = self.head.get_pose()
         hr0 = self.global_rear_end_of_head
         l0=self.seg_lengths[0]
+        if self.Nsegs > 1:
+            o_bound=self.segs[1].get_orientation()
+            dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
+        else:
+            dang=0
+        ang_vel_min, ang_vel_max = (-np.pi + dang)/self.model.dt, (np.pi + dang)/self.model.dt
+
+        if ang_vel<ang_vel_min:
+            ang_vel=ang_vel_min
+            self.ang_vel_over_errors+=1
+        elif ang_vel > ang_vel_max:
+            ang_vel = ang_vel_max
+            self.ang_vel_over_errors += 1
+
         if tank_contact:
 
-            ang_vel, ho1, k, hf01=self.turn_head(ang_vel, hr0, ho0, l0)
+            ang_vel, ho1, k, hf01=self.turn_head(ang_vel, hr0, ho0, l0, ang_range=(ang_vel_min, ang_vel_max))
             lin_vel, d, hf1=self.go_forward(lin_vel,k,hf01)
             # print(lin_vel)
         else :
