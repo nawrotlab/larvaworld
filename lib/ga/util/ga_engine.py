@@ -349,30 +349,7 @@ class GAbuilder(GAselector):
 
 
         if self.generation_step_num == self.model.Nsteps or len(self.robots)<=self.Nagents_min:
-
-            if self.step_df is not None:
-                # for robot in self.robots[:]:
-                #     self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
-                self.finalize_step_df()
-
-
-
-            for robot in self.robots[:]:
-                self.destroy_robot(robot)
-
-        # check population extinction
-        if not self.robots:
-
-
-
-            self.sort_genomes()
-
-            if self.model.sim_params.store_data:
-                self.all_genomes_dic += [
-                {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
-                 'fitness': g.fitness, **dNl.flatten_dict(g.fitness_dict)}
-                for g in self.sorted_genomes if g.fitness_dict is not None]
-
+            self.end_generation()
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
                 self.excluded_ids = []
                 self.create_new_generation(self.space_dict)
@@ -383,6 +360,62 @@ class GAbuilder(GAselector):
                     self.step_df = self.init_step_df()
             else:
                 self.finalize()
+
+        #     if self.step_df is not None:
+        #         # for robot in self.robots[:]:
+        #         #     self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
+        #         self.finalize_step_df()
+        #
+        #
+        #
+        #     for robot in self.robots[:]:
+        #         self.destroy_robot(robot)
+        #
+        # # check population extinction
+        # if not self.robots:
+        #
+        #
+        #
+        #     self.sort_genomes()
+        #
+        #     if self.model.sim_params.store_data:
+        #         self.all_genomes_dic += [
+        #         {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
+        #          'fitness': g.fitness, **dNl.flatten_dict(g.fitness_dict)}
+        #         for g in self.sorted_genomes if g.fitness_dict is not None]
+
+
+
+
+
+    def end_generation(self):
+        if self.step_df is not None:
+            # for robot in self.robots[:]:
+            #     self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
+            self.finalize_step_df()
+
+
+
+        for robot in self.robots[:]:
+            self.destroy_robot(robot)
+
+        # check population extinction
+        # if not self.robots:
+
+
+
+        self.sort_genomes()
+
+        if self.model.sim_params.store_data:
+            self.all_genomes_dic += [
+            {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
+             'fitness': g.fitness, **dNl.flatten_dict(g.fitness_dict)}
+            for g in self.sorted_genomes if g.fitness_dict is not None]
+
+
+
+
+
 
     def destroy_robot(self, robot, excluded=False):
         if excluded:
