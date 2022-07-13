@@ -168,7 +168,7 @@ def epar(e, k=None, par=None, average=True):
 
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
-                 offline=False,show_screen=False,
+                 offline=False,show_screen=False,exclusion_mode=False,
                  sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=10, Nelits=3, Ngenerations=10,
                  **kwargs):
     from lib.ga.util.functions import exclusion_funcs
@@ -184,7 +184,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
         'experiment': 'exploration',
         'env_params': 'arena_200mm',
         'ga_select_kws': preg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
-        'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,
+        'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,exclusion_mode=exclusion_mode,
                                       bestConfID=mID1, fitness_target_refID=refID, exclude_func=exclusion_funcs['bend_errors'])
     }
 
@@ -225,11 +225,12 @@ if __name__ == '__main__':
 
     refID = 'None.150controls'
     # mID0 = 'GAU_SIN_SQ_DEF'
-    mID1 = 'GAU_SIN_SQ_DEF_fit'
+    mID0 = 'GAU_SIN_SQ_DEF_fit'
+    mID1 = 'GAU_SIN_SQ_DEF_exc_mode'
     # space_mkeys = ['crawler', 'turner']
     space_mkeys = ['crawler', 'turner', 'interference']
 
-    from lib.ga.util.functions import GA_evaluation
+    from lib.ga.util.functions import GA_optimization
 
     eval_metrics = {
         'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
@@ -241,12 +242,12 @@ if __name__ == '__main__':
         # 'tortuosity': ['tor5', 'tor20']
     }
 
-    fit_dict=GA_evaluation(refID=refID, GA_eval_kws={
+    fit_dict=GA_optimization(fitness_target_refID=refID, fitness_target_kws={
         'eval_metrics':eval_metrics,
         'cycle_curves':['b', 'fov', 'foa'],
     })
 
 
 
-    entry = optimize_mID(mID0=mID1,mID1=mID1, refID=refID, space_mkeys=space_mkeys, init='model',show_screen=True,
-                         sim_ID=mID1, Nagents=50, Nelits=3, Ngenerations=20, dur=0.5, fit_dict=fit_dict)
+    entry = optimize_mID(mID0=mID0,mID1=mID1, refID=refID, space_mkeys=space_mkeys, init='model',show_screen=True,
+                         sim_ID=mID1, Nagents=20, Nelits=0, Ngenerations=20, dur=0.6, fit_dict=fit_dict, exclusion_mode=False)

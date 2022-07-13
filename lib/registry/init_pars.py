@@ -1120,6 +1120,7 @@ class ParInitDict:
                                'k': 'mID1'},
                 'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
                               'h': 'The initialization mode for the first generation', 'k': 'mGA'},
+                'exclusion_mode' : {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
                 'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
                 'fitness_target_refID': confID_entry('Ref'),
                 'fitness_target_kws': {'dtype': dict, 'v': {},

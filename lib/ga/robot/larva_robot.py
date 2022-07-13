@@ -39,13 +39,19 @@ class LarvaRobot(BodySim):
         return self.head.get_orientation()
 
     def complete_step(self):
-
-        self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.head.get_angularvelocity(),
-                                                                   self.rear_orientation_change/self.model.dt,
-                                                                   self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
+        # if not self.model.engine.exclusion_mode :
+        #     self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.head.get_angularvelocity(),
+        #                                                            self.rear_orientation_change/self.model.dt,
+        #                                                            self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
 
         self.x, self.y = self.model.scene._transform(self.pos)
         self.Nticks += 1
+
+    @ property
+    def collect(self):
+        return [self.body_bend,self.head.get_angularvelocity(),
+                                                                   self.rear_orientation_change/self.model.dt,
+                                                                   self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
 
     def sense_and_act(self):
         self.step()

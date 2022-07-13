@@ -30,6 +30,7 @@ class LarvaOffline:
         self.ang_vel = 0
         self.body_bend = 0
         self.body_bend_errors = 0
+        self.negative_speed_errors = 0
         self.Nsegs = larva_pars.body.Nsegs
         self.torque = 0
         self.cum_dur = 0
@@ -69,11 +70,18 @@ class LarvaOffline:
         self.complete_step()
 
     def complete_step(self):
-        self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
-                                                                   self.lin_vel, self.pos[0],self.pos[1]]
+        if self.lin_vel<0:
+            self.negative_speed_errors+=1
+            self.lin_vel=0
+        # if self.model.engine.step_df:
+        #     self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
+        #                                                            self.lin_vel, self.pos[0],self.pos[1]]
         self.Nticks += 1
 
-
+    @property
+    def collect(self):
+        return [self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
+                                                                   self.lin_vel, self.pos[0],self.pos[1]]
 
     def sense_and_act(self):
         self.step()

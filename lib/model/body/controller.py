@@ -72,6 +72,7 @@ class BodySim(BodyManager, PhysicsController):
 
         self.body_bend = 0
         self.body_bend_errors = 0
+        self.negative_speed_errors=0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
         self.rear_orientation_change = 0
@@ -173,6 +174,9 @@ class BodySim(BodyManager, PhysicsController):
 
 
     def complete_step(self):
+        if self.head.get_linearvelocity()<0:
+            self.negative_speed_errors+=1
+            self.head.set_lin_vel(0)
         if not self.model.Box2D :
             self.model.space.move_agent(self, self.pos)
         self.update_larva()
