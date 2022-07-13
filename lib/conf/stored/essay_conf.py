@@ -42,6 +42,7 @@ class Essay:
     def run(self):
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
+
             print(f'Running {len(cs)} versions of experiment {exp}')
             self.datasets[exp] = [SingleRun(**c, vis_kwargs=self.vis_kwargs).run() for c in cs]
 
@@ -433,8 +434,12 @@ class Chemotaxis_Essay(Essay):
             self.models = self.get_models2(gain)
         elif mode==3 :
             self.models = self.get_models3(gain)
+        elif mode==4 :
+            self.models = self.get_models4(gain)
         self.mdiff_df = self.M.diff_df(mIDs=list(self.models.keys()), ms=[v.model for v in self.models.values()])
         self.exp_dict = self.chemo_exps(self.models)
+
+
 
     def get_models1(self, gain):
         mID0='RE_NEU_SQ_DEF_nav'
@@ -495,6 +500,23 @@ class Chemotaxis_Essay(Essay):
                     f'brain.interference_params.attenuation_max': 0.9,
                 }), 'color': cols[i]}
                 i+=1
+
+        return dNl.NestDict(models)
+
+    def get_models4(self, gain):
+        cols=cNs.N_colors(4)
+        i=0
+        models={}
+        for Tmod in ['NEU', 'SIN'] :
+            for Ifmod in ['PHI', 'SQ'] :
+                mID0=f'RE_{Tmod}_{Ifmod}_DEF_var2_nav'
+                models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
+                    f'brain.olfactor_params.perception': 'log',
+                    f'brain.olfactor_params.decay_coef': 0.1,
+                    f'brain.olfactor_params.odor_dict.Odor.mean': gain,
+                }), 'color': cols[i]}
+                i+=1
+
         return dNl.NestDict(models)
 
     def chemo_exps(self,models):
@@ -505,6 +527,9 @@ class Chemotaxis_Essay(Essay):
         kws = {
             'arena': preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.1, 0.06)),
             'odorscape': {'odorscape': 'Gaussian'},
+            'windscape': None,
+            'thermoscape': None,
+            'border_list': {},
         }
 
         exp1 = 'Orbiting behavior'
@@ -638,7 +663,7 @@ essay_dict = {
 
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-    E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=3)
+    E = Chemotaxis_Essay(video=True, N=5, dur=5, mode=4)
     # E = DoublePatch_Essay(video=False, N=5, dur=5)
     ds = E.run()
     figs, results = E.anal()

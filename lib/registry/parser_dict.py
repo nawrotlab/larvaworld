@@ -21,7 +21,7 @@ class ParsArg:
         return getattr(input, self.key)
 
 
-def build_ParsArg(name, k=None, h='', t=float, v=None, vs=None, **kwargs):
+def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
     if k is None:
         k = name
     d = {
@@ -29,15 +29,15 @@ def build_ParsArg(name, k=None, h='', t=float, v=None, vs=None, **kwargs):
         'short': k,
         'help': h,
     }
-    if t == bool:
+    if dtype == bool:
         d['action'] = 'store_true' if not v else 'store_false'
-    elif t == List[str]:
+    elif dtype == List[str]:
         d['type'] = str
         d['nargs'] = '+'
         if vs is not None:
             d['choices'] = vs
     else:
-        d['type'] = t
+        d['type'] = dtype
         if vs is not None:
             d['choices'] = vs
         if v is not None:
@@ -54,15 +54,15 @@ def build_ParsDict(d0):
     # return parsargs
 
 def build_ParsDict2(d0):
-    def par(name, t=float, v=None, vs=None, h='', k=None, **kwargs):
-        return build_ParsArg(name, k, h, t, v, vs)
+    def par(name, dtype=float, v=None, vs=None, h='', k=None, **kwargs):
+        return build_ParsArg(name, k, h, dtype, v, vs)
 
     def par_dict(d0, **kwargs):
         if d0 is None:
             return None
         d = {}
         for n, v in d0.items():
-            if 't' in v.keys() or 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+            if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
             # try:
                 entry = par(n, **v, **kwargs)
             else:

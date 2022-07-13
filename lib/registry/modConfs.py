@@ -257,8 +257,12 @@ def sensor_kws(k0, l0):
 
 def Olf0():
     from lib.model.modules.sensor import Olfactor
-    args = sensor_kws(k0='O', l0='olfaction')
-    d = {'default': {'args': args, 'class_func': Olfactor, 'variable': ['perception', 'decay_coef', 'brute_force']},
+    args = {
+        'odor_dict': {'dtype': dict, 'k': 'G_O', 'v0': {},
+                      'sym': sub('G', 'O'), 'disp': 'gain per odor ID',
+                      'h': 'The dictionary of the olfactory gains.'},
+        **sensor_kws(k0='O', l0='olfaction')}
+    d = {'default': {'args': args, 'class_func': Olfactor, 'variable': ['perception', 'decay_coef', 'brute_force', 'odor_dict']},
          # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
          # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
@@ -457,7 +461,7 @@ def Phy0():
                      'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
     }
     d = {'args': args,
-         'variable': ['torque_coef', 'ang_damping', 'body_spring_k','bend_correction_coef']
+         'variable': ['torque_coef', 'ang_damping', 'body_spring_k', 'bend_correction_coef']
          }
     return dNl.NestDict(d)
 

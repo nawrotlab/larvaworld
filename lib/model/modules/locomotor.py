@@ -84,6 +84,7 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
         preg.larva_conf_dict.init_loco(conf, self)
 
     def step(self, A_in=0, length=1):
+
         if self.intermitter:
             pre_state = self.intermitter.cur_state
             self.intermitter.step(locomotor=self)

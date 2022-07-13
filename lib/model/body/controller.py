@@ -208,31 +208,159 @@ class BodySim(BodyManager, PhysicsController):
         self.head_contacts_ground = value
 
 
+    # def position_head(self,hp0,ho0,lin_vel, ang_vel):
+    #     self.dst = lin_vel * self.model.dt
+    #     # hp0, ho0 = self.head.get_pose()
+    #     d_or = ang_vel * self.model.dt
+    #
+    #
+    #     if np.abs(d_or) > np.pi:
+    #         self.body_bend_errors += 1
+    #     ho1 = ho0 + d_or
+    #     k = np.array([math.cos(ho1), math.sin(ho1)])
+    #     hp1 = hp0 + k * self.dst
+    #     hf1=hp1 + k * self.seg_lengths[0] / 2
+    #     return hp1,ho1, hf1
+
+
+
+
+
+
+    def go_forward(self,lin_vel,k, hf01, delta=10**-6, counter=0):
+        if np.isnan(lin_vel):
+            return 0,0,hf01
+        d = lin_vel * self.model.dt
+        dxy = k * d * self.model.scaling_factor
+        hf1 = hf01 + dxy
+
+        if not self.in_tank([hf1]):
+            lin_vel -= delta
+            if lin_vel < 0:
+                return 0, 0, hf01
+            counter += 1
+
+            return self.go_forward(lin_vel, k, hf01, delta, counter)
+        else:
+            return lin_vel, d,hf1
+
+
+
+    def turn_head(self,ang_vel, hr0, ho0, l0, delta=np.pi/180, counter=0):
+        if np.isnan(ang_vel):
+            ang_vel=0
+        ho1 = ho0 + ang_vel * self.model.dt
+        k = np.array([math.cos(ho1), math.sin(ho1)])
+        hf01 = hr0 + k * l0
+        # return hf1
+        if not self.in_tank([hf01]):
+            print(counter, ang_vel, hf01)
+            # if delta is None:
+            #     if np.abs(ang_vel)>=0.1:
+            #         delta=0.011*ang_vel
+            #     else:
+            #         delta=0.011
+
+            counter+=1
+            if counter>100:
+                ang_vel=0
+            else :
+                ang_vel -= delta
+            return self.turn_head(ang_vel, hr0, ho0, l0, delta, counter)
+        else:
+            return ang_vel, ho1,k,hf01
+
     def position_body(self, lin_vel, ang_vel, tank_contact=True):
-        self.dst = lin_vel * self.model.dt
+        # print(lin_vel, ang_vel)
+        hp0, ho0 = self.head.get_pose()
+        hr0 = self.global_rear_end_of_head
+        l0=self.seg_lengths[0]
+        if tank_contact:
+
+            ang_vel, ho1, k, hf01=self.turn_head(ang_vel, hr0, ho0, l0)
+            lin_vel, d, hf1=self.go_forward(lin_vel,k,hf01)
+            # print(lin_vel)
+        else :
+            ho1 = ho0 + ang_vel * self.model.dt
+            k = np.array([math.cos(ho1), math.sin(ho1)])
+            d = lin_vel * self.model.dt
+        hp1 = hr0 + k * (d * self.model.scaling_factor + l0 / 2)
+
+        self.dst = d
         self.cum_dst += self.dst
         self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
-                                                               correction_coef=self.bend_correction_coef)
-
-
-        hp0, ho0 = self.head.get_pose()
-        if tank_contact :
-            hr0 = self.global_rear_end_of_head
-            ang_vel, ho1, hr1, hp1 = self.assess_tank_contact(ang_vel, ho0, self.dst, hr0, hp0, self.model.dt, self.seg_lengths[0])
-        else :
-            d_or = ang_vel * self.model.dt
-            if np.abs(d_or) > np.pi:
-                self.body_bend_errors += 1
-            ho1 = ho0 + d_or
-            k = np.array([math.cos(ho1), math.sin(ho1)])
-            hp1 = hp0 + k * self.dst
-
+                                                                       correction_coef=self.bend_correction_coef)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         if self.Nsegs>1 :
             for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
                 self.position_seg(seg, d_or=self.rear_orientation_change / (self.Nsegs - 1),
                                   front_end_pos=self.get_global_rear_end_of_seg(seg_index=i),seg_length=l)
         self.pos = self.global_midspine_of_body
+
+
+
+
+
+        # hp1=
+        # self.dst=d
+        #
+        #
+        #
+        #
+        #
+        # d_or = ang_vel * self.model.dt
+        # ho1=ho0+d_or
+        # k = np.array([math.cos(ho1), math.sin(ho1)])
+        # hf1=hr0+k*self.seg_lengths[0]
+        #
+        #
+        #
+        # hp00=ang_aux.rotate_around_point(hp0, d_or,hr0)
+        #
+        #
+        # hp1,ho1,hf1=self.position_head(hp0, ho0,lin_vel, ang_vel)
+        #
+        # # dst = lin_vel * self.model.dt
+        #
+        # if tank_contact :
+        #     counter=-1
+        #     while not self.in_tank([hp1])
+        #     while not self.in_tank([hf1]):
+        #         if math.isinf(ang_vel):
+        #             ang_vel = 1.0
+        #         print(counter)
+        #         counter+=1
+        #         ang_vel += 0.01*counter
+        #         if counter>100:
+        #             ho0+=np.pi/4
+        #             counter=1
+        #             ang_vel=0.01
+        #         hp1, ho1, hf1 = self.position_head(hp0, ho0, lin_vel, ang_vel)
+        #         # if counter>100:
+        #         #     ho0+=np.pi
+        #         #     counter=0
+        #         # ho0+=np.pi/180 * counter
+        #         # lin_vel*=0.95
+        #         # self.position_head(hp0, ho0, lin_vel, ang_vel)
+        # # else :
+        # self.head.update_all(hp1, ho1, lin_vel, ang_vel)
+        #     # hr0 = self.global_rear_end_of_head
+        #     # ang_vel, ho1, dst, hr1, hp1 = self.assess_tank_contact(ang_vel, ho0, dst, hr0, hp0, self.model.dt, self.seg_lengths[0])
+        #
+        # # else :
+        # #     d_or = ang_vel * self.model.dt
+        # #     if np.abs(d_or) > np.pi:
+        # #         self.body_bend_errors += 1
+        # #     ho1 = ho0 + d_or
+        # #     k = np.array([math.cos(ho1), math.sin(ho1)])
+        # #     hp1 = hp0 + k * dst
+        # # self.dst = dst
+        # self.cum_dst += self.dst
+        # self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
+        #                                                                correction_coef=self.bend_correction_coef)
+        #
+        # # self.head.update_all(hp1, ho1, lin_vel, ang_vel)
+
 
     def position_seg(self, seg, d_or, front_end_pos, seg_length):
         p0, o0 = seg.get_pose()
@@ -439,7 +567,7 @@ class BodySim(BodyManager, PhysicsController):
         def check_in_tank(ang_vel, o0, d, hr0, l0):
             o1 = o0 + ang_vel * dt
             k1 = np.array([math.cos(o1), math.sin(o1)])
-            dxy = k1 * self.dst
+            dxy = k1 * d
             sim_dxy = dxy * self.model.scaling_factor
             # k = np.array([math.cos(o1), math.sin(o1)])
             # dxy = k * d
@@ -451,24 +579,42 @@ class BodySim(BodyManager, PhysicsController):
                 hr1 = None
                 hp1 = hp0 + sim_dxy
                 # hf1 = hp1 + k1 * (self.sim_length / 2)
-            in_tank = sim_aux.inside_polygon(points=[hp1 + k1 * l0 / 2], tank_polygon=self.model.tank_polygon)
+            points = [hp1 + k1 * l0 / 2]
+            #print(points)
+            in_tank = sim_aux.inside_polygon(points=points, tank_polygon=self.model.tank_polygon)
             return in_tank, o1, hr1, hp1
 
         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
         counter = -1
         while not in_tank:
-            ang_vel, counter = avoid_border(ang_vel, counter)
-            if counter>100 :
-                o0+=np.pi
-            try :
-                in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
-            except :
-                pass
+            # o0 += np.pi/180
+            counter += 1
+            ang_vel *= -(1 + 0.01 * counter)
+            print(counter)
+            # ang_vel, counter = avoid_border(ang_vel, counter)
+            if counter>1000 :
+            #     o0+=np.pi
+            #     d=0
+                ang_vel=0.01
+                counter=0
+                o0-=np.pi
+            in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
+            # except :
+            #     pass
         # print(counter)
         # if counter > 0:
             # print(counter)
             # ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
-        return ang_vel, o1, hr1, hp1
+        return ang_vel, o1, d, hr1, hp1
+
+    # @ property
+    def in_tank(self,ps):
+        # hp, ho = self.head.get_pose()
+        # k = np.array([math.cos(ho), math.sin(ho)])
+        # hf=hp + k * self.seg_lengths[0] / 2
+        # hr=hp - k * self.seg_lengths[0] / 2
+        # ps=[hf, hp]
+        return sim_aux.inside_polygon(points=ps, tank_polygon=self.model.tank_polygon)
 
     # def wind_obstructed(self, wind_direction):
     #     from lib.aux.ang_aux import line_through_point

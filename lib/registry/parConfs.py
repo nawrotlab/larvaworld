@@ -939,6 +939,15 @@ class LarvaConfDict:
 
         self.larvaConf(mID='CON_SIN', modes={'crawler': 'constant', 'turner': 'sinusoidal'})
 
+        mID0s = []
+        for Tmod in ['NEU', 'SIN']:
+            for Ifmod in ['PHI', 'SQ', 'DEF']:
+                mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
+                mID0s.append(mID0)
+                for mm in [f'{mID0}_avg',f'{mID0}_var',f'{mID0}_var2']:
+                    if mm in self.storedConf():
+                        mID0s.append(mm)
+
         olf_pars1 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
                                                 odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}})
         olf_pars2 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
@@ -946,17 +955,18 @@ class LarvaConfDict:
                                                            'UCS': {'mean': 0.0, 'std': 0.0}})
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
-        for Tmod in ['NEU', 'SIN']:
-            for Ifmod in ['PHI', 'SQ', 'DEF']:
-                mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
-                mID1 = f'{mID0}_nav'
-                self.newConf(mID=mID1, mID0=mID0, kwargs=kwargs1)
-                mID1br = f'{mID1}_brute'
-                self.newConf(mID=mID1br, mID0=mID1, kwargs={'brain.olfactor_params.brute_force': True})
-                mID2 = f'{mID0}_nav_x2'
-                self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
-                mID2br = f'{mID2}_brute'
-                self.newConf(mID=mID2br, mID0=mID2, kwargs={'brain.olfactor_params.brute_force': True})
+
+
+        for mID0 in mID0s :
+
+            mID1 = f'{mID0}_nav'
+            self.newConf(mID=mID1, mID0=mID0, kwargs=kwargs1)
+            mID1br = f'{mID1}_brute'
+            self.newConf(mID=mID1br, mID0=mID1, kwargs={'brain.olfactor_params.brute_force': True})
+            mID2 = f'{mID0}_nav_x2'
+            self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
+            mID2br = f'{mID2}_brute'
+            self.newConf(mID=mID2br, mID0=mID2, kwargs={'brain.olfactor_params.brute_force': True})
 
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
             mID1 = f'{mID0}_nav'
@@ -1013,15 +1023,17 @@ class LarvaConfDict:
 
         return full_dic
 
-    def diff_df(self, mIDs, ms=None):
+    def diff_df(self, mIDs, ms=None, dIDs=None):
         dic = {}
+        if dIDs is None:
+            dIDs=mIDs
         if ms is None:
             ms = [self.loadConf(mID) for mID in mIDs]
         ms = [dNl.flatten_dict(m) for m in ms]
         ks = dNl.unique_list(dNl.flatten_list([list(m.keys()) for m in ms]))
 
         for k in ks:
-            entry = {mID: m[k] if k in m.keys() else None for mID, m in zip(mIDs, ms)}
+            entry = {dID: m[k] if k in m.keys() else None for dID, m in zip(dIDs, ms)}
             l = list(entry.values())
             if all([a == l[0] for a in l]):
                 continue
@@ -1184,13 +1196,12 @@ class LarvaConfDict:
                 'brain.crawler_params.initial_freq',
             ]
         kwargs = {k: 'sample' for k in sample_ks}
-        # mIDs = []
         entries = {}
         for mID0, mID in zip(mID0s, mIDs):
-            m = self.newConf(mID0=mID0, mID=mID, kwargs=kwargs)
-            # mIDs.append(mID)
+            m0=dNl.copyDict(self.loadConf(mID0))
+            m=dNl.update_existingnestdict(m0,kwargs)
+            self.saveConf(conf=m, mID=mID)
             entries[mID] = m
-
         return entries
 
     def update_mdict(self, mdict, mmdic):

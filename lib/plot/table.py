@@ -68,7 +68,7 @@ def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_
 def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
                      name='mpl_table',header0=None,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
-                     adjust_kws=None,
+                     adjust_kws=None,highlighted_celltext_dict=None,
                      bbox=[0, 0, 1, 1], header_columns=0, axs=None, fig=None, highlighted_cells=None,
                      highlight_color='yellow', return_table=False, verbose=1,
                      **kwargs):
@@ -123,6 +123,8 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
     mpl.auto_set_font_size(False)
     mpl.set_fontsize(font_size)
 
+
+
     for k, cell in six.iteritems(mpl._cells):
         cell.set_edgecolor(edge_color)
         if k in highlight_idx:
@@ -141,6 +143,12 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
                      width=0.5, height=mpl._approx_text_height(),
                      text=header0)
         mpl._cells[(0, -1)].set_text_props(weight='bold', color='w', fontsize=font_size)
+
+    if highlighted_celltext_dict is not None:
+        for color, texts in highlighted_celltext_dict.items():
+            for (k0, k1), cell in mpl._cells.items():
+                if any([cell._text._text == text for text in texts]) :
+                    cell.set_facecolor(color)
 
 
     ax.set_title(title)

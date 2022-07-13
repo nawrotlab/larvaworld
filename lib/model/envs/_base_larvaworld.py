@@ -75,7 +75,7 @@ class BaseLarvaWorld:
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
         self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         self.tank_shape = self.unscaled_tank_shape * s
-        k = 0.97
+        k = 0.9
         self.tank_polygon = Polygon(self.tank_shape * k)
 
         if self.Box2D:

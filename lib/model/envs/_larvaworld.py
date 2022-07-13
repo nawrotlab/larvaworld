@@ -98,6 +98,7 @@ class LarvaWorld(BaseLarvaWorld):
 
         if 'border_list' in self.env_pars.keys() :
             for id, pars in self.env_pars.border_list.items():
+                # print(id,pars)
                 b = Border(model=self, unique_id=id, **pars)
                 self.add_border(b)
 

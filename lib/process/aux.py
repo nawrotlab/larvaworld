@@ -363,7 +363,8 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
     e[nam.max(f'phi_{preg.getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
     e[preg.getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
     try:
-        e[nam.min('attenuation')] = att0s / e[preg.getPar('pau_fov_mu')]
+        e['attenuation'] = att0s / e[preg.getPar('pau_fov_mu')]
+        # e[nam.min('attenuation')] = att0s / e[preg.getPar('pau_fov_mu')]<
         e[nam.max('attenuation')] = (att1s - att0s) / e[preg.getPar('pau_fov_mu')]
     except:
         pass

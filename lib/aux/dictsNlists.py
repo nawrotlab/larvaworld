@@ -224,6 +224,11 @@ def update_nestdict(dic0, dic):
     dic0_f.update(dic)
     return NestDict(unflatten(dic0_f))
 
+def update_existingnestdict(dic0, dic):
+    dic0_f = flatten_dict(dic0)
+    dic0_f = update_existingdict(dic0_f, dic)
+    return NestDict(unflatten(dic0_f))
+
 
 def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):
     if ids is None:
