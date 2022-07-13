@@ -163,10 +163,10 @@ class EvalRun:
                 # 'tortuosity': ['tor5', 'tor20']
             }
 
-        temp, target_data = arrange_evaluation(self.target, eval_metrics)
-        ev = {k: cNs.col_df(**dic) for k, dic in temp.items()}
-
-        return ev, target_data
+        return arrange_evaluation(self.target, eval_metrics)
+        # ev = {k: cNs.col_df(**dic) for k, dic in temp.items()}
+        #
+        # return ev, target_data
 
     def define_eval_args(self, ev):
         self.e_shorts = dNl.flatten_list(ev['end']['shorts'].values.tolist())

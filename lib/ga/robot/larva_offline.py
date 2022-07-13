@@ -46,9 +46,15 @@ class LarvaOffline:
                                                               self.body_bend, dt=self.model.dt,
                                                               ang_suppression=self.brain.locomotor.cur_ang_suppression)
 
-        d_or = self.ang_vel * dt
-        if np.abs(d_or) > np.pi:
+        ang_vel_min, ang_vel_max=(-np.pi + self.body_bend) / self.model.dt, (np.pi + self.body_bend) / self.model.dt
+        if self.ang_vel<ang_vel_min:
+            self.ang_vel=ang_vel_min
+            self.body_bend_errors+=1
+        elif self.ang_vel > ang_vel_max:
+            self.ang_vel = ang_vel_max
             self.body_bend_errors += 1
+
+        d_or = self.ang_vel * dt
         self.fo = (self.fo + d_or) % (2 * np.pi)
         self.dst = self.lin_vel * dt
         self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,

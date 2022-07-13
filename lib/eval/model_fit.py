@@ -168,22 +168,24 @@ def epar(e, k=None, par=None, average=True):
 
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
-                 offline=False,
+                 offline=False,show_screen=False,
                  sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=10, Nelits=3, Ngenerations=10,
                  **kwargs):
+    from lib.ga.util.functions import exclusion_funcs
+
     warnings.filterwarnings('ignore')
     if mID1 is None:
         mID1 = mID0
     kws = {
         'sim_params': preg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt),
-        'show_screen': False,
+        'show_screen': show_screen,
         'offline': offline,
         'save_to': save_to,
         'experiment': 'exploration',
         'env_params': 'arena_200mm',
-        'ga_select_kws': preg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations),
+        'ga_select_kws': preg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
         'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,
-                                      bestConfID=mID1, fitness_target_refID=refID)
+                                      bestConfID=mID1, fitness_target_refID=refID, exclude_func=exclusion_funcs['bend_errors'])
     }
 
     conf = preg.get_null('GAconf', **kws)
@@ -210,9 +212,41 @@ if __name__ == '__main__':
     from lib.aux import dictsNlists as dNl
     import pandas as pd
 
+    # kkk=preg.larva_conf_dict.loadConf('GAU_CON_SQ_DEF_fit')
+    # print(kkk)
+
+    # raise
+    # mmm=preg.larva_conf_dict.storedConf()
+    # print(mmm)
+    # print('GAU_CON_SQ_DEF' in mmm)
+
+
+    # raise
+
     refID = 'None.150controls'
-    mID0 = 'RE_NEU_SQ_DEF_fit'
+    # mID0 = 'GAU_SIN_SQ_DEF'
+    mID1 = 'GAU_SIN_SQ_DEF_fit'
+    # space_mkeys = ['crawler', 'turner']
     space_mkeys = ['crawler', 'turner', 'interference']
 
-    entry = optimize_mID(mID0=mID0, refID=refID, space_mkeys=space_mkeys, init='model',
-                         sim_ID=mID0, Nagents=24, Nelits=5, Ngenerations=20)
+    from lib.ga.util.functions import GA_evaluation
+
+    eval_metrics = {
+        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
+        'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                 'dsp_0_40_max', 'dsp_0_60_max', 'str_N'],
+        'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+        # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+        # 'epochs': ['run_t', 'pau_t'],
+        # 'tortuosity': ['tor5', 'tor20']
+    }
+
+    fit_dict=GA_evaluation(refID=refID, GA_eval_kws={
+        'eval_metrics':eval_metrics,
+        'cycle_curves':['b', 'fov', 'foa'],
+    })
+
+
+
+    entry = optimize_mID(mID0=mID1,mID1=mID1, refID=refID, space_mkeys=space_mkeys, init='model',show_screen=True,
+                         sim_ID=mID1, Nagents=50, Nelits=3, Ngenerations=20, dur=0.5, fit_dict=fit_dict)

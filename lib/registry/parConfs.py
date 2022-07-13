@@ -1131,12 +1131,18 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
-        from lib.ga.util.functions import arrange_fitness, fitness_funcs
-        fit_dict = arrange_fitness(fitness_func=fitness_funcs['distro_KS_interference'], fitness_target_refID=refID,
-                                   fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa'],
-                                                       'pooled_cycle_curves': ['fov', 'foa', 'b']
-                                                       },
-                                   dt=c.dt)
+        from lib.ga.util.functions import GA_optimization, fitness_funcs
+        fit_kws={
+            'eval_metrics':{
+        'angular kinematics': ['b', 'fov', 'foa'],
+        'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                 'dsp_0_40_max', 'dsp_0_60_max'],
+        'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+    },
+            'cycle_curves': ['fov', 'foa', 'b']
+        }
+
+        fit_dict = GA_optimization(refID,fitness_target_kws=fit_kws)
         entries = {}
         mIDs = []
         for Tmod in ['NEU', 'SIN']:
@@ -1157,10 +1163,18 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
-        from lib.ga.util.functions import arrange_fitness,fitness_funcs
-        fit_dict = arrange_fitness(fitness_func=fitness_funcs['distro_KS'], fitness_target_refID=refID,
-                                   fitness_target_kws={'eval_shorts': ['b', 'fov', 'foa', 'sa', 'sv']},
-                                   dt=c.dt)
+        from lib.ga.util.functions import GA_optimization, fitness_funcs
+        fit_kws = {
+            'eval_metrics': {
+                'angular kinematics': ['b', 'fov', 'foa'],
+                'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                         'dsp_0_40_max', 'dsp_0_60_max'],
+                'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+            },
+            'cycle_curves': ['fov', 'foa', 'b']
+        }
+
+        fit_dict = GA_optimization(refID, fitness_target_kws=fit_kws)
         entries = {}
         mIDs = []
         # for Cmod in ['GAU', 'CON']:

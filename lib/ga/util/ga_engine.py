@@ -12,7 +12,7 @@ import numpy as np
 
 from lib.aux import dictsNlists as dNl, naming as nam
 # from lib.ga.util.genome import Genome
-
+from lib.ga.util.functions import GA_optimization
 
 from lib.registry.pars import preg
 
@@ -75,6 +75,9 @@ class GAselector:
     def sort_genomes(self):
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
+
+
+
         if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
             self.best_genome = self.sorted_genomes[0]
             self.best_fitness = self.best_genome.fitness
@@ -160,7 +163,7 @@ class GAselector:
 
     def new_genome(self, gConf, mConf0):
         mConf = dNl.update_nestdict(mConf0, gConf)
-        return dNl.NestDict({'fitness': None, 'fitness_dict': None, 'gConf': gConf, 'mConf': mConf})
+        return dNl.NestDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
 
     def crossover(self, gConf_a, gConf_b):
         gConf={}
@@ -216,11 +219,17 @@ class GAbuilder(GAselector):
         else:
             self.progress_bar = None
         if fit_dict is None :
-            if fitness_target_kws is None:
-                fitness_target_kws = {}
-            from lib.ga.util.functions import arrange_fitness
-            fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt=self.model.dt,source_xy=self.model.source_xy)
+            try:
+                fit_dict=GA_optimization(fitness_target_refID, fitness_target_kws)
+            except:
+                if fitness_target_kws is None:
+                    fitness_target_kws = {}
+                from lib.ga.util.functions import arrange_fitness
+                fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt=self.model.dt,source_xy=self.model.source_xy)
         self.fit_dict =fit_dict
+
+
+
         self.exclude_func = exclude_func
         self.multicore = multicore
         self.scene = scene
@@ -229,6 +238,7 @@ class GAbuilder(GAselector):
         self.mConf0 = self.M.loadConf(base_model)
         self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.dataset0=self.init_dataset()
+        self.excluded_ids=[]
 
 
 
@@ -290,6 +300,13 @@ class GAbuilder(GAselector):
         s = pd.DataFrame(self.step_df, index=self.my_index, columns=self.df_columns)
         s = s.astype(float)
 
+        s.drop(self.excluded_ids, level='AgentID', axis=0, inplace=True)
+        e=e.drop(index=self.excluded_ids)
+        for id in self.excluded_ids:
+            self.genome_dict.pop(id, None)
+        self.dataset.config.agent_ids = s.index.unique('AgentID').values
+        self.dataset.config.N=len(self.dataset.config.agent_ids)
+
         # s[nam.scal('velocity')] = pd.concat([g / e['length'].loc[id] for id, g in s['velocity'].groupby('AgentID')])
         # s[preg.getPar('sv')] = (s[preg.getPar('v')].values.T / ls).T
 
@@ -301,10 +318,33 @@ class GAbuilder(GAselector):
         for k in self.fit_dict.keys:
             preg.compute(k, self.dataset)
 
-        for i, g in self.genome_dict.items():
+        self.fit_dict.func(s=self.dataset.step_data, gd=self.genome_dict)
+
+        # self.eval_grouped(self.dataset.step_data)
+
+
+        # fdict=self.dataset.step_data.groupby('AgentID').apply(self.eval_grouped)
+        #
+        #
+        #
+        # for i, g in self.genome_dict.items():
+        #     g['step']=self.dataset.step_data.xs(i, level='AgentID')
+
+        # self.eval(gd=self.genome_dict)
+
+        # self.fit_dict.pre_func(gd=self.genome_dict)
+        # for i, g in self.genome_dict.items():
+        #     if g.fitness is None:
+        #         gdict =self.fit_dict.robot_func(ss=self.dataset.step_data.xs(i, level='AgentID'))
+        #         g.fitness, g.fitness_dict = self.get_fitness(gdict)
+
+
+    def eval(self, gd):
+        for i, g in gd.items():
             if g.fitness is None:
-                gdict =self.fit_dict.robot_func(ss=self.dataset.step_data.xs(i, level='AgentID'))
+                gdict =self.fit_dict.robot_func(ss=g['step'])
                 g.fitness, g.fitness_dict = self.get_fitness(gdict)
+
 
     def build_generation(self):
         robots = []
@@ -361,7 +401,7 @@ class GAbuilder(GAselector):
                 for g in self.sorted_genomes if g.fitness_dict is not None]
 
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
-
+                self.excluded_ids = []
                 self.create_new_generation(self.space_dict)
                 if self.progress_bar:
                     self.progress_bar.update(self.generation_num)
@@ -374,6 +414,8 @@ class GAbuilder(GAselector):
 
     def destroy_robot(self, robot, excluded=False):
         if excluded:
+            print('excluded', robot.unique_id)
+            self.excluded_ids.append(robot.unique_id)
             robot.genome.fitness = -np.inf
         self.scene.remove(robot)
         self.robots.remove(robot)

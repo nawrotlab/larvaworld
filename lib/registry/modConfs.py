@@ -40,7 +40,7 @@ def Tur0():
 
     }
 
-    Tamp = {'initial_amp': {'lim': (0.1, 20.0), 'dv': 0.1, 'v0': 20.0,
+    Tamp = {'initial_amp': {'lim': (0.1, 200.0), 'dv': 0.1, 'v0': 20.0,
                             'k': 'A_T0', 'codename': 'pause_front_orientation_velocity_mean',
                             'disp': 'output amplitude', 'sym': '$A_{T}^{0}$',
                             'h': 'The initial activity amplitude of the TURNER module.'},

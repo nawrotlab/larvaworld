@@ -663,7 +663,7 @@ essay_dict = {
 
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-    E = Chemotaxis_Essay(video=True, N=5, dur=5, mode=4)
+    E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
     # E = DoublePatch_Essay(video=False, N=5, dur=5)
     ds = E.run()
     figs, results = E.anal()

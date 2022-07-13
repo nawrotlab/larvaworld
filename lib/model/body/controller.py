@@ -72,7 +72,6 @@ class BodySim(BodyManager, PhysicsController):
 
         self.body_bend = 0
         self.body_bend_errors = 0
-        self.ang_vel_over_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
         self.spineangles = [0.0]*self.Nangles
         self.rear_orientation_change = 0
@@ -209,22 +208,6 @@ class BodySim(BodyManager, PhysicsController):
         self.head_contacts_ground = value
 
 
-    # def position_head(self,hp0,ho0,lin_vel, ang_vel):
-    #     self.dst = lin_vel * self.model.dt
-    #     # hp0, ho0 = self.head.get_pose()
-    #     d_or = ang_vel * self.model.dt
-    #
-    #
-    #     if np.abs(d_or) > np.pi:
-    #         self.body_bend_errors += 1
-    #     ho1 = ho0 + d_or
-    #     k = np.array([math.cos(ho1), math.sin(ho1)])
-    #     hp1 = hp0 + k * self.dst
-    #     hf1=hp1 + k * self.seg_lengths[0] / 2
-    #     return hp1,ho1, hf1
-
-
-
 
 
 
@@ -240,7 +223,7 @@ class BodySim(BodyManager, PhysicsController):
             if lin_vel < 0:
                 return 0, 0, hf01
             counter += 1
-            print(counter, lin_vel)
+            # print(counter, lin_vel)
             return self.go_forward(lin_vel, k, hf01, delta, counter)
         else:
             return lin_vel, d,hf1
@@ -255,7 +238,7 @@ class BodySim(BodyManager, PhysicsController):
         hf01 = hr0 + k * l0
         # return hf1
         if not self.in_tank([hf01]):
-            print(counter, ang_vel, hf01)
+            # print(counter, ang_vel, hf01)
             if counter==0:
                 delta*=np.sign(ang_vel)
             ang_vel -=delta
@@ -287,11 +270,14 @@ class BodySim(BodyManager, PhysicsController):
 
         if ang_vel<ang_vel_min:
             ang_vel=ang_vel_min
-            self.ang_vel_over_errors+=1
+            self.body_bend_errors+=1
+            # print(f'{self.body_bend_errors}---------------')
         elif ang_vel > ang_vel_max:
             ang_vel = ang_vel_max
-            self.ang_vel_over_errors += 1
-
+            self.body_bend_errors += 1
+            # print(f'{self.body_bend_errors}++++++++++++++++')
+        # if lin_vel<0 :
+        #     print(self.unique_id, 000000000)
         if tank_contact:
 
             ang_vel, ho1, k, hf01=self.turn_head(ang_vel, hr0, ho0, l0, ang_range=(ang_vel_min, ang_vel_max))
@@ -307,6 +293,9 @@ class BodySim(BodyManager, PhysicsController):
         self.cum_dst += self.dst
         self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
                                                                        correction_coef=self.bend_correction_coef)
+
+        # if lin_vel<0 :
+        #     print(self.unique_id, 11111111111111111)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         if self.Nsegs>1 :
             for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
@@ -366,8 +355,7 @@ class BodySim(BodyManager, PhysicsController):
         #
         # # else :
         # #     d_or = ang_vel * self.model.dt
-        # #     if np.abs(d_or) > np.pi:
-        # #         self.body_bend_errors += 1
+        # #
         # #     ho1 = ho0 + d_or
         # #     k = np.array([math.cos(ho1), math.sin(ho1)])
         # #     hp1 = hp0 + k * dst

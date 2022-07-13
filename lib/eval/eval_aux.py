@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.stats import ks_2samp
 from shapely.geometry import Point
 
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.registry.pars import preg
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
@@ -93,6 +93,8 @@ def eval_distro_fast(ss, s_data, s_sym, mode='pooled', min_size=20):
                 spp, sspp = s_vs.dropna().values, ss[p].dropna().values
                 if spp.shape[0] > min_size and sspp.shape[0] > min_size:
                     Edistro[sym] = ks_2samp(spp, sspp)[0]
+
+
     return Edistro
 
 
@@ -129,6 +131,9 @@ def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
     error_dict['end'].index.name = 'metric'
     error_dict['step'].index.name = 'metric'
     return error_dict
+
+
+
 
 
 def adapt_conf(conf0, ee, cc):
@@ -277,8 +282,12 @@ def arrange_evaluation(d, evaluation_metrics):
         if len(Dshorts) > 0:
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
-    eval_data = dNl.NestDict({'step': Ddata, 'end': Edata})
-    return dic, eval_data
+    target_data = dNl.NestDict({'step': Ddata, 'end': Edata})
+
+    ev = {k: cNs.col_df(**v) for k, v in dic.items()}
+
+    return ev, target_data
+
 
 
 def prepare_sim_dataset(e, c, id, color):
