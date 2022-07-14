@@ -58,7 +58,7 @@ def calibration_plot(save_to=None, files=None):
 
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
     from lib.anal.fitting import test_boutGens
-    from lib.eval.eval_aux import sim_model
+    from lib.sim.eval.eval_aux import sim_model
     if refDataset is None:
         d = preg.loadRef(refID)
         d.load(step=False)
@@ -298,7 +298,7 @@ def result_summary(datasets, target, **kwargs):
 def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.plot.traj import track_annotated
     if d is None:
-        from lib.eval.eval_aux import sim_model
+        from lib.sim.eval.eval_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
     kws0 = NestDict({
         'datasets': [d],

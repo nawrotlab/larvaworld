@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from shapely.geometry import LineString, Point
 
-from lib.anal.rendering import InputBox
+from lib.screen.rendering import InputBox
 from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.model.DEB.substrate import Substrate
 

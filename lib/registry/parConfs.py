@@ -1098,7 +1098,7 @@ class LarvaConfDict:
         conf.mode = mode
         return conf
 
-    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], e=None, c=None,**kwargs):
+    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], save_to=None,e=None, c=None,**kwargs):
         if mID is None:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
@@ -1107,7 +1107,8 @@ class LarvaConfDict:
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
-
+        if save_to is None:
+            save_to=c.dir_dict.GAoptimization,
         m0 = self.loadConf(mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
@@ -1118,10 +1119,10 @@ class LarvaConfDict:
 
         self.saveConf(conf=m0, mID=mID, verbose=0)
 
-        from lib.eval.model_fit import optimize_mID
-
-        entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys,dt=c.dt,
-                             save_to=c.dir_dict.GAoptimization, sim_ID=mID, **kwargs)
+        from lib.sim.eval.model_fit import optimize_mID
+        print(c.dt)
+        entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys,dt=c.dt,refID=refID,
+                              sim_ID=mID, save_to=save_to,**kwargs)
         return entry
 
     def adapt_6mIDs(self, refID, e=None, c=None):
@@ -1131,7 +1132,7 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
-        from lib.ga.util.functions import GA_optimization, fitness_funcs
+        from lib.sim.ga.functions import GA_optimization
         fit_kws={
             'eval_metrics':{
         'angular kinematics': ['b', 'fov', 'foa'],
@@ -1163,7 +1164,7 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
-        from lib.ga.util.functions import GA_optimization, fitness_funcs
+        from lib.sim.ga.functions import GA_optimization
         fit_kws = {
             'eval_metrics': {
                 'angular kinematics': ['b', 'fov', 'foa'],
@@ -1283,9 +1284,97 @@ def epar(e, k=None, par=None, average=True, Nround=2):
 
 
 if __name__ == '__main__':
+    from lib.aux.combining import combine_pdfs
     from lib.registry.pars import preg
+    G=preg.graph_dict.dict
+    M=preg.larva_conf_dict
+    save_to = f'/home/panos/larvaworld_new/larvaworld/data/JovanicGroup/plots/18h/GA/tables'
+    mID0 = 'RE_NEU_PHI_DEF_nav'
 
-    refID = 'None.150controls'
-    d = preg.loadRef(refID)
-    d.load(step=False)
+    mIDs = ['Fed_18loco', 'Starved_18loco']
+    refIDs = ['18h.Fed', '18h.Starved']
+    # print(preg.storedConf('Ref'))
+
+    # for mID,refID in zip(mIDs,refIDs):
+    #     try:
+    #         _ = G['model table'](mID, save_to=save_to)
+    #     except:
+    #         print('TABLE FAIL', mID)
+    #     try:
+    #         _ = G['model summary'](refID=refID, mID=mID, Nids=10, save_to=save_to)
+    #     except:
+    #         print('SUMMARY FAIL', mID)
+    # combine_pdfs(file_dir=save_to, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
+    # raise
+
+    from lib.sim.ga.functions import GA_optimization
+    from lib.sim.eval.model_fit import optimize_mID
+
+    kws={'fitness_target_kws': {'eval_metrics': {
+        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
+        'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                 'dsp_0_40_max', 'dsp_0_60_max'],
+        'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+        # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+        # 'epochs': ['run_t', 'pau_t'],
+        # 'tortuosity': ['tor5', 'tor20']
+    },
+        'cycle_curves': ['sv', 'fov','rov', 'foa'] }}
+
+    # ds=[], ls=[]
+    # for refID in ['18h.Fed', '18h.Starved'] :
+    #     d = preg.loadRef(refID)
+    # # d = preg.loadRef(refID)
+    #     d.load(step=False)
+    #     # print(d.existing('end'))
+    #     # print(d.id, d.N, d.Nticks*d.dt/60, d.dt)
+    #     ds.append(d)
+    #     ls.append(d.id)
+    #
+    # kws={
+    #     'datasets' : ds,
+    #     'labels' :ls,
+    # }
     # d.modelConf_analysis()
+
+
+
+    entries={}
+    #
+    for mID,refID in zip(mIDs,refIDs):
+        entry=M.adapt_mID(refID=refID,mID0=mID0,mID=mID, space_mkeys=['turner', 'interference'],init='random', show_screen=True,
+                    save_to=f'{save_to}/{mID}2',Nagents=50, Nelits=5, Ngenerations=10, dur=0.4)
+        entries.update(entry)
+    #
+    # entries={}
+    # #
+    # for mID,refID in zip(mIDs,refIDs):
+    #     entry=optimize_mID(refID=refID,mID0=mID, space_mkeys=['turner', 'interference'],init='model', show_screen=True,
+    #                 save_to=f'{save_to}/{mID}2',sim_ID=mID, Nagents=20, Nelits=5, Ngenerations=10, dur=1,
+    #                 fit_dict = GA_optimization(fitness_target_refID=refID,
+    #                                            **kws))
+    #     entries.update(entry)
+
+    # space_mkeys = ['crawler', 'turner', 'interference']
+
+    # from lib.ga.util.functions import GA_optimization
+    # #
+    # eval_metrics = {
+    #     'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
+    #     'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+    #                              'dsp_0_40_max', 'dsp_0_60_max', 'str_N'],
+    #     'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+    #     # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+    #     # 'epochs': ['run_t', 'pau_t'],
+    #     # 'tortuosity': ['tor5', 'tor20']
+    # }
+
+    # fit_dict = GA_optimization(fitness_target_refID=refID, fitness_target_kws={
+    #     'eval_metrics': eval_metrics,
+    #     'cycle_curves': ['b', 'fov', 'foa'],
+    # })
+    #
+    # entry = optimize_mID(mID0=mID0, mID1=mID1, refID=refID, space_mkeys=space_mkeys, init='model', show_screen=True,
+    #                      sim_ID=mID1, Nagents=20, Nelits=0, Ngenerations=20, dur=0.6, fit_dict=fit_dict,
+    #                      exclusion_mode=False)
+

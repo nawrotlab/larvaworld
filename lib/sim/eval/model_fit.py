@@ -169,9 +169,9 @@ def epar(e, k=None, par=None, average=True):
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
                  offline=False,show_screen=False,exclusion_mode=False,
-                 sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=10, Nelits=3, Ngenerations=10,
+                 sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=30, Nelits=6, Ngenerations=20,
                  **kwargs):
-    from lib.ga.util.functions import exclusion_funcs
+    from lib.sim.eval.eval_funcs import exclusion_funcs
 
     warnings.filterwarnings('ignore')
     if mID1 is None:
@@ -192,14 +192,14 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     conf.env_params = preg.expandConf(id=conf.env_params, conftype='Env')
 
     if fit_dict is None and refID is not None:
-        from lib.ga.util.functions import approximate_fit_dict
+        from lib.sim.ga.functions import approximate_fit_dict
         fit_dict = approximate_fit_dict(refID, space_mkeys)
 
     conf.ga_build_kws.fit_dict = fit_dict
 
     from lib.anal.argparsers import adjust_sim
     conf.sim_params = adjust_sim(exp=conf.experiment, conf_type='Ga', sim=conf.sim_params)
-    from lib.ga.util.ga_launcher import GAlauncher
+    from lib.sim.ga.ga_launcher import GAlauncher
 
     GA = GAlauncher(**conf)
     best_genome = GA.run()
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     # space_mkeys = ['crawler', 'turner']
     space_mkeys = ['crawler', 'turner', 'interference']
 
-    from lib.ga.util.functions import GA_optimization
+    from lib.sim.ga.functions import GA_optimization
 
     eval_metrics = {
         'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],

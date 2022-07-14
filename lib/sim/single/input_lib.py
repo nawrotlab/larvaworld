@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 
-from lib.anal.rendering import SimulationScale
+from lib.screen.rendering import SimulationScale
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
 from lib.registry.pars import preg

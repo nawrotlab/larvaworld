@@ -9,7 +9,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')
-from lib.ga.util.ga_launcher import GAlauncher
+from lib.sim.ga.ga_launcher import GAlauncher
 from lib.conf.stored.conf import kConfDict
 from lib.anal.argparsers import MultiParser, update_exp_conf
 

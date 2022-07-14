@@ -3,9 +3,9 @@ import pygame
 
 from math import sin, cos, pi
 
-from lib.ga.exception.collision_exception import Collision
-from lib.ga.geometry.rot_triangle import RotTriangle
-from lib.ga.util.color import Color
+from lib.aux.sim_aux import Collision
+from lib.model.space.rot_triangle import RotTriangle
+from lib.aux.color_util import Color
 
 
 class DifferentialDriveRobot(RotTriangle):

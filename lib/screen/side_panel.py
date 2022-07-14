@@ -1,8 +1,8 @@
 import pygame
 import numpy as np
 
-from lib.ga.util.color import Color
-from lib.ga.util.time_util import TimeUtil
+from lib.aux.color_util import Color
+from lib.aux.time_util import TimeUtil
 
 
 class SidePanel:

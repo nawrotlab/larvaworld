@@ -3,10 +3,8 @@ import random
 
 import numpy as np
 
-from lib.ga.geometry.point import Point
-from lib.ga.geometry.util import detect_nearest_obstacle, radar_tuple
 from lib.model.body.body import LarvaBody
-from lib.aux import dictsNlists as dNl, ang_aux, sim_aux
+from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
 
 class PhysicsController :
     def __init__(self, lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=0.5,
@@ -390,11 +388,11 @@ class BodySim(BodyManager, PhysicsController):
             return False
         else:
             x,y=self.pos
-            p0=Point(x,y)
+            p0=shapely_aux.Point(x,y)
             d0 = self.sim_length / 4
             oM = self.head.get_orientation()
-            sensor_ray = radar_tuple(p0=p0, angle=oM, distance=d0)
-            min_dst, nearest_obstacle = detect_nearest_obstacle(self.model.border_walls, sensor_ray,p0)
+            sensor_ray = shapely_aux.radar_tuple(p0=p0, angle=oM, distance=d0)
+            min_dst, nearest_obstacle = shapely_aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray,p0)
 
 
             if min_dst is None:
@@ -566,8 +564,8 @@ class BodySim(BodyManager, PhysicsController):
             else:
                 s = self.sim_length / 1000
                 L, R = self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
-                Ld, Rd = self.model.tank_polygon.exterior.distance(Point(L)), self.model.tank_polygon.exterior.distance(
-                    Point(R))
+                Ld, Rd = self.model.tank_polygon.exterior.distance(shapely_aux.Point(L)), self.model.tank_polygon.exterior.distance(
+                    shapely_aux.Point(R))
                 Ld, Rd = Ld / s, Rd / s
                 LRd = Ld - Rd
                 ang_vel += dd * LRd

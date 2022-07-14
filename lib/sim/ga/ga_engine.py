@@ -12,13 +12,13 @@ import numpy as np
 
 from lib.aux import dictsNlists as dNl, naming as nam
 # from lib.ga.util.genome import Genome
-from lib.ga.util.functions import GA_optimization
+from lib.sim.ga.functions import GA_optimization
 
 from lib.registry.pars import preg
 
-from lib.ga.robot.larva_robot import LarvaRobot
+from lib.model.robot.larva_robot import LarvaRobot
 
-from lib.ga.util.time_util import TimeUtil
+from lib.aux.time_util import TimeUtil
 
 
 class GAselector:
@@ -75,7 +75,7 @@ class GAselector:
     def sort_genomes(self):
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
-        print([g.fitness for g in self.sorted_genomes])
+        # print([g.fitness for g in self.sorted_genomes])
 
 
         if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
@@ -84,6 +84,10 @@ class GAselector:
 
             if self.bestConfID is not None:
                 self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID, verbose=self.verbose)
+                print(self.bestConfID, self.best_fitness)
+                print()
+                print(self.M.loadConf(self.bestConfID).brain.turner_params)
+                print()
         end_generation_time = TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
 
@@ -232,7 +236,7 @@ class GAbuilder(GAselector):
                 except:
                     if fitness_target_kws is None:
                         fitness_target_kws = {}
-                    from lib.ga.util.functions import arrange_fitness
+                    from lib.sim.ga.functions import arrange_fitness
                     fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt=self.model.dt,source_xy=self.model.source_xy)
             self.fit_dict =fit_dict
             self.dataset0=self.init_dataset()
@@ -294,6 +298,7 @@ class GAbuilder(GAselector):
         for k in self.fit_dict.keys:
             preg.compute(k, self.dataset)
         self.fit_dict.func(s=self.dataset.step_data, gd=self.genome_dict)
+        self.genome_dict= {i: g for i, g in self.genome_dict.items() if not np.isnan(g.fitness) and not any([np.isnan(v) for k,v in g.fitness_dict.items()])}
 
 
 
@@ -421,7 +426,7 @@ class GAbuilder(GAselector):
         if excluded:
 
             self.excluded_ids.append(robot.unique_id)
-            print('# excluded : ', len(self.excluded_ids))
+            # print('# excluded : ', len(self.excluded_ids))
             # if len(self.excluded_ids)>=self.Nagents_min
 
 

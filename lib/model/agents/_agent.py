@@ -3,7 +3,7 @@ from scipy.stats import multivariate_normal
 from shapely.geometry import Point
 
 from lib.aux.colsNstr import colorname2tuple
-from lib.anal.rendering import InputBox
+from lib.screen.rendering import InputBox
 
 
 class LarvaworldAgent:

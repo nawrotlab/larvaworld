@@ -7,10 +7,10 @@ import numpy as np
 from lib.aux.sim_aux import get_source_xy
 from lib.registry.pars import preg
 
-from lib.ga.scene.scene import Scene
-from lib.ga.util.color import Color
-from lib.ga.util.ga_engine import GAbuilder
-from lib.ga.util.time_util import TimeUtil
+from lib.model.space.scene import Scene
+from lib.aux.color_util import Color
+from lib.sim.ga.ga_engine import GAbuilder
+from lib.aux.time_util import TimeUtil
 from lib.model.envs._base_larvaworld import BaseLarvaWorld
 
 
@@ -58,19 +58,19 @@ class BaseGAlauncher(BaseLarvaWorld):
         if caption is None:
             caption = f'GA {experiment} : {self.id}'
         self.caption = caption
-        self.scene_file = f'{preg.path_dict["GA_SCENE"]}/{scene}.txt'
+        self.scene_file = f'{preg.path_dict["ga_scene"]}/{scene}.txt'
         self.scene_speed = scene_speed
         self.obstacles = []
 
     def build_box(self, x, y, size, color):
-        from lib.ga.scene.box import Box
+        from lib.model.space.obstacle import Box
 
         box = Box(x, y, size, color)
         self.obstacles.append(box)
         return box
 
     def build_wall(self, point1, point2, color):
-        from lib.ga.scene.wall import Wall
+        from lib.model.space.obstacle import Wall
         wall = Wall(point1, point2, color)
         self.obstacles.append(wall)
         return wall
@@ -109,11 +109,11 @@ class GAlauncher(BaseGAlauncher):
     def __init__(self, ga_build_kws, ga_select_kws, show_screen=True, **kwargs):
         super().__init__(**kwargs)
         if self.offline:
-            from lib.ga.robot.larva_offline import LarvaOffline
+            from lib.model.robot.larva_offline import LarvaOffline
             ga_build_kws.robot_class = LarvaOffline
             show_screen = False
         elif ga_build_kws.robot_class is None :
-            from lib.ga.robot.larva_robot import LarvaRobot
+            from lib.model.robot.larva_robot import LarvaRobot
             ga_build_kws.robot_class = LarvaRobot
         self.ga_build_kws = ga_build_kws
         self.ga_select_kws = ga_select_kws
@@ -191,7 +191,7 @@ class GAlauncher(BaseGAlauncher):
 
         self.engine = GAbuilder(scene=self.scene, model=self, **kwargs)
         if self.show_screen:
-            from lib.ga.util.side_panel import SidePanel
+            from lib.screen.side_panel import SidePanel
 
             from pygame import display
             if not self.offline:

@@ -302,6 +302,10 @@ def cycle_curve_dict(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     strides = detect_strides(s[preg.getPar('sv')], dt, return_extrema=False, return_runs=False)
     da = np.array([np.trapz(s[preg.getPar('fov')][s0:s1]) for ii, (s0, s1) in enumerate(strides)])
     dic = {sh: mean_stride_curve(s[preg.getPar(sh)], strides, da) for sh in shs}
+    # for sh,msc in dic.items():
+    #     if any(np.isnan(strides)):
+    #         print(any(np.isnan(strides)))
+    #         print(any(np.isnan(da)))
     return dNl.NestDict(dic)
 
 

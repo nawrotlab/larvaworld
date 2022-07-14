@@ -12,7 +12,7 @@ import seaborn as sns
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, data_aux
-from lib.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
+from lib.sim.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, sim_models, RSS_dic, std_norm, minmax
 
 

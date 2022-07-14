@@ -1,10 +1,32 @@
+import math
 import pygame
-
-from lib.ga.geometry.rot_surface import RotSurface
-from lib.ga.util.color import Color
+from lib.aux.color_util import Color
 
 
-class Light(RotSurface):
+class RotSurface:
+
+    def __init__(self, x, y, direction, surf):
+        self.x = x
+        self.y = y
+        self.direction = direction
+        self.surf = surf
+        self.speed = 0
+
+    def move(self):
+        dx = self.speed * math.cos(self.direction)
+        dy = self.speed * math.sin(self.direction)
+        self.x += dx
+        self.y += dy
+
+    def draw(self, scene):
+        degrees = math.degrees(self.direction)
+        rotated_surf = pygame.transform.rotate(self.surf, degrees)
+        rot_rect = rotated_surf.get_rect()
+        rot_rect.center = (self.x, self.y)
+        scene.screen.blit(rotated_surf, rot_rect)
+
+
+class LightSource(RotSurface):
 
     def __init__(self, x, y, emitting_power, color_fg, color_bg):
         self.emitting_power = emitting_power
@@ -31,3 +53,6 @@ class Light(RotSurface):
             text = font.render(str(self.label), 1, Color.YELLOW, Color.DARK_GRAY)
             text_pos = pygame.Rect(self.x + (self.size / 2), self.y + (self.size / 2), 50, 50)
             screen.blit(text, text_pos)
+
+
+

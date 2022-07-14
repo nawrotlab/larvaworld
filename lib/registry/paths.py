@@ -30,6 +30,7 @@ def build_path_dict() :
         'model_summaries': f'{MF}/model_summaries',
         'exp_figs': f'{MF}/exp_figures',
         'icons': f'{MF}/icons',
+        'ga_scene': f'{MF}/ga_scenes',
     }
 
     par_paths = {
@@ -79,7 +80,7 @@ def build_path_dict() :
         'ESSAY': f'{F0}/data/SimGroup/essays',
         'RUN': f'{F0}/data/SimGroup/single_runs',
         'SIM': f'{F0}/data/SimGroup',
-        'GA_SCENE': f'{F0}/lib/ga/saved_scenes',
+
         'DATA': f'{F0}/data',
         'GUITEST': f'{GF}/gui_speed_test.csv',
     }

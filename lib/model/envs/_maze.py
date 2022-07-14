@@ -2,10 +2,11 @@ import random
 from matplotlib.patches import Circle
 from shapely.geometry import LineString, Point
 
-import lib.ga.geometry.point
-import lib.ga.scene.wall
 from lib.aux.dictsNlists import group_list_by_n
 import lib.aux.colsNstr as fun
+from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
+
+
 
 class Cell:
     """A cell in the maze.
@@ -180,7 +181,7 @@ class Maze:
 
 class Border:
     def __init__(self, model, points=None, unique_id=None, width=0.001, default_color='black'):
-
+        from lib.model.space.obstacle import Wall
         self.model=model
         if type(default_color)==str :
             default_color=fun.colorname2tuple(default_color)
@@ -199,9 +200,9 @@ class Border:
         for l in self.border_lines :
             # print(list(l.coords))
             (x1, y1),(x2,y2)=list(l.coords)
-            point1 = lib.ga.geometry.point.Point(x1, y1)
-            point2 = lib.ga.geometry.point.Point(x2, y2)
-            wall=lib.ga.scene.wall.Wall(point1, point2, color=self.default_color)
+            point1 = shapely_aux.Point(x1, y1)
+            point2 = shapely_aux.Point(x2, y2)
+            wall=Wall(point1, point2, color=self.default_color)
             # edges = [[point1, point2]]
             self.border_walls.append(wall)
 

@@ -1,12 +1,11 @@
 import pygame
 import numpy as np
 
-from lib.ga.geometry.point import Point
-from lib.ga.scene.box import Box
-from lib.ga.scene.light import Light
-from lib.ga.scene.wall import Wall
-from lib.ga.util.color import Color
-from lib.ga.util.time_util import TimeUtil
+from lib.aux.color_util import Color
+from lib.aux.time_util import TimeUtil
+from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
+from lib.model.space.obstacle import Wall,Box
+from lib.model.space.rot_surface import LightSource
 
 
 class Scene:
@@ -133,8 +132,8 @@ class Scene:
                     x2 = int(words[3])
                     y2 = int(words[4])
 
-                    point1 = Point(x1, y1)
-                    point2 = Point(x2, y2)
+                    point1 = shapely_aux.Point(x1, y1)
+                    point2 = shapely_aux.Point(x2, y2)
                     wall = Wall(point1, point2, Color.random_bright())
                     wall.label = line_number
                     scene.put(wall)
@@ -142,7 +141,7 @@ class Scene:
                     x = int(words[1])
                     y = int(words[2])
                     emitting_power = int(words[3])
-                    light = Light(x, y, emitting_power, Color.YELLOW, Color.BLACK)
+                    light = LightSource(x, y, emitting_power, Color.YELLOW, Color.BLACK)
                     light.label = line_number
                     scene.put(light)
 

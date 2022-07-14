@@ -346,3 +346,11 @@ def sample_group(sample=None, N=1, sample_ps=[], e=None):
         return {}
     dic = {p: v for p, v in zip(ps, vs)}
     return dic
+
+
+
+class Collision(Exception):
+
+    def __init__(self, object1, object2):
+        self.object1 = object1
+        self.object2 = object2

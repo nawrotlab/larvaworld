@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-from lib.ga.geometry.rot_surface import RotSurface
+from lib.model.space.rot_surface import RotSurface
 
 
 class RotTriangle(RotSurface):

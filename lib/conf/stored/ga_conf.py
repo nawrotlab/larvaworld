@@ -8,9 +8,7 @@ from scipy.stats import ks_2samp
 
 from lib.registry.pars import preg
 import lib.aux.dictsNlists as dNl
-from lib.aux.xy_aux import eudi5x
-from lib.ga.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
-from lib.eval.eval_aux import RSS
+from lib.model.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 
 
@@ -19,9 +17,7 @@ from lib.eval.eval_aux import RSS
 
 def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
             m1=None, sel={}, build={}, fitID=None, init='random', excludeID=None, robot_class=LarvaRobot, **kwargs):
-    from lib.ga.util.functions import fitness_funcs
-    from lib.ga.util.functions import fitness_step_funcs
-    from lib.ga.util.functions import exclusion_funcs
+    from lib.sim.eval.eval_funcs import exclusion_funcs, fitness_funcs, fitness_step_funcs
 
     build_kws = {
         'fitness_target_refID': refID,

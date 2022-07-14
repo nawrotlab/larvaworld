@@ -3,11 +3,9 @@ import random
 import pygame
 from math import atan2, sin, cos
 
-from lib.ga.exception.collision_exception import Collision
-from lib.ga.geometry.point import Point
-from lib.ga.geometry.util import detect_nearest_obstacle
-from lib.ga.scene.light import Light
-from lib.ga.util.color import Color
+from lib.aux.color_util import Color
+from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
+from lib.model.space.rot_surface import LightSource
 
 
 class Sensor:
@@ -42,7 +40,7 @@ class LightSensor(Sensor):
         total_value = 0
 
         for obj in self.scene.objects:
-            if issubclass(type(obj), Light):
+            if issubclass(type(obj), LightSource):
                 light = obj
 
                 # cambio SDR
@@ -99,13 +97,13 @@ class ProximitySensor(Sensor):
 
         x, y = pos
         angle = -direction - self.delta_direction
-        p0 = Point(x, y)
-        p1 = Point(
+        p0 = shapely_aux.Point(x, y)
+        p1 = shapely_aux.Point(
             x + cos(angle) * self.max_distance,
             y + sin(angle) * self.max_distance)
         # sensor_ray = radar_tuple(p0=p0, angle=angle, distance=self.max_distance)
         # print('m',x, y,sensor_ray[1].x,sensor_ray[1].y, self.max_distance/self.robot.model.scene._scale[0, 0],self.robot.real_length)
-        min_dst, nearest_obstacle = detect_nearest_obstacle(self.scene.objects, (p0,p1), p0)
+        min_dst, nearest_obstacle = shapely_aux.detect_nearest_obstacle(self.scene.objects, (p0,p1), p0)
 
         if min_dst is None:
             # no obstacle detected
@@ -113,7 +111,7 @@ class ProximitySensor(Sensor):
         else:
             # check collision
             if min_dst < self.collision_distance:
-                raise Collision(self.robot, nearest_obstacle)
+                raise sim_aux.Collision(self.robot, nearest_obstacle)
 
             proximity_value = 1 / random.gauss(min_dst, self.error * min_dst)
 

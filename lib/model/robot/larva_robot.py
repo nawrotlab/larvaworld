@@ -1,8 +1,8 @@
 
-from lib.ga.exception.collision_exception import Collision
+from lib.aux.sim_aux import Collision
 
 
-from lib.ga.util.color import Color
+from lib.aux.color_util import Color
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
 
@@ -82,8 +82,8 @@ class ObstacleLarvaRobot(LarvaRobot):
     def build_sensorimotor(self, sensor_delta_direction, sensor_saturation_value, obstacle_sensor_error,
                            sensor_max_distance,
                            motor_ctrl_coefficient, motor_ctrl_min_actuator_value):
-        from lib.ga.robot.motor_controller import MotorController, Actuator
-        from lib.ga.robot.sensor import ProximitySensor
+        from lib.model.robot.motor_controller import MotorController, Actuator
+        from lib.model.robot.sensor import ProximitySensor
         S_kws = {
             'saturation_value': sensor_saturation_value,
             'error': obstacle_sensor_error,

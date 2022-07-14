@@ -19,7 +19,7 @@ import lib.aux.xy_aux
 from lib.model.agents._larva_sim import LarvaSim
 from lib.aux.collecting import NamedRandomActivation
 from lib.model.envs._space import FoodGrid, WindScape
-import lib.anal.rendering as ren
+import lib.screen.rendering as ren
 import lib.aux.colsNstr as fun
 from lib.model.envs._maze import Border
 from lib.model.agents._agent import LarvaworldAgent

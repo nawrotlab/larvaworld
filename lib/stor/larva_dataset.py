@@ -1012,7 +1012,7 @@ class LarvaDataset:
             dIDs = mIDs
         if save_to is None:
             save_to=self.dir_dict.evaluation
-        from lib.eval.evaluation import EvalRun
+        from lib.sim.eval.evaluation import EvalRun
         evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
                         save_to=save_to,
                         bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
