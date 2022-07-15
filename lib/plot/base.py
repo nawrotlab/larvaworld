@@ -6,15 +6,22 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
-
-
-
+from pint.matplotlib import PintAxisInfo, PintConverter
 
 from lib.aux import dictsNlists as dNl
 
 from lib.plot.aux import dual_half_circle, plot_config, process_plot
 
+plt_conf = {'axes.labelsize': 20,
+            'axes.titlesize': 25,
+            'figure.titlesize': 25,
+            'xtick.labelsize': 20,
+            'ytick.labelsize': 20,
+            'legend.fontsize': 20,
+            'legend.title_fontsize': 20}
+plt.rcParams.update(plt_conf)
 
+PintAxisInfo
 
 class BasePlot:
     def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),verbose=1,
@@ -174,6 +181,33 @@ class BasePlot:
             X = self.text_x0 if ax in self.x0s else ax.get_position().x0 + dx
             Y = self.text_y0 if ax in self.y0s else ax.get_position().y1 + dy
             self.fig.text(X, Y, text, size=30, weight='bold')
+
+    def conf_fig(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
+                xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
+                yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
+                ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
+                xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
+                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None,
+                xMaxFix=False, leg_loc=None,
+                leg_handles=None, xvis=None, yvis=None, zvis=None,adjust_kws=None,align=None,
+                title=None, title_kws={}):
+        if title is not None:
+            pairs={
+                # 't':'t',
+                'w':'fontweight',
+                's':'fontsize',
+                # 't':title_kws.t,
+            }
+            kws=dNl.replace_in_dict(title_kws, pairs, replace_key=True)
+            self.fig.suptitle(t=title,**kws)
+        if adjust_kws is not None :
+            self.adjust(**adjust_kws)
+        if align is not None :
+            if type(align)==list :
+                ax_list=align
+            else :
+                ax_list=self.axs[:]
+            self.fig.align_ylabels(ax_list)
 
 
 class ParPlot(BasePlot):

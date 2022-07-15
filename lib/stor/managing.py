@@ -68,18 +68,20 @@ def build_dataset(datagroup_id, id, target_dir, larva_groups={},**kwargs):
     }
 
     warnings.filterwarnings('ignore')
+    print(f'Initializing {datagroup_id} format-specific dataset import...')
+    shutil.rmtree(target_dir, ignore_errors=True)
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
+    d = LarvaDataset(dir=target_dir, id=id, metric_definition=g.enrichment.metric_definition,
+                     env_params=preg.get_null('env_conf', arena=g.tracker.arena),
+                     load_data=False, larva_groups=larva_groups, **g.tracker.resolution)
+    kws0 = {
+        'dataset': d,
+        'build_conf': g.tracker.filesystem,
+        **kwargs
+    }
     try:
-        print(f'Initializing {datagroup_id} format-specific dataset import...')
-        shutil.rmtree(target_dir, ignore_errors=True)
-        g = preg.loadConf(id=datagroup_id, conftype='Group')
-        d = LarvaDataset(dir=target_dir, id=id, metric_definition=g.enrichment.metric_definition,
-                         env_params=preg.get_null('env_conf', arena=g.tracker.arena),
-                         load_data=False, larva_groups=larva_groups, **g.tracker.resolution)
-        kws0 = {
-            'dataset': d,
-            'build_conf': g.tracker.filesystem,
-            **kwargs
-        }
+
+
         step, end = func_dict[datagroup_id](**kws0)
         d.set_data(step=step, end=end)
 

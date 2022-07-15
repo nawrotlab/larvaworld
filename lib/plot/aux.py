@@ -10,14 +10,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 from lib.aux import dictsNlists as dNl
 from lib.aux.colsNstr import N_colors
 
-plt_conf = {'axes.labelsize': 20,
-            'axes.titlesize': 25,
-            'figure.titlesize': 25,
-            'xtick.labelsize': 20,
-            'ytick.labelsize': 20,
-            'legend.fontsize': 20,
-            'legend.title_fontsize': 20}
-plt.rcParams.update(plt_conf)
+
 suf = 'pdf'
 
 

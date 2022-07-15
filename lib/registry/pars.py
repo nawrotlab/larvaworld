@@ -166,7 +166,7 @@ class ParRegistry:
             for k, v in d.items():
                 if not isinstance(v, dict):
                     null[k] = v
-                elif 'k' in v.keys() or 'h' in v.keys() or 't' in v.keys():
+                elif 'k' in v.keys() or 'h' in v.keys() or 'dtype' in v.keys():
                     null[k] = None if key not in v.keys() else v[key]
                 else:
                     null[k] = v0(v)

@@ -20,6 +20,15 @@ class LarvaDataset:
         self.larva_dicts = {}
         self.configure_body()
         self.define_linear_metrics()
+        self.h5_kdic = dNl.NestDict({
+            'contour': dNl.flatten_list(self.contour_xy),
+            'midline': dNl.flatten_list(self.points_xy),
+            'epochs': self.epochs_ps,
+            'base_spatial': self.base_spatial_ps,
+            'angular': dNl.unique_list(self.angles + self.ang_pars),
+            'dspNtor': self.dspNtor_ps,
+        })
+        self.load_h5_kdic = dNl.NestDict({h5k: "w" for h5k in self.h5_kdic.keys()})
         if load_data:
             try:
                 self.load()
@@ -32,20 +41,22 @@ class LarvaDataset:
         # try:
         if os.path.exists(self.dir_dict.conf):
             config = dNl.load_dict(self.dir_dict.conf, use_pickle=False)
+            # raise
 
         else:
             if metric_definition is None:
-                md=preg.get_null('metric_definition')
-                metric_definition =dNl.NestDict({
-                    'spatial': {
-                        'hardcoded': md['spatial'],
-                        'fitted': None,
-                    },
-                    'angular': {
-                        'hardcoded': md['angular'],
-                        'fitted': None
-                    }
-                })
+                metric_definition = preg.get_null('metric_definition')
+            metric_definition = dNl.NestDict({
+                'spatial': {
+                    'hardcoded': metric_definition['spatial'],
+                    'fitted': None,
+                },
+                'angular': {
+                    'hardcoded': metric_definition['angular'],
+                    'fitted': None
+                }
+            })
+
             group_ids = list(larva_groups.keys())
             samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
             if len(group_ids) == 1:
@@ -153,17 +164,30 @@ class LarvaDataset:
     def load(self, step=True, end=True, food=False,
              h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
         D = self.dir_dict
-        store = pd.HDFStore(D.data_h5)
-
         if step:
+            store = pd.HDFStore(D.data_h5)
             s = store['step']
+            store.close()
+            stored_ps = []
             for h5_k in h5_ks:
-                try:
-                    temp = pd.HDFStore(D[h5_k])
-                    s = s.join(temp[h5_k])
+                if os.path.exists(D[h5_k]):
+                    temp = pd.HDFStore(D[h5_k], mode='r')
+                    ss=temp[h5_k]
                     temp.close()
-                except:
-                    pass
+                    ps=[p for p in ss.columns.values if p not in s.columns.values]
+                    # print(ps)
+
+                    if len(ps)>0 :
+                        stored_ps+=ps
+                        s = s.join(ss[ps])
+                    # print(s[ps])
+                    self.load_h5_kdic[h5_k] = "a"
+                else:
+                    self.load_h5_kdic[h5_k] = "w"
+            # print(ps)
+            # print(stored_ps)
+            # print(s.columns.values)
+            # print([p in s.columns.values for p in stored_ps])
             s.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = s.index.unique('AgentID').values
             self.num_ticks = s.index.unique('Step').size
@@ -175,11 +199,17 @@ class LarvaDataset:
                 self.endpoint_data.sort_index(inplace=True)
                 endpoint.close()
             except:
+                store = pd.HDFStore(D.data_h5)
                 self.endpoint_data = store['end']
+                store.close()
         if food:
+            store = pd.HDFStore(D.data_h5)
             self.food_endpoint_data = store['food']
+            store.close()
             self.food_endpoint_data.sort_index(inplace=True)
-        store.close()
+
+
+        # print(self.load_result_dict)
 
     def save_vel_definition(self, component_vels=True, add_reference=True):
         from lib.process.calibration import comp_stride_variation, comp_segmentation
@@ -210,36 +240,37 @@ class LarvaDataset:
     def save(self, step=True, end=True, food=False,
              h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'],
              add_reference=False):
-        h5_kdic = dNl.NestDict({
-            'contour': dNl.flatten_list(self.contour_xy),
-            'midline': dNl.flatten_list(self.points_xy),
-            'epochs': self.epochs_ps,
-            'base_spatial': self.base_spatial_ps,
-            'angular': dNl.unique_list(self.angles + self.ang_pars),
-            'dspNtor': self.dspNtor_ps,
-        })
+
+
 
         D = self.dir_dict
-        store = pd.HDFStore(D.data_h5)
+
         if step:
             stored_ps = []
             s = self.step_data
             for h5_k in h5_ks:
-                pps = [p for p in h5_kdic[h5_k] if p in s.columns]
-                temp = pd.HDFStore(D[h5_k])
-                temp[h5_k] = s[pps]
-                temp.close()
-                stored_ps += pps
 
-            store['step'] = s.drop(stored_ps, axis=1, errors='ignore')
+                pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
+                if len(pps)>0:
+                    temp = pd.HDFStore(D[h5_k], mode=self.load_h5_kdic[h5_k])
+                    temp[h5_k] = s[pps]
+                    temp.close()
+                    stored_ps += pps
+
+            ss=s.drop(stored_ps, axis=1, errors='ignore')
+            store = pd.HDFStore(D.data_h5)
+            store['step'] = ss
+            store.close()
         if end:
             endpoint = pd.HDFStore(D.endpoint_h5)
             endpoint['end'] = self.endpoint_data
             endpoint.close()
         if food:
+            store = pd.HDFStore(D.data_h5)
             store['food'] = self.food_endpoint_data
+            store.close()
         self.save_config(add_reference=add_reference)
-        store.close()
+
         print(f'Dataset {self.id} stored.')
 
     @property
@@ -385,6 +416,9 @@ class LarvaDataset:
         for k, v in self.config.items():
             if isinstance(v, np.ndarray):
                 self.config[k] = v.tolist()
+        # fc=dNl.flatten_dict(self.config)
+        # for k,v in fc.items():
+        #     print(k, type(v))
         dNl.save_dict(self.config, self.dir_dict.conf, use_pickle=False)
         if add_reference:
             if refID is None:
@@ -516,7 +550,7 @@ class LarvaDataset:
             vis_kwargs = preg.get_null('visualization', mode='video')
         if s0 is None and e0 is None:
             if not hasattr(self, 'step_data'):
-                self.load()
+                self.load(h5_ks=['contour', 'midline', 'base_spatial'])
             s0, e0 = self.step_data, self.endpoint_data
         dic, pars, track_point = self.get_pars_list(track_point, s0, draw_Nsegs)
         s, e, ids, traj_color = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
@@ -578,9 +612,20 @@ class LarvaDataset:
         if type(id) == int:
             id = self.config.agent_ids[id]
         s0, e0 = self.load_agent(id)
+
+
+
         if s0 is None:
-            self.save_agents(ids=[id])
-            s0, e0 = self.load_agent(id)
+
+            try:
+                if not hasattr(self, 'step_data'):
+                    self.load(h5_ks=['contour', 'midline', 'base_spatial'])
+                s00, e00 = self.step_data, self.endpoint_data
+                s0 = s00.loc[(slice(None), [id]), (slice(None))]
+                e0=e00.loc[[id]]
+            except :
+                self.save_agents(ids=[id])
+                s0, e0 = self.load_agent(id)
         env_params = self.env_params
         if close_view:
             env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
@@ -634,7 +679,7 @@ class LarvaDataset:
 
         ang = ['front_orientation', 'rear_orientation', 'head_orientation', 'tail_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang) + nam.min(nam.vel(ang)) + nam.max(
-            nam.vel(ang))
+            nam.vel(ang))+nam.orient(self.segs)
         self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
 
     def define_paths(self, dir):
@@ -682,7 +727,7 @@ class LarvaDataset:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
     def define_linear_metrics(self):
-
+        # print(self.config.metric_definition.keys())
         sp_conf = self.config.metric_definition.spatial
         # print(sp_conf)
         if sp_conf.fitted is None:
@@ -703,6 +748,22 @@ class LarvaDataset:
         if use_component_vel:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
+
+    def annotate(self, interference=True, on_food=True, **kwargs):
+        s, e = self.step_data, self.endpoint_data
+        c = self.config
+        from lib.process import aux, patch
+        self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
+        self.store_chunk_dicts(self.chunk_dicts)
+        aux.turn_mode_annotation(e, self.chunk_dicts)
+        patch.comp_patch(s, e, c)
+        if on_food:
+            from lib.process import patch
+            patch.comp_on_food(s, e, c)
+        if interference:
+            self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+            self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
+            self.store_pooled_epochs(self.pooled_epochs)
 
     def enrich(self, metric_definition=None, preprocessing={}, processing={}, bout_annotation=True,
                to_drop={}, recompute=False, mode='minimal', show_output=False, is_last=True, annotation={},
@@ -731,18 +792,19 @@ class LarvaDataset:
         preprocess(**preprocessing, **cc, **kwargs)
         process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
         if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
-            from lib.process import aux, patch
-            self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
-            self.store_chunk_dicts(self.chunk_dicts)
-            aux.turn_mode_annotation(e, self.chunk_dicts)
-            patch.comp_patch(s, e, c)
-            if annotation['on_food']:
-                from lib.process import patch
-                patch.comp_on_food(s, e, c)
-            if annotation['interference']:
-                self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
-                self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
-                self.store_pooled_epochs(self.pooled_epochs)
+            self.annotate(interference=annotation['interference'], on_food=annotation['on_food'], **kwargs)
+            # from lib.process import aux, patch
+            # self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
+            # self.store_chunk_dicts(self.chunk_dicts)
+            # aux.turn_mode_annotation(e, self.chunk_dicts)
+            # patch.comp_patch(s, e, c)
+            # if annotation['on_food']:
+            #     from lib.process import patch
+            #     patch.comp_on_food(s, e, c)
+            # if annotation['interference']:
+            #     self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+            #     self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
+            #     self.store_pooled_epochs(self.pooled_epochs)
 
         self.drop_pars(**to_drop, **cc)
         if is_last:
@@ -1005,13 +1067,14 @@ class LarvaDataset:
         combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
         combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf", deep=False)
 
-    def eval_model_graphs(self, mIDs, dIDs=None,id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None, **kwargs):
+    def eval_model_graphs(self, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
+                          **kwargs):
         if id is None:
             id = f'{len(mIDs)}mIDs'
         if dIDs is None:
             dIDs = mIDs
         if save_to is None:
-            save_to=self.dir_dict.evaluation
+            save_to = self.dir_dict.evaluation
         from lib.sim.eval.evaluation import EvalRun
         evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
                         save_to=save_to,
@@ -1038,8 +1101,8 @@ class LarvaDataset:
                                         name='avg_mIDs_diffs')
 
             entries_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
-                                                   mID0s=mIDs_avg)
-            mIDs_var=list(entries_var.keys())
+                                         mID0s=mIDs_avg)
+            mIDs_var = list(entries_var.keys())
             self.config.modelConfs.variable = entries_var
             self.save_config(add_reference=True)
             self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
@@ -1060,8 +1123,8 @@ class LarvaDataset:
             for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
                 for Ifmod in ['PHI', 'SQ', 'DEF']:
                     mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
-                    id=f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
-                    d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'],id=id, N=10)
+                    id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
+                    d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
 
 
 if __name__ == '__main__':
@@ -1087,11 +1150,11 @@ if __name__ == '__main__':
     #         id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
     #         d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=5)
 
-    dIDs,mIDs = [], []
+    dIDs, mIDs = [], []
     for Tmod in ['NEU', 'SIN']:
         for Ifmod in ['PHI', 'SQ']:
-            mID=f'RE_{Tmod}_{Ifmod}_DEF_fit'
-            dID=f'{Tmod} {Ifmod}'
+            mID = f'RE_{Tmod}_{Ifmod}_DEF_fit'
+            dID = f'{Tmod} {Ifmod}'
             mIDs.append(mID)
             dIDs.append(dID)
     # id = f'NEU-SIN_x_PHI-SQ_Cmod_RE_50l'
@@ -1099,7 +1162,6 @@ if __name__ == '__main__':
     # preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs), font_size=18, save_to=d.dir_dict.model_tables,
     #                             name=id)
     entries_var = M.add_var_mIDs(refID=refID, e=d.endpoint_data, c=d.config, mID0s=mIDs)
-
 
     # dIDs_avg=[f'{dID} avg' for dID in dIDs]
     # dIDs_var=[f'{dID} var' for dID in dIDs]

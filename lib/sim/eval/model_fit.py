@@ -191,9 +191,9 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     conf = preg.get_null('GAconf', **kws)
     conf.env_params = preg.expandConf(id=conf.env_params, conftype='Env')
 
-    if fit_dict is None and refID is not None:
-        from lib.sim.ga.functions import approximate_fit_dict
-        fit_dict = approximate_fit_dict(refID, space_mkeys)
+    # if fit_dict is None and refID is not None:
+    #     from lib.sim.ga.functions import approximate_fit_dict
+    #     fit_dict = approximate_fit_dict(refID, space_mkeys)
 
     conf.ga_build_kws.fit_dict = fit_dict
 

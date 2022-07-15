@@ -196,20 +196,37 @@ analysis_dict = dNl.NestDict({
           ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
            'food_mass_2', 'hunger', 'EEB', 'fs']],
     ],
-    'general': [
-        box(ks=['l', 'str_N', 'dsp_0_60_max', 'run_tr', 'fsv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
+    'endpoint':[
+box(ks=['l', 'str_N', 'dsp_0_60_max', 'run_tr', 'fsv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
                 'tor20_mu', 'tor20_std']),
         box(ks=['l', 'fsv', 'str_sd_mu', 'str_sd_std', 'run_tr', 'ffov']),
-        entry('angular pars', Npars=5),
-        entry('crawl pars'),
-        entry('trajectories'),
-        entry('trajectories', title='aligned2origin', mode='origin'),
-        entry('ethogram', add_samples=False),
-        entry('pathlength', scaled=False),
-        entry('dispersal', range=(0, 60)),
-        entry( 'dispersal summary', range=(0, 60)),
-        entry('navigation index'),
-        entry('epochs', stridechain_duration=True),
+        entry('crawl pars')
+    ],
+    'general': [
+
+
+        entry('distros', mode='box'),
+        # entry('distros', mode='hist'),
+        # entry('angular pars', Npars=5),
+        # entry('trajectories'),
+        # entry('trajectories', title='aligned2origin', mode='origin'),
+        # entry('ethogram', add_samples=False),
+        # entry('pathlength', scaled=False),
+        # entry('dispersal', range=(0, 60)),
+        # entry('dispersal summary', range=(0, 60)),
+        # entry('navigation index'),
+        # entry('epochs', stridechain_duration=True),
+
+    ],
+'stride': [
         entry('stride cycle'),
+        # entry('stride cycle', individuals=True),
+    ],
+    'track': [
+        entry('stride track'),
+        entry('turn track'),
+        # entry('marked strides'),
+        # entry('sample tracks'),
+        # entry('trajectories'),
     ]
 })

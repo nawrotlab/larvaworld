@@ -67,12 +67,12 @@ def Cr0():
     str_kws = {'stride_dst_mean': {'v0': 0.23, 'lim': (0.0, 1.0), 'dv': 0.01,
                                    'k': 'str_sd_mu',
                                    'disp': r'stride distance mean', 'sym': sub(bar(circle('d')), 'S'),
-                                   'u_name': '$body-lengths$', 'codename': 'scaled_stride_dst_mean',
+                                   'u_name': '$body-lengths$', 'codename': 'stride_scaled_dst_mean',
                                    'h': 'The mean displacement achieved in a single peristaltic stride as a fraction of the body length.'},
                'stride_dst_std': {'v0': 0.04, 'lim': (0.0, 1.0),
                                   'k': 'str_sd_std',
                                   'disp': 'stride distance std', 'sym': sub(tilde(circle('d')), 'S'),
-                                  'u_name': '$body-lengths$', 'codename': 'scaled_stride_dst_std',
+                                  'u_name': '$body-lengths$', 'codename': 'stride_scaled_dst_std',
                                   'h': 'The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.'}}
 
     Camp = {'initial_amp': {'lim': (0.0, 2.0), 'dv': 0.1, 'v0': 0.3,

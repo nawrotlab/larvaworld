@@ -411,21 +411,21 @@ class LarvaConfDict:
         self.full_dict = self.build_full_dict()
 
         self.mcolor = dNl.NestDict({
-                    'body': 'lightskyblue',
-                    'physics': 'lightsteelblue',
-                    'energetics': 'lightskyblue',
-                    'Box2D_params': 'lightcoral',
-                    'crawler': 'lightcoral',
-                    'turner': 'indianred',
-                    'interference': 'lightsalmon',
-                    'intermitter': '#a55af4',
-                    'olfactor': 'palegreen',
-                    'windsensor': 'plum',
-                    'toucher': 'pink',
-                    'feeder': 'pink',
-                    'memory': 'pink',
-                    # 'locomotor': locomotor.DefaultLocomotor,
-                })
+            'body': 'lightskyblue',
+            'physics': 'lightsteelblue',
+            'energetics': 'lightskyblue',
+            'Box2D_params': 'lightcoral',
+            'crawler': 'lightcoral',
+            'turner': 'indianred',
+            'interference': 'lightsalmon',
+            'intermitter': '#a55af4',
+            'olfactor': 'palegreen',
+            'windsensor': 'plum',
+            'toucher': 'pink',
+            'feeder': 'pink',
+            'memory': 'pink',
+            # 'locomotor': locomotor.DefaultLocomotor,
+        })
 
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:
@@ -537,17 +537,18 @@ class LarvaConfDict:
         return mc
 
     def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
-        def gen_rows2(var_mdict, parent, columns, data) :
+        def gen_rows2(var_mdict, parent, columns, data):
             for k, p in var_mdict.items():
                 if isinstance(p, param.Parameterized):
                     ddd = [getattr(p, pname) for pname in columns]
                     row = [parent] + ddd
                     data.append(row)
+
         m = self.loadConf(mID)
         mF = dNl.flatten_dict(m)
         data = []
         for mkey in self.dict.brain.keys:
-            if m.brain.modules[mkey] :
+            if m.brain.modules[mkey]:
                 d0 = self.dict.model.init[mkey]
                 if f'{d0.pref}mode' in mF.keys():
                     mod_v = mF[f'{d0.pref}mode']
@@ -555,37 +556,37 @@ class LarvaConfDict:
                     mod_v = 'default'
 
                 if mkey == 'intermitter':
-                    run_mode=m.brain[f'{mkey}_params']['run_mode']
+                    run_mode = m.brain[f'{mkey}_params']['run_mode']
                     var_ks = d0.mode[mod_v].variable
-                    for var_k in var_ks :
-                        if var_k=='run_dist' and run_mode=='stridechain':
+                    for var_k in var_ks:
+                        if var_k == 'run_dist' and run_mode == 'stridechain':
                             continue
-                        if var_k=='stridechain_dist' and run_mode=='run':
+                        if var_k == 'stridechain_dist' and run_mode == 'run':
                             continue
-                        v=m.brain[f'{mkey}_params'][var_k]
-                        if v is not None :
+                        v = m.brain[f'{mkey}_params'][var_k]
+                        if v is not None:
                             if v.name is not None:
                                 vs1, vs2 = self.dist_dict0.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
                                 data.append(vs1)
                                 data.append(vs2)
-                else :
+                else:
                     var_mdict = self.variable_mdict(mkey, mode=mod_v)
                     var_mdict = self.update_mdict(var_mdict, m.brain[f'{mkey}_params'])
                     gen_rows2(var_mdict, mkey, columns, data)
         for aux_key in self.dict.aux.keys:
             if aux_key not in ['energetics', 'sensorimotor']:
                 var_ks = self.dict.aux.init[aux_key].variable
-                var_mdict =dNl.NestDict({k:self.dict.aux.m[aux_key].args[k] for k in var_ks})
+                var_mdict = dNl.NestDict({k: self.dict.aux.m[aux_key].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m[aux_key])
                 gen_rows2(var_mdict, aux_key, columns, data)
-        if m['energetics'] :
-            for mod, dic in self.dict.aux.init['energetics'].mode.items() :
+        if m['energetics']:
+            for mod, dic in self.dict.aux.init['energetics'].mode.items():
                 var_ks = dic.variable
                 var_mdict = dNl.NestDict({k: self.dict.aux.m['energetics'].mode[mod].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m['energetics'].mod)
                 gen_rows2(var_mdict, f'energetics.{mod}', columns, data)
         if 'sensorimotor' in m.keys():
-            for mod, dic in self.dict.aux.init['sensorimotor'].mode.items() :
+            for mod, dic in self.dict.aux.init['sensorimotor'].mode.items():
                 var_ks = dic.variable
                 var_mdict = dNl.NestDict({k: self.dict.aux.m['sensorimotor'].mode[mod].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m['sensorimotor'])
@@ -595,11 +596,6 @@ class LarvaConfDict:
         return df
 
     def mIDtable_data2(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
-
-
-
-
-
 
         mConf = self.mIDconf(mID)
         # m = self.loadConf(mID)
@@ -944,7 +940,7 @@ class LarvaConfDict:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
                 mID0s.append(mID0)
-                for mm in [f'{mID0}_avg',f'{mID0}_var',f'{mID0}_var2']:
+                for mm in [f'{mID0}_avg', f'{mID0}_var', f'{mID0}_var2']:
                     if mm in self.storedConf():
                         mID0s.append(mm)
 
@@ -956,9 +952,7 @@ class LarvaConfDict:
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
-
-        for mID0 in mID0s :
-
+        for mID0 in mID0s:
             mID1 = f'{mID0}_nav'
             self.newConf(mID=mID1, mID0=mID0, kwargs=kwargs1)
             mID1br = f'{mID1}_brute'
@@ -1026,7 +1020,7 @@ class LarvaConfDict:
     def diff_df(self, mIDs, ms=None, dIDs=None):
         dic = {}
         if dIDs is None:
-            dIDs=mIDs
+            dIDs = mIDs
         if ms is None:
             ms = [self.loadConf(mID) for mID in mIDs]
         ms = [dNl.flatten_dict(m) for m in ms]
@@ -1056,6 +1050,7 @@ class LarvaConfDict:
         mdict = self.dict.model.m['crawler'].mode[mode].args
         crawler_conf = dNl.NestDict({'mode': mode})
         for d, p in mdict.items():
+            # print(d, p.codename)
             if isinstance(p, param.Parameterized):
                 try:
                     crawler_conf[d] = epar(e, par=p.codename, average=average)
@@ -1098,7 +1093,8 @@ class LarvaConfDict:
         conf.mode = mode
         return conf
 
-    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], save_to=None,e=None, c=None,**kwargs):
+    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], save_to=None, e=None, c=None,
+                  **kwargs):
         if mID is None:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
@@ -1108,10 +1104,11 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
         if save_to is None:
-            save_to=c.dir_dict.GAoptimization,
+            save_to = c.dir_dict.GAoptimization,
         m0 = self.loadConf(mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
+            # print(m0.brain.crawler_params)
         if 'intermitter' not in space_mkeys:
             m0.brain.intermitter_params = self.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
                                                                  conf=m0.brain.intermitter_params)
@@ -1120,9 +1117,8 @@ class LarvaConfDict:
         self.saveConf(conf=m0, mID=mID, verbose=0)
 
         from lib.sim.eval.model_fit import optimize_mID
-        print(c.dt)
-        entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys,dt=c.dt,refID=refID,
-                              sim_ID=mID, save_to=save_to,**kwargs)
+        entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys, dt=c.dt, refID=refID,
+                             sim_ID=mID, save_to=save_to, **kwargs)
         return entry
 
     def adapt_6mIDs(self, refID, e=None, c=None):
@@ -1133,17 +1129,17 @@ class LarvaConfDict:
             e, c = d.endpoint_data, d.config
 
         from lib.sim.ga.functions import GA_optimization
-        fit_kws={
-            'eval_metrics':{
-        'angular kinematics': ['b', 'fov', 'foa'],
-        'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                 'dsp_0_40_max', 'dsp_0_60_max'],
-        'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
-    },
+        fit_kws = {
+            'eval_metrics': {
+                'angular kinematics': ['b', 'fov', 'foa'],
+                'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                         'dsp_0_40_max', 'dsp_0_60_max'],
+                'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+            },
             'cycle_curves': ['fov', 'foa', 'b']
         }
 
-        fit_dict = GA_optimization(refID,fitness_target_kws=fit_kws)
+        fit_dict = GA_optimization(refID, fitness_target_kws=fit_kws)
         entries = {}
         mIDs = []
         for Tmod in ['NEU', 'SIN']:
@@ -1151,8 +1147,8 @@ class LarvaConfDict:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
                 mID = f'{Ifmod}on{Tmod}'
                 entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
-                                           space_mkeys=['turner', 'interference'],
-                                           fit_dict =fit_dict)
+                                       space_mkeys=['turner', 'interference'],
+                                       fit_dict=fit_dict)
                 entries.update(entry)
                 mIDs.append(mID)
         return entries, mIDs
@@ -1186,12 +1182,12 @@ class LarvaConfDict:
                     mID = f'{mID0}_fit'
                     entry = self.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
                                            space_mkeys=['crawler', 'turner', 'interference'],
-                                           fit_dict =fit_dict)
+                                           fit_dict=fit_dict)
                     entries.update(entry)
                     mIDs.append(mID)
         return entries, mIDs
 
-    def add_var_mIDs(self, refID, e=None, c=None, mID0s=None,mIDs=None, sample_ks=None):
+    def add_var_mIDs(self, refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
         if e is None or c is None:
             from lib.registry.pars import preg
             d = preg.loadRef(refID)
@@ -1213,8 +1209,8 @@ class LarvaConfDict:
         kwargs = {k: 'sample' for k in sample_ks}
         entries = {}
         for mID0, mID in zip(mID0s, mIDs):
-            m0=dNl.copyDict(self.loadConf(mID0))
-            m=dNl.update_existingnestdict(m0,kwargs)
+            m0 = dNl.copyDict(self.loadConf(mID0))
+            m = dNl.update_existingnestdict(m0, kwargs)
             self.saveConf(conf=m, mID=mID)
             entries[mID] = m
         return entries
@@ -1278,103 +1274,10 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         par = D[k].d
     vs = e[par]
     if average:
+        # print(k,par, np.round(vs.median(), Nround))
         return np.round(vs.median(), Nround)
     else:
         return vs
 
 
-if __name__ == '__main__':
-    from lib.aux.combining import combine_pdfs
-    from lib.registry.pars import preg
-    G=preg.graph_dict.dict
-    M=preg.larva_conf_dict
-    save_to = f'/home/panos/larvaworld_new/larvaworld/data/JovanicGroup/plots/18h/GA/tables'
-    mID0 = 'RE_NEU_PHI_DEF_nav'
-
-    mIDs = ['Fed_18loco', 'Starved_18loco']
-    refIDs = ['18h.Fed', '18h.Starved']
-    # print(preg.storedConf('Ref'))
-
-    # for mID,refID in zip(mIDs,refIDs):
-    #     try:
-    #         _ = G['model table'](mID, save_to=save_to)
-    #     except:
-    #         print('TABLE FAIL', mID)
-    #     try:
-    #         _ = G['model summary'](refID=refID, mID=mID, Nids=10, save_to=save_to)
-    #     except:
-    #         print('SUMMARY FAIL', mID)
-    # combine_pdfs(file_dir=save_to, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
-    # raise
-
-    from lib.sim.ga.functions import GA_optimization
-    from lib.sim.eval.model_fit import optimize_mID
-
-    kws={'fitness_target_kws': {'eval_metrics': {
-        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
-        'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                 'dsp_0_40_max', 'dsp_0_60_max'],
-        'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
-        # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-        # 'epochs': ['run_t', 'pau_t'],
-        # 'tortuosity': ['tor5', 'tor20']
-    },
-        'cycle_curves': ['sv', 'fov','rov', 'foa'] }}
-
-    # ds=[], ls=[]
-    # for refID in ['18h.Fed', '18h.Starved'] :
-    #     d = preg.loadRef(refID)
-    # # d = preg.loadRef(refID)
-    #     d.load(step=False)
-    #     # print(d.existing('end'))
-    #     # print(d.id, d.N, d.Nticks*d.dt/60, d.dt)
-    #     ds.append(d)
-    #     ls.append(d.id)
-    #
-    # kws={
-    #     'datasets' : ds,
-    #     'labels' :ls,
-    # }
-    # d.modelConf_analysis()
-
-
-
-    entries={}
-    #
-    for mID,refID in zip(mIDs,refIDs):
-        entry=M.adapt_mID(refID=refID,mID0=mID0,mID=mID, space_mkeys=['turner', 'interference'],init='random', show_screen=True,
-                    save_to=f'{save_to}/{mID}2',Nagents=50, Nelits=5, Ngenerations=10, dur=0.4)
-        entries.update(entry)
-    #
-    # entries={}
-    # #
-    # for mID,refID in zip(mIDs,refIDs):
-    #     entry=optimize_mID(refID=refID,mID0=mID, space_mkeys=['turner', 'interference'],init='model', show_screen=True,
-    #                 save_to=f'{save_to}/{mID}2',sim_ID=mID, Nagents=20, Nelits=5, Ngenerations=10, dur=1,
-    #                 fit_dict = GA_optimization(fitness_target_refID=refID,
-    #                                            **kws))
-    #     entries.update(entry)
-
-    # space_mkeys = ['crawler', 'turner', 'interference']
-
-    # from lib.ga.util.functions import GA_optimization
-    # #
-    # eval_metrics = {
-    #     'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
-    #     'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-    #                              'dsp_0_40_max', 'dsp_0_60_max', 'str_N'],
-    #     'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
-    #     # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-    #     # 'epochs': ['run_t', 'pau_t'],
-    #     # 'tortuosity': ['tor5', 'tor20']
-    # }
-
-    # fit_dict = GA_optimization(fitness_target_refID=refID, fitness_target_kws={
-    #     'eval_metrics': eval_metrics,
-    #     'cycle_curves': ['b', 'fov', 'foa'],
-    # })
-    #
-    # entry = optimize_mID(mID0=mID0, mID1=mID1, refID=refID, space_mkeys=space_mkeys, init='model', show_screen=True,
-    #                      sim_ID=mID1, Nagents=20, Nelits=0, Ngenerations=20, dur=0.6, fit_dict=fit_dict,
-    #                      exclusion_mode=False)
 

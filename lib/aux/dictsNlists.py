@@ -184,16 +184,27 @@ def unique_list(l):
         return [x for x in l if not (x in seen or seen_add(x))]
 
 
-def replace_in_dict(d0, replace_d, inverse=False):
-    d = copy.deepcopy(d0)
-    if inverse:
-        replace_d = {v0: k0 for k0, v0 in replace_d.items()}
-    for k, v in d.items():  # for each elem in the list datastreams
-        if type(v) == dict:
-            d[k] = replace_in_dict(v, replace_d, inverse=False)
-        elif v in list(replace_d.keys()):
-            d[k] = replace_d[v]
-    return d
+def replace_in_dict(d0, d1, inv_d0=False, inv_d1=False, replace_key=False):
+    if inv_d0 :
+        d0 = {v0: k0 for k0, v0 in d0.items()}
+
+    if inv_d1:
+        d1 = {v0: k0 for k0, v0 in d1.items()}
+
+    if replace_key :
+        d=NestDict()
+        for k, v in d0.items():
+            if k in list(d1.keys()):
+                d[d1[k]] = v
+
+    else :
+        d = copy.deepcopy(d0)
+        for k, v in d.items():  # for each elem in the list datastreams
+            if type(v) == dict:
+                d[k] = replace_in_dict(v, d1, inverse=False)
+            elif v in list(d1.keys()):
+                d[k] = d1[v]
+    return NestDict(d)
 
 
 def group_dicts(dics):

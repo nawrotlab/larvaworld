@@ -40,6 +40,7 @@ def build():
         'PI (combo)': box.boxplot_PI,
         'PI (simple)': box.PIboxplot,
         'boxplot (grouped)': box.boxplot,
+        # 'boxplot (distro)': box.distro_boxplot,
         'boxplot (simple)': box.boxplots,
         'foraging': box.plot_foraging,
         'ggboxplot': box.ggboxplot,
@@ -70,6 +71,7 @@ def build():
     d['hist'] = dNl.NestDict({
         'crawl pars': hist.plot_crawl_pars,
         'angular pars': hist.plot_ang_pars,
+        'distros': hist.plot_distros,
         'angular/epoch': hist.plot_bout_ang_pars,
         'endpoint pars (hist)': hist.plot_endpoint_params,
         'endpoint pars (scatter)': hist.plot_endpoint_scatter,
@@ -96,8 +98,8 @@ def build():
         'nengo': time.plot_nengo_network,
     })
     d['traj'] = dNl.NestDict({
-        'stride track': traj.annotated_strideplot,
-        'turn track': traj.annotated_turnplot,
+        'stride track': traj.annotated_strideplot_data,
+        'turn track': traj.annotated_turnplot_data,
         'marked strides': traj.plot_marked_strides,
         'sample tracks': traj.plot_sample_tracks,
         'trajectories': traj.traj_grouped
@@ -156,6 +158,11 @@ class GraphDict:
         if title is None:
             title = ID
         return {'title': title, 'plotID': ID, 'args': args}
+
+    @property
+    def groups(self):
+        from lib.conf.stored.analysis_conf import analysis_dict
+        return analysis_dict
 
 
 graph_dict = GraphDict()

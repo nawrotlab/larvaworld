@@ -89,7 +89,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
     pref=f'{source_dir}/{source_id}'
     temp_step_path = f'{pref}_step.csv'
     temp_length_path = f'{pref}_length.csv'
-
+    print(pref)
     def temp_save(step, length):
         step.to_csv(temp_step_path, index=True, header=True)
         length.to_csv(temp_length_path, index=True, header=True)

@@ -9,6 +9,7 @@ import pandas as pd
 # parent_dir='AttP2'
 # parent_dir='5h'
 # parent_dir='SS888'
+
 parent_dir='SS888_0_60'
 # parent_dir='18h'
 # parent_dir='AttP240'
@@ -62,6 +63,7 @@ for i, k in enumerate(['AttP240', 'SS888Imp', 'SS888']):
     # # e['length_in_mm']=e['length']*1000
     # # e['velocity_in_mm_mean']=e['velocity_mean']*1000
     # # print(d.id,d.color )
+    # c.color=cols[i]
     # c.color=cols[i]
     # #comp_dispersion(s=None,e=e,c=c,dsp_starts=[0], dsp_stops=[60], store=True)
     # #comp_straightness_index(s=None,e=e,c=c,tor_durs=[20], store=True)

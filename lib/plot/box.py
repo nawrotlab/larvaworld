@@ -58,12 +58,21 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
         except:
             pass
         if annotation:
-            annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+            try:
+                annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+            except:
+                pass
+
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
                   xvis=False if ii < (Nrows - 1) * Ncols else True)
 
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.5, 0.05)
     return P.get()
+
+
+# def distro_boxplot(ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],**kwargs):
+#
+#     return boxplots(shorts=ks,key='step',**kwargs)
 
 
 def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None, **kwargs):

@@ -75,13 +75,11 @@ def eval_distro(ss, s, s_shorts=None, s_pars=None, s_labs=None, mode='pooled', m
 
 
 def eval_distro_fast(ss, s_data, s_sym, mode='pooled', min_size=20):
-    Edistro = {}
-    for p, sym in s_sym.items():
-        s_vs = s_data[p]
-        # sym=s_sym[p]
-        Edistro[sym] = None
-        if p in ss.columns:
-            if mode == '1:1':
+    if mode == '1:1':
+        Edistro = {}
+        for p, sym in s_sym.items():
+            if p in ss.columns:
+                s_vs = s_data[p]
                 pps = []
                 for id in s_data.index:
                     sp, ssp = s_data[p].loc[id].values, ss[p].xs(id, level="AgentID").dropna().values
@@ -89,13 +87,36 @@ def eval_distro_fast(ss, s_data, s_sym, mode='pooled', min_size=20):
                         pps.append(ks_2samp(sp, ssp)[0])
 
                 Edistro[sym] = np.median(pps)
-            elif mode == 'pooled':
-                spp, sspp = s_vs.dropna().values, ss[p].dropna().values
+    elif mode == 'pooled':
+        Edistro = {}
+        for p, sym in s_sym.items():
+            if p in ss.columns:
+                spp, sspp = s_data[p].values, ss[p].dropna().values
                 if spp.shape[0] > min_size and sspp.shape[0] > min_size:
                     Edistro[sym] = ks_2samp(spp, sspp)[0]
-
+    elif mode == '1:pooled':
+        ids=ss.index.unique('AgentID').values
+        Edistro = {id:{} for id in ids}
+        for id in ids:
+            sss = ss.xs(id, level="AgentID").dropna()
+            for p, sym in s_sym.items():
+                if p in ss.columns:
+                    sp, ssp = s_data[p].values, sss[p].values
+                    if sp.shape[0] > min_size and ssp.shape[0] > min_size:
+                        Edistro[id][sym] = ks_2samp(sp, ssp)[0]
 
     return Edistro
+
+
+def eval_RSS(rss,rss_target,rss_sym, mode='1:pooled') :
+    if mode == '1:pooled':
+        RSS_dic={}
+        for id, rrss in rss.items():
+            RSS_dic[id] = {}
+            for p, sym in rss_sym.items():
+                if p in rrss.keys():
+                    RSS_dic[id][sym] = RSS(rrss[p], rss_target[p])
+    return RSS_dic
 
 
 def eval_multi(datasets, s=None, e=None, s_shorts=None, e_shorts=None, mode='pooled', min_size=20):
@@ -126,6 +147,8 @@ def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
         labels = ['RSS error', r'median 1:1 distribution KS$_{D}$']
     elif mode == 'pooled':
         labels = ['pooled endpoint KS$_{D}$', 'pooled distribution KS$_{D}$']
+    elif mode == '1:pooled':
+        labels = ['individual endpoint KS$_{D}$', 'individual distribution KS$_{D}$']
     error_dict = {'end': pd.DataFrame.from_records(GEend).T,
                   'step': pd.DataFrame.from_records(GEdistro).T}
     error_dict['end'].index.name = 'metric'

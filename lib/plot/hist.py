@@ -4,10 +4,10 @@ import warnings
 
 import numpy as np
 import pandas as pd
-
+import seaborn as sns
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry.pars import preg
-from lib.plot.aux import scatter_hist
+from lib.plot.aux import scatter_hist, annotate_plot
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
@@ -73,6 +73,103 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
     P.data_leg(0, loc='upper left' if half_circles else 'upper right')
     # dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
     P.adjust((0.3 / Nps, 0.99), (0.15, 0.95), 0.01)
+    return P.get()
+# ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
+def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],mode='hist',
+                 pvalues=True, half_circles=True,annotation=False,target_only=None, show_ns=True, subfolder='distro', Nbins=100, **kwargs):
+    Nps = len(ks)
+    Ncols=int(np.sqrt(Nps))
+    Nrows=int(np.ceil(Nps/Ncols))
+    if name is None:
+        name = f'distros_{mode}_{Nrows}x{Ncols}'
+    legloc = 'upper left' if half_circles else 'upper right'
+    if mode == 'box':
+        kws2={'sharey':False, 'sharex':True}
+    elif mode=='hist':
+        kws2={'sharex':False, 'sharey':True}
+    P = AutoPlot(name=name, subfolder=subfolder, Ncols=Ncols,Nrows=Nrows, figsize=(Ncols * 8 , Nrows * 8), **kws2,**kwargs)
+    P.init_fits(preg.getPar(ks))
+    palette = dict(zip(P.labels, P.colors))
+    Ddata = {}
+    ps = preg.getPar(ks)
+    lims={}
+    parlabs={}
+    for sh, par in zip(ks, ps):
+        Ddata[par] = {}
+        vs = []
+        for d, l in zip(P.datasets, P.labels):
+            x=d.get_par(par, key='distro').dropna().values
+            Ddata[par][l] = x
+            vs.append(x)
+        if pvalues:
+            P.comp_pvalues(vs, par)
+        vvs = np.hstack(vs)
+        vmin, vmax = np.quantile(vvs, 0.005), np.quantile(vvs, 0.995)
+        lims[par]=(vmin, vmax)
+        parlabs[par]=preg.dict[sh].l
+    for i,(par,dic) in enumerate(Ddata.items()):
+
+        if mode == 'box':
+            dfs = []
+            for l,x in dic.items():
+                df = pd.DataFrame(x, columns=[par])
+                df['DatasetID'] = l
+                dfs.append(df)
+            df0 = pd.concat(dfs)
+            kws = {
+                'x': "DatasetID",
+                'y': par,
+                'palette': palette,
+                'hue': None,
+                'data': df0,
+                'ax': P.axs[i],
+                'width': 0.8,
+                'fliersize': 3,
+                'whis': 1.5,
+                'linewidth': None
+            }
+            g1 = sns.boxplot(**kws)  # RUN PLOT
+            try:
+                g1.get_legend().remove()
+            except:
+                pass
+            if annotation:
+                try:
+                    annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+                except:
+                    pass
+
+            P.conf_ax(i, xticklabelrotation=30, ylab=parlabs[par], yMaxN=4, ylim=lims[par]
+                      # xvis=False if i < (Nrows - 1) * Ncols else True
+                      )
+
+
+        else:
+            vmin, vmax = lims[par]
+            bins = np.linspace(vmin, vmax, Nbins)
+            dic = {}
+            for l, x in dic.items():
+                ws = np.ones_like(x) / float(len(x))
+            # print(l,k,x.shape)
+                dic[l] = {'weights': ws, 'color': palette[l], 'label': l, 'x': x, 'alpha': 0.6}
+                P.axs[i].hist(bins=bins,**dic[l])
+            # if pvalues:
+            #     P.comp_pvalues(vs, par)
+            if half_circles:
+                P.plot_half_circles(par, i)
+
+            # bins, xlim = P.angrange(r, absolute, Nbins)
+            # P.plot_par(vs=vs, nbins=Nbins, i=i, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
+            #            pvalues=False, half_circles=half_circles)
+            P.conf_ax(i, ylab='probability',yvis=True if i%Ncols == 0 else False,  xlab=parlabs[par], yMaxN=3,xMaxN=5, leg_loc=legloc)
+        # P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.l, yMaxN=3)
+
+    # dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
+    if mode == 'box':
+        P.adjust((0.15, 0.95), (0.15, 0.95), 0.3, 0.01)
+    else:
+        P.data_leg(0, loc='upper left' if half_circles else 'upper right')
+        P.adjust((0.15, 0.95), (0.15, 0.95), 0.01, 0.1)
     return P.get()
 
 

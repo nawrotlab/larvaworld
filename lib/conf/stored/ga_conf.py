@@ -17,7 +17,7 @@ from lib.model.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
             m1=None, sel={}, build={}, fitID=None, init='random', excludeID=None, robot_class=LarvaRobot, **kwargs):
-    from lib.sim.eval.eval_funcs import exclusion_funcs, fitness_funcs, fitness_step_funcs
+    from lib.sim.eval.eval_funcs import exclusion_funcs, fitness_funcs
 
     build_kws = {
         'fitness_target_refID': refID,
@@ -71,7 +71,7 @@ ga_dic = dNl.NestDict({
                        # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
                        'pooled_cycle_curves': ['fov', 'foa', 'b']},
               excludeID='bend_errors',
-              space_mkeys=['interference', 'turner'], fitID='distro_KS_interference',
+              space_mkeys=['interference', 'turner'],
               init='model',
               Nel=3, N=10, env_params='arena_200mm'),
     **ga_conf('chemorbit', dur=5, m0='navigator', m1='best_navigator',

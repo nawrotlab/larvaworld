@@ -87,7 +87,9 @@ class EvalRun:
             try:
                 from lib.stor.larva_dataset import LarvaDataset
                 self.dataset_configs = self.load_data('dataset_configs')
-                self.datasets = [LarvaDataset(**c, load_data=False) for id, c in self.dataset_configs.items()]
+                self.datasets = [LarvaDataset(**c, load_data=True) for id, c in self.dataset_configs.items()]
+                # for d in self.datasets :
+                #     d.load()
                 print('Loaded existing datasets')
             except:
                 self.datasets = []

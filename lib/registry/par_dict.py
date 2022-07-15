@@ -67,6 +67,14 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         else :
             sym = k
     # sym = k if sym is None else sym
+
+    # if u_name is None:
+    #     u_name =u.__format__(spec=k)
+        # if u == ureg.dimensionless:
+        #     u_name = '-'
+        # else:
+        #     u_name = ureg.fmt_locale(u)
+
     if lab is None:
         if u == ureg.dimensionless:
             lab = f'{disp}'
@@ -93,6 +101,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         'dtype': dtype,
         'func': func,
         'u': u,
+        'u_name': u_name,
         'required_ks': required_ks,
         'vparfunc': vparfunc,
         'dv': dv,

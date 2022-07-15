@@ -8,7 +8,7 @@ from lib.aux import dictsNlists as dNl
 from lib.registry.units import ureg
 
 
-def v_descriptor(vparfunc, v0=None, dv=None, **kws):
+def v_descriptor(vparfunc, v0=None, dv=None,u_name=None, **kws):
     class LarvaworldParNew(param.Parameterized):
         p = param.String(default='', doc='Name of the parameter')
         d = param.String(default='', doc='Dataset name of the parameter')
@@ -20,7 +20,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
         v = vparfunc
         func = param.Callable(default=None, doc='Function to get the parameter from a dataset', allow_None=True)
         required_ks = param.List(default=[], doc='Keys of prerequired parameters for computation in a dataset')
-        u = param.Parameter(default=ureg.dimensionless, doc='Unit of the parameter values')
+        u = param.Parameter(default=ureg.dimensionless, doc='Unit of the parameter values', label=u_name)
 
         @property
         def s(self):
@@ -28,11 +28,20 @@ def v_descriptor(vparfunc, v0=None, dv=None, **kws):
 
         @property
         def l(self):
-            return self.param.v.label
+            return self.disp+'  ' + self.ulabel
+
+        @property
+        def symunit(self):
+            return self.sym +'  ' + self.ulabel
+
+        @property
+        def ulabel(self):
+            return '(' + self.unit +')'
 
         @property
         def unit(self):
-            return self.u
+            return fr'${self.u}$'
+
 
         @property
         def short(self):

@@ -73,9 +73,9 @@ class GAselector:
         self.printd(1, '\nGeneration', self.generation_num, 'started')
 
     def sort_genomes(self):
+
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
-        # print([g.fitness for g in self.sorted_genomes])
 
 
         if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
@@ -84,8 +84,9 @@ class GAselector:
 
             if self.bestConfID is not None:
                 self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID, verbose=self.verbose)
-                print(self.bestConfID, self.best_fitness)
+
                 print()
+                print(np.round(self.best_fitness,3), self.bestConfID)
                 print(self.M.loadConf(self.bestConfID).brain.turner_params)
                 print()
         end_generation_time = TimeUtil.current_time_millis()
@@ -231,13 +232,11 @@ class GAbuilder(GAselector):
 
         else :
             if fit_dict is None :
-                try:
+                if fitness_target_refID is not None:
                     fit_dict=GA_optimization(fitness_target_refID, fitness_target_kws)
-                except:
-                    if fitness_target_kws is None:
-                        fitness_target_kws = {}
+                else :
                     from lib.sim.ga.functions import arrange_fitness
-                    fit_dict = arrange_fitness(fitness_func, fitness_target_refID, fitness_target_kws,dt=self.model.dt,source_xy=self.model.source_xy)
+                    fit_dict = arrange_fitness(fitness_func,source_xy=self.model.source_xy)
             self.fit_dict =fit_dict
             self.dataset0=self.init_dataset()
             self.step_df = self.init_step_df()
@@ -297,8 +296,25 @@ class GAbuilder(GAselector):
         self.dataset.step_data = s
         for k in self.fit_dict.keys:
             preg.compute(k, self.dataset)
-        self.fit_dict.func(s=self.dataset.step_data, gd=self.genome_dict)
-        self.genome_dict= {i: g for i, g in self.genome_dict.items() if not np.isnan(g.fitness) and not any([np.isnan(v) for k,v in g.fitness_dict.items()])}
+        fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
+
+        valid_gs={}
+        for i, g in self.genome_dict.items():
+            g.fitness_dict = {k: dic[i] for k, dic in fit_dicts.items()}
+            mus = {k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()}
+            if len(mus) == 1:
+                g.fitness = list(mus.values())[0]
+            else:
+                coef_dict = {'KS': 10, 'RSS': 1}
+                g.fitness = np.sum([coef_dict[k] * mean for k, mean in mus.items()])
+            # print(i, g.fitness_dict['RSS'])
+            if not np.isnan(g.fitness) :
+
+                valid_gs[i]=g
+        self.genome_dict = valid_gs
+
+
+
 
 
 
@@ -395,9 +411,9 @@ class GAbuilder(GAselector):
 
     def end_generation(self):
         if self.step_df is not None:
-            # for robot in self.robots[:]:
-            #     self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
             self.finalize_step_df()
+        else :
+            self.eval_robots()
 
 
 
@@ -443,7 +459,7 @@ class GAbuilder(GAselector):
         else:
             return None
 
-    def get_fitness(self, gdict):
+    def get_fitness2(self, gdict):
         return self.fit_dict.func(gdict, **self.fit_dict.target_kws)
 
     def finalize(self):
@@ -515,6 +531,11 @@ class GAbuilder(GAselector):
         for t in threads:
             t.join()
         return threads
+
+    def eval_robots(self):
+        for robot in self.robots :
+            i=robot.unique_id
+            self.genome_dict[i].fitness=self.fit_dict.func(robot)
 
 
 class GA_thread(threading.Thread):
