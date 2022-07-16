@@ -174,7 +174,7 @@ class SingleRun:
         figs, results = {}, {}
         if len(entry_list) > 0:
             from lib.plot.dict import graph_dict
-            graph_entries = graph_dict.eval(entry_list, **kws)
+            graph_entries = graph_dict.eval(entries=entry_list, **kws)
             figs.update(graph_entries)
 
         if 'disp' in exp:

@@ -3,31 +3,29 @@ import shutil
 import warnings
 from itertools import product
 
-from lib.aux import dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.registry.pars import preg
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def import_Jovanic_datasets(parent_dir, source_ids=['Fed', 'Deprived', 'Starved'], **kwargs):
-    # datagroup_id = 'Jovanic lab'
-    # group_id = parent_dir
-    # merged = False
-    # N = None
-    ds = {}
-    for source_id in source_ids:
-        id = source_id
-        d = import_dataset(N=None, id=id, datagroup_id='Jovanic lab', group_id=parent_dir, parent_dir=parent_dir,
-                           source_id=source_id,
-                           merged=False, **kwargs)
-        ds[d.id] = d
+def import_datasets(source_ids, ids=None,colors=None, **kwargs) :
+    if colors is None :
+        colors=cNs.N_colors(len(source_ids))
+    if ids is None :
+        ids=source_ids
+    ds = []
+    for i,source_id in enumerate(source_ids):
+        d = import_dataset(id=ids[i], color=colors[i],source_id=source_id, **kwargs)
+        ds.append(d)
     return ds
 
 
-def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, age=0.0,  merged=True,enrich=True,add_reference=True,   **kwargs):
+def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, age=0.0,  merged=False,enrich=True,add_reference=True,
+                   color='black',   **kwargs):
     # N = 150
-    group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}})
+    group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}},default_color=color)
     group.distribution.N = N
 
     if id is None:
@@ -36,7 +34,7 @@ def import_dataset(datagroup_id,  parent_dir, group_id=None, N=None,  id=None, a
         group_id = parent_dir
 
     g = preg.loadConf(id=datagroup_id, conftype='Group')
-    group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
+    group_dir = f'{preg.path_dict["DATA"]}/{g.path}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
     source_dir = f'{raw_folder}/{parent_dir}'

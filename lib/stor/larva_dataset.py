@@ -1045,27 +1045,17 @@ class LarvaDataset:
         return all_pars
 
     def store_model_graphs(self, mIDs):
-        # from lib.registry.pars import preg
-        from lib.aux.combining import combine_pdfs
-        G = preg.graph_dict.dict
-        # from lib.plot.grid import model_summary
         f1 = self.dir_dict.model_tables
         f2 = self.dir_dict.model_summaries
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
-        for mID in mIDs:
-            # _ = G['model table'](mID, save_to=f1)
-            try:
-                _ = G['model table'](mID, save_to=f1)
-            except:
-                print('TABLE FAIL', mID)
-            try:
-                _ = G['model summary'](refDataset=self, mID=mID, Nids=10, save_to=f2)
-            except:
-                print('SUMMARY FAIL', mID)
 
-        combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf", deep=False)
-        combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf", deep=False)
+        graphs=dNl.NestDict({
+            'tables' : preg.graph_dict.model_tables(mIDs, save_to=f1),
+            'summaries' : preg.graph_dict.model_summaries(mIDs, Nids=10, refDataset=self,save_to=f2)
+        })
+        return graphs
+
 
     def eval_model_graphs(self, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
                           **kwargs):

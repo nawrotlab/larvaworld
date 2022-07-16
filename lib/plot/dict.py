@@ -19,6 +19,7 @@ def build():
     d['table'] = dNl.NestDict({
         'mpl': table.mpl_table,
         'model table': table.modelConfTable,
+        'model diff': table.mdiff_table,
         'mtable': table.mtable,
         # 'barplot': bar.barplot,
         # 'auto_barplot': bar.auto_barplot,
@@ -145,13 +146,26 @@ class GraphDict:
         d = {entry['title']: func(**entry['args'], **kws)}
         return d
 
+
+
     def eval(self, entries, **kws):
+
         ds = {}
         for entry in entries:
 
             d = self.eval0(entry, **kws)
             ds.update(d)
         return ds
+
+    def eval_graphgroups(self, graphgroups,save_to=None,subfolder=None, **kws):
+        ds = {}
+        for graphgroup in graphgroups:
+            if graphgroup in self.graphgroups.keys():
+                entries = self.graphgroups[graphgroup]
+                dir= f'{save_to}/{graphgroup}' if save_to is not None else None
+                ds[graphgroup] = self.eval(entries, save_to=dir,subfolder=graphgroup,**kws)
+        return ds
+
 
     def entry(self, ID, title=None, args={}):
         assert self.get(ID)
@@ -160,9 +174,41 @@ class GraphDict:
         return {'title': title, 'plotID': ID, 'args': args}
 
     @property
-    def groups(self):
+    def graphgroups(self):
         from lib.conf.stored.analysis_conf import analysis_dict
         return analysis_dict
+
+    def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):
+        from lib.aux.combining import combine_pdfs
+        ds = {}
+        ds['mdiff_table'] = self.dict['model diff'](mIDs,dIDs=dIDs, save_to=save_to, **kwargs)
+        for mID in mIDs:
+            try:
+                ds[f'{mID}_table'] = self.dict['model table'](mID, save_to=save_to, **kwargs)
+            except:
+                print('TABLE FAIL', mID)
+        if save_to is not None and len(ds)>1 :
+            combine_pdfs(file_dir=save_to, save_as="_MODEL_TABLES_.pdf", deep=False)
+        return ds
+
+    def model_summaries(self, mIDs, save_to=None, **kwargs):
+        from lib.aux.combining import combine_pdfs
+        ds = {}
+        for mID in mIDs:
+            try:
+                ds[f'{mID}_summary'] = self.dict['model summary'](mID, save_to=save_to, **kwargs)
+            except:
+                print('SUMMARY FAIL', mID)
+        if save_to is not None and len(ds)>0 :
+            combine_pdfs(file_dir=save_to, save_as="_MODEL_SUMMARIES_.pdf", deep=False)
+        return ds
+
+
+
+
+
+
+
 
 
 graph_dict = GraphDict()

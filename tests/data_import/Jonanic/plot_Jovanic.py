@@ -79,9 +79,9 @@ kws = {
 }
 
 
-from lib.conf.stored.analysis_conf import analysis_dict
+# from lib.conf.stored.analysis_conf import analysis_dict
 G=preg.graph_dict
 
-entry_list=analysis_dict.general
-graph_entries = G.eval(entry_list, **kws)
+# entry_list=analysis_dict.general
+graph_entries = G.eval_graphgroups(graphgroups=['general'], **kws)
 

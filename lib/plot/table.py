@@ -161,6 +161,26 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
         return P.get()
 
 
+
+def mdiff_table(mIDs, dIDs, **kwargs) :
+    from lib.registry.pars import preg
+    data = preg.larva_conf_dict.diff_df(mIDs=mIDs, dIDs=dIDs)
+    mpl_kws = {
+        'name': 'mdiff_table',
+        'figsize': (24, 14),
+        'adjust_kws': {'left': 0.3, 'right': 0.95},
+        'font_size': 14,
+        'highlighted_celltext_dict': {'green': ['sample'], 'grey': ['nan', '', None, np.nan]}
+    }
+    mpl_kws.update(kwargs)
+
+
+    return mpl_table(data, **mpl_kws)
+
+
+
+
+
 def error_table(data, k='', title=None, **kwargs):
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
