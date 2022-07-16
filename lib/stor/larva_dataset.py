@@ -9,6 +9,7 @@ import copy
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
+
 from lib.registry.pars import preg
 
 
@@ -38,11 +39,8 @@ class LarvaDataset:
     def retrieve_conf(self, id='unnamed', fr=16, Npoints=None, Ncontour=0, metric_definition=None, env_params={},
                       larva_groups={},
                       source_xy={}, **kwargs):
-        # try:
         if os.path.exists(self.dir_dict.conf):
             config = dNl.load_dict(self.dir_dict.conf, use_pickle=False)
-            # raise
-
         else:
             if metric_definition is None:
                 metric_definition = preg.get_null('metric_definition')
@@ -175,19 +173,12 @@ class LarvaDataset:
                     ss=temp[h5_k]
                     temp.close()
                     ps=[p for p in ss.columns.values if p not in s.columns.values]
-                    # print(ps)
-
                     if len(ps)>0 :
                         stored_ps+=ps
                         s = s.join(ss[ps])
-                    # print(s[ps])
                     self.load_h5_kdic[h5_k] = "a"
                 else:
                     self.load_h5_kdic[h5_k] = "w"
-            # print(ps)
-            # print(stored_ps)
-            # print(s.columns.values)
-            # print([p in s.columns.values for p in stored_ps])
             s.sort_index(level=['Step', 'AgentID'], inplace=True)
             self.agent_ids = s.index.unique('AgentID').values
             self.num_ticks = s.index.unique('Step').size
@@ -207,9 +198,6 @@ class LarvaDataset:
             self.food_endpoint_data = store['food']
             store.close()
             self.food_endpoint_data.sort_index(inplace=True)
-
-
-        # print(self.load_result_dict)
 
     def save_vel_definition(self, component_vels=True, add_reference=True):
         from lib.process.calibration import comp_stride_variation, comp_segmentation
@@ -499,181 +487,22 @@ class LarvaDataset:
                 ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], use_pickle=True)
         return ds
 
-    def get_pars_list(self, p0, s0, draw_Nsegs):
-        if p0 is None:
-            p0 = self.point
-        elif type(p0) == int:
-            p0 = 'centroid' if p0 == -1 else self.points[p0]
-        dic = {}
-        dic['pos_p'] = pos_p = nam.xy(p0) if set(nam.xy(p0)).issubset(s0.columns) else ['x', 'y']
-        dic['mid_p'] = mid_p = [xy for xy in self.points_xy if set(xy).issubset(s0.columns)]
-        dic['cen_p'] = cen_p = nam.xy('centroid') if set(nam.xy('centroid')).issubset(s0.columns) else []
-        dic['con_p'] = con_p = [xy for xy in self.contour_xy if set(xy).issubset(s0.columns)]
-        dic['chunk_p'] = chunk_p = [p for p in ['stride_stop', 'stride_id', 'pause_id', 'feed_id'] if p in s0.columns]
-        dic['ang_p'] = ang_p = ['bend'] if 'bend' in s0.columns else []
-
-        dic['ors_p'] = ors_p = [p for p in
-                                ['front_orientation', 'rear_orientation', 'head_orientation', 'tail_orientation'] if
-                                p in s0.columns]
-        if draw_Nsegs == len(mid_p) - 1 and set(nam.orient(self.segs)).issubset(s0.columns):
-            dic['ors_p'] = ors_p = nam.orient(self.segs)
-        pars = dNl.unique_list(cen_p + pos_p + ang_p + ors_p + chunk_p + dNl.flatten_list(mid_p + con_p))
-
-        return dic, pars, p0
-
-    def get_smaller_dataset(self, s0, e0, ids=None, pars=None, time_range=None, dynamic_color=None):
-        if ids is None:
-            ids = e0.index.values.tolist()
-        if type(ids) == list and all([type(i) == int for i in ids]):
-            ids = [self.agent_ids[i] for i in ids]
-        if dynamic_color is not None and dynamic_color in s0.columns:
-            pars.append(dynamic_color)
-        else:
-            dynamic_color = None
-        pars = [p for p in pars if p in s0.columns]
-        if time_range is None:
-            s = copy.deepcopy(s0.loc[(slice(None), ids), pars])
-        else:
-            a, b = time_range
-            a = int(a / self.dt)
-            b = int(b / self.dt)
-            s = copy.deepcopy(s0.loc[(slice(a, b), ids), pars])
-        e = copy.deepcopy(e0.loc[ids])
-        traj_color = s[dynamic_color] if dynamic_color is not None else None
-        return s, e, ids, traj_color
-
-    def visualize(self, s0=None, e0=None, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None,
-                  draw_Nsegs=None, env_params=None, track_point=None, dynamic_color=None, use_background=False,
-                  transposition=None, fix_point=None, fix_segment=None, **kwargs):
-        from lib.model.envs._larvaworld_replay import LarvaWorldReplay
-        if vis_kwargs is None:
-            vis_kwargs = preg.get_null('visualization', mode='video')
-        if s0 is None and e0 is None:
-            if not hasattr(self, 'step_data'):
-                self.load(h5_ks=['contour', 'midline', 'base_spatial'])
-            s0, e0 = self.step_data, self.endpoint_data
-        dic, pars, track_point = self.get_pars_list(track_point, s0, draw_Nsegs)
-        s, e, ids, traj_color = self.get_smaller_dataset(ids=agent_ids, pars=pars, time_range=time_range,
-                                                         dynamic_color=dynamic_color, s0=s0, e0=e0)
-        if len(ids) == 1:
-            n0 = ids[0]
-        elif len(ids) == len(self.agent_ids):
-            n0 = 'all'
-        else:
-            n0 = f'{len(ids)}l'
-
-        if env_params is None:
-            env_params = self.env_params
-        arena_dims = env_params['arena']['arena_dims']
-
-        if transposition is not None:
-            from lib.process.spatial import align_trajectories
-            s = align_trajectories(s, track_point=track_point, arena_dims=arena_dims, mode=transposition,
-                                   config=self.config)
-            bg = None
-            n1 = 'transposed'
-        elif fix_point is not None:
-            from lib.process.spatial import fixate_larva
-            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment, arena_dims=arena_dims, config=self.config)
-            n1 = 'fixed'
-        else:
-            bg = None
-            n1 = 'normal'
-
-        replay_id = f'{n0}_{n1}'
-        if vis_kwargs['render']['media_name'] is None:
-            vis_kwargs['render']['media_name'] = replay_id
-        if save_to is None:
-            save_to = self.vis_dir
-
-        base_kws = {
-            'vis_kwargs': vis_kwargs,
-            'env_params': env_params,
-            'id': replay_id,
-            'dt': self.dt,
-            'Nsteps': len(s.index.unique('Step').values),
-            'save_to': save_to,
-            'background_motion': bg,
-            'use_background': True if bg is not None else False,
-            'Box2D': False,
-            'traj_color': traj_color,
-            # 'space_in_mm': space_in_mm
-        }
-        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e, config=self.config, draw_Nsegs=draw_Nsegs,
-                                      **dic, **base_kws, **kwargs)
-
-        replay_env.run()
-        print('Visualization complete')
-
-    def visualize_single(self, id=0, close_view=True, fix_point=-1, fix_segment=None, save_to=None, time_range=None,
-                         draw_Nsegs=None, vis_kwargs=None, **kwargs):
-        from lib.model.envs._larvaworld_replay import LarvaWorldReplay
-        from lib.process.spatial import fixate_larva
-        if type(id) == int:
-            id = self.config.agent_ids[id]
-        s0, e0 = self.load_agent(id)
 
 
+    def visualize(self, **kwargs):
+        from lib.sim.replay.replay_run import ReplayRun
+        rep = ReplayRun(dataset=self, **kwargs)
 
-        if s0 is None:
-
-            try:
-                if not hasattr(self, 'step_data'):
-                    self.load(h5_ks=['contour', 'midline', 'base_spatial'])
-                s00, e00 = self.step_data, self.endpoint_data
-                s0 = s00.loc[(slice(None), [id]), (slice(None))]
-                e0=e00.loc[[id]]
-            except :
-                self.save_agents(ids=[id])
-                s0, e0 = self.load_agent(id)
-        env_params = self.env_params
-        if close_view:
-            env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
-        if time_range is None:
-            s00 = copy.deepcopy(s0)
-        else:
-            a, b = time_range
-            a = int(a / self.dt)
-            b = int(b / self.dt)
-            s00 = copy.deepcopy(s0.loc[slice(a, b)])
-        dic, pars, track_point = self.get_pars_list(fix_point, s00, draw_Nsegs)
-        s, bg = fixate_larva(s00, point=fix_point, fix_segment=fix_segment,
-                             arena_dims=env_params.arena.arena_dims, config=self.config)
-        if save_to is None:
-            save_to = self.vis_dir
-        replay_id = f'{id}_fixed_at_{fix_point}'
-        if vis_kwargs is None:
-            vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60, media_name=replay_id)
-        base_kws = {
-            'vis_kwargs': vis_kwargs,
-            'env_params': env_params,
-            'id': replay_id,
-            'dt': self.dt,
-            'Nsteps': len(s.index.unique('Step').values),
-            'save_to': save_to,
-            'background_motion': bg,
-            'use_background': True if bg is not None else False,
-            'Box2D': False,
-            'traj_color': None,
-            # 'space_in_mm': space_in_mm
-        }
-        replay_env = LarvaWorldReplay(step_data=s, endpoint_data=e0, config=self.config, draw_Nsegs=draw_Nsegs,
-                                      **dic, **base_kws, **kwargs)
-
-        replay_env.run()
-        print('Visualization complete')
+        rep.run()
 
     def configure_body(self):
         N, Nc = self.Npoints, self.Ncontour
         self.points = nam.midline(N, type='point')
-
         self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
         self.angles = [f'angle{i}' for i in range(self.Nangles)]
         self.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
         self.segs = nam.midline(self.Nsegs, type='seg')
-
         self.points_xy = nam.xy(self.points)
-
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour)
 
@@ -727,9 +556,7 @@ class LarvaDataset:
             os.makedirs(self.dir_dict[k], exist_ok=True)
 
     def define_linear_metrics(self):
-        # print(self.config.metric_definition.keys())
         sp_conf = self.config.metric_definition.spatial
-        # print(sp_conf)
         if sp_conf.fitted is None:
             point_idx = sp_conf.hardcoded.point_idx
             use_component_vel = sp_conf.hardcoded.use_component_vel

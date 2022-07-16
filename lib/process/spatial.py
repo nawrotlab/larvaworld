@@ -510,7 +510,6 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=No
     else:
         if track_point is None:
             track_point = c.point
-
         XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
         if not set(XY).issubset(s.columns):
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
@@ -536,11 +535,11 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=No
         return s
 
 
-def fixate_larva(s, config, point, arena_dims, fix_segment=None):
+def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     ids = s.index.unique(level='AgentID').values
-    points = nam.midline(config.Npoints, type='point') + ['centroid']
+    points = nam.midline(c.Npoints, type='point') + ['centroid']
     points_xy = nam.xy(points, flat=True)
-    contour = nam.contour(config.Ncontour)
+    contour = nam.contour(c.Ncontour)
     contour_xy = nam.xy(contour, flat=True)
 
     all_xy_pars = points_xy + contour_xy
@@ -559,6 +558,8 @@ def fixate_larva(s, config, point, arena_dims, fix_segment=None):
     xy_ps = nam.xy(point)
     if set(xy_ps).issubset(s.columns):
         print(f'Fixing {point} to arena center')
+        if arena_dims is None :
+            arena_dims=c.env_params.arena.arena_dims
         X, Y = arena_dims
         xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
         xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]

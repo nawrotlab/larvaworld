@@ -50,12 +50,10 @@ def moving_average(a, n=3):
 
 def arrange_index_labels(index):
     from lib.aux import dictsNlists as dNl
-    # old = df.index
     Nks = index.value_counts(sort=False)
     def merge(k,Nk) :
         Nk1=int((Nk-1)/2)
         Nk2=Nk-1-Nk1
         return ['']*Nk1 + [k.upper()] + ['']*Nk2
     new=dNl.flatten_list([merge(k,Nk) for i, (k, Nk) in enumerate(Nks.items())])
-    # df.index=new
     return new

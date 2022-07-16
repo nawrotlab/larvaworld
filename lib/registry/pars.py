@@ -329,6 +329,18 @@ class ParRegistry:
             from lib.stor.larva_dataset import LarvaDataset
             return LarvaDataset(self.loadConf(id=id, conftype='Ref')['dir'], load_data=False)
 
+    def loadRefD(self, id=None, **kwargs):
+        if id is not None:
+            from lib.stor.larva_dataset import LarvaDataset
+            d = LarvaDataset(self.loadConf(id=id, conftype='Ref')['dir'], load_data=False)
+            d.load(**kwargs)
+            return d
+
+    def loadRefDs(self, ids, **kwargs):
+        ds=[self.loadRefD(id, **kwargs) for id in ids]
+        return ds
+
+
     def deleteConf(self, conftype, id=None):
         if id is not None:
             if conftype == 'Data':

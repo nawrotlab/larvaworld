@@ -1,11 +1,35 @@
+from lib.sim.replay.replay_run import ReplayRun
 
-# print(kConfDict('Ref'))
-# raise
-# refID = 'None.Tane_test'
-from lib.registry.pars import preg
+mode = 'fixed_overlap'
+refID = 'exploration.dish'
 
-refID = 'exploration.3controls'
-d = preg.loadRef(refID)
-d.visualize(s0=None, e0=None, vis_kwargs=None, agent_ids=None, save_to=None, time_range=None,
-            draw_Nsegs=None, env_params=None, track_point=None, dynamic_color=None, use_background=False,
-            transposition=None, fix_point=None, fix_segment=None)
+replay_kws = {
+    'normal': {
+        # 'id': f'{refID}_replay'
+    },
+    'fixed_point': {
+        # 'id':f'{refID}_replay_solo_fixed_point',
+        'agent_ids': [1],
+        'close_view': True,
+        'fix_point': 6,
+    },
+    'fixed_segment': {
+        # 'id':f'{refID}_replay_solo_fixed_point',
+        'agent_ids': [1],
+        'close_view': True,
+        'fix_point': 6,
+        'fix_segment': -1,
+    },
+    'fixed_overlap': {
+        # 'id':f'{refID}_replay_solo_fixed_point',
+        'agent_ids': [1],
+        'close_view': True,
+        'fix_point': 6,
+        'fix_segment': -1,
+        'overlap_mode': True,
+    },
+}
+
+rep = ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to='./media', **replay_kws[mode])
+
+rep.run()

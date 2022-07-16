@@ -33,7 +33,7 @@ class LarvaWorld(BaseLarvaWorld):
 
 
     def __init__(self, env_params, vis_kwargs=None, id='unnamed', dt=0.1, Nsteps=None, save_to='.',
-                 background_motion=None, Box2D=False, use_background=False, traj_color=None, allow_clicks=True,
+                 background_motion=None, Box2D=False, traj_color=None, allow_clicks=True,
                  experiment=None, progress_bar=None, larva_groups={}, configuration_text=None,larva_collisions=True):
 
         super().__init__(env_params, id, dt, Nsteps, save_to, Box2D, experiment,larva_collisions,larva_groups)
@@ -79,7 +79,6 @@ class LarvaWorld(BaseLarvaWorld):
 
         self.traj_color = traj_color
         self.background_motion = background_motion
-        self.use_background = use_background
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
 
@@ -261,7 +260,7 @@ class LarvaWorld(BaseLarvaWorld):
         return fun.random_colors(1)[0] if self.random_colors else self.default_larva_color
 
     def set_background(self, width, height):
-        if self.use_background:
+        if self.background_motion is not None:
             ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
             path = os.path.join(ROOT_DIR, 'background.png')
             print('Loading background image from', path)
