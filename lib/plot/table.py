@@ -15,8 +15,9 @@ def modelConfTable(mID, **kwargs):
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
     from lib.registry.pars import preg
-    mdict = preg.init2mdict(k)
-    df = preg.mdict2df(mdict, columns=columns)
+    from lib.aux.data_aux import mdict2df
+    mdict = preg.init_dict.init2mdict(k)
+    df = mdict2df(mdict, columns=columns)
 
     # row_colors = [None] + [None for ii in df.index.values]
     ax, fig, mpl = mpl_table(df, header0=columns[0],

@@ -190,8 +190,16 @@ def get_dist(k, k0='intermitter', v=None, return_tabrows=False, d0=None, return_
 
 
 class DistDict:
-    def __init__(self):
-        self.dict = build_dist_dict()
+    def __init__(self, load=False):
+        from lib.registry import paths
+        if not load:
+            self.dict = build_dist_dict()
+            # dNl.save_dict(self.dict, paths.path_dict['DistDict'])
+        else:
+            self.dict = dNl.load_dict(paths.path_dict['DistDict'])
+
 
     def get_dist(self, **kwargs):
         return get_dist(d0=self.dict, **kwargs)
+
+dist_dict = DistDict()

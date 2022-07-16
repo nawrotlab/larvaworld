@@ -284,7 +284,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
             lb = dsp['upper'].values[t0:t1]
             ub = dsp['lower'].values[t0:t1]
         except :
-            dsp = preg.get(k, d)
+            dsp = preg.par_dict.get(k, d)
             mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]
             ub = dsp.groupby(level='Step').quantile(q=0.75).values[t0:t1]
             lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]

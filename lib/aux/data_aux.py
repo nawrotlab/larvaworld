@@ -57,3 +57,13 @@ def arrange_index_labels(index):
         return ['']*Nk1 + [k.upper()] + ['']*Nk2
     new=dNl.flatten_list([merge(k,Nk) for i, (k, Nk) in enumerate(Nks.items())])
     return new
+
+
+def mdict2df(mdict, columns=['symbol', 'value', 'description']):
+    data = []
+    for k, p in mdict.items():
+        entry = [getattr(p, col) for col in columns]
+        data.append(entry)
+    df = pd.DataFrame(data, columns=columns)
+    df.set_index(columns[0], inplace=True)
+    return df

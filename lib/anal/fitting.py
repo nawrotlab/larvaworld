@@ -74,7 +74,7 @@ def KS2(a1, a2):
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
     from lib.registry.pars import preg
-    D=preg.dist_dict['logNpow']
+    D=preg.dist_dict.dict['logNpow']
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     temp = np.ones([len(xmids), len(overlaps)])
@@ -177,7 +177,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
     with suppress_stdout(False):
         warnings.filterwarnings('ignore')
         from lib.registry.pars import preg
-        DD=preg.dist_dict
+        DD=preg.dist_dict.dict
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
 
@@ -396,7 +396,7 @@ class BoutGenerator:
         self.dt = dt
         self.range = range
         from lib.registry.pars import preg
-        self.ddfs = preg.dist_dict
+        self.ddfs = preg.dist_dict.dict
         self.xmin, self.xmax = range
         kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
         self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}

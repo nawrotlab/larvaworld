@@ -380,9 +380,9 @@ class EvalRun:
     def preprocess(self):
         Ddata, Edata = {}, {}
         for p, sh in zip(self.s_pars, self.s_shorts):
-            Ddata[p] = {d.id: preg.get(sh, d) for d in self.datasets}
+            Ddata[p] = {d.id: preg.par_dict.get(sh, d) for d in self.datasets}
         for p, sh in zip(self.e_pars, self.e_shorts):
-            Edata[p] = {d.id: preg.get(sh, d) for d in self.datasets}
+            Edata[p] = {d.id: preg.par_dict.get(sh, d) for d in self.datasets}
         return dNl.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):

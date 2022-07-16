@@ -19,9 +19,9 @@ class Parser:
     #         self.parsargs = build_ParsDict(d0)
 
     def __init__(self, name):
-
+        from lib.registry.parser_dict import parser_dict
         self.name = name
-        self.parsargs = preg.parser_dict[name]
+        self.parsargs = parser_dict.dict[name]
 
     def add(self, parser=None):
         if parser is None:
@@ -32,9 +32,7 @@ class Parser:
 
     def get(self, input):
         dic = {k: v.get(input) for k, v in self.parsargs.items()}
-        #print(self.parsargs)
-        d=preg.get_null(self.name, **dic)
-        # print(dic)
+        d=preg.get_null(name=self.name, **dic)
         return d
 
 

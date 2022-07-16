@@ -206,7 +206,7 @@ def save_conf_window(conf, conftype, disp=None):
     e, v = sg.Window(f'{disp} configuration', l).read(close=True)
     if e == 'Ok':
         id = v[f'{disp}_ID']
-        preg.saveConf(conf=conf, conftype=conftype, id=id)
+        preg.conftype_dict.saveConf(conf=conf, conftype=conftype, id=id)
         return id
     elif e == 'Cancel':
         return None
@@ -219,7 +219,7 @@ def delete_conf_window(id, conftype, disp=None) :
          [sg.Ok(), sg.Cancel()]], justification='center', vertical_alignment='center', element_justification='center',pad=(20,20))]]
     e, v = sg.Window(f'Delete configuration', l, size=(500,250)).read(close=True)
     if e == 'Ok':
-        preg.deleteConf(id=id, conftype=conftype)
+        preg.conftype_dict.deleteConf(id=id, conftype=conftype)
         return True
     elif e == 'Cancel':
         return False

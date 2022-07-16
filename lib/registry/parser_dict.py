@@ -1,3 +1,4 @@
+import time
 from typing import List
 import lib.aux.dictsNlists as dNl
 
@@ -50,15 +51,21 @@ def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
             d['nargs'] = '?'
     return {name: d}
 
-def build_ParsDict(d0):
+
+def get_ParsDict(d0):
     dic = {}
     for n, ndic in d0.items():
         entry = build_ParsArg(name=n, **ndic)
         dic.update(entry)
+    return dic
+
+
+def build_ParsDict(dic):
     return {k: ParsArg(**v) for k, v in dic.items()}
     # return parsargs
 
-def build_ParsDict2(d0):
+
+def get_ParsDict2(d0):
     def par(name, dtype=float, v=None, vs=None, h='', k=None, **kwargs):
         return build_ParsArg(name, k, h, dtype, v, vs)
 
@@ -74,8 +81,11 @@ def build_ParsDict2(d0):
             d.update(entry)
         return d
 
-
     dic = par_dict(d0=d0)
+    return dic
+
+
+def build_ParsDict2(dic):
     try:
         parsargs = {k: ParsArg(**v) for k, v in dic.items()}
     except:
@@ -87,24 +97,42 @@ def build_ParsDict2(d0):
 
 
 class ParserDict:
-    def __init__(self, init_dict=None, names=['sim_params', 'batch_setup','eval_conf','visualization','ga_select_kws', 'replay'] ):
-        if init_dict is None :
-            from lib.registry.pars import preg
-            init_dict=preg.init_dict
-        self.init_dict=init_dict
-        self.dict=self.build_parser_dict(names)
+    def __init__(self, init_dict=None, load=True,
+                 names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
+        from lib.registry import paths
+        self.dict_path = paths.path_dict['ParserDict']
+        if not load:
+            self.predict = self.build_predict(names, init_dict)
+            dNl.save_dict(self.predict, self.dict_path)
+        else:
+            self.predict = dNl.load_dict(self.dict_path)
+        self.dict = self.build_parser_dict(self.predict)
 
-    def build_parser_dict(self,names) :
-        d=dNl.NestDict()
+    def build_predict(self, names, init_dict=None):
+        if init_dict is None:
+            from lib.registry import init_pars
+            init_dict = init_pars.init_dict.dict
+        # self.init_dict = init_dict
+        pred = dNl.NestDict()
         for name in names:
-            d0 = self.init_dict[name]
-            # parsargs = build_ParsDict2(d0)
-            # print(name)
+            d0 = init_dict[name]
             try:
-                parsargs = build_ParsDict2(d0)
-                # print('ff')
+                pred[name] = get_ParsDict2(d0)
             except:
-                parsargs = build_ParsDict(d0)
+                pred[name] = get_ParsDict(d0)
+        return pred
 
-            d[name]=parsargs
+    def build_parser_dict(self, predict):
+        d = dNl.NestDict()
+        for name, dic in predict.items():
+            try:
+                d[name] = build_ParsDict2(dic)
+            except:
+                d[name] = build_ParsDict(dic)
         return d
+
+
+# t0=time.time()
+parser_dict = ParserDict()
+# t1=time.time()
+# print((t1-t0)*10000)

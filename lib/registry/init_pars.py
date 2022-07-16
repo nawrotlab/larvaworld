@@ -1,7 +1,7 @@
 import param
 
 from lib.aux.par_aux import subsup, sub, sup
-
+from lib.aux import dictsNlists as dNl
 
 def ConfSelector(conf_type, default=None, single_choice=True, **kwargs):
     from lib.conf.stored.conf import kConfDict
@@ -26,7 +26,7 @@ def confID_entry(conftype, default=None, k=None, symbol=None, single_choice=True
     from typing import List
     from lib.conf.stored.conf import kConfDict
     from lib.aux.par_aux import sub
-    from lib.aux import dictsNlists as dNl
+    # from lib.aux import dictsNlists as dNl
     low = conftype.lower()
 
     if single_choice:
@@ -54,7 +54,7 @@ class ParInitDict:
         from types import FunctionType
         import numpy as np
         import param
-        from lib.aux import dictsNlists as dNl
+        # from lib.aux import dictsNlists as dNl
 
         bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
 
@@ -1198,3 +1198,49 @@ class ParInitDict:
             return dNl.NestDict(d)
 
         self.dict = buildInitDict()
+
+
+    def init2mdict(self, k):
+        d0 = self.dict[k]
+        from lib.registry.par_dict import preparePar
+        from lib.registry.par import v_descriptor
+        d = {}
+        for kk, vv in d0.items():
+            prepar = preparePar(p=kk, **vv)
+            p = v_descriptor(**prepar)
+            d[p.k] = p
+        return dNl.NestDict(d)
+
+    def get_null(self, name, key='v', **kwargs):
+        def v0(d):
+            if d is None:
+                return None
+
+            null = dNl.NestDict()
+            for k, v in d.items():
+                if not isinstance(v, dict):
+                    null[k] = v
+                elif 'k' in v.keys() or 'h' in v.keys() or 'dtype' in v.keys():
+                    null[k] = None if key not in v.keys() else v[key]
+                else:
+                    null[k] = v0(v)
+            return null
+
+        if key != 'v':
+            raise
+        dic2 = v0(self.dict[name])
+        if name not in ['visualization', 'enrichment']:
+            dic2.update(kwargs)
+            return dNl.NestDict(dic2)
+        else:
+            for k, v in dic2.items():
+                if k in list(kwargs.keys()):
+                    dic2[k] = kwargs[k]
+                elif isinstance(v, dict):
+                    for k0, v0 in v.items():
+                        if k0 in list(kwargs.keys()):
+                            dic2[k][k0] = kwargs[k0]
+            return dNl.NestDict(dic2)
+
+
+init_dict=ParInitDict()

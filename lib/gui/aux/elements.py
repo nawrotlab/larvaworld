@@ -331,7 +331,7 @@ class SelectionList(GuiElement):
         if self.with_dict:
             # print(self.tab.gui.tab_dict[n][2])
             self.collapsible = CollapsibleDict(name= self.tab.gui.tab_dict[n][2], default=True,
-                                               header_list_width=self.width, header_dict=preg.loadConfDict(self.conftype),
+                                               header_list_width=self.width, header_dict=preg.conftype_dict.loadConfDict(self.conftype),
                                                next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
@@ -957,9 +957,9 @@ class CollapsibleDict(Collapsible):
             entry = par(name=as_entry, dtype=str, v='Unnamed') if as_entry is not None else {}
             if dict_name is None:
                 dict_name = name
-            # print(dict_name)
-            if dict_name in preg.init_dict.keys():
-                dic = par_dict(d0=preg.init_dict[dict_name])
+            D=preg.init_dict.dict
+            if dict_name in D.keys():
+                dic = par_dict(d0=D[dict_name])
                 type_dict = {**entry, **dic}
         self.as_entry = as_entry
         self.subdict_state = subdict_state
@@ -1086,8 +1086,9 @@ class PadDict(PadElement):
             Ncols = len(col_idx)
         if type_dict is None :
             from lib.registry.dtypes import par_dict
-            if self.dict_name in preg.init_dict.keys() :
-                type_dict = par_dict(d0=preg.init_dict[self.dict_name])
+            D = preg.init_dict.dict
+            if self.dict_name in D.keys() :
+                type_dict = par_dict(d0=D[self.dict_name])
         self.type_dict = type_dict
         if content is None:
             content = self.build(name)
@@ -1535,7 +1536,7 @@ class DynamicGraph:
         sg.theme('DarkBlue15')
         self.agent = agent
         if available_pars is None:
-            available_pars = preg.runtime_pars()
+            available_pars = preg.par_dict.runtime_pars()
         self.available_pars = available_pars
         self.pars = pars
         self.dt = self.agent.model.dt
@@ -1702,7 +1703,7 @@ class GuiTreeData(sg.TreeData):
         else:
             from lib.registry.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
-            preg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
+            preg.conftype_dict.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
             # saveConf(df.to_dict(), 'Tree', self.root_key)
         return df
 

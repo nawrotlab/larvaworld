@@ -57,7 +57,7 @@ class SettingsTab(GuiTab):
         kws={'background_color':self.Ccon}
         b_reset=gui_but.GraphButton('Button_Burn', self.k_reset,tooltip='Reset all controls to the defaults. '
                                    'Restart Larvaworld after changing shortcuts.')
-        conf = preg.loadConfDict('Settings')
+        conf = preg.conftype_dict.loadConfDict('Settings')
         # print(conf['keys'].keys())
         cs = [self.single_control_collapsible(k, v,header_width=26, **kws) for k, v in conf['keys'].items()]
         cs.append(self.single_control_collapsible('mouse', conf['mouse'], editable=False,header_width=26, **kws))
@@ -96,12 +96,12 @@ class SettingsTab(GuiTab):
         # d0['keys'][cur] = v_cur
         d0['pygame_keys'][cur] = gui_fun.get_pygame_key(v_cur)
         d0['cur'] = None
-        preg.saveConfDict(id=d0, conftype='Settings')
+        preg.conftype_dict.saveConfDict(id=d0, conftype='Settings')
         # saveConfDict(d0, 'Settings')
 
     def reset_controls(self, w):
         store_controls()
-        conf = preg.loadConfDict('Settings')
+        conf = preg.conftype_dict.loadConfDict('Settings')
         d = self.inti_control_dict(conf)
         for title, dic in conf['keys'].items():
             for k0, v0 in dic.items():

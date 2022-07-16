@@ -399,13 +399,10 @@ from lib.registry.units import ureg
 
 
 class LarvaConfDict:
-    def __init__(self, dist_dict0=None):
+    def __init__(self):
         from lib.registry.modConfs import build_LarvaConfDict
-        if dist_dict0 is None:
-            from lib.registry.pars import preg
-            dist_dict0 = preg.dist_dict0
-        self.dist_dict0 = dist_dict0
-        self.dist_dict = self.dist_dict0.dict
+        from lib.registry import dist_dict
+        self.dist_dict = dist_dict.dist_dict
 
         self.dict = build_LarvaConfDict()
         self.full_dict = self.build_full_dict()
@@ -566,7 +563,7 @@ class LarvaConfDict:
                         v = m.brain[f'{mkey}_params'][var_k]
                         if v is not None:
                             if v.name is not None:
-                                vs1, vs2 = self.dist_dict0.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
+                                vs1, vs2 = self.dist_dict.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
                                 data.append(vs1)
                                 data.append(vs2)
                 else:
@@ -660,7 +657,7 @@ class LarvaConfDict:
                 for kkk in ['stridechain_dist', 'pause_dist', 'run_dist']:
                     if dic[kkk] is not None:
                         if dic[kkk].name is not None:
-                            vs1, vs2 = self.dist_dict0.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
+                            vs1, vs2 = self.dist_dict.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
                             data0.append(vs1)
                             data0.append(vs2)
 
@@ -1303,6 +1300,8 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         return np.round(vs.median(), Nround)
     else:
         return vs
+
+larva_conf_dict=LarvaConfDict()
 
 
 

@@ -64,7 +64,7 @@ def pars_to_tree(name):
     data = []
     columns = ['parent', 'key', 'text', 'initial_value', 'dtype', 'tooltip', 'disp']
     columns2 = ['parent', 'key', 'text', 'default_value', 'dtype', 'description', 'name']
-    d0 = preg.init_dict[name]
+    d0 = preg.init_dict.dict[name]
     data.append(['root', name, name, None, dict, None, name])
     valid.append(name)
     for k0, v0 in d0.items():

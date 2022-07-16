@@ -295,7 +295,7 @@ class GAbuilder(GAselector):
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
         for k in self.fit_dict.keys:
-            preg.compute(k, self.dataset)
+            preg.par_dict.compute(k, self.dataset)
         fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
 
         valid_gs={}

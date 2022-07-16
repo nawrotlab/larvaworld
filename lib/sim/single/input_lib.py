@@ -6,7 +6,7 @@ from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
 from lib.registry.pars import preg
 
-shortcuts = preg.loadConfDict('Settings')
+shortcuts = preg.conftype_dict.loadConfDict('Settings')
 
 
 def evaluate_input(model, screen):

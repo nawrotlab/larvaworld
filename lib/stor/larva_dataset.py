@@ -412,7 +412,7 @@ class LarvaDataset:
             if refID is None:
                 refID = f'{self.group_id}.{self.id}'
             self.config.refID = refID
-            preg.saveConf(conf=self.config, conftype='Ref', id=refID)
+            preg.conftype_dict.saveConf(conf=self.config, conftype='Ref', id=refID)
 
     def save_agents(self, ids=None, pars=None):
         if not hasattr(self, 'step_data'):

@@ -2,10 +2,12 @@ from types import FunctionType
 from typing import Tuple, List
 
 import numpy as np
+import pandas as pd
 import param
 
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring, delta
+
 from lib.registry.units import ureg
 
 
@@ -53,8 +55,9 @@ def vpar(vfunc, v0, h, lab, lim, dv, vs):
     return func
 
 
-def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,codename=None, lab=None, h=None, u_name=None,
-               required_ks=[], u=ureg.dimensionless, v0=None,v=None, lim=None, dv=None, vs=None,
+def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None, codename=None, lab=None, h=None,
+               u_name=None,
+               required_ks=[], u=ureg.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
                vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
@@ -62,26 +65,26 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
     k = k if k is not None else d
     v0 = v if v is not None else v0
     if sym is None:
-        if symbol is not None :
-            sym=symbol
-        else :
+        if symbol is not None:
+            sym = symbol
+        else:
             sym = k
     # sym = k if sym is None else sym
 
     # if u_name is None:
     #     u_name =u.__format__(spec=k)
-        # if u == ureg.dimensionless:
-        #     u_name = '-'
-        # else:
-        #     u_name = ureg.fmt_locale(u)
+    # if u == ureg.dimensionless:
+    #     u_name = '-'
+    # else:
+    #     u_name = ureg.fmt_locale(u)
 
     if lab is None:
         if u == ureg.dimensionless:
             lab = f'{disp}'
         else:
             lab = fr'{disp} ({u})'
-    if dv is None and dtype in [float,List[float], List[Tuple[float]],Tuple[float]] :
-        dv=0.01
+    if dv is None and dtype in [float, List[float], List[Tuple[float]], Tuple[float]]:
+        dv = 0.01
     h = lab if h is None else h
     if vparfunc is None:
         if vfunc is None:
@@ -112,8 +115,24 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
 
 
 class BaseParDict:
-    def __init__(self, func_dict, in_rad=True, in_m=True):
-        self.func_dict = func_dict
+    def __init__(self, in_rad=True, in_m=True, load=False, save=False):
+        from lib.registry import paths
+        self.dict_path=paths.path_dict['ParDf']
+        if load:
+            df = pd.read_csv(self.dict_path, index_col=0)
+            self.dict_entries = df.to_dict(orient='records')
+        else:
+            from lib.registry.par_funcs import parfunc_dict
+            self.func_dict = parfunc_dict.dict
+            self.dict_entries = self.build(in_rad=in_rad, in_m=in_m)
+            if save :
+                df = pd.DataFrame.from_records(self.dict_entries, index='k')
+                df.to_csv(self.dict_path)
+        self.kdict=self.finalize_dict(self.dict_entries)
+        self.ddict = dNl.NestDict({p.d: p for k, p in self.kdict.items()})
+        self.pdict = dNl.NestDict({p.p: p for k, p in self.kdict.items()})
+
+    def build(self, in_rad=True, in_m=True):
         self.dict = dNl.NestDict()
         self.dict_entries = []
         self.build_initial()
@@ -122,6 +141,7 @@ class BaseParDict:
         self.build_chunks()
         self.build_sim_pars()
         self.build_deb_pars()
+        return self.dict_entries
 
     def build_initial(self):
         kws = {'u': ureg.s}
@@ -132,7 +152,7 @@ class BaseParDict:
             **{'p': 'cum_dur', 'k': nam.cum('t'), 'sym': sub('t', 'cum'), 'lim': (0.0, None), 'dv': 0.1, 'v0': 0.0,
                **kws})
         self.add(
-            **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'),'dtype':int, 'lim': (0, None), 'dv': 1})
+            **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
 
     def add(self, **kwargs):
         prepar = preparePar(**kwargs)
@@ -196,11 +216,11 @@ class BaseParDict:
         init_kws = {'d': nam.initial(b.d), 'p': nam.initial(b.p), 'sym': sub(b.sym, '0'), 'disp': f'initial {b.disp}',
                     'func': funcs.initial(b.d), 'k': f'{b.k}0'}
 
-        if k0=='d' :
-            disp='pathlength'
-        elif k0=='sd' :
+        if k0 == 'd':
+            disp = 'pathlength'
+        elif k0 == 'sd':
             disp = 'scaled pathlength'
-        else :
+        else:
             disp = f'total {b.disp}'
         cum_kws = {'d': nam.cum(b.d), 'p': nam.cum(b.p), 'sym': sub(b.sym, 'cum'), 'disp': disp,
                    'func': funcs.cum(b.d), 'k': nam.cum(b.k)}
@@ -280,7 +300,8 @@ class BaseParDict:
             self.add(**{'p': f'{pN_mu}_{ii}_food', 'k': f'{kN_mu}_{ii}_food'})
             self.add(**{'p': f'{ptr}_{ii}_food', 'k': f'{ktr}_{ii}_food', 'lim': (0.0, 1.0)})
 
-        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f'avg. # {pc}s per sec', func=func)
+        self.add_rate(k_num=kN, k_den=nam.cum('t'), k=kN_mu, p=pN_mu, sym=bar(kN), disp=f'avg. # {pc}s per sec',
+                      func=func)
         self.add_operators(k0=kt)
 
         if str.endswith(pc, 'chain'):
@@ -512,7 +533,7 @@ class BaseParDict:
             self.add_unwrap(k0=ko)
 
             self.add_velNacc(k0=kou, k_v=f'{suf}ov', k_a=f'{suf}oa', p_v=p_v, d_v=p_v, p_a=p_a, d_a=p_a,
-                             sym_v=omega(ksuf),sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
+                             sym_v=omega(ksuf), sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
                              disp_a=f'{lsuf}angular acceleration')
         for k0 in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'fo', 'ro']:
             self.add_freq(k0=k0)
@@ -533,7 +554,7 @@ class BaseParDict:
         self.add(**{'p': 'y', 'disp': 'Y position', 'sym': 'Y', **kws})
         self.add(
             **{'p': 'real_length', 'k': 'l', 'd': 'length', 'disp': 'body length',
-               'sym': '$l$','v0': 0.004 * s, 'lim': (0.0005 * s, 0.01 * s), 'dv': 0.0005 * s, **kws})
+               'sym': '$l$', 'v0': 0.004 * s, 'lim': (0.0005 * s, 0.01 * s), 'dv': 0.0005 * s, **kws})
 
         self.add(
             **{'p': 'dispersion', 'k': 'dsp', 'sym': circledast('d'), 'disp': 'dispersal', **kws})
@@ -546,7 +567,8 @@ class BaseParDict:
                          func_v=self.func_dict.vel(d_d, d_v))
         self.add_scaled(k0='d')
         self.add_velNacc(k0='sd', k_v='sv', k_a='sa', p_v=d_sv, d_v=d_sv, p_a=d_sa, d_a=d_sa, sym_v=mathring('v'),
-                         sym_a=dot(mathring('v')), disp_v='scaled crawling speed', disp_a='scaled crawling acceleration',
+                         sym_a=dot(mathring('v')), disp_v='scaled crawling speed',
+                         disp_a='scaled crawling acceleration',
                          func_v=self.func_dict.vel(d_sd, d_sv))
         for k0 in ['l', 'd', 'sd', 'v', 'sv', 'a', 'sa', 'x', 'y']:
             self.add_freq(k0=k0)
@@ -596,11 +618,11 @@ class BaseParDict:
         for ii, jj in zip(['1', '2'], ['first', 'second']):
             k = f'c_odor{ii}'
             dk = f'd{k}'
-            sym=subsup('C', 'odor', ii)
-            dsym=subsup(delta('C'), 'odor', ii)
-            ddisp=f'{sym} sensed (C/{sub("C",0)} - 1)'
+            sym = subsup('C', 'odor', ii)
+            dsym = subsup(delta('C'), 'odor', ii)
+            ddisp = f'{sym} sensed (C/{sub("C", 0)} - 1)'
             self.add(**{'p': f'brain.olfactor.{jj}_odor_concentration', 'k': k, 'd': k,
-                        'disp': sym, 'sym': sym, 'u' : ureg.micromol})
+                        'disp': sym, 'sym': sym, 'u': ureg.micromol})
             self.add(**{'p': f'brain.olfactor.{jj}_odor_concentration_change', 'k': dk, 'd': dk,
                         'disp': ddisp, 'sym': dsym})
 
@@ -623,23 +645,111 @@ class BaseParDict:
                       disp=f'handedness score ({sub("N", "Lturns")} / {sub("N", "turns")})',
                       sym=sub('H', 'tur'), lim=(0.0, 1.0))
         for ii in ['on', 'off']:
-            k=f'{ii}_food'
+            k = f'{ii}_food'
             self.add(**{'p': k, 'k': k, 'dtype': bool})
-            self.add(**{'p': nam.dur(k), 'k': f'{k}_t', 'disp' : f'time {ii} food'})
-            self.add(**{'p': nam.cum(nam.dur(k)), 'k': nam.cum(f'{k}_t'), 'disp' : f'total time {ii} food'})
-            self.add(**{'p': nam.dur_ratio(k), 'k': f'{k}_tr', 'lim': (0.0, 1.0), 'disp' : f'time fraction {ii} food'})
-            self.add(**{'p': f'handedness_score_{k}', 'k': f'tur_H_{k}', 'disp' : f'handedness score {ii} food'})
-            for kk in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a','v_mu', 'sv_mu',
-                      'sa', 'd', 'sd']:
+            self.add(**{'p': nam.dur(k), 'k': f'{k}_t', 'disp': f'time {ii} food'})
+            self.add(**{'p': nam.cum(nam.dur(k)), 'k': nam.cum(f'{k}_t'), 'disp': f'total time {ii} food'})
+            self.add(**{'p': nam.dur_ratio(k), 'k': f'{k}_tr', 'lim': (0.0, 1.0), 'disp': f'time fraction {ii} food'})
+            self.add(**{'p': f'handedness_score_{k}', 'k': f'tur_H_{k}', 'disp': f'handedness score {ii} food'})
+            for kk in ['fov', 'rov', 'foa', 'roa', 'x', 'y', 'fo', 'fou', 'ro', 'rou', 'b', 'bv', 'ba', 'v', 'sv', 'a',
+                       'v_mu', 'sv_mu',
+                       'sa', 'd', 'sd']:
                 b = self.dict[kk]
-                k0=f'{kk}_{k}'
-                p0=f'{b.p}_{k}'
-                self.add(**{'p': p0, 'k': k0, 'disp' : f'{b.disp} {ii} food'})
+                k0 = f'{kk}_{k}'
+                p0 = f'{b.p}_{k}'
+                self.add(**{'p': p0, 'k': k0, 'disp': f'{b.disp} {ii} food'})
 
     def build_deb_pars(self):
-        ks=['f_am', 'sf_am_Vg', 'f_am_V','sf_am_V', 'sf_am_A', 'sf_am_M']
-        ps=['amount_eaten', 'deb.ingested_gut_volume_ratio', 'deb.volume_ingested','deb.ingested_body_volume_ratio', 'deb.ingested_body_area_ratio', 'deb.ingested_body_mass_ratio']
-        ds=['amount_eaten', 'ingested_gut_volume_ratio', 'ingested_volume','ingested_body_volume_ratio', 'ingested_body_area_ratio', 'ingested_body_mass_ratio']
-        disps=['food consumed', 'ingested food as gut volume fraction', 'ingested food volume','ingested food as body volume fraction', 'ingested food as body area fraction', 'ingested food as body mass fraction']
-        for k,p,d, disp in zip(ks,ps,ds, disps) :
-            self.add(**{'p': p, 'k': k,'d': d, 'disp': disp})
+        ks = ['f_am', 'sf_am_Vg', 'f_am_V', 'sf_am_V', 'sf_am_A', 'sf_am_M']
+        ps = ['amount_eaten', 'deb.ingested_gut_volume_ratio', 'deb.volume_ingested', 'deb.ingested_body_volume_ratio',
+              'deb.ingested_body_area_ratio', 'deb.ingested_body_mass_ratio']
+        ds = ['amount_eaten', 'ingested_gut_volume_ratio', 'ingested_volume', 'ingested_body_volume_ratio',
+              'ingested_body_area_ratio', 'ingested_body_mass_ratio']
+        disps = ['food consumed', 'ingested food as gut volume fraction', 'ingested food volume',
+                 'ingested food as body volume fraction', 'ingested food as body area fraction',
+                 'ingested food as body mass fraction']
+        for k, p, d, disp in zip(ks, ps, ds, disps):
+            self.add(**{'p': p, 'k': k, 'd': d, 'disp': disp})
+
+    def finalize_dict(self, entries):
+        from lib.registry.par import v_descriptor
+        dic = dNl.NestDict()
+        for prepar in entries:
+            p = v_descriptor(**prepar)
+            dic[p.k] = p
+        return dic
+
+    def get(self, k, d, compute=True):
+        p = self.kdict[k]
+        res = p.exists(d)
+
+        if res['step']:
+            if hasattr(d, 'step_data'):
+                return d.step_data[p.d]
+            else:
+                return d.read(key='step')[p.d]
+        elif res['end']:
+            if hasattr(d, 'endpoint_data'):
+                return d.endpoint_data[p.d]
+            else:
+                return d.read(key='end', file='endpoint_h5')[p.d]
+        else:
+            for key in res.keys():
+                if key not in ['step', 'end'] and res[key]:
+                    return d.read(key=f'{key}.{p.d}', file='aux_h5')
+
+        if compute:
+            self.compute(k, d)
+            return self.get(k, d, compute=False)
+        else:
+            print(f'Parameter {p.disp} not found')
+
+    def compute(self, k, d):
+        p = self.kdict[k]
+        res = p.exists(d)
+        if not any(list(res.values())):
+            k0s = p.required_ks
+            for k0 in k0s:
+                self.compute(k0, d)
+            p.compute(d)
+
+    def getPar(self, k=None, p=None, d=None, to_return='d'):
+        if k is not None:
+            d0 = self.kdict
+            k0 = k
+        elif d is not None:
+            d0 = self.ddict
+            k0 = d
+        elif p is not None:
+            d0 = self.pdict
+            k0 = p
+        else :
+            raise
+
+        if type(k0) == str:
+            par = d0[k0]
+            if type(to_return) == list:
+                return [getattr(par, i) for i in to_return]
+            elif type(to_return) == str:
+                return getattr(par, to_return)
+        elif type(k0) == list:
+            pars = [d0[i] for i in k0]
+            if type(to_return) == list:
+                return [[getattr(par, i) for par in pars] for i in to_return]
+            elif type(to_return) == str:
+                return [getattr(par, to_return) for par in pars]
+
+    def runtime_pars(self):
+        return [v.d for k, v in self.kdict.items()]
+
+    def auto_load(self, ks, datasets):
+        dic = {}
+        for k in ks:
+            dic[k] = {}
+            for d in datasets:
+                vs = self.get(k=k, d=d, compute=True)
+                dic[k][d.id] = vs
+        return dNl.NestDict(dic)
+
+
+basepar_dict=BaseParDict()

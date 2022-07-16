@@ -90,7 +90,7 @@ def store_controls():
     d = init_controls()
     from lib.registry.pars import preg
     # from lib.conf.stored.conf import saveConfDict
-    preg.saveConfDict(ConfDict=d, conftype='Settings')
+    preg.conftype_dict.saveConfDict(ConfDict=d, conftype='Settings')
 
 
 

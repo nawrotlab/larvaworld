@@ -124,4 +124,4 @@ if __name__ == '__main__':
     # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
     # raise
     # preg.storeConfs()
-    preg.storeConfs(conftypes=['Ga'])
+    preg.conftype_dict.storeConfs(conftypes=['Ga'])

@@ -25,9 +25,9 @@ class ReplayRun:
         self.id=id
         if vis_kwargs is None:
             if not overlap_mode :
-                vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60, media_name=self.id)
+                vis_kwargs = preg.get_null(name='visualization', mode='video', video_speed=60, media_name=self.id)
             else :
-                vis_kwargs = preg.get_null('visualization', mode='image', image_mode='overlap', media_name=self.id, draw_contour=False)
+                vis_kwargs = preg.get_null(name='visualization', mode='image', image_mode='overlap', media_name=self.id, draw_contour=False)
 
 
 

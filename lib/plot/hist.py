@@ -65,7 +65,7 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
     P.init_fits(preg.getPar(shorts))
     for i, (k,r) in enumerate(zip(shorts, rs)):
         p=preg.dict[k]
-        vs=[preg.get(k,d) for d in P.datasets]
+        vs=[preg.par_dict.get(k,d) for d in P.datasets]
         bins, xlim = P.angrange(r, absolute, Nbins)
         P.plot_par(vs=vs, bins=bins, i=i, absolute=absolute, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
                    pvalues=False, half_circles=half_circles)
@@ -182,7 +182,7 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, pvalues=False,type='
     P.build(1, Ncols, figsize=(Ncols * 5, 5), sharey=True, fig=fig, axs=axs)
     for i, k in enumerate(shorts):
         p=preg.dict[k]
-        vs=[preg.get(k,d) for d in P.datasets]
+        vs=[preg.par_dict.get(k,d) for d in P.datasets]
         P.plot_par(vs=vs, bins='broad', nbins=40, labels=p.disp, i=i, sns_kws = sns_kws,
                    type=type, pvalues=pvalues, half_circles=half_circles, key='end')
         P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, xlim=p.lim, yMaxN=4,

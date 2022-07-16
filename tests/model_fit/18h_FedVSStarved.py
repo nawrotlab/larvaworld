@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # print(preg.get_null('replay'))
     pass
     # ds = import_datasets(datagroup_id = 'Jovanic lab', source_ids=dIDs, parent_dir=parent_dir,merged=False,colors=cols)
-    # ds=preg.loadRefDs(refIDs,step=True, end=True, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'])
+    # ds=preg.conftype_dict.loadRefDs(refIDs,step=True, end=True, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'])
 
 
     # gd =preg.graph_dict.eval_graphgroups(graphgroups=['stride', 'track', 'endpoint', 'general'],
