@@ -10,7 +10,7 @@ from lib.stor.managing import import_datasets
 
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'
-idx = 4
+idx = 5
 g = preg.loadConf(id=datagroup_id, conftype='Group')
 group_dir = f'{preg.path_dict["DATA"]}/{g.path}'
 group_plotdir = f'{group_dir}/plots'
@@ -141,12 +141,38 @@ def eval_models(mIDs=mIDs,dataset_ids=dIDs,refIDs=refIDs,save_to=save_to,rerun=F
 
 
 if __name__ == '__main__':
-    ds = import_datasets(datagroup_id = 'Jovanic lab', source_ids=dIDs, parent_dir=parent_dir,merged=False,colors=cols)
-    ds=load_real(step=True)
+    # m0 = preg.larva_conf_dict.loadConf('RE_NEU_PHI_DEF_nav')
+    # for mID, refID in zip(mIDs, refIDs):
+    #     m = preg.larva_conf_dict.loadConf(mID)
+    #     d = preg.loadRef(refID)
+    #     d.load(step=False)
+    #     e, c = d.endpoint_data, d.config
+    #     m.brain.intermitter_params=preg.larva_conf_dict.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
+    #                                                                  conf=m0.brain.intermitter_params)
+    #
+    #     preg.larva_conf_dict.saveConf(conf=m, mID=mID, verbose=0)
+    #     # .config.bout_distros
+    # m = preg.larva_conf_dict.loadConf(mIDs[1]).brain.intermitter_params
+    # print(m.run_dur)
+    # print(m.run_dst)
+    # print(m.run_count)
+    # print(m.run_mode)
+    # print(m.stridechain_dist)
+    # print(m.run_dist)
+
+
+    # ds = import_datasets(datagroup_id = 'Jovanic lab', source_ids=dIDs, parent_dir=parent_dir,merged=False,colors=cols)
+    # ds=load_real(step=True)
     # ds=load_real(step=True,h5_ks=[])
     # ds=load_real(step=False,h5_ks=['angular'])
-    gd =preg.graph_dict.eval_graphgroups(graphgroups=['stride', 'track', 'endpoint', 'general'],
-                                         datasets=ds, save_to=f'{save_to}/real')
+    # ds=[]
+    # for refID in refIDs:
+    #     d = preg.loadRef(refID)
+    #     d.load(step=True, end=True,h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'])
+    #     ds.append(d)
+
+    # gd =preg.graph_dict.eval_graphgroups(graphgroups=['stride', 'track', 'endpoint', 'general'],
+    #                                      datasets=ds, save_to=f'{save_to}/real')
 
 
     # replay(2)

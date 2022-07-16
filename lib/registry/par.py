@@ -8,7 +8,7 @@ from lib.aux import dictsNlists as dNl
 from lib.registry.units import ureg
 
 
-def v_descriptor(vparfunc, v0=None, dv=None,u_name=None, **kws):
+def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
     class LarvaworldParNew(param.Parameterized):
         p = param.String(default='', doc='Name of the parameter')
         d = param.String(default='', doc='Dataset name of the parameter')
@@ -28,20 +28,22 @@ def v_descriptor(vparfunc, v0=None, dv=None,u_name=None, **kws):
 
         @property
         def l(self):
-            return self.disp+'  ' + self.ulabel
+            return self.disp + '  ' + self.ulabel
 
         @property
         def symunit(self):
-            return self.sym +'  ' + self.ulabel
+            return self.sym + '  ' + self.ulabel
 
         @property
         def ulabel(self):
-            return '(' + self.unit +')'
+            return '(' + self.unit + ')'
 
         @property
         def unit(self):
-            return fr'${self.u}$'
-
+            if self.u == ureg.dimensionless:
+                return '-'
+            else:
+                return fr'${self.u}$'
 
         @property
         def short(self):
@@ -117,23 +119,21 @@ def v_descriptor(vparfunc, v0=None, dv=None,u_name=None, **kws):
 
         @property
         def step(self):
-            if self.parclass in [param.Number, param.Range] and self.param.v.step is not None :
+            if self.parclass in [param.Number, param.Range] and self.param.v.step is not None:
                 return self.param.v.step
-            elif self.parclass==param.Magnitude:
+            elif self.parclass == param.Magnitude:
                 return 0.01
-            elif self.dtype in [float,List[float], List[Tuple[float]],Tuple[float]]:
+            elif self.dtype in [float, List[float], List[Tuple[float]], Tuple[float]]:
                 return 0.01
-            else :
+            else:
                 return None
 
         @property
         def Ndec(self):
-            if self.step is not None :
+            if self.step is not None:
                 return str(self.step)[::-1].find('.')
-            else :
+            else:
                 return None
-
-
 
         @property
         def get_ParsArg(self):
@@ -142,20 +142,18 @@ def v_descriptor(vparfunc, v0=None, dv=None,u_name=None, **kws):
 
         def exists(self, dataset):
             par = self.d
-            d=dataset
+            d = dataset
             dic = dNl.NestDict({'step': False, 'end': False})
-            if hasattr(d,'step_data'):
-                s=d.step_data
-                if par in s.columns :
-                    dic.step=True
+            if hasattr(d, 'step_data'):
+                s = d.step_data
+                if par in s.columns:
+                    dic.step = True
             if hasattr(d, 'endpoint_data'):
                 e = d.endpoint_data
                 if par in e.columns:
                     dic.end = True
 
-
-
-            c=d.config
+            c = d.config
             if 'aux_pars' in c.keys():
                 for k, ps in c.aux_pars.items():
                     dic[k] = par in ps

@@ -536,7 +536,7 @@ class LarvaConfDict:
             mc[mkey] = self.update_mdict(mdic, mmdic)
         return mc
 
-    def mIDtable_data(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
+    def mIDtable_data(self, mID, columns):
         def gen_rows2(var_mdict, parent, columns, data):
             for k, p in var_mdict.items():
                 if isinstance(p, param.Parameterized):
@@ -595,7 +595,7 @@ class LarvaConfDict:
         df.set_index(['field'], inplace=True)
         return df
 
-    def mIDtable_data2(self, mID, columns=['parameter', 'symbol', 'value', 'unit']):
+    def mIDtable_data2(self, mID, columns):
 
         mConf = self.mIDconf(mID)
         # m = self.loadConf(mID)
@@ -696,6 +696,8 @@ class LarvaConfDict:
         from lib.plot.table import conf_table
         df = self.mIDtable_data(mID, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
+        from lib.aux.data_aux import arrange_index_labels
+        df.index = arrange_index_labels(df.index)
         return conf_table(df, row_colors, mID=mID, figsize=figsize, **kwargs)
 
     def init_loco(self, conf, L):
@@ -1036,9 +1038,32 @@ class LarvaConfDict:
                     k0 = self.full_dict[k].disp
                 else:
                     k0 = k.split('.')[-1]
+                k00=k.split('.')[0]
+                if k00=='brain' :
+                    k01=k.split('.')[1]
+                    k00=k01.split('_')[0]
+                entry['field']=k00
                 dic[k0] = entry
         df = pd.DataFrame.from_dict(dic).T
-        return df
+        df.index = df.index.set_names(['parameter'])
+        # df=df.reset_index().rename(columns={df.index.name: 'parameter'})
+        df.reset_index(drop=False,inplace=True)
+        df.set_index(['field'], inplace=True)
+        df.sort_index(inplace=True)
+
+
+        # print(df.index.values)
+        # raise
+        row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
+        from lib.aux.data_aux import arrange_index_labels
+        df.index = arrange_index_labels(df.index)
+        # df.index = df.index.set_names(['field'])
+        # df.reset_index(drop=False, inplace=True)
+        # df.set_index(['field','parameter'], inplace=True)
+
+
+
+        return df,row_colors
 
     def adapt_crawler(self, refID=None, e=None, mode='realistic', average=True):
         if e is None:

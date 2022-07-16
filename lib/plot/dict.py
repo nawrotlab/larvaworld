@@ -157,13 +157,14 @@ class GraphDict:
             ds.update(d)
         return ds
 
-    def eval_graphgroups(self, graphgroups,save_to=None,subfolder=None, **kws):
+    def eval_graphgroups(self, graphgroups,save_to=None,**kws):
+        kws.update({'subfolder' : None})
         ds = {}
         for graphgroup in graphgroups:
             if graphgroup in self.graphgroups.keys():
                 entries = self.graphgroups[graphgroup]
                 dir= f'{save_to}/{graphgroup}' if save_to is not None else None
-                ds[graphgroup] = self.eval(entries, save_to=dir,subfolder=graphgroup,**kws)
+                ds[graphgroup] = self.eval(entries, save_to=dir,**kws)
         return ds
 
 
@@ -182,14 +183,15 @@ class GraphDict:
         from lib.aux.combining import combine_pdfs
         ds = {}
         ds['mdiff_table'] = self.dict['model diff'](mIDs,dIDs=dIDs, save_to=save_to, **kwargs)
+        gfunc=self.dict['model table']
         for mID in mIDs:
             try:
-                ds[f'{mID}_table'] = self.dict['model table'](mID, save_to=save_to, **kwargs)
+                ds[f'{mID}_table'] = gfunc(mID, save_to=save_to, **kwargs)
             except:
                 print('TABLE FAIL', mID)
         if save_to is not None and len(ds)>1 :
             combine_pdfs(file_dir=save_to, save_as="_MODEL_TABLES_.pdf", deep=False)
-        return ds
+        return dNl.NestDict(ds)
 
     def model_summaries(self, mIDs, save_to=None, **kwargs):
         from lib.aux.combining import combine_pdfs

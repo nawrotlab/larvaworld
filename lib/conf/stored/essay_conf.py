@@ -89,7 +89,7 @@ class RvsS_Essay(Essay):
 
         }
 
-        self.mdiff_df = self.M.diff_df(mIDs=['rover', 'sitter'])
+        self.mdiff_df, row_colors = self.M.diff_df(mIDs=['rover', 'sitter'])
 
     def RvsS_env(self, on_food=True):
         grid = preg.get_null('food_grid') if on_food else None
@@ -333,7 +333,7 @@ class DoublePatch_Essay(Essay):
         self.dur = dur
         self.exp_dict = self.time_ratio_exp()
         mIDs = ['rover', 'sitter']
-        self.mdiff_df = self.M.diff_df(mIDs=mIDs,
+        self.mdiff_df, row_colors = self.M.diff_df(mIDs=mIDs,
                                        ms=[preg.larva_conf_dict.loadConf(f'navigator_{mID}') for mID in mIDs])
         #
         # RS_diff_df=preg.larva_conf_dict.diff_df(mIDs=mIDs, ms=[preg.larva_conf_dict.loadConf(f'navigator_{mID}') for mID in mIDs])
@@ -436,7 +436,7 @@ class Chemotaxis_Essay(Essay):
             self.models = self.get_models3(gain)
         elif mode==4 :
             self.models = self.get_models4(gain)
-        self.mdiff_df = self.M.diff_df(mIDs=list(self.models.keys()), ms=[v.model for v in self.models.values()])
+        self.mdiff_df, row_colors = self.M.diff_df(mIDs=list(self.models.keys()), ms=[v.model for v in self.models.values()])
         self.exp_dict = self.chemo_exps(self.models)
 
 

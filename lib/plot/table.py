@@ -3,9 +3,9 @@ import os
 import numpy as np
 import six
 
+
 from lib.plot.base import BasePlot
-
-
+from lib.aux import dictsNlists as dNl
 
 def modelConfTable(mID, **kwargs):
     from lib.registry.pars import preg
@@ -13,15 +13,15 @@ def modelConfTable(mID, **kwargs):
 
 
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
-           show=False,save_to=None, save_as=None, **kwargs):
+           show=False, save_to=None, save_as=None, **kwargs):
     from lib.registry.pars import preg
-    mdict=preg.init2mdict(k)
-    df=preg.mdict2df(mdict,columns=columns)
+    mdict = preg.init2mdict(k)
+    df = preg.mdict2df(mdict, columns=columns)
 
     # row_colors = [None] + [None for ii in df.index.values]
-    ax, fig, mpl = mpl_table(df,header0=columns[0],
-                     # colWidths=[0.35, 0.1, 0.25, 0.15],
-                     cellLoc='center', rowLoc='center',
+    ax, fig, mpl = mpl_table(df, header0=columns[0],
+                             # colWidths=[0.35, 0.1, 0.25, 0.15],
+                             cellLoc='center', rowLoc='center',
                              figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
                              # row_colors=row_colors,
                              return_table=True,
@@ -32,46 +32,34 @@ def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
     P.set(fig)
     return P.get()
 
-def conf_table(df,row_colors,mID,figsize=(14, 11),show=False,save_to=None, save_as=None, **kwargs) :
 
+def conf_table(df, row_colors, mID, figsize=(14, 11), show=False, save_to=None, save_as=None, **kwargs):
 
-    ax, fig, mpl = mpl_table(df, header0='MODULE',colWidths=[0.35, 0.1, 0.25, 0.15], cellLoc='center', rowLoc='center',
-                                    figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
-                                    row_colors=row_colors, return_table=True, **kwargs)
+    ax, fig, mpl = mpl_table(df, header0='MODULE', header0_color= 'darkred',colWidths=[0.35, 0.1, 0.25, 0.15],
+                             cellLoc='center', rowLoc='center',
+                             figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
+                             row_colors=row_colors, return_table=True, **kwargs)
 
     mmID = mID.replace("_", "-")
-    ax.set_title(f'Model ID : '+ rf'$\bf{mmID}$', y=1.05, fontsize=30)
-
-    Nks=df.index.value_counts(sort=False)
-    cumNks0=np.cumsum(Nks.values)
-    cumNks0=np.insert(cumNks0,0,0)
-    cumNks= {k : cumNks0[i]+1 for i,(k,Nk) in enumerate(Nks.items())}
-    for (k0,k1), cell in mpl._cells.items():
-        if k1 == -1:
-            if k0==0 :
-                continue
-            k=cell._text._text
-            cell._linewidth = 0
-            if k0 != cumNks[k]:
-                cell._text._text = ''
-            else :
-                cell._text._text = k.upper()
+    ax.set_title(f'Model ID : ' + rf'$\bf{mmID}$', y=1.05, fontsize=30)
 
     if save_as is None:
         save_as = mID
-    P=BasePlot('comf_table',save_as=save_as,save_to=save_to,show=show)
+    P = BasePlot('comf_table', save_as=save_as, save_to=save_to, show=show)
     P.set(fig)
     return P.get()
 
 
 
+
+
 def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
-                     name='mpl_table',header0=None,
-                     header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
-                     adjust_kws=None,highlighted_celltext_dict=None,
-                     bbox=[0, 0, 1, 1], header_columns=0, axs=None, fig=None, highlighted_cells=None,
-                     highlight_color='yellow', return_table=False, verbose=1,
-                     **kwargs):
+              name='mpl_table', header0=None,header0_color=None,
+              header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
+              adjust_kws=None, highlighted_celltext_dict=None,
+              bbox=[0, 0, 1, 1], header_columns=0, axs=None, fig=None, highlighted_cells=None,
+              highlight_color='yellow', return_table=False, verbose=1,
+              **kwargs):
     def get_idx(highlighted_cells):
         d = data.values
         res = []
@@ -123,8 +111,6 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
     mpl.auto_set_font_size(False)
     mpl.set_fontsize(font_size)
 
-
-
     for k, cell in six.iteritems(mpl._cells):
         cell.set_edgecolor(edge_color)
         if k in highlight_idx:
@@ -138,8 +124,10 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
         else:
             cell.set_facecolor(row_colors[k[0] % len(row_colors)])
 
-    if header0 is not None :
-        mpl.add_cell(0, -1, facecolor=header_color, loc='center',
+    if header0 is not None:
+        if header0_color is None:
+            header0_color=header_color
+        mpl.add_cell(0, -1, facecolor=header0_color, loc='center',
                      width=0.5, height=mpl._approx_text_height(),
                      text=header0)
         mpl._cells[(0, -1)].set_text_props(weight='bold', color='w', fontsize=font_size)
@@ -147,9 +135,9 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
     if highlighted_celltext_dict is not None:
         for color, texts in highlighted_celltext_dict.items():
             for (k0, k1), cell in mpl._cells.items():
-                if any([cell._text._text == text for text in texts]) :
-                    cell.set_facecolor(color)
-
+                if k1 != -1:
+                    if any([cell._text._text == text for text in texts]):
+                        cell.set_facecolor(color)
 
     ax.set_title(title)
 
@@ -161,61 +149,74 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
         return P.get()
 
 
-
-def mdiff_table(mIDs, dIDs, **kwargs) :
+def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
     from lib.registry.pars import preg
-    data = preg.larva_conf_dict.diff_df(mIDs=mIDs, dIDs=dIDs)
+    data, row_colors = preg.larva_conf_dict.diff_df(mIDs=mIDs, dIDs=dIDs)
     mpl_kws = {
+        'name': 'mdiff_table',
+        'header0': 'MODULE',
+        'header0_color': 'darkred',
         'name': 'mdiff_table',
         'figsize': (24, 14),
         'adjust_kws': {'left': 0.3, 'right': 0.95},
         'font_size': 14,
-        'highlighted_celltext_dict': {'green': ['sample'], 'grey': ['nan', '', None, np.nan]}
+        'highlighted_celltext_dict': {'green': ['sample'], 'grey': ['nan', '', None, np.nan]},
+        'cellLoc' : 'center',
+        'rowLoc' : 'center',
+        'row_colors': row_colors
     }
     mpl_kws.update(kwargs)
 
-
-    return mpl_table(data, **mpl_kws)
-
+    ax, fig, mpl =mpl_table(data, return_table=True,**mpl_kws)
 
 
+    mpl._cells[(0, 0)].set_text_props(weight='bold', color='w')
+    mpl._cells[(0, 0)].set_facecolor(mpl_kws['header0_color'])
+
+
+    if save_as is None:
+        save_as = 'mdiff_table'
+    P = BasePlot('mdiff_table', save_as=save_as, save_to=save_to, show=show)
+    P.set(fig)
+    return P.get()
 
 
 def error_table(data, k='', title=None, **kwargs):
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
     fig = mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
-                           adjust_kws={'left': 0.3, 'right': 0.95},
-                           name=f'error_table_{k}', **kwargs)
+                    adjust_kws={'left': 0.3, 'right': 0.95},
+                    name=f'error_table_{k}', **kwargs)
     return fig
 
 
-def store_model_graphs(mIDs=None) :
+def store_model_graphs(mIDs=None):
     from lib.registry.pars import preg
     from lib.aux.combining import combine_pdfs
     from lib.plot.grid import model_summary
     f1 = preg.path_dict['model_tables']
     f2 = preg.path_dict['model_summaries']
-    if mIDs is None :
-        mIDs=preg.storedConf('Model')
+    if mIDs is None:
+        mIDs = preg.storedConf('Model')
     for mID in mIDs:
-        try :
-            _=modelConfTable(mID,save_to =f1)
-        except :
+        try:
+            _ = modelConfTable(mID, save_to=f1)
+        except:
             print('TABLE FAIL', mID)
-        try :
-            _=model_summary(refID='None.150controls', mID=mID,Nids=10,save_to =f2)
-        except :
-            print('SUMMARY FAIL',mID)
+        try:
+            _ = model_summary(refID='None.150controls', mID=mID, Nids=10, save_to=f2)
+        except:
+            print('SUMMARY FAIL', mID)
 
-    combine_pdfs(file_dir=f1,save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
-    combine_pdfs(file_dir=f2,save_as="___ALL_MODEL_SUMMARIES___.pdf")
+    combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
+    combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
+
 
 if __name__ == '__main__':
     # for mID in kConfDict('Model'):
     #     print(mID)
     # raise
     # pass
-    mID='basic_navigator'
+    mID = 'basic_navigator'
     _ = modelConfTable(mID, show=True)
     # store_model_graphs()

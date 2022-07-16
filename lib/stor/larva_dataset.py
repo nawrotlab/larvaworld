@@ -1087,8 +1087,8 @@ class LarvaDataset:
             self.save_config(add_reference=True)
             self.store_model_graphs(mIDs=mIDs_avg)
             self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
-            preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs_avg), font_size=18, save_to=self.dir_dict.model_tables,
-                                        name='avg_mIDs_diffs')
+            # preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs_avg), font_size=18, save_to=self.dir_dict.model_tables,
+            #                             name='avg_mIDs_diffs')
 
             entries_var = M.add_var_mIDs(refID=self.config.refID, e=self.endpoint_data, c=self.config,
                                          mID0s=mIDs_avg)
@@ -1106,8 +1106,8 @@ class LarvaDataset:
             self.save_config(add_reference=True)
             self.store_model_graphs(mIDs=mIDs_3m)
             # self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
-            preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs_3m), font_size=18, save_to=self.dir_dict.model_tables,
-                                        name='3fitted_modules_diffs')
+            # preg.graph_dict.dict['mpl'](data=M.diff_df(mIDs=mIDs_3m), font_size=18, save_to=self.dir_dict.model_tables,
+            #                             name='3fitted_modules_diffs')
 
             dIDs = ['NEU', 'SIN', 'CON']
             for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
