@@ -93,7 +93,8 @@ class ConfTypeDict :
                 raise ValueError(f'{conftype} Configuration {id} does not exist')
 
     def saveConfDict(self, ConfDict, conftype, use_pickle=False):
-        path = self.path_dict[conftype]
+        from lib.registry import paths
+        path = paths.path_dict[conftype]
         if conftype == 'Ga':
             use_pickle = True
         if use_pickle:
@@ -104,7 +105,8 @@ class ConfTypeDict :
                 json.dump(ConfDict, f)
 
     def loadConfDict(self, conftype, use_pickle=False):
-        path = self.path_dict[conftype]
+        from lib.registry import paths
+        path = paths.path_dict[conftype]
         if conftype == 'Ga':
             use_pickle = True
         try:

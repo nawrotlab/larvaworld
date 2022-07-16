@@ -20,8 +20,7 @@ from lib.aux import dictsNlists as dNl
 
 class ParRegistry:
     def __init__(self):
-        self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
-                          'Group', 'Trial', 'Life', 'Body']
+        pass
 
     @property
     def conftype_dict(self):
