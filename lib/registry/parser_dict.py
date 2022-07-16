@@ -68,10 +68,8 @@ def build_ParsDict2(d0):
         d = {}
         for n, v in d0.items():
             if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
-            # try:
                 entry = par(n, **v, **kwargs)
             else:
-            # except:
                 entry = {n: {'dtype': dict, 'content': par_dict(d0=v, **kwargs)}}
             d.update(entry)
         return d
@@ -101,9 +99,10 @@ class ParserDict:
         for name in names:
             d0 = self.init_dict[name]
             # parsargs = build_ParsDict2(d0)
+            # print(name)
             try:
                 parsargs = build_ParsDict2(d0)
-
+                # print('ff')
             except:
                 parsargs = build_ParsDict(d0)
 

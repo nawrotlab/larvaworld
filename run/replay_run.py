@@ -41,3 +41,7 @@ e = time.time()
 if d is not None:
     print()
     print(f'Replay completed in {np.round(e - s).astype(int)} seconds!')
+
+'''
+python replay_run.py -refID exploration.dish -id replay_dish -ids 1 -fix_p 6 -vis0
+'''
