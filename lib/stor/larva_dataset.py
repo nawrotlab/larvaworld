@@ -490,7 +490,7 @@ class LarvaDataset:
 
 
     def visualize(self, **kwargs):
-        from lib.sim.replay.replay_run import ReplayRun
+        from lib.sim.replay.replay import ReplayRun
         rep = ReplayRun(dataset=self, **kwargs)
 
         rep.run()

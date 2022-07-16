@@ -1,4 +1,4 @@
-from lib.sim.replay.replay_run import ReplayRun
+from lib.sim.replay.replay import ReplayRun
 
 mode = 'fixed_overlap'
 refID = 'exploration.dish'

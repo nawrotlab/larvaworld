@@ -36,6 +36,11 @@ def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
         d['nargs'] = '+'
         if vs is not None:
             d['choices'] = vs
+    elif dtype == List[int]:
+        d['type'] = int
+        d['nargs'] = '+'
+        if vs is not None:
+            d['choices'] = vs
     else:
         d['type'] = dtype
         if vs is not None:
@@ -84,7 +89,7 @@ def build_ParsDict2(d0):
 
 
 class ParserDict:
-    def __init__(self, init_dict=None, names=['sim_params', 'batch_setup','eval_conf','visualization','ga_select_kws'] ):
+    def __init__(self, init_dict=None, names=['sim_params', 'batch_setup','eval_conf','visualization','ga_select_kws', 'replay'] ):
         if init_dict is None :
             from lib.registry.pars import preg
             init_dict=preg.init_dict

@@ -1075,24 +1075,27 @@ class ParInitDict:
 
             d['replay'] = {
                 'env_params': confID_entry('Env'),
-                'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'],
+                'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'], 'symbol': sub('mod', 'trans'),'k' : 'trans',
                                   'h': 'Whether to transpose the dataset spatial coordinates.'},
-                'agent_ids': {'dtype': List[str],
+                'agent_ids': {'dtype': List[int], 'symbol': 'ids','k' : 'ids',
                               'h': 'Whether to only display some larvae of the dataset, defined by their indexes.'},
-                'dynamic_color': {'dtype': str, 'vs': [None, 'lin_color', 'ang_color'],
+                'dynamic_color': {'dtype': str, 'vs': [None, 'lin_color', 'ang_color'], 'symbol': sub('color', 'dyn'),'k' : 'dyn_col',
                                   'h': 'Whether to display larva tracks according to the instantaneous forward or angular velocity.'},
-                'time_range': {'dtype': Tuple[float], 'lim': (0.0,1000.0),'dv': 1.0,
+                'time_range': {'dtype': Tuple[float], 'lim': (0.0,1000.0),'dv': 1.0, 'symbol': sub('t', 'range'),'k' : 't_range',
                                'h': 'Whether to only replay a defined temporal slice of the dataset.'},
-                'track_point': {'dtype': int, 'v': -1,'lim': (-1,12),
+                'track_point': {'dtype': int, 'lim': (-1,12), 'symbol': sub('p', 'track'),'k' : 'track_p',
                                 'h': 'The midline point to use for defining the larva position.'},
-                'draw_Nsegs': {'dtype': int, 'lim': (1,12),
+                'draw_Nsegs': {'dtype': int, 'lim': (1,12), 'symbol': subsup('N', 'segs', 'draw'),'k' : 'Nsegs',
                                'h': 'Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.'},
-                'fix_point': {'dtype': int, 'lim': (1,12),
+                'fix_point': {'dtype': int, 'lim': (1,12), 'symbol': sub('fix', 'p'),'k' : 'fix_p',
                               'h': 'Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.'},
-                'fix_segment': {'dtype': int, 'vs': [-1, 1],
+                'fix_segment': {'dtype': int, 'vs': [-1, 1], 'symbol': sub('fix', 'seg'),'k' : 'fix_seg',
                                 'h': 'Whether to additionally fixate the above or below body segment.'},
-                'use_background': {**bF,
-                                   'h': 'Whether to use a virtual moving background when replaying a fixated larva.'}
+                'close_view': {**bF, 'symbol': sub('view', 'close'),'k' : 'vis0', 'h': 'Whether to visualize a small arena.'},
+                'overlap_mode': {**bF, 'symbol': sub('mod', 'overlap'),'k' : 'overlap', 'h': 'Whether to draw overlapped image of the track.'},
+                'refID': confID_entry('Ref'),
+                'id': pID('replay', k='id'),
+                'save_to': pPath(v=None, h='The directory to save media', k='save_to')
             }
 
             d['ga_select_kws'] = {
