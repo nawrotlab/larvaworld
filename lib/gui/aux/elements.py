@@ -331,7 +331,7 @@ class SelectionList(GuiElement):
         if self.with_dict:
             # print(self.tab.gui.tab_dict[n][2])
             self.collapsible = CollapsibleDict(name= self.tab.gui.tab_dict[n][2], default=True,
-                                               header_list_width=self.width, header_dict=preg.conftype_dict.loadConfDict(self.conftype),
+                                               header_list_width=self.width, header_dict=preg.conftype_dict.dict[self.conftype].loadDict(),
                                                next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
@@ -1703,7 +1703,7 @@ class GuiTreeData(sg.TreeData):
         else:
             from lib.registry.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
-            preg.conftype_dict.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
+            preg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
             # saveConf(df.to_dict(), 'Tree', self.root_key)
         return df
 

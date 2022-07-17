@@ -4,15 +4,11 @@ import time
 import numpy as np
 from mesa.datacollection import DataCollector
 
-import lib.aux.dictsNlists as dNl
-from lib.aux.xy_aux import generate_xy_distro
-from lib.aux.colsNstr import N_colors
 from lib.registry.pars import preg
 
+from lib.aux import naming as nam, dictsNlists as dNl,colsNstr as cNs, sim_aux, xy_aux
 from lib.model.envs._larvaworld import LarvaWorld
-from lib.aux.sim_aux import generate_larvae, get_sample_bout_distros, sample_group
 from lib.sim.single.conditions import get_exp_condition
-# from lib.conf.base import paths
 
 
 class LarvaWorldSim(LarvaWorld):
@@ -50,7 +46,7 @@ class LarvaWorldSim(LarvaWorld):
         # sources = self.get_food() + self.get_flies()
         ids = dNl.unique_list([s.odor_id for s in sources if s.odor_id is not None])
         N = len(ids)
-        cols = N_colors(N, as_rgb=True)
+        cols = cNs.N_colors(N, as_rgb=True)
         layers = {}
         for i, (id, c) in enumerate(zip(ids, cols)):
             od_sources = [f for f in sources if f.odor_id == id]
@@ -84,7 +80,7 @@ class LarvaWorldSim(LarvaWorld):
             mod, sample = gConf['model'], gConf['sample']
             if type(sample) == str:
                 sample = preg.loadConf(id=sample, conftype='Ref')
-            mod = get_sample_bout_distros(mod, sample)
+            mod = sim_aux.get_sample_bout_distros(mod, sample)
 
             modF = dNl.flatten_dict(mod)
             sample_ks = [p for p in modF if modF[p] == 'sample']
@@ -105,10 +101,10 @@ class LarvaWorldSim(LarvaWorld):
                 ids = [f'{gID}_{i}' for i in range(N)]
                 a1, a2 = np.deg2rad(d['orientation_range'])
                 ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
-                ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
-                sample_dict = sample_group(sample, N, self.sample_ps) if len(self.sample_ps) > 0 else {}
+                ps = xy_aux.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
+                sample_dict = sim_aux.sample_group(sample, N, self.sample_ps) if len(self.sample_ps) > 0 else {}
             sample_dict.update(parameter_dict)
-            all_pars = generate_larvae(N, sample_dict, mod, RefPars)
+            all_pars = sim_aux.generate_larvae(N, sample_dict, mod, RefPars)
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
                 l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID, odor=gConf['odor'],
                                    default_color=gConf['default_color'], life_history=gConf['life_history'])
@@ -209,7 +205,7 @@ class LarvaWorldSim(LarvaWorld):
 
         N = 1;
         id = 'temp'
-        cols = N_colors(N, as_rgb=True)
+        cols = cNs.N_colors(N, as_rgb=True)
         layers = {}
         plate_temp = pars['plate_temp']  # int/float
         source_temp_diff = pars['thermo_source_dTemps']  # dict

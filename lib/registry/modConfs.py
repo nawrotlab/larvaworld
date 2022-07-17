@@ -567,10 +567,10 @@ def init_aux_modules():
     return dNl.NestDict(d0)
 
 
-def build_aux_module_dict():
+def build_aux_module_dict(d0):
     from lib.registry.par import v_descriptor
     from lib.registry.par_dict import preparePar
-    d0 = init_aux_modules()
+
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))
     for mkey in d0.keys():
@@ -589,13 +589,13 @@ def build_aux_module_dict():
                 p = v_descriptor(**pre_p)
                 pre_d00[mkey].mode[m].args[arg] = pre_p
                 d00[mkey].mode[m].args[arg] = p
-    return d0, pre_d00, d00
+    return pre_d00, d00
 
 
-def build_brain_module_dict():
+def build_brain_module_dict(d0):
     from lib.registry.par import v_descriptor
     from lib.registry.par_dict import preparePar
-    d0 = init_brain_modules()
+
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))
     for mkey in d0.keys():
@@ -605,24 +605,45 @@ def build_brain_module_dict():
                 p = v_descriptor(**pre_p)
                 pre_d00[mkey].mode[m].args[arg] = pre_p
                 d00[mkey].mode[m].args[arg] = p
-    return d0, pre_d00, d00
+    return pre_d00, d00
 
 
-def build_LarvaConfDict():
-    # from lib.registry.modConfs import build_brain_module_dict, build_aux_module_dict
-    init_bdicts2, mbpredicts2, mbdicts2 = build_brain_module_dict()
-    init_auxdicts2, aux_predicts2, aux_dicts2 = build_aux_module_dict()
+def build_confdicts0():
+    bdic0 = init_brain_modules()
+    adic0 = init_aux_modules()
 
-    mdicts2 = dNl.NestDict({**mbdicts2, **aux_dicts2})
-    mpredicts2 = dNl.NestDict({**mbpredicts2, **aux_predicts2})
-    init_dicts2 = dNl.NestDict({**init_bdicts2, **init_auxdicts2})
+    bks = list(bdic0.keys())
+    aks = list(adic0.keys())
 
-    bkeys = list(init_bdicts2.keys())
-    auxkeys = list(init_auxdicts2.keys())
+    dic0 = dNl.NestDict({**bdic0, **adic0})
 
-    bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2, 'keys': bkeys}
-    auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2, 'keys': auxkeys}
-    d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2, 'keys': bkeys + auxkeys}
+    bd = {'init': bdic0, 'pre': {}, 'm': {}, 'keys': bks}
+    ad = {'init': adic0, 'pre': {}, 'm': {}, 'keys': aks}
+    d = {'init': dic0, 'pre': {}, 'm': {}, 'keys': bks + aks}
 
-    dd = {'brain': bd, 'aux': auxd, 'model': d}
+    dd = {'brain': bd, 'aux': ad, 'model': d}
+    return dNl.NestDict(dd)
+
+
+
+def build_LarvaConfDict(dd):
+
+
+    dd.brain.pre, dd.brain.m = build_brain_module_dict(dd.brain.init)
+    dd.aux.pre, dd.aux.m = build_aux_module_dict(dd.aux.init)
+
+    dd.model.pre= dNl.NestDict({**dd.brain.pre, **dd.aux.pre})
+    dd.model.m = dNl.NestDict({**dd.brain.m, **dd.aux.m})
+    # dic2 = dNl.NestDict({**bdic2, **adic2})
+    # dic1 = dNl.NestDict({**bdic1, **adic1})
+    # dic0 = dNl.NestDict({**bdic0, **adic0})
+    #
+    # bks = list(bdic0.keys())
+    # aks = list(adic0.keys())
+    #
+    # bd = {'init': bdic0, 'pre': bdic1, 'm': bdic2, 'keys': bks}
+    # ad = {'init': adic0, 'pre': adic1, 'm': adic2, 'keys': aks}
+    # d = {'init': dic0, 'pre': dic1, 'm': dic2, 'keys': bks + aks}
+    #
+    # dd = {'brain': bd, 'aux': ad, 'model': d}
     return dNl.NestDict(dd)

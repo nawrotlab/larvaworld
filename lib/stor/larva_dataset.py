@@ -399,7 +399,7 @@ class LarvaDataset:
         if 'aux_pars' not in self.config.keys():
             self.inspect_aux(save=False)
 
-    def save_config(self, add_reference=False, refID=None):
+    def save_config(self, add_reference=False, refID=None, return_entry=False):
         self.update_config()
         for k, v in self.config.items():
             if isinstance(v, np.ndarray):
@@ -412,7 +412,10 @@ class LarvaDataset:
             if refID is None:
                 refID = f'{self.group_id}.{self.id}'
             self.config.refID = refID
-            preg.conftype_dict.saveConf(conf=self.config, conftype='Ref', id=refID)
+            if return_entry :
+                return {refID : self.config}
+            else :
+                preg.saveConf(conf=self.config, conftype='Ref', id=refID)
 
     def save_agents(self, ids=None, pars=None):
         if not hasattr(self, 'step_data'):

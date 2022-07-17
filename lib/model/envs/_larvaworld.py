@@ -7,27 +7,23 @@ import webcolors
 import pygame
 from shapely.affinity import affine_transform
 
-from lib.registry.pars import preg
+
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 
-import lib.aux.dictsNlists as dNl
-import lib.aux.sim_aux
-import lib.aux.xy_aux
-# from lib.registry.dtypes import null_dict
+from lib.registry.pars import preg
+
 from lib.model.agents._larva_sim import LarvaSim
 from lib.aux.collecting import NamedRandomActivation
-from lib.model.envs._space import FoodGrid, WindScape
+
 import lib.screen.rendering as ren
-import lib.aux.colsNstr as fun
-from lib.model.envs._maze import Border
-from lib.model.agents._agent import LarvaworldAgent
-from lib.model.agents._source import Food
+
+
+
 from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
 from lib.model.envs._base_larvaworld import BaseLarvaWorld
-from lib.aux.sim_aux import get_sample_bout_distros, sample_group
-
+from lib.aux import naming as nam, dictsNlists as dNl,colsNstr as cNs, sim_aux, xy_aux
 
 class LarvaWorld(BaseLarvaWorld):
 
@@ -42,13 +38,8 @@ class LarvaWorld(BaseLarvaWorld):
             progress_bar = progressbar.ProgressBar(Nsteps)
             progress_bar.start()
         self.progress_bar = progress_bar
-
-        # print(vis_kwargs)
-        # raise
-
         if vis_kwargs is None:
-
-            vis_kwargs = preg.get_null('visualization', mode=None)
+            vis_kwargs = preg.init_dict.get_null('visualization', mode=None)
         self.vis_kwargs = dNl.NestDict(vis_kwargs)
         self.__dict__.update(self.vis_kwargs.draw)
         self.__dict__.update(self.vis_kwargs.color)
@@ -97,7 +88,7 @@ class LarvaWorld(BaseLarvaWorld):
 
         if 'border_list' in self.env_pars.keys() :
             for id, pars in self.env_pars.border_list.items():
-                # print(id,pars)
+                from lib.model.envs._maze import Border
                 b = Border(model=self, unique_id=id, **pars)
                 self.add_border(b)
 
@@ -115,6 +106,7 @@ class LarvaWorld(BaseLarvaWorld):
         self.end_condition_met = False
 
         if 'windscape' in self.env_pars.keys() and self.env_pars.windscape is not None :
+            from lib.model.envs._space import WindScape
             self.windscape = WindScape(model=self, **self.env_pars.windscape)
         else:
             self.windscape = None
@@ -158,7 +150,7 @@ class LarvaWorld(BaseLarvaWorld):
                     f.set_color(f.default_color)
         elif name == 'random_colors':
             for f in self.get_flies():
-                color = fun.random_colors(1)[0] if self.random_colors else f.default_color
+                color = cNs.random_colors(1)[0] if self.random_colors else f.default_color
                 f.set_color(color)
         elif name == 'black_background':
             self.update_default_colors()
@@ -179,51 +171,6 @@ class LarvaWorld(BaseLarvaWorld):
             default_larva_color = np.array([0, 0, 0])
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
-    # def create_arena(self, arena_dims, arena_shape):
-    #     self.arena_dims = X, Y = np.array(arena_dims)
-    #     W0, H0 = self.screen_dim_W, self.screen_dim_H
-    #     R0, R = W0 / H0, X / Y
-    #     self.screen_width, self.screen_height = (W0, int(W0 / R/16)*16) if R0 < R else (int(H0 * R/16)*16, H0)
-    #     self.unscaled_space_edges = np.array([(-X / 2, -Y / 2),
-    #                                           (-X / 2, Y / 2),
-    #                                           (X / 2, Y / 2),
-    #                                           (X / 2, -Y / 2)])
-    #     if arena_shape == 'circular':
-    #         # This is a circle_to_polygon shape from the function
-    #         self.unscaled_tank_shape = lib.aux.sim_aux.circle_to_polygon(60, X / 2)
-    #     elif arena_shape == 'rectangular':
-    #         # This is a rectangular shape
-    #         self.unscaled_tank_shape = self.unscaled_space_edges
-    #     # print(self.screen_width, self.screen_height)
-    #
-    # def create_space(self):
-    #     s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
-    #     X, Y = self.space_dims = self.arena_dims * s
-    #     self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
-    #     self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-    #     self.tank_shape = self.unscaled_tank_shape * s
-    #     k = 0.97
-    #     self.tank_polygon = Polygon(self.tank_shape * k)
-    #
-    #     if self.Box2D:
-    #         from Box2D import b2World, b2ChainShape, b2EdgeShape
-    #         self._sim_velocity_iterations = 6
-    #         self._sim_position_iterations = 2
-    #
-    #         # create the space in Box2D
-    #         space = b2World(gravity=(0, 0), doSleep=True)
-    #
-    #         # create a static body for the space borders
-    #         self.tank = space.CreateStaticBody(position=(.0, .0))
-    #         self.tank.CreateFixture(shape=b2ChainShape(vertices=self.tank_shape.tolist()))
-    #         #     create second static body to attach friction
-    #         self.friction_body = space.CreateStaticBody(position=(.0, .0))
-    #         self.friction_body.CreateFixture(shape=b2ChainShape(vertices=self.space_edges))
-    #     else:
-    #         space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
-    #     return space
-
-
     def create_schedules(self):
         self.active_larva_schedule = NamedRandomActivation('active_larva_schedule', self)
         self.all_larva_schedule = NamedRandomActivation('all_larva_schedule', self)
@@ -231,6 +178,8 @@ class LarvaWorld(BaseLarvaWorld):
         self.all_food_schedule = NamedRandomActivation('all_food_schedule', self)
 
     def delete_agent(self, agent):
+        from lib.model.envs._maze import Border
+        from lib.model.agents._source import Food
         if type(agent) is LarvaSim:
             self.active_larva_schedule.remove(agent)
         elif type(agent) is Food:
@@ -244,20 +193,20 @@ class LarvaWorld(BaseLarvaWorld):
         if self._screen is not None:
             self._screen.close_requested()
 
-    def get_flies(self) -> List[LarvaworldAgent]:
+    def get_flies(self):
         return self.active_larva_schedule.agents
 
-    def get_food(self) -> List[LarvaworldAgent]:
+    def get_food(self):
         return self.active_food_schedule.agents
 
-    def get_agents(self, agent_class) -> List[LarvaworldAgent]:
+    def get_agents(self, agent_class):
         if agent_class == 'Food':
             return self.get_food()
         elif agent_class == 'Larva':
             return self.get_flies()
 
     def generate_larva_color(self):
-        return fun.random_colors(1)[0] if self.random_colors else self.default_larva_color
+        return cNs.random_colors(1)[0] if self.random_colors else self.default_larva_color
 
     def set_background(self, width, height):
         if self.background_motion is not None:
@@ -342,6 +291,7 @@ class LarvaWorld(BaseLarvaWorld):
                                       fps=self.video_fps, dt=self.dt,
                                       show_display=self.vis_kwargs.render.show_display,
                                       record_video_to=vid, record_image_to=im)
+
             self.display_configuration(self._screen)
             self.render_aux(self.screen_width, self.screen_height)
             self.set_background(self._screen._window.get_width(), self._screen._window.get_height())
@@ -373,9 +323,9 @@ class LarvaWorld(BaseLarvaWorld):
             ren.draw_trajectories(space_dims=self.space_dims, agents=self.get_flies(), screen=self._screen,
                                   decay_in_ticks=int(self.trajectory_dt / self.dt),
                                   traj_color=self.traj_color)
-
-        evaluate_input(self, self._screen)
-        evaluate_graphs(self)
+        if self._screen.show_display :
+            evaluate_input(self, self._screen)
+            evaluate_graphs(self)
         if self.vis_kwargs['render']['image_mode'] != 'overlap':
             self.draw_aux(self._screen)
             self._screen.render()
@@ -407,10 +357,11 @@ class LarvaWorld(BaseLarvaWorld):
     def _place_food(self, food_pars):
         if food_pars is not None:
             if food_pars.food_grid is not None :
+                from lib.model.envs._space import FoodGrid
                 self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
                 # self._create_food_grid(space_range=self.space_edges_for_screen,grid_pars=food_pars.food_grid)
             for gID, gConf in food_pars.source_groups.items():
-                ps = lib.aux.xy_aux.generate_xy_distro(**gConf.distribution)
+                ps = xy_aux.generate_xy_distro(**gConf.distribution)
                 for i, p in enumerate(ps):
                     self.add_food(id=f'{gID}_{i}', pos=p, group=gID, **gConf)
 
@@ -418,6 +369,7 @@ class LarvaWorld(BaseLarvaWorld):
                 self.add_food(id=id, **f_pars)
 
     def add_food(self, pos, id=None, **food_pars):
+        from lib.model.agents._source import Food
         f = Food(unique_id=self.next_id(type='Food') if id is None else id, pos=pos, model=self, **food_pars)
         self.active_food_schedule.add(f)
         self.all_food_schedule.add(f)
@@ -427,14 +379,14 @@ class LarvaWorld(BaseLarvaWorld):
                   odor=None):
         if group is None and pars is None:
             group, conf = list(self.larva_groups.items())[0]
-            sample_dict = sample_group(conf['sample'], 1, self.sample_ps)
-            mod = get_sample_bout_distros(conf['model'], conf['sample'])
+            sample_dict = sim_aux.sample_group(conf['sample'], 1, self.sample_ps)
+            mod = sim_aux.get_sample_bout_distros(conf['model'], conf['sample'])
             pars = self._generate_larvae(1, sample_dict, mod)
             life_history = conf['life_history']
             odor = conf['odor']
             if default_color is None:
                 default_color = conf['default_color']
-        while not lib.aux.sim_aux.inside_polygon([pos], self.tank_polygon):
+        while not sim_aux.inside_polygon([pos], self.tank_polygon):
             pos = tuple(np.array(pos) * 0.999)
 
         l = LarvaSim(unique_id=self.next_id(type='Larva') if id is None else id, model=self, pos=pos,
@@ -452,6 +404,7 @@ class LarvaWorld(BaseLarvaWorld):
             elif agent_class == 'Larva':
                 f = self.add_larva(p0)
             elif agent_class == 'Border':
+                from lib.model.envs._maze import Border
                 b = Border(model=self, points=[p1, p0])
                 self.add_border(b)
         except:
@@ -520,7 +473,7 @@ class LarvaWorld(BaseLarvaWorld):
     def move_larvae_to_center(self):
         N = len(self.get_flies())
         orientations = np.random.uniform(low=0.0, high=np.pi * 2, size=N).tolist()
-        positions = lib.aux.xy_aux.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0),
+        positions = xy_aux.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0),
                                                       shape='oval')
 
         for l, p, o in zip(self.get_flies(), positions, orientations):
@@ -570,7 +523,7 @@ class LarvaWorld(BaseLarvaWorld):
             agents = self.get_flies()
         elif class_name == 'Border':
             agents = self.borders
-        pars = list(preg.get_null(class_name).keys())
+        pars = list(preg.init_dict.get_null(class_name).keys())
         data = {}
         for f in agents:
             dic = {}

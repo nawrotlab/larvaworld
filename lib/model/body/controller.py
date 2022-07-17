@@ -6,7 +6,8 @@ import numpy as np
 from lib.model.body.body import LarvaBody
 from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
 
-class PhysicsController :
+
+class PhysicsController:
     def __init__(self, lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=0.5,
                  lin_mode='velocity', ang_mode='torque', body_spring_k=1.0, bend_correction_coef=1.0,
                  lin_damping=1.0, ang_damping=1.0):
@@ -21,58 +22,61 @@ class PhysicsController :
         self.lin_force_coef = lin_force_coef
         self.torque_coef = torque_coef
 
-    def compute_ang_vel(self, k, c, torque, v, b,dt, I=1):
-        dtI=dt/I
+    def compute_ang_vel(self, k, c, torque, v, b, dt, I=1):
+        dtI = dt / I
         return v + (-c * v - k * b + torque) * dtI
 
-    def get_vels(self, lin, ang, prev_ang_vel, prev_lin_vel, bend,dt, ang_suppression):
+    def get_vels(self, lin, ang, prev_ang_vel, prev_lin_vel, bend, dt, ang_suppression):
         if self.lin_mode == 'velocity':
-            if lin!=0:
+            if lin != 0:
                 lin_vel = lin * self.lin_vel_coef
-            else :
-                lin_vel = 0# prev_lin_vel*(1-self.lin_damping*dt)
+            else:
+                lin_vel = 0  # prev_lin_vel*(1-self.lin_damping*dt)
         else:
             raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
         if self.ang_mode == 'torque':
-            torque =ang * self.torque_coef
+            torque = ang * self.torque_coef
             # self.torque =ang * self.torque_coef*ang_suppression
             ang_vel = self.compute_ang_vel(torque=torque,
                                            v=prev_ang_vel, b=bend,
-                                           c=self.ang_damping,  k=self.body_spring_k,dt=dt)
+                                           c=self.ang_damping, k=self.body_spring_k, dt=dt)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
         # ang_vel*=ang_suppression
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
-        ang_vel*=ang_suppression
+        ang_vel *= ang_suppression
         return lin_vel, ang_vel
 
-    def assess_collisions(self,lin_vel, ang_vel):
+    def assess_collisions(self, lin_vel, ang_vel):
         return lin_vel, ang_vel
 
 
 class BodyManager(LarvaBody):
-    def __init__(self, **kwargs) :
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
 
 class BodyReplay(BodyManager):
-    def __init__(self, **kwargs) :
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+
 class BodySim(BodyManager, PhysicsController):
-    def __init__(self, physics,density=300.0, **kwargs):
+    def __init__(self, physics, density=300.0, **kwargs):
 
-        PhysicsController.__init__(self,**physics)
-        BodyManager.__init__(self,density=density, **kwargs)
-
+        PhysicsController.__init__(self, **physics)
+        BodyManager.__init__(self, density=density, **kwargs)
 
         self.head_contacts_ground = True
         self.trajectory = [self.initial_pos]
 
         self.body_bend = 0
         self.body_bend_errors = 0
-        self.negative_speed_errors=0
+        self.negative_speed_errors = 0
+        self.border_go_errors = 0
+        self.border_turn_errors = 0
         self.Nangles_b = int(self.Nangles + 1 / 2)
-        self.spineangles = [0.0]*self.Nangles
+        self.spineangles = [0.0] * self.Nangles
         self.rear_orientation_change = 0
         self.compute_body_bend()
         self.mid_seg_index = int(self.Nsegs / 2)
@@ -102,8 +106,7 @@ class BodySim(BodyManager, PhysicsController):
                     item, foodtype = food, food.group
         return item, foodtype
 
-
-    def Box2D_kinematics(self,lin, ang):
+    def Box2D_kinematics(self, lin, ang):
         self.compute_body_bend()
         if self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
@@ -114,7 +117,6 @@ class BodySim(BodyManager, PhysicsController):
         elif self.ang_mode == 'torque':
             torque = ang * self.torque_coef
             self.segs[0]._body.ApplyTorque(torque, wake=True)
-
 
         # Linear component
         # Option : Apply to single body segment
@@ -153,13 +155,13 @@ class BodySim(BodyManager, PhysicsController):
         self.cum_dur += self.model.dt
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
-        lin, ang, self.feeder_motion = self.brain.step(pos, reward= self.food_detected is not None)
+        lin, ang, self.feeder_motion = self.brain.step(pos, reward=self.food_detected is not None)
 
         if self.model.Box2D:
             self.Box2D_kinematics(lin, ang)
         else:
             # print(self.brain.locomotor.cur_ang_suppression, self.head.get_angularvelocity(),self.head.get_linearvelocity())
-            lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(),self.head.get_linearvelocity(),
+            lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(), self.head.get_linearvelocity(),
                                              self.body_bend, dt=self.model.dt,
                                              ang_suppression=self.brain.locomotor.cur_ang_suppression)
             # print(lin_vel, ang_vel)
@@ -169,13 +171,11 @@ class BodySim(BodyManager, PhysicsController):
             self.trajectory.append(self.pos)
         self.complete_step()
 
-
-
     def complete_step(self):
-        if self.head.get_linearvelocity()<0:
-            self.negative_speed_errors+=1
+        if self.head.get_linearvelocity() < 0:
+            self.negative_speed_errors += 1
             self.head.set_lin_vel(0)
-        if not self.model.Box2D :
+        if not self.model.Box2D:
             self.model.space.move_agent(self, self.pos)
         self.update_larva()
         for o in self.carried_objects:
@@ -197,7 +197,6 @@ class BodySim(BodyManager, PhysicsController):
     So a=1, b=1, c=n/4g=1, d=0 
     '''
 
-
     def update_trajectory(self):
         last_pos = self.trajectory[-1]
         if self.model.Box2D:
@@ -209,13 +208,10 @@ class BodySim(BodyManager, PhysicsController):
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value
 
-
-
-
-
-    def go_forward(self,lin_vel,k, hf01, delta=0.00011, counter=0):
-        if np.isnan(lin_vel):
-            return 0,0,hf01
+    def go_forward(self, lin_vel, k, hf01, delta=0.00011, counter=0):
+        if np.isnan(lin_vel) or counter>100 :
+            self.border_go_errors += 1
+            return 0, 0, hf01
         d = lin_vel * self.model.dt
         dxy = k * d * self.model.scaling_factor
         hf1 = hf01 + dxy
@@ -228,51 +224,60 @@ class BodySim(BodyManager, PhysicsController):
             # print(counter, lin_vel)
             return self.go_forward(lin_vel, k, hf01, delta, counter)
         else:
-            return lin_vel, d,hf1
+            return lin_vel, d, hf1
 
+    def turn_head(self, ang_vel, hr0, ho0, l0, ang_range, delta=np.pi / 90, counter=0):
+        def get_hf(ho):
+            kk = np.array([math.cos(ho), math.sin(ho)])
+            hf = hr0 + kk * l0
+            return kk, hf
+        # def return_null() :
+        #     k0, hf00 = get_hf(ho0)
+        #     return 0, ho0, k0, hf00
 
-
-    def turn_head(self,ang_vel, hr0, ho0, l0, ang_range, delta=np.pi/180, counter=0):
-        if np.isnan(ang_vel):
-            ang_vel=0
+        if np.isnan(ang_vel) or counter>100:
+            self.border_turn_errors+=1
+            print(self.unique_id, self.border_turn_errors, self.border_go_errors)
+            k0, hf00 = get_hf(ho0)
+            return 0, ho0, k0, hf00
         ho1 = ho0 + ang_vel * self.model.dt
-        k = np.array([math.cos(ho1), math.sin(ho1)])
-        hf01 = hr0 + k * l0
+        k, hf01 = get_hf(ho1)
+        # k = np.array([math.cos(ho1), math.sin(ho1)])
+        # hf01 = hr0 + k * l0
         # return hf1
         if not self.in_tank([hf01]):
             # print(counter, ang_vel, hf01)
-            if counter==0:
-                delta*=np.sign(ang_vel)
-            ang_vel -=delta
+            if counter == 0:
+                delta *= np.sign(ang_vel)
+            ang_vel -= delta
 
-            if ang_vel<ang_range[0]:
-                ang_vel=ang_range[0]
-                delta=np.abs(delta)
-            elif ang_vel>ang_range[1]:
-                ang_vel=ang_range[1]
-                delta-=np.abs(delta)
-            counter+=1
+            if ang_vel < ang_range[0]:
+                ang_vel = ang_range[0]
+                delta = np.abs(delta)
+            elif ang_vel > ang_range[1]:
+                ang_vel = ang_range[1]
+                delta -= np.abs(delta)
+            counter += 1
 
             return self.turn_head(ang_vel, hr0, ho0, l0, ang_range, delta, counter)
         else:
-            return ang_vel, ho1,k,hf01
+            return ang_vel, ho1, k, hf01
 
     def position_body(self, lin_vel, ang_vel, tank_contact=True):
 
-
         hp0, ho0 = self.head.get_pose()
         hr0 = self.global_rear_end_of_head
-        l0=self.seg_lengths[0]
+        l0 = self.seg_lengths[0]
         if self.Nsegs > 1:
-            o_bound=self.segs[1].get_orientation()
+            o_bound = self.segs[1].get_orientation()
             dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
         else:
-            dang=0
-        ang_vel_min, ang_vel_max = (-np.pi + dang)/self.model.dt, (np.pi + dang)/self.model.dt
+            dang = 0
+        ang_vel_min, ang_vel_max = (-np.pi + dang) / self.model.dt, (np.pi + dang) / self.model.dt
 
-        if ang_vel<ang_vel_min:
-            ang_vel=ang_vel_min
-            self.body_bend_errors+=1
+        if ang_vel < ang_vel_min:
+            ang_vel = ang_vel_min
+            self.body_bend_errors += 1
             # print(f'{self.body_bend_errors}---------------')
         elif ang_vel > ang_vel_max:
             ang_vel = ang_vel_max
@@ -282,10 +287,10 @@ class BodySim(BodyManager, PhysicsController):
         #     print(self.unique_id, 000000000)
         if tank_contact:
 
-            ang_vel, ho1, k, hf01=self.turn_head(ang_vel, hr0, ho0, l0, ang_range=(ang_vel_min, ang_vel_max))
-            lin_vel, d, hf1=self.go_forward(lin_vel,k,hf01)
+            ang_vel, ho1, k, hf01 = self.turn_head(ang_vel, hr0, ho0, l0, ang_range=(ang_vel_min, ang_vel_max))
+            lin_vel, d, hf1 = self.go_forward(lin_vel, k, hf01)
             # print(lin_vel)
-        else :
+        else:
             ho1 = ho0 + ang_vel * self.model.dt
             k = np.array([math.cos(ho1), math.sin(ho1)])
             d = lin_vel * self.model.dt
@@ -299,15 +304,11 @@ class BodySim(BodyManager, PhysicsController):
         # if lin_vel<0 :
         #     print(self.unique_id, 11111111111111111)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
-        if self.Nsegs>1 :
+        if self.Nsegs > 1:
             for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
                 self.position_seg(seg, d_or=self.rear_orientation_change / (self.Nsegs - 1),
-                                  front_end_pos=self.get_global_rear_end_of_seg(seg_index=i),seg_length=l)
+                                  front_end_pos=self.get_global_rear_end_of_seg(seg_index=i), seg_length=l)
         self.pos = self.global_midspine_of_body
-
-
-
-
 
         # hp1=
         # self.dst=d
@@ -368,7 +369,6 @@ class BodySim(BodyManager, PhysicsController):
         #
         # # self.head.update_all(hp1, ho1, lin_vel, ang_vel)
 
-
     def position_seg(self, seg, d_or, front_end_pos, seg_length):
         p0, o0 = seg.get_pose()
         o1 = o0 + d_or
@@ -377,27 +377,26 @@ class BodySim(BodyManager, PhysicsController):
         seg.update_poseNvertices(p1, o1)
 
     def compute_body_bend(self):
-        self.spineangles = [ang_aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in range(self.Nangles)]
+        self.spineangles = [
+            ang_aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in
+            range(self.Nangles)]
         self.body_bend = ang_aux.wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
-
-
 
     @property
     def border_collision(self):
         if len(self.model.border_walls) == 0:
             return False
         else:
-            x,y=self.pos
-            p0=shapely_aux.Point(x,y)
+            x, y = self.pos
+            p0 = shapely_aux.Point(x, y)
             d0 = self.sim_length / 4
             oM = self.head.get_orientation()
             sensor_ray = shapely_aux.radar_tuple(p0=p0, angle=oM, distance=d0)
-            min_dst, nearest_obstacle = shapely_aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray,p0)
-
+            min_dst, nearest_obstacle = shapely_aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray, p0)
 
             if min_dst is None:
                 return False
-            else :
+            else:
                 return True
 
     @property
@@ -410,56 +409,56 @@ class BodySim(BodyManager, PhysicsController):
             # p0 = Point(self.pos)
             d0 = self.sim_length / 4
             # shape = self.head.get_shape()
-            for l in self.model.border_lines :
+            for l in self.model.border_lines:
                 # print(list(l.coords))
                 # raise
                 if p0.distance(l) < d0:
-                # if l.distance(shape)< d0:
+                    # if l.distance(shape)< d0:
                     return True
             return False
 
     @property
     def border_collision2(self):
-        simple=True
+        simple = True
         # print(self.radius, self.sim_length)
         # raise
-        if len(self.model.border_lines) == 0 :
+        if len(self.model.border_lines) == 0:
             return False
-        else :
+        else:
             from lib.aux.shapely_aux import distance, distance_multi
-            oM=self.head.get_orientation()
-            oL=oM+np.pi/3
-            oR=oM-np.pi/3
+            oM = self.head.get_orientation()
+            oL = oM + np.pi / 3
+            oR = oM - np.pi / 3
             p0 = self.pos
             # p0 = tuple(self.get_sensor_position('olfactor'))
             # p0 = tuple(self.olfactor_pos)
             # p0=Point(p0)
-            d0=self.sim_length/3
+            d0 = self.sim_length / 3
             dM = distance_multi(point=p0, angle=oM, ways=self.model.border_lines, max_distance=d0)
             # print(dM)
-            if dM is not None :
-                if simple :
+            if dM is not None:
+                if simple:
                     return True
                 dL = distance_multi(point=p0, angle=oL, ways=self.model.border_lines, max_distance=d0)
                 dR = distance_multi(point=p0, angle=oR, ways=self.model.border_lines, max_distance=d0)
-                if dL is None and dR is None :
+                if dL is None and dR is None:
                     return 'M'
-                elif dL is None and dR is not None :
-                    if dR<dM :
+                elif dL is None and dR is not None:
+                    if dR < dM:
                         return 'RRM'
-                    else :
+                    else:
                         return 'MR'
-                elif dR is None and dL is not None :
-                    if dL<dM :
+                elif dR is None and dL is not None:
+                    if dL < dM:
                         return 'LLM'
-                    else :
+                    else:
                         return 'ML'
                 elif dR is not None and dL is not None:
-                    if dL<dR :
+                    if dL < dR:
                         return 'LLM'
-                    else :
+                    else:
                         return 'RRM'
-            else :
+            else:
                 return False
 
             # radarM = radar_line(p0, oM, d0)
@@ -511,13 +510,12 @@ class BodySim(BodyManager, PhysicsController):
             #
             #     # raise
             #     if dM is not None or dL is not None or dR is not None:
-                    # print(dd)
-                # if shape.distance(l)<self.radius/5:
-                # if olfactor_point.distance(l)<self.radius/5:
-                # if l.intersects(shape):
-                #     return True
+            # print(dd)
+            # if shape.distance(l)<self.radius/5:
+            # if olfactor_point.distance(l)<self.radius/5:
+            # if l.intersects(shape):
+            #     return True
             # return False
-
 
     def assess_collisions(self, lin_vel, ang_vel):
         if not self.model.larva_collisions:
@@ -529,24 +527,24 @@ class BodySim(BodyManager, PhysicsController):
             lin_vel = 0
             ang_vel += np.sign(ang_vel) * np.pi / 10
             return lin_vel, ang_vel
-        res=self.border_collision
+        res = self.border_collision
         d_ang = np.pi / 20
-        if not res :
+        if not res:
             return lin_vel, ang_vel
-        elif res==True :
+        elif res == True:
             lin_vel = 0
             ang_vel += np.sign(ang_vel) * d_ang
             return lin_vel, ang_vel
-        if 'M' in res :
+        if 'M' in res:
             lin_vel = 0
-        if 'RR' in res :
-            ang_vel +=2*d_ang
-        elif 'R' in res :
-            ang_vel +=d_ang
-        if 'LL' in res :
-            ang_vel -=2*d_ang
-        elif 'L' in res :
-            ang_vel -=d_ang
+        if 'RR' in res:
+            ang_vel += 2 * d_ang
+        elif 'R' in res:
+            ang_vel += d_ang
+        if 'LL' in res:
+            ang_vel -= 2 * d_ang
+        elif 'L' in res:
+            ang_vel -= d_ang
 
         return lin_vel, ang_vel
 
@@ -564,7 +562,8 @@ class BodySim(BodyManager, PhysicsController):
             else:
                 s = self.sim_length / 1000
                 L, R = self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
-                Ld, Rd = self.model.tank_polygon.exterior.distance(shapely_aux.Point(L)), self.model.tank_polygon.exterior.distance(
+                Ld, Rd = self.model.tank_polygon.exterior.distance(
+                    shapely_aux.Point(L)), self.model.tank_polygon.exterior.distance(
                     shapely_aux.Point(R))
                 Ld, Rd = Ld / s, Rd / s
                 LRd = Ld - Rd
@@ -587,7 +586,7 @@ class BodySim(BodyManager, PhysicsController):
                 hp1 = hp0 + sim_dxy
                 # hf1 = hp1 + k1 * (self.sim_length / 2)
             points = [hp1 + k1 * l0 / 2]
-            #print(points)
+            # print(points)
             in_tank = sim_aux.inside_polygon(points=points, tank_polygon=self.model.tank_polygon)
             return in_tank, o1, hr1, hp1
 
@@ -599,23 +598,23 @@ class BodySim(BodyManager, PhysicsController):
             ang_vel *= -(1 + 0.01 * counter)
             print(counter)
             # ang_vel, counter = avoid_border(ang_vel, counter)
-            if counter>1000 :
-            #     o0+=np.pi
-            #     d=0
-                ang_vel=0.01
-                counter=0
-                o0-=np.pi
+            if counter > 1000:
+                #     o0+=np.pi
+                #     d=0
+                ang_vel = 0.01
+                counter = 0
+                o0 -= np.pi
             in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
             # except :
             #     pass
         # print(counter)
         # if counter > 0:
-            # print(counter)
-            # ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
+        # print(counter)
+        # ang_vel = np.abs(ang_vel) * np.sign(ang_vel0)
         return ang_vel, o1, d, hr1, hp1
 
     # @ property
-    def in_tank(self,ps):
+    def in_tank(self, ps):
         # hp, ho = self.head.get_pose()
         # k = np.array([math.cos(ho), math.sin(ho)])
         # hf=hp + k * self.seg_lengths[0] / 2
@@ -627,5 +626,3 @@ class BodySim(BodyManager, PhysicsController):
     #     from lib.aux.ang_aux import line_through_point
     #     ll=line_through_point(self.pos, wind_direction, np.max(self.model.arena_dims))
     #     return any([l.intersects(ll) for l in self.model.border_lines])
-
-

@@ -6,10 +6,12 @@ from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
 from lib.registry.pars import preg
 
-shortcuts = preg.conftype_dict.loadConfDict('Settings')
 
 
-def evaluate_input(model, screen):
+def evaluate_input(m, screen):
+    if m.pygame_keys is None :
+        from lib.conf.stored.conf import loadConfDict
+        m.pygame_keys = loadConfDict('Settings')['pygame_keys']
 
     d_zoom = 0.01
     ev = pygame.event.get()
@@ -17,38 +19,36 @@ def evaluate_input(model, screen):
         if e.type == pygame.QUIT:
             screen.close_requested()
         if e.type == pygame.KEYDOWN:
-            # print(e)
-            for k, v in shortcuts['pygame_keys'].items():
+            for k, v in m.pygame_keys.items():
                 if e.key == getattr(pygame, v):
-                    eval_keypress(k, screen, model)
+                    eval_keypress(k, screen, m)
 
-        if model.allow_clicks:
+        if m.allow_clicks:
             if e.type == pygame.MOUSEBUTTONDOWN:
-                model.mousebuttondown_pos = screen.mouse_position
+                m.mousebuttondown_pos = screen.mouse_position
             elif e.type == pygame.MOUSEBUTTONUP:
                 p = screen.mouse_position
                 if e.button == 1:
-                    if not eval_selection(model, p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
-                        model.add_agent(agent_class=model.selected_type, p0=tuple(p),
-                                        p1=tuple(model.mousebuttondown_pos))
+                    if not eval_selection(m, p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
+                        m.add_agent(agent_class=m.selected_type, p0=tuple(p),
+                                        p1=tuple(m.mousebuttondown_pos))
 
                 elif e.button == 3:
                     import lib.gui.aux.windows
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
-                    if len(model.selected_agents) > 0:
-                        for sel in model.selected_agents:
+                    if len(m.selected_agents) > 0:
+                        for sel in m.selected_agents:
                             sel = lib.gui.aux.windows.set_agent_kwargs(sel, location=loc)
                     else:
-                        model.selected_type = lib.gui.aux.windows.object_menu(model.selected_type, location=loc)
+                        m.selected_type = lib.gui.aux.windows.object_menu(m.selected_type, location=loc)
                 elif e.button in [4, 5]:
                     screen.zoom_screen(d_zoom=-d_zoom if e.button == 4 else d_zoom)
-                    model.sim_scale = SimulationScale(model.arena_dims[0]*screen.zoom, color=model.sim_scale.color)
-                    model.sim_scale.render_scale(model.screen_width, model.screen_height)
-                    model.toggle(name='zoom', value=screen.zoom)
-            # lib.stor.datagroup.get_input(e)
-    if model.focus_mode and len(model.selected_agents) > 0:
+                    m.sim_scale = SimulationScale(m.arena_dims[0]*screen.zoom, color=m.sim_scale.color)
+                    m.sim_scale.render_scale(m.screen_width, m.screen_height)
+                    m.toggle(name='zoom', value=screen.zoom)
+    if m.focus_mode and len(m.selected_agents) > 0:
         try:
-            sel = model.selected_agents[0]
+            sel = m.selected_agents[0]
             screen.move_center(pos=sel.get_position())
         except:
             pass
@@ -113,26 +113,26 @@ def eval_keypress(k, screen, model):
         model.toggle(k)
 
 
-def evaluate_graphs(model):
-    for g in model.dynamic_graphs:
+def evaluate_graphs(m):
+    for g in m.dynamic_graphs:
         running = g.evaluate()
         if not running:
-            model.dynamic_graphs.remove(g)
+            m.dynamic_graphs.remove(g)
             del g
 
 
-def eval_selection(model, p, ctrl):
-    res = False if len(model.selected_agents) == 0 else True
-    for f in model.get_food() + model.get_flies() + model.borders:
+def eval_selection(m, p, ctrl):
+    res = False if len(m.selected_agents) == 0 else True
+    for f in m.get_food() + m.get_flies() + m.borders:
         if f.contained(p):
             if not f.selected:
                 f.selected = True
-                model.selected_agents.append(f)
+                m.selected_agents.append(f)
             elif ctrl:
                 f.selected = False
-                model.selected_agents.remove(f)
+                m.selected_agents.remove(f)
             res = True
         elif f.selected and not ctrl:
             f.selected = False
-            model.selected_agents.remove(f)
+            m.selected_agents.remove(f)
     return res

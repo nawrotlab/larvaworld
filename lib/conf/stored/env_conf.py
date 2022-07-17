@@ -164,8 +164,8 @@ def game_env(dim=0.1, x=0.4, y=0.0):
                   'source_units': sus},
                o='G')
 
-
-env_dict = {
+def Env_dict() :
+    d = {
     'focus': env((0.01, 0.01)),
     'dish': env(0.1),
     'dish_40mm': env(0.04),
@@ -214,3 +214,4 @@ env_dict = {
     'game': game_env(),
     'arena_50mm_diffusion': env(0.05, o='D'),
 }
+    return d

@@ -1,18 +1,4 @@
-import copy
-import json
-import os
-import pickle
-import shutil
-
 import numpy as np
-import pandas as pd
-import param
-
-from lib.registry.par import v_descriptor
-from lib.aux import dictsNlists as dNl
-
-
-
 
 
 
@@ -90,6 +76,8 @@ class ParRegistry:
         else:
             return self.init_dict.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
 
+
+
     def enr_dict(self, proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, interference=True,
                  def_kws={}, metric_definition=None, **kwargs):
         to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
@@ -97,9 +85,11 @@ class ParRegistry:
         proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 
         if metric_definition is None:
-            from lib.conf.stored.data_conf import metric_def
-            metric_definition = metric_def(**def_kws)
+            metric_definition = self.init_dict.metric_def(**def_kws)
         pre = self.init_dict.get_null('preprocessing', **pre_kws)
+        # print(pre)
+        # print(pre_kws)
+        # raise
         proc = self.init_dict.get_null('processing', **{k: True if k in proc else False for k in proc_type_keys})
         annot = self.init_dict.get_null('annotation', **{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']},
                               fits=fits,
@@ -108,6 +98,10 @@ class ParRegistry:
         dic = self.init_dict.get_null('enrichment', metric_definition=metric_definition, preprocessing=pre, processing=proc,
                             annotation=annot,
                             to_drop=to_drop, **kwargs)
+
+        # print(dic.preprocessing)
+        # # print(pre_kws)
+        # raise
         return dic
 
     def base_enrich(self, **kwargs):
@@ -117,12 +111,16 @@ class ParRegistry:
 
 
     def loadConf(self, conftype, id=None):
-        return self.conftype_dict.loadConf(conftype=conftype,id=id)
+        return self.conftype_dict.dict[conftype].loadConf(id=id)
 
+    def saveConf(self, conftype, id, conf):
+        return self.conftype_dict.dict[conftype].saveConf(id=id, conf=conf)
 
+    def deleteConf(self, conftype, id=None):
+        return self.conftype_dict.dict[conftype].deleteConf(id=id)
 
     def expandConf(self, conftype, id=None):
-        return self.conftype_dict.expandConf(conftype=conftype, id=id)
+        return self.conftype_dict.dict[conftype].expandConf(id=id)
 
 
     def loadRef(self, id=None):
@@ -130,39 +128,20 @@ class ParRegistry:
 
 
     def storedConf(self, conftype):
-        return self.conftype_dict.storedConf(conftype=conftype)
+        return self.conftype_dict.dict[conftype].ConfIDs
 
 
     def next_idx(self, id, conftype='Exp'):
-        F0 = self.path_dict["SimIdx"]
-        try:
-            with open(F0) as f:
-                d = json.load(f)
-        except:
-            ksExp = self.storedConf('Exp')
-            ksBatch = self.storedConf('Batch')
-            ksEssay = self.storedConf('Essay')
-            ksGA = self.storedConf('Ga')
-            ksEval = self.storedConf('Exp')
-            dExp = dict(zip(ksExp, [0] * len(ksExp)))
-            dBatch = dict(zip(ksBatch, [0] * len(ksBatch)))
-            dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))
-            dGA = dict(zip(ksGA, [0] * len(ksGA)))
-            dEval = dict(zip(ksEval, [0] * len(ksEval)))
-            # batch_idx_dict.update(loadConfDict('Batch'))
-            d = {'Exp': dExp,
-                 'Batch': dBatch,
-                 'Essay': dEssay,
-                 'Eval': dEval,
-                 'Ga': dGA}
-        if not conftype in d.keys():
-            d[conftype] = {}
-        if not id in d[conftype].keys():
-            d[conftype][id] = 0
-        d[conftype][id] += 1
-        with open(F0, "w") as fp:
-            json.dump(d, fp)
-        return d[conftype][id]
+        return self.conftype_dict.next_idx(conftype=conftype, id=id)
+
 
 
 preg = ParRegistry()
+
+enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                                                          bouts=['stride', 'pause', 'turn'])
+
+# if __name__ == '__main__':
+#     for k,v in enrichment.items() :
+#         print(k)
+#         print(v)

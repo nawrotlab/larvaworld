@@ -233,3 +233,17 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
 
     par = LarvaworldParNew(**kws)
     return par
+
+def selector_func(objects,default=None, single_choice=True, **kwargs):
+    kws = {
+        'objects': objects,
+        'default': default,
+        'allow_None': True,
+        'empty_default': True,
+        **kwargs
+    }
+    if single_choice:
+        func = param.Selector
+    else:
+        func = param.ListSelector
+    return func(**kws)

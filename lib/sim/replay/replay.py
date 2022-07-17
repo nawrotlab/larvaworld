@@ -7,8 +7,9 @@ class ReplayRun:
     def __init__(self, dataset=None, refID=None, id=None, save_to=None, vis_kwargs=None, agent_ids=None,  time_range=None,
                   draw_Nsegs=None, env_params=None,close_view=False, track_point=None, dynamic_color=None,overlap_mode=False,
                   transposition=None, fix_point=None, fix_segment=None, show_output = True, **kwargs):
+        D=preg.conftype_dict
         if dataset is None and refID is not None :
-            dataset=preg.loadRef(refID)
+            dataset=D.loadRef(refID)
         self.dataset=dataset
         self.show_output=show_output
 
@@ -25,9 +26,9 @@ class ReplayRun:
         self.id=id
         if vis_kwargs is None:
             if not overlap_mode :
-                vis_kwargs = preg.get_null(name='visualization', mode='video', video_speed=60, media_name=self.id)
+                vis_kwargs = preg.init_dict.get_null(name='visualization', mode='video', video_speed=60, media_name=self.id)
             else :
-                vis_kwargs = preg.get_null(name='visualization', mode='image', image_mode='overlap', media_name=self.id, draw_contour=False)
+                vis_kwargs = preg.init_dict.get_null(name='visualization', mode='image', image_mode='overlap', media_name=self.id, draw_contour=False)
 
 
 

@@ -321,5 +321,9 @@ def create_mod_dict():
     return grouped_mod_dict
 
 d = create_mod_dict()
-mod_dict = dNl.merge_dicts(list(d.values()))
-mod_group_dict = {k: {'model families': list(v.keys())} for k, v in d.items()}
+
+def Model_dict() :
+    return dNl.merge_dicts(list(d.values()))
+
+def ModelGroup_dict() :
+    return  dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})

@@ -7,405 +7,28 @@ import pandas as pd
 import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
+from lib.registry.pars import preg
 
 from lib.registry.units import ureg
 
 
-#
-#
-# def init2par(d0, d=None, pre_d=None, aux_args={}):
-#     def par(name, t=float, v=None, vs=None, lim=None, min=None, max=None, dv=None, disp=None, h='', k=None, symbol='',
-#             u=ureg.dimensionless, u_name=None, label='', codename=None,
-#             vfunc=None, vparfunc=None, **kwargs):
-#         from lib.aux.par_aux import define_range
-#         if k is None:
-#             k = name
-#         dv, lim, vs = define_range(dtype=t, lim=lim, vs=vs, dv=dv, min=min, max=max, u=u, wrap_mode=None)
-#
-#         p_kws = {
-#             'p': name,
-#             'k': k,
-#             'lim': lim,
-#             'dv': dv,
-#             'vs': vs,
-#             'v0': v,
-#             'dtype': t,
-#             'disp': label,
-#             'h': h,
-#             'u_name': u_name,
-#             'u': u,
-#             'sym': symbol,
-#             'codename': codename,
-#             'vfunc': vfunc,
-#             'vparfunc': vparfunc,
-#         }
-#         return p_kws
-#
-#     from lib.registry.par_dict import preparePar
-#     from lib.registry.par import v_descriptor
-#     if d is None and pre_d is None:
-#         d, pre_d = {}, {}
-#     for n, v in d0.items():
-#         depth = dNl.dict_depth(v)
-#
-#         if depth == 0:
-#             continue
-#         if depth == 1:
-#             try:
-#                 pkws = par(name=n, **v)
-#                 prepar = preparePar(**pkws)
-#                 pre_d[prepar.k] = prepar
-#                 p = v_descriptor(**prepar)
-#                 if p is not None:
-#                     for kk, vv in aux_args.items():
-#                         setattr(p, kk, vv)
-#                     d[p.d] = p
-#             except:
-#                 continue
-#         elif depth > 1:
-#             d[n], pre_d[n] = init2par(d0=v)
-#     return d, pre_d
-#
-# #
-# class LarvaConfDict:
-#     def __init__(self, init_dict=None, dist_dict0=None):
-#
-#         if dist_dict0 is None:
-#             from lib.registry.pars import preg
-#             dist_dict0 = preg.dist_dict0
-#         self.dist_dict0 = dist_dict0
-#         self.dist_dict = self.dist_dict0.dict
-#
-#         self.mcolor = dNl.NestDict({
-#             'body': 'lightskyblue',
-#             'physics': 'lightsteelblue',
-#             'energetics': 'lightskyblue',
-#             'Box2D_params': 'lightcoral',
-#             'crawler': 'lightcoral',
-#             'turner': 'indianred',
-#             'interference': 'lightsalmon',
-#             'intermitter': '#a55af4',
-#             'olfactor': 'palegreen',
-#             'windsensor': 'plum',
-#             'toucher': 'pink',
-#             'feeder': 'pink',
-#             'memory': 'pink',
-#             # 'locomotor': locomotor.DefaultLocomotor,
-#         })
-#
-#         if init_dict is None:
-#             from lib.registry.pars import preg
-#             init_dict = preg.init_dict
-#
-#         self.mbkeys = list(init_dict['modules'].keys())
-#         self.aux_keys = ['body', 'physics', 'energetics']
-#         self.mkeys = self.mbkeys + self.aux_keys
-#
-#         self.dict1 = self.build_mode1(init_dict=init_dict)
-#         self.dict2 = self.build_mode2()
-#
-#     def build_mode2(self):
-#         from lib.registry.modConfs import build_brain_module_dict, build_aux_module_dict
-#         init_bdicts2, mbpredicts2, mbdicts2 = build_brain_module_dict()
-#         init_auxdicts2, aux_predicts2, aux_dicts2 = build_aux_module_dict()
-#
-#         mdicts2 = dNl.NestDict({**mbdicts2, **aux_dicts2})
-#         mpredicts2 = dNl.NestDict({**mbpredicts2, **aux_predicts2})
-#         init_dicts2 = dNl.NestDict({**init_bdicts2, **init_auxdicts2})
-#
-#         bd = {'init': init_bdicts2, 'pre': mbpredicts2, 'm': mbdicts2}
-#         auxd = {'init': init_auxdicts2, 'pre': aux_predicts2, 'm': aux_dicts2}
-#         d = {'init': init_dicts2, 'pre': mpredicts2, 'm': mdicts2}
-#
-#         dd = {'brain': bd, 'aux': auxd, 'model': d}
-#         return dNl.NestDict(dd)
-#
-#     def build_mode1(self, init_dict):
-#
-#         # if mfunc is None:
-#         #     from lib.registry.par_funcs import module_func_dict
-#         #     mfunc = module_func_dict()
-#         # self.mfunc = mfunc
-#
-#         mpref = {k: f'brain.{k}_params.' for k in self.mbkeys}
-#         init_bdicts = dNl.NestDict()
-#         mbdicts = dNl.NestDict()
-#         mbpredicts = dNl.NestDict()
-#
-#         for k in self.mbkeys:
-#             init_bdicts[k] = init_dict[k]
-#             mbdicts[k], mbpredicts[k] = init2par(d0=init_bdicts[k], aux_args={'pref': mpref[k]})
-#
-#         init_auxdicts = dNl.NestDict()
-#         aux_dicts = dNl.NestDict()
-#         aux_predicts = dNl.NestDict()
-#         for k in self.aux_keys:
-#             init_auxdicts[k] = init_dict[k]
-#             aux_dicts[k], aux_predicts[k] = init2par(d0=init_auxdicts[k])
-#
-#         mdicts = dNl.NestDict({**mbdicts, **aux_dicts})
-#         mpredicts = dNl.NestDict({**mbpredicts, **aux_predicts})
-#         init_dicts = dNl.NestDict({**init_bdicts, **init_auxdicts})
-#
-#         def build_mpredfs(mpredicts):
-#             mpredfs = dNl.NestDict()
-#             for k, predict in mpredicts.items():
-#                 if predict is not None:
-#                     entries = []
-#                     for kk, vv in predict.items():
-#                         if 'k' in vv.keys():
-#                             entries.append(vv)
-#                         else:
-#                             for kkk, vvv in vv.items():
-#                                 if 'k' in vvv.keys():
-#                                     entries.append(vvv)
-#                                 else:
-#                                     raise ValueError(kkk, kk, k)
-#                     mpredfs[k] = pd.DataFrame.from_records(entries, index='k')
-#                 else:
-#                     mpredfs[k] = None
-#             return mpredfs
-#
-#         bd = {'init': init_bdicts, 'pre': mbpredicts, 'm': mbdicts}
-#         auxd = {'init': init_auxdicts, 'pre': aux_predicts, 'm': aux_dicts}
-#         d = {'init': init_dicts, 'pre': mpredicts, 'm': mdicts}
-#
-#         dd = {'brain': bd, 'aux': auxd, 'model': d}
-#         return dNl.NestDict(dd)
-#
-#     def get_mdict2(self, mkey, mode=None):
-#         if mkey is not None:
-#             if mkey in self.aux_keys:
-#                 mdict = self.dict2.model.m[mkey].args
-#             elif mkey in self.mbkeys:
-#                 if mode is None:
-#                     mode = 'default'
-#                 mdict = self.dict2.model.m[mkey].mode[mode].args
-#             return mdict
-#         else:
-#             raise ValueError('Module dictionary or key must be defined')
-#
-#     def conf2(self, mdict=None, mkey=None, prefix=False, mode=None, refID=None, **kwargs):
-#
-#         if mdict is None:
-#             mdict = self.get_mdict2(mkey, mode)
-#         conf0 = dNl.NestDict()
-#         for d, p in mdict.items():
-#             if isinstance(p, param.Parameterized):
-#                 d0 = f'{p.pref}{d}' if prefix else d
-#                 conf0[d0] = p.v
-#             else:
-#                 conf0[d] = self.conf2(mdict=p, prefix=False)
-#
-#         conf0.update(kwargs)
-#         if refID is not None and mkey == 'intermitter':
-#             try:
-#                 from lib.aux.sim_aux import get_sample_bout_distros0
-#                 from lib.conf.stored.conf import loadConf
-#                 kkkws = {
-#                     'Im': conf0,
-#                     'bout_distros': loadConf(refID, 'Ref').bout_distros,
-#                 }
-#                 conf0 = get_sample_bout_distros0(**kkkws)
-#             except:
-#                 pass
-#             # bout_distros = sample.bout_distros
-#         return dNl.NestDict(conf0)
-#
-#     def module2(self, mkey, mode=None, refID=None, mkwargs={}, **kwargs):
-#         if mode is None:
-#             mdict = self.dict2.brain.m[mkey]
-#         else:
-#             mdict = self.dict2.brain.m[mkey].mode[mode]
-#         mkws = self.dict2.brain.m[mkey].kwargs
-#         conf0 = self.conf2(mdict=mdict.args, prefix=False, refID=refID, **kwargs)
-#         func = mdict.class_func
-#         mkws.update(mkwargs)
-#         m = func(**conf0, **mkws)
-#         return m
-#
-#     def conf(self, mdict=None, mkey=None, prefix=False, **kwargs):
-#         conf0 = dNl.NestDict()
-#         if mdict is None:
-#             if mkey is not None:
-#                 mdict = self.dict1.model.m[mkey]
-#             else:
-#                 raise ValueError('Module dictionary or key must be defined')
-#         for d, p in mdict.items():
-#             if isinstance(p, param.Parameterized):
-#                 d0 = f'{p.pref}{d}' if prefix else d
-#                 conf0[d0] = p.v
-#             else:
-#                 conf0[d] = self.conf(mdict=p, prefix=False)
-#
-#         conf0.update(kwargs)
-#         return conf0
-#
-#     def multibconf(self, mbConf, mode=1):
-#         multiconf = dNl.NestDict()
-#         for mkey, mdict in mbConf.items():
-#             if mkey == 'modules':
-#                 multiconf.modules = mbConf.modules
-#             elif mdict is None:
-#                 multiconf[mkey] = None
-#             else:
-#                 if mode == 1:
-#                     multiconf[mkey] = self.conf(mdict)
-#                 elif mode == 2:
-#                     multiconf[mkey] = self.conf2(mdict)
-#         return multiconf
-#
-#     def multiconf(self, mConf, mode=1):
-#         mc = dNl.NestDict()
-#         mc.brain = self.multibconf(mConf['brain'], mode=mode)
-#         for mkey, mdict in mConf.items():
-#             if mkey == 'brain':
-#                 continue
-#             if mdict is None:
-#                 mc[mkey] = None
-#             else:
-#                 if mode == 1:
-#                     mc[mkey] = self.conf(mdict)
-#                 elif mode == 2:
-#                     mc[mkey] = self.conf2(mdict)
-#                 # mc[mkey] = self.conf(mdict)
-#         return mc
-#
-#     def update_modelConf(self, mconf, mdict, **kwargs):
-#         conf0 = self.conf(mdict, prefix=True, **kwargs)
-#         return dNl.update_nestdict(mconf, conf0)
-#
-#     def crossover(self, mdict, mdict2):
-#         for d, p in mdict.items():
-#             if random.random() < 0.5:
-#                 p.v = mdict2[d].v
-#
-#     def mutate(self, mdict, Pmut, Cmut):
-#         for d, p in mdict.items():
-#             p.mutate(Pmut, Cmut)
-#
-#     def randomize(self, mdict):
-#         for d, p in mdict.items():
-#             p.randomize()
-#
-#     def initConf(self, init_mode, mdict, mconf0, **kwargs):
-#         if init_mode == 'model':
-#             conf = self.conf(mdict, prefix=True, **mconf0)
-#             # return mconf0
-#         elif init_mode == 'default':
-#             conf = self.conf(mdict, prefix=True)
-#             # return self.update_modelConf(mconf0, mdict,**kwargs)
-#         elif init_mode == 'random':
-#             self.randomize(mdict)
-#             conf = self.conf(mdict, prefix=True)
-#         return conf
-#
-#     def compile_pdict(self, dic):
-#         pdict = dNl.NestDict()
-#         for mkey, ds in dic.items():
-#             mdict = self.dict1.brain.m[mkey]
-#             for d in ds:
-#                 pdict[d] = mdict[d]
-#         return pdict
-#
-#     def loco_conf(self, mkeys=None):
-#         mkeys0 = ['crawler', 'turner', 'interference', 'intermitter', 'feeder']
-#         if mkeys is None:
-#             mkeys = mkeys0
-#         conf = dNl.NestDict({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
-#         for mkey in mkeys0:
-#             if mkey in mkeys:
-#                 mdict = self.dict1.brain.m[mkey]
-#                 conf[f'{mkey}_params'] = self.conf(mdict, prefix=False)
-#             else:
-#                 conf[f'{mkey}_params'] = None
-#         return conf
-#
-#     def loco_module(self, mkeys=None, **kwargs):
-#         from lib.model.modules.locomotor import DefaultLocomotor
-#
-#         conf = self.loco_conf(mkeys)
-#         L = DefaultLocomotor(conf=conf, **kwargs)
-#         return L
-#
-#     def brain_conf(self, mkeys=None):
-#         mkeys0 = self.mbkeys
-#         if mkeys is None:
-#             mkeys = mkeys0
-#
-#         conf = dNl.NestDict({'modules': {mkey: mkey in mkeys for mkey in mkeys0}})
-#         for mkey in mkeys0:
-#             if mkey in mkeys:
-#                 mdict = self.dict1.brain.m[mkey]
-#                 conf[f'{mkey}_params'] = self.conf(mdict, prefix=False)
-#             else:
-#                 conf[f'{mkey}_params'] = None
-#         return conf
-#
-#     def brain_module(self, mkeys=None, **kwargs):
-#         from lib.model.modules.brain import DefaultBrain
-#         conf = self.brain_conf(mkeys)
-#         L = DefaultBrain(conf=conf, **kwargs)
-#         return L
-#
-#     def mIDbconf(self, mID=None, m=None):
-#         if m is None:
-#             from lib.conf.stored.conf import loadConf
-#             m = loadConf(mID, 'Model').brain
-#         mIDconf = dNl.NestDict()
-#         mIDconf.modules = m.modules
-#         for mkey, mdic in self.dict1.brain.m.items():
-#             if m.modules[mkey]:
-#                 mmdic = m[f'{mkey}_params']
-#                 mdic = self.copyID(mdic, mmdic)
-#                 mIDconf[f'{mkey}_params'] = mdic
-#             else:
-#                 mIDconf[f'{mkey}_params'] = None
-#         return mIDconf
-#
-#     def mIDconf(self, mID=None, m=None):
-#
-#         if m is None:
-#             from lib.conf.stored.conf import loadConf
-#             m = loadConf(mID, 'Model')
-#
-#         mc = dNl.NestDict()
-#         mc.brain = self.mIDbconf(self, m=m.brain)
-#         for mkey, mdic in self.dict1.aux.m.items():
-#             mmdic = m[mkey]
-#             mc[mkey] = self.copyID(mdic, mmdic)
-#             # if mmdic:
-#             #
-#             # else:
-#             #     mc[mkey]= None
-#         return mc
-#
-#     def copyID(self, mdic, mmdic):
-#         if mmdic is None:
-#             return None
-#         else:
-#             for d, p in mdic.items():
-#                 if isinstance(p, param.Parameterized):
-#                     new_v = mmdic[d] if d in mmdic.keys() else None
-#                     if type(new_v) == list:
-#                         if p.parclass == param.Range:
-#                             new_v = tuple(new_v)
-#                     p.v = new_v
-#                 else:
-#                     self.copyID(mdic=mdic[d], mmdic=mmdic[d])
-#             return mdic
-#
-#
 
 
 class LarvaConfDict:
-    def __init__(self):
-        from lib.registry.modConfs import build_LarvaConfDict
-        from lib.registry import dist_dict
-        self.dist_dict = dist_dict.dist_dict
+    def __init__(self, load=False, save=False, verbose=1):
+        self.verbose = verbose
+        from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
+        self.dict_path = preg.path_dict['LarvaConfDict']
+        if not load:
 
-        self.dict = build_LarvaConfDict()
-        self.full_dict = self.build_full_dict()
+            self.dict0 = build_confdicts0()
+            if save:
+                dNl.save_dict(self.dict0, self.dict_path)
+        else:
+            self.dict0 = dNl.load_dict(self.dict_path)
+
+        self.dict = build_LarvaConfDict(self.dict0)
+        self.full_dict = self.build_full_dict(D = self.dict)
 
         self.mcolor = dNl.NestDict({
             'body': 'lightskyblue',
@@ -563,7 +186,7 @@ class LarvaConfDict:
                         v = m.brain[f'{mkey}_params'][var_k]
                         if v is not None:
                             if v.name is not None:
-                                vs1, vs2 = self.dist_dict.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
+                                vs1, vs2 = preg.dist_dict.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
                                 data.append(vs1)
                                 data.append(vs2)
                 else:
@@ -657,7 +280,7 @@ class LarvaConfDict:
                 for kkk in ['stridechain_dist', 'pause_dist', 'run_dist']:
                     if dic[kkk] is not None:
                         if dic[kkk].name is not None:
-                            vs1, vs2 = self.dist_dict.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
+                            vs1, vs2 = preg.dist_dict.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
                             data0.append(vs1)
                             data0.append(vs2)
 
@@ -846,23 +469,25 @@ class LarvaConfDict:
         #
         # T0=
 
-        self.saveConf(conf, mID)
+        # self.saveConf(conf, mID)
 
-        return conf
+        return {mID : conf}
 
-    def newConf(self, mID0, mID=None, kwargs={}):
-        T0 = dNl.NestDict(copy.deepcopy(self.loadConf(mID=mID0)))
-        T = dNl.update_nestdict(T0, kwargs)
+    def newConf(self, m0=None,mID0=None, mID=None, kwargs={}):
+        if m0 is None :
+            m0=self.loadConf(mID=mID0)
+        T0 = dNl.copyDict(m0)
+        conf = dNl.update_nestdict(T0, kwargs)
         if mID is not None:
-            self.saveConf(conf=T, mID=mID)
-        return T
+            self.saveConf(conf=conf, mID=mID)
+        return conf
 
     def baseConfs(self):
         mod_dict = {'realistic': 'RE', 'square': 'SQ', 'gaussian': 'GAU', 'constant': 'CON',
                     'default': 'DEF', 'neural': 'NEU', 'sinusoidal': 'SIN', 'nengo': 'NENGO', 'phasic': 'PHI',
                     'branch': 'BR'}
         kws = {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
-
+        entries={}
         for Cmod in ['realistic', 'square', 'gaussian', 'constant']:
             for Tmod in ['neural', 'sinusoidal', 'constant']:
                 for Ifmod in ['phasic', 'square', 'default']:
@@ -875,73 +500,31 @@ class LarvaConfDict:
                         }
                         if Ifmod != 'default':
                             kkws.update(**kws)
-                        self.larvaConf(**kkws)
-
-        # self.larvaConf(mID='RE_NEU_PHI_NENGO',
-        #                modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
-        #                       'intermitter': 'nengo'}, nengo=True, **kws)
-        # self.larvaConf(mID='RE_NEU_PHI_BR', modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
-        #                                            'intermitter': 'branch'}, **kws)
-        # self.larvaConf(mID='RE_NEU_PHI_DEF',
-        #                modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'phasic',
-        #                       'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='RE_NEU_SQ_DEF', modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'square',
-        #                                            'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='RE_NEU_DEF_DEF',
-        #                modes={'crawler': 'realistic', 'turner': 'neural', 'interference': 'default',
-        #                       'intermitter': 'default'})
-        # self.larvaConf(mID='SQ_NEU_PHI_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'phasic',
-        #                                             'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='SQ_NEU_SQ_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'square',
-        #                                            'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='SQ_NEU_DEF_DEF', modes={'crawler': 'square', 'turner': 'neural', 'interference': 'default',
-        #                                             'intermitter': 'default'})
-        # self.larvaConf(mID='CON_NEU_PHI_DEF',
-        #                modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'phasic',
-        #                       'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='CON_NEU_SQ_DEF', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'square',
-        #                                             'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='CON_NEU_DEF_DEF',
-        #                modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
-        #                       'intermitter': 'default'})
-        # self.larvaConf(mID='CON_SIN_PHI_DEF',
-        #                modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'phasic',
-        #                       'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='CON_SIN_SQ_DEF',
-        #                modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'square',
-        #                       'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='CON_SIN_DEF_DEF',
-        #                modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
-        #                       'intermitter': 'default'})
-        #
-        # self.larvaConf(mID='RE_SIN_PHI_DEF',
-        #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'phasic',
-        #                       'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='RE_SIN_SQ_DEF',
-        #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'square',
-        #                       'intermitter': 'default'}, **kws)
-        # self.larvaConf(mID='RE_SIN_DEF_DEF',
-        #                modes={'crawler': 'realistic', 'turner': 'sinusoidal', 'interference': 'default',
-        #                       'intermitter': 'default'})
-        self.larvaConf(mID='loco_default', **kws)
+                        entries.update(self.larvaConf(**kkws))
+        e1=self.larvaConf(mID='loco_default', **kws)
         kws2 = {'modkws': {'interference': {'attenuation': 0.0}}}
-        self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
+        e2=self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
                                           'intermitter': 'default'}, **kws2)
-        self.larvaConf(mID='NEU_Levy', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
+        e3=self.larvaConf(mID='NEU_Levy', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
                                               'intermitter': 'default'}, **kws2)
-        self.larvaConf(mID='NEU_Levy_continuous',
+        e4=self.larvaConf(mID='NEU_Levy_continuous',
                        modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default'}, **kws2)
 
-        self.larvaConf(mID='CON_SIN', modes={'crawler': 'constant', 'turner': 'sinusoidal'})
-
-        mID0s = []
+        e5=self.larvaConf(mID='CON_SIN', modes={'crawler': 'constant', 'turner': 'sinusoidal'})
+        entries.update(**e1,**e2,**e3,**e4,**e5)
+        mID0dic = {}
+        # m0s=[]
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
-                mID0s.append(mID0)
+                mID0dic[mID0]=entries[mID0]
+                # mID0s.append(mID0)
+                # m0s.append(entries[mID0])
                 for mm in [f'{mID0}_avg', f'{mID0}_var', f'{mID0}_var2']:
                     if mm in self.storedConf():
-                        mID0s.append(mm)
+                        mID0dic[mm] = self.loadConf(mm)
+                        # mID0s.append(mm)
+                        # m0s.append(self.loadConf(mm))
 
         olf_pars1 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
                                                 odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}})
@@ -951,24 +534,26 @@ class LarvaConfDict:
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
-        for mID0 in mID0s:
+        # for m0 in m0s:
+        for mID0,m0 in mID0dic.items():
             mID1 = f'{mID0}_nav'
-            self.newConf(mID=mID1, mID0=mID0, kwargs=kwargs1)
+            entries[mID1]=self.newConf(m0=m0, kwargs=kwargs1)
             mID1br = f'{mID1}_brute'
-            self.newConf(mID=mID1br, mID0=mID1, kwargs={'brain.olfactor_params.brute_force': True})
+            entries[mID1br] = self.newConf(m0=entries[mID1], kwargs={'brain.olfactor_params.brute_force': True})
             mID2 = f'{mID0}_nav_x2'
-            self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
+            entries[mID2] = self.newConf(m0=m0, kwargs=kwargs2)
             mID2br = f'{mID2}_brute'
-            self.newConf(mID=mID2br, mID0=mID2, kwargs={'brain.olfactor_params.brute_force': True})
-
+            entries[mID2br] = self.newConf(m0=entries[mID2], kwargs={'brain.olfactor_params.brute_force': True})
+        entries['explorer'] =self.newConf(m0=entries['loco_default'], kwargs={})
+        entries['navigator'] =self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
-            mID1 = f'{mID0}_nav'
-            self.newConf(mID=mID1, mID0=mID0, kwargs=kwargs1)
-            mID2 = f'{mID0}_nav_x2'
-            self.newConf(mID=mID2, mID0=mID0, kwargs=kwargs2)
+            entries[f'{mID0}_nav']=self.newConf(m0=entries[mID0], kwargs=kwargs1)
+            entries[f'{mID0}_nav_x2']=self.newConf(m0=entries[mID0], kwargs=kwargs2)
 
         sm_pars = self.generate_configuration(self.dict.aux.m['sensorimotor'].mode['default'].args)
-        self.newConf(mID='obstacle_avoider', mID0='RE_NEU_PHI_DEF_nav', kwargs={'sensorimotor': sm_pars})
+        entries['obstacle_avoider']=self.newConf(m0=entries['RE_NEU_PHI_DEF_nav'], kwargs={'sensorimotor': sm_pars})
+        return entries
+
 
     def saveConf(self, conf, mID=None, verbose=1):
         if mID is not None:
@@ -984,8 +569,8 @@ class LarvaConfDict:
         from lib.conf.stored.conf import kConfDict
         return kConfDict('Model', **kwargs)
 
-    def build_full_dict(self):
-        D = self.dict
+    def build_full_dict(self, D):
+
 
         def register(dic, k0, full_dic):
             for k, p in dic.items():

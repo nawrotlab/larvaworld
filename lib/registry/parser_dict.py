@@ -1,8 +1,30 @@
 import time
 from typing import List
 import lib.aux.dictsNlists as dNl
+# from lib.conf.stored.conf import loadConfDict
 
-
+from lib.registry.pars import preg
+# t0 = time.time()
+# d=preg.conftype_dict.storedConf('Exp')
+# t1 = time.time()
+# d=preg.conftype_dict.storedConf('Exp')
+# t2 = time.time()
+# d=preg.conftype_dict.storedConf('Exp')
+# t3 = time.time()
+# from lib.conf.stored.conf import kConfDict
+# d=kConfDict('Exp')
+# t4 = time.time()
+# d=kConfDict('Exp')
+# t5 = time.time()
+# d=kConfDict('Exp')
+# t6 = time.time()
+# print(t3-t2)
+# print(t2-t1)
+# print(t1-t0)
+# print(t4-t3)
+# print(t5-t4)
+# print(t6-t5)
+# raise
 class ParsArg:
     """
     Create a single parser argument
@@ -99,8 +121,7 @@ def build_ParsDict2(dic):
 class ParserDict:
     def __init__(self, init_dict=None, load=True,
                  names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
-        from lib.registry import paths
-        self.dict_path = paths.path_dict['ParserDict']
+        self.dict_path = preg.path_dict['ParserDict']
         if not load:
             self.predict = self.build_predict(names, init_dict)
             dNl.save_dict(self.predict, self.dict_path)
@@ -132,7 +153,8 @@ class ParserDict:
         return d
 
 
-# t0=time.time()
+
 parser_dict = ParserDict()
-# t1=time.time()
-# print((t1-t0)*10000)
+
+
+

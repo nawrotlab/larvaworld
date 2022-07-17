@@ -10,16 +10,15 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 sys.path.insert(0, '..')
 from lib.sim.ga.ga_launcher import GAlauncher
-from lib.conf.stored.conf import kConfDict
+# from lib.registry.pars import preg
 from lib.anal.argparsers import MultiParser, update_exp_conf
-
+from lib.conf.stored.conf import kConfDict
 s = time.time()
 MP = MultiParser(['sim_params', 'ga_select_kws'])
 p = MP.add()
 p.add_argument('experiment', choices=kConfDict('Ga'), help='The experiment mode')
 p.add_argument('-hide', '--show_screen', action="store_false", help='Whether to render the screen visualization')
 p.add_argument('-offline', '--offline', action="store_true", help='Whether to run a full LarvaworldSim environment')
-
 p.add_argument('-mID0', '--base_model', choices=kConfDict('Model'), help='The model configuration to optimize')
 p.add_argument('-mID1', '--bestConfID', type=str, help='The model configuration ID to store the best genome')
 

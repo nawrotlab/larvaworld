@@ -617,50 +617,51 @@ class Chemotaxis_Essay(Essay):
         self.figs.update(self.G.eval0(entry, **kwargs))
 
 
-rover_sitter_essay = {
-    'experiments': {
-        'pathlength': {
-            'exp_types': ['RvsS_off', 'RvsS_on'],
-            'durations': [20, 20]
-        },
-        'intake': {
-            'exp_types': ['RvsS_on'] * 3,
-            'durations': [10, 15, 20]
-        },
-        'starvation': {
-            'exp_types': [
-                'RvsS_on',
-                'RvsS_on_1h_prestarved',
-                'RvsS_on_2h_prestarved',
-                'RvsS_on_3h_prestarved',
-                'RvsS_on_4h_prestarved',
-            ],
-            'durations': [5] * 5
-        },
-        'quality': {
-            'exp_types': [
-                'RvsS_on',
-                'RvsS_on_q75',
-                'RvsS_on_q50',
-                'RvsS_on_q25',
-                'RvsS_on_q15',
-            ],
-            'durations': [5] * 5
-        },
-        'refeeding': {
-            'exp_types': [
-                'RvsS_on_3h_prestarved'
-            ],
-            'durations': [120]
-        }
-    },
-    'exp_fig_folder': preg.path_dict["RvsS"]}
 
-essay_dict = {
+def Essay_dict() :
+    rover_sitter_essay = {
+        'experiments': {
+            'pathlength': {
+                'exp_types': ['RvsS_off', 'RvsS_on'],
+                'durations': [20, 20]
+            },
+            'intake': {
+                'exp_types': ['RvsS_on'] * 3,
+                'durations': [10, 15, 20]
+            },
+            'starvation': {
+                'exp_types': [
+                    'RvsS_on',
+                    'RvsS_on_1h_prestarved',
+                    'RvsS_on_2h_prestarved',
+                    'RvsS_on_3h_prestarved',
+                    'RvsS_on_4h_prestarved',
+                ],
+                'durations': [5] * 5
+            },
+            'quality': {
+                'exp_types': [
+                    'RvsS_on',
+                    'RvsS_on_q75',
+                    'RvsS_on_q50',
+                    'RvsS_on_q25',
+                    'RvsS_on_q15',
+                ],
+                'durations': [5] * 5
+            },
+            'refeeding': {
+                'exp_types': [
+                    'RvsS_on_3h_prestarved'
+                ],
+                'durations': [120]
+            }
+        },
+        'exp_fig_folder': preg.path_dict["RvsS"]}
+    d = {
     # 'roversVSsitters': rover_sitter_essay,
     # 'RvsS_essay': {}
 }
-
+    return d
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
     E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)

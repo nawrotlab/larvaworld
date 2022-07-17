@@ -39,6 +39,7 @@ def build_path_dict() :
         'ParDict': f'{CF}/ParDict.csv',
         'ParFuncDict': f'{CF}/ParFuncDict.csv',
         'ParInitDict': f'{CF}/ParInitDict.csv',
+        'ParDefaultDict': f'{CF}/ParDefaultDict.csv',
         'ParserDict': f'{CF}/ParserDict.csv',
         'DistDict': f'{CF}/DistDict.csv',
         'LarvaConfDict': f'{CF}/LarvaConfDict.csv',

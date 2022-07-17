@@ -231,8 +231,11 @@ def update_existingdict(dic0,dic):
 
 
 def update_nestdict(dic0, dic):
+    # print(dic)
     dic0_f = flatten_dict(dic0)
     dic0_f.update(dic)
+    # print(dic0_f)
+    # print(unflatten(dic0_f))
     return NestDict(unflatten(dic0_f))
 
 def update_existingnestdict(dic0, dic):

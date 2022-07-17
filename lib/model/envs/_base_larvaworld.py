@@ -31,6 +31,7 @@ class BaseLarvaWorld:
         self.experiment = experiment
         self.Box2D = Box2D
 
+        self.pygame_keys = None
         self.is_running = False
         self.is_paused = False
         self.dt = dt

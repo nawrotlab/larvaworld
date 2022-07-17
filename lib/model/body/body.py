@@ -13,7 +13,7 @@ from lib.registry.pars import preg
 class LarvaShape:
     def __init__(self, Nsegs=2, seg_ratio=None, shape='drosophila_larva', initial_length=0.005, length_std=0,
                  density=300.0, interval=0, scaling_factor=1, initial_orientation=None, initial_pos=None, default_color='black'):
-        from lib.conf.stored.aux_conf import body_dict
+        from lib.conf.stored.aux_conf import Body_dict
         self.default_color = default_color
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         self.interval = interval
@@ -30,7 +30,7 @@ class LarvaShape:
             seg_ratio = seg_ratio.replace(')', '')
             seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = np.array(seg_ratio)
-        self.contour_points = body_dict[shape]['points']
+        self.contour_points = Body_dict()[shape]['points']
         self.base_seg_vertices = sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
         self.seg_lengths = self.sim_length * self.seg_ratio
         self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]

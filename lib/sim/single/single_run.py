@@ -227,7 +227,7 @@ def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
         conf = expandConf(exp, 'Exp')
-        conf.sim_params = preg.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf.sim_params = preg.init_dict.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf.experiment = exp
         conf.update(**kwargs)
         d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()

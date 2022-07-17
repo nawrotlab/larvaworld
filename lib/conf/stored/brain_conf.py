@@ -226,7 +226,7 @@ def brain(module_shorts, nengo=False, OD=None, **kwargs):
 
 if __name__ == '__main__':
     for k, v in loco_dict.items():
-        preg.conftype_dict.saveConf(conf=v, conftype='Brain', id=k)
+        preg.saveConf(conf=v, conftype='Brain', id=k)
         BB = preg.loadConf('navigator', 'Model')
         BB.brain.modules=v.modules
         BB.brain.crawler_params = v.crawler_params
@@ -235,5 +235,5 @@ if __name__ == '__main__':
         BB.brain.intermitter_params = v.intermitter_params
         BB.body.length_std = 0.0
         BB.body.initial_length = 0.005
-        preg.conftype_dict.saveConf(conf=BB, conftype='Model',  id=k)
+        preg.saveConf(conf=BB, conftype='Model',  id=k)
 

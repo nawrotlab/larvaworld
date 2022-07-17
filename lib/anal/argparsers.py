@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
+
 #
 class Parser:
     """
@@ -19,9 +20,8 @@ class Parser:
     #         self.parsargs = build_ParsDict(d0)
 
     def __init__(self, name):
-        from lib.registry.parser_dict import parser_dict
         self.name = name
-        self.parsargs = parser_dict.dict[name]
+        self.parsargs = preg.parser_dict.dict[name]
 
     def add(self, parser=None):
         if parser is None:
@@ -32,7 +32,7 @@ class Parser:
 
     def get(self, input):
         dic = {k: v.get(input) for k, v in self.parsargs.items()}
-        d=preg.get_null(name=self.name, **dic)
+        d = preg.init_dict.get_null(name=self.name, **dic)
         return d
 
 
@@ -60,12 +60,12 @@ def adjust_sim(exp, conf_type, sim):
         # from lib.conf.stored.conf import next_idx
         if sim.duration is None:
             try:
-                exp_conf = preg.loadConf(id=exp, conftype=conf_type)
+                exp_conf = preg.conftype_dict.loadConf(id=exp, conftype=conf_type)
                 sim.duration = exp_conf.sim_params.duration
             except:
                 sim.duration = 3.0
         if sim.sim_ID is None:
-            sim.sim_ID = f'{exp}_{preg.next_idx(id=exp, conftype=conf_type)}'
+            sim.sim_ID = f'{exp}_{preg.conftype_dict.next_idx(id=exp, conftype=conf_type)}'
         if sim.path is None:
             if conf_type == 'Exp':
                 sim.path = f'single_runs/{exp}'
@@ -79,13 +79,13 @@ def adjust_sim(exp, conf_type, sim):
 
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
-    from lib.conf.stored.conf import expandConf, next_idx, loadConf
+    D=preg.conftype_dict
 
-    if conf_type=='Batch' :
-        exp_conf = loadConf(exp, conf_type)
+    if conf_type == 'Batch':
+        exp_conf = preg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
         if batch_id is None:
-            idx = next_idx(exp, type='Batch')
+            idx = preg.next_idx(id=exp, conftype='Batch')
             batch_id = f'{exp}_{idx}'
 
         exp_conf.exp = update_exp_conf(exp_conf.exp, d, N, models)
@@ -96,15 +96,14 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         return exp_conf
 
     try:
-        exp_conf = expandConf(exp, conf_type)
+        exp_conf = preg.expandConf(id=exp, conftype=conf_type)
     except:
-        exp_conf = expandConf(exp, conf_type='Exp')
-
+        exp_conf = preg.expandConf(id=exp, conftype='Exp')
 
     if arena is not None:
         exp_conf.env_params.arena = arena
     if d is None:
-        d = {'sim_params': preg.get_null('sim_params')}
+        d = {'sim_params': preg.init_dict.get_null('sim_params')}
 
     exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
 
@@ -156,6 +155,6 @@ def update_exp_models(exp_conf, models, N=None):
 if __name__ == '__main__':
     conf = update_exp_conf(exp='chemorbit', d=None, N=None, models=None, arena=None, conf_type='Eval')
 
-    print(conf.sim_params)
+    # print(conf.sim_params)
 
     # raise
