@@ -194,24 +194,6 @@ def create_mod_dict():
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
     LTh = brain(['L', 'Th'])
 
-    # Levy_brain = brain(['L'], turner=Tsin, crawler=Ccon,
-    #                    interference=preg.get_null('interference', attenuation=0.0),
-    #                    intermitter=ImD(
-    #                        {'fit': False, 'range': (0.01, 3.0), 'name': 'uniform', 'mu': None, 'sigma': None},
-    #                        {'fit': False, 'range': (1, 120), 'name': 'levy', 'mu': 0, 'sigma': 1})
-    #                    )
-
-    # brain_3c = brain(['L'],
-    #                  intermitter=ImD(preg.get_null('logn_dist', range=(0.22, 56.0), mu=-0.48, sigma=0.74),
-    #                                  preg.get_null('logn_dist', range=(1, 120), mu=1.1, sigma=0.95)))
-
-    # IfPHI = preg.get_null('interference', mode='phasic', attenuation=0.2, attenuation_max=0.31)
-    # IfNull = preg.get_null('interference', mode='default', attenuation=1.0)
-    # IfDef = preg.get_null('interference', mode='default', attenuation=0.0)
-    # Lphi = brain(['L'], interference=IfPHI, intermitter=ImFitted)
-    # LOphi = brain(['L', 'O'], interference=IfPHI)
-    # LOuncoupled = brain(['L', 'O'], interference=IfNull)
-    # LOdef = brain(['L', 'O'], interference=IfDef)
 
     def add_OD(OD, B0=LOF):
         B1 = dNl.NestDict(copy.deepcopy(B0))
@@ -320,10 +302,15 @@ def create_mod_dict():
 
     return grouped_mod_dict
 
-d = create_mod_dict()
+
 
 def Model_dict() :
-    return dNl.merge_dicts(list(d.values()))
+    d = create_mod_dict()
+    dnew = preg.larva_conf_dict.baseConfs()
+    dd=dNl.merge_dicts(list(d.values()))
+    dd.update(dnew)
+    return dd
 
 def ModelGroup_dict() :
+    d = create_mod_dict()
     return  dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})

@@ -31,7 +31,6 @@ def flatten_list(l):
 
 def flatten_dict(d, parent_key='', sep='.'):
     import collections
-    # print(type(d))
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -39,10 +38,13 @@ def flatten_dict(d, parent_key='', sep='.'):
             if len(v) > 0:
                 items.extend(flatten_dict(v, new_key, sep=sep).items())
             else:
-                items.append((new_key, 'empty_dict'))
+                items.append((new_key,'empty_dict'))
+
         else:
             items.append((new_key, v))
-    return NestDict(dict(items))
+    dd= NestDict(dict(items))
+    return dd
+
 
 
 
@@ -234,6 +236,9 @@ def update_nestdict(dic0, dic):
     # print(dic)
     dic0_f = flatten_dict(dic0)
     dic0_f.update(dic)
+    for k,v in dic0_f.items():
+        if v=='empty_dict':
+            dic0_f[k]={}
     # print(dic0_f)
     # print(unflatten(dic0_f))
     return NestDict(unflatten(dic0_f))

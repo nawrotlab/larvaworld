@@ -5,6 +5,7 @@ import numpy as np
 import param
 
 from lib.aux import dictsNlists as dNl
+
 from lib.registry.units import ureg
 
 
@@ -18,6 +19,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
         codename = param.String(default='', doc='Name of the parameter in code')
         dtype = param.Parameter(default=float, doc='Data type of the parameter value')
         v = vparfunc
+        mdict=param.Dict(default=None, doc='The parameter dict in case of a dict header', allow_None=True)
         func = param.Callable(default=None, doc='Function to get the parameter from a dataset', allow_None=True)
         required_ks = param.List(default=[], doc='Keys of prerequired parameters for computation in a dataset')
         u = param.Parameter(default=ureg.dimensionless, doc='Unit of the parameter values', label=u_name)
@@ -48,6 +50,14 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
         @property
         def short(self):
             return self.k
+
+        @ property
+        def gConf(self):
+            if self.mdict is None:
+                return None
+            else :
+                from lib.aux.data_aux import gConf
+                return gConf(self.mdict)
 
         @property
         def v0(self):
@@ -239,11 +249,15 @@ def selector_func(objects,default=None, single_choice=True, **kwargs):
         'objects': objects,
         'default': default,
         'allow_None': True,
-        'empty_default': True,
-        **kwargs
     }
+
+    kwargs.update(kws)
     if single_choice:
         func = param.Selector
     else:
         func = param.ListSelector
-    return func(**kws)
+    try:
+        f= func(empty_default= True,**kwargs)
+    except :
+        f=func(**kwargs)
+    return f

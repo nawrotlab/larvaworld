@@ -1,11 +1,11 @@
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
+# null=preg.init_dict.get_null
 
 
 
 def Tracker_dict():
-    Scl_kws = {
+    dkws={'Schleyer': {
         'resolution.fr': 16.0,
         'resolution.Npoints': 12,
         'resolution.Ncontour': 22,
@@ -19,18 +19,18 @@ def Tracker_dict():
         'arena.arena_shape': 'circular',
         'arena.arena_dims': (0.15, 0.15),
 
-    }
-    Jov_kws = {
+    },
+        'Jovanic': {
         'resolution.fr': 11.27,
         'resolution.Npoints': 11,
-        'resolution.Ncontour': 0,
+        'resolution.Ncontour': 30,
         'filesystem.file.suf': 'larvaid.txt',
         'filesystem.file.sep': '_',
         'arena.arena_shape': 'rectangular',
         'arena.arena_dims': (0.193, 0.193),
 
-    }
-    Ber_kws = {
+    },
+        'Berni': {
         'resolution.fr': 2.0,
         'resolution.Npoints': 1,
         'resolution.Ncontour': 0,
@@ -39,8 +39,8 @@ def Tracker_dict():
         'arena.arena_shape': 'rectangular',
         'arena.arena_dims': (0.24, 0.24),
 
-    }
-    Arg_kws = {
+    },
+        'Arguello': {
         'resolution.fr': 10.0,
         'resolution.Npoints': 5,
         'resolution.Ncontour': 0,
@@ -52,19 +52,23 @@ def Tracker_dict():
         'arena.arena_shape': 'rectangular',
         'arena.arena_dims': (0.17, 0.17),
 
-    }
+    }}
 
-    T0 = preg.init_dict.get_null('tracker')
+    return dNl.NestDict({k:preg.init_dict.null('tracker', kws=kws) for k,kws in dkws.items()})
+    # T0 = preg.init_dict.get_null('tracker')
+    #
+    # d = {
+    #     'Schleyer': I.null('tracker', kws=Scl_kws),
+    #     # 'Schleyer': dNl.update_nestdict(T0, Scl_kws),
+    #     'Jovanic': dNl.update_nestdict(T0, Jov_kws),
+    #     # 'Jovanic': dNl.update_nestdict(T0, Jov_kws),
+    #     'Berni': dNl.update_nestdict(T0, Ber_kws),
+    #     # 'Berni': dNl.update_nestdict(T0, Ber_kws),
+    #     'Arguello': dNl.update_nestdict(T0, Arg_kws)}
+    #     # 'Arguello': dNl.update_nestdict(T0, Arg_kws)}
+    # return dNl.NestDict(d)
 
-    d = {
-        'Schleyer': dNl.update_nestdict(T0, Scl_kws),
-        'Jovanic': dNl.update_nestdict(T0, Jov_kws),
-        'Berni': dNl.update_nestdict(T0, Ber_kws),
-        'Arguello': dNl.update_nestdict(T0, Arg_kws)}
-    return dNl.NestDict(d)
 
-
-# tracker_formats = build_tracker_formats()
 
 
 def Ref_dict():
@@ -88,63 +92,37 @@ def Ref_dict():
     return dNl.NestDict(entries)
 
 
+def Enr_dict():
+    kws = {'metric_definition': [
+        'angular.bend',
+        'angular.front_vector',
+        'angular.rear_vector',
+        'spatial.point_idx'], 'preprocessing': ['filter_f', 'rescale_by', 'drop_collisions', 'transposition']}
+    dkws = {
+        'Schleyer': [['from_vectors', (2, 6), (7, 11), 9], [2.0, 0.001, True, None]],
+        'Jovanic': [['from_vectors', (2, 6), (6, 10), 8], [2.0, 0.001, False, 'arena']],
+        # 'Paisios': ['from_vectors',(2, 4), (7, 11),6],
+        'Arguello': [['from_vectors', (1, 3), (3, 5), -1], [0.1, None, False, 'arena']],
+        # 'Singlepoint': [None,None, None,0],
+        'Berni': [[None, None, None, 0], [0.1, None, False, 'arena']],
+        # 'Sim': [],
+    }
+    kw_list = dNl.flatten_list([[f'{k0}.{k}' for k in ks] for i, (k0, ks) in enumerate(kws.items())])
+    enr = {}
+    for i, (k, vs) in enumerate(dkws.items()):
+        v_list = dNl.flatten_list(vs)
+        dF = dict(zip(kw_list, v_list))
+        enr[k] = preg.init_dict.null('enrichment', kws=dF)
+    return dNl.NestDict(enr)
 def Group_dict():
-    import_par_confs = {
-        'SchleyerParConf': preg.init_dict.metric_def(ang={'b': 'from_vectors', 'fv': (2, 6), 'rv': (7, 11)},
-                                                     sp={'point_idx': 9}),
-        'JovanicParConf': preg.init_dict.metric_def(ang={'b': 'from_vectors', 'fv': (2, 6), 'rv': (6, 10)},
-                                                    sp={'point_idx': 8}),
-        'PaisiosParConf': preg.init_dict.metric_def(ang={'b': 'from_vectors', 'fv': (2, 4), 'rv': (7, 11)},
-                                                    sp={'point_idx': 6}),
-        'SinglepointParConf': preg.init_dict.metric_def(ang={'b': None}, sp={'point_idx': 0}),
-        'SimParConf': preg.init_dict.metric_def(),
-    }
+    tracker_dic = Tracker_dict()
+    enr_dic = Enr_dict()
+    d = dNl.NestDict({f'{k} lab': {'path': f'{preg.path_dict["DATA"]}/{k}Group',
+                             'tracker': tr,
+                             'enrichment': enr_dic[k]} for k, tr in tracker_dic.items()})
 
-    tracker_formats = Tracker_dict()
-
-    d = {
-        'Schleyer lab': {
-            # 'id': 'Schleyer lab',
-            'path': 'SchleyerGroup',
-            'tracker': tracker_formats['Schleyer'],
-            # 'parameterization': parconf(rear_vector=(7, 11)),
-            'enrichment': preg.base_enrich(pre_kws={'filter_f': 2.0, 'drop_collisions': True, 'rescale_by': 0.001},
-                                           metric_definition=import_par_confs['SchleyerParConf']),
-
-        },
-        'Jovanic lab': {
-            # 'id': 'Jovanic lab',
-            'path': 'JovanicGroup',
-            'tracker': tracker_formats['Jovanic'],
-            # 'parameterization': parconf(front_vector=(2, 3), rear_vector=(7, 8)),
-            'enrichment': preg.base_enrich(
-                pre_kws={'filter_f': 2.0, 'rescale_by': 0.001, 'transposition': 'arena'},
-                metric_definition=import_par_confs['JovanicParConf']),
-        },
-        'Berni lab': {
-            # 'id': 'Berni lab',
-            'path': 'BerniGroup',
-            'tracker': tracker_formats['Berni'],
-            # 'parameterization': parconf(bend=None, point_idx=0),
-            'enrichment': preg.enr_dict(
-                pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
-                metric_definition=import_par_confs['SinglepointParConf']),
-        },
-
-        'Arguello lab': {
-            'id': 'Arguello lab',
-            'path': 'ArguelloGroup',
-            'tracker': tracker_formats['Arguello'],
-            # 'parameterization': parconf(bend=None, point_idx=0),
-            'enrichment': preg.enr_dict(
-                pre_kws={'filter_f': 0.1, 'rescale_by': 0.001, 'transposition': 'arena'},
-                metric_definition=import_par_confs['SinglepointParConf']),
-        }
-    }
     return d
 
 
-if __name__ == '__main__':
-    # T0 = preg.get_null('metric_definition')
-    # print(T0)
-    pass
+# if __name__ == '__main__':
+    # I = preg.init_dict

@@ -12,6 +12,7 @@ class Larva(LarvaworldAgent):
                          **kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
+        self.carried_objects = []
 
     def update_color(self, default_color, dic, mode='lin'):
         color = deepcopy(default_color)

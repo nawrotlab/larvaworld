@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+import param
+
+from lib.aux.par_aux import sub
+
 
 def maxNdigits(array, Min=None):
     N = len(max(array.astype(str), key=len))
@@ -67,3 +71,80 @@ def mdict2df(mdict, columns=['symbol', 'value', 'description']):
     df = pd.DataFrame(data, columns=columns)
     df.set_index(columns[0], inplace=True)
     return df
+
+def init2mdict(d0):
+    from lib.aux import dictsNlists as dNl
+    from lib.registry.par_dict import preparePar
+    from lib.registry.par import v_descriptor
+    # d = {}
+
+    def check(D0) :
+        D={}
+        for kk, vv in D0.items():
+            if not isinstance(vv, dict) :
+                pass
+            elif 'dtype' in vv.keys() and vv['dtype']==dict:
+                mdict = check(vv)
+                vv0={kkk:vvv for kkk,vvv in vv.items() if kkk not in mdict.keys()}
+                if 'v0' not in vv0.keys() :
+                    vv0['v0']=gConf(mdict)
+                prepar = preparePar(p=kk, mdict=mdict,**vv0)
+                p = v_descriptor(**prepar)
+                D[kk] = p
+
+            elif any([a in vv.keys() for a in ['symbol', 'h', 'label', 'disp']]) :
+                prepar = preparePar(p=kk, **vv)
+                p = v_descriptor(**prepar)
+                D[kk] = p
+
+            else:
+
+                # label = f'{kk} conf'
+                # if 'v0' in vv.keys() :
+                #     v0=vv['v0']
+                # else :
+                #     v0=None
+                # if 'k' in vv.keys() :
+                #     k=vv['k']
+                # else :
+                #     k=kk
+                # vparfunc = vdicpar(mdict, h=f'The {kk} conf', lab=label, v0=v0)
+                # kws = {
+                #     'name': kk,
+                #     'p': kk,
+                #     'd': kk,
+                #     'k': k,
+                #     'disp': label,
+                #     'sym': sub(k, 'conf'),
+                #     'codename': kk,
+                #     'dtype': dict,
+                #     # 'func': func,
+                #     # 'u': ureg.dimensionless,
+                #     # 'u_name': None,
+                #     # 'required_ks': [],
+                #     'vparfunc': vparfunc,
+                #     # 'dv': None,
+                #     'v0': v0,
+                #
+                # }
+                # p = v_descriptor(**kws)
+                D[kk] = check(vv)
+        return D
+
+    d=check(d0)
+    return dNl.NestDict(d)
+
+
+def gConf(mdict, **kwargs):
+    from lib.aux import dictsNlists as dNl
+    if isinstance(mdict, param.Parameterized):
+        return mdict.v
+    conf = dNl.NestDict()
+    for d, p in mdict.items():
+        if isinstance(p, param.Parameterized):
+            conf[d] = p.v
+        else:
+            conf[d] = gConf(mdict=p)
+        conf = dNl.update_existingdict(conf, kwargs)
+    # conf.update(kwargs)
+    return conf

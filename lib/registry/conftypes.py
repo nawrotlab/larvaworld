@@ -9,17 +9,23 @@ import pandas
 import param
 
 
-from lib.registry.pars import preg
+
 import lib.aux.dictsNlists as dNl
+from lib.aux.par_aux import sub
+
+from lib.registry.pars import preg
 
 
 class ConfType:
     def __init__(self, k, subks={},verbose=1):
         self.verbose = verbose
+
+
         self.k = k
         self.path = preg.path_dict[k]
         self.use_pickle = False if self.k != 'Ga' else True
         self.subks = subks
+        # self.mdict=self.build_mdict()
 
     # @property
     def loadDict(self):
@@ -38,6 +44,7 @@ class ConfType:
             raise ValueError()
 
     def expandConf(self, id):
+        from lib.registry.pars import preg
         conf=self.loadConf(id)
         if len(self.subks)>0:
             CT=preg.conftype_dict.dict
@@ -67,11 +74,13 @@ class ConfType:
     def saveDict(self, d):
         dNl.save_dict(d, self.path,self.use_pickle)
 
-    def resetDict(self, dd):
-        if self.k=='Model' :
-            dnew=preg.larva_conf_dict.baseConfs()
 
-            dd.update(dnew)
+    def reset_func(self):
+        from lib.registry.confResetFuncs import confReset_funcs
+        return confReset_funcs(self.k)()
+
+    def resetDict(self):
+        dd=self.reset_func()
         d = self.loadDict()
 
         N0,N1=len(d), len(dd)
@@ -85,10 +94,6 @@ class ConfType:
 
         if self.verbose >= 1:
             print(f'{self.k}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing')
-
-        # for k,v in d.items():
-        #     print(k)
-        #     print(v.enrichment.preprocessing)
 
 
     def deleteConf(self, id=None):
@@ -107,17 +112,60 @@ class ConfType:
 
     def ConfSelector(self, **kwargs):
         from lib.registry.par import selector_func
-        return selector_func(objects=self.ConfIDs, **kwargs)
+        def func() :
+            return selector_func(objects=self.ConfIDs, **kwargs)
+        return func
 
     def ConfParsarg(self):
         return {'dest': f'{self.k}_experiment', 'choices': self.ConfIDs, 'help': f'The {self.k} mode'}
 
+    def ConfID_entry(self, default=None, k=None, symbol=None, single_choice=True):
+        # print(self.k)
+        from typing import List
+        from lib.aux.par_aux import sub
+        low = self.k.lower()
+        if single_choice:
+            t = str
+            IDstr = 'ID'
+        else:
+            t = List[str]
+            IDstr = 'IDs'
+        if k is None:
+            k = f'{low}{IDstr}'
+        if symbol is None:
+            symbol = sub(IDstr, low)
+        d = {'dtype': t, 'vparfunc': self.ConfSelector(default=default, single_choice=single_choice),
+             'vs': self.ConfIDs, 'v': default,
+             'symbol': symbol, 'k': k, 'h': f'The {self.k} configuration {IDstr}',
+             'disp': f'{self.k} {IDstr}'}
+        return dNl.NestDict(d)
+
+    # def build_mdict(self):
+    def build_mdict(self, k0, initD):
+        from lib.aux.data_aux import init2mdict
+        self.k0 = k0
+        if k0 is not None and k0 in initD.keys():
+            self.dict0 = initD[k0]
+            self.mdict = init2mdict(initD[k0])
+            self.eval=self.checkDict()
+
+        else:
+            self.dict0 = None
+            self.mdict = None
 
 
-
-
-
-
+    def checkDict(self):
+        M=preg.larva_conf_dict
+        d = self.loadDict()
+        eval={}
+        for id, conf in d.items():
+            try :
+                eval[id]= M.update_mdict(self.mdict,conf)
+                # print(f'{id}  SUCCESS')
+            except :
+                eval[id] = None
+                # print(f'{id}  FAIL')
+        return eval
 
 
 
@@ -129,8 +177,9 @@ class ConfTypeDict:
 
 
         self.dict = self.build(self.conftypes)
+        print('completed ConfTypes')
 
-        self.dict_path = preg.path_dict['ConfTypeDict']
+        # self.dict_path = preg.path_dict['ConfTypeDict']
         # if not load:
         #     self.dict = self.build(self.conftypes)
         #     if save:
@@ -151,7 +200,14 @@ class ConfTypeDict:
         d0.update(d1)
         return d0
 
+    def build_mDicts(self, initD):
+        from lib.registry.initDicts import confInit_ks
 
+        for k,ct in self.dict.items():
+            ct.build_mdict(k0 = confInit_ks(k), initD=initD)
+
+
+        print('computed mDicts')
 
 
     def build(self, ks) :
@@ -188,26 +244,30 @@ class ConfTypeDict:
         ds = [self.loadRefD(id, **kwargs) for id in ids]
         return ds
 
-    def confDict_funcs(self,k):
-        from lib.conf.stored import aux_conf, data_conf, batch_conf, exp_conf, env_conf, essay_conf, ga_conf, larva_conf
-        # raise
-        d = dNl.NestDict({
-            'Ref': data_conf.Ref_dict,
-            'Model': larva_conf.Model_dict,
-            'ModelGroup': larva_conf.ModelGroup_dict,
-            'Env': env_conf.Env_dict,
-            'Exp': exp_conf.Exp_dict,
-            'ExpGroup': exp_conf.ExpGroup_dict,
-            'Essay': essay_conf.Essay_dict,
-            'Batch': batch_conf.Batch_dict,
-            'Ga': ga_conf.Ga_dict,
-            'Tracker': data_conf.Tracker_dict,
-            'Group': data_conf.Group_dict,
-            'Trial': aux_conf.Trial_dict,
-            'Life': aux_conf.Life_dict,
-            'Body': aux_conf.Body_dict
-        })
-        return d[k]
+    # def confDict_funcs(self,k):
+    #     from lib.conf.stored import aux_conf, data_conf, batch_conf, exp_conf, env_conf, essay_conf, ga_conf, larva_conf
+    #     # raise
+    #     d = dNl.NestDict({
+    #         'Ref': data_conf.Ref_dict,
+    #         'Model': larva_conf.Model_dict,
+    #         'ModelGroup': larva_conf.ModelGroup_dict,
+    #         'Env': env_conf.Env_dict,
+    #         'Exp': exp_conf.Exp_dict,
+    #         'ExpGroup': exp_conf.ExpGroup_dict,
+    #         'Essay': essay_conf.Essay_dict,
+    #         'Batch': batch_conf.Batch_dict,
+    #         'Ga': ga_conf.Ga_dict,
+    #         'Tracker': data_conf.Tracker_dict,
+    #         'Group': data_conf.Group_dict,
+    #         'Trial': aux_conf.Trial_dict,
+    #         'Life': aux_conf.Life_dict,
+    #         'Body': aux_conf.Body_dict
+    #     })
+    #     return d[k]
+
+
+
+
 
     def resetConfs(self, ks=None):
         if ks is None:
@@ -215,49 +275,11 @@ class ConfTypeDict:
 
 
         for k in ks:
-            func=self.confDict_funcs(k)
-            dic=func()
-            self.dict[k].resetDict(dic)
+            self.dict[k].resetDict()
 
-            # if k == 'Ref':
-            #     store_reference_data_confs()
-            #     continue
-            # elif k == 'Trial':
-            #     from lib.conf.stored.aux_conf import trial_dict as d
-            # elif k == 'Life':
-            #     from lib.conf.stored.aux_conf import life_dict as d
-            # elif k == 'Body':
-            #     from lib.conf.stored.aux_conf import body_dict as d
-            # elif k == 'Tracker':
-            #     from lib.conf.stored.data_conf import tracker_formats as d
-            # elif k == 'Group':
-            #     from lib.conf.stored.data_conf import importformats as d
-            # elif k == 'Model':
-            #     from lib.registry.parConfs import larva_conf_dict
-            #     larva_conf_dict.baseConfs()
-            #     from lib.conf.stored.larva_conf import mod_dict as d
-            # elif k == 'ModelGroup':
-            #     from lib.conf.stored.larva_conf import mod_group_dict as d
-            # elif k == 'Env':
-            #     from lib.conf.stored.env_conf import env_dict as d
-            # elif k == 'Exp':
-            #     from lib.conf.stored.exp_conf import exp_dict as d
-            # elif k == 'ExpGroup':
-            #     from lib.conf.stored.exp_conf import exp_group_dict as d
-            # elif k == 'Essay':
-            #     from lib.conf.stored.essay_conf import essay_dict as d
-            # elif k == 'Batch':
-            #     from lib.conf.stored.batch_conf import batch_dict as d
-            #
-            # elif k == 'Ga':
-            #     from lib.conf.stored.ga_conf import ga_dic as d
-            # else:
-            #     continue
-
-            # for id, conf in d.items():
-            #     self.saveConf(conf=conf, conftype=conftype, id=id)
 
     def next_idx(self, id, conftype='Exp'):
+        from lib.registry.pars import preg
         F0 = preg.path_dict["SimIdx"]
         try:
             with open(F0) as f:
@@ -277,3 +299,4 @@ class ConfTypeDict:
 
 
 conftype_dict = ConfTypeDict()
+

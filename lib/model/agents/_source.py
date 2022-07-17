@@ -8,9 +8,12 @@ from lib.model.agents._agent import LarvaworldAgent
 from lib.aux import xy_aux,sim_aux
 
 class Source(LarvaworldAgent):
-    def __init__(self, shape_vertices=None, shape='circle', **kwargs):
+    def __init__(self, shape_vertices=None, can_be_carried=False, can_be_displaced=False, shape='circle', **kwargs):
         super().__init__(**kwargs)
         self.shape_vertices = shape_vertices
+        self.can_be_carried = can_be_carried
+        self.can_be_displaced = can_be_displaced
+        self.is_carried_by = None
         shape = sim_aux.circle_to_polygon(60, self.radius)
 
         if self.model.Box2D:

@@ -2,11 +2,11 @@ import numpy as np
 
 # from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
-
+null=preg.init_dict.get_null
 
 def trial_conf(durs=[], qs=[]):
     cumdurs = np.cumsum([0] + durs)
-    return {i: preg.get_null('epoch', start=t0, stop=t1, substrate=preg.get_null('substrate', quality=q)) for i, (t0, t1, q) in
+    return {i: null('epoch', start=t0, stop=t1, substrate=null('substrate', quality=q)) for i, (t0, t1, q) in
             enumerate(zip(cumdurs[:-1], cumdurs[1:], qs))}
 
 def Trial_dict() :
@@ -23,7 +23,7 @@ def Trial_dict() :
 
 
 def life_conf(durs=[], qs=[], age=0.0):
-    return preg.get_null('life_history', epochs=trial_conf(durs, qs), age=age)
+    return null('life_history', epochs=trial_conf(durs, qs), age=age)
 
 def Life_dict() :
     d = {
@@ -33,7 +33,7 @@ def Life_dict() :
     return d
 
 def body_conf(ps, symmetry='bilateral', **kwargs):
-    return preg.get_null('body_shape', points=ps, symmetry=symmetry, **kwargs)
+    return null('body_shape', points=ps, symmetry=symmetry, **kwargs)
 
 def Body_dict() :
     d = {

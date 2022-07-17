@@ -1,3 +1,4 @@
+import typing
 from types import FunctionType
 from typing import Tuple, List
 
@@ -6,6 +7,7 @@ import pandas as pd
 import param
 
 from lib.aux import naming as nam, dictsNlists as dNl
+
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 
 from lib.registry.units import ureg
@@ -27,13 +29,17 @@ def get_vfunc(dtype, lim, vs):
         FunctionType: param.Callable,
         Tuple[float]: param.Range,
         Tuple[int]: param.NumericTuple,
+        typing.TypedDict: param.Dict
     }
     if dtype == float and lim == (0.0, 1.0):
         return param.Magnitude
     if type(vs) == list and dtype in [str, int]:
         return param.Selector
-    else:
+    elif dtype in func_dic.keys():
         return func_dic[dtype]
+    else :
+        return param.Parameter
+
 
 
 def vpar(vfunc, v0, h, lab, lim, dv, vs):
@@ -51,12 +57,21 @@ def vpar(vfunc, v0, h, lab, lim, dv, vs):
             f_kws['step'] = dv
     if vfunc in [param.Selector]:
         f_kws['objects'] = vs
+    # print(vfunc,v0, h, lab, lim, dv, vs)
+    # if vfunc in [param.Dict] :
+        # if v0 is not None :
+        #     f_kws['class_'] = type(v0)
+        # else :
+        #     f_kws['class_'] = dict
+        # print(f_kws)
+
     func = vfunc(**f_kws, instantiate=True)
     return func
 
 
+
 def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None, codename=None, lab=None, h=None,
-               u_name=None,
+               u_name=None,mdict=None,
                required_ks=[], u=ureg.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
                vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
@@ -86,6 +101,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
     if dv is None and dtype in [float, List[float], List[Tuple[float]], Tuple[float]]:
         dv = 0.01
     h = lab if h is None else h
+
     if vparfunc is None:
         if vfunc is None:
             vfunc = get_vfunc(dtype=dtype, lim=lim, vs=vs)
@@ -107,12 +123,12 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         'u_name': u_name,
         'required_ks': required_ks,
         'vparfunc': vparfunc,
+        'mdict': mdict,
         'dv': dv,
         'v0': v0,
 
     }
     return dNl.NestDict(kws)
-
 
 class BaseParDict:
     def __init__(self, in_rad=True, in_m=True, load=False, save=False):

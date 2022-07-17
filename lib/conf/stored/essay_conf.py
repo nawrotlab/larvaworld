@@ -3,14 +3,14 @@ import shutil
 
 import pandas as pd
 
-from lib.conf.stored.exp_conf import RvsS_groups
+
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
+I=preg.init_dict
 
 class Essay:
-    def __init__(self, type, N=5, enrichment=preg.base_enrich(), collections=['pose'], video=False, show=False,
+    def __init__(self, type, N=5, enrichment=I.base_enrich(), collections=['pose'], video=False, show=False,
                  **kwargs):
         if video:
             self.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
@@ -68,8 +68,9 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, N=1, **kwargs):
-        super().__init__(type='RvsS', N=N, enrichment=preg.enr_dict(proc=['spatial']),
+        super().__init__(type='RvsS', N=N, enrichment=I.enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
+
         self.all_figs = all_figs
         self.qs = [1.0, 0.75, 0.5, 0.25, 0.15]
         self.hs = [0, 1, 2, 3, 4]
@@ -99,6 +100,7 @@ class RvsS_Essay(Essay):
                              )
 
     def pathlength_exp(self):
+        from lib.conf.stored.exp_conf import RvsS_groups
         dur = self.dur_pathlength
         exp = 'PATHLENGTH'
         confs = []
@@ -114,6 +116,7 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def intake_exp(self):
+        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'AD LIBITUM INTAKE'
         confs = []
         for dur in self.durs:
@@ -128,6 +131,7 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def starvation_exp(self):
+        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'POST-STARVATION INTAKE'
         confs = []
         for h in self.hs:
@@ -142,6 +146,7 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def quality_exp(self):
+        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'REARING-DEPENDENT INTAKE'
         confs = []
         for q in self.qs:
@@ -156,6 +161,7 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def refeeding_exp(self):
+        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'REFEEDING AFTER 3h STARVED'
         h = self.h_refeeding
         dur = self.dur_refeeding
@@ -322,7 +328,7 @@ class RvsS_Essay(Essay):
 class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0, arena_dims=(0.24, 0.24), patch_x=0.06,
                  patch_radius=0.025, **kwargs):
-        super().__init__(type='DoublePatch', enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
+        super().__init__(type='DoublePatch', enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                       bouts=['stride', 'pause', 'turn'],
                                                                       fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
@@ -421,7 +427,7 @@ class DoublePatch_Essay(Essay):
 class Chemotaxis_Essay(Essay):
     def __init__(self, dur=5.0, gain=300.0,mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
-                         enrichment=preg.enr_dict(proc=['spatial', 'angular', 'source'],
+                         enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
                                                   bouts=[], fits=False, interference=False, on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']

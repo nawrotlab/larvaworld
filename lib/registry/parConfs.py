@@ -46,6 +46,7 @@ class LarvaConfDict:
             'memory': 'pink',
             # 'locomotor': locomotor.DefaultLocomotor,
         })
+        print('Completed LarvaConfDict')
 
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:
@@ -827,14 +828,14 @@ class LarvaConfDict:
             return None
         else:
             for d, p in mdict.items():
+                new_v = mmdic[d] if d in mmdic.keys() else None
                 if isinstance(p, param.Parameterized):
-                    new_v = mmdic[d] if d in mmdic.keys() else None
                     if type(new_v) == list:
-                        if p.parclass == param.Range:
+                        if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
                             new_v = tuple(new_v)
                     p.v = new_v
                 else:
-                    self.update_mdict(mdict=mdict[d], mmdic=mmdic[d])
+                    mdict[d]=self.update_mdict(mdict=p, mmdic=new_v)
             return mdict
 
     def variable_keys(self, mkey, mode='default'):
@@ -885,6 +886,7 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         return np.round(vs.median(), Nround)
     else:
         return vs
+
 
 larva_conf_dict=LarvaConfDict()
 

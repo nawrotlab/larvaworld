@@ -84,24 +84,19 @@ class ParRegistry:
                         'unused']
         proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 
+        kw_dic0={
+            'preprocessing' : pre_kws,
+            'processing' : {k: True if k in proc else False for k in proc_type_keys},
+            'annotation' : {**{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']},
+                               **{'fits': fits, 'on_food': on_food,'interference': interference}},
+            'to_drop' : {k: True if k not in to_keep else False for k in to_drop_keys},
+                }
+        kws={k:self.init_dict.get_null(k,**v) for k,v in kw_dic0.items()}
+
         if metric_definition is None:
             metric_definition = self.init_dict.metric_def(**def_kws)
-        pre = self.init_dict.get_null('preprocessing', **pre_kws)
-        # print(pre)
-        # print(pre_kws)
-        # raise
-        proc = self.init_dict.get_null('processing', **{k: True if k in proc else False for k in proc_type_keys})
-        annot = self.init_dict.get_null('annotation', **{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']},
-                              fits=fits,
-                              on_food=on_food, interference=interference)
-        to_drop = self.init_dict.get_null('to_drop', **{k: True if k not in to_keep else False for k in to_drop_keys})
-        dic = self.init_dict.get_null('enrichment', metric_definition=metric_definition, preprocessing=pre, processing=proc,
-                            annotation=annot,
-                            to_drop=to_drop, **kwargs)
-
-        # print(dic.preprocessing)
-        # # print(pre_kws)
-        # raise
+        dic = self.init_dict.get_null('enrichment',
+                                      metric_definition=metric_definition, **kws, **kwargs)
         return dic
 
     def base_enrich(self, **kwargs):
@@ -138,8 +133,10 @@ class ParRegistry:
 
 preg = ParRegistry()
 
-enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                                                          bouts=['stride', 'pause', 'turn'])
+
+
+# enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+#                                                           bouts=['stride', 'pause', 'turn'])
 
 # if __name__ == '__main__':
 #     for k,v in enrichment.items() :

@@ -9,7 +9,7 @@ from lib.screen.rendering import InputBox
 class LarvaworldAgent:
     def __init__(self,unique_id: str,model, pos=None, default_color=None, radius=None,visible=True,
                  odor={'odor_id':None, 'odor_intensity':None, 'odor_spread':None},regeneration=False,regeneration_pos=None,
-                 group=None, can_be_carried=False, can_be_displaced=False, **kwargs):
+                 group=None,  **kwargs):
         self.visible = visible
         self.selected = False
         self.unique_id = unique_id
@@ -29,18 +29,12 @@ class LarvaworldAgent:
         self.odor_id = odor['odor_id']
         self.set_odor_dist(odor['odor_intensity'], odor['odor_spread'])
 
-        self.carried_objects = []
-        self.can_be_carried = can_be_carried
-        self.can_be_displaced = can_be_displaced
-        self.is_carried_by = None
+
         self.regeneration = regeneration
         self.regeneration_pos = regeneration_pos
 
     def get_position(self):
         return tuple(self.pos)
-
-    # def get_radius(self):
-    #     return self.radius
 
     def set_id(self, id):
         self.unique_id = id

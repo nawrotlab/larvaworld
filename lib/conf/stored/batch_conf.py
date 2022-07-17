@@ -1,16 +1,8 @@
 from lib.registry.pars import preg
 
 
-def batch(exp, en=None, ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=True, **kwargs):
-    if en is None:
-        enrichment = preg.get_null('enrichment')
-    elif en == 'PI':
-        enrichment = preg.enr_dict(proc=['PI'])
-    elif en == 'source':
-        enrichment = preg.enr_dict(proc=['angular', 'spatial', 'source'])
-    else:
-        enrichment = en
-
+def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=True, **kwargs):
+    null = preg.init_dict.get_null
     if bm is None:
         bm_kws = {}
     elif bm == 'PI':
@@ -20,7 +12,7 @@ def batch(exp, en=None, ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=
     else:
         bm_kws = bm
     if ss is not None:
-        ss = {p: preg.get_null('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
+        ss = {p: null('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
     else:
         ss = {}
     if ssbool is not None:
@@ -31,12 +23,13 @@ def batch(exp, en=None, ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=
     if len(ss0) == 0:
         ss0 = None
 
-    conf = preg.get_null('batch_conf',
+    enr=null('enrichment',processing=null('processing', **{pr : True for pr in proc}))
+    conf = null('batch_conf',
                          exp=exp,
-                         exp_kws={'enrichment': enrichment, 'experiment': exp},
-                         optimization=preg.get_null("optimization", fit_par=o, **o_kws) if o is not None else None,
+                         exp_kws={'enrichment': enr, 'experiment': exp},
+                         optimization=null("optimization", fit_par=o, **o_kws) if o is not None else None,
                          space_search=ss0,
-                         batch_methods=preg.get_null('batch_methods', **bm_kws),
+                         batch_methods=null('batch_methods', **bm_kws),
                          **kwargs)
     # print(conf)
     if as_entry:
@@ -50,23 +43,23 @@ def Batch_dict():
         **batch('chemotaxis',
                 ss={'Odor.mean': [[300.0, 1300.0], 3], 'decay_coef': [[0.1, 0.5], 3]},
                 o='final_dst_to_Source',
-                en='source'),
+                proc=['angular', 'spatial', 'source']),
         **batch('chemorbit',
                 ss={'Odor.mean': [[300.0, 1300.0], 3], 'decay_coef': [[0.1, 0.5], 3]},
                 o='final_dst_to_Source',
-                en='source'),
+                proc=['angular', 'spatial', 'source']),
         **batch('PItest_off',
                 ss={'odor_dict.CS.mean': [[-100.0, 100.0], 6], 'odor_dict.UCS.mean': [[-100.0, 100.0], 6]},
                 bm='PI',
-                en='PI'),
+                proc=['PI']),
         **batch('PItrain_mini',
                 ss={'input_noise': [[0.0, 0.4], 2], 'decay_coef': [[0.1, 0.5], 2]},
                 bm='PI',
-                en='PI'),
+                proc=['PI']),
         **batch('PItrain',
                 ss={'input_noise': [[0.0, 0.4], 2], 'decay_coef': [[0.1, 0.5], 2]},
                 bm='PI',
-                en='PI'),
+                proc=['PI']),
         **batch('patchy_food',
                 ss={'EEB': [[0.0, 1.0], 3], 'initial_freq': [[1.5, 2.5], 3]},
                 o='ingested_food_volume'),
@@ -89,17 +82,19 @@ def Batch_dict():
                 ss={f'windsensor_params.weights.{m1}_{m2}': [[-20.0, 20.0], 3] for m1, m2 in
                     zip(['bend', 'hunch'], ['ang', 'lin'])},
                 o='anemotaxis', o_kws={'threshold': 1000.0, 'max_Nsims': 100, 'minimize': False, 'Nbest': 8,
-                                       'operations': {'mean': True, 'abs': False}}, en=preg.enr_dict(proc=['wind']))
+                                       'operations': {'mean': True, 'abs': False}}, proc=['wind'])
     }
     return d
 
 
 def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
+    null = preg.init_dict.get_null
     from lib.conf.stored.conf import imitation_exp
     conf = batch(exp=None,
                  ss={'activation_noise': [[0.0, 2.0], 3], 'base_activation': [[15.0, 25.0], 3]},
                  o='tortuosity_20_mean', o_kws={'max_Nsims': 120, 'operations': {'mean': True}},
-                 en=preg.enr_dict(proc=['tortuosity']),
+                 en=null('enrichment',processing=null('processing', tortuosity=True)),
+                 # en=preg.enr_dict(proc=['tortuosity']),
                  as_entry=False
                  )
     conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
@@ -109,6 +104,7 @@ def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 
 
 def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
+    null = preg.init_dict.get_null
     from lib.conf.stored.conf import imitation_exp
     conf = batch(exp=None,
                  ss={
@@ -119,7 +115,7 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
                  o='sample_fit',
                  o_kws={'threshold': 0.1, 'Nbest': 8, 'max_Nsims': 140, 'operations': {'mean': False, 'abs': False}},
                  bm={'run': 'exp_fit'},
-                 en=preg.enr_dict(proc=['angular']),
+                 en=null('enrichment', processing=null('processing', angular=True)),
                  as_entry=False
                  )
     conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
