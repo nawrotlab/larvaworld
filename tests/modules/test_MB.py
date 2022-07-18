@@ -67,7 +67,6 @@ def get_PI(exp='test', N=1,memory_mode='MB', video=True):
     # raise
     exp_conf.larva_groups.Larva.model.brain.modules.memory=True
     exp_conf.larva_groups.Larva.model.brain.memory_params =null_dict('memory', mode=memory_mode)
-    # print( exp_conf.larva_groups.Larva.model.brain.memory_params)
     exp_conf.larva_groups.Larva.model.brain.turner_params.activation_noise = 0.0
     exp_conf.larva_groups.Larva.model.brain.turner_params.noise = 0.0
     exp_conf.update(
@@ -76,9 +75,12 @@ def get_PI(exp='test', N=1,memory_mode='MB', video=True):
             # 'parameter_dict': parameter_dict
         }
     )
-    run_kws=AttrDict.from_nested_dicts({**exp_conf, 'vis_kwargs': vis_kwargs})
+    # run_kws=AttrDict.from_nested_dicts({**exp_conf, 'vis_kwargs': vis_kwargs})
 
-    return get_PI_single(run_kws)
+    run = SingleRun(**exp_conf, vis_kwargs=vis_kwargs)
+    ds = run.run()
+    fig_dict, results = run.analyze()
+    return [results['PIs']['Larva'], results['PI2s']['Larva']]
 
     # with Pool(Ncores) as p:
     #     temp=p.map(get_PI_single, run_kws_list)
