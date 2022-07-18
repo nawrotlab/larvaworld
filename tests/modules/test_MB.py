@@ -45,7 +45,7 @@ def get_PI_single(run_kws) :
     return [results['PIs']['Larva'],results['PI2s']['Larva']]
 
 
-def get_PI(exp='test', N=5,memory_mode='MB', video=True):
+def get_PI(exp='test', N=1,memory_mode='MB', video=True):
     vis_kwargs = null_dict('visualization', mode='video', video_speed=60) if video else null_dict('visualization', mode=None)
     # parameter_dict = {
     #     'brain.olfactor_params.odor_dict.CS.mean': BBs*G,

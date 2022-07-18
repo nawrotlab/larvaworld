@@ -232,6 +232,7 @@ class RemoteBrianModelMemory(Memory):
         self.sim_id = sim_id
         self.G = G
         self.t_sim = int(self.dt * 1000)
+        self.step_id = 0
         # self.step(t_warmup=300)
         #
         # print(self.t_sim)
@@ -242,7 +243,7 @@ class RemoteBrianModelMemory(Memory):
         # T: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
         msg = LarvaMessage(self.sim_id, model_instance_id, odor_id=odor_id, odor_concentration=concentration,
-                           T=t_sim, warmup=t_warmup, **kwargs)
+                           T=t_sim, warmup=t_warmup, step_id=self.step_id, **kwargs)
         # send model parameters to remote model server & wait for result response
         with Client((self.server_host, self.server_port)) as client:
             [response] = client.send([msg])  # this is a LarvaMessage object again
@@ -273,4 +274,5 @@ class RemoteBrianModelMemory(Memory):
 
         mbon_dif = self.runRemoteModel(**msg_kws0, **msg_kws)
         self.gain['CS']=self.G * mbon_dif
+        self.step_id += 1
         return self.gain
