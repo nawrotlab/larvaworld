@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt, patches
 from lib.aux import naming as nam, dictsNlists as dNl,dir_aux
 from lib.registry.pars import preg
 
-from lib.plot.base import BasePlot, Plot
+from lib.plot.base import BasePlot, Plot, AutoPlot
 from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
 
 
@@ -32,15 +32,13 @@ def traj_1group(xy, c, unit='mm', fig=None, axs=None, single_color=False, **kwar
     return P.get()
 
 
-def traj_grouped(axs=None, fig=None, unit='mm', name=None, subfolder='trajectories',
+def traj_grouped(unit='mm', name=None, subfolder='trajectories',
                  range=None, mode='default', single_color=False, **kwargs):
     if name is None :
         name = f'comparative_trajectories_{mode}'
 
-
-
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
-    P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 6), sharex=True, sharey=True, fig=fig, axs=axs)
+    P = AutoPlot(name=name, subfolder=subfolder, subplot_kw=dict(projection='polar'),
+                 build_kws={'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'mode': 'both'}, **kwargs)
     for ii, d in enumerate(P.datasets):
         xy = dir_aux.get_traj(d, mode)
         c = d.config

@@ -217,14 +217,14 @@ class ConfTypeDict:
             conf = self.dict.Ref.loadConf(id)
             from lib.stor.larva_dataset import LarvaDataset
             d = LarvaDataset(conf.dir, load_data=False)
-            preg.vprint(f'Loaded stored reference configuration : {id}', 2)
+            preg.vprint(f'Loaded stored reference configuration : {id}')
             return d
 
     def loadRefD(self, id=None, **kwargs):
         if id is not None:
             d = self.loadRef(id)
             d.load(**kwargs)
-            preg.vprint(f'Loaded stored reference dataset : {id}', 2)
+            preg.vprint(f'Loaded stored reference dataset : {id}',2)
             return d
 
     def loadRefDs(self, ids, **kwargs):

@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry.pars import preg
-from lib.plot.aux import scatter_hist, annotate_plot, NcolNrows
+from lib.plot.aux import scatter_hist, annotate_plot
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
@@ -61,8 +61,7 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
         rs += [200, 2000]
 
     Nps = len(shorts)
-    kws0 = NcolNrows(Nps, Nrows=1,wh=8, mode='hist')
-    P = AutoPlot(name='ang_pars', subfolder=subfolder, **kws0, **kwargs)
+    P = AutoPlot(name='ang_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':8, 'mode':'hist'}, **kwargs)
 
     # P = AutoPlot(name='ang_pars', subfolder=subfolder, Ncols=Nps, figsize=(Nps * 8, 8), sharey=True, **kwargs)
     P.init_fits(preg.getPar(shorts))
@@ -85,9 +84,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         name = f'distros_{mode}_{Nps}'
     legloc = 'upper left' if half_circles else 'upper right'
 
-
-    kws0=NcolNrows(Nps, wh=8, mode=mode)
-    P = AutoPlot(name=name, subfolder=subfolder, **kws0, **kwargs)
+    P = AutoPlot(name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':8, 'mode':mode}, **kwargs)
     P.init_fits(preg.getPar(ks))
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
@@ -161,7 +158,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
             # bins, xlim = P.angrange(r, absolute, Nbins)
             # P.plot_par(vs=vs, nbins=Nbins, i=i, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
             #            pvalues=False, half_circles=half_circles)
-            P.conf_ax(i, ylab='probability',yvis=True if i%kws0['Ncols'] == 0 else False,  xlab=parlabs[par], yMaxN=3,xMaxN=5, leg_loc=legloc)
+            P.conf_ax(i, ylab='probability',yvis=True if i%P.Ncols == 0 else False,  xlab=parlabs[par], yMaxN=3,xMaxN=5, leg_loc=legloc)
         # P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.l, yMaxN=3)
 
     # dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
@@ -177,8 +174,7 @@ def plot_crawl_pars(shorts=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint', pa
                     half_circles=False, kde=True,  **kwargs):
     sns_kws={'kde' : kde, 'stat' : "probability", 'element': "step", 'fill':True, 'multiple' : "layer", 'shrink' :1}
     Nps = len(shorts)
-    kws0 = NcolNrows(Nps, Nrows=1, wh=5, mode='hist')
-    P = AutoPlot(name='crawl_pars', subfolder=subfolder, **kws0, **kwargs)
+    P = AutoPlot(name='crawl_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':5, 'mode':'hist'}, **kwargs)
     P.init_fits(preg.getPar(shorts))
     for i, k in enumerate(shorts):
         p=preg.dict[k]
@@ -246,8 +242,7 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
 def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwargs):
     shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     Nps=len(shorts)
-    kws0 = NcolNrows(Nps, Nrows=2, wh=7, mode='hist')
-    P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, **kws0, **kwargs)
+    P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':2, 'wh':7, 'mode':'hist'}, **kwargs)
 
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
 
@@ -372,12 +367,11 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
 
     Nks = len(par_shorts)
     Ncols = int(np.ceil(Nks / 3))
-    kws0 = NcolNrows(Nks, Ncols =Ncols, w=7,h=5, mode='hist')
 
 
 
 
-    P = AutoLoadPlot(ks=par_shorts,name=f'endpoint_params_{mode}', subfolder=subfolder,**kws0, **kwargs)
+    P = AutoLoadPlot(ks=par_shorts,name=f'endpoint_params_{mode}', subfolder=subfolder,build_kws={'N':Nks,'Ncols':Ncols, 'w':7,'h':5, 'mode':'hist'}, **kwargs)
 
     def build_df(vs, ax, bins):
         Nvalues = [len(i) for i in vs]

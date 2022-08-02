@@ -10,7 +10,7 @@ from pint.matplotlib import PintAxisInfo, PintConverter
 
 from lib.aux import dictsNlists as dNl
 
-from lib.plot.aux import dual_half_circle, plot_config, process_plot
+from lib.plot.aux import dual_half_circle, plot_config, process_plot, NcolNrows
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -37,14 +37,20 @@ class BasePlot:
         self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
         self.letter_dict = {}
         self.x0s, self.y0s = [], []
+        self.fig_kws={}
 
-    def build(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, dim3=False, azim=115, elev=15, **kwargs):
+    def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15,subplot_kw={}, **kwargs):
         if fig is None and axs is None:
-            if figsize is None:
-                figsize = (12 * Ncols, 10 * Nrows)
+
+
+            # if figsize is None:
+            #     figsize = (12 * Ncols, 10 * Nrows)
             if not dim3:
-                self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize, **kwargs)
-                self.axs = axs.ravel() if Nrows * Ncols > 1 else [axs]
+                self.fig_kws, Nplots=NcolNrows(**kwargs)
+
+                self.fig, axs = plt.subplots(subplot_kw=subplot_kw,**self.fig_kws)
+                # self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize,subplot_kw=subplot_kw, **kwargs)
+                self.axs = axs.ravel() if Nplots > 1 else [axs]
             else:
                 from mpl_toolkits.mplot3d import Axes3D
                 self.fig = plt.figure(figsize=(15, 10))
@@ -53,6 +59,29 @@ class BasePlot:
         else:
             self.fig = fig
             self.axs = axs if type(axs) == list else [axs]
+
+    @ property
+    def Naxs(self):
+        return len(self.axs)
+
+    @property
+    def Ncols(self):
+        if self.Naxs==1 :
+            return 1
+        elif 'ncols' in self.fig_kws.keys() :
+            return self.fig_kws['ncols']
+        else :
+            return 1
+
+    @property
+    def Nrows(self):
+        if self.Naxs == 1:
+            return 1
+        elif 'nrows' in self.fig_kws.keys():
+            return self.fig_kws['nrows']
+        else:
+            return 1
+
 
     def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
@@ -416,9 +445,12 @@ class Plot(BasePlot):
 
 
 class AutoPlot(Plot):
-    def __init__(self, Nrows=1, Ncols=1, figsize=None, fig=None, axs=None, sharex=False, sharey=False, **kwargs):
+    def __init__(self, fig=None, axs=None, subplot_kw={},build_kws={}, **kwargs):
         super().__init__(**kwargs)
-        self.build(Nrows=Nrows, Ncols=Ncols, figsize=figsize, fig=fig, axs=axs, sharex=sharex, sharey=sharey)
+        for k,v in build_kws.items():
+            if v=='Ndatasets':
+                build_kws[k]=self.Ndatasets
+        self.build(fig=fig, axs=axs, subplot_kw=subplot_kw, **build_kws)
 
 
 def load_ks(ks, ds,ls,cols, d0):

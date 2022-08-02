@@ -10,7 +10,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 from lib.aux import dictsNlists as dNl
 from lib.aux.colsNstr import N_colors
 
-
 suf = 'pdf'
 
 
@@ -314,7 +313,7 @@ def save_plot(fig, filepath, filename, verbose=1):
     plt.close(fig)
     # if filename is not None:
     #     pass
-        # print(f'Plot saved as {filename}')
+    # print(f'Plot saved as {filename}')
 
 
 def plot_config(datasets, labels, save_to, subfolder=None):
@@ -469,39 +468,69 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     # raise
     return fig
 
-def NcolNrows(N=None, wh=8,w=None, h=None, mode=None, Ncols=None, Nrows=None):
-    if Nrows is None and Ncols is not None :
-        Nrows = int(np.ceil(N / Ncols))
-    elif Ncols is None and Nrows is not None :
-        Ncols = int(np.ceil(N / Nrows))
-    elif Ncols is None and Nrows is None:
-        Ncols = int(np.sqrt(N))
-        Nrows = int(np.ceil(N / Ncols))
-    if wh is not None :
-        w=wh
-        h=wh
+
+def get_figsize(Ncols, Nrows, wh=None, w=8, h=8):
+    if wh is not None:
+        w = wh
+        h = wh
+    figsize = (w * Ncols, h * Nrows)
+    return figsize
 
 
+def getNcolsNrows(N=None, Ncols=None, Nrows=None):
+    if N is not None:
+        if Nrows is None and Ncols is not None:
+            Nrows = int(np.ceil(N / Ncols))
+        elif Ncols is None and Nrows is not None:
+            Ncols = int(np.ceil(N / Nrows))
+        elif Ncols is None and Nrows is None:
+            Ncols = int(np.sqrt(N))
+            Nrows = int(np.ceil(N / Ncols))
+    if Nrows is None:
+        Nrows = 1
+    if Ncols is None:
+        Ncols = 1
+    return Nrows, Ncols
 
 
-
-
-
-
+def sharexy(mode=None, sharex=False, sharey=False):
     if mode == 'box':
-        kws2={'sharey':False, 'sharex':True}
-    elif mode=='hist':
-        kws2={'sharex':False, 'sharey':True}
-    elif mode=='both':
-        kws2={'sharex':True, 'sharey':True}
-    else :
-        kws2 = {'sharex': False, 'sharey': False}
+        sharex, sharey = True, False
+    elif mode == 'hist':
+        sharex, sharey = False, True
+    elif mode == 'both':
+        sharex, sharey = True, True
+
+    kws2 = {'sharex': sharex, 'sharey': sharey}
+    return kws2
+
+
+def NcolNrows0(N=None, wh=None, w=8, h=8, Ncols=None, Nrows=None, figsize=None):
+    Nrows, Ncols = getNcolsNrows(N=N, Ncols=Ncols, Nrows=Nrows)
+    Nplots=Ncols*Nrows
+
+    if figsize is None:
+        figsize = get_figsize(Ncols, Nrows, wh=wh, w=w, h=h)
     kws = {
-        'Ncols': Ncols,
-        'Nrows': Nrows,
-        'figsize': (w * Ncols, h * Nrows),
-        **kws2
+        'ncols': Ncols,
+        'nrows': Nrows,
+        'figsize': figsize,
+        # **kws2, **kwargs
         # 'Ncols' : Ncols,
     }
-    return kws
+    return kws,Nplots
+
+
+def NcolNrows(N=None, wh=None, w=8, h=8, mode=None, sharex=False, sharey=False, Ncols=None, Nrows=None, figsize=None,
+              **kwargs):
+    kws1,Nplots = NcolNrows0(N=N, Ncols=Ncols, Nrows=Nrows, wh=wh, w=w, h=h, figsize=figsize)
+
+    kws2 = sharexy(mode=mode, sharex=sharex, sharey=sharey)
+
+    kws = {
+        **kws1,
+        **kws2, **kwargs
+        # 'Ncols' : Ncols,
+    }
+    return kws,Nplots
     # Ncols = Ncols, Nrows = Nrows, figsize = (8 * Ncols, 8 * Nrows)

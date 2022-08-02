@@ -3,10 +3,10 @@ from matplotlib import patches, ticker
 
 from lib.aux import naming as nam,dictsNlists as dNl
 from lib.plot.aux import circNarrow, circular_hist
-from lib.plot.base import Plot
+from lib.plot.base import Plot, AutoPlot
 
 
-def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
+def plot_turn_Dbearing(datasets,min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
                        Nplots=4, subfolder='turn', **kwargs):
     if ref_angle is None:
         name = f'turn_Dorient_to_center'
@@ -18,9 +18,10 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
         norm = True
         name = f'turn_Dorient_to_{ang0}deg'
         p = nam.unwrap(nam.orient('front'))
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
-    P.build(P.Ndatasets, Nplots, figsize=(5 * Nplots, 5 * P.Ndatasets), subplot_kw=dict(projection='polar'),
-            sharey=True)
+
+    P = AutoPlot(name=name, subfolder=subfolder,subplot_kw=dict(projection='polar'),
+                 build_kws={'Nrows':len(datasets),'Ncols':Nplots, 'wh':5, 'mode':'hist'}, datasets=datasets,**kwargs)
+
 
 
 
@@ -80,17 +81,31 @@ def plot_turn_Dorient2center(**kwargs):
     return plot_turn_Dbearing(ref_angle=None, **kwargs)
 
 
-def plot_chunk_Dorient2source(source_ID, subfolder='bouts', chunk='stride', Nbins=16, min_dur=0.0, plot_merged=False,
+def plot_chunk_Dorient2source(source_ID, datasets,subfolder='bouts', chunk='stride', Nbins=16, min_dur=0.0, plot_merged=False,
                               **kwargs):
-    P = Plot(name=f'{chunk}_Dorient_to_{source_ID}', subfolder=subfolder, **kwargs)
+    N = len(datasets)
+    if plot_merged:
+        N+=1
+
+    Ncols = int(np.ceil(np.sqrt(N)))
+
+    Nrows = Ncols - 1 if N < Ncols ** 2 - Ncols else Ncols
+
+
+    P = AutoPlot(name=f'{chunk}_Dorient_to_{source_ID}', subfolder=subfolder, datasets=datasets, subplot_kw=dict(projection='polar'),
+                 build_kws={'Nrows':Nrows,'Ncols':Ncols, 'wh':8, 'mode':'hist'}, **kwargs)
 
     if plot_merged:
         P.Ndatasets += 1
         P.colors.insert(0, 'black')
         P.labels.insert(0, 'merged')
-    Ncols = int(np.ceil(np.sqrt(P.Ndatasets)))
-    Nrows = Ncols - 1 if P.Ndatasets < Ncols ** 2 - Ncols else Ncols
-    P.build(Nrows, Ncols, figsize=(8 * Ncols, 8 * Nrows), subplot_kw=dict(projection='polar'), sharey=True)
+
+
+
+
+
+
+    # P.build(**kws0)
     c_dur=nam.dur(chunk)
     b = nam.bearing2(source_ID)
     b0s, b1s, dbs= [], [], []

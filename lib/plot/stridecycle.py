@@ -87,18 +87,18 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         print(f'Plot saved as {filepaths[i]}')
 
 
-def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, Nbins=64, individuals=False, pooled=True,figsize=None, **kwargs):
-    x = np.linspace(0, 2 * np.pi, Nbins)
-    Nsh = len(shorts)
-    if figsize is None :
-        figsize = (10, 4 * Nsh)
+def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, subfolder='stride',
+                 Nbins=64, individuals=False, pooled=True, **kwargs):
 
     if name is None:
         if individuals :
             name = f'stride_cycle_curves_all_larvae'
         else:
             name = f'stride_cycle_curves'
-    P = AutoPlot(name=name, Nrows=Nsh, sharex=True, figsize=figsize, **kwargs)
+    Nsh = len(shorts)
+    P = AutoPlot(name=name, subfolder=subfolder,build_kws={'N':Nsh,'Ncols':1, 'w':8,'h':5, 'mode':'box'}, **kwargs)
+
+    x = np.linspace(0, 2 * np.pi, Nbins)
     for ii, sh in enumerate(shorts):
         # par, lab,lab2, sym, symunit = preg.getPar(sh, to_return=['d', 'label','l', 'symbol', 'symunit'])
         if modes is None:
@@ -141,7 +141,7 @@ def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, N
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
                   xlab='$\phi_{stride}$', ylab=preg.dict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
-    P.conf_fig(title='Stride cycle analysis', title_kws={'w' : 'bold', 's' : 20}, align=True, adjust_kws={'BT' : (0.1,0.9),'H':0.01})
+    P.conf_fig(title='Stride cycle analysis', title_kws={'w' : 'bold', 's' : 20}, align=True, adjust_kws={'BT' : (0.1,0.9),'LR' : (0.2,0.9),'H':0.01})
     return P.get()
 
 

@@ -8,7 +8,7 @@ from scipy.stats import ttest_ind
 
 from lib.aux import dictsNlists as dNl, data_aux, colsNstr as cNs
 from lib.registry.pars import preg
-from lib.plot.aux import label_diff, annotate_plot, NcolNrows
+from lib.plot.aux import label_diff, annotate_plot
 
 from lib.plot.base import AutoPlot, Plot
 
@@ -19,8 +19,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True
     Npars = len(shorts)
     if name is None:
         name = f'boxplot_{Npars}_{key}_pars'
-    kws0 = NcolNrows(Npars, Ncols=Ncols,wh=8, mode='box')
-    P = AutoPlot(name=name, **kws0, **kwargs)
+    P = AutoPlot(name=name, build_kws={'N':Npars,'Ncols':Ncols, 'wh':8, 'mode':'box'}, **kwargs)
     pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
@@ -75,11 +74,10 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True
 
 def boxplot(par_shorts, sort_labels=False, name=None,xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None, **kwargs):
     Npars = len(par_shorts)
-    kws0 = NcolNrows(Npars, w=8, h=7, Nrows=int(np.ceil(Npars / 3)))
     if name is None:
         name = par_shorts[0]
 
-    P = AutoPlot(name=name, **kws0, **kwargs)
+    P = AutoPlot(name=name, build_kws={'N':Npars,'Nrows':int(np.ceil(Npars / 3)), 'w':8,'h':7}, **kwargs)
     # P = Plot(name=par_shorts[0], **kwargs)
     pars, sim_labels, exp_labels, labs, lims = preg.getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
 
@@ -365,8 +363,7 @@ def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, 
 
 
 def plot_foraging(**kwargs):
-    kws0 = NcolNrows(Nrows=1, Ncols=2, w=8,h=10, mode='box')
-    P = AutoPlot(name='foraging',**kws0, **kwargs)
+    P = AutoPlot(name='foraging',build_kws={'Nrows':1,'Ncols':2, 'w':8,'h':10, 'mode':'box'}, **kwargs)
     # P.build(1, 2, figsize=(15, 10), sharex=True)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
         dfs = []
@@ -399,11 +396,10 @@ def plot_foraging(**kwargs):
 def lineplot(markers, par_shorts=['f_am'], name=None,coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, scale=1.0,
              **kwargs):
     Npars = len(par_shorts)
-    kws0 = NcolNrows(Npars, w=8, h=7/Npars, Ncols=1)
     if name is None:
         name = par_shorts[0]
 
-    P = AutoPlot(name=name, **kws0, **kwargs)
+    P = AutoPlot(name=name,  build_kws={'N':Npars,'Ncols':1, 'w':8,'h': 7/Npars}, **kwargs)
 
     # Npars = len(par_shorts)
     # P = AutoPlot(name=par_shorts[0], Nrows=Npars, figsize=(8, 7), **kwargs)
