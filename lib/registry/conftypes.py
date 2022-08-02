@@ -232,7 +232,10 @@ class ConfTypeDict:
         if id is not None:
             conf=self.dict.Ref.loadConf(id)
             from lib.stor.larva_dataset import LarvaDataset
-            return LarvaDataset(conf.dir, load_data=False)
+            d= LarvaDataset(conf.dir, load_data=False)
+            if self.verbose >= 1:
+                print(f'Loaded stored reference dataset : {id}')
+            return d
 
     def loadRefD(self, id=None, **kwargs):
         if id is not None:

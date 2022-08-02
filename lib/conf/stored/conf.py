@@ -61,10 +61,12 @@ def kConfDict(conf_type, **kwargs):
 
 
 
-def loadRef(id):
+def loadRef(id, verbose=1):
     from lib.stor.larva_dataset import LarvaDataset
-    return LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
-
+    d= LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
+    if verbose >= 1:
+        print(f'Loaded stored reference dataset : {id}')
+    return d
 
 def copyConf(id, conf_type):
     return dNl.NestDict(copy.deepcopy(expandConf(id, conf_type)))

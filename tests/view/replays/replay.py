@@ -1,11 +1,15 @@
 from lib.sim.replay.replay import ReplayRun
 
-mode = 'fixed_overlap'
-refID = 'exploration.dish'
+mode = 'dispersal'
+refID = 'Rehydration/AttP2.Deprived'
+# refID = 'exploration.dish'
 
 replay_kws = {
     'normal': {
         # 'id': f'{refID}_replay'
+    },
+    'dispersal': {
+        'transposition': 'origin'
     },
     'fixed_point': {
         # 'id':f'{refID}_replay_solo_fixed_point',

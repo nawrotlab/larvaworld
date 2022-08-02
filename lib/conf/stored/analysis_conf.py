@@ -197,9 +197,9 @@ analysis_dict = dNl.NestDict({
            'food_mass_2', 'hunger', 'EEB', 'fs']],
     ],
     'endpoint': [
-        box(ks=['l', 'str_N', 'dsp_0_60_max', 'run_tr', 'fsv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
+        box(ks=['l', 'str_N', 'dsp_0_60_max', 'run_tr', 'fv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
                 'tor20_mu', 'tor20_std']),
-        box(ks=['l', 'fsv', 'str_sd_mu', 'str_sd_std', 'run_tr', 'ffov']),
+        box(ks=['l', 'fv', 'v_mu', 'run_tr']),
         entry('crawl pars')
     ],
     'distro': [
@@ -220,12 +220,12 @@ analysis_dict = dNl.NestDict({
         entry('stride cycle'),
         entry('stride cycle', individuals=True),
     ],
+    'traj': [
+        entry('trajectories', mode='default', unit='mm'),
+        entry('trajectories', title='aligned2origin', mode='origin', unit='mm'),
+    ],
     'track': [
         entry('stride track'),
         entry('turn track'),
-        # entry('marked strides'),
-        # entry('sample tracks'),
-        entry('trajectories'),
-        entry('trajectories', title='aligned2origin', mode='origin'),
     ]
 })

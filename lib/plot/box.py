@@ -16,11 +16,11 @@ from lib.plot.base import AutoPlot, Plot
 def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=True, grouped=False, ylims=None,
              in_mm=[], target_only=None, **kwargs):
     pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
-    Npars = len(pars)
+    Npars = len(shorts)
     Ncols = Ncols
     Nrows = int(np.ceil(Npars / Ncols))
 
-    P = AutoPlot(name=f'boxplot_{Npars}_{key}_pars', Ncols=Ncols, Nrows=Nrows, figsize=(8 * Ncols, 6 * Nrows),
+    P = AutoPlot(name=f'boxplot_{Npars}_{key}_pars', Ncols=Ncols, Nrows=Nrows, figsize=(8 * Ncols, 8 * Nrows),
                  sharex=True, **kwargs)
 
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
@@ -65,8 +65,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
 
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
                   xvis=False if ii < (Nrows - 1) * Ncols else True)
-
-    P.adjust((0.1, 0.95), (0.15, 0.9), 0.5, 0.05)
+    P.conf_fig(align=True,adjust_kws={'LR': (0.1, 0.95),'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
     return P.get()
 
 

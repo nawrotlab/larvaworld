@@ -37,6 +37,17 @@ def get_dsp(s, p):
 #     # if verbose > 1:
 #     #     print(f'{len(ps)} aux parameters saved')
 
+
+
+def store_traj(df, mode='default', c=None, file=None):
+    if file is None :
+        file = c.dir_dict.traj
+    store = pd.HDFStore(file)
+    store[mode] = df
+    # temp[h5_k] = s[pps]
+    store.close()
+
+
 def store_aux_dataset(s, pars, type, file, verbose=0):
     store = pd.HDFStore(file)
     ps = [p for p in pars if p in s.columns]

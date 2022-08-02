@@ -10,58 +10,50 @@ from lib.plot.base import BasePlot, Plot
 from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
 
 
-def traj_1group(s, c, unit='mm', fig=None, axs=None, single_color=False, **kwargs):
+def traj_1group(xy, c, unit='mm', fig=None, axs=None, single_color=False, **kwargs):
+    ids=xy.index.unique('AgentID').values
     color = c.color if single_color else None
     scale = 1000 if unit == 'mm' else 1
     from lib.aux.sim_aux import get_tank_polygon
     P = BasePlot(name=f'trajectories', **kwargs)
     P.build(fig=fig, axs=axs)
+    ax=P.axs[0]
     tank = get_tank_polygon(c, return_polygon=False) * scale
-    for id in s[['x', 'y']].index.unique('AgentID').values:
-        xy = s[['x', 'y']].xs(id, level="AgentID").values * scale
-        P.axs[0].plot(xy[:, 0], xy[:, 1], color=color)
-    P.axs[0].fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
+    for id in ids:
+        xy0 = xy.xs(id, level="AgentID").values * scale
+        ax.plot(xy0[:, 0], xy0[:, 1], color=color)
+    ax.fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
     for sid, sdic in c.env_params.food_params.source_units.items():
         # for sid,sdic in sources.items():
         px, py = sdic['pos']
         circle = plt.Circle((px * scale, py * scale), sdic['radius'] * scale, color=sdic['default_color'])
-        P.axs[0].add_patch(circle)
+        ax.add_patch(circle)
     P.conf_ax(xMaxN=3, yMaxN=3, title=c.id, titlefontsize=25, xlab=f'X ({unit})', ylab=f'Y ({unit})', equal_aspect=True)
     return P.get()
 
 
-def traj_grouped(axs=None, fig=None, unit='mm', name=f'comparative_trajectories', subfolder='trajectories',
-                 range=None, mode=None, single_color=False, **kwargs):
-    def get_traj(d, mode=None):
-        if mode == 'origin':
-            try:
-                s = d.get_traj_aligned(mode)[['x', 'y']]
-                return s
-            except:
-                return get_traj(d, None)
-        else:
-            try:
-                try:
-                    s = d.read(key='trajectories', file='aux_h5')
-                    return s
-                except:
-                    s = d.step_data[['x', 'y']]
-                    return s
-            except:
-                s = d.step_data[['x', 'y']]
-                return s
+def traj_grouped(axs=None, fig=None, unit='mm', name=None, subfolder='trajectories',
+                 range=None, mode='default', single_color=False, **kwargs):
+    if name is None :
+        name = f'comparative_trajectories_{mode}'
+
+    def get_traj(d, mode='default'):
+        try:
+            return d.load_traj(mode)[['x', 'y']]
+        except:
+            return d.step_data[['x', 'y']]
 
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 6), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
-        s = get_traj(d, mode)
+        xy = get_traj(d, mode)
         c = d.config
         if range is not None:
             t0, t1 = range
             tick0, tick1 = int(t0 / c.dt), int(t1 / c.dt)
-            s = s.loc[tick0:tick1]
+            xy = xy.loc[tick0:tick1]
 
-        _ = traj_1group(s, c, unit=unit, fig=P.fig, axs=P.axs[ii], single_color=single_color, save_to=None)
+        _ = traj_1group(xy, c, unit=unit, fig=P.fig, axs=P.axs[ii], single_color=single_color, save_to=None)
         if ii != 0:
             P.axs[ii].yaxis.set_visible(False)
     P.adjust((0.07, 0.95), (0.1, 0.95), 0.05, 0.005)

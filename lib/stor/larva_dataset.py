@@ -9,7 +9,6 @@ import copy
 import lib.aux.dictsNlists as dNl
 import lib.aux.naming as nam
 
-
 from lib.registry.pars import preg
 
 
@@ -159,30 +158,54 @@ class LarvaDataset:
     def read(self, key='step', file='data_h5'):
         return pd.read_hdf(self.dir_dict[file], key)
 
-    def load(self, step=True, end=True, food=False,
-             h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
+    def load_step(self, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
+        D = self.dir_dict
+        store = pd.HDFStore(D.data_h5)
+        s = store['step']
+        store.close()
+        stored_ps = []
+        for h5_k in h5_ks:
+            if os.path.exists(D[h5_k]):
+                temp = pd.HDFStore(D[h5_k], mode='r')
+                ss = temp[h5_k]
+                temp.close()
+                ps = [p for p in ss.columns.values if p not in s.columns.values]
+                if len(ps) > 0:
+                    stored_ps += ps
+                    s = s.join(ss[ps])
+                self.load_h5_kdic[h5_k] = "a"
+            else:
+                self.load_h5_kdic[h5_k] = "w"
+        s.sort_index(level=['Step', 'AgentID'], inplace=True)
+        self.agent_ids = s.index.unique('AgentID').values
+        self.num_ticks = s.index.unique('Step').size
+        return s
+
+    def save_step(self, s=None, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
+        D = self.dir_dict
+        if s is None:
+            s = self.step_data
+        stored_ps = []
+        # s = self.step_data
+        for h5_k in h5_ks:
+
+            pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
+            if len(pps) > 0:
+                temp = pd.HDFStore(D[h5_k], mode=self.load_h5_kdic[h5_k])
+                temp[h5_k] = s[pps]
+                temp.close()
+                stored_ps += pps
+
+        ss = s.drop(stored_ps, axis=1, errors='ignore')
+        store = pd.HDFStore(D.data_h5)
+        store['step'] = ss
+        store.close()
+
+    def load(self, step=True, end=True, food=False, **kwargs):
         D = self.dir_dict
         if step:
-            store = pd.HDFStore(D.data_h5)
-            s = store['step']
-            store.close()
-            stored_ps = []
-            for h5_k in h5_ks:
-                if os.path.exists(D[h5_k]):
-                    temp = pd.HDFStore(D[h5_k], mode='r')
-                    ss=temp[h5_k]
-                    temp.close()
-                    ps=[p for p in ss.columns.values if p not in s.columns.values]
-                    if len(ps)>0 :
-                        stored_ps+=ps
-                        s = s.join(ss[ps])
-                    self.load_h5_kdic[h5_k] = "a"
-                else:
-                    self.load_h5_kdic[h5_k] = "w"
-            s.sort_index(level=['Step', 'AgentID'], inplace=True)
-            self.agent_ids = s.index.unique('AgentID').values
-            self.num_ticks = s.index.unique('Step').size
-            self.step_data = s
+            self.step_data = self.load_step(**kwargs)
+
         if end:
             try:
                 endpoint = pd.HDFStore(D.endpoint_h5)
@@ -198,6 +221,25 @@ class LarvaDataset:
             self.food_endpoint_data = store['food']
             store.close()
             self.food_endpoint_data.sort_index(inplace=True)
+
+    def save(self, step=True, end=True, food=False, add_reference=False, **kwargs):
+
+        D = self.dir_dict
+
+        if step:
+            self.save_step(s=self.step_data, **kwargs)
+
+        if end:
+            endpoint = pd.HDFStore(D.endpoint_h5)
+            endpoint['end'] = self.endpoint_data
+            endpoint.close()
+        if food:
+            store = pd.HDFStore(D.data_h5)
+            store['food'] = self.food_endpoint_data
+            store.close()
+        self.save_config(add_reference=add_reference)
+
+        print(f'***** Dataset {self.id} stored.-----')
 
     def save_vel_definition(self, component_vels=True, add_reference=True):
         from lib.process.calibration import comp_stride_variation, comp_segmentation
@@ -224,42 +266,6 @@ class LarvaDataset:
             return dic
         except:
             raise ValueError('Not found')
-
-    def save(self, step=True, end=True, food=False,
-             h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'],
-             add_reference=False):
-
-
-
-        D = self.dir_dict
-
-        if step:
-            stored_ps = []
-            s = self.step_data
-            for h5_k in h5_ks:
-
-                pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
-                if len(pps)>0:
-                    temp = pd.HDFStore(D[h5_k], mode=self.load_h5_kdic[h5_k])
-                    temp[h5_k] = s[pps]
-                    temp.close()
-                    stored_ps += pps
-
-            ss=s.drop(stored_ps, axis=1, errors='ignore')
-            store = pd.HDFStore(D.data_h5)
-            store['step'] = ss
-            store.close()
-        if end:
-            endpoint = pd.HDFStore(D.endpoint_h5)
-            endpoint['end'] = self.endpoint_data
-            endpoint.close()
-        if food:
-            store = pd.HDFStore(D.data_h5)
-            store['food'] = self.food_endpoint_data
-            store.close()
-        self.save_config(add_reference=add_reference)
-
-        print(f'Dataset {self.id} stored.')
 
     @property
     def base_spatial_ps(self):
@@ -412,9 +418,9 @@ class LarvaDataset:
             if refID is None:
                 refID = f'{self.group_id}.{self.id}'
             self.config.refID = refID
-            if return_entry :
-                return {refID : self.config}
-            else :
+            if return_entry:
+                return {refID: self.config}
+            else:
                 preg.saveConf(conf=self.config, conftype='Ref', id=refID)
 
     def save_agents(self, ids=None, pars=None):
@@ -450,6 +456,38 @@ class LarvaDataset:
         df = store[name]
         store.close()
         return df
+
+    def centralize_xy_tracks(self, replace=True, arena_dims=None, is_last=True):
+        if arena_dims is None:
+            arena_dims = self.config.env_params.arena.arena_dims
+        x0, y0 = arena_dims
+
+        kws0 = {
+            'h5_ks': ['contour', 'midline'],
+            # 'end' : False,
+            # 'step' : True
+        }
+        s = self.load_step(**kws0)
+        xy_pairs = [xy for xy in self.xy_pairs if set(xy).issubset(s.columns)]
+        # xy_flat = np.unique(dNl.flatten_list(xy_pairs))
+
+        for x, y in xy_pairs:
+            s[x] -= x0 / 2
+            s[y] -= y0 / 2
+        if replace:
+            self.step_data = s
+            # ss = s[xy_flat]
+        if is_last:
+            self.save_step(s, **kws0)
+        return s
+
+    def store_traj(self, df, mode='default'):
+        from lib.process.store import store_traj
+        store_traj(df=df, mode=mode, file=self.dir_dict.traj)
+
+    def load_traj(self, mode='default'):
+        # df = self.read(key=mode, file='traj')
+        return pd.read_hdf(self.dir_dict.traj, mode)
 
     def load_aux(self, type, par=None):
         # print(pd.HDFStore(self.dir_dict['aux_h5']).keys())
@@ -490,8 +528,6 @@ class LarvaDataset:
                 ds = dNl.load_dicts(files=files, folder=self.dir_dict[type], use_pickle=True)
         return ds
 
-
-
     def visualize(self, **kwargs):
         from lib.sim.replay.replay import ReplayRun
         rep = ReplayRun(dataset=self, **kwargs)
@@ -511,8 +547,9 @@ class LarvaDataset:
 
         ang = ['front_orientation', 'rear_orientation', 'head_orientation', 'tail_orientation', 'bend']
         self.ang_pars = ang + nam.unwrap(ang) + nam.vel(ang) + nam.acc(ang) + nam.min(nam.vel(ang)) + nam.max(
-            nam.vel(ang))+nam.orient(self.segs)
-        self.xy_pars = nam.xy(self.points + self.contour + ['centroid'], flat=True) + nam.xy('')
+            nam.vel(ang)) + nam.orient(self.segs)
+        self.xy_pairs = self.points_xy + self.contour_xy + nam.xy(['centroid', ''])
+        self.xy_pars = dNl.flatten_list(self.xy_pairs)
 
     def define_paths(self, dir):
         self.dir = dir
@@ -553,6 +590,7 @@ class LarvaDataset:
             'angular': os.path.join(self.data_dir, 'angular.h5'),
             'dspNtor': os.path.join(self.data_dir, 'dspNtor.h5'),
             'aux_h5': os.path.join(self.data_dir, 'aux.h5'),
+            'traj': os.path.join(self.data_dir, 'traj.h5'),
             'vel_definition': os.path.join(self.data_dir, 'vel_definition.h5'),
         })
         for k in ['parent', 'data']:
@@ -658,12 +696,6 @@ class LarvaDataset:
             #     print('Pooled group bouts saved')
             return self.pooled_epochs
         else:
-            return None
-
-    def get_traj_aligned(self, mode='origin'):
-        try:
-            return self.read(key=f'traj_aligned2{mode}', file='aux_h5')
-        except:
             return None
 
     def get_par(self, par, key=None):
@@ -880,12 +912,11 @@ class LarvaDataset:
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
 
-        graphs=dNl.NestDict({
-            'tables' : preg.graph_dict.model_tables(mIDs, save_to=f1),
-            'summaries' : preg.graph_dict.model_summaries(mIDs, Nids=10, refDataset=self,save_to=f2)
+        graphs = dNl.NestDict({
+            'tables': preg.graph_dict.model_tables(mIDs, save_to=f1),
+            'summaries': preg.graph_dict.model_summaries(mIDs, Nids=10, refDataset=self, save_to=f2)
         })
         return graphs
-
 
     def eval_model_graphs(self, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
                           **kwargs):

@@ -1,9 +1,10 @@
+import copy
 import itertools
 
 import numpy as np
 import pandas as pd
 
-from lib.process.store import store_aux_dataset
+from lib.process.store import store_aux_dataset, store_traj
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux
 
@@ -215,8 +216,11 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
 
     if store:
         store_aux_dataset(s, pars=preg.getPar(shorts), type='distro', file=c.aux_dir)
-        store_aux_dataset(s, pars=['x', 'y'], type='trajectories', file=c.aux_dir)
+
         store_aux_dataset(s, pars=[dst,cdst, sdst, csdst], type='pathlength', file=c.aux_dir)
+
+        # store_aux_dataset(s, pars=['x', 'y'], type='trajectories', file=c.aux_dir)
+        store_traj(df=s[['x', 'y']], c=c)
 
 
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
@@ -225,7 +229,7 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c, store=store)
-    # align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=c, store=store, **kwargs)
+    align_trajectories(s, c, store=store)
 
     print(f'Completed {mode} spatial processing.')
 
@@ -491,29 +495,41 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         # print(e['anemotaxis'])
 
 
-def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=None, store=False, **kwargs):
-    ids = s.index.unique(level='AgentID').values
+def align_trajectories(s, c, track_point=None, arena_dims=None, mode='origin', store=False,replace=False, **kwargs):
+
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-    xy_pairs = dNl.group_list_by_n(np.unique(dNl.flatten_list(xy_pairs)), 2)
+    xy_flat=np.unique(dNl.flatten_list(xy_pairs))
+    xy_pairs = dNl.group_list_by_n(xy_flat, 2)
+
+    if replace :
+        ss=s
+    else :
+        ss = copy.deepcopy(s[xy_flat])
+
+
     if mode == 'arena':
         print('Centralizing trajectories in arena center')
         if arena_dims is None:
             arena_dims = c.env_params.arena.arena_dims
         x0, y0 = arena_dims
         X, Y = x0 / 2, y0 / 2
+
         for x, y in xy_pairs:
-            s[x] -= X
-            s[y] -= Y
-        return s
+            ss[x] -= X
+            ss[y] -= Y
+        return ss
     else:
         if track_point is None:
             track_point = c.point
         XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
         if not set(XY).issubset(s.columns):
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
-
+        ids = s.index.unique(level='AgentID').values
+        # Nids=len(ids)
+        Nticks = len(s.index.unique('Step'))
+        # Npairs = len(xy_pairs)
         if mode == 'origin':
             print('Aligning trajectories to common origin')
             xy = [s[XY].xs(id, level='AgentID').dropna().values[0] for id in ids]
@@ -522,17 +538,22 @@ def align_trajectories(s, track_point=None, arena_dims=None, mode='origin', c=No
             xy_max = [s[XY].xs(id, level='AgentID').max().values for id in ids]
             xy_min = [s[XY].xs(id, level='AgentID').min().values for id in ids]
             xy = [(max + min) / 2 for max, min in zip(xy_max, xy_min)]
+        else :
+            raise ValueError('Supported modes are "arena", "origin" and "center"!')
+        xs= np.array([x for x, y in xy]*Nticks)
+        ys= np.array([y for x, y in xy]*Nticks)
 
-        for id, p in zip(ids, xy):
-            for x, y in xy_pairs:
-                s.loc[(slice(None), id), x] -= p[0]
-                s.loc[(slice(None), id), y] -= p[1]
+        for jj,(x, y) in enumerate(xy_pairs):
+            ss[x] = ss[x].values-xs
+            ss[y] = ss[y].values-ys
+
         if store:
-            storage = pd.HDFStore(c.aux_dir)
-            storage[f'traj_aligned2{mode}'] = s
-            storage.close()
+            store_traj(df= ss, mode=mode, c=c)
+            # storage = pd.HDFStore(c.aux_dir)
+            # storage[f'traj_aligned2{mode}'] = ss
+            # storage.close()
             print(f'traj_aligned2{mode} stored')
-        return s
+        return ss
 
 
 def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):

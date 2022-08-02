@@ -1,6 +1,9 @@
 import copy
 import os
 
+import numpy as np
+import pandas as pd
+
 from lib.aux import dictsNlists as dNl
 from lib.registry.pars import preg
 from lib.stor.larva_dataset import LarvaDataset
@@ -89,15 +92,11 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
         print(f'Dataset {id} splitted in {[d.id for d in ds]}')
     return ds
 
-def smaller_dataset(d, track_point=None, ids=None, time_range=None, pars=None,env_params=None,close_view=False):
+def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_range=None, pars=None,env_params=None,close_view=False):
     from lib.aux import naming as nam, dictsNlists as dNl
     c=d.config
     c0=dNl.copyDict(c)
-    if env_params is None:
-        env_params = c.env_params
-    if close_view:
-        env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
-    c0.env_params = env_params
+
 
     if track_point is None:
         track_point = c.point
@@ -120,7 +119,8 @@ def smaller_dataset(d, track_point=None, ids=None, time_range=None, pars=None,en
                 return s0,e0
 
         if not hasattr(d, 'step_data'):
-            d.load(h5_ks=['contour', 'midline', 'base_spatial'])
+            d.load(h5_ks=['contour', 'midline'])
+            # d.load(h5_ks=['contour', 'midline', 'base_spatial'])
         s, e = d.step_data, d.endpoint_data
         e0=copy.deepcopy(e.loc[ids])
         s0=copy.deepcopy(s.loc[(slice(None), ids), :])
@@ -131,6 +131,27 @@ def smaller_dataset(d, track_point=None, ids=None, time_range=None, pars=None,en
     if pars is not None:
         s0 = s0.loc[(slice(None), slice(None)), pars]
 
+        # print('xxx')
+
+    if env_params is not None:
+        c0.env_params = env_params
+
+    if transposition is not None:
+        try:
+            s_tr = d.load_traj(mode=transposition)
+            s0.update(s_tr)
+
+        except:
+            from lib.process.spatial import align_trajectories
+            s0 = align_trajectories(s0, c=c0, mode=transposition,replace=True)
+
+        xy_max=2*np.max(s0[nam.xy(c0.point)].dropna().abs().values.flatten())
+        c0.env_params.arena = preg.get_null('arena', arena_dims=(xy_max, xy_max))
+
+    if close_view:
+        c0.env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
+
+
     if time_range is not None:
         a, b = time_range
         a = int(a / c.dt)
@@ -139,4 +160,58 @@ def smaller_dataset(d, track_point=None, ids=None, time_range=None, pars=None,en
 
     c0.Nsteps = len(s0.index.unique('Step').values)
     return s0,e0, c0
+
+def import_smaller_dataset(step, dt, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None):
+    if time_slice is not None :
+        tmin,tmax=time_slice
+        tickmin,tickmax=int(tmin/dt),int(tmax/dt)
+        step = copy.deepcopy(step.loc[(slice(tickmin,tickmax), slice(None)),:])
+    end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
+    end.columns = ['num_ticks']
+
+    if max_Nagents is not None:
+        # end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
+        # end.columns = ['num_ticks']
+        selected = end.nlargest(max_Nagents, 'num_ticks').index.values
+        step = step.loc[(slice(None), selected), :]
+        end = end.loc[selected]
+    # if min_duration_in_sec > 0:
+
+        # selected = end[end['num_ticks'] >= min_duration_in_sec/dt].index.values
+        # step = step.loc[(slice(None), selected), :]
+        # end = end.loc[selected]
+
+        # end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
+        # end.columns = ['num_ticks']
+    selected = end[end['num_ticks'] > min_duration_in_sec/dt].index.values
+    step = step.loc[(slice(None), selected), :]
+    end = end.loc[selected]
+    end['cum_dur'] = end['num_ticks'] * dt
+    return step, end
+
+def reset_AgentIDs(s):
+    s.reset_index(level='Step', drop=False, inplace=True)
+    trange = np.arange(int(s['Step'].max())).astype(int)
+    old_ids = s.index.unique().tolist()
+    new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
+    new_pairs = dict(zip(old_ids, new_ids))
+    s.rename(index=new_pairs, inplace=True)
+
+    s.reset_index(drop=False, inplace=True)
+    s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+    s.sort_index(level=['Step', 'AgentID'], inplace=True)
+    s.drop_duplicates(inplace=True)
+
+    my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
+    return s, my_index
+
+def reset_MultiIndex(s, columns=None) :
+    s, my_index=reset_AgentIDs(s)
+
+    if columns is None :
+        columns = s.columns.values
+    step = pd.DataFrame(s, index=my_index, columns=columns)
+
+    return step
+
 

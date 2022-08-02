@@ -191,7 +191,7 @@ def food(d):
     d['food'] = {
 
         'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
-        **d['source']
+        **d['source'],
         **d['substrate']
     }
 

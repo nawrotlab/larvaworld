@@ -8,6 +8,7 @@ from lib.process.spatial import spatial_processing, comp_source_metrics, comp_di
     align_trajectories, comp_wind_metrics, comp_final_anemotaxis, comp_PI2, comp_straightness_index
 from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux, stdout
 
+
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
     if abs_threshold is None:
         abs_threshold = [+np.inf, -np.inf]
@@ -51,6 +52,7 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
         s[p_min] = min_array[:, i, :].flatten()
         s[p_max] = max_array[:, i, :].flatten()
 
+
 def filter(s, c, freq=2, inplace=True, recompute=False, **kwargs):
     if freq in ['', None, np.nan]:
         return
@@ -73,7 +75,8 @@ def filter(s, c, freq=2, inplace=True, recompute=False, **kwargs):
 
 def interpolate_nan_values(s, c, pars=None, **kwargs):
     if pars is None:
-        points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour) # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
+        points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(
+            c.Ncontour)  # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
         pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     for p in pars:
@@ -119,7 +122,7 @@ def exclude_rows(s, e, dt, flag, accepted=None, rejected=None, **kwargs):
 
 
 def preprocess(s, e, c, rescale_by=None, drop_collisions=False, interpolate_nans=False, filter_f=None,
-               transposition=None,recompute=False, show_output=True, **kwargs):
+               transposition=None, recompute=False, show_output=True, **kwargs):
     cc = {
         's': s,
         'e': e,
@@ -140,7 +143,7 @@ def preprocess(s, e, c, rescale_by=None, drop_collisions=False, interpolate_nans
         if filter_f is not None:
             filter(freq=filter_f, **cc)
         if transposition is not None:
-            align_trajectories(mode=transposition, **cc)
+            align_trajectories(mode=transposition,replace=True, **cc)
         return s, e
 
 
@@ -189,11 +192,11 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
         if processing['wind']:
             if processing['spatial']:
                 comp_wind_metrics(**cc)
-            else :
+            else:
                 comp_final_anemotaxis(**cc)
-        if processing['dispersion'] :
+        if processing['dispersion']:
             comp_dispersion(**cc)
-        if processing['tortuosity'] :
+        if processing['tortuosity']:
             comp_straightness_index(**cc)
         if processing['PI']:
             if 'x' in e.keys():
@@ -213,9 +216,9 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
             PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=c.env_params.arena.arena_dims[0], return_num=True,
                                       return_all=True)
             c.PI = {'PI': PI, 'N': N, 'N_l': N_l, 'N_r': N_r}
-            try :
+            try:
                 c.PI2 = comp_PI2(xys=s[nam.xy('')], arena_xdim=c.env_params.arena.arena_dims[0])
-            except :
+            except:
                 pass
         if traj_colors:
             try:
@@ -223,5 +226,3 @@ def process(processing, s, e, c, mode='minimal', traj_colors=True, show_output=T
             except:
                 pass
         return s, e
-
-

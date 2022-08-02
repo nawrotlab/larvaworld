@@ -97,7 +97,8 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         if u == ureg.dimensionless:
             lab = f'{disp}'
         else:
-            lab = fr'{disp} ({u})'
+            ulab=fr'${u}$'
+            lab = fr'{disp} ({ulab})'
     if dv is None and dtype in [float, List[float], List[Tuple[float]], Tuple[float]]:
         dv = 0.01
     h = lab if h is None else h
@@ -486,7 +487,8 @@ class BaseParDict:
             'k': f'f{b.k}',
             'u': ureg.Hz,
             'sym': sub(b.sym, 'freq'),
-            'disp': f'{b.disp} dominant frequency',
+            'disp': f'{b.disp} frequency',
+            # 'disp': f'{b.disp} dominant frequency',
             'required_ks': [k0],
             'func': self.func_dict.freq(b.d)
         }
@@ -551,7 +553,7 @@ class BaseParDict:
             self.add_velNacc(k0=kou, k_v=f'{suf}ov', k_a=f'{suf}oa', p_v=p_v, d_v=p_v, p_a=p_a, d_a=p_a,
                              sym_v=omega(ksuf), sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
                              disp_a=f'{lsuf}angular acceleration')
-        for k0 in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'fo', 'ro']:
+        for k0 in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'fo', 'ro', 'ho', 'to']:
             self.add_freq(k0=k0)
             self.add_operators(k0=k0)
 

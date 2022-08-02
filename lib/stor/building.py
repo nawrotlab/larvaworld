@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from lib.stor.match_ids import match_larva_ids
-from lib.aux import naming as nam, dictsNlists as dNl, xy_aux
+from lib.aux import naming as nam, dictsNlists as dNl, xy_aux, dir_aux
 
 
 def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode='semifull',
@@ -85,34 +85,27 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
 
 def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
                   match_ids=True,**kwargs):
-
+    d = dataset
     pref=f'{source_dir}/{source_id}'
     temp_step_path = f'{pref}_step.csv'
     temp_length_path = f'{pref}_length.csv'
-    print(pref)
-    def temp_save(step, length):
-        step.to_csv(temp_step_path, index=True, header=True)
-        length.to_csv(temp_length_path, index=True, header=True)
-        print(f'Saved temporary dataset {dataset.id} successfully!')
 
-    def temp_load():
-        step = pd.read_csv(temp_step_path, index_col=['Step', 'AgentID'])
-        e = pd.read_csv(temp_length_path, index_col=0)
-        return step, e
+    # fr = d.fr
 
-    d = dataset
-    fr = d.fr
-    x_pars = [x for x, y in d.points_xy]
-    y_pars = [y for x, y in d.points_xy]
-    xc_pars = [x for x, y in d.contour_xy]
-    yc_pars = [y for x, y in d.contour_xy]
 
-    try:
-        temp, e = temp_load()
-        print('Loaded temporary data successfully!')
-    except:
 
-        print(f'Buiding temporary data files for dataset {d.id} of group {d.group_id}!')
+    def temp_build(d, pref):
+        # fr = d.fr
+        # x_pars = [x for x, y in d.points_xy]
+        # y_pars = [y for x, y in d.points_xy]
+        # xc_pars = [x for x, y in d.contour_xy]
+        # yc_pars = [y for x, y in d.contour_xy]
+        x_pars = [x for x, y in d.points_xy]
+        y_pars = [y for x, y in d.points_xy]
+        columns = x_pars + y_pars
+        xy_pars = nam.xy(d.points, flat=True)
+
+        print(f'*---- Buiding temporary data files for dataset {d.id} of group {d.group_id}!-----')
         xs = pd.read_csv(f'{pref}_x_spine.txt', header=None, sep='\t', names=x_pars)
         ys = pd.read_csv(f'{pref}_y_spine.txt', header=None, sep='\t', names=y_pars)
         ts = pd.read_csv(f'{pref}_t.txt', header=None, sep='\t', names=['Step'])
@@ -122,108 +115,94 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         try:
             states = pd.read_csv(f'{pref}_global_state_large_state.txt', header=None, sep='\t', names=['state'])
             par_list.append(states)
+            columns.append('state')
+
         except:
             states = None
 
+        if d.Ncontour > 0:
+            try :
+                xc_pars = [x for x, y in d.contour_xy]
+                yc_pars = [y for x, y in d.contour_xy]
 
-        if d.Ncontour>0 :
-            xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
-            ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-            xcs,ycs= xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
-            xcs=pd.DataFrame(xcs, columns=xc_pars, index=None)
-            ycs=pd.DataFrame(ycs, columns=yc_pars, index=None)
-            par_list += [xcs, ycs]
-
-
-
-
+                xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
+                ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
+                xcs, ycs = xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
+                xcs = pd.DataFrame(xcs, columns=xc_pars, index=None)
+                ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
+                par_list += [xcs, ycs]
+                columns = columns + xc_pars + yc_pars
+            except :
+                pass
 
         min_t, max_t = float(ts.min()), float(ts.max())
-
-
-
-
-
-        temp = pd.concat(par_list, axis=1, sort=False)
-        temp.set_index(keys=['AgentID'], inplace=True, drop=True)
-        temp['spinelength'] = np.nan
-        agent_ids = np.sort(temp.index.unique())
+        step = pd.concat(par_list, axis=1, sort=False)
+        step.set_index(keys=['AgentID'], inplace=True, drop=True)
+        step['spinelength'] = np.nan
+        agent_ids = np.sort(step.index.unique())
 
         durs = []
         starts = []
         stops = []
         ls = []
         for id in agent_ids:
-            data = temp.loc[id]
+            data = step.loc[id]
             t = data['Step'].values
-            t0 = int((t[0] - min_t) * fr)
+            t0 = int((t[0] - min_t) * d.fr)
             t1 = t0 + len(t)
             t = np.arange(t0, t1)
-            temp.loc[id, 'Step'] = t
+            step.loc[id, 'Step'] = t
             durs.append(len(t))
             starts.append(t0)
             stops.append(t1)
 
-            xy = data[nam.xy(d.points, flat=True)].values
+            xy = data[xy_pars].values
             spinelength = np.zeros(len(data)) * np.nan
             for j in range(xy.shape[0]):
                 k = np.sum(np.diff(np.array(dNl.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
                 if not np.isnan(np.sum(k)):
-                    sp_l = np.sum([np.sqrt(kk) for kk in k])
-                else:
-                    sp_l = np.nan
-                spinelength[j] = sp_l
-            temp['spinelength'].loc[id] = spinelength
+                    spinelength[j] = np.sum([np.sqrt(kk) for kk in k])
+                # else:
+                #     sp_l = np.nan
+                # spinelength[j] = sp_l
+            step['spinelength'].loc[id] = spinelength
             ls.append(np.nanmean(spinelength))
-        temp['Step'] = temp['Step'].values.astype(int)
+        step['Step'] = step['Step'].values.astype(int)
         e = pd.DataFrame({'length': ls}, index=agent_ids)
-        temp.reset_index(drop=False, inplace=True)
-        temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-        temp_save(temp, e)
+        step.reset_index(drop=False, inplace=True)
+        step.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+        temp_save(step, e)
+        return step, e, columns
+
+
+    def temp_save(step, length):
+        step.to_csv(temp_step_path, index=True, header=True)
+        length.to_csv(temp_length_path, index=True, header=True)
+        # print(f'**---- Saved temporary dataset {dataset.id} successfully!----- ')
+
+    def temp_load():
+        step = pd.read_csv(temp_step_path, index_col=['Step', 'AgentID'])
+        e = pd.read_csv(temp_length_path, index_col=0)
+        columns=step.columns.values
+        return step, e, columns
+
+
+
+
+    try:
+        temp, e, columns = temp_load()
+        print('**--- Loaded temporary data successfully!----- ')
+    except:
+        temp, e, columns = temp_build(d, pref)
+
     if match_ids :
         temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
-    temp.reset_index(level='Step', drop=False, inplace=True)
-    old_ids = temp.index.unique().tolist()
-    new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
-    new_pairs = dict(zip(old_ids, new_ids))
-    temp.rename(index=new_pairs, inplace=True)
 
-    end = temp['head_x'].groupby('AgentID').count().to_frame()
-    end.columns = ['num_ticks']
-    end['cum_dur'] = end['num_ticks'] / fr
 
-    temp.reset_index(drop=False, inplace=True)
-    max_step = int(temp['Step'].max())
-    temp.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-    temp.sort_index(level=['Step', 'AgentID'], inplace=True)
-    temp.drop_duplicates(inplace=True)
-    trange = np.arange(max_step).astype(int)
-    my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
-    columns = x_pars + y_pars + xc_pars + yc_pars
-    if 'state' in temp.columns:
-        columns.append('state')
-    step = pd.DataFrame(temp, index=my_index, columns=columns)
-    if max_Nagents is not None:
-        selected = end.nlargest(max_Nagents, 'num_ticks').index.values
-        step = step.loc[(slice(None), selected), :]
-        end = end.loc[selected]
-    if min_duration_in_sec > 0:
-        selected = end[end['cum_dur'] >= min_duration_in_sec].index.values
-        step = step.loc[(slice(None), selected), :]
-        end = end.loc[selected]
-    if time_slice is not None :
-        tmin,tmax=time_slice
-        tickmin,tickmax=int(tmin/d.dt),int(tmax/d.dt)
-        print(tickmin,tickmax, step.index.unique('Step').values[0])
-        # raise
-        step = copy.deepcopy(step.loc[(slice(tickmin,tickmax), slice(None)),:])
-        ids = step.index.unique('AgentID').values
-        end = end.loc[ids]
-        end['num_ticks'] = step['head_x'].dropna().groupby('AgentID').count().to_frame()
-        selected = end[end['num_ticks'] > 0].index.values
-        step = step.loc[(slice(None), selected), :]
-        end = end.loc[selected]
-        end['cum_dur'] = end['num_ticks'] / fr
+    step=dir_aux.reset_MultiIndex(temp, columns=columns)
+    step, end=dir_aux.import_smaller_dataset(step, dt=d.dt,
+                                             max_Nagents=max_Nagents, min_duration_in_sec=min_duration_in_sec,time_slice=time_slice)
+
     return step, end
 
 def build_Berni(dataset, build_conf, source_files, source_dir=None, max_Nagents=None, min_duration_in_sec=0.0,

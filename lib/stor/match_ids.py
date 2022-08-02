@@ -3,7 +3,7 @@ import numpy as np
 from lib.aux import dictsNlists as dNl
 
 
-def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, **kwargs):
+def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20,verbose=1, **kwargs):
     pairs= {}
 
     def eval(t0, xy0, l0, t1, xy1, l1):
@@ -21,6 +21,7 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx
     s.reset_index(level='Step', drop=False, inplace=True)
     s['Step'] = s['Step'].values.astype(int)
     ids, mins, maxs, first_xy, last_xy, durs = get_extrema(s, pars)
+    Nids0=len(ids)
     while Nidx <= len(ids):
         cur_er, id0, id1 = max_error, None, None
         t0s = maxs.nsmallest(Nidx)
@@ -40,10 +41,13 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx
             del durs[id0]
             ls.drop([id0], inplace=True)
             ids, mins, maxs, first_xy, last_xy = update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy)
-            print(len(ids), int(cur_er))
+            if verbose>=2 :
+                print(len(ids), int(cur_er))
         else :
             Nidx += 1
-    print('Finalizing dataset')
+    Nids1 = len(ids)
+    if verbose >= 2:
+        print('Finalizing dataset')
     while len(dNl.common_member(list(pairs.keys()), list(pairs.values()))) > 0:
         for id0,id1 in pairs.items() :
             if id1 in pairs.keys() :
@@ -52,6 +56,8 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx
     s.rename(index=pairs, inplace=True)
     s.reset_index(drop=False, inplace=True)
     s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+    if verbose >= 1:
+        print(f'**--- Track IDs reduced from {Nids0} to {Nids1} by the matchIDs algorithm -----')
     return s
 
 

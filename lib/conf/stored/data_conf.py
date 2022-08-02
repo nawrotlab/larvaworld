@@ -23,7 +23,7 @@ def Tracker_dict():
         'Jovanic': {
         'resolution.fr': 11.27,
         'resolution.Npoints': 11,
-        'resolution.Ncontour': 30,
+        'resolution.Ncontour': 0,
         'filesystem.file.suf': 'larvaid.txt',
         'filesystem.file.sep': '_',
         'arena.arena_shape': 'rectangular',

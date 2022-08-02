@@ -142,8 +142,6 @@ def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, N
                   xlab='$\phi_{stride}$', ylab=preg.dict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
     P.conf_fig(title='Stride cycle analysis', title_kws={'w' : 'bold', 's' : 20}, align=True, adjust_kws={'BT' : (0.1,0.9),'H':0.01})
-    # P.fig.subplots_adjust(hspace=0.01)
-    # P.fig.align_ylabels(P.axs[:])
     return P.get()
 
 
