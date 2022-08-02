@@ -6,8 +6,8 @@ import pandas as pd
 import warnings
 import copy
 
-import lib.aux.dictsNlists as dNl
-import lib.aux.naming as nam
+from lib.aux import dictsNlists as dNl, xy_aux,naming as nam
+# import lib.aux.naming as nam
 
 from lib.registry.pars import preg
 
@@ -480,6 +480,21 @@ class LarvaDataset:
         if is_last:
             self.save_step(s, **kws0)
         return s
+
+    def comp_dsp(self, s0,s1):
+        # dt=
+        # ids=self.agent_ids
+        xy0 = self.load_traj()
+
+
+
+
+        AA,df=xy_aux.dsp_single(xy0, s0, s1, self.dt)
+
+
+        return df
+
+
 
     def store_traj(self, df, mode='default'):
         from lib.process.store import store_traj
@@ -980,7 +995,7 @@ class LarvaDataset:
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
-    from lib.aux import dictsNlists as dNl
+
     import pandas as pd
 
     M = preg.larva_conf_dict

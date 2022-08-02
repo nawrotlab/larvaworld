@@ -6,7 +6,7 @@ import pandas as pd
 
 from lib.process.store import store_aux_dataset, store_traj
 from lib.registry.pars import preg
-from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux
+from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux, dir_aux
 
 def comp_linear(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -234,58 +234,84 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     print(f'Completed {mode} spatial processing.')
 
 
-def comp_dispersion(s=None, e=None, c=None, recompute=False, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
+
+
+def dsp_solo0(xy,s0, s1, c):
     dt = c.dt
-    point = c.point
+    ids = xy.index.unique('AgentID').values
+    t0 = int(s0 / dt)
+    t1 = int(s1 / dt)
+    Nt=t1-t0
+
+    xy_slice=xy.loc[(slice(t0, t1), slice(None)), slice(None)]
+
+
+
+    AA = np.zeros([c.Nticks, len(ids)]) * np.nan
+    # AA = np.zeros([Nt, len(ids)]) * np.nan
+
+
+    for i, id in (enumerate(ids)):
+        xy_i = xy_slice.xs(id, level='AgentID')
+        xy0 = xy_i.dropna().values
+
+
+        try:
+            AA[t0:t1, i] = xy_aux.eudi5x(xy_i.values, xy0[0])
+        except:
+            print(f'No values to set origin point for {id}')
+    return AA.flatten()
+
+def dsp_solo(s, e, c,s0, s1, p) :
+
+    xy = s[['x', 'y']]
+
+    # AAA = np.zeros([c.Nticks, len(xy.index.unique('AgentID').values)]) * np.nan
+    # p = f'dispersion_{s0}_{s1}'
+    s[p] = dsp_solo0(xy, s0, s1, c)
+    # s[p] = .flatten()
+    # ps.append(p)
+    fp = nam.final(p)
+    mp = nam.max(p)
+    mup = nam.mean(p)
+    # pps += [fp, mp, mup]
+
+    e[mp] = s[p].groupby('AgentID').max()
+    e[mup] = s[p].groupby('AgentID').mean()
+    e[fp] = s[p].dropna().groupby('AgentID').last()
+
+    scale_to_length(s, e, c, pars=[p,fp,mp,mup])
+
+
+def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
+    # dt = c.dt
     if dsp_starts is None or dsp_stops is None:
         return
-    dsp_starts = [int(t) for t in dsp_starts]
-    dsp_stops = [int(t) for t in dsp_stops]
+    # dsp_starts = [int(t) for t in dsp_starts]
+    # dsp_stops = [int(t) for t in dsp_stops]
 
-    if s is None:
-        ss = pd.read_hdf(c.dir_dict['data_h5'], 'step')[['x', 'y']]
-        s = ss
-    else:
-        ss = s[['x', 'y']]
-    ids = s.index.unique('AgentID').values
+    # xy = s[['x', 'y']]
     ps = []
-    pps = []
-    for s0, s1 in itertools.product(dsp_starts, dsp_stops):
+    # pps = []
+    for t0, t1 in itertools.product(dsp_starts, dsp_stops):
+        s0, s1 = int(t0),int(t1)
         p = f'dispersion_{s0}_{s1}'
+        dsp_solo(s, e, c, s0, s1, p)
+
+
+        # s[p] = dsp_solo(xy, s0, s1, dt)
         ps.append(p)
+        # fp = nam.final(p)
+        # mp = nam.max(p)
+        # mup = nam.mean(p)
+        # pps += [fp, mp, mup]
 
-        t0 = int(s0 / dt)
-        t1 = int(s1 / dt)
-        fp = nam.final(p)
-        mp = nam.max(p)
-        mup = nam.mean(p)
-        pps += [fp, mp, mup]
-        # pars = ps + pps
-        AA = np.zeros([c.Nticks, len(ids)]) * np.nan
-        sss=ss.loc[(slice(t0, t1), slice(None)), slice(None)]
-        if set([mp]).issubset(e.columns.values) and not recompute:
-            print(
-                f'Dispersion in {s0}-{s1} sec is already detected. If you want to recompute it, set recompute_dispersion to True')
-            continue
-        for i, id in (enumerate(ids)):
-            xy = sss.xs(id, level='AgentID', drop_level=True)
-            try:
-                origin_xy = xy.dropna().values[0]
-                AA[t0:t1, i] = xy_aux.eudi5x(xy.values, origin_xy)
-            except:
-                print(f'No values to set origin point for {id}')
-                # AA[:, i] = np.empty(len(xy)) * np.nan
-                continue
-            # d = xy_aux.eudi5x(xy.values, origin_xy)
-            # d[:t0] = np.nan
+        # e[mp] = s[p].groupby('AgentID').max()
+        # e[mup] = s[p].groupby('AgentID').mean()
+        # e[fp] = s[p].dropna().groupby('AgentID').last()
 
-        s[p] = AA.flatten()
-        e[mp] = s[p].groupby('AgentID').max()
-        e[mup] = s[p].groupby('AgentID').mean()
-        e[fp] = s[p].dropna().groupby('AgentID').last()
-
-    scale_to_length(s, e, c, pars=ps + pps)
-    if c is not None and store:
+    # scale_to_length(s, e, c, pars=ps + pps)
+    if store:
         store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
 
 

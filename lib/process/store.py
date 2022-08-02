@@ -4,6 +4,8 @@ import pandas as pd
 import lib.aux.naming as nam
 
 
+
+
 def get_dsp(s, p):
     dsp = s[p]
     steps = s.index.unique('Step')
@@ -57,8 +59,8 @@ def store_aux_dataset(s, pars, type, file, verbose=0):
             d.sort_index(inplace=True)
             store[f'{type}.{p}'] = d
 
-    elif type == 'trajectories':
-        store['trajectories'] = s[['x', 'y']]
+    # elif type == 'trajectories':
+    #     store['trajectories'] = s[['x', 'y']]
     elif type == 'pathlength':
         store['pathlength'] = s[ps]
     elif type == 'dispersion':

@@ -304,15 +304,16 @@ def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwar
     return [w1, w2]
 
 
-def save_plot(fig, filepath, filename=None, verbose=1):
+def save_plot(fig, filepath, filename, verbose=1):
     fig.savefig(filepath, dpi=300, facecolor=None)
     if verbose >= 1:
-        print(f'Plot saved as {filepath}')
+        print(f'Plot {filename} saved as {filepath}')
+        # print(f'Plot saved as {filepath}')
     # print(fig.get_size_inches(), filename)
     # fig.clear()
     plt.close(fig)
-    if filename is not None:
-        pass
+    # if filename is not None:
+    #     pass
         # print(f'Plot saved as {filename}')
 
 

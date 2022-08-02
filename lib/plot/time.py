@@ -263,7 +263,6 @@ def plot_Y_pos(**kwargs):
 
 def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_cols=1, ymax=None,
                     **kwargs):
-    from lib.process.store import get_dsp
     ylab = 'scaled dispersal' if scaled else r'dispersal $(mm)$'
     r0, r1 = range
     par = f'dispersion_{r0}_{r1}'
@@ -275,14 +274,13 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
 
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
+
+
         try :
-            try:
-                dsp = d.load_aux(type='dispersion', par=par if not scaled else nam.scal(par))
-            except:
-                dsp = get_dsp(d.step_data, par)
-            mean = dsp['median'].values[t0:t1]
-            lb = dsp['upper'].values[t0:t1]
-            ub = dsp['lower'].values[t0:t1]
+            dsp = d.comp_dsp(r0, r1)
+            mean = dsp['median'].values
+            lb = dsp['upper'].values
+            ub = dsp['lower'].values
         except :
             dsp = preg.par_dict.get(k, d)
             mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]

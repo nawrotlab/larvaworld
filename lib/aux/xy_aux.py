@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import pandas as pd
 from scipy.spatial import ConvexHull
 
 from lib.aux import naming as nam
@@ -167,3 +168,35 @@ def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     drads = (ors - np.rad2deg(rads)) % 360
     drads[drads > 180] -= 360
     return drads if in_deg else np.deg2rad(rads)
+
+def dsp_single(xy0, s0, s1, dt):
+    # dt = c.dt
+    ids = xy0.index.unique('AgentID').values
+    Nids=len(ids)
+    t0 = int(s0 / dt)
+    t1 = int(s1 / dt)
+    Nt = t1 - t0
+
+
+    xy = xy0.loc[(slice(t0, t1), slice(None)), ['x', 'y']]
+
+    AA = np.zeros([Nt, Nids]) * np.nan
+    fails=0
+    for i, id in (enumerate(ids)):
+        xy_i = xy.xs(id, level='AgentID')
+        try:
+            AA[:, i] = eudi5x(xy_i.values[1:], xy_i.dropna().values[0])
+        except:
+            fails+=1
+            # print(f'No values to set origin point for {id}')
+            pass
+    print(f'In {fails} out of {Nids} tracks failed to set origin point')
+
+    trange = np.arange(t0, t1, 1)
+    dsp_ar = np.zeros([Nt, 3]) * np.nan
+    dsp_ar[:, 0] = np.nanquantile(AA, q=0.5, axis=1)
+    dsp_ar[:, 1] = np.nanquantile(AA, q=0.75, axis=1)
+    dsp_ar[:, 2] = np.nanquantile(AA, q=0.25, axis=1)
+    df = pd.DataFrame(dsp_ar, index=trange, columns=['median', 'upper', 'lower'])
+
+    return AA,df

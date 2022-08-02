@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import naming as nam, dictsNlists as dNl,dir_aux
 from lib.registry.pars import preg
 
 from lib.plot.base import BasePlot, Plot
@@ -37,16 +37,12 @@ def traj_grouped(axs=None, fig=None, unit='mm', name=None, subfolder='trajectori
     if name is None :
         name = f'comparative_trajectories_{mode}'
 
-    def get_traj(d, mode='default'):
-        try:
-            return d.load_traj(mode)[['x', 'y']]
-        except:
-            return d.step_data[['x', 'y']]
+
 
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 6), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
-        xy = get_traj(d, mode)
+        xy = dir_aux.get_traj(d, mode)
         c = d.config
         if range is not None:
             t0, t1 = range

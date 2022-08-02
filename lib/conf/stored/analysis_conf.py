@@ -208,12 +208,13 @@ analysis_dict = dNl.NestDict({
         entry('angular pars', Npars=5)
     ],
     'general': [
-        entry('ethogram', add_samples=False),
-        entry('pathlength', scaled=False),
+        # entry('ethogram', add_samples=False),
+        # entry('pathlength', scaled=False),
+        entry('dispersal', range=(0, 40)),
         entry('dispersal', range=(0, 60)),
-        entry('dispersal summary', range=(0, 60)),
-        entry('navigation index'),
-        entry('epochs', stridechain_duration=True),
+        # entry('dispersal summary', range=(0, 60)),
+        # entry('navigation index'),
+        # entry('epochs', stridechain_duration=True),
 
     ],
     'stride': [
@@ -222,7 +223,7 @@ analysis_dict = dNl.NestDict({
     ],
     'traj': [
         entry('trajectories', mode='default', unit='mm'),
-        entry('trajectories', title='aligned2origin', mode='origin', unit='mm'),
+        entry('trajectories', title='aligned2origin', mode='origin', unit='mm', single_color=True),
     ],
     'track': [
         entry('stride track'),

@@ -215,3 +215,10 @@ def reset_MultiIndex(s, columns=None) :
     return step
 
 
+def get_traj(d, mode='default'):
+    try:
+        return d.load_traj(mode)[['x', 'y']]
+    except:
+        return d.step_data[['x', 'y']]
+
+
