@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry.pars import preg
-from lib.plot.aux import scatter_hist, annotate_plot
+from lib.plot.aux import scatter_hist, annotate_plot, NcolNrows
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
@@ -61,7 +61,10 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
         rs += [200, 2000]
 
     Nps = len(shorts)
-    P = AutoPlot(name='ang_pars', subfolder=subfolder, Ncols=Nps, figsize=(Nps * 8, 8), sharey=True, **kwargs)
+    kws0 = NcolNrows(Nps, Nrows=1,wh=8, mode='hist')
+    P = AutoPlot(name='ang_pars', subfolder=subfolder, **kws0, **kwargs)
+
+    # P = AutoPlot(name='ang_pars', subfolder=subfolder, Ncols=Nps, figsize=(Nps * 8, 8), sharey=True, **kwargs)
     P.init_fits(preg.getPar(shorts))
     for i, (k,r) in enumerate(zip(shorts, rs)):
         p=preg.dict[k]
@@ -78,16 +81,13 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
 def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],mode='hist',
                  pvalues=True, half_circles=True,annotation=False,target_only=None, show_ns=True, subfolder='distro', Nbins=100, **kwargs):
     Nps = len(ks)
-    Ncols=int(np.sqrt(Nps))
-    Nrows=int(np.ceil(Nps/Ncols))
     if name is None:
-        name = f'distros_{mode}_{Nrows}x{Ncols}'
+        name = f'distros_{mode}_{Nps}'
     legloc = 'upper left' if half_circles else 'upper right'
-    if mode == 'box':
-        kws2={'sharey':False, 'sharex':True}
-    elif mode=='hist':
-        kws2={'sharex':False, 'sharey':True}
-    P = AutoPlot(name=name, subfolder=subfolder, Ncols=Ncols,Nrows=Nrows, figsize=(Ncols * 8 , Nrows * 8), **kws2,**kwargs)
+
+
+    kws0=NcolNrows(Nps, wh=8, mode=mode)
+    P = AutoPlot(name=name, subfolder=subfolder, **kws0, **kwargs)
     P.init_fits(preg.getPar(ks))
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
@@ -161,7 +161,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
             # bins, xlim = P.angrange(r, absolute, Nbins)
             # P.plot_par(vs=vs, nbins=Nbins, i=i, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
             #            pvalues=False, half_circles=half_circles)
-            P.conf_ax(i, ylab='probability',yvis=True if i%Ncols == 0 else False,  xlab=parlabs[par], yMaxN=3,xMaxN=5, leg_loc=legloc)
+            P.conf_ax(i, ylab='probability',yvis=True if i%kws0['Ncols'] == 0 else False,  xlab=parlabs[par], yMaxN=3,xMaxN=5, leg_loc=legloc)
         # P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.l, yMaxN=3)
 
     # dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
@@ -173,13 +173,13 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
     return P.get()
 
 
-def plot_crawl_pars(subfolder='endpoint', par_legend=False, pvalues=False,type='sns.hist',
-                    half_circles=False, kde=True, fig=None, axs=None,shorts=['str_N', 'run_tr', 'cum_d'], **kwargs):
+def plot_crawl_pars(shorts=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint', par_legend=False, pvalues=False,type='sns.hist',
+                    half_circles=False, kde=True,  **kwargs):
     sns_kws={'kde' : kde, 'stat' : "probability", 'element': "step", 'fill':True, 'multiple' : "layer", 'shrink' :1}
-    P = Plot(name='crawl_pars', subfolder=subfolder, **kwargs)
-    Ncols=len(shorts)
+    Nps = len(shorts)
+    kws0 = NcolNrows(Nps, Nrows=1, wh=5, mode='hist')
+    P = AutoPlot(name='crawl_pars', subfolder=subfolder, **kws0, **kwargs)
     P.init_fits(preg.getPar(shorts))
-    P.build(1, Ncols, figsize=(Ncols * 5, 5), sharey=True, fig=fig, axs=axs)
     for i, k in enumerate(shorts):
         p=preg.dict[k]
         vs=[preg.par_dict.get(k,d) for d in P.datasets]
@@ -188,8 +188,7 @@ def plot_crawl_pars(subfolder='endpoint', par_legend=False, pvalues=False,type='
         P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, xlim=p.lim, yMaxN=4,
                   leg_loc='upper right' if par_legend else None)
     P.data_leg(0, loc='upper left', fontsize=15)
-    # dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left', fontsize=15)
-    P.adjust((0.25 / Ncols, 0.99), (0.15, 0.95), 0.01)
+    P.adjust((0.25 / Nps, 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
 def plot_turn_amp_VS_Ypos(**kwargs):
@@ -246,14 +245,18 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
 
 def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwargs):
     shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
+    Nps=len(shorts)
+    kws0 = NcolNrows(Nps, Nrows=2, wh=7, mode='hist')
+    P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, **kws0, **kwargs)
+
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
 
     pars, sim_ls, xlabels, disps = preg.getPar(shorts, to_return=['d', 's', 'l', 'd'])
-    Ncols = int(len(pars) / 2)
+    # Ncols = int(len(pars) / 2)
     chunks = ['stride', 'pause']
     chunk_cols = ['green', 'purple']
-    P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, Nrows=2, Ncols=Ncols, figsize=(Ncols * 7, 14), sharey=True,
-                 **kwargs)
+    # P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, Nrows=2, Ncols=Ncols, figsize=(Ncols * 7, 14), sharey=True,
+    #              **kwargs)
     p_labs = [[sl] * P.Ndatasets for sl in sim_ls]
 
     P.init_fits(pars, multiindex=False)
@@ -275,8 +278,8 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
 
         P.conf_ax(i, xlab=xlab, xlim=xlim, yMaxN=3)
     P.conf_ax(0, ylab='probability', ylim=[0, 0.04], leg_loc='upper left')
-    P.conf_ax(Ncols, ylab='probability', leg_loc='upper left')
-    P.adjust((0.25 / Ncols, 0.95), (0.1, 0.9), 0.1, 0.3)
+    P.conf_ax(kws0['Ncols'], ylab='probability', leg_loc='upper left')
+    P.adjust((0.1, 0.95), (0.1, 0.9), 0.1, 0.3)
     return P.get()
 
 def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
@@ -324,7 +327,7 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
     return P.get()
 
 def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
-                         plot_fit=True, nbins=20, Ncols=None, use_title=True, **kwargs):
+                         plot_fit=True, nbins=20, use_title=True, **kwargs):
     #warnings.filterwarnings('ignore')
 
     ylim = [0.0, 0.25]
@@ -368,18 +371,13 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
             raise ValueError('Provide parameter shortcuts or define a mode')
 
     Nks = len(par_shorts)
-    maxNrows = 3
-    if Nks > maxNrows:
-        Ncols = int(np.ceil(Nks / maxNrows))
-        Nrows = maxNrows
-        figsize = (Ncols * 6, Nrows * 5)
-    else:
-        Nrows = Nks
-        Ncols = 1
-        figsize = (9, 6)
+    Ncols = int(np.ceil(Nks / 3))
+    kws0 = NcolNrows(Nks, Ncols =Ncols, w=7,h=5, mode='hist')
 
-    P = AutoLoadPlot(ks=par_shorts,name=f'endpoint_params_{mode}', subfolder=subfolder,sharey=True,
-                     Nrows=Nrows,Ncols=Ncols, figsize=figsize, **kwargs)
+
+
+
+    P = AutoLoadPlot(ks=par_shorts,name=f'endpoint_params_{mode}', subfolder=subfolder,**kws0, **kwargs)
 
     def build_df(vs, ax, bins):
         Nvalues = [len(i) for i in vs]
@@ -421,7 +419,7 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
             build_df(vs, ax, bins)
         except:
             pass
-    P.adjust((0.1, 0.97), (0.17 / Nrows, 1 - (0.1 / Nrows)), 0.1, 0.2 * Nrows)
+    P.adjust((0.1, 0.97), (0.1, 1 - (0.1 / 2)), 0.1, 0.2 * 2)
     P.data_leg(0, loc='upper right', fontsize=15)
     return P.get()
 

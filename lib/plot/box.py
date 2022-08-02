@@ -8,21 +8,20 @@ from scipy.stats import ttest_ind
 
 from lib.aux import dictsNlists as dNl, data_aux, colsNstr as cNs
 from lib.registry.pars import preg
-from lib.plot.aux import label_diff, annotate_plot
+from lib.plot.aux import label_diff, annotate_plot, NcolNrows
 
 from lib.plot.base import AutoPlot, Plot
 
 
-def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=True, grouped=False, ylims=None,
+def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True, show_ns=True, grouped=False, ylims=None,
              in_mm=[], target_only=None, **kwargs):
-    pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
+
     Npars = len(shorts)
-    Ncols = Ncols
-    Nrows = int(np.ceil(Npars / Ncols))
-
-    P = AutoPlot(name=f'boxplot_{Npars}_{key}_pars', Ncols=Ncols, Nrows=Nrows, figsize=(8 * Ncols, 8 * Nrows),
-                 sharex=True, **kwargs)
-
+    if name is None:
+        name = f'boxplot_{Npars}_{key}_pars'
+    kws0 = NcolNrows(Npars, Ncols=Ncols,wh=8, mode='box')
+    P = AutoPlot(name=name, **kws0, **kwargs)
+    pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
     data = data_aux.concat_datasets(P.datasets, key=key)
@@ -64,7 +63,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
                 pass
 
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
-                  xvis=False if ii < (Nrows - 1) * Ncols else True)
+                  xvis=False if ii < (kws0['Nrows'] - 1) * Ncols else True)
     P.conf_fig(align=True,adjust_kws={'LR': (0.1, 0.95),'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
     return P.get()
 
@@ -74,10 +73,18 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, annotation=True, show_ns=
 #     return boxplots(shorts=ks,key='step',**kwargs)
 
 
-def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None, **kwargs):
-    P = Plot(name=par_shorts[0], **kwargs)
+def boxplot(par_shorts, sort_labels=False, name=None,xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None, **kwargs):
+    Npars = len(par_shorts)
+    kws0 = NcolNrows(Npars, w=8, h=7, Nrows=int(np.ceil(Npars / 3)))
+    if name is None:
+        name = par_shorts[0]
+
+    P = AutoPlot(name=name, **kws0, **kwargs)
+    # P = Plot(name=par_shorts[0], **kwargs)
     pars, sim_labels, exp_labels, labs, lims = preg.getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
-    Npars = len(pars)
+
+
+    # P.build(**kws0)
 
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
@@ -93,12 +100,8 @@ def boxplot(par_shorts, sort_labels=False, xlabel=None, pair_ids=None, common_id
     if sort_labels:
         common_ids = sorted(common_ids)
         pair_ids = sorted(pair_ids)
-    if Npars > 3:
-        Ncols = int(Npars / 2)
-        Nrows = int(Npars / Ncols)
-        P.build(Ncols=Ncols, Nrows=Nrows, figsize=(8 * Ncols, 7 * Nrows))
-    else:
-        P.build(Ncols=Npars, figsize=(7 * Npars, 6))
+
+
     for ii in range(Npars):
 
         p = pars[ii]
@@ -362,8 +365,9 @@ def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, 
 
 
 def plot_foraging(**kwargs):
-    P = Plot(name='foraging', **kwargs)
-    P.build(1, 2, figsize=(15, 10), sharex=True)
+    kws0 = NcolNrows(Nrows=1, Ncols=2, w=8,h=10, mode='box')
+    P = AutoPlot(name='foraging',**kws0, **kwargs)
+    # P.build(1, 2, figsize=(15, 10), sharex=True)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
         dfs = []
         for i, d in enumerate(P.datasets):
@@ -392,10 +396,17 @@ def plot_foraging(**kwargs):
     P.get()
 
 
-def lineplot(markers, par_shorts=['f_am'], coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, scale=1.0,
+def lineplot(markers, par_shorts=['f_am'], name=None,coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, scale=1.0,
              **kwargs):
     Npars = len(par_shorts)
-    P = AutoPlot(name=par_shorts[0], Nrows=Npars, figsize=(8, 7), **kwargs)
+    kws0 = NcolNrows(Npars, w=8, h=7/Npars, Ncols=1)
+    if name is None:
+        name = par_shorts[0]
+
+    P = AutoPlot(name=name, **kws0, **kwargs)
+
+    # Npars = len(par_shorts)
+    # P = AutoPlot(name=par_shorts[0], Nrows=Npars, figsize=(8, 7), **kwargs)
     Nds = P.Ndatasets
 
     if coupled_labels is not None:

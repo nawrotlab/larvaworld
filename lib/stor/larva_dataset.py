@@ -649,54 +649,86 @@ class LarvaDataset:
             self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
             self.store_pooled_epochs(self.pooled_epochs)
 
+
+    def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
+        cc = {
+            's': self.step_data,
+            'e': self.endpoint_data,
+            'c': self.config,
+            'recompute': recompute,
+            'store': store,
+            **kwargs
+        }
+        for k, v in pre_kws.items():
+            if v:
+                func = preg.proc_func_dict.predict[k]
+                func(**cc, k=v)
+
+        if is_last:
+            self.save(add_reference=add_reference)
+        # return self
+
+    def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=True,add_reference=True, **kwargs):
+        cc = {
+            'mode': mode,
+            'is_last': False,
+            's': self.step_data,
+            'e': self.endpoint_data,
+            'c': self.config,
+            'recompute': recompute,
+            'store': store,
+            **kwargs
+        }
+        for k in keys:
+            func = preg.proc_func_dict.dict[k]
+            func(**cc)
+
+        if is_last:
+            self.save(add_reference=add_reference)
+        # return self
+
+    def update_metric_definition(self, md=None):
+        c = self.config
+        # md = metric_definition
+        if md is None:
+            md = c.metric_definition
+        else:
+            c.metric_definition.angular.hardcoded.update(**md['angular'])
+            c.metric_definition.spatial.hardcoded.update(**md['spatial'])
+            self.define_linear_metrics()
+        return md
+
+
+
     def enrich(self, metric_definition=None, preprocessing={}, processing={}, bout_annotation=True,
                to_drop={}, recompute=False, mode='minimal', show_output=False, is_last=True, annotation={},
                add_reference=False, store=False, **kwargs):
+        md = self.update_metric_definition(md=metric_definition)
+
+
         with stdout.suppress_stdout(show_output):
             warnings.filterwarnings('ignore')
-            c = self.config
-            md = metric_definition
-            if md is None:
-                md = c.metric_definition
-            else:
-                c.metric_definition.angular.hardcoded.update(**md['angular'])
-                c.metric_definition.spatial.hardcoded.update(**md['spatial'])
-                self.define_linear_metrics()
-
-            # from lib.process.basic import preprocess, process
-
-            cc0={
-                's': self.step_data,
-                'e': self.endpoint_data,
-                'c': c,
-                # 'show_output': show_output,
-                'recompute': recompute,
-                # 'mode': mode,
-                # 'is_last': False,
-                'store': store,
-                # **kwargs
-            }
-
-
-            for k, v in preprocessing.items():
-                if v:
-                    func = preg.proc_func_dict.predict[k]
-                    func(**cc0, k=v)
+            cc0 = {
+                    'recompute': recompute,
+                    'is_last': False,
+                    'store': store,
+                }
 
             cc = {
                 'mode': mode,
-                'is_last': False,
                 **cc0,
                 **kwargs,
                 **md['dispersion'], **md['tortuosity']
             }
-            for k, v in processing.items():
-                if v:
-                    func = preg.proc_func_dict.dict[k]
-                    func(**cc)
 
 
-            # process(processing=processing, **cc, **md['dispersion'], **md['tortuosity'])
+
+            self.preprocess(pre_kws=preprocessing,**cc0)
+
+
+            self.process(keys=[k for k, v in processing.items() if v],**cc)
+
+
             if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
                 self.annotate(interference=annotation['interference'], on_food=annotation['on_food'], store=store, **kwargs)
 

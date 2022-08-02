@@ -468,3 +468,40 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     # plt.show()
     # raise
     return fig
+
+def NcolNrows(N=None, wh=8,w=None, h=None, mode=None, Ncols=None, Nrows=None):
+    if Nrows is None and Ncols is not None :
+        Nrows = int(np.ceil(N / Ncols))
+    elif Ncols is None and Nrows is not None :
+        Ncols = int(np.ceil(N / Nrows))
+    elif Ncols is None and Nrows is None:
+        Ncols = int(np.sqrt(N))
+        Nrows = int(np.ceil(N / Ncols))
+    if wh is not None :
+        w=wh
+        h=wh
+
+
+
+
+
+
+
+
+    if mode == 'box':
+        kws2={'sharey':False, 'sharex':True}
+    elif mode=='hist':
+        kws2={'sharex':False, 'sharey':True}
+    elif mode=='both':
+        kws2={'sharex':True, 'sharey':True}
+    else :
+        kws2 = {'sharex': False, 'sharey': False}
+    kws = {
+        'Ncols': Ncols,
+        'Nrows': Nrows,
+        'figsize': (w * Ncols, h * Nrows),
+        **kws2
+        # 'Ncols' : Ncols,
+    }
+    return kws
+    # Ncols = Ncols, Nrows = Nrows, figsize = (8 * Ncols, 8 * Nrows)
