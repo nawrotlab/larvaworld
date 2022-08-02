@@ -15,7 +15,10 @@ from lib.registry.units import ureg
 
 
 class LarvaConfDict:
-    def __init__(self, load=False, save=False, verbose=1):
+    def __init__(self, load=False, save=False, verbose=None):
+        if verbose is None:
+            from lib.registry.units import base_verbose
+            verbose = base_verbose
         self.verbose = verbose
         from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
         self.dict_path = preg.path_dict['LarvaConfDict']
@@ -46,7 +49,10 @@ class LarvaConfDict:
             'memory': 'pink',
             # 'locomotor': locomotor.DefaultLocomotor,
         })
-        print('Completed LarvaConfDict')
+
+        from lib.aux.stdout import vprint
+        vprint('completed LarvaConfDict', self.verbose)
+        # print('Completed LarvaConfDict')
 
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:
@@ -556,10 +562,10 @@ class LarvaConfDict:
         return entries
 
 
-    def saveConf(self, conf, mID=None, verbose=1):
+    def saveConf(self, conf, mID=None):
         if mID is not None:
             from lib.conf.stored.conf import saveConf
-            saveConf(conf, 'Model', mID, verbose=verbose)
+            saveConf(conf, 'Model', mID, verbose=self.verbose)
 
     def loadConf(self, mID=None):
         if mID is not None:
@@ -722,7 +728,7 @@ class LarvaConfDict:
                                                                  conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
 
-        self.saveConf(conf=m0, mID=mID, verbose=0)
+        self.saveConf(conf=m0, mID=mID)
 
         from lib.sim.eval.model_fit import optimize_mID
         entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys, dt=c.dt, refID=refID,

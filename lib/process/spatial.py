@@ -289,29 +289,49 @@ def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40], st
         return
     # dsp_starts = [int(t) for t in dsp_starts]
     # dsp_stops = [int(t) for t in dsp_stops]
-
+    xy0 = pd.read_hdf(c.dir_dict.traj, key='default')
     # xy = s[['x', 'y']]
     ps = []
+    dsps = {}
     # pps = []
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
         s0, s1 = int(t0),int(t1)
         p = f'dispersion_{s0}_{s1}'
-        dsp_solo(s, e, c, s0, s1, p)
 
 
-        # s[p] = dsp_solo(xy, s0, s1, dt)
+
+        AA, df = xy_aux.dsp_single(xy0, s0, s1, c.dt)
+        dsps[p] = df
+
+        # dsp_solo(s, e, c, s0, s1, p)
+        t00=int(s0 / c.dt)
+        t11=t00+AA.shape[0]
+        AA0 = np.zeros([c.Nticks, c.N]) * np.nan
+        AA0[t00:t11,:]=AA
+        s[p] = AA0.flatten()
+
         ps.append(p)
-        # fp = nam.final(p)
-        # mp = nam.max(p)
-        # mup = nam.mean(p)
+        fp = nam.final(p)
+        mp = nam.max(p)
+        mup = nam.mean(p)
         # pps += [fp, mp, mup]
 
-        # e[mp] = s[p].groupby('AgentID').max()
-        # e[mup] = s[p].groupby('AgentID').mean()
-        # e[fp] = s[p].dropna().groupby('AgentID').last()
+        e[mp] = s[p].groupby('AgentID').max()
+        e[mup] = s[p].groupby('AgentID').mean()
+        e[fp] = s[p].dropna().groupby('AgentID').last()
+        scale_to_length(s, e, c, pars=[p, fp, mp, mup])
 
     # scale_to_length(s, e, c, pars=ps + pps)
     if store:
+        dNl.save_dict(dsps, c.dir_dict.dsp, use_pickle=True)
+        # store_dsps(dsps, file=c.dir_dict.dsp)
+        # for p,df in dsps.items():
+        #
+        # for p in ps:
+        #     d = get_dsp(s, p)
+        #     store[f'{type}.{p}'] = d
+
+
         store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
 
 

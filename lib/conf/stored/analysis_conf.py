@@ -208,13 +208,13 @@ analysis_dict = dNl.NestDict({
         entry('angular pars', Npars=5)
     ],
     'general': [
-        # entry('ethogram', add_samples=False),
-        # entry('pathlength', scaled=False),
+        entry('ethogram', add_samples=False),
+        entry('pathlength', scaled=False),
         entry('dispersal', range=(0, 40)),
         entry('dispersal', range=(0, 60)),
-        # entry('dispersal summary', range=(0, 60)),
-        # entry('navigation index'),
-        # entry('epochs', stridechain_duration=True),
+        entry('dispersal summary', range=(0, 60)),
+        entry('navigation index'),
+        entry('epochs', stridechain_duration=True),
 
     ],
     'stride': [

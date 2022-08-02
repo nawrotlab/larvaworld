@@ -502,7 +502,7 @@ class LarvaDataset:
 
     def load_traj(self, mode='default'):
         # df = self.read(key=mode, file='traj')
-        return pd.read_hdf(self.dir_dict.traj, mode)
+        return pd.read_hdf(self.dir_dict.traj, key=mode)
 
     def load_aux(self, type, par=None):
         # print(pd.HDFStore(self.dir_dict['aux_h5']).keys())
@@ -581,6 +581,7 @@ class LarvaDataset:
             'GAoptimization': os.path.join(self.data_dir, 'GAoptimization'),
             'evaluation': os.path.join(self.data_dir, 'evaluation'),
             'foraging': os.path.join(self.data_dir, 'foraging_dicts'),
+            'dsp': os.path.join(self.data_dir, 'dsp_dfs.txt'),
             'deb': os.path.join(self.data_dir, 'deb_dicts'),
             'nengo': os.path.join(self.data_dir, 'nengo_probes'),
             'single_tracks': os.path.join(self.data_dir, 'single_tracks'),

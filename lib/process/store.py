@@ -49,6 +49,15 @@ def store_traj(df, mode='default', c=None, file=None):
     # temp[h5_k] = s[pps]
     store.close()
 
+# def store_dsps(dsps, c=None, file=None) :
+#     from lib.aux import dictsNlists as dNl
+#     if file is None :
+#         file = c.dir_dict.dsp
+#     # path = self.dir_dict.chunk_dicts
+#     # os.makedirs(path, exist_ok=True)
+#     # filepath = f'{path}/{id}.txt'
+#     dNl.save_dict(dsps, file, use_pickle=True)
+
 
 def store_aux_dataset(s, pars, type, file, verbose=0):
     store = pd.HDFStore(file)

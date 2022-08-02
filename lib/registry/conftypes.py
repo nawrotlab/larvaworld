@@ -8,8 +8,6 @@ import numpy as np
 import pandas
 import param
 
-
-
 import lib.aux.dictsNlists as dNl
 from lib.aux.par_aux import sub
 
@@ -17,9 +15,11 @@ from lib.registry.pars import preg
 
 
 class ConfType:
-    def __init__(self, k, subks={},verbose=1):
+    def __init__(self, k, subks={}, verbose=None):
+        if verbose is None:
+            from lib.registry.units import base_verbose
+            verbose = base_verbose
         self.verbose = verbose
-
 
         self.k = k
         self.path = preg.path_dict[k]
@@ -31,36 +31,35 @@ class ConfType:
     def loadDict(self):
         try:
 
-            return dNl.load_dict(self.path,self.use_pickle)
+            return dNl.load_dict(self.path, self.use_pickle)
         except:
             return dNl.NestDict()
 
     def loadConf(self, id):
-        d=self.loadDict()
-        if id in d.keys() :
+        d = self.loadDict()
+        if id in d.keys():
             return dNl.NestDict(d[id])
-        else :
+        else:
             print(f'{self.k} Configuration {id} does not exist')
             raise ValueError()
 
     def expandConf(self, id):
         from lib.registry.pars import preg
-        conf=self.loadConf(id)
-        if len(self.subks)>0:
-            CT=preg.conftype_dict.dict
+        conf = self.loadConf(id)
+        if len(self.subks) > 0:
+            CT = preg.conftype_dict.dict
         for subID, subk in self.subks.items():
-            if subID=='larva_groups' and subk == 'Model':
+            if subID == 'larva_groups' and subk == 'Model':
                 for k, v in conf[subID].items():
                     if type(v.model) == str:
                         v.model = CT[subk].loadConf(v.model)
-            else :
-                conf[subID]=CT[subk].expandConf(conf[subID])
+            else:
+                conf[subID] = CT[subk].expandConf(conf[subID])
 
         return conf
 
-
-    def saveConf(self,id,conf, mode='overwrite'):
-        d=self.loadDict()
+    def saveConf(self, id, conf, mode='overwrite'):
+        d = self.loadDict()
 
         if id in d.keys() and mode == 'update':
             d[id] = dNl.update_nestdict(d[id], dNl.flatten_dict(conf))
@@ -70,50 +69,47 @@ class ConfType:
         if self.verbose >= 1:
             print(f'{self.k} Configuration saved under the id : {id}')
 
-
     def saveDict(self, d):
-        dNl.save_dict(d, self.path,self.use_pickle)
-
+        dNl.save_dict(d, self.path, self.use_pickle)
 
     def reset_func(self):
         from lib.registry.confResetFuncs import confReset_funcs
         return confReset_funcs(self.k)()
 
     def resetDict(self):
-        dd=self.reset_func()
+        dd = self.reset_func()
         d = self.loadDict()
 
-        N0,N1=len(d), len(dd)
+        N0, N1 = len(d), len(dd)
 
         d.update(dd)
 
-        Ncur=len(d)
-        Nnew=Ncur-N0
-        Nup=N1-Nnew
+        Ncur = len(d)
+        Nnew = Ncur - N0
+        Nup = N1 - Nnew
         self.saveDict(d)
 
         if self.verbose >= 1:
             print(f'{self.k}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing')
 
-
     def deleteConf(self, id=None):
         if id is not None:
             d = self.loadDict()
-            if id in d.keys() :
+            if id in d.keys():
                 d.pop(id, None)
                 self.saveDict(d)
                 if self.verbose >= 1:
                     print(f'Deleted {self.k} configuration under the id : {id}')
 
-    @ property
+    @property
     def ConfIDs(self):
         return list(self.loadDict().keys())
 
-
     def ConfSelector(self, **kwargs):
         from lib.registry.par import selector_func
-        def func() :
+        def func():
             return selector_func(objects=self.ConfIDs, **kwargs)
+
         return func
 
     def ConfParsarg(self):
@@ -147,37 +143,40 @@ class ConfType:
         if k0 is not None and k0 in initD.keys():
             self.dict0 = initD[k0]
             self.mdict = init2mdict(initD[k0])
-            self.eval=self.checkDict()
+            self.eval = self.checkDict()
 
         else:
             self.dict0 = None
             self.mdict = None
 
-
     def checkDict(self):
-        M=preg.larva_conf_dict
+        M = preg.larva_conf_dict
         d = self.loadDict()
-        eval={}
+        eval = {}
         for id, conf in d.items():
-            try :
-                eval[id]= M.update_mdict(self.mdict,conf)
+            try:
+                eval[id] = M.update_mdict(self.mdict, conf)
                 # print(f'{id}  SUCCESS')
-            except :
+            except:
                 eval[id] = None
                 # print(f'{id}  FAIL')
         return eval
 
 
-
 class ConfTypeDict:
-    def __init__(self, load=False, save=False, verbose=1):
+    def __init__(self, load=False, save=False, verbose=None):
+        if verbose is None:
+            from lib.registry.units import base_verbose
+            verbose = base_verbose
         self.verbose = verbose
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
                           'Group', 'Trial', 'Life', 'Body']
 
-
         self.dict = self.build(self.conftypes)
-        print('completed ConfTypes')
+
+        from lib.aux.stdout import vprint
+        vprint('completed ConfTypes', self.verbose)
+        # print('completed ConfTypes')
 
         # self.dict_path = preg.path_dict['ConfTypeDict']
         # if not load:
@@ -203,36 +202,30 @@ class ConfTypeDict:
     def build_mDicts(self, initD):
         from lib.registry.initDicts import confInit_ks
 
-        for k,ct in self.dict.items():
-            ct.build_mdict(k0 = confInit_ks(k), initD=initD)
-
+        for k, ct in self.dict.items():
+            ct.build_mdict(k0=confInit_ks(k), initD=initD)
 
         print('computed mDicts')
 
-
-    def build(self, ks) :
+    def build(self, ks):
 
         self.subk_dict = self.build_subk_dict(ks)
 
-        d = dNl.NestDict({k : ConfType(k=k, subks = subks, verbose=self.verbose) for k,subks in self.subk_dict.items()})
+        d = dNl.NestDict({k: ConfType(k=k, subks=subks, verbose=self.verbose) for k, subks in self.subk_dict.items()})
         return d
 
-
-
-
-    def saveConf(self, conf, conftype, id=None,**kwargs):
+    def saveConf(self, conf, conftype, id=None, **kwargs):
         self.dict[conftype].saveConf(id=id, conf=conf, **kwargs)
 
     #
     def loadConf(self, conftype, id=None):
-        self.dict[conftype].loadConf(id=id,)
-
+        self.dict[conftype].loadConf(id=id, )
 
     def loadRef(self, id=None):
         if id is not None:
-            conf=self.dict.Ref.loadConf(id)
+            conf = self.dict.Ref.loadConf(id)
             from lib.stor.larva_dataset import LarvaDataset
-            d= LarvaDataset(conf.dir, load_data=False)
+            d = LarvaDataset(conf.dir, load_data=False)
             if self.verbose >= 1:
                 print(f'Loaded stored reference dataset : {id}')
             return d
@@ -268,18 +261,12 @@ class ConfTypeDict:
     #     })
     #     return d[k]
 
-
-
-
-
     def resetConfs(self, ks=None):
         if ks is None:
             ks = self.conftypes
 
-
         for k in ks:
             self.dict[k].resetDict()
-
 
     def next_idx(self, id, conftype='Exp'):
         from lib.registry.pars import preg
@@ -299,7 +286,4 @@ class ConfTypeDict:
         return d[conftype][id]
 
 
-
-
 conftype_dict = ConfTypeDict()
-

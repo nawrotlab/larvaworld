@@ -5,8 +5,12 @@ import numpy as np
 
 
 class ParRegistry:
-    def __init__(self):
-        pass
+    def __init__(self,verbose=None):
+        if verbose is None:
+            from lib.registry.units import base_verbose
+            verbose = base_verbose
+        self.verbose = verbose
+
 
     @property
     def conftype_dict(self):
