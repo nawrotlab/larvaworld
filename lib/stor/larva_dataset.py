@@ -6,7 +6,7 @@ import pandas as pd
 import warnings
 import copy
 
-from lib.aux import dictsNlists as dNl, xy_aux,naming as nam
+from lib.aux import dictsNlists as dNl, xy_aux, naming as nam, stdout
 # import lib.aux.naming as nam
 
 from lib.registry.pars import preg
@@ -222,7 +222,7 @@ class LarvaDataset:
             store.close()
             self.food_endpoint_data.sort_index(inplace=True)
 
-    def save(self, step=True, end=True, food=False, add_reference=False, **kwargs):
+    def save(self, step=True, end=True, food=False, add_reference=False,refID=None, **kwargs):
 
         D = self.dir_dict
 
@@ -237,7 +237,7 @@ class LarvaDataset:
             store = pd.HDFStore(D.data_h5)
             store['food'] = self.food_endpoint_data
             store.close()
-        self.save_config(add_reference=add_reference)
+        self.save_config(add_reference=add_reference, refID=refID)
 
         print(f'***** Dataset {self.id} stored.-----')
 
@@ -633,11 +633,11 @@ class LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-    def annotate(self, interference=True, on_food=True, **kwargs):
+    def annotate(self, interference=True, on_food=True, store=False, **kwargs):
         s, e = self.step_data, self.endpoint_data
         c = self.config
         from lib.process import aux, patch
-        self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
+        self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, store=store, **kwargs)
         self.store_chunk_dicts(self.chunk_dicts)
         aux.turn_mode_annotation(e, self.chunk_dicts)
         patch.comp_patch(s, e, c)
@@ -645,55 +645,65 @@ class LarvaDataset:
             from lib.process import patch
             patch.comp_on_food(s, e, c)
         if interference:
-            self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
+            self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, store=store)
             self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
             self.store_pooled_epochs(self.pooled_epochs)
 
     def enrich(self, metric_definition=None, preprocessing={}, processing={}, bout_annotation=True,
                to_drop={}, recompute=False, mode='minimal', show_output=False, is_last=True, annotation={},
-               add_reference=False, **kwargs):
-        c = self.config
-        md = metric_definition
-        if md is None:
-            md = c.metric_definition
-        else:
-            c.metric_definition.angular.hardcoded.update(**md['angular'])
-            c.metric_definition.spatial.hardcoded.update(**md['spatial'])
-            self.define_linear_metrics()
+               add_reference=False, store=False, **kwargs):
+        with stdout.suppress_stdout(show_output):
+            warnings.filterwarnings('ignore')
+            c = self.config
+            md = metric_definition
+            if md is None:
+                md = c.metric_definition
+            else:
+                c.metric_definition.angular.hardcoded.update(**md['angular'])
+                c.metric_definition.spatial.hardcoded.update(**md['spatial'])
+                self.define_linear_metrics()
 
-        from lib.process.basic import preprocess, process
-        warnings.filterwarnings('ignore')
-        s, e = self.step_data, self.endpoint_data
-        cc = {
-            's': s,
-            'e': e,
-            'c': c,
-            'show_output': show_output,
-            'recompute': recompute,
-            'mode': mode,
-            'is_last': False,
-        }
-        preprocess(**preprocessing, **cc, **kwargs)
-        process(processing=processing, **cc, **kwargs, **md['dispersion'], **md['tortuosity'])
-        if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
-            self.annotate(interference=annotation['interference'], on_food=annotation['on_food'], **kwargs)
-            # from lib.process import aux, patch
-            # self.chunk_dicts = aux.comp_chunk_dicts(s, e, c, **kwargs)
-            # self.store_chunk_dicts(self.chunk_dicts)
-            # aux.turn_mode_annotation(e, self.chunk_dicts)
-            # patch.comp_patch(s, e, c)
-            # if annotation['on_food']:
-            #     from lib.process import patch
-            #     patch.comp_on_food(s, e, c)
-            # if annotation['interference']:
-            #     self.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=self.chunk_dicts, **kwargs)
-            #     self.pooled_epochs = self.compute_pooled_epochs(chunk_dicts=self.chunk_dicts)
-            #     self.store_pooled_epochs(self.pooled_epochs)
+            # from lib.process.basic import preprocess, process
 
-        self.drop_pars(**to_drop, **cc)
-        if is_last:
-            self.save(add_reference=add_reference)
-        return self
+            cc0={
+                's': self.step_data,
+                'e': self.endpoint_data,
+                'c': c,
+                # 'show_output': show_output,
+                'recompute': recompute,
+                # 'mode': mode,
+                # 'is_last': False,
+                'store': store,
+                # **kwargs
+            }
+
+
+            for k, v in preprocessing.items():
+                if v:
+                    func = preg.proc_func_dict.predict[k]
+                    func(**cc0, k=v)
+
+            cc = {
+                'mode': mode,
+                'is_last': False,
+                **cc0,
+                **kwargs,
+                **md['dispersion'], **md['tortuosity']
+            }
+            for k, v in processing.items():
+                if v:
+                    func = preg.proc_func_dict.dict[k]
+                    func(**cc)
+
+
+            # process(processing=processing, **cc, **md['dispersion'], **md['tortuosity'])
+            if bout_annotation and any([annotation[kk] for kk in ['stride', 'pause', 'turn']]):
+                self.annotate(interference=annotation['interference'], on_food=annotation['on_food'], store=store, **kwargs)
+
+            # self.drop_pars(**to_drop, **cc)
+            if is_last:
+                self.save(add_reference=add_reference)
+            return self
 
     def compute_pooled_epochs(self, chunk_dicts=None):
         from lib.anal.fitting import fit_bouts

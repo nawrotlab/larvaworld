@@ -15,11 +15,8 @@ from lib.registry.units import ureg
 
 
 class LarvaConfDict:
-    def __init__(self, load=False, save=False, verbose=None):
-        if verbose is None:
-            from lib.registry.units import base_verbose
-            verbose = base_verbose
-        self.verbose = verbose
+    def __init__(self, load=False, save=False):
+
         from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
         self.dict_path = preg.path_dict['LarvaConfDict']
         if not load:
@@ -50,8 +47,8 @@ class LarvaConfDict:
             # 'locomotor': locomotor.DefaultLocomotor,
         })
 
-        from lib.aux.stdout import vprint
-        vprint('completed LarvaConfDict', self.verbose)
+        preg.vprint('completed LarvaConfDict')
+
         # print('Completed LarvaConfDict')
 
     def get_mdict(self, mkey, mode='default'):
@@ -565,7 +562,7 @@ class LarvaConfDict:
     def saveConf(self, conf, mID=None):
         if mID is not None:
             from lib.conf.stored.conf import saveConf
-            saveConf(conf, 'Model', mID, verbose=self.verbose)
+            saveConf(conf, 'Model', mID)
 
     def loadConf(self, mID=None):
         if mID is not None:

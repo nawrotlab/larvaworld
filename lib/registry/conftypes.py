@@ -15,17 +15,12 @@ from lib.registry.pars import preg
 
 
 class ConfType:
-    def __init__(self, k, subks={}, verbose=None):
-        if verbose is None:
-            from lib.registry.units import base_verbose
-            verbose = base_verbose
-        self.verbose = verbose
+    def __init__(self, k, subks={}):
 
         self.k = k
         self.path = preg.path_dict[k]
         self.use_pickle = False if self.k != 'Ga' else True
         self.subks = subks
-        # self.mdict=self.build_mdict()
 
     # @property
     def loadDict(self):
@@ -66,8 +61,7 @@ class ConfType:
         else:
             d[id] = dNl.NestDict(conf)
         self.saveDict(d)
-        if self.verbose >= 1:
-            print(f'{self.k} Configuration saved under the id : {id}')
+        preg.vprint(f'{self.k} Configuration saved under the id : {id}')
 
     def saveDict(self, d):
         dNl.save_dict(d, self.path, self.use_pickle)
@@ -89,8 +83,9 @@ class ConfType:
         Nup = N1 - Nnew
         self.saveDict(d)
 
-        if self.verbose >= 1:
-            print(f'{self.k}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing')
+        preg.vprint(f'{self.k}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',2)
+
+
 
     def deleteConf(self, id=None):
         if id is not None:
@@ -98,8 +93,7 @@ class ConfType:
             if id in d.keys():
                 d.pop(id, None)
                 self.saveDict(d)
-                if self.verbose >= 1:
-                    print(f'Deleted {self.k} configuration under the id : {id}')
+                preg.vprint(f'Deleted {self.k} configuration under the id : {id}', 2)
 
     @property
     def ConfIDs(self):
@@ -164,18 +158,15 @@ class ConfType:
 
 
 class ConfTypeDict:
-    def __init__(self, load=False, save=False, verbose=None):
-        if verbose is None:
-            from lib.registry.units import base_verbose
-            verbose = base_verbose
-        self.verbose = verbose
+    def __init__(self, load=False, save=False):
+
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
                           'Group', 'Trial', 'Life', 'Body']
 
         self.dict = self.build(self.conftypes)
 
-        from lib.aux.stdout import vprint
-        vprint('completed ConfTypes', self.verbose)
+        # from lib.aux.stdout import vprint
+        preg.vprint('completed ConfTypes')
         # print('completed ConfTypes')
 
         # self.dict_path = preg.path_dict['ConfTypeDict']
@@ -211,7 +202,7 @@ class ConfTypeDict:
 
         self.subk_dict = self.build_subk_dict(ks)
 
-        d = dNl.NestDict({k: ConfType(k=k, subks=subks, verbose=self.verbose) for k, subks in self.subk_dict.items()})
+        d = dNl.NestDict({k: ConfType(k=k, subks=subks) for k, subks in self.subk_dict.items()})
         return d
 
     def saveConf(self, conf, conftype, id=None, **kwargs):
@@ -226,8 +217,7 @@ class ConfTypeDict:
             conf = self.dict.Ref.loadConf(id)
             from lib.stor.larva_dataset import LarvaDataset
             d = LarvaDataset(conf.dir, load_data=False)
-            if self.verbose >= 1:
-                print(f'Loaded stored reference dataset : {id}')
+            preg.vprint(f'Loaded stored reference dataset : {id}', 2)
             return d
 
     def loadRefD(self, id=None, **kwargs):

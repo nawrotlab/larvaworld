@@ -6,19 +6,16 @@ from lib.aux import dictsNlists as dNl
 
 
 class ParInitDict:
-    def __init__(self, load=False, save=False,verbose=None):
-        if verbose is None:
-            from lib.registry.units import base_verbose
-            verbose = base_verbose
-        self.verbose = verbose
+    def __init__(self, load=False, save=False):
+
 
         if not load:
             from lib.registry.initDicts import I0
             self.dict = I0
             self.default_dict = self.build_default_dict(self.dict)
 
-            from lib.aux.stdout import vprint
-            vprint('started InitParDict', self.verbose)
+
+            # preg.vprint('started InitParDict')
 
             # print('started InitParDict')
             # if save:

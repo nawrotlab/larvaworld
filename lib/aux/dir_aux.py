@@ -143,7 +143,7 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
 
         except:
             from lib.process.spatial import align_trajectories
-            s0 = align_trajectories(s0, c=c0, mode=transposition,replace=True)
+            s0 = align_trajectories(s0, c=c0, transposition=transposition,replace=True)
 
         xy_max=2*np.max(s0[nam.xy(c0.point)].dropna().abs().values.flatten())
         c0.env_params.arena = preg.get_null('arena', arena_dims=(xy_max, xy_max))
@@ -162,6 +162,9 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
     return s0,e0, c0
 
 def import_smaller_dataset(step, dt, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None):
+    min_ticks=min_duration_in_sec/dt
+
+
     if time_slice is not None :
         tmin,tmax=time_slice
         tickmin,tickmax=int(tmin/dt),int(tmax/dt)
@@ -170,20 +173,10 @@ def import_smaller_dataset(step, dt, max_Nagents=None, min_duration_in_sec=0.0,t
     end.columns = ['num_ticks']
 
     if max_Nagents is not None:
-        # end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
-        # end.columns = ['num_ticks']
         selected = end.nlargest(max_Nagents, 'num_ticks').index.values
         step = step.loc[(slice(None), selected), :]
         end = end.loc[selected]
-    # if min_duration_in_sec > 0:
-
-        # selected = end[end['num_ticks'] >= min_duration_in_sec/dt].index.values
-        # step = step.loc[(slice(None), selected), :]
-        # end = end.loc[selected]
-
-        # end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
-        # end.columns = ['num_ticks']
-    selected = end[end['num_ticks'] > min_duration_in_sec/dt].index.values
+    selected = end[end['num_ticks'] > min_ticks].index.values
     step = step.loc[(slice(None), selected), :]
     end = end.loc[selected]
     end['cum_dur'] = end['num_ticks'] * dt

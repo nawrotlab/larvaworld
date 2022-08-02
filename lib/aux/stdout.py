@@ -26,7 +26,7 @@ def suppress_stdout(show_output):
         # else :
         #     pass
 
-def vprint(text,verbose,verbose_thr=1):
-    if verbose>=verbose_thr:
-        print(text)
+# def vprint(text,verbose,verbose_thr=1):
+#     if verbose>=verbose_thr:
+#         print(text)
 

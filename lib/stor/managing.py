@@ -10,21 +10,27 @@ from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_
 from lib.stor.larva_dataset import LarvaDataset
 
 
-def import_datasets(source_ids, ids=None, colors=None, **kwargs):
+def import_datasets(source_ids, ids=None, colors=None,refIDs=None,  **kwargs):
     if colors is None:
         colors = cNs.N_colors(len(source_ids))
     if ids is None:
         ids = source_ids
     ds = []
     for i, source_id in enumerate(source_ids):
-        d = import_dataset(id=ids[i], color=colors[i], source_id=source_id, **kwargs)
+        refID = None if refIDs is None else refIDs[i]
+
+
+        d = import_dataset(id=ids[i], color=colors[i], source_id=source_id,refID=refID,  **kwargs)
         ds.append(d)
+
     return ds
 
 
 def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, age=0.0, merged=False, enrich=True,
-                   add_reference=True,
+                   add_reference=True,refID=None,enrich_conf=None,
                    color='black', **kwargs):
+    print()
+    print(f'----- Initializing {datagroup_id} format-specific dataset import. -----')
     # N = 150
     group = preg.get_null('LarvaGroup', sample=None, model=None, life_history={'age': age, 'epochs': {}},
                           default_color=color)
@@ -54,15 +60,22 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, age
     }
     d = build_dataset(id=id, **kws)
     if d is not None:
-
+        print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
         if enrich:
             print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
-            d = d.enrich(**g.enrichment, store=True, is_last=False)
-        d.save(food=False, add_reference=add_reference)
+            if enrich_conf is None :
+                enrich_conf =g.enrichment
+
+            d = d.enrich(**enrich_conf, store=True, is_last=False)
+        d.save(food=False, add_reference=add_reference, refID=refID)
+    else :
+        print(f'xxxxx Failed to create dataset {id}! -----')
     return d
 
 
 def build_dataset(datagroup_id, id, target_dir, larva_groups={}, **kwargs):
+    print(f'*---- Building dataset {id} under the {datagroup_id} format. -----')
+
     func_dict = {
         'Jovanic lab': build_Jovanic,
         'Berni lab': build_Berni,
@@ -71,7 +84,7 @@ def build_dataset(datagroup_id, id, target_dir, larva_groups={}, **kwargs):
     }
 
     warnings.filterwarnings('ignore')
-    print(f'----- Initializing {datagroup_id} format-specific dataset import. -----')
+
     shutil.rmtree(target_dir, ignore_errors=True)
     g = preg.loadConf(id=datagroup_id, conftype='Group')
     d = LarvaDataset(dir=target_dir, id=id, metric_definition=g.enrichment.metric_definition,
@@ -86,10 +99,10 @@ def build_dataset(datagroup_id, id, target_dir, larva_groups={}, **kwargs):
 
         step, end = func_dict[datagroup_id](**kws0)
         d.set_data(step=step, end=end)
-        print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
+        # print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
         return d
     except:
-        print(f'xxxxx Failed to create dataset {id}! -----')
+        # print(f'xxxxx Failed to create dataset {id}! -----')
         # d.delete()
         return None
 

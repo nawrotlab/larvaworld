@@ -5,11 +5,12 @@ import numpy as np
 
 
 class ParRegistry:
-    def __init__(self,verbose=None):
-        if verbose is None:
-            from lib.registry.units import base_verbose
-            verbose = base_verbose
+    def __init__(self,verbose=1):
         self.verbose = verbose
+
+    def vprint(self, text, verbose=0):
+        if verbose >= self.verbose:
+            print(text)
 
 
     @property
@@ -56,6 +57,11 @@ class ParRegistry:
     def par_dict(self):
         from lib.registry.par_dict import basepar_dict
         return basepar_dict
+
+    @property
+    def proc_func_dict(self):
+        from lib.process.basic import procfunc_dict
+        return procfunc_dict
 
     @property
     def dict(self):

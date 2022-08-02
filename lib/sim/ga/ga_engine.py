@@ -83,7 +83,7 @@ class GAselector:
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
-                self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID, verbose=self.verbose)
+                self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
 
                 print()
                 print(np.round(self.best_fitness,3), self.bestConfID)
@@ -91,6 +91,8 @@ class GAselector:
                 print()
         end_generation_time = TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
+
+
 
         if self.verbose >= 2:
             print(f'Generation {self.generation_num} duration',total_generation_time)
@@ -494,7 +496,7 @@ class GAbuilder(GAselector):
         self.genome_df = self.genome_df.round(3)
         self.genome_df.sort_values(by='fitness', ascending=False, inplace=True)
         preg.graph_dict.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
-                                    name=self.bestConfID, verbose=self.verbose)
+                                    name=self.bestConfID)
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
         # print(f'GA dataframe saved at {filepath}')
 

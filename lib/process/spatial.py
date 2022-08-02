@@ -229,7 +229,7 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c, store=store)
-    align_trajectories(s, c, store=store)
+    align_trajectories(s, c, store=store, replace=False, transposition='origin')
 
     print(f'Completed {mode} spatial processing.')
 
@@ -504,6 +504,11 @@ def comp_source_metrics(s, e, c, **kwargs):
 
         print('Bearing and distance to source computed')
 
+def comp_wind(**kwargs) :
+    try :
+        comp_wind_metrics(**kwargs)
+    except :
+        comp_final_anemotaxis(**kwargs)
 
 def comp_wind_metrics(s, e, c, **kwargs):
     w = c.env_params.windscape
@@ -541,8 +546,10 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         # print(e['anemotaxis'])
 
 
-def align_trajectories(s, c, track_point=None, arena_dims=None, mode='origin', store=False,replace=False, **kwargs):
-
+def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='origin', store=False,replace=True, **kwargs):
+    if transposition in ['', None, np.nan]:
+        return
+    mode=transposition
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]

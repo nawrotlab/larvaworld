@@ -38,6 +38,7 @@ def build_path_dict() :
         'ParShelve': f'{CF}/ParShelve',
         'ParDict': f'{CF}/ParDict.csv',
         'ParFuncDict': f'{CF}/ParFuncDict.csv',
+        'ProcFuncDict': f'{CF}/ProcFuncDict.csv',
         'ParInitDict': f'{CF}/ParInitDict.csv',
         'ParDefaultDict': f'{CF}/ParDefaultDict.csv',
         'ParserDict': f'{CF}/ParserDict.csv',
