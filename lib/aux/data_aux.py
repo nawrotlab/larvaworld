@@ -136,22 +136,32 @@ def init2mdict(d0):
 
 
 def gConf(mdict, **kwargs):
-    from lib.aux import dictsNlists as dNl
-    if isinstance(mdict, param.Parameterized):
+    if mdict is None:
+        return None
+
+
+    elif isinstance(mdict, param.Parameterized):
         return mdict.v
-    conf = dNl.NestDict()
-    for d, p in mdict.items():
-        if isinstance(p, param.Parameterized):
-            conf[d] = p.v
-        else:
-            conf[d] = gConf(mdict=p)
-        conf = dNl.update_existingdict(conf, kwargs)
-    # conf.update(kwargs)
-    return conf
+    elif isinstance(mdict,dict):
+        from lib.aux import dictsNlists as dNl
+        conf = dNl.NestDict()
+        for d, p in mdict.items():
+            if isinstance(p, param.Parameterized):
+                conf[d] = p.v
+            else:
+                conf[d] = gConf(mdict=p)
+            conf = dNl.update_existingdict(conf, kwargs)
+        # conf.update(kwargs)
+        return conf
+    else:
+        return mdict
+
 
 def update_mdict(mdict, mmdic):
-    if mmdic is None:
+    if mmdic is None or mdict is None:
         return None
+    elif not isinstance(mmdic,dict) or not isinstance(mdict,dict):
+        return mdict
     else:
         for d, p in mdict.items():
             new_v = mmdic[d] if d in mmdic.keys() else None
@@ -182,3 +192,15 @@ def update_existing_mdict(mdict, mmdic):
             elif isinstance(p,dict) and isinstance(v,dict):
                 mdict[d]=update_existing_mdict(mdict=p, mmdic=v)
         return mdict
+
+
+def get_ks(d0, k0=None, ks=[]):
+    for k, p in d0.items():
+        if k0 is not None:
+            k = f'{k0}.{k}'
+        if isinstance(p, param.Parameterized):
+
+            ks.append(k)
+        else:
+            ks = get_ks(p, k0=k, ks=ks)
+    return ks

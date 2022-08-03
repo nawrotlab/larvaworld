@@ -12,6 +12,10 @@ class ParRegistry:
         if verbose >= self.verbose:
             print(text)
 
+    @property
+    def grouptype_dict(self):
+        from lib.registry.order import GT
+        return GT
 
     @property
     def conftype_dict(self):

@@ -45,7 +45,8 @@ def flatten_dict(d, parent_key='', sep='.'):
     dd= NestDict(dict(items))
     return dd
 
-
+def flatten_dict_list(l):
+    return [flatten_dict(conf) for conf in l]
 
 
 def reconstruct_dict(param_group, **kwargs):
@@ -259,6 +260,11 @@ def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):
     keys = ['turn_dur', 'turn_amp', 'turn_vel_max', 'run_dur', 'run_dst', 'pause_dur', 'run_count']
     aux_dic = {k: np.array(flatten_list([chunk_dicts[id][k] for id in ids])) for k in keys}
     return aux_dic
+
+def same_dicts(d0, ds):
+    for k,v in d0.items():
+        ds=[d for d in ds if k in d.keys() and d[k]==v]
+    return ds
 
 
 class AttrDict(dict):

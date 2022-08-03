@@ -42,58 +42,56 @@ class ConfType:
             print(f'{self.k} Configuration {id} does not exist')
             raise ValueError()
 
-    def expand_mdict(self):
+    def expand_mdict(self, m0=None):
+        if m0 is  None:
+            if self.mdict is None:
+                return None
+            else :
+                m0=self.mdict
+
+        def retrieve(p,ct):
+            conf = None
+            if p in ct.ConfIDs:
+                # print(v)
+                conf = ct.loadConf(p)
+            elif isinstance(p, param.Parameterized):
+                if p.v in ct.ConfIDs:
+                    conf = ct.loadConf(p.v)
+            if conf is not None:
+                mm = copy.deepcopy(ct.mdict)
+                # print(m, conf)
+
+                mm = update_existing_mdict(mm, conf)
+
+                return mm
+            else :
+                return ct.mdict
 
 
 
-        if self.mdict is  None:
-            return
+
 
         if len(self.subks) > 0:
             CT = preg.conftype_dict.dict
         for subID, subk in self.subks.items():
             if CT[subk].mdict is None :
                 continue
-            # print(subID,subk)
-            # print(subID,subk)
-            # print(subID,subk)
+
             if subID == 'larva_groups' and subk == 'Model':
-                ct=CT['Model']
-                m=copy.deepcopy(ct.mdict)
-                lg=self.mdict[subID].v
-                for k,dic in lg.items():
-                    p=dic.model
-                    if p in ct.ConfIDs:
-                        # print(v)
-                        conf = ct.loadConf(p)
-                    elif isinstance(p, param.Parameterized):
-                        if p.v in ct.ConfIDs:
-                            conf = ct.loadConf(p.v)
-                    else:
-                        conf = None
-                    if conf is not None:
-                        # print(m, conf)
-                        m = update_existing_mdict(m, conf)
-                    dic.model=m
+
+                for k,dic in m0[subID].v.items():
+                    if 'model' in dic.keys():
+                        p=dic.model
+                        mm=retrieve(p,CT['Model'])
+                        dic.model=mm
 
             else:
-                ct=CT[subk]
-                m=copy.deepcopy(ct.mdict)
-                p = self.mdict[subID]
-                if p in ct.ConfIDs:
-                    conf = ct.loadConf(p)
-                elif isinstance(p, param.Parameterized):
-                    if p.v in ct.ConfIDs:
-                        conf = ct.loadConf(p.v)
-                else:
-                    conf=None
-                if conf is not None:
-                    m = update_existing_mdict(m, conf)
-
-
-
-
-                self.mdict[subID]=m
+                # ct=CT[subk]
+                # mm=copy.deepcopy(ct.mdict)
+                # p = m0[subID]
+                m0[subID] = retrieve(m0[subID], CT[subk])
+                # m0[subID]=mm
+        return m0
 
 
 
@@ -102,18 +100,22 @@ class ConfType:
 
     def expandConf(self, id=None,conf=None):
         if conf is None:
+            if id in self.ConfIDs:
 
             # from lib.registry.pars import preg
-            conf = self.loadConf(id)
+                conf = self.loadConf(id)
+            else :
+                return None
         if len(self.subks) > 0:
             CT = preg.conftype_dict.dict
         for subID, subk in self.subks.items():
             if subID == 'larva_groups' and subk == 'Model':
-                for k, v in conf[subID].items():
-                    if type(v.model) == str:
-                        v.model = CT[subk].loadConf(v.model)
+                for k, v in conf['larva_groups'].items():
+                    if v.model in CT['Model'].ConfIDs:
+                        v.model = CT['Model'].loadConf(id=v.model)
             else:
-                conf[subID] = CT[subk].expandConf(conf[subID])
+                if conf[subID] in CT[subk].ConfIDs:
+                    conf[subID] = CT[subk].loadConf(id=conf[subID])
 
         return conf
 
@@ -200,27 +202,31 @@ class ConfType:
         if dict0 is not None :
 
 
-            from lib.aux.data_aux import init2mdict
+            from lib.aux.data_aux import init2mdict, get_ks
             self.mdict = init2mdict(dict0)
             # g1=self.gConf()
             # self.mdict = self.expand_mdict(self.mdict)
             # g2 = self.gConf()
             # dNl.dicsprint([g1, g2])
-
+            self.ks = get_ks(self.mdict)
 
             self.eval = self.checkDict()
+
         else:
             self.mdict = None
-        if self.k=='Trial':
-            print(self.dict0, self.mdict)
-
+            self.ks=None
             # raise
 
 
 
-    def gConf(self,**kwargs):
+    def gConf(self,m0=None,**kwargs):
+        if m0 is  None:
+            if self.mdict is None:
+                return None
+            else :
+                m0=self.mdict
         from lib.aux.data_aux import gConf
-        return gConf(self.mdict,**kwargs)
+        return gConf(m0,**kwargs)
 
 
 

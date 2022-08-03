@@ -18,6 +18,8 @@ class Essay:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
         self.N = N
         self.G = preg.graph_dict
+        self.GT=preg.grouptype_dict
+        self.CT=preg.conftype_dict
         self.M = preg.larva_conf_dict
         self.show = show
         self.type = type
@@ -342,23 +344,51 @@ class DoublePatch_Essay(Essay):
         self.mdiff_df, row_colors = self.M.diff_df(mIDs=mIDs,
                                        ms=[self.M.loadConf(f'navigator_{mID}') for mID in mIDs])
 
+
+
+
+    # def get_larvagroups_old(self, type='standard'):
+    #     age = 72.0
+    #     kws = {
+    #         'distribution': preg.get_null('larva_distro', N=self.N, scale=(0.005, 0.005)),
+    #         'life_history': preg.get_null('life_history', age=age,
+    #                                       epochs={0: preg.get_null('epoch', start=0.0, stop=age,
+    #                                                                substrate=preg.get_null('substrate'))}),
+    #         'odor': preg.get_null('odor'),
+    #         'sample': 'None.150controls'
+    #     }
+    #     lgs = {}
+    #     mID0s = ['rover', 'sitter']
+    #     mcols = ['blue', 'red']
+    #     for mID0, mcol in zip(mID0s, mcols):
+    #         mID = f'navigator_{mID0}'
+    #         lgs[f'{type}_{mID0}'] = preg.get_null('LarvaGroup', default_color=mcol,
+    #                                               model=self.M.loadConf(mID), **kws)
+    #     return lgs
+
     def get_larvagroups(self, type='standard'):
         age = 72.0
-        kws = {
-            'distribution': preg.get_null('larva_distro', N=self.N, scale=(0.005, 0.005)),
-            'life_history': preg.get_null('life_history', age=age,
-                                          epochs={0: preg.get_null('epoch', start=0.0, stop=age,
-                                                                   substrate=preg.get_null('substrate'))}),
-            'odor': preg.get_null('odor'),
-            'sample': 'None.150controls'
+
+        kws0 = {
+            'kwdic': {
+                'distribution': {'N': self.N, 'scale': (0.005, 0.005)},
+                'life_history': {'age': age, 'epochs': self.GT.dict.epoch.entry(0, start=0.0, stop=age)},
+            'odor':{}
+            },
+            'sample': 'None.150controls',
         }
-        lgs = {}
-        mID0s = ['rover', 'sitter']
+
         mcols = ['blue', 'red']
+        mID0s = ['rover', 'sitter']
+        lgs = {}
         for mID0, mcol in zip(mID0s, mcols):
-            mID = f'navigator_{mID0}'
-            lgs[f'{type}_{mID0}'] = preg.get_null('LarvaGroup', default_color=mcol,
-                                                  model=self.M.loadConf(mID), **kws)
+            kws = {
+                'default_color': mcol,
+                'model': self.CT.dict.Model.loadConf(f'navigator_{mID0}'),
+                **kws0
+            }
+
+            lgs.update(self.GT.dict.LarvaGroup.entry(id=f'{type}_{mID0}', **kws))
         return lgs
 
     def get_sources(self, type='standard'):
@@ -668,7 +698,7 @@ def Essay_dict() :
     return d
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-    E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
-    # E = DoublePatch_Essay(video=False, N=5, dur=5)
+    # E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
+    E = DoublePatch_Essay(video=True, N=5, dur=5)
     ds = E.run()
     figs, results = E.anal()

@@ -24,14 +24,41 @@ def confReset_funcs(k):
 
 #
 #
-# if __name__ == '__main__':
-#
-#
-#     from lib.aux.data_aux import update_mdict
-#     import lib.aux.dictsNlists as dNl
-#     from lib.registry.pars import preg
-#     M=preg.larva_conf_dict
-#     CT=preg.conftype_dict
+if __name__ == '__main__':
+
+
+    from lib.aux.data_aux import update_mdict
+    import lib.aux.dictsNlists as dNl
+    from lib.registry.pars import preg
+    M=preg.larva_conf_dict
+    from lib.registry.par_tree import tree_dict
+    CT=preg.conftype_dict
+    a=CT.dict['Ga']
+    m=a.mdict
+    g={}
+    g[0] =a.gConf(**{})
+
+    g[1]=a.expandConf(conf=g[0])
+
+    md=a.expand_mdict(a.mdict)
+
+    g[2]=a.gConf(m0=md)
+    g[3] = a.expandConf(conf=g[2])
+
+    g[4]=preg.get_null('GAconf')
+
+    g[5]=a.expandConf(conf=g[4])
+
+
+
+    for i,gg in g.items():
+        print(i , gg.ga_build_kws)
+    # dNl.dicprint(g)
+
+    # tree=tree_dict(g)
+    # print(tree)
+
+    raise
 #     from lib.conf.stored.conf import kConfDict
 #
 #     print(preg.get_null('trials'))
@@ -46,9 +73,9 @@ def confReset_funcs(k):
 #     # m=preg.larva_conf_dict.loadConf('RE_NEU_PHI_DEF_nav')
 #     # print(m)
 #     # raise
-#     a=CT.dict['Ga']
-#
-#     # g1 = a.gConf()
+
+
+    # g1 = a.gConf()
 #     # a.mdict = a.expand_mdict(a.mdict)
 #     # g2 = a.gConf()
 #     # dNl.dicsprint([g1, g2])
@@ -56,21 +83,35 @@ def confReset_funcs(k):
 #     # print(g1.env_params)
 #     # print(g2.env_params)
 #     # raise
-#     kws={}
+    kws={}
 #     # kws={'ga_build_kws' :preg.get_null('ga_build_kws',space_mkeys=['turner', 'crawler'])}
 #     # kws={'ga_build_kws.space_mkeys':['turner', 'crawler']}
 #
+
+
+    # print(a.mdict.larva_groups.v)
+    # print(a.mdict.trials.v)
+    # print(a.mdict.env_params.keys())
+    # raise
+    m=preg.get_null('exp_conf')
+    # m=a.expandConf(conf=m)
+
+    # m=a.gConf(**kws)
+    print(m)
+    raise
+
 #
-#     m=a.gConf(**kws)
-#
-#     mm=preg.get_null('GAconf',**kws)
-#     mm=a.expandConf(conf=mm)
-#     print(m.env_params.arena)
+
+    gs=[m,mm]
+    for g in gs:
+
+        print(g.env_params.arena)
+        print(g.larva_groups)
 #     print(mm.env_params.arena)
 #     # dNl.dicsprint([m,mm])
 #     #
 #     #
-#     raise
+    raise
 #
 #     from lib.sim.ga.ga_launcher import GAlauncher
 #     GA=GAlauncher(**m)
