@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema
 
+from lib.registry.base import BaseConfDict
 from lib.registry.pars import preg
 
 from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux, stdout
@@ -194,19 +195,22 @@ def preproc_func_dict():
 
     })
     return func_dict
+#
+# class ProcFuncDict:
+#     def __init__(self, load=False):
+#         self.dict_path = preg.paths['ProcFuncDict']
+#         if not load:
+#             self.dict = proc_func_dict()
+#             self.predict = preproc_func_dict()
+#             # dNl.save_dict(self.dict, self.dict_path)
+#         else:
+#             self.dict = dNl.load_dict(self.dict_path)
 
-class ProcFuncDict:
-    def __init__(self, load=False):
-        from lib.registry import paths
-        self.dict_path = paths.path_dict['ProcFuncDict']
-        if not load:
-            self.dict = proc_func_dict()
-            self.predict = preproc_func_dict()
-            # dNl.save_dict(self.dict, self.dict_path)
-        else:
-            self.dict = dNl.load_dict(self.dict_path)
+# procfunc_dict=ProcFuncDict()
 
-procfunc_dict=ProcFuncDict()
+class ProcFuncDict(BaseConfDict):
 
-
+    def build(self):
+        d=dNl.NestDict({'preproc' : preproc_func_dict(), 'proc' : proc_func_dict()})
+        return d
 

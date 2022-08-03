@@ -15,23 +15,28 @@ class ParRegistry:
 
     @property
     def conftype_dict(self):
-        from lib.registry.conftypes import conftype_dict
-        return conftype_dict
+        from lib.registry.order import CT
+        return CT
 
     @property
     def path_dict(self):
-        from lib.registry.paths import path_dict
-        return path_dict
+        from lib.registry.paths import PathD
+        return PathD
+
+    @property
+    def paths(self):
+        from lib.registry.paths import PathD
+        return PathD
 
     @property
     def larva_conf_dict(self):
-        from lib.registry.parConfs import larva_conf_dict
-        return larva_conf_dict
+        from lib.registry.order import MD
+        return MD
 
     @property
     def init_dict(self):
-        from lib.registry.init_pars import init_dict
-        return init_dict
+        from lib.registry.order import PI
+        return PI
 
     @property
     def output_dict(self):
@@ -40,28 +45,28 @@ class ParRegistry:
 
     @property
     def dist_dict(self):
-        from lib.registry.dist_dict import dist_dict
-        return dist_dict
+        from lib.registry.order import DD
+        return DD
 
     @property
     def graph_dict(self):
-        from lib.plot.dict import graph_dict
-        return graph_dict
+        from lib.registry.order import GD
+        return GD
 
     @property
     def parser_dict(self):
-        from lib.registry.parser_dict import parser_dict
-        return parser_dict
+        from lib.registry.order import ParsD
+        return ParsD
 
     @property
     def par_dict(self):
-        from lib.registry.par_dict import basepar_dict
-        return basepar_dict
+        from lib.registry.order import PD
+        return PD
 
     @property
     def proc_func_dict(self):
-        from lib.process.basic import procfunc_dict
-        return procfunc_dict
+        from lib.registry.order import ProcF
+        return ProcF
 
     @property
     def dict(self):
@@ -148,7 +153,30 @@ preg = ParRegistry()
 # enrichment=preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
 #                                                           bouts=['stride', 'pause', 'turn'])
 
-# if __name__ == '__main__':
-#     for k,v in enrichment.items() :
-#         print(k)
-#         print(v)
+if __name__ == '__main__':
+    group_id = 'AttP240-Fed'
+    datagroup_id = 'Jovanic lab'
+    idx = 1
+    g = preg.loadConf(id=datagroup_id, conftype='Group')
+    save_to = f'{g.path}/plots/{group_id}/trial{idx}'
+
+
+    refIDs0 = ['Coaster.AttP240.Fed', 'Rehydration/AttP240.Fed', 'AttP240.Fed']
+    dIDs = ['Coaster', 'Rehydration', 'Control']
+
+    load_kws = {
+        # 'step':True,
+        'step': False,
+        # 'end':False,
+        'end': True,
+        'h5_ks': ['epochs', 'angular', 'dspNtor'],
+        #
+    }
+
+    ds = preg.conftype_dict.loadRefDs(refIDs0, **load_kws)
+
+    ggs = ['traj']
+    # ggs=['traj','endpoint']
+    # ggs = ['track', 'general', 'dsp', 'traj']
+    gd = preg.graph_dict.eval_graphgroups(graphgroups=ggs, datasets=ds, labels=dIDs,save_to=save_to)
+

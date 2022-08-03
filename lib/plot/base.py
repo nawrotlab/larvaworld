@@ -25,6 +25,7 @@ plt.rcParams.update(plt_conf)
 
 class BasePlot:
     def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),verbose=1,
+                 subplot_kw={}, build_kws={},
                  **kwargs):
         self.filename = f'{name}.{suf}' if save_as is None else f'{save_as}.{suf}'
         self.return_fig = return_fig
@@ -38,27 +39,31 @@ class BasePlot:
         self.letter_dict = {}
         self.x0s, self.y0s = [], []
         self.fig_kws={}
+        self.build_kws=self.set_build_kws(subplot_kw=subplot_kw, build_kws=build_kws)
 
-    def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15,subplot_kw={}, **kwargs):
-        if fig is None and axs is None:
+    def set_build_kws(self,subplot_kw, build_kws):
+        for k,v in build_kws.items():
+            if v=='Ndatasets':
+                build_kws[k]=self.Ndatasets
+        build_kws['subplot_kw']=subplot_kw
+        return build_kws
 
 
-            # if figsize is None:
-            #     figsize = (12 * Ncols, 10 * Nrows)
-            if not dim3:
-                self.fig_kws, Nplots=NcolNrows(**kwargs)
+    def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15):
+        if fig is not None and axs is not None:
+            self.fig = fig
+            self.axs = axs if type(axs) == list else [axs]
 
-                self.fig, axs = plt.subplots(subplot_kw=subplot_kw,**self.fig_kws)
-                # self.fig, axs = plt.subplots(Nrows, Ncols, figsize=figsize,subplot_kw=subplot_kw, **kwargs)
-                self.axs = axs.ravel() if Nplots > 1 else [axs]
-            else:
+        else:
+            if dim3:
                 from mpl_toolkits.mplot3d import Axes3D
                 self.fig = plt.figure(figsize=(15, 10))
                 ax = Axes3D(self.fig, azim=azim, elev=elev)
                 self.axs = [ax]
-        else:
-            self.fig = fig
-            self.axs = axs if type(axs) == list else [axs]
+            else:
+                self.fig_kws = NcolNrows(**self.build_kws)
+                self.fig, axs = plt.subplots(**self.fig_kws)
+                self.axs = axs.ravel() if self.Ncols*self.Nrows > 1 else [axs]
 
     @ property
     def Naxs(self):
@@ -66,18 +71,18 @@ class BasePlot:
 
     @property
     def Ncols(self):
-        if self.Naxs==1 :
-            return 1
-        elif 'ncols' in self.fig_kws.keys() :
+        # if self.Naxs==1 :
+        #     return 1
+        if 'ncols' in self.fig_kws.keys() :
             return self.fig_kws['ncols']
         else :
             return 1
 
     @property
     def Nrows(self):
-        if self.Naxs == 1:
-            return 1
-        elif 'nrows' in self.fig_kws.keys():
+        # if self.Naxs == 1:
+        #     return 1
+        if 'nrows' in self.fig_kws.keys():
             return self.fig_kws['nrows']
         else:
             return 1
@@ -89,7 +94,7 @@ class BasePlot:
                 ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
                 xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
                 xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
-                leg_handles=None, xvis=None, yvis=None, zvis=None,
+                leg_handles=None, leg_labels=None,legfontsize=None,xvis=None, yvis=None, zvis=None,
                 title=None, title_y=None, titlefontsize=None):
         ax = self.axs[idx]
         if equal_aspect is not None:
@@ -165,10 +170,16 @@ class BasePlot:
             ax.zaxis.set_tick_params(pad=ztickpad)
 
         if leg_loc is not None:
+            kws={
+                'loc' : leg_loc,
+                'fontsize' : legfontsize,
+            }
             if leg_handles is not None:
-                ax.legend(handles=leg_handles, loc=leg_loc)
-            else:
-                ax.legend(loc=leg_loc)
+                kws['handles']=leg_handles
+            if leg_labels is not None:
+                kws['labels']=leg_labels
+            ax.legend(**kws)
+
 
     def adjust(self, LR=None, BT=None, W=None, H=None):
         kws = {}
@@ -256,6 +267,12 @@ class ParPlot(BasePlot):
                      xMaxN=maxN, yMaxN=maxN, zMaxN=maxN, title=title)
 
 
+class AutoBasePlot(BasePlot):
+    def __init__(self, fig=None, axs=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self.build(fig=fig, axs=axs)
+
 class Plot(BasePlot):
     def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, add_samples=False,
                  **kwargs):
@@ -270,8 +287,10 @@ class Plot(BasePlot):
                 labels += targetIDs
         self.Ndatasets, self.colors, save_to, self.labels = plot_config(datasets, labels, save_to,
                                                                         subfolder=subfolder)
+
         super().__init__(name, save_to=save_to, **kwargs)
         self.datasets = datasets
+        # print([d.id for d in self.datasets], self.labels)
         ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
         self.fit_filename = os.path.join(self.save_to, ff) if ff is not None and self.save_to is not None else None
         self.fit_ind = None
@@ -364,6 +383,11 @@ class Plot(BasePlot):
         return leg
 
     @property
+    def data_dict(self):
+        # N_list = [d.config.N for d in self.datasets]
+        return dict(zip(self.labels,self.datasets))
+
+    @property
     def Nticks(self):
         Nticks_list = [d.config.Nticks for d in self.datasets]
         return np.max(dNl.unique_list(Nticks_list))
@@ -444,13 +468,12 @@ class Plot(BasePlot):
         return vs
 
 
+
 class AutoPlot(Plot):
-    def __init__(self, fig=None, axs=None, subplot_kw={},build_kws={}, **kwargs):
+    def __init__(self, fig=None, axs=None, **kwargs):
         super().__init__(**kwargs)
-        for k,v in build_kws.items():
-            if v=='Ndatasets':
-                build_kws[k]=self.Ndatasets
-        self.build(fig=fig, axs=axs, subplot_kw=subplot_kw, **build_kws)
+
+        self.build(fig=fig, axs=axs)
 
 
 def load_ks(ks, ds,ls,cols, d0):

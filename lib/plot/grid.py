@@ -330,7 +330,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     min_amps = [None] * 2 + [min_turn_amp] * 3
 
     for i, (p, l, ep, a, a2, extr, min_amp) in enumerate(zip(pars, labs, epochs, aas, a2s, extrs, min_amps)):
-        track_annotated(epoch=ep, a=a, a2plot=a2, ax=P.axs[i], min_amp=min_amp, show_extrema=extr, ylab=l, **kws1)
+        track_annotated(epoch=ep, a=a, a2plot=a2, axs=P.axs[i], min_amp=min_amp, show_extrema=extr, ylab=l, **kws1)
         P.conf_ax(i, xvis=True if i == Nrows - 1 else False)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01, 0.05)
     P.fig.align_ylabels(P.axs[:])

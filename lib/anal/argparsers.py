@@ -21,7 +21,7 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        self.parsargs = preg.parser_dict.dict[name]
+        self.parsargs = preg.parser_dict.parser_dict[name]
 
     def add(self, parser=None):
         if parser is None:
@@ -80,7 +80,7 @@ def adjust_sim(exp, conf_type, sim):
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     D=preg.conftype_dict
-
+    # print(1, d.sim_params.duration)
     if conf_type == 'Batch':
         exp_conf = preg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
@@ -106,7 +106,6 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         d = {'sim_params': preg.init_dict.get_null('sim_params')}
 
     exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
-
     if models is not None:
         if conf_type in ['Exp', 'Eval']:
             exp_conf = update_exp_models(exp_conf, models)

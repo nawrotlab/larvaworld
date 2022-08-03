@@ -301,3 +301,37 @@ def NestDict(data=None):
 def copyDict(d):
     return NestDict(copy.deepcopy(d))
 
+def dicprint(d):
+    if isinstance(d,dict):
+        for k,v in d.items():
+            print(k)
+            dicprint(v)
+    else:
+        print(d)
+
+def dicsprint(ds):
+
+    if all([isinstance(d,dict) for d in ds]):
+        ds = [flatten_dict(d) for d in ds]
+        ks = unique_list([list(d.keys() for d in ds)])
+        for k in ks:
+
+            vs=[]
+            for d in ds :
+                try:
+                    v=d[k]
+                except:
+                    v='---'
+                vs.append(v)
+
+            print(k,' : ',vs)
+
+
+
+
+
+
+    else:
+        print(ds)
+
+

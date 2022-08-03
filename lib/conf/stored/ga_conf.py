@@ -29,7 +29,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
         'space_mkeys': space_mkeys,
         # 'space_dict': space_dict,
     }
-
+    # print(dur,name)
     kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=dt),
            'scene': scene,
            'experiment': name,
@@ -74,7 +74,7 @@ def Ga_dict() :
               space_mkeys=['interference', 'turner'],
               init='model',
               Nel=3, N=10, env_params='arena_200mm'),
-    **ga_conf('chemorbit', dur=5, m0='RE_NEU_PHI_DEF_nav', m1='RE_NEU_PHI_DEF_nav2',
+    **ga_conf('chemorbit', dur=1, m0='RE_NEU_PHI_DEF_nav', m1='RE_NEU_PHI_DEF_nav2',init='random',
               space_mkeys=['olfactor'], fitID='dst2source', fit_kws={'source_xy': None},
               Nel=5, N=50, env_params='mid_odor_gaussian_square'),
     **ga_conf('obstacle_avoidance', dur=0.5, m0='obstacle_avoider', m1='obstacle_avoider2',

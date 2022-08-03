@@ -213,7 +213,7 @@ class GraphDict:
 
 
 
-graph_dict = GraphDict()
+# graph_dict = GraphDict()
 
 if __name__ == '__main__':
 

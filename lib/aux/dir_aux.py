@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
+
 from lib.registry.pars import preg
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -209,9 +210,16 @@ def reset_MultiIndex(s, columns=None) :
 
 
 def get_traj(d, mode='default'):
-    try:
-        return d.load_traj(mode)[['x', 'y']]
-    except:
-        return d.step_data[['x', 'y']]
+    if mode=='default':
+        return d.load_traj(mode)
+    elif mode == 'origin':
+        try:
+            ss=d.load_traj(mode)
+            return ss[['x', 'y']]
+        except:
+            s = d.load_step(h5_ks=['contour', 'midline'])
+            from lib.process.spatial import align_trajectories
+            ss=align_trajectories(s, c=d.config, store=True, replace=False, transposition='origin')
+            return ss[['x', 'y']]
 
 

@@ -6,7 +6,7 @@ from lib.plot.aux import circNarrow, circular_hist
 from lib.plot.base import Plot, AutoPlot
 
 
-def plot_turn_Dbearing(datasets,min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
+def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
                        Nplots=4, subfolder='turn', **kwargs):
     if ref_angle is None:
         name = f'turn_Dorient_to_center'
@@ -20,7 +20,7 @@ def plot_turn_Dbearing(datasets,min_angle=30.0, max_angle=180.0, ref_angle=None,
         p = nam.unwrap(nam.orient('front'))
 
     P = AutoPlot(name=name, subfolder=subfolder,subplot_kw=dict(projection='polar'),
-                 build_kws={'Nrows':len(datasets),'Ncols':Nplots, 'wh':5, 'mode':'hist'}, datasets=datasets,**kwargs)
+                 build_kws={'Nrows':'Ndatasets','Ncols':Nplots, 'wh':5, 'mode':'hist'}, **kwargs)
 
 
 

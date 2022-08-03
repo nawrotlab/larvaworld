@@ -191,8 +191,8 @@ def get_dist(k, k0='intermitter', v=None, return_tabrows=False, d0=None, return_
 
 
 class DistDict:
-    def __init__(self, load=False, save=False):
-        self.dict_path = preg.path_dict['DistDict']
+    def __init__(self,load=False, save=False):
+        self.dict_path =  preg.paths['DistDict']
         if not load:
             self.dict = build_dist_dict()
             if save:
@@ -204,4 +204,4 @@ class DistDict:
     def get_dist(self, **kwargs):
         return get_dist(d0=self.dict, **kwargs)
 
-dist_dict = DistDict()
+# dist_dict = DistDict()

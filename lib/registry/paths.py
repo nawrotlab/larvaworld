@@ -94,5 +94,4 @@ def build_path_dict() :
     dic['parent']=F0
     return dic
 
-path_dict=build_path_dict()
-
+PathD = build_path_dict()

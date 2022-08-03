@@ -340,9 +340,7 @@ class DoublePatch_Essay(Essay):
         self.exp_dict = self.time_ratio_exp()
         mIDs = ['rover', 'sitter']
         self.mdiff_df, row_colors = self.M.diff_df(mIDs=mIDs,
-                                       ms=[preg.larva_conf_dict.loadConf(f'navigator_{mID}') for mID in mIDs])
-        #
-        # RS_diff_df=preg.larva_conf_dict.diff_df(mIDs=mIDs, ms=[preg.larva_conf_dict.loadConf(f'navigator_{mID}') for mID in mIDs])
+                                       ms=[self.M.loadConf(f'navigator_{mID}') for mID in mIDs])
 
     def get_larvagroups(self, type='standard'):
         age = 72.0

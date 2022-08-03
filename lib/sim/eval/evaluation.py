@@ -443,7 +443,7 @@ class EvalRun:
             P.adjust(W=0.01, H=0.5)
 
         elif type == 'box':
-            data = data_aux.concat_datasets(P.datasets, key=mode)
+            data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
                 data[preg.getPar(sh)] *= 1000

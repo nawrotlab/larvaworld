@@ -484,13 +484,15 @@ class LarvaDataset:
     def comp_dsp(self, s0,s1):
         # dt=
         # ids=self.agent_ids
+
         xy0 = self.load_traj()
+        if xy0 is not None :
 
 
 
-
-        AA,df=xy_aux.dsp_single(xy0, s0, s1, self.dt)
-
+            AA,df=xy_aux.dsp_single(xy0, s0, s1, self.dt)
+        else :
+            df=None
 
         return df
 
@@ -501,8 +503,21 @@ class LarvaDataset:
         store_traj(df=df, mode=mode, file=self.dir_dict.traj)
 
     def load_traj(self, mode='default'):
-        # df = self.read(key=mode, file='traj')
-        return pd.read_hdf(self.dir_dict.traj, key=mode)
+        try:
+            df= pd.read_hdf(self.dir_dict.traj, key=mode)
+        except :
+            if mode=='default':
+                s=self.load_step(h5_ks=[])
+                df = s[['x', 'y']]
+                self.store_traj(df, mode='default')
+            elif mode in ['origin', 'center']:
+                s = self.load_step(h5_ks=['contour', 'midline'])
+                from lib.process.spatial import align_trajectories
+                ss = align_trajectories(s, c=self.config, store=True, replace=False, transposition=mode)
+                df=ss[['x', 'y']]
+            else:
+                df=None
+        return df
 
     def load_aux(self, type, par=None):
         # print(pd.HDFStore(self.dir_dict['aux_h5']).keys())
@@ -651,6 +666,8 @@ class LarvaDataset:
 
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
+        FD = preg.proc_func_dict.dict.preproc
+
         cc = {
             's': self.step_data,
             'e': self.endpoint_data,
@@ -661,7 +678,7 @@ class LarvaDataset:
         }
         for k, v in pre_kws.items():
             if v:
-                func = preg.proc_func_dict.predict[k]
+                func = FD[k]
                 func(**cc, k=v)
 
         if is_last:
@@ -669,6 +686,8 @@ class LarvaDataset:
         # return self
 
     def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=True,add_reference=True, **kwargs):
+        FD=preg.proc_func_dict.dict.proc
+
         cc = {
             'mode': mode,
             'is_last': False,
@@ -680,7 +699,7 @@ class LarvaDataset:
             **kwargs
         }
         for k in keys:
-            func = preg.proc_func_dict.dict[k]
+            func = FD[k]
             func(**cc)
 
         if is_last:

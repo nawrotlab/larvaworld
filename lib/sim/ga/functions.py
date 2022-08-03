@@ -93,7 +93,7 @@ def GA_optimization(fitness_target_refID, fitness_target_kws):
 
 
 
-    return dNl.NestDict({'func': func, 'keys': fit_dic0['keys']})
+    return dNl.NestDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg':'s'})
 
 
 
@@ -164,5 +164,5 @@ def arrange_fitness(fitness_func, **kwargs):
     def func(robot):
         return fitness_func(robot, **kwargs)
 
-    return dNl.NestDict({'func': func})
+    return dNl.NestDict({'func': func, 'func_arg':'robot'})
 

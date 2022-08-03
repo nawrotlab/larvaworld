@@ -8,10 +8,10 @@ from scipy.stats import ttest_ind
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import label_diff
-from lib.plot.base import BasePlot, Plot, AutoLoadPlot, AutoPlot
+from lib.plot.base import BasePlot, Plot, AutoLoadPlot, AutoPlot, AutoBasePlot
 
 
-def error_barplot(error_dict, evaluation, axs=None, fig=None, labels=None, name='error_barplots',
+def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
                   titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
     def build_legend(ax, eval_df):
         h, l = ax.get_legend_handles_labels()
@@ -23,13 +23,13 @@ def error_barplot(error_dict, evaluation, axs=None, fig=None, labels=None, name=
             counter += (len(eval_df['shorts'].loc[g]) + 1)
         ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
 
-    P = BasePlot(name=name, **kwargs)
     Nplots = len(error_dict)
-    P.build(Nplots, 1, figsize=(20, Nplots * 6), sharex=False, fig=fig, axs=axs)
+    P = AutoBasePlot(name=name,build_kws = {'Nrows': Nplots, 'Ncols': 1, 'w': 20, 'h': 6}, **kwargs)
+
+
     P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
     for ii, (k, eval_df) in enumerate(evaluation.items()):
         lab = labels[k] if labels is not None else k
-        # ax = P.axs[ii] if axs is None else axs[ii]
         df = error_dict[k]
         color = dNl.flatten_list(eval_df['par_colors'].values.tolist())
         df = df[dNl.flatten_list(eval_df['symbols'].values.tolist())]
@@ -45,19 +45,10 @@ def intake_barplot(**kwargs):
 
 def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(par_shorts)
-    maxNrows = 3
-    if Nks > maxNrows:
-        Ncols = int(np.ceil(Nks / maxNrows))
-        Nrows = maxNrows
-        figsize = (Ncols * 6, Nrows * 5)
-    else:
-        Nrows = Nks
-        Ncols = 1
-        figsize = (9, 6)
 
-
-    P = AutoPlot(name=par_shorts[0],Nrows=Nrows, Ncols=Ncols, figsize=figsize, **kwargs)
+    P = AutoPlot(name=par_shorts[0],build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
+
     w = 0.15
 
     if coupled_labels is not None:
@@ -115,16 +106,8 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
 def auto_barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(par_shorts)
-    maxNrows=3
-    if Nks>maxNrows:
-        Ncols=int(np.ceil(Nks/maxNrows))
-        Nrows = maxNrows
-        figsize = (Ncols * 6, Nrows * 5)
-    else :
-        Nrows = Nks
-        Ncols = 1
-        figsize = (9, 6)
-    P = AutoLoadPlot(ks=par_shorts,name=par_shorts[0],Nrows=Nrows,Ncols=Ncols, figsize=figsize, **kwargs)
+
+    P = AutoLoadPlot(ks=par_shorts,name=par_shorts[0],build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks/3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15

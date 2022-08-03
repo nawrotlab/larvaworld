@@ -6,7 +6,7 @@ import shutil
 import param
 
 import lib.aux.dictsNlists as dNl
-from lib.registry import paths
+from lib.registry.pars import preg
 
 
 def loadConf(id, conf_type, **kwargs):
@@ -39,7 +39,7 @@ def expandConf(id, conf_type, **kwargs):
 
 
 def loadConfDict(conf_type, use_pickle=False):
-    path = paths.path_dict[conf_type]
+    path = preg.paths[conf_type]
     if conf_type == 'Ga':
         use_pickle = True
     try:
@@ -96,7 +96,7 @@ def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
 def saveConfDict(ConfDict, conf_type, use_pickle=False):
     # from lib.conf.pars.pars import ParDict
     # path = ParDict.path_dict[conf_type]
-    path = paths.path_dict[conf_type]
+    path = preg.paths[conf_type]
     if conf_type == 'Ga':
         use_pickle = True
     if use_pickle:
@@ -127,7 +127,7 @@ def deleteConf(id, conf_type,**kwargs):
 def next_idx(exp, type='Exp'):
     # from lib.conf.pars.pars import ParDict
     # F0 = ParDict.path_dict["SimIdx"]
-    F0 = paths.path_dict["SimIdx"]
+    F0 = preg.paths["SimIdx"]
     try:
         with open(F0) as f:
             d = json.load(f)

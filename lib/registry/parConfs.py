@@ -15,10 +15,11 @@ from lib.registry.units import ureg
 
 
 class LarvaConfDict:
-    def __init__(self, load=False, save=False):
+    def __init__(self,load=False, save=False):
 
+        preg.vprint('started LarvaConfDict', 2)
         from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
-        self.dict_path = preg.path_dict['LarvaConfDict']
+        self.dict_path = preg.paths['LarvaConfDict']
         if not load:
 
             self.dict0 = build_confdicts0()
@@ -47,7 +48,7 @@ class LarvaConfDict:
             # 'locomotor': locomotor.DefaultLocomotor,
         })
 
-        preg.vprint('completed LarvaConfDict')
+        preg.vprint('completed LarvaConfDict',2)
 
         # print('Completed LarvaConfDict')
 
@@ -653,7 +654,6 @@ class LarvaConfDict:
 
     def adapt_crawler(self, refID=None, e=None, mode='realistic', average=True):
         if e is None:
-            from lib.registry.pars import preg
             d = preg.loadRef(refID)
             d.load(step=False)
             e = d.endpoint_data
@@ -673,7 +673,6 @@ class LarvaConfDict:
 
     def adapt_intermitter(self, refID=None, e=None, c=None, mode='default', conf=None):
         if e is None or c is None:
-            from lib.registry.pars import preg
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
@@ -710,7 +709,6 @@ class LarvaConfDict:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
         if e is None or c is None:
-            from lib.registry.pars import preg
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
@@ -734,7 +732,6 @@ class LarvaConfDict:
 
     def adapt_6mIDs(self, refID, e=None, c=None):
         if e is None or c is None:
-            from lib.registry.pars import preg
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
@@ -766,7 +763,6 @@ class LarvaConfDict:
 
     def adapt_3modules(self, refID, e=None, c=None):
         if e is None or c is None:
-            from lib.registry.pars import preg
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
@@ -800,7 +796,6 @@ class LarvaConfDict:
 
     def add_var_mIDs(self, refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
         if e is None or c is None:
-            from lib.registry.pars import preg
             d = preg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
@@ -863,12 +858,15 @@ class LarvaConfDict:
                 mod_v = 'default'
             var_mdict = self.variable_mdict(mkey, mode=mod_v)
             for k, p in var_mdict.items():
+
                 k0 = f'{d0.pref}{k}'
-                dic[k0] = p
-                if type(mF[k0]) == list:
-                    if dic[k0].parclass == param.Range:
-                        mF[k0] = tuple(mF[k0])
-                dic[k0].v = mF[k0]
+
+                if k0 in mF.keys():
+                    dic[k0] = p
+                    if type(mF[k0]) == list:
+                        if dic[k0].parclass == param.Range:
+                            mF[k0] = tuple(mF[k0])
+                    dic[k0].v = mF[k0]
         return dNl.NestDict(dic)
 
     def to_string(self, mdict):
@@ -879,7 +877,6 @@ class LarvaConfDict:
 
 
 def epar(e, k=None, par=None, average=True, Nround=2):
-    from lib.registry.pars import preg
     if par is None:
         D = preg.dict
         par = D[k].d
@@ -891,7 +888,14 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         return vs
 
 
-larva_conf_dict=LarvaConfDict()
+# larva_conf_dict=LarvaConfDict()
 
-
-
+#
+# if __name__ == '__main__':
+#     LM=larva_conf_dict
+#     mID='RE_NEU_PHI_DEF_nav'
+#     m=LM.loadConf(mID)
+#     ol=m.brain.olfactor_params
+#     print(ol)
+#
+#

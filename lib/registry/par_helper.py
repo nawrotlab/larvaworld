@@ -123,5 +123,7 @@ class FuncParHelper:
 if __name__ == '__main__':
     # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
     # raise
-    preg.conftype_dict.resetConfs(['Tracker','Group'])
+    # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
+    preg.conftype_dict.resetConfs(['Ga'])
+    # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
     # preg.conftype_dict.resetConfs(ks=['Exp'])

@@ -261,11 +261,11 @@ def plot_Y_pos(**kwargs):
     return timeplot(['y'], **kwargs)
 
 
-def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_cols=1, ymax=None,
+def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=None,
                     **kwargs):
     ylab = 'scaled dispersal' if scaled else r'dispersal $(mm)$'
     r0, r1 = range
-    par = f'dispersion_{r0}_{r1}'
+    # par = f'dispersion_{r0}_{r1}'
     name = f'scaled_dispersal_{r0}-{r1}' if scaled else f'dispersal_{r0}-{r1}'
     k = f'sdsp_{r0}_{r1}' if scaled else f'dsp_{r0}_{r1}'
     P = AutoPlot(name=name, subfolder=subfolder, **kwargs)
@@ -274,8 +274,6 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
 
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-
-
         try :
             dsp = d.comp_dsp(r0, r1)
             mean = dsp['median'].values
@@ -288,13 +286,12 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', fig_col
             lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]
         P.axs[0].fill_between(x, ub, lb, color=c, alpha=.2)
         P.axs[0].plot(x, mean, c, label=lab, linewidth=3 if lab != 'experiment' else 8, alpha=1.0)
-    P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4)
-    P.axs[0].legend(loc='upper left', fontsize=15)
+    P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4, leg_loc='upper left', legfontsize=15)
     return P.get()
 
 
 def plot_navigation_index(subfolder='source', **kwargs):
-    P = AutoPlot(name='nav_index', subfolder=subfolder, Nrows=2, figsize=(20, 20), sharex=True, sharey=True, **kwargs)
+    P = AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 20, 'h': 10,'mode':'both'}, **kwargs)
     from lib.aux.vel_aux import compute_component_velocity,compute_velocity
 
     for d, c, g in zip(P.datasets, P.colors, P.labels):
@@ -339,7 +336,6 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
         ylab = f'{ylab0} $({unit})$'
         k = 'cum_d'
     p=preg.dict[k]
-    print(k)
     P = AutoPlot(ks=[k], name=name, subfolder=subfolder, figsize=(15, 5),**kwargs)
     x = P.trange(t_unit)
     # dic,p=P.kpdict[k]
@@ -365,11 +361,8 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         xlabel = 'time, $min$'
     P = AutoPlot(name=name,figsize=(7, 6), **kwargs)
 
-    # P.build(figsize=(7, 6))
-
     p=preg.dict['cum_d']
 
-    # dst_par, dst_u = preg.getPar('cum_d', to_return=['d', 'u'])
     x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.get_par(p.d, key='step')

@@ -23,7 +23,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True
     pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
-    data = data_aux.concat_datasets(P.datasets, key=key)
+    data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
     if not grouped:
         x = "DatasetID"
         hue = None
@@ -62,7 +62,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True
                 pass
 
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
-                  xvis=False if ii < (kws0['Nrows'] - 1) * Ncols else True)
+                  xvis=False if ii < (P.Nrows - 1) * Ncols else True)
     P.conf_fig(align=True,adjust_kws={'LR': (0.1, 0.95),'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
     return P.get()
 
@@ -348,7 +348,7 @@ def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, 
     else:
         name = f'ggboxplot_{len(pars)}_end_pars'
     P = Plot(name=name, subfolder=subfolder, **kwargs)
-    e = data_aux.concat_datasets(P.datasets, key=key)
+    e = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
     Cdict = dict(zip(P.labels, P.colors))
     ggs = [ggplot(e, aes(x='DatasetID', y=p, color='DatasetID')) for p in pars]
     if Npars == 1:
@@ -364,7 +364,6 @@ def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, 
 
 def plot_foraging(**kwargs):
     P = AutoPlot(name='foraging',build_kws={'Nrows':1,'Ncols':2, 'w':8,'h':10, 'mode':'box'}, **kwargs)
-    # P.build(1, 2, figsize=(15, 10), sharex=True)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
         dfs = []
         for i, d in enumerate(P.datasets):

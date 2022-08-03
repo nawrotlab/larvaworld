@@ -507,7 +507,7 @@ def sharexy(mode=None, sharex=False, sharey=False):
 
 def NcolNrows0(N=None, wh=None, w=8, h=8, Ncols=None, Nrows=None, figsize=None):
     Nrows, Ncols = getNcolsNrows(N=N, Ncols=Ncols, Nrows=Nrows)
-    Nplots=Ncols*Nrows
+    # Nplots=Ncols*Nrows
 
     if figsize is None:
         figsize = get_figsize(Ncols, Nrows, wh=wh, w=w, h=h)
@@ -518,12 +518,14 @@ def NcolNrows0(N=None, wh=None, w=8, h=8, Ncols=None, Nrows=None, figsize=None):
         # **kws2, **kwargs
         # 'Ncols' : Ncols,
     }
-    return kws,Nplots
+    return kws
 
 
-def NcolNrows(N=None, wh=None, w=8, h=8, mode=None, sharex=False, sharey=False, Ncols=None, Nrows=None, figsize=None,
+def NcolNrows(N=None, wh=None, w=8, h=8, mode=None, sharex=False, sharey=False, Ncols=None, Nrows=None,Nrows_coef=1, figsize=None,
               **kwargs):
-    kws1,Nplots = NcolNrows0(N=N, Ncols=Ncols, Nrows=Nrows, wh=wh, w=w, h=h, figsize=figsize)
+    if Nrows is not None:
+        Nrows*=Nrows_coef
+    kws1 = NcolNrows0(N=N, Ncols=Ncols, Nrows=Nrows, wh=wh, w=w, h=h, figsize=figsize)
 
     kws2 = sharexy(mode=mode, sharex=sharex, sharey=sharey)
 
@@ -532,5 +534,5 @@ def NcolNrows(N=None, wh=None, w=8, h=8, mode=None, sharex=False, sharey=False, 
         **kws2, **kwargs
         # 'Ncols' : Ncols,
     }
-    return kws,Nplots
+    return kws
     # Ncols = Ncols, Nrows = Nrows, figsize = (8 * Ncols, 8 * Nrows)

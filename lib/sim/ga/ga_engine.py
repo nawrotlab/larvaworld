@@ -73,9 +73,12 @@ class GAselector:
         self.printd(1, '\nGeneration', self.generation_num, 'started')
 
     def sort_genomes(self):
-
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
+
+        # f=np.mean([self.genome_dict[i].fitness for i in sorted_idx[:5]])
+
+        # preg.vprint(f'Generation {self.generation_num} 5_highest : {[self.genome_dict[i].fitness for i in sorted_idx[:5]]}', 2)
 
 
         if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
@@ -84,18 +87,12 @@ class GAselector:
 
             if self.bestConfID is not None:
                 self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
-
-                print()
-                print(np.round(self.best_fitness,3), self.bestConfID)
-                print(self.M.loadConf(self.bestConfID).brain.turner_params)
-                print()
         end_generation_time = TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
+        preg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
+        # preg.vprint(f'Generation {self.generation_num} duration : {total_generation_time}',self.verbose)
 
 
-
-        if self.verbose >= 2:
-            print(f'Generation {self.generation_num} duration',total_generation_time)
 
 
     def ga_selection(self):
@@ -149,8 +146,8 @@ class GAselector:
 
         while num_gConfs_to_create > 0:
             gConf_a, gConf_b = self.choose_parents(gConfs)
-            gConf = self.crossover(gConf_a, gConf_b)
-            space_dict=self.M.update_mdict(space_dict,gConf)
+            gConf0 = self.crossover(gConf_a, gConf_b)
+            space_dict=self.M.update_mdict(space_dict,gConf0)
             self.M.mutate(space_dict, Pmut=self.Pmutation, Cmut=self.Cmutation)
             gConf=self.M.conf(space_dict)
             new_gConfs.append(gConf)
@@ -240,8 +237,15 @@ class GAbuilder(GAselector):
                     from lib.sim.ga.functions import arrange_fitness
                     fit_dict = arrange_fitness(fitness_func,source_xy=self.model.source_xy)
             self.fit_dict =fit_dict
-            self.dataset0=self.init_dataset()
-            self.step_df = self.init_step_df()
+            arg=self.fit_dict.func_arg
+            if arg=='s':
+
+                self.dataset0=self.init_dataset()
+                self.step_df = self.init_step_df()
+            elif arg=='robot':
+
+                self.dataset = None
+                self.step_df = None
 
         self.printd(1, 'Generation', self.generation_num, 'started')
         self.printd(1, 'multicore:', self.multicore, 'num_cpu:', self.num_cpu)
@@ -296,8 +300,9 @@ class GAbuilder(GAselector):
 
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
-        for k in self.fit_dict.keys:
-            preg.par_dict.compute(k, self.dataset)
+        if 'keys' in self.fit_dict.keys():
+            for k in self.fit_dict.keys:
+                preg.par_dict.compute(k, self.dataset)
         fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
 
         valid_gs={}
@@ -309,7 +314,6 @@ class GAbuilder(GAselector):
             else:
                 coef_dict = {'KS': 10, 'RSS': 1}
                 g.fitness = np.sum([coef_dict[k] * mean for k, mean in mus.items()])
-            # print(i, g.fitness_dict['RSS'])
             if not np.isnan(g.fitness) :
 
                 valid_gs[i]=g
@@ -349,8 +353,7 @@ class GAbuilder(GAselector):
         if self.step_df is not None:
             for robot in self.robots[:]:
                 self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
-                # print(robot.Nticks, self.generation_step_num)
-                # raise
+
         if self.multicore:
 
             for thr in self.threads:
@@ -379,7 +382,7 @@ class GAbuilder(GAselector):
                 if self.progress_bar:
                     self.progress_bar.update(self.generation_num)
                 self.robots = self.build_generation()
-                if not self.exclusion_mode:
+                if not self.exclusion_mode and self.dataset is not None:
                     self.step_df = self.init_step_df()
             else:
                 self.finalize()
@@ -444,9 +447,6 @@ class GAbuilder(GAselector):
         if excluded:
 
             self.excluded_ids.append(robot.unique_id)
-            # print('# excluded : ', len(self.excluded_ids))
-            # if len(self.excluded_ids)>=self.Nagents_min
-
 
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
@@ -498,7 +498,6 @@ class GAbuilder(GAselector):
         preg.graph_dict.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
                                     name=self.bestConfID)
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
-        # print(f'GA dataframe saved at {filepath}')
 
     def build_threads(self, robots):
         # if self.multicore:

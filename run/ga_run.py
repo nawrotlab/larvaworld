@@ -30,8 +30,9 @@ bestConfID = args.bestConfID
 show_screen = args.show_screen
 offline = args.offline
 
+ga_select_kws = d['ga_select_kws'],
 
-exp_conf = update_exp_conf(exp, d, conf_type='Ga', ga_select_kws = d['ga_select_kws'],
+exp_conf = update_exp_conf(exp, d, conf_type='Ga',
                            offline=offline, show_screen=show_screen)
 
 if base_model is not None :

@@ -19,9 +19,9 @@ def boolean_indexing(v, fillval=np.nan):
     return out
 
 
-def concat_datasets(ds, key='end', unit='sec'):
+def concat_datasets(ddic, key='end', unit='sec'):
     dfs = []
-    for d in ds:
+    for l,d in ddic.items():
         if key == 'end':
             try:
                 df = d.endpoint_data
@@ -32,13 +32,13 @@ def concat_datasets(ds, key='end', unit='sec'):
                 df = d.step_data
             except:
                 df = d.read(key='step')
-        df['DatasetID'] = d.id
+        df['DatasetID'] = l
         df['GroupID'] = d.group_id
         dfs.append(df)
     df0 = pd.concat(dfs)
     if key == 'step':
         df0.reset_index(level='Step', drop=False, inplace=True)
-        dts = np.unique([d.config['dt'] for d in ds])
+        dts = np.unique([d.config['dt'] for l,d in ddic.items()])
         if len(dts) == 1:
             dt = dts[0]
             dic = {'sec': 1, 'min': 60, 'hour': 60 * 60, 'day': 24 * 60 * 60}
@@ -148,3 +148,37 @@ def gConf(mdict, **kwargs):
         conf = dNl.update_existingdict(conf, kwargs)
     # conf.update(kwargs)
     return conf
+
+def update_mdict(mdict, mmdic):
+    if mmdic is None:
+        return None
+    else:
+        for d, p in mdict.items():
+            new_v = mmdic[d] if d in mmdic.keys() else None
+            if isinstance(p, param.Parameterized):
+                if type(new_v) == list:
+                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
+                        new_v = tuple(new_v)
+                p.v = new_v
+            else:
+                mdict[d]=update_mdict(mdict=p, mmdic=new_v)
+        return mdict
+
+
+def update_existing_mdict(mdict, mmdic):
+    if mmdic is None:
+        return mdict
+    else:
+        for d, v in mmdic.items():
+            p=mdict[d]
+
+            # new_v = mmdic[d] if d in mmdic.keys() else None
+            if isinstance(p, param.Parameterized) :
+                if type(v) == list:
+                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
+                        v = tuple(v)
+
+                p.v = v
+            elif isinstance(p,dict) and isinstance(v,dict):
+                mdict[d]=update_existing_mdict(mdict=p, mmdic=v)
+        return mdict

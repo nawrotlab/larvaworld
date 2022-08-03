@@ -9,14 +9,15 @@ from lib.sim.eval.eval_aux import RSS
 
 def dst2source_evaluation(robot, source_xy):
     traj = np.array(robot.trajectory)
-    # traj = gdict['step'][['x', 'y']].values
     dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
     cum_dst = np.sum(dst)
+    l=[]
     for label, pos in source_xy.items():
         dst2source = eudi5x(traj, np.array(pos))
-        break
-    return -np.mean(dst2source) / cum_dst, {}
-
+        l.append(dst2source)
+    m=np.mean(np.min(np.vstack(l),axis=0))
+    fitness= - m/ cum_dst
+    return fitness
 
 def cum_dst(robot, **kwargs):
     return robot.cum_dst / robot.real_length
