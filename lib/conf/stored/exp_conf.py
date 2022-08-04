@@ -5,15 +5,7 @@ from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
 I=preg.init_dict
 
-def prestarved(h=0.0, age=0.0, q=1.0, substrate_type='standard'):
-    sub0 = preg.get_null('substrate', type=substrate_type, quality=q)
-    ep0 = {0: preg.get_null('epoch', start=0.0, stop=age - h, substrate=sub0)}
-    if h == 0.0:
-        return ep0
-    else:
-        sub1 = preg.get_null('substrate', type=substrate_type, quality=0.0)
-        ep1 = {1: preg.get_null('epoch', start=age - h, stop=age, substrate=sub1)}
-    return {**ep0, **ep1}
+#
 
 
 def lgs(models, ids=None, **kwargs):
@@ -33,37 +25,39 @@ def lg(group='Larva', c='black', N=1, mode='uniform', sh='circle', p=(0.0, 0.0),
        s=(0.0, 0.0), m='explorer', o=None, **kwargs):
     if type(s) == float:
         s = (s, s)
-    if o is None :
-        o=I.get_null('odor')
-    dist = I.get_null('larva_distro', N=N, mode=mode, shape=sh, loc=p, orientation_range=ors, scale=s)
-    g = I.get_null('LarvaGroup', distribution=dist, default_color=c, model=m, odor=o, **kwargs)
-    return {group: g}
+
+    kws = {'kwdic': {'distribution': {'N': N, 'scale': s, 'orientation_range': ors, 'loc': p, 'shape': sh, 'mode': mode}},
+       'default_color': c, 'model': m,  **kwargs}
+    if o is not None:
+        kws['odor']=o
+
+    return preg.grouptype_dict.dict.LarvaGroup.entry(id=group,**kws)
+    # return {group: g}
+#
+
+
 
 
 def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, **kwargs):
-    kw = {
-        'sim_params': I.get_null('sim_params', **sim),
-        'env_params': env_name,
+
+    ct = preg.conftype_dict.dict.Exp
+    kw = {'kwdic': {'sim_params': sim},
         'larva_groups': l,
+        'env_params': env_name,
         'collections': ['pose'] + c,
-        # **kwargs
     }
-    kw.update(kwargs)
+
     if en:
-        exp_conf = I.get_null('exp_conf',
-                                 enrichment=I.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                                                          bouts=['stride', 'pause', 'turn']), **kw)
-        # print(exp_conf.enrichment.preprocessing)
-        # raise
-    else:
-        exp_conf = I.get_null('exp_conf', **kw)
+        kw['enrichment'] = preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                                         bouts=['stride', 'pause', 'turn'])
+    kw.update(kwargs)
 
     if not as_entry:
-        return exp_conf
+        return ct.gConf(**kw)
     else:
         if exp_name is None:
             exp_name = env_name
-        return {exp_name: exp_conf}
+        return ct.entry(id=exp_name, **kw)
 
 
 def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
@@ -109,26 +103,6 @@ def pref_exp(name, dur=5.0, c=[], enrichment=I.enr_dict(proc=['PI']), **kwargs):
     return exp(name, sim={'duration': dur}, c=c, enrichment=enrichment, **kwargs)
 
 
-def RvsS_groups(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard', pref='',
-                navigator=False,expand=False, **kwargs):
-    l = I.get_null('life_history', age=age,
-                      epochs=prestarved(h=h_starved, age=age, q=q, substrate_type=substrate_type))
-    group_kws = {
-        'sample': sample,
-        'life_history': l,
-        's': 0.005,
-        'N': N,
-        **kwargs
-    }
-    mR, mS = ['rover', 'sitter'] if not navigator else ['navigator_rover', 'navigator_sitter']
-    if expand :
-        mR=preg.expandConf('Model', mR)
-        mS=preg.expandConf('Model', mS)
-
-    return {**lg(f'{pref}Rover', m=mR, c='blue', **group_kws),
-            **lg(f'{pref}Sitter', m=mS, c='red', **group_kws)}
-
-
 def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     x = np.round(x * dim, 3)
     y = np.round(y * dim, 3)
@@ -143,16 +117,18 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
              **lg('Right', N=1, p=(+0.01, 0.0), m='follower-R', c='darkred', o=I.oD(id='Right_odor'))}
     return l
 
+def GTRvsS(**kwargs):
+    return preg.grouptype_dict.dict.LarvaGroup.RvsS_groups(**kwargs)
 
 def Exp_dict() :
+
+
+
     grouped_exp_dict = {
         'exploration': {
             'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
             'focus': simple_exp('focus', l=lg(m='Levy', N=1, ors=[90.0, 90.0])),
             'dish': simple_exp('dish', l=lg(m='branch_explorer', N=5, s=0.02)),
-            # 'dish_x2': simple_exp('dish', l=lgs(models=['explorer', 'branch_explorer'],
-            #                                     ids=['default', 'branch'], N=5)),
-            # 'nengo_dish': simple_exp('dish', l=lg(m='nengo_explorer', N=25, s=0.02)),
             'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
             'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
                                         l=lgs(models=['explorer', 'Levy', 'nengo_explorer'],
@@ -209,7 +185,7 @@ def Exp_dict() :
             'single_odor_patch': food_exp('single_odor_patch',
                                           l=lgs(models=['Orco_forager', 'forager'],
                                                 ids=['Orco', 'control'], N=5, mode='periphery', s=0.03)),
-            'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
+            'double_patch': food_exp('double_patch', l=GTRvsS(N=5),
                                      c=['toucher', 'feeder', 'olfactor'],
                                      enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'], interference=False,
                                                               on_food=True, fits=False), en=False),
@@ -232,18 +208,18 @@ def Exp_dict() :
             '4corners': exp('4corners', c=['memory'], l=lg(m='RL_forager', N=10, s=0.04))
         },
 
-        'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=RvsS_groups(age=0.0)),
-                   'RvsS': deb_exp('food_grid', dur=180.0, l=RvsS_groups(age=0.0)),
-                   'RvsS_on': deb_exp('food_grid', dur=20.0, l=RvsS_groups()),
-                   'RvsS_off': deb_exp('arena_200mm', dur=20.0, l=RvsS_groups()),
-                   'RvsS_on_q75': deb_exp('food_grid', l=RvsS_groups(q=0.75)),
-                   'RvsS_on_q50': deb_exp('food_grid', l=RvsS_groups(q=0.50)),
-                   'RvsS_on_q25': deb_exp('food_grid', l=RvsS_groups(q=0.25)),
-                   'RvsS_on_q15': deb_exp('food_grid', l=RvsS_groups(q=0.15)),
-                   'RvsS_on_1h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=1.0)),
-                   'RvsS_on_2h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=2.0)),
-                   'RvsS_on_3h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=3.0)),
-                   'RvsS_on_4h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=4.0)),
+        'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=GTRvsS(age=0.0)),
+                   'RvsS': deb_exp('food_grid', dur=180.0, l=GTRvsS(age=0.0)),
+                   'RvsS_on': deb_exp('food_grid', dur=20.0, l=GTRvsS()),
+                   'RvsS_off': deb_exp('arena_200mm', dur=20.0, l=GTRvsS()),
+                   'RvsS_on_q75': deb_exp('food_grid', l=GTRvsS(q=0.75)),
+                   'RvsS_on_q50': deb_exp('food_grid', l=GTRvsS(q=0.50)),
+                   'RvsS_on_q25': deb_exp('food_grid', l=GTRvsS(q=0.25)),
+                   'RvsS_on_q15': deb_exp('food_grid', l=GTRvsS(q=0.15)),
+                   'RvsS_on_1h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=1.0)),
+                   'RvsS_on_2h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=2.0)),
+                   'RvsS_on_3h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=3.0)),
+                   'RvsS_on_4h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=4.0)),
 
                    },
 
@@ -332,7 +308,7 @@ def ExpGroup_dict() :
             'single_odor_patch': food_exp('single_odor_patch',
                                           l=lgs(models=['Orco_forager', 'forager'],
                                                 ids=['Orco', 'control'], N=5, mode='periphery', s=0.03)),
-            'double_patch': food_exp('double_patch', l=RvsS_groups(N=5),
+            'double_patch': food_exp('double_patch', l=GTRvsS(N=5),
                                      c=['toucher', 'feeder', 'olfactor'],
                                      enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'], interference=False,
                                                               on_food=True, fits=False), en=False),
@@ -355,18 +331,18 @@ def ExpGroup_dict() :
             '4corners': exp('4corners', c=['memory'], l=lg(m='RL_forager', N=10, s=0.04))
         },
 
-        'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=RvsS_groups(age=0.0)),
-                   'RvsS': deb_exp('food_grid', dur=180.0, l=RvsS_groups(age=0.0)),
-                   'RvsS_on': deb_exp('food_grid', dur=20.0, l=RvsS_groups()),
-                   'RvsS_off': deb_exp('arena_200mm', dur=20.0, l=RvsS_groups()),
-                   'RvsS_on_q75': deb_exp('food_grid', l=RvsS_groups(q=0.75)),
-                   'RvsS_on_q50': deb_exp('food_grid', l=RvsS_groups(q=0.50)),
-                   'RvsS_on_q25': deb_exp('food_grid', l=RvsS_groups(q=0.25)),
-                   'RvsS_on_q15': deb_exp('food_grid', l=RvsS_groups(q=0.15)),
-                   'RvsS_on_1h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=1.0)),
-                   'RvsS_on_2h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=2.0)),
-                   'RvsS_on_3h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=3.0)),
-                   'RvsS_on_4h_prestarved': deb_exp('food_grid', l=RvsS_groups(h_starved=4.0)),
+        'growth': {'growth': deb_exp('food_grid', dur=24 * 60.0, l=GTRvsS(age=0.0)),
+                   'RvsS': deb_exp('food_grid', dur=180.0, l=GTRvsS(age=0.0)),
+                   'RvsS_on': deb_exp('food_grid', dur=20.0, l=GTRvsS()),
+                   'RvsS_off': deb_exp('arena_200mm', dur=20.0, l=GTRvsS()),
+                   'RvsS_on_q75': deb_exp('food_grid', l=GTRvsS(q=0.75)),
+                   'RvsS_on_q50': deb_exp('food_grid', l=GTRvsS(q=0.50)),
+                   'RvsS_on_q25': deb_exp('food_grid', l=GTRvsS(q=0.25)),
+                   'RvsS_on_q15': deb_exp('food_grid', l=GTRvsS(q=0.15)),
+                   'RvsS_on_1h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=1.0)),
+                   'RvsS_on_2h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=2.0)),
+                   'RvsS_on_3h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=3.0)),
+                   'RvsS_on_4h_prestarved': deb_exp('food_grid', l=GTRvsS(h_starved=4.0)),
 
                    },
 

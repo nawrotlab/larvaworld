@@ -25,12 +25,23 @@ def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=preg.get_null('
     return {id: preg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
 
 
-def sg(id='Source', c='green', r=0.003, a=0.0, o=preg.get_null('odor'), N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
+def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
        m='uniform', **kwargs):
     if type(s) == float:
         s = (s, s)
-    d = preg.get_null('spatial_distro', N=N, loc=loc, scale=s, shape=sh, mode=m)
-    return {id: preg.get_null('SourceGroup', default_color=c, distribution=d, radius=r, amount=a, odor=o, **kwargs)}
+
+
+
+    kws = {
+        'kwdic': {'distribution': {'N': N, 'scale': s,  'loc': loc, 'shape': sh, 'mode': m}},
+        'default_color': c, 'radius': r,'amount': a, **kwargs}
+    if o is not None:
+        kws['odor'] = o
+
+
+
+    gt = preg.grouptype_dict.dict.SourceGroup
+    return gt.entry(id=id, **kws)
 
 
 def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):

@@ -121,9 +121,10 @@ class FuncParHelper:
             return self.compute(s=s,**kwargs)
 
 if __name__ == '__main__':
+    pass
     # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
     # raise
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    preg.conftype_dict.resetConfs(['Ga'])
+    preg.conftype_dict.resetConfs(['Model'])
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    # preg.conftype_dict.resetConfs(ks=['Exp'])
+    # preg.conftype_dict.resetConfs(ks=['Env','Exp'])

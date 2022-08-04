@@ -101,15 +101,17 @@ class RvsS_Essay(Essay):
                              food_params=preg.get_null('food_params', food_grid=grid),
                              )
 
+    def GTRvsS(self,**kwargs):
+        return self.GT.dict.LarvaGroup.RvsS_groups(expand=True, N=self.N,**kwargs)
+
     def pathlength_exp(self):
-        from lib.conf.stored.exp_conf import RvsS_groups
         dur = self.dur_pathlength
         exp = 'PATHLENGTH'
         confs = []
         for n, nb in zip(self.substrates, [False, True]):
             kws = {
                 'env': self.RvsS_env(on_food=nb),
-                'lgs': RvsS_groups(expand=True, N=self.N),
+                'lgs': self.GTRvsS(),
                 'id': f'{exp}_{n}_{dur}min',
                 'dur': dur,
                 'exp': exp
@@ -118,13 +120,12 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def intake_exp(self):
-        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'AD LIBITUM INTAKE'
         confs = []
         for dur in self.durs:
             kws = {
                 'env': self.RvsS_env(on_food=True),
-                'lgs': RvsS_groups(expand=True, N=self.N),
+                'lgs': self.GTRvsS(),
                 'id': f'{exp}_{dur}min',
                 'dur': dur,
                 'exp': exp
@@ -133,13 +134,12 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def starvation_exp(self):
-        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'POST-STARVATION INTAKE'
         confs = []
         for h in self.hs:
             kws = {
                 'env': self.RvsS_env(on_food=True),
-                'lgs': RvsS_groups(expand=True, N=self.N, h_starved=h),
+                'lgs': self.GTRvsS( h_starved=h),
                 'id': f'{exp}_{h}h_{self.dur}min',
                 'dur': self.dur,
                 'exp': exp
@@ -148,13 +148,12 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def quality_exp(self):
-        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'REARING-DEPENDENT INTAKE'
         confs = []
         for q in self.qs:
             kws = {
                 'env': self.RvsS_env(on_food=True),
-                'lgs': RvsS_groups(expand=True, N=self.N, q=q),
+                'lgs': self.GTRvsS( q=q),
                 'id': f'{exp}_{q}_{self.dur}min',
                 'dur': self.dur,
                 'exp': exp
@@ -163,13 +162,12 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def refeeding_exp(self):
-        from lib.conf.stored.exp_conf import RvsS_groups
         exp = 'REFEEDING AFTER 3h STARVED'
         h = self.h_refeeding
         dur = self.dur_refeeding
         kws = {
             'env': self.RvsS_env(on_food=True),
-            'lgs': RvsS_groups(expand=True, N=self.N, h_starved=h),
+            'lgs': self.GTRvsS( h_starved=h),
             'id': f'{exp}_{h}h_{dur}min',
             'dur': dur,
             'exp': exp
@@ -387,8 +385,11 @@ class DoublePatch_Essay(Essay):
                 'model': self.CT.dict.Model.loadConf(f'navigator_{mID0}'),
                 **kws0
             }
-
+            # print(kws['model'])
+            # raise
             lgs.update(self.GT.dict.LarvaGroup.entry(id=f'{type}_{mID0}', **kws))
+
+
         return lgs
 
     def get_sources(self, type='standard'):

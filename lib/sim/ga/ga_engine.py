@@ -76,11 +76,6 @@ class GAselector:
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
         self.sorted_genomes = [self.genome_dict[i] for i in sorted_idx]
 
-        # f=np.mean([self.genome_dict[i].fitness for i in sorted_idx[:5]])
-
-        # preg.vprint(f'Generation {self.generation_num} 5_highest : {[self.genome_dict[i].fitness for i in sorted_idx[:5]]}', 2)
-
-
         if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
             self.best_genome = self.sorted_genomes[0]
             self.best_fitness = self.best_genome.fitness

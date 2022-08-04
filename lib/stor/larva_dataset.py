@@ -9,8 +9,10 @@ import copy
 from lib.aux import dictsNlists as dNl, xy_aux, naming as nam, stdout
 # import lib.aux.naming as nam
 
-from lib.registry.pars import preg
-
+# from lib.registry.pars import preg
+# from lib.registry.timer import check_time
+import logging
+from codetiming import Timer
 
 class LarvaDataset:
     def __init__(self, dir, load_data=True, **kwargs):
@@ -201,6 +203,9 @@ class LarvaDataset:
         store['step'] = ss
         store.close()
 
+
+
+    @Timer(name="load")
     def load(self, step=True, end=True, food=False, **kwargs):
         D = self.dir_dict
         if step:
@@ -1057,6 +1062,14 @@ class LarvaDataset:
 
 if __name__ == '__main__':
     from lib.registry.pars import preg
+    refID = 'None.150controls'
+
+    d = preg.loadRef(refID)
+    raise
+    d.load(step=False)
+
+    raise
+
 
     import pandas as pd
 
@@ -1068,9 +1081,12 @@ if __name__ == '__main__':
     # h5_ks = []
 
     d = preg.loadRef(refID)
-    d.load(h5_ks=h5_ks)
-    # entries_3m = d.config.modelConfs['3modules']
+    d.load(h5_ks=h5_ks, step=False)
 
+
+
+    # entries_3m = d.config.modelConfs['3modules']
+    # raise
     # dIDs = ['NEU', 'SIN', 'CON']
     # for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
     #     for Ifmod in ['PHI', 'SQ', 'DEF']:

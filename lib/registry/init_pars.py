@@ -78,6 +78,7 @@ class ParInitDict(BaseConfDict):
         d=dNl.NestDict(d)
 
         self.default_dict = self.build_default_dict(d)
+
         self.build_mDicts(CTs, d)
         return d
 
@@ -89,14 +90,10 @@ class ParInitDict(BaseConfDict):
             else:
                 dict0 = None
 
-            ct.build_mdict(dict0)
-        # for k, ct in CTs.items():
-        #     # if k=='Ga':
-        #     #     print(ct.mdict.env_params.v)
-        #     #     # raise
-        #     ct.expand_mdict()
-            # if k=='Ga':
-            #     print(ct.mdict.env_params.arena.arena_dims.v)
+            ct.set_dict0(dict0)
+
+
+
 
 
 

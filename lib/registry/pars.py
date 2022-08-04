@@ -59,7 +59,7 @@ class ParRegistry:
 
     @property
     def parser_dict(self):
-        from lib.registry.order import ParsD
+        from lib.registry.parser_dict import ParsD
         return ParsD
 
     @property
@@ -80,6 +80,10 @@ class ParRegistry:
         return self.par_dict.getPar(k=k, d=d, p=p, to_return=to_return)
 
     def get_null(self, name, **kwargs):
+        # print(self.get_null('intermitter'))
+        # # print(kwargs)
+        # print()
+        # raise
         return self.init_dict.get_null(name=name, **kwargs)
 
     def oG(self, c=1, id='Odor'):
@@ -136,9 +140,20 @@ class ParRegistry:
     def expandConf(self, conftype, id=None):
         return self.conftype_dict.dict[conftype].expandConf(id=id)
 
+    def loadRef(self, id, verbose=1):
+        self.paths['Ref']
 
-    def loadRef(self, id=None):
-        return self.conftype_dict.loadRef(id=id)
+
+        from lib.stor.larva_dataset import LarvaDataset
+        d = LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
+        if verbose >= 1:
+            print(f'Loaded stored reference dataset : {id}')
+        return d
+
+
+    # def loadRef(self, id=None):
+    #     from lib.conf.stored
+    #     return self.conftype_dict.loadRef(id=id)
 
 
     def storedConf(self, conftype):

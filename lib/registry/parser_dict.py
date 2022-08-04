@@ -1,10 +1,15 @@
 import time
 from typing import List
+
+
+
 import lib.aux.dictsNlists as dNl
 # from lib.conf.stored.conf import loadConfDict
 from lib.registry.base import BaseConfDict
 
 from lib.registry.pars import preg
+
+
 class ParsArg:
     """
     Create a single parser argument
@@ -63,7 +68,7 @@ def get_ParsDict(d0):
 
 
 def build_ParsDict(dic):
-    return {k: ParsArg(**v) for k, v in dic.items()}
+    return dNl.NestDict({k: ParsArg(**v) for k, v in dic.items()})
     # return parsargs
 
 
@@ -96,6 +101,7 @@ def build_ParsDict2(dic):
             for kk, vv in v['content'].items():
                 parsargs[kk] = ParsArg(**vv)
     return parsargs
+
 
 #
 # class ParserDict:
@@ -135,17 +141,17 @@ def build_ParsDict2(dic):
 #         return d
 
 
-
 # parser_dict = ParserDict()
-
-
+print('xx')
+from codetiming import Timer
+@Timer(name="tt")
 class ParserDict(BaseConfDict):
 
-    def __init__(self, mode='load',names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
+    def __init__(self, mode='load',
+                 names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
         self.names = names
         super().__init__(mode=mode)
         self.parser_dict = self.build_parser_dict()
-
 
     def build(self):
         init_dict = preg.init_dict.dict
@@ -158,11 +164,28 @@ class ParserDict(BaseConfDict):
                 d[name] = get_ParsDict(d0)
         return d
 
-    def build_parser_dict(self):
-        d = dNl.NestDict()
-        for name, dic in self.dict.items():
-            try:
-                d[name] = build_ParsDict2(dic)
-            except:
-                d[name] = build_ParsDict(dic)
+    def prepare(self, dic):
+        try:
+            d = build_ParsDict2(dic)
+        except:
+            d = build_ParsDict(dic)
         return d
+
+    def build_parser_dict(self):
+        d = {}
+        for name, dic in self.dict.items():
+            d[name] = self.prepare(dic)
+        return dNl.NestDict(d)
+
+    def retrieve(self, name):
+        if name in self.parser_dict.keys():
+            return self.parser_dict[name]
+        elif name in self.dict.keys():
+            self.parser_dict[name] = self.prepare(self.dict[name])
+            return self.parser_dict[name]
+        else:
+            raise
+
+
+ParsD = ParserDict()
+# print('tt')

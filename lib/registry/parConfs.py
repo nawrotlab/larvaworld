@@ -328,14 +328,18 @@ class LarvaConfDict:
     def init_loco(self, conf, L):
         D = self.dict.model.m
         for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
+
             if conf.modules[k]:
+
                 m = conf[f'{k}_params']
                 if k == 'feeder':
                     mode = 'default'
                 else:
                     mode = m.mode
+                # print(k, D[k], mode)
                 kws = {kw: getattr(L, kw) for kw in D[k].kwargs.keys()}
-                M = D[k].mode[mode].class_func(**m, **kws)
+                func=D[k].mode[mode].class_func
+                M = func(**m, **kws)
                 if k == 'intermitter':
                     M.disinhibit_locomotion(L)
                 if k == 'crawler':
@@ -886,6 +890,8 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         return np.round(vs.median(), Nround)
     else:
         return vs
+
+
 
 
 # larva_conf_dict=LarvaConfDict()

@@ -8,15 +8,21 @@ import numpy as np
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
 
+OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
+OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
+
+
 def Im(EEB, **kwargs):
-    return preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=EEB, **kwargs)
+    conf = preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=EEB, **kwargs)
+
+    return conf
 
 
 # -------------------------------------------WHOLE NEURAL MODES---------------------------------------------------------
 
 
 def brain(ks, nengo=False, OD=None, **kwargs):
-    base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(np.pi/2, np.pi),
+    base_coupling = preg.get_null('interference', mode='square', crawler_phi_range=(np.pi / 2, np.pi),
                                   feeder_phi_range=(0.0, 0.0),
                                   attenuation=0.1, attenuation_max=0.6)
 
@@ -63,28 +69,6 @@ def brain(ks, nengo=False, OD=None, **kwargs):
     return dNl.NestDict(d)
 
 
-def RvsS_larva(EEB=0.5, Nsegs=2, mock=False, hunger_gain=1.0, DEB_dt=10.0, OD=None, gut_kws={}, **deb_kws):
-    if OD is None:
-        ms = ['L', 'F']
-    else:
-        ms = ['LOF']
-    b = brain(ms, OD=OD, intermitter=Im(EEB)) if not mock else brain(['Im', 'F'], intermitter=Im(EEB))
-
-    gut = preg.get_null('gut', **gut_kws)
-    deb = preg.get_null('DEB', hunger_as_EEB=True, hunger_gain=hunger_gain, DEB_dt=DEB_dt, **deb_kws)
-
-    null_Box2D_params = {
-        'joint_types': {
-            'friction': {'N': 0, 'args': {}},
-            'revolute': {'N': 0, 'args': {}},
-            'distance': {'N': 0, 'args': {}}
-        }
-    }
-
-    return preg.get_null('larva_conf', brain=b, body=preg.get_null('body', initial_length=0.001, Nsegs=Nsegs),
-                         energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
-
-
 def nengo_brain(module_shorts, EEB, OD=None):
     if EEB > 0:
         f_fr0, f_fr_r = 2.0, (1.0, 3.0)
@@ -97,10 +81,98 @@ def nengo_brain(module_shorts, EEB, OD=None):
                                        mode='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=preg.get_null('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
                  # olfactor=olfactor,
-                 intermitter=Im(EEB, mode='nengo'),
+                 intermitter=preg.get_null('intermitter', feed_bouts=EEB > 0, EEB=EEB, mode='nengo'),
                  nengo=True,
                  OD=OD
                  )
+
+
+def RvsS_larva(species, mock=False, OD=None):
+    if species == 'rover':
+        EEB = 0.67
+        gut_kws = {'k_abs': 0.8}
+    elif species == 'sitter':
+        EEB = 0.37
+        gut_kws = {'k_abs': 0.4}
+    else:
+        raise
+
+    mods = ['intermitter', 'feeder']
+    kws = {'intermitter_params': preg.get_null('intermitter', feed_bouts=True, EEB=EEB),
+           'feeder_params': preg.get_null('feeder'),
+           'nengo': False}
+    if mock:
+        Nsegs = 1
+    else:
+        Nsegs = 2
+
+        mods2 = ['crawler', 'turner', 'interference']
+
+        if OD is not None:
+            mods2 += ['olfactor']
+        b = preg.conftype_dict.dict.Model.loadConf('RE_NEU_SQ_DEF_nav').brain
+        for mod in mods2:
+            key = f'{mod}_params'
+            kws[key] = b[key]
+            if mod == 'olfactor':
+                kws[key]['odor_dict'] = OD
+
+        mods += mods2
+
+    kws['modules'] = preg.get_null('modules', **{m: True for m in mods})
+    bb = preg.get_null('brain', **kws)
+    #
+
+    # if not mock :
+    #     b = brain(ms, OD=OD, intermitter=Im)
+    # else :
+    #     b =brain(['Im', 'F'], intermitter=Im)
+
+    gut = preg.get_null('gut', **gut_kws)
+    deb = preg.get_null('DEB', hunger_as_EEB=True, hunger_gain=1.0, DEB_dt=10.0, species=species)
+
+    null_Box2D_params = {
+        'joint_types': {
+            'friction': {'N': 0, 'args': {}},
+            'revolute': {'N': 0, 'args': {}},
+            'distance': {'N': 0, 'args': {}}
+        }
+    }
+
+    return preg.get_null('larva_conf', brain=bb, body=preg.get_null('body', initial_length=0.001, Nsegs=Nsegs),
+                         energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
+
+
+# b=RvsS_larva(EEB=0.37, species='rover', OD=OD1, gut_kws={'k_abs': 0.8}).brain
+# print(b.modules.feeder)
+# bb=preg.conftype_dict.dict.Model.loadConf('RE_NEU_SQ_DEF_nav').brain
+# print(bb.modules.feeder)
+# raise
+
+def build_RvsS():
+    RvsS = {}
+    for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
+        kws0 = {'energetics': {
+            'DEB': preg.get_null('DEB', hunger_as_EEB=True, hunger_gain=1.0, DEB_dt=10.0, species=species),
+            'gut': preg.get_null('gut', k_abs=k_abs)},
+                'body': preg.get_null('body', initial_length=0.001, Nsegs=2)},
+        brain_kws = {
+            'intermitter_params': preg.get_null('intermitter', feed_bouts=True, EEB=EEB),
+            'feeder_params': preg.get_null('feeder'),
+            'nengo': False
+        }
+        mods = ['intermitter', 'feeder']
+        RvsS[f'mock_{species}']
+
+    RvsS = {
+        'rover': RvsS_larva(species='rover'),
+        'sitter': RvsS_larva(species='sitter'),
+        'navigator_rover': RvsS_larva(species='rover', OD=OD1),
+        'mock_rover': RvsS_larva(species='rover', mock=True),
+        'navigator_sitter': RvsS_larva(species='sitter', OD=OD1),
+        'mock_sitter': RvsS_larva(species='sitter', mock=True),
+    }
+    return RvsS
 
 
 def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
@@ -142,8 +214,6 @@ def create_mod_dict():
                          freq_range=[0.1, 1.0]
                          )
 
-
-
     RL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30,
                                     update_dt=0.5,
                                     gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=True)
@@ -151,19 +221,6 @@ def create_mod_dict():
     gRL_touch_memory = preg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30,
                                      update_dt=0.5,
                                      gain_space=np.round(np.arange(-10, 11, 5), 1).tolist(), state_specific_best=False)
-
-    OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
-    OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
-
-    def ImD(pau, str, run=None, **kwargs):
-        return preg.get_null('intermitter', pause_dist=pau, stridechain_dist=str, run_dist=run, **kwargs)
-
-    ImFitted = ImD(
-        run_mode='run',
-        pau={'fit': False, 'range': (0.125, 15.875), 'name': 'lognormal', 'mu': -0.24223, 'sigma': 0.96498},
-        str={'fit': False, 'range': (1, 157), 'name': 'lognormal', 'mu': 1.34411, 'sigma': 1.16138},
-        run={'fit': False, 'range': (0.375, 115.9375), 'name': 'powerlaw', 'alpha': 1.48249},
-    )
 
     M0 = mod()
 
@@ -194,7 +251,6 @@ def create_mod_dict():
     nLO = nengo_brain(['L', 'O'], EEB=0.0)
     LTh = brain(['L', 'Th'])
 
-
     def add_OD(OD, B0=LOF):
         B1 = dNl.NestDict(copy.deepcopy(B0))
         B1.olfactor_params.odor_dict = OD
@@ -213,7 +269,8 @@ def create_mod_dict():
         # 'phasic_explorer': add_brain(Lphi),
         # 'uncoupled_explorer': add_brain(LOuncoupled),
         # 'def_coupled_explorer': add_brain(LOdef),
-        'branch_explorer': add_brain(add_Im(Im(0.0, mode='branch'), LW)),
+        'branch_explorer': add_brain(add_Im(preg.get_null('intermitter', feed_bouts=False, EEB=0, mode='branch'), LW)),
+        # 'branch_explorer': add_brain(add_Im(Im(0.0, mode='branch'), LW)),
         'nengo_explorer': add_brain(nengo_brain(['L', 'W'], EEB=0.0)),
         # 'Levy-walker': add_brain(Levy_brain),
         # 'explorer_3con': add_brain(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
@@ -249,6 +306,15 @@ def create_mod_dict():
         'nengo_forager': add_brain(nengo_brain(['LOF'], EEB=0.75, OD=OD1))
     }
 
+    RvsS = {
+        'rover': RvsS_larva(species='rover'),
+        'sitter': RvsS_larva(species='sitter'),
+        'navigator_rover': RvsS_larva(species='rover', OD=OD1),
+        'mock_rover': RvsS_larva(species='rover', mock=True),
+        'navigator_sitter': RvsS_larva(species='sitter', OD=OD1),
+        'mock_sitter': RvsS_larva(species='sitter', mock=True),
+    }
+
     touchers = {
         'toucher': add_brain(LTo),
         'toucher_brute': add_brain(LTo_brute),
@@ -260,15 +326,6 @@ def create_mod_dict():
 
     other = {
         'immobile': add_brain(brain(['T', 'O'], OD=OD1)),
-    }
-
-    RvsS = {
-        'rover': RvsS_larva(EEB=0.37,species='rover', gut_kws={'k_abs': 0.8}),
-        'sitter': RvsS_larva(EEB=0.67,species='sitter',  gut_kws={'k_abs': 0.4}),
-        'navigator_rover': RvsS_larva(EEB=0.37,species='rover', OD=OD1, gut_kws={'k_abs': 0.8}),
-        'mock_rover': RvsS_larva(EEB=0.37, species='rover', Nsegs=1, mock=True, gut_kws={'k_abs': 0.8}),
-        'navigator_sitter': RvsS_larva(EEB=0.67,  species='sitter', OD=OD1, gut_kws={'k_abs': 0.4}),
-        'mock_sitter': RvsS_larva(EEB=0.67, species='sitter', Nsegs=1, mock=True, gut_kws={'k_abs': 0.4}),
     }
 
     odors3 = [f'{i}_odor' for i in ['Flag', 'Left_base', 'Right_base']]
@@ -303,14 +360,16 @@ def create_mod_dict():
     return grouped_mod_dict
 
 
-
-def Model_dict() :
+def Model_dict():
     d = create_mod_dict()
+
     dnew = preg.larva_conf_dict.baseConfs()
-    dd=dNl.merge_dicts(list(d.values()))
+    dd = dNl.merge_dicts(list(d.values()))
+
     dd.update(dnew)
     return dd
 
-def ModelGroup_dict() :
+
+def ModelGroup_dict():
     d = create_mod_dict()
-    return  dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})
+    return dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})

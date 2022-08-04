@@ -11,19 +11,19 @@ import param
 import lib.aux.dictsNlists as dNl
 from lib.aux.data_aux import update_mdict, update_existing_mdict
 from lib.aux.par_aux import sub
+from lib.registry.base import BaseType
 
 from lib.registry.pars import preg
 
 
 
 
-class ConfType:
-    def __init__(self,k, subks={}):
-        self.k = k
-        self.path = preg.paths[k]
-        # self.use_pickle = False
+class ConfType(BaseType):
+    def __init__(self, CT,**kwargs):
+        super().__init__(**kwargs)
+        self.path = preg.paths[self.k]
+        self.CT=CT
         self.use_pickle = False if self.k != 'Ga' else True
-        self.subks = subks
 
     # @property
     def loadDict(self):
@@ -72,26 +72,23 @@ class ConfType:
 
 
         if len(self.subks) > 0:
-            CT = preg.conftype_dict.dict
-        for subID, subk in self.subks.items():
-            if CT[subk].mdict is None :
-                continue
+            for subID, subk in self.subks.items():
+                ct = self.CT.dict[subk]
+                if ct.mdict is None :
+                    continue
 
-            if subID == 'larva_groups' and subk == 'Model':
+                if subID == 'larva_groups' and subk == 'Model':
 
-                for k,dic in m0[subID].v.items():
-                    if 'model' in dic.keys():
-                        p=dic.model
-                        mm=retrieve(p,CT['Model'])
-                        dic.model=mm
+                    for k,dic in m0[subID].v.items():
+                        if 'model' in dic.keys():
+                            p=dic.model
+                            mm=retrieve(p,ct)
+                            dic.model=mm
 
-            else:
-                # ct=CT[subk]
-                # mm=copy.deepcopy(ct.mdict)
-                # p = m0[subID]
-                m0[subID] = retrieve(m0[subID], CT[subk])
-                # m0[subID]=mm
-        return m0
+                else:
+                    m0[subID] = retrieve(m0[subID],ct)
+                    # m0[subID]=mm
+            return m0
 
 
 
@@ -107,17 +104,17 @@ class ConfType:
             else :
                 return None
         if len(self.subks) > 0:
-            CT = preg.conftype_dict.dict
-        for subID, subk in self.subks.items():
-            if subID == 'larva_groups' and subk == 'Model':
-                for k, v in conf['larva_groups'].items():
-                    if v.model in CT['Model'].ConfIDs:
-                        v.model = CT['Model'].loadConf(id=v.model)
-            else:
-                if conf[subID] in CT[subk].ConfIDs:
-                    conf[subID] = CT[subk].loadConf(id=conf[subID])
+            for subID, subk in self.subks.items():
+                ct = self.CT.dict[subk]
+                if subID == 'larva_groups' and subk == 'Model':
+                    for k, v in conf['larva_groups'].items():
+                        if v.model in ct.ConfIDs:
+                            v.model = ct.loadConf(id=v.model)
+                else:
+                    if conf[subID] in ct.ConfIDs:
+                        conf[subID] = ct.loadConf(id=conf[subID])
 
-        return conf
+            return conf
 
     def saveConf(self, id, conf, mode='overwrite'):
         d = self.loadDict()
@@ -196,37 +193,6 @@ class ConfType:
              'disp': f'{self.k} {IDstr}'}
         return dNl.NestDict(d)
 
-    # def build_mdict(self):
-    def build_mdict(self, dict0):
-        self.dict0 =dict0
-        if dict0 is not None :
-
-
-            from lib.aux.data_aux import init2mdict, get_ks
-            self.mdict = init2mdict(dict0)
-            # g1=self.gConf()
-            # self.mdict = self.expand_mdict(self.mdict)
-            # g2 = self.gConf()
-            # dNl.dicsprint([g1, g2])
-            self.ks = get_ks(self.mdict)
-
-            self.eval = self.checkDict()
-
-        else:
-            self.mdict = None
-            self.ks=None
-            # raise
-
-
-
-    def gConf(self,m0=None,**kwargs):
-        if m0 is  None:
-            if self.mdict is None:
-                return None
-            else :
-                m0=self.mdict
-        from lib.aux.data_aux import gConf
-        return gConf(m0,**kwargs)
 
 
 
@@ -273,13 +239,8 @@ class ConfTypeDict:
 
         self.subk_dict = self.build_subk_dict(ks)
 
-        d = dNl.NestDict({k: ConfType(k=k, subks=subks) for k, subks in self.subk_dict.items()})
+        d = dNl.NestDict({k: ConfType(k=k, subks=subks, CT=self) for k, subks in self.subk_dict.items()})
 
-        # aa = d['Ga'].loadDict()
-        # print(aa)
-        # # # aa=CTs['Ga'].ConfID_entry(default='realism')
-        # # # aa=CTs['Ga'].ConfID_entry(default='exploration')
-        # raise
         return d
 
     def saveConf(self, conf, conftype, id=None, **kwargs):
