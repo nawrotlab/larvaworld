@@ -495,10 +495,11 @@ class LarvaWorld(BaseLarvaWorld):
             head.set_pose(p, o)
             head.update_vertices(p, o)
             for i, seg in enumerate(l.segs[1:]):
-                seg.set_orientation(o)
+
                 prev_p = l.get_global_rear_end_of_seg(seg_index=i)
                 new_p = prev_p + temp * l.seg_lengths[i + 1] / 2
-                seg.set_position(new_p)
+                seg.set_pose(new_p,o)
+
                 seg.set_lin_vel(0.0)
                 seg.set_ang_vel(0.0)
             l.pos = l.global_midspine_of_body

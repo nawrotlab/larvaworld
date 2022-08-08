@@ -285,7 +285,7 @@ def get_source_xy(food_params):
 def go_forward(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_err=0):
     if np.isnan(lin_vel) or counter > 100:
         go_err += 1
-        return 0, 0, hf01
+        return 0, 0, hf01, go_err
     d = lin_vel * dt
     dxy = k * d * sf
     hf1 = hf01 + dxy
@@ -293,25 +293,37 @@ def go_forward(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_er
     if not inside_polygon([hf1], tank):
         lin_vel -= delta
         if lin_vel < 0:
-            return 0, 0, hf01
+            return 0, 0, hf01, go_err
         counter += 1
         return go_forward(lin_vel, k, hf01, dt, tank, sf, delta, counter, go_err)
     else:
+        # print(lin_vel, d, hf1, go_err)
         return lin_vel, d, hf1, go_err
+
+def test_rotation(ho0, ang_vel, hr0, l0,dt, to_return='front'):
+    ho1 = ho0 + ang_vel * dt
+    kk = np.array([math.cos(ho1), math.sin(ho1)])
+    if to_return=='front':
+        return hr0 + kk * l0
+    elif to_return == 'mid':
+
+        return hr0 + kk * l0/2
 
 
 def turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
-    def get_hf(ho):
-        kk = np.array([math.cos(ho), math.sin(ho)])
+    def get_hf(ho0, ang_vel, hr0, l0):
+        ho1 = ho0 + ang_vel * dt
+        kk = np.array([math.cos(ho1), math.sin(ho1)])
         hf = hr0 + kk * l0
-        return kk, hf
+        return ho1,kk, hf
 
     if np.isnan(ang_vel) or counter > 100:
         turn_err += 1
-        k0, hf00 = get_hf(ho0)
-        return 0, ho0, k0, hf00
-    ho1 = ho0 + ang_vel * dt
-    k, hf01 = get_hf(ho1)
+        ang_vel=0
+        ho1,k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
+        return ang_vel, ho1, k0, hf00, turn_err
+
+    ho1, k, hf01 = get_hf(ho0, ang_vel, hr0, l0)
     if not inside_polygon([hf01], tank):
         if counter == 0:
             delta *= np.sign(ang_vel)

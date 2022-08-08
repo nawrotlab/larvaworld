@@ -6,7 +6,7 @@ from shapely.ops import cascaded_union
 
 
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
-from lib.aux import dictsNlists as dNl, sim_aux, xy_aux
+from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang_aux
 from lib.registry.pars import preg
 
 
@@ -100,12 +100,12 @@ class LarvaShape:
         c = np.copy(color)
         return [np.array((0, 255, 0))] + [c] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [c] * N
 
-    def generate_segs(self,orientation, seg_positions):
+    def generate_segs(self,orientation, seg_positions, seg_lengths, rotation_ps):
         segs = []
 
         for i in range(self.Nsegs):
             seg = DefaultSegment(pos=seg_positions[i], orientation=orientation,
-                                 seg_vertices=self.seg_vertices[i], idx=i, color=self.seg_colors[i])
+                                 seg_vertices=self.seg_vertices[i], idx=i, color=self.seg_colors[i], seg_length=seg_lengths[i], rotation_point=rotation_ps[i])
             segs.append(seg)
 
         return segs
@@ -169,6 +169,7 @@ class LarvaShape:
         global_pos = self.get_segment(seg_index).get_world_point(local_pos)
         return global_pos
 
+
     @property
     def global_rear_end_of_head(self):
         return self.segs[0].get_world_point(self.local_rear_end_of_head)
@@ -217,13 +218,21 @@ class LarvaBody(LarvaShape):
         super().__init__(initial_orientation=orientation, initial_pos=pos,scaling_factor=model.scaling_factor, **kwargs)
         self.model = model
 
+        if self.Nsegs==1:
+            rotation_ps=['mid']
+        elif self.Nsegs>=2 :
+            rotation_ps = ['rear']+[None for i in range(self.Nsegs-1)]
+        #self.segs[0].rotation_point=rotation_ps[0]
+
         if self.model.Box2D :
-            self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions,joint_types)
+            self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions, self.seg_lengths,rotation_ps,joint_types)
         else :
-            self.segs = self.generate_segs(self.initial_orientation, self.seg_positions)
+            self.segs = self.generate_segs(self.initial_orientation, self.seg_positions, self.seg_lengths,rotation_ps)
             from lib.model.agents._agent import LarvaworldAgent
             if isinstance(self, LarvaworldAgent) :
                 self.model.space.place_agent(self, self.initial_pos)
+
+
 
         self.contour = self.set_contour(self.segs)
 
@@ -291,7 +300,7 @@ class LarvaBody(LarvaShape):
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    def generate_Box2D_segs(self,orientation, seg_positions, joint_types):
+    def generate_Box2D_segs(self,orientation, seg_positions,seg_lengths, joint_types,rotation_ps):
         from Box2D import b2Vec2
         segs = []
         physics_pars = {'density': self.density,
@@ -305,7 +314,8 @@ class LarvaBody(LarvaShape):
         for i in range(self.Nsegs):
             seg = Box2DPolygon(space=self.model.space, pos=seg_positions[i], orientation=orientation,
                                physics_pars=physics_pars, facing_axis=b2Vec2(1.0, 0.0), idx=i,
-                               seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
+                               seg_vertices=self.seg_vertices[i], color=self.seg_colors[i], seg_length=seg_lengths[i],
+                               rotation_point=rotation_ps[i])
             fixtures.extend(seg._fixtures)
             segs.append(seg)
 
@@ -480,8 +490,10 @@ class LarvaBody(LarvaShape):
         pos = tuple(self.pos)
         if self.model.draw_sensors:
             self.draw_sensors(viewer)
-
-
+        h=self.head
+        viewer.draw_circle(h.get_position(), self.radius / 2, color='red', width=self.radius / 6)
+        viewer.draw_circle(h.rotation_pos, self.radius / 2, color='blue', width=self.radius / 6)
+        viewer.draw_circle(self.global_rear_end_of_head, self.radius / 2, color='green', width=self.radius / 6)
 
         if self.model.draw_contour:
             if self.Nsegs is not None:
@@ -548,11 +560,23 @@ class LarvaBody(LarvaShape):
         p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
         return p
 
+    def valid_Dbend_range(self,idx=0, ho0=None):
+        if ho0 is None :
+            ho0=self.segs[idx].get_orientation()
+        jdx=idx+1
+        if self.Nsegs > jdx:
+            o_bound = self.segs[jdx].get_orientation()
+            dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
+        else:
+            dang = 0
+        return (-np.pi + dang), (np.pi + dang)
+
+
     def move_body(self, dx, dy):
         for i, seg in enumerate(self.segs):
             p, o = seg.get_pose()
             new_p = p + np.array([dx, dy])
-            seg.set_position(tuple(new_p))
+            seg.set_pose(tuple(new_p), o)
             seg.update_vertices(new_p, o)
         self.pos = self.global_midspine_of_body
 

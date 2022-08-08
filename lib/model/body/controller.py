@@ -257,20 +257,22 @@ class BodySim(BodyManager, PhysicsController):
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
         hr0 = self.global_rear_end_of_head
-        l0 = self.seg_lengths[0]
-        if self.Nsegs > 1:
-            o_bound = self.segs[1].get_orientation()
-            dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
-        else:
-            dang = 0
-        ang_range=ang_vel_min, ang_vel_max = (-np.pi + dang) / dt, (np.pi + dang) / dt
 
-        if ang_vel < ang_vel_min:
-            ang_vel = ang_vel_min
+
+
+
+
+        l0 = self.seg_lengths[0]
+        A0,A1=self.valid_Dbend_range(0,ho0)
+        ang_range = A0 / dt, A1 / dt
+
+
+        if ang_vel < A0 / dt:
+            ang_vel = A0 / dt
             self.body_bend_errors += 1
             # print(f'{self.body_bend_errors}---------------')
-        elif ang_vel > ang_vel_max:
-            ang_vel = ang_vel_max
+        elif ang_vel > A1 / dt:
+            ang_vel = A1 / dt
             self.body_bend_errors += 1
             # print(f'{self.body_bend_errors}++++++++++++++++')
         # if lin_vel<0 :

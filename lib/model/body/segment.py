@@ -1,19 +1,81 @@
+import math
+
 import Box2D
 import numpy as np
 from shapely import affinity
 from shapely.geometry import Polygon
 
 from lib.aux import ang_aux
+from lib.decorators.timer3 import timer
 
 
 class BodySegment:
-    def __init__(self, pos, orientation, seg_vertices, color, idx):
+    def __init__(self, pos, orientation, seg_vertices, color,seg_length, idx, rotation_point=None):
         # self.space = space
         self.color = color
         self.pos = pos
         self.orientation = orientation % (np.pi * 2)
         self.seg_vertices = seg_vertices
+        self.seg_length = seg_length
         self.idx = idx
+        self.rotation_point = rotation_point
+
+        self.reset_rotation_pos()
+
+
+    @property
+    def rotation_pos(self):
+
+        p= self._rotation_pos
+        # if p is None and self.rotation_point is not None :
+        #     p=self.comp_rotation_pos()
+        #     self._rotation_pos = p
+        return p
+
+
+
+    #@property
+    # @timer
+    def reset_rotation_pos(self):
+        rp=self.rotation_point
+        if rp is None :
+            rpos= None
+        else :
+            p=self.get_position()
+            o=self.get_orientation()
+            if rp=='mid':
+                rpos= p
+            elif rp=='rear':
+                k = np.array([math.cos(o), math.sin(o)])
+                rpos= p-k*self.seg_length/2
+            elif rp=='front':
+                k = np.array([math.cos(o), math.sin(o)])
+                rpos= p+k*self.seg_length/2
+            else :
+                raise
+        self.rotation_pos = rpos
+
+    @rotation_pos.setter
+    def rotation_pos(self, p=None):
+        # if p is None and self.rotation_point is not None:
+        #     p = self.comp_rotation_pos()
+
+        self._rotation_pos = p
+
+    def test_rotation(self, dho=0,d=0,to_return=['mid','front']):
+        rp=self.rotation_pos
+        if rp is None :
+            return None
+        p0 = self.get_position()
+        o0 = self.get_orientation()
+
+        o1 = o0 + dho
+        k = np.array([math.cos(o1), math.sin(o1)])
+        if self.rotation_point=='rear':
+            if to_return==['mid','front']:
+                pf1 = rp + k * (self.seg_length+d)
+                p1 = rp + k * (self.seg_length/2+d)
+                return pf1,p1
 
     def draw(self, viewer, color=None, filled=True):
         if color is None:
@@ -31,12 +93,15 @@ class BodySegment:
     def set_position(self, pos):
         self.pos = pos
 
+        # self.rotation_pos = None
+
     def set_orientation(self, orientation):
         self.orientation = orientation % (np.pi * 2)
 
     def set_pose(self, pos, orientation):
-        self.set_position(pos)
         self.set_orientation(orientation)
+        self.set_position(pos)
+
 
     def get_orientation(self):
         return self.orientation
@@ -240,6 +305,8 @@ class DefaultSegment(BodySegment):
 
     def get_pose(self):
         return np.array(self.pos), self.orientation
+
+
 
     def get_world_point(self, local_point):
         return self.get_position() + ang_aux.rotate_around_center(point=local_point, radians=-self.get_orientation())
