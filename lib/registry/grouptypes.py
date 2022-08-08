@@ -201,6 +201,24 @@ class GroupType(BaseType):
             lgs.update(self.entry(id, **kws))
         return lgs
 
+    def lg_entry(self, id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors=(0.0, 360.0),
+           s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
+        if id is None :
+            id=mID
+        m=mID if not expand else preg.loadConf(id=mID, conftype='Model')
+        if type(s) == float:
+            s = (s, s)
+        kws = {'kwdic': {
+            'distribution': {'N': N, 'scale': s, 'orientation_range': ors, 'loc': loc, 'shape': sh, 'mode': mode},
+            'life_history': {'age': age,'epochs': epochs}
+        },
+               'default_color': c, 'model': m,'sample':sample,  **kwargs}
+        if o is not None:
+            kws['odor'] = o
+
+        return self.entry(id=id, **kws)
+
+
 
 
 class GroupTypeDict:

@@ -21,19 +21,12 @@ def lgs(models, ids=None, **kwargs):
     return lgs
 
 
-def lg(group='Larva', c='black', N=1, mode='uniform', sh='circle', p=(0.0, 0.0), ors=(0.0, 360.0),
-       s=(0.0, 0.0), m='explorer', o=None, **kwargs):
-    if type(s) == float:
-        s = (s, s)
+def lg(group='Larva', s=(0.0, 0.0), m='explorer', **kwargs):
 
-    kws = {'kwdic': {'distribution': {'N': N, 'scale': s, 'orientation_range': ors, 'loc': p, 'shape': sh, 'mode': mode}},
-       'default_color': c, 'model': m,  **kwargs}
-    if o is not None:
-        kws['odor']=o
 
-    return preg.grouptype_dict.dict.LarvaGroup.entry(id=group,**kws)
-    # return {group: g}
-#
+    return preg.lg(id=group, s=(0.0, 0.0), mID=m, **kwargs)
+
+
 
 
 

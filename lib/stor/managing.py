@@ -70,8 +70,8 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
     return d
 
 
-def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None, epochs={},
-                  color='black', age=0.0, **kwargs):
+def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
+                  color='black', epochs={},age=0.0, **kwargs):
     print(f'*---- Building dataset {id} under the {datagroup_id} format. -----')
 
     func_dict = {
@@ -86,21 +86,12 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None, e
     shutil.rmtree(target_dir, ignore_errors=True)
     g = preg.loadConf(id=datagroup_id, conftype='Group')
 
-    lg_kws = {
-        'kwdic': {'distribution': {'N': N},
-                  'life_history': {'age': age,
-                                   'epochs': epochs
-                                   }},
-        'default_color': color, 'model': None, 'sample': sample}
-
-    lg = preg.grouptype_dict.dict.LarvaGroup.entry(id=group_id, **lg_kws)
-
     conf = {
         'load_data': False,
         'dir': target_dir,
         'id': id,
         'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': lg,
+        'larva_groups': preg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs={},age=0.0),
         'env_params': preg.get_null('env_conf', arena=g.tracker.arena),
         **g.tracker.resolution
     }

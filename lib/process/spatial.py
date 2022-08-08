@@ -283,14 +283,17 @@ def dsp_solo(s, e, c,s0, s1, p) :
 
 
 
-def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
+def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
     # dt = c.dt
     if dsp_starts is None or dsp_stops is None:
         return
     # dsp_starts = [int(t) for t in dsp_starts]
     # dsp_stops = [int(t) for t in dsp_stops]
-    xy0 = read(key='default', path=preg.datapath('traj', c.dir))
-    # xy = s[['x', 'y']]
+    if s is None :
+        xy0 = read(key='default', path=preg.datapath('traj', c.dir))
+    else :
+
+        xy0 = s[['x', 'y']]
     ps = []
     dsps = {}
     # pps = []
@@ -692,10 +695,10 @@ def comp_PI(arena_xdim, xs, return_num=False, return_all=False):
         return pI
 
 
-def scale_to_length(s, e, c, pars=None, keys=None):
+def scale_to_length(s, e, c=None, pars=None, keys=None):
     l_par = 'length'
     if l_par not in e.keys():
-        comp_length(s, e, c, mode='minimal', recompute=True)
+        comp_length(s, e, c=c, mode='minimal', recompute=True)
         # return
     l = e[l_par]
     if pars is None:

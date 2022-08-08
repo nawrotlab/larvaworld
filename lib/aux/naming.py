@@ -307,8 +307,8 @@ def retrieve_metrics(obj, c):
         p = points[point_idx - 1]
     except:
         p = 'centroid'
-
-    obj = define_metrics(obj, N=c.Npoints, Nc=c.Ncontour, p=p, use_component_vel=use_component_vel)
+    c.point=p
+    obj = define_metrics(obj, N=c.Npoints, Nc=c.Ncontour, p=c.point, use_component_vel=use_component_vel)
     return obj
 
 

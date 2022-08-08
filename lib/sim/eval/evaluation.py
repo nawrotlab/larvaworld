@@ -269,8 +269,7 @@ class EvalRun:
             self.figs.errors[k] = self.get_error_plots(self.error_dicts[k], mode, show=self.show)
 
     def get_error_plots(self, error_dict, mode='pooled', **kwargs):
-        from lib.plot.dict import graph_dict
-        ED = graph_dict.error_dict
+        ED = preg.graph_dict.error_dict
         labels = self.label_dic[mode]
         dic = {}
         for norm in self.norm_modes:
@@ -309,16 +308,14 @@ class EvalRun:
         return dNl.NestDict(dic)
 
     def plot_models(self):
-        from lib.plot.dict import graph_dict
-        MD = graph_dict.mod_dict
+        MD = preg.graph_dict.mod_dict
         save_to = self.dir_dict.models
         for mID in self.modelIDs:
             self.figs.models.table[mID] = MD['configuration'](mID=mID, save_to=save_to, figsize=(14, 11))
             self.figs.models.summary[mID] = MD['summary'](mID=mID, save_to=save_to, refID=self.refID)
 
     def plot_results(self, plots=['hists', 'trajectories', 'dispersion', 'bouts', 'fft', 'boxplots']):
-        from lib.plot.dict import graph_dict
-        GD = graph_dict.dict
+        GD = preg.graph_dict.dict
 
         print('Generating comparative graphs')
 
@@ -523,6 +520,66 @@ class EvalRun:
             pass
         self.dataset_configs = {dd.id: dd.config for dd in self.datasets}
         dNl.save_dict(self.dataset_configs, self.dir_dict.dataset_configs)
+
+def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
+                      **kwargs):
+    if id is None:
+        id = f'{len(mIDs)}mIDs'
+    if dIDs is None:
+        dIDs = mIDs
+    if save_to is None:
+        save_to = preg.datapath('evaluation', preg.retrieveRef(refID).dir)
+    # from lib.sim.eval.evaluation import EvalRun
+    evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
+                    save_to=save_to,
+                    bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
+    #
+    evrun.run(video=False, dur=dur)
+    evrun.eval()
+    evrun.plot_models()
+    evrun.plot_results()
+    return evrun
+
+def modelConf_analysis(d, avgVSvar=False, mods3=False):
+    from lib.registry.pars import preg
+    warnings.filterwarnings('ignore')
+    c=d.config
+    e = d.endpoint_data
+    refID=c.refID
+    if 'modelConfs' not in c.keys():
+        c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
+    M = preg.larva_conf_dict
+    if avgVSvar:
+        entries_avg, mIDs_avg = M.adapt_6mIDs(refID=c.refID, e=e, c=c)
+        c.modelConfs.average = entries_avg
+
+        preg.graph_dict.store_model_graphs(mIDs_avg, d.dir)
+        eval_model_graphs(refID, mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
+
+
+        entries_var = M.add_var_mIDs(refID=c.refID, e=e, c=c,
+                                     mID0s=mIDs_avg)
+        mIDs_var = list(entries_var.keys())
+        c.modelConfs.variable = entries_var
+        eval_model_graphs(refID,mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
+        eval_model_graphs(refID,mIDs=mIDs_avg[:3] + mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1',
+                               N=10)
+        eval_model_graphs(refID,mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
+                               N=10)
+    if mods3:
+        entries_3m, mIDs_3m = M.adapt_3modules(refID=c.refID, e=e, c=c)
+        c.modelConfs['3modules'] = entries_3m
+        preg.graph_dict.store_model_graphs(mIDs_3m, d.dir)
+
+
+        dIDs = ['NEU', 'SIN', 'CON']
+        for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
+            for Ifmod in ['PHI', 'SQ', 'DEF']:
+                mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
+                id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
+                d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
+    d.config=c
+    d.save_config()
 
 
 if __name__ == '__main__':

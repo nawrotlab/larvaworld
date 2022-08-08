@@ -2,6 +2,7 @@ import random
 import time
 
 import numpy as np
+import pandas as pd
 from mesa.datacollection import DataCollector
 
 from lib.registry.pars import preg
@@ -219,6 +220,44 @@ class LarvaWorldSim(LarvaWorld):
         tlayers = ThermoScape(pTemp=plate_temp, spread=None, origins=sources, tempDiff=source_temp_diff, **kwargs)
         tlayers.generate_thermoscape()
         return N, tlayers
+
+    def get_larva_dicts(self, ids):
+        from lib.model.modules.nengobrain import NengoBrain
+        deb_dicts = {}
+        nengo_dicts = {}
+        bout_dicts = {}
+        foraging_dicts = {}
+        for l in self.get_flies():
+            if l.unique_id in ids:
+                if hasattr(l, 'deb') and l.deb is not None:
+                    deb_dicts[l.unique_id] = l.deb.finalize_dict()
+                elif isinstance(l.brain, NengoBrain):
+                    if l.brain.dict is not None:
+                        nengo_dicts[l.unique_id] = l.brain.dict
+                if l.brain.locomotor.intermitter is not None:
+                    bout_dicts[l.unique_id] = l.brain.locomotor.intermitter.build_dict()
+                if len(self.foodtypes) > 0:
+                    foraging_dicts[l.unique_id] = l.finalize_foraging_dict()
+                # self.config.foodtypes = env.foodtypes
+        return dNl.NestDict({'deb': deb_dicts, 'nengo': nengo_dicts, 'bouts': bout_dicts,
+                             'foraging': foraging_dicts})
+
+    def get_larva_tables(self):
+        dic = {}
+        if self.table_collector is not None:
+
+            for name, table in self.table_collector.tables.items():
+                df = pd.DataFrame(table)
+                if 'unique_id' in df.columns:
+                    df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
+                    N = len(df['AgentID'].unique().tolist())
+                    if N > 0:
+                        Nrows = int(len(df.index) / N)
+                        df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
+                        df.set_index(['Step', 'AgentID'], inplace=True)
+                        df.sort_index(level=['Step', 'AgentID'], inplace=True)
+                        dic[name] = df
+        return dNl.NestDict(dic)
 
 
 def imitate_group(config, sample_pars=[], N=None):

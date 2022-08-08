@@ -72,7 +72,7 @@ def comp_stride_variation(d, component_vels=True):
     for ii in range(c.N):
         print(ii)
         id = c.agent_ids[ii]
-        ss, ee = d.get_larva(ii)
+        ss, ee = s.xs(id, level='AgentID'), e.loc[id]
         for i, vv in enumerate(svels):
             cum_dur = ss[vv].dropna().values.shape[0] * c.dt
             a = ss[vv].values

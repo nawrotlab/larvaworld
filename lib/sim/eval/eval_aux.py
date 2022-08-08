@@ -9,6 +9,7 @@ from shapely.geometry import Point
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.aux.annotation import annotate
+from lib.aux.sim_aux import sample_modelConf
 from lib.registry.pars import preg
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
@@ -468,19 +469,21 @@ def sim_model_data(Nticks, Nids, ms, group_id, dt=0.1):
     e['num_ticks'] = Nticks
     e['length'] = [m.body.initial_length for m in ms]
 
+    from lib.process.spatial import scale_to_length
+    scale_to_length(s, e, keys=['v'])
     return s,e
 
 
 def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_durs=[], dsp_starts=[0], dsp_stops=[40],
-              env_params={}, dir=None,age=0.0, epochs={},
-              bout_annotation=True, enrichment=True, refDataset=None, sample_ks=None, store=False,
+              env_params={}, dir=None,
+              bout_annotation=True, enrichment=True, refDataset=None, sample_ks=None,
               use_LarvaConfDict=False, **kwargs):
-    from lib.process.spatial import scale_to_length
-    if dataset_id is None:
-        dataset_id = mID
+
+
     if refDataset is not None:
         refID = refDataset.refID
-        ms = refDataset.sample_modelConf(N=Nids, mID=mID, sample_ks=sample_ks)
+        ms = sample_modelConf(refDataset, N=Nids, mID=mID, sample_ks=sample_ks)
+        # ms = refDataset.sample_modelConf(N=Nids, mID=mID, sample_ks=sample_ks)
     else:
         refID = None
         m = preg.loadConf(id=mID, conftype="Model")
@@ -491,20 +494,15 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
 
     Nticks=int(dur * 60 / dt)
 
-    lg_kws = {
-        'kwdic': {'distribution': {'N': Nids},
-                  'life_history': {'age': age,
-                                   'epochs': epochs
-                                   }},
-        'default_color': color, 'model': preg.expandConf(id=mID, conftype='Model'), 'sample': refID}
-
+    if dataset_id is None:
+        dataset_id = mID
 
     c_kws = {
         # 'load_data': False,
         'dir': dir,
         'id': dataset_id,
         # 'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': preg.grouptype_dict.dict.LarvaGroup.entry(id=dataset_id, **lg_kws),
+        'larva_groups': preg.lg(id=dataset_id, c=color, sample=refID,mID= mID, N=Nids,expand=True, **kwargs),
         'env_params': env_params,
         'Npoints': 3,
         'Ncontour': 0,
@@ -515,17 +513,11 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
     from lib.stor.larva_dataset import LarvaDataset
     d = LarvaDataset(**c_kws, load_data=False)
     s,e=sim_model_data(Nticks, Nids, ms, dataset_id, dt=dt)
-    scale_to_length(s, e, c=d.config, pars=None, keys=['v'])
+
     d.set_data(step=s, end=e)
-    c = d.config
 
-
-
-
-    if c.dir is not None:
-        store = True
     if enrichment:
-        d=d._enrich(proc_keys=['spatial', 'angular', 'dispesion', 'tortuosity'], bout_annotation=bout_annotation,store=store,
+        d=d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'], bout_annotation=bout_annotation,store=dir is not None,
                   dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
 
 
@@ -583,4 +575,4 @@ def minmax(df):
 
 if __name__ == '__main__':
     mID = 'forager'
-    d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=False, use_ModuleConfDict=True)
+    d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=True)

@@ -105,7 +105,8 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
         if key is not None:
             filepath_key = key
         else:
-            raise ValueError('None of file or key are provided.')
+            print('None of file or key are provided.Returning None')
+            return None
 
     # h5_key = key
 
@@ -122,13 +123,14 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
         if parent_dir is not None:
             path = datapath(filepath_key, parent_dir)
         else:
-            raise ValueError('Filepath not provided.')
+            print('Filepath not provided.Returning None')
+            return None
     return path
 
 
 def read(path=None, key=None, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    if not os.path.exists(path):
+    if path is None or not os.path.exists(path):
         print(f'Filepath {path} does not exist.')
         return None
     if key is not None:
@@ -151,28 +153,29 @@ def read(path=None, key=None, **kwargs):
 
 def storeH5(df, path=None, key=None, mode=None, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    if mode is None:
-        if os.path.isfile(path):
-            mode = 'a'
-        else:
-            mode = 'w'
+    if path is not None :
+        if mode is None:
+            if os.path.isfile(path):
+                mode = 'a'
+            else:
+                mode = 'w'
 
-    if key is not None:
-        store = pd.HDFStore(path, mode=mode)
-        store[key] = df
-        store.close()
-    elif key is None and isinstance(df, dict):
-        store = pd.HDFStore(path, mode=mode)
-        for k, v in df.items():
-            store[k] = v
-        store.close()
-    else:
-        raise ValueError('H5key not provided.')
+        if key is not None:
+            store = pd.HDFStore(path, mode=mode)
+            store[key] = df
+            store.close()
+        elif key is None and isinstance(df, dict):
+            store = pd.HDFStore(path, mode=mode)
+            for k, v in df.items():
+                store[k] = v
+            store.close()
+        else:
+            raise ValueError('H5key not provided.')
 
 
 def loadDic(path=None, key=None, use_pickle=True, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    if not os.path.isfile(path):
+    if path is None or not os.path.isfile(path):
         print('File does not exist.Returning None')
         return None
     else:
@@ -181,9 +184,10 @@ def loadDic(path=None, key=None, use_pickle=True, **kwargs):
 
 def storeDic(d, path=None, key=None, use_pickle=True, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    # shutil.rmtree(path,ignore_errors=True)
+    if path is not None :
+        # shutil.rmtree(path,ignore_errors=True)
     # os.makedirs(path, exist_ok=True)
-    dNl.save_dict(d, path, use_pickle=use_pickle)
+        dNl.save_dict(d, path, use_pickle=use_pickle)
 
 
 def loadSoloDics(agent_ids, path=None, key=None, **kwargs):

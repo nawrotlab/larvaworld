@@ -16,7 +16,7 @@ from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam, stdout
 # import logging
 # from codetiming import Timer
 from lib.aux.annotation import annotate
-from lib.aux.stor_aux import read, storeH5, storeDic, loadDic, loadSoloDics, storeSoloDics
+from lib.aux.stor_aux import read, storeH5, storeDic, loadDic, loadSoloDics, storeSoloDics, datapath
 
 from lib.decorators.timer3 import timer
 
@@ -144,60 +144,6 @@ class _LarvaDataset:
         return dic
 
 
-    def save_larva_dicts(self):
-        for type, vs in self.larva_dicts.items():
-            storeSoloDics(vs,path=self.get_filepath(type))
-
-
-    def get_larva_dicts(self, env):
-        from lib.model.modules.nengobrain import NengoBrain
-        deb_dicts = {}
-        nengo_dicts = {}
-        bout_dicts = {}
-        foraging_dicts = {}
-        for l in env.get_flies():
-            if l.unique_id in self.agent_ids:
-                if hasattr(l, 'deb') and l.deb is not None:
-                    deb_dicts[l.unique_id] = l.deb.finalize_dict()
-                elif isinstance(l.brain, NengoBrain):
-                    if l.brain.dict is not None:
-                        nengo_dicts[l.unique_id] = l.brain.dict
-                if l.brain.locomotor.intermitter is not None:
-                    bout_dicts[l.unique_id] = l.brain.locomotor.intermitter.build_dict()
-                if len(env.foodtypes) > 0:
-                    foraging_dicts[l.unique_id] = l.finalize_foraging_dict()
-                self.config.foodtypes = env.foodtypes
-        self.larva_dicts = {'deb': deb_dicts, 'nengo': nengo_dicts, 'bouts': bout_dicts,
-                            'foraging': foraging_dicts}
-
-    def get_larva_tables(self, env):
-        if env.table_collector is not None:
-            for name, table in env.table_collector.tables.items():
-                df = pd.DataFrame(table)
-                if 'unique_id' in df.columns:
-                    df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
-                    N = len(df['AgentID'].unique().tolist())
-                    if N > 0:
-                        Nrows = int(len(df.index) / N)
-                        df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
-                        df.set_index(['Step', 'AgentID'], inplace=True)
-                        df.sort_index(level=['Step', 'AgentID'], inplace=True)
-                        self.larva_tables[name] = df
-
-    def get_larva(self, idx=0, id=None):
-        if not hasattr(self, 'step_data'):
-            raise ValueError('Step data not loaded.')
-        if not hasattr(self, 'endpoint_data'):
-            raise ValueError('Endpoint data not loaded.')
-        s, e = self.step_data, self.endpoint_data
-        if id is None:
-            id = self.config.agent_ids[idx]
-        ss = s.xs(id, level='AgentID')
-        ee = e.loc[id]
-        return ss, ee
-
-    def save_larva_tables(self):
-        self.storeH5(df=self.larva_tables, key=None, filepath_key='table')
 
 
 
@@ -218,7 +164,7 @@ class _LarvaDataset:
         refID=self.retrieveRefID(add_reference=add_reference, refID=refID)
 
         self.config=update_config(self, self.config)
-        self.storeDic(self.config, 'conf')
+        storeDic(self.config,path=datapath('conf', self.config.dir))
 
 
 
@@ -342,6 +288,7 @@ class _LarvaDataset:
 
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
+        from lib.registry.pars import preg
         FD = preg.proc_func_dict.dict.preproc
 
         cc = {
@@ -477,38 +424,11 @@ class _LarvaDataset:
 
 
 
-    def get_chunks(self, chunk, shorts, min_dur=0, max_dur=np.inf, idx=None):
-        min_ticks = int(min_dur / self.config.dt)
-        pars = preg.getPar(shorts)
-        ss = self.step_data[pars]
-
-        dic = self.loadDic('chunk_dicts')
-        chunks = []
-        if idx is None:
-            ids = self.agent_ids
-        elif type(idx) == int:
-            ids = [self.agent_ids[idx]]
-        elif type(idx) == list:
-            ids = [self.agent_ids[idxx] for idxx in idx]
-        for id in ids:
-            sss = ss.xs(id, level='AgentID')
-            p01s = dic[id][chunk]
-            p_ticks = np.diff(p01s).flatten()
-            vp01s = p01s[p_ticks > min_ticks]
-            Nvps = vp01s.shape[0]
-            if Nvps > 0:
-                for i in range(Nvps):
-                    vp0, vp1 = vp01s[i, :]
-                    entry = {'id': id, 'chunk': sss.loc[vp0:vp1]}
-                    chunks.append(entry)
-        return chunks
 
     def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
         if par is None:
             par = preg.getPar(short)
-        dic0 = self.loadDic('chunk_dicts')
-        # dic0 = self.load_chunk_dicts()
-        dic0 = self.loadDic('chunk_dicts')
+        dic0 = self.chunk_dicts
         dics = [dic0[id] for id in self.agent_ids]
         sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
 
@@ -567,92 +487,6 @@ class _LarvaDataset:
             shorts = preg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
-    def sample_modelConf(self, N, mID, sample_ks=None):
-        from lib.aux.sim_aux import sample_group
-        from lib.aux.sim_aux import generate_larvae
-        m = preg.loadConf(id=mID, conftype='Model')
-        # m = loadConf(mID, 'Model')
-        if sample_ks is None:
-            modF = dNl.flatten_dict(m)
-            sample_ks = [p for p in modF if modF[p] == 'sample']
-        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-        invRefPars = {v: k for k, v in RefPars.items()}
-        sample_ps = [invRefPars[p] for p in sample_ks]
-        sample_dict = sample_group(e=self.read(key='end'), N=N, sample_ps=sample_ps) if len(
-            sample_ps) > 0 else {}
-        all_pars = generate_larvae(N, sample_dict, m, RefPars)
-        return all_pars
-
-    def store_model_graphs(self, mIDs):
-        preg.datapath('model_tables', self.dir)
-        f1 = preg.datapath('model_tables', self.dir)
-        f2 = preg.datapath('model_summaries', self.dir)
-        os.makedirs(f1, exist_ok=True)
-        os.makedirs(f2, exist_ok=True)
-
-        graphs = dNl.NestDict({
-            'tables': preg.graph_dict.model_tables(mIDs, save_to=f1),
-            'summaries': preg.graph_dict.model_summaries(mIDs, Nids=10, refDataset=self, save_to=f2)
-        })
-        return graphs
-
-    def eval_model_graphs(self, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
-                          **kwargs):
-        if id is None:
-            id = f'{len(mIDs)}mIDs'
-        if dIDs is None:
-            dIDs = mIDs
-        if save_to is None:
-            save_to = preg.datapath('evaluation', self.dir)
-        from lib.sim.eval.evaluation import EvalRun
-        evrun = EvalRun(refID=self.config.refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
-                        save_to=save_to,
-                        bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
-        #
-        evrun.run(video=False, dur=dur)
-        evrun.eval()
-        evrun.plot_models()
-        evrun.plot_results()
-        return evrun
-
-    def modelConf_analysis(self, avgVSvar=False, mods3=False):
-        from lib.registry.pars import preg
-        warnings.filterwarnings('ignore')
-        c=self.config
-        if 'modelConfs' not in c.keys():
-            c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
-        M = preg.larva_conf_dict
-        if avgVSvar:
-            entries_avg, mIDs_avg = M.adapt_6mIDs(refID=c.refID, e=self.endpoint_data, c=c)
-            c.modelConfs.average = entries_avg
-
-            self.store_model_graphs(mIDs=mIDs_avg)
-            self.eval_model_graphs(mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
-
-
-            entries_var = M.add_var_mIDs(refID=c.refID, e=self.endpoint_data, c=c,
-                                         mID0s=mIDs_avg)
-            mIDs_var = list(entries_var.keys())
-            c.modelConfs.variable = entries_var
-            self.eval_model_graphs(mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
-            self.eval_model_graphs(mIDs=mIDs_avg[:3] + mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1',
-                                   N=10)
-            self.eval_model_graphs(mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
-                                   N=10)
-        if mods3:
-            entries_3m, mIDs_3m = M.adapt_3modules(refID=c.refID, e=self.endpoint_data, c=c)
-            c.modelConfs['3modules'] = entries_3m
-            self.store_model_graphs(mIDs=mIDs_3m)
-
-
-            dIDs = ['NEU', 'SIN', 'CON']
-            for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
-                for Ifmod in ['PHI', 'SQ', 'DEF']:
-                    mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
-                    id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
-                    d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
-        self.config=c
-        self.save_config()
 
 LarvaDataset = type('LarvaDataset', (_LarvaDataset,), dic_manager_kwargs)
 

@@ -5,6 +5,7 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
+from lib.aux.stor_aux import storeDic, datapath
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
@@ -84,7 +85,8 @@ class ExpFitter:
         # temp={'sample_data': sample_data_lists, 'df': self.df.to_dict(),
         temp = {'sample_data': sample_data_lists, 'stat_coefs': self.stat_coefs,
                 'stats': self.df_st.values.tolist()}
-        self.sample.storeDic(temp, 'ExpFitter')
+        storeDic(d=temp, path=datapath('ExpFitter', self.sample.dir))
+
 
     def multicol_df(self, key='s'):
         shorts = [

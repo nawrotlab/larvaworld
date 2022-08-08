@@ -1,3 +1,5 @@
+import os
+
 from lib.aux import dictsNlists as dNl
 
 
@@ -204,6 +206,19 @@ class GraphDict:
         if save_to is not None and len(ds)>0 :
             combine_pdfs(file_dir=save_to, save_as="_MODEL_SUMMARIES_.pdf", deep=False)
         return ds
+
+    def store_model_graphs(self, mIDs, dir):
+        from lib.registry.pars import preg
+        f1 = preg.datapath('model_tables', dir)
+        f2 = preg.datapath('model_summaries', dir)
+        os.makedirs(f1, exist_ok=True)
+        os.makedirs(f2, exist_ok=True)
+
+        graphs = dNl.NestDict({
+            'tables': self.model_tables(mIDs, save_to=f1),
+            'summaries': self.model_summaries(mIDs, Nids=10, refDataset=self, save_to=f2)
+        })
+        return graphs
 
 
 

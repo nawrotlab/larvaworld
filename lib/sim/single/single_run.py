@@ -103,9 +103,9 @@ class SingleRun:
             food = None
 
         ds = dir_aux.split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
-                           source_xy=self.source_xy,
-                           fr=1 / self.env.dt, dir=self.data_dir, id=self.id,
-                           show_output=self.show_output)
+                                   source_xy=self.source_xy,
+                                   fr=1 / self.env.dt, dir=self.data_dir, id=self.id,
+                                   show_output=self.show_output)
         for d in ds:
             if self.show_output:
                 print()
@@ -113,17 +113,18 @@ class SingleRun:
             if self.enrichment:
                 d.enrich(**self.enrichment, is_last=False, show_output=self.show_output,
                          store=self.sim_params.store_data)
-            d.get_larva_dicts(env)
-            d.get_larva_tables(env)
+            d.larva_dicts = env.get_larva_dicts(ids=d.agent_ids)
+            d.larva_tables = env.get_larva_tables()
         return ds
 
     def store(self):
+        from lib.aux.stor_aux import storeSoloDics,storeH5,storeDic, datapath
         for d in self.datasets:
             d.save()
-            d.save_larva_dicts()
-            d.save_larva_tables()
-            d.storeDic(self.param_dict, 'sim_conf')
-
+            for type, vs in d.larva_dicts.items():
+                storeSoloDics(vs, path=datapath(type, d.dir))
+            storeH5(df=d.larva_tables, key=None, path=datapath('table', d.dir))
+            storeDic(self.param_dict,path=datapath('sim_conf', d.dir))
 
     def analyze(self, save_to=None, **kwargs):
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
@@ -191,9 +192,9 @@ class SingleRun:
         # if 'RvsS' in exp or 'growth' in exp:
         #     from lib.sim.single.analysis import deb_analysis
         #     figs.update(**deb_analysis(**kws))
-        if len(figs)==0 and len(results)==0 :
-            return None,None
-        else :
+        if len(figs) == 0 and len(results) == 0:
+            return None, None
+        else:
             return figs, results
 
 

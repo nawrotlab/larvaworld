@@ -230,7 +230,8 @@ class ParRegistry:
             print(dic)
             print()
 
-
+    def lg(self, **kwargs):
+        return self.grouptype_dict.dict.LarvaGroup.lg_entry(**kwargs)
 
     # def loadRef(self, id=None):
     #     from lib.conf.stored

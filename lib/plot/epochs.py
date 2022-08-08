@@ -6,7 +6,6 @@ import pandas as pd
 from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.plot.base import AutoPlot
-from lib.process.aux import comp_pooled_epochs
 from lib.registry.pars import preg
 
 
@@ -75,13 +74,16 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
     valid_labs = {}
     for j, d in enumerate(P.datasets):
         id = d.id
-        try:
-            v = d.pooled_epochs
-        except:
-            v = d.loadDic('pooled_epochs')
-
-        if v is None :
-            v = comp_pooled_epochs(s=d.step_data, e=d.endpoint_data,c = d.config )
+        v = d.pooled_epochs
+        if v is None:
+            continue
+        # try:
+        #     v = d.pooled_epochs
+        # except:
+        #     v = d.loadDic('pooled_epochs')
+        #
+        # if v is None :
+        #     v = comp_pooled_epochs(s=d.step_data, e=d.endpoint_data,c = d.config )
 
         kws = {
             'marker': 'o',

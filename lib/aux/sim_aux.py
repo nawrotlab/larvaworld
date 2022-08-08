@@ -6,6 +6,7 @@ import numpy as np
 from shapely.geometry import Point, Polygon, LineString
 
 from lib.aux import naming as nam, dictsNlists as dNl
+from lib.registry.pars import preg
 
 
 def LvsRtoggle(side):
@@ -347,7 +348,22 @@ def sample_group(sample=None, N=1, sample_ps=[], e=None):
     dic = {p: v for p, v in zip(ps, vs)}
     return dic
 
-
+def sample_modelConf(d, N, mID, sample_ks=None):
+    # from lib.aux.sim_aux import sample_group
+    # from lib.aux.sim_aux import generate_larvae
+    m = preg.loadConf(id=mID, conftype='Model')
+    # m = loadConf(mID, 'Model')
+    if sample_ks is None:
+        modF = dNl.flatten_dict(m)
+        sample_ks = [p for p in modF if modF[p] == 'sample']
+    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
+    invRefPars = {v: k for k, v in RefPars.items()}
+    sample_ps = [invRefPars[p] for p in sample_ks]
+    e=d.endpoint_data if hasattr(d, 'endpoint_data') else d.read(key='end')
+    sample_dict = sample_group(e=e, N=N, sample_ps=sample_ps) if len(
+        sample_ps) > 0 else {}
+    all_pars = generate_larvae(N, sample_dict, m, RefPars)
+    return all_pars
 
 class Collision(Exception):
 
