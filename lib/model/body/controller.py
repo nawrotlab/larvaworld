@@ -264,15 +264,15 @@ class BodySim(BodyManager, PhysicsController):
 
         l0 = self.seg_lengths[0]
         A0,A1=self.valid_Dbend_range(0,ho0)
-        ang_range = A0 / dt, A1 / dt
+        fov0,fov1 = A0 / dt, A1 / dt
 
 
-        if ang_vel < A0 / dt:
-            ang_vel = A0 / dt
+        if ang_vel < fov0:
+            ang_vel = fov0
             self.body_bend_errors += 1
             # print(f'{self.body_bend_errors}---------------')
-        elif ang_vel > A1 / dt:
-            ang_vel = A1 / dt
+        elif ang_vel > fov1:
+            ang_vel = fov1
             self.body_bend_errors += 1
             # print(f'{self.body_bend_errors}++++++++++++++++')
         # if lin_vel<0 :
@@ -281,8 +281,8 @@ class BodySim(BodyManager, PhysicsController):
             tank = self.model.tank_polygon
 
             print()
-            # d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
-            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank2(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
+            # d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank2(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
+            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
             print()
 
             self.border_turn_errors+=turn_err
@@ -302,76 +302,14 @@ class BodySim(BodyManager, PhysicsController):
         #     print(self.unique_id, 11111111111111111)
 
         if self.Nsegs > 1:
-            for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
-                self.position_seg(seg, d_or=self.rear_orientation_change / (self.Nsegs - 1),
-                                  front_end_pos=self.get_global_rear_end_of_seg(seg_index=i), seg_length=l)
+            d_or = self.rear_orientation_change / (self.Nsegs - 1)
+            for i, seg in enumerate(self.segs[1:]):
+                o1 = seg.get_orientation() + d_or
+                k = np.array([math.cos(o1), math.sin(o1)])
+                p1 = self.get_global_rear_end_of_seg(seg_index=i) - k * seg.seg_length / 2
+                seg.update_poseNvertices(p1, o1)
         self.pos = self.global_midspine_of_body
 
-        # hp1=
-        # self.dst=d
-        #
-        #
-        #
-        #
-        #
-        # d_or = ang_vel * self.model.dt
-        # ho1=ho0+d_or
-        # k = np.array([math.cos(ho1), math.sin(ho1)])
-        # hf1=hr0+k*self.seg_lengths[0]
-        #
-        #
-        #
-        # hp00=ang_aux.rotate_around_point(hp0, d_or,hr0)
-        #
-        #
-        # hp1,ho1,hf1=self.position_head(hp0, ho0,lin_vel, ang_vel)
-        #
-        # # dst = lin_vel * self.model.dt
-        #
-        # if tank_contact :
-        #     counter=-1
-        #     while not self.in_tank([hp1])
-        #     while not self.in_tank([hf1]):
-        #         if math.isinf(ang_vel):
-        #             ang_vel = 1.0
-        #         print(counter)
-        #         counter+=1
-        #         ang_vel += 0.01*counter
-        #         if counter>100:
-        #             ho0+=np.pi/4
-        #             counter=1
-        #             ang_vel=0.01
-        #         hp1, ho1, hf1 = self.position_head(hp0, ho0, lin_vel, ang_vel)
-        #         # if counter>100:
-        #         #     ho0+=np.pi
-        #         #     counter=0
-        #         # ho0+=np.pi/180 * counter
-        #         # lin_vel*=0.95
-        #         # self.position_head(hp0, ho0, lin_vel, ang_vel)
-        # # else :
-        # self.head.update_all(hp1, ho1, lin_vel, ang_vel)
-        #     # hr0 = self.global_rear_end_of_head
-        #     # ang_vel, ho1, dst, hr1, hp1 = self.assess_tank_contact(ang_vel, ho0, dst, hr0, hp0, self.model.dt, self.seg_lengths[0])
-        #
-        # # else :
-        # #     d_or = ang_vel * self.model.dt
-        # #
-        # #     ho1 = ho0 + d_or
-        # #     k = np.array([math.cos(ho1), math.sin(ho1)])
-        # #     hp1 = hp0 + k * dst
-        # # self.dst = dst
-        # self.cum_dst += self.dst
-        # self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
-        #                                                                correction_coef=self.bend_correction_coef)
-        #
-        # # self.head.update_all(hp1, ho1, lin_vel, ang_vel)
-
-    def position_seg(self, seg, d_or, front_end_pos, seg_length):
-        p0, o0 = seg.get_pose()
-        o1 = o0 + d_or
-        k = np.array([math.cos(o1), math.sin(o1)])
-        p1 = front_end_pos - k * seg_length / 2
-        seg.update_poseNvertices(p1, o1)
 
     def compute_body_bend(self):
         self.spineangles = [

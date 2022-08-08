@@ -283,40 +283,24 @@ def get_source_xy(food_params):
     return {**sources_u, **sources_g}
 
 
-def go_forward2(lin_vel, coef, hf01, tank, delta=0.00011, counter=0, go_err=0):
-    if np.isnan(lin_vel) or counter > 100:
-        go_err += 1
-        return 0, go_err
-    hf1 = hf01 + coef * lin_vel
 
-    if not inside_polygon([hf1], tank):
-        lin_vel -= delta
-        if lin_vel < 0:
-            return 0, go_err
-        counter += 1
-        return go_forward2(lin_vel, coef, hf01, tank, delta, counter, go_err)
-    else:
-        # print(lin_vel, d, hf1, go_err)
-        return lin_vel, go_err
-
-
-def go_forward(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_err=0):
-    if np.isnan(lin_vel) or counter > 100:
-        go_err += 1
-        return 0, 0, hf01, go_err
-    d = lin_vel * dt
-    dxy = k * d * sf
-    hf1 = hf01 + dxy
-
-    if not inside_polygon([hf1], tank):
-        lin_vel -= delta
-        if lin_vel < 0:
-            return 0, 0, hf01, go_err
-        counter += 1
-        return go_forward(lin_vel, k, hf01, dt, tank, sf, delta, counter, go_err)
-    else:
-        # print(lin_vel, d, hf1, go_err)
-        return lin_vel, d, hf1, go_err
+# def go_forward2(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_err=0):
+#     if np.isnan(lin_vel) or counter > 100:
+#         go_err += 1
+#         return 0, 0, hf01, go_err
+#     d = lin_vel * dt
+#     dxy = k * d * sf
+#     hf1 = hf01 + dxy
+#
+#     if not inside_polygon([hf1], tank):
+#         lin_vel -= delta
+#         if lin_vel < 0:
+#             return 0, 0, hf01, go_err
+#         counter += 1
+#         return go_forward2(lin_vel, k, hf01, dt, tank, sf, delta, counter, go_err)
+#     else:
+#         # print(lin_vel, d, hf1, go_err)
+#         return lin_vel, d, hf1, go_err
 
 
 def test_rotation(ho0, ang_vel, hr0, l0, dt, to_return='front'):
@@ -328,90 +312,145 @@ def test_rotation(ho0, ang_vel, hr0, l0, dt, to_return='front'):
 
         return hr0 + kk * l0 / 2
 
-
-def turn_head2(ang_vel, hr0, hf0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
-    if np.isnan(ang_vel) or counter > 100:
-        turn_err += 1
-        # ang_vel = 0
-        # ho1, k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
-        return 0, hf0, turn_err
-
-    d_or = ang_vel * dt
-    hf01 = np.array(ang_aux.rotate_around_point(origin=hr0, point=hf0, radians=-d_or))
-    if not inside_polygon([hf01], tank):
-        if counter == 0:
-            delta *= np.sign(ang_vel)
-        ang_vel -= delta
-
-        if ang_vel < ang_range[0]:
-            ang_vel = ang_range[0]
-            delta = np.abs(delta)
-        elif ang_vel > ang_range[1]:
-            ang_vel = ang_range[1]
-            delta -= np.abs(delta)
-        counter += 1
-
-        return turn_head2(ang_vel, hr0, hf0, ang_range, dt, tank, delta, counter, turn_err)
-    else:
-        return ang_vel, hf01, turn_err
+#
+# def turn_head(v,dv=None, idx=0, v0=-np.pi,v1=np.pi):
+#     if dv is None:
+#         dv=dv=np.pi / 90
+#     if idx == 0:
+#         dv *= np.sign(v)
+#     v -= dv
+#
+#     if v < v0:
+#         v = v0
+#         dv = np.abs(dv)
+#     elif v > v1:
+#         v = v1
+#         dv -= np.abs(dv)
+#     # idx += 1
+#     return v, dv
 
 
-def turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
-    def get_hf(ho0, ang_vel, hr0, l0):
-        ho1 = ho0 + ang_vel * dt
-        kk = np.array([math.cos(ho1), math.sin(ho1)])
-        hf = hr0 + kk * l0
-        return ho1, kk, hf
+# def go_forward(v, dv=None):
+#     if dv is None:
+#         dv = 0.00011
+#
+#     v -= dv
+#
+#
+#
+#     return v, dv
 
-    if np.isnan(ang_vel) or counter > 100:
-        turn_err += 1
-        ang_vel = 0
-        ho1, k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
-        return ang_vel, ho1, k0, hf00, turn_err
 
-    ho1, k, hf01 = get_hf(ho0, ang_vel, hr0, l0)
-
-    if not inside_polygon([hf01], tank):
-        if counter == 0:
-            delta *= np.sign(ang_vel)
-        ang_vel -= delta
-
-        if ang_vel < ang_range[0]:
-            ang_vel = ang_range[0]
-            delta = np.abs(delta)
-        elif ang_vel > ang_range[1]:
-            ang_vel = ang_range[1]
-            delta -= np.abs(delta)
-        counter += 1
-
-        return turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta, counter, turn_err)
-    else:
-        return ang_vel, ho1, k, hf01, turn_err
+# def turn_head2(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
+#     def get_hf(ho0, ang_vel, hr0, l0):
+#         ho1 = ho0 + ang_vel * dt
+#         kk = np.array([math.cos(ho1), math.sin(ho1)])
+#         hf = hr0 + kk * l0
+#         return ho1, kk, hf
+#
+#     if np.isnan(ang_vel) or counter > 100:
+#         turn_err += 1
+#         ang_vel = 0
+#         ho1, k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
+#         return ang_vel, ho1, k0, hf00, turn_err
+#
+#     ho1, k, hf01 = get_hf(ho0, ang_vel, hr0, l0)
+#
+#     if not inside_polygon([hf01], tank):
+#         if counter == 0:
+#             delta *= np.sign(ang_vel)
+#         ang_vel -= delta
+#
+#         if ang_vel < ang_range[0]:
+#             ang_vel = ang_range[0]
+#             delta = np.abs(delta)
+#         elif ang_vel > ang_range[1]:
+#             ang_vel = ang_range[1]
+#             delta -= np.abs(delta)
+#         counter += 1
+#
+#         return turn_head2(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta, counter, turn_err)
+#     else:
+#         return ang_vel, ho1, k, hf01, turn_err
 
 
 @timer
-def position_head_in_tank2(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=1):
+def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
     hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
+    def get_hf0(ang_vel):
 
-    ang_vel, hf01, turn_err = turn_head2(ang_vel, hr0, hf0, ang_range=ang_range, dt=dt,
-                                         tank=tank)
+        d_or = ang_vel * dt
+        return np.array(ang_aux.rotate_around_point(origin=hr0, point=hf0, radians=-d_or))
+
+
+    def fov(ang_vel, turn_err =0):
+
+
+        dv=np.pi / 90
+        idx=0
+
+        # hf01 = get_hf0(ang_vel)
+        while not inside_polygon([get_hf0(ang_vel)], tank):
+            if idx == 0:
+                dv *= np.sign(ang_vel)
+            ang_vel -= dv
+            if ang_vel < fov0:
+                ang_vel = fov0
+                dv = np.abs(dv)
+            elif ang_vel > fov1:
+                ang_vel = fov1
+                dv -= np.abs(dv)
+
+            idx += 1
+            if np.isnan(ang_vel) or idx > 100:
+                turn_err += 1
+                ang_vel = 0
+                break
+            #
+        return ang_vel, turn_err
+
+    ang_vel, turn_err=fov(ang_vel, turn_err=turn_err)
+
     ho1 = ho0 + ang_vel * dt
     k = np.array([math.cos(ho1), math.sin(ho1)])
+    hf01 = get_hf0(ang_vel)
     coef = dt * sf * k
 
-    lin_vel, go_err = go_forward2(lin_vel, coef, hf01, tank=tank)
+    def get_hf1(lin_vel):
+        return hf01 + coef * lin_vel
+    def lv(lin_vel,go_err=0):
+
+        dv = 0.00011
+        idx = 0
+
+            #return hr0 + k * (coef * lin_vel + l0)
+
+        while not inside_polygon([get_hf1(lin_vel)], tank):
+            idx += 1
+            lin_vel -= dv
+            # lin_vel, dv = go_forward(lin_vel, dv)
+            if np.isnan(lin_vel) or idx > 100:
+                go_err += 1
+                lin_vel =0
+                break
+            if lin_vel < 0:
+                lin_vel = 0
+                break
+        return lin_vel, go_err
+
+    lin_vel, go_err=lv(lin_vel, go_err=go_err)
     d = lin_vel * dt
     hp1 = hr0 + k * (d * sf + l0 / 2)
     return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
 
 
-@timer
-def position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=1):
-    ang_vel, ho1, k, hf01, turn_err = turn_head(ang_vel, hr0, ho0, l0, ang_range=ang_range, dt=dt,
-                                                tank=tank)
-    lin_vel, d, hf1, go_err = go_forward(lin_vel, k, hf01, dt=dt, tank=tank, sf=sf)
-    hp1 = hr0 + k * (d * sf + l0 / 2)
-    return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
+# @timer
+# def position_head_in_tank2(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=1):
+#     ang_vel, ho1, k, hf01, turn_err = turn_head2(ang_vel, hr0, ho0, l0, ang_range=ang_range, dt=dt,
+#                                                 tank=tank)
+#     lin_vel, d, hf1, go_err = go_forward2(lin_vel, k, hf01, dt=dt, tank=tank, sf=sf)
+#     hp1 = hr0 + k * (d * sf + l0 / 2)
+#     return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
 
 
 class Collision(Exception):
