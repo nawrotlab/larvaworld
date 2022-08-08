@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from mesa.datacollection import DataCollector
 
-from lib.aux.sim_aux import get_sample_ks
+import lib.aux.sample_aux
+from lib.aux.sample_aux import get_sample_ks
 from lib.registry.pars import preg
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
@@ -91,7 +92,7 @@ class LarvaWorldSim(LarvaWorld):
 
                 ps, ors = xy_aux.generate_xyNor_distro(d)
                 ids = [f'{gID}_{i}' for i in range(d.N)]
-                all_pars, refID = sim_aux.sampleRef(**kws)
+                all_pars, refID = lib.aux.sample_aux.sampleRef(**kws)
 
 
 
@@ -99,7 +100,7 @@ class LarvaWorldSim(LarvaWorld):
 
 
             else:
-                ids, ps, ors, all_pars = sim_aux.imitateRef(**kws)
+                ids, ps, ors, all_pars = lib.aux.sample_aux.imitateRef(**kws)
 
             for id, p, o, pars in zip(ids, ps, ors, all_pars):
                 conf = {

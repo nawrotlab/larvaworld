@@ -8,7 +8,7 @@ import webcolors
 import pygame
 from shapely.affinity import affine_transform
 
-
+import lib.aux.sample_aux
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -383,7 +383,7 @@ class LarvaWorld(BaseLarvaWorld):
             'refID': gConf.sample,
             'Nids': 1,
         }
-        pars, refID = sim_aux.sampleRef(**kws)
+        pars, refID = lib.aux.sample_aux.sampleRef(**kws)
 
         conf = {
             'pos': pos,

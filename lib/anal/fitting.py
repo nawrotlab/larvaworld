@@ -426,7 +426,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     Npau = aux_dic['pause_dur'].shape[0]
     Nrun = aux_dic['run_dur'].shape[0]
 
-    from lib.aux.sim_aux import get_sample_bout_distros
+    from lib.aux.sample_aux import get_sample_bout_distros
     m=preg.loadConf(id=mID, conftype='Model')
     m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params

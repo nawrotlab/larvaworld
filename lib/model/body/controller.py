@@ -166,7 +166,7 @@ class BodySim(BodyManager, PhysicsController):
                                              ang_suppression=self.brain.locomotor.cur_ang_suppression)
             # print(lin_vel, ang_vel)
             # print()
-            self.position_body(lin_vel=lin_vel, ang_vel=ang_vel)
+            self.position_body(lin_vel=lin_vel, ang_vel=ang_vel, dt=self.model.dt)
             self.compute_body_bend()
             self.trajectory.append(self.pos)
         self.complete_step()
@@ -208,63 +208,53 @@ class BodySim(BodyManager, PhysicsController):
     def set_head_contacts_ground(self, value):
         self.head_contacts_ground = value
 
-    def go_forward(self, lin_vel, k, hf01, delta=0.00011, counter=0):
-        if np.isnan(lin_vel) or counter>100 :
-            self.border_go_errors += 1
-            return 0, 0, hf01
-        d = lin_vel * self.model.dt
-        dxy = k * d * self.model.scaling_factor
-        hf1 = hf01 + dxy
+    # def go_forward(self, lin_vel, k, hf01,dt, tank,scaling_factor=1, delta=0.00011, counter=0, border_go_errors=0):
+    #     if np.isnan(lin_vel) or counter>100 :
+    #         border_go_errors += 1
+    #         return 0, 0, hf01
+    #     d = lin_vel * dt
+    #     dxy = k * d * scaling_factor
+    #     hf1 = hf01 + dxy
+    #
+    #     if not sim_aux.inside_polygon([hf01], tank):
+    #         lin_vel -= delta
+    #         if lin_vel < 0:
+    #             return 0, 0, hf01
+    #         counter += 1
+    #         return self.go_forward(lin_vel, k, hf01, delta, counter,border_go_errors)
+    #     else:
+    #         return lin_vel, d, hf1, border_go_errors
+    #
+    # def turn_head(self, ang_vel, hr0, ho0, l0, ang_range,dt, tank, delta=np.pi / 90, counter=0, border_turn_errors=0):
+    #     def get_hf(ho):
+    #         kk = np.array([math.cos(ho), math.sin(ho)])
+    #         hf = hr0 + kk * l0
+    #         return kk, hf
+    #     if np.isnan(ang_vel) or counter>100:
+    #         border_turn_errors+=1
+    #         k0, hf00 = get_hf(ho0)
+    #         return 0, ho0, k0, hf00
+    #     ho1 = ho0 + ang_vel * dt
+    #     k, hf01 = get_hf(ho1)
+    #     if not sim_aux.inside_polygon([hf01], tank):
+    #         if counter == 0:
+    #             delta *= np.sign(ang_vel)
+    #         ang_vel -= delta
+    #
+    #         if ang_vel < ang_range[0]:
+    #             ang_vel = ang_range[0]
+    #             delta = np.abs(delta)
+    #         elif ang_vel > ang_range[1]:
+    #             ang_vel = ang_range[1]
+    #             delta -= np.abs(delta)
+    #         counter += 1
+    #
+    #         return self.turn_head(ang_vel, hr0, ho0, l0, ang_range, delta, counter, border_turn_errors)
+    #     else:
+    #         return ang_vel, ho1, k, hf01, border_turn_errors
 
-        if not self.in_tank([hf1]):
-            lin_vel -= delta
-            if lin_vel < 0:
-                return 0, 0, hf01
-            counter += 1
-            # print(counter, lin_vel)
-            return self.go_forward(lin_vel, k, hf01, delta, counter)
-        else:
-            return lin_vel, d, hf1
-
-    def turn_head(self, ang_vel, hr0, ho0, l0, ang_range, delta=np.pi / 90, counter=0):
-        def get_hf(ho):
-            kk = np.array([math.cos(ho), math.sin(ho)])
-            hf = hr0 + kk * l0
-            return kk, hf
-        # def return_null() :
-        #     k0, hf00 = get_hf(ho0)
-        #     return 0, ho0, k0, hf00
-
-        if np.isnan(ang_vel) or counter>100:
-            self.border_turn_errors+=1
-            print(self.unique_id, self.border_turn_errors, self.border_go_errors)
-            k0, hf00 = get_hf(ho0)
-            return 0, ho0, k0, hf00
-        ho1 = ho0 + ang_vel * self.model.dt
-        k, hf01 = get_hf(ho1)
-        # k = np.array([math.cos(ho1), math.sin(ho1)])
-        # hf01 = hr0 + k * l0
-        # return hf1
-        if not self.in_tank([hf01]):
-            # print(counter, ang_vel, hf01)
-            if counter == 0:
-                delta *= np.sign(ang_vel)
-            ang_vel -= delta
-
-            if ang_vel < ang_range[0]:
-                ang_vel = ang_range[0]
-                delta = np.abs(delta)
-            elif ang_vel > ang_range[1]:
-                ang_vel = ang_range[1]
-                delta -= np.abs(delta)
-            counter += 1
-
-            return self.turn_head(ang_vel, hr0, ho0, l0, ang_range, delta, counter)
-        else:
-            return ang_vel, ho1, k, hf01
-
-    def position_body(self, lin_vel, ang_vel, tank_contact=True):
-
+    def position_body(self, lin_vel, ang_vel,dt, tank_contact=True):
+        sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
         hr0 = self.global_rear_end_of_head
         l0 = self.seg_lengths[0]
@@ -273,7 +263,7 @@ class BodySim(BodyManager, PhysicsController):
             dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
         else:
             dang = 0
-        ang_vel_min, ang_vel_max = (-np.pi + dang) / self.model.dt, (np.pi + dang) / self.model.dt
+        ang_range=ang_vel_min, ang_vel_max = (-np.pi + dang) / dt, (np.pi + dang) / dt
 
         if ang_vel < ang_vel_min:
             ang_vel = ang_vel_min
@@ -286,16 +276,21 @@ class BodySim(BodyManager, PhysicsController):
         # if lin_vel<0 :
         #     print(self.unique_id, 000000000)
         if tank_contact:
+            tank = self.model.tank_polygon
 
-            ang_vel, ho1, k, hf01 = self.turn_head(ang_vel, hr0, ho0, l0, ang_range=(ang_vel_min, ang_vel_max))
-            lin_vel, d, hf1 = self.go_forward(lin_vel, k, hf01)
+
+            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
+            self.border_turn_errors+=turn_err
+            self.border_go_errors+=go_err
+            # ang_vel, ho1, k, hf01, border_turn_errors = sim_aux.turn_head(ang_vel, hr0, ho0, l0, ang_range=ang_range, dt=dt, tank=tank)
+            # lin_vel, d, hf1,border_go_errors = sim_aux.go_forward(lin_vel, k, hf01, dt=dt, tank=tank, scaling_factor=scaling_factor)
             # print(lin_vel)
         else:
-            ho1 = ho0 + ang_vel * self.model.dt
+            ho1 = ho0 + ang_vel * dt
             k = np.array([math.cos(ho1), math.sin(ho1)])
-            d = lin_vel * self.model.dt
-        hp1 = hr0 + k * (d * self.model.scaling_factor + l0 / 2)
-
+            d = lin_vel * dt
+            hp1 = hr0 + k * (d * sf + l0 / 2)
+        self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         self.dst = d
         self.cum_dst += self.dst
         self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
@@ -303,7 +298,7 @@ class BodySim(BodyManager, PhysicsController):
 
         # if lin_vel<0 :
         #     print(self.unique_id, 11111111111111111)
-        self.head.update_all(hp1, ho1, lin_vel, ang_vel)
+
         if self.Nsegs > 1:
             for i, (seg, l) in enumerate(zip(self.segs[1:], self.seg_lengths[1:])):
                 self.position_seg(seg, d_or=self.rear_orientation_change / (self.Nsegs - 1),

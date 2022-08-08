@@ -169,7 +169,7 @@ class ParRegistry:
             return None
 
     def simRef(self,id, mID, **kwargs):
-        from lib.sim.eval.eval_aux import sim_model
+        from lib.aux.sample_aux import sim_model
         return sim_model(mID,  refID=id, **kwargs)
 
 

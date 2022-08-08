@@ -1,6 +1,5 @@
 import copy
 import itertools
-import random
 
 import numpy as np
 import pandas as pd
@@ -251,8 +250,7 @@ def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
 
 
 def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stops=[40]):
-    from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
-        store_spatial
+    from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index
     strides_enabled = True if cc.Npoints > 1 else False
     vel_thr = cc.vel_thr if cc.Npoints == 1 else 0.2
 
@@ -392,131 +390,6 @@ def torsNdsps(pars):
     dsp_shorts0 = [f'dsp_{s0}_{s1}' for s0, s1 in itertools.product(dsp_starts, dsp_stops)]
     dsp_shorts = dNl.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
     return tor_durs, dsp_starts, dsp_stops
-
-
-def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
-    N = len(mIDs)
-    if colors is None:
-        from lib.aux.colsNstr import N_colors
-        colors = N_colors(N)
-    if dataset_ids is None:
-        dataset_ids = mIDs
-    if data_dir is None:
-        dirs = [None] * N
-    else:
-        dirs = [f'{data_dir}/{dID}' for dID in dataset_ids]
-    ds = [sim_model(mID=mIDs[i], color=colors[i], dataset_id=dataset_ids[i], dir=dirs[i], **kwargs) for i in range(N)]
-    return ds
-
-
-def sim_model_single(m, Nticks=1000, dt=0.1, df_columns=None):
-    from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.model.body.controller import PhysicsController
-    from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
-
-    if df_columns is None:
-        df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
-    AA = np.ones([Nticks, len(df_columns)]) * np.nan
-
-    controller = PhysicsController(**m.physics)
-    l = m.body.initial_length
-    bend_errors = 0
-    DL = DefaultLocomotor(dt=dt, conf=m.brain)
-    for qq in range(100):
-        if random.uniform(0, 1) < 0.5:
-            DL.step(A_in=0, length=l)
-    b, fo, ro, fov, x, y, dst, v = 0, 0, 0, 0, 0, 0, 0, 0
-
-    for i in range(Nticks):
-        lin, ang, feed = DL.step(A_in=0, length=l)
-        v, fov = controller.get_vels(lin, ang, fov, v, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
-
-        d_or = fov * dt
-        if np.abs(d_or) > np.pi:
-            bend_errors += 1
-        dst = lin * dt
-        d_ro = rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
-        b = wrap_angle_to_0(b + d_or - d_ro)
-        fo = (fo + d_or) % (2 * np.pi)
-        ro = (ro + d_ro) % (2 * np.pi)
-        x += dst * np.cos(fo)
-        y += dst * np.sin(fo)
-
-        AA[i, :] = [b, fo, ro, fov, DL.turner.input, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
-
-    AA[:, :4] = np.rad2deg(AA[:, :4])
-    return AA
-
-def sim_model_data(Nticks, Nids, ms, group_id, dt=0.1):
-    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
-
-    ids = [f'{group_id}{j}' for j in range(Nids)]
-    my_index = pd.MultiIndex.from_product([np.arange(Nticks), ids], names=['Step', 'AgentID'])
-    AA = np.ones([Nticks, Nids, len(df_columns)]) * np.nan
-
-    for j, id in enumerate(ids):
-        m = ms[j]
-        # mConf = mConfs[j]
-
-        AA[:, j, :] = sim_model_single(m, Nticks, dt=dt, df_columns=df_columns)
-
-    AA = AA.reshape(Nticks * Nids, len(df_columns))
-    s = pd.DataFrame(AA, index=my_index, columns=df_columns)
-    s = s.astype(float)
-
-    e = pd.DataFrame(index=ids)
-    e['cum_dur'] = Nticks * dt
-    e['num_ticks'] = Nticks
-    e['length'] = [m.body.initial_length for m in ms]
-
-    from lib.process.spatial import scale_to_length
-    scale_to_length(s, e, keys=['v'])
-    return s,e
-
-
-
-
-
-def sim_model(mID,  Nids=1, refID=None,refDataset=None, sample_ks=None,use_LarvaConfDict=False, **kwargs):
-    from lib.aux.sim_aux import sampleRef
-    ms, refID=sampleRef(mID=mID, refID=refID, Nids=Nids, refDataset=refDataset, sample_ks=sample_ks)
-    if use_LarvaConfDict:
-        pass
-    d=sim_ms(ms, mID=mID, Nids=Nids,refID=refID, **kwargs)
-    return d
-
-def sim_ms(ms, mID,env_params={}, dir=None,dur=3, dt=1 / 16,color='blue', dataset_id=None, tor_durs=[], dsp_starts=[0], dsp_stops=[40],
-              bout_annotation=True, enrichment=True, refID = None, Nids=1,  **kwargs) :
-    Nticks = int(dur * 60 / dt)
-    if dataset_id is None:
-        dataset_id = mID
-
-    c_kws = {
-        # 'load_data': False,
-        'dir': dir,
-        'id': dataset_id,
-        # 'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': preg.lg(id=dataset_id, c=color, sample=refID,mID= mID, N=Nids,expand=True, **kwargs),
-        'env_params': env_params,
-        'Npoints': 3,
-        'Ncontour': 0,
-        'fr': 1 / dt,
-        'mID': mID,
-    }
-
-    from lib.stor.larva_dataset import LarvaDataset
-    d = LarvaDataset(**c_kws, load_data=False)
-    s,e=sim_model_data(Nticks, Nids, ms, dataset_id, dt=dt)
-
-    d.set_data(step=s, end=e)
-
-    if enrichment:
-        d=d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'], bout_annotation=bout_annotation,store=dir is not None,
-                  dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
-
-
-    return d
-
 
 
 def RSS(vs0, vs):

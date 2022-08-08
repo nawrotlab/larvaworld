@@ -1,13 +1,10 @@
-import copy
 import math
-import random
 
 import numpy as np
 
 from shapely.geometry import Point, Polygon, LineString
 
-from lib.aux import naming as nam, dictsNlists as dNl
-from lib.registry.pars import preg
+from lib.aux import naming as nam, ang_aux
 
 
 def LvsRtoggle(side):
@@ -285,134 +282,60 @@ def get_source_xy(food_params):
     return {**sources_u, **sources_g}
 
 
-def generate_larvae(N, sample_dict, base_model):
-    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-    from unflatten import unflatten
-    from lib.aux.dictsNlists import load_dict, flatten_dict
-    if len(sample_dict) > 0:
-        all_pars = []
-        modF = flatten_dict(base_model)
-        for i in range(N):
-            lF = copy.deepcopy(modF)
-            for p, vs in sample_dict.items():
-                p = RefPars[p] if p in RefPars.keys() else p
-                lF.update({p: vs[i]})
-            dic = dNl.NestDict(unflatten(lF))
-            all_pars.append(dic)
+def go_forward(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_err=0):
+    if np.isnan(lin_vel) or counter > 100:
+        go_err += 1
+        return 0, 0, hf01
+    d = lin_vel * dt
+    dxy = k * d * sf
+    hf1 = hf01 + dxy
+
+    if not inside_polygon([hf1], tank):
+        lin_vel -= delta
+        if lin_vel < 0:
+            return 0, 0, hf01
+        counter += 1
+        return go_forward(lin_vel, k, hf01, dt, tank, sf, delta, counter, go_err)
     else:
-        all_pars = [base_model] * N
-    return all_pars
+        return lin_vel, d, hf1, go_err
 
 
-def get_sample_bout_distros0(Im, bout_distros):
-    dic = {
-        'pause_dist': ['pause', 'pause_dur'],
-        'stridechain_dist': ['stride', 'run_count'],
-        'run_dist': ['run', 'run_dur'],
-    }
+def turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
+    def get_hf(ho):
+        kk = np.array([math.cos(ho), math.sin(ho)])
+        hf = hr0 + kk * l0
+        return kk, hf
 
-    ds = [ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if
-          (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
-    for d in ds:
-        for sample_d in dic[d]:
-            if sample_d in bout_distros.keys() and bout_distros[sample_d] is not None:
-                Im[d] = bout_distros[sample_d]
-    return Im
+    if np.isnan(ang_vel) or counter > 100:
+        turn_err += 1
+        k0, hf00 = get_hf(ho0)
+        return 0, ho0, k0, hf00
+    ho1 = ho0 + ang_vel * dt
+    k, hf01 = get_hf(ho1)
+    if not inside_polygon([hf01], tank):
+        if counter == 0:
+            delta *= np.sign(ang_vel)
+        ang_vel -= delta
 
+        if ang_vel < ang_range[0]:
+            ang_vel = ang_range[0]
+            delta = np.abs(delta)
+        elif ang_vel > ang_range[1]:
+            ang_vel = ang_range[1]
+            delta -= np.abs(delta)
+        counter += 1
 
-def get_sample_bout_distros(model, sample):
-    if sample in [None, {}]:
-        return model
-    m = dNl.copyDict(model)
-    if m.brain.intermitter_params:
-        m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
-                                                              bout_distros=sample.bout_distros)
-
-    return m
-
-
-def sample_group(dir=None, N=1, sample_ps=[], e=None):
-    if e is None:
-        from lib.stor.larva_dataset import LarvaDataset
-        d = LarvaDataset(dir, load_data=False)
-        e = d.read(key='end')
-    ps = [p for p in sample_ps if p in e.columns]
-    means = [e[p].mean() for p in ps]
-    if len(ps) >= 2:
-        base = e[ps].values.T
-        cov = np.cov(base)
-        vs = np.random.multivariate_normal(means, cov, N).T
-    elif len(ps) == 1:
-        std = np.std(e[ps].values)
-        vs = np.atleast_2d(np.random.normal(means[0], std, N))
+        return turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta, counter, turn_err)
     else:
-        return {}
-    dic = {p: v for p, v in zip(ps, vs)}
-    return dic
+        return ang_vel, ho1, k, hf01, turn_err
 
 
-def get_sample_ks(m, sample_ks=None):
-    if sample_ks is None:
-        sample_ks = []
-    modF = dNl.flatten_dict(m)
-    sample_ks += [p for p in modF if modF[p] == 'sample']
-    return sample_ks
-
-
-def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nids=1, parameter_dict={}):
-    if m is None:
-        m = preg.loadConf(id=mID, conftype="Model")
-    ks = get_sample_ks(m, sample_ks=sample_ks)
-    sample_dict = {}
-    if len(ks) > 0:
-        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-        invRefPars = {v: k for k, v in RefPars.items()}
-        sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
-        if len(sample_ps) > 0:
-            if refDataset is None:
-                if refID is not None:
-                    refDataset = preg.loadRef(refID, load=True, step=False)
-            if refDataset is not None:
-                m = get_sample_bout_distros(m, refDataset.config)
-                e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
-                sample_ps = [p for p in sample_ps if p in e.columns]
-                if len(sample_ps) > 0:
-                    sample_dict = sample_group(N=Nids, sample_ps=sample_ps, e=e)
-                    refID = refDataset.refID
-    sample_dict.update(parameter_dict)
-    return generate_larvae(Nids, sample_dict, m), refID
-
-
-def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_dict={}):
-    if refDataset is None:
-        if refID is not None:
-            refDataset = preg.loadRef(refID, load=True, step=False)
-        else:
-            raise
-    else:
-        refID = refDataset.refID
-    if Nids is None:
-        Nids = refDataset.config.N
-
-    e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
-    ids = random.sample(e.index.values.tolist(), Nids)
-    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-    sample_ps = [p for p in list(RefPars.keys()) if p in e.columns]
-    sample_dict = {p: [e[p].loc[id] for id in ids] for p in sample_ps}
-    sample_dict.update(parameter_dict)
-
-    if m is None:
-        m = preg.loadConf(id=mID, conftype="Model")
-    m = get_sample_bout_distros(m, refDataset.config)
-    all_pars = generate_larvae(Nids, sample_dict, m)
-    ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
-    try:
-        ors = [e['initial_front_orientation'].loc[id] for id in ids]
-    except:
-        ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
-    return ids, ps, ors, all_pars
-
-
+def position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=1):
+    ang_vel, ho1, k, hf01, turn_err = turn_head(ang_vel, hr0, ho0, l0, ang_range=ang_range, dt=dt,
+                                                          tank=tank)
+    lin_vel, d, hf1, go_err = go_forward(lin_vel, k, hf01, dt=dt, tank=tank,sf=sf)
+    hp1 = hr0 + k * (d * sf + l0 / 2)
+    return d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err
 
 
 class Collision(Exception):
