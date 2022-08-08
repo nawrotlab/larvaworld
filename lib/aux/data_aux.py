@@ -97,7 +97,7 @@ def init2mdict(d0):
                 p = v_descriptor(**prepar)
                 D[kk] = p
 
-            elif any([a in vv.keys() for a in ['symbol', 'h', 'label', 'disp']]):
+            elif any([a in vv.keys() for a in ['symbol', 'h', 'label', 'disp', 'k']]):
                 prepar = preparePar(p=kk, **vv)
                 p = v_descriptor(**prepar)
                 D[kk] = p

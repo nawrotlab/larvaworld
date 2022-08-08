@@ -492,6 +492,8 @@ LarvaDataset = type('LarvaDataset', (_LarvaDataset,), dic_manager_kwargs)
 
 if __name__ == '__main__':
     d=LarvaDataset(dir=None, load_data=False)
+    print(d.config.N)
+
     raise
     #
     #refID = 'None.40controls'

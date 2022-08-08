@@ -66,6 +66,14 @@ def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)):
     else:
         raise ValueError(f'XY distribution {mode} not implemented.')
 
+def generate_xyNor_distro(d):
+    N = d.N
+    a1, a2 = np.deg2rad(d.orientation_range)
+    ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
+    ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
+    return ps, ors
+
+
 
 def eudis5(v1, v2):
     dist = [(a - b) ** 2 for a, b in zip(v1, v2)]

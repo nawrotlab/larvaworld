@@ -1,5 +1,6 @@
 import copy
 import math
+import random
 
 import numpy as np
 
@@ -202,8 +203,6 @@ def apply_filter_to_array_with_nans_multidim(a, freq, fr, N=1):
     """
     from scipy.signal import butter
 
-
-
     # 2-dimensional array must have each timeseries in different column
     if a.ndim == 1:
         sos = butter(N=N, Wn=freq, btype='lowpass', analog=False, fs=fr, output='sos')
@@ -286,7 +285,8 @@ def get_source_xy(food_params):
     return {**sources_u, **sources_g}
 
 
-def generate_larvae(N, sample_dict, base_model, RefPars):
+def generate_larvae(N, sample_dict, base_model):
+    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
     from unflatten import unflatten
     from lib.aux.dictsNlists import load_dict, flatten_dict
     if len(sample_dict) > 0:
@@ -321,18 +321,20 @@ def get_sample_bout_distros0(Im, bout_distros):
 
 
 def get_sample_bout_distros(model, sample):
-    m = dNl.NestDict(copy.deepcopy(model))
-    if m.brain.intermitter_params and sample != {}:
+    if sample in [None, {}]:
+        return model
+    m = dNl.copyDict(model)
+    if m.brain.intermitter_params:
         m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
                                                               bout_distros=sample.bout_distros)
 
     return m
 
 
-def sample_group(sample=None, N=1, sample_ps=[], e=None):
+def sample_group(dir=None, N=1, sample_ps=[], e=None):
     if e is None:
         from lib.stor.larva_dataset import LarvaDataset
-        d = LarvaDataset(sample['dir'], load_data=False)
+        d = LarvaDataset(dir, load_data=False)
         e = d.read(key='end')
     ps = [p for p in sample_ps if p in e.columns]
     means = [e[p].mean() for p in ps]
@@ -348,22 +350,85 @@ def sample_group(sample=None, N=1, sample_ps=[], e=None):
     dic = {p: v for p, v in zip(ps, vs)}
     return dic
 
-def sample_modelConf(d, N, mID, sample_ks=None):
-    # from lib.aux.sim_aux import sample_group
-    # from lib.aux.sim_aux import generate_larvae
-    m = preg.loadConf(id=mID, conftype='Model')
-    # m = loadConf(mID, 'Model')
+
+def get_sample_ks(m, sample_ks=None):
     if sample_ks is None:
-        modF = dNl.flatten_dict(m)
-        sample_ks = [p for p in modF if modF[p] == 'sample']
-    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-    invRefPars = {v: k for k, v in RefPars.items()}
-    sample_ps = [invRefPars[p] for p in sample_ks]
-    e=d.endpoint_data if hasattr(d, 'endpoint_data') else d.read(key='end')
-    sample_dict = sample_group(e=e, N=N, sample_ps=sample_ps) if len(
-        sample_ps) > 0 else {}
-    all_pars = generate_larvae(N, sample_dict, m, RefPars)
-    return all_pars
+        sample_ks = []
+    modF = dNl.flatten_dict(m)
+    sample_ks += [p for p in modF if modF[p] == 'sample']
+    return sample_ks
+
+
+
+
+
+
+
+
+
+def larvaConfs(gID, gConf, parameter_dict={}):
+    mod = gConf.model,
+    d = gConf.distribution
+    #N = d.N
+    refConf = preg.retrieveRef(id=gConf.sample)
+    if not gConf.imitation:
+        from lib.aux import xy_aux
+        ps, ors = xy_aux.generate_xyNor_distro(d)
+        ids = [f'{gID}_{i}' for i in range(d.N)]
+        sample_dict = {}
+        if refConf is not None:
+            mod = get_sample_bout_distros(mod, refConf)
+            ks=get_sample_ks(mod)
+            if len(ks)>0:
+                RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
+                invRefPars = {v: k for k, v in RefPars.items()}
+                sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
+                if len(sample_ps) > 0:
+                    from lib.aux import stor_aux
+                    e = stor_aux.read(key='end', path=stor_aux.datapath('end', refConf.dir))
+                    sample_ps = [p for p in sample_ps if p in e.columns]
+                    if len(sample_ps) > 0:
+                        sample_dict = sample_group(N=d.N, sample_ps=sample_ps, e=e)
+
+
+
+
+    else:
+        if refConf is None:
+            raise
+        else:
+            if d.N is None:
+                d.N = refConf.N
+            from lib.aux import stor_aux
+            e = stor_aux.read(key='end', path=stor_aux.datapath('end', refConf.dir))
+            RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
+
+            sample_ps = [p for p in list(RefPars.keys()) if p in e.columns]
+            ids = random.sample(e.index.values.tolist(), d.N)
+            sample_dict = {p: [e[p].loc[id] for id in ids] for p in sample_ps}
+
+            ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
+            try:
+                ors = [e['initial_front_orientation'].loc[id] for id in ids]
+            except:
+                ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
+
+
+    sample_dict.update(parameter_dict)
+    all_pars = generate_larvae(d.N, sample_dict, mod)
+    confs = [{
+        'pos': p,
+        'orientation': o,
+        'id': id,
+        'pars': pars,
+        'group': gID,
+        'odor': gConf.odor,
+        'default_color': gConf.default_color,
+        'life_history': gConf.life_history
+    } for id, p, o, pars in zip(ids, ps, ors, all_pars)]
+
+    return confs
+
 
 class Collision(Exception):
 

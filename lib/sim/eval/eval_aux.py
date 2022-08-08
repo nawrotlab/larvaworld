@@ -9,7 +9,7 @@ from shapely.geometry import Point
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.aux.annotation import annotate
-from lib.aux.sim_aux import sample_modelConf
+
 from lib.registry.pars import preg
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
@@ -270,7 +270,7 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     comp_dispersion(ss, ee, cc, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss, ee, cc, dt, tor_durs=tor_durs)
     d = dNl.NestDict({'step_data': ss, 'endpoint_data': ee, 'config': cc, 'color': cc.color})
-    annotation(d)
+    annotate(d)
 
 
 
@@ -474,26 +474,39 @@ def sim_model_data(Nticks, Nids, ms, group_id, dt=0.1):
     return s,e
 
 
-def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_durs=[], dsp_starts=[0], dsp_stops=[40],
-              env_params={}, dir=None,
-              bout_annotation=True, enrichment=True, refDataset=None, sample_ks=None,
-              use_LarvaConfDict=False, **kwargs):
+def get_model_variations(mID,  refID = None, Nids=1,refDataset=None, sample_ks=None):
+    from lib.aux.sim_aux import get_sample_ks, sample_group, generate_larvae
+    m = preg.loadConf(id=mID, conftype="Model")
+    ks = get_sample_ks(m, sample_ks=sample_ks)
+    if len(ks) > 0:
+        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
+        invRefPars = {v: k for k, v in RefPars.items()}
+        sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
+        if len(sample_ps) > 0:
+            if refDataset is None:
+                if refID is not None:
+                    refDataset = preg.loadRef(refID, load=False, step=False)
+            if refDataset is not None :
+                e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
+                sample_ps = [p for p in sample_ps if p in e.columns]
+                if len(sample_ps) > 0:
+                    sample_dict = sample_group(N=d.N, sample_ps=sample_ps, e=e)
+                    ms= generate_larvae(Nids, sample_dict, m)
+                    return ms, refDataset.refID
+
+    return [m] * Nids, None
 
 
-    if refDataset is not None:
-        refID = refDataset.refID
-        ms = sample_modelConf(refDataset, N=Nids, mID=mID, sample_ks=sample_ks)
-        # ms = refDataset.sample_modelConf(N=Nids, mID=mID, sample_ks=sample_ks)
-    else:
-        refID = None
-        m = preg.loadConf(id=mID, conftype="Model")
-        ms = [m] * Nids
-
+def sim_model(mID,  Nids=1, refID=None,refDataset=None, sample_ks=None,use_LarvaConfDict=False, **kwargs):
+    ms, refID=get_model_variations(mID, refID=refID, Nids=Nids, refDataset=refDataset, sample_ks=sample_ks)
     if use_LarvaConfDict:
         pass
+    d=sim_ms(ms, mID=mID, Nids=Nids,refID=refID, **kwargs)
+    return d
 
-    Nticks=int(dur * 60 / dt)
-
+def sim_ms(ms, mID,env_params={}, dir=None,dur=3, dt=1 / 16,color='blue', dataset_id=None, tor_durs=[], dsp_starts=[0], dsp_stops=[40],
+              bout_annotation=True, enrichment=True, refID = None, Nids=1,  **kwargs) :
+    Nticks = int(dur * 60 / dt)
     if dataset_id is None:
         dataset_id = mID
 
@@ -522,6 +535,7 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
 
 
     return d
+
 
 
 def RSS(vs0, vs):
@@ -574,5 +588,8 @@ def minmax(df):
 
 
 if __name__ == '__main__':
+    refID = 'None.150controls'
     mID = 'forager'
-    d = sim_model(mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=True)
+
+    d = preg.simRef(refID, mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=True)
+

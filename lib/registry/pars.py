@@ -4,8 +4,10 @@ import time
 
 import numpy as np
 import lib.aux.dictsNlists as dNl
+
 from lib.aux.stor_aux import read
 from lib.decorators.timer3 import timer, load_timer
+
 
 
 class ParRegistry:
@@ -165,6 +167,12 @@ class ParRegistry:
         else:
             # self.vprint(f'Ref Configuration {id} does not exist. Returning None')
             return None
+
+    def simRef(self,id, mID, **kwargs):
+        from lib.sim.eval.eval_aux import sim_model
+        return sim_model(mID,  refID=id, **kwargs)
+
+
 
     def loadRefD(self, id, **kwargs):
         return self.loadRef(id, load=True, **kwargs)

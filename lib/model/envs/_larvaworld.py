@@ -380,7 +380,7 @@ class LarvaWorld(BaseLarvaWorld):
                   odor=None):
         if group is None and pars is None:
             group, conf = list(self.larva_groups.items())[0]
-            sample_dict = sim_aux.sample_group(conf['sample'], 1, self.sample_ps)
+            sample_dict = sim_aux.sample_group(conf['sample'].dir, 1, self.sample_ps)
             mod = sim_aux.get_sample_bout_distros(conf['model'], conf['sample'])
             pars = self._generate_larvae(1, sample_dict, mod)
             life_history = conf['life_history']

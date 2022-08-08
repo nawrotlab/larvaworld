@@ -12,10 +12,8 @@ from lib.registry.pars import preg
 from lib.registry.units import ureg
 
 
-
-
 class LarvaConfDict:
-    def __init__(self,load=False, save=False):
+    def __init__(self, load=False, save=False):
 
         preg.vprint('started LarvaConfDict', 2)
         from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
@@ -29,7 +27,7 @@ class LarvaConfDict:
             self.dict0 = dNl.load_dict(self.dict_path)
 
         self.dict = build_LarvaConfDict(self.dict0)
-        self.full_dict = self.build_full_dict(D = self.dict)
+        self.full_dict = self.build_full_dict(D=self.dict)
 
         self.mcolor = dNl.NestDict({
             'body': 'lightskyblue',
@@ -48,7 +46,7 @@ class LarvaConfDict:
             # 'locomotor': locomotor.DefaultLocomotor,
         })
 
-        preg.vprint('completed LarvaConfDict',2)
+        preg.vprint('completed LarvaConfDict', 2)
 
         # print('Completed LarvaConfDict')
 
@@ -338,7 +336,7 @@ class LarvaConfDict:
                     mode = m.mode
                 # print(k, D[k], mode)
                 kws = {kw: getattr(L, kw) for kw in D[k].kwargs.keys()}
-                func=D[k].mode[mode].class_func
+                func = D[k].mode[mode].class_func
                 M = func(**m, **kws)
                 if k == 'intermitter':
                     M.disinhibit_locomotion(L)
@@ -480,11 +478,11 @@ class LarvaConfDict:
 
         # self.saveConf(conf, mID)
 
-        return {mID : conf}
+        return {mID: conf}
 
-    def newConf(self, m0=None,mID0=None, mID=None, kwargs={}):
-        if m0 is None :
-            m0=self.loadConf(mID=mID0)
+    def newConf(self, m0=None, mID0=None, mID=None, kwargs={}):
+        if m0 is None:
+            m0 = self.loadConf(mID=mID0)
         T0 = dNl.copyDict(m0)
         conf = dNl.update_nestdict(T0, kwargs)
         if mID is not None:
@@ -496,7 +494,7 @@ class LarvaConfDict:
                     'default': 'DEF', 'neural': 'NEU', 'sinusoidal': 'SIN', 'nengo': 'NENGO', 'phasic': 'PHI',
                     'branch': 'BR'}
         kws = {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
-        entries={}
+        entries = {}
         for Cmod in ['realistic', 'square', 'gaussian', 'constant']:
             for Tmod in ['neural', 'sinusoidal', 'constant']:
                 for Ifmod in ['phasic', 'square', 'default']:
@@ -510,23 +508,23 @@ class LarvaConfDict:
                         if Ifmod != 'default':
                             kkws.update(**kws)
                         entries.update(self.larvaConf(**kkws))
-        e1=self.larvaConf(mID='loco_default', **kws)
+        e1 = self.larvaConf(mID='loco_default', **kws)
         kws2 = {'modkws': {'interference': {'attenuation': 0.0}}}
-        e2=self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
-                                          'intermitter': 'default'}, **kws2)
-        e3=self.larvaConf(mID='NEU_Levy', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
-                                              'intermitter': 'default'}, **kws2)
-        e4=self.larvaConf(mID='NEU_Levy_continuous',
-                       modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default'}, **kws2)
+        e2 = self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
+                                               'intermitter': 'default'}, **kws2)
+        e3 = self.larvaConf(mID='NEU_Levy', modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default',
+                                                   'intermitter': 'default'}, **kws2)
+        e4 = self.larvaConf(mID='NEU_Levy_continuous',
+                            modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default'}, **kws2)
 
-        e5=self.larvaConf(mID='CON_SIN', modes={'crawler': 'constant', 'turner': 'sinusoidal'})
-        entries.update(**e1,**e2,**e3,**e4,**e5)
+        e5 = self.larvaConf(mID='CON_SIN', modes={'crawler': 'constant', 'turner': 'sinusoidal'})
+        entries.update(**e1, **e2, **e3, **e4, **e5)
         mID0dic = {}
         # m0s=[]
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
-                mID0dic[mID0]=entries[mID0]
+                mID0dic[mID0] = entries[mID0]
                 # mID0s.append(mID0)
                 # m0s.append(entries[mID0])
                 for mm in [f'{mID0}_avg', f'{mID0}_var', f'{mID0}_var2']:
@@ -544,25 +542,35 @@ class LarvaConfDict:
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
         # for m0 in m0s:
-        for mID0,m0 in mID0dic.items():
+        for mID0, m0 in mID0dic.items():
             mID1 = f'{mID0}_nav'
-            entries[mID1]=self.newConf(m0=m0, kwargs=kwargs1)
+            entries[mID1] = self.newConf(m0=m0, kwargs=kwargs1)
             mID1br = f'{mID1}_brute'
             entries[mID1br] = self.newConf(m0=entries[mID1], kwargs={'brain.olfactor_params.brute_force': True})
             mID2 = f'{mID0}_nav_x2'
             entries[mID2] = self.newConf(m0=m0, kwargs=kwargs2)
             mID2br = f'{mID2}_brute'
             entries[mID2br] = self.newConf(m0=entries[mID2], kwargs={'brain.olfactor_params.brute_force': True})
-        entries['explorer'] =self.newConf(m0=entries['loco_default'], kwargs={})
-        entries['navigator'] =self.newConf(m0=entries['explorer'], kwargs=kwargs1)
+        entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
+        entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
-            entries[f'{mID0}_nav']=self.newConf(m0=entries[mID0], kwargs=kwargs1)
-            entries[f'{mID0}_nav_x2']=self.newConf(m0=entries[mID0], kwargs=kwargs2)
+            entries[f'{mID0}_nav'] = self.newConf(m0=entries[mID0], kwargs=kwargs1)
+            entries[f'{mID0}_nav_x2'] = self.newConf(m0=entries[mID0], kwargs=kwargs2)
 
         sm_pars = self.generate_configuration(self.dict.aux.m['sensorimotor'].mode['default'].args)
-        entries['obstacle_avoider']=self.newConf(m0=entries['RE_NEU_PHI_DEF_nav'], kwargs={'sensorimotor': sm_pars})
-        return entries
+        entries['obstacle_avoider'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_nav'], kwargs={'sensorimotor': sm_pars})
 
+        sample_ks = [
+            'brain.crawler_params.stride_dst_mean',
+            'brain.crawler_params.stride_dst_std',
+            'brain.crawler_params.max_scaled_vel',
+            'brain.crawler_params.max_vel_phase',
+            'brain.crawler_params.initial_freq',
+        ]
+        for mID0 in ['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_nav']:
+            entries[f'v{mID0}'] = self.newConf(m0=entries[mID0], kwargs={k: 'sample' for k in sample_ks})
+
+        return entries
 
     def saveConf(self, conf, mID=None):
         if mID is not None:
@@ -579,7 +587,6 @@ class LarvaConfDict:
         return kConfDict('Model', **kwargs)
 
     def build_full_dict(self, D):
-
 
         def register(dic, k0, full_dic):
             for k, p in dic.items():
@@ -629,19 +636,18 @@ class LarvaConfDict:
                     k0 = self.full_dict[k].disp
                 else:
                     k0 = k.split('.')[-1]
-                k00=k.split('.')[0]
-                if k00=='brain' :
-                    k01=k.split('.')[1]
-                    k00=k01.split('_')[0]
-                entry['field']=k00
+                k00 = k.split('.')[0]
+                if k00 == 'brain':
+                    k01 = k.split('.')[1]
+                    k00 = k01.split('_')[0]
+                entry['field'] = k00
                 dic[k0] = entry
         df = pd.DataFrame.from_dict(dic).T
         df.index = df.index.set_names(['parameter'])
         # df=df.reset_index().rename(columns={df.index.name: 'parameter'})
-        df.reset_index(drop=False,inplace=True)
+        df.reset_index(drop=False, inplace=True)
         df.set_index(['field'], inplace=True)
         df.sort_index(inplace=True)
-
 
         # print(df.index.values)
         # raise
@@ -652,9 +658,7 @@ class LarvaConfDict:
         # df.reset_index(drop=False, inplace=True)
         # df.set_index(['field','parameter'], inplace=True)
 
-
-
-        return df,row_colors
+        return df, row_colors
 
     def adapt_crawler(self, refID=None, e=None, mode='realistic', average=True):
         if e is None:
@@ -837,7 +841,7 @@ class LarvaConfDict:
                             new_v = tuple(new_v)
                     p.v = new_v
                 else:
-                    mdict[d]=self.update_mdict(mdict=p, mmdic=new_v)
+                    mdict[d] = self.update_mdict(mdict=p, mmdic=new_v)
             return mdict
 
     def variable_keys(self, mkey, mode='default'):
@@ -890,9 +894,6 @@ def epar(e, k=None, par=None, average=True, Nround=2):
         return np.round(vs.median(), Nround)
     else:
         return vs
-
-
-
 
 # larva_conf_dict=LarvaConfDict()
 

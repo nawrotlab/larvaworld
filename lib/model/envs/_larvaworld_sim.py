@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 from mesa.datacollection import DataCollector
 
+from lib.aux.sim_aux import get_sample_ks
 from lib.registry.pars import preg
 
-from lib.aux import naming as nam, dictsNlists as dNl,colsNstr as cNs, sim_aux, xy_aux
+from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
 from lib.model.envs._larvaworld import LarvaWorld
 from lib.sim.single.conditions import get_exp_condition
 
@@ -21,11 +22,11 @@ class LarvaWorldSim(LarvaWorld):
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
 
-
         self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         if self.env_pars.odorscape is not None:
-            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape, sources = self.get_food() + self.get_flies())
+            self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape,
+                                                                     sources=self.get_food() + self.get_flies())
 
         if 'thermoscape' in self.env_pars.keys() and self.env_pars.thermoscape is not None:
             self.Ntemps, self.thermo_layers = self._create_thermo_layers(self.env_pars.thermoscape)
@@ -40,9 +41,9 @@ class LarvaWorldSim(LarvaWorld):
         self.exp_condition = k(self) if k is not None else None
 
     def _create_odor_layers(self, pars, sources):
-        Xdim,Ydim=self.arena_dims
-        s=self.scaling_factor
-        dt=self.dt
+        Xdim, Ydim = self.arena_dims
+        s = self.scaling_factor
+        dt = self.dt
         from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
         # sources = self.get_food() + self.get_flies()
         ids = dNl.unique_list([s.odor_id for s in sources if s.odor_id is not None])
@@ -78,37 +79,8 @@ class LarvaWorldSim(LarvaWorld):
 
     def create_larvae(self, larva_groups, parameter_dict={}):
         for gID, gConf in larva_groups.items():
-            mod, sample = gConf['model'], gConf['sample']
-            if type(sample) == str:
-                sample = preg.loadConf(id=sample, conftype='Ref')
-            mod = sim_aux.get_sample_bout_distros(mod, sample)
-
-            modF = dNl.flatten_dict(mod)
-            sample_ks = [p for p in modF if modF[p] == 'sample']
-            RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-            invRefPars = {v: k for k, v in RefPars.items()}
-
-            if gConf['imitation'] and sample != {}:
-                self.sample_ps = list(invRefPars.values())
-                ids, ps, ors, sample_dict = imitate_group(sample, self.sample_ps, N=gConf['distribution']['N'])
-                ids = [f'{gID}_{id}' for id in ids]
-                N = len(ids)
-            else:
-                # print(gID,mod.brain.intermitter_params)
-                # raise
-                self.sample_ps = [invRefPars[p] for p in sample_ks]
-                d = gConf['distribution']
-                N = d['N']
-                ids = [f'{gID}_{i}' for i in range(N)]
-                a1, a2 = np.deg2rad(d['orientation_range'])
-                ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
-                ps = xy_aux.generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
-                sample_dict = sim_aux.sample_group(sample, N, self.sample_ps) if len(self.sample_ps) > 0 else {}
-            sample_dict.update(parameter_dict)
-            all_pars = sim_aux.generate_larvae(N, sample_dict, mod, RefPars)
-            for id, p, o, pars in zip(ids, ps, ors, all_pars):
-                l = self.add_larva(pos=p, orientation=o, id=id, pars=pars, group=gID, odor=gConf['odor'],
-                                   default_color=gConf['default_color'], life_history=gConf['life_history'])
+            for conf in sim_aux.larvaConfs(gID, gConf, parameter_dict=parameter_dict) :
+                l = self.add_larva(**conf)
 
     def step(self):
         self.sim_clock.tick_clock()
@@ -133,7 +105,6 @@ class LarvaWorldSim(LarvaWorld):
         if self.exp_condition is not None:
             self.exp_condition.check(self)
         self.Nticks += 1
-
 
     def get_larva_bodies(self, scale=1.0):
         return {l.unique_id: l.get_shape(scale=scale) for l in self.get_flies()}
@@ -164,13 +135,13 @@ class LarvaWorldSim(LarvaWorld):
             output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']
 
-        f=[]#['initial_amount', 'final_amount']
+        f = []  # ['initial_amount', 'final_amount']
         self.step_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s) if len(
             s) > 0 else None
         self.end_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e) if len(
             e) > 0 else None
         self.food_collector = TargetedDataCollector(schedule=self.all_food_schedule,
-                                                    pars=f)if len(
+                                                    pars=f) if len(
             f) > 0 else None
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
 
@@ -258,28 +229,3 @@ class LarvaWorldSim(LarvaWorld):
                         df.sort_index(level=['Step', 'AgentID'], inplace=True)
                         dic[name] = df
         return dNl.NestDict(dic)
-
-
-def imitate_group(config, sample_pars=[], N=None):
-    from lib.stor.larva_dataset import LarvaDataset
-    d = LarvaDataset(config['dir'], load_data=False)
-    e = d.read('end')
-    ids = e.index.values.tolist()
-    sample_pars = [p for p in sample_pars if p in e.columns]
-
-    if N is not None:
-        ids = random.sample(ids, N)
-    ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
-    try:
-        ors = [e['initial_front_orientation'].loc[id] for id in ids]
-    except:
-        ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
-    dic = {p: [e[p].loc[id] for id in ids] for p in sample_pars}
-    return ids, ps, ors, dic
-
-
-
-
-
-
-
