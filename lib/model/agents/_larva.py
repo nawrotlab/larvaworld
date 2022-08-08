@@ -8,6 +8,8 @@ class Larva(LarvaworldAgent):
     def __init__(self, unique_id, model, pos=None, radius=None, default_color=None, **kwargs):
         if default_color is None:
             default_color = model.generate_larva_color()
+        if unique_id is None:
+            unique_id = model.next_id(type='Larva')
         super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius,
                          **kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']

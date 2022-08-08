@@ -78,7 +78,6 @@ class LarvaWorldSim(LarvaWorld):
         return N, layers
 
     def create_larvae(self, larva_groups, parameter_dict={}):
-        from lib.aux import xy_aux, sim_aux
         for gID, gConf in larva_groups.items():
             d = gConf.distribution
             kws = {
@@ -106,8 +105,8 @@ class LarvaWorldSim(LarvaWorld):
                 conf = {
                     'pos': p,
                     'orientation': o,
-                    'id': id,
-                    'pars': pars,
+                    'unique_id': id,
+                    'larva_pars': pars,
                     'group': gID,
                     'odor': gConf.odor,
                     'default_color': gConf.default_color,

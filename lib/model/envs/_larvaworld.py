@@ -376,29 +376,35 @@ class LarvaWorld(BaseLarvaWorld):
         self.all_food_schedule.add(f)
         return f
 
-    def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life_history=None,
-                  odor=None):
+    def _add_larva(self, pos):
+        gID, gConf = list(self.larva_groups.items())[0]
+        kws = {
+            'm': gConf.model,
+            'refID': gConf.sample,
+            'Nids': 1,
+        }
+        pars, refID = sim_aux.sampleRef(**kws)
+
+        conf = {
+            'pos': pos,
+            # 'orientation': o,
+            'unique_id': f'{gID}_{self.all_larva_schedule.get_agent_count()+1}',
+            'larva_pars': pars,
+            'group': gID,
+            'odor': gConf.odor,
+            'default_color': gConf.default_color,
+            'life_history': gConf.life_history
+        }
+
+        l = self.add_larva(**conf)
+
+
+    def add_larva(self, pos, **kwargs):
         while not sim_aux.inside_polygon([pos], self.tank_polygon):
             pos = tuple(np.array(pos) * 0.999)
-        if group is None and pars is None:
-            group, gConf = list(self.larva_groups.items())[0]
-            kws = {
-                'm': gConf.model,
-                'refID': gConf.sample,
-                'Nids': 1,
-                # 'parameter_dict': {},
-            }
-
-            pars, refID = sim_aux.sampleRef(**kws)
-            life_history = gConf['life_history']
-            odor = gConf['odor']
-            if default_color is None:
-                default_color = gConf['default_color']
 
 
-        l = LarvaSim(unique_id=self.next_id(type='Larva') if id is None else id, model=self, pos=pos,
-                     orientation=np.random.uniform(0, 2 * np.pi, 1)[0] if orientation is None else orientation,
-                     odor=odor, larva_pars=pars, group=group, default_color=default_color, life_history=life_history)
+        l = LarvaSim(model=self, pos=pos,**kwargs)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
 
@@ -409,7 +415,7 @@ class LarvaWorld(BaseLarvaWorld):
             if agent_class == 'Food':
                 f = self.add_food(p0)
             elif agent_class == 'Larva':
-                f = self.add_larva(p0)
+                f = self._add_larva(p0)
             elif agent_class == 'Border':
                 from lib.model.envs._maze import Border
                 b = Border(model=self, points=[p1, p0])
