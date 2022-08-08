@@ -359,75 +359,60 @@ def get_sample_ks(m, sample_ks=None):
     return sample_ks
 
 
-
-
-
-
-
-
-
-def larvaConfs(gID, gConf, parameter_dict={}):
-    mod = gConf.model,
-    d = gConf.distribution
-    #N = d.N
-    refConf = preg.retrieveRef(id=gConf.sample)
-    if not gConf.imitation:
-        from lib.aux import xy_aux
-        ps, ors = xy_aux.generate_xyNor_distro(d)
-        ids = [f'{gID}_{i}' for i in range(d.N)]
-        sample_dict = {}
-        if refConf is not None:
-            mod = get_sample_bout_distros(mod, refConf)
-            ks=get_sample_ks(mod)
-            if len(ks)>0:
-                RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-                invRefPars = {v: k for k, v in RefPars.items()}
-                sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
+def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nids=1, parameter_dict={}):
+    if m is None:
+        m = preg.loadConf(id=mID, conftype="Model")
+    ks = get_sample_ks(m, sample_ks=sample_ks)
+    sample_dict = {}
+    if len(ks) > 0:
+        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
+        invRefPars = {v: k for k, v in RefPars.items()}
+        sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
+        if len(sample_ps) > 0:
+            if refDataset is None:
+                if refID is not None:
+                    refDataset = preg.loadRef(refID, load=True, step=False)
+            if refDataset is not None:
+                m = get_sample_bout_distros(m, refDataset.config)
+                e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
+                sample_ps = [p for p in sample_ps if p in e.columns]
                 if len(sample_ps) > 0:
-                    from lib.aux import stor_aux
-                    e = stor_aux.read(key='end', path=stor_aux.datapath('end', refConf.dir))
-                    sample_ps = [p for p in sample_ps if p in e.columns]
-                    if len(sample_ps) > 0:
-                        sample_dict = sample_group(N=d.N, sample_ps=sample_ps, e=e)
-
-
-
-
-    else:
-        if refConf is None:
-            raise
-        else:
-            if d.N is None:
-                d.N = refConf.N
-            from lib.aux import stor_aux
-            e = stor_aux.read(key='end', path=stor_aux.datapath('end', refConf.dir))
-            RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-
-            sample_ps = [p for p in list(RefPars.keys()) if p in e.columns]
-            ids = random.sample(e.index.values.tolist(), d.N)
-            sample_dict = {p: [e[p].loc[id] for id in ids] for p in sample_ps}
-
-            ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
-            try:
-                ors = [e['initial_front_orientation'].loc[id] for id in ids]
-            except:
-                ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
-
-
+                    sample_dict = sample_group(N=Nids, sample_ps=sample_ps, e=e)
+                    refID = refDataset.refID
     sample_dict.update(parameter_dict)
-    all_pars = generate_larvae(d.N, sample_dict, mod)
-    confs = [{
-        'pos': p,
-        'orientation': o,
-        'id': id,
-        'pars': pars,
-        'group': gID,
-        'odor': gConf.odor,
-        'default_color': gConf.default_color,
-        'life_history': gConf.life_history
-    } for id, p, o, pars in zip(ids, ps, ors, all_pars)]
+    return generate_larvae(Nids, sample_dict, m), refID
 
-    return confs
+
+def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_dict={}):
+    if refDataset is None:
+        if refID is not None:
+            refDataset = preg.loadRef(refID, load=True, step=False)
+        else:
+            raise
+    else:
+        refID = refDataset.refID
+    if Nids is None:
+        Nids = refDataset.config.N
+
+    e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
+    ids = random.sample(e.index.values.tolist(), Nids)
+    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
+    sample_ps = [p for p in list(RefPars.keys()) if p in e.columns]
+    sample_dict = {p: [e[p].loc[id] for id in ids] for p in sample_ps}
+    sample_dict.update(parameter_dict)
+
+    if m is None:
+        m = preg.loadConf(id=mID, conftype="Model")
+    m = get_sample_bout_distros(m, refDataset.config)
+    all_pars = generate_larvae(Nids, sample_dict, m)
+    ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
+    try:
+        ors = [e['initial_front_orientation'].loc[id] for id in ids]
+    except:
+        ors = np.random.uniform(low=0, high=2 * np.pi, size=len(ids)).tolist()
+    return ids, ps, ors, all_pars
+
+
 
 
 class Collision(Exception):

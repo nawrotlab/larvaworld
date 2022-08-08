@@ -78,8 +78,42 @@ class LarvaWorldSim(LarvaWorld):
         return N, layers
 
     def create_larvae(self, larva_groups, parameter_dict={}):
+        from lib.aux import xy_aux, sim_aux
         for gID, gConf in larva_groups.items():
-            for conf in sim_aux.larvaConfs(gID, gConf, parameter_dict=parameter_dict) :
+            d = gConf.distribution
+            kws = {
+                'm': gConf.model,
+                'refID': gConf.sample,
+                'Nids': d.N,
+                'parameter_dict': parameter_dict,
+            }
+
+            if not gConf.imitation:
+
+                ps, ors = xy_aux.generate_xyNor_distro(d)
+                ids = [f'{gID}_{i}' for i in range(d.N)]
+                all_pars, refID = sim_aux.sampleRef(**kws)
+
+
+
+
+
+
+            else:
+                ids, ps, ors, all_pars = sim_aux.imitateRef(**kws)
+
+            for id, p, o, pars in zip(ids, ps, ors, all_pars):
+                conf = {
+                    'pos': p,
+                    'orientation': o,
+                    'id': id,
+                    'pars': pars,
+                    'group': gID,
+                    'odor': gConf.odor,
+                    'default_color': gConf.default_color,
+                    'life_history': gConf.life_history
+                }
+
                 l = self.add_larva(**conf)
 
     def step(self):

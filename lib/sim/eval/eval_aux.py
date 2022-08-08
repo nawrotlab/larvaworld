@@ -474,31 +474,12 @@ def sim_model_data(Nticks, Nids, ms, group_id, dt=0.1):
     return s,e
 
 
-def get_model_variations(mID,  refID = None, Nids=1,refDataset=None, sample_ks=None):
-    from lib.aux.sim_aux import get_sample_ks, sample_group, generate_larvae
-    m = preg.loadConf(id=mID, conftype="Model")
-    ks = get_sample_ks(m, sample_ks=sample_ks)
-    if len(ks) > 0:
-        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-        invRefPars = {v: k for k, v in RefPars.items()}
-        sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
-        if len(sample_ps) > 0:
-            if refDataset is None:
-                if refID is not None:
-                    refDataset = preg.loadRef(refID, load=False, step=False)
-            if refDataset is not None :
-                e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
-                sample_ps = [p for p in sample_ps if p in e.columns]
-                if len(sample_ps) > 0:
-                    sample_dict = sample_group(N=d.N, sample_ps=sample_ps, e=e)
-                    ms= generate_larvae(Nids, sample_dict, m)
-                    return ms, refDataset.refID
 
-    return [m] * Nids, None
 
 
 def sim_model(mID,  Nids=1, refID=None,refDataset=None, sample_ks=None,use_LarvaConfDict=False, **kwargs):
-    ms, refID=get_model_variations(mID, refID=refID, Nids=Nids, refDataset=refDataset, sample_ks=sample_ks)
+    from lib.aux.sim_aux import sampleRef
+    ms, refID=sampleRef(mID=mID, refID=refID, Nids=Nids, refDataset=refDataset, sample_ks=sample_ks)
     if use_LarvaConfDict:
         pass
     d=sim_ms(ms, mID=mID, Nids=Nids,refID=refID, **kwargs)
