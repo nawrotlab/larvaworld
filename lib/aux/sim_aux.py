@@ -5,6 +5,7 @@ import numpy as np
 from shapely.geometry import Point, Polygon, LineString
 
 from lib.aux import naming as nam, ang_aux
+from lib.decorators.timer3 import timer
 
 
 def LvsRtoggle(side):
@@ -282,6 +283,23 @@ def get_source_xy(food_params):
     return {**sources_u, **sources_g}
 
 
+def go_forward2(lin_vel, coef, hf01, tank, delta=0.00011, counter=0, go_err=0):
+    if np.isnan(lin_vel) or counter > 100:
+        go_err += 1
+        return 0, go_err
+    hf1 = hf01 + coef * lin_vel
+
+    if not inside_polygon([hf1], tank):
+        lin_vel -= delta
+        if lin_vel < 0:
+            return 0, go_err
+        counter += 1
+        return go_forward2(lin_vel, coef, hf01, tank, delta, counter, go_err)
+    else:
+        # print(lin_vel, d, hf1, go_err)
+        return lin_vel, go_err
+
+
 def go_forward(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_err=0):
     if np.isnan(lin_vel) or counter > 100:
         go_err += 1
@@ -300,14 +318,42 @@ def go_forward(lin_vel, k, hf01, dt, tank, sf=1, delta=0.00011, counter=0, go_er
         # print(lin_vel, d, hf1, go_err)
         return lin_vel, d, hf1, go_err
 
-def test_rotation(ho0, ang_vel, hr0, l0,dt, to_return='front'):
+
+def test_rotation(ho0, ang_vel, hr0, l0, dt, to_return='front'):
     ho1 = ho0 + ang_vel * dt
     kk = np.array([math.cos(ho1), math.sin(ho1)])
-    if to_return=='front':
+    if to_return == 'front':
         return hr0 + kk * l0
     elif to_return == 'mid':
 
-        return hr0 + kk * l0/2
+        return hr0 + kk * l0 / 2
+
+
+def turn_head2(ang_vel, hr0, hf0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
+    if np.isnan(ang_vel) or counter > 100:
+        turn_err += 1
+        # ang_vel = 0
+        # ho1, k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
+        return 0, hf0, turn_err
+
+    d_or = ang_vel * dt
+    hf01 = np.array(ang_aux.rotate_around_point(origin=hr0, point=hf0, radians=-d_or))
+    if not inside_polygon([hf01], tank):
+        if counter == 0:
+            delta *= np.sign(ang_vel)
+        ang_vel -= delta
+
+        if ang_vel < ang_range[0]:
+            ang_vel = ang_range[0]
+            delta = np.abs(delta)
+        elif ang_vel > ang_range[1]:
+            ang_vel = ang_range[1]
+            delta -= np.abs(delta)
+        counter += 1
+
+        return turn_head2(ang_vel, hr0, hf0, ang_range, dt, tank, delta, counter, turn_err)
+    else:
+        return ang_vel, hf01, turn_err
 
 
 def turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, counter=0, turn_err=0):
@@ -315,15 +361,16 @@ def turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, coun
         ho1 = ho0 + ang_vel * dt
         kk = np.array([math.cos(ho1), math.sin(ho1)])
         hf = hr0 + kk * l0
-        return ho1,kk, hf
+        return ho1, kk, hf
 
     if np.isnan(ang_vel) or counter > 100:
         turn_err += 1
-        ang_vel=0
-        ho1,k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
+        ang_vel = 0
+        ho1, k0, hf00 = get_hf(ho0, ang_vel, hr0, l0)
         return ang_vel, ho1, k0, hf00, turn_err
 
     ho1, k, hf01 = get_hf(ho0, ang_vel, hr0, l0)
+
     if not inside_polygon([hf01], tank):
         if counter == 0:
             delta *= np.sign(ang_vel)
@@ -342,12 +389,29 @@ def turn_head(ang_vel, hr0, ho0, l0, ang_range, dt, tank, delta=np.pi / 90, coun
         return ang_vel, ho1, k, hf01, turn_err
 
 
+@timer
+def position_head_in_tank2(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=1):
+    hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
+
+    ang_vel, hf01, turn_err = turn_head2(ang_vel, hr0, hf0, ang_range=ang_range, dt=dt,
+                                         tank=tank)
+    ho1 = ho0 + ang_vel * dt
+    k = np.array([math.cos(ho1), math.sin(ho1)])
+    coef = dt * sf * k
+
+    lin_vel, go_err = go_forward2(lin_vel, coef, hf01, tank=tank)
+    d = lin_vel * dt
+    hp1 = hr0 + k * (d * sf + l0 / 2)
+    return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
+
+
+@timer
 def position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=1):
     ang_vel, ho1, k, hf01, turn_err = turn_head(ang_vel, hr0, ho0, l0, ang_range=ang_range, dt=dt,
-                                                          tank=tank)
-    lin_vel, d, hf1, go_err = go_forward(lin_vel, k, hf01, dt=dt, tank=tank,sf=sf)
+                                                tank=tank)
+    lin_vel, d, hf1, go_err = go_forward(lin_vel, k, hf01, dt=dt, tank=tank, sf=sf)
     hp1 = hr0 + k * (d * sf + l0 / 2)
-    return d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err
+    return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
 
 
 class Collision(Exception):

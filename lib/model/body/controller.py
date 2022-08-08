@@ -280,13 +280,13 @@ class BodySim(BodyManager, PhysicsController):
         if tank_contact:
             tank = self.model.tank_polygon
 
+            print()
+            # d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
+            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank2(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
+            print()
 
-            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank(hr0, ho0, l0, ang_range, ang_vel, lin_vel, dt, tank, sf=sf)
             self.border_turn_errors+=turn_err
             self.border_go_errors+=go_err
-            # ang_vel, ho1, k, hf01, border_turn_errors = sim_aux.turn_head(ang_vel, hr0, ho0, l0, ang_range=ang_range, dt=dt, tank=tank)
-            # lin_vel, d, hf1,border_go_errors = sim_aux.go_forward(lin_vel, k, hf01, dt=dt, tank=tank, scaling_factor=scaling_factor)
-            # print(lin_vel)
         else:
             ho1 = ho0 + ang_vel * dt
             k = np.array([math.cos(ho1), math.sin(ho1)])
