@@ -378,17 +378,23 @@ class LarvaWorld(BaseLarvaWorld):
 
     def add_larva(self, pos, orientation=None, id=None, pars=None, group=None, default_color=None, life_history=None,
                   odor=None):
-        if group is None and pars is None:
-            group, conf = list(self.larva_groups.items())[0]
-            sample_dict = sim_aux.sample_group(conf['sample'].dir, 1, self.sample_ps)
-            mod = sim_aux.get_sample_bout_distros(conf['model'], conf['sample'])
-            pars = self._generate_larvae(1, sample_dict, mod)
-            life_history = conf['life_history']
-            odor = conf['odor']
-            if default_color is None:
-                default_color = conf['default_color']
         while not sim_aux.inside_polygon([pos], self.tank_polygon):
             pos = tuple(np.array(pos) * 0.999)
+        if group is None and pars is None:
+            group, gConf = list(self.larva_groups.items())[0]
+            kws = {
+                'm': gConf.model,
+                'refID': gConf.sample,
+                'Nids': 1,
+                # 'parameter_dict': {},
+            }
+
+            pars, refID = sim_aux.sampleRef(**kws)
+            life_history = gConf['life_history']
+            odor = gConf['odor']
+            if default_color is None:
+                default_color = gConf['default_color']
+
 
         l = LarvaSim(unique_id=self.next_id(type='Larva') if id is None else id, model=self, pos=pos,
                      orientation=np.random.uniform(0, 2 * np.pi, 1)[0] if orientation is None else orientation,
