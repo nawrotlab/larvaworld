@@ -85,8 +85,10 @@ def Ref_dict():
     for dr in dds:
         try:
             d = LarvaDataset(dr, load_data=False)
-            entry = d.save_config(add_reference=True, return_entry=True)
-            entries.update(entry)
+            d.load(step=False)
+            refID=d.retrieveRefID()
+            conf=d.update_config()
+            entries[refID]=conf
         except:
             pass
     return dNl.NestDict(entries)

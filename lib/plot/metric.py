@@ -13,7 +13,7 @@ def plot_segmentation_definition(subfolder='metric_definition', axs=None, fig=No
     for ii, d in enumerate(P.datasets):
         ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
         N = d.Nangles
-        dic = d.load_vel_definition()
+        dic = d.read(file='vel_definition')
         df_reg = dic['/bend2or_regression']
         df_corr = dic['/bend2or_correlation']
 
@@ -46,11 +46,12 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
     P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
         ax = P.axs[ii]
-        try:
-            dic = d.load_vel_definition()
-        except:
-            d.save_vel_definition(component_vels=component_vels)
-            dic = d.load_vel_definition()
+
+        dic = d.read(file='vel_definition')
+        if dic is None :
+            dic=d.save_vel_definition(component_vels=component_vels)
+
+
         stvar = dic['/stride_variability']
         stvar.sort_values(by='idx', inplace=True)
         ps = stvar.index if component_vels else [p for p in stvar.index if 'lin' not in p]
@@ -84,5 +85,3 @@ def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlat
             confidence_ellipse(x=e[pars[i]].values, y=e[pars[j]].values,
                                ax=ax, n_std=std, facecolor='red', alpha=a)
     return process_plot(g, save_to, save_as, return_fig)
-
-

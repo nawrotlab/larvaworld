@@ -104,7 +104,7 @@ class SingleRun:
 
         ds = dir_aux.split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
                            source_xy=self.source_xy,
-                           fr=1 / self.env.dt, dir=self.data_dir, id=self.id, plot_dir=self.plot_dir,
+                           fr=1 / self.env.dt, dir=self.data_dir, id=self.id,
                            show_output=self.show_output)
         for d in ds:
             if self.show_output:
@@ -122,7 +122,8 @@ class SingleRun:
             d.save()
             d.save_larva_dicts()
             d.save_larva_tables()
-            dNl.dict_to_file(self.param_dict, d.dir_dict.sim)
+            d.storeDic(self.param_dict, 'sim_conf')
+
 
     def analyze(self, save_to=None, **kwargs):
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}

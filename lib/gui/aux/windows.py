@@ -249,7 +249,7 @@ def save_ref_window(d):
          [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Store reference dataset', l).read(close=True)
     if e == 'Ok':
-        d.save_config(add_reference=True, refID=v[k])
+        d.save_config(refID=v[k])
 
 
 def import_window(datagroup_id, raw_dic):
@@ -320,7 +320,7 @@ def import_window(datagroup_id, raw_dic):
                 conf = s1.get_dict(v, w)
                 kws = {
                     'datagroup_id': datagroup_id,
-                    'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
+                    # 'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
                 from lib.stor.managing import build_dataset

@@ -717,7 +717,7 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
         if save_to is None:
-            save_to = c.dir_dict.GAoptimization,
+            save_to = preg.datapath('GAoptimization', c.dir)
         m0 = self.loadConf(mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)

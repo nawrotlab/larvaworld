@@ -87,16 +87,16 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         print(f'Plot saved as {filepaths[i]}')
 
 
-def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, subfolder='stride',
+def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None, subfolder='stride',
                  Nbins=64, individuals=False, pooled=True, **kwargs):
-
     if name is None:
-        if individuals :
+        if individuals:
             name = f'stride_cycle_curves_all_larvae'
         else:
             name = f'stride_cycle_curves'
     Nsh = len(shorts)
-    P = AutoPlot(name=name, subfolder=subfolder,build_kws={'N':Nsh,'Ncols':1, 'w':8,'h':5, 'mode':'box'}, **kwargs)
+    P = AutoPlot(name=name, subfolder=subfolder, build_kws={'N': Nsh, 'Ncols': 1, 'w': 8, 'h': 5, 'mode': 'box'},
+                 **kwargs)
 
     x = np.linspace(0, 2 * np.pi, Nbins)
     for ii, sh in enumerate(shorts):
@@ -113,11 +113,11 @@ def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, s
                 try:
                     cycle_curves = d.cycle_curves
                 except:
-                    cycle_curves = d.load_cycle_curves()
+                    cycle_curves = d.loadDic('cycle_curves')
                 if cycle_curves is None:
-                    try :
+                    try:
                         s, e = d.step_data, d.endpoint_data
-                    except :
+                    except:
                         d.load()
                         s, e = d.step_data, d.endpoint_data
                     cycle_curves = compute_interference(s, e, c=c)
@@ -136,12 +136,12 @@ def stride_cycle(name=None,shorts=['sv', 'fov', 'rov', 'foa','b'], modes=None, s
                     compute_interference(s, e, c=c)
                 P.axs[ii].plot(x, np.array(c.pooled_cycle_curves[sh][mode]), label=d.id, color=col)
 
-
         P.conf_ax(ii, xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
                   xlab='$\phi_{stride}$', ylab=preg.dict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
-    P.conf_fig(title='Stride cycle analysis', title_kws={'w' : 'bold', 's' : 20}, align=True, adjust_kws={'BT' : (0.1,0.9),'LR' : (0.2,0.9),'H':0.01})
+    P.conf_fig(title='Stride cycle analysis', title_kws={'w': 'bold', 's': 20}, align=True,
+               adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})
     return P.get()
 
 
@@ -338,8 +338,6 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
     elif mode == 'spinelength':
         shorts.append('l')
 
-
-
     Npars = len(shorts)
 
     pars, ylabs = preg.getPar(shorts, to_return=['d', 'l'])
@@ -347,20 +345,20 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
 
     ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
 
-    if agent_idx is not None:
-        data = [[d.load_aux(type='stride', par=p).loc[d.agent_ids[agent_idx]].values for p in pars] for
-                d in P.datasets]
-    else:
-        data = [[d.load_aux(type='stride', par=p).values for p in pars] for d in P.datasets]
-    Npoints = data[0][0].shape[1] - 1
-    for d0, c, l in zip(data, P.colors, P.labels):
-        if mode in ['bend', 'orientation']:
-            d0 = [np.abs(d) for d in d0]
-        for i, (p, ylab, df) in enumerate(zip(pars, ylabs, d0)):
+    for i, (p, ylab) in enumerate(zip(pars, ylabs)):
+        for l, d, c in P.data_palette:
+            df = d.read(key=f'stride.{p}', file='aux')
+            if agent_idx is not None:
+                df = df.loc[d.agent_ids[agent_idx]].values
+            else:
+                df = df.values
+            if mode in ['bend', 'orientation']:
+                df = np.abs(df)
+            Npoints = df.shape[1] - 1
             plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
-            P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right')
-
-    P.conf_ax(-1, xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
-              xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+        P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right',
+                  xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
+                  xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
+                  xvis=True if i == Npars - 1 else False)
     P.adjust((0.12, 0.95), (0.2 / Npars, 0.97), 0.05, 0.1)
     return P.get()

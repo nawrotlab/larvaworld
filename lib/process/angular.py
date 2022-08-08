@@ -1,7 +1,9 @@
 import numpy as np
 
-from lib.process.store import store_aux_dataset
+from lib.aux.stor_aux import store_distros, get_distros, storeH5
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux
+from lib.registry.pars import preg
+
 
 def comp_angles(s, e, c, mode='full'):
     N=c.Npoints
@@ -206,7 +208,10 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
     comp_extrema(s, dt=c.dt, parameters=[nam.vel(nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)
     if store :
-        store_aux_dataset(s, pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars), type='distro', file=c.aux_dir)
+        pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars)
+        dic = get_distros(s, pars=pars)
+        storeH5(dic, key=None, path=preg.datapath('distro', c.dir))
+
     print(f'Completed {mode} angular processing.')
 
 

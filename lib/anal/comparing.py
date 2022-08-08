@@ -39,7 +39,7 @@ class ExpFitter:
             self.build(use_symbols, stat_coefs)
 
     def retrieve(self):
-        dic = self.sample.load_ExpFitter()
+        dic = self.sample.loadDic('ExpFitter')
         if dic is not None:
             print('Loaded existing configuration')
             self.sample_data = {k: np.array(v) for k, v in dic['sample_data'].items()}
@@ -84,8 +84,7 @@ class ExpFitter:
         # temp={'sample_data': sample_data_lists, 'df': self.df.to_dict(),
         temp = {'sample_data': sample_data_lists, 'stat_coefs': self.stat_coefs,
                 'stats': self.df_st.values.tolist()}
-
-        self.sample.save_ExpFitter(temp, )
+        self.sample.storeDic(temp, 'ExpFitter')
 
     def multicol_df(self, key='s'):
         shorts = [
@@ -133,12 +132,18 @@ class ExpFitter:
 
         if 'dispersion curve' in self.valid_fields:
             t0, t1 = int(0 * d.fr), int(40 * d.fr)
-            d_d['dispersion'] = d.load_aux('dispersion', 'dispersion')['median'][t0:t1]
-            d_d['scaled_dispersion'] = d.load_aux('dispersion', nam.scal('dispersion'))['median'][t0:t1]
+            dsp='dispersion'
+
+            for k in [dsp, nam.scal(dsp)]:
+                df=d.read(key=f'{dsp}.{k}', file='aux')
+                if df is not None :
+                    d_d[k]=df['median'][t0:t1]
+
+
 
         if 'stride cycle curve' in self.valid_fields:
             for p in df['pars'].loc['stride cycle curve']:
-                chunk_d = d.load_aux('stride', p).values
+                chunk_d = d.read(key=f'stride.{p}', file='aux').values
                 if any([x in p for x in ['bend', 'orientation']]):
                     chunk_d = np.abs(chunk_d)
                 d_d[f'str_{p}'] = np.nanquantile(chunk_d, q=0.5, axis=0)

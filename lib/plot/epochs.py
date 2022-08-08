@@ -78,10 +78,10 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
         try:
             v = d.pooled_epochs
         except:
-            v = d.load_pooled_epochs()
+            v = d.loadDic('pooled_epochs')
 
         if v is None :
-            v = comp_pooled_epochs(d)
+            v = comp_pooled_epochs(s=d.step_data, e=d.endpoint_data,c = d.config )
 
         kws = {
             'marker': 'o',

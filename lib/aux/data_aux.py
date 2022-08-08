@@ -11,6 +11,7 @@ def maxNdigits(array, Min=None):
         N = max([N, Min])
     return N
 
+
 def boolean_indexing(v, fillval=np.nan):
     lens = np.array([len(item) for item in v])
     mask = lens[:, None] > np.arange(lens.max())
@@ -21,12 +22,12 @@ def boolean_indexing(v, fillval=np.nan):
 
 def concat_datasets(ddic, key='end', unit='sec'):
     dfs = []
-    for l,d in ddic.items():
+    for l, d in ddic.items():
         if key == 'end':
             try:
                 df = d.endpoint_data
             except:
-                df = d.read(key='end', file='endpoint_h5')
+                df = d.read(key='end')
         elif key == 'step':
             try:
                 df = d.step_data
@@ -38,7 +39,7 @@ def concat_datasets(ddic, key='end', unit='sec'):
     df0 = pd.concat(dfs)
     if key == 'step':
         df0.reset_index(level='Step', drop=False, inplace=True)
-        dts = np.unique([d.config['dt'] for l,d in ddic.items()])
+        dts = np.unique([d.config['dt'] for l, d in ddic.items()])
         if len(dts) == 1:
             dt = dts[0]
             dic = {'sec': 1, 'min': 60, 'hour': 60 * 60, 'day': 24 * 60 * 60}
@@ -52,14 +53,17 @@ def moving_average(a, n=3):
     return np.convolve(a, np.ones((n,)) / n, mode='same')
     # return ret[n - 1:] / n
 
+
 def arrange_index_labels(index):
     from lib.aux import dictsNlists as dNl
     Nks = index.value_counts(sort=False)
-    def merge(k,Nk) :
-        Nk1=int((Nk-1)/2)
-        Nk2=Nk-1-Nk1
-        return ['']*Nk1 + [k.upper()] + ['']*Nk2
-    new=dNl.flatten_list([merge(k,Nk) for i, (k, Nk) in enumerate(Nks.items())])
+
+    def merge(k, Nk):
+        Nk1 = int((Nk - 1) / 2)
+        Nk2 = Nk - 1 - Nk1
+        return [''] * Nk1 + [k.upper()] + [''] * Nk2
+
+    new = dNl.flatten_list([merge(k, Nk) for i, (k, Nk) in enumerate(Nks.items())])
     return new
 
 
@@ -72,27 +76,28 @@ def mdict2df(mdict, columns=['symbol', 'value', 'description']):
     df.set_index(columns[0], inplace=True)
     return df
 
+
 def init2mdict(d0):
     from lib.aux import dictsNlists as dNl
     from lib.registry.par_dict import preparePar
     from lib.registry.par import v_descriptor
     # d = {}
 
-    def check(D0) :
-        D={}
+    def check(D0):
+        D = {}
         for kk, vv in D0.items():
-            if not isinstance(vv, dict) :
+            if not isinstance(vv, dict):
                 pass
-            elif 'dtype' in vv.keys() and vv['dtype']==dict:
+            elif 'dtype' in vv.keys() and vv['dtype'] == dict:
                 mdict = check(vv)
-                vv0={kkk:vvv for kkk,vvv in vv.items() if kkk not in mdict.keys()}
-                if 'v0' not in vv0.keys() :
-                    vv0['v0']=gConf(mdict)
-                prepar = preparePar(p=kk, mdict=mdict,**vv0)
+                vv0 = {kkk: vvv for kkk, vvv in vv.items() if kkk not in mdict.keys()}
+                if 'v0' not in vv0.keys():
+                    vv0['v0'] = gConf(mdict)
+                prepar = preparePar(p=kk, mdict=mdict, **vv0)
                 p = v_descriptor(**prepar)
                 D[kk] = p
 
-            elif any([a in vv.keys() for a in ['symbol', 'h', 'label', 'disp']]) :
+            elif any([a in vv.keys() for a in ['symbol', 'h', 'label', 'disp']]):
                 prepar = preparePar(p=kk, **vv)
                 p = v_descriptor(**prepar)
                 D[kk] = p
@@ -131,7 +136,7 @@ def init2mdict(d0):
                 D[kk] = check(vv)
         return D
 
-    d=check(d0)
+    d = check(d0)
     return dNl.NestDict(d)
 
 
@@ -142,7 +147,7 @@ def gConf(mdict, **kwargs):
 
     elif isinstance(mdict, param.Parameterized):
         return mdict.v
-    elif isinstance(mdict,dict):
+    elif isinstance(mdict, dict):
         from lib.aux import dictsNlists as dNl
         conf = dNl.NestDict()
         for d, p in mdict.items():
@@ -160,7 +165,7 @@ def gConf(mdict, **kwargs):
 def update_mdict(mdict, mmdic):
     if mmdic is None or mdict is None:
         return None
-    elif not isinstance(mmdic,dict) or not isinstance(mdict,dict):
+    elif not isinstance(mmdic, dict) or not isinstance(mdict, dict):
         return mdict
     else:
         for d, p in mdict.items():
@@ -171,7 +176,7 @@ def update_mdict(mdict, mmdic):
                         new_v = tuple(new_v)
                 p.v = new_v
             else:
-                mdict[d]=update_mdict(mdict=p, mmdic=new_v)
+                mdict[d] = update_mdict(mdict=p, mmdic=new_v)
         return mdict
 
 
@@ -180,17 +185,17 @@ def update_existing_mdict(mdict, mmdic):
         return mdict
     else:
         for d, v in mmdic.items():
-            p=mdict[d]
+            p = mdict[d]
 
             # new_v = mmdic[d] if d in mmdic.keys() else None
-            if isinstance(p, param.Parameterized) :
+            if isinstance(p, param.Parameterized):
                 if type(v) == list:
                     if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
                         v = tuple(v)
 
                 p.v = v
-            elif isinstance(p,dict) and isinstance(v,dict):
-                mdict[d]=update_existing_mdict(mdict=p, mmdic=v)
+            elif isinstance(p, dict) and isinstance(v, dict):
+                mdict[d] = update_existing_mdict(mdict=p, mmdic=v)
         return mdict
 
 
@@ -204,3 +209,5 @@ def get_ks(d0, k0=None, ks=[]):
         else:
             ks = get_ks(p, k0=k, ks=ks)
     return ks
+
+

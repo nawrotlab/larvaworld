@@ -23,7 +23,8 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     for i, (d, dlab) in enumerate(zip(P.datasets, P.labels)):
         c=d.config
 
-        dic0 = d.load_chunk_dicts()
+        dic0 = d.loadDic('chunk_dicts')
+        # dic0 = d.load_chunk_dicts()
         for j, (id, dic) in enumerate(dic0.items()):
             for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
                 idx = 2 * i + k
@@ -180,7 +181,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
                 c = d_col
             try:
                 if table is not None:
-                    dc = d.load_table(table)[p]
+                    dc=d.read(key=p, file='tables_h5')
                 else:
                     dc = d.get_par(p, key='step')
                 if absolute:
@@ -341,7 +342,7 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
     # dic,p=P.kpdict[k]
     P.conf_ax(0, xlab=f'time, ${t_unit}$', ylab=ylab, xlim=(x[0], x[-1]), ylim=[0, None], xMaxN=5, leg_loc='upper left')
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-        df = d.read(key='pathlength', file='aux_h5')[p.d]
+        df = d.read(key='pathlength', file='aux')[p.d]
         plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)

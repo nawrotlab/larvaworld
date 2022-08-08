@@ -8,6 +8,7 @@ from scipy.stats import ks_2samp
 from shapely.geometry import Point
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
+from lib.aux.annotation import annotate
 from lib.registry.pars import preg
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
@@ -267,15 +268,12 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
 
     comp_dispersion(ss, ee, cc, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
     comp_straightness_index(ss, ee, cc, dt, tor_durs=tor_durs)
-    from lib.process import aux,patch
-    chunk_dicts = aux.comp_chunk_dicts(ss, ee, cc, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    aux.turn_mode_annotation(ee, chunk_dicts)
-    patch.comp_patch(ss, ee, cc)
-    cycle_curves = aux.compute_interference(ss, ee, cc, chunk_dicts=chunk_dicts)
-    from lib.anal.fitting import fit_bouts
-    pooled_epochs = fit_bouts(c=cc, chunk_dicts=chunk_dicts, s=ss, e=ee, id=cc.id)
+    d = dNl.NestDict({'step_data': ss, 'endpoint_data': ee, 'config': cc, 'color': cc.color})
+    annotation(d)
 
-    return pooled_epochs
+
+
+    return d.pooled_epochs
 
 
 def arrange_evaluation(d, evaluation_metrics):
@@ -286,7 +284,7 @@ def arrange_evaluation(d, evaluation_metrics):
         ps = preg.getPar(shs)
         for sh, p in zip(shs, ps):
             try:
-                data = d.read(key='end', file='endpoint_h5')[p]
+                data = d.read(key='end')[p]
                 if data is not None:
                     Edata[p] = data
                     Eshorts.append(sh)
@@ -326,7 +324,7 @@ def prepare_sim_dataset(e, c, id, color):
         'Npoints': 3,
         'color': color,
         'point': '',
-        'parent_plot_dir': c.parent_plot_dir,
+        # 'parent_plot_dir': c.parent_plot_dir,
 
     })
 
@@ -448,14 +446,36 @@ def sim_model_single(m, Nticks=1000, dt=0.1, df_columns=None):
     AA[:, :4] = np.rad2deg(AA[:, :4])
     return AA
 
+def sim_model_data(Nticks, Nids, ms, group_id, dt=0.1):
+    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
+
+    ids = [f'{group_id}{j}' for j in range(Nids)]
+    my_index = pd.MultiIndex.from_product([np.arange(Nticks), ids], names=['Step', 'AgentID'])
+    AA = np.ones([Nticks, Nids, len(df_columns)]) * np.nan
+
+    for j, id in enumerate(ids):
+        m = ms[j]
+        # mConf = mConfs[j]
+
+        AA[:, j, :] = sim_model_single(m, Nticks, dt=dt, df_columns=df_columns)
+
+    AA = AA.reshape(Nticks * Nids, len(df_columns))
+    s = pd.DataFrame(AA, index=my_index, columns=df_columns)
+    s = s.astype(float)
+
+    e = pd.DataFrame(index=ids)
+    e['cum_dur'] = Nticks * dt
+    e['num_ticks'] = Nticks
+    e['length'] = [m.body.initial_length for m in ms]
+
+    return s,e
+
 
 def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_durs=[], dsp_starts=[0], dsp_stops=[40],
-              env_params={}, dir=None,
+              env_params={}, dir=None,age=0.0, epochs={},
               bout_annotation=True, enrichment=True, refDataset=None, sample_ks=None, store=False,
               use_LarvaConfDict=False, **kwargs):
-    from lib.process.angular import angular_processing
-    from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index, comp_spatial, \
-        store_spatial
+    from lib.process.spatial import scale_to_length
     if dataset_id is None:
         dataset_id = mID
     if refDataset is not None:
@@ -469,68 +489,45 @@ def sim_model(mID, dur=3, dt=1 / 16, Nids=1, color='blue', dataset_id=None, tor_
     if use_LarvaConfDict:
         pass
 
-    ids = [f'Agent{j}' for j in range(Nids)]
+    Nticks=int(dur * 60 / dt)
 
-    larva_groups = {dataset_id: preg.get_null('LarvaGroup', sample=refID, model=preg.expandConf(id=mID, conftype='Model'),
-                                              default_color=color,
-                                              distribution=preg.get_null('larva_distro', N=Nids))}
+    lg_kws = {
+        'kwdic': {'distribution': {'N': Nids},
+                  'life_history': {'age': age,
+                                   'epochs': epochs
+                                   }},
+        'default_color': color, 'model': preg.expandConf(id=mID, conftype='Model'), 'sample': refID}
 
-    c = dNl.NestDict(
-        {'dir': dir, 'id': dataset_id, 'larva_groups': larva_groups, 'group_id': 'offline', 'dt': dt, 'fr': 1 / dt,
-         'agent_ids': ids, 'duration': dur * 60,
-         'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': Nids, 'Nticks': int(dur * 60 / dt), 'mID': mID, 'color': color,
-         'env_params': env_params})
 
-    my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), ids], names=['Step', 'AgentID'])
-    e = pd.DataFrame(index=ids)
-    e['cum_dur'] = c.duration
-    e['num_ticks'] = c.Nticks
-    e['length'] = [m.body.initial_length for m in ms]
-    # e['length'] = [np.nan for id in ids]
+    c_kws = {
+        # 'load_data': False,
+        'dir': dir,
+        'id': dataset_id,
+        # 'metric_definition': g.enrichment.metric_definition,
+        'larva_groups': preg.grouptype_dict.dict.LarvaGroup.entry(id=dataset_id, **lg_kws),
+        'env_params': env_params,
+        'Npoints': 3,
+        'Ncontour': 0,
+        'fr': 1 / dt,
+        'mID': mID,
+    }
 
-    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
-    AA = np.ones([c.Nticks, Nids, len(df_columns)]) * np.nan
+    from lib.stor.larva_dataset import LarvaDataset
+    d = LarvaDataset(**c_kws, load_data=False)
+    s,e=sim_model_data(Nticks, Nids, ms, dataset_id, dt=dt)
+    scale_to_length(s, e, c=d.config, pars=None, keys=['v'])
+    d.set_data(step=s, end=e)
+    c = d.config
 
-    for j, id in enumerate(ids):
-        m = ms[j]
-        # mConf = mConfs[j]
 
-        AA[:, j, :] = sim_model_single(m, c.Nticks, dt, df_columns=df_columns)
 
-    AA = AA.reshape(c.Nticks * Nids, len(df_columns))
-    s = pd.DataFrame(AA, index=my_index, columns=df_columns)
-    s = s.astype(float)
 
     if c.dir is not None:
-        from lib.stor.larva_dataset import LarvaDataset
-        d = LarvaDataset(**c, load_data=False)
         store = True
-        d.set_data(step=s, end=e)
-        c = d.config
-    else:
-        d = dNl.NestDict(
-            {'id': c.id, 'group_id': c.group_id, 'step_data': s, 'endpoint_data': e, 'config': c, 'color': c.color})
-    scale_to_length(s, e, c, pars=None, keys=['v'])
     if enrichment:
-        from lib.aux.stdout import suppress_stdout
-        with suppress_stdout(False):
-            comp_spatial(s, e, c, mode='minimal')
-            store_spatial(s, e, c, store=store)
-            angular_processing(s, e, c, store=store)
-            comp_dispersion(s, e, c, dsp_starts=dsp_starts, dsp_stops=dsp_stops, store=store)
-            comp_straightness_index(s, e=e, c=c, tor_durs=tor_durs, store=store)
+        d=d._enrich(proc_keys=['spatial', 'angular', 'dispesion', 'tortuosity'], bout_annotation=bout_annotation,store=store,
+                  dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
 
-        if bout_annotation:
-            from lib.process import aux,patch
-            from lib.anal.fitting import fit_bouts
-            d.chunk_dicts = aux.comp_chunk_dicts(s, e, c, store=store)
-            if store :
-                d.store_chunk_dicts(d.chunk_dicts)
-            aux.turn_mode_annotation(e, d.chunk_dicts)
-            patch.comp_patch(s, e, c)
-
-            d.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, store=store)
-            d.pooled_epochs = fit_bouts(c=c, chunk_dicts=d.chunk_dicts, s=s, e=e, id=c.id, store=store)
 
     return d
 

@@ -34,8 +34,10 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
     elif save_mode == 'minimal':
         cols1 = nam.xy(d.point)
     elif save_mode == 'semifull':
-        cols1 = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + [
-            'collision_flag']
+        N,Nc=d.Npoints, d.Ncontour
+        cols1 = nam.midline_xy(N, flat=True) + nam.contour_xy(Nc, flat=True)+ ['collision_flag']
+        # cols1 = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + ['collision_flag']
+
     elif save_mode == 'points':
         cols1 = nam.xy(d.points, flat=True) + ['collision_flag']
 
@@ -99,8 +101,8 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         # y_pars = [y for x, y in d.points_xy]
         # xc_pars = [x for x, y in d.contour_xy]
         # yc_pars = [y for x, y in d.contour_xy]
-        x_pars = [x for x, y in d.points_xy]
-        y_pars = [y for x, y in d.points_xy]
+        x_pars = [x for x, y in d.midline_xy]
+        y_pars = [y for x, y in d.midline_xy]
         columns = x_pars + y_pars
         xy_pars = nam.xy(d.points, flat=True)
 

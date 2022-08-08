@@ -388,6 +388,11 @@ class Plot(BasePlot):
         return dict(zip(self.labels,self.datasets))
 
     @property
+    def data_palette(self):
+        # N_list = [d.config.N for d in self.datasets]
+        return zip(self.labels, self.datasets, self.colors)
+
+    @property
     def Nticks(self):
         Nticks_list = [d.config.Nticks for d in self.datasets]
         return np.max(dNl.unique_list(Nticks_list))

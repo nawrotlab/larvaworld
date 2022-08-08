@@ -64,8 +64,7 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
         figs['olfactor_decay_table_inds'] = preg.graph_dict['timeplot'](['D_olf'], save_as='olfactor_decay_inds.pdf',
                                                      individuals=True, **c)
         figs['reward_table'] = preg.graph_dict['timeplot'](['cum_reward'], save_as='reward.pdf', **c)
-    elif exp_type == 'realistic_imitation':
-        d.save_agents(pars=flatten_list(d.points_xy) + flatten_list(d.contour_xy))
+
     if exp_type == 'dish':
         # targeted_analysis(ds)
         figs = {f'stride_track_idx_0_in_{s0}-{s1}': plot_marked_strides(agent_idx=0,
@@ -297,7 +296,7 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
     figs = {}
     warnings.filterwarnings('ignore')
     if save_to is None:
-        save_to = datasets[0].dir_dict.comp_plot
+        save_to = datasets[0].plot_dir
     if labels is None:
         labels = [d.id for d in datasets]
     cc = {'datasets': datasets,
@@ -349,7 +348,7 @@ def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **
 def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, **kwargs):
     # with fun.suppress_stdout():
     if save_to is None:
-        save_to = datasets[0].dir_dict.comp_plot
+        save_to = datasets[0].plot_dir
     if labels is None:
         labels = [d.id for d in datasets]
     anal_kws = {'datasets': datasets,

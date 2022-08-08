@@ -45,7 +45,7 @@ class ReplayRun:
             bg = None
 
         if save_to is None:
-            save_to = self.dataset.vis_dir
+            save_to = self.dataset.datapath('visuals')
 
         base_kws = {
             'step_data': s,

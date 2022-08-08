@@ -1,7 +1,11 @@
+import os
+import shutil
+import time
+
 import numpy as np
-
-
-
+import lib.aux.dictsNlists as dNl
+from lib.aux.stor_aux import read
+from lib.decorators.timer3 import timer, load_timer
 
 
 class ParRegistry:
@@ -19,7 +23,7 @@ class ParRegistry:
 
     @property
     def conftype_dict(self):
-        from lib.registry.order import CT
+        from lib.registry.reg import CT
         return CT
 
     @property
@@ -33,13 +37,18 @@ class ParRegistry:
         return PathD
 
     @property
+    def datapath(self):
+        from lib.aux.stor_aux import datapath
+        return datapath
+
+    @property
     def larva_conf_dict(self):
-        from lib.registry.order import MD
+        from lib.registry.reg import MD
         return MD
 
     @property
     def init_dict(self):
-        from lib.registry.order import PI
+        from lib.registry.reg import PI
         return PI
 
     @property
@@ -140,15 +149,87 @@ class ParRegistry:
     def expandConf(self, conftype, id=None):
         return self.conftype_dict.dict[conftype].expandConf(id=id)
 
-    def loadRef(self, id, verbose=1):
-        self.paths['Ref']
+    def loadRef(self, id, load=False, **kwargs):
+        config = self.retrieveRef(id)
+        if config is not None :
+            from lib.stor.larva_dataset import LarvaDataset
+            d = LarvaDataset(config['dir'], load_data=False)
+            if not load:
+                self.vprint(f'Loaded stored reference configuration : {id}')
+                return d
+            else:
+                d.load(**kwargs)
+                self.vprint(f'Loaded stored reference dataset : {id}')
+                return d
+
+        else:
+            # self.vprint(f'Ref Configuration {id} does not exist. Returning None')
+            return None
+
+    def loadRefD(self, id, **kwargs):
+        return self.loadRef(id, load=True, **kwargs)
 
 
-        from lib.stor.larva_dataset import LarvaDataset
-        d = LarvaDataset(loadConf(id, 'Ref')['dir'], load_data=False)
-        if verbose >= 1:
-            print(f'Loaded stored reference dataset : {id}')
-        return d
+    def loadRefDs(self, ids, **kwargs):
+        ds = [self.loadRefD(id, **kwargs) for id in ids]
+        return ds
+
+    def deleteRef(self,id):
+        path = self.paths['Ref']
+        dic = dNl.load_dict(path, use_pickle=False)
+        if id in dic.keys():
+            shutil.rmtree(dic[id].dir,ignore_errors=True)
+            dic.pop(id,None)
+            self.vprint(f'Deleted Ref Configuration {id}')
+            dNl.save_dict(dic, path, use_pickle=False)
+
+
+    def saveRef(self, id, conf):
+        path=self.paths['Ref']
+        dic = dNl.load_dict(path, use_pickle=False)
+        dic[id] = conf
+        dNl.save_dict(dic, path, use_pickle=False)
+
+    def storedRefIDs(self):
+        dic = dNl.load_dict(self.paths['Ref'], use_pickle=False)
+        return list(dic.keys())
+
+
+    def retrieveRef(self,id):
+        dic = dNl.load_dict(self.paths['Ref'], use_pickle=False)
+        if id in dic.keys():
+            return dic[id]
+        else:
+            self.vprint(f'Ref Configuration {id} does not exist. Returning None')
+            return None
+
+    #@ load_timer
+    def readRef(self, id, key='end',**kwargs):
+        config = self.retrieveRef(id)
+        if config is not None:
+            D=config.dir_dict
+            return read(D[key], key=key,**kwargs)
+        else:
+            return None
+
+    def testRef(self, id):
+        config = self.retrieveRef(id)
+        if config is not None:
+            D = config.dir_dict
+            dic={}
+            for k, d in D.items():
+                if d.endswith('.h5') and os.path.exists(d):
+                    try :
+                        t0=time.time()
+                        read(d, key=k)
+                        dic[k]=np.round(time.time()-t0,2)
+                    except :
+                        dic[k]='FAIL'
+            # if k not in D1.keys() :
+            print(f'------- Loading times for {id}---------------------')
+            print(dic)
+            print()
+
 
 
     # def loadRef(self, id=None):
@@ -173,6 +254,10 @@ preg = ParRegistry()
 #                                                           bouts=['stride', 'pause', 'turn'])
 
 if __name__ == '__main__':
+    #print(preg.datapath)
+    #print(preg.datapath('step', 'kkk'))
+
+    raise
     group_id = 'AttP240-Fed'
     datagroup_id = 'Jovanic lab'
     idx = 1

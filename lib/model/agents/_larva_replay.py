@@ -35,6 +35,9 @@ class LarvaReplay(Larva, BodyReplay):
         for i, p in enumerate(self.behavior_pars):
             if p in vp_beh:
                 self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
+
+
+
         self.ang_ar = np.deg2rad(data[m.ang_pars].values) if m.Nangles > 0 else np.ones([N, m.Nangles]) * np.nan
         self.or_ar = np.deg2rad(data[m.or_pars].values) if m.Nors > 0 else np.ones([N, m.Nors]) * np.nan
         self.bend_ar = np.deg2rad(data['bend'].values) if 'bend' in data.columns else np.ones(N) * np.nan

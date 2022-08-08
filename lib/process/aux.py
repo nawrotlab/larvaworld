@@ -3,10 +3,11 @@ import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks
 
+from lib.anal.fitting import fit_epochs
+from lib.aux.stor_aux import store_distros
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, naming as nam, sim_aux
 
-from lib.process.store import store_aux_dataset
 
 
 def process_epochs(a, epochs, dt, return_idx=True):
@@ -267,13 +268,6 @@ def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
     return chunk_dicts
 
 
-def comp_pooled_epochs(d, chunk_dicts=None, **kwargs):
-    s, e, c = d.step_data, d.endpoint_data, d.config
-    from lib.anal.fitting import fit_bouts
-    if chunk_dicts is None:
-        chunk_dicts = comp_chunk_dicts(s, e, c, **kwargs)
-    pooled_epochs = fit_bouts(c=c, chunk_dicts=chunk_dicts, s=s, e=e, id=c.id)
-    return pooled_epochs
 
 def stride_interp(a, strides, Nbins=64):
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -318,7 +312,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     return dNl.NestDict(dic)
 
 
-def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
+def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     import lib.aux.naming as nam
     x = np.linspace(0, 2 * np.pi, Nbins)
 
@@ -383,9 +377,6 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None, store=False):
         pass
 
     c.pooled_cycle_curves = pooled_curves
-    if store:
-        dNl.save_dict(cycle_curves, c.dir_dict.cycle_curves, use_pickle=True)
-        print('Individual mean cycle curves saved')
     return cycle_curves
 
 
@@ -437,7 +428,7 @@ def turn_annotation(s, e, c, store=False):
     e[eTur_ps] = eTur_vs
     if store:
         turn_ps = preg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
-        store_aux_dataset(s, pars=turn_ps, type='distro', file=c.aux_dir)
+        store_distros(s, pars=turn_ps, parent_dir=c.dir)
     return turn_dict
 
 
@@ -553,7 +544,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         e[str_sd_std] = e[str_d_std] / e[l]
     if store:
         run_ps = preg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_d', 'str_sd'])
-        store_aux_dataset(s, pars=run_ps, type='distro', file=c.aux_dir)
+        store_distros(s, pars=run_ps, parent_dir=c.dir)
     return crawl_dict
 
 
@@ -567,7 +558,7 @@ def track_par_in_chunk(d, chunk, par):
     s, c = d.step_data, d.config
     A = np.zeros([c.Nticks, c.N, len(bpars)]) * np.nan
 
-    dic0 = d.load_chunk_dicts()
+    dic0 =d.loadDic('chunk_dicts')
     for i, id in enumerate(c.agent_ids):
         epochs = dic0[id][chunk]
         ss = s[par].xs(id, level='AgentID')

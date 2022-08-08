@@ -250,16 +250,9 @@ def update_existingnestdict(dic0, dic):
     return NestDict(unflatten(dic0_f))
 
 
-def chunk_dicts_to_aux_dict(chunk_dicts, c=None, ids=None):
-    if ids is None:
-        if c is not None:
-            ids = c.agent_ids
-        else:
-            ids = list(chunk_dicts.keys())
-
+def group_epoch_dicts(individual_epochs):
     keys = ['turn_dur', 'turn_amp', 'turn_vel_max', 'run_dur', 'run_dst', 'pause_dur', 'run_count']
-    aux_dic = {k: np.array(flatten_list([chunk_dicts[id][k] for id in ids])) for k in keys}
-    return aux_dic
+    return {k: np.array(flatten_list([dic[k] for id,dic in individual_epochs.items()])) for k in keys}
 
 def same_dicts(d0, ds):
     for k,v in d0.items():

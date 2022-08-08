@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 import lib.aux.naming as nam
-from lib.process.store import store_aux_dataset
+from lib.aux.stor_aux import store_distros
 
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
@@ -26,7 +26,7 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
         s.loc[s[c1] == True, b1_par] = b1
         s[db_par] = np.nan
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
-        store_aux_dataset(s, pars=[b0_par, b1_par, db_par], type='distro', file=c.aux_dir)
+        store_distros(s, pars=[b0_par, b1_par, db_par], parent_dir=c.dir)
         print(f'Bearing to source {n} during {chunk} computed')
 
 

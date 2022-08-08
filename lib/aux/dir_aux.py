@@ -77,7 +77,7 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
                 dirs.append(dr)
     return ids, dirs
 
-def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=False, **kwargs):
+def split_dataset(step,end, food, larva_groups,dir, id, show_output=False, **kwargs):
     agent_ids = end.index.values
     ds = []
     for gID, gConf in larva_groups.items():
@@ -85,7 +85,7 @@ def split_dataset(step,end, food, larva_groups,dir, id,plot_dir,  show_output=Fa
         valid_ids = [id for id in agent_ids if str.startswith(id, f'{gID}_')]
         d = LarvaDataset(new_dir, id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
         d.set_data(step=step.loc[(slice(None), valid_ids), :], end=end.loc[valid_ids], food=food)
-        d.config.parent_plot_dir = plot_dir
+        # d.config.parent_plot_dir = plot_dir
         # if is_last:
         #     d.save()
         ds.append(d)
@@ -113,11 +113,7 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
     c0.N = len(ids)
 
     def get_data(d,ids) :
-        if len(ids)==1:
-            id=ids[0]
-            s0, e0 = d.load_agent(id)
-            if s0 is not None and e0 is not None :
-                return s0,e0
+
 
         if not hasattr(d, 'step_data'):
             d.load(h5_ks=['contour', 'midline'])

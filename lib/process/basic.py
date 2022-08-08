@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema
 
+
 from lib.registry.base import BaseConfDict
 from lib.registry.pars import preg
 
@@ -167,7 +168,7 @@ def comp_dataPI(s,e,c):
     except:
         pass
 
-def proc_func_dict():
+def processing_funcs():
     from lib.process.angular import angular_processing
     from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_straightness_index, comp_wind
     func_dict = dNl.NestDict({
@@ -183,7 +184,7 @@ def proc_func_dict():
     })
     return func_dict
 
-def preproc_func_dict():
+def preproccesing_funcs():
     from lib.process.spatial import align_trajectories
     func_dict = dNl.NestDict({
         'rescale_by': rescale,
@@ -195,6 +196,26 @@ def preproc_func_dict():
 
     })
     return func_dict
+
+def annotation_funcs():
+    from lib.process.spatial import align_trajectories
+    from lib.anal.fitting import fit_epochs, get_bout_distros
+    from lib.process.aux import comp_chunk_dicts
+
+    klist=[
+    ['chunk_dicts', comp_chunk_dicts, ['s', 'e', 'c']],
+    ['grouped_epochs', dNl.group_epoch_dicts, ['chunk_dicts']],
+    ['fitted_epochs', fit_epochs, ['grouped_epochs']],
+    ['bout_distros', get_bout_distros, ['fitted_epochs']]
+        ]
+
+    func_dict = dNl.NestDict({k[0] : {'func' : k[1], 'required_ks' :k[2]} for k in klist})
+
+
+
+    return func_dict
+
+
 #
 # class ProcFuncDict:
 #     def __init__(self, load=False):
@@ -211,6 +232,7 @@ def preproc_func_dict():
 class ProcFuncDict(BaseConfDict):
 
     def build(self):
-        d=dNl.NestDict({'preproc' : preproc_func_dict(), 'proc' : proc_func_dict()})
+        d=dNl.NestDict({'preproc' : preproccesing_funcs(), 'proc' : processing_funcs(),
+                        'annotation' : annotation_funcs()})
         return d
 

@@ -41,9 +41,7 @@ class FuncParHelper:
             args = signature(f)
             args = list(args.parameters.keys())
             if arg in args:
-                if k!='store_aux_dataset' :
-                    # funcnames.append(k)
-                    arg_dict[k]= {'args' : args, 'module':module}
+                arg_dict[k]= {'args' : args, 'module':module}
         return arg_dict
 
     def inspect_funcs(self, arg='s'):
@@ -58,7 +56,7 @@ class FuncParHelper:
     def manual_fill(self,df):
         df.loc['comp_ang_from_xy'] = ['x', 'y'], ['ang_from_xy'], ['fov', 'foa']
         df.loc['angular_processing'] = [], ['comp_orientations', 'comp_bend', 'comp_ang_from_xy', 'comp_angular',
-                                            'comp_extrema', 'compute_LR_bias', 'store_aux_dataset'], []
+                                            'comp_extrema', 'compute_LR_bias'], []
         df.loc['comp_angular'] = ['fo', 'ro', 'b'], ['unwrap_orientations'], ['fov', 'foa', 'rov', 'roa', 'bv', 'ba']
         df.loc['unwrap_orientations'] = ['fo', 'ro'], [], ['fou', 'rou']
         df.loc['comp_orientation_1point'] = ['x', 'y'], [], ['fov']

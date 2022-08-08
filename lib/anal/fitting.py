@@ -95,69 +95,54 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
         return xmids[ii], overlaps[jj]
 
 
-def fit_bouts(c, aux_dic=None,chunk_dicts=None,  s=None, e=None, dataset=None,id=None, store=False):
-    from lib.model.modules.intermitter import get_EEB_poly1d
-    if id is None:
-        id = c.id
-
-    if aux_dic is None :
-        if chunk_dicts is not None :
-            from lib.aux.dictsNlists import chunk_dicts_to_aux_dict
-            aux_dic=chunk_dicts_to_aux_dict(chunk_dicts,c)
-        else :
-            for k in ['run_count', 'run_dur', 'pause_dur']:
-                if dataset is not None:
-                    aux_dic[k]=dataset.get_par(k).values
-                elif s is not None:
-                    aux_dic[k] = s[k].dropna().values
-                else :
-                    aux_dic[k] = None
 
 
-    dic, best = {}, {}
-    for k, v in aux_dic.items():
-        # print(k, v.shape)
-        # print(k,v.shape)
-        if k=='stridechain_length':
-            k='run_count'
+
+
+
+
+
+def fit_bouts(c, aux_dic):
+
+
+
+
+
+
+    fitted_epochs,c.bout_distros = fit_epochs(aux_dic)
+
+
+
+    return fitted_epochs
+
+
+
+def fit_epochs(grouped_epochs):
+    fitted = {}
+    for k, v in grouped_epochs.items():
+        if k == 'stridechain_length':
+            k = 'run_count'
         discr = True if k == 'run_count' else False
-        if v is not None and v.shape[0]>0 :
-            try :
-                dic[k] = fit_bout_distros(np.abs(v), dataset_id=id, bout=k, combine=False, discrete=discr)
-                best[k] = dic[k]['best'][k]['best']
-            except :
-                dic[k] = None
-                best[k] = None
+        if v is not None and v.shape[0] > 0:
+            try:
+                fitted[k] = fit_bout_distros(np.abs(v), bout=k, combine=False, discrete=discr)
+            except:
+                fitted[k] = None
         else:
-            dic[k] = None
-            best[k] = None
+            fitted[k] = None
+    return dNl.NestDict(fitted)
 
-    c.bout_distros = dNl.NestDict(best)
 
-    dic = dNl.NestDict(dic)
-    if store:
-        path=c.dir_dict.pooled_epochs
-        os.makedirs(path, exist_ok=True)
-        dNl.save_dict(dic, f'{path}/{id}.txt', use_pickle=True)
-        print('Pooled group bouts saved')
-    # return dic
+def get_bout_distros(fitted_epochs) :
+    d={}
+    for k, dic in fitted_epochs.items():
+        if isinstance(dic,dict) and 'best' in dic.keys():
+            d[k]=dic['best']
+        else :
+            d[k]=None
+    return dNl.NestDict(d)
 
-    try:
-        c['intermitter'] = {
-            nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
-            nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
-            'dt': c.dt,
-            'crawl_bouts': True,
-            'feed_bouts': True,
-            'stridechain_dist': c.bout_distros.run_count,
-            'pause_dist': c.bout_distros.pause_dur,
-            'run_dist': c.bout_distros.run_dur,
-            'feeder_reoccurence_rate': None,
-        }
-        c['EEB_poly1d'] = get_EEB_poly1d(**c['intermitter']).c.tolist()
-    except :
-        pass
-    return dic
+
 
 
 def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=False,
@@ -267,8 +252,14 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
               f'KS_uni',
               'xmin', 'xmax']
     res_dict2 = dict(zip(names2, res))
-    best = {bout: {'best': get_best_distro(p, res_dict, idx_Kmax=idx_Kmax),
-                   'fits': res_dict2}}
+
+    dic = dNl.NestDict({
+        'values': values, 'pdfs': pdfs, 'cdfs': cdfs, 'Ks': Ks, 'idx_Kmax': idx_Kmax, 'res': res, 'res_dict': res_dict,
+        'best': get_best_distro(p, res_dict, idx_Kmax=idx_Kmax), 'fits': dict(zip(names2, res))
+    })
+
+
+
 
     if print_fits:
         print()
@@ -292,13 +283,10 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
 
         print()
         print(f'---{dataset_id}-{bout}-distro')
-        print(best)
+        print(dic.best)
         print()
 
-    dic = {
-        'values': values, 'pdfs': pdfs, 'cdfs': cdfs, 'Ks': Ks, 'idx_Kmax': idx_Kmax, 'res': res, 'res_dict': res_dict,
-        'best': best
-    }
+
     return dic
 
 
@@ -434,7 +422,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
         refDataset=d
     c=refDataset.config
     chunk_dicts = refDataset.load_chunk_dicts()
-    aux_dic = dNl.chunk_dicts_to_aux_dict(chunk_dicts, c)
+    aux_dic = dNl.group_epoch_dicts(chunk_dicts)
     Npau = aux_dic['pause_dur'].shape[0]
     Nrun = aux_dic['run_dur'].shape[0]
 

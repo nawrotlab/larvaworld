@@ -65,7 +65,7 @@ class EvalRun:
         self.figs = dNl.NestDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
         self.refDataset = preg.loadRef(refID)
-        self.refDataset.pooled_epochs = self.refDataset.load_pooled_epochs()
+        self.refDataset.pooled_epochs = self.refDataset.loadDic('pooled_epochs')
         self.N = N
         self.show = show
         self.target, self.target_val = self.define_target(self.refDataset, N)

@@ -332,7 +332,7 @@ def sample_group(sample=None, N=1, sample_ps=[], e=None):
     if e is None:
         from lib.stor.larva_dataset import LarvaDataset
         d = LarvaDataset(sample['dir'], load_data=False)
-        e = d.read(key='end', file='endpoint_h5')
+        e = d.read(key='end')
     ps = [p for p in sample_ps if p in e.columns]
     means = [e[p].mean() for p in ps]
     if len(ps) >= 2:

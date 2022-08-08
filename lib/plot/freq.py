@@ -59,7 +59,7 @@ def plot_fft_multi(axx=None, ax=None, fig=None, **kwargs):
         try:
             s = d.step_data
         except:
-            s = d.read(key='step', file='data_h5')
+            s = d.read(key='step')
         c = d.config
         _ = plot_fft(s, c, axx=axx, ax=P.axs[0], fig=P.fig, palette={'v': d.color, 'fov': d.color}, return_fig=True)
     return P.get()

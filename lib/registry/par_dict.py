@@ -708,11 +708,11 @@ class BaseParDict:
             if hasattr(d, 'endpoint_data'):
                 return d.endpoint_data[p.d]
             else:
-                return d.read(key='end', file='endpoint_h5')[p.d]
+                return d.read(key='end')[p.d]
         else:
             for key in res.keys():
                 if key not in ['step', 'end'] and res[key]:
-                    return d.read(key=f'{key}.{p.d}', file='aux_h5')
+                    return d.read(key=f'{key}.{p.d}', file='aux')
 
         if compute:
             self.compute(k, d)

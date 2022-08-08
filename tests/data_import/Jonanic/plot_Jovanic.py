@@ -33,10 +33,6 @@ for i, k in enumerate(['AttP240', 'SS888Imp', 'SS888']):
     refID = f'{parent_dir}.{k}'
     d = preg.loadRef(refID)
     d.load(step=step,end=end, contour=False, midline=False)
-    # store = pd.HDFStore(d.dir_dict.data_h5)
-    # s=store['step']['x']
-    # store.close()
-    # raise
     s,e,c=d.step_data, d.endpoint_data, d.config
     # fft_freqs(s, e, c)
     #e,c=d.endpoint_data, d.config
@@ -47,14 +43,12 @@ for i, k in enumerate(['AttP240', 'SS888Imp', 'SS888']):
     # # j=0
     # # lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
     # # raise
-    # # store = pd.HDFStore(c.aux_dir)
     # # ddd=pd.read_hdf(d.dir_dict['aux_h5'],'trajectories')
     # # dddd=pd.read_hdf(d.dir_dict['aux_h5'],p.d)
     # # # df = d.read(key='pathlength', file='aux_h5')
     # # print(store.keys())
     # # store.close()
     # # raise
-    # # vs=pd.read_hdf(d.dir_dict['data_h5'], 'step')[par]
     # # print(vs)
     # #print(d.id, c.color)
     # #print(e[preg.getPar( 'tor20_std')])

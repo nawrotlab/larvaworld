@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from lib.process.store import store_aux_dataset, store_traj
+from lib.aux.stor_aux import read, storeH5, store_distros, storeDic, get_distros
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux, dir_aux
 
@@ -215,12 +215,11 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
         shorts += ['v_in_mm', 'a_in_mm']
 
     if store:
-        store_aux_dataset(s, pars=preg.getPar(shorts), type='distro', file=c.aux_dir)
+        store_distros(s, pars=preg.getPar(shorts), parent_dir=c.dir)
+        ps=[p for p in [dst,cdst, sdst, csdst] if p in s.columns]
+        storeH5(s[ps], key='pathlength', filepath_key='aux', parent_dir=c.dir)
 
-        store_aux_dataset(s, pars=[dst,cdst, sdst, csdst], type='pathlength', file=c.aux_dir)
-
-        # store_aux_dataset(s, pars=['x', 'y'], type='trajectories', file=c.aux_dir)
-        store_traj(df=s[['x', 'y']], c=c)
+        storeH5(df=s[['x', 'y']], key='default', filepath_key='traj', parent_dir=c.dir)
 
 
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
@@ -283,13 +282,14 @@ def dsp_solo(s, e, c,s0, s1, p) :
     scale_to_length(s, e, c, pars=[p,fp,mp,mup])
 
 
+
 def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
     # dt = c.dt
     if dsp_starts is None or dsp_stops is None:
         return
     # dsp_starts = [int(t) for t in dsp_starts]
     # dsp_stops = [int(t) for t in dsp_stops]
-    xy0 = pd.read_hdf(c.dir_dict.traj, key='default')
+    xy0 = read(key='default', path=preg.datapath('traj', c.dir))
     # xy = s[['x', 'y']]
     ps = []
     dsps = {}
@@ -323,16 +323,8 @@ def comp_dispersion(s, e, c, recompute=False, dsp_starts=[0], dsp_stops=[40], st
 
     # scale_to_length(s, e, c, pars=ps + pps)
     if store:
-        dNl.save_dict(dsps, c.dir_dict.dsp, use_pickle=True)
-        # store_dsps(dsps, file=c.dir_dict.dsp)
-        # for p,df in dsps.items():
-        #
-        # for p in ps:
-        #     d = get_dsp(s, p)
-        #     store[f'{type}.{p}'] = d
+        storeDic(dsps, path=preg.datapath('dsp', c.dir))
 
-
-        store_aux_dataset(s, pars=ps + nam.scal(ps), type='dispersion', file=c.aux_dir)
 
 
 
@@ -442,7 +434,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        ss = pd.read_hdf(c.dir_dict['data_h5'], 'step')[['x', 'y']]
+        ss = read(key='step', path=preg.datapath('step',c.dir))[['x', 'y']]
         s = ss
     else:
         ss = s[['x', 'y']]
@@ -467,7 +459,8 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
 
     if store:
-        store_aux_dataset(s, pars=pars, type='distro', file=c.aux_dir)
+        dic = get_distros(s, pars=pars)
+        storeH5(dic, key=None, path=preg.datapath('distro', c.dir))
 
 
 def comp_source_metrics(s, e, c, **kwargs):
@@ -601,8 +594,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
             ss[y] = ss[y].values-ys
 
         if store:
-            store_traj(df= ss, mode=mode, c=c)
-            # storage = pd.HDFStore(c.aux_dir)
+            storeH5(df= ss, key=mode, path=preg.datapath('traj', c.dir))
             # storage[f'traj_aligned2{mode}'] = ss
             # storage.close()
             print(f'traj_aligned2{mode} stored')
