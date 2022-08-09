@@ -581,7 +581,8 @@ class BaseParDict:
         self.add_velNacc(k0='d', k_v='v', k_a='a', p_v=d_v, d_v=d_v, p_a=d_a, d_a=d_a,
                          sym_v='v', sym_a=dot('v'), disp_v='crawling speed', disp_a='crawling acceleration',
                          func_v=self.func_dict.vel(d_d, d_v))
-        self.add_scaled(k0='d')
+        for k0 in ['x', 'y', 'd']:
+            self.add_scaled(k0=k0)
         self.add_velNacc(k0='sd', k_v='sv', k_a='sa', p_v=d_sv, d_v=d_sv, p_a=d_sa, d_a=d_sa, sym_v=mathring('v'),
                          sym_a=dot(mathring('v')), disp_v='scaled crawling speed',
                          disp_a='scaled crawling acceleration',
@@ -589,6 +590,8 @@ class BaseParDict:
         for k0 in ['l', 'd', 'sd', 'v', 'sv', 'a', 'sa', 'x', 'y']:
             self.add_freq(k0=k0)
             self.add_operators(k0=k0)
+        for k0 in [nam.cum('d')]:
+            self.add_scaled(k0=k0)
 
         for i in dsp_ranges:
             self.add_dsp(range=i, u=u)

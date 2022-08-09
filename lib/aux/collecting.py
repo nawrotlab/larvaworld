@@ -41,15 +41,18 @@ class TargetedDataCollector(DataCollector):
         D=preg.dict
         ks = [k for k in pars if k in D.keys()]
         dic = {}
+        self.invalid_keys=dNl.NestDict({'not_in_registry' : [k for k in pars if k not in D.keys()], 'not_in_agent':{}})
         for k in ks:
             d, p = D[k].d, D[k].codename
             try:
                 temp = [cNs.rgetattr(l, p) for l in self.schedule.agents]
                 dic.update({d: p})
             except:
+                self.invalid_keys.not_in_agent[d]=p
                 pass
         # print(dic)
         # raise
+        # print(self.invalid_keys)
         return dic
 
     def _record_agents(self, model, schedule):

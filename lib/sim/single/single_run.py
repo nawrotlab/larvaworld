@@ -7,6 +7,7 @@ import numpy as np
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
+from lib.registry.output import set_output
 from lib.registry.pars import preg
 
 
@@ -34,7 +35,7 @@ class SingleRun:
         self.start = time.time()
         self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
 
-        output = set_output(collections=collections, Nsegs=list(larva_groups.values())[0]['model']['body']['Nsegs'])
+        output = set_output(collections=collections, Npoints=np.min([lg.model.body.Nsegs+1 for id, lg in larva_groups.items()]))
         # print(output)
         # raise
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
@@ -123,8 +124,11 @@ class SingleRun:
             d.save()
             for type, vs in d.larva_dicts.items():
                 storeSoloDics(vs, path=datapath(type, d.dir))
-            storeH5(df=d.larva_tables, key=None, path=datapath('table', d.dir))
-            storeDic(self.param_dict,path=datapath('sim_conf', d.dir))
+            storeH5(df=d.larva_tables, key=None, path=datapath('tables', d.dir))
+            try :
+                storeDic(self.param_dict,path=datapath('sim_conf', d.dir), use_pickle=True)
+            except :
+                pass
 
     def analyze(self, save_to=None, **kwargs):
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
@@ -198,29 +202,6 @@ class SingleRun:
             return figs, results
 
 
-def set_output(collections, Nsegs=2, Ncontour=0):
-    if collections is None:
-        collections = ['pose']
-    cd = preg.output_dict
-    step = []
-    end = []
-    tables = {}
-    for c in collections:
-        if c == 'midline':
-            from lib.aux.collecting import midline_xy_pars
-            step += list(midline_xy_pars(N=Nsegs).keys())
-        elif c == 'contour':
-            step += dNl.flatten_list(nam.xy(nam.contour(Ncontour)))
-        else:
-            step += cd[c]['step']
-            end += cd[c]['endpoint']
-            if 'tables' in list(cd[c].keys()):
-                tables.update(cd[c]['tables'])
-    output = {'step': dNl.unique_list(step),
-              'end': dNl.unique_list(end),
-              'tables': tables,
-              }
-    return output
 
 
 def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):

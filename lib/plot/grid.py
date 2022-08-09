@@ -184,7 +184,7 @@ def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
 
 
 def DoublePatch_summary(datasets, title, mdiff_df, **kwargs):
-    Nmods = len(mdiff_df.columns)
+    Nmods = 2
     h_mpl = len(mdiff_df.index)
     hh_mpl = h_mpl + 4
     w, h = 32, 50 + hh_mpl
@@ -193,29 +193,37 @@ def DoublePatch_summary(datasets, title, mdiff_df, **kwargs):
     P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4 + int(Nmods / 2),
            h0=0)
 
-    Nexps = len(datasets)
-    h1exp = int((h - hh_mpl) / Nexps)
-    for i, (exp, dds) in enumerate(datasets.items()):
-        h0 = i * h1exp + (i + 1) * 1 + hh_mpl
-        dds = dNl.flatten_list(dds)
-        Ndds = len(dds)
-        kws1 = {
-            'datasets': dds,
-            'save_to': None,
-            'subfolder': None,
-            'show': False,
-            # 'title': False,
+    Nsubs = len(datasets)
+    Ndds=Nmods*Nsubs
+    h1exp = int(h - hh_mpl)
+    h0=1 + hh_mpl
+    ds=[]
+    ls=[]
 
-        }
-        axs1 = P.add(w=w, x0=True, N=(3, 2), share_h=True, share_w=True, h=h1exp - 18, h0=h0, dh=3, dw=4)
-        P.plot(func='double patch', kws={**kws1, 'title': False}, axs=axs1)
-        P.fig.align_ylabels(axs1)
-        axs2 = P.add(w=w, x0=True, N=(Nmods, int(Ndds / Nmods)), share_h=True, share_w=True, h=16, h0=h0 + h1exp - 16,
-                     dh=2, dw=1, cols_first=True)
-        P.plot(func='trajectories', kws={**kws1, 'single_color': True}, axs=axs2)
-        for ii, ax in enumerate(axs2):
-            ax.yaxis.set_visible(True)
-            ax.xaxis.set_visible(True)
+    for i, (subID, RnS) in enumerate(datasets.items()):
+        if len(RnS)==1 :
+            RnS=dNl.flatten_list(RnS)
+        ls+=[f'{subID}_{d.id}' for d in RnS]
+        ds+=RnS
+    kws1 = {
+        'datasets': ds,
+        'labels':ls,
+        'save_to': None,
+        'subfolder': None,
+        'show': False,
+        # 'title': False,
+
+    }
+    axs1 = P.add(w=w, x0=True, N=(3, 2), share_h=True, share_w=True, h=h1exp - 18, h0=h0, dh=3, dw=4)
+    P.plot(func='double patch', kws={**kws1, 'title': False}, axs=axs1)
+    P.fig.align_ylabels(axs1)
+    axs2 = P.add(w=w, x0=True, N=(Nmods,Nsubs), share_h=True, share_w=True, h=16, h0=h-16,
+                 dh=2, dw=1, cols_first=True)
+    P.plot(func='trajectories', kws={**kws1, 'single_color': True}, axs=axs2)
+    P.fig.align_ylabels(axs2)
+    for ii, ax in enumerate(axs2):
+        ax.yaxis.set_visible(True)
+        ax.xaxis.set_visible(True)
 
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.2)
     P.annotate()

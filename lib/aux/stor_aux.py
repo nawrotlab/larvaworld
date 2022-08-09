@@ -130,8 +130,11 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
 
 def read(path=None, key=None, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    if path is None or not os.path.exists(path):
-        print(f'Filepath {path} does not exist.')
+    if path is None :
+        # print(f'Filepath not provided for key {key} H5.Returning None')
+        return None
+    elif not os.path.isfile(path):
+        # print(f'File H5 does not exist at {path}.Returning None')
         return None
     if key is not None:
         return pd.read_hdf(path, key=key, mode='r')
@@ -175,8 +178,11 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
 
 def loadDic(path=None, key=None, use_pickle=True, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    if path is None or not os.path.isfile(path):
-        print('File does not exist.Returning None')
+    if path is None :
+        # print(f'Filepath not provided for key {key} Dict.Returning None')
+        return None
+    elif not os.path.isfile(path):
+        # print(f'File of type Dict does not exist at {path}.Returning None')
         return None
     else:
         return dNl.load_dict(path, use_pickle=use_pickle)
@@ -192,8 +198,12 @@ def storeDic(d, path=None, key=None, use_pickle=True, **kwargs):
 
 def loadSoloDics(agent_ids, path=None, key=None, **kwargs):
     path = get_path(path=path, key=key, **kwargs)
-    if not os.path.exists(path):
-        raise ValueError('Filepath does not exist.')
+    if path is None :
+        # print(f'Filepath not provided for key {key} SoloDicts.Returning None')
+        return None
+    elif not os.path.isfile(path):
+        # print(f'File of type SoloDicts does not exist at {path}.Returning None')
+        return None
     else:
         files = [f'{id}.txt' for id in agent_ids]
         try:

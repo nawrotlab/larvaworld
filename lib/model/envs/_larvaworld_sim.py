@@ -25,6 +25,7 @@ class LarvaWorldSim(LarvaWorld):
 
         self._place_food(self.env_pars.food_params)
         self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
+        self.create_collectors(output)
         if self.env_pars.odorscape is not None:
             self.Nodors, self.odor_layers = self._create_odor_layers(self.env_pars.odorscape,
                                                                      sources=self.get_food() + self.get_flies())
@@ -34,7 +35,7 @@ class LarvaWorldSim(LarvaWorld):
 
         self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
-        self.create_collectors(output)
+
         if not self.larva_collisions:
             self.eliminate_overlap()
 
@@ -164,18 +165,19 @@ class LarvaWorldSim(LarvaWorld):
 
     def create_collectors(self, output):
         from lib.aux.collecting import TargetedDataCollector
+
+
         # kws0 = {'par_dict': preg.dict}
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']
 
         f = []  # ['initial_amount', 'final_amount']
-        self.step_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=s) if len(
+        self.step_collector = TargetedDataCollector(self.active_larva_schedule, pars=s) if len(
             s) > 0 else None
-        self.end_collector = TargetedDataCollector(schedule=self.active_larva_schedule, pars=e) if len(
+        self.end_collector = TargetedDataCollector(self.active_larva_schedule, pars=e) if len(
             e) > 0 else None
-        self.food_collector = TargetedDataCollector(schedule=self.all_food_schedule,
-                                                    pars=f) if len(
+        self.food_collector = TargetedDataCollector(self.all_food_schedule,pars=f) if len(
             f) > 0 else None
         self.table_collector = DataCollector(tables=t) if len(t) > 0 else None
 

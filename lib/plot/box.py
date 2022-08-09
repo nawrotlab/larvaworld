@@ -227,36 +227,41 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
+def boxplot_double_patch(ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr'], xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
+    mIDs = ['rover', 'sitter']
+    Cmods=dict(zip(mIDs, ['dark', 'light']))
+    subIDs = dNl.unique_list([l.split('_')[0] for l in P.labels])
+    Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
+    #gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
 
-    gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
-    mIDs = dNl.unique_list([l.split('_')[-1] for l in gIDs])
-    subIDs = dNl.unique_list([l.split('_')[0] for l in gIDs])
+
+    ks = ['v_mu', 'tur_tr', 'pau_tr', 'on_food_tr', 'f_am', 'fov_mu']
+
+    DataDic=dNl.NestDict({
+        subID : {
+            mID : {
+                'data' : dict(P.data_dict)[f'{subID}_{mID}'],
+                   'colors' : [f'xkcd:{Cmods[mID]} {Csubs[subID]}', f'xkcd:{Cmods[mID]} cyan']} for mID in mIDs
+        } for subID in subIDs
+    })
 
     # print(gIDs,mIDs,subIDs)
     # raise
 
-    Nmods = len(mIDs)
-    Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
-    if Nmods == 2:
-        temp = ['dark', 'light']
-    elif Nmods == 3:
-        temp = ['dark', 'light', '']
-    Cmods = dict(zip(mIDs, temp))
-    ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
-
+    # Nmods = len(mIDs)
+    # ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
     def get_df(par, scale):
-        dic = {id: [d.endpoint_data[par].values * scale for d in P.datasets if d.config['group_id'] == id] for id in
-               gIDs}
 
         pair_dfs = []
-        for subID in subIDs:
-            subModIDs = [f'{subID}_{mID}' for mID in mIDs]
-            pair_vs = dNl.flatten_list([dic[id] for id in subModIDs])
+        for subID, RvSdic in DataDic.items():
+            pair_vs = []
+            for id, dic in RvSdic.items() :
+                vs=dic.data.endpoint_data[par].values * scale
+                pair_vs.append(vs)
             pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
-            cdf = pd.concat(pair_dfs)  # CONCATENATE
+        cdf = pd.concat(pair_dfs)  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
         # print(mdf)
         return mdf
@@ -289,7 +294,10 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, tit
             g1.get_legend().remove()
             # print(data)
             # print(data.shape)
-            annotate_plot(show_ns=show_ns, **kws)
+            try:
+                annotate_plot(show_ns=show_ns, **kws)
+            except:
+                pass
             g1.set(xlabel=None)
             if stripplot:
                 g2 = sns.stripplot(x="Substrate", y="value", hue=hue, data=data, color='black', ax=ax)
@@ -298,12 +306,25 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, tit
 
             cols = []
             if not agar:
-                for subID, mID in itertools.product(subIDs, mIDs):
-                    cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
+                for subID, RvSdic in DataDic.items():
+                    for id, dic in RvSdic.items():
+                        cols.append(dic.colors[0])
+
+
+                # for subID, mID in itertools.product(subIDs, mIDs):
+                #     cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
             else:
-                for subID, mID in itertools.product(subIDs, mIDs):
-                    cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
-                    cols.append(f'xkcd:{Cmods[mID]} cyan')
+                for mID in mIDs:
+                    for subID, RvSdic in DataDic.items():
+                        cols += RvSdic[mID].colors
+                #for subID, RvSdic in DataDic.items():
+
+
+                # for subID, mID in itertools.product(subIDs, mIDs):
+                # for subID in subIDs :
+                #     for mID in mIDs :
+                #         cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
+                #         cols.append(f'xkcd:{Cmods[mID]} cyan')
                 ax.set_xticklabels(subIDs * 2)
                 ax.axvline(2.5, color='black', alpha=1.0, linestyle='dashed', linewidth=6)
                 for x_text, text in zip([0.25, 0.75], RStexts):
@@ -318,7 +339,7 @@ def boxplot_double_patch(xlabel='substrate', show_ns=False, stripplot=False, tit
         par = p.d
         ylab = p.label
         scale = 1
-        if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H']:
+        if k in ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'tur_tr']:
             if k == 'v_mu':
                 ylab = "crawling speed (mm/s)"
                 scale = 1000

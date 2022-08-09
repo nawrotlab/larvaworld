@@ -141,6 +141,7 @@ def init2mdict(d0):
 
 
 def gConf(mdict, **kwargs):
+    from lib.aux import dictsNlists as dNl
     if mdict is None:
         return None
 
@@ -148,8 +149,8 @@ def gConf(mdict, **kwargs):
     elif isinstance(mdict, param.Parameterized):
         return mdict.v
     elif isinstance(mdict, dict):
-        from lib.aux import dictsNlists as dNl
-        conf = dNl.NestDict()
+
+        conf = {}
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
                 conf[d] = p.v
@@ -157,9 +158,9 @@ def gConf(mdict, **kwargs):
                 conf[d] = gConf(mdict=p)
             conf = dNl.update_existingdict(conf, kwargs)
         # conf.update(kwargs)
-        return conf
+        return dNl.NestDict(conf)
     else:
-        return mdict
+        return dNl.NestDict(mdict)
 
 
 def update_mdict(mdict, mmdic):

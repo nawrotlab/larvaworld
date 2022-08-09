@@ -127,7 +127,6 @@ class ConfType(BaseType):
         preg.vprint(f'{self.k} Configuration saved under the id : {id}')
 
     def saveDict(self, d):
-        print(self.k, self.use_pickle)
         dNl.save_dict(d, self.path, self.use_pickle)
 
     def reset_func(self):

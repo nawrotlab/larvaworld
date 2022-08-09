@@ -90,6 +90,8 @@ def angle_dif(angle_1, angle_2, in_deg=True):
         return (a + np.pi) % (np.pi * 2) - np.pi
 
 
+
+
 def rotate_around_point(point, radians, origin=[0, 0]):
     """Rotate a point around a given point.
 
@@ -118,10 +120,6 @@ def rotate_around_center(point, radians):
     return np.array([qx, qy])
 
 
-def rotate_around_center_multi_old(points : np.array, radians):
-    cos_rad = cos(radians)
-    sin_rad = sin(radians)
-    return np.array([(cos_rad * x + sin_rad * y, -sin_rad * x + cos_rad * y) for x, y in points])
 
 def rotate_around_center_multi(points : np.array, radians):
     cos_rad = cos(radians)
@@ -167,4 +165,6 @@ def line_through_point(pos, angle, length, pos_as_start=False) :
     end = Point(start.x + length * cos(angle),
                 start.y + length * sin(angle))
     return LineString([start, end])
+
+
 

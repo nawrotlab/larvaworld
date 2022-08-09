@@ -3,11 +3,12 @@ import shutil
 
 import pandas as pd
 
-
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-I=preg.init_dict
+
+I = preg.init_dict
+
 
 class Essay:
     def __init__(self, type, N=5, enrichment=I.base_enrich(), collections=['pose'], video=False, show=False,
@@ -18,8 +19,8 @@ class Essay:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
         self.N = N
         self.G = preg.graph_dict
-        self.GT=preg.grouptype_dict
-        self.CT=preg.conftype_dict
+        self.GT = preg.grouptype_dict
+        self.CT = preg.conftype_dict
         self.M = preg.larva_conf_dict
         self.show = show
         self.type = type
@@ -44,7 +45,6 @@ class Essay:
     def run(self):
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
-
             print(f'Running {len(cs)} versions of experiment {exp}')
             self.datasets[exp] = [SingleRun(**c, vis_kwargs=self.vis_kwargs).run() for c in cs]
 
@@ -101,8 +101,8 @@ class RvsS_Essay(Essay):
                              food_params=preg.get_null('food_params', food_grid=grid),
                              )
 
-    def GTRvsS(self,**kwargs):
-        return self.GT.dict.LarvaGroup.RvsS_groups(expand=True, N=self.N,**kwargs)
+    def GTRvsS(self, **kwargs):
+        return self.GT.dict.LarvaGroup.RvsS_groups(expand=True, N=self.N, **kwargs)
 
     def pathlength_exp(self):
         dur = self.dur_pathlength
@@ -139,7 +139,7 @@ class RvsS_Essay(Essay):
         for h in self.hs:
             kws = {
                 'env': self.RvsS_env(on_food=True),
-                'lgs': self.GTRvsS( h_starved=h),
+                'lgs': self.GTRvsS(h_starved=h),
                 'id': f'{exp}_{h}h_{self.dur}min',
                 'dur': self.dur,
                 'exp': exp
@@ -153,7 +153,7 @@ class RvsS_Essay(Essay):
         for q in self.qs:
             kws = {
                 'env': self.RvsS_env(on_food=True),
-                'lgs': self.GTRvsS( q=q),
+                'lgs': self.GTRvsS(q=q),
                 'id': f'{exp}_{q}_{self.dur}min',
                 'dur': self.dur,
                 'exp': exp
@@ -167,7 +167,7 @@ class RvsS_Essay(Essay):
         dur = self.dur_refeeding
         kws = {
             'env': self.RvsS_env(on_food=True),
-            'lgs': self.GTRvsS( h_starved=h),
+            'lgs': self.GTRvsS(h_starved=h),
             'id': f'{exp}_{h}h_{dur}min',
             'dur': dur,
             'exp': exp
@@ -247,7 +247,7 @@ class RvsS_Essay(Essay):
 
         entry = self.G.entry('RvsS summary',
                              args={'entrylist': self.entrylist, 'title': f'ROVERS VS SITTERS ESSAY (N={self.N})',
-                                   'mdiff_df' : self.mdiff_df})
+                                   'mdiff_df': self.mdiff_df})
         self.figs.update(self.G.eval0(entry, **kwargs))
         self.figs.update(self.G.eval(self.entrylist, **kwargs))
 
@@ -326,11 +326,11 @@ class RvsS_Essay(Essay):
 
 
 class DoublePatch_Essay(Essay):
-    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], dur=5.0, arena_dims=(0.24, 0.24), patch_x=0.06,
+    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'],N=10, dur=5.0, arena_dims=(0.24, 0.24), patch_x=0.06,
                  patch_radius=0.025, **kwargs):
-        super().__init__(type='DoublePatch', enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                                      bouts=['stride', 'pause', 'turn'],
-                                                                      fits=False, interference=False, on_food=True),
+        super().__init__(N=N,type='DoublePatch', enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
+                                                                   bouts=['stride', 'pause', 'turn'],
+                                                                   fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
         self.arena_dims = arena_dims
         self.patch_x = patch_x
@@ -340,94 +340,89 @@ class DoublePatch_Essay(Essay):
         self.exp_dict = self.time_ratio_exp()
         mIDs = ['rover', 'sitter']
         self.mdiff_df, row_colors = self.M.diff_df(mIDs=mIDs,
-                                       ms=[self.M.loadConf(f'navigator_{mID}') for mID in mIDs])
+                                                   ms=[self.M.loadConf(f'navigator_{mID}') for mID in mIDs])
 
 
+    def get_larvagroups(self,age=120.0):
 
-
-    # def get_larvagroups_old(self, type='standard'):
-    #     age = 72.0
-    #     kws = {
-    #         'distribution': preg.get_null('larva_distro', N=self.N, scale=(0.005, 0.005)),
-    #         'life_history': preg.get_null('life_history', age=age,
-    #                                       epochs={0: preg.get_null('epoch', start=0.0, stop=age,
-    #                                                                substrate=preg.get_null('substrate'))}),
-    #         'odor': preg.get_null('odor'),
-    #         'sample': 'None.150controls'
-    #     }
-    #     lgs = {}
-    #     mID0s = ['rover', 'sitter']
-    #     mcols = ['blue', 'red']
-    #     for mID0, mcol in zip(mID0s, mcols):
-    #         mID = f'navigator_{mID0}'
-    #         lgs[f'{type}_{mID0}'] = preg.get_null('LarvaGroup', default_color=mcol,
-    #                                               model=self.M.loadConf(mID), **kws)
-    #     return lgs
-
-    def get_larvagroups(self, type='standard'):
-        age = 72.0
 
         kws0 = {
             'kwdic': {
                 'distribution': {'N': self.N, 'scale': (0.005, 0.005)},
                 'life_history': {'age': age, 'epochs': self.GT.dict.epoch.entry(0, start=0.0, stop=age)},
-            'odor':{}
+                'odor': {}
             },
             'sample': 'None.150controls',
         }
 
-        mcols = ['blue', 'red']
-        mID0s = ['rover', 'sitter']
-        lgs = {}
-        for mID0, mcol in zip(mID0s, mcols):
-            kws = {
-                'default_color': mcol,
-                'model': self.CT.dict.Model.loadConf(f'navigator_{mID0}'),
-                **kws0
-            }
-            # print(kws['model'])
-            # raise
-            lgs.update(self.GT.dict.LarvaGroup.entry(id=f'{type}_{mID0}', **kws))
+        return dNl.NestDict({
+            mID0: self.GT.dict.LarvaGroup.gConf(default_color=mcol,
+                                                            model=self.CT.dict.Model.loadConf(f'navigator_{mID0}'),
+                                                            **kws0)
+
+            for mID0, mcol in zip(['rover', 'sitter'], ['blue', 'red'])
+        })
+
+    def get_sources(self, type='standard', q=1.0, Cpeak=2.0, Cscale=0.0002):
+
+        kws0 = {'radius': self.patch_radius, 'default_color': 'green', 'amount': 0.1,
+                'type': type, 'quality': q, 'group': 'Patch',
+                'odor': {'odor_id': 'Odor', 'odor_intensity': Cpeak, 'odor_spread': Cscale}
+
+                }
+
+        return dNl.NestDict({
+            'Left_patch': self.CT.dict.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
+            'Right_patch': self.CT.dict.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
+
+        })
 
 
-        return lgs
 
-    def get_sources(self, type='standard'):
-        o = preg.get_null('odor', odor_id='Odor', odor_intensity=2.0, odor_spread=0.0002)
-        sus = {
-            'Left_patch': preg.get_null('source', pos=(-self.patch_x, 0.0), default_color='green', group='Source',
-                                        radius=self.patch_radius,
-                                        amount=0.1, odor=o, type=type),
-            'Right_patch': preg.get_null('source', pos=(self.patch_x, 0.0), default_color='green', group='Source',
-                                         radius=self.patch_radius,
-                                         amount=0.1, odor=o, type=type)
+    def patch_env(self, type='standard', q=1.0, o='G'):
+        if o == 'G':
+            odorscape = {'odorscape': 'Gaussian'}
+            Cpeak, Cscale = 2.0, 0.0002
+        else:
+            raise
+
+        kws = {'kwdic': {
+            'arena': {'arena_dims': self.arena_dims, 'arena_shape': 'rectangular'},
+            'food_params': {'source_units': self.get_sources(type=type, q=q, Cpeak=Cpeak, Cscale=Cscale),
+                            'source_groups': {}, 'food_grid': None},
+        }, 'odorscape': odorscape, 'border_list': {}, 'windscape': None, 'thermoscape': None,
+
         }
-        return sus
 
-    def patch_env(self, type='standard'):
-        sus = self.get_sources(type=type)
+        return self.CT.dict.Env.gConf(**kws)
 
-        conf = preg.get_null('env_conf',
-                             arena=preg.get_null('arena', arena_shape='rectangular', arena_dims=self.arena_dims),
-                             food_params={'source_groups': {},
-                                          'food_grid': None,
-                                          'source_units': sus},
-                             odorscape={'odorscape': 'Gaussian'})
+    def time_ratio_exp(self):
 
-        return conf
 
-    def time_ratio_exp(self, exp='double_patch'):
-        confs = []
+        # exp = 'double_patch'
+        confs = {}
         for n in self.substrates:
-            kws = {
-                'env': self.patch_env(type=n),
-                'lgs': self.get_larvagroups(type=n),
-                'id': f'{exp}_{n}_{self.dur}min',
-                'dur': self.dur,
-                'exp': exp
+            kws = {'kwdic': {
+                'sim_params': {'duration': self.dur, 'path': self.path, 'sim_ID': f'{self.type}_{n}_{self.dur}min',
+                               'store_data': True},
+                # 'enrichment': {'processing': {n: True for n in ['angular', 'spatial', 'source', 'dispersion']},
+                #                'annotation': {n: True for n in ['stride', 'on_food']}, 'to_drop': None},
+                # 'food_params' : {'source_units':patches, 'source_groups':{}, 'food_grid': None},
+            },
+                'env_params': self.patch_env(type=n),
+                'larva_groups': self.get_larvagroups(),
+                'experiment': 'double_patch',
+                'trials': {},
+                'collections': self.collections,
+                'enrichment': self.enrichment
+                # 'collections': ['pose', 'olfactor', 'feeder', 'gut', 'toucher']
+
             }
-            confs.append(self.conf(**kws))
-        return {exp: confs}
+
+            confs[n]=[dNl.NestDict(self.CT.dict.Exp.gConf(**kws))]
+        return dNl.NestDict(confs)
+
+
 
     def global_anal(self):
         kwargs = {
@@ -454,31 +449,30 @@ class DoublePatch_Essay(Essay):
 
 
 class Chemotaxis_Essay(Essay):
-    def __init__(self, dur=5.0, gain=300.0,mode=1, **kwargs):
+    def __init__(self, dur=5.0, gain=300.0, mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
                          enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                  bouts=[], fits=False, interference=False, on_food=False),
+                                               bouts=[], fits=False, interference=False, on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']
         self.dur = dur
         self.gain = gain
         # self.mID0 = mID0
-        if mode==1 :
+        if mode == 1:
             self.models = self.get_models1(gain)
-        elif mode==2 :
+        elif mode == 2:
             self.models = self.get_models2(gain)
-        elif mode==3 :
+        elif mode == 3:
             self.models = self.get_models3(gain)
-        elif mode==4 :
+        elif mode == 4:
             self.models = self.get_models4(gain)
-        self.mdiff_df, row_colors = self.M.diff_df(mIDs=list(self.models.keys()), ms=[v.model for v in self.models.values()])
+        self.mdiff_df, row_colors = self.M.diff_df(mIDs=list(self.models.keys()),
+                                                   ms=[v.model for v in self.models.values()])
         self.exp_dict = self.chemo_exps(self.models)
 
-
-
     def get_models1(self, gain):
-        mID0='RE_NEU_SQ_DEF_nav'
-        o='brain.olfactor_params'
+        mID0 = 'RE_NEU_SQ_DEF_nav'
+        o = 'brain.olfactor_params'
         mW = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
                                                f'{o}.perception': 'log'})
         mWlin = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
@@ -505,28 +499,28 @@ class Chemotaxis_Essay(Essay):
         return dNl.NestDict(models)
 
     def get_models2(self, gain):
-        cols=cNs.N_colors(6)
-        i=0
-        models={}
-        for Tmod in ['NEU', 'SIN'] :
-            for Ifmod in ['PHI', 'SQ', 'DEF'] :
-                mID0=f'RE_{Tmod}_{Ifmod}_DEF_nav'
+        cols = cNs.N_colors(6)
+        i = 0
+        models = {}
+        for Tmod in ['NEU', 'SIN']:
+            for Ifmod in ['PHI', 'SQ', 'DEF']:
+                mID0 = f'RE_{Tmod}_{Ifmod}_DEF_nav'
                 models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
                     f'brain.olfactor_params.brute_force': True,
                     f'brain.olfactor_params.odor_dict.Odor.mean': gain,
                     f'brain.interference_params.attenuation': 0.1,
                     f'brain.interference_params.attenuation_max': 0.0,
                 }), 'color': cols[i]}
-                i+=1
+                i += 1
         return dNl.NestDict(models)
 
     def get_models3(self, gain):
-        cols=cNs.N_colors(6)
-        i=0
-        models={}
-        for Tmod in ['NEU', 'SIN'] :
-            for Ifmod in ['PHI', 'SQ', 'DEF'] :
-                mID0=f'RE_{Tmod}_{Ifmod}_DEF_nav'
+        cols = cNs.N_colors(6)
+        i = 0
+        models = {}
+        for Tmod in ['NEU', 'SIN']:
+            for Ifmod in ['PHI', 'SQ', 'DEF']:
+                mID0 = f'RE_{Tmod}_{Ifmod}_DEF_nav'
                 models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
                     f'brain.olfactor_params.perception': 'log',
                     f'brain.olfactor_params.decay_coef': 0.1,
@@ -534,27 +528,27 @@ class Chemotaxis_Essay(Essay):
                     f'brain.interference_params.attenuation': 0.1,
                     f'brain.interference_params.attenuation_max': 0.9,
                 }), 'color': cols[i]}
-                i+=1
+                i += 1
 
         return dNl.NestDict(models)
 
     def get_models4(self, gain):
-        cols=cNs.N_colors(4)
-        i=0
-        models={}
-        for Tmod in ['NEU', 'SIN'] :
-            for Ifmod in ['PHI', 'SQ'] :
-                mID0=f'RE_{Tmod}_{Ifmod}_DEF_var2_nav'
+        cols = cNs.N_colors(4)
+        i = 0
+        models = {}
+        for Tmod in ['NEU', 'SIN']:
+            for Ifmod in ['PHI', 'SQ']:
+                mID0 = f'RE_{Tmod}_{Ifmod}_DEF_var2_nav'
                 models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
                     f'brain.olfactor_params.perception': 'log',
                     f'brain.olfactor_params.decay_coef': 0.1,
                     f'brain.olfactor_params.odor_dict.Odor.mean': gain,
                 }), 'color': cols[i]}
-                i+=1
+                i += 1
 
         return dNl.NestDict(models)
 
-    def chemo_exps(self,models):
+    def chemo_exps(self, models):
         lg_kws = {
             'odor': preg.get_null('odor'),
             'sample': 'None.150controls'
@@ -652,8 +646,7 @@ class Chemotaxis_Essay(Essay):
         self.figs.update(self.G.eval0(entry, **kwargs))
 
 
-
-def Essay_dict() :
+def Essay_dict():
     rover_sitter_essay = {
         'experiments': {
             'pathlength': {
@@ -692,16 +685,26 @@ def Essay_dict() :
             }
         },
         'exp_fig_folder': preg.path_dict["RvsS"]}
+
+
     d = {
-    # 'roversVSsitters': rover_sitter_essay,
-    # 'RvsS_essay': {}
-}
-    return d
+        # 'roversVSsitters': rover_sitter_essay,
+        # 'RvsS_essay': {}
+    }
+    for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
+        e=E()
+        d[e.type]=e.exp_dict
+    return dNl.NestDict(d)
+
+
 if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
     # E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
-    E = DoublePatch_Essay(video=True, N=5, dur=5)
+    #E = DoublePatch_Essay(video=True, N=22, dur=1)
     # print(E.patch_env())
     # raise
-    ds = E.run()
-    figs, results = E.anal()
+    #ds = E.run()
+    #figs, results = E.anal()
+    dic=Essay_dict()
+    print(dic.keys())
+

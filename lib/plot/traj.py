@@ -6,17 +6,17 @@ from matplotlib import pyplot as plt, patches
 from lib.aux import naming as nam, dictsNlists as dNl, dir_aux
 from lib.registry.pars import preg
 
-from lib.plot.base import BasePlot, Plot, AutoPlot
+from lib.plot.base import BasePlot, Plot, AutoPlot, AutoBasePlot
 from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
 
 
-def traj_1group(xy, c, unit='mm', fig=None, axs=None, title=None, single_color=False, **kwargs):
+def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
     ids = xy.index.unique('AgentID').values
     color = c.color if single_color else None
     scale = 1000 if unit == 'mm' else 1
     from lib.aux.sim_aux import get_tank_polygon
-    P = BasePlot(name=f'trajectories', **kwargs)
-    P.build(fig=fig, axs=axs)
+    P = AutoBasePlot(name=f'trajectories', **kwargs)
+    # P.build(fig=fig, axs=axs)
     ax = P.axs[0]
     tank = get_tank_polygon(c, return_polygon=False) * scale
     for id in ids:

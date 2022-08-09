@@ -12,6 +12,7 @@ from lib.aux import dictsNlists as dNl
 
 from lib.plot.aux import dual_half_circle, plot_config, process_plot, NcolNrows
 
+
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
             'figure.titlesize': 25,
@@ -571,6 +572,6 @@ class GridPlot(BasePlot):
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:
             axs = self.add(**kwargs)
-        from lib.plot.dict import graph_dict
-        func=graph_dict.get(func)
+        from lib.registry.pars import preg
+        func=preg.graph_dict.get(func)
         _ = func(fig=self.fig, axs=axs, **kws)

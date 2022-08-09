@@ -29,7 +29,7 @@ class BaseType():
         for k,kws in dic.items():
             m0=self.mdict[k]
             kws0[k]=self.gConf(m0,**kws)
-        return kws0
+        return dNl.NestDict(kws0)
 
 
     def gConf(self,m0=None,kwdic=None,**kwargs):
@@ -42,10 +42,10 @@ class BaseType():
             kws0=self.gConf_kws(kwdic)
             kwargs.update(kws0)
         from lib.aux.data_aux import gConf
-        return gConf(m0,**kwargs)
+        return dNl.NestDict(gConf(m0,**kwargs))
 
     def entry(self, id, **kwargs):
-        return {id : self.gConf(**kwargs)}
+        return dNl.NestDict({id: self.gConf(**kwargs)})
 
 class BaseConfDict :
     def __init__(self, mode='build',verbose=1):

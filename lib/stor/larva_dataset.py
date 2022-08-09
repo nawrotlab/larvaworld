@@ -484,6 +484,7 @@ class _LarvaDataset:
         if not return_shorts:
             return sorted(pars)
         else:
+            from lib.registry.pars import preg
             shorts = preg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
@@ -491,21 +492,25 @@ class _LarvaDataset:
 LarvaDataset = type('LarvaDataset', (_LarvaDataset,), dic_manager_kwargs)
 
 if __name__ == '__main__':
-    d=LarvaDataset(dir=None, load_data=False)
-    print(d.config.N)
-
-    raise
+    # d=LarvaDataset(dir=None, load_data=False)
+    # print(d.config.N)
     #
+    # raise
+    # #
     #refID = 'None.40controls'
 
+
     from lib.registry.pars import preg
+    #
+    # md = nam.update_metric_definition()
+    # print(md)
+    # raise
 
-    md = nam.update_metric_definition()
-    print(md)
+    ds = preg.loadRefDs(['None.40controls', 'None.150controls'], step=False)
+    GD=preg.graph_dict
+    GD.eval0({'plotID':'crawl pars','title':'test','args': {'datasets':ds, 'show':True}})
+
     raise
-
-    d = preg.loadRef(refID)
-    #raise
     d.load()
     d.process(keys=['angular', 'spatial','dispersion','tortuosity'], recompute=True, store=True)
 

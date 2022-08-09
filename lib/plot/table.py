@@ -4,7 +4,7 @@ import numpy as np
 import six
 
 
-from lib.plot.base import BasePlot
+from lib.plot.base import BasePlot, AutoBasePlot
 from lib.aux import dictsNlists as dNl
 
 def modelConfTable(mID, **kwargs):
@@ -56,12 +56,12 @@ def conf_table(df, row_colors, mID, figsize=(14, 11), show=False, save_to=None, 
 
 
 
-def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, figsize=None, save_to=None,
+def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,
               name='mpl_table', header0=None,header0_color=None,
-              header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black', show=False,
-              adjust_kws=None, highlighted_celltext_dict=None,
-              bbox=[0, 0, 1, 1], header_columns=0, axs=None, fig=None, highlighted_cells=None,
-              highlight_color='yellow', return_table=False, verbose=1,
+              header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
+              adjust_kws=None, highlighted_celltext_dict=None,highlighted_cells=None,
+              bbox=[0, 0, 1, 1], header_columns=0,
+              highlight_color='yellow', return_table=False,
               **kwargs):
     def get_idx(highlighted_cells):
         d = data.values
@@ -102,15 +102,18 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None, f
         highlight_idx = get_idx(highlighted_cells)
     except:
         highlight_idx = []
-
-    P = BasePlot(name=name, save_to=save_to, show=show, verbose=verbose)
-    if figsize is None:
-        figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-    P.build(1, 1, figsize=figsize, axs=axs, fig=fig)
+    P = AutoBasePlot(name=name, build_kws={'Nrows': 1, 'Ncols': 1, 'w': 20, 'h': 6}, **kwargs)
+    #P = BasePlot(name=name, save_to=save_to, show=show, verbose=verbose)
+    #if figsize is None:
+    #    figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
+    #P.build(1, 1, axs=axs, fig=fig)
     ax = P.axs[0]
     ax.axis('off')
     mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,
-                   rowLabels=data.index.values, **kwargs)
+                   rowLabels=data.index.values, #colWidths=col_width, #row_height=row_height
+                   )
+    # FIXME deleted **kwargs
+                   # rowLabels=data.index.values, **kwargs)
     mpl.auto_set_font_size(False)
     mpl.set_fontsize(font_size)
 
