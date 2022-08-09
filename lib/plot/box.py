@@ -227,7 +227,9 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr'], xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
+def boxplot_double_patch(ks = None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
+    if ks is None:
+        ks=['v_mu', 'tur_tr', 'pau_tr', 'on_food_tr', 'f_am', 'fov_mu']
     P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
     mIDs = ['rover', 'sitter']
@@ -237,7 +239,8 @@ def boxplot_double_patch(ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 
     #gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
 
 
-    ks = ['v_mu', 'tur_tr', 'pau_tr', 'on_food_tr', 'f_am', 'fov_mu']
+    # ks =
+    # ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr']
 
     DataDic=dNl.NestDict({
         subID : {

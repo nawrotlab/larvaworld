@@ -345,13 +345,17 @@ class DoublePatch_Essay(Essay):
         if olfactor :
             if feeder :
                 suf='_forager'
+                self.mode='foragers'
             else :
                 suf='_nav'
+                self.mode = 'navigators'
         else :
             if feeder :
                 suf=''
+                self.mode = 'feeders'
             else :
                 suf='_loco'
+                self.mode = 'locomotors'
         self.mIDs=[f'{mID0}{suf}' for mID0 in self.mID0s]
 
 
@@ -451,7 +455,11 @@ class DoublePatch_Essay(Essay):
             'mdiff_df': self.mdiff_df
         }
         # entry = self.G.entry('double-patch summary', args={})
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', args={}), **kwargs))
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',title='fig1',
+                                                         args={'name':f'{self.mode}_fig1','ks':None}), **kwargs))
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',title='fig2',
+                                                         args={'name':f'{self.mode}_fig2',
+                                                               'ks':['tur_tr', 'tur_N_mu', 'pau_tr','cum_d', 'f_am', 'on_food_tr']}), **kwargs))
 
     def analyze(self, exp, ds0):
         pass

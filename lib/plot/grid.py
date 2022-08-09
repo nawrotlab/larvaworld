@@ -183,12 +183,14 @@ def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     return P.get()
 
 
-def DoublePatch_summary(datasets, title, mdiff_df, **kwargs):
+def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
     Nmods = 2
     h_mpl = len(mdiff_df.index)
     hh_mpl = h_mpl + 4
     w, h = 32, 50 + hh_mpl
-    P = GridPlot(name=f'DoublePatch_summary', width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
+    if name is None:
+        name = f'DoublePatch_summary',
+    P = GridPlot(name=name, width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
     P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4 + int(Nmods / 2),
            h0=0)
@@ -215,7 +217,7 @@ def DoublePatch_summary(datasets, title, mdiff_df, **kwargs):
 
     }
     axs1 = P.add(w=w, x0=True, N=(3, 2), share_h=True, share_w=True, h=h1exp - 18, h0=h0, dh=3, dw=4)
-    P.plot(func='double patch', kws={**kws1, 'title': False}, axs=axs1)
+    P.plot(func='double patch', kws={**kws1, 'title': False, 'ks':ks}, axs=axs1)
     P.fig.align_ylabels(axs1)
     axs2 = P.add(w=w, x0=True, N=(Nmods,Nsubs), share_h=True, share_w=True, h=16, h0=h-16,
                  dh=2, dw=1, cols_first=True)

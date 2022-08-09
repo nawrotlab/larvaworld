@@ -8,7 +8,7 @@ def RvsSx4():
     i=0
     for o in [True,False]:
         for f in [True,False]:
-            E = DoublePatch_Essay(video=False, N=5, dur=5, olfactor=o,feeder=f, essay_id=f'RvsS_{sufs[i]}')
+            E = DoublePatch_Essay(video=False, N=10, dur=5, olfactor=o,feeder=f, essay_id=f'RvsS_{sufs[i]}')
         #     # print(E.patch_env())
             ds = E.run()
             figs, results = E.anal()
