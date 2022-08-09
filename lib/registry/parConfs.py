@@ -543,6 +543,14 @@ class LarvaConfDict:
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
+        feed_pars = self.generate_configuration(self.dict.brain.m['feeder'].mode['default'].args)
+        feed_kws = {'brain.modules.feeder': True, 'brain.feeder_params': feed_pars, 'brain.intermitter_params.EEB': 0.5}
+        RvSkws={}
+        for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
+            DEB_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['DEB'].args,species=species, hunger_gain=1.0,DEB_dt=10.0)
+            gut_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['gut'].args,k_abs=k_abs)
+            RvSkws[species] = {'energetics': dNl.NestDict({'DEB' : DEB_pars, 'gut':gut_pars}),'brain.intermitter_params.EEB': EEB}
+
         # for m0 in m0s:
         for mID0, m0 in mID0dic.items():
             mID1 = f'{mID0}_nav'
@@ -553,6 +561,12 @@ class LarvaConfDict:
             entries[mID2] = self.newConf(m0=m0, kwargs=kwargs2)
             mID2br = f'{mID2}_brute'
             entries[mID2br] = self.newConf(m0=entries[mID2], kwargs={'brain.olfactor_params.brute_force': True})
+
+            mID01 = f'{mID0}_feeder'
+            entries[mID01] = self.newConf(m0=m0, kwargs=feed_kws)
+            mID11 = f'{mID0}_forager'
+            entries[mID11] = self.newConf(m0=entries[mID1], kwargs=feed_kws)
+
         entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
         entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
@@ -562,6 +576,7 @@ class LarvaConfDict:
         sm_pars = self.generate_configuration(self.dict.aux.m['sensorimotor'].mode['default'].args)
         entries['obstacle_avoider'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_nav'], kwargs={'sensorimotor': sm_pars})
 
+
         sample_ks = [
             'brain.crawler_params.stride_dst_mean',
             'brain.crawler_params.stride_dst_std',
@@ -569,8 +584,13 @@ class LarvaConfDict:
             'brain.crawler_params.max_vel_phase',
             'brain.crawler_params.initial_freq',
         ]
-        for mID0 in ['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_nav']:
+        for mID0,RvSsuf in zip(['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_feeder', 'RE_NEU_PHI_DEF_nav','RE_NEU_PHI_DEF_forager'], ['_loco', '', '_nav', '_forager']):
             entries[f'v{mID0}'] = self.newConf(m0=entries[mID0], kwargs={k: 'sample' for k in sample_ks})
+            for species,kws in RvSkws.items():
+                entries[f'{species}{RvSsuf}']=self.newConf(m0=entries[mID0], kwargs=kws)
+
+
+
 
         return entries
 

@@ -123,6 +123,6 @@ if __name__ == '__main__':
     # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
     # raise
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    reg.CT.resetConfs(['Env','Exp','Essay'])
+    # reg.CT.resetConfs(['Env','Exp','Essay'])
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    #preg.conftype_dict.resetConfs(ks=['Model'])
+    reg.CT.resetConfs(ks=['Model'])

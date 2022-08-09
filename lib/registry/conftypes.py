@@ -7,6 +7,8 @@ import shutil
 import numpy as np
 import pandas
 import param
+from lib.registry import reg
+#reg.init()
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.data_aux import update_mdict, update_existing_mdict
@@ -14,7 +16,7 @@ from lib.aux.par_aux import sub
 from lib.registry.base import BaseType
 
 from lib.registry.pars import preg
-from lib.registry import reg
+
 
 
 def confReset_funcs(k):
@@ -313,3 +315,14 @@ class ConfTypeDict:
 
         for k in ks:
             self.dict[k].resetDict()
+
+
+
+if __name__ == '__main__':
+    pass
+    # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
+    # raise
+    # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
+    # reg.CT.resetConfs(['Env','Exp','Essay'])
+    # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
+    # reg.CT.resetConfs(ks=['Model'])

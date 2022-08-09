@@ -167,8 +167,8 @@ def build_RvsS():
                              energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
     RvsS = {
-        'rover': RvsS_larva(species='rover'),
-        'sitter': RvsS_larva(species='sitter'),
+        'rover_old': RvsS_larva(species='rover'),
+        'sitter_old': RvsS_larva(species='sitter'),
         'navigator_rover': RvsS_larva(species='rover', OD=OD1),
         'mock_rover': RvsS_larva(species='rover', mock=True),
         'navigator_sitter': RvsS_larva(species='sitter', OD=OD1),

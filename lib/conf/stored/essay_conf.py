@@ -7,26 +7,29 @@ from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry import reg
-I = reg.PI.dict
+
+I = reg.PI
 
 
 class Essay:
-    def __init__(self, type, N=5, enrichment=I.base_enrich(), collections=['pose'], video=False, show=False,
+    def __init__(self, type,essay_id=None, N=5, enrichment=I.base_enrich(), collections=['pose'], video=False, show=False,
                  **kwargs):
         if video:
             self.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
         else:
             self.vis_kwargs = preg.get_null('visualization', mode=None)
         self.N = N
-        self.G = preg.graph_dict
-        self.GT = preg.grouptype_dict
-        self.CT = preg.conftype_dict
-        self.M = preg.larva_conf_dict
+        self.G = reg.GD
+        self.GT = reg.GT
+        self.CT = reg.CT
+        self.M = reg.MD
         self.show = show
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
-        self.essay_id = f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
+        if essay_id is None:
+            essay_id=f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
+        self.essay_id = essay_id
         self.path = f'essays/{type}/{self.essay_id}/data'
         path = reg.Path.ESSAY
         self.full_path = f'{path}/{type}/{self.essay_id}/data'
@@ -326,8 +329,9 @@ class RvsS_Essay(Essay):
 
 
 class DoublePatch_Essay(Essay):
-    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'],N=10, dur=5.0, arena_dims=(0.24, 0.24), patch_x=0.06,
-                 patch_radius=0.025, **kwargs):
+    def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=10, dur=5.0, olfactor=True, feeder=True,
+                 arena_dims=(0.24, 0.24), patch_x=0.06,patch_radius=0.025,
+                 **kwargs):
         super().__init__(N=N,type='DoublePatch', enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                    bouts=['stride', 'pause', 'turn'],
                                                                    fits=False, interference=False, on_food=True),
@@ -337,10 +341,24 @@ class DoublePatch_Essay(Essay):
         self.patch_radius = patch_radius
         self.substrates = substrates
         self.dur = dur
+        self.mID0s = ['rover', 'sitter']
+        if olfactor :
+            if feeder :
+                suf='_forager'
+            else :
+                suf='_nav'
+        else :
+            if feeder :
+                suf=''
+            else :
+                suf='_loco'
+        self.mIDs=[f'{mID0}{suf}' for mID0 in self.mID0s]
+
+
+        self.ms=[self.M.loadConf(mID) for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
-        mIDs = ['rover', 'sitter']
-        self.mdiff_df, row_colors = self.M.diff_df(mIDs=mIDs,
-                                                   ms=[self.M.loadConf(f'navigator_{mID}') for mID in mIDs])
+
+        self.mdiff_df, row_colors = self.M.diff_df(mIDs=self.mID0s,ms=self.ms)
 
 
     def get_larvagroups(self,age=120.0):
@@ -357,10 +375,10 @@ class DoublePatch_Essay(Essay):
 
         return dNl.NestDict({
             mID0: self.GT.dict.LarvaGroup.gConf(default_color=mcol,
-                                                            model=self.CT.dict.Model.loadConf(f'navigator_{mID0}'),
+                                                            model=self.CT.dict.Model.loadConf(mID),
                                                             **kws0)
 
-            for mID0, mcol in zip(['rover', 'sitter'], ['blue', 'red'])
+            for mID0,mID, mcol in zip(['rover', 'sitter'],self.mIDs, ['blue', 'red'])
         })
 
     def get_sources(self, type='standard', q=1.0, Cpeak=2.0, Cscale=0.0002):
@@ -697,14 +715,19 @@ def Essay_dict():
     return dNl.NestDict(d)
 
 
-if __name__ == "__main__":
-    # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-    # E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
-    #E = DoublePatch_Essay(video=True, N=22, dur=1)
-    # print(E.patch_env())
-    # raise
-    #ds = E.run()
-    #figs, results = E.anal()
-    dic=Essay_dict()
-    print(dic.keys())
+# if __name__ == "__main__":
+#     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
+#     # E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
+def RvsSx4():
+    sufs=['foragers', 'navigators','feeders', 'locomotors']
+    i=0
+    for o in [True,False]:
+        for f in [True,False]:
+            E = DoublePatch_Essay(video=False, N=5, dur=5, olfactor=o,feeder=f, essay_id=f'RvsS_{sufs[i]}')
+        #     # print(E.patch_env())
+            ds = E.run()
+            figs, results = E.anal()
+            i+=1
+#     dic=Essay_dict()
+#     print(dic.keys())
 
