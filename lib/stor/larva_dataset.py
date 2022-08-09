@@ -18,7 +18,7 @@ from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam, stdout
 from lib.aux.annotation import annotate
 from lib.aux.stor_aux import read, storeH5, storeDic, loadDic, loadSoloDics, storeSoloDics, datapath
 
-from lib.decorators.timer3 import timer
+from lib.decorators.timer3 import timer, warn_slow
 
 from lib.decorators.property import dic_manager_kwargs
 from lib.stor.config import retrieve_config, update_config, update_metric_definition
@@ -82,11 +82,7 @@ class _LarvaDataset:
         self.num_ticks = s.index.unique('Step').size
         return s
 
-
-
-
-
-
+    @warn_slow
     def load(self, step=True, end=True, food=False, **kwargs):
         if step:
             self.step_data = self.load_step(**kwargs)
@@ -116,7 +112,7 @@ class _LarvaDataset:
         ss = s.drop(stored_ps, axis=1, errors='ignore')
         self.storeH5(df=ss, key='step')
 
-
+    @warn_slow
     def save(self, step=True, end=True, food=False, add_reference=False,refID=None, **kwargs):
 
         if step:

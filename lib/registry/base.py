@@ -1,12 +1,13 @@
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.data_aux import get_ks
 import timeit
-
+from lib.registry import reg
 from lib.decorators.timer1 import timing
 
 
 class BaseType():
-    def __init__(self, k, subks={}):
+    def __init__(self, parent, k, subks={}):
+        self.parent = parent
         self.k = k
         self.subks = subks
         self.mdict=None
@@ -49,30 +50,25 @@ class BaseType():
 
 class BaseConfDict :
     def __init__(self, mode='build',verbose=1):
-        with timing() as timer:
-            self.name=self.__class__.__name__
-            self.verbose = verbose
-            self.vprint(f'Initializing {self.name} in mode {mode}')
+        # with timing() as timer:
+        self.name=self.__class__.__name__
+        reg.vprint(f'Initializing {self.name} in mode {mode}')
 
 
-            from lib.registry.pars import preg
-            self.path = preg.paths[self.name]
-            if mode=='build':
-                self.dict = self.build()
+        self.path = reg.Path[self.name]
+        if mode=='build':
+            self.dict = self.build()
 
-            elif mode=='load':
-                self.dict = self.load()
-            else:
-                pass
+        elif mode=='load':
+            self.dict = self.load()
+        else:
+            pass
 
-            self.vprint(f'Completed {self.name} successfully')
-        self.vprint(f'Class {self.name} Initialization time {timer.time_sec} in mode {mode}', 2)
+        reg.vprint(f'Completed {self.name} successfully')
+        # self.vprint(f'Class {self.name} Initialization time {timer.time_sec} in mode {mode}', 2)
 
 
 
-    def vprint(self, text, verbose=2):
-        if verbose >= self.verbose:
-            print(text)
 
     def build(self):
         return dNl.NestDict()

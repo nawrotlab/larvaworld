@@ -7,7 +7,7 @@ from scipy.stats import uniform, levy, norm
 import lib.aux.dictsNlists as dNl
 from lib.aux.par_aux import sub, subsup
 from lib.registry.units import ureg
-from lib.registry.pars import preg
+import lib.registry.registry as reg
 
 
 def powerlaw_cdf(x, xmin, alpha):
@@ -192,13 +192,13 @@ def get_dist(k, k0='intermitter', v=None, return_tabrows=False, d0=None, return_
 
 class DistDict:
     def __init__(self,load=False, save=False):
-        self.dict_path =  preg.paths['DistDict']
+        self.path =  reg.Path['DistDict']
         if not load:
             self.dict = build_dist_dict()
             if save:
-                dNl.save_dict(self.dict, self.dict_path)
+                dNl.save_dict(self.dict, self.path)
         else:
-            self.dict = dNl.load_dict(self.dict_path)
+            self.dict = dNl.load_dict(self.path)
 
 
     def get_dist(self, **kwargs):

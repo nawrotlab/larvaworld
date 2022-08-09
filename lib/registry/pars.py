@@ -7,7 +7,7 @@ import lib.aux.dictsNlists as dNl
 
 from lib.aux.stor_aux import read
 from lib.decorators.timer3 import timer, load_timer
-
+from lib.registry import reg
 
 
 class ParRegistry:
@@ -20,7 +20,7 @@ class ParRegistry:
 
     @property
     def grouptype_dict(self):
-        from lib.registry.order import GT
+        from lib.registry.reg import GT
         return GT
 
     @property
@@ -251,7 +251,8 @@ class ParRegistry:
 
 
     def next_idx(self, id, conftype='Exp'):
-        return self.conftype_dict.next_idx(conftype=conftype, id=id)
+        import lib.registry.registry as reg
+        return reg.next_idx(conftype=conftype, id=id)
 
 
 

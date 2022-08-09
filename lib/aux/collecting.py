@@ -1,4 +1,3 @@
-"""Here we state all possible collected parameters for the simulations"""
 from collections import OrderedDict
 from typing import Dict, List
 
@@ -77,29 +76,7 @@ class TargetedDataCollector(DataCollector):
             self._agent_records[self.schedule.steps] = list(agent_records)
 
 
-def midline_xy_pars(N=11):
-    midline_xy = {}
-    points = ['head'] + [f'seg{i}' for i in np.arange(2, N, 1)] + ['tail']
-    # points = ['head'] + [f'spinepoint_{i}' for i in np.arange(2, N, 1)] + ['tail']
-    for i, p in enumerate(points):
-        midline_xy.update(
-            {f'{p}_x': lambda a, i_bound=i: a.get_segment(i_bound).get_position()[
-                                                0] * 1000 / a.model.scaling_factor,
-             f'{p}_y': lambda a, i_bound=i: a.get_segment(i_bound).get_position()[
-                                                1] * 1000 / a.model.scaling_factor,
-             })
-    return midline_xy
 
-
-def contour_xy_pars(N=22):
-    contour_xy = {}
-    contour = [f'contourpoint_{j}' for j in range(N)]
-    for j, c_point in enumerate(contour):
-        contour_xy.update(
-            {f'{c_point}_x': lambda a, j_bound=j: a.get_contour()[j_bound][0] * 1000 / a.model.scaling_factor,
-             f'{c_point}_y': lambda a, j_bound=j: a.get_contour()[j_bound][1] * 1000 / a.model.scaling_factor,
-             })
-    return contour_xy
 
 
 # output_dict = {

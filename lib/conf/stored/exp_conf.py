@@ -177,7 +177,7 @@ def Exp_dict() :
             'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
             'single_odor_patch': food_exp('single_odor_patch',
                                           l=lgs(models=['Orco_forager', 'forager'],
-                                                ids=['Orco', 'control'], N=5, mode='periphery', s=0.03)),
+                                                ids=['Orco', 'control'], N=5, mode='periphery', s=0.01)),
             'double_patch': food_exp('double_patch', l=GTRvsS(N=5),
                                      c=['toucher', 'feeder', 'olfactor'],
                                      enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'], interference=False,

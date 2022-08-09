@@ -9,7 +9,7 @@ from shapely.geometry import Point
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.aux.annotation import annotate
 
-from lib.registry.pars import preg
+# from lib.registry.pars import preg
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
     ['d', 'v', 'sv', 'a', 'sa', 'fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',

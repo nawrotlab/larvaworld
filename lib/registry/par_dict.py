@@ -9,8 +9,7 @@ import param
 from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring, delta
-from lib.registry.pars import preg
-
+from lib.registry import reg
 from lib.registry.units import ureg
 
 
@@ -126,10 +125,10 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
 
 class BaseParDict:
     def __init__(self,in_rad=True, in_m=True, load=False, save=False):
-        preg.vprint('started BaseParDict', 2)
-        self.dict_path=preg.paths['ParDf']
+        reg.vprint('started BaseParDict', 2)
+        self.path=reg.Path['ParDf']
         if load:
-            df = pd.read_csv(self.dict_path, index_col=0)
+            df = pd.read_csv(self.path, index_col=0)
             self.dict_entries = df.to_dict(orient='records')
         else:
             from lib.registry.par_funcs import ParFuncDict
@@ -140,7 +139,7 @@ class BaseParDict:
             self.dict_entries = self.build(in_rad=in_rad, in_m=in_m)
             if save :
                 df = pd.DataFrame.from_records(self.dict_entries, index='k')
-                df.to_csv(self.dict_path)
+                df.to_csv(self.path)
         self.kdict=self.finalize_dict(self.dict_entries)
         self.ddict = dNl.NestDict({p.d: p for k, p in self.kdict.items()})
         self.pdict = dNl.NestDict({p.p: p for k, p in self.kdict.items()})
@@ -771,4 +770,3 @@ class BaseParDict:
         return dNl.NestDict(dic)
 
 
-# basepar_dict=BaseParDict()

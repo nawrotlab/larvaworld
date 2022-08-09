@@ -1,6 +1,6 @@
 import time
 from typing import List
-
+from lib.registry import reg
 
 
 import lib.aux.dictsNlists as dNl
@@ -103,48 +103,7 @@ def build_ParsDict2(dic):
     return parsargs
 
 
-#
-# class ParserDict:
-#     def __init__(self, init_dict=None, load=True,
-#                  names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
-#
-#         self.dict_path = preg.paths['ParserDict']
-#         if not load:
-#             self.predict = self.build_predict(names, init_dict)
-#             dNl.save_dict(self.predict, self.dict_path)
-#         else:
-#             self.predict = dNl.load_dict(self.dict_path)
-#         self.dict = self.build_parser_dict(self.predict)
-#
-#     def build_predict(self, names, init_dict=None):
-#         if init_dict is None:
-#             # from lib.registry import init_pars
-#             # init_dict = init_pars.init_dict.dict
-#             init_dict = preg.init_dict.dict
-#         # self.init_dict = init_dict
-#         pred = dNl.NestDict()
-#         for name in names:
-#             d0 = init_dict[name]
-#             try:
-#                 pred[name] = get_ParsDict2(d0)
-#             except:
-#                 pred[name] = get_ParsDict(d0)
-#         return pred
-#
-#     def build_parser_dict(self, predict):
-#         d = dNl.NestDict()
-#         for name, dic in predict.items():
-#             try:
-#                 d[name] = build_ParsDict2(dic)
-#             except:
-#                 d[name] = build_ParsDict(dic)
-#         return d
 
-
-# parser_dict = ParserDict()
-print('xx')
-from codetiming import Timer
-@Timer(name="tt")
 class ParserDict(BaseConfDict):
 
     def __init__(self, mode='load',

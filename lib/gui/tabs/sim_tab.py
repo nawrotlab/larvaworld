@@ -7,6 +7,7 @@ from lib.gui.tabs.tab import GuiTab
 from lib.registry.pars import preg
 from run.exec_run import Exec
 from lib.gui.aux import functions as gui_fun, elements as gui_el
+import lib.registry.registry as reg
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
@@ -85,7 +86,7 @@ class SimTab(GuiTab):
         # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
-        sim.update({'sim_ID': f'{id}_{preg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
+        sim.update({'sim_ID': f'{id}_{reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
         c['trials'].update(w, preg.loadConf(id=conf['trials'], conftype='Trial'))
         self.draw_tab.set_env_db(env=preg.expandConf(id=conf['env_params'], conftype='Env'), lg=conf['larva_groups'])

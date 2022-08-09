@@ -13,19 +13,17 @@ from lib.aux.data_aux import update_mdict, update_existing_mdict, get_ks
 from lib.aux.par_aux import sub
 from lib.registry.base import BaseType
 
-from lib.registry.pars import preg
+# from lib.registry.pars import preg
+from lib.registry import reg
 
 
 
 
 class GroupType(BaseType):
-    def __init__(self, GT,**kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.GT=GT
-        self.set_dict0(preg.init_dict.dict[self.k])
-        # self.build_mdict()
+        self.set_dict0(reg.PI.dict[self.k])
 
-    # @property
 
 
     def expand_mdict(self, m0=None):
@@ -60,7 +58,7 @@ class GroupType(BaseType):
         if len(self.subks) > 0:
             CT = preg.conftype_dict.dict
         for subID, subk in self.subks.items():
-            if CT[subk].mdict is None :
+            if self.parent[subk].mdict is None :
                 continue
 
             if subID == 'larva_groups' and subk == 'Model':
@@ -254,7 +252,7 @@ class GroupTypeDict:
 
         self.subk_dict = self.build_subk_dict(ks)
 
-        d = dNl.NestDict({k: GroupType(k=k, subks=subks, GT=self) for k, subks in self.subk_dict.items()})
+        d = dNl.NestDict({k: GroupType(k=k, subks=subks, parent=self) for k, subks in self.subk_dict.items()})
 
         # aa = d['Ga'].loadDict()
         # print(aa)

@@ -177,9 +177,20 @@ def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
 
 
 def set_agent_kwargs(agent, **kwargs):
+    return agent
+    #if isinstance(agent,)
+
+
     # from lib.registry.dtypes import null_dict
     class_name = type(agent).__name__
-    type_dict = preg.get_null('agent', 'dtype')
+    if class_name=='Food':
+        k='food'
+    elif class_name=='Larva':
+        k='larva_conf'
+    else:
+        return agent
+    #print(class_name)
+    type_dict = preg.get_null(k)
     title = f'{class_name} args'
     dic = {}
     for p in list(type_dict.keys()):

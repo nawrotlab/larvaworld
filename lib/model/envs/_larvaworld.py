@@ -363,6 +363,8 @@ class LarvaWorld(BaseLarvaWorld):
                 # self._create_food_grid(space_range=self.space_edges_for_screen,grid_pars=food_pars.food_grid)
             for gID, gConf in food_pars.source_groups.items():
                 ps = xy_aux.generate_xy_distro(**gConf.distribution)
+
+
                 for i, p in enumerate(ps):
                     self.add_food(id=f'{gID}_{i}', pos=p, group=gID, **gConf)
 

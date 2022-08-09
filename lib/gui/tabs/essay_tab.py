@@ -3,7 +3,7 @@ import os
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 from lib.registry.pars import preg
-
+import lib.registry.registry as reg
 
 class EssayTab(GuiTab):
     def __init__(self, **kwargs):
@@ -35,7 +35,7 @@ class EssayTab(GuiTab):
         # from lib.registry.dtypes import null_dict
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
-        essay = preg.get_null('essay_params', essay_ID=f'{id}_{preg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
+        essay = preg.get_null('essay_params', essay_ID=f'{id}_{reg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
         fdir = conf['exp_fig_folder']
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}

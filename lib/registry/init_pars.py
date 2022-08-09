@@ -1,13 +1,12 @@
 
 import numpy as np
 
-from lib.aux import dictsNlists as dNl
+from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry.base import BaseConfDict
-from lib.registry.pars import preg
-
+from lib.registry import reg
 
 def confInit_ks(k):
-    from lib.aux import naming as nam, dictsNlists as dNl
+
     d = dNl.NestDict({
         'Ref': None,
         'Eval': 'eval_conf',
@@ -63,16 +62,17 @@ def update_default(name, dic, **kwargs):
 
 
 class ParInitDict(BaseConfDict):
-    def __init__(self,CT,**kwargs):
+    def __init__(self):
 
-        self.CT=CT
-        self.default_path = preg.paths['ParDefaultDict']
-        super().__init__(**kwargs)
+
+
+        self.default_path = reg.Path.ParDefaultDict
+        super().__init__()
 
 
     def build(self):
 
-        CTs=self.CT.dict
+        CTs=reg.CT.dict
 
         from lib.registry.initDicts import buildInitDict
         d = buildInitDict(CTs)

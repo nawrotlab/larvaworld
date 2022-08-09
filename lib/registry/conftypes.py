@@ -14,15 +14,14 @@ from lib.aux.par_aux import sub
 from lib.registry.base import BaseType
 
 from lib.registry.pars import preg
-
+from lib.registry import reg
 
 
 
 class ConfType(BaseType):
-    def __init__(self, CT,**kwargs):
+    def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        self.path = preg.paths[self.k]
-        self.CT=CT
+        self.path = reg.Path[self.k]
         self.use_pickle = False if self.k != 'Ga' else True
 
     # @property
@@ -209,7 +208,6 @@ class ConfType(BaseType):
 class ConfTypeDict:
     def __init__(self,load=False, save=False):
 
-        self.SimIdx_path = preg.paths["SimIdx"]
 
         preg.vprint('started ConfTypes',2)
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
@@ -238,7 +236,7 @@ class ConfTypeDict:
 
         self.subk_dict = self.build_subk_dict(ks)
 
-        d = dNl.NestDict({k: ConfType(k=k, subks=subks, CT=self) for k, subks in self.subk_dict.items()})
+        d = dNl.NestDict({k: ConfType(k=k, subks=subks, parent=self) for k, subks in self.subk_dict.items()})
 
         return d
 
@@ -295,22 +293,3 @@ class ConfTypeDict:
 
         for k in ks:
             self.dict[k].resetDict()
-
-    def next_idx(self, id, conftype='Exp'):
-        F0 = self.SimIdx_path
-        try:
-            with open(F0) as f:
-                d = json.load(f)
-        except:
-            d = {k: {exp: 0 for exp in self.dict[k].ConfIDs} for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']}
-        if not conftype in d.keys():
-            d[conftype] = {}
-        if not id in d[conftype].keys():
-            d[conftype][id] = 0
-        d[conftype][id] += 1
-        with open(F0, "w") as fp:
-            json.dump(d, fp)
-        return d[conftype][id]
-
-
-# conftype_dict = ConfTypeDict()

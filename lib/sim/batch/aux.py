@@ -4,7 +4,7 @@ from pypet import cartesian_product, load_trajectory
 
 from lib.aux import dictsNlists as dNl
 from lib.registry.pars import preg
-
+from lib.registry import reg
 
 def retrieve_exp_conf(traj):
     d={}

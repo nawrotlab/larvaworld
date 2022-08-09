@@ -15,7 +15,7 @@ from lib.aux import dictsNlists as dNl, naming as nam
 from lib.sim.ga.functions import GA_optimization
 
 from lib.registry.pars import preg
-
+from lib.registry import reg
 from lib.model.robot.larva_robot import LarvaRobot
 
 from lib.aux.time_util import TimeUtil

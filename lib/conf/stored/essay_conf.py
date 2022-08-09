@@ -6,8 +6,8 @@ import pandas as pd
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
-I = preg.init_dict
+from lib.registry import reg
+I = reg.PI.dict
 
 
 class Essay:
@@ -26,7 +26,7 @@ class Essay:
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
-        self.essay_id = f'{type}_{preg.next_idx(id=type, conftype="Essay")}'
+        self.essay_id = f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
         path = preg.path_dict["ESSAY"]
         self.full_path = f'{path}/{type}/{self.essay_id}/data'

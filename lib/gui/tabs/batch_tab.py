@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib.registry.pars import preg
-
+import lib.registry.registry as reg
 
 class BatchTab(GuiTab):
     def __init__(self, **kwargs):
@@ -28,7 +28,7 @@ class BatchTab(GuiTab):
 
     def update(self, w, c, conf, id):
         from lib.sim.batch.aux import stored_trajs
-        w.Element(self.batch_id_key).Update(value=f'{id}_{preg.next_idx(id=id, conftype="Batch")}')
+        w.Element(self.batch_id_key).Update(value=f'{id}_{reg.next_idx(id=id, conftype="Batch")}')
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
         self.DL1.add(w, stored_trajs(id), replace=True)

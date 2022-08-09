@@ -6,7 +6,7 @@ import numpy as np
 
 from lib.aux.sim_aux import get_source_xy
 from lib.registry.pars import preg
-
+from lib.registry import reg
 from lib.model.space.scene import Scene
 from lib.aux.color_util import Color
 from lib.sim.ga.ga_engine import GAbuilder
@@ -32,7 +32,7 @@ class BaseGAlauncher(BaseLarvaWorld):
         dt = sim_params.timestep
         Nsteps = int(sim_params.duration * 60 / dt)
         if save_to is None:
-            save_to = preg.path_dict["SIM"]
+            save_to = reg.Path.SIM
         self.save_to = save_to
         self.dir_path = f'{save_to}/{sim_params.path}/{id}'
         self.plot_dir = f'{self.dir_path}/plots'
@@ -58,7 +58,7 @@ class BaseGAlauncher(BaseLarvaWorld):
         if caption is None:
             caption = f'GA {experiment} : {self.id}'
         self.caption = caption
-        self.scene_file = f'{preg.path_dict["ga_scene"]}/{scene}.txt'
+        self.scene_file = f'{reg.Path.ga_scene}/{scene}.txt'
         self.scene_speed = scene_speed
         self.obstacles = []
 

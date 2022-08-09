@@ -1,4 +1,6 @@
 import functools
+from atexit import register
+#from decorators import count_calls
 
 def debug(func):
     """Print the function signature and return value"""
@@ -12,3 +14,18 @@ def debug(func):
         print(f"{func.__name__!r} returned {value!r}")           # 4
         return value
     return wrapper_debug
+
+
+from dataclasses import dataclass
+
+#
+# @dataclass
+# class Food:
+#     name: str
+#     unit_price: float
+#     stock: int = 0
+#
+#     def stock_value(self) -> float:
+#         return (self.stock * self.unit_price)
+
+

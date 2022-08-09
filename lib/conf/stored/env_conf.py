@@ -2,6 +2,8 @@ import numpy as np
 
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
+from lib.registry import reg
+
 
 def border(ps, c='black', w=0.01, id=None):
     b = preg.get_null('Border', points=ps, default_color=c, width=w)
@@ -40,7 +42,7 @@ def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0
 
 
 
-    gt = preg.grouptype_dict.dict.SourceGroup
+    gt = reg.GT.dict.SourceGroup
     return gt.entry(id=id, **kws)
 
 

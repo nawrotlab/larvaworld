@@ -12,8 +12,6 @@ import param
 from lib.aux.par_aux import subsup, sub, sup
 from lib.aux import dictsNlists as dNl
 
-from lib.registry.pars import preg
-# CTs=preg.conftype_dict.dict
 
 
 
@@ -119,8 +117,9 @@ def buildInitDict(CTs):
 
         d['SourceGroup'] = {
             'distribution': d['spatial_distro'],
+            **{k:v for k,v in d['food'].items() if k not in ['pos', 'group']}
             # 'default_color': pCol('green', 'source group'),
-            **d['food'],
+            # **d['food'],
             # 'odor': d['odor'],
 
         }

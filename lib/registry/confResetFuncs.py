@@ -22,8 +22,7 @@ def confReset_funcs(k):
     })
     return d[k]
 
-#
-#
+
 if __name__ == '__main__':
 
 

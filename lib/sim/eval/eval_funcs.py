@@ -1,11 +1,8 @@
 
 import numpy as np
-from scipy.stats import ks_2samp
 
-from lib.registry.pars import preg
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
-from lib.sim.eval.eval_aux import RSS
 
 def dst2source_evaluation(robot, source_xy):
     traj = np.array(robot.trajectory)

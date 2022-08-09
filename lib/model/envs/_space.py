@@ -299,7 +299,7 @@ class DiffusionValueLayer(ValueLayer):
 
         for s in self.sources:
             source_pos = s.get_position()
-            intensity = s.odor_intensity
+            intensity = s.odor.odor_intensity
             self.add_value(source_pos, intensity)
 
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const

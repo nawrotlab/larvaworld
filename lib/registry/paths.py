@@ -1,6 +1,9 @@
 import os
 from lib.aux import dictsNlists as dNl
 
+
+
+
 def get_parent_dir():
     p=os.path.abspath(__file__)
     p = os.path.dirname(p)
@@ -97,4 +100,11 @@ def build_path_dict() :
     dic['parent']=F0
     return dNl.NestDict(dic)
 
-PathD = build_path_dict()
+# class PathDict :
+#     def __init__(self):
+#         self.dict=build_path_dict()
+#
+#
+#
+
+#pathD = build_path_dict()

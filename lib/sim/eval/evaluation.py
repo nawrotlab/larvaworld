@@ -1,6 +1,6 @@
 import warnings
 
-import lib.plot.box
+
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -17,8 +17,8 @@ from lib.sim.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluatio
 from lib.aux.sample_aux import sim_models
 
 from lib.registry.pars import preg
-
-
+from lib.registry import reg
+import lib.plot.box
 
 
 class EvalRun:
@@ -27,10 +27,10 @@ class EvalRun:
                  enrichment=None,progress_bar=False,
                  norm_modes=['raw'], eval_modes=['pooled'], offline=False, store_data=True, show=False):
         if id is None:
-            id = f'evaluation_run_{preg.next_idx(id="dispersion", conftype="Eval")}'
+            id = f'evaluation_run_{reg.next_idx(id="dispersion", conftype="Eval")}'
         self.id = id
         if save_to is None:
-            save_to = preg.path_dict["SIM"]
+            save_to = reg.Path["SIM"]
         self.path = f'eval_runs'
         self.bout_annotation = bout_annotation
         self.enrichment = enrichment
@@ -269,7 +269,7 @@ class EvalRun:
             self.figs.errors[k] = self.get_error_plots(self.error_dicts[k], mode, show=self.show)
 
     def get_error_plots(self, error_dict, mode='pooled', **kwargs):
-        ED = preg.graph_dict.error_dict
+        ED = reg.GD.error_dict
         labels = self.label_dic[mode]
         dic = {}
         for norm in self.norm_modes:
@@ -308,14 +308,14 @@ class EvalRun:
         return dNl.NestDict(dic)
 
     def plot_models(self):
-        MD = preg.graph_dict.mod_dict
+        MD = reg.GD.mod_dict
         save_to = self.dir_dict.models
         for mID in self.modelIDs:
             self.figs.models.table[mID] = MD['configuration'](mID=mID, save_to=save_to, figsize=(14, 11))
             self.figs.models.summary[mID] = MD['summary'](mID=mID, save_to=save_to, refID=self.refID)
 
     def plot_results(self, plots=['hists', 'trajectories', 'dispersion', 'bouts', 'fft', 'boxplots']):
-        GD = preg.graph_dict.dict
+        GD = reg.GD.dict
 
         print('Generating comparative graphs')
 

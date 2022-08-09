@@ -8,7 +8,7 @@ import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 from lib.registry.pars import preg
-
+import lib.registry.registry as reg
 from lib.registry.units import ureg
 
 
@@ -17,14 +17,16 @@ class LarvaConfDict:
 
         preg.vprint('started LarvaConfDict', 2)
         from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
-        self.dict_path = preg.paths['LarvaConfDict']
+
+
+        self.path = reg.Path.LarvaConfDict
         if not load:
 
             self.dict0 = build_confdicts0()
             if save:
-                dNl.save_dict(self.dict0, self.dict_path)
+                dNl.save_dict(self.dict0, self.path)
         else:
-            self.dict0 = dNl.load_dict(self.dict_path)
+            self.dict0 = dNl.load_dict(self.path)
 
         self.dict = build_LarvaConfDict(self.dict0)
         self.full_dict = self.build_full_dict(D=self.dict)

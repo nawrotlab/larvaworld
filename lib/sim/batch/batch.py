@@ -17,7 +17,7 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry.pars import preg
 from lib.sim.batch.aux import grid_search_dict, delete_traj
 from lib.sim.batch.functions import single_run, batch_method_unpack
-
+from lib.registry import reg
 ''' Default batch run.
 Arguments :
 - Experiment mode eg 'chemorbit'

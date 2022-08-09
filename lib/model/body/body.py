@@ -1,13 +1,16 @@
 from random import sample, seed
 import random
+from typing import Union
+
 import numpy as np
 from shapely.geometry import Point
 from shapely.ops import cascaded_union
-
+# from dataclasses import dataclass
 
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang_aux
 from lib.registry.pars import preg
+
 
 
 class LarvaShape:
@@ -52,6 +55,7 @@ class LarvaShape:
         self.seg_colors = self.generate_seg_colors(self.Nsegs)
         self.set_head_edges()
 
+
     def initialize(self, initial_length, length_std):
         if not hasattr(self, 'real_length'):
             self.real_length = None
@@ -92,7 +96,7 @@ class LarvaShape:
         self.real_length = np.sqrt(self.real_mass / (self.density * self.width_to_length_ratio))
 
     def generate_seg_colors(self, N, color=None):
-        if color is None :
+        if color is None:
             try:
                 color = self.default_color
             except:
@@ -100,12 +104,13 @@ class LarvaShape:
         c = np.copy(color)
         return [np.array((0, 255, 0))] + [c] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [c] * N
 
-    def generate_segs(self,orientation, seg_positions, seg_lengths, rotation_ps):
+    def generate_segs(self, orientation, seg_positions, seg_lengths, rotation_ps):
         segs = []
 
         for i in range(self.Nsegs):
             seg = DefaultSegment(pos=seg_positions[i], orientation=orientation,
-                                 seg_vertices=self.seg_vertices[i], idx=i, color=self.seg_colors[i], seg_length=seg_lengths[i], rotation_point=rotation_ps[i])
+                                 seg_vertices=self.seg_vertices[i], idx=i, color=self.seg_colors[i],
+                                 seg_length=seg_lengths[i], rotation_point=rotation_ps[i])
             segs.append(seg)
 
         return segs
@@ -169,7 +174,6 @@ class LarvaShape:
         global_pos = self.get_segment(seg_index).get_world_point(local_pos)
         return global_pos
 
-
     @property
     def global_rear_end_of_head(self):
         return self.segs[0].get_world_point(self.local_rear_end_of_head)
@@ -206,7 +210,7 @@ class LarvaShape:
     def olfactor_point(self):
         # print(tuple(self.olfactor_pos))
         # raise
-        return Point(self.olfactor_pos[0],self.olfactor_pos[1])
+        return Point(self.olfactor_pos[0], self.olfactor_pos[1])
 
     @property
     def midline_xy(self):
@@ -215,30 +219,29 @@ class LarvaShape:
 
 class LarvaBody(LarvaShape):
     def __init__(self, model, pos=None, orientation=None, joint_types=None, **kwargs):
-        super().__init__(initial_orientation=orientation, initial_pos=pos,scaling_factor=model.scaling_factor, **kwargs)
+        super().__init__(initial_orientation=orientation, initial_pos=pos, scaling_factor=model.scaling_factor,
+                         **kwargs)
         self.model = model
 
-        if self.Nsegs==1:
-            rotation_ps=['mid']
-        elif self.Nsegs>=2 :
-            rotation_ps = ['rear']+[None for i in range(self.Nsegs-1)]
-        #self.segs[0].rotation_point=rotation_ps[0]
+        if self.Nsegs == 1:
+            rotation_ps = ['mid']
+        elif self.Nsegs >= 2:
+            rotation_ps = ['rear'] + [None for i in range(self.Nsegs - 1)]
+        # self.segs[0].rotation_point=rotation_ps[0]
 
-        if self.model.Box2D :
-            self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions, self.seg_lengths,rotation_ps,joint_types)
-        else :
-            self.segs = self.generate_segs(self.initial_orientation, self.seg_positions, self.seg_lengths,rotation_ps)
+        if self.model.Box2D:
+            self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions, self.seg_lengths,
+                                                 rotation_ps, joint_types)
+        else:
+            self.segs = self.generate_segs(self.initial_orientation, self.seg_positions, self.seg_lengths, rotation_ps)
             from lib.model.agents._agent import LarvaworldAgent
-            if isinstance(self, LarvaworldAgent) :
+            if isinstance(self, LarvaworldAgent):
                 self.model.space.place_agent(self, self.initial_pos)
-
-
 
         self.contour = self.set_contour(self.segs)
 
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
-
 
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
@@ -248,8 +251,6 @@ class LarvaBody(LarvaShape):
             seg.seg_vertices = vec
         self.set_head_edges()
         self.update_sensor_position()
-
-
 
     '''
     seg_vertices of 2 segments example :
@@ -272,8 +273,6 @@ class LarvaBody(LarvaShape):
     def update_sensor_position(self):
         for sensor_dict in self.sensors:
             sensor_dict['local_pos'] = sensor_dict['base_local_pos'] * self.sim_length
-
-
 
     def define_sensor(self, sensor, pos_on_body):
         x, y = pos_on_body
@@ -300,7 +299,7 @@ class LarvaBody(LarvaShape):
         d = self.get_sensor(sensor)
         return self.segs[d['seg_idx']].get_world_point(d['local_pos'])
 
-    def generate_Box2D_segs(self,orientation, seg_positions,seg_lengths, joint_types,rotation_ps):
+    def generate_Box2D_segs(self, orientation, seg_positions, seg_lengths, joint_types, rotation_ps):
         from Box2D import b2Vec2
         segs = []
         physics_pars = {'density': self.density,
@@ -329,8 +328,6 @@ class LarvaBody(LarvaShape):
             # self.create_rotator(segs, position, orientation, physics_pars)
         return segs
 
-
-
     # To make peristalsis visible we try to leave some space between the segments.
     # We define an interval proportional to the length : int*l.
     # We subtract it from the front end of all segments except the first and from the rear end of all segments except the last.
@@ -349,7 +346,7 @@ class LarvaBody(LarvaShape):
         return seg_starts, seg_stops
 
     def create_joints(self, Nsegs, segs, joint_types=None):
-        if joint_types is None :
+        if joint_types is None:
             # from lib.conf.base.dtypes import null_dict
             joint_types = preg.get_null('Box2D_params').joint_types
         space = self.model.space
@@ -503,8 +500,9 @@ class LarvaBody(LarvaShape):
             self.contour = self.set_contour(self.segs)
             viewer.draw_polygon(self.contour, self.head.color, True, self.radius / 5)
         # print(self.real_length)
-        draw_body(viewer=viewer, model=self.model, pos=pos,  midline_xy=self.midline_xy, contour_xy=None,
-                  radius=self.radius, vertices=self.get_shape().boundary.coords, color=self.default_color, selected=self.selected)
+        draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline_xy, contour_xy=None,
+                  radius=self.radius, vertices=self.get_shape().boundary.coords, color=self.default_color,
+                  selected=self.selected)
 
     def plot_vertices(self, axes, **kwargs):
         for seg in self.segs:
@@ -515,8 +513,6 @@ class LarvaBody(LarvaShape):
         for seg in self.segs:
             mass += seg.get_mass()
         return mass
-
-
 
     def get_contour(self):
         return self.contour
@@ -554,23 +550,20 @@ class LarvaBody(LarvaShape):
         # elif N == 0:
         #     pass
 
-
-
     def get_shape(self, scale=1):
         p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
         return p
 
-    def valid_Dbend_range(self,idx=0, ho0=None):
-        if ho0 is None :
-            ho0=self.segs[idx].get_orientation()
-        jdx=idx+1
+    def valid_Dbend_range(self, idx=0, ho0=None):
+        if ho0 is None:
+            ho0 = self.segs[idx].get_orientation()
+        jdx = idx + 1
         if self.Nsegs > jdx:
             o_bound = self.segs[jdx].get_orientation()
             dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
         else:
             dang = 0
         return (-np.pi + dang), (np.pi + dang)
-
 
     def move_body(self, dx, dy):
         for i, seg in enumerate(self.segs):
@@ -657,11 +650,9 @@ class LarvaBody(LarvaShape):
 
 #
 
-def draw_body(viewer, model, pos, midline_xy, contour_xy, radius, vertices, color, selected=False) :
+def draw_body(viewer, model, pos, midline_xy, contour_xy, radius, vertices, color, selected=False):
     if model.draw_centroid:
         draw_body_centroid(viewer, pos, radius, color)
-
-
 
     if model.draw_contour:
         draw_body_contour(viewer, contour_xy, radius)
@@ -722,7 +713,7 @@ def draw_selected_body(viewer, pos, contour_xy, radius, color):
         pass
 
 
-def draw_body_orientation(viewer, pos,orientation, radius,color) :
+def draw_body_orientation(viewer, pos, orientation, radius, color):
     viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
                      color=color, width=radius / 10)
     # viewer.draw_line(self.midline[-1], xy_aux.xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),

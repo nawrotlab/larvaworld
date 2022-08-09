@@ -1,5 +1,4 @@
-from lib.registry.grouptypes import GroupTypeDict
-GT=GroupTypeDict()
+
 
 from lib.registry.par_dict import BaseParDict
 
@@ -9,9 +8,7 @@ from lib.registry.dist_dict import DistDict
 
 DD = DistDict()
 
-from lib.plot.dict import GraphDict
 
-GD = GraphDict()
 
 # CT.build_mDicts(PI=PI, MD=MD)
 
