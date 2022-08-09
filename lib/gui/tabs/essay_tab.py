@@ -3,7 +3,8 @@ import os
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 from lib.registry.pars import preg
-import lib.registry.registry as reg
+from lib.registry import reg
+
 
 class EssayTab(GuiTab):
     def __init__(self, **kwargs):

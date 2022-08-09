@@ -9,6 +9,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')
+from lib.registry import reg
+reg.init()
 from lib.sim.ga.ga_launcher import GAlauncher
 # from lib.registry.pars import preg
 from lib.anal.argparsers import MultiParser, update_exp_conf
@@ -30,7 +32,7 @@ bestConfID = args.bestConfID
 show_screen = args.show_screen
 offline = args.offline
 
-ga_select_kws = d['ga_select_kws'],
+ga_select_kws = d['ga_select_kws']
 
 exp_conf = update_exp_conf(exp, d, conf_type='Ga',
                            offline=offline, show_screen=show_screen)

@@ -28,7 +28,7 @@ class Essay:
         self.collections = collections
         self.essay_id = f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
         self.path = f'essays/{type}/{self.essay_id}/data'
-        path = preg.path_dict["ESSAY"]
+        path = reg.Path.ESSAY
         self.full_path = f'{path}/{type}/{self.essay_id}/data'
         self.plot_dir = f'{path}/{type}/{self.essay_id}/plots'
         self.exp_dict = {}

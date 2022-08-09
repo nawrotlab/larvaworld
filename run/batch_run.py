@@ -4,6 +4,10 @@ import sys
 
 sys.path.insert(0, '..')
 # from lib.registry.pars import preg
+
+from lib.registry import reg
+reg.init()
+
 from lib.anal.argparsers import MultiParser, update_exp_conf
 from run.exec_run import Exec
 from lib.conf.stored.conf import kConfDict
@@ -13,6 +17,8 @@ p = MP.add()
 p.add_argument('experiment', choices=kConfDict('Batch'), help='The experiment mode')
 p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
 p.add_argument('-ms', '--models', type=str, nargs='+', help='The larva models to use for creating the simulation larva groups')
+
+
 
 args = p.parse_args()
 d = MP.get(args)

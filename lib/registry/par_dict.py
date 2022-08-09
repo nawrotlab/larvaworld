@@ -144,7 +144,7 @@ class BaseParDict:
         self.ddict = dNl.NestDict({p.d: p for k, p in self.kdict.items()})
         self.pdict = dNl.NestDict({p.p: p for k, p in self.kdict.items()})
 
-        preg.vprint('completed BaseParDict', 2)
+        reg.vprint('completed BaseParDict', 2)
 
     def build(self, in_rad=True, in_m=True):
         self.dict = dNl.NestDict()

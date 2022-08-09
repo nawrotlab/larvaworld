@@ -6,7 +6,6 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
-from pint.matplotlib import PintAxisInfo, PintConverter
 
 from lib.aux import dictsNlists as dNl
 

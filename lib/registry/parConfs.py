@@ -8,7 +8,7 @@ import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
 from lib.registry.pars import preg
-import lib.registry.registry as reg
+from lib.registry import reg
 from lib.registry.units import ureg
 
 

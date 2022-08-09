@@ -6,6 +6,11 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')
+
+from lib.registry import reg
+reg.init()
+
+
 from lib.sim.eval.evaluation import EvalRun
 from lib.anal.argparsers import MultiParser
 

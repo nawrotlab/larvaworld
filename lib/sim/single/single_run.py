@@ -9,7 +9,7 @@ from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.registry.output import set_output
 from lib.registry.pars import preg
-
+from lib.registry import reg
 
 class SingleRun:
     def __init__(self, sim_params, env_params, larva_groups, enrichment, collections, experiment,
@@ -25,7 +25,7 @@ class SingleRun:
         self.analysis = analysis
         if save_to is None:
             from lib.registry.pars import preg
-            save_to = preg.path_dict["SIM"]
+            save_to = reg.Path.SIM
         self.save_to = save_to
         self.storage_path = f'{sim_params.path}/{self.id}'
         self.dir_path = f'{save_to}/{self.storage_path}'

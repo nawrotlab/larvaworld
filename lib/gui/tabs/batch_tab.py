@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib.registry.pars import preg
-import lib.registry.registry as reg
+from lib.registry import reg
 
 class BatchTab(GuiTab):
     def __init__(self, **kwargs):

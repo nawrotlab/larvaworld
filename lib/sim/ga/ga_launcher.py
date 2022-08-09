@@ -5,7 +5,6 @@ import sys
 import numpy as np
 
 from lib.aux.sim_aux import get_source_xy
-from lib.registry.pars import preg
 from lib.registry import reg
 from lib.model.space.scene import Scene
 from lib.aux.color_util import Color

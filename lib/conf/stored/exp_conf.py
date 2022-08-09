@@ -3,7 +3,8 @@ import numpy as np
 from lib.conf.stored.conf import imitation_exp
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
-I=preg.init_dict
+from lib.registry import reg
+I=reg.PI
 
 #
 

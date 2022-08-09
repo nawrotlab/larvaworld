@@ -7,6 +7,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')
+from lib.registry import reg
+reg.init()
 #
 # from lib.registry.pars import ParDict
 # print(ParDict.dict['b'].d)

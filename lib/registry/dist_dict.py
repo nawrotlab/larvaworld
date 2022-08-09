@@ -7,7 +7,7 @@ from scipy.stats import uniform, levy, norm
 import lib.aux.dictsNlists as dNl
 from lib.aux.par_aux import sub, subsup
 from lib.registry.units import ureg
-import lib.registry.registry as reg
+from lib.registry import reg
 
 
 def powerlaw_cdf(x, xmin, alpha):

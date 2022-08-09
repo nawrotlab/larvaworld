@@ -10,6 +10,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 sys.path.insert(0, '..')
+
+
+from lib.registry import reg
+reg.init()
 from lib.registry.pars import preg
 from lib.conf.stored.conf import kConfDict
 from lib.sim.single.single_run import SingleRun

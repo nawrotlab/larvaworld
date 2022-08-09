@@ -2,7 +2,8 @@
 # !/usr/bin/env python
 import sys
 sys.path.insert(0, '..')
-
+from lib.registry import reg
+reg.init()
 
 
 

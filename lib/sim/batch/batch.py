@@ -50,7 +50,7 @@ class BatchRun:
         self.s0 = time.time()
         self.id = batch_id
         self.type = batch_type
-        self.parent_dir = f'{preg.path_dict["BATCH"]}/{self.type}'
+        self.parent_dir = f'{reg.Path.BATCH}/{self.type}'
         self.dir = f'{self.parent_dir}/{self.id}'
         self.filename = f'{self.parent_dir}/{self.type}.hdf5'
         bm=batch_method_unpack(**batch_methods)

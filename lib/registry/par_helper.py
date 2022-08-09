@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from lib.registry.pars import preg
-
+from lib.registry import reg
 
 class FuncParHelper:
 
@@ -123,6 +123,6 @@ if __name__ == '__main__':
     # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
     # raise
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    preg.conftype_dict.resetConfs(['Env','Exp','Essay'])
+    reg.CT.resetConfs(['Env','Exp','Essay'])
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
     #preg.conftype_dict.resetConfs(ks=['Model'])

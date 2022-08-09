@@ -10,7 +10,6 @@ import param
 
 import lib.aux.dictsNlists as dNl
 from lib.aux.data_aux import update_mdict, update_existing_mdict, get_ks
-from lib.aux.par_aux import sub
 from lib.registry.base import BaseType
 
 # from lib.registry.pars import preg
@@ -52,13 +51,8 @@ class GroupType(BaseType):
                 return ct.mdict
 
 
-
-
-
-        if len(self.subks) > 0:
-            CT = preg.conftype_dict.dict
         for subID, subk in self.subks.items():
-            if self.parent[subk].mdict is None :
+            if self.parent.dict[subk].mdict is None :
                 continue
 
             if subID == 'larva_groups' and subk == 'Model':
@@ -66,42 +60,20 @@ class GroupType(BaseType):
                 for k,dic in m0[subID].v.items():
                     if 'model' in dic.keys():
                         p=dic.model
-                        mm=retrieve(p,CT['Model'])
+                        mm=retrieve(p,self.parent.dict['Model'])
                         dic.model=mm
 
             else:
                 # ct=CT[subk]
                 # mm=copy.deepcopy(ct.mdict)
                 # p = m0[subID]
-                m0[subID] = retrieve(m0[subID], CT[subk])
+                m0[subID] = retrieve(m0[subID], self.parent.dict[subk])
                 # m0[subID]=mm
         return m0
 
 
 
 
-
-
-    def expandConf(self, id=None,conf=None):
-        if conf is None:
-            if id in self.ConfIDs:
-
-            # from lib.registry.pars import preg
-                conf = self.loadConf(id)
-            else :
-                return None
-        if len(self.subks) > 0:
-            CT = preg.conftype_dict.dict
-        for subID, subk in self.subks.items():
-            if subID == 'larva_groups' and subk == 'Model':
-                for k, v in conf['larva_groups'].items():
-                    if v.model in CT['Model'].ConfIDs:
-                        v.model = CT['Model'].loadConf(id=v.model)
-            else:
-                if conf[subID] in CT[subk].ConfIDs:
-                    conf[subID] = CT[subk].loadConf(id=conf[subID])
-
-        return conf
 
 
 
@@ -188,7 +160,7 @@ class GroupType(BaseType):
             if navigator :
                 mID0=f'navigator_{mID0}'
             if expand:
-                mID0=preg.conftype_dict.dict.Model.loadConf(mID0)
+                mID0=reg.CT.dict.Model.loadConf(mID0)
 
 
 
@@ -205,7 +177,7 @@ class GroupType(BaseType):
            s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
         if id is None :
             id=mID
-        m=mID if not expand else preg.loadConf(id=mID, conftype='Model')
+        m=mID if not expand else reg.CT.dict.loadConf(id=mID, conftype='Model')
         if type(s) == float:
             s = (s, s)
         kws = {'kwdic': {
@@ -226,12 +198,12 @@ class GroupTypeDict:
 
 
 
-        preg.vprint('started GroupTypes',2)
+        reg.vprint('started GroupTypes',2)
         self.grouptypes = ['LarvaGroup', 'SourceGroup', 'epoch']
 
         self.dict = self.build(self.grouptypes)
 
-        preg.vprint('completed GroupTypes',2)
+        reg.vprint('completed GroupTypes',2)
 
     def build_subk_dict(self, ks):
         d0 = dNl.NestDict({k: {} for k in ks})

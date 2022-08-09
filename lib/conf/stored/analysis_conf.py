@@ -1,10 +1,10 @@
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 from lib.registry.pars import preg
-
+from lib.registry import reg
 
 def entry(ID, title=None, **kwargs):
-    return preg.graph_dict.entry(ID, title=title, args=kwargs)
+    return reg.GD.entry(ID, title=title, args=kwargs)
 
 
 def time(short=None, par=None, title=None, u='sec', f1=False, abs=False, **kwargs):

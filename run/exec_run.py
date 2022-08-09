@@ -4,6 +4,10 @@ import argparse
 
 
 sys.path.insert(0, '..')
+
+
+from lib.registry import reg
+reg.init()
 from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results

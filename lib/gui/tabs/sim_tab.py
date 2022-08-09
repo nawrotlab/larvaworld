@@ -7,7 +7,7 @@ from lib.gui.tabs.tab import GuiTab
 from lib.registry.pars import preg
 from run.exec_run import Exec
 from lib.gui.aux import functions as gui_fun, elements as gui_el
-import lib.registry.registry as reg
+from lib.registry import reg
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):

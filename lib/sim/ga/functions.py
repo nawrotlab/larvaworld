@@ -2,7 +2,6 @@ import numpy as np
 from scipy.stats import ks_2samp
 
 import lib.aux.dictsNlists as dNl
-# from lib.ga.util.genome import Genome
 
 
 from lib.registry.pars import preg

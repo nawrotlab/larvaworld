@@ -1,4 +1,3 @@
-from lib.conf.stored.conf import saveConfDict
 
 
 def init_shortcuts():
@@ -91,7 +90,7 @@ def init_controls():
 def store_controls():
     d = init_controls()
     from lib.registry.pars import preg
-    # from lib.conf.stored.conf import saveConfDict
+    from lib.conf.stored.conf import saveConfDict
     saveConfDict(ConfDict=d, conftype='Settings')
 
 

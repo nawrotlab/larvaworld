@@ -1,6 +1,6 @@
 import time
 from typing import List
-from lib.registry import reg
+
 
 
 import lib.aux.dictsNlists as dNl
@@ -8,7 +8,7 @@ import lib.aux.dictsNlists as dNl
 from lib.registry.base import BaseConfDict
 
 from lib.registry.pars import preg
-
+from lib.registry import reg
 
 class ParsArg:
     """
