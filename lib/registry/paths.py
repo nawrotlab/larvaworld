@@ -63,6 +63,7 @@ def build_path_dict() :
         'Ga': f'{CF}/GaConfs.txt',
         'ExpGroup': f'{CF}/ExpGroupConfs.txt',
         'Essay': f'{CF}/EssayConfs.txt',
+        'Source': f'{CF}/SourceConfs.txt',
         'Model': f'{CF}/ModelConfs.txt',
         'ModelGroup': f'{CF}/ModelGroupConfs.txt',
         'Batch': f'{CF}/BatchConfs.txt',

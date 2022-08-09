@@ -149,19 +149,21 @@ class GroupType(BaseType):
 
     def RvsS_groups(self,N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard',pref='',
                     navigator=False, expand=False, **kwargs):
-
-        if h_starved==0:
-            eps={
-                0 : {'start': 0.0, 'stop' : age, 'substate':{'type': substrate_type, 'quality': q}}
-            }
+        if age==0.0 :
+            epochs={}
         else :
-            eps = {
-                0: {'start': 0.0, 'stop': age-h_starved, 'substate': {'type': substrate_type, 'quality': q}},
-                1: {'start': age-h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
-            }
-        epochs={}
-        for id,kws in eps.items():
-            epochs.update(self.GT.dict.epoch.entry(id=id,**kws))
+            if h_starved==0:
+                eps={
+                    0 : {'start': 0.0, 'stop' : age, 'substate':{'type': substrate_type, 'quality': q}}
+                }
+            else :
+                eps = {
+                    0: {'start': 0.0, 'stop': age-h_starved, 'substate': {'type': substrate_type, 'quality': q}},
+                    1: {'start': age-h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
+                }
+            epochs={}
+            for id,kws in eps.items():
+                epochs.update(self.GT.dict.epoch.entry(id=id,**kws))
 
 
 
@@ -188,7 +190,7 @@ class GroupType(BaseType):
             if navigator :
                 mID0=f'navigator_{mID0}'
             if expand:
-                mID0=preg.conftype_dict.dict.Model.expandConf(mID0)
+                mID0=preg.conftype_dict.dict.Model.loadConf(mID0)
 
 
 
@@ -199,7 +201,7 @@ class GroupType(BaseType):
             }
 
             lgs.update(self.entry(id, **kws))
-        return lgs
+        return dNl.NestDict(lgs)
 
     def lg_entry(self, id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors=(0.0, 360.0),
            s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):

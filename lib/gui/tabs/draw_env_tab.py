@@ -42,14 +42,20 @@ class DrawEnvTab(DrawTab):
         return o, o0, oM, oS
 
     def group_ks(self, i):
+        if i == self.S:
+            D = 'spatial_distro'
+        elif i==self.L :
+            D ='larva_distro'
+
         s = f'{i}_single'
         g = f'{i}_group'
         s0 = f'{i}_id'
         g0 = f'{g}_id'
-        D = f'{i}_DISTRO'
+        # D = f'{i}_distro'
         DN = f'{D}_N'
         Dm = f'{D}_mode'
         Ds = f'{D}_shape'
+        # return g, g0, s, s0
         return g, g0, D, DN, Dm, Ds, s, s0
 
     def arena_pars(self, v, w, c):
@@ -495,6 +501,7 @@ class DrawEnvTab(DrawTab):
         n = name
         n0 = n.lower()
         g, g0, D, DN, Dm, Ds, s, s0 = self.group_ks(n)
+
         o, o0, oM, oS = self.odor_ks(n)
         f, fM = self.food_ks
         info = w['info']

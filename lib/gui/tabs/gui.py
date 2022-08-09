@@ -15,7 +15,7 @@ matplotlib.use('TkAgg')
 class LarvaworldGui:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
         from lib.gui.tabs import intro_tab, life_tab, sim_tab, batch_tab, essay_tab, import_tab, \
-            analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab
+            analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab,env_tab
         cls.tab_dict = {
             'introduction': (intro_tab.IntroTab, None, None),
             'larva-model': (model_tab.ModelTab, 'Model', 'model_conf'),

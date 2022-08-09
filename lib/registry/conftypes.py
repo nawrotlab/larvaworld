@@ -214,7 +214,7 @@ class ConfTypeDict:
 
         preg.vprint('started ConfTypes',2)
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
-                          'Group', 'Trial', 'Life', 'Body']
+                          'Group', 'Trial', 'Life', 'Body', 'Source', 'Tree']
 
         self.dict = self.build(self.conftypes)
 

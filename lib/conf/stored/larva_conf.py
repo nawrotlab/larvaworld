@@ -87,7 +87,7 @@ def nengo_brain(module_shorts, EEB, OD=None):
                  )
 
 
-def RvsS_larva(species, mock=False, OD=None):
+def RvsS_larva(species, mock=False, OD=None, l0=0.001):
     if species == 'rover':
         EEB = 0.67
         gut_kws = {'k_abs': 0.8}
@@ -139,7 +139,7 @@ def RvsS_larva(species, mock=False, OD=None):
         }
     }
 
-    return preg.get_null('larva_conf', brain=bb, body=preg.get_null('body', initial_length=0.001, Nsegs=Nsegs),
+    return preg.get_null('larva_conf', brain=bb, body=preg.get_null('body', initial_length=l0, Nsegs=Nsegs),
                          energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
 

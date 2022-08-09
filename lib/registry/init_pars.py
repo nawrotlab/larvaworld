@@ -13,6 +13,7 @@ def confInit_ks(k):
         'Eval': 'eval_conf',
         'Replay': 'replay',
         'Model': 'larva_conf',
+        'Source': 'food',
         'LarvaGroup': 'LarvaGroup',
         'ModelGroup': 'ModelGroup',
         'Env': 'env_conf',
@@ -27,6 +28,7 @@ def confInit_ks(k):
         'Group': 'DataGroup',
         'Trial': 'trials',
         'Life': 'life_history',
+        'Tree': None,
         'Body': 'body_shape'
     })
     return d[k]

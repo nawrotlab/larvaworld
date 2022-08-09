@@ -14,6 +14,7 @@ class LarvaSim(BodySim, Larva):
         Larva.__init__(self, unique_id=unique_id, model=model, pos=pos,
                        odor=odor, group=group, default_color=default_color)
         self.build_energetics(larva_pars.energetics, life_history=life_history)
+
         BodySim.__init__(self, model=model, pos=self.pos, orientation=orientation,default_color=self.default_color,
                          physics=larva_pars.physics, **larva_pars.body,
                          **larva_pars.Box2D_params,**kwargs)
@@ -100,7 +101,7 @@ class LarvaSim(BodySim, Larva):
             self.real_length = self.deb.Lw * 10 / 1000
             self.real_mass = self.deb.Ww
             self.V = self.deb.V
-
+            #print(self.real_length)
         else:
             self.deb = None
             self.V = None

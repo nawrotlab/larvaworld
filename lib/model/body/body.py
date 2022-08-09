@@ -490,10 +490,10 @@ class LarvaBody(LarvaShape):
         pos = tuple(self.pos)
         if self.model.draw_sensors:
             self.draw_sensors(viewer)
-        h=self.head
-        viewer.draw_circle(h.get_position(), self.radius / 2, color='red', width=self.radius / 6)
-        viewer.draw_circle(h.rotation_pos, self.radius / 2, color='blue', width=self.radius / 6)
-        viewer.draw_circle(self.global_rear_end_of_head, self.radius / 2, color='green', width=self.radius / 6)
+        # h=self.head
+        # viewer.draw_circle(h.get_position(), self.radius / 2, color='red', width=self.radius / 6)
+        # viewer.draw_circle(h.rotation_pos, self.radius / 2, color='blue', width=self.radius / 6)
+        # viewer.draw_circle(self.global_rear_end_of_head, self.radius / 2, color='green', width=self.radius / 6)
 
         if self.model.draw_contour:
             if self.Nsegs is not None:
@@ -502,7 +502,7 @@ class LarvaBody(LarvaShape):
         else:
             self.contour = self.set_contour(self.segs)
             viewer.draw_polygon(self.contour, self.head.color, True, self.radius / 5)
-
+        # print(self.real_length)
         draw_body(viewer=viewer, model=self.model, pos=pos,  midline_xy=self.midline_xy, contour_xy=None,
                   radius=self.radius, vertices=self.get_shape().boundary.coords, color=self.default_color, selected=self.selected)
 

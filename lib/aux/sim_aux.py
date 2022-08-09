@@ -374,7 +374,7 @@ def test_rotation(ho0, ang_vel, hr0, l0, dt, to_return='front'):
 #         return ang_vel, ho1, k, hf01, turn_err
 
 
-@timer
+# @timer
 def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
     hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
     def get_hf0(ang_vel):

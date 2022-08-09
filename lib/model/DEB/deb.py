@@ -30,6 +30,7 @@ class DEB:
                  save_to=None,V_bite=0.0005, base_hunger=0.5, hunger_gain=0, hunger_as_EEB=False, hours_as_larva=0,
                  simulation=True, use_gut=True,
                  intermitter=None, gut_params=None, **kwargs):
+        # raise
 
         # Drosophila model by default
         self.species = species
@@ -521,6 +522,7 @@ class DEB:
         self.epoch_qs = []
         self.epochs = []
         for idx, ep in epochs.items():
+            #print(idx,ep)
             q = ep['substrate']['quality']
             f = Substrate(**ep['substrate']).get_f(K=self.K)
             c = {'assimilation_mode': 'sim', 'f': f}

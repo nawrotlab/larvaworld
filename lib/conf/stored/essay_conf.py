@@ -701,5 +701,7 @@ if __name__ == "__main__":
     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
     # E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
     E = DoublePatch_Essay(video=True, N=5, dur=5)
+    # print(E.patch_env())
+    # raise
     ds = E.run()
     figs, results = E.anal()
