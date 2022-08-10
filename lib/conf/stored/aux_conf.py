@@ -61,30 +61,13 @@ def Body_dict() :
     }
     return d
 
-def store_RefPars():
-    from lib.aux.dictsNlists import save_dict
-    # from lib.conf.pars.pars import ParDict
-    import lib.aux.naming as nam
-    d = {
-        'length': 'body.initial_length',
-        nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
-        'stride_reoccurence_rate': 'brain.intermitter_params.crawler_reoccurence_rate',
-        nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_mean',
-        nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
-        nam.freq('feed'): 'brain.feeder_params.initial_freq',
-        nam.max(nam.chunk_track('stride', nam.scal(nam.vel('')))): 'brain.crawler_params.max_scaled_vel',
-        'phi_scaled_velocity_max': 'brain.crawler_params.max_vel_phase',
-        'attenuation': 'brain.interference_params.attenuation',
-        'attenuation_max':  'brain.interference_params.attenuation_max',
-        nam.freq(nam.vel(nam.orient(('front')))):  'brain.turner_params.initial_freq',
-        nam.max('phi_attenuation'):  'brain.interference_params.max_attenuation_phase',
-    }
-    save_dict(d, preg.path_dict["ParRef"], use_pickle=False)
+
 
 
 if __name__ == '__main__':
+    pass
     # d=init2par()
     # print(d.keys())
 
     # store_controls()
-    store_RefPars()
+    # store_RefPars()

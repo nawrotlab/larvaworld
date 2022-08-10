@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 
+
 from lib.screen.rendering import SimulationScale
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.agents._larva import Larva
@@ -10,8 +11,8 @@ from lib.registry.pars import preg
 
 def evaluate_input(m, screen):
     if m.pygame_keys is None :
-        from lib.conf.stored.conf import loadConfDict
-        m.pygame_keys = loadConfDict('Settings')['pygame_keys']
+        from lib.registry.controls import load_controls
+        m.pygame_keys = load_controls()['pygame_keys']
 
     d_zoom = 0.01
     ev = pygame.event.get()

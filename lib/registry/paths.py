@@ -71,7 +71,8 @@ def build_path_dict() :
         'Model': f'{CF}/ModelConfs.txt',
         'ModelGroup': f'{CF}/ModelGroupConfs.txt',
         'Batch': f'{CF}/BatchConfs.txt',
-        'Settings': f'{CF}/SetConfs.txt',
+        # 'Settings': f'{CF}/SetConfs.txt',
+        'controls': f'{CF}/controls.txt',
         'Ref': f"{CF}/ReferenceDatasets.txt",
         'Trial': f"{CF}/TrialConfs.txt",
         'Life': f"{CF}/LifeConfs.txt",
@@ -108,3 +109,25 @@ def build_path_dict() :
 #
 
 #pathD = build_path_dict()
+
+def buildSampleDic():
+    # from lib.aux.dictsNlists import save_dict
+    import lib.aux.naming as nam
+    d =dNl.NestDict(
+        {
+            'length': 'body.initial_length',
+            nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
+            'stride_reoccurence_rate': 'brain.intermitter_params.crawler_reoccurence_rate',
+            nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_mean',
+            nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
+            nam.freq('feed'): 'brain.feeder_params.initial_freq',
+            nam.max(nam.chunk_track('stride', nam.scal(nam.vel('')))): 'brain.crawler_params.max_scaled_vel',
+            'phi_scaled_velocity_max': 'brain.crawler_params.max_vel_phase',
+            'attenuation': 'brain.interference_params.attenuation',
+            'attenuation_max': 'brain.interference_params.attenuation_max',
+            nam.freq(nam.vel(nam.orient(('front')))): 'brain.turner_params.initial_freq',
+            nam.max('phi_attenuation'): 'brain.interference_params.max_attenuation_phase',
+        }
+    )
+    return dNl.bidict(d)
+    # save_dict(d, preg.path_dict["ParRef"], use_pickle=False)

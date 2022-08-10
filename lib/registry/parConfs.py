@@ -549,7 +549,8 @@ class LarvaConfDict:
         for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
             DEB_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['DEB'].args,species=species, hunger_gain=1.0,DEB_dt=10.0)
             gut_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['gut'].args,k_abs=k_abs)
-            RvSkws[species] = {'energetics': dNl.NestDict({'DEB' : DEB_pars, 'gut':gut_pars}),'brain.intermitter_params.EEB': EEB}
+            energy_pars=dNl.NestDict({'DEB' : DEB_pars, 'gut':gut_pars})
+            RvSkws[species] = {'wF' : {'energetics': energy_pars, 'brain.intermitter_params.EEB': EEB}, 'woF' :{'energetics': energy_pars} }
 
         # for m0 in m0s:
         for mID0, m0 in mID0dic.items():
@@ -584,10 +585,10 @@ class LarvaConfDict:
             'brain.crawler_params.max_vel_phase',
             'brain.crawler_params.initial_freq',
         ]
-        for mID0,RvSsuf in zip(['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_feeder', 'RE_NEU_PHI_DEF_nav','RE_NEU_PHI_DEF_forager'], ['_loco', '', '_nav', '_forager']):
+        for mID0,RvSsuf,Fexists in zip(['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_feeder', 'RE_NEU_PHI_DEF_nav','RE_NEU_PHI_DEF_forager'], ['_loco', '', '_nav', '_forager'], ['woF', 'wF', 'woF', 'wF']):
             entries[f'v{mID0}'] = self.newConf(m0=entries[mID0], kwargs={k: 'sample' for k in sample_ks})
             for species,kws in RvSkws.items():
-                entries[f'{species}{RvSsuf}']=self.newConf(m0=entries[mID0], kwargs=kws)
+                entries[f'{species}{RvSsuf}']=self.newConf(m0=entries[mID0], kwargs=kws[Fexists])
 
 
 
@@ -928,3 +929,5 @@ def epar(e, k=None, par=None, average=True, Nround=2):
 #     print(ol)
 #
 #
+
+

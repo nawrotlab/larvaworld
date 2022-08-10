@@ -229,7 +229,7 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
 
 def boxplot_double_patch(ks = None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     if ks is None:
-        ks=['v_mu', 'tur_tr', 'pau_tr', 'on_food_tr', 'f_am', 'fov_mu']
+        ks=['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
     P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
     mIDs = ['rover', 'sitter']

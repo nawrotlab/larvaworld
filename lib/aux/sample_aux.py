@@ -5,23 +5,18 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-from lib.registry.pars import preg
+# from lib.registry.pars import preg
+from lib.registry import reg
+
+
 
 
 def generate_larvae(N, sample_dict, base_model):
-    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-    from unflatten import unflatten
-    from lib.aux.dictsNlists import load_dict, flatten_dict
     if len(sample_dict) > 0:
         all_pars = []
-        modF = flatten_dict(base_model)
         for i in range(N):
-            lF = copy.deepcopy(modF)
-            for p, vs in sample_dict.items():
-                p = RefPars[p] if p in RefPars.keys() else p
-                lF.update({p: vs[i]})
-            dic = dNl.NestDict(unflatten(lF))
-            all_pars.append(dic)
+            dic= dNl.NestDict({p: vs[i] for p, vs in sample_dict.items()})
+            all_pars.append(dNl.update_nestdict(dNl.copyDict(base_model), dic))
     else:
         all_pars = [base_model] * N
     return all_pars
@@ -54,12 +49,7 @@ def get_sample_bout_distros(model, sample):
     return m
 
 
-def sample_group(dir=None, N=1, sample_ps=[], e=None):
-    if e is None:
-        from lib.stor.larva_dataset import LarvaDataset
-        d = LarvaDataset(dir, load_data=False)
-        e = d.read(key='end')
-    ps = [p for p in sample_ps if p in e.columns]
+def sample_group(e, N=1, ps=[]):
     means = [e[p].mean() for p in ps]
     if len(ps) >= 2:
         base = e[ps].dropna().values.T
@@ -83,25 +73,30 @@ def get_sample_ks(m, sample_ks=None):
 
 
 def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nids=1, parameter_dict={}):
+    sample_dict = {}
     if m is None:
         m = preg.loadConf(id=mID, conftype="Model")
     ks = get_sample_ks(m, sample_ks=sample_ks)
-    sample_dict = {}
+
     if len(ks) > 0:
-        RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-        invRefPars = {v: k for k, v in RefPars.items()}
-        sample_ps = [invRefPars[k] for k in ks if k in invRefPars.keys()]
-        if len(sample_ps) > 0:
-            if refDataset is None:
-                if refID is not None:
-                    refDataset = preg.loadRef(refID, load=True, step=False)
-            if refDataset is not None:
-                m = get_sample_bout_distros(m, refDataset.config)
-                e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
-                sample_ps = [p for p in sample_ps if p in e.columns]
-                if len(sample_ps) > 0:
-                    sample_dict = sample_group(N=Nids, sample_ps=sample_ps, e=e)
-                    refID = refDataset.refID
+        if refDataset is None:
+            if refID is not None:
+                refDataset = preg.loadRef(refID, load=True, step=False)
+        if refDataset is not None:
+            m = get_sample_bout_distros(m, refDataset.config)
+            e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
+            Sinv=reg.SampleDic.inverse
+            sample_ps=[]
+            for k in ks:
+                if k in Sinv.keys():
+                    p=Sinv[k]
+                    if p in e.columns :
+                        sample_ps.append(p)
+
+            if len(sample_ps) > 0:
+                sample_dict_p = sample_group(N=Nids, ps=sample_ps, e=e)
+                sample_dict={reg.SampleDic[p]:vs for p,vs in sample_dict_p.items()}
+                refID = refDataset.refID
     sample_dict.update(parameter_dict)
     return generate_larvae(Nids, sample_dict, m), refID
 
@@ -119,20 +114,19 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_
 
     e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
     ids = random.sample(e.index.values.tolist(), Nids)
-    RefPars = dNl.load_dict(preg.path_dict["ParRef"], use_pickle=False)
-    sample_ps = [p for p in list(RefPars.keys()) if p in e.columns]
     sample_dict = {}
-    for p in sample_ps:
-        pmu=e[p].mean()
-        vs=[]
-        for id in ids:
-            v=e[p].loc[id]
-            if np.isnan(v):
-                v=pmu
-            vs.append(v)
-        sample_dict[p]=vs
+    for p,k in reg.SampleDic.items():
+        if p in e.columns:
+            pmu = e[p].mean()
+            vs = []
+            for id in ids:
+                v = e[p].loc[id]
+                if np.isnan(v):
+                    v = pmu
+                vs.append(v)
+            sample_dict[k] = vs
 
-    # sample_dict = {p: [e[p].loc[id] for id in ids] for p in sample_ps}
+
     sample_dict.update(parameter_dict)
 
     if m is None:

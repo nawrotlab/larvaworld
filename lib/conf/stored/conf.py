@@ -124,40 +124,6 @@ def deleteConf(id, conf_type,**kwargs):
         pass
 
 
-def next_idx(exp, type='Exp'):
-    # from lib.conf.pars.pars import ParDict
-    # F0 = ParDict.path_dict["SimIdx"]
-    F0 = preg.paths["SimIdx"]
-    try:
-        with open(F0) as f:
-            d = json.load(f)
-    except:
-        ksExp = kConfDict('Exp')
-        ksBatch = kConfDict('Batch')
-        ksEssay = kConfDict('Essay')
-        ksGA = kConfDict('Ga')
-        ksEval = kConfDict('Exp')
-        dExp = dict(zip(ksExp, [0] * len(ksExp)))
-        dBatch = dict(zip(ksBatch, [0] * len(ksBatch)))
-        dEssay = dict(zip(ksEssay, [0] * len(ksEssay)))
-        dGA = dict(zip(ksGA, [0] * len(ksGA)))
-        dEval = dict(zip(ksEval, [0] * len(ksEval)))
-        # batch_idx_dict.update(loadConfDict('Batch'))
-        d = {'Exp': dExp,
-             'Batch': dBatch,
-             'Essay': dEssay,
-             'Eval': dEval,
-             'Ga': dGA}
-    if not type in d.keys():
-        d[type] = {}
-    if not exp in d[type].keys():
-        d[type][exp] = 0
-    d[type][exp] += 1
-    with open(F0, "w") as fp:
-        json.dump(d, fp)
-    return d[type][exp]
-
-
 
 def modshort(vv):
     mm = vv.brain.modules

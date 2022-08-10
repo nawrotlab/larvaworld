@@ -14,5 +14,4 @@ def RvsSx4():
             figs, results = E.anal()
             i+=1
 if __name__ == "__main__":
-    print(reg.Path.SIM)
-    RvsSx4()
+    pass

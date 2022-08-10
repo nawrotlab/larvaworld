@@ -1,4 +1,5 @@
-
+from lib.registry import reg
+import lib.aux.dictsNlists as dNl
 
 def init_shortcuts():
     draw = {
@@ -87,13 +88,15 @@ def init_controls():
     return d
 
 
-def store_controls():
-    d = init_controls()
-    from lib.registry.pars import preg
-    from lib.conf.stored.conf import saveConfDict
-    saveConfDict(ConfDict=d, conftype='Settings')
+def store_controls(d=None):
+    if d is None :
+        d = init_controls()
+    dNl.save_dict(d,reg.Path.controls, use_pickle=False)
+
+def load_controls():
+    return dNl.load_dict(reg.Path.controls, use_pickle=False)
 
 
 
 if __name__ == '__main__':
-    store_controls()
+    pass
