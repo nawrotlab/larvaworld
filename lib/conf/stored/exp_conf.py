@@ -112,7 +112,7 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     return l
 
 def GTRvsS(**kwargs):
-    return preg.grouptype_dict.dict.LarvaGroup.RvsS_groups(**kwargs)
+    return reg.GT.dict.LarvaGroup.RvsS_groups(**kwargs)
 
 def Exp_dict() :
 

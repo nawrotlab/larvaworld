@@ -11,7 +11,7 @@ import param
 import lib.aux.dictsNlists as dNl
 from lib.aux.data_aux import update_mdict, update_existing_mdict, get_ks
 from lib.registry.base import BaseType
-
+from lib.aux import colsNstr as cNs
 # from lib.registry.pars import preg
 from lib.registry import reg
 
@@ -177,7 +177,7 @@ class GroupType(BaseType):
            s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
         if id is None :
             id=mID
-        m=mID if not expand else reg.CT.dict.loadConf(id=mID, conftype='Model')
+        m=mID if not expand else reg.CT.dict.Model.loadConf(mID)
         if type(s) == float:
             s = (s, s)
         kws = {'kwdic': {
@@ -190,6 +190,14 @@ class GroupType(BaseType):
 
         return self.entry(id=id, **kws)
 
+    def lgs(self, mIDs, ids=None, cs=None,**kwargs):
+
+        if ids is None:
+            ids = mIDs
+        N = len(mIDs)
+        if cs is None :
+            cs = cNs.N_colors(N)
+        return dNl.NestDict(dNl.merge_dicts([self.lg_entry(id, c=c, mID=mID, **kwargs) for mID, c, id in zip(mIDs, cs, ids)]))
 
 
 

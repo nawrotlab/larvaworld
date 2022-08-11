@@ -4,8 +4,9 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from lib.aux.stor_aux import read, storeH5, store_distros, storeDic, get_distros
+from lib.aux.stor_aux import read, storeH5, store_distros, get_distros
 from lib.registry.pars import preg
+from lib.registry import reg
 from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux, dir_aux
 
 def comp_linear(s, e, c, mode='minimal'):
@@ -217,9 +218,9 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
     if store:
         store_distros(s, pars=preg.getPar(shorts), parent_dir=c.dir)
         ps=[p for p in [dst,cdst, sdst, csdst] if p in s.columns]
-        storeH5(s[ps], key='pathlength', filepath_key='aux', parent_dir=c.dir)
+        storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
 
-        storeH5(df=s[['x', 'y']], key='default', filepath_key='traj', parent_dir=c.dir)
+        storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
 
 
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
@@ -290,7 +291,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
     # dsp_starts = [int(t) for t in dsp_starts]
     # dsp_stops = [int(t) for t in dsp_stops]
     if s is None :
-        xy0 = read(key='default', path=preg.datapath('traj', c.dir))
+        xy0 = read(key='default', path=reg.datapath('traj', c.dir))
     else :
 
         xy0 = s[['x', 'y']]
@@ -326,7 +327,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
 
     # scale_to_length(s, e, c, pars=ps + pps)
     if store:
-        storeDic(dsps, path=preg.datapath('dsp', c.dir))
+        dNl.save_dict(dsps, reg.datapath('dsp', c.dir))
 
 
 

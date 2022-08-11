@@ -1,7 +1,9 @@
 import time
 
+
+from lib.registry import reg
 from lib.model.envs._larvaworld_replay import LarvaWorldReplay
-from lib.registry.pars import preg
+
 from lib.process.spatial import fixate_larva
 from lib.aux.dir_aux import smaller_dataset
 
@@ -11,7 +13,7 @@ class ReplayRun:
                   transposition=None, fix_point=None, fix_segment=None, show_output = True, **kwargs):
 
         if dataset is None and refID is not None :
-            dataset=preg.conftype_dict.loadRef(refID)
+            dataset=reg.loadRef(refID)
         self.dataset=dataset
         self.show_output=show_output
 
@@ -20,7 +22,10 @@ class ReplayRun:
         s,e,c=smaller_dataset(d=self.dataset,ids=agent_ids, transposition=transposition, time_range=time_range, track_point=track_point,
                               env_params=env_params,close_view=close_view)
 
-
+        c.env_params.windscape=None
+        # print(c.Nsteps)
+        # print(c.Nticks)
+        # print(c.duration)
         if id is None:
             if transposition is not None:
                 n1 = f'aligned_to_{transposition}'
@@ -34,9 +39,9 @@ class ReplayRun:
         self.id=id
 
         if not overlap_mode :
-            vis_kwargs = preg.init_dict.get_null(name='visualization', mode='video', video_speed=60, media_name=self.id)
+            vis_kwargs = reg.get_null(name='visualization', mode='video', video_speed=60, media_name=self.id)
         else :
-            vis_kwargs = preg.init_dict.get_null(name='visualization', mode='image', image_mode='overlap', media_name=self.id, draw_contour=False)
+            vis_kwargs = reg.get_null(name='visualization', mode='image', image_mode='overlap', media_name=self.id, draw_contour=False)
 
 
         if fix_point is not None:
@@ -45,7 +50,7 @@ class ReplayRun:
             bg = None
 
         if save_to is None:
-            save_to = self.dataset.datapath('visuals')
+            save_to = reg.datapath('visuals',c.dir)
 
         base_kws = {
             'step_data': s,
@@ -62,9 +67,8 @@ class ReplayRun:
         self.env = LarvaWorldReplay(**base_kws)
 
     def run(self):
-        if self.show_output:
-            print()
-            print(f'---- Replay {self.id} ----')
+        reg.vprint()
+        reg.vprint(f'---- Replay {self.id} ----')
         # Run the simulation
         completed = self.env.run()
         if not completed:

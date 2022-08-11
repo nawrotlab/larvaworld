@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
+from lib.registry import reg
 
 from lib.registry.pars import preg
 from lib.stor.larva_dataset import LarvaDataset
@@ -77,20 +78,15 @@ def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False
                 dirs.append(dr)
     return ids, dirs
 
-def split_dataset(step,end, food, larva_groups,dir, id, show_output=False, **kwargs):
-    agent_ids = end.index.values
+def split_dataset(step,end, food, larva_groups,dir, **kwargs):
     ds = []
     for gID, gConf in larva_groups.items():
-        new_dir=f'{dir}/{gID}'
-        valid_ids = [id for id in agent_ids if str.startswith(id, f'{gID}_')]
-        d = LarvaDataset(new_dir, id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
-        d.set_data(step=step.loc[(slice(None), valid_ids), :], end=end.loc[valid_ids], food=food)
+        d = LarvaDataset(f'{dir}/{gID}', id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
+        d.set_data(step=step.loc[(slice(None), gConf.ids), :], end=end.loc[gConf.ids], food=food)
         # d.config.parent_plot_dir = plot_dir
         # if is_last:
         #     d.save()
         ds.append(d)
-    if show_output:
-        print(f'Dataset {id} splitted in {[d.id for d in ds]}')
     return ds
 
 def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_range=None, pars=None,env_params=None,close_view=False):

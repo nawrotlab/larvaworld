@@ -7,7 +7,6 @@ import warnings
 import copy
 
 # from codetiming import Timer
-from lib.anal.fitting import fit_epochs, get_bout_distros
 from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam, stdout
 # import lib.aux.naming as nam
 
@@ -16,13 +15,13 @@ from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam, stdout
 # import logging
 # from codetiming import Timer
 from lib.aux.annotation import annotate
-from lib.aux.stor_aux import read, storeH5, storeDic, loadDic, loadSoloDics, storeSoloDics, datapath
+from lib.aux.stor_aux import read, storeH5, loadSoloDics
 
 from lib.decorators.timer3 import timer, warn_slow
 
 from lib.decorators.property import dic_manager_kwargs
 from lib.stor.config import retrieve_config, update_config, update_metric_definition
-
+from lib.registry import reg
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
@@ -160,14 +159,13 @@ class _LarvaDataset:
         refID=self.retrieveRefID(add_reference=add_reference, refID=refID)
 
         self.config=update_config(self, self.config)
-        storeDic(self.config,path=datapath('conf', self.config.dir))
+        dNl.save_dict(self.config,reg.datapath('conf', self.config.dir))
 
 
 
 
         if refID is not None:
-            from lib.registry.pars import preg
-            preg.saveRef(conf=self.config, id=refID)
+            reg.saveRef(conf=self.config, id=refID)
 
 
 
@@ -216,29 +214,41 @@ class _LarvaDataset:
         return df
 
 
-    def get_filepath(self, filepath_key):
-        from lib.aux.stor_aux import datapath, storeH5
-        return datapath(filepath_key, self.dir)
+    # def get_filepath(self, filepath_key):
+    #     return datapath(filepath_key, self.dir)
 
     def storeH5(self, df, key, filepath_key=None, mode=None):
         if filepath_key is None :
             filepath_key=key
-        storeH5(df=df, key=key, path=self.get_filepath(filepath_key), mode=mode)
+        storeH5(df=df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
 
     def read(self, key=None,file=None):
         filepath_key = file
         if filepath_key is None :
             filepath_key=key
-        return read(key=key,path=self.get_filepath(filepath_key))
+        return read(reg.datapath(filepath_key,self.dir), key)
+
+    def store_distros(self, ks=None):
+        if ks is None :
+            ks=['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou']+['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                     'dsp_0_40_max', 'dsp_0_60_max', 'str_N', 'tor5', 'tor20']+['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr']+['tor5', 'tor20']+['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N']
+        s=self.load_step()
+        ps = reg.getPar(ks)
+        ps = [p for p in ps if p in s.columns]
+        dic = {}
+        for p in ps:
+            df = s[p].dropna().reset_index(level=0, drop=True)
+            df.sort_index(inplace=True)
+            dic[p] = df
+        self.storeH5(dic, key=None,filepath_key='distro')
 
 
 
-
-    def storeDic(self, d, filepath_key):
-        storeDic(d=d, path=self.get_filepath(filepath_key))
+    def storeDic(self, d, filepath_key,**kwargs):
+        dNl.save_dict(d,reg.datapath(filepath_key,self.dir),**kwargs)
 
     def loadDic(self, filepath_key,**kwargs):
-        return loadDic(path=self.get_filepath(filepath_key),**kwargs)
+        return dNl.load_dict(reg.datapath(filepath_key,self.dir),**kwargs)
 
     def load_traj(self, mode='default'):
         df=self.read(key=mode, file='traj')
@@ -277,15 +287,14 @@ class _LarvaDataset:
 
     @ property
     def plot_dir(self):
-        from lib.aux.stor_aux import datapath
-        return datapath('plots', self.dir)
+
+        return reg.datapath('plots', self.dir)
 
 
 
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
-        from lib.registry.pars import preg
-        FD = preg.proc_func_dict.dict.preproc
+
 
         cc = {
             's': self.step_data,
@@ -297,7 +306,7 @@ class _LarvaDataset:
         }
         for k, v in pre_kws.items():
             if v:
-                func = FD[k]
+                func = reg.PF.dict.preproc[k]
                 func(**cc, k=v)
 
         if is_last:
@@ -305,8 +314,7 @@ class _LarvaDataset:
         # return self
 
     def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,add_reference=False, **kwargs):
-        from lib.registry.pars import preg
-        FD=preg.proc_func_dict.dict.proc
+
 
         cc = {
             'mode': mode,
@@ -319,7 +327,7 @@ class _LarvaDataset:
             **kwargs
         }
         for k in keys:
-            func = FD[k]
+            func = reg.PF.dict.proc[k]
             func(**cc)
 
         if is_last:
@@ -517,9 +525,6 @@ if __name__ == '__main__':
     raise
 
 
-    import pandas as pd
-
-    M = preg.larva_conf_dict
     refID = 'None.150controls'
     # refID='None.Sims2019_controls'
     h5_ks = ['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']

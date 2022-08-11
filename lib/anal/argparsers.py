@@ -21,7 +21,7 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        self.parsargs = preg.parser_dict.parser_dict[name]
+        self.parsargs = reg.ParsD.parser_dict[name]
 
     def add(self, parser=None):
         if parser is None:
@@ -32,7 +32,7 @@ class Parser:
 
     def get(self, input):
         dic = {k: v.get(input) for k, v in self.parsargs.items()}
-        d = preg.init_dict.get_null(name=self.name, **dic)
+        d = reg.get_null(name=self.name, **dic)
         return d
 
 
@@ -57,13 +57,14 @@ class MultiParser:
 
 def adjust_sim(exp, conf_type, sim):
     if exp is not None and conf_type is not None:
-        # from lib.conf.stored.conf import next_idx
+
         if sim.duration is None:
-            try:
-                exp_conf = preg.conftype_dict.loadConf(id=exp, conftype=conf_type)
-                sim.duration = exp_conf.sim_params.duration
-            except:
+            ct = reg.CT.dict[conf_type]
+            if exp in ct.ConfIDs:
+                sim.duration =ct.loadConf(exp).sim_params.duration
+            else:
                 sim.duration = 3.0
+
         if sim.sim_ID is None:
             sim.sim_ID = f'{exp}_{reg.next_idx(id=exp, conftype=conf_type)}'
         if sim.path is None:

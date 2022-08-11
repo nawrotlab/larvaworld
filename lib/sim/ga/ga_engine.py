@@ -382,28 +382,6 @@ class GAbuilder(GAselector):
             else:
                 self.finalize()
 
-        #     if self.step_df is not None:
-        #         # for robot in self.robots[:]:
-        #         #     self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
-        #         self.finalize_step_df()
-        #
-        #
-        #
-        #     for robot in self.robots[:]:
-        #         self.destroy_robot(robot)
-        #
-        # # check population extinction
-        # if not self.robots:
-        #
-        #
-        #
-        #     self.sort_genomes()
-        #
-        #     if self.model.sim_params.store_data:
-        #         self.all_genomes_dic += [
-        #         {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
-        #          'fitness': g.fitness, **dNl.flatten_dict(g.fitness_dict)}
-        #         for g in self.sorted_genomes if g.fitness_dict is not None]
 
 
 
@@ -465,7 +443,7 @@ class GAbuilder(GAselector):
             self.progress_bar.finish()
         self.printd(0, 'Best fittness:', self.best_genome.fitness)
         if self.model.sim_params.store_data :
-            self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.dir_path)
+            self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.data_dir)
 
 
 

@@ -5,6 +5,8 @@ from matplotlib import pyplot as plt, patches, transforms, ticker
 
 import warnings
 
+from lib.registry import reg
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from lib.aux import dictsNlists as dNl
@@ -305,15 +307,9 @@ def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwar
 
 def save_plot(fig, filepath, filename, verbose=1):
     fig.savefig(filepath, dpi=300, facecolor=None)
-    if verbose >= 1:
-        print(f'Plot {filename} saved as {filepath}')
-        # print(f'Plot saved as {filepath}')
-    # print(fig.get_size_inches(), filename)
-    # fig.clear()
+
     plt.close(fig)
-    # if filename is not None:
-    #     pass
-    # print(f'Plot saved as {filename}')
+    reg.vprint(f'Plot {filename} saved as {filepath}', verbose=verbose)
 
 
 def plot_config(datasets, labels, save_to, subfolder=None):

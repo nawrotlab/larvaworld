@@ -17,9 +17,7 @@ class ParRegistry:
         if verbose >= self.verbose:
             print(text)
 
-    @property
-    def grouptype_dict(self):
-        return reg.GT
+
 
     @property
     def conftype_dict(self):
@@ -35,8 +33,7 @@ class ParRegistry:
 
     @property
     def datapath(self):
-        from lib.aux.stor_aux import datapath
-        return datapath
+        return reg.datapath
 
     @property
     def larva_conf_dict(self):
@@ -53,8 +50,7 @@ class ParRegistry:
 
     @property
     def dist_dict(self):
-        from lib.registry.order import DD
-        return DD
+        return reg.DD
 
     @property
     def graph_dict(self):
@@ -62,18 +58,16 @@ class ParRegistry:
 
     @property
     def parser_dict(self):
-        from lib.registry.parser_dict import ParsD
-        return ParsD
+
+        return reg.ParsD
 
     @property
     def par_dict(self):
-        from lib.registry.order import PD
-        return PD
+        return reg.PD
 
     @property
     def proc_func_dict(self):
-        from lib.registry.order import ProcF
-        return ProcF
+        return reg.PF
 
     @property
     def dict(self):
@@ -87,20 +81,20 @@ class ParRegistry:
         # # print(kwargs)
         # print()
         # raise
-        return self.init_dict.get_null(name=name, **kwargs)
+        return reg.get_null(name=name, **kwargs)
 
     def oG(self, c=1, id='Odor'):
-        return self.init_dict.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+        return reg.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
 
     def oD(self, c=1, id='Odor'):
-        return self.init_dict.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
+        return reg.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
         # return self.odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
 
     def arena(self, x, y=None):
         if y is None:
-            return self.init_dict.get_null('arena', arena_shape='circular', arena_dims=(x, x))
+            return reg.get_null('arena', arena_shape='circular', arena_dims=(x, x))
         else:
-            return self.init_dict.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
+            return reg.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
 
 
 
@@ -117,11 +111,11 @@ class ParRegistry:
                                **{'fits': fits, 'on_food': on_food,'interference': interference}},
             'to_drop' : {k: True if k not in to_keep else False for k in to_drop_keys},
                 }
-        kws={k:self.init_dict.get_null(k,**v) for k,v in kw_dic0.items()}
+        kws={k:reg.get_null(k,**v) for k,v in kw_dic0.items()}
 
         if metric_definition is None:
             metric_definition = self.init_dict.metric_def(**def_kws)
-        dic = self.init_dict.get_null('enrichment',
+        dic = reg.get_null('enrichment',
                                       metric_definition=metric_definition, **kws, **kwargs)
         return dic
 
@@ -143,22 +137,7 @@ class ParRegistry:
     def expandConf(self, conftype, id=None):
         return self.conftype_dict.dict[conftype].expandConf(id=id)
 
-    def loadRef(self, id, load=False, **kwargs):
-        config = self.retrieveRef(id)
-        if config is not None :
-            from lib.stor.larva_dataset import LarvaDataset
-            d = LarvaDataset(config['dir'], load_data=False)
-            if not load:
-                self.vprint(f'Loaded stored reference configuration : {id}')
-                return d
-            else:
-                d.load(**kwargs)
-                self.vprint(f'Loaded stored reference dataset : {id}')
-                return d
 
-        else:
-            # self.vprint(f'Ref Configuration {id} does not exist. Returning None')
-            return None
 
     def simRef(self,id, mID, **kwargs):
         from lib.aux.sample_aux import sim_model
@@ -182,19 +161,22 @@ class ParRegistry:
             dic.pop(id,None)
             self.vprint(f'Deleted Ref Configuration {id}')
             dNl.save_dict(dic, path, use_pickle=False)
+    def loadRef(self, id, load=False, **kwargs):
+        config = self.retrieveRef(id)
+        if config is not None :
+            from lib.stor.larva_dataset import LarvaDataset
+            d = LarvaDataset(config['dir'], load_data=False)
+            if not load:
+                self.vprint(f'Loaded stored reference configuration : {id}')
+                return d
+            else:
+                d.load(**kwargs)
+                self.vprint(f'Loaded stored reference dataset : {id}')
+                return d
 
-
-    def saveRef(self, id, conf):
-        path=self.paths['Ref']
-        dic = dNl.load_dict(path, use_pickle=False)
-        dic[id] = conf
-        dNl.save_dict(dic, path, use_pickle=False)
-
-    def storedRefIDs(self):
-        dic = dNl.load_dict(self.paths['Ref'], use_pickle=False)
-        return list(dic.keys())
-
-
+        else:
+            # self.vprint(f'Ref Configuration {id} does not exist. Returning None')
+            return None
     def retrieveRef(self,id):
         dic = dNl.load_dict(self.paths['Ref'], use_pickle=False)
         if id in dic.keys():
@@ -202,6 +184,14 @@ class ParRegistry:
         else:
             self.vprint(f'Ref Configuration {id} does not exist. Returning None')
             return None
+
+
+    def storedRefIDs(self):
+        dic = dNl.load_dict(self.paths['Ref'], use_pickle=False)
+        return list(dic.keys())
+
+
+
 
     #@ load_timer
     def readRef(self, id, key='end',**kwargs):
@@ -242,8 +232,6 @@ class ParRegistry:
         return self.conftype_dict.dict[conftype].ConfIDs
 
 
-    def next_idx(self, id, conftype='Exp'):
-        return reg.next_idx(conftype=conftype, id=id)
 
 
 

@@ -1,6 +1,7 @@
 import os
 
 from lib.aux import dictsNlists as dNl
+from lib.registry import reg
 
 
 def build_mod_dict():
@@ -145,7 +146,7 @@ class GraphDict:
 
     def eval0(self, entry, **kws):
         func = self.get(entry['plotID'])
-        d = {entry['title']: func(**entry['args'], **kws)}
+        d = {entry['key']: func(**entry['args'], **kws)}
         return d
 
 
@@ -170,11 +171,14 @@ class GraphDict:
         return ds
 
 
-    def entry(self, ID, title=None, args={}):
+    def entry(self, ID, name=None, args={}):
         assert self.get(ID)
-        if title is None:
-            title = ID
-        return {'title': title, 'plotID': ID, 'args': args}
+        if name is not None:
+            args['name']=name
+            key=name
+        else :
+            key = ID
+        return {'key': key, 'plotID': ID, 'args': args}
 
     @property
     def graphgroups(self):
@@ -208,9 +212,8 @@ class GraphDict:
         return ds
 
     def store_model_graphs(self, mIDs, dir):
-        from lib.registry.pars import preg
-        f1 = preg.datapath('model_tables', dir)
-        f2 = preg.datapath('model_summaries', dir)
+        f1 = reg.datapath('model_tables', dir)
+        f2 = reg.datapath('model_summaries', dir)
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
 

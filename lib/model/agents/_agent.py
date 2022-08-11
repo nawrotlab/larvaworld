@@ -95,7 +95,9 @@ class LarvaworldAgent:
     def get_gaussian_odor_value(self, pos):
         return self.odor_dist.pdf(pos) * self.odor_peak_value
 
-    def draw(self, viewer, filled=True):
+    def draw(self, viewer,model=None, filled=True):
+        if model is None :
+            model=self.model
         if self.get_shape() is None:
             return
         p, c, r = self.get_position(), self.color, self.radius
@@ -110,7 +112,7 @@ class LarvaworldAgent:
             # viewer.draw_circle(p, r * 2.0, c, False, r / 15)
             # viewer.draw_circle(p, r * 3.0, c, False, r / 20)
         if self.selected:
-            viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
+            viewer.draw_polygon(self.get_shape(1.1).boundary.coords, model.selection_color, False, r / 5)
             # viewer.draw_circle(p, r * 1.2, self.model.selection_color, False, r / 5)
 
 

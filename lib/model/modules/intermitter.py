@@ -198,7 +198,7 @@ class BaseIntermitter(Effector):
             d[nam.cum('t')] = self.total_t
         else:
             d[nam.cum('t')] = self.total_ticks * self.dt
-        d[nam.num('tick')] = self.total_ticks
+        d[nam.num('tick')] = int(self.total_ticks)
         for c in ['feedchain', 'stridechain', 'pause']:
             t = nam.dur(c)
             l = nam.length(c)
@@ -206,13 +206,13 @@ class BaseIntermitter(Effector):
             cum_t = nam.cum(t)
             rt = nam.dur_ratio(c)
             d[t] = getattr(self, f'{t}s')
-            d[N] = getattr(self, f'{c}_counter')
+            d[N] = int(getattr(self, f'{c}_counter'))
             d[cum_t] = getattr(self, cum_t)
             d[rt] = d[cum_t] / d[nam.cum('t')]
             if c in ['feedchain', 'stridechain']:
-                d[l] = getattr(self, f'{l}s')
-        d[nam.num('feed')] = sum(d[nam.length('feedchain')])
-        d[nam.num('stride')] = sum(d[nam.length('stridechain')])
+                d[l] = [int(ll) for ll in getattr(self, f'{l}s')]
+        d[nam.num('feed')] = int(sum(d[nam.length('feedchain')]))
+        d[nam.num('stride')] = int(sum(d[nam.length('stridechain')]))
         d[nam.mean(nam.freq('feed'))] = d[nam.num('feed')] / d[nam.cum('t')]
         d[nam.mean(nam.freq('stride'))] = d[nam.num('stride')] / d[nam.cum('t')]
 

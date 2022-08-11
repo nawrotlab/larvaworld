@@ -4,7 +4,7 @@ from lib.registry.pars import preg
 from lib.registry import reg
 
 def entry(ID, title=None, **kwargs):
-    return reg.GD.entry(ID, title=title, args=kwargs)
+    return reg.GD.entry(ID, name=title, args=kwargs)
 
 
 def time(short=None, par=None, title=None, u='sec', f1=False, abs=False, **kwargs):

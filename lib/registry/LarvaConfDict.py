@@ -191,7 +191,7 @@ class LarvaConfDict:
                         v = m.brain[f'{mkey}_params'][var_k]
                         if v is not None:
                             if v.name is not None:
-                                vs1, vs2 = preg.dist_dict.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
+                                vs1, vs2 = reg.DD.get_dist(k=var_k, k0=mkey, v=v, return_tabrows=True)
                                 data.append(vs1)
                                 data.append(vs2)
                 else:
@@ -285,7 +285,7 @@ class LarvaConfDict:
                 for kkk in ['stridechain_dist', 'pause_dist', 'run_dist']:
                     if dic[kkk] is not None:
                         if dic[kkk].name is not None:
-                            vs1, vs2 = preg.dist_dict.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
+                            vs1, vs2 = reg.DD.get_dist(k=kkk, k0=k, v=dic[kkk], return_tabrows=True)
                             data0.append(vs1)
                             data0.append(vs2)
 
@@ -744,7 +744,7 @@ class LarvaConfDict:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
         if save_to is None:
-            save_to = preg.datapath('GAoptimization', c.dir)
+            save_to = reg.datapath('GAoptimization', c.dir)
         m0 = self.loadConf(mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)

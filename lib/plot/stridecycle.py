@@ -110,10 +110,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
             c = d.config
             col = c.color if 'color' in c.keys() else d.color
             if individuals:
-                try:
-                    cycle_curves = d.cycle_curves
-                except:
-                    cycle_curves = d.loadDic('cycle_curves')
+                cycle_curves = d.cycle_curves
                 if cycle_curves is None:
                     try:
                         s, e = d.step_data, d.endpoint_data

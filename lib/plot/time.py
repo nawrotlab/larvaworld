@@ -23,7 +23,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     for i, (d, dlab) in enumerate(zip(P.datasets, P.labels)):
         c=d.config
 
-        dic0 = d.loadDic('chunk_dicts')
+        dic0 = d.chunk_dicts
         # dic0 = d.load_chunk_dicts()
         for j, (id, dic) in enumerate(dic0.items()):
             for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):

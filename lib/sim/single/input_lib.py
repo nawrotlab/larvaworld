@@ -1,15 +1,14 @@
 import pygame
 import numpy as np
 
-
+from lib.registry import reg
 from lib.screen.rendering import SimulationScale
-from lib.model.agents._larva_sim import LarvaSim
-from lib.model.agents._larva import Larva
-from lib.registry.pars import preg
+
 
 
 
 def evaluate_input(m, screen):
+
     if m.pygame_keys is None :
         from lib.registry.controls import load_controls
         m.pygame_keys = load_controls()['pygame_keys']
@@ -18,7 +17,7 @@ def evaluate_input(m, screen):
     ev = pygame.event.get()
     for e in ev:
         if e.type == pygame.QUIT:
-            screen.close_requested()
+            screen.close()
         if e.type == pygame.KEYDOWN:
             for k, v in m.pygame_keys.items():
                 if e.key == getattr(pygame, v):
@@ -43,9 +42,7 @@ def evaluate_input(m, screen):
                     else:
                         m.selected_type = lib.gui.aux.windows.object_menu(m.selected_type, location=loc)
                 elif e.button in [4, 5]:
-                    screen.zoom_screen(d_zoom=-d_zoom if e.button == 4 else d_zoom)
-                    m.sim_scale = SimulationScale(m.arena_dims[0]*screen.zoom, color=m.sim_scale.color)
-                    m.sim_scale.render_scale(m.screen_width, m.screen_height)
+                    m.apply_screen_zoom(screen, d_zoom=-d_zoom if e.button == 4 else d_zoom)
                     m.toggle(name='zoom', value=screen.zoom)
     if m.focus_mode and len(m.selected_agents) > 0:
         try:
@@ -56,6 +53,8 @@ def evaluate_input(m, screen):
 
 
 def eval_keypress(k, screen, model):
+    from lib.model.agents._larva_sim import LarvaSim
+    from lib.model.agents._larva import Larva
     # print(k)
     if k == '▲ trail duration':
         model.toggle('trajectory_dt', plus=True, disp='trail duration')
@@ -124,7 +123,7 @@ def evaluate_graphs(m):
 
 def eval_selection(m, p, ctrl):
     res = False if len(m.selected_agents) == 0 else True
-    for f in m.get_food() + m.get_flies() + m.borders:
+    for f in m.get_all_objects():
         if f.contained(p):
             if not f.selected:
                 f.selected = True

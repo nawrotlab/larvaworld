@@ -4,34 +4,41 @@ import datetime
 import random
 import time
 import numpy as np
+
+
+from lib.registry import reg
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
 from lib.model.envs._larvaworld_sim import LarvaWorldSim
 from lib.registry.output import set_output
 from lib.registry.pars import preg
-from lib.registry import reg
+
 
 class SingleRun:
-    def __init__(self, sim_params, env_params, larva_groups, enrichment, collections, experiment,
+    def __init__(self, sim_params, env_params, larva_groups, enrichment, collections, experiment,store_data=True,id=None,
                  trials={}, save_to=None, seed=None, analysis=False, show_output=False, **kwargs):
         np.random.seed(seed)
         random.seed(seed)
         self.show_output = show_output
-        self.id = sim_params.sim_ID
+        if id is None :
+            id = sim_params.sim_ID
+        self.id = id
         self.sim_params = sim_params
         self.experiment = experiment
+        self.store_data = store_data
         dt = sim_params.timestep
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:
+            # if sim_params.path is None :
             from lib.registry.pars import preg
             save_to = reg.Path.SIM
         self.save_to = save_to
-        self.storage_path = f'{sim_params.path}/{self.id}'
-        self.dir_path = f'{save_to}/{self.storage_path}'
-        self.plot_dir = f'{self.dir_path}/plots'
-        self.data_dir = f'{self.dir_path}/data'
-        self.param_dict = locals()
+        # self.storage_path = f'{sim_params.path}/{self.id}'
+        self.storage_path = f'{self.save_to}/{self.id}'
+        self.plot_dir = f'{self.storage_path}/plots'
+        self.data_dir = f'{self.storage_path}/data'
+        # self.vis_dir = f'{self.storage_path}/visuals'
         self.start = time.time()
         self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
 
@@ -39,96 +46,85 @@ class SingleRun:
         # print(output)
         # raise
         self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
-                                 env_params=env_params, larva_groups=larva_groups, trials=trials,
-                                 experiment=self.experiment, Nsteps=int(sim_params.duration * 60 / dt),
-                                 save_to=f'{self.dir_path}/visuals', configuration_text=self.configuration_text,
+                                 env_params=env_params, larva_groups=larva_groups, trials=trials,dur=sim_params.duration,
+                                 experiment=self.experiment,
+                                 save_to=f'{self.storage_path}/visuals',
                                  **kwargs)
 
     def run(self):
-        if self.show_output:
-            print()
-            print(f'---- Simulation {self.id} ----')
-        # Run the simulation
-        completed = self.env.run()
-        if not completed:
-            print('    Simulation aborted!')
-            self.datasets = None
-        else:
-            self.datasets = self.retrieve()
-            end = time.time()
-            dur = end - self.start
-            if self.sim_params.store_data:
-                self.param_dict['date'] = datetime.datetime.now()
-                self.param_dict['duration'] = np.round(dur, 2)
+        self.datasets = self.env.simulate()
+        if self.datasets is not None:
+            for d in self.datasets:
+                if self.enrichment:
+                    reg.vprint()
+                    reg.vprint(f'--- Enriching dataset {self.id} with derived parameters ---')
+                    d.enrich(**self.enrichment, is_last=False, store=self.store_data)
+            if self.sim_params.store_data and self.store_data:
                 self.store()
 
-            # res = store_data(self.env, self.d, self.store_data, self.enrichment, self.param_dict)
-            # if analysis and ds is not None :
-            #     from lib.sim.analysis import sim_analysis
-            #     fig_dict, results = sim_analysis(ds, env.experiment)
-            # else :
-            #     fig_dict, results = None, None
-            if self.show_output:
-                print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
-        self.env.close()
-        return self.datasets
+
+    # def run2(self):
+    #     if self.show_output:
+    #         print()
+    #         print(f'---- Simulation {self.id} ----')
+    #     # Run the simulation
+    #     completed = self.env.run()
+    #     if not completed:
+    #         print('    Simulation aborted!')
+    #         self.datasets = None
+    #     else:
+    #         self.datasets = self.retrieve()
+    #         end = time.time()
+    #         dur = end - self.start
+    #         if self.sim_params.store_data and self.store_data:
+    #             self.store()
+    #         if self.show_output:
+    #             print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
+    #     self.env.close()
+    #     return self.datasets
 
     def terminate(self):
         self.env.close()
 
-    @property
-    def configuration_text(self):
-        text = f"Simulation configuration : \n" \
-               "\n" \
-               f"Experiment : {self.experiment}\n" \
-               f"Simulation ID : {self.id}\n" \
-               f"Duration (min) : {self.sim_params.duration}\n" \
-               f"Timestep (sec) : {self.sim_params.timestep}\n" \
-               f"Parent path : {self.save_to}\n" \
-               f"Dataset path : {self.storage_path}"
-        return text
 
-    def retrieve(self):
-        env = self.env
-        # Read the data collected during the simulation
-        step = env.step_collector.get_agent_vars_dataframe() if env.step_collector else None
-        if env.end_collector is not None:
-            env.end_collector.collect(env)
-            end = env.end_collector.get_agent_vars_dataframe().droplevel('Step')
-        else:
-            end = None
-        if env.food_collector is not None:
-            env.food_collector.collect(env)
-            food = env.food_collector.get_agent_vars_dataframe().droplevel('Step')
-        else:
-            food = None
 
-        ds = dir_aux.split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
-                                   source_xy=self.source_xy,
-                                   fr=1 / self.env.dt, dir=self.data_dir, id=self.id,
-                                   show_output=self.show_output)
-        for d in ds:
-            if self.show_output:
-                print()
-                print(f'--- Enriching dataset {self.id} with derived parameters ---')
-            if self.enrichment:
-                d.enrich(**self.enrichment, is_last=False, show_output=self.show_output,
-                         store=self.sim_params.store_data)
-            d.larva_dicts = env.get_larva_dicts(ids=d.agent_ids)
-            d.larva_tables = env.get_larva_tables()
-        return ds
+    # def retrieve(self):
+    #     env = self.env
+    #     # Read the data collected during the simulation
+    #     step = env.step_collector.get_agent_vars_dataframe() if env.step_collector else None
+    #     if env.end_collector is not None:
+    #         env.end_collector.collect(env)
+    #         end = env.end_collector.get_agent_vars_dataframe().droplevel('Step')
+    #     else:
+    #         end = None
+    #     if env.food_collector is not None:
+    #         env.food_collector.collect(env)
+    #         food = env.food_collector.get_agent_vars_dataframe().droplevel('Step')
+    #     else:
+    #         food = None
+    #
+    #     ds = dir_aux.split_dataset(step, end, food, env_params=self.env.env_pars, larva_groups=self.env.larva_groups,
+    #                                source_xy=self.source_xy,
+    #                                fr=1 / self.env.dt, dir=self.data_dir, id=self.id)
+    #     for d in ds:
+    #         if self.show_output:
+    #             print()
+    #             print(f'--- Enriching dataset {self.id} with derived parameters ---')
+    #         if self.enrichment:
+    #             d.enrich(**self.enrichment, is_last=False, show_output=self.show_output,
+    #                      store=self.sim_params.store_data)
+    #         d.larva_dicts = env.get_larva_dicts(ids=d.agent_ids)
+    #         d.larva_tables = env.get_larva_tables()
+    #     return ds
 
     def store(self):
-        from lib.aux.stor_aux import storeSoloDics,storeH5,storeDic, datapath
+        from lib.aux.stor_aux import storeSoloDics,storeH5
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
-                storeSoloDics(vs, path=datapath(type, d.dir))
-            storeH5(df=d.larva_tables, key=None, path=datapath('tables', d.dir))
-            try :
-                storeDic(self.param_dict,path=datapath('sim_conf', d.dir), use_pickle=True)
-            except :
-                pass
+                storeSoloDics(vs, path=reg.datapath(type, d.dir), use_pickle=False)
+            storeH5(df=d.larva_tables, key=None, path=reg.datapath('tables', d.dir))
+
 
     def analyze(self, save_to=None, **kwargs):
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}

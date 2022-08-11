@@ -7,9 +7,7 @@ import lib.aux.naming as nam
 
 class LarvaWorldReplay(LarvaWorld):
     def __init__(self, step_data, endpoint_data, config, draw_Nsegs=None, experiment='replay', **kwargs):
-        super().__init__(experiment=experiment, dt=config.dt,
-                         Nsteps=config.Nsteps,env_params=config.env_params,
-                         **kwargs)
+        super().__init__(experiment=experiment, dt=config.dt,env_params=config.env_params,Nsteps=config.Nsteps,**kwargs)
         self.draw_Nsegs = draw_Nsegs
         self.step_data = step_data
         self.endpoint_data = endpoint_data
@@ -48,11 +46,11 @@ class LarvaWorldReplay(LarvaWorld):
             self.active_larva_schedule.add(f)
             self.space.place_agent(f, (0, 0))
 
-    def step(self):
-        self.Nticks += 1
-        # Tick sim_clock
-        self.sim_clock.tick_clock()
-        self.active_larva_schedule.step()
-        self.active_food_schedule.step()
+    # def step(self):
+    #     self.Nticks += 1
+    #     # Tick sim_clock
+    #     #self.sim_clock.tick_clock()
+    #     self.active_larva_schedule.step()
+    #     self.active_food_schedule.step()
 
 

@@ -1,11 +1,13 @@
 import random
+
+import numpy as np
 from matplotlib.patches import Circle
 from shapely.geometry import LineString, Point
 
 from lib.aux.dictsNlists import group_list_by_n
 import lib.aux.colsNstr as fun
 from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
-
+from shapely.affinity import affine_transform
 
 
 class Cell:
@@ -180,22 +182,19 @@ class Maze:
         return lines
 
 class Border:
-    def __init__(self, model, points=None, unique_id=None, width=0.001, default_color='black'):
+    def __init__(self, model, points=None, unique_id='Border', width=0.001, default_color='black',
+                 scaling_factor=1):
         from lib.model.space.obstacle import Wall
         self.model=model
         if type(default_color)==str :
             default_color=fun.colorname2tuple(default_color)
-        elif default_color is None :
-            default_color=self.model.screen_color
         self.default_color=default_color
-        if unique_id is None :
-            unique_id= f'Border_{len(self.model.border_xy)}'
         self.unique_id = unique_id
-        self.width=width * self.model.scaling_factor
+        self.width=width*scaling_factor
         self.points=points
-        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in group_list_by_n(points, 2)]
-        self.border_xy, self.border_lines = self.model.create_borders(lines)
-        self.border_bodies = self.model.create_border_bodies(self.border_xy)
+
+        self.border_xy, self.border_lines = self.define_lines(points, s=scaling_factor)
+        self.border_bodies = []
         self.border_walls=[]
         for l in self.border_lines :
             # print(list(l.coords))
@@ -208,16 +207,24 @@ class Border:
 
         self.selected=False
 
-    def delete(self):
-        for xy in self.border_xy :
-            self.model.border_xy.remove(xy)
-        for l in self.border_lines:
-            self.model.border_lines.remove(l)
-        if len(self.border_bodies)>0 :
-            for b in self.border_bodies :
-                self.model.border_bodies.remove(b)
-                self.model.space.delete(b)
-        del self
+    def define_lines(self, points, s=1):
+        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in group_list_by_n(points, 2)]
+
+
+        T = [s, 0, 0, s, 0, 0]
+        ls = [affine_transform(l, T) for l in lines]
+        ps = [l.coords.xy for l in ls]
+        xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+        return xy, ls
+
+    # def delete(self):
+    #     for l in self.border_lines:
+    #         self.model.border_lines.remove(l)
+    #     if len(self.border_bodies)>0 :
+    #         for b in self.border_bodies :
+    #             self.model.border_bodies.remove(b)
+    #             self.model.space.delete(b)
+    #     del self
 
     def draw(self, screen):
         for b in self.border_xy :

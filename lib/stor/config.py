@@ -2,6 +2,9 @@ import os
 
 import numpy as np
 from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam
+from lib.registry import reg
+
+
 def update_metric_definition(md=None, mdconf=None):
     if mdconf is None :
 
@@ -67,22 +70,26 @@ def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_
 
 
 
-def retrieve_config(dir=None, **kwargs):
-    new_config = dataset_config(dir=dir, **kwargs)
+def retrieve_config(dir=None,verbose=1, **kwargs):
+    c = dataset_config(dir=dir, **kwargs)
     if dir is not None :
-        from lib.registry.pars import preg
-        from lib.aux.stor_aux import loadDic
         os.makedirs(dir, exist_ok=True)
-        os.makedirs(preg.datapath('data', dir), exist_ok=True)
-        try :
-            oldconfig=loadDic(path=preg.datapath('conf',dir), use_pickle=True)
-            print('Config with pickle True')
-        except :
-            oldconfig = loadDic(path=preg.datapath('conf', dir), use_pickle=False)
-            print('Config with pickle False')
-        if oldconfig is not None :
-            return oldconfig
-    return new_config
+        os.makedirs(reg.datapath('data', dir), exist_ok=True)
+        f=reg.datapath('conf',dir)
+        if os.path.isfile(f):
+            try:
+                c = dNl.load_dict(f, use_pickle=False)
+                reg.vprint(f'Loaded existing conf {c.id} with pickle False',verbose)
+                return dNl.NestDict(c)
+            except:
+                try:
+                    c = dNl.load_dict(f, use_pickle=True)
+                    reg.vprint(f'Loaded existing conf {c.id} with pickle True', verbose)
+                    return dNl.NestDict(c)
+                except:
+                    pass
+    reg.vprint(f'Generated new conf {c.id} with pickle True', verbose)
+    return dNl.NestDict(c)
 
 
 

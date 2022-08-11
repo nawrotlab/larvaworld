@@ -9,7 +9,7 @@ from shapely.geometry import Point
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.aux.annotation import annotate
 
-# from lib.registry.pars import preg
+from lib.registry.pars import preg
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
     ['d', 'v', 'sv', 'a', 'sa', 'fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',
@@ -275,7 +275,20 @@ def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stop
     return d.pooled_epochs
 
 
-def arrange_evaluation(d, evaluation_metrics):
+def arrange_evaluation(d, evaluation_metrics=None):
+    if evaluation_metrics is None:
+        evaluation_metrics = {
+            'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
+            'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                     'dsp_0_40_max', 'dsp_0_60_max', 'str_N', 'tor5', 'tor20'],
+            'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
+            'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+            'epochs': ['run_t', 'pau_t'],
+            'tortuosity': ['tor5', 'tor20']
+        }
+
+
+
     Edata, Ddata = {}, {}
     dic = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
@@ -288,7 +301,7 @@ def arrange_evaluation(d, evaluation_metrics):
                     Edata[p] = data
                     Eshorts.append(sh)
             except:
-                data = d.get_par(p, key='distro')
+                data = d.read(p, 'distro')
                 if data is not None:
                     Ddata[p] = data.dropna()
                     Dshorts.append(sh)
@@ -303,6 +316,7 @@ def arrange_evaluation(d, evaluation_metrics):
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
     target_data = dNl.NestDict({'step': Ddata, 'end': Edata})
+
 
     ev = {k: cNs.col_df(**v) for k, v in dic.items()}
 

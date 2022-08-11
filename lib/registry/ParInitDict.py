@@ -62,12 +62,12 @@ def update_default(name, dic, **kwargs):
 
 
 class ParInitDict(BaseConfDict):
-    def __init__(self):
-
-
-
-        self.default_path = reg.Path.ParDefaultDict
-        super().__init__()
+    # def __init__(self):
+    #
+    #
+    #
+    #
+    #     super().__init__()
 
 
     def build(self):
@@ -79,7 +79,7 @@ class ParInitDict(BaseConfDict):
 
         d=dNl.NestDict(d)
 
-        self.default_dict = self.build_default_dict(d)
+        # self.default_dict = self.build_default_dict(d)
 
         self.build_mDicts(CTs, d)
         return d
@@ -99,37 +99,32 @@ class ParInitDict(BaseConfDict):
 
 
 
-    def load(self):
-        d= dNl.load_dict(self.path)
 
-        self.default_dict = dNl.load_dict(self.default_path)
-        return d
+    def i2m(self, k):
+        from lib.aux.data_aux import init2mdict
+        return init2mdict({k:self.dict[k]})
 
-    def save(self, d=None):
-        if d is None :
-            d=self.dict
-        dNl.save_dict(d, self.path)
-        dNl.save_dict(self.default_dict, self.default_path)
+class ParDefaultDict(BaseConfDict):
+    # def __init__(self):
+    #     super().__init__()
 
 
-    def build_default_dict(self, d0):
-        dic ={}
-        for name, d in d0.items() :
-            dic[name] = get_default(d,key='v')
+    def build(self):
+        dic = {}
+        for name, d in reg.PI.dict.items():
+            dic[name] = get_default(d, key='v')
         return dNl.NestDict(dic)
-
-
-    def get_null(self, name, key='v', **kwargs):
-        if key != 'v':
-            raise
-        return update_default(name, self.default_dict[name], **kwargs)
 
     def null(self,name, kws={},key='v'):
         if key != 'v':
             raise
-        d0=self.default_dict[name]
+        d0=self.dict[name]
         return dNl.update_nestdict(d0,kws)
 
+    def get_null(self, name, key='v', **kwargs):
+        if key != 'v':
+            raise
+        return update_default(name, self.dict[name], **kwargs)
 
     def metric_def(self, ang={}, sp={}, **kwargs):
         def ang_def(fv=(1, 2), rv=(-2, -1), **kwargs):
@@ -180,8 +175,3 @@ class ParInitDict(BaseConfDict):
         return self.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
                              bouts=['stride', 'pause', 'turn'],
                              to_keep=['midline', 'contour'], **kwargs)
-
-    def i2m(self, k):
-        from lib.aux.data_aux import init2mdict
-        return init2mdict({k:self.dict[k]})
-

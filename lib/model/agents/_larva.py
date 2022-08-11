@@ -5,9 +5,8 @@ from lib.model.agents._agent import LarvaworldAgent
 
 
 class Larva(LarvaworldAgent):
-    def __init__(self, unique_id, model, pos=None, radius=None, default_color=None, **kwargs):
-        if default_color is None:
-            default_color = model.generate_larva_color()
+    def __init__(self, unique_id, model, pos=None, radius=None, default_color='black', **kwargs):
+
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
         super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius,
@@ -16,7 +15,8 @@ class Larva(LarvaworldAgent):
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
         self.carried_objects = []
 
-    def update_color(self, default_color, dic, mode='lin'):
+    def update_color(self, default_color,dic, mode='lin'):
+
         color = deepcopy(default_color)
         if mode == 'lin':
             if dic.stride_id or dic.run_id:

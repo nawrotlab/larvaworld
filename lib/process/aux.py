@@ -558,7 +558,7 @@ def track_par_in_chunk(d, chunk, par):
     s, c = d.step_data, d.config
     A = np.zeros([c.Nticks, c.N, len(bpars)]) * np.nan
 
-    dic0 =d.loadDic('chunk_dicts')
+    dic0 =d.chunk_dicts
     for i, id in enumerate(c.agent_ids):
         epochs = dic0[id][chunk]
         ss = s[par].xs(id, level='AgentID')

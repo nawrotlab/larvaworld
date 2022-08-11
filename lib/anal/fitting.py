@@ -4,9 +4,9 @@ import numpy as np
 from scipy.stats import levy, norm, rv_discrete, ks_2samp
 from scipy.special import erf
 
+
+from lib.registry import reg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
-
 
 def gaussian(x, mu, sig):
     return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
@@ -384,7 +384,7 @@ class BoutGenerator:
         self.dt = dt
         self.range = range
         from lib.registry.pars import preg
-        self.ddfs = preg.dist_dict.dict
+        self.ddfs = reg.DD.dict
         self.xmin, self.xmax = range
         kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
         self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}

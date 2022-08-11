@@ -216,18 +216,6 @@ def annotation_funcs():
     return func_dict
 
 
-#
-# class ProcFuncDict:
-#     def __init__(self, load=False):
-#         self.dict_path = preg.paths['ProcFuncDict']
-#         if not load:
-#             self.dict = proc_func_dict()
-#             self.predict = preproc_func_dict()
-#             # dNl.save_dict(self.dict, self.dict_path)
-#         else:
-#             self.dict = dNl.load_dict(self.dict_path)
-
-# procfunc_dict=ProcFuncDict()
 
 class ProcFuncDict(BaseConfDict):
 

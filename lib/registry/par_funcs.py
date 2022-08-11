@@ -189,12 +189,12 @@ class ParFuncDict(BaseConfDict):
 #             self.dict = dNl.load_dict(self.dict_path)
 
 # parfunc_dict=ParFuncDict()
-
-if __name__ == '__main__':
-    fd = ParFuncDict()
-    # n=fd.__class__.__name__
-    print(fd.dict, fd.path)
-    # fd.save()
-    # print(preg.paths[n])
+#
+# if __name__ == '__main__':
+#     fd = ParFuncDict()
+#     # n=fd.__class__.__name__
+#     print(fd.dict, fd.path)
+#     # fd.save()
+#     # print(preg.paths[n])
 
 

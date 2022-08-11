@@ -91,10 +91,10 @@ def init_controls():
 def store_controls(d=None):
     if d is None :
         d = init_controls()
-    dNl.save_dict(d,reg.Path.controls, use_pickle=False)
+    dNl.save_dict(d,reg.Path.controls, use_pickle=True)
 
 def load_controls():
-    return dNl.load_dict(reg.Path.controls, use_pickle=False)
+    return dNl.load_dict(reg.Path.controls, use_pickle=True)
 
 
 

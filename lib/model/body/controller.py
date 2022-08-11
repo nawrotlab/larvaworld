@@ -307,7 +307,7 @@ class BodySim(BodyManager, PhysicsController):
 
     @property
     def border_collision(self):
-        if len(self.model.border_walls) == 0:
+        if len(self.model.borders) == 0:
             return False
         else:
             x, y = self.pos

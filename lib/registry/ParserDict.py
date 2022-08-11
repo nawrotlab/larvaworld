@@ -146,5 +146,5 @@ class ParserDict(BaseConfDict):
             raise
 
 
-ParsD = ParserDict()
+
 # print('tt')

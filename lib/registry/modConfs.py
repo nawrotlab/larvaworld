@@ -4,6 +4,7 @@ import numpy as np
 from scipy import signal
 
 from lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
+from lib.registry import reg
 
 from lib.registry.units import ureg
 from lib.aux import dictsNlists as dNl
@@ -180,8 +181,10 @@ def If0():
 def Im0():
     from lib.model.modules.intermitter import Intermitter, BranchIntermitter
     from lib.model.modules.intermitter import NengoIntermitter
-    from lib.registry.dist_dict import build_dist_dict, get_dist
-    d0 = build_dist_dict()
+    from lib.registry.DistDict import get_dist
+    # from lib.registry.DistDict import build_dist_dict, get_dist
+    d0 = reg.DD.dict
+    # d0 = build_dist_dict()
 
     dist_args = {k: get_dist(k=k, d0=d0) for k in ['stridechain_dist', 'run_dist', 'pause_dist']}
 
@@ -569,7 +572,7 @@ def init_aux_modules():
 
 def build_aux_module_dict(d0):
     from lib.registry.par import v_descriptor
-    from lib.registry.par_dict import preparePar
+    from lib.registry.BaseParDict import preparePar
 
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))
@@ -594,7 +597,7 @@ def build_aux_module_dict(d0):
 
 def build_brain_module_dict(d0):
     from lib.registry.par import v_descriptor
-    from lib.registry.par_dict import preparePar
+    from lib.registry.BaseParDict import preparePar
 
     d00 = dNl.NestDict(copy.deepcopy(d0))
     pre_d00 = dNl.NestDict(copy.deepcopy(d0))

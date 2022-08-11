@@ -134,6 +134,8 @@ class LarvaSim(BodySim, Larva):
     def get_feed_success(self, t):
         return self.feed_success
 
+
+
     def update_behavior_dict(self):
         d = dNl.NestDict(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter
@@ -223,8 +225,8 @@ class LarvaSim(BodySim, Larva):
 
     def update_behavior(self):
         # Paint the body to visualize effector state
-        if self.model.color_behavior:
-            self.update_behavior_dict()
+        # if self.model.color_behavior:
+        #     self.update_behavior_dict()
         if self.brain.locomotor.intermitter is not None :
             self.brain.locomotor.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 

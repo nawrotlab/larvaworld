@@ -1,6 +1,8 @@
 import random
 import numpy as np
 
+
+from lib.registry import reg
 import lib.aux.sim_aux
 from lib.aux.xy_aux import eudi5x, eudis5
 from lib.process.spatial import comp_PI
@@ -44,7 +46,7 @@ class PrefTrainCondition:
                 env.delete_agent(f)
 
     def start_trial(self,env, on_food=True):
-        m, s = env.sim_clock.minute, env.sim_clock.second
+        # m, s = env.sim_clock.minute, env.sim_clock.second
         c=self.peak_intensity
         if on_food :
             env.CS_counter += 1
@@ -67,6 +69,8 @@ class PrefTrainCondition:
                 env.move_larvae_to_center()
             elif env.UCS_counter == 4:
                 PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                sec=int(env.Nticks*env.dt)
+                m,s=int(sec/60), sec%60
                 print()
                 print(f'Test trial on food ended at {m}:{s} with PI={PI}')
                 text = f'Test trial off food'
@@ -90,7 +94,8 @@ class PrefTrainCondition:
                 print(f'Test trial off food ended with PI={PI}')
                 text = f'Test trial off food PI={PI}'
                 env.input_box.flash_text(text)
-                env.end_condition_met = True
+                return True
+        return False
 
 
 
@@ -124,8 +129,12 @@ class CatchMeCondition:
         for group, score in env.score.items():
             if score >= 20000.0:
                 print(f'{group} group wins')
-                env.end_condition_met = True
-        env.sim_state.set_text(f'L:{np.round(env.score["Left"], 1)} vs R:{np.round(env.score["Right"], 1)}')
+                return True
+        try:
+            env.sim_state.set_text(f'L:{np.round(env.score["Left"], 1)} vs R:{np.round(env.score["Right"], 1)}')
+        except:
+            pass
+        return False
 
 class KeepFlagCondition:
     def __init__(self, env):
@@ -148,14 +157,18 @@ class KeepFlagCondition:
             env.r_t = 0
             if env.l_t - dur > 0:
                 print('Left group wins')
-                env.end_condition_met = True
+                return True
         elif carrier.group == 'Right':
             env.r_t += env.dt
             env.l_t = 0
             if env.r_t - dur > 0:
                 print('Right group wins')
-                env.end_condition_met = True
-        env.sim_state.set_text(f'L:{np.round(dur - env.l_t, 2)} vs R:{np.round(dur - env.r_t, 2)}')
+                return True
+        try :
+            env.sim_state.set_text(f'L:{np.round(dur - env.l_t, 2)} vs R:{np.round(dur - env.r_t, 2)}')
+        except:
+            pass
+        return False
 
 class CaptureFlagCondition:
     def __init__(self, env):
@@ -185,8 +198,12 @@ class CaptureFlagCondition:
         r_dst = np.round(r_dst * 1000, 2)
         if l_dst < 0:
             print('Left group wins')
-            env.end_condition_met = True
+            return True
         elif r_dst < 0:
             print('Right group wins')
-            env.end_condition_met = True
-        env.sim_state.set_text(f'L:{l_dst} vs R:{r_dst}')
+            return True
+        try:
+            env.sim_state.set_text(f'L:{l_dst} vs R:{r_dst}')
+        except:
+            pass
+        return False

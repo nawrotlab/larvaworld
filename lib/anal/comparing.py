@@ -5,10 +5,9 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
-from lib.aux.stor_aux import storeDic, datapath
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
+from lib.registry import reg
 
 class ExpFitter:
     from lib.stor.larva_dataset import LarvaDataset
@@ -85,7 +84,7 @@ class ExpFitter:
         # temp={'sample_data': sample_data_lists, 'df': self.df.to_dict(),
         temp = {'sample_data': sample_data_lists, 'stat_coefs': self.stat_coefs,
                 'stats': self.df_st.values.tolist()}
-        storeDic(d=temp, path=datapath('ExpFitter', self.sample.dir))
+        dNl.save_dict(temp, reg.datapath('ExpFitter', self.sample.dir))
 
 
     def multicol_df(self, key='s'):

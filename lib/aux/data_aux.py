@@ -79,7 +79,7 @@ def mdict2df(mdict, columns=['symbol', 'value', 'description']):
 
 def init2mdict(d0):
     from lib.aux import dictsNlists as dNl
-    from lib.registry.par_dict import preparePar
+    from lib.registry.BaseParDict import preparePar
     from lib.registry.par import v_descriptor
     # d = {}
 

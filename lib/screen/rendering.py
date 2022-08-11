@@ -3,43 +3,51 @@ import os
 import time
 import numpy as np
 import pygame
-
+import imageio
 
 
 
 class Viewer(object):
-    def __init__(self, width, height, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
-                 record_image_to=None, zoom=1):
+    def __init__(self, window_dims, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
+                 record_image_to=None, zoom=1, space_bounds=None):
         # raise
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
         self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
         self.zoom = zoom
         self.caption = caption
-        self.window_size = width, height
+        self.window_dims = window_dims
+        self.space_bounds = space_bounds
         self.show_display = show_display
         self._t = pygame.time.Clock()
         self._fps = fps
         self.dt = dt
         self.center = np.array([0.0, 0.0])
         self.center_lim = np.array([0.0, 0.0])
-
+        self.snapshot_requested=None
         self.display_size = self.scale_dims()
         self._window = self.init_screen()
 
+
+
         if record_video_to:
-            import imageio
             self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=self._fps)
         else:
             self._video_writer = None
 
         if record_image_to:
-            import imageio
+
             self._image_writer = imageio.get_writer(record_image_to, mode='i')
         else:
             self._image_writer = None
 
         self._scale = np.array([[1., .0], [.0, -1.]])
         self._translation = np.zeros(2)
+        if self.space_bounds is not None:
+            self.set_bounds(*self.space_bounds)
+
+    @ property
+    def display_dims(self):
+        return self._window.get_width(), self._window.get_height()
 
     def draw_arena(self, vertices, tank_color, screen_color):
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
@@ -53,7 +61,7 @@ class Viewer(object):
     def init_screen(self):
         if self.show_display:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF
-            window = pygame.display.set_mode(self.window_size, flags)
+            window = pygame.display.set_mode(self.window_dims, flags)
             pygame.display.set_caption(self.caption)
             pygame.event.set_allowed(pygame.QUIT)
         else:
@@ -62,7 +70,7 @@ class Viewer(object):
         return window
 
     def scale_dims(self):
-        return (np.array(self.window_size) / self.zoom).astype(int)
+        return (np.array(self.window_dims) / self.zoom).astype(int)
 
     def zoom_screen(self, d_zoom, pos=None):
         if pos is None:
@@ -73,6 +81,9 @@ class Viewer(object):
             self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
+        if self.space_bounds is not None:
+            self.set_bounds(*self.space_bounds)
+
 
     def set_bounds(self, left, right, bottom, top):
         assert right > left and top > bottom
@@ -178,6 +189,9 @@ class Viewer(object):
             image = pygame.surfarray.array3d(self._window)
         if self._video_writer:
             self._video_writer.append_data(np.flipud(np.rot90(image)))
+        if self.snapshot_requested :
+            self._image_writer = imageio.get_writer(f'{self.caption}_at_{self.snapshot_requested}_sec.png', mode='i')
+            self.snapshot_requested=None
         if self._image_writer:
             self._image_writer.append_data(np.flipud(np.rot90(image)))
             self._image_writer = None
@@ -202,6 +216,8 @@ class Viewer(object):
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
+        if self.space_bounds is not None:
+            self.set_bounds(*self.space_bounds)
 
 
 class ScreenItem:
@@ -246,10 +262,16 @@ class InputBox(ScreenItem):
         else:
             self.shape = None
 
-    def draw(self, viewer):
+    def draw(self, viewer, screen_pos=None):
         if self.visible:
             if self.agent is not None:
-                self.set_shape(self.agent.model.space2screen_pos(self.agent.get_position()))
+                if screen_pos is None :
+                    screen_pos=self.agent.model.space2screen_pos(self.agent.get_position())
+                self.set_shape(screen_pos)
+                # try :
+                #     self.set_shape(self.agent.model.screen_manager.space2screen_pos(self.agent.get_position()))
+                # except :
+                #     self.set_shape(self.agent.model.space2screen_pos(self.agent.get_position()))
                 self.color = self.agent.default_color
             if self.shape is not None:
                 # Render the current text.

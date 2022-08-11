@@ -79,6 +79,10 @@ class LarvaReplay(Larva, BodyReplay):
         for p in ['front_orientation_vel']:
             setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
 
+    def update_behavior_dict(self):
+        # self.beh_dict = dNl.NestDict(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
+        self.color = self.update_color(self.default_color, self.beh_dict)
+
     def step(self):
         m = self.model
         step = m.active_larva_schedule.steps
@@ -86,10 +90,10 @@ class LarvaReplay(Larva, BodyReplay):
         mid = self.midline
         if not np.isnan(self.pos).any():
             m.space.move_agent(self, self.pos)
-        if m.color_behavior:
-            self.color = self.update_color(self.default_color, self.beh_dict)
-        else:
-            self.color = self.default_color
+        # if m.color_behavior:
+        #     self.color = self.update_color(self.default_color, self.beh_dict)
+        # else:
+        #     self.color = self.default_color
         if m.draw_Nsegs is not None:
             segs = self.segs
             if len(mid) == len(segs) + 1:
@@ -113,7 +117,9 @@ class LarvaReplay(Larva, BodyReplay):
     def set_color(self, color):
         self.color = color
 
-    def draw(self, viewer, filled=True):
+    def draw(self, viewer, model=None, filled=True):
+        if model is None :
+            model=self.model
         # r, c, m, v = self.radius, self.color, self.model, self.vertices
 
         pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
@@ -125,7 +131,7 @@ class LarvaReplay(Larva, BodyReplay):
             draw_body_orientation(viewer, self.midline[5], self.front_orientation, self.radius, 'green')
             draw_body_orientation(viewer, self.midline[6], self.rear_orientation, self.radius, 'red')
 
-        if self.model.draw_contour:
+        if model.draw_contour:
 
             if self.Nsegs is not None:
 
@@ -134,7 +140,7 @@ class LarvaReplay(Larva, BodyReplay):
             elif len(self.vertices) > 0:
                 viewer.draw_polygon(self.vertices, color=self.color)
 
-        draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline, contour_xy=None,
+        draw_body(viewer=viewer, model=model, pos=pos, midline_xy=self.midline, contour_xy=None,
                   radius=self.radius, vertices=self.vertices, color=self.color, selected=self.selected)
 
 

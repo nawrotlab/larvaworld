@@ -161,7 +161,7 @@ def build_dist_dict():
 
 def get_dist(k, k0='intermitter', v=None, return_tabrows=False, d0=None, return_all=False):
     if d0 is None:
-        d0 = build_dist_dict()
+        d0 = reg.DD.dict
     dict0 = {
         'stridechain_dist': ('run length', ('N', 'R'), ureg.dimensionless, '# $strides$'),
         'pause_dist': ('pause duration', ('t', 'P'), ureg.s, '$sec$'),

@@ -2,7 +2,7 @@ import numpy as np
 
 from lib.aux.stor_aux import store_distros, get_distros, storeH5
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux
-from lib.registry.pars import preg
+from lib.registry import reg
 
 
 def comp_angles(s, e, c, mode='full'):
@@ -210,7 +210,7 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
     if store :
         pars=ang_pars + nam.vel(ang_pars) + nam.acc(ang_pars)
         dic = get_distros(s, pars=pars)
-        storeH5(dic, key=None, path=preg.datapath('distro', c.dir))
+        storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
 
     print(f'Completed {mode} angular processing.')
 
