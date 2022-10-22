@@ -17,7 +17,7 @@ def build_path_dict() :
     F0 = get_parent_dir()
     RF = f'{F0}/run'
     GF = f'{F0}/lib/gui'
-    CF = f'{F0}/lib/conf/stored/conf_dicts'
+    CF = f'{F0}/lib/conf/conf_dicts'
     MF = f'{F0}/lib/media'
 
     exp_paths = {
@@ -56,13 +56,16 @@ def build_path_dict() :
         'ParRef': f'{CF}/RefPars.txt',
         'ParGlossary': f'{CF}/ParGlossary.csv',
         'ParGlossaryTxT': f'{CF}/ParGlossaryTxT.txt',
+        'Par': f'{CF}/ParConfs.txt',
     }
 
+    ks=['Group', 'Tracker', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Model', 'ModelGroup', 'Batch', 'Ref', 'Trial', 'Life', 'Body', 'Brain', 'SimIdx', 'Tree', 'Ga', 'controls']
+    conf_paths={k : f'{F0}/lib/conf/confDicts/{k}.txt' for k in ks}
     conf_paths = {
         'Group': f'{CF}/DataGroups.txt',
         'Tracker': f'{CF}/TrackerFormats.txt',
         'Env': f'{CF}/EnvConfs.txt',
-        'Par': f'{CF}/ParConfs.txt',
+
         'Exp': f'{CF}/ExpConfs.txt',
         'Ga': f'{CF}/GaConfs.txt',
         'ExpGroup': f'{CF}/ExpGroupConfs.txt',
@@ -82,6 +85,8 @@ def build_path_dict() :
         'Tree': f'{CF}/ParTree.txt',
     }
 
+
+
     data_paths = {
         'DEB': f'{F0}/data/SimGroup/deb_runs',
         'DEB_MODS': {n: f'{F0}/lib/model/DEB/models/deb_{n}.csv' for n in ['rover', 'sitter', 'default']},
@@ -96,6 +101,8 @@ def build_path_dict() :
         'DATA': f'{F0}/data',
         'GUITEST': f'{GF}/gui_speed_test.csv',
     }
+
+
 
     dic = {**par_paths, **conf_paths, **exp_paths, **media_paths, **data_paths}
     dic['parent']=F0
@@ -193,8 +200,122 @@ def build_datafunc_dict(kd):
     return dNl.NestDict(dic)
 
 
+def move_confDicts():
+    F0 = get_parent_dir()
+    CF = f'{F0}/lib/conf/conf_dicts'
+
+    old = {
+        'Group': f'{CF}/DataGroups.txt',
+        'Tracker': f'{CF}/TrackerFormats.txt',
+        'Env': f'{CF}/EnvConfs.txt',
+
+        'Exp': f'{CF}/ExpConfs.txt',
+        'Ga': f'{CF}/GaConfs.txt',
+        'ExpGroup': f'{CF}/ExpGroupConfs.txt',
+        'Essay': f'{CF}/EssayConfs.txt',
+        'Source': f'{CF}/SourceConfs.txt',
+        'Model': f'{CF}/ModelConfs.txt',
+        'ModelGroup': f'{CF}/ModelGroupConfs.txt',
+        'Batch': f'{CF}/BatchConfs.txt',
+        # 'Settings': f'{CF}/SetConfs.txt',
+        'controls': f'{CF}/controls.txt',
+        'Ref': f"{CF}/ReferenceDatasets.txt",
+        'Trial': f"{CF}/TrialConfs.txt",
+        'Life': f"{CF}/LifeConfs.txt",
+        'Body': f"{CF}/BodyConfs.txt",
+        'Brain': f"{CF}/BrainConfs.txt",
+        'SimIdx': f'{CF}/SimIdx.txt',
+        'Tree': f'{CF}/ParTree.txt',
+    }
 
 
+    ff = f'{F0}/lib/conf/confDicts'
+    dd = dNl.NestDict()
+    dd0 = dNl.NestDict()
+    dd1 = dNl.NestDict()
+    for k, c in old.items():
+        try:
+            d = dNl.load_dict(c, use_pickle=True)
+            dd[k] = True
+        except:
+            try:
+                d = dNl.load_dict(c, use_pickle=False)
+                dd[k] = False
+            except:
+                d = None
+                dd[k] = 'FAIL'
+        print(k,dd[k])
+        if d is not None:
+            fff = f'{ff}/{k}.txt'
+
+            res=dNl.save_dict(d, fff, use_pickle=dd[k])
+            print(fff, res)
+            if not dd[k]:
+                dd0[k] = d
+            else:
+                dd1[k] = d
+    dd0.pickle = dd
+    dd1.pickle = dd
+    fff0 = f'{ff}/NoPickleConfs.txt'
+    fff1 = f'{ff}/PickleConfs.txt'
+    dNl.save_dict(dd0, fff0, use_pickle=False)
+    dNl.save_dict(dd1, fff1, use_pickle=True)
+    print(dd0.keys())
+    print(dd1.keys())
+
+def AllConfDict():
+    F0 = get_parent_dir()
+    f = f'{F0}/lib/conf/confDicts/CONFS.txt'
+    d=dNl.load_dict(f, use_pickle=False)
+    f2= f'{F0}/lib/conf/confDicts/CONFS2.txt'
+    d2=dNl.load_dict(f2, use_pickle=True)
+    d.update(d2)
+    return d
+
+def ConfSubkeyDict():
+    # d0 = dNl.NestDict({k: {} for k in ks})
+    d1 = dNl.NestDict({
+        'Batch': {'exp': 'Exp'},
+        'Ga': {'env_params': 'Env'},
+        'Exp': {'env_params': 'Env',
+                'trials': 'Trial',
+                'larva_groups': 'Model',
+                }
+    })
+    # d0.update(d1)
+    return d1
+
+def ExpandedConfDict():
+    c0=AllConfDict()
+    sk=ConfSubkeyDict()
+    for confType0 in c0.keys():
+        if confType0 in sk.keys():
+            pairs = sk[confType0]
+            for id, conf in c0[confType0].items():
+                for subID, confType in pairs.items():
+
+
+                    if subID in conf.keys():
+                        if isinstance(conf[subID], str) and conf[subID] in c0[confType].keys():
+                            conf[subID]=c0[confType][conf[subID]]
+                        elif (subID, confType) == ('larva_groups', 'Model'):
+                            for gID, gConf in conf[subID].items():
+                                mID=gConf.model
+                                if mID in c0['Model'].keys():
+                                    gConf.model=c0['Model'][mID]
+                                else:
+                                    raise
+                        else:
+                            print(subID, confType, confType0, id, c0[confType].keys())
+                        # continue
+                    else :
+                        print(subID, confType)
+    return c0
+
+
+kk=ExpandedConfDict()
+print(kk.Exp.dispersion.larva_groups.Larva.keys())
+# print(kk.Exp.dispersion.trials)
 
 
 

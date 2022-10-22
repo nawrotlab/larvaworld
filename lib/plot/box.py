@@ -13,13 +13,13 @@ from lib.plot.aux import label_diff, annotate_plot
 from lib.plot.base import AutoPlot, Plot
 
 
-def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True, show_ns=True, grouped=False, ylims=None,
+def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=True, grouped=False,
+             ylims=None,
              in_mm=[], target_only=None, **kwargs):
-
     Npars = len(shorts)
     if name is None:
         name = f'boxplot_{Npars}_{key}_pars'
-    P = AutoPlot(name=name, build_kws={'N':Npars,'Ncols':Ncols, 'wh':8, 'mode':'box'}, **kwargs)
+    P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
     pars, labs, units, symbols = preg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
@@ -63,7 +63,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True
 
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
                   xvis=False if ii < (P.Nrows - 1) * Ncols else True)
-    P.conf_fig(align=True,adjust_kws={'LR': (0.1, 0.95),'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
+    P.conf_fig(align=True, adjust_kws={'LR': (0.1, 0.95), 'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
     return P.get()
 
 
@@ -72,15 +72,15 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None,annotation=True
 #     return boxplots(shorts=ks,key='step',**kwargs)
 
 
-def boxplot(par_shorts, sort_labels=False, name=None,xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None, **kwargs):
+def boxplot(par_shorts, sort_labels=False, name=None, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None,
+            **kwargs):
     Npars = len(par_shorts)
     if name is None:
         name = par_shorts[0]
 
-    P = AutoPlot(name=name, build_kws={'N':Npars,'Nrows':int(np.ceil(Npars / 3)), 'w':8,'h':7}, **kwargs)
+    P = AutoPlot(name=name, build_kws={'N': Npars, 'Nrows': int(np.ceil(Npars / 3)), 'w': 8, 'h': 7}, **kwargs)
     # P = Plot(name=par_shorts[0], **kwargs)
     pars, sim_labels, exp_labels, labs, lims = preg.getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
-
 
     # P.build(**kws0)
 
@@ -98,7 +98,6 @@ def boxplot(par_shorts, sort_labels=False, name=None,xlabel=None, pair_ids=None,
     if sort_labels:
         common_ids = sorted(common_ids)
         pair_ids = sorted(pair_ids)
-
 
     for ii in range(Npars):
 
@@ -208,17 +207,16 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
 
 def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     f = f'{save_to}/{exp}{suf}.pdf'
-    box = boxplot(figsize=(10, 7), grid=False,
-                  color=dict(boxes='k', whiskers='k', medians='b', caps='k'),
-                  boxprops=dict(linestyle='-', linewidth=3),
-                  medianprops=dict(linestyle='-', linewidth=3),
-                  whiskerprops=dict(linestyle='-', linewidth=3),
-                  capprops=dict(linestyle='-', linewidth=3)
-                  )
-    box.set_title(exp, fontsize=35)
-    box.set_xlabel('# training trials', fontsize=25)
-    box.set_ylabel(ylabel, fontsize=25)
-    box.set_ylim(ylim)
+    box = plt.boxplot(df,
+                      boxprops=dict(linestyle='-', linewidth=3),
+                      medianprops=dict(linestyle='-', linewidth=3),
+                      whiskerprops=dict(linestyle='-', linewidth=3),
+                      capprops=dict(linestyle='-', linewidth=3)
+                      )
+    plt.suptitle(exp, fontsize=30)
+    plt.xlabel('# training trials', fontsize=25)
+    plt.ylabel(ylabel, fontsize=25)
+    plt.ylim(ylim)
     plt.tick_params(labelsize=20)
     plt.tight_layout()
     plt.savefig(f, dpi=300)
@@ -227,26 +225,25 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     plt.close()
 
 
-def boxplot_double_patch(ks = None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
+def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     if ks is None:
-        ks=['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
+        ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
     P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
     mIDs = ['rover', 'sitter']
-    Cmods=dict(zip(mIDs, ['dark', 'light']))
+    Cmods = dict(zip(mIDs, ['dark', 'light']))
     subIDs = dNl.unique_list([l.split('_')[0] for l in P.labels])
     Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
-    #gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
-
+    # gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
 
     # ks =
     # ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr']
 
-    DataDic=dNl.NestDict({
-        subID : {
-            mID : {
-                'data' : dict(P.data_dict)[f'{subID}_{mID}'],
-                   'colors' : [f'xkcd:{Cmods[mID]} {Csubs[subID]}', f'xkcd:{Cmods[mID]} cyan']} for mID in mIDs
+    DataDic = dNl.NestDict({
+        subID: {
+            mID: {
+                'data': dict(P.data_dict)[f'{subID}_{mID}'],
+                'colors': [f'xkcd:{Cmods[mID]} {Csubs[subID]}', f'xkcd:{Cmods[mID]} cyan']} for mID in mIDs
         } for subID in subIDs
     })
 
@@ -260,8 +257,8 @@ def boxplot_double_patch(ks = None, xlabel='substrate', show_ns=False, stripplot
         pair_dfs = []
         for subID, RvSdic in DataDic.items():
             pair_vs = []
-            for id, dic in RvSdic.items() :
-                vs=dic.data.endpoint_data[par].values * scale
+            for id, dic in RvSdic.items():
+                vs = dic.data.endpoint_data[par].values * scale
                 pair_vs.append(vs)
             pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
         cdf = pd.concat(pair_dfs)  # CONCATENATE
@@ -313,15 +310,13 @@ def boxplot_double_patch(ks = None, xlabel='substrate', show_ns=False, stripplot
                     for id, dic in RvSdic.items():
                         cols.append(dic.colors[0])
 
-
                 # for subID, mID in itertools.product(subIDs, mIDs):
                 #     cols.append(f'xkcd:{Cmods[mID]} {Csubs[subID]}')
             else:
                 for mID in mIDs:
                     for subID, RvSdic in DataDic.items():
                         cols += RvSdic[mID].colors
-                #for subID, RvSdic in DataDic.items():
-
+                # for subID, RvSdic in DataDic.items():
 
                 # for subID, mID in itertools.product(subIDs, mIDs):
                 # for subID in subIDs :
@@ -355,7 +350,7 @@ def boxplot_double_patch(ks = None, xlabel='substrate', show_ns=False, stripplot
             mdf = get_df(par, scale)
             plot_p(mdf, ax, 'Model')
         P.conf_ax(ii, xlab=xlabel if ii > 3 else None, ylab=ylab, ylim=None)
-    if title :
+    if title:
         dur = int(np.round(P.duration / 60))
         P.fig.suptitle(f'Double-patch experiment (duration = {dur} min)', size=40, weight='bold')
     P.fig.align_ylabels(P.axs[:])
@@ -387,7 +382,7 @@ def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, 
 
 
 def plot_foraging(**kwargs):
-    P = AutoPlot(name='foraging',build_kws={'Nrows':1,'Ncols':2, 'w':8,'h':10, 'mode':'box'}, **kwargs)
+    P = AutoPlot(name='foraging', build_kws={'Nrows': 1, 'Ncols': 2, 'w': 8, 'h': 10, 'mode': 'box'}, **kwargs)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
         dfs = []
         for i, d in enumerate(P.datasets):
@@ -416,13 +411,14 @@ def plot_foraging(**kwargs):
     P.get()
 
 
-def lineplot(markers, par_shorts=['f_am'], name=None,coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, scale=1.0,
+def lineplot(markers, par_shorts=['f_am'], name=None, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None,
+             scale=1.0,
              **kwargs):
     Npars = len(par_shorts)
     if name is None:
         name = par_shorts[0]
 
-    P = AutoPlot(name=name,  build_kws={'N':Npars,'Ncols':1, 'w':8,'h': 7/Npars}, **kwargs)
+    P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': 1, 'w': 8, 'h': 7 / Npars}, **kwargs)
 
     # Npars = len(par_shorts)
     # P = AutoPlot(name=par_shorts[0], Nrows=Npars, figsize=(8, 7), **kwargs)

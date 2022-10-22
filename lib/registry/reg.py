@@ -3,6 +3,13 @@ from lib.aux import dictsNlists as dNl
 from functools import lru_cache
 VERBOSE = 0
 
+def init0():
+    from lib.registry.paths import AllConfDict, ExpandedConfDict
+    global conf
+    conf = AllConfDict()
+    global conF
+    conF = ExpandedConfDict()
+
 
 def init(ks=None):
     # global VERBOSE
@@ -70,7 +77,7 @@ def init(ks=None):
     for k in ks:
 
         # kws=dNl.NestDict()
-        print(k)
+        # print(k)
         if k in load_mode.keys() :
             kws=load_mode[k]
         else :

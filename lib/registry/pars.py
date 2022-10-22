@@ -126,9 +126,14 @@ class ParRegistry:
 
 
     def loadConf(self, conftype, id=None):
-        return self.conftype_dict.dict[conftype].loadConf(id=id)
+        if id in reg.conf[conftype].keys():
+            return reg.conf[conftype][id]
+        else :
+            return None
+        # return self.conftype_dict.dict[conftype].loadConf(id=id)
 
     def saveConf(self, conftype, id, conf):
+       # reg.conf[conftype][id]=conf
         return self.conftype_dict.dict[conftype].saveConf(id=id, conf=conf)
 
     def deleteConf(self, conftype, id=None):

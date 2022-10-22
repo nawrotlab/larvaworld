@@ -3,7 +3,7 @@ import numpy as np
 # from lib.registry.dtypes import null_dict
 from lib.registry.pars import preg
 from lib.registry import reg
-null=reg.PI.get_null
+null=reg.get_null
 
 def trial_conf(durs=[], qs=[]):
     cumdurs = np.cumsum([0] + durs)

@@ -1,9 +1,9 @@
 import copy
 from argparse import ArgumentParser
 
-from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.registry import reg
+
 
 
 class Parser:
@@ -80,6 +80,7 @@ def adjust_sim(exp, conf_type, sim):
 
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
+    from lib.registry.pars import preg
     if conf_type == 'Batch':
         exp_conf = preg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
@@ -97,7 +98,47 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     try:
         exp_conf = preg.expandConf(id=exp, conftype=conf_type)
     except:
-        exp_conf = preg.expandConf(id=exp, conftype='Exp')
+        # exp_conf = preg.expandConf(id=exp, conftype='Exp')
+        raise
+
+    if arena is not None:
+        exp_conf.env_params.arena = arena
+    if d is None:
+        d = {'sim_params': reg.get_null('sim_params')}
+
+    exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
+    if models is not None:
+        if conf_type in ['Exp', 'Eval']:
+            exp_conf = update_exp_models(exp_conf, models)
+    # if N is not None:
+    #     if conf_type == 'Exp':
+    #         for gID, gConf in exp_conf.larva_groups.items():
+    #             gConf.distribution.N = N
+    exp_conf.update(**kwargs)
+    return exp_conf
+
+
+def update_exp_con2f(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
+    from lib.registry.pars import preg
+    if conf_type == 'Batch':
+        exp_conf = preg.loadConf(conftype=conf_type, id=exp)
+        batch_id = d['batch_setup']['batch_id']
+        if batch_id is None:
+            idx = reg.next_idx(id=exp, conftype='Batch')
+            batch_id = f'{exp}_{idx}'
+
+        exp_conf.exp = update_exp_conf(exp_conf.exp, d, N, models)
+        exp_conf.batch_id = batch_id
+        exp_conf.batch_type = exp
+
+        exp_conf.update(**kwargs)
+        return exp_conf
+
+    try:
+        exp_conf = preg.expandConf(id=exp, conftype=conf_type)
+    except:
+        # exp_conf = preg.expandConf(id=exp, conftype='Exp')
+        raise
 
     if arena is not None:
         exp_conf.env_params.arena = arena
@@ -115,8 +156,33 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     exp_conf.update(**kwargs)
     return exp_conf
 
+def update_exp_models(exp_conf, mIDs=None, N=None):
+    lgs = exp_conf.larva_groups
+    if mIDs is not None:
+        Nm = len(mIDs)
 
-def update_exp_models(exp_conf, models, N=None):
+        confs=list(lgs.values())
+        if len(lgs) != Nm:
+            confs=[confs[0]]*Nm
+            for conf,col in zip(confs,cNs.N_colors(Nm)):
+                conf.default_color = col
+        lgs = dNl.NestDict({mID: {} for mID in mIDs})
+        for mID, conf in zip(mIDs, confs):
+            lgs[mID] = conf
+            lgs[mID].model = reg.conf.Model[mID]
+    if N is not None:
+        for mID, conf in lgs.items():
+            conf.distribution.N = N
+    exp_conf.larva_groups = lgs
+    return exp_conf
+
+
+
+
+
+
+def update_exp_models2(exp_conf, models, N=None):
+    from lib.registry.pars import preg
     larva_groups = {}
     Nmodels = len(models)
     colors = cNs.N_colors(Nmodels)

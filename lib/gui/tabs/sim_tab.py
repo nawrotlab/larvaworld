@@ -4,10 +4,11 @@ import PySimpleGUI as sg
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 from lib.gui.tabs.tab import GuiTab
-from lib.registry.pars import preg
+
 from run.exec_run import Exec
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 from lib.registry import reg
+from lib.registry.pars import preg
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
@@ -82,7 +83,8 @@ class SimTab(GuiTab):
         return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):
-        output_keys=list(preg.output_dict.keys())
+        from lib.registry.output import output_dict
+        output_keys=list(output_dict.keys())
         # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])

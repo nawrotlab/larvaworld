@@ -72,7 +72,8 @@ class LightSensor(Sensor):
         dir_sensor = self.robot.direction + self.delta_direction
         x_sensor_eol = self.robot.x + self.LENGTH_SENSOR_LINE * cos(dir_sensor)
         y_sensor_eol = self.robot.y + self.LENGTH_SENSOR_LINE * -sin(dir_sensor)
-
+        viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
+                         color=color, width=radius / 10)
         pygame.draw.line(self.scene.screen, Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
 
 

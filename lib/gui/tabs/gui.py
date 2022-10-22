@@ -9,7 +9,7 @@ import pandas as pd
 from lib.registry.pars import preg
 from lib.gui.aux.functions import col_size, window_size, w_kws
 
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 
 
 class LarvaworldGui:

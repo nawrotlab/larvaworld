@@ -6,9 +6,10 @@ import numpy as np
 
 from lib.aux.sim_aux import get_source_xy
 from lib.registry import reg
-from lib.model.space.scene import Scene
+from lib.screen.rendering import  Viewer
 from lib.aux.color_util import Color
 from lib.registry.base import BaseRun
+from lib.screen.screen_aux import get_arena_bounds
 from lib.sim.ga.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil
 from lib.model.envs._base_larvaworld import BaseLarvaWorld
@@ -141,12 +142,7 @@ class GAlauncher(BaseGAlauncher):
         self.scene_file = f'{reg.Path.ga_scene}/{scene}.txt'
         self.scene_speed = scene_speed
         self.obstacles = []
-        if show_screen:
-            import pygame
 
-            pygame.init()
-            pygame.display.set_caption(self.caption)
-            self.clock = pygame.time.Clock()
         self.initialize(**ga_build_kws, **ga_select_kws)
 
     def run(self):
@@ -195,7 +191,7 @@ class GAlauncher(BaseGAlauncher):
                 self.display_info()
 
                 display.flip()
-                self.clock.tick(int(round(self.scene.speed)))
+                self.scene._t.tick(int(round(self.scene.speed)))
         return self.engine.best_genome
 
     def printd(self, min_debug_level, *args):
@@ -211,7 +207,9 @@ class GAlauncher(BaseGAlauncher):
         self.side_panel.display_ga_info()
 
     def initialize(self, **kwargs):
-        self.init_scene()
+        self.scene = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
+                                           panel_width=self.SIDE_PANEL_WIDTH,
+                                           space_bounds=get_arena_bounds(self.arena_dims, self.scaling_factor))
 
         self.engine = GAbuilder(scene=self.scene, model=self, **kwargs)
         if self.show_screen:
@@ -220,8 +218,7 @@ class GAlauncher(BaseGAlauncher):
             from pygame import display
             if not self.offline:
                 self.get_larvaworld_food()
-            self.scene.screen = display.set_mode((self.scene.width + self.scene.panel_width, self.scene.height))
-            self.screen = self.scene.screen
+            self.screen = self.scene._window
             self.side_panel = SidePanel(self.scene, self.engine.space_dict)
             self.side_panel.update_ga_data(self.engine.generation_num, None)
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
@@ -256,9 +253,9 @@ class GAlauncher(BaseGAlauncher):
         return np.array(real_pos) * self.scaling_factor + np.array([self.scene.width / 2, self.scene.height / 2])
 
     def init_scene(self):
-        self.scene = Scene.load_from_file(self.scene_file, self.scene_speed, self.SIDE_PANEL_WIDTH)
+        self.scene = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
+                                           panel_width=self.SIDE_PANEL_WIDTH, space_bounds = get_arena_bounds(self.arena_dims, self.scaling_factor))
 
-        self.scene.set_bounds(*self.space_edges_for_screen)
 
     def increase_scene_speed(self):
         if self.scene.speed < self.SCENE_MAX_SPEED:

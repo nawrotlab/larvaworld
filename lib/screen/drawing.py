@@ -11,8 +11,7 @@ from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
 
 
 class ScreenManager:
-    def __init__(self, model,  vis_kwargs=None,
-                 **kwargs):
+    def __init__(self, model,  vis_kwargs=None,**kwargs):
 
         self.model = model
         if vis_kwargs is None:
@@ -31,6 +30,7 @@ class ScreenManager:
 
 
     def build(self,show_conf_text=False,background_motion=None, traj_color=None, allow_clicks=True, **kwargs):
+        self.s = self.model.scaling_factor
         self.screen_kws = self.define_screen_kws()
         self.image_mode = self.vis_kwargs.render.image_mode
 
@@ -59,7 +59,7 @@ class ScreenManager:
 
         self.snapshot_counter = 0
         self.odorscape_counter = 0
-        self.s = self.model.scaling_factor
+
 
         self.show_conf_text = show_conf_text
 
@@ -73,8 +73,9 @@ class ScreenManager:
         self.sim_clock = SimulationClock(self.model.dt, color=self.scale_clock_color)
         self.sim_scale = SimulationScale(self.model.arena_dims[0], color=self.scale_clock_color)
         self.sim_state = SimulationState(model=self.model, color=self.scale_clock_color)
-        self.add_screen_texts(list(self.model.odor_layers.keys()), color=self.scale_clock_color)
+
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
+        self.add_screen_texts(list(self.model.odor_layers.keys()), color=self.scale_clock_color)
         self.input_box = InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                   center=True, w=120 * 4, h=32 * 4, font=pygame.font.SysFont("comicsansms", 32 * 2))
 
@@ -88,7 +89,7 @@ class ScreenManager:
         if media_name is None:
             media_name = m.id
 
-        self.space_bounds = get_arena_bounds(m.arena_dims)
+        self.space_bounds = get_arena_bounds(m.arena_dims, self.s)
         self.window_dims = get_window_dims(m.arena_dims)
         screen_kws = {
             'window_dims': self.window_dims,

@@ -143,7 +143,7 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
     # return s
 
 
-def comp_dataPI(s,e,c):
+def comp_dataPI(s,e,c, **kwargs):
     # from lib.process.angular import angular_processing
     from lib.process.spatial import comp_PI, comp_PI2
     if 'x' in e.keys():

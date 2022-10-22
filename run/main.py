@@ -1,7 +1,8 @@
 
 from lib.registry import reg
-reg.init()
-reg.init2()
+reg.init0()
+# reg.init()
+# reg.init2()
 
 def RvsSx4():
 
@@ -18,7 +19,12 @@ def RvsSx4():
             i+=1
 if __name__ == "__main__":
     pass
-    # print(reg.DEF)
+    print(reg.conf.Exp.keys())
+    # print(reg.conf.Life.keys())
+    # print(reg.conf.Trial.keys())
+    # print(reg.conf.Exp.dispersion.env_params)
+    # print(reg.conf.Env.arena_200mm)
+
     # print(reg.DEF)
     # print(reg.CT)
     # print(reg.CT)

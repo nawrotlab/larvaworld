@@ -4,17 +4,26 @@ import time
 import numpy as np
 import pygame
 import imageio
+import pygame
+import numpy as np
 
-
+from lib.aux.color_util import Color
+from lib.aux.time_util import TimeUtil
+from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
+from lib.model.space.obstacle import Wall,Box
+from lib.model.space.rot_surface import LightSource
 
 class Viewer(object):
     def __init__(self, window_dims, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
-                 record_image_to=None, zoom=1, space_bounds=None):
-        # raise
+                 record_image_to=None, zoom=1, space_bounds=None,speed=None, panel_width=0):
+        pygame.init()
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
         self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
+        self.speed = speed
+        self.panel_width = panel_width
         self.zoom = zoom
         self.caption = caption
+        self.width,self.height = window_dims
         self.window_dims = window_dims
         self.space_bounds = space_bounds
         self.show_display = show_display
@@ -26,7 +35,7 @@ class Viewer(object):
         self.snapshot_requested=None
         self.display_size = self.scale_dims()
         self._window = self.init_screen()
-
+        self.objects = []
 
 
         if record_video_to:
@@ -45,6 +54,49 @@ class Viewer(object):
         if self.space_bounds is not None:
             self.set_bounds(*self.space_bounds)
 
+    def put(self, obj):
+        if isinstance(obj, list):
+            self.objects.extend(obj)
+        else:
+            self.objects.append(obj)
+
+    def remove(self, obj):
+        self.objects.remove(obj)
+
+    def save(self, filename_pattern='scene', file_path='saved_scenes/'):
+        date_time = TimeUtil.format_date_time()
+        file_name = filename_pattern + '_' + date_time + ".txt"
+        file_path = file_path + file_name
+
+        with open(file_path, 'w') as f:
+            line1 = '# First uncommented line must starts with "Scene"'
+            line2 = '# This is the syntax for each kind of object:'
+            line3 = '# Scene WIDTH HEIGHT'
+            line4 = '# Wall X1 Y1 X2 Y2'
+            line5 = '# Box X Y SIZE'
+            line6 = '# Light X Y EMITTING_POWER'
+
+            f.write(line1 + '\n')
+            f.write(line2 + '\n')
+            f.write(line3 + '\n')
+            f.write(line4 + '\n')
+            f.write(line5 + '\n')
+            f.write(line6 + '\n')
+            f.write('\n')
+
+            f.write(self.get_saved_scene_repr() + '\n')  # scene size
+
+            for obj in self.objects:
+                if hasattr(obj, 'get_saved_scene_repr'):
+                    line = obj.get_saved_scene_repr()
+                    f.write(line + '\n')
+        f.closed
+        print('Scene saved:', file_path)
+
+    def get_saved_scene_repr(self):
+        return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
+
+
     @ property
     def display_dims(self):
         return self._window.get_width(), self._window.get_height()
@@ -61,7 +113,7 @@ class Viewer(object):
     def init_screen(self):
         if self.show_display:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF
-            window = pygame.display.set_mode(self.window_dims, flags)
+            window = pygame.display.set_mode((self.width + self.panel_width, self.height), flags)
             pygame.display.set_caption(self.caption)
             pygame.event.set_allowed(pygame.QUIT)
         else:
@@ -219,6 +271,65 @@ class Viewer(object):
         if self.space_bounds is not None:
             self.set_bounds(*self.space_bounds)
 
+    @staticmethod
+    def load_from_file(file_path, scene_speed,  **kwargs):
+        with open(file_path) as f:
+            line_number = 1
+
+            for line in f:
+                words = line.split()
+
+                # skip empty lines
+                if len(words) == 0:
+                    line_number += 1
+                    continue
+
+                # skip comments in file
+                if words[0][0] == '#':
+                    line_number += 1
+                    continue
+
+                if words[0] == 'Scene':
+                    width = int(words[1])
+                    height = int(words[2])
+                    scene = Viewer((width, height), speed=scene_speed, **kwargs)
+                # elif words[0] == 'SensorDrivenRobot':
+                #     x = float(words[1])
+                #     y = float(words[2])
+                #     robot = SensorDrivenRobot(x, y, ROBOT_SIZE, ROBOT_WHEEL_RADIUS)
+                #     robot.label = line_number
+                #     scene.put(robot)
+                elif words[0] == 'Box':
+                    x = int(words[1])
+                    y = int(words[2])
+                    size = int(words[3])
+                    box = Box(x, y, size, Color.random_bright())
+                    box.label = line_number
+                    scene.put(box)
+                elif words[0] == 'Wall':
+                    x1 = int(words[1])
+                    y1 = int(words[2])
+                    x2 = int(words[3])
+                    y2 = int(words[4])
+
+                    point1 = shapely_aux.Point(x1, y1)
+                    point2 = shapely_aux.Point(x2, y2)
+                    wall = Wall(point1, point2, Color.random_bright())
+                    wall.label = line_number
+                    scene.put(wall)
+                elif words[0] == 'Light':
+                    x = int(words[1])
+                    y = int(words[2])
+                    emitting_power = int(words[3])
+                    light = LightSource(x, y, emitting_power, Color.YELLOW, Color.BLACK)
+                    light.label = line_number
+                    scene.put(light)
+
+                line_number += 1
+
+        f.closed
+        return scene
+
 
 class ScreenItem:
     def __init__(self, color=None):
@@ -247,6 +358,7 @@ class InputBox(ScreenItem):
         self.visible = visible
         self.active = False
         if font is None:
+            pygame.init()
             font = pygame.font.Font(None, 32)
         self.font = font
         self.text = text

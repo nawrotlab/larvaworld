@@ -1,6 +1,7 @@
 import numpy as np
 
 from lib.model.body.controller import PhysicsController
+from lib.registry import reg
 
 
 class Locomotor:
@@ -81,7 +82,7 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
         else:
             Locomotor.__init__(self, **kwargs)
         from lib.registry.pars import preg
-        preg.larva_conf_dict.init_loco(conf, self)
+        reg.MD.init_loco(conf, self)
 
     def step(self, A_in=0, length=1):
 
