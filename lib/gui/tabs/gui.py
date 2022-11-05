@@ -14,7 +14,7 @@ from lib.gui.aux.functions import col_size, window_size, w_kws
 
 class LarvaworldGui:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
-        from lib.gui.tabs import intro_tab, life_tab, sim_tab, batch_tab, essay_tab, import_tab, \
+        from lib.gui.tabs import sim_tab,intro_tab, life_tab, batch_tab, essay_tab, import_tab, \
             analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab,env_tab
         cls.tab_dict = {
             'introduction': (intro_tab.IntroTab, None, None),
@@ -30,18 +30,20 @@ class LarvaworldGui:
             'tutorials': (tutorial_tab.TutorialTab, None, None),
             'settings': (settings_tab.SettingsTab, None, None)
         }
-        cls.tabgroups = {
-            'introduction': ['introduction'],
-            'models': ['larva-model', 'life-history'],
-            # 'environment': ['environment'],
-            'data': ['import', 'analysis'],
-            'simulations': ['simulation', 'batch-run', 'essay'],
-            'resources': ['tutorials', 'videos'],
-            'settings': ['settings'],
-        }
+        # cls.tabgroups = {
+        #     'introduction': ['introduction'],
+        #     'models': ['larva-model', 'life-history'],
+        #     # 'environment': ['environment'],
+        #     'data': ['import', 'analysis'],
+        #     'simulations': ['simulation', 'batch-run', 'essay'],
+        #     'resources': ['tutorials', 'videos'],
+        #     'settings': ['settings'],
+        # }
+
         return object.__new__(cls)
 
     def __init__(self, tabs=None):
+        # print("a")
         self.run_externally = {'sim': False, 'batch': True}
         if tabs is None:
             tabs = list(self.tab_dict.keys())
@@ -67,6 +69,7 @@ class LarvaworldGui:
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
         dic = {}
         for n in tabs:
+
             func, conftype, dtype = self.tab_dict[n]
             ts[n] = func(name=n, gui=self, conftype=conftype, dtype=dtype)
             l, c, d, g = ts[n].build()
@@ -162,3 +165,4 @@ def speed_test():
     df = pd.DataFrame(res)
     # fdir = ParDict.path_dict["GUITEST"]
     df.to_csv(preg.path_dict["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])
+

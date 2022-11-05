@@ -1,14 +1,18 @@
 import copy
 import PySimpleGUI as sg
 
+from lib.gui.tabs.tab import GuiTab
+from lib.gui.aux import functions as gui_fun, elements as gui_el
+from lib.registry.pars import preg
+# from lib.registry import reg
+# reg.init0()
+# reg.init()
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
-from lib.gui.tabs.tab import GuiTab
 
 from run.exec_run import Exec
-from lib.gui.aux import functions as gui_fun, elements as gui_el
-from lib.registry import reg
-from lib.registry.pars import preg
+
+
 
 class SimTab(GuiTab):
     def __init__(self, **kwargs):
@@ -162,5 +166,6 @@ class SimTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['simulation', 'settings'])
+    larvaworld_gui = LarvaworldGui()
+    # larvaworld_gui = LarvaworldGui(tabs=['simulation', 'settings'])
     larvaworld_gui.run()

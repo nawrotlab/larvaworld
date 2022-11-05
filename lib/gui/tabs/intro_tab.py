@@ -1,6 +1,7 @@
 import os
 import PySimpleGUI as sg
 
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.gui.tabs.tab import GuiTab
 
@@ -12,7 +13,7 @@ class IntroTab(GuiTab):
                'pad': (20, 5),
                'justification': 'center'
                }
-        f0 = preg.path_dict["intro"]
+        f0 = reg.Path["intro"]
         fs = sorted(os.listdir(f0))
         bl = [sg.B(image_filename=os.path.join(f0, f), image_subsample=3, pad=(15, 70)) for f in fs]
         l = [[sg.Col([[sg.T('', size=(5, 5))],

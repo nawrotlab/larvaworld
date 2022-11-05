@@ -386,7 +386,7 @@ def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, s
     def fov(ang_vel, turn_err =0):
 
 
-        dv=np.pi / 90
+        dv=8*np.pi / 90
         idx=0
 
         # hf01 = get_hf0(ang_vel)

@@ -108,6 +108,8 @@ class SectionDict:
 
 class SingleSpin(sg.Spin):
     def __init__(self, values, initial_value, dtype=float, value_kws={}, **kwargs):
+        if values is None:
+            values=[]
         spin_kws = {
             'values': [''] + values,
             'initial_value': initial_value if initial_value is not None else '',

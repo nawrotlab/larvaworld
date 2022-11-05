@@ -10,6 +10,5 @@ reg.init()
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-
-    larvaworld_gui = LarvaworldGui(tabs=None)
-    larvaworld_gui.run()
+    my_gui = LarvaworldGui(tabs=None)
+    my_gui.run()
