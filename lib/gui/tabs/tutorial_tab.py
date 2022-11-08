@@ -30,9 +30,9 @@ class TutorialTab(GuiTab):
                 [sg.B(image_filename=os.path.join(f0, '4.png'), key='BUTTON 4',
                       image_subsample=2, image_size=(70, 70), pad=(20, 10))]]
         col2 = [
-            [sg.T('1. Run and analyze a single run experiment with selected larva model and environment',
+            [sg.T('1. Run and analyze a single exec experiment with selected larva model and environment',
                   font='Lobster 12', **c1)],
-            [sg.T('2. Run and analyze a batch run experiment with selected larva model and environment',
+            [sg.T('2. Run and analyze a batch exec experiment with selected larva model and environment',
                   font='Lobster 12', **c1)],
             [sg.T('3. Create your own experimental environment', font='Lobster 12', **c1)],
             [sg.T('4. Change settings and shortcuts', font='Lobster 12', **c1)],

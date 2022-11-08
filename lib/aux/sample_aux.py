@@ -26,7 +26,7 @@ def get_sample_bout_distros0(Im, bout_distros):
     dic = {
         'pause_dist': ['pause', 'pause_dur'],
         'stridechain_dist': ['stride', 'run_count'],
-        'run_dist': ['run', 'run_dur'],
+        'run_dist': ['exec', 'run_dur'],
     }
 
     ds = [ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if

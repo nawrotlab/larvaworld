@@ -816,8 +816,8 @@ def buildInitDict(CTs):
         d['intermitter'] = {
             'mode': {'dtype': str, 'v': 'default', 'vs': ['', 'default', 'branch', 'nengo'],
                      'h': 'The implementation mode of the intermittency (INTERMITTER) module.'},
-            'run_mode': {'dtype': str, 'v': 'stridechain', 'vs': ['stridechain', 'run'],
-                         'h': 'The generation mode of run epochs.'},
+            'run_mode': {'dtype': str, 'v': 'stridechain', 'vs': ['stridechain', 'exec'],
+                         'h': 'The generation mode of exec epochs.'},
             'stridechain_dist': d['bout_distro'],
             'run_dist': d['bout_distro'],
             'pause_dist': d['bout_distro'],
@@ -962,7 +962,7 @@ def buildInitDict(CTs):
                         'h': 'Number of agents per generation', 'k': 'N'},
             'Nelits': {'dtype': int, 'v': 3, 'lim': (0, 1000),
                        'h': 'Number of elite agents preserved per generation', 'k': 'Nel'},
-            'Ngenerations': {'dtype': int, 'lim': (0, 1000), 'h': 'Number of generations to run',
+            'Ngenerations': {'dtype': int, 'lim': (0, 1000), 'h': 'Number of generations to exec',
                              'k': 'Ngen'},
             'Pmutation': {'v': 0.3, 'lim': (0.0, 1.0), 'h': 'Probability of genome mutation',
                           'k': 'Pmut'},
@@ -1007,7 +1007,7 @@ def buildInitDict(CTs):
             'caption': {'dtype': str, 'h': 'The screen caption'},
             'save_to': pSaveTo(),
             'show_screen': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
-            'offline': {**bF, 'h': 'Whether to run a full LarvaworldSim environment', 'k': 'offline'},
+            'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
             'ga_build_kws': d['ga_build_kws'],
             'ga_select_kws': d['ga_select_kws'],
             # 'ga_kws': {**d['GAbuilder'], **d['GAselector']},
@@ -1021,9 +1021,9 @@ def buildInitDict(CTs):
                 'fit_par': {'dtype': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
                 'minimize': {**bT, 'h': 'Whether to minimize or maximize the utility parameter.'},
                 'threshold': {'v': 0.001, 'lim': (0.0, 0.01), 'dv': 0.0001,
-                              'h': 'The utility threshold to reach before terminating the batch-run.'},
+                              'h': 'The utility threshold to reach before terminating the batch-exec.'},
                 'max_Nsims': {'dtype': int, 'v': 7, 'lim': (0, 100),
-                              'h': 'The maximum number of single runs before terminating the batch-run.'},
+                              'h': 'The maximum number of single runs before terminating the batch-exec.'},
                 'Nbest': {'dtype': int, 'v': 3, 'lim': (0, 20),
                           'h': 'The number of best parameter combinations to use for generating the next generation.'},
                 'operations': {
@@ -1034,14 +1034,14 @@ def buildInitDict(CTs):
                 },
             },
             'batch_methods': {
-                'run': {'dtype': str, 'v': 'default',
+                'exec': {'dtype': str, 'v': 'default',
                         'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'],
-                        'h': 'The method to be applied on simulated data derived from every individual run'},
+                        'h': 'The method to be applied on simulated data derived from every individual exec'},
                 'post': {'dtype': str, 'v': 'default', 'vs': ['null', 'default'],
-                         'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-run will be terminated.'},
+                         'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-exec will be terminated.'},
                 'final': {'dtype': str, 'v': 'null',
                           'vs': ['null', 'scatterplots', 'deb', 'odor_preference'],
-                          'h': 'The method to be applied once the batch-run is complete to plot/save the results.'}
+                          'h': 'The method to be applied once the batch-exec is complete to plot/save the results.'}
             },
             'space_search_par': {
                 'range': {'dtype': Tuple[float], 'lim': (-100.0, 100.0), 'dv': 1.0,
@@ -1059,8 +1059,8 @@ def buildInitDict(CTs):
                 'Ngrid': {'dtype': int, 'lim': (0, 100), 'h': 'The number of steps for space search.',
                           'k': 'ss.Ngrid'}},
             'batch_setup': {
-                'batch_id': pID('batch-run', k='b_id'),
-                'save_hdf5': {**bF, 'h': 'Whether to store the batch-run data', 'k': 'store_batch'}
+                'batch_id': pID('batch-exec', k='b_id'),
+                'save_hdf5': {**bF, 'h': 'Whether to store the batch-exec data', 'k': 'store_batch'}
             }
         })
         d.update(d0)
@@ -1069,9 +1069,9 @@ def buildInitDict(CTs):
                            'batch_methods': d['batch_methods'],
                            'optimization': d['optimization'],
                            'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']},
-                                       'h': 'Keywords for the exp run.'},
-                           'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post run.'},
-                           'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc run.'},
+                                       'h': 'Keywords for the exp exec.'},
+                           'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post exec.'},
+                           'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc exec.'},
                            'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                            }
         return d
@@ -1183,11 +1183,11 @@ def buildInitDict(CTs):
             'modelIDs': CTs['Model'].ConfID_entry(single_choice=False, k='mIDs'),
             # 'modelIDs': confID_entry('Model', single_choice=False, k='mIDs'),
             'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
-            'offline': {**bF, 'h': 'Whether to run a full LarvaworldSim environment', 'k': 'offline'},
+            'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
                   'h': 'Number of agents per model ID',
                   'k': 'N'},
-            'id': pID('evaluation run', k='id'),
+            'id': pID('evaluation exec', k='id'),
 
         }
 
@@ -1227,7 +1227,7 @@ def buildInitDict(CTs):
         'xy': xy_distros,
         'substrate': substrate,
         'scape': scapeConfs,
-        'run': runConfs,
+        'exec': runConfs,
         'enrich': enrConfs,
         'model': init_mods,
     }

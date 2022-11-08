@@ -15,7 +15,7 @@ def get_parent_dir():
 
 def build_path_dict() :
     F0 = get_parent_dir()
-    RF = f'{F0}/run'
+    RF = f'{F0}/lib/sim/exec'
     GF = f'{F0}/lib/gui'
     CF = f'{F0}/lib/conf/conf_dicts'
     MF = f'{F0}/lib/media'

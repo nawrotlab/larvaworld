@@ -1,7 +1,6 @@
 import numpy as np
 
-# from lib.registry.dtypes import null_dict
-from lib.registry.pars import preg
+
 from lib.registry import reg
 null=reg.get_null
 

@@ -2,10 +2,10 @@ import subprocess
 import sys
 import argparse
 
-
-sys.path.insert(0, '..')
-
 from lib.registry import reg
+# sys.path.insert(0, '../../..')
+#
+# from lib.registry import reg
 #reg.init()
 from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
@@ -89,10 +89,10 @@ class Exec:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run given batch-run/simulation")
+    parser = argparse.ArgumentParser(description="Run given batch-exec/simulation")
     parser.add_argument('mode', choices=['sim', 'batch'],
-                        help='Whether we are running a single simulation or a batch-run')
-    parser.add_argument('conf_file', type=str, help='The configuration file of the batch-run/simulation')
+                        help='Whether we are running a single simulation or a batch-exec')
+    parser.add_argument('conf_file', type=str, help='The configuration file of the batch-exec/simulation')
     args = parser.parse_args()
     conf = dNl.load_dict(args.conf_file)
     k = Exec(args.mode, conf)

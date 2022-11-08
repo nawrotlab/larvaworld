@@ -22,7 +22,7 @@ class LarvaworldGui:
             'life-history': (life_tab.LifeTab, 'Life', 'life'),
             # 'environment': (env_tab.EnvTab, 'Env', 'env_conf'),
             'simulation': (sim_tab.SimTab, 'Exp', 'exp_conf'),
-            'batch-run': (batch_tab.BatchTab, 'Batch', 'batch_conf'),
+            'batch-exec': (batch_tab.BatchTab, 'Batch', 'batch_conf'),
             'essay': (essay_tab.EssayTab, 'Essay', 'essay_conf'),
             'import': (import_tab.ImportTab, 'Group', None),
             'analysis': (analysis_tab.AnalysisTab, None, None),
@@ -35,7 +35,7 @@ class LarvaworldGui:
         #     'models': ['larva-model', 'life-history'],
         #     # 'environment': ['environment'],
         #     'data': ['import', 'analysis'],
-        #     'simulations': ['simulation', 'batch-run', 'essay'],
+        #     'simulations': ['simulation', 'batch-exec', 'essay'],
         #     'resources': ['tutorials', 'videos'],
         #     'settings': ['settings'],
         # }
@@ -149,7 +149,7 @@ def gui_terminal(size=col_size(y_frac=0.3)):
 def speed_test():
     import numpy as np
     ns0 = ['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay',
-           'batch-run', 'analysis', 'import', 'videos', 'settings']
+           'batch-exec', 'analysis', 'import', 'videos', 'settings']
     ns = [[n] for n in ns0]
     ns = [None] + ns + [None]
     ns0 = ['Total_1'] + ns0 + ['Total_2']

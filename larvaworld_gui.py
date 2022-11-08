@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # !/usr/bin/env python
-import sys
-
-sys.path.insert(0, '..')
 from lib.registry import reg
-
-# reg.init0()
 reg.init()
 
 if __name__ == "__main__":

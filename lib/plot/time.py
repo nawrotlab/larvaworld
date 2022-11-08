@@ -13,7 +13,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     P.build(Nrows=P.Ndatasets, Ncols=2, sharex=True)
     Cbouts = {
         # 'lin': {'stridechain': 'green',
-        'lin': {'run': 'green',
+        'lin': {'exec': 'green',
                 'pause': 'red',
                 'feedchain': 'blue'},
         'ang': {'Lturn': 'cyan',

@@ -33,7 +33,7 @@ def button_row(name, buttons, button_args={}):
         'edit': f'Configure an existing or create a new {name}.',
         'save': f'Save a new {name} configuration.',
         'delete': f'Delete an existing {name} configuration.',
-        'run': 'Run the selected simulation/essay/batch-run.',
+        'exec': 'Run the selected simulation/essay/batch-exec.',
         'save_fig': 'Save the graph to a file.',
         'refresh_figs': 'Detect available graphs and refresh graph list.',
         'draw_fig': 'Draw the selected graph.',

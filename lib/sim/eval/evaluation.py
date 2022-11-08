@@ -80,7 +80,7 @@ class EvalRun(BaseRun):
         self.eval_symbols = dNl.NestDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
-    # def run(self, **kwargs):
+    # def exec(self, **kwargs):
     #     self.sim_models(**kwargs)
 
     def analyze(self):
@@ -945,7 +945,7 @@ if __name__ == '__main__':
     evrun = EvalRun(refID=refID, modelIDs=mIDs, dataset_ids=dataset_ids, offline=False)
 
     #
-    # evrun.run(video=False)
+    # evrun.exec(video=False)
     # evrun.eval()
     # evrun.plot_models()
     # evrun.plot_results()

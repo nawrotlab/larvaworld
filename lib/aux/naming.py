@@ -241,9 +241,9 @@ def epoch_ps(c):
     return chunk_track(c, pars)
 
 
-def epochs_ps(cs=['turn', 'Lturn', 'Rturn', 'pause', 'run', 'stride', 'stridechain']):
+def epochs_ps(cs=['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']):
     from lib.aux import dictsNlists as dNl
-    cs = ['turn', 'Lturn', 'Rturn', 'pause', 'run', 'stride', 'stridechain']
+    cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']
     pars = dNl.flatten_list([epoch_ps(c) for c in cs])
     return pars
 

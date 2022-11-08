@@ -217,19 +217,19 @@ def update_exp_models2(exp_conf, models, N=None):
     return exp_conf
 
 
-def run_template(conftype, args, d):
+def run_template(sim_mode, args, d):
     # MP, p = get_parser(conftype)
 
-    if conftype == 'Rep':
+    if sim_mode == 'Rep':
         from lib.sim.replay.replay import ReplayRun
         run = ReplayRun(**d['replay'])
         run.run()
-    elif conftype == 'Batch':
+    elif sim_mode == 'Batch':
         from run.exec_run import Exec
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Batch')
         exec = Exec(mode='batch', conf=conf, run_externally=False)
         exec.run()
-    elif conftype == 'Exp':
+    elif sim_mode == 'Exp':
         from lib.sim.single.single_run import SingleRun
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
         run = SingleRun(**conf, vis_kwargs=d['visualization'])
@@ -237,7 +237,7 @@ def run_template(conftype, args, d):
 
         if args.analysis:
             fig_dict, results = run.analyze(show=args.show)
-    elif conftype == 'Ga':
+    elif sim_mode == 'Ga':
         from lib.sim.ga.ga_launcher import GAlauncher
         conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,
                                conf_type='Ga')
@@ -251,7 +251,7 @@ def run_template(conftype, args, d):
 
         GA = GAlauncher(**conf)
         best_genome = GA.run()
-    elif conftype == 'Eval':
+    elif sim_mode == 'Eval':
         from lib.sim.eval.evaluation import EvalRun
         evrun = EvalRun(**d.eval_conf)
         evrun.run(video=args.show_screen)
@@ -260,7 +260,7 @@ def run_template(conftype, args, d):
         evrun.plot_models()
 
 
-def get_parser(conftype, parser=None):
+def get_parser(sim_mode, parser=None):
     dic = dNl.NestDict({
         'Batch': [['sim_params', 'batch_setup'], ['e', 'N', 'ms']],
         'Eval': [['eval_conf'], ['hide']],
@@ -268,13 +268,13 @@ def get_parser(conftype, parser=None):
         'Ga': [['sim_params', 'ga_select_kws'], ['e', 'mID0', 'mID1', 'offline', 'hide']],
         'Rep': [['replay'], []]
     })
-    mks, ks = dic[conftype]
+    mks, ks = dic[sim_mode]
 
     MP = MultiParser(mks)
     p = MP.add(parser)
     for k in ks:
         if k == 'e':
-            p.add_argument('experiment', choices=reg.CT.dict[conftype].ConfIDs, help='The experiment mode')
+            p.add_argument('experiment', choices=reg.CT.dict[sim_mode].ConfIDs, help='The experiment mode')
         elif k == 'N':
             p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
         elif k == 'ms':
@@ -287,11 +287,11 @@ def get_parser(conftype, parser=None):
             p.add_argument('-mID1', '--bestConfID', type=str,
                            help='The model configuration ID to store the best genome')
         elif k == 'a':
-            p.add_argument('-a', '--analysis', action="store_true", help='Whether to run analysis')
+            p.add_argument('-a', '--analysis', action="store_true", help='Whether to exec analysis')
             p.add_argument('-show', '--show', action="store_true", help='Whether to show the analysis plots')
         elif k == 'offline':
             p.add_argument('-offline', '--offline', action="store_true",
-                           help='Whether to run a full LarvaworldSim environment')
+                           help='Whether to exec a full LarvaworldSim environment')
         elif k == 'hide':
             p.add_argument('-hide', '--show_screen', action="store_false",
                            help='Whether to render the screen visualization')
@@ -302,8 +302,8 @@ def get_parser(conftype, parser=None):
 
 
 
-if __name__ == '__main__':
-    conf = update_exp_conf(exp='chemorbit', d=None, N=None, models=None, arena=None, conf_type='Eval')
+# if __name__ == '__main__':
+#     conf = update_exp_conf(exp='chemorbit', d=None, N=None, models=None, arena=None, conf_type='Eval')
 
     # print(conf.sim_params)
 

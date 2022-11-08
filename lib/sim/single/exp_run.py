@@ -70,12 +70,12 @@ class ExpRun(BaseRun):
 
         return self.datasets
 
-    # def run(self):
+    # def exec(self):
     #     if self.show_output:
     #         print()
     #         print(f'---- Simulation {self.id} ----')
     #     # Run the simulation
-    #     completed = self.env.run()
+    #     completed = self.env.exec()
     #     if not completed:
     #         print('    Simulation aborted!')
     #         self.datasets = None

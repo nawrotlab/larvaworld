@@ -186,7 +186,7 @@ class LarvaConfDict:
                     for var_k in var_ks:
                         if var_k == 'run_dist' and run_mode == 'stridechain':
                             continue
-                        if var_k == 'stridechain_dist' and run_mode == 'run':
+                        if var_k == 'stridechain_dist' and run_mode == 'exec':
                             continue
                         v = m.brain[f'{mkey}_params'][var_k]
                         if v is not None:

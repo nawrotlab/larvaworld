@@ -280,7 +280,7 @@ class ProgressBarLayout:
         w[self.k].update(0, max=max)
 
     # def start(self):
-    #     # To make compaible with terminal run
+    #     # To make compaible with terminal exec
     #     return self
 
 

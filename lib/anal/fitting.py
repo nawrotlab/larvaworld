@@ -431,7 +431,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params
     dic = {}
-    for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
+    for n,n0 in zip(['pause', 'exec', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
         N=Npau if n == 'pause' else Nrun
         discr = True if n == 'stridechain' else False
         dt = 1 if n == 'stridechain' else c.dt

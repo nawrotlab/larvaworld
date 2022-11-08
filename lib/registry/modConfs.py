@@ -189,8 +189,8 @@ def Im0():
     dist_args = {k: get_dist(k=k, d0=d0) for k in ['stridechain_dist', 'run_dist', 'pause_dist']}
 
     IMargs = {
-        'run_mode': {'dtype': str, 'v0': 'stridechain', 'vs': ['stridechain', 'run'],
-                     'h': 'The generation mode of run epochs.'},
+        'run_mode': {'dtype': str, 'v0': 'stridechain', 'vs': ['stridechain', 'exec'],
+                     'h': 'The generation mode of exec epochs.'},
         'EEB': {'v0': 0.0, 'lim': (0.0, 1.0), 'sym': 'EEB', 'k': 'EEB', 'disp': 'Exploitation:Exploration balance',
                 'h': 'The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.'},
         'EEB_decay': {'v0': 1.0, 'lim': (0.0, 2.0), 'sym': sub('c', 'EEB'),

@@ -65,9 +65,6 @@ class ParRegistry:
     def par_dict(self):
         return reg.PD
 
-    @property
-    def proc_func_dict(self):
-        return reg.PF
 
     @property
     def dict(self):
@@ -240,7 +237,10 @@ class ParRegistry:
 
 
 
-
+# from lib.registry import reg
+# reg.init()
 preg = ParRegistry()
+
+
 
 

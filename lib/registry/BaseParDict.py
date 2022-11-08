@@ -607,7 +607,7 @@ class BaseParDict:
             'tur': 'turn',
             'Ltur': 'Lturn',
             'Rtur': 'Rturn',
-            'run': 'run',
+            'exec': 'exec',
             'str_c': nam.chain('stride'),
             'fee_c': nam.chain('feed')
         }

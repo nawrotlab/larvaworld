@@ -36,7 +36,7 @@ class DrawBodyTab(DrawTab):
             'P2': None,
         }
 
-        sl = gui_el.SelectionList(tab=self, disp='Body', buttons=['load', 'save', 'delete', 'run'],
+        sl = gui_el.SelectionList(tab=self, disp='Body', buttons=['load', 'save', 'delete', 'exec'],
                            width=30, text_kws=gui_fun.t_kws(12))
 
         c1 = gui_el.PadDict(self.c_key, disp_name='Configuration', text_kws=gui_fun.t_kws(8), header_width=25,

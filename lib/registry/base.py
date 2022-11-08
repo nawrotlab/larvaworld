@@ -158,18 +158,18 @@ class BaseRun:
     def simulate(self):
         pass
         # reg.vprint()
-        # reg.vprint(f'---- {self.runtype} run : {self.id} ----')
+        # reg.vprint(f'---- {self.runtype} exec : {self.id} ----')
         # # Run the simulation
         # start = time.time()
         # is_running = True
         # while is_running:
         # #     if self.aborted:
-        # #         reg.vprint(f'---- {self.runtype} run : {self.id} ----')
+        # #         reg.vprint(f'---- {self.runtype} exec : {self.id} ----')
         # #     elif self.completed:
         # #         self.retrieve()
         # #         end = time.time()
         # #         dur = np.round(end - start).astype(int)
-        # #         reg.vprint(f'    {self.runtype} run : {self.id} completed in {dur} seconds!')
+        # #         reg.vprint(f'    {self.runtype} exec : {self.id} completed in {dur} seconds!')
         # #         self.is_running = False
         # # return self.data
 

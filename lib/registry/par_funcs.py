@@ -13,7 +13,7 @@ def track_par_func(chunk, par):
 
 
 def chunk_func(kc, store=False):
-    if kc in ['str', 'pau', 'run', 'str_c']:
+    if kc in ['str', 'pau', 'exec', 'str_c']:
         def func(d):
             from lib.process.aux import crawl_annotation
             s, e, c = d.step_data, d.endpoint_data, d.config

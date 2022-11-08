@@ -10,7 +10,7 @@ from lib.registry.pars import preg
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 
-from run.exec_run import Exec
+from lib.sim.exec.exec_run import Exec
 
 
 
@@ -41,7 +41,7 @@ class SimTab(GuiTab):
         tab_kws = {'font': ("Helvetica", 13, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
 
-        ts = [sg.Tab(n, nl, key=f'{n}_SIM TAB') for n, nl in zip(['draw','setup', 'run'], [l3,l1, l2])]
+        ts = [sg.Tab(n, nl, key=f'{n}_SIM TAB') for n, nl in zip(['draw','setup', 'exec'], [l3,l1, l2])]
         l_tabs = sg.TabGroup([ts], key='ACTIVE_SIM_TAB', tab_location='topleft', **tab_kws)
         l = [[l0, l_tabs]]
         return l, {**c1, **c2, **c3}, {**g1, **g2, **g3}, {**d1, **d2, **d3}
@@ -68,7 +68,7 @@ class SimTab(GuiTab):
         s2 = gui_el.PadTable('trials', buttons=['add', 'remove'], index='idx', col_widths=[3, 4, 4, 5, 8],
                               heading_dict={'start': 'start', 'stop': 'stop', 'quality': 'substrate.quality',
                                             'type': 'substrate.type'},dict_name='epoch')
-        sl3 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run', 'tree', 'conf_tree'], progress=True,root_key='exp_conf',
+        sl3 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec', 'tree', 'conf_tree'], progress=True,root_key='exp_conf',
                             sublists={'env_params': sl1, 'larva_groups': s1},text_kws=gui_fun.t_kws(10), width=28)
         sl4 = gui_el.SelectionList(tab=self, conftype='ExpGroup', disp='Behavior/field :', buttons=[],single_line=True,
                             width=15, text_kws=gui_fun.t_kws(12),sublists={'simulations': sl3})

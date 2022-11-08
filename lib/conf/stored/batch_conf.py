@@ -1,18 +1,16 @@
-from lib.registry.pars import preg
-
+from lib.registry import reg
 
 def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=True, **kwargs):
-    null = preg.init_dict.get_null
     if bm is None:
         bm_kws = {}
     elif bm == 'PI':
-        bm_kws = {'run': 'odor_preference', 'post': 'null', 'final': 'odor_preference'}
+        bm_kws = {'exec': 'odor_preference', 'post': 'null', 'final': 'odor_preference'}
     elif bm == 'DEB':
-        bm_kws = {'run': 'deb', 'post': 'null', 'final': 'deb'}
+        bm_kws = {'exec': 'deb', 'post': 'null', 'final': 'deb'}
     else:
         bm_kws = bm
     if ss is not None:
-        ss = {p: null('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
+        ss = {p: reg.get_null('space_search_par', range=r, Ngrid=N) for p, (r, N) in ss.items()}
     else:
         ss = {}
     if ssbool is not None:
@@ -23,13 +21,13 @@ def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=
     if len(ss0) == 0:
         ss0 = None
 
-    enr=null('enrichment',processing=null('processing', **{pr : True for pr in proc}))
-    conf = null('batch_conf',
+    enr=reg.get_null('enrichment',processing=reg.get_null('processing', **{pr : True for pr in proc}))
+    conf = reg.get_null('batch_conf',
                          exp=exp,
                          exp_kws={'enrichment': enr, 'experiment': exp},
-                         optimization=null("optimization", fit_par=o, **o_kws) if o is not None else None,
+                         optimization=reg.get_null("optimization", fit_par=o, **o_kws) if o is not None else None,
                          space_search=ss0,
-                         batch_methods=null('batch_methods', **bm_kws),
+                         batch_methods=reg.get_null('batch_methods', **bm_kws),
                          **kwargs)
     # print(conf)
     if as_entry:
@@ -73,7 +71,7 @@ def Batch_dict():
                 ss={'activation_noise': [[0.0, 0.8], 3], 'base_activation': [[15.0, 25.0], 3]},
                 o='sample_fit',
                 o_kws={'threshold': 1.0, 'max_Nsims': 20, 'operations': {'mean': False, 'abs': False, 'std': False}},
-                bm={'run': 'exp_fit'}),
+                bm={'exec': 'exp_fit'}),
         **batch('tactile_detection',
                 ss={'initial_gain': [[25.0, 75.0], 10], 'decay_coef': [[0.01, 0.5], 4]},
                 o='cum_food_detected', o_kws={'threshold': 100000.0, 'max_Nsims': 600, 'minimize': False, 'Nbest': 8,
@@ -88,12 +86,11 @@ def Batch_dict():
 
 
 def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
-    null = preg.init_dict.get_null
     from lib.conf.stored.conf import imitation_exp
     conf = batch(exp=None,
                  ss={'activation_noise': [[0.0, 2.0], 3], 'base_activation': [[15.0, 25.0], 3]},
                  o='tortuosity_20_mean', o_kws={'max_Nsims': 120, 'operations': {'mean': True}},
-                 en=null('enrichment',processing=null('processing', tortuosity=True)),
+                 en=reg.get_null('enrichment',processing=reg.get_null('processing', tortuosity=True)),
                  # en=preg.enr_dict(proc=['tortuosity']),
                  as_entry=False
                  )
@@ -104,7 +101,6 @@ def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 
 
 def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
-    null = preg.init_dict.get_null
     from lib.conf.stored.conf import imitation_exp
     conf = batch(exp=None,
                  ss={
@@ -114,8 +110,8 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
                  },
                  o='sample_fit',
                  o_kws={'threshold': 0.1, 'Nbest': 8, 'max_Nsims': 140, 'operations': {'mean': False, 'abs': False}},
-                 bm={'run': 'exp_fit'},
-                 en=null('enrichment', processing=null('processing', angular=True)),
+                 bm={'exec': 'exp_fit'},
+                 en=reg.get_null('enrichment', processing=reg.get_null('processing', angular=True)),
                  as_entry=False
                  )
     conf['exp'] = imitation_exp(sample, model=model, exp=exp, idx=idx, **kwargs)
@@ -125,7 +121,7 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 
 
 def run_fit_global_batch(sample, **kwargs):
-    from run.exec_run import Exec
+    from lib.sim.exec.exec_run import Exec
     from lib.anal.comparing import ExpFitter
     conf = fit_global_batch(sample=sample, **kwargs)
     conf['proc_kws']['exp_fitter'] = ExpFitter(sample, valid_fields=['angular motion'])

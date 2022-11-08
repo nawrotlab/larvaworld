@@ -37,7 +37,7 @@ for i, k in enumerate(['AttP240', 'SS888Imp', 'SS888']):
     # fft_freqs(s, e, c)
     #e,c=d.endpoint_data, d.config
     # # dic = d.load_chunk_dicts()
-    # # bbs=dic['Larva_101'].run*c.dt
+    # # bbs=dic['Larva_101'].exec*c.dt
     # # print()
     # # b0s, b1s = bbs[:, 0], bbs[:, 1]
     # # j=0

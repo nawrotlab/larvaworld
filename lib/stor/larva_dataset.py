@@ -294,7 +294,7 @@ class _LarvaDataset:
 
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
-
+        D = reg.init_Dic('PF').dict
 
         cc = {
             's': self.step_data,
@@ -306,7 +306,7 @@ class _LarvaDataset:
         }
         for k, v in pre_kws.items():
             if v:
-                func = reg.PF.dict.preproc[k]
+                func = D.preproc[k]
                 func(**cc, k=v)
 
         if is_last:
@@ -314,8 +314,7 @@ class _LarvaDataset:
         # return self
 
     def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,add_reference=False, **kwargs):
-        #print(keys)
-        #raise
+        D=reg.init_Dic('PF').dict
         cc = {
             'mode': mode,
             'is_last': False,
@@ -327,7 +326,7 @@ class _LarvaDataset:
             **kwargs
         }
         for k in keys:
-            func = reg.PF.dict.proc[k]
+            func = D.proc[k]
             func(**cc)
 
         if is_last:
@@ -337,7 +336,7 @@ class _LarvaDataset:
 
     def _enrich(self,pre_kws={}, proc_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True, bout_annotation=True,
                 add_reference=False, store=False, **kwargs):
-        reg.init_Dic('PF')
+
 
         with stdout.suppress_stdout(show_output):
             warnings.filterwarnings('ignore')

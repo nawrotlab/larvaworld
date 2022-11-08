@@ -1,9 +1,9 @@
-import sys
+# import sys
 from argparse import ArgumentParser
 
 
 
-sys.path.insert(0, '..')
+# sys.path.insert(0, '..')
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.registry import reg
 reg.init()

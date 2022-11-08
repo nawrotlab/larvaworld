@@ -163,9 +163,9 @@ def get_dist(k, k0='intermitter', v=None, return_tabrows=False, d0=None, return_
     if d0 is None:
         d0 = reg.DD.dict
     dict0 = {
-        'stridechain_dist': ('run length', ('N', 'R'), ureg.dimensionless, '# $strides$'),
+        'stridechain_dist': ('exec length', ('N', 'R'), ureg.dimensionless, '# $strides$'),
         'pause_dist': ('pause duration', ('t', 'P'), ureg.s, '$sec$'),
-        'run_dist': ('run duration', ('t', 'R'), ureg.s, '$sec$')
+        'run_dist': ('exec duration', ('t', 'R'), ureg.s, '$sec$')
     }
     disp, (tt0, tt1), u, uname = dict0[k]
     dispD, dispR = f'{disp} distribution', f'{disp} range'

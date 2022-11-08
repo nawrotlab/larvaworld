@@ -8,7 +8,7 @@ class Locomotor:
     def __init__(self, dt=0.1):
         self.crawler, self.turner, self.feeder, self.intermitter, self.interference = [None] * 5
         self.dt = dt
-        self.cur_state = 'run'
+        self.cur_state = 'exec'
         self.cur_run_dur = 0
         self.cur_pause_dur = None
         self.cur_ang_suppression = 1
@@ -18,7 +18,7 @@ class Locomotor:
         self.feed_motion = False
 
     def update(self):
-        if self.cur_state == 'run':
+        if self.cur_state == 'exec':
             self.cur_run_dur += self.dt
         elif self.cur_state == 'pause':
             self.cur_pause_dur += self.dt
@@ -89,9 +89,9 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
         if self.intermitter:
             pre_state = self.intermitter.cur_state
             self.intermitter.step(locomotor=self)
-            if pre_state == 'run' and self.intermitter.cur_state == 'pause':
+            if pre_state == 'exec' and self.intermitter.cur_state == 'pause':
                 self.on_new_pause()
-            elif pre_state == 'pause' and self.intermitter.cur_state == 'run':
+            elif pre_state == 'pause' and self.intermitter.cur_state == 'exec':
                 self.on_new_run()
         self.feed_motion = self.feeder.step() if self.feeder else False
         self.lin_activity = self.crawler.step() * length if self.crawler else 0

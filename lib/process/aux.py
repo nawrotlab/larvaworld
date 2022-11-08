@@ -525,7 +525,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
             np.nanmin(pause_durs) if len(pause_durs) > 0 else dt,
             np.nanmax(pause_durs) if len(pause_durs) > 0 else 100,
         ]
-        crawl_dict[id] = {'stride': strides, 'stride_Dor': stride_Dor, 'run': runs, 'pause': pauses,
+        crawl_dict[id] = {'stride': strides, 'stride_Dor': stride_Dor, 'exec': runs, 'pause': pauses,
                           'run_idx': run_idx, 'pause_idx': pause_idx, 'stride_dur': stride_durs,
                           'run_count': str_chain_ls, 'run_dur': run_durs, 'run_dst': run_dsts, 'pause_dur': pause_durs}
     s[run_ps] = run_vs.reshape([c.Nticks * c.N, len(run_ps)])

@@ -131,7 +131,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
     P = AutoPlot(name=name, subfolder=subfolder, Ncols=2, figsize=(10, 5), sharey=True, **kwargs)
     pause_par = nam.dur('pause')
     if stridechain_duration:
-        chain_par = nam.dur('run')  # nam.dur(nam.chain('stride'))
+        chain_par = nam.dur('exec')  # nam.dur(nam.chain('stride'))
         chn_discr = False
         chain_xlabel = f'time $({time_unit})$'
         chn0 = 0.5

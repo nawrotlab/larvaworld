@@ -1,5 +1,7 @@
-from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
+from lib.registry import reg
+
+
 # null=preg.init_dict.get_null
 
 
@@ -54,7 +56,7 @@ def Tracker_dict():
 
     }}
 
-    return dNl.NestDict({k:preg.init_dict.null('tracker', kws=kws) for k,kws in dkws.items()})
+    return dNl.NestDict({k:reg.get_null('tracker', kws=kws) for k,kws in dkws.items()})
     # T0 = preg.init_dict.get_null('tracker')
     #
     # d = {
@@ -73,7 +75,7 @@ def Tracker_dict():
 
 def Ref_dict():
     from lib.stor.larva_dataset import LarvaDataset
-    DATA = preg.path_dict["DATA"]
+    DATA = reg.Path["DATA"]
     dds = [
         [f'{DATA}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
@@ -114,12 +116,12 @@ def Enr_dict():
     for i, (k, vs) in enumerate(dkws.items()):
         v_list = dNl.flatten_list(vs)
         dF = dict(zip(kw_list, v_list))
-        enr[k] = preg.init_dict.null('enrichment', kws=dF)
+        enr[k] = reg.get_null('enrichment', kws=dF)
     return dNl.NestDict(enr)
 def Group_dict():
     tracker_dic = Tracker_dict()
     enr_dic = Enr_dict()
-    d = dNl.NestDict({f'{k} lab': {'path': f'{preg.path_dict["DATA"]}/{k}Group',
+    d = dNl.NestDict({f'{k} lab': {'path': f'{reg.Path["DATA"]}/{k}Group',
                              'tracker': tr,
                              'enrichment': enr_dic[k]} for k, tr in tracker_dic.items()})
 

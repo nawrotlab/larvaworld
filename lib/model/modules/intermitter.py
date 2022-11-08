@@ -105,7 +105,7 @@ class BaseIntermitter(Effector):
                 self.cur_state = 'feed'
 
     def run_initiation(self) :
-        self.cur_state='run'
+        self.cur_state='exec'
 
     def inhibit_locomotion(self, L=None):
         if L is None :
@@ -279,13 +279,13 @@ class Intermitter(BaseIntermitter):
                 self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
                 self.run_dist = None
             else :
-                run_mode = 'run'
-        if run_mode=='run' :
+                run_mode = 'exec'
+        if run_mode=='exec' :
             if run_dist is not None :
                 self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
                 self.stridechain_dist = None
             else :
-                raise ValueError ('None of stidechain or run distribution exist')
+                raise ValueError ('None of stidechain or exec distribution exist')
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
         # print(stridechain_dist)
 
@@ -302,7 +302,7 @@ class Intermitter(BaseIntermitter):
             self.current_numstrides = 0
         elif self.run_dist is not None:
             self.current_run_duration = self.run_dist.sample()
-        self.cur_state = 'run'
+        self.cur_state = 'exec'
 
     def generate_pause(self):
         return self.pause_dist.sample()
@@ -427,14 +427,14 @@ class BranchIntermitter(BaseIntermitter):
                 self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
                 self.run_dist = None
             else:
-                run_mode = 'run'
-        if run_mode == 'run':
+                run_mode = 'exec'
+        if run_mode == 'exec':
             if run_dist is not None:
                 self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
                 self.stridechain_min, self.stridechain_max = run_dist.range
                 self.stridechain_dist = None
             else:
-                raise ValueError('None of stidechain or run distribution exist')
+                raise ValueError('None of stidechain or exec distribution exist')
         self.pau_min, self.pau_max = (np.array(pause_dist.range)/self.dt).astype(int)
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
 

@@ -53,7 +53,7 @@ class BatchTab(GuiTab):
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
         sl1 = gui_el.SelectionList(tab=self, conftype='Exp', idx=1)
-        sl2 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'], sublists={'exp': sl1})
+        sl2 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'], sublists={'exp': sl1})
         batch_conf = [[sg.T('Batch id:', **gui_fun.t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **gui_fun.t_kws(16))],
                       gui_but.named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
@@ -128,5 +128,5 @@ class BatchTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['batch-run'])
+    larvaworld_gui = LarvaworldGui(tabs=['batch-exec'])
     larvaworld_gui.run()

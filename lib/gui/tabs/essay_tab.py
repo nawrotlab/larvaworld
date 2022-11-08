@@ -16,8 +16,8 @@ class EssayTab(GuiTab):
         kws={'list_size' : (25,15), 'canvas_size' : gui_fun.col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
         s1 = gui_el.PadDict('essay_params', disp_name='Configuration', background_color='orange', text_kws=gui_fun.t_kws(10),
                      header_width=25)
-        sl1 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'run'])
-        dl1 = gui_el.DataList(self.essay_exps_key, tab=self, buttons=['run'], select_mode=None, size=(24,10))
+        sl1 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'])
+        dl1 = gui_el.DataList(self.essay_exps_key, tab=self, buttons=['exec'], select_mode=None, size=(24,10))
         g1 = gui_el.GraphList(self.name, list_header='Simulated', **kws)
         g2 = gui_el.ButtonGraphList(self.exp_figures_key, list_header='Observed',fig_dict={}, **kws,
                              buttons=['browse_figs'],button_args={'browse_figs': {'target': (2, -1)}}

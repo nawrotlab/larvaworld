@@ -1,5 +1,5 @@
 '''
-This file is the template for a batch run of simulations.
+This file is the template for a batch exec of simulations.
 Simulations are managed through a pypet trajectory.
 Results are saved in hdf5 format.
 CAUTION : save_hdf5 parameters whether step and end pandas dataframes are saved (in the hdf5 not as csvs). This takes LONG!!!
@@ -18,7 +18,7 @@ from lib.registry.pars import preg
 from lib.sim.batch.aux import grid_search_dict, delete_traj
 from lib.sim.batch.functions import single_run, batch_method_unpack
 from lib.registry import reg
-''' Default batch run.
+''' Default batch exec.
 Arguments :
 - Experiment mode eg 'chemorbit'
 - Batchrun configuration as a dict eg :
@@ -30,14 +30,14 @@ Arguments :
                 'ranges': ranges}
 where ranges is a np.array of shape (Npars,2)
 - Number of larvae
-- Simulation time per run
+- Simulation time per exec
 - Parameters to perform space search
 - Values of the parameters to combine. 
 - par_space_density : If values is None then the space to search will be a grid. 
 Each parameter will be sampled at a given number of equally-distanced values within the provided range.
 This number can be the same for all parameters (par_space_steps is an int) or different for each parameter (par_space_steps is a list of ints)
 
-Examples of this default batch run are given in  :
+Examples of this default batch exec are given in  :
 - chemo_batchrun.py for chemorbit and chemotax experiments
 - feed_scatter_batchrun.py for feed_scatter_experiment
 '''
@@ -86,7 +86,7 @@ class BatchRun:
         }
 
         self.env1_kws = {
-            'comment': f'{self.type} batch run!',
+            'comment': f'{self.type} batch exec!',
             'multiproc': multiproc,
             'resumable': self.resumable,
             'resume_folder': self.dir,
@@ -129,10 +129,10 @@ class BatchRun:
     def run(self):
         self.env.run(**self.run_kws)
         self.env.disable_logging()
-        print('Batch run complete')
+        print('Batch exec complete')
         if self.finfunc is not None:
             res = self.finfunc(self.env.traj)
-        print(f'Batch-run completed in {np.round(time.time() - self.s0).astype(int)} seconds!')
+        print(f'Batch-exec completed in {np.round(time.time() - self.s0).astype(int)} seconds!')
         return res
 
     def get_env(self):
