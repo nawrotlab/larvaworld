@@ -6,6 +6,7 @@ import math
 import os
 import numpy as np
 
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex
 from lib.aux import naming as nam, dictsNlists as dNl
@@ -696,11 +697,11 @@ def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     N = len(epochs)
     if N == 0:
-        epochs = {0: preg.get_null('epoch', start=0.0, stop=None)}
+        epochs = {0: reg.get_null('epoch', start=0.0, stop=None)}
     elif str(N - 1) in epochs.keys() and epochs[str(N - 1)]['stop'] is not None:
-        epochs.update({N: preg.get_null('epoch', start=epochs[str(N - 1)]['stop'], stop=None)})
+        epochs.update({N: reg.get_null('epoch', start=epochs[str(N - 1)]['stop'], stop=None)})
     elif N - 1 in epochs.keys() and epochs[N - 1]['stop'] is not None:
-        epochs.update({N: preg.get_null('epoch', start=epochs[N - 1]['stop'], stop=None)})
+        epochs.update({N: reg.get_null('epoch', start=epochs[N - 1]['stop'], stop=None)})
     deb.grow_larva(epochs=epochs, age=age)
     deb.finalize_dict()
     d = deb.return_dict()
