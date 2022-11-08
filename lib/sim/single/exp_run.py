@@ -1,19 +1,14 @@
 """ Run a simulation and save the parameters and data to files."""
 import copy
-import datetime
-import random
-import time
 import numpy as np
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
 from lib.model.envs.world_sim import WorldSim
-from lib.registry.base import BaseRun
 from lib.registry.output import set_output
-from lib.registry.pars import preg
-from lib.registry import reg
+from lib.registry import reg, base
 
 
-class ExpRun(BaseRun):
+class ExpRun(base.BaseRun):
     def __init__(self, sim_params, enrichment, collections, larva_groups,progress_bar=False, save_to=None, store_data=True,
                  analysis=True, show=False, **kwargs):
 
@@ -170,7 +165,7 @@ class ExpRun(BaseRun):
         if 'disp' in exp:
             from lib.sim.single.analysis import comparative_analysis
             samples = dNl.unique_list([d.config.sample for d in self.datasets])
-            targets = [preg.loadRef(sd) for sd in samples]
+            targets = [reg.loadRef(sd) for sd in samples]
             kkws = copy.deepcopy(kws)
             kkws['datasets'] = self.datasets + targets
             figs.update(**comparative_analysis(**kkws))
@@ -192,7 +187,7 @@ def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
         conf = expandConf(exp, 'Exp')
-        conf.sim_params = preg.init_dict.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf.sim_params = reg.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf.experiment = exp
         conf.update(**kwargs)
         d = ExpRun(**conf, vis_kwargs=vis_kwargs).run()

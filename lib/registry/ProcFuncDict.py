@@ -9,48 +9,7 @@ from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux, stdout
 
 
-def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
-    if abs_threshold is None:
-        abs_threshold = [+np.inf, -np.inf]
-    order = np.round(interval_in_sec / dt).astype(int)
-    ids = s.index.unique('AgentID').values
-    Nids = len(ids)
-    Npars = len(parameters)
-    Nticks = len(s.index.unique('Step'))
-    t0 = s.index.unique('Step').min()
 
-    min_array = np.ones([Nticks, Npars, Nids]) * np.nan
-    max_array = np.ones([Nticks, Npars, Nids]) * np.nan
-    for i, p in enumerate(parameters):
-        p_min, p_max = nam.min(p), nam.max(p)
-        s[p_min] = np.nan
-        s[p_max] = np.nan
-        d = s[p]
-        std = d.std()
-        mu = d.mean()
-        if threshold_in_std is not None:
-            thr_min = mu - threshold_in_std * std
-            thr_max = mu + threshold_in_std * std
-        else:
-            thr_min, thr_max = abs_threshold
-        for j, id in enumerate(ids):
-            df = d.xs(id, level='AgentID', drop_level=True)
-            i_min = argrelextrema(df.values, np.less_equal, order=order)[0]
-            i_max = argrelextrema(df.values, np.greater_equal, order=order)[0]
-
-            i_min_dif = np.diff(i_min, append=order)
-            i_max_dif = np.diff(i_max, append=order)
-            i_min = i_min[i_min_dif >= order]
-            i_max = i_max[i_max_dif >= order]
-
-            i_min = i_min[df.loc[i_min + t0] < thr_min]
-            i_max = i_max[df.loc[i_max + t0] > thr_max]
-
-            min_array[i_min, i, j] = True
-            max_array[i_max, i, j] = True
-
-        s[p_min] = min_array[:, i, :].flatten()
-        s[p_max] = max_array[:, i, :].flatten()
 
 
 def filter(s, c, filter_f=2, inplace=True, recompute=False, **kwargs):

@@ -1,10 +1,10 @@
-from lib.registry import reg
-from lib.registry.base import BaseRun
+from lib.registry import reg, base
+
 from lib.registry.output import set_output
 from lib.aux import naming as nam, dictsNlists as dNl
 
 
-class EssayRun(BaseRun):
+class EssayRun(base.BaseRun):
     def __init__(self, enrichment, collections=['pose'],N=5,Npoints=3,dt=0.1,dur=None,
                  video=False, **kwargs):
 

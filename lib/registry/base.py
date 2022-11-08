@@ -1,20 +1,13 @@
 import os
-import time
-
 import numpy as np
 import random
 
 
 from lib.registry import reg
-from lib.aux import naming as nam, dictsNlists as dNl
-from lib.aux.data_aux import get_ks
-import timeit
+from lib.aux import naming as nam, dictsNlists as dNl, data_aux
 
 
-
-
-
-class BaseType():
+class BaseType:
     def __init__(self, parent, k, subks={}):
         self.parent = parent
         self.k = k
@@ -26,7 +19,7 @@ class BaseType():
     def build_mdict(self):
         from lib.aux.data_aux import init2mdict
         self.mdict = init2mdict(self.dict0)
-        self.ks = get_ks(self.mdict)
+        self.ks = data_aux.get_ks(self.mdict)
 
     def set_dict0(self, dict0):
         self.dict0 = dict0

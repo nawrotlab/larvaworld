@@ -12,7 +12,7 @@ import seaborn as sns
 import pandas as pd
 
 
-from lib.registry import reg
+from lib.registry import reg, base
 # reg.init()
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, data_aux
 from lib.sim.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluation, prepare_sim_dataset, \
@@ -23,7 +23,7 @@ from lib.registry.pars import preg
 import lib.plot.box
 
 
-class EvalRun(BaseRun):
+class EvalRun(base.BaseRun):
     def __init__(self, refID, eval_metrics=None, N=5, dur=None,
                  bout_annotation=True, modelIDs=None, dataset_ids=None,
                  enrichment=True, norm_modes=['raw'], eval_modes=['pooled'],

@@ -1,27 +1,16 @@
 import copy
-import json
-import os
-import pickle
-import shutil
-
-import numpy as np
-import pandas
 import param
-from lib.registry import reg
-#reg.init()
+from lib.registry import reg, base
 
-import lib.aux.dictsNlists as dNl
-from lib.aux.data_aux import update_mdict, update_existing_mdict
-from lib.aux.par_aux import sub
+from lib.aux import naming as nam, dictsNlists as dNl, data_aux
 
-from lib.registry.base import BaseType
 
 
 
 
 def confReset_funcs(k):
     from lib.conf.stored import aux_conf, data_conf, batch_conf, exp_conf, env_conf, essay_conf, ga_conf, larva_conf
-    from lib.aux import naming as nam, dictsNlists as dNl
+
     d = dNl.NestDict({
         'Ref': data_conf.Ref_dict,
         'Model': larva_conf.Model_dict,
@@ -41,7 +30,7 @@ def confReset_funcs(k):
     return d[k]
 
 
-class ConfType(BaseType):
+class ConfType(base.BaseType):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
         self.path = reg.Path[self.k]
@@ -81,10 +70,7 @@ class ConfType(BaseType):
                     conf = ct.loadConf(p.v)
             if conf is not None:
                 mm = copy.deepcopy(ct.mdict)
-                # print(m, conf)
-
-                mm = update_existing_mdict(mm, conf)
-
+                mm = data_aux.update_existing_mdict(mm, conf)
                 return mm
             else :
                 return ct.mdict
@@ -221,7 +207,7 @@ class ConfType(BaseType):
         eval = {}
         for id, conf in d.items():
             try:
-                eval[id] =update_mdict(self.mdict, conf)
+                eval[id] =data_aux.update_mdict(self.mdict, conf)
             except:
                 eval[id] = None
         return eval
@@ -316,13 +302,3 @@ class ConfTypeDict:
         for k in ks:
             self.dict[k].resetDict()
 
-
-
-if __name__ == '__main__':
-    pass
-    # _=preg.graph_dict.dict['mtable'](k='build_conf', show=True)
-    # raise
-    # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    # reg.CT.resetConfs(['Env','Exp','Essay'])
-    # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    # reg.CT.resetConfs(ks=['Model'])

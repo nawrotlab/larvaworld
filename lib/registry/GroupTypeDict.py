@@ -1,24 +1,15 @@
 import copy
-import json
-import os
-import pickle
-import shutil
-
-import numpy as np
-import pandas
 import param
 
 import lib.aux.dictsNlists as dNl
-from lib.aux.data_aux import update_mdict, update_existing_mdict, get_ks
-from lib.registry.base import BaseType
+from lib.aux.data_aux import update_mdict, update_existing_mdict
 from lib.aux import colsNstr as cNs
-# from lib.registry.pars import preg
-from lib.registry import reg
+from lib.registry import reg, base
 
 
 
 
-class GroupType(BaseType):
+class GroupType(base.BaseType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.set_dict0(reg.PI.dict[self.k])
@@ -77,44 +68,44 @@ class GroupType(BaseType):
 
 
 
-
-    def ConfID_entry(self, default=None, k=None, symbol=None, single_choice=True):
-        from typing import List
-        from lib.aux.par_aux import sub
-        low = self.k.lower()
-        if single_choice:
-            t = str
-            IDstr = 'ID'
-        else:
-            t = List[str]
-            IDstr = 'IDs'
-        if k is None:
-            k = f'{low}{IDstr}'
-        if symbol is None:
-            symbol = sub(IDstr, low)
-        d = {'dtype': t, 'vparfunc': self.ConfSelector(default=default, single_choice=single_choice),
-             'vs': self.ConfIDs, 'v': default,
-             'symbol': symbol, 'k': k, 'h': f'The {self.k} configuration {IDstr}',
-             'disp': f'{self.k} {IDstr}'}
-        return dNl.NestDict(d)
-
-
+    #
+    # def ConfID_entry(self, default=None, k=None, symbol=None, single_choice=True):
+    #     from typing import List
+    #     from lib.aux.par_aux import sub
+    #     low = self.k.lower()
+    #     if single_choice:
+    #         t = str
+    #         IDstr = 'ID'
+    #     else:
+    #         t = List[str]
+    #         IDstr = 'IDs'
+    #     if k is None:
+    #         k = f'{low}{IDstr}'
+    #     if symbol is None:
+    #         symbol = sub(IDstr, low)
+    #     d = {'dtype': t, 'vparfunc': self.ConfSelector(default=default, single_choice=single_choice),
+    #          'vs': self.ConfIDs, 'v': default,
+    #          'symbol': symbol, 'k': k, 'h': f'The {self.k} configuration {IDstr}',
+    #          'disp': f'{self.k} {IDstr}'}
+    #     return dNl.NestDict(d)
 
 
 
 
 
 
-
-    def checkDict(self):
-        d = self.loadDict()
-        eval = {}
-        for id, conf in d.items():
-            try:
-                eval[id] =update_mdict(self.mdict, conf)
-            except:
-                eval[id] = None
-        return eval
+    #
+    #
+    #
+    # def checkDict(self):
+    #     d = self.loadDict()
+    #     eval = {}
+    #     for id, conf in d.items():
+    #         try:
+    #             eval[id] =update_mdict(self.mdict, conf)
+    #         except:
+    #             eval[id] = None
+    #     return eval
 
 
     def RvsS_groups(self,N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard',pref='',
