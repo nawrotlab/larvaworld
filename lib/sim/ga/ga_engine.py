@@ -84,8 +84,8 @@ class GAselector:
                 self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
         end_generation_time = TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
-        preg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
-        # preg.vprint(f'Generation {self.generation_num} duration : {total_generation_time}',self.verbose)
+        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
+        # reg.vprint(f'Generation {self.generation_num} duration : {total_generation_time}',self.verbose)
 
 
 

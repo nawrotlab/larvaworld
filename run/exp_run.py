@@ -13,12 +13,7 @@ sys.path.insert(0, '..')
 
 
 from lib.registry import reg
-reg.init0()
 reg.init()
-# from lib.registry.pars import preg
-# from lib.conf.stored.conf import kConfDict
-from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
-# from lib.registry.pars import preg
 from lib.anal.argparsers import MultiParser, update_exp_models
 
 s = time.time()
@@ -40,7 +35,7 @@ N = args.Nagents
 models = args.models
 
 conf0=reg.conF.Exp[exp]
-conf0=update_exp_models(conf0,models,N)
+conf=update_exp_models(conf0,models,N)
 
 # conf=dNl.NestDict({k:conf0[k] for k in ['env_params', 'larva_groups', 'trials']})
 # sim0,sim=conf0,d['sim_params']

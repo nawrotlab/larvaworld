@@ -244,12 +244,12 @@ def move_confDicts():
             except:
                 d = None
                 dd[k] = 'FAIL'
-        print(k,dd[k])
+        # print(k,dd[k])
         if d is not None:
             fff = f'{ff}/{k}.txt'
 
             res=dNl.save_dict(d, fff, use_pickle=dd[k])
-            print(fff, res)
+            # print(fff, res)
             if not dd[k]:
                 dd0[k] = d
             else:
@@ -260,8 +260,8 @@ def move_confDicts():
     fff1 = f'{ff}/PickleConfs.txt'
     dNl.save_dict(dd0, fff0, use_pickle=False)
     dNl.save_dict(dd1, fff1, use_pickle=True)
-    print(dd0.keys())
-    print(dd1.keys())
+    # print(dd0.keys())
+    # print(dd1.keys())
 
 def AllConfDict():
     F0 = get_parent_dir()
@@ -305,17 +305,15 @@ def ExpandedConfDict():
                                     gConf.model=c0['Model'][mID]
                                 else:
                                     raise
-                        else:
-                            print(subID, confType, confType0, id, c0[confType].keys())
-                        # continue
-                    else :
-                        print(subID, confType)
+                    #     else:
+                    #         print(subID, confType, confType0, id, c0[confType].keys())
+                    #     # continue
+                    # else :
+                    #     print(subID, confType)
     return c0
 
 
-kk=ExpandedConfDict()
-print(kk.Exp.dispersion.larva_groups.Larva.keys())
-# print(kk.Exp.dispersion.trials)
+
 
 
 

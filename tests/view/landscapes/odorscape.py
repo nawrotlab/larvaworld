@@ -1,6 +1,6 @@
 import numpy as np
 from lib.registry.pars import preg
-from lib.model.envs._larvaworld_sim import LarvaWorldSim
+from lib.model.envs.world_sim import WorldSim
 
 N = 500
 mode = 'D'
@@ -38,8 +38,8 @@ env_params = preg.get_null('env_conf',
                            odorscape=odorscape)
 # env_params=null_dict('env_conf', odorscape=odorscape, food_params=f_pars(su=su(pos=(0.0, 0.0), o=oG(2, id='Odor'))))
 # env_params=null_dict('env_conf', windscape=windscape, border_list={'Border' : null_dict('Border', points=[(-0.03,0.02), (0.03,0.02)])})
-env = LarvaWorldSim(env_params=env_params, Nsteps=N,
-                    vis_kwargs=preg.get_null('visualization', mode='video', video_speed=10, media_name=media_name))
+env = WorldSim(env_params=env_params, Nsteps=N,
+               vis_kwargs=preg.get_null('visualization', mode='video', video_speed=10, media_name=media_name))
 env.odor_layers['Odor_R'].visible = True
 # env.windscape.visible=True
 env.is_running = True

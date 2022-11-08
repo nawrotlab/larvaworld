@@ -10,7 +10,7 @@ from lib.aux import naming as nam, dictsNlists as dNl
 from lib.aux.data_aux import get_ks
 import timeit
 
-from lib.model.envs._larvaworld_sim import LarvaWorldSim
+
 
 
 
@@ -92,7 +92,11 @@ class BaseConfDict:
 
 class BaseRun:
     def __init__(self, runtype, experiment=None, id=None, progress_bar=False, save_to=None, store_data=True,
-                 analysis=True, show=False, seed=None, model_class=LarvaWorldSim, graph_entries=[]):
+                 analysis=True, show=False, seed=None, model_class=None, graph_entries=[]):
+        if model_class is None :
+            from lib.model.envs.world_sim import WorldSim
+            model_class = WorldSim
+
         np.random.seed(seed)
         random.seed(seed)
         self.runtype = runtype

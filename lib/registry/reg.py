@@ -1,37 +1,37 @@
 import os
-from lib.aux import dictsNlists as dNl
 from functools import lru_cache
-VERBOSE = 0
+from lib.aux import dictsNlists as dNl
+VERBOSE = 2
 
-def init0():
-    from lib.registry.paths import AllConfDict, ExpandedConfDict
+def init_conf():
+    from lib.registry.paths import AllConfDict, ExpandedConfDict, build_path_dict, buildSampleDic, build_datapath_structure
     global conf
     conf = AllConfDict()
     global conF
     conF = ExpandedConfDict()
 
 
-def init(ks=None):
-    # global VERBOSE
-    # VERBOSE = 0
-
-    from lib.registry.paths import build_path_dict, buildSampleDic, build_datapath_structure, build_datapath_dict, \
-        build_datafunc_dict
     global Path
     global SampleDic
 
-    global datafunc_dict
-    global datapath_dict
+
 
     Path = build_path_dict()
     SampleDic = buildSampleDic()
+
+
+def init_data_structure() :
+    from lib.registry.paths import build_datapath_structure
+    global datafunc_dict
+    global datapath_dict
     datapath_dict, datafunc_dict = build_datapath_structure()
 
 
+def reg_dict() :
     from lib.registry import ConfTypeDict, LarvaConfDict, ParInitDict, GraphDict, ProcFuncDict, ParserDict, \
         BaseParDict, GroupTypeDict, DistDict
 
-    reg_dict=dNl.NestDict({
+    d = dNl.NestDict({
         'CT': ConfTypeDict.ConfTypeDict,
         'DD': DistDict.DistDict,
         'MD': LarvaConfDict.LarvaConfDict,
@@ -40,64 +40,50 @@ def init(ks=None):
         'GT': GroupTypeDict.GroupTypeDict,
         'GD': GraphDict.GraphDict,
 
-        'ParsD':ParserDict.ParserDict,
-        'PF':ProcFuncDict.ProcFuncDict,
+        'ParsD': ParserDict.ParserDict,
+        'PF': ProcFuncDict.ProcFuncDict,
         'PD': BaseParDict.BaseParDict,
     })
+    return d
 
-    load_mode= {'DEF' : {'mode' : 'load'}}
+def init_dicts(ks=None):
 
-    # import random
-    # PLUGINS = dict()
+    global DicF
+    DicF = reg_dict()
+    all_ks = list(DicF.keys())
 
-    # def register(func):
-    #     """Register a function as a plug-in"""
-    #     PLUGINS[func.__name__] = func
-    #     return func
 
-    class Foo(object):
+    global Dic
+    Dic = dNl.NestDict({kk : None for kk in all_ks})
 
-        #@property
-        @lru_cache()
-        def prop(self, func, kwargs):
-            # print("once")
-            return func(**kwargs)
-    #         else :
-    #             print("exists")
-    #             return reg_dict[key]()
-    #
-    # def eee(k,v):
-    #     if k not in globals():
-    #         globals()[k]=None
-    #     else :
-    #         return foo.prop(v)
-    foo=Foo()
-    if ks is None :
-        ks=list(reg_dict.keys())
+    load_mode = {'DEF': {'mode': 'load'}}
+    if ks is None:
+        ks = all_ks
     for k in ks:
 
-        # kws=dNl.NestDict()
-        # print(k)
-        if k in load_mode.keys() :
-            kws=load_mode[k]
-        else :
+        if k in load_mode.keys():
+            kws = load_mode[k]
+        else:
             kws = {}
-            # kws.mode='load'
-        globals()[k] = reg_dict[k](**kws)
-        # globals()[k] = foo.prop(reg_dict[k], kwargs=kws)
-        # eee(k,v)
-    #     globals()[k]
+        init_Dic(k, D=Dic, **kws)
+
+def init(ks=None):
+    # global VERBOSE
+    # VERBOSE = 0
+    vprint(f'Initializing larvaworld registry',3)
+    init_conf()
+    init_data_structure()
+    init_dicts(ks=ks)
+    vprint(f'Completed larvaworld registry',3)
 
 
+def init_Dic(k,D= None, **kws) :
+    if D is None :
+        D=globals()['Dic']
+    if D[k] is None or k not in globals():
+        D[k] = DicF[k](**kws)
+        globals()[k] = D[k]
 
-
-def init2():
-    pass
-    #
-
-    #
-    # # CT.build_mDicts(PI=PI, MD=MD)
-    #
 
 
 
@@ -127,6 +113,8 @@ def vprint(text='', verbose=0):
 
 
 def datafunc(filepath_key, mode='load'):
+    if 'datafunc_dict' not in globals() :
+        init_data_structure()
     DD = datafunc_dict
     if filepath_key in DD.keys():
         return DD[filepath_key][mode]
@@ -135,6 +123,8 @@ def datafunc(filepath_key, mode='load'):
 
 
 def datapath(filepath_key, dir=None):
+    if 'datapath_dict' not in globals() :
+        init_data_structure()
     DD = datapath_dict
     if dir is not None and filepath_key in DD.keys():
         return f'{dir}{DD[filepath_key]}'

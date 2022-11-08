@@ -206,12 +206,12 @@ class GroupTypeDict:
 
 
 
-        reg.vprint('started GroupTypes',2)
+        reg.vprint('started GroupTypes',0)
         self.grouptypes = ['LarvaGroup', 'SourceGroup', 'epoch']
 
         self.dict = self.build(self.grouptypes)
 
-        reg.vprint('completed GroupTypes',2)
+        reg.vprint('completed GroupTypes',0)
 
     def build_subk_dict(self, ks):
         d0 = dNl.NestDict({k: {} for k in ks})
@@ -240,3 +240,5 @@ class GroupTypeDict:
         # # # aa=CTs['Ga'].ConfID_entry(default='exploration')
         # raise
         return d
+
+

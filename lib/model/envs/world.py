@@ -18,11 +18,11 @@ from lib.registry.pars import preg
 import lib.screen.rendering as ren
 
 from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
-from lib.model.envs._base_larvaworld import BaseLarvaWorld
+from lib.model.envs.base_world import BaseWorld
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
 from lib.sim.single.conditions import get_exp_condition
 
-class LarvaWorld(BaseLarvaWorld):
+class World(BaseWorld):
 
     def __init__(self, vis_kwargs=None,
                  background_motion=None, traj_color=None, allow_clicks=True,

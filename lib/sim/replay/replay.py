@@ -2,7 +2,7 @@ import time
 
 
 from lib.registry import reg
-from lib.model.envs._larvaworld_replay import LarvaWorldReplay
+from lib.model.envs.world_replay import WorldReplay
 
 from lib.process.spatial import fixate_larva
 from lib.aux.dir_aux import smaller_dataset
@@ -64,7 +64,7 @@ class ReplayRun:
             'traj_color': s[dynamic_color] if dynamic_color is not None and dynamic_color in s.columns else None,
             **kwargs
         }
-        self.env = LarvaWorldReplay(**base_kws)
+        self.env = WorldReplay(**base_kws)
 
     def run(self):
         reg.vprint()

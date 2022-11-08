@@ -8,11 +8,11 @@ from mesa.datacollection import DataCollector
 from lib.model.agents._larva_sim import LarvaSim
 from lib.registry import reg
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux, dir_aux, sample_aux
-from lib.model.envs._larvaworld import LarvaWorld
+from lib.model.envs.world import World
 
 
 
-class LarvaWorldSim(LarvaWorld):
+class WorldSim(World):
     def __init__(self, output=None,  parameter_dict={},larva_groups={}, **kwargs):
         super().__init__(**kwargs)
 

@@ -3,6 +3,7 @@ import numpy as np
 from lib.aux.stor_aux import store_distros, get_distros, storeH5
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux
 from lib.registry import reg
+from lib.registry.ProcFuncDict import comp_extrema
 
 
 def comp_angles(s, e, c, mode='full'):
@@ -194,7 +195,6 @@ def comp_angular(s, e, c, mode='minimal'):
 
 
 def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **kwargs):
-    from lib.process.basic import comp_extrema
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')

@@ -15,7 +15,7 @@ from lib.registry.units import ureg
 class LarvaConfDict:
     def __init__(self, load=False, save=False):
 
-        preg.vprint('started LarvaConfDict', 2)
+        reg.vprint('started LarvaConfDict', 0)
         from lib.registry.modConfs import build_LarvaConfDict, build_confdicts0
 
 
@@ -48,7 +48,7 @@ class LarvaConfDict:
             # 'locomotor': locomotor.DefaultLocomotor,
         })
 
-        preg.vprint('completed LarvaConfDict', 2)
+        reg.vprint('completed LarvaConfDict', 0)
 
         # print('Completed LarvaConfDict')
 

@@ -13,9 +13,9 @@ from lib.registry import reg
 import lib.aux.dictsNlists as dNl
 from lib.aux.data_aux import update_mdict, update_existing_mdict
 from lib.aux.par_aux import sub
+
 from lib.registry.base import BaseType
 
-from lib.registry.pars import preg
 
 
 
@@ -146,7 +146,7 @@ class ConfType(BaseType):
         else:
             d[id] = dNl.NestDict(conf)
         self.saveDict(d)
-        preg.vprint(f'{self.k} Configuration saved under the id : {id}')
+        reg.vprint(f'{self.k} Configuration saved under the id : {id}')
 
     def saveDict(self, d):
         dNl.save_dict(d, self.path, self.use_pickle)
@@ -167,7 +167,7 @@ class ConfType(BaseType):
         Nup = N1 - Nnew
         self.saveDict(d)
 
-        preg.vprint(f'{self.k}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',2)
+        reg.vprint(f'{self.k}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',2)
 
 
 
@@ -177,7 +177,7 @@ class ConfType(BaseType):
             if id in d.keys():
                 d.pop(id, None)
                 self.saveDict(d)
-                preg.vprint(f'Deleted {self.k} configuration under the id : {id}', 2)
+                reg.vprint(f'Deleted {self.k} configuration under the id : {id}', 2)
 
     @property
     def ConfIDs(self):
@@ -231,13 +231,13 @@ class ConfTypeDict:
     def __init__(self,load=False, save=False):
 
 
-        preg.vprint('started ConfTypes',2)
+        reg.vprint('started ConfTypes',0)
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
                           'Group', 'Trial', 'Life', 'Body', 'Source', 'Tree']
 
         self.dict = self.build(self.conftypes)
 
-        preg.vprint('completed ConfTypes',2)
+        reg.vprint('completed ConfTypes',0)
 
     def build_subk_dict(self, ks):
         d0 = dNl.NestDict({k: {} for k in ks})
@@ -274,14 +274,14 @@ class ConfTypeDict:
             conf = self.dict.Ref.loadConf(id)
             from lib.stor.larva_dataset import LarvaDataset
             d = LarvaDataset(conf.dir, load_data=False)
-            preg.vprint(f'Loaded stored reference configuration : {id}')
+            reg.vprint(f'Loaded stored reference configuration : {id}')
             return d
 
     def loadRefD(self, id=None, **kwargs):
         if id is not None:
             d = self.loadRef(id)
             d.load(**kwargs)
-            preg.vprint(f'Loaded stored reference dataset : {id}',2)
+            reg.vprint(f'Loaded stored reference dataset : {id}',2)
             return d
 
     def loadRefDs(self, ids, **kwargs):

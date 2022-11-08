@@ -1,6 +1,6 @@
-import os
+from lib.registry import reg
+reg.init()
 
-from lib.registry.pars import preg
 from lib.stor.managing import import_dataset
 
 kws0 = {
@@ -41,6 +41,18 @@ kws3 = {
     'id': f'dish',
     **kws0
 }
+
+# Merged case
+kws4 = {
+    # 'datagroup_id': 'Schleyer lab',
+    'parent_dir': 'no_odor',
+    'merged': True,
+    'N': 22,
+    'min_duration_in_sec': 180,
+    'id': f'merged_dishes',
+    **kws0
+}
+
 
 # d1 = import_dataset(**kws1)
 # d2 = import_dataset(**kws2)

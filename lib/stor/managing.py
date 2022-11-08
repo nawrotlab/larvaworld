@@ -7,6 +7,7 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.registry.pars import preg
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
+from lib.stor.building import build_Schleyer
 from lib.stor.larva_dataset import LarvaDataset
 
 

@@ -12,7 +12,7 @@ from lib.registry.base import BaseRun
 from lib.screen.screen_aux import get_arena_bounds
 from lib.sim.ga.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil
-from lib.model.envs._base_larvaworld import BaseLarvaWorld
+from lib.model.envs.base_world import BaseWorld
 
 class GenAlgRun(BaseRun):
     def __init__(self, sim_params, env_params=None, experiment='exploration',
@@ -20,7 +20,7 @@ class GenAlgRun(BaseRun):
 
         kws = {
             # 'dt': dt,
-            # 'model_class': LarvaWorldSim,
+            # 'model_class': WorldSim,
             # 'progress_bar': progress_bar,
             # 'save_to': save_to,
             # 'store_data': store_data,
@@ -70,7 +70,7 @@ class GenAlgRun(BaseRun):
 
 
 
-class BaseGAlauncher(BaseLarvaWorld):
+class BaseGAlauncher(BaseWorld):
 
 
     # SCREEN_MARGIN = 12

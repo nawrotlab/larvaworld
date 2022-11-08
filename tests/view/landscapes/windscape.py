@@ -1,7 +1,7 @@
 import numpy as np
 from lib.registry.pars import preg
-from lib.model.envs._larvaworld import LarvaWorld
-from lib.model.envs._larvaworld_sim import LarvaWorldSim
+from lib.model.envs.world import World
+from lib.model.envs.world_sim import WorldSim
 
 test_direction=True
 test_speed=False
@@ -28,7 +28,7 @@ else :
     wind_speed = 10.0
 windscape=preg.get_null('windscape', wind_direction=0.0, wind_speed=wind_speed, puffs=puffs)
 env_params=preg.get_null('env_conf', windscape=windscape, border_list={'Border' : preg.get_null('Border', points=[(-0.03,0.02), (0.03,0.02)])})
-env=LarvaWorldSim(env_params=env_params, Nsteps=N, vis_kwargs=preg.get_null('visualization', mode='video', video_speed=5, media_name=media_name))
+env=WorldSim(env_params=env_params, Nsteps=N, vis_kwargs=preg.get_null('visualization', mode='video', video_speed=5, media_name=media_name))
 
 env.windscape.visible=True
 env.is_running=True

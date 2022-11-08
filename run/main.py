@@ -1,8 +1,5 @@
-
 from lib.registry import reg
-reg.init0()
-# reg.init()
-# reg.init2()
+reg.init()
 
 def RvsSx4():
 
@@ -19,7 +16,9 @@ def RvsSx4():
             i+=1
 if __name__ == "__main__":
     pass
-    print(reg.conf.Exp.keys())
+    # from lib.registry.pars import ParRegistry
+    # preg = ParRegistry()
+    # print(preg.get_null('env_conf'))
     # print(reg.conf.Life.keys())
     # print(reg.conf.Trial.keys())
     # print(reg.conf.Exp.dispersion.env_params)

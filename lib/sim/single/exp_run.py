@@ -6,7 +6,7 @@ import time
 import numpy as np
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
-from lib.model.envs._larvaworld_sim import LarvaWorldSim
+from lib.model.envs.world_sim import WorldSim
 from lib.registry.base import BaseRun
 from lib.registry.output import set_output
 from lib.registry.pars import preg
@@ -19,7 +19,7 @@ class ExpRun(BaseRun):
 
         kws = {
             # 'dt': dt,
-            'model_class': LarvaWorldSim,
+            'model_class': WorldSim,
             'progress_bar': progress_bar,
             'save_to': save_to,
             'store_data': store_data,
@@ -40,7 +40,7 @@ class ExpRun(BaseRun):
                             Npoints=np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()]))
         self.model_conf = {
             'dt': dt,
-            # 'model_class': LarvaWorldSim,
+            # 'model_class': WorldSim,
             'dur': sim_params.duration,
             'output': output,
             'id': self.id,

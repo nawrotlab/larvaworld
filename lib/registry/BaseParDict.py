@@ -125,7 +125,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
 
 class BaseParDict:
     def __init__(self,in_rad=True, in_m=True, load=False, save=False):
-        reg.vprint('started BaseParDict', 2)
+        reg.vprint('started BaseParDict', 0)
         self.path=reg.Path['ParDf']
         if load:
             df = pd.read_csv(self.path, index_col=0)
@@ -144,7 +144,7 @@ class BaseParDict:
         self.ddict = dNl.NestDict({p.d: p for k, p in self.kdict.items()})
         self.pdict = dNl.NestDict({p.p: p for k, p in self.kdict.items()})
 
-        reg.vprint('completed BaseParDict', 2)
+        reg.vprint('completed BaseParDict', 0)
 
     def build(self, in_rad=True, in_m=True):
         self.dict = dNl.NestDict()

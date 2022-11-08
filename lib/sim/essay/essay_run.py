@@ -34,7 +34,7 @@ class EssayRun(BaseRun):
         return dNl.NestDict({
             'dt': self.dt,
             'dur': self.dur,
-            # 'model_class': LarvaWorldSim,
+            # 'model_class': WorldSim,
             'output': self.output,
             # 'id': self.id,
             'experiment': exp,

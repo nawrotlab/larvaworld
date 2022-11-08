@@ -229,7 +229,10 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c, store=store)
-    align_trajectories(s, c, store=store, replace=False, transposition='origin')
+    try:
+        align_trajectories(s, c, store=store, replace=False, transposition='origin')
+    except :
+        pass
 
     print(f'Completed {mode} spatial processing.')
 

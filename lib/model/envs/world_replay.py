@@ -1,11 +1,11 @@
 import numpy as np
 
-from lib.model.envs._larvaworld import LarvaWorld
+from lib.model.envs.world import World
 from lib.model.agents._larva_replay import LarvaReplay
 import lib.aux.naming as nam
 
 
-class LarvaWorldReplay(LarvaWorld):
+class WorldReplay(World):
     def __init__(self, step_data, endpoint_data, config, draw_Nsegs=None, experiment='replay', **kwargs):
         super().__init__(experiment=experiment, dt=config.dt,env_params=config.env_params,Nsteps=config.Nsteps,**kwargs)
         self.draw_Nsegs = draw_Nsegs

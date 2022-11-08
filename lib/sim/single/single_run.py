@@ -9,7 +9,7 @@ import numpy as np
 from lib.registry import reg
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
-from lib.model.envs._larvaworld_sim import LarvaWorldSim
+from lib.model.envs.world_sim import WorldSim
 from lib.registry.output import set_output
 from lib.registry.pars import preg
 
@@ -50,11 +50,11 @@ class SingleRun:
         output = set_output(collections=collections, Npoints=np.min([lg.model.body.Nsegs+1 for id, lg in larva_groups.items()]))
         # print(output)
         # raise
-        self.env = LarvaWorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
-                                 env_params=env_params, larva_groups=larva_groups, trials=trials,dur=sim_params.duration,
-                                 experiment=self.experiment,
-                                 save_to=f'{self.storage_path}/visuals',
-                                 **kwargs)
+        self.env = WorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
+                            env_params=env_params, larva_groups=larva_groups, trials=trials, dur=sim_params.duration,
+                            experiment=self.experiment,
+                            save_to=f'{self.storage_path}/visuals',
+                            **kwargs)
 
     def run(self):
         self.datasets = self.env.simulate()

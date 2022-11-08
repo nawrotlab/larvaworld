@@ -19,7 +19,7 @@ from lib.aux.collecting import NamedRandomActivation
 # import lib.aux.xy_aux
 
 
-class BaseLarvaWorld:
+class BaseWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
         """Create a new model object_class and instantiate its RNG automatically."""
         cls._seed = kwargs.get("seed", None)

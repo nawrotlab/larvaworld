@@ -337,6 +337,8 @@ class _LarvaDataset:
 
     def _enrich(self,pre_kws={}, proc_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True, bout_annotation=True,
                 add_reference=False, store=False, **kwargs):
+        reg.init_Dic('PF')
+
         with stdout.suppress_stdout(show_output):
             warnings.filterwarnings('ignore')
             cc0 = {
