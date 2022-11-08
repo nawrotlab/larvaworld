@@ -10,9 +10,10 @@ import pandas as pd
 import progressbar
 import numpy as np
 
-from lib.aux import dictsNlists as dNl, naming as nam
+from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
+from lib.aux.colsNstr import get_class_by_name
 # from lib.ga.util.genome import Genome
-from lib.sim.ga.functions import GA_optimization
+from lib.sim.ga.functions import GA_optimization, get_robot_class
 
 from lib.registry.pars import preg
 from lib.registry import reg
@@ -176,11 +177,10 @@ class GAselector:
 
 
 class GAbuilder(GAselector):
-    def __init__(self, scene, side_panel=None, space_mkeys=[], robot_class=LarvaRobot, base_model='explorer',
+    def __init__(self, scene, side_panel=None, space_mkeys=[], robot_class=None, base_model='explorer',
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
                  exclude_func=None, plot_func=None,exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
-
 
         self.is_running = True
         if progress_bar and self.Ngenerations is not None:
@@ -191,7 +191,7 @@ class GAbuilder(GAselector):
         self.exclude_func = exclude_func
         self.multicore = multicore
         self.scene = scene
-        self.robot_class = robot_class
+        self.robot_class = get_robot_class(robot_class, self.model.offline)
         self.mConf0 = self.M.loadConf(base_model)
         self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.excluded_ids = []

@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from lib.aux.stor_aux import read, storeH5, store_distros, get_distros
-from lib.registry.pars import preg
 from lib.registry import reg
 from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux, dir_aux
 
@@ -207,7 +206,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
     shorts = ['v', 'a', 'sv', 'sa']
 
     if also_in_mm:
-        d_in_mm, v_in_mm, a_in_mm = preg.getPar(['d_in_mm', 'v_in_mm', 'a_in_mm'])
+        d_in_mm, v_in_mm, a_in_mm = reg.getPar(['d_in_mm', 'v_in_mm', 'a_in_mm'])
         s[d_in_mm] = s[dst] * 1000
         s[v_in_mm] = s[v] * 1000
         s[a_in_mm] = s[a] * 1000
@@ -216,7 +215,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
         shorts += ['v_in_mm', 'a_in_mm']
 
     if store:
-        store_distros(s, pars=preg.getPar(shorts), parent_dir=c.dir)
+        store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
         ps=[p for p in [dst,cdst, sdst, csdst] if p in s.columns]
         storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
 
@@ -441,7 +440,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        ss = read(key='step', path=preg.datapath('step',c.dir))[['x', 'y']]
+        ss = read(key='step', path=reg.datapath('step',c.dir))[['x', 'y']]
         s = ss
     else:
         ss = s[['x', 'y']]
@@ -449,7 +448,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
     Nticks = len(s.index.unique('Step'))
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
-    pars = [preg.getPar(f'tor{dur}') for dur in tor_durs]
+    pars = [reg.getPar(f'tor{dur}') for dur in tor_durs]
     for dur, p in zip(tor_durs, pars):
         r = int(dur / dt / 2)
         T = np.zeros([Nticks, Nids]) * np.nan
@@ -467,11 +466,11 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
     if store:
         dic = get_distros(s, pars=pars)
-        storeH5(dic, key=None, path=preg.datapath('distro', c.dir))
+        storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
 
 
 def comp_source_metrics(s, e, c, **kwargs):
-    fo = preg.getPar('fo')
+    fo = reg.getPar('fo')
     xy = nam.xy('')
     for n, pos in c.source_xy.items():
         print(f'Computing bearing and distance to {n} based on xy position')
@@ -601,7 +600,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
             ss[y] = ss[y].values-ys
 
         if store:
-            storeH5(df= ss, key=mode, path=preg.datapath('traj', c.dir))
+            storeH5(df= ss, key=mode, path=reg.datapath('traj', c.dir))
             # storage[f'traj_aligned2{mode}'] = ss
             # storage.close()
             print(f'traj_aligned2{mode} stored')
@@ -707,7 +706,7 @@ def scale_to_length(s, e, c=None, pars=None, keys=None):
     l = e[l_par]
     if pars is None:
         if keys is not None:
-            pars = preg.getPar(keys)
+            pars = reg.getPar(keys)
         else:
             raise ValueError('No parameter names or keys provided.')
     s_pars = [p for p in pars if p in s.columns]

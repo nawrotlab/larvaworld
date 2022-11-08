@@ -1,14 +1,14 @@
 import numpy as np
 from scipy.stats import ks_2samp
 
-import lib.aux.dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
+from lib.registry import reg
 
 
-from lib.registry.pars import preg
 
 
 def GA_optimization(fitness_target_refID, fitness_target_kws):
-    d = preg.loadRef(fitness_target_refID)
+    d = reg.loadRef(fitness_target_refID)
     fit_dic0=build_fitness(fitness_target_kws, d)
 
     func_dict=fit_dic0['func_global_dict']
@@ -165,3 +165,19 @@ def arrange_fitness(fitness_func, **kwargs):
 
     return dNl.NestDict({'func': func, 'func_arg':'robot'})
 
+def get_robot_class(short_name=None, offline=False):
+    if offline:
+        short_name = 'LarvaOffline'
+    if short_name is None:
+        short_name = 'LarvaRobot'
+
+    if type(short_name) == str:
+        if short_name == 'LarvaRobot' :
+            class_name = f'lib.model.robot.larva_robot.LarvaRobot'
+        elif short_name == 'LarvaOffline' :
+
+            class_name = f'lib.model.robot.larva_offline.LarvaOffline'
+        robot_class = cNs.get_class_by_name(class_name)
+    elif type(short_name) == str :
+        robot_class =short_name
+    return robot_class

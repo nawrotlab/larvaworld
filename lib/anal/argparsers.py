@@ -11,18 +11,9 @@ class Parser:
     Create an argument parser for a group of arguments (normally from a dict).
     """
 
-    # def __init__(self, name):
-    #     self.name = name
-    #     d0 = ParDict.init_dict[name]
-    #     try :
-    #         self.parsargs =build_ParsDict2(d0)
-    #     except :
-    #         self.parsargs = build_ParsDict(d0)
-
     def __init__(self, name):
-        reg.init_Dic('ParsD')
         self.name = name
-        self.parsargs = reg.ParsD.parser_dict[name]
+        self.parsargs = reg.init_Dic('ParsD').parser_dict[name]
 
     def add(self, parser=None):
         if parser is None:

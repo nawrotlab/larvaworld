@@ -9,6 +9,7 @@ from lib.registry import reg, base
 from lib.screen.rendering import  Viewer
 from lib.aux.color_util import Color
 from lib.screen.screen_aux import get_arena_bounds
+from lib.sim.ga.functions import get_robot_class
 from lib.sim.ga.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil
 from lib.model.envs.base_world import BaseWorld
@@ -118,18 +119,9 @@ class GAlauncher(BaseGAlauncher):
     SCENE_SPEED_CHANGE_COEFF = 1.5
 
     SIDE_PANEL_WIDTH = 600
-    def __init__(self, ga_build_kws, ga_select_kws, show_screen=True, offline=False,
+    def __init__(self, ga_build_kws, ga_select_kws, show_screen=True,
                  caption=None, scene='no_boxes', scene_speed=0, **kwargs):
-        self.offline = offline
-        if self.offline:
-            from lib.model.robot.larva_offline import LarvaOffline
-            ga_build_kws.robot_class = LarvaOffline
-            show_screen = False
-        elif ga_build_kws.robot_class is None :
-            from lib.model.robot.larva_robot import LarvaRobot
-            ga_build_kws.robot_class = LarvaRobot
-
-        super().__init__(offline=self.offline,**kwargs)
+        super().__init__(**kwargs)
 
 
         self.ga_build_kws = ga_build_kws
@@ -143,6 +135,9 @@ class GAlauncher(BaseGAlauncher):
         self.obstacles = []
 
         self.initialize(**ga_build_kws, **ga_select_kws)
+
+
+
 
     def run(self):
         while True and self.engine.is_running:

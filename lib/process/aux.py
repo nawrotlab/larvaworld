@@ -1,9 +1,7 @@
-import os
 import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks, argrelextrema
 
-from lib.anal.fitting import fit_epochs
 from lib.aux.stor_aux import store_distros
 from lib.registry import reg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux, sim_aux
@@ -148,14 +146,7 @@ def detect_runs(a, dt, vel_thr=0.3, min_dur=0.5):
 
 
     """
-    # if min_dur is None:
-    #     min_dur = 2 * dt
     idx = np.where(a >= vel_thr)[0]
-    # r0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
-    # r1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
-    # runs = np.vstack([r0s, r1s]).T
-    # durs = (np.diff(runs).flatten() + 1) * dt
-    # runs = runs[durs >= min_dur]
     runs = detect_epochs(idx, dt, min_dur)
     return runs
 
