@@ -2,7 +2,6 @@ import numpy as np
 
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry.base import BaseConfDict
-# from lib.registry.pars import preg
 
 def track_par_func(chunk, par):
     def func(d):
@@ -173,28 +172,3 @@ class ParFuncDict(BaseConfDict):
             'unwrap': unwrap_func,
             'vel': func_v_spatial,
         })
-
-
-
-
-
-# class ParFuncDict:
-#     def __init__(self, load=False, save=False):
-#         self.dict_path = preg.paths['ParFuncDict']
-#         if not load:
-#             self.dict = build_func_dict()
-#             if save :
-#                 dNl.save_dict(self.dict, self.dict_path)
-#         else:
-#             self.dict = dNl.load_dict(self.dict_path)
-
-# parfunc_dict=ParFuncDict()
-#
-# if __name__ == '__main__':
-#     fd = ParFuncDict()
-#     # n=fd.__class__.__name__
-#     print(fd.dict, fd.path)
-#     # fd.save()
-#     # print(preg.paths[n])
-
-

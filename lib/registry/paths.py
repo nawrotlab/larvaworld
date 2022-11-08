@@ -1,5 +1,5 @@
 import os
-from lib.aux import dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, naming as nam
 
 
 
@@ -9,8 +9,6 @@ def get_parent_dir():
     p = os.path.dirname(p)
     p = os.path.dirname(p)
     p = os.path.dirname(p)
-    #p = os.path.dirname(p)
-    # p = os.path.join(p, '../..')
     return p
 
 def build_path_dict() :
@@ -108,18 +106,7 @@ def build_path_dict() :
     dic['parent']=F0
     return dNl.NestDict(dic)
 
-# class PathDict :
-#     def __init__(self):
-#         self.dict=build_path_dict()
-#
-#
-#
-
-#pathD = build_path_dict()
-
 def buildSampleDic():
-    # from lib.aux.dictsNlists import save_dict
-    import lib.aux.naming as nam
     d =dNl.NestDict(
         {
             'length': 'body.initial_length',
@@ -305,11 +292,6 @@ def ExpandedConfDict():
                                     gConf.model=c0['Model'][mID]
                                 else:
                                     raise
-                    #     else:
-                    #         print(subID, confType, confType0, id, c0[confType].keys())
-                    #     # continue
-                    # else :
-                    #     print(subID, confType)
     return c0
 
 

@@ -42,12 +42,6 @@ class GenAlgRun(base.BaseRun):
         self.sim_params = sim_params
         dt = sim_params.timestep
         Nsteps = int(sim_params.duration * 60 / dt)
-        # if save_to is None:
-        #     save_to = reg.Path.SIM
-        # self.save_to = save_to
-        # self.dir_path = f'{save_to}/{sim_params.path}/{id}'
-        # self.plot_dir = f'{self.dir_path}/plots'
-        # os.makedirs(self.plot_dir, exist_ok=True)
         if not self.offline:
             super().__init__(id=id, dt=dt, Box2D=sim_params.Box2D, env_params=env_params,
                              save_to=f'{self.dir_path}/visuals',

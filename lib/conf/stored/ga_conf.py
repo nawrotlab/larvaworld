@@ -3,12 +3,8 @@ import warnings
 
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
-import numpy as np
-from scipy.stats import ks_2samp
-
-from lib.registry.pars import preg
+from lib.registry import reg
 import lib.aux.dictsNlists as dNl
-from lib.model.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 
 
@@ -16,7 +12,7 @@ from lib.model.robot.larva_robot import LarvaRobot, ObstacleLarvaRobot
 
 
 def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
-            m1=None, sel={}, build={}, fitID=None, init='random', excludeID=None, robot_class=LarvaRobot, **kwargs):
+            m1=None, sel={}, build={}, fitID=None, init='random', excludeID=None, robot_class='LarvaRobot', **kwargs):
     from lib.sim.eval.eval_funcs import exclusion_funcs, fitness_funcs
 
     build_kws = {
@@ -30,7 +26,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
         # 'space_dict': space_dict,
     }
     # print(dur,name)
-    kws = {'sim_params': preg.get_null('sim_params', duration=dur, timestep=dt),
+    kws = {'sim_params': reg.get_null('sim_params', duration=dur, timestep=dt),
            'scene': scene,
            'experiment': name,
            'env_params': env_params,
@@ -41,11 +37,11 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
     if excludeID is not None:
         build_kws['exclude_func'] = exclusion_funcs[excludeID]
 
-    kws['ga_select_kws'] = preg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, **sel)
-    kws['ga_build_kws'] = preg.get_null('ga_build_kws', **build_kws, **build)
+    kws['ga_select_kws'] = reg.get_null('ga_select_kws', Nagents=N, Nelits=Nel, **sel)
+    kws['ga_build_kws'] = reg.get_null('ga_build_kws', **build_kws, **build)
     kws.update(kwargs)
 
-    conf = preg.get_null('GAconf', **kws)
+    conf = reg.get_null('GAconf', **kws)
     return {name: conf}
 
 def Ga_dict() :
@@ -78,13 +74,13 @@ def Ga_dict() :
               space_mkeys=['olfactor'], fitID='dst2source', fit_kws={'source_xy': None},
               Nel=5, N=50, env_params='mid_odor_gaussian_square'),
     **ga_conf('obstacle_avoidance', dur=0.5, m0='obstacle_avoider', m1='obstacle_avoider2',
-              space_mkeys=['sensorimotor'], fitID='cum_dst', robot_class=ObstacleLarvaRobot,
+              space_mkeys=['sensorimotor'], fitID='cum_dst', robot_class='ObstacleLarvaRobot',
               Nel=2, N=15, env_params='dish_40mm', init='default',
               scene='obstacle_avoidance_700')
     })
     return d
 
 
-if __name__ == '__main__':
-    mkeys=['interference', 'turner']
-    mID0='PHIonNEU'
+# if __name__ == '__main__':
+#     mkeys=['interference', 'turner']
+#     mID0='PHIonNEU'

@@ -5,13 +5,11 @@ from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
 from lib.registry import reg
 
 
-
-
 def GA_optimization(fitness_target_refID, fitness_target_kws):
     d = reg.loadRef(fitness_target_refID)
-    fit_dic0=build_fitness(fitness_target_kws, d)
+    fit_dic0 = build_fitness(fitness_target_kws, d)
 
-    func_dict=fit_dic0['func_global_dict']
+    func_dict = fit_dic0['func_global_dict']
 
     # func_solo_dict = dNl.NestDict()
     # func_global_dict = dNl.NestDict()
@@ -84,31 +82,27 @@ def GA_optimization(fitness_target_refID, fitness_target_kws):
     #         print(i, g.fitness, fitness_means)
 
     def func(s):
-        fit_dicts ={}
+        fit_dicts = {}
         for k, kfunc in func_dict.items():
             fit_dicts.update(kfunc(s))
         return fit_dicts
 
+    return dNl.NestDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg': 's'})
 
 
-
-    return dNl.NestDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg':'s'})
-
-
-
-def build_fitness(dic, refDataset) :
-    d=refDataset
-    c=d.config
+def build_fitness(dic, refDataset):
+    d = refDataset
+    c = d.config
     func_global_dict = dNl.NestDict()
     func_solo_dict = dNl.NestDict()
-    keys=[]
-    for k,vs in dic.items():
+    keys = []
+    for k, vs in dic.items():
         if k == 'cycle_curves':
             cycle_dict = {'sv': 'abs', 'fov': 'norm', 'rov': 'norm', 'foa': 'norm', 'b': 'norm'}
-            cycle_ks=vs
-            cycle_modes={sh:cycle_dict[sh] for sh in cycle_ks}
+            cycle_ks = vs
+            cycle_modes = {sh: cycle_dict[sh] for sh in cycle_ks}
             T = d.config.pooled_cycle_curves
-            target = dNl.NestDict({sh: np.array(T[sh][mod]) for sh,mod in cycle_modes.items()})
+            target = dNl.NestDict({sh: np.array(T[sh][mod]) for sh, mod in cycle_modes.items()})
             rss_sym = {sh: sh for sh in vs}
             keys += cycle_ks
 
@@ -126,7 +120,8 @@ def build_fitness(dic, refDataset) :
                 from lib.sim.eval.eval_aux import eval_RSS
 
                 rss0 = cycle_curve_dict_multi(s=s, dt=d.config.dt, shs=cycle_ks)
-                rss = dNl.NestDict({id: {sh: dic[sh][mod] for sh,mod in cycle_modes.items()} for id, dic in rss0.items()})
+                rss = dNl.NestDict(
+                    {id: {sh: dic[sh][mod] for sh, mod in cycle_modes.items()} for id, dic in rss0.items()})
                 return dNl.NestDict({'RSS': eval_RSS(rss, target, rss_sym, mode='1:pooled')})
 
             func_global_dict[k] = gfunc
@@ -154,16 +149,15 @@ def build_fitness(dic, refDataset) :
             func_global_dict[k] = gfunc
 
     keys = dNl.unique_list(keys)
-    return dNl.NestDict({'func_global_dict': func_global_dict,'func_solo_dict': func_solo_dict, 'keys': keys})
-
+    return dNl.NestDict({'func_global_dict': func_global_dict, 'func_solo_dict': func_solo_dict, 'keys': keys})
 
 
 def arrange_fitness(fitness_func, **kwargs):
-
     def func(robot):
         return fitness_func(robot, **kwargs)
 
-    return dNl.NestDict({'func': func, 'func_arg':'robot'})
+    return dNl.NestDict({'func': func, 'func_arg': 'robot'})
+
 
 def get_robot_class(short_name=None, offline=False):
     if offline:
@@ -172,12 +166,14 @@ def get_robot_class(short_name=None, offline=False):
         short_name = 'LarvaRobot'
 
     if type(short_name) == str:
-        if short_name == 'LarvaRobot' :
+        if short_name == 'LarvaRobot':
             class_name = f'lib.model.robot.larva_robot.LarvaRobot'
-        elif short_name == 'LarvaOffline' :
+        elif short_name == 'ObstacleLarvaRobot':
+            class_name = f'lib.model.robot.larva_robot.ObstacleLarvaRobot'
+        elif short_name == 'LarvaOffline':
 
             class_name = f'lib.model.robot.larva_offline.LarvaOffline'
         robot_class = cNs.get_class_by_name(class_name)
-    elif type(short_name) == str :
-        robot_class =short_name
+    elif type(short_name) == str:
+        robot_class = short_name
     return robot_class
