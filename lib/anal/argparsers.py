@@ -20,6 +20,7 @@ class Parser:
     #         self.parsargs = build_ParsDict(d0)
 
     def __init__(self, name):
+        reg.init_Dic('ParsD')
         self.name = name
         self.parsargs = reg.ParsD.parser_dict[name]
 

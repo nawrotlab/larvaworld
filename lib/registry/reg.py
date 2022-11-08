@@ -136,6 +136,7 @@ def lgs(**kwargs):
     return GT.dict.LarvaGroup.lgs(**kwargs)
 
 def get_null(name, **kwargs):
+    init_Dic('DEF')
     return DEF.get_null(name=name, **kwargs)
 
 
