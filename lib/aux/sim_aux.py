@@ -246,7 +246,7 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
     a = np.nan_to_num(a)
     Nticks = len(a)
     xf = fftfreq(Nticks, dt)[:Nticks // 2]
-    yf = fft(a, norm="backward")
+    yf = fft(a, norm="ortho")
     yf = 2.0 / Nticks * np.abs(yf[:Nticks // 2])
     yf = 1000 * yf / np.sum(yf)
     # yf = moving_average(yf, n=21)

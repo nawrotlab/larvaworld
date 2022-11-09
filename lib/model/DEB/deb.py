@@ -8,7 +8,7 @@ import numpy as np
 
 from lib.registry import reg
 from lib.registry.pars import preg
-from lib.model.DEB.deb_aux import beta0, simplex
+from lib.model.DEB.deb_aux import beta0, simplex, get_lb, get_E0, get_E_Rm
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.model.DEB.gut import Gut
 from lib.model.DEB.substrate import Substrate, substrate_dict
@@ -171,7 +171,10 @@ class DEB:
         self.Lm = v / (g * k_M)
         self.T_factor = np.exp(self.T_A / self.T_ref - self.T_A / self.T);  # Arrhenius factor
         # v**-1*L=e*E_G/(g*pM)
-        lb = self.lb = self.get_length_at_birth(eb=self.eb)
+        lb = self.lb = get_lb(eb=self.eb, **self.species_dict)
+        self.E0 = get_E0(eb=self.eb,lb=lb, **self.species_dict)
+        self.E_Rm = get_E_Rm(lb=lb, **self.species_dict)
+
         Lb = self.Lb = lb * self.Lm
         self.Lwb = Lb / self.del_M
         self.tau_b = self.get_tau_b(eb=self.eb)
@@ -189,9 +192,9 @@ class DEB:
         # self.y_VE = (self.d_V / self.w_V)*self.mu_E/E_G
         # self.J_E_Am = self.p_Am/self.mu_E
 
-        self.uE0 = self.get_initial_reserve(eb=self.eb)
-        self.U0 = self.uE0 * v ** 2 / g ** 2 / k_M ** 3
-        self.E0 = self.U0 * p_Am
+
+        # self.U0 = self.uE0 * v ** 2 / g ** 2 / k_M ** 3
+        # self.E0 = self.U0 * p_Am
         self.Ww0 = self.E0 * self.w_E / self.mu_E  # g, initial wet weight
 
         self.v_Rm = (1 + lb / g) / (1 - lb)  # scaled max reprod buffer density
@@ -219,48 +222,6 @@ class DEB:
         ab = 3 * g * xb ** (1 / 3) / self.lb
         return 3 * quad(func=get_tb, a=1e-15, b=xb, args=(ab, xb))[0]
 
-    def get_length_at_birth(self, eb=1.0):
-        g = self.g
-        k = self.k
-        vHb = self.vHb
-
-        n = 1000 + round(1000 * max(0, k - 1))
-        xb = g / (g + eb)
-        xb3 = xb ** (1 / 3)
-        x = np.linspace(10 ** -5, xb, n)
-        dx = xb / n
-        x3 = x ** (1 / 3)
-
-        b = beta0(x, xb) / (3 * g)
-
-        t0 = xb * g * vHb
-        i = 0
-        norm = 1
-        ni = 100
-
-        lb = vHb ** (1 / 3)
-
-        while i < ni and norm > 1e-18:
-            l = x3 / (xb3 / lb - b)
-            s = (k - x) / (1 - x) * l / g / x
-            vv = np.exp(- dx * np.cumsum(s))
-            vb = vv[- 1]
-            r = (g + l)
-            rv = r / vv
-            t = t0 / lb ** 3 / vb - dx * np.sum(rv)
-            dl = xb3 / lb ** 2 * l ** 2. / x3
-            dlnv = np.exp(- dx * np.cumsum(s * dl / l))
-            dlnvb = dlnv[- 1]
-            dt = - t0 / lb ** 3 / vb * (3 / lb + dlnvb) - dx * np.sum((dl / r - dlnv) * rv)
-            lb -= t / dt  # Newton Raphson step
-            norm = t ** 2
-            i += 1
-        return lb
-
-    def get_initial_reserve(self, eb=1.0):
-        g = self.g
-        xb = g / (g + eb)
-        return np.real((3 * g / (3 * g * xb ** (1 / 3) / self.lb - beta0(0, xb))) ** 3)
 
     def predict_larva_stage(self, f=1.0):
         g = self.g

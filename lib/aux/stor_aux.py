@@ -62,7 +62,10 @@ def read(path=None, key=None, mode='r',**kwargs):
         # print(f'File H5 does not exist at {path}.Returning None')
         return None
     if key is not None:
-        return pd.read_hdf(path, key=key, mode=mode)
+        try :
+            return pd.read_hdf(path, key=key, mode=mode)
+        except :
+            return None
     else:
         store = pd.HDFStore(path)
         ks = list(store.keys())
@@ -80,6 +83,7 @@ def read(path=None, key=None, mode='r',**kwargs):
 
 
 def storeH5(df, path=None, key=None, mode=None, **kwargs):
+
     if path is not None :
         if mode is None:
             if os.path.isfile(path):
@@ -88,9 +92,14 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
                 mode = 'w'
 
         if key is not None:
-            store = pd.HDFStore(path, mode=mode)
-            store[key] = df
-            store.close()
+
+            try:
+                store = pd.HDFStore(path, mode=mode)
+                store[key] = df
+                store.close()
+            except:
+                if mode == 'a':
+                    storeH5(df, path=path, key=key, mode='w', **kwargs)
         elif key is None and isinstance(df, dict):
             store = pd.HDFStore(path, mode=mode)
             for k, v in df.items():

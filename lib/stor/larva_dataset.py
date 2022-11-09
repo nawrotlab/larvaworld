@@ -83,6 +83,7 @@ class _LarvaDataset:
 
     @warn_slow
     def load(self, step=True, end=True, food=False, **kwargs):
+
         if step:
             self.step_data = self.load_step(**kwargs)
 
@@ -98,11 +99,13 @@ class _LarvaDataset:
     def save_step(self, s=None, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
         if s is None:
             s = self.step_data
+        s = s.loc[:, ~s.columns.duplicated()]
         stored_ps = []
         # s = self.step_data
         for h5_k in h5_ks:
 
             pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
+            pps=dNl.unique_list(pps)
             if len(pps) > 0:
                 self.storeH5(df=s[pps], key=h5_k, mode=self.load_h5_kdic[h5_k])
 

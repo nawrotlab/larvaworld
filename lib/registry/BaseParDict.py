@@ -603,6 +603,7 @@ class BaseParDict:
         d0 = {
             'str': 'stride',
             'pau': 'pause',
+            'run': 'run',
             'fee': 'feed',
             'tur': 'turn',
             'Ltur': 'Lturn',
