@@ -163,7 +163,7 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
 def kinematic_analysis(datasets, **kwargs):
     w, h = 50, 24
     P = GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.95), **kwargs)
-    # Nds = len(datasets)
+
     kws = {
         'datasets': datasets,
         'save_to': None,

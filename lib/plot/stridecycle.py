@@ -321,7 +321,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     shorts = ['str_fo', 'str_ro']
     P.build(1, len(shorts))
     for i, sh in enumerate(shorts):
-        p, sl, xlab = preg.getPar(sh, to_return=['d', 's', 'l'])
+        p, sl, xlab = reg.getPar(sh, to_return=['d', 's', 'l'])
         bins, xlim = P.angrange(80, absolute, 200)
         P.plot_par(p, bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, yMaxN=4, leg_loc='upper left')
@@ -345,7 +345,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
 
     Npars = len(shorts)
 
-    pars, ylabs = preg.getPar(shorts, to_return=['d', 'l'])
+    pars, ylabs = reg.getPar(shorts, to_return=['d', 'l'])
     P = AutoPlot(name=name, subfolder=subfolder, Nrows=Npars, figsize=(10, Npars * 5), sharex=True, **kwargs)
 
     ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
