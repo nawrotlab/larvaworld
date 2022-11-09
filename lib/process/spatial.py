@@ -50,8 +50,8 @@ def comp_linear(s, e, c, mode='minimal'):
             cum_d = np.nancumsum(d)
             D[:, i] = d
             Dcum[:, i] = cum_d
-            V[1:, i] = v
-            A[2:, i] = a
+            V[:, i] = v
+            A[1:, i] = a
 
         s[dst] = D.flatten()
         s[cum_dst] = Dcum.flatten()

@@ -47,9 +47,7 @@ def comp_stride_variation(d, component_vels=True):
                           'use_component_vel': lin_flag[ii]} for ii in
            range(len(all_vels))}
 
-    shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'str_sd_mu', 'str_sd_std', 'str_t_var','str_sd_var']
-    pars = reg.getPar(shorts)
-    sstr_d_var, str_t_var, str_tr = pars[-1], pars[-2], pars[2]
+
 
     if any([vv not in s.columns for vv in vels + [cvel]]):
         from lib.process.spatial import comp_spatial
@@ -67,11 +65,14 @@ def comp_stride_variation(d, component_vels=True):
         scale_to_length(s, e, c, pars=all_vels0)
 
     svels = [p for p in all_vels if p in s.columns]
+
+    shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'str_sd_mu', 'str_sd_std', 'str_t_var', 'str_sd_var']
+
     my_index = pd.MultiIndex.from_product([svels, c.agent_ids], names=['VelPar', 'AgentID'])
-    df = pd.DataFrame(index=my_index, columns=pars)
+    df = pd.DataFrame(index=my_index, columns=reg.getPar(shorts))
 
     for ii in range(c.N):
-        print(ii)
+        # print(ii)
         id = c.agent_ids[ii]
         ss, ee = s.xs(id, level='AgentID'), e.loc[id]
         for i, vv in enumerate(svels):
@@ -93,12 +94,12 @@ def comp_stride_variation(d, component_vels=True):
                        np.mean(amps), np.std(amps), t_cv, s_cv]
 
             df.loc[(vv, id)] = row
-    str_var = df[[sstr_d_var, str_t_var, str_tr]].groupby('VelPar').mean()
+    str_var = df[reg.getPar(['str_sd_var', 'str_t_var', 'str_tr'])].astype(float).groupby('VelPar').mean()
     for ii in ['symbol', 'color', 'marker','par', 'idx', 'point', 'point_idx', 'use_component_vel'] :
         str_var[ii]= [dic[jj][ii] for jj in str_var.index.values]
     dic = {'stride_data': df, 'stride_variability': str_var}
 
-    sNt_cv = str_var[[sstr_d_var, str_t_var]].sum(axis=1)
+    sNt_cv = str_var[reg.getPar(['str_sd_var', 'str_t_var'])].sum(axis=1)
     best_idx = sNt_cv.argmin()
     c.metric_definition.spatial.fitted = dNl.NestDict(
         {'point_idx': int(str_var['point_idx'].iloc[best_idx]),

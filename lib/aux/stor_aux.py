@@ -46,7 +46,7 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
         path = filepath_dic[filepath_key]
     else:
         if parent_dir is not None:
-            path = datapath(filepath_key, parent_dir)
+            path = reg.datapath(filepath_key, parent_dir)
         else:
             print('Filepath not provided.Returning None')
             return None
@@ -73,13 +73,15 @@ def read(path=None, key=None, mode='r',**kwargs):
             df = store[ks[0]]
             store.close()
             return df
-
-        # if not all_keys :
-        #     return pd.read_hdf(path, key=key, mode='r')
-        else:
-            dic = {k: store[k] for k in store.keys()}
+        else :
+            dd=dNl.NestDict()
+            for k in ks :
+                dd[k]=store[k]
             store.close()
-            return dic
+            return dd
+
+
+
 
 
 def storeH5(df, path=None, key=None, mode=None, **kwargs):

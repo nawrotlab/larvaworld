@@ -65,6 +65,12 @@ def std_func(par):
 
     return func
 
+def var_func(par):
+    def func(d):
+        d.endpoint_data[nam.var(par)] = d.step_data[par].dropna().groupby('AgentID').mean()/d.step_data[par].dropna().groupby('AgentID').std()
+
+    return func
+
 
 def min_func(par):
     def func(d):
@@ -159,6 +165,7 @@ class ParFuncDict(BaseConfDict):
             'ops': {
                 'mean': mean_func,
                 'std': std_func,
+                'var': var_func,
                 'min': min_func,
                 'max': max_func,
                 'final': fin_func,

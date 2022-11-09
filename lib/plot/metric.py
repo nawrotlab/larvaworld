@@ -4,13 +4,13 @@ import seaborn as sns
 
 from lib.plot.base import AutoPlot
 from lib.plot.aux import confidence_ellipse, process_plot, suf
+from lib.registry import reg
 
 
 def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
-    build_kws = {'Nrows': 1, 'Ncols': 2, 'wh': 5, 'sharex': False, 'sharey': False}
+    build_kws = {'Nrows': 2, 'Ncols': 1, 'wh': 5, 'sharex': False, 'sharey': False}
 
     P = AutoPlot(name=f'segmentation_definition', subfolder=subfolder,build_kws=build_kws, **kwargs)
-    # P.build(1, P.Ndatasets * 2, figsize=(5 * P.Ndatasets, 5), sharex=False, sharey=False, fig=fig, axs=axs)
     Nbest = 5
     for ii, d in enumerate(P.datasets):
         ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
@@ -37,17 +37,16 @@ def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
         best_combos = df_corr.index.values[:Nbest]
         xx = [','.join(map(str, cc)) for cc in best_combos]
         ax2.bar(x=xx, height=max_corrs, width=0.5, color='black')
-        P.conf_ax(ii * 2 + 1, xlab='combined angular velocities', ylab='Pearson correlation', yMaxN=4, ylim=(0.5, 1))
+        P.conf_ax(ii * 2 + 1, xlab='combined angular velocities', ylab='Pearson correlation', yMaxN=4, ylim=(0, 1))
         ax2.tick_params(axis='x', which='major', labelsize=20)
-        P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.3)
-        return P.get()
+    P.adjust(LR=(0.1, 0.95), BT=(0.15, 0.95), W=0.3)
+    return P.get()
 
 
 def plot_stride_variability(component_vels=True, subfolder='metric_definition', **kwargs):
     build_kws = {'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True}
 
     P = AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,build_kws=build_kws,  **kwargs)
-    # P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
         ax = P.axs[ii]
 
@@ -61,7 +60,7 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
         ps = stvar.index if component_vels else [p for p in stvar.index if 'lin' not in p]
         for p in ps:
             row = stvar.loc[p]
-            ax.scatter(x=row['scaled_stride_dst_var'], y=row['stride_dur_var'], marker=row['marker'], s=200,
+            ax.scatter(x=row[reg.getPar('str_sd_var')], y=row[reg.getPar('str_t_var')], marker=row['marker'], s=200,
                        color=row['color'], label=row['symbol'])
         ax.legend(ncol=2, handleheight=1.7, labelspacing=0.01, loc='lower right')
         ax.set_ylabel(r'$\overline{cv}_{temporal}$')

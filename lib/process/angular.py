@@ -87,14 +87,19 @@ def comp_orientations(s, e, c, mode='minimal'):
         r1, r2 = temp.rear_vector
 
     xy = [nam.xy(points[i]) for i in range(len(points))]
+
+
+
     print(f'Computing front/rear body-vector and head/tail orientation angles')
     pars=nam.orient(['front','rear', 'head', 'tail'])
     Npars=len(pars)
 
     xy_pars = dNl.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
-    xy_ar = s[xy_pars].values
-    Nticks = xy_ar.shape[0]
-    xy_ar = np.reshape(xy_ar, (Nticks, Npars*2, 2))
+    xy_ar0 = s[xy_pars].values
+
+
+    Nticks = xy_ar0.shape[0]
+    xy_ar = np.reshape(xy_ar0, (Nticks, Npars*2, 2))
 
 
 
@@ -112,10 +117,10 @@ def comp_orientations(s, e, c, mode='minimal'):
         print(f'Computing additional orients for {N} spinesegments')
         ors = nam.orient(segs)
         xy_pars = dNl.flatten_list([xy[i] for i in range(N + 1)])
-        xy_ar = s[xy_pars].values
+        xy_ar0 = s[xy_pars].values
         # Npoints = int(xy_ar.shape[1] / 2)
-        Nticks = xy_ar.shape[0]
-        xy_ar = np.reshape(xy_ar, (Nticks, N*2, 2))
+        Nticks = xy_ar0.shape[0]
+        xy_ar = np.reshape(xy_ar0, (Nticks, N + 1, 2))
         cc = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
             cc[:, i] = np.array([ang_aux.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])

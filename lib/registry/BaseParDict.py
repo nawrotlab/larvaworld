@@ -218,6 +218,10 @@ class BaseParDict:
                    'func': funcs.std(b.d),
                    'k': f'{b.k}_std'}
 
+        var_kws = {'d': nam.var(b.d), 'p': nam.var(b.p), 'sym': wave(b.sym), 'disp': f'var {b.disp}',
+                   'func': funcs.var(b.d),
+                   'k': f'{b.k}_var'}
+
         min_kws = {'d': nam.min(b.d), 'p': nam.min(b.p), 'sym': sub(b.sym, 'min'), 'disp': f'minimum {b.disp}',
                    'func': funcs.min(b.d), 'k': f'{b.k}_min'}
 
@@ -239,7 +243,7 @@ class BaseParDict:
         cum_kws = {'d': nam.cum(b.d), 'p': nam.cum(b.p), 'sym': sub(b.sym, 'cum'), 'disp': disp,
                    'func': funcs.cum(b.d), 'k': nam.cum(b.k)}
 
-        for kws in [mu_kws, std_kws, min_kws, max_kws, fin_kws, init_kws, cum_kws]:
+        for kws in [mu_kws, std_kws,var_kws, min_kws, max_kws, fin_kws, init_kws, cum_kws]:
             self.add(**kws, **kws0)
 
     def add_chunk(self, pc, kc, func=None, required_ks=[]):

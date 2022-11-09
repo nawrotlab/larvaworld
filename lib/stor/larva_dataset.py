@@ -136,7 +136,7 @@ class _LarvaDataset:
         dic={**res_v,**res_fov}
         nam.retrieve_metrics(self, self.config)
         self.save_config()
-        self.storeH5(df=dic, key=None, filepath_key='vel_definition')
+        self.storeH5(df=dic, filepath_key='vel_definition')
         print(f'Velocity definition dataset stored.')
 
         return dic
