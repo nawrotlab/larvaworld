@@ -61,7 +61,8 @@ def build():
     })
     d['freq'] = dNl.NestDict({
         'powerspectrum': freq.powerspectrum,
-        'fft': freq.plot_fft_multi,
+        'fft multi': freq.plot_fft_multi,
+        'fft': freq.plot_fft,
 
     })
     d['grid'] = dNl.NestDict({

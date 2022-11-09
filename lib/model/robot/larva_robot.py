@@ -26,13 +26,13 @@ class LarvaRobot(BodySim):
         # raise
         self.brain = DefaultBrain(dt=self.model.dt, conf=larva_pars.brain, agent=self)
 
-        self.x, self.y = self.model.scene._transform(self.pos)
+        self.x, self.y = self.model.viewer._transform(self.pos)
 
 
-    def draw(self, scene):
+    def draw(self, viewer):
         for seg in self.segs:
             for vs in seg.vertices:
-                scene.draw_polygon(vs, filled=True, color=seg.color)
+                viewer.draw_polygon(vs, filled=True, color=seg.color)
 
     @property
     def direction(self):
@@ -44,7 +44,7 @@ class LarvaRobot(BodySim):
         #                                                            self.rear_orientation_change/self.model.dt,
         #                                                            self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
 
-        self.x, self.y = self.model.scene._transform(self.pos)
+        self.x, self.y = self.model.viewer._transform(self.pos)
         self.Nticks += 1
 
     @ property
@@ -87,10 +87,10 @@ class ObstacleLarvaRobot(LarvaRobot):
         S_kws = {
             'saturation_value': sensor_saturation_value,
             'error': obstacle_sensor_error,
-            'max_distance': int(self.model.scene._scale[0, 0] * sensor_max_distance * self.real_length),
+            'max_distance': int(self.model.viewer._scale[0, 0] * sensor_max_distance * self.real_length),
             # 'max_distance': sensor_max_distance * self.real_length,
-            'scene': self.model.scene,
-            'collision_distance': int(self.model.scene._scale[0, 0] * self.real_length / 5),
+            # 'viewer': self.model.viewer,
+            'collision_distance': int(self.model.viewer._scale[0, 0] * self.real_length / 5),
             # 'collision_distance': 0.1 * self.real_length,
         }
 
@@ -111,7 +111,7 @@ class ObstacleLarvaRobot(LarvaRobot):
 
     def sense_and_act(self):
         if not self.collision_with_object:
-            pos = self.model.scene._transform(self.olfactor_pos)
+            pos = self.model.viewer._transform(self.olfactor_pos)
             try:
 
                 self.left_motor_controller.sense_and_act(pos=pos, direction=self.direction)
@@ -147,9 +147,9 @@ class ObstacleLarvaRobot(LarvaRobot):
     def set_right_motor_controller(self, right_motor_controller):
         self.right_motor_controller = right_motor_controller
 
-    def draw(self, scene):
+    def draw(self, viewer):
         # pos = self.olfactor_pos
-        pos = self.model.scene._transform(self.olfactor_pos)
+        pos = self.model.viewer._transform(self.olfactor_pos)
         # draw the sensor lines
 
         # in scene_loader a robot doesn't have sensors
@@ -158,4 +158,4 @@ class ObstacleLarvaRobot(LarvaRobot):
             self.right_motor_controller.sensor.draw(pos=pos, direction=self.direction)
 
         # call super method to draw the robot
-        super().draw(scene)
+        super().draw(viewer)

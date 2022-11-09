@@ -73,11 +73,10 @@ class BatchTab(GuiTab):
         return l, c, {g1.name: g1}, {self.name: {'df': None, 'fig_dict': None}}
 
     def run(self, v, w, c, d, g, conf, id):
-        from run.exec_run import Exec
         batch_id = v[self.batch_id_key]
         conf['batch_id'] = batch_id
         conf['batch_type'] = id
-        exec = Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
+        exec = exec_run.Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
         self.DL0.add(w, {batch_id: exec})
         exec.run()
         return d, g

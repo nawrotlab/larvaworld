@@ -161,8 +161,8 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
 
 
 def kinematic_analysis(datasets, **kwargs):
-    w, h = 50, 24
-    P = GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.95), **kwargs)
+    w, h = 50, 28
+    P = GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.94), **kwargs)
 
     kws = {
         'datasets': datasets,
@@ -172,7 +172,7 @@ def kinematic_analysis(datasets, **kwargs):
 
     }
     kws2 = {
-        'dh': 2,
+        'dh': 4,
         'dw': 2,
         # 'h': 12,
         'w': int(w/2-2),
@@ -187,9 +187,9 @@ def kinematic_analysis(datasets, **kwargs):
         **kws2
     }
 
-    P.plot(func='fft',kws={**kws}, y0=True,N=1, **kws1)
+    P.plot(func='fft multi',kws={**kws}, y0=True,N=1, **kws1)
     P.plot(func='epochs', kws={'plot_fits': ['powerlaw', 'exponential', 'lognormal', 'levy'], **kws},h0=int(h/2+2), N=2, **kws1)
-    P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h-2, w0=int(w/2+2),y0=True,share_w= True, **kws2)
+    P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h, w0=int(w/2+2),y0=True,share_w= True, **kws2)
     P.adjust((0.07, 0.95), (0.1, 0.9), 0.2, 0.1)
     P.annotate()
     return P.get()

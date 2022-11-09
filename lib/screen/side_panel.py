@@ -13,9 +13,8 @@ class SidePanel:
     DEFAULT_MARGIN = 35
     LEFT_MARGIN = 30
 
-    def __init__(self, scene, space_dict):
-        self.scene = scene
-        self.screen = scene.screen
+    def __init__(self, viewer, space_dict):
+        self.viewer = viewer
         self.Nagents = None
         self.generation_num = None
         self.best_genome = None
@@ -41,26 +40,15 @@ class SidePanel:
         self.gen_sim_t = gen_sim_t
 
     def display_ga_info(self):
-        pygame.draw.line(self.screen, Color.GRAY, (self.scene.width, 0), (self.scene.width, self.scene.height))
+        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=Color.WHITE)
 
         if pygame.font:
             font = pygame.font.Font(None, self.FONT_SIZE)
             self.line_num = 1
-            self.line_spacing = self.LINE_SPACING_MAX if self.scene.height > self.SCENE_HEIGHT_THRESHOLD else self.LINE_SPACING_MIN
-            # if self.scene.height > self.SCENE_HEIGHT_THRESHOLD:
-            #     self.line_spacing = self.LINE_SPACING_MAX
-            # else:
-            #     self.line_spacing = self.LINE_SPACING_MIN
-            #
+            self.line_spacing = self.LINE_SPACING_MAX if self.viewer.height > self.SCENE_HEIGHT_THRESHOLD else self.LINE_SPACING_MIN
+
             fitness_best = '-' if self.best_genome is None else str(round(self.best_genome.fitness, 2))
 
-            # if self.best_genome is None:
-                # this happens only at the first generation
-                # fitness_best = '-'
-                # generation_num_best = '-'
-            # else:
-            #     fitness_best = str(round(self.fitness_best_genome, 2))
-            #     generation_num_best = str(self.best_genome.generation_num)
 
             self.render_line(font, 'Total time: ' + TimeUtil.format_time_seconds(self.cum_t))
             self.render_line(font, 'Generation: ' + str(self.generation_num))
@@ -88,7 +76,7 @@ class SidePanel:
             self.render_line(font, 'ESC : quit', self.LEFT_MARGIN)
 
     def display_info(self, object_to_place):
-        pygame.draw.line(self.screen, Color.GRAY, (self.scene.width, 0), (self.scene.width, self.scene.height))
+        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=Color.WHITE)
 
         if pygame.font:
             font = pygame.font.Font(None, self.FONT_SIZE)
@@ -108,8 +96,8 @@ class SidePanel:
 
     def render_line(self, font, text, extra_margin=0):
         line = font.render(text, 1, Color.WHITE)
-        x = self.scene.width + self.DEFAULT_MARGIN + extra_margin
+        x = self.viewer.width + self.DEFAULT_MARGIN + extra_margin
         y = self.line_num * self.line_spacing
         lint_pos = pygame.Rect(x, y, 20, 20)
-        self.screen.blit(line, lint_pos)
+        self.viewer._window.blit(line, lint_pos)
         self.line_num += 1

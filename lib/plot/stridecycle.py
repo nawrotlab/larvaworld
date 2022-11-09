@@ -193,8 +193,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
     P = AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
                  **kwargs)
 
-    if axx is None:
-        axx = P.fig.add_axes([0.64, 0.4, 0.25, 0.12])
+
 
 
     pi2 = 2 * np.pi
@@ -271,6 +270,8 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
         aa = np.zeros([c.Npoints, c.N]) * np.nan
         for i, p in enumerate(ps):
             aa[i, :] = e[p].values - e[phi_att_max].values
+        if axx is None:
+            axx = P.axs[1].inset_axes([0.7, 0.7, 0.3, 0.25])
         axx.violinplot(aa.T, widths=0.9)
         axx.set_ylabel(r'$\Delta\phi$')
         axx.set_xlabel('# point')

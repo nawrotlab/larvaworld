@@ -6,10 +6,12 @@ import six
 
 from lib.plot.base import BasePlot, AutoBasePlot
 from lib.aux import dictsNlists as dNl
+from lib.registry import reg
+
 
 def modelConfTable(mID, **kwargs):
-    from lib.registry.pars import preg
-    return preg.larva_conf_dict.mIDtable(mID, **kwargs)
+    #from lib.registry.pars import preg
+    return reg.Dic.MD.mIDtable(mID, **kwargs)
 
 
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
@@ -36,19 +38,21 @@ def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
     return P.get()
 
 
-def conf_table(df, row_colors, mID, figsize=(14, 11), show=False, save_to=None, save_as=None, **kwargs):
+def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
+               build_kws={'Nrows': 1, 'Ncols': 1, 'w': 15, 'h': 20}, **kwargs):
 
-    ax, fig, mpl = mpl_table(df, header0='MODULE', header0_color= 'darkred',colWidths=[0.35, 0.1, 0.25, 0.15],
-                             cellLoc='center', rowLoc='center',
-                             figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
+    ax, fig, mpl = mpl_table(df, header0='MODULE', header0_color= 'darkred',
+                             cellLoc='center', rowLoc='center',build_kws=build_kws,
+                             adjust_kws={'left': 0.2, 'right': 0.95},
                              row_colors=row_colors, return_table=True, **kwargs)
 
     mmID = mID.replace("_", "-")
-    ax.set_title(f'Model ID : ' + rf'$\bf{mmID}$', y=1.05, fontsize=30)
+    # ax.set_title(f'Model ID : ' + rf'$\bf{mmID}$', y=1.05, fontsize=30)
+    ax.set_title(f'Model ID : ' + rf'${mmID}$', y=1.05, fontsize=30)
 
     if save_as is None:
         save_as = mID
-    P = BasePlot('comf_table', save_as=save_as, save_to=save_to, show=show)
+    P = BasePlot('conf_table', save_as=save_as, save_to=save_to, show=show)
     P.set(fig)
     return P.get()
 
@@ -56,11 +60,11 @@ def conf_table(df, row_colors, mID, figsize=(14, 11), show=False, save_to=None, 
 
 
 
-def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,
+def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size=14, title=None,
               name='mpl_table', header0=None,header0_color=None,
               header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
               adjust_kws=None, highlighted_celltext_dict=None,highlighted_cells=None,
-              bbox=[0, 0, 1, 1], header_columns=0,
+              bbox=[0, 0, 1, 1], header_columns=0,colWidths=None,
               highlight_color='yellow', return_table=False,
               **kwargs):
     def get_idx(highlighted_cells):
@@ -102,15 +106,12 @@ def mpl_table(data, col_width=4.0, row_height=0.625, font_size=14, title=None,
         highlight_idx = get_idx(highlighted_cells)
     except:
         highlight_idx = []
-    P = AutoBasePlot(name=name, build_kws={'Nrows': 1, 'Ncols': 1, 'w': 20, 'h': 6}, **kwargs)
-    #P = BasePlot(name=name, save_to=save_to, show=show, verbose=verbose)
-    #if figsize is None:
-    #    figsize = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-    #P.build(1, 1, axs=axs, fig=fig)
+    P = AutoBasePlot(name=name, **kwargs)
+
     ax = P.axs[0]
     ax.axis('off')
-    mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,
-                   rowLabels=data.index.values, #colWidths=col_width, #row_height=row_height
+    mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,rowLoc=rowLoc,
+                   rowLabels=data.index.values, colWidths=colWidths, colLoc=colLoc,cellLoc=cellLoc,
                    )
     # FIXME deleted **kwargs
                    # rowLabels=data.index.values, **kwargs)

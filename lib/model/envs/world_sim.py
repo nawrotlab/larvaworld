@@ -27,7 +27,6 @@ class WorldSim(World):
 
 
 
-        # self.add_screen_texts(list(self.odor_layers.keys()), color=self.scale_clock_color)
 
         if not self.larva_collisions:
             self.eliminate_overlap()

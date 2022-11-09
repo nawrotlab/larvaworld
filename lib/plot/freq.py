@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import ticker, cm
 
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot, AutoBasePlot
@@ -17,10 +18,10 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     P = AutoBasePlot(name=f'fft_powerspectrum',build_kws={'w': 15, 'h': 12}, **kwargs)
     #P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
-        axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
+        axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
 
-    l, v, fov = preg.getPar(['l', 'v', 'fov'])
+    l, v, fov = reg.getPar(['l', 'v', 'fov'])
     fvs = np.zeros(c.N) * np.nan
     ffovs = np.zeros(c.N) * np.nan
     v_ys = np.zeros([c.N, c.Nticks // 2])
@@ -34,7 +35,7 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
     xmax = 3.5
     P.conf_ax(0, ylim=(0, 4), xlim=(0, xmax), ylab='Amplitude', xlab='Frequency (Hz)',
-              title='Fourier analysis', leg_loc='lower left', yMaxN=5)
+              title='Fourier analysis',titlefontsize=25, leg_loc='lower left', yMaxN=5)
 
     bins = np.linspace(0, 2, 40)
 
@@ -44,24 +45,30 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     axx.hist(ffovs, color=palette['fov'], bins=bins, weights=fov_weights)
     axx.set_xlabel('Dominant frequency (Hz)')
     axx.set_ylabel('Probability')
-    axx.tick_params(axis='both', which='minor', labelsize=12)
-    axx.tick_params(axis='both', which='major', labelsize=12)
+    axx.tick_params(axis='both', which='minor', labelsize=10)
+    axx.tick_params(axis='both', which='major', labelsize=10)
     axx.yaxis.set_major_locator(ticker.MaxNLocator(2))
     return P.get()
 
 
-def plot_fft_multi(axx=None, **kwargs):
+def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
     P = AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
     # P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
-        axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
+        axx = P.axs[0].inset_axes([0.64, 0.65, 0.3, 0.25])
+
+
     for d in P.datasets:
+        if dataset_colors :
+            palette = {'v': d.color, 'fov': d.color}
+        else :
+            palette = None
         try:
             s = d.step_data
         except:
             s = d.read(key='step')
         c = d.config
-        _ = plot_fft(s, c, axx=axx, ax=P.axs[0], fig=P.fig, palette={'v': d.color, 'fov': d.color}, return_fig=True)
+        _ = plot_fft(s, c, axx=axx, axs=P.axs[0], fig=P.fig, palette=palette, return_fig=True)
     return P.get()
 
 

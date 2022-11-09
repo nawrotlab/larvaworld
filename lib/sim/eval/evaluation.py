@@ -929,7 +929,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
                 id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
-                d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
+                eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
     d.config = c
     d.save_config()
 

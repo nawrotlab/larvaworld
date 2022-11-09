@@ -10,12 +10,11 @@ from lib.model.space.rot_surface import LightSource
 
 class Sensor:
 
-    def __init__(self, robot, delta_direction, saturation_value, error, scene):
+    def __init__(self, robot, delta_direction, saturation_value, error):
         self.robot = robot
         self.delta_direction = delta_direction
         self.saturation_value = saturation_value
         self.error = error
-        self.scene = scene
         self.value = 0
 
     def get_value(self):
@@ -33,13 +32,13 @@ class LightSensor(Sensor):
     LENGTH_SENSOR_LINE = 100
 
     def __init__(self, robot, delta_direction, saturation_value, error, scene):
-        super().__init__(robot, delta_direction, saturation_value, error, scene)
+        super().__init__(robot, delta_direction, saturation_value, error)
 
     def get_value(self):
         dir_sensor = self.robot.direction + self.delta_direction
         total_value = 0
 
-        for obj in self.scene.objects:
+        for obj in self.robot.model.viewer.objects:
             if issubclass(type(obj), LightSource):
                 light = obj
 
@@ -72,17 +71,17 @@ class LightSensor(Sensor):
         dir_sensor = self.robot.direction + self.delta_direction
         x_sensor_eol = self.robot.x + self.LENGTH_SENSOR_LINE * cos(dir_sensor)
         y_sensor_eol = self.robot.y + self.LENGTH_SENSOR_LINE * -sin(dir_sensor)
-        viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
-                         color=color, width=radius / 10)
-        pygame.draw.line(self.scene.screen, Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
+        # viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
+        #                  color=color, width=radius / 10)
+        pygame.draw.line(self.robot.model.screen, Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
 
 
 class ProximitySensor(Sensor):
 
     # COLLISION_DISTANCE = 12  # px
 
-    def __init__(self, robot, delta_direction, saturation_value, error, max_distance, scene, collision_distance=12):
-        super().__init__(robot, delta_direction, saturation_value, error, scene)
+    def __init__(self, robot, delta_direction, saturation_value, error, max_distance, collision_distance=12):
+        super().__init__(robot, delta_direction, saturation_value, error)
         self.max_distance = max_distance
         self.collision_distance = collision_distance
         # print(max_distance)
@@ -133,4 +132,4 @@ class ProximitySensor(Sensor):
         y1=y0 + sin(angle) * self.max_distance
 
         # self.scene.draw_line((x, y), (x_sensor_eol, y_sensor_eol),Color.RED, width=0.0005)
-        pygame.draw.line(self.scene.screen, Color.RED, (x0, y0), (x1, y1))
+        pygame.draw.line(self.robot.model.screen, Color.RED, (x0, y0), (x1, y1))

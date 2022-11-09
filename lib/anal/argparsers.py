@@ -51,7 +51,7 @@ def adjust_sim(exp, conf_type, sim):
     if exp is not None and conf_type is not None:
 
         if sim.duration is None:
-            ct = reg.CT.dict[conf_type]
+            ct = reg.Dic.CT.dict[conf_type]
             if exp in ct.ConfIDs:
                 sim.duration =ct.loadConf(exp).sim_params.duration
             else:
@@ -216,7 +216,7 @@ def run_template(sim_mode, args, d):
         run = ReplayRun(**d['replay'])
         run.run()
     elif sim_mode == 'Batch':
-        from run.exec_run import Exec
+        from lib.sim.exec.exec_run import Exec
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Batch')
         exec = Exec(mode='batch', conf=conf, run_externally=False)
         exec.run()

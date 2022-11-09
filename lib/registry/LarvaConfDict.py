@@ -161,7 +161,7 @@ class LarvaConfDict:
             mc[mkey] = self.update_mdict(mdic, mmdic)
         return mc
 
-    def mIDtable_data(self, mID, columns):
+    def mIDtable_data(self, m, columns):
         def gen_rows2(var_mdict, parent, columns, data):
             for k, p in var_mdict.items():
                 if isinstance(p, param.Parameterized):
@@ -169,7 +169,7 @@ class LarvaConfDict:
                     row = [parent] + ddd
                     data.append(row)
 
-        m = self.loadConf(mID)
+
         mF = dNl.flatten_dict(m)
         data = []
         for mkey in self.dict.brain.keys:
@@ -317,13 +317,16 @@ class LarvaConfDict:
         df.set_index(['field'], inplace=True)
         return df
 
-    def mIDtable(self, mID, columns=['parameter', 'symbol', 'value', 'unit'], figsize=(14, 11), **kwargs):
+    def mIDtable(self, mID,m=None, columns=['parameter', 'symbol', 'value', 'unit'],
+                 colWidths=[0.35, 0.1, 0.25, 0.15],**kwargs):
         from lib.plot.table import conf_table
-        df = self.mIDtable_data(mID, columns=columns)
+        if m is None :
+            m = self.loadConf(mID)
+        df = self.mIDtable_data(m, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
         from lib.aux.data_aux import arrange_index_labels
         df.index = arrange_index_labels(df.index)
-        return conf_table(df, row_colors, mID=mID, figsize=figsize, **kwargs)
+        return conf_table(df, row_colors, mID=mID,colWidths=colWidths, **kwargs)
 
     def init_loco(self, conf, L):
         D = self.dict.model.m

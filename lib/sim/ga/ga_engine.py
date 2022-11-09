@@ -177,7 +177,7 @@ class GAselector:
 
 
 class GAbuilder(GAselector):
-    def __init__(self, scene, side_panel=None, space_mkeys=[], robot_class=None, base_model='explorer',
+    def __init__(self, viewer, side_panel=None, space_mkeys=[], robot_class=None, base_model='explorer',
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
                  exclude_func=None, plot_func=None,exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
@@ -190,7 +190,7 @@ class GAbuilder(GAselector):
             self.progress_bar = None
         self.exclude_func = exclude_func
         self.multicore = multicore
-        self.scene = scene
+        self.viewer = viewer
         self.robot_class = get_robot_class(robot_class, self.model.offline)
         self.mConf0 = self.M.loadConf(base_model)
         self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
@@ -337,7 +337,7 @@ class GAbuilder(GAselector):
             robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
             robot.genome = g
             robots.append(robot)
-            self.scene.put(robot)
+            self.viewer.put(robot)
 
         if self.multicore:
             self.threads=self.build_threads(robots)
@@ -424,7 +424,7 @@ class GAbuilder(GAselector):
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
             robot.genome.fitness =robot.Nticks
-        self.scene.remove(robot)
+        self.viewer.remove(robot)
         self.robots.remove(robot)
 
 
@@ -449,8 +449,8 @@ class GAbuilder(GAselector):
 
     def check(self, robot):
         if not self.model.offline:
-            if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
-                # if robot.x < 0 or robot.x > self.scene.width or robot.y < 0 or robot.y > self.scene.height:
+            if robot.x < 0 or robot.x > self.viewer.width or robot.y < 0 or robot.y > self.viewer.height:
+                # if robot.x < 0 or robot.x > self.viewer.width or robot.y < 0 or robot.y > self.viewer.height:
                 self.destroy_robot(robot)
 
             # destroy robot if it collides an obstacle

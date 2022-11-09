@@ -58,8 +58,7 @@ class World(BaseWorld):
 
     def close(self):
         self.is_running = False
-        # if self._screen is not None:
-        #     self._screen.close_requested()
+
 
     def step(self):
 

@@ -293,20 +293,20 @@ class Viewer(object):
                 if words[0] == 'Scene':
                     width = int(words[1])
                     height = int(words[2])
-                    scene = Viewer((width, height), speed=scene_speed, **kwargs)
+                    viewer = Viewer((width, height), speed=scene_speed, **kwargs)
                 # elif words[0] == 'SensorDrivenRobot':
                 #     x = float(words[1])
                 #     y = float(words[2])
                 #     robot = SensorDrivenRobot(x, y, ROBOT_SIZE, ROBOT_WHEEL_RADIUS)
                 #     robot.label = line_number
-                #     scene.put(robot)
+                #     viewer.put(robot)
                 elif words[0] == 'Box':
                     x = int(words[1])
                     y = int(words[2])
                     size = int(words[3])
                     box = Box(x, y, size, Color.random_bright())
                     box.label = line_number
-                    scene.put(box)
+                    viewer.put(box)
                 elif words[0] == 'Wall':
                     x1 = int(words[1])
                     y1 = int(words[2])
@@ -317,19 +317,19 @@ class Viewer(object):
                     point2 = shapely_aux.Point(x2, y2)
                     wall = Wall(point1, point2, Color.random_bright())
                     wall.label = line_number
-                    scene.put(wall)
+                    viewer.put(wall)
                 elif words[0] == 'Light':
                     x = int(words[1])
                     y = int(words[2])
                     emitting_power = int(words[3])
                     light = LightSource(x, y, emitting_power, Color.YELLOW, Color.BLACK)
                     light.label = line_number
-                    scene.put(light)
+                    viewer.put(light)
 
                 line_number += 1
 
         f.closed
-        return scene
+        return viewer
 
 
 class ScreenItem:

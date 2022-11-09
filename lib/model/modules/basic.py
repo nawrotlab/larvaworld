@@ -112,7 +112,6 @@ class StepModule:
         A=self.update_input(A_in)
         self.input = A* (1 + np.random.normal(scale=self.input_noise))
         if self.active :
-
             a= self.Act
         else :
             a=0

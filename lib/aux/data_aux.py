@@ -56,6 +56,7 @@ def moving_average(a, n=3):
 
 def arrange_index_labels(index):
     from lib.aux import dictsNlists as dNl
+    ks=index.unique().tolist()
     Nks = index.value_counts(sort=False)
 
     def merge(k, Nk):
@@ -63,7 +64,7 @@ def arrange_index_labels(index):
         Nk2 = Nk - 1 - Nk1
         return [''] * Nk1 + [k.upper()] + [''] * Nk2
 
-    new = dNl.flatten_list([merge(k, Nk) for i, (k, Nk) in enumerate(Nks.items())])
+    new = dNl.flatten_list([merge(k, Nks[k]) for k in ks])
     return new
 
 

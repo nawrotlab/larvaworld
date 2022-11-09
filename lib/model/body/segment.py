@@ -6,7 +6,6 @@ from shapely import affinity
 from shapely.geometry import Polygon
 
 from lib.aux import ang_aux
-from lib.decorators.timer3 import timer
 
 
 class BodySegment:

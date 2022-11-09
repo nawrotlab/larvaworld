@@ -18,12 +18,12 @@ class RotSurface:
         self.x += dx
         self.y += dy
 
-    def draw(self, scene):
+    def draw(self, viewer):
         degrees = math.degrees(self.direction)
         rotated_surf = pygame.transform.rotate(self.surf, degrees)
         rot_rect = rotated_surf.get_rect()
         rot_rect.center = (self.x, self.y)
-        scene.screen.blit(rotated_surf, rot_rect)
+        viewer._window.blit(rotated_surf, rot_rect)
 
 
 class LightSource(RotSurface):

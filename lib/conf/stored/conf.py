@@ -3,7 +3,6 @@ import json
 import pickle
 import shutil
 
-import param
 
 import lib.aux.dictsNlists as dNl
 from lib.registry.pars import preg

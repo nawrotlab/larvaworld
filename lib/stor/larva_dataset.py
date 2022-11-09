@@ -2,18 +2,10 @@ import itertools
 import os.path
 import shutil
 import numpy as np
-import pandas as pd
 import warnings
-import copy
 
-# from codetiming import Timer
 from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam, stdout
-# import lib.aux.naming as nam
 
-# from lib.registry.pars import preg
-# from lib.registry.timer import check_time
-# import logging
-# from codetiming import Timer
 from lib.aux.annotation import annotate
 from lib.aux.stor_aux import read, storeH5, loadSoloDics
 

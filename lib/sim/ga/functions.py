@@ -159,21 +159,24 @@ def arrange_fitness(fitness_func, **kwargs):
     return dNl.NestDict({'func': func, 'func_arg': 'robot'})
 
 
-def get_robot_class(short_name=None, offline=False):
+def get_robot_class(robot_class=None, offline=False):
+    # print(robot_class)
+    # print(type(robot_class))
     if offline:
-        short_name = 'LarvaOffline'
-    if short_name is None:
-        short_name = 'LarvaRobot'
+        robot_class = 'LarvaOffline'
+    if robot_class is None:
+        robot_class = 'LarvaRobot'
 
-    if type(short_name) == str:
-        if short_name == 'LarvaRobot':
+    if type(robot_class) == str:
+        if robot_class == 'LarvaRobot':
             class_name = f'lib.model.robot.larva_robot.LarvaRobot'
-        elif short_name == 'ObstacleLarvaRobot':
+        elif robot_class == 'ObstacleLarvaRobot':
             class_name = f'lib.model.robot.larva_robot.ObstacleLarvaRobot'
-        elif short_name == 'LarvaOffline':
-
+        elif robot_class == 'LarvaOffline':
             class_name = f'lib.model.robot.larva_offline.LarvaOffline'
-        robot_class = cNs.get_class_by_name(class_name)
-    elif type(short_name) == str:
-        robot_class = short_name
-    return robot_class
+        else :
+            raise
+        return cNs.get_class_by_name(class_name)
+    elif type(robot_class) == type:
+        return robot_class
+

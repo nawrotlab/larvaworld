@@ -100,7 +100,6 @@ class BaseWorld:
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
-        # print(self.screen_width, self.screen_height)
 
     def create_space(self):
         s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
@@ -184,7 +183,6 @@ class BaseWorld:
             if food_pars.food_grid is not None :
                 from lib.model.envs._space import FoodGrid
                 self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
-                # self._create_food_grid(space_range=self.space_edges_for_screen,grid_pars=food_pars.food_grid)
             for gID, gConf in food_pars.source_groups.items():
                 ps = xy_aux.generate_xy_distro(**gConf.distribution)
 

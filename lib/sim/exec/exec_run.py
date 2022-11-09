@@ -3,16 +3,11 @@ import sys
 import argparse
 
 from lib.registry import reg
-# sys.path.insert(0, '../../..')
-#
-# from lib.registry import reg
-#reg.init()
 from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 import lib.aux.dictsNlists as dNl
 
-# from lib.registry.pars import preg
 
 
 class Exec:

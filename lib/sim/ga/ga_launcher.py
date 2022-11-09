@@ -71,7 +71,7 @@ class BaseGAlauncher(BaseWorld):
 
     def __init__(self, sim_params,  env_params=None, experiment='exploration',
                   save_to=None,offline=False,  **kwargs):
-
+        self.offline = offline
         id = sim_params.sim_ID
         self.sim_params = sim_params
         dt = sim_params.timestep
@@ -82,7 +82,7 @@ class BaseGAlauncher(BaseWorld):
         self.dir_path = f'{save_to}/{sim_params.path}/{id}'
         self.plot_dir = f'{self.dir_path}/plots'
         os.makedirs(self.plot_dir, exist_ok=True)
-        if not offline:
+        if not self.offline:
             super().__init__(id=id, dt=dt, Box2D=sim_params.Box2D, env_params=env_params,
                              save_to=f'{self.dir_path}/visuals',
                              Nsteps=Nsteps, experiment=experiment, **kwargs)
@@ -169,17 +169,17 @@ class GAlauncher(BaseGAlauncher):
                 self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
                 self.screen.fill(Color.BLACK)
 
-                for obj in self.scene.objects:
-                    obj.draw(self.scene)
+                for obj in self.viewer.objects:
+                    obj.draw(self.viewer)
 
                 # draw a black background for the side panel
-                side_panel_bg_rect = Rect(self.scene.width, 0, self.SIDE_PANEL_WIDTH, self.scene.height)
+                side_panel_bg_rect = Rect(self.viewer.width, 0, self.SIDE_PANEL_WIDTH, self.viewer.height)
                 draw.rect(self.screen, Color.BLACK, side_panel_bg_rect)
 
                 self.display_info()
 
                 display.flip()
-                self.scene._t.tick(int(round(self.scene.speed)))
+                self.viewer._t.tick(int(round(self.viewer.speed)))
         return self.engine.best_genome
 
     def printd(self, min_debug_level, *args):
@@ -195,19 +195,19 @@ class GAlauncher(BaseGAlauncher):
         self.side_panel.display_ga_info()
 
     def initialize(self, **kwargs):
-        self.scene = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
+        self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
                                            panel_width=self.SIDE_PANEL_WIDTH,
                                            space_bounds=get_arena_bounds(self.arena_dims, self.scaling_factor))
 
-        self.engine = GAbuilder(scene=self.scene, model=self, **kwargs)
+        self.engine = GAbuilder(viewer=self.viewer, model=self, **kwargs)
         if self.show_screen:
             from lib.screen.side_panel import SidePanel
 
             from pygame import display
             if not self.offline:
                 self.get_larvaworld_food()
-            self.screen = self.scene._window
-            self.side_panel = SidePanel(self.scene, self.engine.space_dict)
+            self.screen = self.viewer._window
+            self.side_panel = SidePanel(self.viewer, self.engine.space_dict)
             self.side_panel.update_ga_data(self.engine.generation_num, None)
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
@@ -235,22 +235,22 @@ class GAlauncher(BaseGAlauncher):
             col = ff.default_color
             box = self.build_box(x, y, size, col)
             box.label = label
-            self.scene.put(box)
+            self.viewer.put(box)
 
     def screen_pos(self, real_pos):
-        return np.array(real_pos) * self.scaling_factor + np.array([self.scene.width / 2, self.scene.height / 2])
+        return np.array(real_pos) * self.scaling_factor + np.array([self.viewer.width / 2, self.viewer.height / 2])
 
     def init_scene(self):
-        self.scene = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
+        self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
                                            panel_width=self.SIDE_PANEL_WIDTH, space_bounds = get_arena_bounds(self.arena_dims, self.scaling_factor))
 
 
     def increase_scene_speed(self):
-        if self.scene.speed < self.SCENE_MAX_SPEED:
-            self.scene.speed *= self.SCENE_SPEED_CHANGE_COEFF
-        print('scene.speed:', self.scene.speed)
+        if self.viewer.speed < self.SCENE_MAX_SPEED:
+            self.viewer.speed *= self.SCENE_SPEED_CHANGE_COEFF
+        print('viewer.speed:', self.viewer.speed)
 
     def decrease_scene_speed(self):
-        if self.scene.speed > self.SCENE_MIN_SPEED:
-            self.scene.speed /= self.SCENE_SPEED_CHANGE_COEFF
-        print('scene.speed:', self.scene.speed)
+        if self.viewer.speed > self.SCENE_MIN_SPEED:
+            self.viewer.speed /= self.SCENE_SPEED_CHANGE_COEFF
+        print('viewer.speed:', self.viewer.speed)
