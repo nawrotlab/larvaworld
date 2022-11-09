@@ -160,6 +160,41 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
     return P.get()
 
 
+def kinematic_analysis(datasets, **kwargs):
+    w, h = 50, 24
+    P = GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.95), **kwargs)
+    # Nds = len(datasets)
+    kws = {
+        'datasets': datasets,
+        'save_to': None,
+        'subfolder': None,
+        'show': False
+
+    }
+    kws2 = {
+        'dh': 2,
+        'dw': 2,
+        # 'h': 12,
+        'w': int(w/2-2),
+
+        # 'share_w': True,
+    }
+
+    kws1={
+        'h': int(h/2-2),
+        'x0': True,
+        'share_h': True,
+        **kws2
+    }
+
+    P.plot(func='fft',kws={**kws}, y0=True,N=1, **kws1)
+    P.plot(func='epochs', kws={'plot_fits': ['powerlaw', 'exponential', 'lognormal', 'levy'], **kws},h0=int(h/2+2), N=2, **kws1)
+    P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h-2, w0=int(w/2+2),y0=True,share_w= True, **kws2)
+    P.adjust((0.07, 0.95), (0.1, 0.9), 0.2, 0.1)
+    P.annotate()
+    return P.get()
+
+
 def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     h_mpl = 4
     w, h = 30, 60 + h_mpl * 2

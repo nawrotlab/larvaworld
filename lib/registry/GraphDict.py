@@ -72,6 +72,7 @@ def build():
         'eval summary': grid.result_summary,
         'model summary': grid.model_summary,
         'velocity definition': grid.velocity_definition,
+        'kinematic analysis': grid.kinematic_analysis,
     })
     d['hist'] = dNl.NestDict({
         'crawl pars': hist.plot_crawl_pars,
@@ -88,6 +89,7 @@ def build():
         'stride Dbend': stridecycle.plot_stride_Dbend,
         'stride Dor': stridecycle.plot_stride_Dorient,
         'stride cycle': stridecycle.stride_cycle,
+        'stride cycle multi': stridecycle.stride_cycle_all_points,
         'interference': stridecycle.plot_interference,
     })
     d['time'] = dNl.NestDict({

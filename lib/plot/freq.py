@@ -6,16 +6,16 @@ from matplotlib import ticker, cm
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
 from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles
-from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot
+from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot, AutoBasePlot
 
 
-def plot_fft(s, c, palette=None, axx=None, ax=None, fig=None, **kwargs):
+def plot_fft(s, c, palette=None, axx=None, **kwargs):
     from scipy.fft import fftfreq
     from lib.aux.sim_aux import fft_max
     if palette is None:
         palette = {'v': 'red', 'fov': 'blue'}
-    P = BasePlot(name=f'fft_powerspectrum', **kwargs)
-    P.build(fig=fig, axs=ax, figsize=(15, 12))
+    P = AutoBasePlot(name=f'fft_powerspectrum',build_kws={'w': 15, 'h': 12}, **kwargs)
+    #P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
         axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
@@ -50,9 +50,9 @@ def plot_fft(s, c, palette=None, axx=None, ax=None, fig=None, **kwargs):
     return P.get()
 
 
-def plot_fft_multi(axx=None, ax=None, fig=None, **kwargs):
-    P = Plot(name=f'fft_powerspectrum', **kwargs)
-    P.build(fig=fig, axs=ax, figsize=(15, 12))
+def plot_fft_multi(axx=None, **kwargs):
+    P = AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
+    # P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
         axx = P.fig.add_axes([0.64, 0.65, 0.25, 0.2])
     for d in P.datasets:

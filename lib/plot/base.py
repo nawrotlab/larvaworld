@@ -546,7 +546,7 @@ class GridPlot(BasePlot):
                 axs = [self.fig.add_subplot(self.grid[h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1), w0:w0 + w]) for i
                        in range(N)]
             elif share_w and share_h:
-                Nrows,Ncols=N
+                Nrows,Ncols=N,N
                 hh = int((h - (Nrows - 1) * dh) / Nrows)
                 ww = int((w - (Ncols - 1) * dw) / Ncols)
                 axs=[]

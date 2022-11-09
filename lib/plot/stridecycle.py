@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
 from lib.aux import naming as nam, dictsNlists as dNl
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles, suf
 from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
@@ -186,71 +187,76 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
         plt.show()
 
 
-def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=True, maxNpoints=5, save_to=None,
-                            axs=None, fig=None, axx=None):
-    from lib.process.aux import detect_strides, stride_interp
-    from lib.aux.vel_aux import compute_velocity
-    l, sv, pau_fov_mu, fv, fov = preg.getPar(['l', 'sv', 'pau_fov_mu', 'fv', 'fov'])
-    att = 'attenuation'
-    att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
+def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
+                            axx=None, **kwargs):
 
-    points0 = nam.midline(c.Npoints, type='point')
-    id = c.agent_ids[idx]
-    ee = e.loc[id]
-    ss = s.xs(id, level='AgentID')
-    strides = detect_strides(ss[sv], c.dt, fr=ee[fv], return_runs=False, return_extrema=False)
-    # strides = strides.tolist()
+    P = AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
+                 **kwargs)
+
+    if axx is None:
+        axx = P.fig.add_axes([0.64, 0.4, 0.25, 0.12])
+
+
     pi2 = 2 * np.pi
     x = np.linspace(0, pi2, Nbins)
 
-    if axs is None and fig is None and axx is None:
-        Nrows = 2 if short else 1
-        fig, axs = plt.subplots(Nrows, 1, figsize=(15, 6 * Nrows))
-        axs = axs.ravel() if short else [axs]
-        axx = fig.add_axes([0.64, 0.4, 0.25, 0.12])
-        fig.subplots_adjust(hspace=0.1, left=0.15, right=0.9, bottom=0.2, top=0.9)
-    if short is not None:
-        par, lab = preg.getPar(short, to_return=['d', 'lab'])
-        a_sh = ss[par].values
-        a_fov = ss[preg.getPar('fov')].values
-        da = np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+    from lib.process.aux import detect_strides, stride_interp
+    from lib.aux.vel_aux import compute_velocity
+    l, sv, fv, fov = reg.getPar(['l', 'sv', 'fv', 'fov'])
 
-        aa = stride_interp(a_sh, strides, Nbins)
-        aa_minus = aa[da < 0]
-        aa_plus = aa[da > 0]
-        aa_norm = np.vstack([aa_plus, -aa_minus])
 
-        plot_quantiles(df=aa_norm, from_np=True, axis=axs[1], color_shading='blue', x=x, label='experiment')
+    for d in P.datasets:
+        s,e,c = d.step_data, d.endpoint_data, d.config
+        id = c.agent_ids[idx]
+        ee = e.loc[id]
+        ss = s.xs(id, level='AgentID')
+        strides = detect_strides(ss[sv], c.dt, fr=ee[fv], return_runs=False, return_extrema=False)
 
-        axs[1].set_ylabel(lab)
 
-    if c.Npoints > maxNpoints:
-        points = [points0[0]] + [points0[2 + int(ii * (c.Npoints - 2) / (maxNpoints - 2))] for ii in
-                                 range(maxNpoints - 2)] + [points0[-1]]
-    else:
-        points = points0
-    if len(points) == 5:
-        pointcols = ['black', 'darkblue', 'darkgreen', 'seagreen', 'mediumturquoise']
-    else:
-        pointcols = cm.rainbow(np.linspace(0, 1, len(points)))
-    ymax = 0.7
-    for p, col in zip(points, pointcols):
-        v_p = nam.vel(p)
-        a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
-        a = a / ee[l]
-        aa = np.zeros([len(strides), Nbins])
-        for ii, (s0, s1) in enumerate(strides):
-            aa[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), a[s0:s1])
-        aa_mu = np.nanquantile(aa, q=0.5, axis=0)
-        aa_max = np.max(aa_mu)
-        phi_max = x[np.argmax(aa_mu)]
-        plot_quantiles(df=aa, from_np=True, axis=axs[0], color_shading=col, x=x, label=p)
-        axs[0].axvline(phi_max, ymax=aa_max / ymax, color=col, alpha=1, linestyle='dashed', linewidth=2, zorder=20)
-        axs[0].scatter(phi_max, aa_max + 0.02 * ymax, color=col, marker='v', linewidth=2, zorder=20)
+        if short is not None:
+            par, lab = reg.getPar(short, to_return=['d', 'lab'])
+            a_sh = ss[par].values
+            a_fov = ss[fov].values
+            da = np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
 
-    axs[0].set_ylabel(r'scaled velocity $(sec^{-1})$')
-    axs[0].set_ylim([0, ymax])
-    for ax in axs:
+            aa = stride_interp(a_sh, strides, Nbins)
+            aa_minus = aa[da < 0]
+            aa_plus = aa[da > 0]
+            aa_norm = np.vstack([aa_plus, -aa_minus])
+
+            plot_quantiles(df=aa_norm, from_np=True, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
+
+            P.axs[1].set_ylabel(lab)
+
+
+        points0 = nam.midline(c.Npoints, type='point')
+        if c.Npoints > maxNpoints:
+            points = [points0[0]] + [points0[2 + int(ii * (c.Npoints - 2) / (maxNpoints - 2))] for ii in
+                                     range(maxNpoints - 2)] + [points0[-1]]
+        else:
+            points = points0
+        if len(points) == 5:
+            pointcols = ['black', 'darkblue', 'darkgreen', 'seagreen', 'mediumturquoise']
+        else:
+            pointcols = cm.rainbow(np.linspace(0, 1, len(points)))
+        ymax = 0.7
+        for p, col in zip(points, pointcols):
+            v_p = nam.vel(p)
+            a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
+            a = a / ee[l]
+            aa = np.zeros([len(strides), Nbins])
+            for ii, (s0, s1) in enumerate(strides):
+                aa[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), a[s0:s1])
+            aa_mu = np.nanquantile(aa, q=0.5, axis=0)
+            aa_max = np.max(aa_mu)
+            phi_max = x[np.argmax(aa_mu)]
+            plot_quantiles(df=aa, from_np=True, axis=P.axs[0], color_shading=col, x=x, label=p)
+            P.axs[0].axvline(phi_max, ymax=aa_max / ymax, color=col, alpha=1, linestyle='dashed', linewidth=2, zorder=20)
+            P.axs[0].scatter(phi_max, aa_max + 0.02 * ymax, color=col, marker='v', linewidth=2, zorder=20)
+
+    P.axs[0].set_ylabel(r'scaled velocity $(sec^{-1})$')
+    P.axs[0].set_ylim([0, ymax])
+    for ax in P.axs:
         ax.set_xlabel('$\phi_{stride}$')
         ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
         ax.set_xlim([0, pi2])
@@ -259,6 +265,8 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=T
         ax.legend(loc='upper left', fontsize=15)
 
     try:
+        att = 'attenuation'
+        att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
         ps = [nam.max(f'phi_{nam.vel(p)}') for i, p in enumerate(points0)]
         aa = np.zeros([c.Npoints, c.N]) * np.nan
         for i, p in enumerate(ps):
@@ -275,8 +283,8 @@ def stride_cycle_all_points(s, e, c, idx=0, Nbins=64, short=None, ang_absolute=T
         axx.axhline(0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
     except:
         pass
-    if save_to is not None:
-        fig.savefig(f'{save_to}/stride_cycle_all_points.pdf', dpi=300)
+    P.adjust((0.15, 0.9), (0.2, 0.9), 0.1, 0.15)
+    return P.get()
 
 
 def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
