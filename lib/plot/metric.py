@@ -2,13 +2,15 @@ from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from lib.plot.base import Plot
+from lib.plot.base import AutoPlot
 from lib.plot.aux import confidence_ellipse, process_plot, suf
 
 
-def plot_segmentation_definition(subfolder='metric_definition', axs=None, fig=None, **kwargs):
-    P = Plot(name=f'segmentation_definition', subfolder=subfolder, **kwargs)
-    P.build(1, P.Ndatasets * 2, figsize=(5 * P.Ndatasets, 5), sharex=False, sharey=False, fig=fig, axs=axs)
+def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
+    build_kws = {'Nrows': 1, 'Ncols': 2, 'wh': 5, 'sharex': False, 'sharey': False}
+
+    P = AutoPlot(name=f'segmentation_definition', subfolder=subfolder,build_kws=build_kws, **kwargs)
+    # P.build(1, P.Ndatasets * 2, figsize=(5 * P.Ndatasets, 5), sharex=False, sharey=False, fig=fig, axs=axs)
     Nbest = 5
     for ii, d in enumerate(P.datasets):
         ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
@@ -41,9 +43,11 @@ def plot_segmentation_definition(subfolder='metric_definition', axs=None, fig=No
         return P.get()
 
 
-def plot_stride_variability(component_vels=True, subfolder='metric_definition', axs=None, fig=None, **kwargs):
-    P = Plot(name=f'stride_spatiotemporal_variation', subfolder=subfolder, **kwargs)
-    P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
+def plot_stride_variability(component_vels=True, subfolder='metric_definition', **kwargs):
+    build_kws = {'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True}
+
+    P = AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,build_kws=build_kws,  **kwargs)
+    # P.build(1, P.Ndatasets, figsize=(5 * P.Ndatasets, 5), sharex=True, sharey=True, fig=fig, axs=axs)
     for ii, d in enumerate(P.datasets):
         ax = P.axs[ii]
 

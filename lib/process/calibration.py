@@ -47,7 +47,7 @@ def comp_stride_variation(d, component_vels=True):
                           'use_component_vel': lin_flag[ii]} for ii in
            range(len(all_vels))}
 
-    shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'sstr_d_mu', 'sstr_d_std', 'str_t_var','sstr_d_var']
+    shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'str_sd_mu', 'str_sd_std', 'str_t_var','str_sd_var']
     pars = reg.getPar(shorts)
     sstr_d_var, str_t_var, str_tr = pars[-1], pars[-2], pars[2]
 

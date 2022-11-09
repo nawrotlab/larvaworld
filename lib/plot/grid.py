@@ -103,7 +103,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     return P.get()
 
 
-def combo_plot_vel_definition(d, save_to=None, save_as='vel_definition.pdf', component_vels=True):
+def velocity_definition(d, save_to=None, save_as='vel_definition.pdf', component_vels=True, **kwargs):
     from lib.plot.metric import plot_segmentation_definition, plot_stride_variability
 
     if save_to is None:

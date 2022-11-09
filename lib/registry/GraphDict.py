@@ -71,6 +71,7 @@ def build():
         'chemotaxis summary': grid.chemo_summary,
         'eval summary': grid.result_summary,
         'model summary': grid.model_summary,
+        'velocity definition': grid.velocity_definition,
     })
     d['hist'] = dNl.NestDict({
         'crawl pars': hist.plot_crawl_pars,
