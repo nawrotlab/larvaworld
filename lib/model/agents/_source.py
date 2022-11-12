@@ -100,7 +100,7 @@ class Food(Source):
 
         if self.odor_id is not None:
             if self.odor_intensity > 0:
-                if self.model.odor_aura:
+                if self.model.screen_manager.odor_aura:
                     viewer.draw_circle(p, r * 1.5, c, False, r / 10)
                     viewer.draw_circle(p, r * 2.0, c, False, r / 15)
                     viewer.draw_circle(p, r * 3.0, c, False, r / 20)

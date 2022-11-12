@@ -1,14 +1,79 @@
 import numpy as np
+from Box2D import b2EdgeShape
+
+from lib.aux import sim_aux
+from mesa.space import ContinuousSpace
 from scipy.ndimage.filters import gaussian_filter
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, Polygon
 
 from lib.screen.rendering import InputBox
 from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.model.DEB.substrate import Substrate
 
 
+
+
+class Space(ContinuousSpace):
+    def __init__(self, dims):
+        X, Y = self.dims = dims
+        super().__init__(x_min = -X / 2, x_max = X / 2, y_min = -Y / 2, y_max = Y / 2, torus = False)
+        self.edges = np.array([(-X / 2, -Y / 2),
+                              (-X / 2, Y / 2),
+                              (X / 2, Y / 2),
+                              (X / 2, -Y / 2)])
+
+
+
+
+        self.obstacles = []
+
+    def place_obstacle(self, ob) -> None:
+
+        if self.Box2D:
+            b = self.Box2D.CreateStaticBody(position=(.0, .0))
+            b.CreateFixture(shape=b2EdgeShape(vertices=ob.edges * self.scaling_factor))
+            ob.Box2D_body=b
+        self.obstacles.append(ob)
+
+
+#
+# class Space:
+#     def __new__(cls, arena_dims, Box2D=False, scaling_factor=1):
+#         cls.Box2D = Box2D
+#         if cls.Box2D:
+#             scaling_factor *= 1000
+#         s = cls.scaling_factor = scaling_factor
+#         X, Y = cls.dims = arena_dims * s
+#         cls.edges = np.array([(-X / 2, -Y / 2),
+#                               (-X / 2, Y / 2),
+#                               (X / 2, Y / 2),
+#                               (X / 2, -Y / 2)])
+#
+#         if cls.Box2D:
+#             from Box2D import b2World, b2ChainShape
+#             instance = super().__new__(b2World)
+#             cls.gravity = (0, 0)
+#             cls._sim_velocity_iterations = 6
+#             cls._sim_position_iterations = 2
+#
+#             cls.friction_body = cls.CreateStaticBody(position=(.0, .0))
+#             cls.friction_body.CreateFixture(shape=b2ChainShape(vertices=cls.edges))
+#
+#
+#         else:
+#             from mesa.space import ContinuousSpace
+#             instance = super().__new__(ContinuousSpace, x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2,
+#                                        torus=False)
+#         cls.obstacles = []
+#         print(f"I'm a {type(instance).__name__}!")
+#         return instance
+#
+#     def __init__(self):
+#         print("Never runs!")
+
+
 class ValueGrid:
-    def __init__(self,model,  unique_id, space_range, grid_dims=[51, 51], distribution='uniform', visible=False,
+    def __init__(self, model, unique_id, space_range, grid_dims=[51, 51], distribution='uniform', visible=False,
                  initial_value=0.0, default_color=(255, 255, 255), max_value=None, min_value=0.0, fixed_max=False):
         self.model = model
         self.visible = visible
@@ -29,7 +94,7 @@ class ValueGrid:
         xr, yr = x1 - x0, y1 - y0
         self.x = xr / self.X
         self.y = yr / self.Y
-        self.cell_radius=np.sqrt(np.sum((self.x/2)**2+(self.y/2)**2))
+        self.cell_radius = np.sqrt(np.sum((self.x / 2) ** 2 + (self.y / 2) ** 2))
         self.xy = np.array([self.x, self.y])
         self.XY_half = np.array([self.X / 2, self.Y / 2])
         self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
@@ -40,11 +105,9 @@ class ValueGrid:
                            [xr / 2, -yr / 2],
                            [xr / 2, yr / 2],
                            [-xr / 2, yr / 2]]
-        if max_value is None :
-            max_value=np.max(self.grid)
-        self.max_value=max_value
-
-
+        if max_value is None:
+            max_value = np.max(self.grid)
+        self.max_value = max_value
 
     def add_value(self, p, value):
         cell = self.get_grid_cell(p)
@@ -79,8 +142,8 @@ class ValueGrid:
     def add_cell_value(self, cell, value):
         v0 = self.get_cell_value(cell)
         v1 = v0 + value
-        if not self.fixed_max :
-            self.max_value=np.max([self.max_value, v1])
+        if not self.fixed_max:
+            self.max_value = np.max([self.max_value, v1])
         v2 = np.clip(v1, a_min=self.min_value, a_max=self.max_value)
         self.set_cell_value(cell, v2)
         if v1 < v2:
@@ -91,19 +154,19 @@ class ValueGrid:
             return value
 
     def generate_grid_vertices(self):
-        vertices = np.zeros([self.X,self.Y,4,2])
+        vertices = np.zeros([self.X, self.Y, 4, 2])
         for i in range(self.X):
             for j in range(self.Y):
-                vertices[i,j]=self.cell_vertices(i, j)
+                vertices[i, j] = self.cell_vertices(i, j)
         return vertices
 
     def cell_vertices(self, i, j):
         x, y = self.x, self.y
         X, Y = self.X / 2, self.Y / 2
         v = np.array([(x * (i - X), y * (j - Y)),
-             (x * (i + 1 - X), y * (j - Y)),
-             (x * (i + 1 - X), y * (j + 1 - Y)),
-             (x * (i - X), y * (j + 1 - Y))])
+                      (x * (i + 1 - X), y * (j - Y)),
+                      (x * (i + 1 - X), y * (j + 1 - Y)),
+                      (x * (i - X), y * (j + 1 - Y))])
         return v
 
     def cel_pos(self, i, j):
@@ -120,58 +183,57 @@ class ValueGrid:
         p = self.cel_pos(*idx)
         vs = self.cell_vertices(*idx)
 
-        viewer.draw_circle(p, self.cell_radius/2, self.default_color, filled=True, width=0.0005)
+        viewer.draw_circle(p, self.cell_radius / 2, self.default_color, filled=True, width=0.0005)
         # viewer.draw_polygon(vs, self.default_color, filled=True, width=0.0005)
 
         p_text = (p[0] + self.x, p[1] - self.y)
-        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active=self.default_color, visible=True,screen_pos=viewer._transform(p_text))
+        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active=self.default_color, visible=True,
+                            screen_pos=viewer._transform(p_text))
         text_box.draw(viewer)
 
     def draw(self, viewer):
 
-        Cgrid = self.get_color_grid().reshape([self.X,self.Y,3])
+        Cgrid = self.get_color_grid().reshape([self.X, self.Y, 3])
         for i in range(self.X):
             for j in range(self.Y):
-                viewer.draw_polygon(self.grid_vertices[i,j], Cgrid[i,j], filled=True)
+                viewer.draw_polygon(self.grid_vertices[i, j], Cgrid[i, j], filled=True)
         self.draw_peak(viewer)
-        if self.model.odor_aura :
-
+        if self.model.screen_manager.odor_aura:
             self.draw_isocontours(viewer)
 
     def draw_isocontours(self, viewer):
         N = 8
-        k=4
+        k = 4
         g = self.get_grid()
         # c='white'
-        c=self.default_color
+        c = self.default_color
         vmax = np.max(g)
         for i in range(N):
-            v = vmax *k**-i
-            if v<=0 :
+            v = vmax * k ** -i
+            if v <= 0:
                 continue
-            inds = np.argwhere((v <= g) & (g < v*k)).tolist()
+            inds = np.argwhere((v <= g) & (g < v * k)).tolist()
             points = [self.cel_pos(i, j) for (i, j) in inds]
             if len(points) > 2:
                 try:
-                    ps=np.array(points)
-                    pxy=ps[np.argmax(ps[:,0]),:]+np.array([self.x, -self.y])
+                    ps = np.array(points)
+                    pxy = ps[np.argmax(ps[:, 0]), :] + np.array([self.x, -self.y])
                     viewer.draw_convex(points, color=c, filled=False, width=0.0005)
                     text_box = InputBox(text=str(np.round(v, 2)), color_active=c, visible=True,
                                         screen_pos=viewer._transform(pxy))
                     text_box.draw(viewer)
-                except :
+                except:
                     pass
-
 
     def get_color_grid(self):
         g = self.get_grid().flatten()
 
-        v0,v1 = self.min_value, self.max_value
-        gg=(g-v0)/(v1-v0)
-        k=10**2
-        m=(1-np.exp(-k))**-1
-        q=m*(1-np.exp(-k*gg))
-        q=np.clip(q, a_min=0, a_max=1)
+        v0, v1 = self.min_value, self.max_value
+        gg = (g - v0) / (v1 - v0)
+        k = 10 ** 2
+        m = (1 - np.exp(-k)) ** -1
+        q = m * (1 - np.exp(-k * gg))
+        q = np.clip(q, a_min=0, a_max=1)
         # print()
         # print(v0,v1,g.shape, self.grid_dims)
         return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
@@ -182,7 +244,7 @@ class ValueGrid:
 
 class FoodGrid(ValueGrid):
     def __init__(self, default_color=(0, 255, 0), quality=1, type='standard', **kwargs):
-        super().__init__(default_color=default_color,fixed_max=True, **kwargs)
+        super().__init__(default_color=default_color, fixed_max=True, **kwargs)
         self.substrate = Substrate(type=type, quality=quality)
         # self.max_value=self.initial_value
 
@@ -195,9 +257,9 @@ class FoodGrid(ValueGrid):
         viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
         for i in range(self.X):
             for j in range(self.Y):
-                v=self.grid[i,j]
-                if v != self.initial_value :
-                    viewer.draw_polygon(self.grid_vertices[i,j], self.get_color(v), filled=True)
+                v = self.grid[i, j]
+                if v != self.initial_value:
+                    viewer.draw_polygon(self.grid_vertices[i, j], self.get_color(v), filled=True)
 
 
 class ValueLayer(ValueGrid):
@@ -273,29 +335,28 @@ class DiffusionValueLayer(ValueLayer):
         # print(gaussian_sigma)
 
     def update_values(self):
-        k=1000
-        if self.model.windscape is not None :
-            v,a=self.model.windscape.wind_speed, self.model.windscape.wind_direction
-            if v!=0 :
-                dx=v*np.cos(a)*self.model.dt
-                dy=v*np.sin(a)*self.model.dt
-                Px,Py=dx/self.x/k, dy/self.y/k
+        k = 1000
+        if self.model.windscape is not None:
+            v, a = self.model.windscape.wind_speed, self.model.windscape.wind_direction
+            if v != 0:
+                dx = v * np.cos(a) * self.model.dt
+                dy = v * np.sin(a) * self.model.dt
+                Px, Py = dx / self.x / k, dy / self.y / k
 
-                Pr=np.abs(Px/(Px+Py))
+                Pr = np.abs(Px / (Px + Py))
                 # print(Pr, Px, Py, self.max_value)
-                Px=np.clip(Px, a_min=-Pr, a_max=Pr)
-                Py=np.clip(Py, a_min=-1+Pr, a_max=1-Pr)
+                Px = np.clip(Px, a_min=-Pr, a_max=Pr)
+                Py = np.clip(Py, a_min=-1 + Pr, a_max=1 - Pr)
                 # print(Pr, Px, Py, self.max_value)
-                Gx=self.grid*Px
-                Gy=self.grid*Py
-                Gx=np.roll(Gx,1, axis=0)
-                Gx[0,:]=0
-                Gy=np.roll(Gy,1, axis=1)
-                Gy[:,0] = 0
-                self.grid*=(1-Px-Py)
-                self.grid+=(Gx+Gy)
+                Gx = self.grid * Px
+                Gy = self.grid * Py
+                Gx = np.roll(Gx, 1, axis=0)
+                Gx[0, :] = 0
+                Gy = np.roll(Gy, 1, axis=1)
+                Gy[:, 0] = 0
+                self.grid *= (1 - Px - Py)
+                self.grid += (Gx + Gy)
                 np.clip(self.grid, a_min=0, a_max=None)
-
 
         for s in self.sources:
             source_pos = s.get_position()
@@ -476,7 +537,7 @@ class ThermoScape(ValueGrid):
         for k in self.thermoscape_layers:
             v = self.thermoscape_layers[k]
             pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (
-                        self.thermo_source_dTemps[k] * nSources)  # @todo need to check if this works
+                    self.thermo_source_dTemps[k] * nSources)  # @todo need to check if this works
             # print(plate_temp + sum(pos_temp.values()) / len(pos_temp))
             # print(plate_temp + pos_temp[k] / len(pos_temp))
             # print(pos_temp[k] / nSources)

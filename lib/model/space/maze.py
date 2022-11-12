@@ -1,13 +1,8 @@
 import random
 
-import numpy as np
-from matplotlib.patches import Circle
-from shapely.geometry import LineString, Point
 
-from lib.aux.dictsNlists import group_list_by_n
-import lib.aux.colsNstr as fun
-from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
-from shapely.affinity import affine_transform
+from shapely.geometry import LineString
+
 
 
 class Cell:
@@ -39,6 +34,7 @@ class Cell:
         other.walls[Cell.wall_pairs[wall]] = False
 
 
+
 class Maze:
     """A Maze, represented as a grid of cells."""
 
@@ -48,7 +44,7 @@ class Maze:
         at the cell indexed at (ix, iy).
 
         """
-        self.height=height
+        self.height = height
         self.nx, self.ny = nx, ny
         self.ix, self.iy = ix, iy
         self.maze_map = [[Cell(x, y) for y in range(ny)] for x in range(nx)]
@@ -169,7 +165,7 @@ class Maze:
             nv += 1
 
     def maze_lines(self):
-        lines=[]
+        lines = []
         # Scaling factors mapping maze coordinates to image coordinates
         scy, scx = self.height / self.ny, self.height / self.ny
 
@@ -180,60 +176,3 @@ class Maze:
                 if self.cell_at(x, y).walls['E']:
                     lines.append(LineString([((x + 1) * scx, y * scy), ((x + 1) * scx, (y + 1) * scy)]))
         return lines
-
-class Border:
-    def __init__(self, model, points=None, unique_id='Border', width=0.001, default_color='black',
-                 scaling_factor=1):
-        from lib.model.space.obstacle import Wall
-        self.model=model
-        if type(default_color)==str :
-            default_color=fun.colorname2tuple(default_color)
-        self.default_color=default_color
-        self.unique_id = unique_id
-        self.width=width*scaling_factor
-        self.points=points
-
-        self.border_xy, self.border_lines = self.define_lines(points, s=scaling_factor)
-        self.border_bodies = []
-        self.border_walls=[]
-        for l in self.border_lines :
-            # print(list(l.coords))
-            (x1, y1),(x2,y2)=list(l.coords)
-            point1 = shapely_aux.Point(x1, y1)
-            point2 = shapely_aux.Point(x2, y2)
-            wall=Wall(point1, point2, color=self.default_color)
-            # edges = [[point1, point2]]
-            self.border_walls.append(wall)
-
-        self.selected=False
-
-    def define_lines(self, points, s=1):
-        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in group_list_by_n(points, 2)]
-
-
-        T = [s, 0, 0, s, 0, 0]
-        ls = [affine_transform(l, T) for l in lines]
-        ps = [l.coords.xy for l in ls]
-        xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
-        return xy, ls
-
-    # def delete(self):
-    #     for l in self.border_lines:
-    #         self.model.border_lines.remove(l)
-    #     if len(self.border_bodies)>0 :
-    #         for b in self.border_bodies :
-    #             self.model.border_bodies.remove(b)
-    #             self.model.space.delete(b)
-    #     del self
-
-    def draw(self, screen):
-        for b in self.border_xy :
-            screen.draw_polyline(b, color=self.default_color, width=self.width, closed=False)
-            if self.selected :
-                screen.draw_polyline(b, color=self.model.selection_color, width=self.width*0.5, closed=False)
-
-    def contained(self,p):
-        return any([l.distance(Point(p))<self.width for l in self.border_lines])
-
-    def set_id(self,id):
-        self.unique_id=id

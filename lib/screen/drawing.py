@@ -29,7 +29,7 @@ class ScreenManager:
 
 
 
-    def build(self,show_conf_text=False,background_motion=None, traj_color=None, allow_clicks=True, **kwargs):
+    def build(self,show_conf_text=False,background_motion=None, traj_color=None,odor_aura = False, allow_clicks=True, **kwargs):
         self.s = self.model.scaling_factor
         self.screen_kws = self.define_screen_kws()
         self.image_mode = self.vis_kwargs.render.image_mode
@@ -41,6 +41,8 @@ class ScreenManager:
         self.focus_mode = False
         self.selected_type = ''
 
+
+        self.odor_aura = odor_aura
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
 

@@ -113,7 +113,7 @@ class WorldSim(World):
             elif agent_class == 'Larva':
                 f = self._add_larva(p0)
             elif agent_class == 'Border':
-                from lib.model.envs._maze import Border
+                from lib.model.space.obstacle import Border
                 b = Border(model=self, points=[p1, p0])
                 self.add_border(b)
         except:

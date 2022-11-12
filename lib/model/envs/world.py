@@ -24,7 +24,7 @@ from lib.sim.single.conditions import get_exp_condition
 
 class World(BaseWorld):
 
-    def __init__(self, vis_kwargs=None,
+    def __init__(self, vis_kwargs=None,odor_aura = False,
                  background_motion=None, traj_color=None, allow_clicks=True,
                  progress_bar=None, show_conf_text=False, **kwargs):
 
@@ -35,7 +35,7 @@ class World(BaseWorld):
             progress_bar.start()
         self.progress_bar = progress_bar
 
-        self.screen_manager=ScreenManager(model=self, vis_kwargs=vis_kwargs, show_conf_text=show_conf_text,
+        self.screen_manager=ScreenManager(model=self, vis_kwargs=vis_kwargs, show_conf_text=show_conf_text,odor_aura = odor_aura,
                                           background_motion=background_motion, traj_color=traj_color, allow_clicks=allow_clicks)
 
 
@@ -124,7 +124,10 @@ class World(BaseWorld):
 
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
+
+    ww=World()
+    ww.run()
 #     RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
 #     print(RefPars)
 #     sample_ps=list(RefPars.keys())

@@ -5,8 +5,7 @@ from typing import Any
 from shapely.geometry import Polygon
 
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame
+
 
 from mesa.space import ContinuousSpace
 
@@ -30,6 +29,8 @@ class BaseWorld:
 
     def __init__(self, env_params,  id='unnamed', dt=0.1, save_to='.',trials={},Nsteps=None,
                  Box2D=False, experiment=None, larva_collisions=True, dur=None):
+
+
 
         self.experiment = experiment
         self.Box2D = Box2D
@@ -74,7 +75,7 @@ class BaseWorld:
 
 
 
-        self.odor_aura = False
+
         self.odor_layers = {}
 
         self.food_grid = None
@@ -85,7 +86,11 @@ class BaseWorld:
         self._place_food(self.env_pars.food_params)
         self._create_odor_layers(self.get_food(), self.env_pars.odorscape)
 
-
+    def future(self):
+        from lib.model.space.obstacle import Arena
+        from lib.model.envs._space import Space
+        self.arena=Arena(**self.env_pars.arena)
+        self.space = Space(Box2D=self.Box2D, arena=self.arena)
 
     def create_arena(self, arena_dims, arena_shape):
         self.arena_dims = X, Y = np.array(arena_dims)
@@ -137,7 +142,7 @@ class BaseWorld:
     def create_borders(self, border_list=None):
         if border_list is not None and len(border_list)>0:
             for id, pars in self.env_pars.border_list.items():
-                from lib.model.envs._maze import Border
+                from lib.model.space.obstacle import Border
                 b = Border(model=self, unique_id=id,scaling_factor=self.scaling_factor, **pars)
                 self.add_border(b)
         pass
@@ -207,7 +212,7 @@ class BaseWorld:
         self.all_food_schedule = NamedRandomActivation('all_food_schedule', self)
 
     def delete_agent(self, agent):
-        from lib.model.envs._maze import Border
+        from lib.model.space.obstacle import Border
         from lib.model.agents._source import Food
         if type(agent) is LarvaSim:
             self.active_larva_schedule.remove(agent)

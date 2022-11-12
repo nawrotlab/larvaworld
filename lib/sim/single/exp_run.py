@@ -65,25 +65,6 @@ class ExpRun(base.BaseRun):
 
         return self.datasets
 
-    # def exec(self):
-    #     if self.show_output:
-    #         print()
-    #         print(f'---- Simulation {self.id} ----')
-    #     # Run the simulation
-    #     completed = self.env.exec()
-    #     if not completed:
-    #         print('    Simulation aborted!')
-    #         self.datasets = None
-    #     else:
-    #         self.datasets = self.retrieve()
-    #         end = time.time()
-    #         dur = end - self.start
-    #         if self.sim_params.store_data and self.store_data:
-    #             self.store()
-    #         if self.show_output:
-    #             print(f'    Simulation {self.id} completed in {np.round(dur).astype(int)} seconds!')
-    #     self.env.close()
-    #     return self.datasets
 
     def terminate(self):
         self.model.close()

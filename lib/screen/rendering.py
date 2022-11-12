@@ -2,11 +2,9 @@ import math
 import os
 import time
 import numpy as np
-import pygame
 import imageio
-
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
-import numpy as np
 
 from lib.aux.color_util import Color
 from lib.aux.time_util import TimeUtil
