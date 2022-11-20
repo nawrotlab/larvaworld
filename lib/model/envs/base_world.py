@@ -2,13 +2,13 @@ import random
 import numpy as np
 import os
 from typing import Any
-from shapely.geometry import Polygon
+#from shapely.geometry import Polygon
 
 
 
 
 from mesa.space import ContinuousSpace
-
+from shapely.geometry import Polygon
 
 from lib.registry import reg
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux, dir_aux, sample_aux

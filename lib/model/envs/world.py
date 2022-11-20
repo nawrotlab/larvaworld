@@ -3,9 +3,7 @@ import numpy as np
 import pandas as pd
 import progressbar
 import os
-from typing import List
-import webcolors
-import pygame
+
 
 import lib.aux.sample_aux
 from lib.screen.drawing import ScreenManager

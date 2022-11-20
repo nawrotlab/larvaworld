@@ -1,6 +1,6 @@
 import numpy as np
 import pygame
-from Geometry import Point
+# from Geometry import Point
 from shapely.affinity import affine_transform
 from shapely.geometry import LineString, Polygon
 
@@ -122,7 +122,7 @@ class Border(Obstacle):
             #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 
     def contained(self, p):
-        return any([l.distance(Point(p)) < self.width for l in self.border_lines])
+        return any([l.distance(shapely_aux.Point(p)) < self.width for l in self.border_lines])
 
     def set_id(self, id):
         self.unique_id = id
