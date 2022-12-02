@@ -118,10 +118,7 @@ Add the virtual environment to jupyter so that you can run the notebooks
 
 **Run Larvaworld**
 
-Larvaworld-GUI can be run directly from linux terminal.
-The executable files are in `larvaworld/run` directory.
-
-    cd run
+Larvaworld can be run directly from linux terminal.
     
     
    Larvaworld-GUI
@@ -134,13 +131,12 @@ The executable files are in `larvaworld/run` directory.
 
    Larvaworld via Linux terminal
    =========================================
-   Optionally Larvaworld can be launched through Linux terminal via the remaining two executable python files.
-   Help on how to use these can be found in the [tutorial notebook](tutorial/walkthrough.ipynb).
-   Three modes are available :
+   Optionally Larvaworld can be launched through Linux terminal.
+   Different modes are available :
 
    
 
-   1. Simulation
+   1. Single Simulation
 
        Run a single simulation of one of multiple available experiments. 
        Optionally run the respetive analysis.
@@ -148,23 +144,21 @@ The executable files are in `larvaworld/run` directory.
        This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
        We choose to also see the simulation at a speed x6 as it unfolds.
 
-           python exp_run.py dish -N 30 -t 3.0 -vid 6
+           python larvaworld.py Exp dish -N 30 -t 3.0 -m video
 
        This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
        We choose to only produce a final image of the simulation.
 
-           python exp_run.py dispersion -N 30 -t 3.0 -img -a
+           python larvaworld.py Exp dispersion -N 30 -t 3.0 -m image -a
 
-       Check the plots comparing simulated to empirical data in `larvaworld/data/SimGroup/single_runs/dispersion`.
 
    2. Batch run
 
        Run multiple trials of a given experiment with different parameters.
        This line runs a batch run of odor preference experiments for different valences of the two odor sources.
 
-           python batch_run.py odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
+           python larvaworld.py Batch odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
 
-       Check the heatmap of preference indexes in `larvaworld/data/SimGroup/batch_runs`.
     
     
     
