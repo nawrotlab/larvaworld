@@ -8,7 +8,7 @@ imageio-ffmpeg
 pygame==2.0.1
 #pandas==1.1.5
 pandas
-joblib==1.0.1
+joblib==1.2.0
 matplotlib==3.3.4
 seaborn
 pypet==0.5.1
