@@ -19,7 +19,7 @@ from lib.sim.eval.eval_aux import sim_dataset, enrich_dataset, arrange_evaluatio
     prepare_dataset, prepare_validation_dataset, torsNdsps, eval_fast, RSS_dic, std_norm, minmax
 from lib.aux.sample_aux import sim_models
 
-from lib.registry.pars import preg
+# from lib.registry.pars import preg
 import lib.plot.box
 
 
@@ -90,7 +90,7 @@ class EvalRun(base.BaseRun):
 
     def prepare_exp_conf(self, dur=None, video=False):
         exp = 'dispersion'
-        exp_conf = preg.loadConf(id=exp, conftype='Exp')
+        exp_conf = reg.loadConf(id=exp, conftype='Exp')
         c = self.target.config
         if dur is None:
             dur = c.Nticks * c.dt / 60
@@ -115,9 +115,9 @@ class EvalRun(base.BaseRun):
             exp_conf.enrichment.bout_annotation = self.bout_annotation
 
         if video:
-            vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
+            vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
         else:
-            vis_kwargs = preg.get_null('visualization', mode=None)
+            vis_kwargs = reg.get_null('visualization', mode=None)
 
         kws = dNl.NestDict({
             'enrichment': exp_conf.enrichment,
@@ -264,9 +264,9 @@ class EvalRun(base.BaseRun):
     def preprocess(self,ds):
         Ddata, Edata = {}, {}
         for p, sh in zip(self.s_pars, self.s_shorts):
-            Ddata[p] = {d.id: preg.par_dict.get(sh, d) for d in ds}
+            Ddata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
         for p, sh in zip(self.e_pars, self.e_shorts):
-            Edata[p] = {d.id: preg.par_dict.get(sh, d) for d in ds}
+            Edata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
         return dNl.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
@@ -331,7 +331,7 @@ class EvalRun(base.BaseRun):
             data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
-                data[preg.getPar(sh)] *= 1000
+                data[reg.getPar(sh)] *= 1000
 
             for i, (p, sym) in enumerate(symbols.items()):
                 kws = {
@@ -565,25 +565,25 @@ class EvalRun2:
     def prepare_exp_conf(self, dur, video=False, **kwargs):
         # from lib.registry.dtypes import null_dict
         exp = 'dispersion'
-        exp_conf = preg.expandConf(id=exp, conftype='Exp')
+        exp_conf = reg.expandConf(id=exp, conftype='Exp')
         c = self.target.config
 
         exp_conf.larva_groups = {
-            dID: preg.get_null('LarvaGroup', sample=self.refID, model=preg.expandConf(id=mID, conftype='Model'),
+            dID: reg.get_null('LarvaGroup', sample=self.refID, model=reg.expandConf(id=mID, conftype='Model'),
                                default_color=self.model_colors[dID],
-                               distribution=preg.get_null('larva_distro', N=self.N)) for mID, dID in
+                               distribution=reg.get_null('larva_distro', N=self.N)) for mID, dID in
             zip(self.modelIDs, self.dataset_ids)}
         exp_conf.env_params = c.env_params
 
         # if dur is None :
         #     dur = c.Nticks * c.dt / 60
 
-        exp_conf.sim_params = preg.get_null('sim_params', timestep=c.dt, duration=dur,
+        exp_conf.sim_params = reg.get_null('sim_params', timestep=c.dt, duration=dur,
                                             path=self.path, sim_ID=self.id, store_data=self.store_data)
         if video:
-            exp_conf.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
+            exp_conf.vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
         else:
-            exp_conf.vis_kwargs = preg.get_null('visualization', mode=None)
+            exp_conf.vis_kwargs = reg.get_null('visualization', mode=None)
         exp_conf.save_to = self.save_to
         exp_conf.update(kwargs)
         print(f'Preparing simulation {self.id} for {dur} minutes')
@@ -730,9 +730,9 @@ class EvalRun2:
     def preprocess(self):
         Ddata, Edata = {}, {}
         for p, sh in zip(self.s_pars, self.s_shorts):
-            Ddata[p] = {d.id: preg.par_dict.get(sh, d) for d in self.datasets}
+            Ddata[p] = {d.id: reg.par_dict.get(sh, d) for d in self.datasets}
         for p, sh in zip(self.e_pars, self.e_shorts):
-            Edata[p] = {d.id: preg.par_dict.get(sh, d) for d in self.datasets}
+            Edata[p] = {d.id: reg.par_dict.get(sh, d) for d in self.datasets}
         return dNl.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
@@ -796,7 +796,7 @@ class EvalRun2:
             data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
-                data[preg.getPar(sh)] *= 1000
+                data[reg.getPar(sh)] *= 1000
 
             for i, (p, sym) in enumerate(symbols.items()):
                 kws = {

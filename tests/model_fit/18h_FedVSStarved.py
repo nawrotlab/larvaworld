@@ -2,6 +2,7 @@ import pandas as pd
 
 
 from lib.aux.combining import combine_pdfs
+from lib.registry import reg
 from lib.sim.eval.evaluation import EvalRun
 from lib.sim.ga.functions import GA_optimization
 from lib.sim.eval.model_fit import optimize_mID
@@ -11,8 +12,8 @@ from lib.stor.managing import import_datasets
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'
 idx = 5
-g = preg.loadConf(id=datagroup_id, conftype='Group')
-group_dir = f'{preg.path_dict["DATA"]}/{g.path}'
+g = reg.loadConf(id=datagroup_id, conftype='Group')
+group_dir = f'{reg.Path["DATA"]}/{g.path}'
 group_plotdir = f'{group_dir}/plots'
 save_to = f'{group_plotdir}/{parent_dir}/trial{idx}'
 

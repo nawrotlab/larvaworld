@@ -6,6 +6,7 @@ import pandas as pd
 from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.plot.base import AutoPlot
+from lib.registry import reg
 from lib.registry.pars import preg
 
 
@@ -211,7 +212,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, P.colors, P.labels, frs)):
         try:
-            ref = preg.loadConf(id=label, conftype='Ref')
+            ref = reg.loadConf(id=label, conftype='Ref')
         except:
             ref = None
         for i, (x0, discr, xmin, xmax) in enumerate(

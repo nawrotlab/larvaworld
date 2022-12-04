@@ -297,7 +297,7 @@ class GAbuilder(GAselector):
         self.dataset.step_data = s
         if 'keys' in self.fit_dict.keys():
             for k in self.fit_dict.keys:
-                preg.par_dict.compute(k, self.dataset)
+                reg.Dic.PD.compute(k, self.dataset)
         fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
 
         valid_gs={}
@@ -468,7 +468,7 @@ class GAbuilder(GAselector):
         self.genome_df = pd.DataFrame.from_records(dic)
         self.genome_df = self.genome_df.round(3)
         self.genome_df.sort_values(by='fitness', ascending=False, inplace=True)
-        preg.graph_dict.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
+        reg.Dic.GD.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
                                     name=self.bestConfID)
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
 

@@ -6,6 +6,7 @@ from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib.registry.pars import preg
 from lib.registry import reg
+from lib.sim.exec.exec_run import Exec
 
 class BatchTab(GuiTab):
     def __init__(self, **kwargs):
@@ -37,9 +38,9 @@ class BatchTab(GuiTab):
         try:
             enrichment = self.current_conf(v)['exp_kws']['enrichment']
         except:
-            enrichment = preg.loadConf(id=v[self.selectionlists['Exp'].k],conftype= 'Exp')['enrichment']
+            enrichment = reg.loadConf(id=v[self.selectionlists['Exp'].k],conftype= 'Exp')['enrichment']
         # from lib.registry.dtypes import null_dict
-        conf = preg.get_null('batch_conf',
+        conf = reg.get_null('batch_conf',
                          save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
                          exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},
                          batch_methods=c['batch_methods'].get_dict(v, w),
@@ -76,7 +77,7 @@ class BatchTab(GuiTab):
         batch_id = v[self.batch_id_key]
         conf['batch_id'] = batch_id
         conf['batch_type'] = id
-        exec = exec_run.Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
+        exec = Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
         self.DL0.add(w, {batch_id: exec})
         exec.run()
         return d, g

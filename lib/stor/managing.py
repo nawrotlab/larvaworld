@@ -4,7 +4,7 @@ import warnings
 from itertools import product
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
-from lib.registry.pars import preg
+from lib.registry import reg
 
 from lib.stor.building import build_Jovanic, build_Schleyer, build_Berni, build_Arguello
 from lib.stor.building import build_Schleyer
@@ -37,7 +37,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
     if group_id is None:
         group_id = parent_dir
 
-    g = preg.loadConf(id=datagroup_id, conftype='Group')
+    g = reg.loadConf(id=datagroup_id, conftype='Group')
     group_dir = g.path
     # group_dir = f'{preg.path_dict["DATA"]}/{g.path}'
     raw_folder = f'{group_dir}/raw'
@@ -85,15 +85,15 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
     warnings.filterwarnings('ignore')
 
     shutil.rmtree(target_dir, ignore_errors=True)
-    g = preg.loadConf(id=datagroup_id, conftype='Group')
+    g = reg.loadConf(id=datagroup_id, conftype='Group')
 
     conf = {
         'load_data': False,
         'dir': target_dir,
         'id': id,
         'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': preg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs={},age=0.0),
-        'env_params': preg.get_null('env_conf', arena=g.tracker.arena),
+        'larva_groups': reg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs={},age=0.0),
+        'env_params': reg.get_null('env_conf', arena=g.tracker.arena),
         **g.tracker.resolution
     }
 
@@ -117,12 +117,12 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
 
 def get_datasets(datagroup_id, names, last_common='processed', folders=None, suffixes=None,
                  mode='load', load_data=True, ids=None, **kwargs):
-    g = preg.loadConf(id=datagroup_id, conftype='Group')
+    g = reg.loadConf(id=datagroup_id, conftype='Group')
     data_conf = g.tracker.resolution
     spatial_def = g.enrichment.metric_definition.spatial
     arena_pars = g.tracker.arena
     par_conf = g['parameterization']
-    group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
+    group_dir = f'{reg.Path["DATA"]}/{g["path"]}'
 
     last_common = f'{group_dir}/{last_common}'
     if folders is None:

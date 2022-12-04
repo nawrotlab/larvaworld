@@ -5,7 +5,6 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
-from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry import reg
 
@@ -23,7 +22,7 @@ class ExpFitter:
             if type(sample) == dict:
                 self.sample_conf = sample
             elif type(sample) == str:
-                self.sample_conf = preg.loadConf(id=sample, conftype='Ref')
+                self.sample_conf = reg.loadConf(id=sample, conftype='Ref')
             self.sample = LarvaDataset(self.sample_conf['dir'], load_data=True)
 
         key = 's' if use_symbols else 'd'
@@ -110,8 +109,8 @@ class ExpFitter:
              'group_color': group_cols
              })
 
-        df['pars'] = df['shorts'].apply(lambda row: preg.getPar(row))
-        df['symbols'] = df['shorts'].apply(lambda row: preg.getPar(row, to_return=key))
+        df['pars'] = df['shorts'].apply(lambda row: reg.getPar(row))
+        df['symbols'] = df['shorts'].apply(lambda row: reg.getPar(row, to_return=key))
         df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
         df['par_colors'] = df.apply(
             lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)

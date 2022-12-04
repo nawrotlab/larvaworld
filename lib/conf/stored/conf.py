@@ -5,6 +5,7 @@ import shutil
 
 
 import lib.aux.dictsNlists as dNl
+from lib.registry import reg
 from lib.registry.pars import preg
 
 
@@ -170,17 +171,16 @@ def modshort(vv):
 
 
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
-    from lib.registry.pars import preg
-    I = preg.init_dict
+    I = reg.Dic.PI
 
-    sample_conf = preg.loadConf(id=sample, conftype='Ref')
+    sample_conf = reg.loadConf(id=sample, conftype='Ref')
 
     # env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
-    base_larva = preg.expandConf(id=model, conftype='Model')
+    base_larva = reg.expandConf(id=model, conftype='Model')
     if imitation:
         exp = 'imitation'
         larva_groups = {
-            'ImitationGroup': preg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+            'ImitationGroup': reg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
                                         imitation=True,
                                         distribution={'N': N})}
     else:

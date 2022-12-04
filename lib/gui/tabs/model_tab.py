@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 import copy
 import os
 
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.gui.tabs.draw_body_tab import DrawBodyTab
 from lib.gui.tabs.tab import GuiTab
@@ -11,10 +12,9 @@ from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gu
 class ModelTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # from lib.registry.dtypes import null_dict
         self.fields = ['physics', 'body']
-        self.module_keys = list(preg.get_null('modules').keys())
-        self.energetics_keys = list(preg.get_null('energetics').keys())
+        self.module_keys = list(reg.get_null('modules').keys())
+        self.energetics_keys = list(reg.get_null('energetics').keys())
         self.canvas_size = (1200, 1000)
 
 

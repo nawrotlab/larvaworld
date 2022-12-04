@@ -39,9 +39,9 @@ class ParRegistry:
         from lib.registry.output import output_dict
         return output_dict
 
-    @property
-    def dist_dict(self):
-        return reg.DD
+    # @property
+    # def dist_dict(self):
+    #     return reg.DD
 
     @property
     def graph_dict(self):
@@ -62,7 +62,7 @@ class ParRegistry:
         return self.par_dict.kdict
 
     def getPar(self, k=None, p=None, d=None, to_return='d'):
-        return self.par_dict.getPar(k=k, d=d, p=p, to_return=to_return)
+        return reg.getPar(k=k, d=d, p=p, to_return=to_return)
 
     def get_null(self, name, **kwargs):
         return reg.get_null(name=name, **kwargs)
@@ -81,25 +81,14 @@ class ParRegistry:
             return reg.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
 
 
-    def loadConf(self, conftype, id=None):
-        return self.conftype_dict.dict[conftype].loadConf(id=id)
+    # def loadConf(self, conftype, id=None):
+    #     return self.conftype_dict.dict[conftype].loadConf(id=id)
 
-    def saveConf(self, conftype, id, conf):
-       # reg.conf[conftype][id]=conf
-        return self.conftype_dict.dict[conftype].saveConf(id=id, conf=conf)
-
-    def deleteConf(self, conftype, id=None):
-        return self.conftype_dict.dict[conftype].deleteConf(id=id)
-
-    def expandConf(self, conftype, id=None):
-        return self.conftype_dict.dict[conftype].expandConf(id=id)
+    # def saveConf(self, conftype, id, conf):
+    #    # reg.conf[conftype][id]=conf
+    #     return self.conftype_dict.dict[conftype].saveConf(id=id, conf=conf)
 
 
-
-
-    def storedRefIDs(self):
-        dic = dNl.load_dict(self.paths['Ref'], use_pickle=False)
-        return list(dic.keys())
 
 
 
@@ -107,11 +96,6 @@ class ParRegistry:
     def lg(self, **kwargs):
         return reg.GT.dict.LarvaGroup.lg_entry(**kwargs)
 
-
-
-
-    def storedConf(self, conftype):
-        return self.conftype_dict.dict[conftype].ConfIDs
 
 preg = ParRegistry()
 

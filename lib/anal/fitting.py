@@ -74,8 +74,7 @@ def KS2(a1, a2):
 
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
-    from lib.registry.pars import preg
-    D=preg.dist_dict.dict['logNpow']
+    D=reg.Dic.DD.dict['logNpow']
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     temp = np.ones([len(xmids), len(overlaps)])
@@ -162,8 +161,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmax=np.nanmax(x0)
     with suppress_stdout(False):
         warnings.filterwarnings('ignore')
-        from lib.registry.pars import preg
-        DD=preg.dist_dict.dict
+        DD=reg.Dic.DD.dict
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
 

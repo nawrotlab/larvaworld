@@ -8,7 +8,7 @@ from lib.anal.fitting import BoutGenerator
 from lib.aux import naming as nam
 
 from lib.model.modules.basic import Effector
-
+from lib.registry import reg
 
 
 class BaseIntermitter(Effector):
@@ -262,17 +262,25 @@ class BaseIntermitter(Effector):
         if self.current_pause_duration is not None:
             self.register_pause()
             self.disinhibit_locomotion(L=L)
+
+    def check_distros(self, pause_dist=None, stridechain_dist=None):
+        if pause_dist.range is None and stridechain_dist.range is None:
+            bout_distros = reg.loadRef(f'None.150_controls').bout_distros
+            pause_dist=bout_distros.pause_dur
+            stridechain_dist=bout_distros.run_count
+        return pause_dist,stridechain_dist
 #
 
 class Intermitter(BaseIntermitter):
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist= None, run_mode='stridechain',**kwargs):
         super().__init__(**kwargs)
         from lib.anal.fitting import BoutGenerator
-        if pause_dist.range is None and stridechain_dist.range is None:
-            from lib.registry.pars import preg
-            conf=preg.loadConf(id='None.150controls', conftype='Ref').bout_distros
-            pause_dist=conf.pause_dur
-            stridechain_dist=conf.run_count
+        pause_dist, stridechain_dist = self.check_distros(pause_dist=pause_dist,stridechain_dist=stridechain_dist)
+
+        # if pause_dist.range is None and stridechain_dist.range is None:
+        #     bout_distros = reg.loadRef(f'None.150_controls').bout_distros
+        #     pause_dist=bout_distros.pause_dur
+        #     stridechain_dist=bout_distros.run_count
 
         if run_mode=='stridechain' :
             if stridechain_dist is not None :
@@ -415,11 +423,9 @@ class BranchIntermitter(BaseIntermitter):
         self.c = c
         self.beta = beta
         self.sigma = sigma
-        if pause_dist.range is None and stridechain_dist.range is None:
-            from lib.registry.pars import preg
-            conf=preg.loadConf(id='None.150controls', conftype='Ref').bout_distros
-            pause_dist=conf.pause_dur
-            stridechain_dist=conf.run_count
+        pause_dist, stridechain_dist = self.check_distros(pause_dist=pause_dist,stridechain_dist=stridechain_dist)
+
+
         if run_mode == 'stridechain':
             if stridechain_dist is not None:
                 # print(stridechain_dist.range)
@@ -449,8 +455,7 @@ class BranchIntermitter(BaseIntermitter):
 
 class FittedIntermitter(OfflineIntermitter):
     def __init__(self, sample_dataset, **kwargs):
-        from lib.registry.pars import preg
-        sample = preg.loadConf(id=sample_dataset, conftype='Ref')
+        sample = reg.loadRef(sample_dataset)
         stored_conf = {
             'crawl_freq': sample['crawl_freq'],
             'feed_freq': sample['feed_freq'],
@@ -468,8 +473,7 @@ class FittedIntermitter(OfflineIntermitter):
 def get_EEB_poly1d(sample=None, dt=None, **kwargs):
     if sample is not None:
         if type(sample) == str:
-            from lib.registry.pars import preg
-            sample = preg.loadConf(id=sample, conftype='Ref')
+            sample = reg.loadRef(sample)
         kws = sample['intermitter']
     else:
         kws = kwargs
@@ -500,8 +504,7 @@ def get_best_EEB(deb, sample):
 def get_EEB_time_fractions(sample=None, dt=None, **kwargs):
     if sample is not None:
         if type(sample) == str:
-            from lib.registry.pars import preg
-            sample = preg.loadConf(id=sample, conftype='Ref')
+            sample = reg.loadRef(sample)
         kws = sample['intermitter']
     else:
         kws = kwargs
@@ -523,25 +526,3 @@ def get_EEB_time_fractions(sample=None, dt=None, **kwargs):
     df = pd.DataFrame.from_records(data=data)
     return df
 
-
-if __name__ == "__main__":
-    from lib.stor.larva_dataset import LarvaDataset
-    from lib.registry.pars import preg
-
-    refID = 'None.150controls'
-    # d = preg.loadRef(refID)
-    # c=d.config
-    # from lib.model.DEB.deb import DEB
-    # for mID in ['rover', 'sitter']:
-    #     m=preg.larva_conf_dict.loadConf(mID).energetics
-    #     print(m.gut)
-    #     deb = DEB(id=mID, gut_params=m.gut, **m.DEB)
-    #     EEB=get_best_EEB(deb, sample=c)
-    #     print(mID,EEB)
-    # print(c['intermitter'])
-    # c['EEB_poly1d'] = get_EEB_poly1d(**c['intermitter']).c.tolist()
-    # d.save_config(add_reference=True)
-    # print(c['EEB_poly1d'])
-    # d = LarvaDataset(sample['dir'])
-    # d.config['EEB_poly1d'] = get_EEB_poly1d(**d.config['intermitter']).c.tolist()
-    # d.save_config()

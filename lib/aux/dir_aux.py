@@ -7,7 +7,6 @@ import pandas as pd
 from lib.aux import dictsNlists as dNl
 from lib.registry import reg
 
-from lib.registry.pars import preg
 from lib.stor.larva_dataset import LarvaDataset
 
 def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
@@ -15,7 +14,7 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
     if folder_path in ['', None]:
         return dic
     if raw:
-        conf = preg.loadConf(id=datagroup_id, conftype='Group').tracker.filesystem
+        conf = reg.loadConf(id=datagroup_id, conftype='Group').tracker.filesystem
         dF, df = conf.folder, conf.file
         dFp, dFs = dF.pref, dF.suf
         dfp, dfs, df_ = df.pref, df.suf, df.sep
@@ -139,10 +138,10 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
             s0 = align_trajectories(s0, c=c0, transposition=transposition,replace=True)
 
         xy_max=2*np.max(s0[nam.xy(c0.point)].dropna().abs().values.flatten())
-        c0.env_params.arena = preg.get_null('arena', arena_dims=(xy_max, xy_max))
+        c0.env_params.arena = reg.get_null('arena', arena_dims=(xy_max, xy_max))
 
     if close_view:
-        c0.env_params.arena = preg.get_null('arena', arena_dims=(0.01, 0.01))
+        c0.env_params.arena = reg.get_null('arena', arena_dims=(0.01, 0.01))
 
 
     if time_range is not None:

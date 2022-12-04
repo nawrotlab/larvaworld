@@ -3,7 +3,7 @@ import os
 import random
 import numpy as np
 import pandas as pd
-from pypet import ObjectTable
+
 
 from lib.aux.stdout import suppress_stdout
 import lib.aux.dictsNlists as dNl
@@ -218,6 +218,7 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
                     f'Splitting resulting dataset yielded {len(ds)} datasets but the batch-run is configured for a single one.')
 
     if save_hdf5:
+        from pypet import ObjectTable
         s, e = [ObjectTable(data=k, index=k.index, columns=k.columns.values, copy=True) for k in
                 [d.step_data.reset_index(level='Step'), d.endpoint_data]]
         traj.f_add_result('end', endpoint_data=e, comment='The simulation endpoint data')

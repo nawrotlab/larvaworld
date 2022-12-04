@@ -11,6 +11,7 @@ import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, dir_aux
 from lib.aux.par_aux import base_dtype
+from lib.registry import reg
 from lib.registry.pars import preg
 
 # from lib.conf.stored.conf import loadConfDict
@@ -356,8 +357,7 @@ class SelectionList(GuiElement):
         k0 = self.conftype
 
         if e == self.k:
-            conf = preg.loadConf(id=id, conftype=k0)
-            # conf = loadConf(id, k0)
+            conf = reg.loadConf(id=id, conftype=k0)
             for kk, vv in self.sublists.items():
                 if type(conf[kk]) == str:
                     vv.update(w, conf[kk])
@@ -424,8 +424,7 @@ class SelectionList(GuiElement):
         return gui_win.delete_conf_window(id, conftype=k0, disp=self.disp)
 
     def load(self, w, c, id):
-        conf = preg.loadConf(id=id, conftype=self.conftype)
-        # conf = loadConf(id, self.conftype)
+        conf = reg.loadConf(id=id, conftype=self.conftype)
         self.tab.update(w, c, conf, id)
         if self.progressbar is not None:
             self.progressbar.reset(w)
@@ -449,8 +448,7 @@ class SelectionList(GuiElement):
             for kk, vv in self.sublists.items():
                 if isinstance(vv, SelectionList):
                     if not vv.with_dict:
-                        conf[kk] = preg.expandConf(id=v[vv.k], conftype=vv.conftype)
-                        # conf[kk] = expandConf(id=v[vv.k], conf_type=vv.conftype)
+                        conf[kk] = reg.expandConf(id=v[vv.k], conftype=vv.conftype)
                     else:
                         conf[kk] = vv.collapsible.get_dict(v, w)
                 else:
@@ -458,8 +456,7 @@ class SelectionList(GuiElement):
                     if kk == 'larva_groups':
                         for n, gr in conf[kk].items():
                             if type(gr['model']) == str:
-                                gr['model'] = preg.loadConf(id=gr['model'], conftype= 'Model')
-                                # gr['model'] = loadConf(gr['model'], 'Model')
+                                gr['model'] = reg.loadConf(id=gr['model'], conftype= 'Model')
         return conf
 
     def get_next(self, k0):
@@ -475,7 +472,7 @@ class SelectionList(GuiElement):
 
     @property
     def confs(self):
-        return preg.storedConf(self.conftype)
+        return reg.storedConf(self.conftype)
         # return kConfDict(self.conftype)
 
     @property
@@ -1538,7 +1535,7 @@ class DynamicGraph:
         sg.theme('DarkBlue15')
         self.agent = agent
         if available_pars is None:
-            available_pars = preg.par_dict.runtime_pars()
+            available_pars = reg.Dic.PD.runtime_pars()
         self.available_pars = available_pars
         self.pars = pars
         self.dt = self.agent.model.dt
@@ -1698,15 +1695,12 @@ class GuiTreeData(sg.TreeData):
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def get_df(self):
-        if not self.build_tree and self.root_key in preg.storedConf('Tree'):
-        # if not self.build_tree and self.root_key in kConfDict('Tree'):
-            df = pd.DataFrame.from_dict(preg.loadConf(id=self.root_key, conftype='Tree'))
-            # df = pd.DataFrame.from_dict(loadConf(self.root_key, 'Tree'))
+        if not self.build_tree and self.root_key in reg.storedConf('Tree'):
+            df = pd.DataFrame.from_dict(reg.loadConf(id=self.root_key, conftype='Tree'))
         else:
             from lib.registry.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
-            preg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
-            # saveConf(df.to_dict(), 'Tree', self.root_key)
+            reg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
         return df
 
     def get_entries(self):

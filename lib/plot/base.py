@@ -278,10 +278,9 @@ class Plot(BasePlot):
                  **kwargs):
 
         if add_samples:
-            from lib.registry.pars import preg
             targetIDs = dNl.unique_list([d.config['sample'] for d in datasets])
 
-            targets = [reg.loadRef(id) for id in targetIDs if id in preg.storedConf('Ref')]
+            targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedConf('Ref')]
             datasets += targets
             if labels is not None:
                 labels += targetIDs

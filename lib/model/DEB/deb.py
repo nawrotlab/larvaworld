@@ -672,7 +672,7 @@ def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
 def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=False, model_id=None, save_dict=True,
             **kwargs):
     from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
-    sample = preg.loadConf(id=sample, conftype='Ref')
+    sample = reg.loadConf(id=sample, conftype='Ref')
     kws2 = sample['intermitter']
     if dt is None:
         dt = kws2['dt']

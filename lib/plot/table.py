@@ -201,10 +201,10 @@ def store_model_graphs(mIDs=None):
     from lib.registry.pars import preg
     from lib.aux.combining import combine_pdfs
     from lib.plot.grid import model_summary
-    f1 = preg.path_dict['model_tables']
-    f2 = preg.path_dict['model_summaries']
+    f1 = reg.Path['model_tables']
+    f2 = reg.Path['model_summaries']
     if mIDs is None:
-        mIDs = preg.storedConf('Model')
+        mIDs = reg.storedConf('Model')
     for mID in mIDs:
         try:
             _ = modelConfTable(mID, save_to=f1)

@@ -3,6 +3,7 @@ import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import functions as gui_fun, elements as gui_el
+from lib.registry import reg
 from lib.registry.pars import preg
 # from lib.registry import reg
 # reg.init0()
@@ -94,15 +95,16 @@ class SimTab(GuiTab):
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
-        c['trials'].update(w, preg.loadConf(id=conf['trials'], conftype='Trial'))
-        self.draw_tab.set_env_db(env=preg.expandConf(id=conf['env_params'], conftype='Env'), lg=conf['larva_groups'])
+        c['trials'].update(w, reg.loadConf(id=conf['trials'], conftype='Trial'))
+        self.draw_tab.set_env_db(env=reg.expandConf(id=conf['env_params'], conftype='Env'), lg=conf['larva_groups'])
         w.write_event_value('RESET_ARENA', 'Draw the initial arena')
 
     def get(self, w, v, c, as_entry=True):
+        from lib.registry.output import output_dict
         conf = {
 
             'sim_params': c['sim_params'].get_dict(v, w),
-            'collections': [k for k in list(preg.output_dict.keys()) if c['output'].get_dict(v, w)[k]],
+            'collections': [k for k in list(output_dict.keys()) if c['output'].get_dict(v, w)[k]],
             # 'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
             'enrichment': self.current_conf(v)['enrichment'],
             'trials': c['trials'].get_dict(v, w),

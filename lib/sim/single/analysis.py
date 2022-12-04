@@ -14,6 +14,7 @@ from lib.plot.hist import plot_ang_pars, plot_crawl_pars, plot_turn_amp, plot_en
 from lib.plot.stridecycle import plot_stride_Dbend, plot_stride_Dorient, plot_interference
 from lib.plot.epochs import plot_stridesNpauses
 from lib.plot.bar import barplot
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.model.DEB.deb import deb_default
 from lib.plot.grid import calibration_plot
@@ -23,6 +24,8 @@ import lib.aux.naming as nam
 
 
 def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=False):
+
+    GD=reg.Dic.GD
     if ds is None:
         return
     # if not type(ds) == list:
@@ -38,12 +41,12 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'tactile' in exp_type:
         tact_kws={'unit' : 'min',**cc}
-        figs['time ratio on food (final)'] = preg.graph_dict['endpoint pars (hist)'](par_shorts=['on_food_tr'], **cc)
-        figs['time ratio on food'] = preg.graph_dict['timeplot'](['on_food_tr'], **tact_kws)
-        figs['time on food'] = preg.graph_dict['timeplot'](['cum_f_det'], **tact_kws)
-        figs['turner input'] = preg.graph_dict['timeplot'](['A_tur'], show_first=True, **tact_kws)
-        figs['turner output'] = preg.graph_dict['timeplot'](['Act_tur'], show_first=True, **tact_kws)
-        figs['tactile activation'] = preg.graph_dict['timeplot'](['A_touch'], show_first=True, **tact_kws)
+        figs['time ratio on food (final)'] = GD['endpoint pars (hist)'](par_shorts=['on_food_tr'], **cc)
+        figs['time ratio on food'] = GD['timeplot'](['on_food_tr'], **tact_kws)
+        figs['time on food'] = GD['timeplot'](['cum_f_det'], **tact_kws)
+        figs['turner input'] = GD['timeplot'](['A_tur'], show_first=True, **tact_kws)
+        figs['turner output'] = GD['timeplot'](['Act_tur'], show_first=True, **tact_kws)
+        figs['tactile activation'] = GD['timeplot'](['A_touch'], show_first=True, **tact_kws)
 
     if 'RvsS' in exp_type:
         figs.update(**intake_analysis(**cc))
@@ -59,11 +62,11 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
         }
 
         g_keys = ['g_odor1'] if exp_type == 'chemotaxis_RL' else ['g_odor1', 'g_odor2']
-        figs['best_gains_table'] = preg.graph_dict['timeplot'](g_keys, save_as='best_gains.pdf', **c)
-        figs['olfactor_decay_table'] = preg.graph_dict['timeplot'](['D_olf'], save_as='olfactor_decay.pdf', **c)
-        figs['olfactor_decay_table_inds'] = preg.graph_dict['timeplot'](['D_olf'], save_as='olfactor_decay_inds.pdf',
+        figs['best_gains_table'] = GD['timeplot'](g_keys, save_as='best_gains.pdf', **c)
+        figs['olfactor_decay_table'] = GD['timeplot'](['D_olf'], save_as='olfactor_decay.pdf', **c)
+        figs['olfactor_decay_table_inds'] = GD['timeplot'](['D_olf'], save_as='olfactor_decay_inds.pdf',
                                                      individuals=True, **c)
-        figs['reward_table'] = preg.graph_dict['timeplot'](['cum_reward'], save_as='reward.pdf', **c)
+        figs['reward_table'] = GD['timeplot'](['cum_reward'], save_as='reward.pdf', **c)
 
     if exp_type == 'dish':
         # targeted_analysis(ds)
@@ -80,14 +83,14 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'anemo' in exp_type:
         for group in ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V', 'wind_effect_on_Fr'] :
-            figs[group] = preg.graph_dict['nengo'](group,same_plot=True if group=='anemotaxis' else False, **cc)
-        figs['anemotaxis'] = preg.graph_dict['timeplot'](['anemotaxis'], show_first=False, **cc)
-        figs['final anemotaxis'] = preg.graph_dict['endpoint pars (hist)'](par_shorts=['anemotaxis'], **cc)
+            figs[group] = GD['nengo'](group,same_plot=True if group=='anemotaxis' else False, **cc)
+        figs['anemotaxis'] = GD['timeplot'](['anemotaxis'], show_first=False, **cc)
+        figs['final anemotaxis'] = GD['endpoint pars (hist)'](par_shorts=['anemotaxis'], **cc)
 
         figs['wind activation VS bearing to wind'] = plot_2pars(['o_wind','A_wind'], **cc)
-        figs['wind activation'] = preg.graph_dict['timeplot'](['A_wind'], show_first=False, **cc)
+        figs['wind activation'] = GD['timeplot'](['A_wind'], show_first=False, **cc)
         figs['anemotaxis VS bearing to wind'] = plot_2pars(['anemotaxis','o_wind'], **cc)
-        figs['bearing to wind direction'] = preg.graph_dict['timeplot'](['o_wind'], show_first=False, **cc)
+        figs['bearing to wind direction'] = GD['timeplot'](['o_wind'], show_first=False, **cc)
 
 
 
@@ -95,7 +98,7 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
     if 'dispersion' in exp_type:
         samples = unique_list([d.config['sample'] for d in ds])
-        targets = [LarvaDataset(preg.loadConf(id=sd, conftype='Ref')['dir']) for sd in samples]
+        targets = [LarvaDataset(reg.loadConf(id=sd, conftype='Ref')['dir']) for sd in samples]
         figs0 = comparative_analysis(datasets=ds + targets, **ccc)
         figs.update(figs0)
 

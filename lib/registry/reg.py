@@ -226,3 +226,15 @@ def resetConfs(ks=None) :
 
 def loadConf(conftype, id=None):
     return Dic.CT.dict[conftype].loadConf(id=id)
+
+def saveConf(conftype, id, conf):
+    return Dic.CT.dict[conftype].saveConf(id=id, conf=conf)
+
+def deleteConf(conftype, id=None):
+    return Dic.CT.dict[conftype].deleteConf(id=id)
+
+def expandConf(conftype, id=None):
+    return Dic.CT.dict[conftype].expandConf(id=id)
+
+def storedConf(conftype):
+    return Dic.CT.dict[conftype].ConfIDs

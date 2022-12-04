@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import collections as mc
 
 from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl
+from lib.registry import reg
 from lib.registry.pars import preg
 
 from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
@@ -281,7 +282,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
             lb = dsp['upper'].values
             ub = dsp['lower'].values
         except :
-            dsp = preg.par_dict.get(k, d)
+            dsp = reg.Dic.PD.get(k, d)
             mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]
             ub = dsp.groupby(level='Step').quantile(q=0.75).values[t0:t1]
             lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]

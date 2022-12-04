@@ -20,10 +20,10 @@ def lgs(models, ids=None, **kwargs):
     return lgs
 
 
-def lg(group='Larva', s=(0.0, 0.0), m='explorer', **kwargs):
+def lg(group='Larva', m='explorer', **kwargs):
 
 
-    return reg.lg(id=group, s=(0.0, 0.0), mID=m, **kwargs)
+    return reg.lg(id=group, mID=m, **kwargs)
 
 
 
@@ -120,7 +120,7 @@ def Exp_dict() :
         'exploration': {
             'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
             'focus': simple_exp('focus', l=lg(m='Levy', N=1, ors=[90.0, 90.0])),
-            'dish': simple_exp('dish', l=lg(m='loco_default', N=5, s=0.02)),
+            'dish': simple_exp('dish', l=lg(m='loco_default', N=25, s=0.02)),
             'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
             'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
                                         l=lgs(models=['explorer', 'Levy', 'nengo_explorer'],

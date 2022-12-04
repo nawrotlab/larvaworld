@@ -27,7 +27,7 @@ class EssayTab(GuiTab):
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
-        conf = preg.loadConf(id=id, conftype=self.conftype)
+        conf = reg.loadConf(id=id, conftype=self.conftype)
         for essay_exp in list(conf['experiments'].keys()):
             d, g = self.run_essay_exp(v, w, c, d, g, essay_exp)
         return d, g
@@ -36,7 +36,7 @@ class EssayTab(GuiTab):
         # from lib.registry.dtypes import null_dict
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
-        essay = preg.get_null('essay_params', essay_ID=f'{id}_{reg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
+        essay = reg.get_null('essay_params', essay_ID=f'{id}_{reg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
         fdir = conf['exp_fig_folder']
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}
@@ -68,7 +68,7 @@ class EssayTab(GuiTab):
         from lib.sim.single.analysis import essay_analysis
         pars = c['essay_params'].get_dict(v, w)
         essay_type = self.current_ID(v)
-        essay = preg.loadConf(id=essay_type, conftype=self.conftype)['experiments'][essay_exp]
+        essay = reg.loadConf(id=essay_type, conftype=self.conftype)['experiments'][essay_exp]
         kws = {
             'id': essay_exp,
             'path': f"{pars['path']}/{pars['essay_ID']}",

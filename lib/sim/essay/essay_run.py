@@ -114,10 +114,10 @@ class DoublePatch_Essay(EssayRun):
 
 
 
-        self.ms=[reg.MD.loadConf(mID) for mID in self.mIDs]
+        self.ms=[reg.Dic.MD.loadConf(mID) for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
 
-        self.mdiff_df, row_colors = reg.MD.diff_df(mIDs=self.mID0s,ms=self.ms)
+        self.mdiff_df, row_colors = reg.Dic.MD.diff_df(mIDs=self.mID0s,ms=self.ms)
         self.analysis_kws= {
             # 'datasets': self.datasets,
             # 'save_to': self.plot_dir,

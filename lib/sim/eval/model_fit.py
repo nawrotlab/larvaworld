@@ -178,19 +178,19 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     if mID1 is None:
         mID1 = mID0
     kws = {
-        'sim_params': preg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt),
+        'sim_params': reg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt),
         'show_screen': show_screen,
         'offline': offline,
         'save_to': save_to,
         'experiment': 'exploration',
         'env_params': 'arena_200mm',
-        'ga_select_kws': preg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
-        'ga_build_kws': preg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,exclusion_mode=exclusion_mode,
+        'ga_select_kws': reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
+        'ga_build_kws': reg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,exclusion_mode=exclusion_mode,
                                       bestConfID=mID1, fitness_target_refID=refID, exclude_func=exclusion_funcs['bend_errors'])
     }
 
-    conf = preg.get_null('GAconf', **kws)
-    conf.env_params = preg.expandConf(id=conf.env_params, conftype='Env')
+    conf = reg.get_null('GAconf', **kws)
+    conf.env_params = reg.expandConf(id=conf.env_params, conftype='Env')
 
     # if fit_dict is None and refID is not None:
     #     from lib.sim.ga.functions import approximate_fit_dict

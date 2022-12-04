@@ -5,6 +5,7 @@ import PySimpleGUI as sg
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.gui.aux import buttons as gui_but, functions as gui_fun
+from lib.registry import reg
 from lib.registry.pars import preg
 
 
@@ -209,7 +210,7 @@ def save_conf_window(conf, conftype, disp=None):
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
-                     choices=preg.storedConf(conftype),
+                     choices=reg.storedConf(conftype),
                      readonly=False, enable_events=False, header_kws={'text': f'Store new {disp}'})
     l = [
         temp.get_layout(),
@@ -217,7 +218,7 @@ def save_conf_window(conf, conftype, disp=None):
     e, v = sg.Window(f'{disp} configuration', l).read(close=True)
     if e == 'Ok':
         id = v[f'{disp}_ID']
-        preg.saveConf(conf=conf, conftype=conftype, id=id)
+        reg.saveConf(conf=conf, conftype=conftype, id=id)
         return id
     elif e == 'Cancel':
         return None
@@ -230,7 +231,7 @@ def delete_conf_window(id, conftype, disp=None) :
          [sg.Ok(), sg.Cancel()]], justification='center', vertical_alignment='center', element_justification='center',pad=(20,20))]]
     e, v = sg.Window(f'Delete configuration', l, size=(500,250)).read(close=True)
     if e == 'Ok':
-        preg.deleteConf(id=id, conftype=conftype)
+        reg.deleteConf(id=id, conftype=conftype)
         return True
     elif e == 'Cancel':
         return False
@@ -241,7 +242,7 @@ def add_ref_window():
     from lib.gui.aux.elements import NamedList
     from lib.stor.larva_dataset import LarvaDataset
     k = 'ID'
-    temp = NamedList('Reference ID : ', key=k, choices=preg.storedConf('Ref'), size=(30, 10),
+    temp = NamedList('Reference ID : ', key=k, choices=reg.storedConf('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
                      readonly=True, enable_events=False, header_kws={'text': 'Select reference datasets'})
     l = [
@@ -249,7 +250,7 @@ def add_ref_window():
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Load reference datasets', l).read(close=True)
     if e == 'Ok':
-        return {id: LarvaDataset(dir=preg.loadConf(id=id, conftype='Ref')['dir'], load_data=False) for id in v[k]}
+        return {id: LarvaDataset(dir=reg.loadConf(id=id, conftype='Ref')['dir'], load_data=False) for id in v[k]}
     elif e == 'Cancel':
         return None
 
@@ -266,9 +267,8 @@ def save_ref_window(d):
 def import_window(datagroup_id, raw_dic):
     from lib.gui.tabs.gui import check_togglesNcollapsibles
     from lib.gui.aux.elements import PadDict
-    from lib.registry.pars import preg
-    g = preg.loadConf(id=datagroup_id, conftype='Group')
-    group_dir = f'{preg.path_dict["DATA"]}/{g["path"]}'
+    g = reg.loadConf(id=datagroup_id, conftype='Group')
+    group_dir = f'{reg.Path["DATA"]}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
 

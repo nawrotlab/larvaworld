@@ -74,7 +74,7 @@ def adjust_sim(exp, conf_type, sim):
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     from lib.registry.pars import preg
     if conf_type == 'Batch':
-        exp_conf = preg.loadConf(conftype=conf_type, id=exp)
+        exp_conf = reg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
         if batch_id is None:
             idx = reg.next_idx(id=exp, conftype='Batch')
@@ -90,9 +90,8 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
 
 
     try:
-        exp_conf = preg.expandConf(id=exp, conftype=conf_type)
+        exp_conf = reg.expandConf(id=exp, conftype=conf_type)
     except:
-        # exp_conf = preg.expandConf(id=exp, conftype='Exp')
         raise
 
     if arena is not None:
@@ -116,9 +115,8 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
 
 
 def update_exp_con2f(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
-    from lib.registry.pars import preg
     if conf_type == 'Batch':
-        exp_conf = preg.loadConf(conftype=conf_type, id=exp)
+        exp_conf = reg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
         if batch_id is None:
             idx = reg.next_idx(id=exp, conftype='Batch')
@@ -132,15 +130,14 @@ def update_exp_con2f(exp, d=None, N=None, models=None, arena=None, conf_type='Ex
         return exp_conf
 
     try:
-        exp_conf = preg.expandConf(id=exp, conftype=conf_type)
+        exp_conf = reg.expandConf(id=exp, conftype=conf_type)
     except:
-        # exp_conf = preg.expandConf(id=exp, conftype='Exp')
         raise
 
     if arena is not None:
         exp_conf.env_params.arena = arena
     if d is None:
-        d = {'sim_params': preg.init_dict.get_null('sim_params')}
+        d = {'sim_params': reg.get_null('sim_params')}
 
     exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
     if models is not None:
@@ -198,11 +195,11 @@ def update_exp_models2(exp_conf, models, N=None):
             if isinstance(m, dict):
                 gConf.model = m
                 larva_groups[f'LarvaGroup{i}'] = gConf
-            elif m in preg.storedConf('Model'):
-                gConf.model = preg.expandConf(id=m, conftype='Model')
+            elif m in reg.storedConf('Model'):
+                gConf.model = reg.expandConf(id=m, conftype='Model')
                 larva_groups[m] = gConf
-            elif m in preg.storedConf('Brain'):
-                gConf.model = preg.expandConf(id=m, conftype='Brain')
+            elif m in reg.storedConf('Brain'):
+                gConf.model = reg.expandConf(id=m, conftype='Brain')
                 larva_groups[m] = gConf
             else:
                 raise ValueError(f'{m} larva-model or brain-model does not exist!')
