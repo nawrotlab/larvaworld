@@ -105,14 +105,13 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     if models is not None:
         if conf_type in ['Exp', 'Eval']:
             exp_conf = update_exp_models(exp_conf, models)
-    # if N is not None:
-    #     if conf_type == 'Exp':
-    #         for gID, gConf in exp_conf.larva_groups.items():
-    #             gConf.distribution.N = N
+    if N is not None:
+        if conf_type == 'Exp':
+            for gID, gConf in exp_conf.larva_groups.items():
+                gConf.distribution.N = N
     exp_conf.update(**kwargs)
 
-    if conf_type == 'Exp':
-        exp_conf.experiment=exp
+    exp_conf.experiment=exp
     return exp_conf
 
 
@@ -229,7 +228,12 @@ def run_template(sim_mode, args, d):
     elif sim_mode == 'Exp':
         from lib.sim.single.single_run import SingleRun
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
+
+
         run = SingleRun(**conf, vis_kwargs=d['visualization'])
+
+
+
         ds = run.run()
 
         if args.analysis:

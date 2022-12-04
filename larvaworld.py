@@ -1,9 +1,5 @@
-# import sys
 from argparse import ArgumentParser
 
-
-
-# sys.path.insert(0, '..')
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.registry import reg
 reg.init()
@@ -26,11 +22,10 @@ for mode in ['Exp','Batch', 'Ga', 'Eval', 'Rep'] :
 
 if __name__ == "__main__":
     args = p.parse_args()
+
+
     sim_mode = args.sim_mode
-    # print(args.experiment)
-    # raise
     d = MPs[sim_mode].get(args)
-    # print(d.keys())
 
     kwargs = dNl.NestDict(vars(args))
     kwargs.pop(dest)

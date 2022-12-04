@@ -300,5 +300,8 @@ class ConfTypeDict:
             ks = self.conftypes
 
         for k in ks:
-            self.dict[k].resetDict()
+            try :
+                self.dict[k].resetDict()
+            except :
+                pass
 

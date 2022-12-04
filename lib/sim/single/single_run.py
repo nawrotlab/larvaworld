@@ -21,10 +21,6 @@ class SingleRun:
         random.seed(seed)
         self.show_output = show_output
 
-        # print(sim_params)
-        # print(sim_params.path)
-        # raise
-
         if id is None :
             id = sim_params.sim_ID
         self.id = id
@@ -35,8 +31,6 @@ class SingleRun:
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:
-            # if sim_params.path is None :
-            from lib.registry.pars import preg
             save_to = reg.Path.SIM
         self.save_to = save_to
         # self.storage_path = f'{sim_params.path}/{self.id}'
@@ -48,8 +42,7 @@ class SingleRun:
         self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
 
         output = set_output(collections=collections, Npoints=np.min([lg.model.body.Nsegs+1 for id, lg in larva_groups.items()]))
-        # print(output)
-        # raise
+
         self.env = WorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
                             env_params=env_params, larva_groups=larva_groups, trials=trials, dur=sim_params.duration,
                             experiment=self.experiment,

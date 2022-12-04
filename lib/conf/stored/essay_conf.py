@@ -8,7 +8,7 @@ from lib.registry import reg
 from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-I = reg.PI
+I = reg.Dic.DEF
 
 
 

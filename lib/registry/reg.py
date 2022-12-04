@@ -174,5 +174,6 @@ def saveRef(id, conf):
     dic[id] = conf
     dNl.save_dict(dic, path, use_pickle=False)
 
-
+def resetConfs(ks=None) :
+    Dic.CT.resetConfs(ks=ks)
 

@@ -111,7 +111,7 @@ class ParRegistry:
         kws={k:reg.get_null(k,**v) for k,v in kw_dic0.items()}
 
         if metric_definition is None:
-            metric_definition = self.init_dict.metric_def(**def_kws)
+            metric_definition = reg.Dic.DEF.metric_def(**def_kws)
         dic = reg.get_null('enrichment',
                                       metric_definition=metric_definition, **kws, **kwargs)
         return dic
@@ -123,11 +123,6 @@ class ParRegistry:
 
 
     def loadConf(self, conftype, id=None):
-        # if id in self.conftype_dict.dict[conftype].keys():
-        #     return self.conftype_dict.dict[conftype].loadConf(id=id)
-        #     return reg.conf[conftype][id]
-        # else :
-        #     return None
         return self.conftype_dict.dict[conftype].loadConf(id=id)
 
     def saveConf(self, conftype, id, conf):

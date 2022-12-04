@@ -124,7 +124,7 @@ class GroupType(base.BaseType):
                 }
             epochs={}
             for id,kws in eps.items():
-                epochs.update(self.GT.dict.epoch.entry(id=id,**kws))
+                epochs.update(reg.Dic.GT.dict.epoch.entry(id=id,**kws))
 
 
 
@@ -168,7 +168,7 @@ class GroupType(base.BaseType):
            s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
         if id is None :
             id=mID
-        m=mID if not expand else reg.CT.dict.Model.loadConf(mID)
+        m=mID if not expand else reg.dIC.CT.dict.Model.loadConf(mID)
         if type(s) == float:
             s = (s, s)
         kws = {'kwdic': {

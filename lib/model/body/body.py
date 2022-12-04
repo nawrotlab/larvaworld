@@ -501,7 +501,6 @@ class LarvaBody(LarvaShape):
         else:
             self.contour = self.set_contour(self.segs)
             viewer.draw_polygon(self.contour, self.head.color, filled=filled, width=self.radius / 5)
-        # print(self.real_length)
         draw_body(viewer=viewer, model=model, pos=pos, midline_xy=self.midline_xy, contour_xy=None,
                   radius=self.radius, vertices=self.get_shape().boundary.coords, color=self.default_color,
                   selected=self.selected)

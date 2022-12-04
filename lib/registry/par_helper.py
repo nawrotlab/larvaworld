@@ -124,4 +124,4 @@ if __name__ == '__main__':
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
     # reg.CT.resetConfs(['Env','Exp','Essay'])
     # print(preg.conftype_dict.dict['Ga'].ConfID_entry(default='exploration'))
-    reg.CT.resetConfs(ks=['Model'])
+    reg.Dic.CT.resetConfs(ks=['Model'])

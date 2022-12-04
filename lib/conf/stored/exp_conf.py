@@ -4,7 +4,8 @@ from lib.conf.stored.conf import imitation_exp
 from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl
 from lib.registry import reg
-I=reg.PI
+I=reg.Dic.DEF
+# I=reg.PI
 
 #
 
@@ -112,7 +113,7 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
     return l
 
 def GTRvsS(**kwargs):
-    return reg.GT.dict.LarvaGroup.RvsS_groups(**kwargs)
+    return reg.Dic.GT.dict.LarvaGroup.RvsS_groups(**kwargs)
 
 def Exp_dict() :
 
@@ -122,7 +123,7 @@ def Exp_dict() :
         'exploration': {
             'tethered': simple_exp('focus', dur=30.0, l=lg(m='immobile', N=1, ors=[90.0, 90.0])),
             'focus': simple_exp('focus', l=lg(m='Levy', N=1, ors=[90.0, 90.0])),
-            'dish': simple_exp('dish', l=lg(m='branch_explorer', N=5, s=0.02)),
+            'dish': simple_exp('dish', l=lg(m='loco_default', N=5, s=0.02)),
             'dispersion': simple_exp('arena_200mm', l=lg(m='explorer', N=25)),
             'dispersion_x4': simple_exp('arena_200mm', dur=3.0,
                                         l=lgs(models=['explorer', 'Levy', 'nengo_explorer'],
