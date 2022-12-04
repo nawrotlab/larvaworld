@@ -6,13 +6,14 @@ import pandas as pd
 from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
+from lib.registry import reg
 from lib.registry.pars import preg
 
 
 class Calibration:
     def __init__(self, refID, turner_mode='neural', physics_keys=None, absolute=True, shorts=None):
         self.refID = refID
-        self.refDataset = d = preg.loadRef(refID)
+        self.refDataset = d = reg.loadRef(refID)
         d.load(contour=False)
         s, e, c = d.step_data, d.endpoint_data, d.config
         if shorts is None:

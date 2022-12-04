@@ -1,11 +1,9 @@
-import copy
 import shutil
 
 import numpy as np
 import pandas as pd
 
 from lib.registry import reg
-from lib.registry.pars import preg
 from lib.sim.single.single_run import SingleRun
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 I = reg.Dic.DEF
@@ -20,9 +18,9 @@ class Essay:
     def __init__(self, type,essay_id=None, N=5, enrichment=I.base_enrich(), collections=['pose'], video=False, show=False,
                  **kwargs):
         if video:
-            self.vis_kwargs = preg.get_null('visualization', mode='video', video_speed=60)
+            self.vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
         else:
-            self.vis_kwargs = preg.get_null('visualization', mode=None)
+            self.vis_kwargs = reg.get_null('visualization', mode=None)
         self.N = N
         self.G = reg.GD
         self.GT = reg.GT
@@ -45,8 +43,8 @@ class Essay:
         self.results = {}
 
     def conf(self, exp, id, dur, lgs, env, **kwargs):
-        sim = preg.get_null('sim_params', sim_ID=id, path=self.path, duration=dur)
-        return preg.get_null('exp_conf', sim_params=sim, env_params=env, trials={},
+        sim = reg.get_null('sim_params', sim_ID=id, path=self.path, duration=dur)
+        return reg.get_null('exp_conf', sim_params=sim, env_params=env, trials={},
                              larva_groups=lgs, experiment=exp, enrichment=self.enrichment,
                              collections=self.collections, **kwargs)
 
@@ -103,10 +101,10 @@ class RvsS_Essay(Essay):
         self.mdiff_df, row_colors = self.M.diff_df(mIDs=['rover', 'sitter'])
 
     def RvsS_env(self, on_food=True):
-        grid = preg.get_null('food_grid') if on_food else None
-        return preg.get_null('env_conf',
-                             arena=preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.02, 0.02)),
-                             food_params=preg.get_null('food_params', food_grid=grid),
+        grid = reg.get_null('food_grid') if on_food else None
+        return reg.get_null('env_conf',
+                             arena=reg.get_null('arena', arena_shape='rectangular', arena_dims=(0.02, 0.02)),
+                             food_params=reg.get_null('food_params', food_grid=grid),
                              )
 
     def GTRvsS(self, **kwargs):
@@ -267,7 +265,7 @@ class RvsS_Essay(Essay):
             markers = ['D', 's']
             ls = [r'$for^{R}$', r'$for^{S}$']
             shorts = ['f_am', 'sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M']
-            pars = preg.getPar(shorts)
+            pars = reg.getPar(shorts)
 
             #
             def dsNls(ds0, lls=None):
@@ -581,11 +579,11 @@ class Chemotaxis_Essay(Essay):
 
     def chemo_exps(self, models):
         lg_kws = {
-            'odor': preg.get_null('odor'),
+            'odor': reg.get_null('odor'),
             'sample': 'None.150controls'
         }
         kws = {
-            'arena': preg.get_null('arena', arena_shape='rectangular', arena_dims=(0.1, 0.06)),
+            'arena': reg.get_null('arena', arena_shape='rectangular', arena_dims=(0.1, 0.06)),
             'odorscape': {'odorscape': 'Gaussian'},
             'windscape': None,
             'thermoscape': None,
@@ -594,13 +592,13 @@ class Chemotaxis_Essay(Essay):
 
         exp1 = 'Orbiting behavior'
         kws1 = {
-            'env': preg.get_null('env_conf',
+            'env': reg.get_null('env_conf',
                                  food_params={'source_groups': {},
                                               'food_grid': None,
                                               'source_units': {
-                                                  'Source': preg.get_null('source', pos=(0.0, 0.0),
+                                                  'Source': reg.get_null('source', pos=(0.0, 0.0),
                                                                           group='Source',
-                                                                          odor=preg.get_null('odor',
+                                                                          odor=reg.get_null('odor',
                                                                                              odor_id='Odor',
                                                                                              odor_intensity=2.0,
                                                                                              odor_spread=0.0002)
@@ -608,8 +606,8 @@ class Chemotaxis_Essay(Essay):
                                               }
                                               }, **kws),
             'lgs': {
-                mID: preg.get_null('LarvaGroup',
-                                   distribution=preg.get_null('larva_distro', N=self.N, mode='uniform'),
+                mID: reg.get_null('LarvaGroup',
+                                   distribution=reg.get_null('larva_distro', N=self.N, mode='uniform'),
                                    default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
                 models.items()},
             'id': f'{exp1}_exp',
@@ -619,21 +617,21 @@ class Chemotaxis_Essay(Essay):
 
         exp2 = 'Up-gradient navigation'
         kws2 = {
-            'env': preg.get_null('env_conf',
+            'env': reg.get_null('env_conf',
                                  food_params={'source_groups': {},
                                               'food_grid': None,
                                               'source_units': {
-                                                  'Source': preg.get_null('source', pos=(0.04, 0.0),
+                                                  'Source': reg.get_null('source', pos=(0.04, 0.0),
                                                                           group='Source',
-                                                                          odor=preg.get_null('odor',
+                                                                          odor=reg.get_null('odor',
                                                                                              odor_id='Odor',
                                                                                              odor_intensity=8.0,
                                                                                              odor_spread=0.0004)),
                                               }
                                               }, **kws),
             'lgs': {
-                mID: preg.get_null('LarvaGroup',
-                                   distribution=preg.get_null('larva_distro', N=self.N, mode='uniform',
+                mID: reg.get_null('LarvaGroup',
+                                   distribution=reg.get_null('larva_distro', N=self.N, mode='uniform',
                                                               loc=(-0.04, 0.0),
                                                               orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
                                    default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
@@ -715,7 +713,7 @@ def Essay_dict():
                 'durations': [120]
             }
         },
-        'exp_fig_folder': preg.path_dict["RvsS"]}
+        'exp_fig_folder': reg.Path["RvsS"]}
 
 
     d = {

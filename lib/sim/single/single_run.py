@@ -178,13 +178,13 @@ class SingleRun:
         figs, results = {}, {}
         if len(entry_list) > 0:
             #from lib.plot.dict import graph_dict
-            graph_entries = reg.GD.eval(entries=entry_list, **kws)
+            graph_entries = reg.Dic.GD.eval(entries=entry_list, **kws)
             figs.update(graph_entries)
 
         if 'disp' in exp:
             from lib.sim.single.analysis import comparative_analysis
             samples = dNl.unique_list([d.config.sample for d in self.datasets])
-            targets = [preg.loadRef(sd) for sd in samples]
+            targets = [reg.loadRef(sd) for sd in samples]
             kkws = copy.deepcopy(kws)
             kkws['datasets'] = self.datasets + targets
             figs.update(**comparative_analysis(**kkws))

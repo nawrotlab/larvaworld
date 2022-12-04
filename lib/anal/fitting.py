@@ -20,12 +20,13 @@ def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
 
 def get_powerlaw_alpha(dur, dur0=None, dur1=None, discrete=False):
     from lib.aux.stdout import suppress_stdout_stderr
+    from powerlaw import Fit
     if dur0 is None :
         dur0=np.min(dur)
     if dur1 is None :
         dur1=np.max(dur)
     with suppress_stdout_stderr():
-        from powerlaw import Fit
+
         return Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete).power_law.alpha
 
 
@@ -411,10 +412,10 @@ class BoutGenerator:
 
 
 def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
-    from lib.registry.pars import preg
+    # from lib.registry.pars import preg
     if refDataset is None :
 
-        d = preg.loadRef(refID)
+        d = reg.loadRef(refID)
         d.load(contour=False)
         # s, e, c = d.step_data, d.endpoint_data, d.config
         # Npau = s['pause_dur'].dropna().values.shape[0]
@@ -427,7 +428,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     Nrun = aux_dic['run_dur'].shape[0]
 
     from lib.aux.sample_aux import get_sample_bout_distros
-    m=preg.loadConf(id=mID, conftype='Model')
+    m=reg.loadConf(id=mID, conftype='Model')
     m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params
     dic = {}

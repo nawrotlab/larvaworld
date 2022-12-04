@@ -3,11 +3,13 @@ import itertools
 
 import numpy as np
 import pandas as pd
+
 from scipy.stats import ks_2samp
 from shapely.geometry import Point
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.aux.annotation import annotate
+from lib.registry import reg
 
 from lib.registry.pars import preg
 
@@ -459,5 +461,5 @@ if __name__ == '__main__':
     refID = 'None.150controls'
     mID = 'forager'
 
-    d = preg.simRef(refID, mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=True)
+    d = reg.simRef(refID, mID=mID, dur=3, dt=1 / 16, Nids=5, color='blue', enrichment=True)
 

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from lib.aux import dictsNlists as dNl
 from lib.aux.dictsNlists import NestDict
+from lib.registry import reg
 from lib.registry.pars import preg
 from lib.plot.aux import save_plot
 from lib.plot.base import GridPlot, Plot
@@ -60,7 +61,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     from lib.anal.fitting import test_boutGens
     from lib.aux.sample_aux import sim_model
     if refDataset is None:
-        d = preg.loadRef(refID)
+        d = reg.loadRef(refID)
         d.load(step=False)
         refDataset = d
     refDataset.color = 'red'

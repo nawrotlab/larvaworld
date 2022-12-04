@@ -1,4 +1,8 @@
 import os
+import time
+
+import numpy as np
+
 from lib.aux import dictsNlists as dNl
 
 VERBOSE = 2
@@ -37,7 +41,6 @@ def reg_dict():
         'DEF': ParInitDict.ParDefaultDict,
         'GT': GroupTypeDict.GroupTypeDict,
         'GD': GraphDict.GraphDict,
-
         'ParsD': ParserDict.ParserDict,
         'PF': ProcFuncDict.ProcFuncDict,
         'PD': BaseParDict.BaseParDict,
@@ -49,7 +52,6 @@ def init_dicts(ks=None):
     global DicF
     DicF = reg_dict()
     all_ks = list(DicF.keys())
-    # print(all_ks)
 
     global Dic
     Dic = dNl.NestDict({kk: None for kk in all_ks})
@@ -67,8 +69,6 @@ def init_dicts(ks=None):
 
 
 def init(ks=None):
-    # global VERBOSE
-    # VERBOSE = 0
     vprint(f'Initializing larvaworld registry', 3)
     init_conf()
     init_data_structure()
@@ -135,6 +135,10 @@ def lgs(**kwargs):
     d = init_Dic('GT')
     return d.dict.LarvaGroup.lgs(**kwargs)
 
+def lg(**kwargs):
+    d = init_Dic('GT')
+    return d.dict.LarvaGroup.lg_entry(**kwargs)
+
 
 def get_null(name, **kwargs):
     d = init_Dic('DEF')
@@ -158,6 +162,15 @@ def loadRef(id, load=False, **kwargs):
         # self.vprint(f'Ref Configuration {id} does not exist. Returning None')
         return None
 
+def loadRefD(id, **kwargs):
+    return loadRef(id, load=True, **kwargs)
+
+
+def loadRefDs(ids, **kwargs):
+    ds = [loadRefD(id, **kwargs) for id in ids]
+    return ds
+
+
 
 def retrieveRef(id):
     dic = dNl.load_dict(Path.Ref, use_pickle=False)
@@ -174,6 +187,42 @@ def saveRef(id, conf):
     dic[id] = conf
     dNl.save_dict(dic, path, use_pickle=False)
 
+def deleteRef(id):
+    import shutil
+    path = Path.Ref
+    dic = dNl.load_dict(path, use_pickle=False)
+    if id in dic.keys():
+        shutil.rmtree(dic[id].dir,ignore_errors=True)
+        dic.pop(id,None)
+        vprint(f'Deleted Ref Configuration {id}')
+        dNl.save_dict(dic, path, use_pickle=False)
+
+def testRef(id):
+    from lib.aux.stor_aux import read
+    config = retrieveRef(id)
+    if config is not None:
+        D = config.dir_dict
+        dic={}
+        for k, d in D.items():
+            if d.endswith('.h5') and os.path.exists(d):
+                try :
+                    t0=time.time()
+                    read(d, key=k)
+                    dic[k]=np.round(time.time()-t0,2)
+                except :
+                    dic[k]='FAIL'
+        # if k not in D1.keys() :
+        print(f'------- Loading times for {id}---------------------')
+        print(dic)
+        print()
+
+
+def simRef(id, mID, **kwargs):
+    from lib.aux.sample_aux import sim_model
+    return sim_model(mID,  refID=id, **kwargs)
+
 def resetConfs(ks=None) :
     Dic.CT.resetConfs(ks=ks)
 
+def loadConf(conftype, id=None):
+    return Dic.CT.dict[conftype].loadConf(id=id)

@@ -1,11 +1,8 @@
-import copy
 import random
-
 import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-# from lib.registry.pars import preg
 from lib.registry import reg
 
 
@@ -75,13 +72,13 @@ def get_sample_ks(m, sample_ks=None):
 def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nids=1, parameter_dict={}):
     sample_dict = {}
     if m is None:
-        m = preg.loadConf(id=mID, conftype="Model")
+        m = reg.loadConf(id=mID, conftype="Model")
     ks = get_sample_ks(m, sample_ks=sample_ks)
 
     if len(ks) > 0:
         if refDataset is None:
             if refID is not None:
-                refDataset = preg.loadRef(refID, load=True, step=False)
+                refDataset = reg.loadRef(refID, load=True, step=False)
         if refDataset is not None:
             m = get_sample_bout_distros(m, refDataset.config)
             e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
@@ -104,7 +101,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
 def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_dict={}):
     if refDataset is None:
         if refID is not None:
-            refDataset = preg.loadRef(refID, load=True, step=False)
+            refDataset = reg.loadRef(refID, load=True, step=False)
         else:
             raise
     else:
@@ -130,7 +127,7 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_
     sample_dict.update(parameter_dict)
 
     if m is None:
-        m = preg.loadConf(id=mID, conftype="Model")
+        m = reg.loadConf(id=mID, conftype="Model")
     m = get_sample_bout_distros(m, refDataset.config)
     ms = generate_larvae(Nids, sample_dict, m)
     ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
@@ -166,7 +163,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         p0=(0.0,0.0)
     x0,y0=p0
     if df_columns is None:
-        df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
+        df_columns = reg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
     controller = PhysicsController(**m.physics)
@@ -202,7 +199,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
 
 
 def sim_multi_agents(Nticks, Nids, ms, group_id, dt=0.1, ids=None, p0s=None, fo0s=None):
-    df_columns = preg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
+    df_columns = reg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
     if ids is None:
         ids = [f'{group_id}{j}' for j in range(Nids)]
     if p0s is None:
@@ -261,7 +258,7 @@ def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color=
         'dir': dir,
         'id': dataset_id,
         # 'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': preg.lg(id=dataset_id, c=color, sample=refID, mID=mID, N=Nids, expand=True, **kwargs),
+        'larva_groups': reg.lg(id=dataset_id, c=color, sample=refID, mID=mID, N=Nids, expand=True, **kwargs),
         'env_params': env_params,
         'Npoints': 3,
         'Ncontour': 0,

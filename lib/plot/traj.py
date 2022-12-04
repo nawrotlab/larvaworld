@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt, patches
 
 from lib.aux import naming as nam, dictsNlists as dNl, dir_aux
+from lib.registry import reg
 from lib.registry.pars import preg
 
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoBasePlot
@@ -477,7 +478,7 @@ if __name__ == '__main__':
 
 
     refID = 'exploration.dish'
-    d = preg.loadRef(refID)
+    d = reg.loadRef(refID)
     d.load()
     s, e,c = d.step_data,d.endpoint_data, d.config
     def get_title(idx):

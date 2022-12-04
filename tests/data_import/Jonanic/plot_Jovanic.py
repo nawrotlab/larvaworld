@@ -1,3 +1,4 @@
+from lib.registry import reg
 from lib.registry.pars import preg
 import pandas as pd
 # D=preg.dict
@@ -31,7 +32,7 @@ save_to = f'/home/panos/larvaworld_new/larvaworld/data/JovanicGroup/plots/{paren
 for i, k in enumerate(['AttP240', 'SS888Imp', 'SS888']):
     # try:
     refID = f'{parent_dir}.{k}'
-    d = preg.loadRef(refID)
+    d = reg.loadRef(refID)
     d.load(step=step,end=end, contour=False, midline=False)
     s,e,c=d.step_data, d.endpoint_data, d.config
     # fft_freqs(s, e, c)

@@ -688,7 +688,7 @@ class LarvaConfDict:
 
     def adapt_crawler(self, refID=None, e=None, mode='realistic', average=True):
         if e is None:
-            d = preg.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e = d.endpoint_data
 
@@ -707,7 +707,7 @@ class LarvaConfDict:
 
     def adapt_intermitter(self, refID=None, e=None, c=None, mode='default', conf=None):
         if e is None or c is None:
-            d = preg.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
@@ -743,7 +743,7 @@ class LarvaConfDict:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
         if e is None or c is None:
-            d = preg.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
         if save_to is None:
@@ -766,7 +766,7 @@ class LarvaConfDict:
 
     def adapt_6mIDs(self, refID, e=None, c=None):
         if e is None or c is None:
-            d = preg.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
@@ -797,7 +797,7 @@ class LarvaConfDict:
 
     def adapt_3modules(self, refID, e=None, c=None):
         if e is None or c is None:
-            d = preg.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
@@ -830,7 +830,7 @@ class LarvaConfDict:
 
     def add_var_mIDs(self, refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
         if e is None or c is None:
-            d = preg.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 

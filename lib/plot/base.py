@@ -10,7 +10,7 @@ from matplotlib.gridspec import GridSpec
 from lib.aux import dictsNlists as dNl
 
 from lib.plot.aux import dual_half_circle, plot_config, process_plot, NcolNrows
-
+from lib.registry import reg
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -281,7 +281,7 @@ class Plot(BasePlot):
             from lib.registry.pars import preg
             targetIDs = dNl.unique_list([d.config['sample'] for d in datasets])
 
-            targets = [preg.loadRef(id) for id in targetIDs if id in preg.storedConf('Ref')]
+            targets = [reg.loadRef(id) for id in targetIDs if id in preg.storedConf('Ref')]
             datasets += targets
             if labels is not None:
                 labels += targetIDs

@@ -1,13 +1,10 @@
 import numpy as np
 
-from lib.conf.stored.conf import imitation_exp
-from lib.registry.pars import preg
+
 from lib.aux import dictsNlists as dNl
 from lib.registry import reg
 I=reg.Dic.DEF
-# I=reg.PI
 
-#
 
 
 def lgs(models, ids=None, **kwargs):
@@ -26,7 +23,7 @@ def lgs(models, ids=None, **kwargs):
 def lg(group='Larva', s=(0.0, 0.0), m='explorer', **kwargs):
 
 
-    return preg.lg(id=group, s=(0.0, 0.0), mID=m, **kwargs)
+    return reg.lg(id=group, s=(0.0, 0.0), mID=m, **kwargs)
 
 
 
@@ -35,7 +32,7 @@ def lg(group='Larva', s=(0.0, 0.0), m='explorer', **kwargs):
 
 def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, **kwargs):
 
-    ct = preg.conftype_dict.dict.Exp
+    ct = reg.Dic.CT.dict.Exp
     kw = {'kwdic': {'sim_params': sim},
         'larva_groups': l,
         'env_params': env_name,
@@ -43,7 +40,7 @@ def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, *
     }
 
     if en:
-        kw['enrichment'] = preg.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+        kw['enrichment'] = I.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
                                          bouts=['stride', 'pause', 'turn'])
     kw.update(kwargs)
 

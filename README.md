@@ -14,7 +14,7 @@ doi: https://doi.org/10.1101/2021.07.07.451470
 
 GUI
 ===================
-A user-friendly GUI allows easy importation, inspection and analysis of data, model, life-history and environment configuration, visualization and data-acquisition setup and control over simulations, essays and batch-runs. Videos and tutorials are also available. In principal the user shouldn't have to mess with the code at all.
+A user-friendly GUI allows easy importation, inspection and analysis of data, model, life-history and environment configuration, visualization and data-acquisition setup and control over simulations, essays and batch-runs. Videos and tutorials are also available. In principle the user shouldn't have to mess with the code at all.
 
 Visualization
 ===================
@@ -25,11 +25,11 @@ Arena drawing
 The GUI features an arena editor that supports :
 
    1. Arenas and dishes
-      The arena editor allows defining arena shape and dimensions in detail and placement of larva groups and items at prefered locations in predefined spatial         distributions and orientations.
-   2.Odorcapes
+      The arena editor allows defining arena shape and dimensions in detail and placement of larva groups and items at preferred locations in predefined spatial         distributions and orientations.
+   2. Odorscapes
       Odor sources can be specified and arbitrary odor landscapes can be constructed. The constructed arenas are directly available for modeling simulations. The       virtual larvae themselves can bear an odor creating dynamic odorscapes while moving.
    3. Food items
-      Food sources are availble either as single items, distributions of defined parameters or food grids of defined dimensions. 
+      Food sources are available either as single items, distributions of defined parameters or food grids of defined dimensions. 
    4. Impassable borders.
 
 
@@ -40,17 +40,17 @@ Multiple aspects of real larvae are captured in various models. These can be con
 
 
    1. Virtual body
-            The 2D body consists of 1, 2(default) or more segments, featuring viscoelastic forces (torsional spring model), olfactory and touch sensors at                     desired locations and a mouth for feeding. Exemplary models with angular and linear motion optimized to fit empirical data are available                           featuring differential motion of the front and rear segments and realistic velocities and accelerations at both plains. Furthermore optional use                   of the Box2D physics engine is available as illustrated in an example of realistic imitation of real larvae with a multi-segment body model.
+            The 2D body consists of 1, 2(default) or more segments, featuring viscoelastic forces (torsional spring model), olfactory and touch sensors at                     desired locations and a mouth for feeding. Exemplary models with angular and linear motion optimized to fit empirical data are available                           featuring differential motion of the front and rear segments and realistic velocities and accelerations at both plains. Furthermore, optional use                   of the Box2D physics engine is available as illustrated in an example of realistic imitation of real larvae with a multi-segment body model.
    2. Sensorimotor effectors
-            Crawling, lateral bending and feeding are modeled as oscillatory processes, either independent, coupled or mutually exclusive. The individual                     modules and their interaction are easily configurable through the GUI. Body-dependent phasic interference can be defined as well. An olfactory                     sensor dynamically tracks odor gradients enabling chemotactic navigation. Feedback from the environment is only partially supported as in the case                 of reoccurent feeding motion at succesfull food encounter.
+            Crawling, lateral bending and feeding are modeled as oscillatory processes, either independent, coupled or mutually exclusive. The individual                     modules and their interaction are easily configurable through the GUI. Body-dependent phasic interference can be defined as well. An olfactory                     sensor dynamically tracks odor gradients enabling chemotactic navigation. Feedback from the environment is only partially supported as in the case                 of recurrent feeding motion at successful food encounter.
    3. Intermittent behavior
             Intermittent function of the oscillator modules is available through definition of specific spatial or temporal distributions. Models featuring                   empirically-fitted intermittent crawling interspersed by brief pauses can be readily tested. Time has been quantized at the scale of single                       crawling or feeding motions.
    4. Olfactory learning
             A neuron-level detailed mushroom-body model has been integrated to the locomotory model, enabling olfactory learning after associative                             conditioning of novel odorants to food. The short neuron-level temporal scale (0.1 ms) has been coupled to the 0.1 s behavioral timestep in parallel               simulation. Detailed implementations of an established olfactory learning behavioral paradigm are supported.
    5. Energetics and life-history
-            A widely-accepted dynamic energy budget (DEB) model runs in the background and controls energy allocation to growth and biomass maintenance. The model             has been fitted to Drosophila and accurately reproduces the larva life stage in terms of body-length, wet-weight, instar duration and time to                     pupation. The long timescale model (in days) has been coupled to the behavioral timescale as well. Therefore virtual larvae can be realistically                   reared in substrates of specified quality before entering the behavioral simulation or can be starved for defined periods during or before being                   tested.
+            A widely-accepted dynamic energy budget (DEB) model runs in the background and controls energy allocation to growth and biomass maintenance. The model             has been fitted to Drosophila and accurately reproduces the larva life stage in terms of body-length, wet-weight, instar duration and time to                     pupation. The long timescale model (in days) has been coupled to the behavioral timescale as well. Therefore, virtual larvae can be realistically                   reared in substrates of specified quality before entering the behavioral simulation or can be starved for defined periods during or before being                   tested.
    6. Hunger drive and foraging phenotypes
-            The DEB energetics module has been coupled to behavior via a variety of model configurations, each based on different assumptions. For example in one             implementation a hunger/satiety homeostatic drive that tracks the enrgy reserve density deriving from metabolism controls the exploration VS                       exploitation behavioral balance, boosting consumption after food deprivation and vice versa. The rover and sitter foraging phenotypes have been                   modeled, integrating differential glucose absorption to differential exploration pathlength and food consumption. 
+            The DEB energetics module has been coupled to behavior via a variety of model configurations, each based on different assumptions. For example in one             implementation a hunger/satiety homeostatic drive that tracks the energy reserve density deriving from metabolism controls the exploration VS                       exploitation behavioral balance, boosting consumption after food deprivation and vice versa. The rover and sitter foraging phenotypes have been                   modeled, integrating differential glucose absorption to differential exploration pathlength and food consumption. 
 
             
          
@@ -71,7 +71,7 @@ The simulation platform supports simulations of experiments that implement estab
    5. Foraging in patch environments
    6. Growth over the whole larva stage
 
-Finally some games are availble for fun where opposite larva groups try to capture the flag or stay at the top of the odorscape hill!!!
+Finally, some games are available for fun where opposite larva groups try to capture the flag or stay at the top of the odorscape hill!!!
 
 -----------------------------------------------------------------------------------------------------------------
 
@@ -97,8 +97,7 @@ Download or clone the repository to your local drive :
 
     git clone https://github.com/nawrotlab/larvaworld.git
 
-Either make sure python 3.9 is your default python interpreter,
-Or optionally create a python 3.9 virtual environment, for example in folder `larvaworld_venv`, and activate it:
+Either make sure python 3.9 is your default python interpreter or optionally create a python 3.9 virtual environment, for example in folder `larvaworld_venv`, and activate it:
 
     python3.9 -m venv larvaworld_venv
 
@@ -123,7 +122,7 @@ Larvaworld can be run directly from linux terminal.
     
    Larvaworld-GUI
    =====================
-   All functionalities are availbale via the respective tabs of the larvaworld GUI.
+   All functionalities are available via the respective tabs of the larvaworld GUI.
    Launch the GUI :
 
       python larvaworld-gui
@@ -134,12 +133,10 @@ Larvaworld can be run directly from linux terminal.
    Optionally Larvaworld can be launched through Linux terminal.
    Different modes are available :
 
-   
-
    1. Single Simulation
 
        Run a single simulation of one of multiple available experiments. 
-       Optionally run the respetive analysis.
+       Optionally run the respective analysis.
 
        This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
        We choose to also see the simulation at a speed x6 as it unfolds.
@@ -151,13 +148,12 @@ Larvaworld can be run directly from linux terminal.
 
            python larvaworld.py Exp dispersion -N 30 -t 3.0 -m image -a
 
-
    2. Batch run
-
+       (needs debugging)
        Run multiple trials of a given experiment with different parameters.
        This line runs a batch run of odor preference experiments for different valences of the two odor sources.
 
-           python larvaworld.py Batch odor_pref -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
+           python larvaworld.py Batch PItest_off -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
 
     
     
