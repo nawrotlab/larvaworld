@@ -5,7 +5,6 @@ from matplotlib import ticker, cm
 
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
 from lib.registry import reg
-from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot, AutoBasePlot
 
@@ -80,7 +79,7 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims = preg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
+            pars, symbols, ylabs, ylims = reg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim'])
     else:
         symbols = pars
         ylabs = pars

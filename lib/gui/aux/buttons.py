@@ -3,7 +3,7 @@ import webbrowser
 
 import PySimpleGUI as sg
 
-from lib.registry.pars import preg
+from lib.registry import reg
 from lib.gui.aux import functions as gui_fun
 
 
@@ -49,9 +49,9 @@ def button_row(name, buttons, button_args={}):
         'conf_tree': 'kinesis-data-firehose',
     }
     but_kws = {
-        'browse': {'initial_folder': preg.path_dict["DATA"], 'enable_events': True,
+        'browse': {'initial_folder': reg.Path["DATA"], 'enable_events': True,
                    'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FOLDER},
-        'browse_figs': {'initial_folder': preg.path_dict["exp_figs"], 'enable_events': True,
+        'browse_figs': {'initial_folder': reg.Path["exp_figs"], 'enable_events': True,
                         'target': (0, -1), 'button_type': sg.BUTTON_TYPE_BROWSE_FILES,
                         'file_types': (("png Files", "*.png"),)},
     }
@@ -89,7 +89,7 @@ class GraphButton(sg.Button):
                     # ff = ParDict.path_dict["icons"]
                     # from lib.conf.base import paths
                     image_subsample=1 if i!=2 else 10
-                    filename = f'{preg.path_dict["icons"]}/icons{i+1}/{name}.png'
+                    filename = f'{reg.Path["icons"]}/icons{i+1}/{name}.png'
                     super().__init__(image_filename=filename, k=key,image_subsample=image_subsample, **b_kws, **kwargs)
                 except :
                     continue

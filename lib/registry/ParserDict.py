@@ -4,10 +4,8 @@ from typing import List
 
 
 import lib.aux.dictsNlists as dNl
-# from lib.conf.stored.conf import loadConfDict
 from lib.registry.base import BaseConfDict
 
-from lib.registry.pars import preg
 from lib.registry import reg
 
 class ParsArg:
@@ -113,7 +111,7 @@ class ParserDict(BaseConfDict):
         self.parser_dict = self.build_parser_dict()
 
     def build(self):
-        init_dict = preg.init_dict.dict
+        init_dict = reg.Dic.PI.dict
         d = dNl.NestDict()
         for name in self.names:
             d0 = init_dict[name]

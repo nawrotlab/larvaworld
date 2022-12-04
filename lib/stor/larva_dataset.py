@@ -456,9 +456,6 @@ class _LarvaDataset:
             cc0s, cc1s, cc01s = [], [], []
             for ss, dic in zip(sss, dics):
                 epochs = dic[chunk]
-                # for id in self.agent_ids:
-                #     ss = self.step_data[par].xs(id, level='AgentID')
-                #     dic = dic0[id]
                 if min_dur != 0:
                     chunk_dur = f'{chunk}_dur'
                     epochs = epochs[dic[chunk_dur] >= min_dur]
@@ -484,8 +481,7 @@ class _LarvaDataset:
         if not return_shorts:
             return sorted(pars)
         else:
-            from lib.registry.pars import preg
-            shorts = preg.getPar(d=pars, to_return='k')
+            shorts = reg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
 

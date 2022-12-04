@@ -382,8 +382,7 @@ class BoutGenerator:
         self.name = name
         self.dt = dt
         self.range = range
-        from lib.registry.pars import preg
-        self.ddfs = reg.DD.dict
+        self.ddfs = reg.Dic.DD.dict
         self.xmin, self.xmax = range
         kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
         self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}
@@ -410,7 +409,6 @@ class BoutGenerator:
 
 
 def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
-    # from lib.registry.pars import preg
     if refDataset is None :
 
         d = reg.loadRef(refID)

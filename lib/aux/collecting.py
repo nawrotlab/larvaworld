@@ -37,7 +37,6 @@ class TargetedDataCollector(DataCollector):
             self.reports = None
 
     def valid_reporters(self, pars):
-        from lib.registry.pars import preg
         D=reg.PD.dict
         ks = [k for k in pars if k in D.keys()]
         dic = {}

@@ -4,7 +4,6 @@ import copy
 import PySimpleGUI as sg
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
-from lib.registry.pars import preg
 from lib.registry import reg
 from lib.sim.exec.exec_run import Exec
 

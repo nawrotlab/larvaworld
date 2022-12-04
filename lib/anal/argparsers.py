@@ -72,7 +72,6 @@ def adjust_sim(exp, conf_type, sim):
 
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
-    from lib.registry.pars import preg
     if conf_type == 'Batch':
         exp_conf = reg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
@@ -176,7 +175,6 @@ def update_exp_models(exp_conf, mIDs=None, N=None):
 
 
 def update_exp_models2(exp_conf, models, N=None):
-    from lib.registry.pars import preg
     larva_groups = {}
     Nmodels = len(models)
     colors = cNs.N_colors(Nmodels)

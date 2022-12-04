@@ -1,6 +1,5 @@
 from lib.gui.aux.elements import GuiElement
 from lib.registry import reg
-from lib.registry.pars import preg
 
 
 class GuiTab(GuiElement):

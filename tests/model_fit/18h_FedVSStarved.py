@@ -6,7 +6,6 @@ from lib.registry import reg
 from lib.sim.eval.evaluation import EvalRun
 from lib.sim.ga.functions import GA_optimization
 from lib.sim.eval.model_fit import optimize_mID
-from lib.registry.pars import preg
 from lib.stor.managing import import_datasets
 
 datagroup_id = 'Jovanic lab'
@@ -42,9 +41,8 @@ def adapt_models(mIDs=mIDs,refIDs=refIDs,mID0 = 'RE_NEU_PHI_DEF_nav',space_mkeys
     },
         'cycle_curves': ['fov', 'foa']}}
     entries = {}
-    M = preg.larva_conf_dict
     for mID, refID in zip(mIDs, refIDs):
-        entry = M.adapt_mID(refID=refID, mID0=mID0, mID=mID, space_mkeys=space_mkeys,
+        entry = reg.Dic.MD.adapt_mID(refID=refID, mID0=mID0, mID=mID, space_mkeys=space_mkeys,
                             init=init, show_screen=True,
                             save_to=f'{save_to}/GA/{mID}', Nagents=50, Nelits=5, Ngenerations=10, dur=0.4,
                             fit_dict=GA_optimization(fitness_target_refID=refID, **kws))

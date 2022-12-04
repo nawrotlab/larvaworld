@@ -7,7 +7,6 @@ from lib.aux import naming as nam, dictsNlists as dNl
 
 from lib.plot.base import AutoPlot
 from lib.registry import reg
-from lib.registry.pars import preg
 
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',

@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
-from scipy.signal import argrelextrema
 
-
+from lib.registry import reg
 from lib.registry.base import BaseConfDict
-from lib.registry.pars import preg
 
 from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux, stdout
 
@@ -75,7 +73,7 @@ def exclude_rows(s, e, c, flag='collision_flag',  accepted=[0], rejected=None, *
         s.loc[s[flag] == rejected[0]] = np.nan
 
     for id in s.index.unique('AgentID').values:
-        e.loc[id, preg.getPar('cum_t')] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * c.dt
+        e.loc[id, reg.getPar('cum_t')] = len(s.xs(id, level='AgentID', drop_level=True).dropna()) * c.dt
 
     print(f'Rows excluded according to {flag}.')
 
@@ -84,9 +82,9 @@ def exclude_rows(s, e, c, flag='collision_flag',  accepted=[0], rejected=None, *
 def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
     N = len(s.index.unique('Step'))
     if sp_vel is None:
-        sp_vel = preg.getPar('sv')
+        sp_vel = reg.getPar('sv')
     if ang_vel is None:
-        ang_vel = preg.getPar('fov')
+        ang_vel = reg.getPar('fov')
     pars = [sp_vel, ang_vel]
     edge_colors = [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]]
     labels = ['lin_color', 'ang_color']

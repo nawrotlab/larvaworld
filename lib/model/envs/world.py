@@ -11,7 +11,6 @@ from lib.screen.drawing import ScreenManager
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 from lib.registry import reg
-from lib.registry.pars import preg
 
 import lib.screen.rendering as ren
 

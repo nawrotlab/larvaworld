@@ -9,6 +9,7 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import label_diff
 from lib.plot.base import BasePlot, Plot, AutoLoadPlot, AutoPlot, AutoBasePlot
+from lib.registry import reg
 
 
 def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
@@ -73,8 +74,7 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
     for ii, sh in enumerate(par_shorts):
         ax = P.axs[ii]
-        from lib.registry.pars import preg
-        p, u = preg.getPar(sh, to_return=['d', 'l'])
+        p, u = reg.getPar(sh, to_return=['d', 'l'])
         vs = [d.get_par(key='end', par=p) for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]

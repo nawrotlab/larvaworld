@@ -1,31 +1,22 @@
-import copy
 import random
 import multiprocessing
 import math
 import threading
-import time
-from typing import Tuple
 
 import pandas as pd
 import progressbar
 import numpy as np
 
 from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
-from lib.aux.colsNstr import get_class_by_name
-# from lib.ga.util.genome import Genome
 from lib.sim.ga.functions import GA_optimization, get_robot_class
-
-from lib.registry.pars import preg
 from lib.registry import reg
-from lib.model.robot.larva_robot import LarvaRobot
-
 from lib.aux.time_util import TimeUtil
 
 
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
                  selection_ratio=0.3, verbose=0, bestConfID=None):
-        self.M = preg.larva_conf_dict
+        self.M = reg.Dic.MD
         self.bestConfID = bestConfID
         self.model = model
         self.Ngenerations = Ngenerations
@@ -257,7 +248,7 @@ class GAbuilder(GAselector):
 
         self.my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), c.agent_ids],
                                                    names=['Step', 'AgentID'])
-        self.df_columns = preg.getPar(['b', 'fov', 'rov', 'v', 'x', 'y'])
+        self.df_columns = reg.getPar(['b', 'fov', 'rov', 'v', 'x', 'y'])
         self.df_Ncols = len(self.df_columns)
 
         e = pd.DataFrame(index=c.agent_ids)

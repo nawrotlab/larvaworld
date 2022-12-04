@@ -9,8 +9,7 @@ def update_metric_definition(md=None, mdconf=None):
     if mdconf is None :
 
         if md is None:
-            from lib.registry.pars import preg
-            md = preg.get_null('metric_definition')
+            md = reg.get_null('metric_definition')
         from lib.aux import dictsNlists as dNl
         mdconf = dNl.NestDict({
             'spatial': {

@@ -7,7 +7,6 @@ from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
 from lib.registry import reg
-from lib.registry.pars import preg
 
 
 class Calibration:
@@ -38,7 +37,7 @@ class Calibration:
             'all': physics_keys + turner_keys
         })
 
-        self.D = preg.larva_conf_dict
+        self.D = reg.Dic.MD
         self.mdicts = dNl.NestDict({
             'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
             'physics': self.D.dict.model.m['physics'].args
@@ -159,8 +158,7 @@ class Calibration:
 #
 def epar(e, k=None, par=None, average=True):
     if par is None:
-        D = preg.dict
-        par = D[k].d
+        par = reg.Dic.PI.dict[k].d
     vs = e[par]
     if average:
         return np.round(vs.median(), 2)
@@ -209,15 +207,12 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
 
 
 if __name__ == '__main__':
-    from lib.registry.pars import preg
     from lib.aux import dictsNlists as dNl
     import pandas as pd
 
-    # kkk=preg.larva_conf_dict.loadConf('GAU_CON_SQ_DEF_fit')
     # print(kkk)
 
     # raise
-    # mmm=preg.larva_conf_dict.storedConf()
     # print(mmm)
     # print('GAU_CON_SQ_DEF' in mmm)
 

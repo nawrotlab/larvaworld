@@ -1,6 +1,5 @@
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
-from lib.registry.pars import preg
 from lib.registry import reg
 
 def entry(ID, title=None, **kwargs):
@@ -9,7 +8,7 @@ def entry(ID, title=None, **kwargs):
 
 def time(short=None, par=None, title=None, u='sec', f1=False, abs=False, **kwargs):
     if title is None:
-        title = par if par is not None else preg.getPar(short)
+        title = par if par is not None else reg.getPar(short)
         # name =f'{short} timeplot'
     args = {
         'par_shorts': [short] if short is not None else [],
@@ -51,8 +50,7 @@ def end(shorts=None, title=None, **kwargs):
 
 def bar(short, title=None, **kwargs):
     if title is None:
-        title = preg.getPar(short)
-        # name =f'{short} timeplot'
+        title = reg.getPar(short)
     args = {
         'par_shorts': [short],
         **kwargs

@@ -3,7 +3,6 @@ import pandas as pd
 from pypet import cartesian_product, load_trajectory
 
 from lib.aux import dictsNlists as dNl
-from lib.registry.pars import preg
 from lib.registry import reg
 
 def retrieve_exp_conf(traj):
@@ -66,7 +65,7 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
 
 
 def load_traj(batch_type, batch_id):
-    parent_dir_path = f'{preg.path_dict["BATCH"]}/{batch_type}'
+    parent_dir_path = f'{reg.Path["BATCH"]}/{batch_type}'
     filename = f'{parent_dir_path}/{batch_type}.hdf5'
     traj = load_trajectory(filename=filename, name=batch_id, load_all=2)
     return traj
@@ -76,7 +75,7 @@ def load_traj(batch_type, batch_id):
 def stored_trajs(batch_type):
     # ParDict.path_dict["BATCH"]
     import h5py
-    filename = f'{preg.path_dict["BATCH"]}/{batch_type}/{batch_type}.hdf5'
+    filename = f'{reg.Path["BATCH"]}/{batch_type}/{batch_type}.hdf5'
     try:
         f = h5py.File(filename, 'r')
         return {k:f for k in f.keys()}
@@ -86,7 +85,7 @@ def stored_trajs(batch_type):
 
 def delete_traj(batch_type, traj_name):
     import h5py
-    filename = f'{preg.path_dict["BATCH"]}/{batch_type}/{batch_type}.hdf5'
+    filename = f'{reg.Path["BATCH"]}/{batch_type}/{batch_type}.hdf5'
     with h5py.File(filename, 'r+') as f:
         del f[traj_name]
 

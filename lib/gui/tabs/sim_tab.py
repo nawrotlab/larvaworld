@@ -4,10 +4,6 @@ import PySimpleGUI as sg
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 from lib.registry import reg
-from lib.registry.pars import preg
-# from lib.registry import reg
-# reg.init0()
-# reg.init()
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
 

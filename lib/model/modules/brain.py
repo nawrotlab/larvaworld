@@ -2,6 +2,7 @@ import numpy as np
 
 from lib.model.modules.locomotor import DefaultLocomotor
 from lib.aux import dictsNlists as dNl
+from lib.registry import reg
 
 
 class Brain():
@@ -86,8 +87,7 @@ class DefaultBrain(Brain):
     def __init__(self, conf, agent=None, dt=None, **kwargs):
         super().__init__(agent=agent, dt=dt)
         self.locomotor = DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
-        from lib.registry.pars import preg
-        preg.larva_conf_dict.init_brain(conf, self)
+        reg.Dic.MD.init_brain(conf, self)
 
 
 

@@ -7,7 +7,9 @@ import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import DrawTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
-from lib.registry.pars import preg
+from lib.registry import reg
+
+
 
 
 class DrawEnvTab(DrawTab):
@@ -252,7 +254,7 @@ class DrawEnvTab(DrawTab):
                                     'distribution': c[f'{S}_DISTRO'].get_dict(v, w),
                                     **dic['sample_pars']
                                 }
-                                dic['current'] = {v[f'{S}_group_id']: preg.get_null('SourceGroup', **temp_dic)}
+                                dic['current'] = {v[f'{S}_group_id']: reg.get_null('SourceGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                     p2=p2, line_color=color)
                         elif v[L] and not self.check_abort(L, w, v, db[self.Lu]['items'], db[self.Lg]['items']):
@@ -273,7 +275,7 @@ class DrawEnvTab(DrawTab):
                                     'distribution': temp,
                                     **sample_larva_pars
                                 }
-                                dic['current'] = {v[f'{o}_group_id']: preg.get_null('LarvaGroup', **temp_dic)}
+                                dic['current'] = {v[f'{o}_group_id']: reg.get_null('LarvaGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{o}_DISTRO_shape'], p1=p1,
                                                                     p2=p2, line_color=color)
 
@@ -282,7 +284,7 @@ class DrawEnvTab(DrawTab):
                             if id in list(db[self.Bg]['items'].keys()) or id == '':
                                 info.update(value=f"{B} id {id} already exists or is empty")
                             else:
-                                dic['current'] = {id:preg.get_null('Border', points=[P1, P2], default_color=v[f'{B}_color'], width=float(v[f'{B}_width']))}
+                                dic['current'] = {id:reg.get_null('Border', points=[P1, P2], default_color=v[f'{B}_color'], width=float(v[f'{B}_width']))}
                                 # dic['current'] = border(ps=[P1, P2], c=v[f'{B}_color'],w=float(v[f'{B}_width']), id=id)
                                 dic['prior_rect'] = self.graph.draw_line(p1, p2, color=v[f'{B}_color'],
                                                                          width=int(float(v[f'{B}_width']) * self.s))
@@ -562,7 +564,7 @@ class DrawEnvTab(DrawTab):
             # from lib.registry.dtypes import null_dict
 
             env = {self.Bg: {},
-                   'arena': preg.get_null('arena'),
+                   'arena': reg.get_null('arena'),
                    'food_params': {self.Su: {}, self.Sg: {}, 'food_grid': None},
                    # self.Lg: {}
                    }

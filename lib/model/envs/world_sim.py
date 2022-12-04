@@ -173,7 +173,6 @@ class WorldSim(World):
     def create_collectors(self, output):
         from lib.aux.collecting import TargetedDataCollector
 
-        # kws0 = {'par_dict': preg.dict}
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}}
         s, e, t = output['step'], output['end'], output['tables']

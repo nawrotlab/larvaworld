@@ -6,7 +6,6 @@ import shutil
 
 import lib.aux.dictsNlists as dNl
 from lib.registry import reg
-from lib.registry.pars import preg
 
 
 def loadConf(id, conf_type, **kwargs):
@@ -39,7 +38,7 @@ def expandConf(id, conf_type, **kwargs):
 
 
 def loadConfDict(conf_type, use_pickle=False):
-    path = preg.paths[conf_type]
+    path = reg.Path[conf_type]
     if conf_type == 'Ga':
         use_pickle = True
     try:
@@ -94,9 +93,7 @@ def saveConf(conf, conf_type, id=None, mode='overwrite', verbose=1, **kwargs):
 
 
 def saveConfDict(ConfDict, conf_type, use_pickle=False):
-    # from lib.conf.pars.pars import ParDict
-    # path = ParDict.path_dict[conf_type]
-    path = preg.paths[conf_type]
+    path = reg.Path[conf_type]
     if conf_type == 'Ga':
         use_pickle = True
     if use_pickle:
@@ -175,7 +172,6 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
 
     sample_conf = reg.loadConf(id=sample, conftype='Ref')
 
-    # env_params = null_dict('env_conf', arena=sample_conf.env_params.arena)
     base_larva = reg.expandConf(id=model, conftype='Model')
     if imitation:
         exp = 'imitation'
@@ -186,17 +182,17 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
     else:
         exp = 'evaluation'
         larva_groups = {
-            sample: I.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
+            sample: reg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
                               imitation=False,
                               distribution={'N': N})}
     id = sample_conf.id
 
     if duration is None:
         duration = sample_conf.duration / 60
-    sim_params = I.get_null('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
+    sim_params = reg.get_null('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
                            path=f'single_runs/{exp}', sim_ID=f'{id}_{exp}_{idx}')
     env_params = sample_conf.env_params
-    exp_conf = I.get_null('exp_conf', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
+    exp_conf = reg.get_null('exp_conf', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
                          trials={}, enrichment=I.base_enrich())
     exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)

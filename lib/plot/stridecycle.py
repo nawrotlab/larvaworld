@@ -5,7 +5,6 @@ from matplotlib import pyplot as plt, ticker, cm
 
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.registry import reg
-from lib.registry.pars import preg
 from lib.plot.aux import plot_quantiles, suf
 from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
 from lib.process.aux import compute_interference
@@ -136,7 +135,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
 
         P.conf_ax(ii, xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
-                  xlab='$\phi_{stride}$', ylab=preg.dict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
+                  xlab='$\phi_{stride}$', ylab=reg.Dic.PI.dict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
     P.conf_fig(title='Stride cycle analysis', title_kws={'w': 'bold', 's': 20}, align=True,
                adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})
@@ -148,7 +147,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
                             absolute=False, save_to=None, pooled=False,
                             ylim=None, axs=None, fig=None, show=False):
     from lib.process.aux import detect_strides
-    p, sv, fv = preg.getPar([short, 'sv', 'fv'])
+    p, sv, fv = reg.getPar([short, 'sv', 'fv'])
     if ss is None:
         id = c.agent_ids[idx]
         ee = e.loc[id]

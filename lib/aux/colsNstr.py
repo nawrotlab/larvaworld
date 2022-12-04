@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm, colors
 
+from lib.registry import reg
+
 
 def invert_color(col, return_self=False):
     if type(col) in [list, tuple] and len(col) == 3:
@@ -99,7 +101,6 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
 
 
 def col_df(shorts, groups):
-    from lib.registry.pars import preg
 
     group_col_dic = {
         'angular kinematics': 'Blues',
@@ -125,8 +126,8 @@ def col_df(shorts, groups):
         {'group': groups,
          'group_label': [group_label_dic[g] for g in groups],
          'shorts': shorts,
-         'pars': [preg.getPar(sh) for sh in shorts],
-         'symbols': [preg.getPar(sh, to_return='l') for sh in shorts],
+         'pars': [reg.getPar(sh) for sh in shorts],
+         'symbols': [reg.getPar(sh, to_return='l') for sh in shorts],
          'group_color': [group_col_dic[g] for g in groups]
          })
 

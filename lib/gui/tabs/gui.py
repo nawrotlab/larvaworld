@@ -6,7 +6,7 @@ import time
 
 import pandas as pd
 
-from lib.registry.pars import preg
+from lib.registry import reg
 from lib.gui.aux.functions import col_size, window_size, w_kws
 
 # matplotlib.use('TkAgg')
@@ -88,14 +88,14 @@ class LarvaworldGui:
         # from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
-        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else preg.get_null('visualization',
+        return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else reg.get_null('visualization',
                                                                                                      **kwargs)
 
     def get_replay_kwargs(self, v):
         # from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
-        return c['replay'].get_dict(v, w) if 'replay' in c.keys() else preg.get_null('replay')
+        return c['replay'].get_dict(v, w) if 'replay' in c.keys() else reg.get_null('replay')
 
     def run0(self, e, v):
         w = self.window
@@ -164,5 +164,5 @@ def speed_test():
         res.append(r)
     df = pd.DataFrame(res)
     # fdir = ParDict.path_dict["GUITEST"]
-    df.to_csv(preg.path_dict["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])
+    df.to_csv(reg.Path["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])
 

@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from lib.registry.pars import preg
+from lib.registry import reg
 from lib.gui.aux import functions as gui_fun, elements as gui_el
 
 from lib.gui.tabs.tab import GuiTab
@@ -16,7 +16,7 @@ class ImportTab(GuiTab):
         self.Ctrac, self.Cenr = 'purple', 'cyan'
 
     def update(self, w, c, conf, id=None):
-        ff=preg.path_dict["DATA"]
+        ff=reg.Path["DATA"]
         path = conf['path']
         w[f'BROWSE {self.raw_key}'].InitialFolder = f'{ff}/{path}/raw'
         w[f'BROWSE {self.proc_key}'].InitialFolder = f'{ff}/{path}/processed'

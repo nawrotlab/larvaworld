@@ -16,11 +16,8 @@ def modelConfTable(mID, **kwargs):
 
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
-    from lib.registry.pars import preg
     from lib.aux.data_aux import mdict2df, init2mdict
-    # mdict = preg.init_dict.init2mdict(k)
-    mdict = init2mdict(preg.init_dict.dict[k])
-
+    mdict = init2mdict(reg.Dic.PI.dict[k])
     df = mdict2df(mdict, columns=columns)
 
     # row_colors = [None] + [None for ii in df.index.values]
@@ -157,8 +154,7 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
 
 
 def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
-    from lib.registry.pars import preg
-    data, row_colors = preg.larva_conf_dict.diff_df(mIDs=mIDs, dIDs=dIDs)
+    data, row_colors = reg.Dic.MD.diff_df(mIDs=mIDs, dIDs=dIDs)
     mpl_kws = {
         'name': 'mdiff_table',
         'header0': 'MODULE',
@@ -198,7 +194,6 @@ def error_table(data, k='', title=None, **kwargs):
 
 
 def store_model_graphs(mIDs=None):
-    from lib.registry.pars import preg
     from lib.aux.combining import combine_pdfs
     from lib.plot.grid import model_summary
     f1 = reg.Path['model_tables']

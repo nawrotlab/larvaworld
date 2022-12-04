@@ -5,7 +5,6 @@ from matplotlib import pyplot as plt, patches
 
 from lib.aux import naming as nam, dictsNlists as dNl, dir_aux
 from lib.registry import reg
-from lib.registry.pars import preg
 
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoBasePlot
 from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
@@ -133,7 +132,7 @@ def epoch_func(**kwargs):
         kws = epoch_dict[epoch]
 
         def ss_f(ss, moving_average_interval=None, a2plot=None, dt=0.1, **kwargs):
-            a = ss[preg.getPar(kws.k)].values
+            a = ss[reg.getPar(kws.k)].values
             trange = np.arange(0, a.shape[0] * dt, dt)
             if a2plot is not None:
                 aa2plot = a2plot
@@ -299,14 +298,14 @@ def track_annotated_data(name=None, subfolder='tracks',
         'stride': 'sv',
         'turn': 'fov'
     }
-    apar = preg.getPar(epoch_kdic[epoch])
+    apar = reg.getPar(epoch_kdic[epoch])
 
     def get_a(ss):
         return ss[apar].values
 
     if a2plot_k is not None:
 
-        par, lab = preg.getPar(a2plot_k, to_return=['d', 'symbol'])
+        par, lab = reg.getPar(a2plot_k, to_return=['d', 'symbol'])
     else:
         par, lab = None, None
 
@@ -318,8 +317,8 @@ def track_annotated_data(name=None, subfolder='tracks',
         ee = e.loc[id]
 
         length = np.round(ee['length'] * 1000, 2)
-        cum_sd = np.round(ee[preg.getPar('cum_sd')], 2)
-        run_tr = int(ee[preg.getPar('run_tr')] * 100)
+        cum_sd = np.round(ee[reg.getPar('cum_sd')], 2)
+        run_tr = int(ee[reg.getPar('run_tr')] * 100)
         title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
         return title
 
@@ -383,7 +382,7 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
 
     chunks = ['stride', 'pause']
     chunk_cols = ['lightblue', 'grey']
-    p, ylab = preg.getPar('sv', to_return=['d', 'l'])
+    p, ylab = reg.getPar('sv', to_return=['d', 'l'])
     figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
     figy = 5
 
@@ -437,7 +436,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
                 chunks = ['stride', 'pause']
                 chunk_cols = ['lightblue', 'grey']
 
-                p, ylab, ylim = preg.getPar('sv', to_return=['d', 'l', 'lim'])
+                p, ylab, ylim = reg.getPar('sv', to_return=['d', 'l', 'lim'])
                 ylim = (0.0, 1.0)
             elif key == 'turns':
                 chunks = ['Rturn', 'Lturn']
@@ -447,7 +446,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
                 bv = nam.vel(b)
                 ho = nam.orient('front')
                 hov = nam.vel(ho)
-                p, ylab, ylim = preg.getPar('fov', to_return=['d', 'l', 'lim'])
+                p, ylab, ylim = reg.getPar('fov', to_return=['d', 'l', 'lim'])
 
             handles = [patches.Patch(color=col, label=n) for n, col in zip(chunks, chunk_cols)]
             P.conf_ax(kk, xlab=r'time $(sec)$' if jj == Nrows - 1 else None, ylab=ylab, ylim=ylim, xlim=slice,
@@ -489,8 +488,8 @@ if __name__ == '__main__':
         ee = e.loc[id]
 
         length = np.round(ee['length'] * 1000, 2)
-        cum_sd = np.round(ee[preg.getPar('cum_sd')], 2)
-        run_tr = int(ee[preg.getPar('run_tr')] * 100)
+        cum_sd = np.round(ee[reg.getPar('cum_sd')], 2)
+        run_tr = int(ee[reg.getPar('run_tr')] * 100)
         title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
         return title,ss
 

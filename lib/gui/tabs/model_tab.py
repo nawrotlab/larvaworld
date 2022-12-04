@@ -3,7 +3,6 @@ import copy
 import os
 
 from lib.registry import reg
-from lib.registry.pars import preg
 from lib.gui.tabs.draw_body_tab import DrawBodyTab
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
@@ -127,7 +126,7 @@ class ModelTab(GuiTab):
         return l, c
 
     def build_architecture_tab(self):
-        fdir = preg.path_dict["model"]
+        fdir = reg.Path["model"]
         # from lib.conf.base import paths
         # fdir = paths.path('model')
         fig_dict = {f: f'{fdir}/{f}' for f in sorted(os.listdir(fdir))}

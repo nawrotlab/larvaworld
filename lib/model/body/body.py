@@ -9,7 +9,7 @@ from shapely.ops import cascaded_union
 
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang_aux
-from lib.registry.pars import preg
+from lib.registry import reg
 
 
 
@@ -347,8 +347,7 @@ class LarvaBody(LarvaShape):
 
     def create_joints(self, Nsegs, segs, joint_types=None):
         if joint_types is None:
-            # from lib.conf.base.dtypes import null_dict
-            joint_types = preg.get_null('Box2D_params').joint_types
+            joint_types = reg.get_null('Box2D_params').joint_types
         space = self.model.space
         l0 = np.mean(self.seg_lengths)
         self.joints = []

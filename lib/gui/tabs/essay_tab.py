@@ -2,7 +2,6 @@ import os
 
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import functions as gui_fun, elements as gui_el
-from lib.registry.pars import preg
 from lib.registry import reg
 
 

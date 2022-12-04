@@ -494,9 +494,8 @@ def load_ks(ks, ds,ls,cols, d0):
 
 class AutoLoadPlot(AutoPlot) :
     def __init__(self, ks, **kwargs):
-        from lib.registry.pars import preg
         super().__init__(**kwargs)
-        d0 = preg
+        d0 = reg.Dic.PI
         self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, d0)
         self.pdict=dNl.NestDict({k:d0.dict[k] for k in ks})
         self.kpdict=dNl.NestDict({k:[self.kdict[k],self.pdict[k]] for k in ks})
@@ -570,6 +569,5 @@ class GridPlot(BasePlot):
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:
             axs = self.add(**kwargs)
-        from lib.registry.pars import preg
-        func=preg.graph_dict.get(func)
+        func=reg.Dic.GD.get(func)
         _ = func(fig=self.fig, axs=axs, **kws)

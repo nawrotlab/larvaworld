@@ -7,7 +7,6 @@ import os
 import numpy as np
 
 from lib.registry import reg
-from lib.registry.pars import preg
 from lib.model.DEB.deb_aux import beta0, simplex, get_lb, get_E0, get_E_Rm
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.model.DEB.gut import Gut
@@ -36,7 +35,7 @@ class DEB:
         # Drosophila model by default
         self.species = species
         # fdir = ParDict.path_dict["DEB_MODS"]
-        with open(preg.path_dict["DEB_MODS"][species]) as tfp:
+        with open(reg.Path["DEB_MODS"][species]) as tfp:
             self.species_dict = json.load(tfp)
         self.__dict__.update(self.species_dict)
 
@@ -88,7 +87,7 @@ class DEB:
         # self.gut_p_A = 0
         # print(substrate)
         if substrate is None:
-            substrate = preg.get_null('substrate')
+            substrate = reg.get_null('substrate')
         # print(substrate)
         if isinstance(substrate, dict):
             self.substrate = Substrate(type=substrate['type'], quality=substrate['quality'])
@@ -101,7 +100,7 @@ class DEB:
         self.steps_per_day = steps_per_day
         self.dt = 1 / steps_per_day
         if gut_params is None:
-            gut_params = preg.get_null('gut')
+            gut_params = reg.get_null('gut')
             # gut_params=null_dict('gut_params')
 
         self.gut = Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None

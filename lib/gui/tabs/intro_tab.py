@@ -2,7 +2,6 @@ import os
 import PySimpleGUI as sg
 
 from lib.registry import reg
-from lib.registry.pars import preg
 from lib.gui.tabs.tab import GuiTab
 
 

@@ -81,8 +81,7 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
             OfflineLocomotor.__init__(self, **kwargs)
         else:
             Locomotor.__init__(self, **kwargs)
-        from lib.registry.pars import preg
-        reg.MD.init_loco(conf, self)
+        reg.Dic.MD.init_loco(conf, self)
 
     def step(self, A_in=0, length=1):
 

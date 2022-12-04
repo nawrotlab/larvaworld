@@ -3,7 +3,6 @@ from matplotlib import collections as mc
 
 from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl
 from lib.registry import reg
-from lib.registry.pars import preg
 
 from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
 from lib.plot.aux import plot_quantiles
@@ -151,7 +150,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
         if len(par_shorts) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims, ylabs0 = preg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
+            pars, symbols, ylabs, ylims, ylabs0 = reg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
 
     else:
         symbols = pars
@@ -337,7 +336,7 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
         name = f'{ylab0}'
         ylab = f'{ylab0} $({unit})$'
         k = 'cum_d'
-    p=preg.dict[k]
+    p=reg.Dic.PI.dict[k]
     P = AutoPlot(ks=[k], name=name, subfolder=subfolder, figsize=(15, 5),**kwargs)
     x = P.trange(t_unit)
     # dic,p=P.kpdict[k]
@@ -363,7 +362,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         xlabel = 'time, $min$'
     P = AutoPlot(name=name,figsize=(7, 6), **kwargs)
 
-    p=preg.dict['cum_d']
+    p=reg.Dic.PI.dict['cum_d']
 
     x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):

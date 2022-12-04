@@ -3,15 +3,13 @@ import webbrowser
 
 import PySimpleGUI as sg
 
-from lib.registry.pars import preg
 from lib.gui.tabs.tab import GuiTab
-# from lib.conf.base.paths import path
 
 
 class TutorialTab(GuiTab):
 
     def build(self):
-        f0=preg.path_dict["tutorials"]
+        f0=reg.Path["tutorials"]
         # f0=path('tutorials')
         c2 = {'size': (80, 1),
               'pad': (20, 5),
@@ -55,7 +53,7 @@ class TutorialTab(GuiTab):
         return l_tut, {}, {}, {}
 
     def eval(self, e, v, w, c, d, g):
-        f0=preg.path_dict["tutorials"]
+        f0=reg.Path["tutorials"]
         if 'BUTTON 1' in e:
             webbrowser.open_new(f0 + "/1.mp4")
         if 'BUTTON 2' in e:

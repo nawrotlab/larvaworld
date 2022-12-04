@@ -12,10 +12,7 @@ import matplotlib.pyplot as plt
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, dir_aux
 from lib.aux.par_aux import base_dtype
 from lib.registry import reg
-from lib.registry.pars import preg
 
-# from lib.conf.stored.conf import loadConfDict
-# from lib.conf.stored.conf import loadConfDict, loadConf, expandConf, kConfDict, saveConf
 from lib.gui.aux import windows as gui_win, buttons as gui_but, functions as gui_fun
 
 
@@ -334,7 +331,7 @@ class SelectionList(GuiElement):
         if self.with_dict:
             # print(self.tab.gui.tab_dict[n][2])
             self.collapsible = CollapsibleDict(name= self.tab.gui.tab_dict[n][2], default=True,
-                                               header_list_width=self.width, header_dict=preg.conftype_dict.dict[self.conftype].loadDict(),
+                                               header_list_width=self.width, header_dict=reg.Dic.CT.dict[self.conftype].loadDict(),
                                                next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
@@ -781,7 +778,7 @@ class CollapsibleTable(Collapsible):
         self.key = f'TABLE {name}'
         # from lib.registry.dtypes import null_dict
 
-        self.null_dict = preg.get_null(dict_name)
+        self.null_dict = reg.get_null(dict_name)
         if heading_dict is None:
             heading_dict = {k: k for k in self.null_dict.keys()}
         self.heading_dict = heading_dict
@@ -956,7 +953,7 @@ class CollapsibleDict(Collapsible):
             entry = par(name=as_entry, dtype=str, v='Unnamed') if as_entry is not None else {}
             if dict_name is None:
                 dict_name = name
-            D=preg.init_dict.dict
+            D=reg.Dic.PI.dict
             if dict_name in D.keys():
                 dic = par_dict(d0=D[dict_name])
                 type_dict = {**entry, **dic}
@@ -1085,7 +1082,7 @@ class PadDict(PadElement):
             Ncols = len(col_idx)
         if type_dict is None :
             from lib.registry.dtypes import par_dict
-            D = preg.init_dict.dict
+            D = reg.Dic.PI.dict
             if self.dict_name in D.keys() :
                 type_dict = par_dict(d0=D[self.dict_name])
         self.type_dict = type_dict
@@ -1221,7 +1218,7 @@ class PadTable(PadElement):
         if heading_dict is None:
             # from lib.registry.dtypes import null_dict
 
-            heading_dict = {k: k for k in preg.get_null(self.dict_name).keys()}
+            heading_dict = {k: k for k in reg.get_null(self.dict_name).keys()}
         self.heading_dict = heading_dict
         self.headings = list(heading_dict.keys())
         self.dict = dict
@@ -1454,7 +1451,7 @@ class ButtonGraphList(GraphList):
             l = [
                 [sg.T('Filename', **gui_fun.t_kws(10)), sg.In(default_text=self.save_as, k=kDir, **gui_fun.t_kws(80))],
                 [sg.T('Directory', **gui_fun.t_kws(10)), sg.In(self.save_to, k=kFil, **gui_fun.t_kws(80)),
-                 sg.FolderBrowse(initial_folder=preg.path_dict["parent"], key=kFil, change_submits=True)],
+                 sg.FolderBrowse(initial_folder=reg.Path["parent"], key=kFil, change_submits=True)],
                 [sg.Ok(), sg.Cancel()]]
             e, v = sg.Window('Save figure', l).read(close=True)
             if e == 'Ok':
@@ -1615,8 +1612,7 @@ class DynamicGraph:
 
     def update_pars(self):
         from matplotlib import ticker
-        from lib.registry.pars import preg
-        self.pars, syms, us, lims, pcs = preg.getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
+        self.pars, syms, us, lims, pcs = reg.getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
         self.Npars = len(self.pars)
         self.yranges = {}
         self.fig, axs = plt.subplots(self.Npars, 1, figsize=self.figsize, dpi=self.my_dpi, sharex=True)
@@ -1723,7 +1719,7 @@ class GuiTreeData(sg.TreeData):
             self.insert(**entry)
 
     def save(self, **kwargs):
-        with open(preg.path_dict["ParGlossaryTxT"], 'w') as f:
+        with open(reg.Path["ParGlossaryTxT"], 'w') as f:
             f.write(self._NodeStr(**kwargs))
 
     def build_layout(self):

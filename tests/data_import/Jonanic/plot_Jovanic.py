@@ -1,5 +1,4 @@
 from lib.registry import reg
-from lib.registry.pars import preg
 import pandas as pd
 # D=preg.dict
 # p=D['cum_sd']
@@ -75,7 +74,7 @@ kws = {
 
 
 # from lib.conf.stored.analysis_conf import analysis_dict
-G=preg.graph_dict
+G=reg.Dic.GD
 
 # entry_list=analysis_dict.general
 graph_entries = G.eval_graphgroups(graphgroups=['general'], **kws)

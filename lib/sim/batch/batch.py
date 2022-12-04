@@ -8,13 +8,11 @@ Created by bagjohn on April 5th 2020
 
 # !/usr/bin/python
 import logging
-import os
 import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-from lib.registry.pars import preg
 from lib.sim.batch.aux import grid_search_dict, delete_traj
 from lib.sim.batch.functions import single_run, batch_method_unpack
 from lib.registry import reg
@@ -72,7 +70,7 @@ class BatchRun:
             'save_hdf5': save_hdf5,
             'exp_kws': {**exp_kws,
                         'save_to': self.dir,
-                        'vis_kwargs': preg.get_null('visualization', mode=None),
+                        'vis_kwargs': reg.get_null('visualization', mode=None),
                         'collections': exp['collections']
                         },
             'proc_kws': proc_kws

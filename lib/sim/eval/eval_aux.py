@@ -11,9 +11,8 @@ from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
 from lib.aux.annotation import annotate
 from lib.registry import reg
 
-from lib.registry.pars import preg
 
-dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = preg.getPar(
+dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = reg.getPar(
     ['d', 'v', 'sv', 'a', 'sa', 'fou', 'rou', 'fo', 'ro', 'b', 'fov', 'rov', 'bv', 'foa', 'roa', 'ba', 'x', 'y', 'l',
      "dsp", "dsp_0_40", "dsp_0_40_mu", "dsp_0_40_max", 'str_fov_mu', 'run_fov_mu', 'pau_fov_mu', 'run_foa_mu',
      'pau_foa_mu', 'str_fov_std', 'pau_fov_std', 'str_sd_mu', 'str_sd_std', 'str_d_mu', 'str_d_std', 'str_sv_mu',
@@ -23,9 +22,9 @@ dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, d
 
 def eval_endpoint(ee, e, e_shorts=None, e_pars=None, e_labs=None, mode='pooled'):
     if e_pars is None:
-        e_pars = preg.getPar(e_shorts)
+        e_pars = reg.getPar(e_shorts)
     if e_labs is None:
-        e_labs = preg.getPar(d=e_pars, to_return=['lab'])
+        e_labs = reg.getPar(d=e_pars, to_return=['lab'])
     Eend = {}
     for p, pl in zip(e_pars, e_labs):
         Eend[pl] = None
@@ -53,9 +52,9 @@ def eval_end_fast(ee, e_data, e_sym, mode='pooled'):
 
 def eval_distro(ss, s, s_shorts=None, s_pars=None, s_labs=None, mode='pooled', min_size=20):
     if s_pars is None:
-        s_pars = preg.getPar(s_shorts)
+        s_pars = reg.getPar(s_shorts)
     if s_labs is None:
-        s_labs = preg.getPar(d=s_pars, to_return=['lab'])
+        s_labs = reg.getPar(d=s_pars, to_return=['lab'])
 
     Edistro = {}
     for p, pl in zip(s_pars, s_labs):
@@ -125,10 +124,10 @@ def eval_RSS(rss,rss_target,rss_sym, mode='1:pooled') :
 def eval_multi(datasets, s=None, e=None, s_shorts=None, e_shorts=None, mode='pooled', min_size=20):
     GEend, GEdistro = {}, {}
     if e is not None and e_shorts is not None:
-        e_pars, e_labs = preg.getPar(e_shorts, to_return=['d', 'lab'])
+        e_pars, e_labs = reg.getPar(e_shorts, to_return=['d', 'lab'])
         GEend = {d.id: eval_endpoint(d.endpoint_data, e, e_pars=e_pars, e_labs=e_labs, mode=mode) for d in datasets}
     if s is not None and s_shorts is not None:
-        s_pars, s_labs = preg.getPar(s_shorts, to_return=['d', 'lab'])
+        s_pars, s_labs = reg.getPar(s_shorts, to_return=['d', 'lab'])
         GEdistro = {d.id: eval_distro(d.step_data, s, s_pars=s_pars, s_labs=s_labs, mode=mode, min_size=min_size) for d
                     in datasets}
     if mode == '1:1':
@@ -163,7 +162,7 @@ def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
 
 
 def adapt_conf(conf0, ee, cc):
-    run_t_max, pau_t_min, pau_t_max, fsv, l, v_mu, cum_d, sv_mu, fov_mu, b_mu = preg.getPar(
+    run_t_max, pau_t_min, pau_t_max, fsv, l, v_mu, cum_d, sv_mu, fov_mu, b_mu = reg.getPar(
         ['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv', 'l', 'v_mu', "cum_d", "sv_mu", 'fov_mu', 'b_mu'])
 
     conf = copy.deepcopy(conf0)
@@ -202,7 +201,7 @@ def adapt_conf(conf0, ee, cc):
 
 def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
     if df_cols is None:
-        df_cols = preg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
+        df_cols = reg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     aL = np.ones([N, len(df_cols)]) * np.nan
     for i in range(N):
         lin, ang, feed = L.step(A_in=0, length=length)
@@ -221,7 +220,7 @@ def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_f
 
 def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
     from lib.aux.sim_aux import get_tank_polygon
-    df_cols = preg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
+    df_cols = reg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
     Ncols = len(df_cols)
 
     Ls = {}
@@ -295,7 +294,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
     dic = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         Eshorts, Dshorts = [], []
-        ps = preg.getPar(shs)
+        ps = reg.getPar(shs)
         for sh, p in zip(shs, ps):
             try:
                 data = d.read(key='end')[p]

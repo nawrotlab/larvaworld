@@ -7,9 +7,7 @@ import pandas as pd
 import param
 from lib.aux import dictsNlists as dNl
 from lib.aux.par_aux import sub
-from lib.registry.pars import preg
 from lib.registry import reg
-from lib.registry.units import ureg
 
 
 class LarvaConfDict:
@@ -912,25 +910,9 @@ class LarvaConfDict:
 
 def epar(e, k=None, par=None, average=True, Nround=2):
     if par is None:
-        D = preg.dict
-        par = D[k].d
+        par = reg.Dic.PI.dict[k].d
     vs = e[par]
     if average:
-        # print(k,par, np.round(vs.median(), Nround))
         return np.round(vs.median(), Nround)
     else:
         return vs
-
-# larva_conf_dict=LarvaConfDict()
-
-#
-# if __name__ == '__main__':
-#     LM=larva_conf_dict
-#     mID='RE_NEU_PHI_DEF_nav'
-#     m=LM.loadConf(mID)
-#     ol=m.brain.olfactor_params
-#     print(ol)
-#
-#
-
-

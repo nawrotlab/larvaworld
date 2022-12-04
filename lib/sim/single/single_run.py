@@ -11,7 +11,6 @@ from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
 from lib.model.envs.world_sim import WorldSim
 from lib.registry.output import set_output
-from lib.registry.pars import preg
 
 
 class SingleRun:
@@ -203,12 +202,10 @@ class SingleRun:
 
 
 def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
-    from lib.conf.stored.conf import expandConf
-    # from lib.registry.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
-        conf = expandConf(exp, 'Exp')
-        conf.sim_params = preg.init_dict.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
+        conf = reg.expandConf(exp, 'Exp')
+        conf.sim_params = reg.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf.experiment = exp
         conf.update(**kwargs)
         d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()

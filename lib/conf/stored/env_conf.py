@@ -1,12 +1,12 @@
 import numpy as np
 
-from lib.registry.pars import preg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry import reg
 
+I=reg.Dic.DEF
 
 def border(ps, c='black', w=0.01, id=None):
-    b = preg.get_null('Border', points=ps, default_color=c, width=w)
+    b = reg.get_null('Border', points=ps, default_color=c, width=w)
     if id is not None:
         return {id: b}
     else:
@@ -23,8 +23,8 @@ def vborder(x, ys, **kwargs):
     return border(ps, **kwargs)
 
 
-def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=preg.get_null('odor'), **kwargs):
-    return {id: preg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
+def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=reg.get_null('odor'), **kwargs):
+    return {id: reg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
 
 
 def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
@@ -59,7 +59,7 @@ def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):
     if cs is None:
         cs = [tuple(cNs.col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
     if os is None:
-        os = [preg.oG(id=f'Odor{i}') for i in range(Ngs)]
+        os = [I.oG(id=f'Odor{i}') for i in range(Ngs)]
     l = [sg(id=ids[i], c=cs[i], r=rs[i], a=ams[i], o=os[i], quality=qs[i], **kwargs) for i in range(Ngs)]
     result = {}
     for d in l:
@@ -74,7 +74,7 @@ def f_pars(sg={}, su={}, grid=None):
 
 
 def foodNodor_4corners(d=0.05):
-    l = [su(f'Source_{i}', pos=p, a=0.01, o=preg.oD(id=f'Odor_{i}'), c=c, r=0.01) for i, (c, p) in
+    l = [su(f'Source_{i}', pos=p, a=0.01, o=I.oD(id=f'Odor_{i}'), c=c, r=0.01) for i, (c, p) in
          enumerate(zip(['blue', 'red', 'green', 'magenta'], [(-d, -d), (-d, d), (d, -d), (d, d)]))]
     dic = {**l[0], **l[1], **l[2], **l[3]}
     return dic
@@ -82,9 +82,9 @@ def foodNodor_4corners(d=0.05):
 
 def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None):
     if type(arenaXY) == float:
-        arena = preg.get_null('arena', arena_shape='circular', arena_dims=(arenaXY, arenaXY))
+        arena = reg.get_null('arena', arena_shape='circular', arena_dims=(arenaXY, arenaXY))
     elif type(arenaXY) == tuple:
-        arena = preg.get_null('arena', arena_shape='rectangular', arena_dims=arenaXY)
+        arena = reg.get_null('arena', arena_shape='rectangular', arena_dims=arenaXY)
     else:
         raise
     if o == 'D':
@@ -102,35 +102,35 @@ def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None):
     if w is not None:
         if 'puffs' in w.keys():
             for id, args in w['puffs'].items():
-                w['puffs'][id] = preg.get_null('air_puff', **args)
+                w['puffs'][id] = reg.get_null('air_puff', **args)
         else:
             w['puffs'] = {}
-        w = preg.get_null('windscape', **w)
+        w = reg.get_null('windscape', **w)
     if th is not None:
-        th = preg.get_null('thermoscape', **th)
-    return preg.get_null('env_conf', arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,
+        th = reg.get_null('thermoscape', **th)
+    return reg.get_null('env_conf', arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,
                          thermoscape=th)
 
 
 def CS_UCS(N=2, x=0.04):
     if N == 1:
-        return {**su('CS', pos=(-x, 0.0), o=preg.oG(id='CS'), c='red'),
-                **su('UCS', pos=(x, 0.0), o=preg.oG(id='UCS'), c='blue')}
+        return {**su('CS', pos=(-x, 0.0), o=I.oG(id='CS'), c='red'),
+                **su('UCS', pos=(x, 0.0), o=I.oG(id='UCS'), c='blue')}
     elif N == 2:
         return {
-            **su('CS_l', pos=(-x, 0.0), o=preg.oG(id='CS'), c='red'),
-            **su('CS_r', pos=(x, 0.0), o=preg.oG(id='CS'), c='red'),
-            **su('UCS_l', pos=(-x, 0.0), o=preg.oG(id='UCS'), c='blue'),
-            **su('UCS_r', pos=(x, 0.0), o=preg.oG(id='UCS'), c='blue')
+            **su('CS_l', pos=(-x, 0.0), o=I.oG(id='CS'), c='red'),
+            **su('CS_r', pos=(x, 0.0), o=I.oG(id='CS'), c='red'),
+            **su('UCS_l', pos=(-x, 0.0), o=I.oG(id='UCS'), c='blue'),
+            **su('UCS_r', pos=(x, 0.0), o=I.oG(id='UCS'), c='blue')
         }
 
 
 def double_patches(type='standard'):
     return {
-            'Left_patch': preg.get_null('source', pos=(-0.06, 0.0), default_color='green', group='Source', radius=0.025,
-                                        amount=0.1, odor=preg.oG(id='Odor'), type=type),
-            'Right_patch': preg.get_null('source', pos=(0.06, 0.0), default_color='green', group='Source', radius=0.025,
-                                         amount=0.1, odor=preg.oG(id='Odor'), type=type)
+            'Left_patch': reg.get_null('source', pos=(-0.06, 0.0), default_color='green', group='Source', radius=0.025,
+                                        amount=0.1, odor=I.oG(id='Odor'), type=type),
+            'Right_patch': reg.get_null('source', pos=(0.06, 0.0), default_color='green', group='Source', radius=0.025,
+                                         amount=0.1, odor=I.oG(id='Odor'), type=type)
             }
 
 
@@ -154,7 +154,7 @@ def maze_conf(n, h):
     return env((h, h),
                f={'source_groups': {},
                   'food_grid': None,
-                  'source_units': su('Target', o=preg.oG(), c='blue')},
+                  'source_units': su('Target', o=I.oG(), c='blue')},
                # f=f_pars(su=su('Target', o=preg.oG(), c='blue')),
                o='G',
                bl={'Maze': {
@@ -167,9 +167,9 @@ def game_env(dim=0.1, x=0.4, y=0.0):
     x = np.round(x * dim, 3)
     y = np.round(y * dim, 3)
 
-    sus = {**su('Flag', c='green', can_be_carried=True, a=0.01, o=preg.oG(2, id='Flag_odor')),
-           **su('Left_base', pos=(-x, y), c='blue', o=preg.oG(id='Left_base_odor')),
-           **su('Right_base', pos=(+x, y), c='red', o=preg.oG(id='Right_base_odor'))}
+    sus = {**su('Flag', c='green', can_be_carried=True, a=0.01, o=I.oG(2, id='Flag_odor')),
+           **su('Left_base', pos=(-x, y), c='blue', o=I.oG(id='Left_base_odor')),
+           **su('Right_base', pos=(+x, y), c='red', o=I.oG(id='Right_base_odor'))}
 
     return env((dim, dim),
                f={'source_groups': {},
@@ -178,6 +178,8 @@ def game_env(dim=0.1, x=0.4, y=0.0):
                o='G')
 
 def Env_dict() :
+
+
     d = {
     'focus': env((0.01, 0.01)),
     'dish': env(0.1),
@@ -185,13 +187,13 @@ def Env_dict() :
     'arena_200mm': env((0.2, 0.2)),
     'arena_500mm': env((0.5, 0.5)),
     'arena_1000mm': env((1.0, 1.0)),
-    'odor_gradient': env((0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=preg.oG(2))), 'G'),
-    'mid_odor_gaussian': env((0.1, 0.06), f_pars(su=su(o=preg.oG())), 'G'),
-    'mid_odor_gaussian_square': env((0.2, 0.2), f_pars(su=su(o=preg.oG())), 'G'),
-    'mid_odor_diffusion': env((0.3, 0.3), f_pars(su=su(r=0.03, o=preg.oD())), 'D'),
+    'odor_gradient': env((0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=I.oG(2))), 'G'),
+    'mid_odor_gaussian': env((0.1, 0.06), f_pars(su=su(o=I.oG())), 'G'),
+    'mid_odor_gaussian_square': env((0.2, 0.2), f_pars(su=su(o=I.oG())), 'G'),
+    'mid_odor_diffusion': env((0.3, 0.3), f_pars(su=su(r=0.03, o=I.oD())), 'D'),
     '4corners': env((0.2, 0.2), f_pars(su=foodNodor_4corners()), 'D'),
     'food_at_bottom': env((0.2, 0.2),
-                          f_pars(sg=sg('FoodLine', o=preg.oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
+                          f_pars(sg=sg('FoodLine', o=I.oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
                                        m='periphery')), 'G'),
     'thermo_arena': env((0.3, 0.3), th={}),
     'windy_arena': env((0.3, 0.3), w={'wind_speed': 10.0}),
@@ -208,15 +210,15 @@ def Env_dict() :
     'single_puff': env((0.3, 0.3),
                        w={'puffs': {'Puff': {'N': 1, 'duration': 30.0, 'start_time': 55, 'speed': 100}}}),
 
-    'CS_UCS_on_food': env(0.1, f_pars(grid=preg.get_null('food_grid'), su=CS_UCS(1)), 'G'),
-    'CS_UCS_on_food_x2': env(0.1, f_pars(grid=preg.get_null('food_grid'), su=CS_UCS(2)), 'G'),
+    'CS_UCS_on_food': env(0.1, f_pars(grid=reg.get_null('food_grid'), su=CS_UCS(1)), 'G'),
+    'CS_UCS_on_food_x2': env(0.1, f_pars(grid=reg.get_null('food_grid'), su=CS_UCS(2)), 'G'),
     'CS_UCS_off_food': env(0.1, f_pars(su=CS_UCS(1)), 'G'),
 
-    'patchy_food': env((0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=preg.oG(2))), 'G'),
+    'patchy_food': env((0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=I.oG(2))), 'G'),
     'random_food': env((0.1, 0.1), f_pars(sg=sgs(4, N=1, s=0.04, m='uniform', shape='rectangular')), 'G'),
     'uniform_food': env(0.05, f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
-    'food_grid': env((0.02, 0.02), f_pars(grid=preg.get_null('food_grid'))),
-    'single_odor_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=preg.oG())), 'G'),
+    'food_grid': env((0.02, 0.02), f_pars(grid=reg.get_null('food_grid'))),
+    'single_odor_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=I.oG())), 'G'),
     'single_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01))),
     'multi_patch': env((0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
     'double_patch': env((0.24, 0.24),

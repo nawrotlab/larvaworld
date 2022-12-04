@@ -6,7 +6,6 @@ import PySimpleGUI as sg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.gui.aux import buttons as gui_but, functions as gui_fun
 from lib.registry import reg
-from lib.registry.pars import preg
 
 
 def get_table(v, pars_dict, Nagents):
@@ -190,8 +189,7 @@ def set_agent_kwargs(agent, **kwargs):
         k='larva_conf'
     else:
         return agent
-    #print(class_name)
-    type_dict = preg.get_null(k)
+    type_dict = reg.get_null(k)
     title = f'{class_name} args'
     dic = {}
     for p in list(type_dict.keys()):
