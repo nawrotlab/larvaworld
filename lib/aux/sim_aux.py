@@ -73,8 +73,7 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
         l = LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
         new_ps = []
         for p in ps:
-            new_p = [new_p for new_p in split(p, l)]
-            new_ps += new_p
+            new_ps += list(split(p, l).geoms)
         ps = new_ps
 
     # Sort segments so that front segments come first

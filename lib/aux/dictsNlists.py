@@ -5,7 +5,7 @@ import pickle
 import sys
 import numpy as np
 from unflatten import unflatten
-
+import typing
 
 def dict_depth(d):
     if isinstance(d, dict):
@@ -30,11 +30,12 @@ def flatten_list(l):
 
 
 def flatten_dict(d, parent_key='', sep='.'):
-    import collections
+    # import collections
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, typing.MutableMapping):
+        # if isinstance(v, collections.MutableMapping):
             if len(v) > 0:
                 items.extend(flatten_dict(v, new_key, sep=sep).items())
             else:
