@@ -31,8 +31,9 @@ class ScreenManager:
 
     def build(self,show_conf_text=False,background_motion=None, traj_color=None,odor_aura = False, allow_clicks=True, **kwargs):
         self.s = self.model.scaling_factor
-        self.screen_kws = self.define_screen_kws()
+
         self.image_mode = self.vis_kwargs.render.image_mode
+        self.screen_kws = self.define_screen_kws()
 
         self.__dict__.update(self.vis_kwargs.draw)
         self.__dict__.update(self.vis_kwargs.color)

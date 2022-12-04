@@ -132,6 +132,10 @@ class SingleRun:
 
 
     def analyze(self, save_to=None, **kwargs):
+        if self.datasets is None or any([d is None for d in self.datasets]):
+            return None, None
+
+
         kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         exp = self.experiment
         if 'PI' in exp:

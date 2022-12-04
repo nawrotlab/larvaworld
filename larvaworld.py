@@ -27,8 +27,8 @@ for mode in ['Exp','Batch', 'Ga', 'Eval', 'Rep'] :
 if __name__ == "__main__":
     args = p.parse_args()
     sim_mode = args.sim_mode
-    # print(conftype)
-
+    # print(args.experiment)
+    # raise
     d = MPs[sim_mode].get(args)
     # print(d.keys())
 

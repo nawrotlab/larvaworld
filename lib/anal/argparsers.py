@@ -87,6 +87,8 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         exp_conf.update(**kwargs)
         return exp_conf
 
+
+
     try:
         exp_conf = preg.expandConf(id=exp, conftype=conf_type)
     except:
@@ -99,6 +101,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         d = {'sim_params': reg.get_null('sim_params')}
 
     exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=dNl.NestDict(d['sim_params']))
+
     if models is not None:
         if conf_type in ['Exp', 'Eval']:
             exp_conf = update_exp_models(exp_conf, models)
@@ -107,6 +110,9 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     #         for gID, gConf in exp_conf.larva_groups.items():
     #             gConf.distribution.N = N
     exp_conf.update(**kwargs)
+
+    if conf_type == 'Exp':
+        exp_conf.experiment=exp
     return exp_conf
 
 

@@ -294,6 +294,8 @@ def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
 
 def comparative_analysis(datasets, labels=None, simVSexp=False, save_to=None, **kwargs):
     figs = {}
+    if datasets is None or any([d is None for d in datasets]):
+        return figs
     warnings.filterwarnings('ignore')
     if save_to is None:
         save_to = datasets[0].plot_dir
