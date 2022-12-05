@@ -56,7 +56,8 @@ def init_dicts(ks=None):
     global Dic
     Dic = dNl.NestDict({kk: None for kk in all_ks})
 
-    load_mode = {'DEF': {'mode': 'load'}}
+    load_mode = {}
+    # load_mode = {'DEF': {'mode': 'load'}}
     if ks is None:
         ks = all_ks
     for k in ks:

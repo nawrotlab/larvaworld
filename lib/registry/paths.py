@@ -245,12 +245,55 @@ def move_confDicts():
     dd1.pickle = dd
     fff0 = f'{ff}/NoPickleConfs.txt'
     fff1 = f'{ff}/PickleConfs.txt'
+    dNl.save_dict(dd, f'{ff}/PickleTest.txt', use_pickle=False)
     dNl.save_dict(dd0, fff0, use_pickle=False)
     dNl.save_dict(dd1, fff1, use_pickle=True)
     # print(dd0.keys())
     # print(dd1.keys())
+    print(dd)
+
+
+
+def test_pickle():
+    dd = dNl.NestDict()
+    F0 = get_parent_dir()
+    ks = ['Group', 'Tracker', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Model', 'ModelGroup', 'Batch', 'Ref', 'Trial', 'Life',
+          'Body', 'Brain', 'SimIdx', 'Tree', 'Ga', 'controls']
+    conf_paths = {k: f'{F0}/lib/conf/confDicts/{k}.txt' for k in ks}
+    for k,c in conf_paths.items():
+        try:
+            d = dNl.load_dict(c, use_pickle=True)
+            dd[k] = True
+        except:
+            try:
+                d = dNl.load_dict(c, use_pickle=False)
+                dd[k] = False
+            except:
+                d = None
+                dd[k] = 'FAIL'
+    return dd
+
 
 def AllConfDict():
+    dd = dNl.NestDict()
+    ks = ['Group', 'Tracker', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Model', 'ModelGroup', 'Batch', 'Ref', 'Trial', 'Life',
+          'Body', 'Brain', 'SimIdx', 'Tree', 'Ga', 'controls']
+
+    F0 = get_parent_dir()
+    for k in ks:
+        path=f'{F0}/lib/conf/confDicts/{k}.txt'
+        try:
+            d = dNl.load_dict(path, use_pickle=False)
+        except:
+            try:
+                d = dNl.load_dict(path, use_pickle=True)
+            except:
+                d= {}
+        dd[k] = d
+    return dd
+
+
+def AllConfDict2():
     F0 = get_parent_dir()
     f = f'{F0}/lib/conf/confDicts/CONFS.txt'
     d=dNl.load_dict(f, use_pickle=False)

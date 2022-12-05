@@ -62,6 +62,7 @@ class LarvaSim(BodySim, Larva):
                     V = source.subtract_amount(a_max)
                 self.feed_success_counter += 1
                 self.amount_eaten += V * 1000
+                print(self.unique_id)
                 return V, 1
             else:
                 return 0, -1

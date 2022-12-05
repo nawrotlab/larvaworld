@@ -80,11 +80,11 @@ def foodNodor_4corners(d=0.05):
     return dic
 
 
-def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None):
+def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None, torus=False):
     if type(arenaXY) == float:
-        arena = reg.get_null('arena', arena_shape='circular', arena_dims=(arenaXY, arenaXY))
+        arena = reg.get_null('arena', arena_shape='circular', arena_dims=(arenaXY, arenaXY), torus=torus)
     elif type(arenaXY) == tuple:
-        arena = reg.get_null('arena', arena_shape='rectangular', arena_dims=arenaXY)
+        arena = reg.get_null('arena', arena_shape='rectangular', arena_dims=arenaXY, torus=torus)
     else:
         raise
     if o == 'D':
@@ -217,8 +217,10 @@ def Env_dict() :
     'patchy_food': env((0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=I.oG(2))), 'G'),
     'random_food': env((0.1, 0.1), f_pars(sg=sgs(4, N=1, s=0.04, m='uniform', shape='rectangular')), 'G'),
     'uniform_food': env(0.05, f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
+    'patch_grid': env((0.2, 0.2), f_pars(sg=sg(N=5*5, s=0.2, a=0.01, r=0.007, m='grid', shape='rectangular', o=I.oG(0.2))), 'G', torus=True),
+
     'food_grid': env((0.02, 0.02), f_pars(grid=reg.get_null('food_grid'))),
-    'single_odor_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01, o=I.oG())), 'G'),
+    'single_odor_patch': env((0.1, 0.1), f_pars(su=su('Patch', a=0.1, r=0.01, o=I.oG())), 'G'),
     'single_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01))),
     'multi_patch': env((0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
     'double_patch': env((0.24, 0.24),

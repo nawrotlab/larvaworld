@@ -1200,8 +1200,12 @@ class ModelRegistry:
 
             mID01 = f'{mID0}_feeder'
             entries[mID01] = self.newConf(m0=m0, kwargs=feed_kws)
+            mID02 = f'{mID0}_max_feeder'
+            entries[mID02] = self.newConf(m0=entries[mID01], kwargs={'brain.intermitter_params.EEB': 0.9})
             mID11 = f'{mID0}_forager'
             entries[mID11] = self.newConf(m0=entries[mID1], kwargs=feed_kws)
+            mID12 = f'{mID0}_max_forager'
+            entries[mID12] = self.newConf(m0=entries[mID11], kwargs={'brain.intermitter_params.EEB': 0.9})
 
         entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
         entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)

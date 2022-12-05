@@ -109,6 +109,10 @@ def game_groups(dim=0.1, N=10, x=0.4, y=0.0, mode='king'):
              **lg('Right', N=1, p=(+0.01, 0.0), m='follower-R', c='darkred', o=I.oD(id='Right_odor'))}
     return l
 
+def lgs_x4(N=5):
+    return lgs(models=['RE_NEU_PHI_DEF_max_forager', 'RE_NEU_PHI_DEF_max_feeder', 'RE_NEU_PHI_DEF_nav', 'RE_NEU_PHI_DEF'],
+                                                       ids=['forager', 'Orco', 'navigator', 'explorer'], N=N)
+
 def GTRvsS(**kwargs):
     return reg.Dic.GT.dict.LarvaGroup.RvsS_groups(**kwargs)
 
@@ -135,6 +139,7 @@ def Exp_dict() :
             'chemorbit_x3': chem_exp('mid_odor_gaussian', dur=3.0,
                                      l=lgs(models=['RE_NEU_PHI_DEF_nav', 'RL_navigator'],
                                            ids=['CoupledOsc', 'RL'], N=10)),
+            'chemorbit_x4': chem_exp('mid_odor_gaussian_square', dur=3.0,l=lgs_x4()),
             'chemotaxis_diffusion': chem_exp('mid_odor_diffusion', dur=10.0, l=lg(m='RE_NEU_PHI_DEF_nav', N=30)),
             'chemotaxis_RL': chem_exp('mid_odor_diffusion', dur=10.0, c=['olfactor', 'memory'],
                                       l=lg(m='RL_navigator', N=10, mode='periphery', s=0.04)),
@@ -167,6 +172,7 @@ def Exp_dict() :
                                       l=lg(N=25, s=(0.005, 0.02), m='RL_navigator'))},
         'foraging': {
             'patchy_food': food_exp('patchy_food', l=lg(m='forager', N=25)),
+            'patch_grid': food_exp('patch_grid', l=lgs_x4()),
             'random_food': food_exp('random_food', c=['feeder', 'toucher'], l=lgs(models=['Orco_forager', 'RL_forager'],
                                                                                   ids=['Orco', 'RL'], N=5,
                                                                                   mode='uniform',
@@ -177,6 +183,7 @@ def Exp_dict() :
             'single_odor_patch': food_exp('single_odor_patch',
                                           l=lgs(models=['Orco_forager', 'forager'],
                                                 ids=['Orco', 'control'], N=5, mode='periphery', s=0.01)),
+            'single_odor_patch_x4': food_exp('single_odor_patch',l=lgs_x4()),
             'double_patch': food_exp('double_patch', l=GTRvsS(N=5),
                                      c=['toucher', 'feeder', 'olfactor'],
                                      enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'], interference=False,
@@ -290,6 +297,8 @@ def ExpGroup_dict() :
                                       l=lg(N=25, s=(0.005, 0.02), m='RL_navigator'))},
         'foraging': {
             'patchy_food': food_exp('patchy_food', l=lg(m='forager', N=25)),
+            'patch_grid': food_exp('patch_grid', l=lgs(models=['forager', 'Orco_forager', 'RE_NEU_PHI_DEF_nav', 'RE_NEU_PHI_DEF'],
+                                                       ids=['forager', 'Orco', 'navigator', 'explorer'], N=5)),
             'random_food': food_exp('random_food', c=['feeder', 'toucher'], l=lgs(models=['Orco_forager', 'RL_forager'],
                                                                                   ids=['Orco', 'RL'], N=5,
                                                                                   mode='uniform',

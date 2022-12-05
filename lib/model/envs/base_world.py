@@ -59,8 +59,8 @@ class BaseWorld:
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
         self.env_pars = dNl.NestDict(env_params)
 
-        self.create_arena(**self.env_pars.arena)
-        self.space = self.create_space()
+        self.create_arena(self.env_pars.arena.arena_dims, self.env_pars.arena.arena_shape)
+        self.space = self.create_space(torus=self.env_pars.arena.torus)
         self.borders, self.border_walls, self.border_lines = [], [], []
         self.create_borders(self.env_pars.border_list)
 
@@ -106,7 +106,7 @@ class BaseWorld:
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
 
-    def create_space(self):
+    def create_space(self,torus=False):
         s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
         X, Y = self.space_dims = self.arena_dims * s
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
@@ -114,7 +114,7 @@ class BaseWorld:
         self.tank_shape = self.unscaled_tank_shape * s
         k = 0.96
         self.tank_polygon = Polygon(self.tank_shape * k)
-
+        self.toroidal_space=torus
         if self.Box2D:
             from Box2D import b2World, b2ChainShape, b2EdgeShape
             self._sim_velocity_iterations = 6
@@ -130,7 +130,7 @@ class BaseWorld:
             self.friction_body = space.CreateStaticBody(position=(.0, .0))
             self.friction_body.CreateFixture(shape=b2ChainShape(vertices=self.space_edges))
         else:
-            space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=False)
+            space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=torus)
         return space
 
     def add_border(self, b):

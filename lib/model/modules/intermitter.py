@@ -76,6 +76,8 @@ class BaseIntermitter(Effector):
     def step(self, locomotor=None):
         super().count_time()
         self.update_state(locomotor)
+        # if self.cur_state=='feed':
+        #     print(self.feed_counter)
         return self.cur_state
 
     def generate_stridechain(self):
@@ -265,7 +267,7 @@ class BaseIntermitter(Effector):
 
     def check_distros(self, pause_dist=None, stridechain_dist=None):
         if pause_dist.range is None and stridechain_dist.range is None:
-            bout_distros = reg.loadRef(f'None.150_controls').bout_distros
+            bout_distros = reg.retrieveRef(f'None.150controls').bout_distros
             pause_dist=bout_distros.pause_dur
             stridechain_dist=bout_distros.run_count
         return pause_dist,stridechain_dist
@@ -276,11 +278,6 @@ class Intermitter(BaseIntermitter):
         super().__init__(**kwargs)
         from lib.anal.fitting import BoutGenerator
         pause_dist, stridechain_dist = self.check_distros(pause_dist=pause_dist,stridechain_dist=stridechain_dist)
-
-        # if pause_dist.range is None and stridechain_dist.range is None:
-        #     bout_distros = reg.loadRef(f'None.150_controls').bout_distros
-        #     pause_dist=bout_distros.pause_dur
-        #     stridechain_dist=bout_distros.run_count
 
         if run_mode=='stridechain' :
             if stridechain_dist is not None :

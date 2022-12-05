@@ -48,8 +48,23 @@ def xy_uniform_circle(N, loc, scale):
     p = [(loc[0] + x, loc[1] + y) for a, x, y in zip(angles, xs, ys)]
     return p
 
+def xy_grid(grid_dims, area, loc=(0.0, 0.0)) :
+    x0, y0 = loc
+    X,Y=area
+    Nx, Ny=grid_dims
+    dx,dy=X/Nx, Y/Ny
+    grid = np.meshgrid(np.linspace(x0-X/2+dx/2,x0+X/2+dx/2, Nx), np.linspace(y0-Y/2+dy/2,y0+Y/2+dy/2, Ny))
 
-def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)):
+
+    # positions = np.stack([Xs.ravel(), Ys.ravel()])
+    cartprod = np.stack(grid, axis=-1).reshape(-1, 2)
+
+    # Convert to list of tuples
+    return list(map(tuple, cartprod))
+    # return Xs,Ys
+
+
+def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0), area=None):
     loc, scale = np.array(loc), np.array(scale)
     if mode == 'uniform':
         if shape in ['circle', 'oval']:
@@ -62,7 +77,19 @@ def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0)):
         if shape in ['circle', 'oval']:
             return xy_along_circle(N, loc=loc, radius=scale)
         elif shape == 'rect':
-            return xy_along_rect(N, loc, scale)
+            return xy_along_rect(N, loc=loc, scale=scale)
+    elif mode == 'grid':
+        if type(N) == tuple:
+            grid_dims = N
+        else:
+            Nx = int(np.sqrt(N))
+            Ny = int(N / Nx)
+            if Nx * Ny != N:
+                raise
+            grid_dims=(Nx,Ny)
+        if area is None :
+            area=scale
+        return xy_grid(grid_dims, loc=loc, area=area)
     else:
         raise ValueError(f'XY distribution {mode} not implemented.')
 
@@ -208,3 +235,6 @@ def dsp_single(xy0, s0, s1, dt):
     df = pd.DataFrame(dsp_ar, index=trange, columns=['median', 'upper', 'lower'])
 
     return AA,df
+
+if __name__ == "__main__":
+    xy_grid((5,5),(0.1,0.1))

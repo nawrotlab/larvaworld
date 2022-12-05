@@ -139,9 +139,9 @@ Larvaworld can be run directly from linux terminal.
        Optionally run the respective analysis.
 
        This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
-       We choose to also see the simulation at a speed x6 as it unfolds.
 
            python larvaworld.py Exp dish -N 30 -t 3.0 -m video
+           python larvaworld.py Exp patch_grid -N 30 -t 3.0 -m video
 
        This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
        We choose to only produce a final image of the simulation.

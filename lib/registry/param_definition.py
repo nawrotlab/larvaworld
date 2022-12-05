@@ -58,8 +58,9 @@ def get_default(d,key='v') :
 
 def update_default(name, dic, **kwargs):
     if name not in ['visualization', 'enrichment']:
+        # dNl.update_nestdict(dic, kwargs)
         dic.update(kwargs)
-        return dNl.NestDict(dic)
+        return dic
     else:
         for k, v in dic.items():
             if k in list(kwargs.keys()):
@@ -240,7 +241,7 @@ def buildInitDict(CTs):
             },
         })
         d['spatial_distro'] = {
-            'mode': {'dtype': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform'],
+            'mode': {'dtype': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform', 'grid'],
                      'disp': 'placing',
                      'h': 'The wa to place agents in the distribution shape.'},
             'shape': {'dtype': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'],
@@ -336,7 +337,8 @@ def buildInitDict(CTs):
                                'h': 'The arena dimensions in meters.'},
                 'arena_shape': {'dtype': str, 'v': 'circular', 'vs': ['circular', 'rectangular'],
                                 'disp': 'shape',
-                                'h': 'The arena shape.'}
+                                'h': 'The arena shape.'},
+                'torus':{**bF, 'h': 'Whether to allow a toroidal space.'}
             },
 
         })
@@ -1349,21 +1351,25 @@ class ParInitDict(base.BaseConfDict):
 class ParDefaultDict(base.BaseConfDict):
 
     def build(self):
+
         dic = {}
         for name, d in reg.PI.dict.items():
             dic[name] = get_default(d, key='v')
-        return dNl.NestDict(dic)
+        d=dNl.NestDict(dic)
+        # print(d.source.pos)
+        # raise
+        return d
 
-    def null(self,name, kws={},key='v'):
+    def null(self,name, key='v', **kwargs):
         if key != 'v':
             raise
         d0=self.dict[name]
-        return dNl.update_nestdict(d0,kws)
+        return dNl.update_nestdict(d0,kwargs)
 
     def get_null(self, name, key='v', **kwargs):
         if key != 'v':
             raise
-        return update_default(name, self.dict[name], **kwargs)
+        return update_default(name, dNl.copyDict(self.dict[name]), **kwargs)
 
     def metric_def(self, ang={}, sp={}, **kwargs):
         def ang_def(fv=(1, 2), rv=(-2, -1), **kwargs):
