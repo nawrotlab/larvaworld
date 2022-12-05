@@ -147,7 +147,7 @@ class MultiSpin(sg.Pane):
         else:
             self.N = len(initial_value)
             self.v_spins = [vv for vv in initial_value] + [''] * (Nspins - self.N)
-        self.key = key
+        # self.key = key
         self.tuples = tuples
         self.add_key, self.remove_key = f'SPIN+ {key}', f'SPIN- {key}'
         self.k_spins = [f'{key}_{i}' for i in range(Nspins)]
@@ -159,7 +159,7 @@ class MultiSpin(sg.Pane):
         remove_button = gui_but.GraphButton('Button_Remove', self.remove_key, tooltip='Remove last item in the list.')
         self.buttons = sg.Col([[add_button], [remove_button]])
         pane_list = [sg.Col([self.layout])]
-        super().__init__(pane_list=pane_list, key=self.key)
+        super().__init__(pane_list=pane_list, key=key)
 
     def build_spins(self):
         spin_kws = {

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pypet import cartesian_product, load_trajectory
+
 
 from lib.aux import dictsNlists as dNl
 from lib.registry import reg
@@ -17,6 +17,7 @@ def retrieve_exp_conf(traj):
     return d
 
 def grid_search_dict(space_dict):
+    import pypet
     dic={}
     for p, args in space_dict.items() :
         if args['values'] is not None :
@@ -29,7 +30,7 @@ def grid_search_dict(space_dict):
             if type(r0) == int and type(r1) == int:
                 vs = vs.astype(int)
             dic[p] = vs.tolist()
-    return cartesian_product(dic)
+    return pypet.cartesian_product(dic)
 
 
 def get_space_from_file(space_filepath=None, params=None, space_pd=None, returned_params=None, flag=None,
@@ -65,9 +66,10 @@ def get_space_from_file(space_filepath=None, params=None, space_pd=None, returne
 
 
 def load_traj(batch_type, batch_id):
+    import pypet
     parent_dir_path = f'{reg.Path["BATCH"]}/{batch_type}'
     filename = f'{parent_dir_path}/{batch_type}.hdf5'
-    traj = load_trajectory(filename=filename, name=batch_id, load_all=2)
+    traj = pypet.load_trajectory(filename=filename, name=batch_id, load_all=2)
     return traj
 
 

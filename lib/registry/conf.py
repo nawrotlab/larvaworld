@@ -124,7 +124,7 @@ class ConfType(base.BaseType):
             if id in self.ConfIDs:
 
             # from lib.registry.pars import preg
-                conf = self.loadConf(id)
+                conf = self.loadConf(id=id)
             else :
                 return None
         if len(self.subks) > 0:
@@ -138,7 +138,7 @@ class ConfType(base.BaseType):
                     if conf[subID] in ct.ConfIDs:
                         conf[subID] = ct.loadConf(id=conf[subID])
 
-            return conf
+        return conf
 
     def saveConf(self, id, conf, mode='overwrite'):
         d = self.loadDict()

@@ -11,48 +11,60 @@ from lib.gui.aux.functions import col_size, window_size, w_kws
 
 # matplotlib.use('TkAgg')
 
+def build_tab_dict():
+    from lib.gui.tabs import sim_tab, intro_tab, life_tab, batch_tab, essay_tab, import_tab, \
+        analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab, env_tab
+    tab_dict = {
+        'intro': (intro_tab.IntroTab, None, None, 'introduction'),
+        'model': (model_tab.ModelTab, 'Model', 'model_conf', 'larva-model'),
+        'life': (life_tab.LifeTab, 'Life', 'life', 'life-history'),
+        # 'env': (env_tab.EnvTab, 'Env', 'env_conf', 'environment'),
+        'sim': (sim_tab.SimTab, 'Exp', 'exp_conf', 'simulation'),
+        'batch': (batch_tab.BatchTab, 'Batch', 'batch_conf', 'batch-exec'),
+        'essay': (essay_tab.EssayTab, 'Essay', 'essay_conf', 'essay'),
+        'import': (import_tab.ImportTab, 'Group', None, 'import'),
+        'anal': (analysis_tab.AnalysisTab, None, None, 'analysis'),
+        'vid': (video_tab.VideoTab, None, None, 'videos'),
+        'tutor': (tutorial_tab.TutorialTab, None, None, 'tutorials'),
+        'set': (settings_tab.SettingsTab, None, None, 'settings')
+    }
+    return tab_dict
+
 
 class LarvaworldGui:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
-        from lib.gui.tabs import sim_tab,intro_tab, life_tab, batch_tab, essay_tab, import_tab, \
-            analysis_tab, video_tab, tutorial_tab, settings_tab, model_tab,env_tab
-        cls.tab_dict = {
-            'introduction': (intro_tab.IntroTab, None, None),
-            'larva-model': (model_tab.ModelTab, 'Model', 'model_conf'),
-            'life-history': (life_tab.LifeTab, 'Life', 'life'),
-            # 'environment': (env_tab.EnvTab, 'Env', 'env_conf'),
-            'simulation': (sim_tab.SimTab, 'Exp', 'exp_conf'),
-            'batch-exec': (batch_tab.BatchTab, 'Batch', 'batch_conf'),
-            'essay': (essay_tab.EssayTab, 'Essay', 'essay_conf'),
-            'import': (import_tab.ImportTab, 'Group', None),
-            'analysis': (analysis_tab.AnalysisTab, None, None),
-            'videos': (video_tab.VideoTab, None, None),
-            'tutorials': (tutorial_tab.TutorialTab, None, None),
-            'settings': (settings_tab.SettingsTab, None, None)
-        }
-        # cls.tabgroups = {
-        #     'introduction': ['introduction'],
-        #     'models': ['larva-model', 'life-history'],
-        #     # 'environment': ['environment'],
-        #     'data': ['import', 'analysis'],
-        #     'simulations': ['simulation', 'batch-exec', 'essay'],
-        #     'resources': ['tutorials', 'videos'],
-        #     'settings': ['settings'],
-        # }
-
+        reg.init(ks=['CT','DD','PI','DEF','GT','GD'])
+        cls.tab_dict = build_tab_dict()
+        cls.tab_keys = list(cls.tab_dict.keys())
         return object.__new__(cls)
 
-    def __init__(self, tabs=None):
+    def __init__(self, tabs=None, add_terminal=True):
         # print("a")
         self.run_externally = {'sim': False, 'batch': True}
         if tabs is None:
-            tabs = list(self.tab_dict.keys())
+            tabs = self.tab_keys
+        for t in tabs :
+            if t not in self.tab_keys:
+                raise ValueError(f'{t} not in tab keys')
+        if 'sim' in tabs :
+            tabs=[t for t in tabs if t!='env']
+        # print(tabs)
         sg.theme('LightGreen')
         self.background_color = None
-        self.terminal = gui_terminal()
-        layout, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
+
+        # raise
+        l_tabs, self.collapsibles, self.graph_lists, self.dicts, self.tabs = self.build(tabs)
+        if add_terminal:
+            self.terminal = gui_terminal()
+
+            layout = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]
+        else:
+            self.terminal=None
+            layout=l_tabs
         c = {'layout': layout, 'size': window_size, **w_kws}
+
         self.window = sg.Window('Larvaworld gui', **c)
+
 
     def run(self):
         while True:
@@ -68,10 +80,12 @@ class LarvaworldGui:
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
         dic = {}
-        for n in tabs:
 
-            func, conftype, dtype = self.tab_dict[n]
+        for t in tabs:
+
+            func, conftype, dtype,n = self.tab_dict[t]
             ts[n] = func(name=n, gui=self, conftype=conftype, dtype=dtype)
+
             l, c, d, g = ts[n].build()
             cs.update(c)
             ds.update(d)
@@ -81,8 +95,11 @@ class LarvaworldGui:
         tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
                    'tab_background_color': 'lightgrey'}
         l_tabs = sg.TabGroup([ls], key='ACTIVE_TAB', tab_location='topleft', **tab_kws)
-        l0 = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]
-        return l0, cs, ds, gs, ts
+
+        # self.terminal = gui_terminal()
+
+        # l0 = [[sg.Pane([sg.vtop(l_tabs), sg.vbottom(self.terminal)], handle_size=30)]]
+        return l_tabs, cs, ds, gs, ts
 
     def get_vis_kwargs(self, v, **kwargs):
         # from lib.registry.dtypes import null_dict

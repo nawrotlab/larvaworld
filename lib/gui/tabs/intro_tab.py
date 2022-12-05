@@ -26,5 +26,5 @@ class IntroTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['introduction'])
+    larvaworld_gui = LarvaworldGui(tabs=['intro'])
     larvaworld_gui.run()

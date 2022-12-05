@@ -163,6 +163,16 @@ def buildInitDict(CTs):
 
         }
 
+        d['nutrient'] = {
+
+            'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
+            'radius': {'v': 0.003, 'lim': (0.0, 0.1), 'dv': 0.001,
+                       'h': 'The spatial radius of the source in meters.'},
+            # 'shape': {'v': 'circle', 'dtype': str,'vs': ['circle', 'rect'],
+            #            'h': 'The shape of the food source.'},
+            **d['substrate']
+        }
+
         d['food'] = {
 
             'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
@@ -179,7 +189,7 @@ def buildInitDict(CTs):
 
         }
 
-        d['Source_DISTRO'] = d['spatial_distro']
+        d['Source_distro'] = d['spatial_distro']
 
         d['food_params'] = {'source_groups': {'dtype': dict, 'v': {}, 'disp': 'source groups', 'k': 'gSources',
                                               'symbol': sub('source', 'G'), 'entry': 'SourceGroup',
@@ -248,6 +258,8 @@ def buildInitDict(CTs):
                                   'disp': 'heading',
                                   'h': 'The range of larva body orientations to sample from, in degrees.'}
         }
+
+        d['source_distro'] =d['spatial_distro']
         return d
 
     def scapeConfs():

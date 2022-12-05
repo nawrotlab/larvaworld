@@ -89,6 +89,10 @@ def getPar(k=None, p=None, d=None, to_return='d'):
     dd = init_Dic('PD')
     return dd.getPar(k=k, d=d, p=p, to_return=to_return)
 
+def getParDic(k):
+    dd = init_Dic('PI')
+    return dd.dict[k]
+
 
 def next_idx(id, conftype='Exp'):
     f = Path.SimIdx

@@ -6,7 +6,7 @@ import lib.aux.dictsNlists as dNl
 from lib.registry.controls import store_controls, load_controls
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
-from lib.registry import reg
+# from lib.registry import reg
 
 
 class SettingsTab(GuiTab):
@@ -141,5 +141,5 @@ class SettingsTab(GuiTab):
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
 
-    larvaworld_gui = LarvaworldGui(tabs=['settings'])
+    larvaworld_gui = LarvaworldGui(tabs=['set'])
     larvaworld_gui.run()

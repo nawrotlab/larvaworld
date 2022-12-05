@@ -74,14 +74,15 @@ class SimTab(GuiTab):
         c2 = gui_el.PadDict('output',text_kws= gui_fun.t_kws(7), Ncols=2,header_width=30, **kws)
 
         ll3 = gui_fun.gui_col([c1, c2, s2], x_frac=0.25, as_pane=True)
-        l1 = [self.envtab.layout[0]+[ll3]]
+        l1 = [tab1_l[0]+[ll3]]
+        # l1 = [self.envtab.layout[0]+[ll3]]
 
         c = {}
         for i in [c1, c2, s2, s1]:
             c.update(i.get_subdicts())
         c.update(**tab1_c)
         l0 = gui_fun.gui_col([sl4, sl3, s1, c['arena']], x_frac=0.2, as_pane=True, pad=(10,10))
-        return l0, l1, c, {}, {}
+        return l0, l1, c, tab1_g, tab1_d
 
     def update(self, w, c, conf, id):
 
@@ -122,7 +123,6 @@ class SimTab(GuiTab):
         return d, g
 
     def eval(self, e, v, w, c, d, g):
-        # print(e)
         if e==self.DL1.key :
             ks=v[self.DL1.key]
             if len(ks)>0:
@@ -163,6 +163,6 @@ class SimTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui()
-    # larvaworld_gui = LarvaworldGui(tabs=['simulation', 'settings'])
+    # larvaworld_gui = LarvaworldGui()
+    larvaworld_gui = LarvaworldGui(tabs=['sim'])
     larvaworld_gui.run()

@@ -53,5 +53,6 @@ class EnvTab(GuiTab):
 
 if __name__ == "__main__":
     from lib.gui.tabs.gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['environment'])
+    # larvaworld_gui = LarvaworldGui()
+    larvaworld_gui = LarvaworldGui(tabs=['env'])
     larvaworld_gui.run()

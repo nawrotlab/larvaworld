@@ -21,9 +21,9 @@ from lib.plot.traj import plot_marked_strides
 from lib.stor.larva_dataset import LarvaDataset
 import lib.aux.naming as nam
 
-GD=reg.Dic.GD
-def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=False):
 
+def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=False):
+    GD = reg.Dic.GD
 
     if ds is None:
         return
@@ -120,6 +120,7 @@ def sim_analysis(ds: List[LarvaDataset], exp_type, show=False, delete_datasets=F
 
 
 def intake_analysis(**kwargs):
+    GD = reg.Dic.GD
     kwargs0 = {'show_first': False, 'legend_loc': 'upper left', **kwargs}
     figs = {}
     figs['faeces ratio'] = GD['timeplot'](['sf_faeces_M'], **kwargs0)
@@ -139,6 +140,7 @@ def intake_analysis(**kwargs):
 
 
 def source_analysis(source_xy, **kwargs):
+    GD = reg.Dic.GD
     figs = {}
     for n, pos in source_xy.items():
         for p in [nam.bearing2(n), nam.dst2(n), nam.scal(nam.dst2(n))]:
@@ -170,7 +172,7 @@ def foraging_analysis(sources, **kwargs):
     figs['turn duration'] = plot_turn_amp(par_short='tur_t', mode='scatter', absolute=True, **kwargs)
     # figs['turn amplitude'] = TurnPlot(**kwargs).get()
     figs['turn amplitude'] = plot_turns(**kwargs)
-    figs['Y position'] = GD['timeplot'](['y'], legend_loc='lower left', **kwargs)
+    figs['Y position'] = reg.Dic.GD['timeplot'](['y'], legend_loc='lower left', **kwargs)
     figs['navigation index'] = plot_navigation_index(**kwargs)
 
     return figs
@@ -178,6 +180,7 @@ def foraging_analysis(sources, **kwargs):
 
 
 def essay_analysis(essay_type, exp, ds0, all_figs=False, path=None):
+    GD = reg.Dic.GD
     if path is None:
         parent_dir = f'essays/{essay_type}/global_test'
         plot_dir = f'{reg.Path["SIM"]}/{parent_dir}/plots'
@@ -386,6 +389,7 @@ def targeted_analysis(datasets, labels=None, save_to=None, pref='', show=False, 
 
 
 def deb_analysis(datasets,**kwargs) :
+    GD = reg.Dic.GD
     figs={}
     deb_model = deb_default(**datasets[0].config['life_history'])
     deb_dicts = flatten_list([d.load_dicts('deb') for d in datasets])
