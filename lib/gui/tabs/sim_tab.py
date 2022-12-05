@@ -6,7 +6,7 @@ from lib.gui.aux import functions as gui_fun, elements as gui_el
 from lib.registry import reg
 from lib.gui.tabs.draw_env_tab import DrawEnvTab
 from lib.gui.tabs.env_tab import EnvTab
-
+from lib.registry.output import output_dict
 from lib.sim.exec.exec_run import Exec
 
 
@@ -84,7 +84,7 @@ class SimTab(GuiTab):
         return l0, l1, c, {}, {}
 
     def update(self, w, c, conf, id):
-        from lib.registry.output import output_dict
+
         output_keys=list(output_dict.keys())
         # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
@@ -96,7 +96,6 @@ class SimTab(GuiTab):
         w.write_event_value('RESET_ARENA', 'Draw the initial arena')
 
     def get(self, w, v, c, as_entry=True):
-        from lib.registry.output import output_dict
         conf = {
 
             'sim_params': c['sim_params'].get_dict(v, w),

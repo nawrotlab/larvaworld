@@ -1,129 +1,16 @@
-import typing
-from types import FunctionType
-from typing import Tuple, List
+
 
 import numpy as np
 import pandas as pd
-import param
 
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import naming as nam, dictsNlists as dNl, data_aux
 
 from lib.aux.par_aux import bar, wave, sub, subsup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 from lib.registry import reg
 from lib.registry.units import ureg
 
 
-def get_vfunc(dtype, lim, vs):
-    func_dic = {
-        float: param.Number,
-        int: param.Integer,
-        str: param.String,
-        bool: param.Boolean,
-        dict: param.Dict,
-        list: param.List,
-        type: param.ClassSelector,
-        List[int]: param.List,
-        List[str]: param.List,
-        List[float]: param.List,
-        List[Tuple[float]]: param.List,
-        FunctionType: param.Callable,
-        Tuple[float]: param.Range,
-        Tuple[int]: param.NumericTuple,
-        typing.TypedDict: param.Dict
-    }
-    if dtype == float and lim == (0.0, 1.0):
-        return param.Magnitude
-    if type(vs) == list and dtype in [str, int]:
-        return param.Selector
-    elif dtype in func_dic.keys():
-        return func_dic[dtype]
-    else :
-        return param.Parameter
-
-
-
-def vpar(vfunc, v0, h, lab, lim, dv, vs):
-    f_kws = {
-        'default': v0,
-        'doc': h,
-        'label': lab,
-        'allow_None': True
-    }
-    if vfunc in [param.List, param.Number, param.Range]:
-        if lim is not None:
-            f_kws['bounds'] = lim
-    if vfunc in [param.Range, param.Number]:
-        if dv is not None:
-            f_kws['step'] = dv
-    if vfunc in [param.Selector]:
-        f_kws['objects'] = vs
-    # print(vfunc,v0, h, lab, lim, dv, vs)
-    # if vfunc in [param.Dict] :
-        # if v0 is not None :
-        #     f_kws['class_'] = type(v0)
-        # else :
-        #     f_kws['class_'] = dict
-        # print(f_kws)
-
-    func = vfunc(**f_kws, instantiate=True)
-    return func
-
-
-
-def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None, codename=None, lab=None, h=None,
-               u_name=None,mdict=None,
-               required_ks=[], u=ureg.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
-               vfunc=None, vparfunc=None, func=None, **kwargs):
-    codename = p if codename is None else codename
-    d = p if d is None else d
-    disp = d if disp is None else disp
-    k = k if k is not None else d
-    v0 = v if v is not None else v0
-    if sym is None:
-        if symbol is not None:
-            sym = symbol
-        else:
-            sym = k
-
-    if lab is None:
-        if u == ureg.dimensionless:
-            lab = f'{disp}'
-        else:
-            ulab=fr'${u}$'
-            lab = fr'{disp} ({ulab})'
-    if dv is None and dtype in [float, List[float], List[Tuple[float]], Tuple[float]]:
-        dv = 0.01
-    h = lab if h is None else h
-
-    if vparfunc is None:
-        if vfunc is None:
-            vfunc = get_vfunc(dtype=dtype, lim=lim, vs=vs)
-        vparfunc = vpar(vfunc, v0, h, lab, lim, dv, vs)
-    else:
-        vparfunc = vparfunc()
-
-    kws = {
-        'name': p,
-        'p': p,
-        'd': d,
-        'k': k,
-        'disp': disp,
-        'sym': sym,
-        'codename': codename,
-        'dtype': dtype,
-        'func': func,
-        'u': u,
-        'u_name': u_name,
-        'required_ks': required_ks,
-        'vparfunc': vparfunc,
-        'mdict': mdict,
-        'dv': dv,
-        'v0': v0,
-
-    }
-    return dNl.NestDict(kws)
-
-class BaseParDict:
+class ParamRegistry:
     def __init__(self,in_rad=True, in_m=True, load=False, save=False):
         reg.vprint('started BaseParDict', 0)
         self.path=reg.Path['ParDf']
@@ -131,8 +18,8 @@ class BaseParDict:
             df = pd.read_csv(self.path, index_col=0)
             self.dict_entries = df.to_dict(orient='records')
         else:
-            from lib.registry.par_funcs import ParFuncDict
-            self.par_func_dict = ParFuncDict()
+            from lib.registry.param_computation import ParamComputeFunctionRegistry
+            self.par_func_dict = ParamComputeFunctionRegistry()
             self.func_dict = self.par_func_dict.dict
             # from lib.registry.par_funcs import parfunc_dict
             # self.func_dict = parfunc_dict.dict
@@ -169,7 +56,7 @@ class BaseParDict:
             **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
 
     def add(self, **kwargs):
-        prepar = preparePar(**kwargs)
+        prepar = data_aux.preparePar(**kwargs)
         self.dict[prepar.k] = prepar
         self.dict_entries.append(prepar)
 
@@ -695,10 +582,9 @@ class BaseParDict:
             self.add(**{'p': p, 'k': k, 'd': d, 'disp': disp})
 
     def finalize_dict(self, entries):
-        from lib.registry.par import v_descriptor
         dic = dNl.NestDict()
         for prepar in entries:
-            p = v_descriptor(**prepar)
+            p = data_aux.v_descriptor(**prepar)
             dic[p.k] = p
         return dic
 

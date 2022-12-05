@@ -388,7 +388,7 @@ class SelectionList(GuiElement):
         elif e == f'TREE {n}' and self.tree is not None:
             self.tree.test()
         elif e == f'CONF_TREE {n}' and id != '':
-            from lib.registry.par_tree import tree_dict
+            from lib.gui.aux.par_tree import tree_dict
             conf = self.get(w, v, c, as_entry=False)
             entries = tree_dict(d=conf, parent_key=id, sep='.')
             tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40, 20])
@@ -1304,7 +1304,7 @@ class PadTable(PadElement):
                 self.dict.pop(id, None)
             self.update(w)
         elif e == f'CONF_TREE {self.name}':
-            from lib.registry.par_tree import multiconf_to_tree
+            from lib.gui.aux.par_tree import multiconf_to_tree
             ids = [ff['model'] for ff in list(self.dict.values())]
             entries = multiconf_to_tree(ids, 'Model')
             tree = GuiTreeData(entries=entries, headings=[ids], col_widths=[40] + [20] * len(ids))
@@ -1694,7 +1694,7 @@ class GuiTreeData(sg.TreeData):
         if not self.build_tree and self.root_key in reg.storedConf('Tree'):
             df = pd.DataFrame.from_dict(reg.loadConf(id=self.root_key, conftype='Tree'))
         else:
-            from lib.registry.par_tree import pars_to_tree
+            from lib.gui.aux.par_tree import pars_to_tree
             df = pars_to_tree(self.root_key)
             reg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
         return df

@@ -13,7 +13,7 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        self.parsargs = reg.init_Dic('ParsD').parser_dict[name]
+        self.parsargs = reg.parsers.parser_dict[name]
 
     def add(self, parser=None):
         if parser is None:

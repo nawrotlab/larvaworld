@@ -74,7 +74,8 @@ def KS2(a1, a2):
 
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
-    D=reg.Dic.DD.dict['logNpow']
+    distros = reg.Dic.DD.dict
+    D=distros['logNpow']
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     temp = np.ones([len(xmids), len(overlaps)])
@@ -161,7 +162,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmax=np.nanmax(x0)
     with suppress_stdout(False):
         warnings.filterwarnings('ignore')
-        DD=reg.Dic.DD.dict
+        distros=reg.Dic.DD.dict
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
 
@@ -170,35 +171,35 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
 
         a2 = 1 + len(x) / np.sum(np.log(x / xmin))
         a = get_powerlaw_alpha(x, xmin, xmax, discrete=discrete)
-        p_cdf = 1 - DD['powerlaw']['cdf'](u2, xmin, a)
-        p_pdf = DD['powerlaw']['pdf'](du2, xmin, a)
+        p_cdf = 1 - distros['powerlaw']['cdf'](u2, xmin, a)
+        p_pdf = distros['powerlaw']['pdf'](du2, xmin, a)
 
         b = get_exp_beta(x, xmin)
-        e_cdf = 1 - DD['exponential']['cdf'](u2, xmin, b)
-        e_pdf = DD['exponential']['pdf'](du2, xmin, b)
+        e_cdf = 1 - distros['exponential']['cdf'](u2, xmin, b)
+        e_pdf = distros['exponential']['pdf'](du2, xmin, b)
 
         m, s = get_lognormal(x)
-        l_cdf = 1 - DD['lognormal']['cdf'](u2, m, s)
-        l_pdf = DD['lognormal']['pdf'](du2, m, s)
+        l_cdf = 1 - distros['lognormal']['cdf'](u2, m, s)
+        l_pdf = distros['lognormal']['pdf'](du2, m, s)
 
         m_lev, s_lev = levy.fit(x)
-        lev_cdf = 1 - DD['levy']['cdf'](u2, m_lev, s_lev)
-        lev_pdf = DD['levy']['pdf'](du2, m_lev, s_lev)
+        lev_cdf = 1 - distros['levy']['cdf'](u2, m_lev, s_lev)
+        lev_pdf = distros['levy']['pdf'](du2, m_lev, s_lev)
 
         m_nor, s_nor = norm.fit(x)
-        nor_cdf = 1 - DD['normal']['cdf'](u2, m_nor, s_nor)
-        nor_pdf = DD['normal']['pdf'](du2, m_nor, s_nor)
+        nor_cdf = 1 - distros['normal']['cdf'](u2, m_nor, s_nor)
+        nor_pdf = distros['normal']['pdf'](du2, m_nor, s_nor)
 
-        uni_cdf = 1 - DD['uniform']['cdf'](u2, xmin, xmin + xmax)
-        uni_pdf = DD['uniform']['pdf'](du2, xmin, xmin + xmax)
+        uni_cdf = 1 - distros['uniform']['cdf'](u2, xmin, xmin + xmax)
+        uni_pdf = distros['uniform']['pdf'](du2, xmin, xmin + xmax)
 
         if np.isnan(xmid) and combine:
             xmid, overlap = logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete, fit_by)
 
         if not np.isnan(xmid):
             mm, ss, aa, r = get_logNpow(x, xmax, xmid, discrete=discrete, overlap=overlap)
-            lp_cdf = 1 - DD['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
-            lp_pdf = DD['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
+            lp_cdf = 1 - distros['logNpow']['cdf'](u2, mm, ss, aa, xmid, r)
+            lp_pdf = distros['logNpow']['pdf'](du2, mm, ss, aa, xmid, r)
         else:
             mm, ss, aa, r = np.nan, np.nan, np.nan, np.nan
             lp_cdf, lp_pdf = None, None

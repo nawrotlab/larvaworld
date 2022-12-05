@@ -30,20 +30,20 @@ def init_data_structure():
 
 
 def reg_dict():
-    from lib.registry import ConfTypeDict, LarvaConfDict, ParInitDict, GraphDict, ProcFuncDict, ParserDict, \
-        BaseParDict, GroupTypeDict, DistDict
+
+    from lib.registry import conf, distro,models, params,param_definition, parsers,graphs,processing
 
     d = dNl.NestDict({
-        'CT': ConfTypeDict.ConfTypeDict,
-        'DD': DistDict.DistDict,
-        'MD': LarvaConfDict.LarvaConfDict,
-        'PI': ParInitDict.ParInitDict,
-        'DEF': ParInitDict.ParDefaultDict,
-        'GT': GroupTypeDict.GroupTypeDict,
-        'GD': GraphDict.GraphDict,
-        'ParsD': ParserDict.ParserDict,
-        'PF': ProcFuncDict.ProcFuncDict,
-        'PD': BaseParDict.BaseParDict,
+        'CT': conf.ConfTypeDict,
+        'DD': distro.DistributionRegistry,
+        'MD': models.ModelRegistry,
+        'PI': param_definition.ParInitDict,
+        'DEF': param_definition.ParDefaultDict,
+        'GT': conf.GroupTypeDict,
+        'GD': graphs.GraphRegistry,
+        'parsers': parsers.ParserDict,
+        'PF': processing.ProcFuncDict,
+        'PD': params.ParamRegistry,
     })
     return d
 
@@ -238,3 +238,9 @@ def expandConf(conftype, id=None):
 
 def storedConf(conftype):
     return Dic.CT.dict[conftype].ConfIDs
+
+def get_dist(**kwargs):
+    d = init_Dic('DD')
+    return d.get_dist(**kwargs)
+
+

@@ -39,7 +39,7 @@ def build_path_dict() :
         'ParDb': f'{CF}/ParDatabase.csv',
         'ParShelve': f'{CF}/ParShelve',
         'ParDict': f'{CF}/ParDict.csv',
-        'ParFuncDict': f'{CF}/ParFuncDict.csv',
+        'ParamComputeFunctionRegistry': f'{CF}/ParamComputeFunctionRegistry.csv',
         'ProcFuncDict': f'{CF}/ProcFuncDict.csv',
         'ParInitDict': f'{CF}/ParInitDict.csv',
         'ParDefaultDict': f'{CF}/ParDefaultDict.csv',

@@ -40,7 +40,7 @@ output_dict = {
     # 'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
 }
 
-output_keys = list(output_dict.keys())
+# output_keys = list(output_dict.keys())
 
 
 def set_output(collections, Npoints=3, Ncontour=0):

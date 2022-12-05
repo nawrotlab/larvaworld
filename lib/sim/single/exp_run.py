@@ -31,8 +31,8 @@ class ExpRun(base.BaseRun):
         self.enrichment = enrichment
         self.sim_params = sim_params
         dt = sim_params.timestep
-        output = set_output(collections=collections,
-                            Npoints=np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()]))
+        Npoints = np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()])
+        output = set_output(collections=collections,Npoints=Npoints)
         self.model_conf = {
             'dt': dt,
             # 'model_class': WorldSim,

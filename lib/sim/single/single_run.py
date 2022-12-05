@@ -39,8 +39,8 @@ class SingleRun:
         # self.vis_dir = f'{self.storage_path}/visuals'
         self.start = time.time()
         self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
-
-        output = set_output(collections=collections, Npoints=np.min([lg.model.body.Nsegs+1 for id, lg in larva_groups.items()]))
+        Npoints = np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()])
+        output = set_output(collections=collections, Npoints=Npoints)
 
         self.env = WorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
                             env_params=env_params, larva_groups=larva_groups, trials=trials, dur=sim_params.duration,

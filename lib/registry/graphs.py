@@ -126,7 +126,7 @@ def build_error_dict():
     return d
 
 
-class GraphDict:
+class GraphRegistry:
     def __init__(self):
         self.grouped_dic = build()
         self.flat_dict = dNl.flatten_dict(self.grouped_dic)
