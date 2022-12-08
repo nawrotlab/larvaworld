@@ -4,7 +4,7 @@ import webbrowser
 import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import GuiTab
-
+from lib.registry import reg
 
 class TutorialTab(GuiTab):
 

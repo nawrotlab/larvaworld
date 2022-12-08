@@ -41,7 +41,9 @@ def confReset_funcs(k):
         'Group': data_conf.Group_dict,
         'Trial': aux_conf.Trial_dict,
         'Life': aux_conf.Life_dict,
-        'Body': aux_conf.Body_dict
+        'Body': aux_conf.Body_dict,
+        'Tree': aux_conf.Tree_dict,
+        'Source': aux_conf.Source_dict
     })
     return d[k]
 
@@ -234,7 +236,7 @@ class ConfTypeDict:
 
         reg.vprint('started ConfTypes',0)
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
-                          'Group', 'Trial', 'Life', 'Body', 'Source', 'Tree']
+                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
 
         self.dict = self.build(self.conftypes)
 
@@ -318,6 +320,7 @@ class ConfTypeDict:
             try :
                 self.dict[k].resetDict()
             except :
+                # print(f'{k} configuration reset failed')
                 pass
 
 

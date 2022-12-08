@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun
-
+from lib.registry import reg
 
 class VideoTab(GuiTab):
 

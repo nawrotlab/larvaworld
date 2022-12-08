@@ -96,7 +96,7 @@ def nengo_brain(module_shorts, EEB, OD=None):
 # print(bb.modules.feeder)
 # raise
 
-def build_RvsS():
+def build_RvsS(b):
     # RvsS = {}
     # for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
     #     kws0 = {'energetics': {
@@ -110,6 +110,7 @@ def build_RvsS():
     #     }
     #     mods = ['intermitter', 'feeder']
     #     RvsS[f'mock_{species}']
+
 
     def RvsS_larva(species, mock=False, OD=None, l0=0.001):
         if species == 'rover':
@@ -134,7 +135,7 @@ def build_RvsS():
 
             if OD is not None:
                 mods2 += ['olfactor']
-            b = reg.Dic.CT.dict.Model.loadConf('RE_NEU_SQ_DEF_nav').brain
+
             for mod in mods2:
                 key = f'{mod}_params'
                 kws[key] = b[key]
@@ -207,7 +208,7 @@ def OD(ids: list, means: list, stds=None) -> dict:
     return odor_dict
 
 
-def create_mod_dict():
+def create_mod_dict(b):
     Tsin = reg.get_null('turner',
                          mode='sinusoidal',
                          initial_amp=15.0,
@@ -353,7 +354,7 @@ def create_mod_dict():
         'navigators': navigators,
         'foragers': foragers,
         'touchers': touchers,
-        'foraging phenotypes': build_RvsS(),
+        'foraging phenotypes': build_RvsS(b),
         'games': gamers,
         'zebrafish': zebrafish,
         'other': other,
@@ -363,9 +364,11 @@ def create_mod_dict():
 
 
 def Model_dict():
-    d = create_mod_dict()
-
     dnew = reg.Dic.MD.baseConfs()
+    b = dnew['RE_NEU_SQ_DEF_nav'].brain
+    d = create_mod_dict(b)
+
+
     dd = dNl.merge_dicts(list(d.values()))
 
     dnew.update(dd)
@@ -373,5 +376,7 @@ def Model_dict():
 
 
 def ModelGroup_dict():
-    d = create_mod_dict()
+    dnew = reg.Dic.MD.baseConfs()
+    b = dnew['RE_NEU_SQ_DEF_nav'].brain
+    d = create_mod_dict(b)
     return dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})

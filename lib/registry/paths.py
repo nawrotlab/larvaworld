@@ -1,7 +1,8 @@
 import os
 from lib.aux import dictsNlists as dNl, naming as nam
 
-
+ks = ['Group', 'Tracker', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Model', 'ModelGroup', 'Batch', 'Ref', 'Trial', 'Life',
+      'Body', 'Brain', 'SimIdx', 'Tree', 'Ga','Source', 'controls']
 
 
 def get_parent_dir():
@@ -57,31 +58,30 @@ def build_path_dict() :
         'Par': f'{CF}/ParConfs.txt',
     }
 
-    ks=['Group', 'Tracker', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Model', 'ModelGroup', 'Batch', 'Ref', 'Trial', 'Life', 'Body', 'Brain', 'SimIdx', 'Tree', 'Ga', 'controls']
     conf_paths={k : f'{F0}/lib/conf/confDicts/{k}.txt' for k in ks}
-    conf_paths = {
-        'Group': f'{CF}/DataGroups.txt',
-        'Tracker': f'{CF}/TrackerFormats.txt',
-        'Env': f'{CF}/EnvConfs.txt',
-
-        'Exp': f'{CF}/ExpConfs.txt',
-        'Ga': f'{CF}/GaConfs.txt',
-        'ExpGroup': f'{CF}/ExpGroupConfs.txt',
-        'Essay': f'{CF}/EssayConfs.txt',
-        'Source': f'{CF}/SourceConfs.txt',
-        'Model': f'{CF}/ModelConfs.txt',
-        'ModelGroup': f'{CF}/ModelGroupConfs.txt',
-        'Batch': f'{CF}/BatchConfs.txt',
-        # 'Settings': f'{CF}/SetConfs.txt',
-        'controls': f'{CF}/controls.txt',
-        'Ref': f"{CF}/ReferenceDatasets.txt",
-        'Trial': f"{CF}/TrialConfs.txt",
-        'Life': f"{CF}/LifeConfs.txt",
-        'Body': f"{CF}/BodyConfs.txt",
-        'Brain': f"{CF}/BrainConfs.txt",
-        'SimIdx': f'{CF}/SimIdx.txt',
-        'Tree': f'{CF}/ParTree.txt',
-    }
+    # conf_paths = {
+    #     'Group': f'{CF}/DataGroups.txt',
+    #     'Tracker': f'{CF}/TrackerFormats.txt',
+    #     'Env': f'{CF}/EnvConfs.txt',
+    #
+    #     'Exp': f'{CF}/ExpConfs.txt',
+    #     'Ga': f'{CF}/GaConfs.txt',
+    #     'ExpGroup': f'{CF}/ExpGroupConfs.txt',
+    #     'Essay': f'{CF}/EssayConfs.txt',
+    #     'Source': f'{CF}/SourceConfs.txt',
+    #     'Model': f'{CF}/ModelConfs.txt',
+    #     'ModelGroup': f'{CF}/ModelGroupConfs.txt',
+    #     'Batch': f'{CF}/BatchConfs.txt',
+    #     # 'Settings': f'{CF}/SetConfs.txt',
+    #     'controls': f'{CF}/controls.txt',
+    #     'Ref': f"{CF}/ReferenceDatasets.txt",
+    #     'Trial': f"{CF}/TrialConfs.txt",
+    #     'Life': f"{CF}/LifeConfs.txt",
+    #     'Body': f"{CF}/BodyConfs.txt",
+    #     'Brain': f"{CF}/BrainConfs.txt",
+    #     'SimIdx': f'{CF}/SimIdx.txt',
+    #     'Tree': f'{CF}/ParTree.txt',
+    # }
 
 
 
@@ -276,8 +276,7 @@ def test_pickle():
 
 def AllConfDict():
     dd = dNl.NestDict()
-    ks = ['Group', 'Tracker', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Model', 'ModelGroup', 'Batch', 'Ref', 'Trial', 'Life',
-          'Body', 'Brain', 'SimIdx', 'Tree', 'Ga', 'controls']
+
 
     F0 = get_parent_dir()
     for k in ks:
@@ -288,19 +287,13 @@ def AllConfDict():
             try:
                 d = dNl.load_dict(path, use_pickle=True)
             except:
+                # print(f'{k} configuration directory not found')
                 d= {}
         dd[k] = d
     return dd
 
 
-def AllConfDict2():
-    F0 = get_parent_dir()
-    f = f'{F0}/lib/conf/confDicts/CONFS.txt'
-    d=dNl.load_dict(f, use_pickle=False)
-    f2= f'{F0}/lib/conf/confDicts/CONFS2.txt'
-    d2=dNl.load_dict(f2, use_pickle=True)
-    d.update(d2)
-    return d
+
 
 def ConfSubkeyDict():
     # d0 = dNl.NestDict({k: {} for k in ks})
@@ -334,7 +327,9 @@ def ExpandedConfDict():
                                 if mID in c0['Model'].keys():
                                     gConf.model=c0['Model'][mID]
                                 else:
-                                    raise
+                                    # print(f'{mID} not found')
+                                    pass
+                                    # raise
     return c0
 
 

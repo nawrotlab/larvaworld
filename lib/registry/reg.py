@@ -8,7 +8,7 @@ from lib.aux import dictsNlists as dNl
 VERBOSE = 2
 
 
-def init_conf():
+def init_conf(reset=False):
     from lib.registry.paths import AllConfDict, ExpandedConfDict, build_path_dict, buildSampleDic
     global conf
     conf = AllConfDict()

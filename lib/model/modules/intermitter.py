@@ -2,10 +2,9 @@ import os
 import numpy as np
 import pandas as pd
 
-import lib.aux.dictsNlists as dNl
 from lib.anal.fitting import BoutGenerator
 
-from lib.aux import naming as nam
+from lib.aux import naming as nam,dictsNlists as dNl
 
 from lib.model.modules.basic import Effector
 from lib.registry import reg
@@ -76,8 +75,6 @@ class BaseIntermitter(Effector):
     def step(self, locomotor=None):
         super().count_time()
         self.update_state(locomotor)
-        # if self.cur_state=='feed':
-        #     print(self.feed_counter)
         return self.cur_state
 
     def generate_stridechain(self):
