@@ -264,7 +264,7 @@ class BaseIntermitter(Effector):
 
     def check_distros(self, pause_dist=None, stridechain_dist=None):
         if pause_dist.range is None and stridechain_dist.range is None:
-            bout_distros = reg.retrieveRef(f'None.150controls').bout_distros
+            bout_distros = reg.retrieveRef(f'exploration.150controls').bout_distros
             pause_dist=bout_distros.pause_dur
             stridechain_dist=bout_distros.run_count
         return pause_dist,stridechain_dist

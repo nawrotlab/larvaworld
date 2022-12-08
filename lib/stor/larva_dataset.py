@@ -141,7 +141,8 @@ class _LarvaDataset:
         if refID is None:
             if self.config.refID is not None:
                 refID = self.config.refID
-            elif add_reference:
+            else:
+            # elif add_reference:
                 refID = f'{self.group_id}.{self.id}'
                 self.config.refID = refID
 

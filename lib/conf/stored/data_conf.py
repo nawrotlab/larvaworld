@@ -2,9 +2,6 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry import reg
 
 
-# null=preg.init_dict.get_null
-
-
 
 def Tracker_dict():
     dkws={'Schleyer': {
@@ -73,25 +70,29 @@ def Tracker_dict():
 
 
 
-def Ref_dict():
+def Ref_dict(DATA=None):
     from lib.stor.larva_dataset import LarvaDataset
-    DATA = reg.Path["DATA"]
+    from lib.stor.config import update_config
+    if DATA is None :
+        DATA = reg.Path["DATA"]
     dds = [
-        [f'{DATA}/JovanicGroup/processed/3_conditions/AttP{g}@UAS_TNT/{c}' for g
+        [f'{DATA}/JovanicGroup/processed/AttP{g}/{c}' for g
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     dds = dNl.flatten_list(dds)
-    dds.append(f'{DATA}/SchleyerGroup/processed/FRUvsQUI/Naive->PUR/EM/exploration')
-    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200_controls')
-    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/10_controls')
+    # dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200controls')
+    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/150controls')
+    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/40controls')
     entries = {}
     for dr in dds:
         try:
             d = LarvaDataset(dr, load_data=False)
             d.load(step=False)
             refID=d.retrieveRefID()
-            conf=d.update_config()
+            conf=update_config(d, d.config)
             entries[refID]=conf
+            # print(f'Added reference dataset under ID {refID}')
         except:
+            # print(f'Failed to retrieve reference dataset from path {dr}')
             pass
     return dNl.NestDict(entries)
 

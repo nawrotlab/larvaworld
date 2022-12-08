@@ -352,7 +352,6 @@ class SelectionList(GuiElement):
         n = self.disp
         id = v[self.k]
         k0 = self.conftype
-
         if e == self.k:
             conf = reg.loadConf(id=id, conftype=k0)
             for kk, vv in self.sublists.items():
@@ -372,7 +371,9 @@ class SelectionList(GuiElement):
         elif e == f'DELETE {n}' and id != '':
             if self.delete(id, k0):
                 self.update(w)
-        elif e == f'RUN {n}' and id != '':
+        elif e == f'EXEC {n}' and id != '':
+        # FIXME Seems lie EXEC is used and not RUN
+        # elif e == f'RUN {n}' and id != '':
             try:
                 conf = self.get(w, v, c, as_entry=False)
                 d, g = self.tab.run(v, w, c, d, g, conf, id)

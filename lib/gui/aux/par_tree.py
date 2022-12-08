@@ -18,11 +18,11 @@ def tree_dict(d, parent_key='', sep='.'):
     add(['', parent_key, parent_key, [' ']])
 
     def tree_dict0(d, parent_key='', sep='.'):
-        import collections
+        import typing
 
         for k, v in d.items():
             new_key = parent_key + sep + k
-            if isinstance(v, collections.MutableMapping):
+            if isinstance(v, typing.MutableMapping):
                 add([parent_key, new_key, k, [' ']])
                 if len(v) > 0:
                     tree_dict0(v, new_key, sep=sep)
