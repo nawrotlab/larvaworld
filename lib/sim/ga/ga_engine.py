@@ -8,7 +8,7 @@ import progressbar
 import numpy as np
 
 from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
-from lib.sim.ga.functions import GA_optimization, get_robot_class
+from lib.sim.ga.functions import GA_optimization
 from lib.registry import reg
 from lib.aux.time_util import TimeUtil
 
@@ -220,7 +220,6 @@ class GAbuilder(GAselector):
                 if fitness_target_refID is not None:
                     fit_dict=GA_optimization(fitness_target_refID, fitness_target_kws)
                 else :
-                    from lib.sim.ga.functions import arrange_fitness
                     fit_dict = arrange_fitness(fitness_func,source_xy=self.model.source_xy)
             self.fit_dict =fit_dict
             arg=self.fit_dict.func_arg
@@ -286,9 +285,11 @@ class GAbuilder(GAselector):
 
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
-        if 'keys' in self.fit_dict.keys():
+        try :
             for k in self.fit_dict.keys:
                 reg.Dic.PD.compute(k, self.dataset)
+        except:
+            pass
         fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
 
         valid_gs={}
@@ -512,3 +513,29 @@ class GA_thread(threading.Thread):
         for robot in self.robots:
             robot.sense_and_act()
 
+def get_robot_class(robot_class=None, offline=False):
+    # print(robot_class)
+    # print(type(robot_class))
+    if offline:
+        robot_class = 'LarvaOffline'
+    if robot_class is None:
+        robot_class = 'LarvaRobot'
+
+    if type(robot_class) == str:
+        if robot_class == 'LarvaRobot':
+            class_name = f'lib.model.agents.larva_robot.LarvaRobot'
+        elif robot_class == 'ObstacleLarvaRobot':
+            class_name = f'lib.model.agents.larva_robot.ObstacleLarvaRobot'
+        elif robot_class == 'LarvaOffline':
+            class_name = f'lib.model.agents.larva_offline.LarvaOffline'
+        else :
+            raise
+        return cNs.get_class_by_name(class_name)
+    elif type(robot_class) == type:
+        return robot_class
+
+def arrange_fitness(fitness_func, **kwargs):
+    def func(robot):
+        return fitness_func(robot, **kwargs)
+
+    return dNl.NestDict({'func': func, 'func_arg': 'robot'})

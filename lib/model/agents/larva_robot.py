@@ -5,7 +5,8 @@ from lib.aux.sim_aux import Collision
 from lib.aux.color_util import Color
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
-
+from lib.model.modules.motor_controller import MotorController, Actuator
+from lib.model.modules.sensor2 import ProximitySensor
 
 class LarvaRobot(BodySim):
 
@@ -82,8 +83,7 @@ class ObstacleLarvaRobot(LarvaRobot):
     def build_sensorimotor(self, sensor_delta_direction, sensor_saturation_value, obstacle_sensor_error,
                            sensor_max_distance,
                            motor_ctrl_coefficient, motor_ctrl_min_actuator_value):
-        from lib.model.robot.motor_controller import MotorController, Actuator
-        from lib.model.robot.sensor import ProximitySensor
+
         S_kws = {
             'saturation_value': sensor_saturation_value,
             'error': obstacle_sensor_error,

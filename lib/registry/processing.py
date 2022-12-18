@@ -4,10 +4,7 @@ import pandas as pd
 from lib.registry import reg
 from lib.registry.base import BaseConfDict
 
-from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux, stdout
-
-
-
+from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux
 
 
 def filter(s, c, filter_f=2, inplace=True, recompute=False, **kwargs):
@@ -155,8 +152,7 @@ def preproccesing_funcs():
     return func_dict
 
 def annotation_funcs():
-    from lib.process.spatial import align_trajectories
-    from lib.anal.fitting import fit_epochs, get_bout_distros
+    from lib.aux.fitting import fit_epochs, get_bout_distros
     from lib.process.aux import comp_chunk_dicts
 
     klist=[

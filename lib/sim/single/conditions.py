@@ -1,10 +1,7 @@
 import random
 import numpy as np
 
-
-from lib.registry import reg
-import lib.aux.sim_aux
-from lib.aux.xy_aux import eudi5x, eudis5
+from lib.aux.xy_aux import eudis5
 from lib.process.spatial import comp_PI
 
 def get_exp_condition(exp):

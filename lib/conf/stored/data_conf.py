@@ -80,8 +80,10 @@ def Ref_dict(DATA=None):
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     dds = dNl.flatten_list(dds)
     # dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200controls')
+    dds.append(f'{DATA}/SchleyerGroup/processed/exploration/dish')
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/150controls')
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/40controls')
+    dds.append(f'{DATA}/SchleyerGroup/processed/naive_locomotion/20controls')
     entries = {}
     for dr in dds:
         try:

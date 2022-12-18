@@ -88,10 +88,9 @@ def pars_to_tree(name):
 
 
 def multiconf_to_tree(ids, conftype):
-    from lib.conf.stored.conf import expandConf
     dfs = []
     for i, id in enumerate(ids):
-        conf = expandConf(id, conftype)
+        conf = reg.expandConf(id=id, conftype=conftype)
         entries = tree_dict(d=conf, parent_key=id)
         df = pd.DataFrame.from_records(entries, index=['parent', 'key', 'text'])
         dfs.append(df)

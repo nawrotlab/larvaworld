@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib import patches, ticker
 
 from lib.aux import naming as nam,dictsNlists as dNl
 from lib.plot.aux import circNarrow, circular_hist

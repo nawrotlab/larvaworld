@@ -3,15 +3,17 @@ import os
 import random
 import numpy as np
 import pandas as pd
+import pypet
 
 
+
+from lib.registry import reg
 from lib.aux.stdout import suppress_stdout
 import lib.aux.dictsNlists as dNl
 import lib.aux.sim_aux
 from lib.plot.hist import plot_endpoint_params, plot_endpoint_scatter
 from lib.plot.deb import plot_debs
 from lib.plot.scape import plot_3pars, plot_heatmap_PI, plot_2d
-from lib.sim.batch.aux import load_traj, retrieve_exp_conf
 from lib.sim.single.single_run import SingleRun
 from lib.stor.larva_dataset import LarvaDataset
 
@@ -204,6 +206,38 @@ def post_processing(traj, result_tuple):
     traj.f_store()
 
 
+def reconstruct_dict(param_group, **kwargs):
+
+
+    dict = {}
+    for p in param_group:
+        if type(p) == pypet.ParameterGroup:
+            d = reconstruct_dict(p)
+            dict.update({p.v_name: d})
+        elif type(p) == pypet.Parameter:
+            if p.f_is_empty():
+                dict.update({p.v_name: None})
+            else:
+                v = p.f_get()
+                if v == 'empty_dict':
+                    v = {}
+                dict.update({p.v_name: v})
+    dict.update(**kwargs)
+    return dict
+
+
+def retrieve_exp_conf(traj):
+    d={}
+    for k0 in ['env_params', 'sim_params', 'trials', 'larva_groups']:
+        kws={'sim_ID':f'run_{traj.v_idx}', 'path':traj.config.dataset_path,'store_data':False} if k0=='sim_params' else {}
+        try :
+            c=traj.f_get(k0)
+            d[k0]=reconstruct_dict(c, **kws)
+        except:
+            d[k0]={}
+    return d
+
+
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
     with suppress_stdout(False):
         ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
@@ -289,6 +323,14 @@ def batch_method_unpack(run='default', post='default', final='null'):
     return {'procfunc': procfunc_dict[run],
             'postfunc': postfunc_dict[post],
             'finfunc': finfunc_dict[final], }
+
+
+def load_traj(batch_type, batch_id):
+
+    parent_dir_path = f'{reg.Path["BATCH"]}/{batch_type}'
+    filename = f'{parent_dir_path}/{batch_type}.hdf5'
+    traj = pypet.load_trajectory(filename=filename, name=batch_id, load_all=2)
+    return traj
 
 
 def retrieve_results(batch_type, batch_id):

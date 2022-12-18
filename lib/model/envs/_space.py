@@ -9,7 +9,7 @@ from shapely.geometry import LineString, Point, Polygon
 from lib.screen.rendering import InputBox
 from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.model.DEB.substrate import Substrate
-
+from lib.aux.shapely_aux import line_through_point
 
 
 
@@ -395,7 +395,7 @@ class WindScape:
             return np.abs(angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
 
     def obstructed(self, pos):
-        from lib.aux.ang_aux import line_through_point
+
         ll = line_through_point(pos, self.wind_direction, self.max_dim)
         return any([l.intersects(ll) for l in self.model.border_lines])
 

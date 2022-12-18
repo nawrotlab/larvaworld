@@ -6,7 +6,7 @@ from matplotlib import ticker, cm
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
 from lib.registry import reg
 from lib.plot.aux import plot_quantiles
-from lib.plot.base import BasePlot, Plot, AutoPlot, AutoLoadPlot, AutoBasePlot
+from lib.plot.base import AutoPlot, AutoLoadPlot, AutoBasePlot
 
 
 def plot_fft(s, c, palette=None, axx=None, **kwargs):

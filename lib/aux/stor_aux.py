@@ -1,6 +1,4 @@
 import os
-import shutil
-
 import pandas as pd
 from lib.aux import dictsNlists as dNl
 from lib.registry import reg
@@ -33,8 +31,6 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
             print('None of file or key are provided.Returning None')
             return None
 
-    # h5_key = key
-
     if filepath_key == 'data_h5':
         filepath_key = 'step'
         print('Change this')
@@ -56,10 +52,8 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
 def read(path=None, key=None, mode='r',**kwargs):
     path = get_path(path=path, key=key, **kwargs)
     if path is None :
-        # print(f'Filepath not provided for key {key} H5.Returning None')
         return None
     elif not os.path.isfile(path):
-        # print(f'File H5 does not exist at {path}.Returning None')
         return None
     if key is not None:
         try :
@@ -118,9 +112,6 @@ def loadSoloDics(agent_ids, path=None, use_pickle=False):
     if os.path.isdir(path) :
         files = [f'{id}.txt' for id in agent_ids]
         return dNl.load_dicts(files=files, folder=path, use_pickle=use_pickle)
-        # except:
-        #     ds = dNl.load_dicts(files=files, folder=path, use_pickle=True)
-        # return ds
 
 
 def storeSoloDics(agent_dics, path=None, use_pickle=False):
@@ -128,30 +119,3 @@ def storeSoloDics(agent_dics, path=None, use_pickle=False):
         os.makedirs(path, exist_ok=True)
         for id, dic in agent_dics.items():
             dNl.save_dict(dic, f'{path}/{id}.txt', use_pickle=use_pickle)
-        # except:
-        #     dNl.save_dict(dic, filepath, use_pickle=not use_pickle)
-
-
-#
-# class C(object):
-#     def __init__(self, path):
-#         self.path=path
-#         #self._x = None
-#
-#     @property
-#     def x(self):
-#         """I'm the 'x' property."""
-#         print("getter of x called")
-#         return loadDic(path=self.path)
-#
-#     @x.setter
-#     def x(self, d):
-#         print("setter of x called")
-#         storeDic(d, path=self.path)
-#
-#     # @x.deleter
-#     # def x(self):
-#     #     print("deleter of x called")
-#     #     del self._x
-# if __name__ == '__main__':
-#     print(datapath('dsp', 'my/ddd'))

@@ -13,7 +13,6 @@ import param
 from lib.aux.par_aux import subsup, sub, sup
 from lib.aux import naming as nam, dictsNlists as dNl, data_aux
 from lib.registry import reg, base
-from lib.model.robot.larva_robot import LarvaRobot
 
 def confInit_ks(k):
 
@@ -1044,7 +1043,7 @@ def buildInitDict(CTs):
 
         d['ga_build_kws'] = {
             'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
-            'robot_class': {'v':LarvaRobot, 'dtype': object, 'h': 'The agent class to use in the simulations'},
+            'robot_class': {'v':'LarvaRobot', 'dtype': str,'vs': ['LarvaRobot', 'LarvaOffline'], 'h': 'The agent class to use in the simulations'},
             'base_model': CTs['Model'].ConfID_entry(default='RE_NEU_PHI_DEF_nav', k='mID0', symbol=sub('mID', 0)),
             'bestConfID': {'dtype': str,
                            'h': 'The model configuration ID to store the best genome',

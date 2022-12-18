@@ -332,7 +332,7 @@ def import_window(datagroup_id, raw_dic):
                     # 'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
-                from lib.stor.managing import build_dataset
+                from lib.stor.building import build_dataset
                 targets = [f.replace(raw_folder, proc_folder) for f in raw_dirs]
                 if not merge:
                     print(f'------ Building {N} discrete datasets ------')

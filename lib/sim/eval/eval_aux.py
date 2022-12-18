@@ -1,14 +1,10 @@
 import copy
 import itertools
-
 import numpy as np
 import pandas as pd
-
 from scipy.stats import ks_2samp
-from shapely.geometry import Point
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
-from lib.aux.annotation import annotate
 from lib.registry import reg
 
 
@@ -158,122 +154,6 @@ def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
     return error_dict
 
 
-
-
-
-def adapt_conf(conf0, ee, cc):
-    run_t_max, pau_t_min, pau_t_max, fsv, l, v_mu, cum_d, sv_mu, fov_mu, b_mu = reg.getPar(
-        ['run_t_max', 'pau_t_min', 'pau_t_max', 'fsv', 'l', 'v_mu', "cum_d", "sv_mu", 'fov_mu', 'b_mu'])
-
-    conf = copy.deepcopy(conf0)
-
-    dic = {
-        run_sv_mu: ee[str_sv_mu] if str_sv_mu in ee.index else ee[run_v_mu] / ee[l],
-        run_v_mu: ee[run_v_mu],
-        run_t_min: ee[run_t_min],
-        run_t_max: ee[run_t_max],
-        pau_t_min: ee[pau_t_min],
-        pau_t_max: ee[pau_t_max],
-        'ang_vel_headcast': np.deg2rad(ee[pau_fov_mu]),
-        'theta_min_headcast': np.deg2rad(ee['headcast_q25_amp']),
-        'theta_max_headcast': np.deg2rad(ee['headcast_q75_amp']),
-        'theta_max_weathervane': np.deg2rad(ee['weathervane_q75_amp']),
-        'ang_vel_weathervane': np.deg2rad(ee[run_fov_mu]),
-        'turner_input_constant': ee['turner_input_constant'],
-        'run_dist': cc.bout_distros.run_dur,
-        'pause_dist': cc.bout_distros.pause_dur,
-        'stridechain_dist': cc.bout_distros.run_count}
-
-    if cc.Npoints > 1:
-        ddic = {'initial_freq': ee[fsv],
-                'step_mu': ee[str_sd_mu],
-                'step_std': ee[str_sd_std],
-                'attenuation': ee['attenuation'],
-                'attenuation_max': ee['attenuation_max'],
-                'max_vel_phase': ee['phi_scaled_velocity_max']}
-        dic.update(**ddic)
-    for kk, vv in dic.items():
-        if kk in conf.keys():
-            conf[kk] = vv
-
-    return conf
-
-
-def sim_locomotor(L, N, df_cols=None, tank_polygon=None, cur_x=0, cur_y=0, cur_fo=0, length=0.004):
-    if df_cols is None:
-        df_cols = reg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
-    aL = np.ones([N, len(df_cols)]) * np.nan
-    for i in range(N):
-        lin, ang, feed = L.step(A_in=0, length=length)
-        cur_d = lin * L.dt
-        if tank_polygon:
-            if not tank_polygon.contains(Point(cur_x, cur_y)):
-                cur_fo -= np.pi
-        cur_fo += ang * L.dt
-        cur_x += np.cos(cur_fo) * cur_d
-        cur_y += np.sin(cur_fo) * cur_d
-        aL[i, :7] = [lin, ang, cur_d, cur_fo, cur_x, cur_y, L.bend]
-    for ii in [1, 3, 6]:
-        aL[:, ii] = np.rad2deg(aL[:, ii])
-    return aL
-
-
-def sim_dataset(ee, cc, loco_func, loco_conf, adapted=False):
-    from lib.aux.sim_aux import get_tank_polygon
-    df_cols = reg.getPar(['v', 'fov', 'd', 'fo', 'x', 'y', 'b'])
-    Ncols = len(df_cols)
-
-    Ls = {}
-    for jj, id in enumerate(cc.agent_ids):
-
-        # Build locomotor instance of given model configuration adapted to the specific experimental larva
-        if adapted == 'I':
-            loco_conf = adapt_conf(loco_conf, ee.loc[id], cc)
-        Ls[id] = loco_func(dt=cc.dt, **loco_conf)
-
-    aaL = np.zeros([cc.Nticks, cc.N, Ncols]) * np.nan
-    aaL[0, :, :] = 0
-    try:
-        aaL[0, :, 3:6] = ee[nam.initial([fo, x, y])]
-    except:
-        pass
-    tank_polygon = get_tank_polygon(cc)
-    for jj, id in enumerate(cc.agent_ids):
-        # cur_x, cur_y, cur_fo = 0,0,0
-        cur_fo, cur_x, cur_y = aaL[0, jj, 3:6]
-        aaL[1:, jj, :] = sim_locomotor(Ls[id], cc.Nticks - 1, df_cols, tank_polygon, cur_x, cur_y, np.deg2rad(cur_fo),
-                                       length=ee['length'].loc[id])
-
-    df_index = pd.MultiIndex.from_product([np.arange(cc.Nticks), cc.agent_ids], names=['Step', 'AgentID'])
-    ss = pd.DataFrame(aaL.reshape([cc.Nticks * cc.N, Ncols]), index=df_index, columns=df_cols)
-
-    return ss
-
-
-def enrich_dataset(ss, ee, cc, tor_durs=[2, 5, 10, 20], dsp_starts=[0], dsp_stops=[40]):
-    from lib.process.spatial import scale_to_length, comp_dispersion, comp_straightness_index
-    strides_enabled = True if cc.Npoints > 1 else False
-    vel_thr = cc.vel_thr if cc.Npoints == 1 else 0.2
-
-    dt = cc.dt
-    ss[bv] = ss[b].groupby('AgentID').diff() / dt
-    ss[ba] = ss[bv].groupby('AgentID').diff() / dt
-    ss[foa] = ss[fov].groupby('AgentID').diff() / dt
-    ss[acc] = ss[v].groupby('AgentID').diff() / dt
-
-    ee[nam.mean(v)] = ss[v].dropna().groupby('AgentID').mean()
-    ee[nam.cum(dst)] = ss[dst].dropna().groupby('AgentID').sum()
-
-    scale_to_length(ss, ee, cc, keys=['d', 'v', 'a', 'v_mu'])
-
-    comp_dispersion(ss, ee, cc, dsp_starts=dsp_starts, dsp_stops=dsp_stops)
-    comp_straightness_index(ss, ee, cc, dt, tor_durs=tor_durs)
-    d = dNl.NestDict({'step_data': ss, 'endpoint_data': ee, 'config': cc, 'color': cc.color})
-    annotate(d)
-
-
-
-    return d.pooled_epochs
 
 
 def arrange_evaluation(d, evaluation_metrics=None):

@@ -5,7 +5,7 @@ from lib.aux import dictsNlists as dNl
 from lib.registry import reg
 
 
-class Brain():
+class Brain:
     def __init__(self, agent=None, dt=None):
         self.agent = agent
 
@@ -87,7 +87,38 @@ class DefaultBrain(Brain):
     def __init__(self, conf, agent=None, dt=None, **kwargs):
         super().__init__(agent=agent, dt=dt)
         self.locomotor = DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
-        reg.Dic.MD.init_brain(conf, self)
+        # reg.Dic.MD.init_brain(conf, self)
+
+    # def init_brain(self, conf, B):
+        D = reg.Dic.MD.dict.model.m
+        for k in ['olfactor', 'toucher', 'windsensor', 'thermosensor']:
+            if conf.modules[k]:
+                m = conf[f'{k}_params']
+                if k == 'windsensor':
+                    m.gain_dict = {'windsensor': 1.0}
+                mode = 'default'
+                kws = {kw: getattr(self, kw) for kw in D[k].kwargs.keys()}
+                M = D[k].mode[mode].class_func(**m, **kws)
+                if k == 'toucher':
+                    M.init_sensors(brain=self)
+
+
+            else:
+                M = None
+            setattr(self, k, M)
+        self.touch_memory = None
+        self.memory = None
+        if conf.modules['memory']:
+            mm = conf['memory_params']
+            mode = mm['modality']
+            kws = {kw: getattr(self, kw) for kw in D['memory'].kwargs.keys()}
+            if mode == 'olfaction' and self.olfactor:
+                mm.gain = self.olfactor.gain
+                self.memory = D['memory'].mode[mode].class_func(**mm, **kws)
+            elif mode == 'touch' and self.toucher:
+                mm.gain = self.toucher.gain
+                self.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
+        # return B
 
 
 

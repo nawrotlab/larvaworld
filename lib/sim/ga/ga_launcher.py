@@ -9,7 +9,6 @@ from lib.registry import reg, base
 from lib.screen.rendering import  Viewer
 from lib.aux.color_util import Color
 from lib.screen.screen_aux import get_arena_bounds
-from lib.sim.ga.functions import get_robot_class
 from lib.sim.ga.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil
 from lib.model.envs.base_world import BaseWorld
@@ -142,7 +141,7 @@ class GAlauncher(BaseGAlauncher):
             # t1 = TimeUtil.current_time_millis()
             # self.printd(2, 'Step duration: ', t1 - t0)
             if self.show_screen:
-                from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, K_e, QUIT, event, Rect, draw, display
+                from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, Rect, draw, display
                 for e in event.get():
                     if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
                         sys.exit()
@@ -214,14 +213,14 @@ class GAlauncher(BaseGAlauncher):
             # self.side_panel.space_dict=self.engine.space_dict
 
     def build_box(self, x, y, size, color):
-        from lib.model.space.obstacle import Box
+        from lib.model.envs.obstacle import Box
 
         box = Box(x, y, size, color)
         self.obstacles.append(box)
         return box
 
     def build_wall(self, point1, point2, color):
-        from lib.model.space.obstacle import Wall
+        from lib.model.envs.obstacle import Wall
         wall = Wall(point1, point2, color)
         self.obstacles.append(wall)
         return wall

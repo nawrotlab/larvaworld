@@ -1,12 +1,13 @@
 """ Run a simulation and save the parameters and data to files."""
 import copy
 import numpy as np
-from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
+
+from lib.registry import reg, base
+from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 from lib.model.envs.world_sim import WorldSim
 from lib.registry.output import set_output
-from lib.registry import reg, base
-
+from lib.aux.stor_aux import storeSoloDics, storeH5
 
 class ExpRun(base.BaseRun):
     def __init__(self, sim_params, enrichment, collections, larva_groups,progress_bar=False, save_to=None, store_data=True,
@@ -84,7 +85,7 @@ class ExpRun(base.BaseRun):
 
 
     def store(self):
-        from lib.aux.stor_aux import storeSoloDics, storeH5
+
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
@@ -153,9 +154,6 @@ class ExpRun(base.BaseRun):
         if 'dish' in exp:
             from lib.sim.single.analysis import targeted_analysis
             figs.update(**targeted_analysis(**kws))
-        # if 'RvsS' in exp or 'growth' in exp:
-        #     from lib.sim.single.analysis import deb_analysis
-        #     figs.update(**deb_analysis(**kws))
         if len(figs) == 0 and len(results) == 0:
             return None, None
         else:
@@ -163,11 +161,9 @@ class ExpRun(base.BaseRun):
 
 
 def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
-    from lib.conf.stored.conf import expandConf
-    # from lib.registry.dtypes import null_dict
     ds = []
     for i, (exp, dur) in enumerate(zip(exp_types, durations)):
-        conf = expandConf(exp, 'Exp')
+        conf = reg.expandConf(id=exp, conftype='Exp')
         conf.sim_params = reg.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
         conf.experiment = exp
         conf.update(**kwargs)

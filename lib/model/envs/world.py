@@ -14,7 +14,6 @@ from lib.registry import reg
 
 import lib.screen.rendering as ren
 
-from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
 from lib.model.envs.base_world import BaseWorld
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
 from lib.sim.single.conditions import get_exp_condition

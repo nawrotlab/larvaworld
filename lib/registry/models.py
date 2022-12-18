@@ -384,14 +384,9 @@ def Mem0():
 
     MBargs = {}
 
-    # d = {'RL': {'args': RLargs, 'class_func': RLmemory},
-    #      'MB': {'args': MBargs, 'class_func': RLmemory},
-    #      # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
-    #      }
     d = {'olfaction': {'args': RLargs, 'class_func': RLOlfMemory,
                        'variable': ['Delta', 'update_dt', 'alpha', 'epsilon']},
          'touch': {'args': MBargs, 'class_func': RLTouchMemory, 'variable': []},
-         # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
          }
     return dNl.NestDict(d)
 
@@ -670,18 +665,6 @@ class ModelRegistry:
 
         dd.model.pre = dNl.NestDict({**dd.brain.pre, **dd.aux.pre})
         dd.model.m = dNl.NestDict({**dd.brain.m, **dd.aux.m})
-        # dic2 = dNl.NestDict({**bdic2, **adic2})
-        # dic1 = dNl.NestDict({**bdic1, **adic1})
-        # dic0 = dNl.NestDict({**bdic0, **adic0})
-        #
-        # bks = list(bdic0.keys())
-        # aks = list(adic0.keys())
-        #
-        # bd = {'init': bdic0, 'pre': bdic1, 'm': bdic2, 'keys': bks}
-        # ad = {'init': adic0, 'pre': adic1, 'm': adic2, 'keys': aks}
-        # d = {'init': dic0, 'pre': dic1, 'm': dic2, 'keys': bks + aks}
-        #
-        # dd = {'brain': bd, 'aux': ad, 'model': d}
         return dNl.NestDict(dd)
 
     def get_mdict(self, mkey, mode='default'):
@@ -767,8 +750,7 @@ class ModelRegistry:
 
     def mIDbconf(self, mID=None, m=None):
         if m is None:
-            from lib.conf.stored.conf import loadConf
-            m = loadConf(mID, 'Model').brain
+            m = reg.loadConf(id=mID, conftype='Model').brain
         mIDconf = dNl.NestDict()
         mIDconf.modules = m.modules
         for mkey, mdic in self.dict.brain.m.items():
@@ -960,60 +942,30 @@ class ModelRegistry:
         df.index = arrange_index_labels(df.index)
         return conf_table(df, row_colors, mID=mID,colWidths=colWidths, **kwargs)
 
-    def init_loco(self, conf, L):
-        D = self.dict.model.m
-        for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
+    # def init_loco(self, conf, L):
+    #     D = self.dict.model.m
+    #     for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
+    #
+    #         if conf.modules[k]:
+    #
+    #             m = conf[f'{k}_params']
+    #             if k == 'feeder':
+    #                 mode = 'default'
+    #             else:
+    #                 mode = m.mode
+    #             # print(k, D[k], mode)
+    #             kws = {kw: getattr(L, kw) for kw in D[k].kwargs.keys()}
+    #             func = D[k].mode[mode].class_func
+    #             M = func(**m, **kws)
+    #             if k == 'intermitter':
+    #                 M.disinhibit_locomotion(L)
+    #             if k == 'crawler':
+    #                 M.mode = m.mode
+    #         else:
+    #             M = None
+    #         setattr(L, k, M)
+    #     return L
 
-            if conf.modules[k]:
-
-                m = conf[f'{k}_params']
-                if k == 'feeder':
-                    mode = 'default'
-                else:
-                    mode = m.mode
-                # print(k, D[k], mode)
-                kws = {kw: getattr(L, kw) for kw in D[k].kwargs.keys()}
-                func = D[k].mode[mode].class_func
-                M = func(**m, **kws)
-                if k == 'intermitter':
-                    M.disinhibit_locomotion(L)
-                if k == 'crawler':
-                    M.mode = m.mode
-            else:
-                M = None
-            setattr(L, k, M)
-        return L
-
-    def init_brain(self, conf, B):
-        D = self.dict.model.m
-        for k in ['olfactor', 'toucher', 'windsensor', 'thermosensor']:
-            if conf.modules[k]:
-                m = conf[f'{k}_params']
-                if k == 'windsensor':
-                    m.gain_dict = {'windsensor': 1.0}
-                mode = 'default'
-                kws = {kw: getattr(B, kw) for kw in D[k].kwargs.keys()}
-                M = D[k].mode[mode].class_func(**m, **kws)
-                if k == 'toucher':
-                    M.init_sensors(brain=B)
-
-
-            else:
-                M = None
-            setattr(B, k, M)
-        B.touch_memory = None
-        B.memory = None
-        if conf.modules['memory']:
-            mm = conf['memory_params']
-            mode = mm['modality']
-            kws = {kw: getattr(B, kw) for kw in D['memory'].kwargs.keys()}
-            if mode == 'olfaction' and B.olfactor:
-                mm.gain = B.olfactor.gain
-                B.memory = D['memory'].mode[mode].class_func(**mm, **kws)
-            elif mode == 'touch' and B.toucher:
-                mm.gain = B.toucher.gain
-                B.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
-        return B
 
     def locoConf(self, module_modes=None, modkws={}):
 
@@ -1236,17 +1188,14 @@ class ModelRegistry:
 
     def saveConf(self, conf, mID=None):
         if mID is not None:
-            from lib.conf.stored.conf import saveConf
-            saveConf(conf, 'Model', mID)
+            reg.saveConf(conf=conf, conftype='Model', id=mID)
 
     def loadConf(self, mID=None):
         if mID is not None:
-            from lib.conf.stored.conf import loadConf
-            return loadConf(mID, 'Model')
+            return reg.loadConf(id=mID, conftype='Model')
 
     def storedConf(self, **kwargs):
-        from lib.conf.stored.conf import kConfDict
-        return kConfDict('Model', **kwargs)
+        return reg.storedConf('Model')
 
     def build_full_dict(self, D):
 

@@ -82,9 +82,6 @@ def split_dataset(step,end, food, larva_groups,dir, **kwargs):
     for gID, gConf in larva_groups.items():
         d = LarvaDataset(f'{dir}/{gID}', id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
         d.set_data(step=step.loc[(slice(None), gConf.ids), :], end=end.loc[gConf.ids], food=food)
-        # d.config.parent_plot_dir = plot_dir
-        # if is_last:
-        #     d.save()
         ds.append(d)
     return ds
 
@@ -108,11 +105,8 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
     c0.N = len(ids)
 
     def get_data(d,ids) :
-
-
         if not hasattr(d, 'step_data'):
             d.load(h5_ks=['contour', 'midline'])
-            # d.load(h5_ks=['contour', 'midline', 'base_spatial'])
         s, e = d.step_data, d.endpoint_data
         e0=copy.deepcopy(e.loc[ids])
         s0=copy.deepcopy(s.loc[(slice(None), ids), :])
@@ -122,8 +116,6 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
 
     if pars is not None:
         s0 = s0.loc[(slice(None), slice(None)), pars]
-
-        # print('xxx')
 
     if env_params is not None:
         c0.env_params = env_params
@@ -192,11 +184,9 @@ def reset_AgentIDs(s):
 
 def reset_MultiIndex(s, columns=None) :
     s, my_index=reset_AgentIDs(s)
-
     if columns is None :
         columns = s.columns.values
     step = pd.DataFrame(s, index=my_index, columns=columns)
-
     return step
 
 

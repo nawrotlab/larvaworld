@@ -8,7 +8,7 @@ from scipy.stats import ttest_ind
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import label_diff
-from lib.plot.base import BasePlot, Plot, AutoLoadPlot, AutoPlot, AutoBasePlot
+from lib.plot.base import AutoLoadPlot, AutoPlot, AutoBasePlot
 from lib.registry import reg
 
 

@@ -23,10 +23,5 @@ def suppress_stdout(show_output):
         finally:
             sys.stdout = old_stdout
             sys.stderr = old_stderr
-        # else :
-        #     pass
 
-# def vprint(text,verbose,verbose_thr=1):
-#     if verbose>=verbose_thr:
-#         print(text)
 

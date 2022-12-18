@@ -18,7 +18,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     lws = [2] * num_distros
 
     if fit_dic is None:
-        from lib.anal.fitting import fit_bout_distros
+        from lib.aux.fitting import fit_bout_distros
         xmin, xmax = np.min(x0), np.max(x0)
         fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
     idx_Kmax = fit_dic['idx_Kmax']
@@ -124,7 +124,7 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
 def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False, test_detection=False, **kwargs):
-    from lib.anal.fitting import compute_density, fit_bout_distros
+    from lib.aux.fitting import compute_density, fit_bout_distros
     warnings.filterwarnings('ignore')
     nn = f'stridesNpauses_{mode}_{range}_{plot_fits}'
     name = nn if not only_fit_one else f'{nn}_0'
@@ -220,7 +220,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
             lws = [2] * num_distros
 
             if not refit_distros and ref is not None:
-                from lib.anal.fitting import BoutGenerator
+                from lib.aux.fitting import BoutGenerator
                 u2, du2, c2, c2cum = compute_density(x0, xmin, xmax)
                 b = BoutGenerator(**ref[bout]['best'])
                 pdfs = [b.get(x=du2, mode='pdf')] * num_distros

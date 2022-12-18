@@ -176,7 +176,6 @@ class SingleRun:
         exp = self.experiment
         figs, results = {}, {}
         if len(entry_list) > 0:
-            #from lib.plot.dict import graph_dict
             graph_entries = reg.Dic.GD.eval(entries=entry_list, **kws)
             figs.update(graph_entries)
 
@@ -190,9 +189,6 @@ class SingleRun:
         if 'dish' in exp:
             from lib.sim.single.analysis import targeted_analysis
             figs.update(**targeted_analysis(**kws))
-        # if 'RvsS' in exp or 'growth' in exp:
-        #     from lib.sim.single.analysis import deb_analysis
-        #     figs.update(**deb_analysis(**kws))
         if len(figs) == 0 and len(results) == 0:
             return None, None
         else:

@@ -4,9 +4,7 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.registry import reg
 reg.init()
 
-
-
-from lib.anal.argparsers import get_parser, run_template
+from cli.cli_argparsers import run_template, get_parser
 
 dest='sim_mode'
 

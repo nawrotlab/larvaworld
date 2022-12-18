@@ -7,14 +7,14 @@ import pandas as pd
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 from lib.registry import reg
+from lib.stor.larva_dataset import LarvaDataset
 
 class ExpFitter:
-    from lib.stor.larva_dataset import LarvaDataset
+
     def __init__(self, sample: Union[dict, str, LarvaDataset], stat_coefs=None,
                  valid_fields=['angular motion', 'reorientation', 'spatial motion', 'dispersion curve',
                                'stride cycle curve'],
                  use_symbols=False, overwrite=False):
-        from lib.stor.larva_dataset import LarvaDataset
         if isinstance(sample, LarvaDataset):
             self.sample = sample
             self.sample_conf = self.sample.config

@@ -7,7 +7,8 @@ from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 import lib.aux.dictsNlists as dNl
-
+from lib.sim.single.single_run import SingleRun
+from lib.sim.batch.batch import BatchRun
 
 
 class Exec:
@@ -56,22 +57,17 @@ class Exec:
         elif self.mode == 'sim':
             sim_id = self.conf['sim_params']['sim_ID']
             if res is None and self.run_externally:
-                # from lib.conf.pars.pars import ParDict
-                ff = reg.Path.SIM
-                dir0 = f"{ff}/{self.conf['sim_params']['path']}/{sim_id}"
+                dir0 = f"{reg.Path.SIM}/{self.conf['sim_params']['path']}/{sim_id}"
                 res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
             if res is not None:
-                # fig_dict, results = self.process.analyze()
                 fig_dict, results = sim_analysis(res, self.type)
                 entry = {sim_id: {'dataset': res, 'figs': fig_dict}}
-                # entry = {d.id: {'dataset': d, 'figs': fig_dict} for d in res}
             else:
                 entry, fig_dict = None, None
             return entry, fig_dict
 
     def exec_run(self):
-        from lib.sim.single.single_run import SingleRun
-        from lib.sim.batch.batch import BatchRun
+
         if self.mode == 'sim':
             self.process = SingleRun(**self.conf, progress_bar=self.w_progressbar)
             res = self.process.run()

@@ -26,7 +26,6 @@ def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):
 
 
 def xy_along_circle(N, loc, radius):
-    # print(r, N, loc)
     angles = np.linspace(0, np.pi * 2, N + 1)[:-1]
     p = [(loc[0] + np.cos(a) * radius[0], loc[1] + np.sin(a) * radius[1]) for a in angles]
     return p
@@ -54,14 +53,10 @@ def xy_grid(grid_dims, area, loc=(0.0, 0.0)) :
     Nx, Ny=grid_dims
     dx,dy=X/Nx, Y/Ny
     grid = np.meshgrid(np.linspace(x0-X/2+dx/2,x0+X/2+dx/2, Nx), np.linspace(y0-Y/2+dy/2,y0+Y/2+dy/2, Ny))
-
-
-    # positions = np.stack([Xs.ravel(), Ys.ravel()])
     cartprod = np.stack(grid, axis=-1).reshape(-1, 2)
 
     # Convert to list of tuples
     return list(map(tuple, cartprod))
-    # return Xs,Ys
 
 
 def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0), area=None):
@@ -121,10 +116,8 @@ def raw_or_filtered_xy(s, points):
     r = nam.xy(points, flat=True)
     f = nam.filt(r)
     if all(i in s.columns for i in f):
-        # print('Using filtered xy coordinates')
         return f
     elif all(i in s.columns for i in r):
-        # print('Using raw xy coordinates')
         return r
     else:
         print('No xy coordinates exist. Not computing spatial metrics')
@@ -205,16 +198,12 @@ def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     return drads if in_deg else np.deg2rad(rads)
 
 def dsp_single(xy0, s0, s1, dt):
-    # dt = c.dt
     ids = xy0.index.unique('AgentID').values
     Nids=len(ids)
     t0 = int(s0 / dt)
     t1 = int(s1 / dt)
     Nt = t1 - t0
-
-
     xy = xy0.loc[(slice(t0, t1), slice(None)), ['x', 'y']]
-
     AA = np.zeros([Nt, Nids]) * np.nan
     fails=0
     for i, id in (enumerate(ids)):
@@ -223,7 +212,6 @@ def dsp_single(xy0, s0, s1, dt):
             AA[:, i] = eudi5x(xy_i.values[1:], xy_i.dropna().values[0])
         except:
             fails+=1
-            # print(f'No values to set origin point for {id}')
             pass
     print(f'In {fails} out of {Nids} tracks failed to set origin point')
 
@@ -233,8 +221,4 @@ def dsp_single(xy0, s0, s1, dt):
     dsp_ar[:, 1] = np.nanquantile(AA, q=0.75, axis=1)
     dsp_ar[:, 2] = np.nanquantile(AA, q=0.25, axis=1)
     df = pd.DataFrame(dsp_ar, index=trange, columns=['median', 'upper', 'lower'])
-
     return AA,df
-
-if __name__ == "__main__":
-    xy_grid((5,5),(0.1,0.1))

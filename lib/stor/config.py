@@ -136,8 +136,3 @@ def update_config(obj, c) :
             c[k] = v.tolist()
     return c
 
-
-# if __name__ == '__main__':
-#     c=retrieve_config()
-#
-#     raise

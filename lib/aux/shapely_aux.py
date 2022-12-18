@@ -1,8 +1,7 @@
-import math
 import shapely.geometry as geometry
 from typing import Optional, List
-import numpy as np
-
+import math
+from shapely.geometry import LineString, Point
 
 def move_point(point: geometry.Point, angle: float, distance: float) -> geometry.Point:
     return geometry.Point(
@@ -52,28 +51,15 @@ def segments_intersection(segment_1, segment_2):
 def segments_intersection_p(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y):
     EPSILON = 0.000001
     s1_x = p1_x - p0_x
-
-    # print("s1_y = " + str(p1_y) + " - " + str(p0_y))
-
     s1_y = p1_y - p0_y
     s2_x = p3_x - p2_x
-
-    # print("s2_y = " + str(p3_y) + " - " + str(p2_y))
-
     s2_y = p3_y - p2_y
 
-    # print("divisore: " + str(-s2_x) + " * " + str(s1_y) + " + " + str(s1_x) + " * " + str(s2_y))
-
-    # s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y)
-    # t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
-
     divisore_1 = -s2_x * s1_y + s1_x * s2_y
-
     if divisore_1 == 0:
         divisore_1 = EPSILON
 
     divisore_2 = -s2_x * s1_y + s1_x * s2_y
-
     if divisore_2 == 0:
         divisore_2 = EPSILON
 
@@ -91,7 +77,7 @@ def segments_intersection_p(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y):
 
 
 def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
-    from lib.model.space.obstacle import Obstacle
+    from lib.model.envs.obstacle import Obstacle
     min_dst = None
     nearest_obstacle = None
 
@@ -100,21 +86,25 @@ def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
             obstacle = obj
 
             # check collision between obstacle edges and sensor ray
-            # print(obstacle.edges)
-            # raise
             for edge in obstacle.edges:
-                # print("obstacle_edge:", geom_utils.segment_to_string(obstacle_edge))
                 intersection_point = segments_intersection(sensor_ray, edge)
 
                 if intersection_point is not None:
-                    # print("intersection_point:", geom_utils.point_to_string(intersection_point))
                     dst = distance(p0, intersection_point)
 
                     if min_dst is None or dst < min_dst:
                         min_dst = dst
                         nearest_obstacle = obstacle
-                        # print("new distance_from_nearest_obstacle:", distance_from_nearest_obstacle)
     return min_dst, nearest_obstacle
+
+
+def line_through_point(pos, angle, length, pos_as_start=False) :
+    if not pos_as_start :
+        length=-length
+    start = Point(pos)
+    end = Point(start.x + length * math.cos(angle),
+                start.y + length * math.sin(angle))
+    return LineString([start, end])
 
 
 class Point:

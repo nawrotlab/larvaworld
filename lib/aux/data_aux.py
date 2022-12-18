@@ -7,8 +7,6 @@ import numpy as np
 import param
 
 from lib.aux import dictsNlists as dNl
-
-
 from lib.registry.units import ureg
 
 
@@ -40,6 +38,8 @@ def concat_datasets(ddic, key='end', unit='sec'):
                 df = d.step_data
             except:
                 df = d.read(key='step')
+        else :
+            raise
         df['DatasetID'] = l
         df['GroupID'] = d.group_id
         dfs.append(df)
@@ -55,14 +55,11 @@ def concat_datasets(ddic, key='end', unit='sec'):
 
 
 def moving_average(a, n=3):
-    # ret = np.cumsum(a, dtype=float)
-    # ret[n:] = ret[n:] - ret[:-n]
     return np.convolve(a, np.ones((n,)) / n, mode='same')
-    # return ret[n - 1:] / n
 
 
 def arrange_index_labels(index):
-    from lib.aux import dictsNlists as dNl
+
     ks=index.unique().tolist()
     Nks = index.value_counts(sort=False)
 
@@ -86,9 +83,6 @@ def mdict2df(mdict, columns=['symbol', 'value', 'description']):
 
 
 def init2mdict(d0):
-    from lib.aux import dictsNlists as dNl
-    # d = {}
-
     def check(D0):
         D = {}
         for kk, vv in D0.items():
@@ -109,36 +103,6 @@ def init2mdict(d0):
                 D[kk] = p
 
             else:
-
-                # label = f'{kk} conf'
-                # if 'v0' in vv.keys() :
-                #     v0=vv['v0']
-                # else :
-                #     v0=None
-                # if 'k' in vv.keys() :
-                #     k=vv['k']
-                # else :
-                #     k=kk
-                # vparfunc = vdicpar(mdict, h=f'The {kk} conf', lab=label, v0=v0)
-                # kws = {
-                #     'name': kk,
-                #     'p': kk,
-                #     'd': kk,
-                #     'k': k,
-                #     'disp': label,
-                #     'sym': sub(k, 'conf'),
-                #     'codename': kk,
-                #     'dtype': dict,
-                #     # 'func': func,
-                #     # 'u': ureg.dimensionless,
-                #     # 'u_name': None,
-                #     # 'required_ks': [],
-                #     'vparfunc': vparfunc,
-                #     # 'dv': None,
-                #     'v0': v0,
-                #
-                # }
-                # p = v_descriptor(**kws)
                 D[kk] = check(vv)
         return D
 
@@ -147,7 +111,6 @@ def init2mdict(d0):
 
 
 def gConf(mdict, **kwargs):
-    from lib.aux import dictsNlists as dNl
     if mdict is None:
         return None
 
@@ -163,7 +126,6 @@ def gConf(mdict, **kwargs):
             else:
                 conf[d] = gConf(mdict=p)
             conf = dNl.update_existingdict(conf, kwargs)
-        # conf.update(kwargs)
         return dNl.NestDict(conf)
     else:
         return dNl.NestDict(mdict)
@@ -193,8 +155,6 @@ def update_existing_mdict(mdict, mmdic):
     else:
         for d, v in mmdic.items():
             p = mdict[d]
-
-            # new_v = mmdic[d] if d in mmdic.keys() else None
             if isinstance(p, param.Parameterized):
                 if type(v) == list:
                     if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
@@ -211,7 +171,6 @@ def get_ks(d0, k0=None, ks=[]):
         if k0 is not None:
             k = f'{k0}.{k}'
         if isinstance(p, param.Parameterized):
-
             ks.append(k)
         else:
             ks = get_ks(p, k0=k, ks=ks)
@@ -497,14 +456,6 @@ def vpar(vfunc, v0, h, lab, lim, dv, vs):
             f_kws['step'] = dv
     if vfunc in [param.Selector]:
         f_kws['objects'] = vs
-    # print(vfunc,v0, h, lab, lim, dv, vs)
-    # if vfunc in [param.Dict] :
-        # if v0 is not None :
-        #     f_kws['class_'] = type(v0)
-        # else :
-        #     f_kws['class_'] = dict
-        # print(f_kws)
-
     func = vfunc(**f_kws, instantiate=True)
     return func
 

@@ -2,7 +2,7 @@ import numpy as np
 
 from lib.model.body.controller import PhysicsController
 from lib.registry import reg
-
+from lib.aux.ang_aux import restore_bend_2seg
 
 class Locomotor:
     def __init__(self, dt=0.1):
@@ -56,7 +56,7 @@ class OfflineLocomotor(Locomotor):
                                                               bend=self.bend, dt=self.dt,
                                                               ang_suppression=self.cur_ang_suppression)
 
-        from lib.aux.ang_aux import restore_bend_2seg
+
         self.last_dist = self.lin_vel * self.dt
         self.bend = restore_bend_2seg(self.bend, self.last_dist, length,
                                       correction_coef=self.controller.bend_correction_coef)
@@ -70,7 +70,9 @@ class OfflineLocomotor(Locomotor):
             self.bend = -np.pi
 
     # @property
-    def output(self, length):
+    def output(self, length=None):
+        if length is None :
+            length=1
         self.update_body(length)
         return self.lin_vel, self.ang_vel, self.feed_motion
 
@@ -81,7 +83,31 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
             OfflineLocomotor.__init__(self, **kwargs)
         else:
             Locomotor.__init__(self, **kwargs)
-        reg.Dic.MD.init_loco(conf, self)
+        # reg.Dic.MD.init_loco(conf, self)
+
+    # def init_loco(self, conf, L):
+        D = reg.Dic.MD.dict.model.m
+        for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
+
+            if conf.modules[k]:
+
+                m = conf[f'{k}_params']
+                if k == 'feeder':
+                    mode = 'default'
+                else:
+                    mode = m.mode
+                kws = {kw: getattr(self, kw) for kw in D[k].kwargs.keys()}
+                func = D[k].mode[mode].class_func
+                M = func(**m, **kws)
+                if k == 'intermitter':
+                    M.disinhibit_locomotion(self)
+                if k == 'crawler':
+                    M.mode = m.mode
+            else:
+                M = None
+            setattr(self, k, M)
+        # return L
+
 
     def step(self, A_in=0, length=1):
 

@@ -1,11 +1,6 @@
 import pygame
 import numpy as np
 
-from lib.registry import reg
-from lib.screen.rendering import SimulationScale
-
-
-
 
 def evaluate_input(m, screen):
 

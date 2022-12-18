@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
+from lib.aux import colsNstr as cNs
 from lib.registry import reg
 
 I=reg.Dic.DEF
@@ -137,7 +137,7 @@ def double_patches(type='standard'):
 
 def maze_conf(n, h):
     def maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
-        from lib.model.space.maze import Maze
+        from lib.model.envs.maze import Maze
         m = Maze(nx, ny, ix, iy, height=h)
         m.make_maze()
         lines = m.maze_lines()

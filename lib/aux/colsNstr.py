@@ -1,5 +1,5 @@
 import random
-
+import functools
 import numpy as np
 import pandas as pd
 from matplotlib import cm, colors
@@ -72,7 +72,7 @@ def remove_suffix(text, suffix):
     return text  # or whatever
 
 
-import functools
+
 
 
 def rsetattr(obj, attr, val):

@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import six
 
@@ -10,7 +8,6 @@ from lib.registry import reg
 
 
 def modelConfTable(mID, **kwargs):
-    #from lib.registry.pars import preg
     return reg.Dic.MD.mIDtable(mID, **kwargs)
 
 

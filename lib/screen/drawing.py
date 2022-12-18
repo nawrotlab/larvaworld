@@ -6,8 +6,8 @@ import pygame
 from lib.registry import reg
 from lib.screen.rendering import Viewer, InputBox, SimulationClock, SimulationScale, SimulationState, draw_trajectories
 from lib.screen.screen_aux import get_window_dims, get_arena_bounds
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
-from lib.sim.single.input_lib import evaluate_input, evaluate_graphs
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
+from lib.screen.input_lib import evaluate_input, evaluate_graphs
 
 
 class ScreenManager:
@@ -460,12 +460,4 @@ class ScreenManager:
     def eliminate_overlap(self):
         pass
 
-# if __name__ == '__main__':
-#     RefPars = lib.aux.dictsNlists.load_dict(paths.path('ParRef'), use_pickle=False)
-#     print(RefPars)
-#     sample_ps=list(RefPars.keys())
-#
-#     from lib.conf.stored.conf import loadConf
-#     sample=loadConf('None.200_controls', 'Ref')
-#     dic=sample_group(sample, 10, sample_ps)
-# print(dic)
+

@@ -1,7 +1,7 @@
 from lib.registry import reg
 reg.init()
 
-from lib.stor.managing import import_dataset
+from lib.stor.building import import_dataset
 
 kws0 = {
     'datagroup_id': 'Schleyer lab',

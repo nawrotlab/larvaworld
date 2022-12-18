@@ -1,6 +1,5 @@
 import math
 import os
-import time
 import numpy as np
 import imageio
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -8,9 +7,9 @@ import pygame
 
 from lib.aux.color_util import Color
 from lib.aux.time_util import TimeUtil
-from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
-from lib.model.space.obstacle import Wall,Box
-from lib.model.space.rot_surface import LightSource
+from lib.aux import shapely_aux
+from lib.model.envs.obstacle import Wall,Box
+from lib.model.modules.rot_surface import LightSource
 
 class Viewer(object):
     def __init__(self, window_dims, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,

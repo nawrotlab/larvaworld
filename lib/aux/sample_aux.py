@@ -6,8 +6,6 @@ from lib.aux import dictsNlists as dNl
 from lib.registry import reg
 
 
-
-
 def generate_larvae(N, sample_dict, base_model):
     if len(sample_dict) > 0:
         all_pars = []

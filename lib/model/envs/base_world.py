@@ -10,10 +10,9 @@ from typing import Any
 from mesa.space import ContinuousSpace
 from shapely.geometry import Polygon
 
-from lib.registry import reg
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux, dir_aux, sample_aux
+from lib.aux import dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
 from lib.model.agents._larva_sim import LarvaSim
-from lib.aux.collecting import NamedRandomActivation
+from lib.model.envs.collecting import NamedRandomActivation
 # import lib.aux.sim_aux
 # import lib.aux.xy_aux
 
@@ -87,7 +86,7 @@ class BaseWorld:
         self._create_odor_layers(self.get_food(), self.env_pars.odorscape)
 
     def future(self):
-        from lib.model.space.obstacle import Arena
+        from lib.model.envs.obstacle import Arena
         from lib.model.envs._space import Space
         self.arena=Arena(**self.env_pars.arena)
         self.space = Space(Box2D=self.Box2D, arena=self.arena)
@@ -142,7 +141,7 @@ class BaseWorld:
     def create_borders(self, border_list=None):
         if border_list is not None and len(border_list)>0:
             for id, pars in self.env_pars.border_list.items():
-                from lib.model.space.obstacle import Border
+                from lib.model.envs.obstacle import Border
                 b = Border(model=self, unique_id=id,scaling_factor=self.scaling_factor, **pars)
                 self.add_border(b)
         pass
@@ -212,7 +211,7 @@ class BaseWorld:
         self.all_food_schedule = NamedRandomActivation('all_food_schedule', self)
 
     def delete_agent(self, agent):
-        from lib.model.space.obstacle import Border
+        from lib.model.envs.obstacle import Border
         from lib.model.agents._source import Food
         if type(agent) is LarvaSim:
             self.active_larva_schedule.remove(agent)

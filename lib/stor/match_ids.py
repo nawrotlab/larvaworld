@@ -6,6 +6,11 @@ from lib.aux import dictsNlists as dNl
 def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20,verbose=1, **kwargs):
     pairs= {}
 
+    def common_member(a, b):
+        a_set = set(a)
+        b_set = set(b)
+        return a_set & b_set
+
     def eval(t0, xy0, l0, t1, xy1, l1):
         tt = t1 - t0
         if tt <= 0:
@@ -48,7 +53,7 @@ def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx
     Nids1 = len(ids)
     if verbose >= 2:
         print('Finalizing dataset')
-    while len(dNl.common_member(list(pairs.keys()), list(pairs.values()))) > 0:
+    while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
         for id0,id1 in pairs.items() :
             if id1 in pairs.keys() :
                 pairs[id0]=pairs[id1]

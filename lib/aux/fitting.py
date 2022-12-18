@@ -2,14 +2,12 @@ import os
 import warnings
 import numpy as np
 from scipy.stats import levy, norm, rv_discrete, ks_2samp
-from scipy.special import erf
 
 
 from lib.registry import reg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
-def gaussian(x, mu, sig):
-    return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+
 
 def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
     r = len(x[x < xmid]) / len(x)
@@ -334,14 +332,6 @@ def get_best_distro(bout, f, idx_Kmax=None):
                   'name': 'uniform'}
     return distro
 
-
-def pvalue_star(pv):
-    a = {1e-4: "****", 1e-3: "***",
-         1e-2: "**", 0.05: "*", 1: "ns"}
-    for k, v in a.items():
-        if pv < k:
-            return v
-    return "ns"
 
 
 def critical_bout(c=0.9, sigma=1, N=1000, tmax=1100, tmin=1) :

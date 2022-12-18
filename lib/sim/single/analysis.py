@@ -2,11 +2,9 @@ import itertools
 import warnings
 from typing import List
 
-import numpy as np
-
 from lib.aux.combining import combine_pdfs
 from lib.aux.dictsNlists import flatten_list, unique_list
-from lib.anal.comparing import ExpFitter
+from lib.aux.exp_fitter import ExpFitter
 from lib.plot.time import plot_navigation_index, plot_dispersion
 from lib.plot.bearing import plot_turn_Dbearing, plot_chunk_Dorient2source
 from lib.plot.scape import plot_2pars

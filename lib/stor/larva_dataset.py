@@ -1,15 +1,13 @@
-import itertools
-import os.path
 import shutil
 import numpy as np
 import warnings
 
-from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam, stdout
+from lib.aux import dictsNlists as dNl, xy_aux, naming as nam, stdout
 
 from lib.aux.annotation import annotate
 from lib.aux.stor_aux import read, storeH5, loadSoloDics
 
-from lib.decorators.timer3 import timer, warn_slow
+from lib.decorators.timer import warn_slow
 
 from lib.decorators.property import dic_manager_kwargs
 from lib.stor.config import retrieve_config, update_config, update_metric_definition

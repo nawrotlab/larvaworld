@@ -1,19 +1,51 @@
 import warnings
-
-
+import numpy as np
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from lib.registry import reg
 import lib.aux.dictsNlists as dNl
+from lib.aux.xy_aux import eudi5x
+
+def dst2source_evaluation(robot, source_xy):
+    traj = np.array(robot.trajectory)
+    dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
+    cum_dst = np.sum(dst)
+    l=[]
+    for label, pos in source_xy.items():
+        dst2source = eudi5x(traj, np.array(pos))
+        l.append(dst2source)
+    m=np.mean(np.min(np.vstack(l),axis=0))
+    fitness= - m/ cum_dst
+    return fitness
+
+def cum_dst(robot, **kwargs):
+    return robot.cum_dst / robot.real_length
+
+
+def bend_error_exclusion(robot):
+    if robot.body_bend_errors >= 20:
+        return True
+    # elif robot.negative_speed_errors >= 5:
+    #     return True
+    else:
+        return False
+
+
+fitness_funcs = dNl.NestDict({
+    'dst2source': dst2source_evaluation,
+    'cum_dst': cum_dst,
+})
 
 
 
+exclusion_funcs = dNl.NestDict({
+    'bend_errors': bend_error_exclusion
+})
 
 
 
 def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
             m1=None, sel={}, build={}, fitID=None, init='random', excludeID=None, robot_class='LarvaRobot', **kwargs):
-    from lib.sim.eval.eval_funcs import exclusion_funcs, fitness_funcs
 
     build_kws = {
         'fitness_target_refID': refID,
@@ -46,12 +78,12 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
 
 def Ga_dict() :
     d = dNl.NestDict({
-    **ga_conf('interference', dt=1 / 16, dur=3, refID='None.150controls', m0='loco_default',
+    **ga_conf('interference', dt=1 / 16, dur=3, refID='exploration.150controls', m0='loco_default',
               m1='NEU_PHI',
               fit_kws={'cycle_curves': ['fov', 'rov', 'foa']}, init='model',
               space_mkeys=['interference', 'turner'],
               Nel=2, N=6, env_params='arena_200mm'),
-    **ga_conf('exploration', dur=0.5, dt=1 / 16, refID='None.150controls', m0='loco_default',
+    **ga_conf('exploration', dur=0.5, dt=1 / 16, refID='exploration.150controls', m0='loco_default',
               m1='NEU_PHI',
               fit_kws={'eval_metrics':
                            {'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
@@ -62,7 +94,7 @@ def Ga_dict() :
               space_mkeys=['interference', 'turner'], init='random',
               excludeID='bend_errors',
               Nel=2, N=10, env_params='arena_200mm'),
-    **ga_conf('realism', dur=1, dt=1 / 16, refID='None.150controls', m0='loco_default', m1='PHIonSIN',
+    **ga_conf('realism', dur=1, dt=1 / 16, refID='exploration.150controls', m0='loco_default', m1='PHIonSIN',
               fit_kws={'eval_shorts': ['b', 'fov', 'foa'],
                        # fit_kws={'eval_shorts': ['b', 'fov', 'foa', 'rov', 'tur_t', 'tur_fou', 'pau_t', 'run_t', 'tor2', 'tor10'],
                        'pooled_cycle_curves': ['fov', 'foa', 'b']},
@@ -80,7 +112,3 @@ def Ga_dict() :
     })
     return d
 
-
-# if __name__ == '__main__':
-#     mkeys=['interference', 'turner']
-#     mID0='PHIonNEU'

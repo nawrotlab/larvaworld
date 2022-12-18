@@ -4,11 +4,11 @@ import pygame
 from math import atan2, sin, cos
 
 from lib.aux.color_util import Color
-from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
-from lib.model.space.rot_surface import LightSource
+from lib.aux import sim_aux, shapely_aux
+from lib.model.modules.rot_surface import LightSource
 
 
-class Sensor:
+class Sensor2:
 
     def __init__(self, robot, delta_direction, saturation_value, error):
         self.robot = robot
@@ -27,7 +27,7 @@ class Sensor:
 
 
 
-class LightSensor(Sensor):
+class LightSensor(Sensor2):
 
     LENGTH_SENSOR_LINE = 100
 
@@ -76,7 +76,7 @@ class LightSensor(Sensor):
         pygame.draw.line(self.robot.model.screen, Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
 
 
-class ProximitySensor(Sensor):
+class ProximitySensor(Sensor2):
 
     # COLLISION_DISTANCE = 12  # px
 

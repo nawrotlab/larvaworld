@@ -155,6 +155,10 @@ Larvaworld can be run directly from linux terminal.
 
            python larvaworld.py Batch PItest_off -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
 
-    
-    
+   3. Genetic Algorithm optimization
+   
+       Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
+       This line optimizes a model for kinematic realism against a reference experimental dataset
+
+           python larvaworld.py Ga realism -N 20 -t 0.5
     

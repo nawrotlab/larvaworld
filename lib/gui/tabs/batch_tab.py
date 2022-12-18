@@ -2,8 +2,11 @@
 
 import copy
 import PySimpleGUI as sg
+import h5py
+
 from lib.gui.tabs.tab import GuiTab
 from lib.gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
+from lib.plot.table import mpl_table
 from lib.registry import reg
 from lib.sim.exec.exec_run import Exec
 
@@ -27,7 +30,6 @@ class BatchTab(GuiTab):
         return self.datalists[self.k_stored]
 
     def update(self, w, c, conf, id):
-        from lib.sim.batch.aux import stored_trajs
         w.Element(self.batch_id_key).Update(value=f'{id}_{reg.next_idx(id=id, conftype="Batch")}')
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
@@ -96,7 +98,7 @@ class BatchTab(GuiTab):
                 self.draw(df, fig_dict, w)
 
         elif e == f'REMOVE {self.k_stored}':
-            from lib.sim.batch.aux import delete_traj, stored_trajs
+            from lib.sim.batch.aux import delete_traj
             for stor_id in stor_ids:
                 delete_traj(id0, stor_id)
             self.DL1.add(w, stored_trajs(id0), replace=True)
@@ -110,7 +112,6 @@ class BatchTab(GuiTab):
         complete = []
         for batch_id, ex in self.DL0.dict.items():
             if ex.check():
-                from lib.sim.batch.aux import stored_trajs
                 df, fig_dict = ex.results
                 self.draw(df, fig_dict, w)
                 self.DL1.add(w, stored_trajs(ex.type), replace=True)
@@ -118,11 +119,19 @@ class BatchTab(GuiTab):
         self.DL0.remove(w, complete)
 
     def draw(self, df, fig_dict, w):
-        from lib.plot.table import mpl_table
         fig_dict['dataframe'] = mpl_table(df)
         self.base_dict['df'] = df
         self.base_dict['fig_dict'] = fig_dict
         self.graph_list.update(w, fig_dict)
+
+
+def stored_trajs(batch_type):
+    filename = f'{reg.Path["BATCH"]}/{batch_type}/{batch_type}.hdf5'
+    try:
+        f = h5py.File(filename, 'r')
+        return {k:f for k in f.keys()}
+    except:
+        return {}
 
 
 if __name__ == "__main__":

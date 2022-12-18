@@ -2,7 +2,7 @@ import itertools
 import os
 import numpy as np
 from matplotlib import pyplot as plt, patches, transforms, ticker
-
+from scipy.stats import mannwhitneyu
 import warnings
 
 from lib.registry import reg
@@ -212,11 +212,18 @@ def label_diff(i, j, text, X, Y, ax):
     # ax.annotate(text, xy=(X[i], y), zorder=10)
     ax.annotate('', xy=(X[i], y), xytext=(X[j], y), arrowprops=props)
 
+def pvalue_star(pv):
+    a = {1e-4: "****", 1e-3: "***",
+         1e-2: "**", 0.05: "*", 1: "ns"}
+    for k, v in a.items():
+        if pv < k:
+            return v
+    return "ns"
+
 
 def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs):
     from statannotations.Annotator import Annotator
-    from lib.anal.fitting import pvalue_star
-    from scipy.stats import mannwhitneyu
+
     subIDs0 = np.unique(data[x].values)
     # print(subIDs0)
     if hue is not None:

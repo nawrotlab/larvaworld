@@ -1,6 +1,5 @@
-from lib.anal.fitting import fit_epochs, get_bout_distros
-from lib.aux import dictsNlists as dNl, xy_aux, naming as nam, stdout
-
+from lib.aux.fitting import fit_epochs, get_bout_distros
+from lib.aux import dictsNlists as dNl, naming as nam
 
 
 def register_bout_distros(c,e):
@@ -39,5 +38,4 @@ def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
         c.bout_distros = get_bout_distros(d.pooled_epochs)
         register_bout_distros(c, e)
     if on_food:
-        from lib.process import patch
         patch.comp_on_food(s, e, c)

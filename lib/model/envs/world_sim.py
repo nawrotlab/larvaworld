@@ -1,15 +1,15 @@
-import random
 import time
 
 import numpy as np
 import pandas as pd
 from mesa.datacollection import DataCollector
 
-from lib.model.agents._larva_sim import LarvaSim
-from lib.registry import reg
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux, dir_aux, sample_aux
-from lib.model.envs.world import World
 
+from lib.registry import reg
+from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, dir_aux, sample_aux
+from lib.model.envs.world import World
+from lib.model.agents._larva_sim import LarvaSim
+from lib.model.envs.collecting import TargetedDataCollector
 
 
 class WorldSim(World):
@@ -113,7 +113,7 @@ class WorldSim(World):
             elif agent_class == 'Larva':
                 f = self._add_larva(p0)
             elif agent_class == 'Border':
-                from lib.model.space.obstacle import Border
+                from lib.model.envs.obstacle import Border
                 b = Border(model=self, points=[p1, p0])
                 self.add_border(b)
         except:
@@ -171,7 +171,7 @@ class WorldSim(World):
         return False
 
     def create_collectors(self, output):
-        from lib.aux.collecting import TargetedDataCollector
+
 
         if output is None:
             output = {'step': [], 'end': [], 'tables': {}}

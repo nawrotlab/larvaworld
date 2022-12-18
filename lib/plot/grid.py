@@ -57,7 +57,7 @@ def calibration_plot(save_to=None, files=None):
 
 
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
-    from lib.anal.fitting import test_boutGens
+    from lib.aux.fitting import test_boutGens
     from lib.aux.sample_aux import sim_model
     if refDataset is None:
         d = reg.loadRef(refID)

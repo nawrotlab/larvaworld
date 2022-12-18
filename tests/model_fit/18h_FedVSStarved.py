@@ -6,7 +6,7 @@ from lib.registry import reg
 from lib.sim.eval.evaluation import EvalRun
 from lib.sim.ga.functions import GA_optimization
 from lib.sim.eval.model_fit import optimize_mID
-from lib.stor.managing import import_datasets
+from lib.stor.building import import_datasets
 
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'

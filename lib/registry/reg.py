@@ -9,7 +9,7 @@ VERBOSE = 2
 
 
 def init_conf(reset=False):
-    from lib.registry.paths import AllConfDict, ExpandedConfDict, build_path_dict, buildSampleDic
+    from lib.registry.paths import AllConfDict, ExpandedConfDict, build_path_dict, buildSampleDic, get_parent_dir
     global conf
     conf = AllConfDict()
     global conF
@@ -18,7 +18,8 @@ def init_conf(reset=False):
     global Path
     global SampleDic
 
-    Path = build_path_dict()
+    F0 = get_parent_dir()
+    Path = build_path_dict(F0=F0)
     SampleDic = buildSampleDic()
 
 

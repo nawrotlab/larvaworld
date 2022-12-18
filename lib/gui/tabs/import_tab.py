@@ -61,7 +61,7 @@ class ImportTab(GuiTab):
         return d, g
 
     def imitate(self, conf):
-        from lib.anal.comparing import ExpFitter
+        from lib.aux.exp_fitter import ExpFitter
         from lib.sim.single.single_run import SingleRun
         dd = SingleRun(**conf).run()
         for d in dd:

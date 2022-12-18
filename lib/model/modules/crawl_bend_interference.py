@@ -63,8 +63,11 @@ class PhasicCoupling(DefaultCoupling):
     def step(self, crawler=None, feeder=None):
         A = 1
         c_on, f_on = self.active_effectors(crawler, feeder)
+
+        def gaussian(x, mu, sig):
+            return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+
         if c_on:
-            from lib.anal.fitting import gaussian
             if hasattr(crawler, 'phi') :
                 x=crawler.phi
             else :
