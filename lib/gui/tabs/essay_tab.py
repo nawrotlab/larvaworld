@@ -63,25 +63,30 @@ class EssayTab(GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
-        from lib.sim.single.single_run import run_essay
-        from lib.sim.single.analysis import essay_analysis
+        from lib.conf.stored.essay_conf import RvsS_Essay, DoublePatch_Essay, Chemotaxis_Essay
+        type = self.current_ID(v)
         pars = c['essay_params'].get_dict(v, w)
-        essay_type = self.current_ID(v)
-        essay = reg.loadConf(id=essay_type, conftype=self.conftype)['experiments'][essay_exp]
         kws = {
-            'id': essay_exp,
-            'path': f"{pars['path']}/{pars['essay_ID']}",
-            'vis_kwargs': self.gui.get_vis_kwargs(v),
-            'exp_types': essay['exp_types'],
-            'durations': essay['durations'],
+            'essay_id': essay_exp,
+            # 'path': f"{pars['path']}/{pars['essay_ID']}",
+            # 'vis_kwargs': self.gui.get_vis_kwargs(v),
+            # 'exp_types': essay['exp_types'],
+            # 'durations': essay['durations'],
             # 'N': pars['N'],
+            **pars
         }
-        ds0 = run_essay(**kws)
-        if ds0 is not None:
-            fig_dict, results = essay_analysis(essay_type, essay_exp, ds0)
-            self.base_dict[essay_exp] = {'exp_fig_dict': fig_dict, 'results': results}
-            self.base_dict['fig_dict'].update(fig_dict)
-            self.graph_list.update(w, self.base_dict['fig_dict'])
+        if type == 'RvsS':
+            essay=RvsS_Essay(**kws)
+        elif type == 'DoublePatch':
+            essay=DoublePatch_Essay(**kws)
+        elif type == 'Chemotaxis':
+            essay=Chemotaxis_Essay(**kws)
+
+        ds0 = essay.run()
+        essay.anal()
+        self.base_dict[essay_exp] = {'exp_fig_dict': essay.figs, 'results': essay.results}
+        self.base_dict['fig_dict'].update(essay.figs)
+        self.graph_list.update(w, self.base_dict['fig_dict'])
         return d, g
 
 

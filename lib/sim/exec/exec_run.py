@@ -3,7 +3,6 @@ import sys
 import argparse
 
 from lib.registry import reg
-from lib.sim.single.analysis import sim_analysis
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 import lib.aux.dictsNlists as dNl
@@ -59,8 +58,11 @@ class Exec:
             if res is None and self.run_externally:
                 dir0 = f"{reg.Path.SIM}/{self.conf['sim_params']['path']}/{sim_id}"
                 res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
+
             if res is not None:
-                fig_dict, results = sim_analysis(res, self.type)
+                # TODO sim analysis independent from SingleRun class. Currently exec does not run analysis for "sim" mode
+                # fig_dict, results = sim_analysis(res, self.type)
+                fig_dict, results = None, None
                 entry = {sim_id: {'dataset': res, 'figs': fig_dict}}
             else:
                 entry, fig_dict = None, None

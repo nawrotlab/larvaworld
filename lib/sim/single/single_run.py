@@ -1,6 +1,4 @@
 """ Run a simulation and save the parameters and data to files."""
-import copy
-import datetime
 import random
 import time
 import numpy as np
@@ -124,22 +122,28 @@ class SingleRun:
 
 
     def analyze(self, save_to=None, **kwargs):
-        if self.datasets is None or any([d is None for d in self.datasets]):
+        exp = self.experiment
+        ds = self.datasets
+
+        if ds is None or any([d is None for d in ds]):
             return None, None
 
-
-        kws = {'datasets': self.datasets, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
-        exp = self.experiment
         if 'PI' in exp:
             PIs = {}
             PI2s = {}
-            for d in self.datasets:
+            for d in ds:
                 PIs[d.id] = d.config.PI["PI"]
                 PI2s[d.id] = d.config.PI2
-                if self.show_output:
-                    print(f'Group {d.id} -> PI : {PIs[d.id]}')
-                    print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
+                # if self.show_output:
+                #     print(f'Group {d.id} -> PI : {PIs[d.id]}')
+                #     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
+
+        if 'disp' in exp:
+            samples = dNl.unique_list([d.config.sample for d in ds])
+            ds += [reg.loadRef(sd) for sd in samples]
+
+        kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
 
         entry_list = []
         sources = self.source_xy
@@ -164,46 +168,40 @@ class SingleRun:
                 'chemo': analysis_dict.chemo,
                 'RL': analysis_dict.RL,
                 # 'dispersion': ['comparative_analysis'],
+                'dispersion': analysis_dict.endpoint,
+                'dispersion': analysis_dict.distro,
+                'dispersion': analysis_dict.dsp,
                 # 'dish': ['targeted_analysis'],
             }
             for k, v in dic.items():
                 if k in exp:
                     entry_list += v
 
-        return self.run_analysis(entry_list, **kws)
+
+
+        figs, results=self.run_analysis(entry_list, **kws)
+
+        return figs, results
 
     def run_analysis(self, entry_list, **kws):
-        exp = self.experiment
+        # exp = self.experiment
         figs, results = {}, {}
         if len(entry_list) > 0:
             graph_entries = reg.Dic.GD.eval(entries=entry_list, **kws)
             figs.update(graph_entries)
-
-        if 'disp' in exp:
-            from lib.sim.single.analysis import comparative_analysis
-            samples = dNl.unique_list([d.config.sample for d in self.datasets])
-            targets = [reg.loadRef(sd) for sd in samples]
-            kkws = copy.deepcopy(kws)
-            kkws['datasets'] = self.datasets + targets
-            figs.update(**comparative_analysis(**kkws))
-        if 'dish' in exp:
-            from lib.sim.single.analysis import targeted_analysis
-            figs.update(**targeted_analysis(**kws))
+        # FIXME Substituted "comparative analysis" of dispersion simulation to automatize analysis. Probably will fail
+        # if 'disp' in exp:
+        #     from lib.sim.single.analysis import comparative_analysis
+        #     samples = dNl.unique_list([d.config.sample for d in self.datasets])
+        #     targets = [reg.loadRef(sd) for sd in samples]
+        #     kkws = copy.deepcopy(kws)
+        #     kkws['datasets'] = self.datasets + targets
+        #     figs.update(**comparative_analysis(**kkws))
+        # if 'dish' in exp:
+        #     from lib.sim.single.analysis import targeted_analysis
+        #     figs.update(**targeted_analysis(**kws))
         if len(figs) == 0 and len(results) == 0:
             return None, None
         else:
             return figs, results
 
-
-
-
-def run_essay(id, path, exp_types, durations, vis_kwargs, **kwargs):
-    ds = []
-    for i, (exp, dur) in enumerate(zip(exp_types, durations)):
-        conf = reg.expandConf(exp, 'Exp')
-        conf.sim_params = reg.get_null('sim_params', duration=dur, sim_ID=f'{id}_{i}', path=path)
-        conf.experiment = exp
-        conf.update(**kwargs)
-        d = SingleRun(**conf, vis_kwargs=vis_kwargs).run()
-        ds.append(d)
-    return ds

@@ -726,19 +726,14 @@ def Essay_dict():
     return dNl.NestDict(d)
 
 
-# if __name__ == "__main__":
-#     # E = RvsS_Essay(video=False, all_figs=False, show=False, N=1)
-#     # E = Chemotaxis_Essay(video=False, N=5, dur=5, mode=4)
+
 def RvsSx4():
     sufs=['foragers', 'navigators','feeders', 'locomotors']
     i=0
     for o in [True,False]:
         for f in [True,False]:
             E = DoublePatch_Essay(video=False, N=5, dur=5, olfactor=o,feeder=f, essay_id=f'RvsS_{sufs[i]}')
-        #     # print(E.patch_env())
             ds = E.run()
             figs, results = E.anal()
             i+=1
-#     dic=Essay_dict()
-#     print(dic.keys())
 
