@@ -210,7 +210,7 @@ class RvsS_Essay(Essay):
                 kws = {
                     'xlabel': r'Time spent on food $(min)$',
                     'coupled_labels': durs,
-                    'par_shorts': ['sf_am_V'],
+                    'ks': ['sf_am_V'],
                     **kws0
                 }
                 plotID = 'barplot'
@@ -218,7 +218,7 @@ class RvsS_Essay(Essay):
                 kws = {
                     'xlabel': r'Food deprivation $(h)$',
                     'coupled_labels': hs,
-                    'par_shorts': ['f_am'],
+                    'ks': ['f_am'],
                     'ylabel': 'Food intake',
                     'scale': 1000,
                     **kws0}
@@ -227,7 +227,7 @@ class RvsS_Essay(Essay):
                 kws = {
                     'xlabel': 'Food quality (%)',
                     'coupled_labels': [int(q * 100) for q in qs],
-                    'par_shorts': ['sf_am_V'],
+                    'ks': ['sf_am_V'],
                     **kws0
                 }
                 plotID = 'barplot'
@@ -240,7 +240,7 @@ class RvsS_Essay(Essay):
                 plotID = 'food intake (timeplot)'
             else:
                 raise
-            entry = G.entry(ID=plotID, title=exp, args=dNl.NestDict(kws))
+            entry = G.entry(ID=plotID, name=exp, args=dNl.NestDict(kws))
             entrylist.append(entry)
         return entrylist
 
@@ -258,7 +258,7 @@ class RvsS_Essay(Essay):
 
     def analyze(self, exp, ds0):
         if self.all_figs:
-            entry = [e for e in self.entrylist if e['title'] == exp][0]
+            entry = [e for e in self.entrylist if e['name'] == exp][0]
             kws = entry['args']
             RS_leg_cols = ['black', 'white']
             markers = ['D', 's']
@@ -457,9 +457,9 @@ class DoublePatch_Essay(Essay):
             'mdiff_df': self.mdiff_df
         }
         # entry = self.G.entry('double-patch summary', args={})
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',title='fig1',
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', name='fig1',
                                                          args={'name':f'{self.mode}_fig1','ks':None}), **kwargs))
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',title='fig2',
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', name='fig2',
                                                          args={'name':f'{self.mode}_fig2',
                                                                'ks':['tur_tr', 'tur_N_mu', 'pau_tr','cum_d', 'f_am', 'on_food_tr']}), **kwargs))
 

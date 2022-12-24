@@ -9,7 +9,7 @@ from lib.plot.base import AutoPlot
 from lib import reg
 
 
-@reg.funcs.graph('gut')
+
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
                      marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
     from lib.plot.aux import dataset_legend
@@ -65,7 +65,7 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)
 
-
+@reg.funcs.graph('epochs')
 def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
     if not turns:
         name = f'runsNpauses{plot_fits}'
@@ -121,7 +121,7 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
-
+@reg.funcs.graph('runs & pauses')
 def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False, test_detection=False, **kwargs):

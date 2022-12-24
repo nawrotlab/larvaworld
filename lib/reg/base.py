@@ -193,7 +193,7 @@ class BaseRun:
                     # 'mdiff_df': self.mdiff_df
                     **self.analysis_kws
                 }
-                self.figs.auto=reg.GD.eval(entries=self.graph_entries, **kwargs)
+                self.figs.auto=reg.graphs.eval(entries=self.graph_entries, **kwargs)
         pass
 
     def manual_anal(self):

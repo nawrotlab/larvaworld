@@ -143,16 +143,16 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     return P.get()
 
 @reg.funcs.graph('timeplot')
-def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
+def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
              show_legend=True, show_first=False, subfolder='timeplots', legend_loc='upper left', leg_fontsize=15,
              figsize=(7.5, 5),
              **kwargs):
     unit_coefs = {'sec': 1, 'min': 1 / 60, 'hour': 1 / 60 / 60}
     if len(pars) == 0:
-        if len(par_shorts) == 0:
+        if len(ks) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims, ylabs0 = reg.getPar(par_shorts, to_return=['d', 's', 'l', 'lim', 'lab'])
+            pars, symbols, ylabs, ylims, ylabs0 = reg.getPar(ks, to_return=['d', 's', 'l', 'lim', 'lab'])
 
     else:
         symbols = pars
@@ -163,12 +163,13 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     cols = ['grey'] if N == 1 else cNs.N_colors(N)
     if not same_plot:
         raise NotImplementedError
-    if N == 1:
-        name = f'{pars[0]}'
-    elif N == 2:
-        name = f'{pars[0]}_VS_{pars[1]}'
-    else:
-        name = f'{N}_pars'
+    if name is None:
+        if N == 1:
+            name = f'{pars[0]}'
+        elif N == 2:
+            name = f'{pars[0]}_VS_{pars[1]}'
+        else:
+            name = f'{N}_pars'
     P = AutoPlot(name=name, subfolder=subfolder, figsize=figsize, **kwargs)
 
     ax = P.axs[0]

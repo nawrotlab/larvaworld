@@ -44,13 +44,13 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
 
 @reg.funcs.graph('food intake (barplot)')
 def intake_barplot(**kwargs):
-    return barplot(par_shorts=['f_am'], **kwargs)
+    return barplot(ks=['f_am'], **kwargs)
 
 @reg.funcs.graph('barplot')
-def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
-    Nks = len(par_shorts)
+def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+    Nks = len(ks)
 
-    P = AutoPlot(name=par_shorts[0],build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
+    P = AutoPlot(name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15
@@ -75,7 +75,7 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
     err_kwargs = {'zorder': 20, 'fmt': 'none', 'linewidth': 4, 'ecolor': 'k', 'barsabove': True, 'capsize': 10}
 
 
-    for ii, sh in enumerate(par_shorts):
+    for ii, sh in enumerate(ks):
         ax = P.axs[ii]
         p, u = reg.getPar(sh, to_return=['d', 'l'])
         vs = [d.get_par(key='end', par=p) for d in P.datasets]
@@ -107,10 +107,10 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
 
 @reg.funcs.graph('auto_barplot')
-def auto_barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
-    Nks = len(par_shorts)
+def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+    Nks = len(ks)
 
-    P = AutoLoadPlot(ks=par_shorts,name=par_shorts[0],build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks/3)), 'w': 8, 'h': 6}, **kwargs)
+    P = AutoLoadPlot(ks=ks, name=ks[0], build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15

@@ -209,8 +209,6 @@ class _LarvaDataset:
         return df
 
 
-    # def get_filepath(self, filepath_key):
-    #     return datapath(filepath_key, self.dir)
 
     def storeH5(self, df, key, filepath_key=None, mode=None):
         if filepath_key is None :
@@ -268,7 +266,7 @@ class _LarvaDataset:
         if type in ds0 and all([id in ds0[type].keys() for id in ids]):
             ds = [ds0[type][id] for id in ids]
         else:
-            ds= loadSoloDics(agent_ids=ids, path=self.get_filepath(type))
+            ds= loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
         return ds
 
     def visualize(self, **kwargs):
@@ -389,7 +387,7 @@ class _LarvaDataset:
 
         if key=='distro':
             try:
-                return read(key=par,path=self.get_filepath('distro'))
+                return read(key=par,path=reg.datapath("distro", self.dir))
             except:
                 return self.get_par(par, key='step')
 
@@ -484,81 +482,3 @@ class _LarvaDataset:
 
 
 LarvaDataset = type('LarvaDataset', (_LarvaDataset,), dic_manager_kwargs)
-
-# if __name__ == '__main__':
-#     # d=LarvaDataset(dir=None, load_data=False)
-#     # print(d.config.N)
-#     #
-#     # raise
-#     # #
-#     #refID = 'None.40controls'
-#
-#
-#     from lib.registry.pars import preg
-#     #
-#     # md = nam.update_metric_definition()
-#     # print(md)
-#     # raise
-#
-#     ds = preg.loadRefDs(['None.40controls', 'None.150controls'], step=False)
-#     GD=preg.graph_dict
-#     GD.eval0({'plotID':'crawl pars','title':'test','args': {'datasets':ds, 'show':True}})
-#
-#     raise
-#     d.load()
-#     d.process(keys=['angular', 'spatial','dispersion','tortuosity'], recompute=True, store=True)
-#
-#     d.annotate(on_food=False, store=True)
-#     d.save(refID=refID)
-#
-#
-#     raise
-#
-#
-#     refID = 'None.150controls'
-#     # refID='None.Sims2019_controls'
-#     h5_ks = ['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']
-#     h5_ks = ['epochs', 'angular', 'dspNtor']
-#     # h5_ks = []
-#
-#     d = preg.loadRef(refID)
-#     d.load(h5_ks=h5_ks, step=False)
-#
-#
-#
-#     # entries_3m = d.config.modelConfs['3modules']
-#     # raise
-#     # dIDs = ['NEU', 'SIN', 'CON']
-#     # for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
-#     #     for Ifmod in ['PHI', 'SQ', 'DEF']:
-#     #         mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
-#     #         id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
-#     #         d.eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=5)
-#
-#     dIDs, mIDs = [], []
-#     for Tmod in ['NEU', 'SIN']:
-#         for Ifmod in ['PHI', 'SQ']:
-#             mID = f'RE_{Tmod}_{Ifmod}_DEF_fit'
-#             dID = f'{Tmod} {Ifmod}'
-#             mIDs.append(mID)
-#             dIDs.append(dID)
-#
-#     entries_var = M.add_var_mIDs(refID=refID, e=d.endpoint_data, c=d.config, mID0s=mIDs)
-#
-#     # dIDs_avg=[f'{dID} avg' for dID in dIDs]
-#     # dIDs_var=[f'{dID} var' for dID in dIDs]
-#     #
-#     # mIDs1=[mIDs[0], mIDs_var[0],mIDs[1],mIDs_var[1]]
-#     # dIDs1=[dIDs_avg[0], dIDs_var[0],dIDs_avg[1],dIDs_var[1]]
-#     # id1 = f'PHIvsSQ_avgVSvar_NEU_RE_50l'
-#     # d.eval_model_graphs(mIDs=mIDs1, dIDs=dIDs1, norm_modes=['raw', 'minmax'], id=id1, N=50)
-#     #
-#     # mIDs2 = [mIDs[2], mIDs_var[2], mIDs[3], mIDs_var[3]]
-#     # dIDs2 = [dIDs_avg[2], dIDs_var[2], dIDs_avg[3], dIDs_var[3]]
-#     # id2 = f'PHIvsSQ_avgVSvar_SIN_RE_50l'
-#     # d.eval_model_graphs(mIDs=mIDs2, dIDs=dIDs2, norm_modes=['raw', 'minmax'], id=id2, N=50)
-#
-#     # for mID,m in entries_3m.items():
-#     #     print(mID, m)
-#     # d.store_model_graphs(mIDs=mIDs_3m)
-#     # d.modelConf_analysis(mods3=True)

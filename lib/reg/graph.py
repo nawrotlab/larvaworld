@@ -2,12 +2,13 @@ import os
 
 from lib.aux import dictsNlists as dNl
 from lib import reg
-
+from lib import plot
 
 
 class GraphRegistry:
     def __init__(self):
         self.dict = reg.funcs.graphs
+        # self.graphgroups=dNl.NestDict()
 
     def get(self, f):
         if isinstance(f, str):
@@ -52,6 +53,9 @@ class GraphRegistry:
         else :
             key = ID
         return {'key': key, 'plotID': ID, 'args': args}
+
+    def group_entry(self, gID, entrylist):
+        self.graphgroups[gID]=entrylist
 
     @property
     def graphgroups(self):

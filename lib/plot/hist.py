@@ -325,14 +325,14 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
     return P.get()
 
 @reg.funcs.graph('endpoint pars (hist)')
-def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
+def plot_endpoint_params(mode='basic', ks=None, subfolder='endpoint',
                          plot_fit=True, nbins=20, use_title=True, **kwargs):
     #warnings.filterwarnings('ignore')
 
     ylim = [0.0, 0.25]
     nbins = nbins
     l_par = 'l'  # 'l_mu
-    if par_shorts is None:
+    if ks is None:
         dic = {
             'basic': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
                       'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
@@ -365,17 +365,17 @@ def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
             ]
         }
         if mode in dic.keys():
-            par_shorts = dic[mode]
+            ks = dic[mode]
         else:
             raise ValueError('Provide parameter shortcuts or define a mode')
 
-    Nks = len(par_shorts)
+    Nks = len(ks)
     Ncols = int(np.ceil(Nks / 3))
 
 
 
 
-    P = AutoLoadPlot(ks=par_shorts,name=f'endpoint_params_{mode}', subfolder=subfolder,build_kws={'N':Nks,'Ncols':Ncols, 'w':7,'h':5, 'mode':'hist'}, **kwargs)
+    P = AutoLoadPlot(ks=ks, name=f'endpoint_params_{mode}', subfolder=subfolder, build_kws={'N':Nks, 'Ncols':Ncols, 'w':7, 'h':5, 'mode': 'hist'}, **kwargs)
 
     def build_df(vs, ax, bins):
         Nvalues = [len(i) for i in vs]
@@ -441,7 +441,7 @@ if __name__ == '__main__':
                         'b_mu', 'bv_mu']
 
     # kws={'datasets' : ds, 'show':True, 'mode' : 'minimal'}
-    kws={'datasets' : ds, 'show':True, 'par_shorts' : ks}
+    kws={'datasets' : ds, 'show':True, 'ks' : ks}
 
     t0=time.time()
     # _ = plot_endpoint_params(**kws)

@@ -13,14 +13,14 @@ from lib.plot.base import AutoPlot, Plot
 
 
 @reg.funcs.graph('boxplot (simple)')
-def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=True, grouped=False,
+def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=True, grouped=False,
              ylims=None,
              in_mm=[], target_only=None, **kwargs):
-    Npars = len(shorts)
+    Npars = len(ks)
     if name is None:
         name = f'boxplot_{Npars}_{key}_pars'
     P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
-    pars, labs, units, symbols = reg.getPar(shorts, to_return=['d', 'lab', 'unit', 'symbol'])
+    pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
     data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
@@ -72,15 +72,15 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=Tru
 #     return boxplots(shorts=ks,key='step',**kwargs)
 
 @reg.funcs.graph('boxplot (grouped)')
-def boxplot(par_shorts, sort_labels=False, name=None, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None,
+def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None,
             **kwargs):
-    Npars = len(par_shorts)
+    Npars = len(ks)
     if name is None:
-        name = par_shorts[0]
+        name = ks[0]
 
     P = AutoPlot(name=name, build_kws={'N': Npars, 'Nrows': int(np.ceil(Npars / 3)), 'w': 8, 'h': 7}, **kwargs)
-    # P = Plot(name=par_shorts[0], **kwargs)
-    pars, sim_labels, exp_labels, labs, lims = reg.getPar(par_shorts, to_return=['d', 's', 's', 'l', 'lim'])
+    # P = Plot(name=ks[0], **kwargs)
+    pars, sim_labels, exp_labels, labs, lims = reg.getPar(ks, to_return=['d', 's', 's', 'l', 'lim'])
 
     # P.build(**kws0)
 
@@ -358,8 +358,8 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     return P.get()
 
 @reg.funcs.graph('ggboxplot')
-def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
-    pars, syms, labs, lims = reg.getPar(shorts, to_return=['d', 's', 'lab', 'lim'])
+def ggboxplot(ks=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
+    pars, syms, labs, lims = reg.getPar(ks, to_return=['d', 's', 'lab', 'lim'])
     from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
     Npars = len(pars)
     if Npars == 1:
@@ -411,17 +411,17 @@ def plot_foraging(**kwargs):
     P.get()
 
 @reg.funcs.graph('lineplot')
-def lineplot(markers, par_shorts=['f_am'], name=None, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None,
+def lineplot(markers, ks=['f_am'], name=None, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None,
              scale=1.0,
              **kwargs):
-    Npars = len(par_shorts)
+    Npars = len(ks)
     if name is None:
-        name = par_shorts[0]
+        name = ks[0]
 
     P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': 1, 'w': 8, 'h': 7 / Npars}, **kwargs)
 
-    # Npars = len(par_shorts)
-    # P = AutoPlot(name=par_shorts[0], Nrows=Npars, figsize=(8, 7), **kwargs)
+    # Npars = len(ks)
+    # P = AutoPlot(name=ks[0], Nrows=Npars, figsize=(8, 7), **kwargs)
     Nds = P.Ndatasets
 
     if coupled_labels is not None:
@@ -442,7 +442,7 @@ def lineplot(markers, par_shorts=['f_am'], name=None, coupled_labels=None, xlabe
     plot_kws = {'linewidth': 2, 'zorder': 5}
     err_kws = {'zorder': 2, 'fmt': 'none', 'linewidth': 4, 'ecolor': 'k', 'barsabove': True, 'capsize': 10}
 
-    for ii, sh in enumerate(par_shorts):
+    for ii, sh in enumerate(ks):
         ax = P.axs[ii]
         p, u = reg.getPar(sh, to_return=['d', 'l'])
         vs = [d.endpoint_data[p] * scale for d in P.datasets]

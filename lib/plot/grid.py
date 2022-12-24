@@ -211,7 +211,7 @@ def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
         h0 = i * h1exp + (i + 1) * 1 + h_mpl * 2
         axs = P.add(w=w, x0=True, h=h1exp - 2, h0=h0)
         P.plot(func=entry['plotID'], kws=entry['args'], axs=axs)
-        axs.set_title(entry['title'], size=30, weight='bold', horizontalalignment='center', pad=15)
+        axs.set_title(entry['name'], size=30, weight='bold', horizontalalignment='center', pad=15)
         ax_list.append(axs)
     P.adjust((0.1, 0.95), (0.05, 0.96), 0.05, 0.1)
     P.annotate()
