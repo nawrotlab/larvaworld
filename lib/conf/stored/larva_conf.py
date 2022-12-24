@@ -5,7 +5,7 @@ import copy
 
 import numpy as np
 
-from lib.registry import reg
+from lib import reg
 from lib.aux import dictsNlists as dNl
 
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
@@ -209,13 +209,6 @@ def OD(ids: list, means: list, stds=None) -> dict:
 
 
 def create_mod_dict(b):
-    Tsin = reg.get_null('turner',
-                         mode='sinusoidal',
-                         initial_amp=15.0,
-                         amp_range=[0.0, 50.0],
-                         initial_freq=0.3,
-                         freq_range=[0.1, 1.0]
-                         )
 
     RL_touch_memory = reg.get_null('memory', Delta=0.5, state_spacePerSide=1, modality='touch', train_dur=30,
                                     update_dt=0.5,
@@ -237,8 +230,8 @@ def create_mod_dict(b):
 
     LOF = brain(['LOF'])
     LOFM = brain(['LOF', 'M'])
-    LO = brain(['L', 'O'])
-    LO_brute = brain(['L', 'O'], olfactor=reg.get_null('olfactor', brute_force=True))
+    # LO = brain(['L', 'O'])
+    # LO_brute = brain(['L', 'O'], olfactor=reg.get_null('olfactor', brute_force=True))
     LW = brain(['L', 'W'])
     L = brain(['L'])
     LTo = brain(['L', 'To'], toucher=reg.get_null('toucher', touch_sensors=[]))
@@ -362,9 +355,14 @@ def create_mod_dict(b):
 
     return grouped_mod_dict
 
+def all_mod_dict():
+    dnew = reg.Dic.MD.autostored_confs
+    b = dnew['RE_NEU_SQ_DEF_nav'].brain
+    return create_mod_dict(b)
 
+@reg.funcs.stored_conf("Model")
 def Model_dict():
-    dnew = reg.Dic.MD.baseConfs()
+    dnew = reg.Dic.MD.autostored_confs
     b = dnew['RE_NEU_SQ_DEF_nav'].brain
     d = create_mod_dict(b)
 
@@ -374,9 +372,7 @@ def Model_dict():
     dnew.update(dd)
     return dnew
 
-
+@reg.funcs.stored_conf("ModelGroup")
 def ModelGroup_dict():
-    dnew = reg.Dic.MD.baseConfs()
-    b = dnew['RE_NEU_SQ_DEF_nav'].brain
-    d = create_mod_dict(b)
+    d = all_mod_dict()
     return dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})

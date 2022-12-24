@@ -4,9 +4,11 @@ import seaborn as sns
 
 from lib.plot.base import AutoPlot
 from lib.plot.aux import confidence_ellipse, process_plot, suf
-from lib.registry import reg
+from lib import reg
 
 
+
+# @graph('gut')
 def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
     build_kws = {'Nrows': 2, 'Ncols': 1, 'wh': 5, 'sharex': False, 'sharey': False}
 

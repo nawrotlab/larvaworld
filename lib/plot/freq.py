@@ -4,11 +4,13 @@ import numpy as np
 from matplotlib import ticker, cm
 
 from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 from lib.plot.aux import plot_quantiles
 from lib.plot.base import AutoPlot, AutoLoadPlot, AutoBasePlot
 
 
+
+@reg.funcs.graph('fft')
 def plot_fft(s, c, palette=None, axx=None, **kwargs):
     from scipy.fft import fftfreq
     from lib.aux.sim_aux import fft_max
@@ -49,7 +51,7 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     axx.yaxis.set_major_locator(ticker.MaxNLocator(2))
     return P.get()
 
-
+@reg.funcs.graph('fft multi')
 def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
     P = AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
     # P.build(fig=fig, axs=ax, figsize=(15, 12))
@@ -143,7 +145,7 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
 
 
 
-#
+@reg.funcs.graph('powerspectrum')
 def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums', **kwargs):
     Nks=len(ks)
 

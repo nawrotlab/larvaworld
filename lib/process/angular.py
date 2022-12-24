@@ -3,7 +3,9 @@ import numpy as np
 from lib.aux.stor_aux import store_distros, get_distros, storeH5
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux
 from lib.process.aux import comp_extrema
-from lib.registry import reg
+
+from lib import aux
+from lib import reg
 
 
 def comp_angles(s, e, c, mode='full'):
@@ -157,6 +159,7 @@ def unwrap_orientations(s, segs):
     print('All orients unwrapped')
 
 
+
 def comp_angular(s, e, c, mode='minimal'):
     ors = nam.orient(['front','rear', 'head', 'tail'])
     ang_pars = ors + ['bend']
@@ -198,7 +201,7 @@ def comp_angular(s, e, c, mode='minimal'):
         s[nam.acc(p)] = A[:, k, :].flatten()
     print('All angular parameters computed')
 
-
+@reg.funcs.proc("angular")
 def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **kwargs):
     ang_pars = [nam.orient('front'), nam.orient('rear'), 'bend']
     if set(ang_pars).issubset(s.columns.values) and not recompute:

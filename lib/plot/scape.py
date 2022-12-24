@@ -5,10 +5,13 @@ from matplotlib import cm, pyplot as plt
 from scipy.stats import multivariate_normal
 
 from lib.aux import colsNstr as cNs
-from lib.registry import reg
+from lib import reg
 from lib.plot.base import ParPlot, Plot
 
-
+# from lib.plot.facade import graph
+#
+#
+# @graph('gut')
 def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, azim=115, elev=15, **kwargs):
     P = ParPlot(name='3d_surface', **kwargs)
     P.build(fig=fig, axs=ax, dim3=True, azim=azim, elev=elev)

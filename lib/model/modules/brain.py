@@ -2,7 +2,7 @@ import numpy as np
 
 from lib.model.modules.locomotor import DefaultLocomotor
 from lib.aux import dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 
 
 class Brain:
@@ -90,7 +90,7 @@ class DefaultBrain(Brain):
         # reg.Dic.MD.init_brain(conf, self)
 
     # def init_brain(self, conf, B):
-        D = reg.Dic.MD.dict.model.m
+        D = reg.model.dict.model.m
         for k in ['olfactor', 'toucher', 'windsensor', 'thermosensor']:
             if conf.modules[k]:
                 m = conf[f'{k}_params']

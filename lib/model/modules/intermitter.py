@@ -7,7 +7,7 @@ from lib.aux.fitting import BoutGenerator
 from lib.aux import naming as nam,dictsNlists as dNl
 
 from lib.model.modules.basic import Effector
-from lib.registry import reg
+from lib import reg
 
 
 class BaseIntermitter(Effector):

@@ -5,7 +5,7 @@ import pandas as pd
 import shutil
 import warnings
 
-from lib.registry import reg
+from lib import reg
 from lib.stor.larva_dataset import LarvaDataset
 from lib.stor.match_ids import match_larva_ids
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, xy_aux, dir_aux

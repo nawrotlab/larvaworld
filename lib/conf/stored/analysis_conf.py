@@ -1,6 +1,6 @@
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
-from lib.registry import reg
+from lib import reg
 
 def entry(ID, title=None, **kwargs):
     return reg.GD.entry(ID, name=title, args=kwargs)

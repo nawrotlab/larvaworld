@@ -3,8 +3,10 @@ import numpy as np
 from lib.aux import naming as nam,dictsNlists as dNl
 from lib.plot.aux import circNarrow, circular_hist
 from lib.plot.base import Plot, AutoPlot
+from lib import reg
 
 
+@reg.funcs.graph('bearing/turn')
 def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
                        Nplots=4, subfolder='turn', **kwargs):
     if ref_angle is None:
@@ -75,11 +77,11 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
     P.adjust((0.0, 1.0), (0.15, 0.9), 0.0, 0.35)
     return P.get()
 
-
+@reg.funcs.graph('bearing to center/turn')
 def plot_turn_Dorient2center(**kwargs):
     return plot_turn_Dbearing(ref_angle=None, **kwargs)
 
-
+@reg.funcs.graph('bearing to source/epoch')
 def plot_chunk_Dorient2source(source_ID, datasets,subfolder='bouts', chunk='stride', Nbins=16, min_dur=0.0, plot_merged=False,
                               **kwargs):
     N = len(datasets)

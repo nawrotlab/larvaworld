@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 
 from lib.aux import dictsNlists as dNl
 from lib.aux.dictsNlists import NestDict
-from lib.registry import reg
+from lib import reg
 from lib.plot.aux import save_plot
 from lib.plot.base import GridPlot, Plot
+
+
 
 
 def calibration_plot(save_to=None, files=None):
@@ -55,7 +57,7 @@ def calibration_plot(save_to=None, files=None):
     save_plot(fig, filepath, filename)
     return fig
 
-
+@reg.funcs.graph('model summary')
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
     from lib.aux.fitting import test_boutGens
     from lib.aux.sample_aux import sim_model
@@ -102,7 +104,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     P.annotate()
     return P.get()
 
-
+@reg.funcs.graph('velocity definition')
 def velocity_definition(d, save_to=None, save_as='vel_definition.pdf', component_vels=True, **kwargs):
     from lib.plot.metric import plot_segmentation_definition, plot_stride_variability
 
@@ -133,7 +135,7 @@ def velocity_definition(d, save_to=None, save_as='vel_definition.pdf', component
     fig.subplots_adjust(hspace=0.1, wspace=0.5, bottom=0.1, top=0.9, left=0.07, right=0.95)
     fig.savefig(f'{save_to}/{save_as}', dpi=300)
 
-
+@reg.funcs.graph('dispersal summary')
 def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
     w, h = 54, 26
     P = GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
@@ -159,7 +161,7 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
     P.annotate()
     return P.get()
 
-
+@reg.funcs.graph('kinematic analysis')
 def kinematic_analysis(datasets, **kwargs):
     w, h = 50, 28
     P = GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.94), **kwargs)
@@ -194,7 +196,7 @@ def kinematic_analysis(datasets, **kwargs):
     P.annotate()
     return P.get()
 
-
+@reg.funcs.graph('RvsS summary')
 def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     h_mpl = 4
     w, h = 30, 60 + h_mpl * 2
@@ -204,7 +206,6 @@ def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
 
     P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=6, h0=0)
-
     ax_list = []
     for i, entry in enumerate(entrylist):
         h0 = i * h1exp + (i + 1) * 1 + h_mpl * 2
@@ -217,7 +218,7 @@ def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     P.fig.align_ylabels(ax_list)
     return P.get()
 
-
+@reg.funcs.graph('double-patch summary')
 def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
     Nmods = 2
     h_mpl = len(mdiff_df.index)
@@ -266,7 +267,7 @@ def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
     P.annotate()
     return P.get()
 
-
+@reg.funcs.graph('chemotaxis summary')
 def chemo_summary(datasets, mdiff_df, title, **kwargs):
     Nmods = len(mdiff_df.columns)
     h_mpl = len(mdiff_df.index)
@@ -309,7 +310,7 @@ def chemo_summary(datasets, mdiff_df, title, **kwargs):
     P.annotate()
     return P.get()
 
-
+@reg.funcs.graph('eval summary')
 def result_summary(datasets, target, **kwargs):
     w, h = 50, 34
     P = GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)
@@ -339,7 +340,7 @@ def result_summary(datasets, target, **kwargs):
     P.annotate()
     return P.get()
 
-
+@reg.funcs.graph('sample track')
 def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.plot.traj import track_annotated
     if d is None:
@@ -381,7 +382,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-
+@reg.funcs.graph('error summary')
 def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled', **kwargs):
     label_dic = {
         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},

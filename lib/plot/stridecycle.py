@@ -4,10 +4,11 @@ import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 from lib.plot.aux import plot_quantiles, suf
 from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
-from lib.process.aux import compute_interference
+
+
 
 
 def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_fig=False, show=False):
@@ -86,9 +87,10 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         fig.savefig(filepaths[i], dpi=300)
         print(f'Plot saved as {filepaths[i]}')
 
-
+@reg.funcs.graph('stride cycle')
 def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None, subfolder='stride',
                  Nbins=64, individuals=False, pooled=True, **kwargs):
+    from lib.process.aux import compute_interference
     if name is None:
         if individuals:
             name = f'stride_cycle_curves_all_larvae'
@@ -141,7 +143,6 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
                adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})
     return P.get()
 
-
 def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16, short='fov', idx=0, Nbins=64,
                             color_solo='grey', color='red',
                             absolute=False, save_to=None, pooled=False,
@@ -185,7 +186,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
     if show:
         plt.show()
 
-
+@reg.funcs.graph('stride cycle multi')
 def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
                             axx=None, **kwargs):
 
@@ -286,7 +287,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
     P.adjust((0.15, 0.9), (0.2, 0.9), 0.1, 0.15)
     return P.get()
 
-
+@reg.funcs.graph('stride Dbend')
 def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
     P = Plot(name='stride_bend_change', subfolder=subfolder, **kwargs)
     P.build()
@@ -315,7 +316,7 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
     P.adjust((0.25, 0.95), (0.2, 0.95), 0.01)
     return P.get()
 
-
+@reg.funcs.graph('stride Dor')
 def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     P = Plot(name='stride_orient_change', subfolder=subfolder, **kwargs)
     shorts = ['str_fo', 'str_ro']
@@ -328,7 +329,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()
 
-
+@reg.funcs.graph('interference')
 def plot_interference(mode='orientation', agent_idx=None, subfolder='interference', **kwargs):
     name = f'interference_{mode}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}'
 

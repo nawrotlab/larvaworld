@@ -5,8 +5,8 @@ import numpy as np
 def evaluate_input(m, screen):
 
     if m.pygame_keys is None :
-        from lib.registry.controls import load_controls
-        m.pygame_keys = load_controls()['pygame_keys']
+        from lib import reg
+        m.pygame_keys = reg.controls.load()['pygame_keys']
 
     d_zoom = 0.01
     ev = pygame.event.get()
@@ -29,13 +29,13 @@ def evaluate_input(m, screen):
                                         p1=tuple(m.mousebuttondown_pos))
 
                 elif e.button == 3:
-                    import lib.gui.aux.windows
+                    from gui.aux.windows import set_agent_kwargs, object_menu
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(m.selected_agents) > 0:
                         for sel in m.selected_agents:
-                            sel = lib.gui.aux.windows.set_agent_kwargs(sel, location=loc)
+                            sel = set_agent_kwargs(sel, location=loc)
                     else:
-                        m.selected_type = lib.gui.aux.windows.object_menu(m.selected_type, location=loc)
+                        m.selected_type = object_menu(m.selected_type, location=loc)
                 elif e.button in [4, 5]:
                     m.apply_screen_zoom(screen, d_zoom=-d_zoom if e.button == 4 else d_zoom)
                     m.toggle(name='zoom', value=screen.zoom)
@@ -87,7 +87,7 @@ def eval_keypress(k, screen, model):
         except :
             pass
     elif k == 'delete item':
-        from lib.gui.aux.windows import delete_objects_window
+        from gui.aux.windows import delete_objects_window
         if delete_objects_window(model.selected_agents):
             for f in model.selected_agents:
                 model.selected_agents.remove(f)
@@ -96,13 +96,13 @@ def eval_keypress(k, screen, model):
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
             if isinstance(sel, Larva):
-                from lib.gui.aux.elements import DynamicGraph
+                from gui.aux.elements import DynamicGraph
                 model.dynamic_graphs.append(DynamicGraph(agent=sel))
     elif k == 'odor gains':
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
             if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
-                from lib.gui.aux.windows import set_kwargs
+                from gui.aux.windows import set_kwargs
                 sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
     else:
         model.toggle(k)

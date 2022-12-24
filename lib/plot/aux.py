@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt, patches, transforms, ticker
 from scipy.stats import mannwhitneyu
 import warnings
 
-from lib.registry import reg
+from lib import reg
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 

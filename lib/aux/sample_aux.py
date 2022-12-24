@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 
 
 def generate_larvae(N, sample_dict, base_model):

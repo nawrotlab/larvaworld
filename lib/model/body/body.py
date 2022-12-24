@@ -9,14 +9,14 @@ from shapely.ops import cascaded_union
 
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
 from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang_aux
-from lib.registry import reg
+from lib import reg
 
 
 
 class LarvaShape:
     def __init__(self, Nsegs=2, seg_ratio=None, shape='drosophila_larva', initial_length=0.005, length_std=0,
                  density=300.0, interval=0, scaling_factor=1, initial_orientation=None, initial_pos=None, default_color='black'):
-        from lib.conf.stored.aux_conf import Body_dict
+        from lib.conf.stored.miscellaneous import Body_dict
         self.default_color = default_color
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         self.interval = interval

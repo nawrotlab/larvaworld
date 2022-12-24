@@ -4,10 +4,11 @@ import numpy as np
 from matplotlib import pyplot as plt, patches
 
 from lib.aux import naming as nam, dictsNlists as dNl, dir_aux
-from lib.registry import reg
+from lib import reg
 
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoBasePlot
-from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
+
+
 
 
 def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
@@ -31,7 +32,7 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
               equal_aspect=True)
     return P.get()
 
-
+@reg.funcs.graph('trajectories')
 def traj_grouped(unit='mm', name=None, subfolder='trajectories',
                  range=None, mode='default', single_color=False, **kwargs):
     if name is None:
@@ -53,7 +54,6 @@ def traj_grouped(unit='mm', name=None, subfolder='trajectories',
     P.adjust((0.1, 0.9), (0.2, 0.9), 0.1, 0.01)
     return P.get()
 
-
 def ax_conf_kws(kws, trange, Ndatasets,Nrows, i=0, ylab=None, ylim=None, xlim=None):
     conf_kws = {
         'ylab': kws.ylab if ylab is None else ylab,
@@ -72,8 +72,8 @@ def ax_conf_kws(kws, trange, Ndatasets,Nrows, i=0, ylab=None, ylim=None, xlim=No
 
     return {**conf_kws, **leg_kws}
 
-
 def epoch_func(**kwargs):
+    from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
     def stride_epochs(a, trange, show_extrema=True, a2plot=None, dt=0.1, **kwargs):
 
         if show_extrema and a2plot is None:
@@ -180,11 +180,11 @@ def epoch_func(**kwargs):
 
     return epoch_f
 
-
 def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim=None, xlim=None,
                     slice=None, agent_idx=0, agent_id=None,
                     subfolder='tracks', moving_average_interval=None, epoch_boundaries=True, show_extrema=True,
                     min_amp=None, **kwargs):
+    from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
     temp = f'track_{slice[0]}-{slice[1]}' if slice is not None else f'track'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
     P = AutoPlot(name=name, subfolder=subfolder,
@@ -276,14 +276,11 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
     P.conf_ax(0, **conf_kws, **leg_kws)
     return P.get()
 
-
 def annotated_strideplot(**kwargs):
     return track_annotated(epoch='stride', **kwargs)
 
-
 def annotated_turnplot(**kwargs):
     return track_annotated(epoch='turn', **kwargs)
-
 
 def track_annotated_data(name=None, subfolder='tracks',
                          epoch='stride', a2plot_k=None, agent_idx=[3, 4, 5, 6, 7], dur=1, **kwargs):
@@ -365,15 +362,15 @@ def track_annotated_data(name=None, subfolder='tracks',
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-
+@reg.funcs.graph('stride track')
 def annotated_strideplot_data(**kwargs):
     return track_annotated_data(epoch='stride', **kwargs)
 
-
+@reg.funcs.graph('turn track')
 def annotated_turnplot_data(**kwargs):
     return track_annotated_data(epoch='turn', **kwargs)
 
-
+@reg.funcs.graph('marked strides')
 def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals', **kwargs):
     temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
@@ -410,7 +407,7 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
     P.adjust((0.08, 0.95), (0.15, 0.95), H=0.1)
     return P.get()
 
-
+@reg.funcs.graph('sample tracks')
 def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals',
                        **kwargs):
     Nrows = len(mode)

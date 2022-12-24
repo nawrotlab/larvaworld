@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import ks_2samp
 
 from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
-from lib.registry import reg
+from lib import reg
 from lib.sim.eval.eval_aux import RSS, arrange_evaluation
 
 def GA_optimization(fitness_target_refID, fitness_target_kws):

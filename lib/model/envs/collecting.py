@@ -7,7 +7,7 @@ from operator import attrgetter
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 
-from lib.registry import reg
+from lib import reg
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
 
@@ -37,7 +37,7 @@ class TargetedDataCollector(DataCollector):
             self.reports = None
 
     def valid_reporters(self, pars):
-        D=reg.PD.dict
+        D=reg.par.dict
         ks = [k for k in pars if k in D.keys()]
         dic = {}
         self.invalid_keys=dNl.NestDict({'not_in_registry' : [k for k in pars if k not in D.keys()], 'not_in_agent':{}})

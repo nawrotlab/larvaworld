@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
-from lib.registry import reg
-reg.init()
+
+from lib import reg
+# from lib.registry import reg
+# reg.init()
 
 from cli.cli_argparsers import run_template, get_parser
 
@@ -19,6 +20,7 @@ for mode in ['Exp','Batch', 'Ga', 'Eval', 'Rep'] :
 
 
 if __name__ == "__main__":
+    from lib.aux import dictsNlists as dNl
     args = p.parse_args()
 
 

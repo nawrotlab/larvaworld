@@ -1,6 +1,7 @@
 import warnings
 
-from lib.registry.base import BaseRun
+
+from lib.reg.base import BaseRun
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -12,7 +13,8 @@ import seaborn as sns
 import pandas as pd
 
 
-from lib.registry import reg, base
+from lib import reg
+from lib.reg import base
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, data_aux
 from lib.sim.eval.eval_aux import arrange_evaluation, torsNdsps, eval_fast, std_norm, minmax
 from lib.aux.sample_aux import sim_models
@@ -155,7 +157,7 @@ class EvalRun(base.BaseRun):
             self.figs.errors[k] = self.get_error_plots(self.error_dicts[k], mode, show=self.show)
 
     def get_error_plots(self, error_dict, mode='pooled', **kwargs):
-        ED = reg.GD.error_dict
+        GD = reg.GD.dict
         label_dic = {
             '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
             'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
@@ -173,13 +175,13 @@ class EvalRun(base.BaseRun):
 
             bars = {}
             tabs = {}
-            bars['summary'] = ED['error summary'](norm_mode=norm, eval_mode=mode, error_dict=error_dict0,
+            bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=error_dict0,
                                                   evaluation=self.evaluation, **kws)
 
             for i, (k, df) in enumerate(error_dict0.items()):
-                tabs[k] = ED['error table'](df, k, labels[k], **kws)
-            tabs['mean'] = ED['error table'](df0, 'mean', 'average error', **kws)
-            bars['full'] = ED['error barplot'](error_dict=error_dict0, evaluation=self.evaluation, labels=labels, **kws)
+                tabs[k] = GD['error table'](df, k, labels[k], **kws)
+            tabs['mean'] = GD['error table'](df0, 'mean', 'average error', **kws)
+            bars['full'] = GD['error barplot'](error_dict=error_dict0, evaluation=self.evaluation, labels=labels, **kws)
 
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
 
@@ -199,11 +201,11 @@ class EvalRun(base.BaseRun):
         return dNl.NestDict(dic)
 
     def plot_models(self):
-        MD = reg.GD.mod_dict
+        GD = reg.GD.dict
         save_to = self.dir_dict.models
         for mID in self.modelIDs:
-            self.figs.models.table[mID] = MD['configuration'](mID=mID, save_to=save_to, figsize=(14, 11))
-            self.figs.models.summary[mID] = MD['summary'](mID=mID, save_to=save_to, refID=self.refID)
+            self.figs.models.table[mID] = GD['model table'](mID=mID, save_to=save_to, figsize=(14, 11))
+            self.figs.models.summary[mID] = GD['model summary'](mID=mID, save_to=save_to, refID=self.refID)
 
     def plot_results(self, plots=['hists', 'trajectories', 'dispersion', 'bouts', 'fft', 'boxplots']):
         GD = reg.GD.dict
@@ -391,6 +393,98 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enric
     return evrun
 
 
+def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
+    if e is None or c is None:
+        d = reg.loadRef(refID)
+        d.load(step=False)
+        e, c = d.endpoint_data, d.config
+
+    if mID0s is None:
+        mID0s = list(c.modelConfs.average.keys())
+    if mIDs is None:
+        mIDs = [f'{mID0}_var' for mID0 in mID0s]
+    if sample_ks is None:
+        sample_ks = [
+            'brain.crawler_params.stride_dst_mean',
+            'brain.crawler_params.stride_dst_std',
+            'brain.crawler_params.max_scaled_vel',
+            'brain.crawler_params.max_vel_phase',
+            'brain.crawler_params.initial_freq',
+        ]
+    kwargs = {k: 'sample' for k in sample_ks}
+    entries = {}
+    for mID0, mID in zip(mID0s, mIDs):
+        m0 = dNl.copyDict(reg.loadConf(id=mID0, conftype='Model'))
+        m = dNl.update_existingnestdict(m0, kwargs)
+        reg.saveConf(conf=m, id=mID, conftype='Model')
+        entries[mID] = m
+    return entries
+
+def adapt_6mIDs(refID, e=None, c=None):
+    if e is None or c is None:
+        d = reg.loadRef(refID)
+        d.load(step=False)
+        e, c = d.endpoint_data, d.config
+
+    from lib.sim.ga.functions import GA_optimization
+    fit_kws = {
+        'eval_metrics': {
+            'angular kinematics': ['b', 'fov', 'foa'],
+            'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                     'dsp_0_40_max', 'dsp_0_60_max'],
+            'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+        },
+        'cycle_curves': ['fov', 'foa', 'b']
+    }
+
+    fit_dict = GA_optimization(refID, fitness_target_kws=fit_kws)
+    entries = {}
+    mIDs = []
+    for Tmod in ['NEU', 'SIN']:
+        for Ifmod in ['PHI', 'SQ', 'DEF']:
+            mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
+            mID = f'{Ifmod}on{Tmod}'
+            entry = reg.MD.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                                   space_mkeys=['turner', 'interference'],
+                                   fit_dict=fit_dict)
+            entries.update(entry)
+            mIDs.append(mID)
+    return entries, mIDs
+
+def adapt_3modules(refID, e=None, c=None):
+    if e is None or c is None:
+        d = reg.loadRef(refID)
+        d.load(step=False)
+        e, c = d.endpoint_data, d.config
+
+    from lib.sim.ga.functions import GA_optimization
+    fit_kws = {
+        'eval_metrics': {
+            'angular kinematics': ['b', 'fov', 'foa'],
+            'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                     'dsp_0_40_max', 'dsp_0_60_max'],
+            'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
+        },
+        'cycle_curves': ['fov', 'foa', 'b']
+    }
+
+    fit_dict = GA_optimization(refID, fitness_target_kws=fit_kws)
+    entries = {}
+    mIDs = []
+    # for Cmod in ['GAU', 'CON']:
+    for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
+        for Tmod in ['NEU', 'SIN', 'CON']:
+            for Ifmod in ['PHI', 'SQ', 'DEF']:
+                mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
+                mID = f'{mID0}_fit'
+                entry = reg.MD.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                                       space_mkeys=['crawler', 'turner', 'interference'],
+                                       fit_dict=fit_dict)
+                entries.update(entry)
+                mIDs.append(mID)
+    return entries, mIDs
+
+
 def modelConf_analysis(d, avgVSvar=False, mods3=False):
     warnings.filterwarnings('ignore')
     c = d.config
@@ -400,13 +494,13 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
         c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
     M = reg.MD
     if avgVSvar:
-        entries_avg, mIDs_avg = M.adapt_6mIDs(refID=c.refID, e=e, c=c)
+        entries_avg, mIDs_avg = adapt_6mIDs(refID=c.refID, e=e, c=c)
         c.modelConfs.average = entries_avg
 
         reg.GD.store_model_graphs(mIDs_avg, d.dir)
         eval_model_graphs(refID, mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
 
-        entries_var = M.add_var_mIDs(refID=c.refID, e=e, c=c,
+        entries_var = add_var_mIDs(refID=c.refID, e=e, c=c,
                                      mID0s=mIDs_avg)
         mIDs_var = list(entries_var.keys())
         c.modelConfs.variable = entries_var
@@ -416,7 +510,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
         eval_model_graphs(refID, mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
                           N=10)
     if mods3:
-        entries_3m, mIDs_3m = M.adapt_3modules(refID=c.refID, e=e, c=c)
+        entries_3m, mIDs_3m = adapt_3modules(refID=c.refID, e=e, c=c)
         c.modelConfs['3modules'] = entries_3m
         reg.GD.store_model_graphs(mIDs_3m, d.dir)
 

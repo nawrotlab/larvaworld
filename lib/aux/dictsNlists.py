@@ -69,6 +69,18 @@ def load_dict(file, use_pickle=True):
             d = json.load(tfp)
     return NestDict(d)
 
+def load_dict2(file):
+    try:
+        with open(file) as tfp:
+            d = json.load(tfp)
+    except:
+        try:
+            with open(file, 'rb') as tfp:
+                d = pickle.load(tfp)
+        except:
+            raise
+    return NestDict(d)
+
 
 def save_dict(d, file, use_pickle=True):
     if file is not None :

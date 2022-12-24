@@ -3,35 +3,33 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from lib.registry import reg
-from lib.sim.single.single_run import SingleRun
+import lib.aux.data_aux
+from lib import reg
+
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-I = reg.Dic.DEF
-
-
-
-
 
 
 
 class Essay:
-    def __init__(self, type,essay_id=None, N=5, enrichment=I.base_enrich(), collections=['pose'], video=False, show=False,
+    def __init__(self, type,essay_id=None, N=5, enrichment=None, collections=['pose'], video=False, show=False,
                  **kwargs):
+        if enrichment is None:
+            enrichment = reg.Dic.DEF.base_enrich()
         if video:
             self.vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
         else:
             self.vis_kwargs = reg.get_null('visualization', mode=None)
         self.N = N
+        self.M = reg.MD
         self.G = reg.GD
         self.GT = reg.GT
         self.CT = reg.CT
-        self.M = reg.MD
         self.show = show
         self.type = type
         self.enrichment = enrichment
         self.collections = collections
         if essay_id is None:
-            essay_id=f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
+            essay_id=f'{type}_{lib.aux.data_aux.next_idx(id=type, conftype="Essay")}'
         self.essay_id = essay_id
         self.path = f'essays/{type}/{self.essay_id}/data'
         path = reg.Path.ESSAY
@@ -49,6 +47,7 @@ class Essay:
                              collections=self.collections, **kwargs)
 
     def run(self):
+        from lib.sim.single.single_run import SingleRun
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
             print(f'Running {len(cs)} versions of experiment {exp}')
@@ -76,7 +75,7 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, N=1, **kwargs):
-        super().__init__(type='RvsS', N=N, enrichment=I.enr_dict(proc=['spatial']),
+        super().__init__(type='RvsS', N=N, enrichment=reg.Dic.DEF.enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
 
         self.all_figs = all_figs
@@ -335,7 +334,7 @@ class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=10, dur=5.0, olfactor=True, feeder=True,
                  arena_dims=(0.24, 0.24), patch_x=0.06,patch_radius=0.025,
                  **kwargs):
-        super().__init__(N=N,type='DoublePatch', enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
+        super().__init__(N=N,type='DoublePatch', enrichment=reg.Dic.DEF.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                    bouts=['stride', 'pause', 'turn'],
                                                                    fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
@@ -362,7 +361,7 @@ class DoublePatch_Essay(Essay):
         self.mIDs=[f'{mID0}{suf}' for mID0 in self.mID0s]
 
 
-        self.ms=[self.M.loadConf(mID) for mID in self.mIDs]
+        self.ms=[reg.loadConf(id=mID, conftype='Model') for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
 
         self.mdiff_df, row_colors = self.M.diff_df(mIDs=self.mID0s,ms=self.ms)
@@ -480,7 +479,7 @@ class DoublePatch_Essay(Essay):
 class Chemotaxis_Essay(Essay):
     def __init__(self, dur=5.0, gain=300.0, mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
-                         enrichment=I.enr_dict(proc=['spatial', 'angular', 'source'],
+                         enrichment=reg.Dic.DEF.enr_dict(proc=['spatial', 'angular', 'source'],
                                                bouts=[], fits=False, interference=False, on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']
@@ -675,6 +674,7 @@ class Chemotaxis_Essay(Essay):
         self.figs.update(self.G.eval0(entry, **kwargs))
 
 
+@reg.funcs.stored_conf("Essay")
 def Essay_dict():
     rover_sitter_essay = {
         'experiments': {

@@ -6,7 +6,7 @@ from scipy.stats import ks_2samp
 import pandas as pd
 
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-from lib.registry import reg
+from lib import reg
 from lib.stor.larva_dataset import LarvaDataset
 
 class ExpFitter:

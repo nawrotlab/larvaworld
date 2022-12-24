@@ -6,7 +6,7 @@ import math
 import os
 import numpy as np
 
-from lib.registry import reg
+from lib import reg
 from lib.model.DEB.deb_aux import beta0, simplex, get_lb, get_E0, get_E_Rm
 from lib.aux import naming as nam, dictsNlists as dNl
 from lib.model.DEB.gut import Gut

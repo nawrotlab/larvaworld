@@ -9,9 +9,11 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import label_diff
 from lib.plot.base import AutoLoadPlot, AutoPlot, AutoBasePlot
-from lib.registry import reg
+from lib import reg
+# from lib import plot
 
 
+@reg.funcs.graph('error barplot')
 def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
                   titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
     def build_legend(ax, eval_df):
@@ -40,10 +42,11 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
     return P.get()
 
 
+@reg.funcs.graph('food intake (barplot)')
 def intake_barplot(**kwargs):
     return barplot(par_shorts=['f_am'], **kwargs)
 
-
+@reg.funcs.graph('barplot')
 def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(par_shorts)
 
@@ -103,7 +106,7 @@ def barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=
 
 
 
-
+@reg.funcs.graph('auto_barplot')
 def auto_barplot(par_shorts, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(par_shorts)
 

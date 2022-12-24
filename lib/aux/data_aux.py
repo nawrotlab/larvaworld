@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import random
 import typing
@@ -6,8 +8,8 @@ from typing import Tuple, List
 import numpy as np
 import param
 
+from lib import reg
 from lib.aux import dictsNlists as dNl
-from lib.registry.units import ureg
 
 
 def maxNdigits(array, Min=None):
@@ -189,7 +191,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
         mdict=param.Dict(default=None, doc='The parameter dict in case of a dict header', allow_None=True)
         func = param.Callable(default=None, doc='Function to get the parameter from a dataset', allow_None=True)
         required_ks = param.List(default=[], doc='Keys of prerequired parameters for computation in a dataset')
-        u = param.Parameter(default=ureg.dimensionless, doc='Unit of the parameter values', label=u_name)
+        u = param.Parameter(default=reg.units.dimensionless, doc='Unit of the parameter values', label=u_name)
 
         @property
         def s(self):
@@ -209,7 +211,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
 
         @property
         def unit(self):
-            if self.u == ureg.dimensionless:
+            if self.u == reg.units.dimensionless:
                 return '-'
             else:
                 return fr'${self.u}$'
@@ -314,7 +316,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
 
         @property
         def get_ParsArg(self):
-            from lib.registry.parsers import build_ParsArg
+            from lib.reg.parser import build_ParsArg
             return build_ParsArg(name=self.name, k=self.k, h=self.help, dtype=self.dtype, v=self.initial_value, vs=None)
 
         def exists(self, dataset):
@@ -463,7 +465,7 @@ def vpar(vfunc, v0, h, lab, lim, dv, vs):
 
 def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None, codename=None, lab=None, h=None,
                u_name=None,mdict=None,
-               required_ks=[], u=ureg.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
+               required_ks=[], u=reg.units.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
                vfunc=None, vparfunc=None, func=None, **kwargs):
     codename = p if codename is None else codename
     d = p if d is None else d
@@ -477,7 +479,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
             sym = k
 
     if lab is None:
-        if u == ureg.dimensionless:
+        if u == reg.units.dimensionless:
             lab = f'{disp}'
         else:
             ulab=fr'${u}$'
@@ -513,3 +515,75 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
 
     }
     return dNl.NestDict(kws)
+
+
+def loadConfDic(k) :
+    path = f'{reg.ROOT_DIR}/lib/conf/confDicts/{k}.txt'
+    return dNl.load_dict2(path)
+
+
+def selector_func(objects,default=None, single_choice=True, **kwargs):
+    kws = {
+        'objects': objects,
+        'default': default,
+        'allow_None': True,
+    }
+
+    kwargs.update(kws)
+    if single_choice:
+        func = param.Selector
+    else:
+        func = param.ListSelector
+    try:
+        f= func(empty_default= True,**kwargs)
+    except :
+        f=func(**kwargs)
+    return f
+
+
+def ConfID_entry(conftype,ids=None,default=None,k=None, symbol=None, single_choice=True):
+    if ids is None :
+        ids=list(loadConfDic(conftype).keys())
+
+    def ConfSelector(**kwargs):
+        def func():
+            return selector_func(objects=ids, **kwargs)
+
+        return func
+
+    from typing import List
+    from lib.aux.par_aux import sub
+
+    if single_choice:
+        t = str
+        IDstr = 'ID'
+    else:
+        t = List[str]
+        IDstr = 'IDs'
+
+    low = conftype.lower()
+    if k is None:
+        k = f'{low}{IDstr}'
+    if symbol is None:
+        symbol = sub(IDstr, low)
+    d = {'dtype': t, 'vparfunc': ConfSelector(default=default, single_choice=single_choice),
+         'vs': ids, 'v': default,
+         'symbol': symbol, 'k': k, 'h': f'The {conftype} configuration {IDstr}',
+         'disp': f'{conftype} {IDstr}'}
+    return dNl.NestDict(d)
+
+
+def next_idx(id, conftype='Exp'):
+    f = reg.Path.SimIdx
+    if not os.path.isfile(f):
+        d = dNl.NestDict({k: dNl.NestDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
+    else:
+        d = dNl.load_dict(f, use_pickle=False)
+
+    if not conftype in d.keys():
+        d[conftype] = {}
+    if not id in d[conftype].keys():
+        d[conftype][id] = 0
+    d[conftype][id] += 1
+    dNl.save_dict(d, f, use_pickle=False)
+    return d[conftype][id]

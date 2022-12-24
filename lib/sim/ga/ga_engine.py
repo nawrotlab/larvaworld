@@ -9,7 +9,7 @@ import numpy as np
 
 from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
 from lib.sim.ga.functions import GA_optimization
-from lib.registry import reg
+from lib import reg
 from lib.aux.time_util import TimeUtil
 
 
@@ -73,7 +73,8 @@ class GAselector:
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
-                self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
+                reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
+                # self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
         end_generation_time = TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
         reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
@@ -183,7 +184,7 @@ class GAbuilder(GAselector):
         self.multicore = multicore
         self.viewer = viewer
         self.robot_class = get_robot_class(robot_class, self.model.offline)
-        self.mConf0 = self.M.loadConf(base_model)
+        self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.excluded_ids = []
         self.Nagents_min = round(self.Nagents * self.selection_ratio)

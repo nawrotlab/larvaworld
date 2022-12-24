@@ -7,7 +7,7 @@ import pypet
 
 
 
-from lib.registry import reg
+from lib import reg
 from lib.aux.stdout import suppress_stdout
 import lib.aux.dictsNlists as dNl
 import lib.aux.sim_aux

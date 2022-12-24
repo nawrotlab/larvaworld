@@ -4,11 +4,11 @@ import time
 import numpy as np
 
 
-from lib.registry import reg
+from lib import reg
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
 
 from lib.model.envs.world_sim import WorldSim
-from lib.registry.output import set_output
+# from lib.registry.output import set_output
 
 
 class SingleRun:
@@ -38,7 +38,7 @@ class SingleRun:
         self.start = time.time()
         self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
         Npoints = np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()])
-        output = set_output(collections=collections, Npoints=Npoints)
+        output = reg.set_output(collections=collections, Npoints=Npoints)
 
         self.env = WorldSim(id=self.id, dt=dt, Box2D=sim_params.Box2D, output=output,
                             env_params=env_params, larva_groups=larva_groups, trials=trials, dur=sim_params.duration,

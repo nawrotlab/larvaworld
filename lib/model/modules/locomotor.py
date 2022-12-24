@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib.model.body.controller import PhysicsController
-from lib.registry import reg
+from lib import reg
 from lib.aux.ang_aux import restore_bend_2seg
 
 class Locomotor:
@@ -86,7 +86,7 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
         # reg.Dic.MD.init_loco(conf, self)
 
     # def init_loco(self, conf, L):
-        D = reg.Dic.MD.dict.model.m
+        D = reg.model.dict.model.m
         for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
 
             if conf.modules[k]:

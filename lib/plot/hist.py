@@ -5,13 +5,17 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from lib.aux import naming as nam, dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 from lib.plot.aux import scatter_hist, annotate_plot
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
+
+@reg.funcs.graph('module hists')
+
 def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
                           **kwargs):
+
     if e is None and refID is not None:
         d = reg.loadRef(refID)
         d.load(step=False)
@@ -41,7 +45,7 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     P.adjust((0.2, 0.9), (0.2, 0.9), 0.01)
     return P.get()
 
-
+@reg.funcs.graph('angular pars')
 def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfolder='turn', Npars=5, Nbins=100, **kwargs):
     if Npars == 5:
         shorts = ['b', 'bv', 'ba', 'fov', 'foa']
@@ -73,6 +77,7 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
     P.adjust((0.3 / Nps, 0.99), (0.15, 0.95), 0.01)
     return P.get()
 # ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
+@reg.funcs.graph('distros')
 def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],mode='hist',
                  pvalues=True, half_circles=True,annotation=False,target_only=None, show_ns=True, subfolder='distro', Nbins=100, **kwargs):
     Nps = len(ks)
@@ -165,7 +170,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         P.adjust((0.15, 0.95), (0.15, 0.95), 0.01, 0.1)
     return P.get()
 
-
+@reg.funcs.graph('crawl pars')
 def plot_crawl_pars(shorts=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint', par_legend=False, pvalues=False,type='sns.hist',
                     half_circles=False, kde=True,  **kwargs):
     sns_kws={'kde' : kde, 'stat' : "probability", 'element': "step", 'fill':True, 'multiple' : "layer", 'shrink' :1}
@@ -183,12 +188,13 @@ def plot_crawl_pars(shorts=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint', pa
     P.adjust((0.25 / Nps, 0.99), (0.15, 0.95), 0.01)
     return P.get()
 
+@reg.funcs.graph('turn amplitude VS Y pos')
 def plot_turn_amp_VS_Ypos(**kwargs):
     return plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
 
+@reg.funcs.graph('turn duration')
 def plot_turn_duration(absolute=True, **kwargs):
     return plot_turn_amp(par_short='tur_t', mode='scatter', absolute=absolute, **kwargs)
-
 
 def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='hist', cumy=True, absolute=True, **kwargs):
     nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
@@ -234,7 +240,7 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
                              cumy=cumy)
     return P.get()
 
-
+@reg.funcs.graph('angular/epoch')
 def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwargs):
     shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     Nps=len(shorts)
@@ -273,6 +279,7 @@ def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwa
     P.adjust((0.1, 0.95), (0.1, 0.9), 0.1, 0.3)
     return P.get()
 
+@reg.funcs.graph('endpoint pars (scatter)')
 def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
     pairs = list(itertools.combinations(keys, 2))
     Npairs = len(pairs)
@@ -306,7 +313,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 
     return P.get()
 
-
+@reg.funcs.graph('turn amplitude')
 def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P = Plot(name='turn_amplitude', subfolder=subfolder, **kwargs)
     P.build()
@@ -317,6 +324,7 @@ def plot_turns(absolute=True, subfolder='turn', **kwargs):
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
+@reg.funcs.graph('endpoint pars (hist)')
 def plot_endpoint_params(mode='basic', par_shorts=None, subfolder='endpoint',
                          plot_fit=True, nbins=20, use_title=True, **kwargs):
     #warnings.filterwarnings('ignore')

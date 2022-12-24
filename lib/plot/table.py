@@ -4,13 +4,17 @@ import six
 
 from lib.plot.base import BasePlot, AutoBasePlot
 from lib.aux import dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 
 
+
+@reg.funcs.graph('model table')
 def modelConfTable(mID, **kwargs):
     return reg.Dic.MD.mIDtable(mID, **kwargs)
 
 
+
+@reg.funcs.graph('mtable')
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
     from lib.aux.data_aux import mdict2df, init2mdict
@@ -30,7 +34,6 @@ def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
     P = BasePlot('mtable', save_as=save_as, save_to=save_to, show=show)
     P.set(fig)
     return P.get()
-
 
 def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
                build_kws={'Nrows': 1, 'Ncols': 1, 'w': 15, 'h': 20}, **kwargs):
@@ -53,7 +56,7 @@ def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
 
 
 
-
+@reg.funcs.graph('mpl')
 def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size=14, title=None,
               name='mpl_table', header0=None,header0_color=None,
               header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='black',
@@ -149,7 +152,7 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
     else:
         return P.get()
 
-
+@reg.funcs.graph('model diff')
 def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
     data, row_colors = reg.Dic.MD.diff_df(mIDs=mIDs, dIDs=dIDs)
     mpl_kws = {
@@ -180,7 +183,7 @@ def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
     P.set(fig)
     return P.get()
 
-
+@reg.funcs.graph('error table')
 def error_table(data, k='', title=None, **kwargs):
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])

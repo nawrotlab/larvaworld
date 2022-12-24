@@ -1,7 +1,7 @@
 import time
 
 
-from lib.registry import reg
+from lib import reg
 from lib.model.envs.world_replay import WorldReplay
 
 from lib.process.spatial import fixate_larva

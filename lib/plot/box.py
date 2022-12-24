@@ -7,12 +7,12 @@ from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
 
 from lib.aux import dictsNlists as dNl, data_aux, colsNstr as cNs
-from lib.registry import reg
+from lib import reg
 from lib.plot.aux import label_diff, annotate_plot
-
 from lib.plot.base import AutoPlot, Plot
 
 
+@reg.funcs.graph('boxplot (simple)')
 def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=True, grouped=False,
              ylims=None,
              in_mm=[], target_only=None, **kwargs):
@@ -71,7 +71,7 @@ def boxplots(shorts=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=Tru
 #
 #     return boxplots(shorts=ks,key='step',**kwargs)
 
-
+@reg.funcs.graph('boxplot (grouped)')
 def boxplot(par_shorts, sort_labels=False, name=None, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None,
             **kwargs):
     Npars = len(par_shorts)
@@ -142,7 +142,7 @@ def boxplot(par_shorts, sort_labels=False, name=None, xlabel=None, pair_ids=None
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()
 
-
+@reg.funcs.graph('PI (combo)')
 def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     P = AutoPlot(name='PI_boxplot', figsize=(10, 5), **kwargs)
 
@@ -204,7 +204,7 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     P.adjust((0.2, 0.9), (0.15, 0.9), 0.05, 0.005)
     return P.get()
 
-
+@reg.funcs.graph('PI (simple)')
 def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
     f = f'{save_to}/{exp}{suf}.pdf'
     box = plt.boxplot(df,
@@ -224,7 +224,7 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
         plt.show()
     plt.close()
 
-
+@reg.funcs.graph('double patch')
 def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     if ks is None:
         ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
@@ -357,7 +357,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()
 
-
+@reg.funcs.graph('ggboxplot')
 def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
     pars, syms, labs, lims = reg.getPar(shorts, to_return=['d', 's', 'lab', 'lim'])
     from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
@@ -380,7 +380,7 @@ def ggboxplot(shorts=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, 
             figure_size=figsize)).draw()
     return P.get()
 
-
+@reg.funcs.graph('foraging')
 def plot_foraging(**kwargs):
     P = AutoPlot(name='foraging', build_kws={'Nrows': 1, 'Ncols': 2, 'w': 8, 'h': 10, 'mode': 'box'}, **kwargs)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
@@ -410,7 +410,7 @@ def plot_foraging(**kwargs):
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.2, 0.005)
     P.get()
 
-
+@reg.funcs.graph('lineplot')
 def lineplot(markers, par_shorts=['f_am'], name=None, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None,
              scale=1.0,
              **kwargs):

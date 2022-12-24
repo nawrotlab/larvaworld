@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm, colors
 
-from lib.registry import reg
+#
 
 
 def invert_color(col, return_self=False):
@@ -100,45 +100,7 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
     return res
 
 
-def col_df(shorts, groups):
 
-    group_col_dic = {
-        'angular kinematics': 'Blues',
-        'spatial displacement': 'Greens',
-        'temporal dynamics': 'Reds',
-        'dispersal': 'Purples',
-        'tortuosity': 'Purples',
-        'epochs': 'Oranges',
-        'stride cycle': 'Oranges',
-
-    }
-    group_label_dic = {
-        'angular kinematics': r'$\bf{angular}$ $\bf{kinematics}$',
-        'spatial displacement': r'$\bf{spatial}$ $\bf{displacement}$',
-        'temporal dynamics': r'$\bf{temporal}$ $\bf{dynamics}$',
-        'dispersal': r'$\bf{dispersal}$',
-        'tortuosity': r'$\bf{tortuosity}$',
-        'epochs': r'$\bf{epochs}$',
-        'stride cycle': r'$\bf{stride}$ $\bf{cycle}$',
-
-    }
-    df = pd.DataFrame(
-        {'group': groups,
-         'group_label': [group_label_dic[g] for g in groups],
-         'shorts': shorts,
-         'pars': [reg.getPar(sh) for sh in shorts],
-         'symbols': [reg.getPar(sh, to_return='l') for sh in shorts],
-         'group_color': [group_col_dic[g] for g in groups]
-         })
-
-    # print(shorts)
-    # print(groups)
-
-    df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
-    df['par_colors'] = df.apply(
-        lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)
-    df.set_index('group', inplace=True)
-    return df
 
 # for q in np.arange(0,1,0.1):
 #     print(q, col_range(q, low=(255, 0, 0), high=(0, 128, 0)))

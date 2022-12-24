@@ -3,7 +3,7 @@ import pandas as pd
 
 
 from lib.aux import dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 
 
 

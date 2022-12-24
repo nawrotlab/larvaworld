@@ -3,9 +3,10 @@ import itertools
 import numpy as np
 import pandas as pd
 from scipy.stats import ks_2samp
+from matplotlib import cm, colors
 
 from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
-from lib.registry import reg
+from lib import reg
 
 
 dst, v, sv, acc, sa, fou, rou, fo, ro, b, fov, rov, bv, foa, roa, ba, x, y, l, dsp, dsp_0_40, dsp_0_40_mu, dsp_0_40_max, str_fov_mu, run_fov_mu, pau_fov_mu, run_foa_mu, pau_foa_mu, str_fov_std, pau_fov_std, str_sd_mu, str_sd_std, str_d_mu, str_d_std, str_sv_mu, pau_sv_mu, str_v_mu, run_v_mu, run_sv_mu, pau_v_mu, str_tr, run_tr, pau_tr, Ltur_tr, Rtur_tr, Ltur_fou, Rtur_fou, run_t_min, cum_t, run_t, run_dst, pau_t = reg.getPar(
@@ -154,7 +155,45 @@ def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
     return error_dict
 
 
+def col_df(shorts, groups):
 
+    group_col_dic = {
+        'angular kinematics': 'Blues',
+        'spatial displacement': 'Greens',
+        'temporal dynamics': 'Reds',
+        'dispersal': 'Purples',
+        'tortuosity': 'Purples',
+        'epochs': 'Oranges',
+        'stride cycle': 'Oranges',
+
+    }
+    group_label_dic = {
+        'angular kinematics': r'$\bf{angular}$ $\bf{kinematics}$',
+        'spatial displacement': r'$\bf{spatial}$ $\bf{displacement}$',
+        'temporal dynamics': r'$\bf{temporal}$ $\bf{dynamics}$',
+        'dispersal': r'$\bf{dispersal}$',
+        'tortuosity': r'$\bf{tortuosity}$',
+        'epochs': r'$\bf{epochs}$',
+        'stride cycle': r'$\bf{stride}$ $\bf{cycle}$',
+
+    }
+    df = pd.DataFrame(
+        {'group': groups,
+         'group_label': [group_label_dic[g] for g in groups],
+         'shorts': shorts,
+         'pars': [reg.getPar(sh) for sh in shorts],
+         'symbols': [reg.getPar(sh, to_return='l') for sh in shorts],
+         'group_color': [group_col_dic[g] for g in groups]
+         })
+
+    # print(shorts)
+    # print(groups)
+
+    df['cols'] = df.apply(lambda row: [(row['group'], p) for p in row['symbols']], axis=1)
+    df['par_colors'] = df.apply(
+        lambda row: [cm.get_cmap(row['group_color'])(i) for i in np.linspace(0.4, 0.7, len(row['pars']))], axis=1)
+    df.set_index('group', inplace=True)
+    return df
 
 def arrange_evaluation(d, evaluation_metrics=None):
     if evaluation_metrics is None:
@@ -199,7 +238,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
     target_data = dNl.NestDict({'step': Ddata, 'end': Edata})
 
 
-    ev = {k: cNs.col_df(**v) for k, v in dic.items()}
+    ev = {k: col_df(**v) for k, v in dic.items()}
 
     return ev, target_data
 

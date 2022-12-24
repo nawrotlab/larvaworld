@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pygame
 
-from lib.registry import reg
+from lib import reg
 from lib.screen.rendering import Viewer, InputBox, SimulationClock, SimulationScale, SimulationState, draw_trajectories
 from lib.screen.screen_aux import get_window_dims, get_arena_bounds
 from lib.aux import dictsNlists as dNl, colsNstr as cNs

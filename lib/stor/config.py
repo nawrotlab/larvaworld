@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 from lib.aux import dictsNlists as dNl, xy_aux,data_aux, naming as nam
-from lib.registry import reg
+from lib import reg
 
 
 def update_metric_definition(md=None, mdconf=None):

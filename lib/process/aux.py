@@ -3,8 +3,10 @@ import numpy as np
 from scipy.signal import find_peaks, argrelextrema
 
 from lib.aux.stor_aux import store_distros
-from lib.registry import reg
+
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux, sim_aux
+from lib import reg
+
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
     if abs_threshold is None:
@@ -291,7 +293,7 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     cast_min, cast_max = np.nanquantile(cast_amps, 0.25), np.nanquantile(cast_amps, 0.75)
     return wvane_min, wvane_max, cast_min, cast_max
 
-
+# @funcs.annotation("epochs")
 def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
     sim_aux.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
@@ -343,7 +345,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
         dic[id]=cycle_curve_dict(ss, dt=dt, shs=shs)
     return dNl.NestDict(dic)
 
-
+# @funcs.annotation("interference")
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     import lib.aux.naming as nam
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -420,7 +422,7 @@ def turn_mode_annotation(e, chunk_dicts):
         wNh[id] = dict(zip(wNh_ps, weathervanesNheadcasts(dic.run_idx, dic.pause_idx, dic.turn_slice, dic.turn_amp)))
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
 
-
+# @funcs.annotation("turn")
 def turn_annotation(s, e, c, store=False):
     fov, foa = reg.getPar(['fov', 'foa'])
 
@@ -463,7 +465,7 @@ def turn_annotation(s, e, c, store=False):
         store_distros(s, pars=turn_ps, parent_dir=c.dir)
     return turn_dict
 
-
+# @funcs.annotation("crawl")
 def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     if vel_thr is None:
         vel_thr = c.vel_thr

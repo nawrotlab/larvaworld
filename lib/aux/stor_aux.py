@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from lib.aux import dictsNlists as dNl
-from lib.registry import reg
+#
 
 
 
@@ -42,6 +42,7 @@ def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_d
         path = filepath_dic[filepath_key]
     else:
         if parent_dir is not None:
+            from lib import reg
             path = reg.datapath(filepath_key, parent_dir)
         else:
             print('Filepath not provided.Returning None')

@@ -1,12 +1,10 @@
-import os
 import warnings
 import numpy as np
 from scipy.stats import levy, norm, rv_discrete, ks_2samp
 
 
-from lib.registry import reg
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
+from lib import reg
+from lib.aux import dictsNlists as dNl
 
 
 def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
@@ -72,8 +70,7 @@ def KS2(a1, a2):
 
 
 def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
-    distros = reg.Dic.DD.dict
-    D=distros['logNpow']
+    D=reg.distro_database['logNpow']
     xmids = u2[1:-int(len(u2) / 3)][::2]
     overlaps = np.linspace(0, 1, 6)
     temp = np.ones([len(xmids), len(overlaps)])
@@ -101,18 +98,18 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
 
 
 
-def fit_bouts(c, aux_dic):
-
-
-
-
-
-
-    fitted_epochs,c.bout_distros = fit_epochs(aux_dic)
-
-
-
-    return fitted_epochs
+# def fit_bouts(c, aux_dic):
+#
+#
+#
+#
+#
+#
+#     fitted_epochs,c.bout_distros = fit_epochs(aux_dic)
+#
+#
+#
+#     return fitted_epochs
 
 
 
@@ -160,7 +157,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmax=np.nanmax(x0)
     with suppress_stdout(False):
         warnings.filterwarnings('ignore')
-        distros=reg.Dic.DD.dict
+        distros=reg.distro_database
         x = x0[x0 >= xmin]
         x = x[x <= xmax]
 
@@ -373,7 +370,7 @@ class BoutGenerator:
         self.name = name
         self.dt = dt
         self.range = range
-        self.ddfs = reg.Dic.DD.dict
+        self.ddfs = reg.distro_database
         self.xmin, self.xmax = range
         kwargs.update({'xmin': self.xmin, 'xmax': self.xmax})
         self.args = {a: kwargs[a] for a in self.ddfs[self.name]['args']}

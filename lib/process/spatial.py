@@ -4,9 +4,12 @@ import itertools
 import numpy as np
 import pandas as pd
 
+
 from lib.aux.stor_aux import read, storeH5, store_distros, get_distros
-from lib.registry import reg
+from lib import reg
 from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux, dir_aux
+
+
 
 def comp_linear(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -222,6 +225,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
         storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
 
 
+@reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
@@ -286,6 +290,7 @@ def dsp_solo(s, e, c,s0, s1, p) :
 
 
 
+@reg.funcs.proc("dispersion")
 def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
     # dt = c.dt
     if dsp_starts is None or dsp_stops is None:
@@ -434,7 +439,7 @@ def straightness_index(xy, w, match_shape=True):
             SI[i] = tortuosity(xys[i, :])
     return SI
 
-
+@reg.funcs.proc("tortuosity")
 def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], store=False, **kwargs):
     if dt is None:
         dt = c.dt
@@ -468,7 +473,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dic = get_distros(s, pars=pars)
         storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
 
-
+@reg.funcs.proc("source")
 def comp_source_metrics(s, e, c, **kwargs):
     fo = reg.getPar('fo')
     xy = nam.xy('')
@@ -503,6 +508,7 @@ def comp_source_metrics(s, e, c, **kwargs):
 
         print('Bearing and distance to source computed')
 
+@reg.funcs.proc("wind")
 def comp_wind(**kwargs) :
     try :
         comp_wind_metrics(**kwargs)
@@ -545,6 +551,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         # print(e['anemotaxis'])
 
 
+@reg.funcs.preproc("transposition")
 def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='origin', store=False,replace=True, **kwargs):
     if transposition in ['', None, np.nan]:
         return

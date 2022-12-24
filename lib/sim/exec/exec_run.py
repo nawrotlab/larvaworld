@@ -2,7 +2,7 @@ import subprocess
 import sys
 import argparse
 
-from lib.registry import reg
+from lib import reg
 from lib.stor.larva_dataset import LarvaDataset
 from lib.sim.batch.functions import retrieve_results
 import lib.aux.dictsNlists as dNl

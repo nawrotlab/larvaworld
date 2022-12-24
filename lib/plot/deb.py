@@ -9,8 +9,10 @@ from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import plot_quantiles, plot_mean_and_range, suf, process_plot
 from lib.plot.base import AutoPlot
+from lib import reg
 
 
+@reg.funcs.graph('gut')
 def plot_gut(**kwargs):
     P = AutoPlot(name='gut', **kwargs)
     x = P.trange()
@@ -22,7 +24,7 @@ def plot_gut(**kwargs):
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
-
+@reg.funcs.graph('food intake (timeplot)')
 def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
     name = 'food_intake'
     ylab = r'Cumulative food intake $(mg)$'
@@ -60,7 +62,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
 
-
+@reg.funcs.graph('deb')
 def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False, include_egg=True,
               time_unit='hours', return_fig=False, sim_only=False, force_ymin=None, color_epoch_quality=True,
               datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True, **kwargs):
@@ -351,7 +353,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15, right=0.93, hspace=0.15)
     return process_plot(fig, save_to, save_as, return_fig, show)
 
-
+#@graph('bearing/turn')
 def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitter', 'default'],
                              save_to=None, return_fig=False, show=False, **kwargs):
     if samples is None:

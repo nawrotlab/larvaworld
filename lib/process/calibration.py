@@ -12,7 +12,7 @@ from sklearn.linear_model import LinearRegression
 
 from lib.process.spatial import comp_centroid
 from lib.aux import dictsNlists as dNl, naming as nam
-from lib.registry import reg
+from lib import reg
 
 
 def comp_stride_variation(d, component_vels=True):

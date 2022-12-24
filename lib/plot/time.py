@@ -2,12 +2,14 @@ import numpy as np
 from matplotlib import collections as mc
 
 from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 
 from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
 from lib.plot.aux import plot_quantiles
 
 
+
+@reg.funcs.graph('ethogram')
 def plot_ethogram(subfolder='timeplots', **kwargs):
     P = Plot(name='ethogram', subfolder=subfolder, **kwargs)
     P.build(Nrows=P.Ndatasets, Ncols=2, sharex=True)
@@ -81,7 +83,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
 
 
 
-
+@reg.funcs.graph('nengo')
 def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='nengo', **kwargs):
     probe_groups = {
         'anemotaxis': ['Ch', 'LNa', 'LNb', 'Ha', 'Hb', 'B1', 'B2', 'Bend', 'Hunch'],
@@ -140,7 +142,7 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     P.adjust((0.1, 0.95), (0.1, 0.95), 0.01, 0.05)
     return P.get()
 
-
+@reg.funcs.graph('timeplot')
 def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
              show_legend=True, show_first=False, subfolder='timeplots', legend_loc='upper left', leg_fontsize=15,
              figsize=(7.5, 5),
@@ -217,6 +219,7 @@ def timeplot(par_shorts=[], pars=[], same_plot=True, individuals=False, table=No
     P.adjust((0.15, 0.95), (0.15, 0.95))
     return P.get()
 
+@reg.funcs.graph('autoplot')
 def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True,individuals=True,**kwargs):
     Nks=len(ks)
     if name is None :
@@ -249,19 +252,19 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-
+@reg.funcs.graph('C odor (real)')
 def plot_odor_concentration(**kwargs):
     return timeplot(['c_odor1'], **kwargs)
 
-
+@reg.funcs.graph('C odor (perceived)')
 def plot_sensed_odor_concentration(**kwargs):
     return timeplot(['dc_odor1'], **kwargs)
 
-
+@reg.funcs.graph('Y pos')
 def plot_Y_pos(**kwargs):
     return timeplot(['y'], **kwargs)
 
-
+@reg.funcs.graph('dispersal')
 def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=None,
                     **kwargs):
     ylab = 'scaled dispersal' if scaled else r'dispersal $(mm)$'
@@ -290,7 +293,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
     P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4, leg_loc='upper left', legfontsize=15)
     return P.get()
 
-
+@reg.funcs.graph('navigation index')
 def plot_navigation_index(subfolder='source', **kwargs):
     P = AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 20, 'h': 10,'mode':'both'}, **kwargs)
     from lib.aux.vel_aux import compute_component_velocity,compute_velocity
@@ -324,7 +327,6 @@ def plot_navigation_index(subfolder='source', **kwargs):
     P.axs[1].axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
     return P.get()
 
-
 def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
     t_unit='min'
     ylab0 = 'pathlength'
@@ -349,7 +351,7 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
     return P.get()
 
 
-
+@reg.funcs.graph('pathlength')
 def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
     lab = 'pathlength'
     if scaled:
@@ -368,7 +370,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.get_par(p.d, key='step')
         if not scaled and unit == 'cm':
-            from lib.registry.units import ureg
+            from lib.reg import units as ureg
             if p.u == ureg.m:
                 df *= 100
         plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)

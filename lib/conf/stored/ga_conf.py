@@ -1,8 +1,9 @@
 import warnings
 import numpy as np
 
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
-from lib.registry import reg
+from lib import reg
 import lib.aux.dictsNlists as dNl
 from lib.aux.xy_aux import eudi5x
 
@@ -76,6 +77,8 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
     conf = reg.get_null('GAconf', **kws)
     return {name: conf}
 
+
+@reg.funcs.stored_conf("Ga")
 def Ga_dict() :
     d = dNl.NestDict({
     **ga_conf('interference', dt=1 / 16, dur=3, refID='exploration.150controls', m0='loco_default',

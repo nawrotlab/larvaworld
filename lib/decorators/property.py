@@ -2,7 +2,7 @@
 # def add_prop(k, obj):
 #    _k=f'_{k}'
 import lib.aux.dictsNlists as dNl
-from lib.registry import reg
+from lib import reg
 
 
 def alias(k, inverse=False):

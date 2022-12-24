@@ -1,4 +1,4 @@
-from lib.aux.fitting import fit_epochs, get_bout_distros
+
 from lib.aux import dictsNlists as dNl, naming as nam
 
 
@@ -24,6 +24,7 @@ def register_bout_distros(c,e):
 
 
 def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
+    from lib.aux.fitting import fit_epochs, get_bout_distros
     from lib.process import aux, patch
     s, e ,c= d.step_data, d.endpoint_data,d.config
 

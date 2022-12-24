@@ -5,7 +5,8 @@ import sys
 import numpy as np
 
 from lib.aux.sim_aux import get_source_xy
-from lib.registry import reg, base
+from lib.reg.base import BaseRun
+from lib import reg
 from lib.screen.rendering import  Viewer
 from lib.aux.color_util import Color
 from lib.screen.screen_aux import get_arena_bounds
@@ -13,7 +14,7 @@ from lib.sim.ga.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil
 from lib.model.envs.base_world import BaseWorld
 
-class GenAlgRun(base.BaseRun):
+class GenAlgRun(BaseRun):
     def __init__(self, sim_params, env_params=None, experiment='exploration',
                  offline=False, **kwargs):
 

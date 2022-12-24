@@ -10,8 +10,9 @@ from lib.aux.stor_aux import read, storeH5, loadSoloDics
 from lib.decorators.timer import warn_slow
 
 from lib.decorators.property import dic_manager_kwargs
+# from lib.registry.function_facade import funcs
 from lib.stor.config import retrieve_config, update_config, update_metric_definition
-from lib.registry import reg
+from lib import reg
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
@@ -288,7 +289,6 @@ class _LarvaDataset:
 
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
-        D = reg.init_Dic('PF').dict
 
         cc = {
             's': self.step_data,
@@ -300,7 +300,8 @@ class _LarvaDataset:
         }
         for k, v in pre_kws.items():
             if v:
-                func = D.preproc[k]
+                func = reg.funcs.preprocessing[k]
+                # func = D.preproc[k]
                 func(**cc, k=v)
 
         if is_last:
@@ -308,7 +309,6 @@ class _LarvaDataset:
         # return self
 
     def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,add_reference=False, **kwargs):
-        D=reg.init_Dic('PF').dict
         cc = {
             'mode': mode,
             'is_last': False,
@@ -320,12 +320,11 @@ class _LarvaDataset:
             **kwargs
         }
         for k in keys:
-            func = D.proc[k]
+            func = reg.funcs.processing[k]
             func(**cc)
 
         if is_last:
             self.save(add_reference=add_reference)
-        # return self
 
 
     def _enrich(self,pre_kws={}, proc_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True, bout_annotation=True,

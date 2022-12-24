@@ -5,7 +5,7 @@ import pandas as pd
 from mesa.datacollection import DataCollector
 
 
-from lib.registry import reg
+from lib import reg
 from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, dir_aux, sample_aux
 from lib.model.envs.world import World
 from lib.model.agents._larva_sim import LarvaSim

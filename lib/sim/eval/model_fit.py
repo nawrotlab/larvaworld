@@ -3,10 +3,11 @@ import warnings
 import numpy as np
 import pandas as pd
 
+import lib.aux.data_aux
 from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
-from lib.registry import reg
+from lib import reg
 
 
 class Calibration:
@@ -176,7 +177,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
         mID1 = mID0
 
     if sim_ID is None:
-        sim_ID = f'{experiment}_{reg.next_idx(id=experiment, conftype="Ga")}'
+        sim_ID = f'{experiment}_{lib.aux.data_aux.next_idx(id=experiment, conftype="Ga")}'
 
     kws = {
         'sim_params': reg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt,

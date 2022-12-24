@@ -174,38 +174,11 @@ def define_vs(vs, dv, lim, cur_dtype):
     return vs
 
 
-def define_lim2(lim, vs, min, max, u, wrap_mode, cur_dtype):
-    if lim is not None:
-        return lim
-    if wrap_mode is not None and u is not None:
-        from lib.registry.units import ureg
-        if u == ureg.deg:
-            if wrap_mode == 'positive':
-                lim = (0.0, 360.0)
-            elif wrap_mode == 'zero':
-                lim = (-180.0, 180.0)
-        elif u == ureg.rad:
-            if wrap_mode == 'positive':
-                lim = (0.0, 2 * np.pi)
-            elif wrap_mode == 'zero':
-                lim = (-np.pi, np.pi)
-    else:
-        if cur_dtype in [float, int]:
-            if vs is not None:
-                lim = (np.min(vs), np.max(vs))
-            else:
-                if min is None:
-                    min = 0
-                if max is None:
-                    max = 1
-                lim = (min, max)
-    return lim
-
 def define_lim(lim, vs, u, wrap_mode, cur_dtype):
     if lim is not None:
         return lim
     if wrap_mode is not None and u is not None:
-        from lib.registry.units import ureg
+        from lib.reg import units as ureg
         if u == ureg.deg:
             if wrap_mode == 'positive':
                 lim = (0.0, 360.0)
