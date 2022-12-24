@@ -4,7 +4,7 @@ import warnings
 
 from lib.aux import dictsNlists as dNl, xy_aux, naming as nam, stdout
 
-from lib.aux.annotation import annotate
+from lib.process.annotation import annotate
 from lib.aux.stor_aux import read, storeH5, loadSoloDics
 
 from lib.decorators.timer import warn_slow

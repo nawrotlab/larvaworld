@@ -122,7 +122,7 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 
 def run_fit_global_batch(sample, **kwargs):
     from lib.sim.exec.exec_run import Exec
-    from lib.aux.exp_fitter import ExpFitter
+    from lib.sim.exp_fitter import ExpFitter
     conf = fit_global_batch(sample=sample, **kwargs)
     conf['proc_kws']['exp_fitter'] = ExpFitter(sample, valid_fields=['angular motion'])
     # conf['proc_kws']['exp_fitter'] = ExpFitter(sample, valid_fields=['angular motion', 'reorientation', 'spatial motion'])

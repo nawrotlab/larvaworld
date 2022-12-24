@@ -333,7 +333,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     for ii, k in enumerate(ks):
         # print(ii,k)
         ax = P.axs[ii]
-        p = reg.Dic.PD.kdict[k]
+        p = reg.par.kdict[k]
         par = p.d
         ylab = p.label
         scale = 1

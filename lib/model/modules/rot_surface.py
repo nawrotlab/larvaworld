@@ -1,6 +1,6 @@
 import math
 import pygame
-from lib.aux.color_util import Color
+from lib.aux.colsNstr import Color
 
 
 class RotSurface:

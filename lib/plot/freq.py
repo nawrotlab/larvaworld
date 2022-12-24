@@ -1,9 +1,7 @@
-import time
-
 import numpy as np
 from matplotlib import ticker, cm
 
-from lib.aux import colsNstr as cNs, data_aux, dictsNlists as dNl
+from lib.aux import colsNstr as cNs, data_aux
 from lib import reg
 from lib.plot.aux import plot_quantiles
 from lib.plot.base import AutoPlot, AutoLoadPlot, AutoBasePlot

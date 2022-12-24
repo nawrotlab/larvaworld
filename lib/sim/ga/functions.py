@@ -23,22 +23,20 @@ def GA_optimization(fitness_target_refID, fitness_target_kws):
 def build_fitness(dic, refDataset):
     d = refDataset
     c = d.config
-    func_global_dict = dNl.NestDict()
-    func_solo_dict = dNl.NestDict()
+    func_global_dict, func_solo_dict = {},{}
     keys = []
     for k, vs in dic.items():
         if k == 'cycle_curves':
             cycle_dict = {'sv': 'abs', 'fov': 'norm', 'rov': 'norm', 'foa': 'norm', 'b': 'norm'}
             cycle_ks = vs
             cycle_modes = {sh: cycle_dict[sh] for sh in cycle_ks}
-            T = d.config.pooled_cycle_curves
-            target = dNl.NestDict({sh: np.array(T[sh][mod]) for sh, mod in cycle_modes.items()})
+            target = dNl.NestDict({sh: np.array(c.pooled_cycle_curves[sh][mod]) for sh, mod in cycle_modes.items()})
             rss_sym = {sh: sh for sh in vs}
             keys += cycle_ks
 
             def func(ss):
                 from lib.process.aux import cycle_curve_dict
-                c0 = cycle_curve_dict(s=ss, dt=d.config.dt, shs=vs)
+                c0 = cycle_curve_dict(s=ss, dt=c.dt, shs=vs)
                 eval_curves = dNl.NestDict(({sh: c0[sh][mode] for sh, mode in cycle_modes.items()}))
                 return dNl.NestDict(
                     {'RSS': {sh: RSS(ref_curve, eval_curves[sh]) for sh, ref_curve in target.items()}})
@@ -49,7 +47,7 @@ def build_fitness(dic, refDataset):
                 from lib.process.aux import cycle_curve_dict_multi
                 from lib.sim.eval.eval_aux import eval_RSS
 
-                rss0 = cycle_curve_dict_multi(s=s, dt=d.config.dt, shs=cycle_ks)
+                rss0 = cycle_curve_dict_multi(s=s, dt=c.dt, shs=cycle_ks)
                 rss = dNl.NestDict(
                     {id: {sh: dic[sh][mod] for sh, mod in cycle_modes.items()} for id, dic in rss0.items()})
                 return dNl.NestDict({'RSS': eval_RSS(rss, target, rss_sym, mode='1:pooled')})

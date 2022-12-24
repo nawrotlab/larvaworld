@@ -78,7 +78,7 @@ def eval_distro_fast(ss, s_data, s_sym, mode='pooled', min_size=20):
         Edistro = {}
         for p, sym in s_sym.items():
             if p in ss.columns:
-                s_vs = s_data[p]
+                # s_vs = s_data[p]
                 pps = []
                 for id in s_data.index:
                     sp, ssp = s_data[p].loc[id].values, ss[p].xs(id, level="AgentID").dropna().values
@@ -138,16 +138,15 @@ def eval_multi(datasets, s=None, e=None, s_shorts=None, e_shorts=None, mode='poo
 
 
 def eval_fast(datasets, data, symbols, mode='pooled', min_size=20):
-    GEend, GEdistro = {}, {}
     GEend = {d.id: eval_end_fast(d.endpoint_data, data.end, symbols.end, mode=mode) for d in datasets}
     GEdistro = {d.id: eval_distro_fast(d.step_data, data.step, symbols.step, mode=mode, min_size=min_size) for d
                 in datasets}
-    if mode == '1:1':
-        labels = ['RSS error', r'median 1:1 distribution KS$_{D}$']
-    elif mode == 'pooled':
-        labels = ['pooled endpoint KS$_{D}$', 'pooled distribution KS$_{D}$']
-    elif mode == '1:pooled':
-        labels = ['individual endpoint KS$_{D}$', 'individual distribution KS$_{D}$']
+    # if mode == '1:1':
+    #     labels = ['RSS error', r'median 1:1 distribution KS$_{D}$']
+    # elif mode == 'pooled':
+    #     labels = ['pooled endpoint KS$_{D}$', 'pooled distribution KS$_{D}$']
+    # elif mode == '1:pooled':
+    #     labels = ['individual endpoint KS$_{D}$', 'individual distribution KS$_{D}$']
     error_dict = {'end': pd.DataFrame.from_records(GEend).T,
                   'step': pd.DataFrame.from_records(GEdistro).T}
     error_dict['end'].index.name = 'metric'

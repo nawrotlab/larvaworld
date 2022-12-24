@@ -333,7 +333,7 @@ class SelectionList(GuiElement):
         if self.with_dict:
             # print(self.tab.gui.tab_dict[n][2])
             self.collapsible = CollapsibleDict(name= self.tab.gui.tab_dict[n][2], default=True,
-                                               header_list_width=self.width, header_dict=reg.Dic.CT.dict[self.conftype].loadDict(),
+                                               header_list_width=self.width, header_dict=reg.conf.dict[self.conftype].loadDict(),
                                                next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
@@ -1084,8 +1084,8 @@ class PadDict(PadElement):
         if col_idx is not None:
             Ncols = len(col_idx)
         if type_dict is None :
-            from lib.registry.dtypes import par_dict
-            D = reg.Dic.PI.dict
+            from lib.reg.dtypes import par_dict
+            D = reg.par.PI
             if self.dict_name in D.keys() :
                 type_dict = par_dict(d0=D[self.dict_name])
         self.type_dict = type_dict
@@ -1535,7 +1535,7 @@ class DynamicGraph:
         sg.theme('DarkBlue15')
         self.agent = agent
         if available_pars is None:
-            available_pars = reg.Dic.PD.runtime_pars()
+            available_pars = reg.par.runtime_pars()
         self.available_pars = available_pars
         self.pars = pars
         self.dt = self.agent.model.dt

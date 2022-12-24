@@ -390,7 +390,7 @@ class GroupType(reg.base.BaseType):
                 }
             epochs={}
             for id,kws in eps.items():
-                epochs.update(reg.Dic.GT.dict.epoch.entry(id=id,**kws))
+                epochs.update(reg.group.dict.epoch.entry(id=id,**kws))
 
 
 

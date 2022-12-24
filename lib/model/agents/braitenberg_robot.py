@@ -5,7 +5,7 @@ from math import sin, cos, pi
 
 from lib.aux.sim_aux import Collision
 from lib.model.modules.rot_surface import RotTriangle
-from lib.aux.color_util import Color
+from lib.aux.colsNstr import Color
 
 
 class DifferentialDriveRobot(RotTriangle):

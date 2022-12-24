@@ -2,6 +2,9 @@ import math
 import numpy as np
 
 from shapely.geometry import Point, Polygon, LineString
+from shapely.ops import split
+from scipy.signal import sosfiltfilt, butter
+
 
 from lib.aux import naming as nam, ang_aux
 
@@ -55,7 +58,7 @@ def body(points, start=None, stop=None):
 
 
 def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
-    from shapely.ops import split
+
     # If segment ratio is not provided, generate equal-length segments
     if seg_ratio is None:
         seg_ratio = [1 / N] * N
@@ -145,7 +148,7 @@ def parse_array_at_nans(a):
 
 
 def apply_sos_filter_to_array_with_nans(sos, x, padlen=6):
-    from scipy.signal import sosfiltfilt
+
     try:
         array_filt = np.full_like(x, np.nan)
         ds, de = parse_array_at_nans(x)
@@ -181,7 +184,7 @@ def apply_filter_to_array_with_nans_multidim(a, freq, fr, N=1):
         Filtered array of same shape as a
 
     """
-    from scipy.signal import butter
+
 
     # 2-dimensional array must have each timeseries in different column
     if a.ndim == 1:

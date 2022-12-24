@@ -137,7 +137,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
 
         P.conf_ax(ii, xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
-                  xlab='$\phi_{stride}$', ylab=reg.Dic.PI.dict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
+                  xlab='$\phi_{stride}$', ylab=reg.par.PI[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
     P.conf_fig(title='Stride cycle analysis', title_kws={'w': 'bold', 's': 20}, align=True,
                adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})

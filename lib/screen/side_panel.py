@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 
-from lib.aux.color_util import Color
+from lib.aux.colsNstr import Color
 from lib.aux.time_util import TimeUtil
 
 

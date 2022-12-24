@@ -14,16 +14,16 @@ class Essay:
     def __init__(self, type,essay_id=None, N=5, enrichment=None, collections=['pose'], video=False, show=False,
                  **kwargs):
         if enrichment is None:
-            enrichment = reg.Dic.DEF.base_enrich()
+            enrichment = reg.par.base_enrich()
         if video:
             self.vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
         else:
             self.vis_kwargs = reg.get_null('visualization', mode=None)
         self.N = N
-        self.M = reg.MD
-        self.G = reg.GD
-        self.GT = reg.GT
-        self.CT = reg.CT
+        self.M = reg.model
+        self.G = reg.graphs
+        self.GT = reg.group
+        self.CT = reg.conf
         self.show = show
         self.type = type
         self.enrichment = enrichment
@@ -75,7 +75,7 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, N=1, **kwargs):
-        super().__init__(type='RvsS', N=N, enrichment=reg.Dic.DEF.enr_dict(proc=['spatial']),
+        super().__init__(type='RvsS', N=N, enrichment=reg.par.enr_dict(proc=['spatial']),
                          collections=['pose', 'feeder', 'gut'], **kwargs)
 
         self.all_figs = all_figs
@@ -334,7 +334,7 @@ class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=10, dur=5.0, olfactor=True, feeder=True,
                  arena_dims=(0.24, 0.24), patch_x=0.06,patch_radius=0.025,
                  **kwargs):
-        super().__init__(N=N,type='DoublePatch', enrichment=reg.Dic.DEF.enr_dict(proc=['spatial', 'angular', 'source'],
+        super().__init__(N=N,type='DoublePatch', enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
                                                                    bouts=['stride', 'pause', 'turn'],
                                                                    fits=False, interference=False, on_food=True),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
@@ -479,7 +479,7 @@ class DoublePatch_Essay(Essay):
 class Chemotaxis_Essay(Essay):
     def __init__(self, dur=5.0, gain=300.0, mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
-                         enrichment=reg.Dic.DEF.enr_dict(proc=['spatial', 'angular', 'source'],
+                         enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
                                                bouts=[], fits=False, interference=False, on_food=False),
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']

@@ -1,15 +1,14 @@
-# Base64 Encoder - encodes a folder of PNG files and creates a .py file with definitions
-import PySimpleGUI as sg
-import os
-import base64
 
-'''
-    Make base64 images
-    input:  folder with .png .ico .gif 'sigma
-    output: output.py file with variables
-'''
-
-def main():
+def png_to_b64():
+    # Base64 Encoder - encodes a folder of PNG files and creates a .py file with definitions
+    import PySimpleGUI as sg
+    import os
+    import base64
+    '''
+        Make base64 images
+        input:  folder with .png .ico .gif 'sigma
+        output: output.py file with variables
+    '''
     OUTPUT_FILENAME = 'output.py'
 
     folder = sg.popup_get_folder('Source folder for images\nImages will be encoded and results saved to %s'%OUTPUT_FILENAME,
@@ -37,4 +36,4 @@ def main():
     sg.popup('Completed!', 'Encoded %s files'%(i+1))
 
 if __name__ == '__main__':
-    main()
+    png_to_b64()

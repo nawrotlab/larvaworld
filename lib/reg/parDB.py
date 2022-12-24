@@ -2017,7 +2017,7 @@ class ParamRegistry:
         return dNl.NestDict(dic)
 
 # from lib.reg import funcs
-from lib.reg import param_computation
+from lib.reg import parFunc
 # print(funcs.param_computing)
 par = ParamRegistry(func_dict = reg.funcs.param_computing)
 

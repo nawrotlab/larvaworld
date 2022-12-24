@@ -9,7 +9,6 @@ def Env_dict() :
 # from lib.conf.stored.facade import stored_conf
     from lib import reg
 
-    # I=reg.Dic.DEF
 
 
     def oG(c=1, id='Odor'):
@@ -57,7 +56,7 @@ def Env_dict() :
 
 
 
-        gt = reg.GT.dict.SourceGroup
+        gt = reg.group.dict.SourceGroup
         return gt.entry(id=id, **kws)
 
 

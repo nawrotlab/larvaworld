@@ -5,7 +5,7 @@ import imageio
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-from lib.aux.color_util import Color
+from lib.aux.colsNstr import Color
 from lib.aux.time_util import TimeUtil
 from lib.aux import shapely_aux
 from lib.model.envs.obstacle import Wall,Box

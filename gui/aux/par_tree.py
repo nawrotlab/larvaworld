@@ -34,7 +34,7 @@ def tree_dict(d, parent_key='', sep='.'):
 
 
 def pars_to_tree(name):
-    from lib.registry.dtypes import par, par_dict
+    from lib.reg.dtypes import par, par_dict
     from lib.aux.par_aux import dtype_name
 
     invalid = []
@@ -65,7 +65,7 @@ def pars_to_tree(name):
     data = []
     columns = ['parent', 'key', 'text', 'initial_value', 'dtype', 'tooltip', 'disp']
     columns2 = ['parent', 'key', 'text', 'default_value', 'dtype', 'description', 'name']
-    d0 = reg.Dic.PI.dict[name]
+    d0 = reg.par.PI[name]
     data.append(['root', name, name, None, dict, None, name])
     valid.append(name)
     for k0, v0 in d0.items():

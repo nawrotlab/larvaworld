@@ -3,7 +3,7 @@ import random
 import pygame
 from math import atan2, sin, cos
 
-from lib.aux.color_util import Color
+from lib.aux.colsNstr import Color
 from lib.aux import sim_aux, shapely_aux
 from lib.model.modules.rot_surface import LightSource
 

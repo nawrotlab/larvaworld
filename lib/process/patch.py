@@ -1,44 +1,43 @@
 import pandas as pd
 import numpy as np
 
-import lib.aux.naming as nam
-from lib.aux.stor_aux import store_distros
+from lib import aux
 
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
     from lib.aux.xy_aux import comp_bearing
 
-    c0 = nam.start(chunk)
-    c1 = nam.stop(chunk)
-    ho = nam.unwrap(nam.orient('front'))
-    ho0s = s[nam.at(ho, c0)].dropna().values
-    ho1s = s[nam.at(ho, c1)].dropna().values
+    c0 = aux.nam.start(chunk)
+    c1 = aux.nam.stop(chunk)
+    ho = aux.nam.unwrap(aux.nam.orient('front'))
+    ho0s = s[aux.nam.at(ho, c0)].dropna().values
+    ho1s = s[aux.nam.at(ho, c1)].dropna().values
     for n, pos in c.sources.items():
-        b = nam.bearing2(n)
-        b0_par = nam.at(b, c0)
-        b1_par = nam.at(b, c1)
-        db_par = nam.chunk_track(chunk, b)
-        b0 = comp_bearing(s[nam.at('x', c0)].dropna().values, s[nam.at('y', c0)].dropna().values, ho0s, loc=pos)
-        b1 = comp_bearing(s[nam.at('x', c1)].dropna().values, s[nam.at('y', c1)].dropna().values, ho1s, loc=pos)
+        b = aux.nam.bearing2(n)
+        b0_par = aux.nam.at(b, c0)
+        b1_par = aux.nam.at(b, c1)
+        db_par = aux.nam.chunk_track(chunk, b)
+        b0 = comp_bearing(s[aux.nam.at('x', c0)].dropna().values, s[aux.nam.at('y', c0)].dropna().values, ho0s, loc=pos)
+        b1 = comp_bearing(s[aux.nam.at('x', c1)].dropna().values, s[aux.nam.at('y', c1)].dropna().values, ho1s, loc=pos)
         s[b0_par] = np.nan
         s.loc[s[c0] == True, b0_par] = b0
         s[b1_par] = np.nan
         s.loc[s[c1] == True, b1_par] = b1
         s[db_par] = np.nan
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
-        store_distros(s, pars=[b0_par, b1_par, db_par], parent_dir=c.dir)
+        aux.stor.store_distros(s, pars=[b0_par, b1_par, db_par], parent_dir=c.dir)
         print(f'Bearing to source {n} during {chunk} computed')
 
 
 def comp_patch_metrics(s, e, **kwargs):
-    # v=nam.vel('')
-    # v_mu=nam.mean(v)
-    cum_t = nam.cum('dur')
+    # v=aux.nam.vel('')
+    # v_mu=aux.nam.mean(v)
+    cum_t = aux.nam.cum('dur')
     on = 'on_food'
     off = 'off_food'
-    on_tr = nam.dur_ratio(on)
-    on_cumt = nam.cum(nam.dur(on))
-    off_cumt = nam.cum(nam.dur(off))
+    on_tr = aux.nam.dur_ratio(on)
+    on_cumt = aux.nam.cum(aux.nam.dur(on))
+    off_cumt = aux.nam.cum(aux.nam.dur(off))
     s_on = s[s[on] == True]
     s_off = s[s[on] == False]
 
@@ -46,11 +45,11 @@ def comp_patch_metrics(s, e, **kwargs):
     e[off_cumt] = e[cum_t] * (1 - e[on_tr])
 
     for c in ['Lturn', 'turn', 'pause']:
-        dur = nam.dur(c)
-        cdur = nam.cum(dur)
+        dur = aux.nam.dur(c)
+        cdur = aux.nam.cum(dur)
         cdur_on = f'{cdur}_{on}'
         cdur_off = f'{cdur}_{off}'
-        N = nam.num(c)
+        N = aux.nam.num(c)
 
         e[f'{N}_{on}'] = s_on[dur].groupby('AgentID').count()
         e[f'{N}_{off}'] = s_off[dur].groupby('AgentID').count()
@@ -58,24 +57,24 @@ def comp_patch_metrics(s, e, **kwargs):
         e[cdur_on] = s_on[dur].groupby('AgentID').sum()
         e[cdur_off] = s_off[dur].groupby('AgentID').sum()
 
-        e[f'{nam.dur_ratio(c)}_{on}'] = e[cdur_on] / e[on_cumt]
-        e[f'{nam.dur_ratio(c)}_{off}'] = e[cdur_off] / e[off_cumt]
-        e[f'{nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[on_cumt]
-        e[f'{nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[off_cumt]
+        e[f'{aux.nam.dur_ratio(c)}_{on}'] = e[cdur_on] / e[on_cumt]
+        e[f'{aux.nam.dur_ratio(c)}_{off}'] = e[cdur_off] / e[off_cumt]
+        e[f'{aux.nam.mean(N)}_{on}'] = e[f'{N}_{on}'] / e[on_cumt]
+        e[f'{aux.nam.mean(N)}_{off}'] = e[f'{N}_{off}'] / e[off_cumt]
 
-    dst = nam.dst('')
-    cdst = nam.cum(dst)
+    dst = aux.nam.dst('')
+    cdst = aux.nam.cum(dst)
     cdst_on = f'{cdst}_{on}'
     cdst_off = f'{cdst}_{off}'
-    v_mu = nam.mean(nam.vel(''))
+    v_mu = aux.nam.mean(aux.nam.vel(''))
     e[cdst_on] = s_on[dst].dropna().groupby('AgentID').sum()
     e[cdst_off] = s_off[dst].dropna().groupby('AgentID').sum()
 
     e[f'{v_mu}_{on}'] = e[cdst_on] / e[on_cumt]
     e[f'{v_mu}_{off}'] = e[cdst_off] / e[off_cumt]
-    # e['handedness_score'] = e[nam.num('Lturn')] / e[nam.num('turn')]
-    e[f'handedness_score_{on}'] = e[f"{nam.num('Lturn')}_{on}"] / e[f"{nam.num('turn')}_{on}"]
-    e[f'handedness_score_{off}'] = e[f"{nam.num('Lturn')}_{off}"] / e[f"{nam.num('turn')}_{off}"]
+    # e['handedness_score'] = e[aux.nam.num('Lturn')] / e[aux.nam.num('turn')]
+    e[f'handedness_score_{on}'] = e[f"{aux.nam.num('Lturn')}_{on}"] / e[f"{aux.nam.num('turn')}_{on}"]
+    e[f'handedness_score_{off}'] = e[f"{aux.nam.num('Lturn')}_{off}"] / e[f"{aux.nam.num('turn')}_{off}"]
 
 
 def comp_patch(s, e, c):
@@ -91,5 +90,5 @@ def comp_patch(s, e, c):
 
 def comp_on_food(s, e, c):
     on = 'on_food'
-    if on in s.columns and nam.dur_ratio(on) in e.columns:
+    if on in s.columns and aux.nam.dur_ratio(on) in e.columns:
         comp_patch_metrics(s, e)

@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from lib.aux import dictsNlists as dNl
+from lib.aux import naming as nam, dictsNlists as dNl
 
 
 from lib.stor.larva_dataset import LarvaDataset
@@ -88,7 +88,7 @@ def split_dataset(step,end, food, larva_groups,dir, **kwargs):
     return ds
 
 def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_range=None, pars=None,env_params=None,close_view=False):
-    from lib.aux import naming as nam, dictsNlists as dNl
+
 
     c=d.config
     c0=dNl.copyDict(c)

@@ -3,14 +3,13 @@ import six
 
 
 from lib.plot.base import BasePlot, AutoBasePlot
-from lib.aux import dictsNlists as dNl
 from lib import reg
 
 
 
 @reg.funcs.graph('model table')
 def modelConfTable(mID, **kwargs):
-    return reg.Dic.MD.mIDtable(mID, **kwargs)
+    return reg.model.mIDtable(mID, **kwargs)
 
 
 
@@ -18,7 +17,7 @@ def modelConfTable(mID, **kwargs):
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
     from lib.aux.data_aux import mdict2df, init2mdict
-    mdict = init2mdict(reg.Dic.PI.dict[k])
+    mdict = init2mdict(reg.par.PI[k])
     df = mdict2df(mdict, columns=columns)
 
     # row_colors = [None] + [None for ii in df.index.values]
@@ -154,7 +153,7 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
 
 @reg.funcs.graph('model diff')
 def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
-    data, row_colors = reg.Dic.MD.diff_df(mIDs=mIDs, dIDs=dIDs)
+    data, row_colors = reg.model.diff_df(mIDs=mIDs, dIDs=dIDs)
     mpl_kws = {
         'name': 'mdiff_table',
         'header0': 'MODULE',

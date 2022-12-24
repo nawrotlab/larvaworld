@@ -83,7 +83,6 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
             OfflineLocomotor.__init__(self, **kwargs)
         else:
             Locomotor.__init__(self, **kwargs)
-        # reg.Dic.MD.init_loco(conf, self)
 
     # def init_loco(self, conf, L):
         D = reg.model.dict.model.m

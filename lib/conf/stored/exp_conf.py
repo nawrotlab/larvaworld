@@ -6,8 +6,6 @@ from lib import reg
 
 def grouped_exp_dic():
 
-    # from lib.registry import reg
-    # I=reg.Dic.DEF
 
     def oG(c=1, id='Odor'):
         return reg.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
@@ -17,7 +15,7 @@ def grouped_exp_dic():
         return reg.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
 
     def enr_dict(**kwargs):
-        return reg.Dic.DEF.enr_dict(**kwargs)
+        return reg.par.enr_dict(**kwargs)
 
     def lgs(models, ids=None, **kwargs):
         from lib.aux.colsNstr import N_colors
@@ -44,7 +42,7 @@ def grouped_exp_dic():
 
     def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, **kwargs):
 
-        ct = reg.Dic.CT.dict.Exp
+        ct = reg.conf.dict.Exp
         kw = {'kwdic': {'sim_params': sim},
             'larva_groups': l,
             'env_params': env_name,
@@ -126,7 +124,7 @@ def grouped_exp_dic():
                                                            ids=['forager', 'Orco', 'navigator', 'explorer'], N=N)
 
     def GTRvsS(**kwargs):
-        return reg.Dic.GT.dict.LarvaGroup.RvsS_groups(**kwargs)
+        return reg.group.dict.LarvaGroup.RvsS_groups(**kwargs)
 
     d={
         'exploration': {

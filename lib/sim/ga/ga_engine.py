@@ -16,7 +16,7 @@ from lib.aux.time_util import TimeUtil
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
                  selection_ratio=0.3, verbose=0, bestConfID=None):
-        self.M = reg.Dic.MD
+        self.M = reg.model
         self.bestConfID = bestConfID
         self.model = model
         self.Ngenerations = Ngenerations
@@ -288,7 +288,7 @@ class GAbuilder(GAselector):
         self.dataset.step_data = s
         try :
             for k in self.fit_dict.keys:
-                reg.Dic.PD.compute(k, self.dataset)
+                reg.par.compute(k, self.dataset)
         except:
             pass
         fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
@@ -461,7 +461,7 @@ class GAbuilder(GAselector):
         self.genome_df = pd.DataFrame.from_records(dic)
         self.genome_df = self.genome_df.round(3)
         self.genome_df.sort_values(by='fitness', ascending=False, inplace=True)
-        reg.Dic.GD.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
+        reg.graphs.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
                                     name=self.bestConfID)
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
 

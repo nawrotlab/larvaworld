@@ -1,8 +1,7 @@
 
 from lib.aux.sim_aux import Collision
 
-
-from lib.aux.color_util import Color
+from lib.aux.colsNstr import Color
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
 from lib.model.modules.motor_controller import MotorController, Actuator

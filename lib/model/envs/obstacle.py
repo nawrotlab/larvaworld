@@ -4,9 +4,8 @@ import pygame
 from shapely.affinity import affine_transform
 from shapely.geometry import LineString, Polygon
 
-from lib.aux.color_util import Color
 from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
-from lib.aux.colsNstr import colorname2tuple
+from lib.aux.colsNstr import colorname2tuple, Color
 
 
 class Obstacle:

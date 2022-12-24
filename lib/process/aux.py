@@ -2,10 +2,9 @@ import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks, argrelextrema
 
-from lib.aux.stor_aux import store_distros
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam, ang_aux, sim_aux
 from lib import reg
+from lib import aux
 
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
@@ -21,7 +20,7 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
     min_array = np.ones([Nticks, Npars, Nids]) * np.nan
     max_array = np.ones([Nticks, Npars, Nids]) * np.nan
     for i, p in enumerate(parameters):
-        p_min, p_max = nam.min(p), nam.max(p)
+        p_min, p_max = aux.nam.min(p), aux.nam.max(p)
         s[p_min] = np.nan
         s[p_max] = np.nan
         d = s[p]
@@ -191,7 +190,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
 
     """
     if fr is None:
-        fr = sim_aux.fft_max(a, dt, fr_range=(1, 2.5))
+        fr = aux.sim.fft_max(a, dt, fr_range=(1, 2.5))
     tmin = stretch[0] // (fr * dt)
     tmax = stretch[1] // (fr * dt)
     i_min = find_peaks(-a, height=-3 * vel_thr, distance=tmin)[0]
@@ -295,10 +294,10 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
 
 # @funcs.annotation("epochs")
 def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
-    sim_aux.fft_freqs(s, e, c)
+    aux.sim.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
-    chunk_dicts = dNl.NestDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
+    chunk_dicts = aux.NestDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
     return chunk_dicts
 
 
@@ -316,7 +315,7 @@ def mean_stride_curve(a, strides, da, Nbins=64):
     aa_minus = aa[da < 0]
     aa_plus = aa[da > 0]
     aa_norm = np.vstack([aa_plus, -aa_minus])
-    dic = dNl.NestDict({
+    dic = aux.NestDict({
         'abs': np.nanquantile(np.abs(aa), q=0.5, axis=0).tolist(),
         'plus': np.nanquantile(aa_plus, q=0.5, axis=0).tolist(),
         'minus': np.nanquantile(aa_minus, q=0.5, axis=0).tolist(),
@@ -334,7 +333,7 @@ def cycle_curve_dict(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     #     if any(np.isnan(strides)):
     #         print(any(np.isnan(strides)))
     #         print(any(np.isnan(da)))
-    return dNl.NestDict(dic)
+    return aux.NestDict(dic)
 
 def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
 
@@ -343,7 +342,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     for id in ids:
         ss = s.xs(id, level="AgentID").dropna()
         dic[id]=cycle_curve_dict(ss, dt=dt, shs=shs)
-    return dNl.NestDict(dic)
+    return aux.NestDict(dic)
 
 # @funcs.annotation("interference")
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
@@ -385,13 +384,13 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
             curves_minus[jj, :] = np.nanquantile(aa_minus, q=0.5, axis=0)
             curves_norm[jj, :] = np.nanquantile(aa_norm, q=0.5, axis=0)
         mean_curves_abs[sh] = curves_abs
-        cycle_curves[sh] = dNl.NestDict({
+        cycle_curves[sh] = aux.NestDict({
             'abs': curves_abs,
             'plus': curves_plus,
             'minus': curves_minus,
             'norm': curves_norm,
         })
-        pooled_curves[sh] = dNl.NestDict({
+        pooled_curves[sh] = aux.NestDict({
             'abs': np.nanquantile(curves_abs, q=0.5, axis=0).tolist(),
             'plus': np.nanquantile(curves_plus, q=0.5, axis=0).tolist(),
             'minus': np.nanquantile(curves_minus, q=0.5, axis=0).tolist(),
@@ -400,13 +399,13 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
 
     att0s, att1s = np.min(mean_curves_abs['fov'], axis=1), np.max(mean_curves_abs['fov'], axis=1)
 
-    e[nam.max('phi_attenuation')] = x[np.argmax(mean_curves_abs['fov'], axis=1)]
-    e[nam.max(f'phi_{reg.getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
+    e[aux.nam.max('phi_attenuation')] = x[np.argmax(mean_curves_abs['fov'], axis=1)]
+    e[aux.nam.max(f'phi_{reg.getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
     e[reg.getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
     try:
         e['attenuation'] = att0s / e[reg.getPar('pau_fov_mu')]
-        # e[nam.min('attenuation')] = att0s / e[preg.getPar('pau_fov_mu')]<
-        e[nam.max('attenuation')] = (att1s - att0s) / e[reg.getPar('pau_fov_mu')]
+        # e[aux.nam.min('attenuation')] = att0s / e[preg.getPar('pau_fov_mu')]<
+        e[aux.nam.max('attenuation')] = (att1s - att0s) / e[reg.getPar('pau_fov_mu')]
     except:
         pass
 
@@ -462,7 +461,7 @@ def turn_annotation(s, e, c, store=False):
     e[eTur_ps] = eTur_vs
     if store:
         turn_ps = reg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
-        store_distros(s, pars=turn_ps, parent_dir=c.dir)
+        aux.stor.store_distros(s, pars=turn_ps, parent_dir=c.dir)
     return turn_dict
 
 # @funcs.annotation("crawl")
@@ -578,16 +577,16 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
         e[str_sd_std] = e[str_d_std] / e[l]
     if store:
         run_ps = reg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_d', 'str_sd'])
-        store_distros(s, pars=run_ps, parent_dir=c.dir)
+        aux.stor.store_distros(s, pars=run_ps, parent_dir=c.dir)
     return crawl_dict
 
 
 def track_par_in_chunk(d, chunk, par):
-    c0 = nam.start(chunk)
-    c1 = nam.stop(chunk)
-    b0_par = nam.at(par, c0)
-    b1_par = nam.at(par, c1)
-    db_par = nam.chunk_track(chunk, par)
+    c0 = aux.nam.start(chunk)
+    c1 = aux.nam.stop(chunk)
+    b0_par = aux.nam.at(par, c0)
+    b1_par = aux.nam.at(par, c1)
+    db_par = aux.nam.chunk_track(chunk, par)
     bpars = [b0_par, b1_par, db_par]
     s, c = d.step_data, d.config
     A = np.zeros([c.Nticks, c.N, len(bpars)]) * np.nan

@@ -38,7 +38,7 @@ class Calibration:
             'all': physics_keys + turner_keys
         })
 
-        self.D = reg.Dic.MD
+        self.D = reg.model
         self.mdicts = dNl.NestDict({
             'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
             'physics': self.D.dict.model.m['physics'].args
@@ -159,7 +159,7 @@ class Calibration:
 #
 def epar(e, k=None, par=None, average=True):
     if par is None:
-        par = reg.Dic.PI.dict[k].d
+        par = reg.par.PI[k].d
     vs = e[par]
     if average:
         return np.round(vs.median(), 2)

@@ -11,25 +11,23 @@ from sklearn.linear_model import LinearRegression
 
 
 from lib.process.spatial import comp_centroid
-from lib.aux import dictsNlists as dNl, naming as nam
 from lib import reg
-
+from lib import aux
 
 def comp_stride_variation(d, component_vels=True):
     from lib.process.aux import detect_strides, process_epochs
-    from lib.aux.sim_aux import fft_max
     s, e, c = d.step_data, d.endpoint_data, d.config
     N = c.Npoints
-    points = nam.midline(N, type='point')
-    vels = nam.vel(points)
-    cvel = nam.vel('centroid')
-    lvels = nam.lin(nam.vel(points[1:]))
+    points = aux.nam.midline(N, type='point')
+    vels = aux.nam.vel(points)
+    cvel = aux.nam.vel('centroid')
+    lvels = aux.nam.lin(aux.nam.vel(points[1:]))
 
     all_point_idx = np.arange(N).tolist() + [-1] + np.arange(N).tolist()[1:]
     all_points = points + ['centroid'] + points[1:]
     lin_flag = [False] * N + [False] + [True] * (N - 1)
     all_vels0 = vels + [cvel] + lvels
-    all_vels = nam.scal(all_vels0)
+    all_vels = aux.nam.scal(all_vels0)
 
     vel_num_strings = ['{' + str(i + 1) + '}' for i in range(N)]
     lvel_num_strings = ['{' + str(i + 2) + '}' for i in range(N - 1)]
@@ -78,7 +76,7 @@ def comp_stride_variation(d, component_vels=True):
         for i, vv in enumerate(svels):
             cum_dur = ss[vv].dropna().values.shape[0] * c.dt
             a = ss[vv].values
-            fr = fft_max(a, c.dt, fr_range=(1, 2.5))
+            fr = aux.sim.fft_max(a, c.dt, fr_range=(1, 2.5))
             strides = detect_strides(a, fr=fr, dt=c.dt, return_extrema=False, return_runs=False)
             if len(strides) == 0:
                 row = [fr, 0, np.nan, np.nan, np.nan,
@@ -101,7 +99,7 @@ def comp_stride_variation(d, component_vels=True):
 
     sNt_cv = str_var[reg.getPar(['str_sd_var', 'str_t_var'])].sum(axis=1)
     best_idx = sNt_cv.argmin()
-    c.metric_definition.spatial.fitted = dNl.NestDict(
+    c.metric_definition.spatial.fitted = aux.dNl.NestDict(
         {'point_idx': int(str_var['point_idx'].iloc[best_idx]),
          'use_component_vel': bool(str_var['use_component_vel'].iloc[best_idx])})
     print('Stride variability analysis complete!')
@@ -110,8 +108,8 @@ def comp_stride_variation(d, component_vels=True):
 
 def comp_segmentation(d):
     s, e, c = d.step_data, d.endpoint_data, d.config
-    avels = nam.vel(d.angles)
-    hov = nam.vel(nam.orient('front'))
+    avels = aux.nam.vel(d.angles)
+    hov = aux.nam.vel(aux.nam.orient('front'))
 
     if not set(avels).issubset(s.columns.values):
         from lib.process.angular import comp_angles, comp_angular
@@ -171,7 +169,7 @@ def comp_segmentation(d):
     best_combo_max = np.max(best_combo)
     front_body_ratio = best_combo_max / N
 
-    c.metric_definition.angular.fitted = dNl.NestDict(
+    c.metric_definition.angular.fitted = aux.dNl.NestDict(
         {'best_combo': str(best_combo), 'front_body_ratio': front_body_ratio,
          'bend': 'from_vectors'})
     print('Angular velocity definition analysis complete!')

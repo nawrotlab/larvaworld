@@ -87,7 +87,6 @@ class DefaultBrain(Brain):
     def __init__(self, conf, agent=None, dt=None, **kwargs):
         super().__init__(agent=agent, dt=dt)
         self.locomotor = DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
-        # reg.Dic.MD.init_brain(conf, self)
 
     # def init_brain(self, conf, B):
         D = reg.model.dict.model.m

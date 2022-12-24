@@ -284,7 +284,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
             lb = dsp['upper'].values
             ub = dsp['lower'].values
         except :
-            dsp = reg.Dic.PD.get(k, d)
+            dsp = reg.par.get(k, d)
             mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]
             ub = dsp.groupby(level='Step').quantile(q=0.75).values[t0:t1]
             lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]
@@ -338,7 +338,7 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
         name = f'{ylab0}'
         ylab = f'{ylab0} $({unit})$'
         k = 'cum_d'
-    p=reg.Dic.PI.dict[k]
+    p=reg.par[k]
     P = AutoPlot(ks=[k], name=name, subfolder=subfolder, figsize=(15, 5),**kwargs)
     x = P.trange(t_unit)
     # dic,p=P.kpdict[k]
@@ -364,7 +364,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         xlabel = 'time, $min$'
     P = AutoPlot(name=name,figsize=(7, 6), **kwargs)
 
-    p=reg.Dic.PI.dict['cum_d']
+    p=reg.par.PI['cum_d']
 
     x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):

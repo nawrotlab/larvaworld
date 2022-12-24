@@ -187,7 +187,7 @@ class SingleRun:
         # exp = self.experiment
         figs, results = {}, {}
         if len(entry_list) > 0:
-            graph_entries = reg.Dic.GD.eval(entries=entry_list, **kws)
+            graph_entries = reg.graphs.eval(entries=entry_list, **kws)
             figs.update(graph_entries)
         # FIXME Substituted "comparative analysis" of dispersion simulation to automatize analysis. Probably will fail
         # if 'disp' in exp:

@@ -2,7 +2,7 @@ from lib import reg
 
 
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
-    I = reg.Dic.PI
+    I = reg.par.PI
 
     sample_conf = reg.loadConf(id=sample, conftype='Ref')
 

@@ -1,6 +1,6 @@
 from lib.aux import dictsNlists as dNl
 
-VERBOSE = 2
+VERBOSE =2
 
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
@@ -15,7 +15,7 @@ from .units import units
 from .facade import funcs
 from . import base
 from .distro import distro_database,get_dist
-from .param_definition import par
+from .parDB import par
 from .config import conf, group
 from .controls import controls
 from .models import model

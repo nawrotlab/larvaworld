@@ -5,20 +5,20 @@ import numpy as np
 import pandas as pd
 
 
-from lib.aux.stor_aux import read, storeH5, store_distros, get_distros
+# from lib.aux.stor_aux import read, storeH5, aux.stor.store_distros, get_distros
 from lib import reg
-from lib.aux import dictsNlists as dNl, naming as nam, xy_aux, ang_aux,vel_aux, dir_aux
-
+# from lib.aux import dictsNlists as aux.dNl, aux.naming as aux.nam, aux.xy, aux.ang,aux.vel
+from lib import aux
 
 
 def comp_linear(s, e, c, mode='minimal'):
-    points = nam.midline(c.Npoints, type='point')
+    points = aux.nam.midline(c.Npoints, type='point')
     Nsegs = np.clip(c.Npoints - 1, a_min=0, a_max=None)
-    segs = nam.midline(Nsegs, type='seg')
+    segs = aux.nam.midline(Nsegs, type='seg')
     if mode == 'full':
         print(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
         points = points[1:]
-        orientations = nam.orient(segs)
+        orientations = aux.nam.orient(segs)
     elif mode == 'minimal':
         if c.point == 'centroid' or c.point == points[0]:
             print('Defined point is either centroid or head. Orientation of front segment not defined.')
@@ -32,14 +32,14 @@ def comp_linear(s, e, c, mode='minimal'):
         print('Required orients not found. Component linear metrics not computed.')
         return
 
-    xy_params = xy_aux.raw_or_filtered_xy(s, points)
-    xy_params = dNl.group_list_by_n(xy_params, 2)
+    xy_params = aux.xy.raw_or_filtered_xy(s, points)
+    xy_params = aux.dNl.group_list_by_n(xy_params, 2)
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
-    dsts = nam.lin(nam.dst(points))
-    cum_dsts = nam.cum(nam.lin(dsts))
-    vels = nam.lin(nam.vel(points))
-    accs = nam.lin(nam.acc(points))
+    dsts = aux.nam.lin(aux.nam.dst(points))
+    cum_dsts = aux.nam.cum(aux.nam.lin(dsts))
+    vels = aux.nam.lin(aux.nam.vel(points))
+    accs = aux.nam.lin(aux.nam.acc(points))
 
     for p, xy, dst, cum_dst, vel, acc, orient in zip(points, xy_params, dsts, cum_dsts, vels, accs, orientations):
         D = np.zeros([c.Nticks, c.N]) * np.nan
@@ -48,7 +48,7 @@ def comp_linear(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = vel_aux.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
+            v, d = aux.vel.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -60,14 +60,14 @@ def comp_linear(s, e, c, mode='minimal'):
         s[cum_dst] = Dcum.flatten()
         s[vel] = V.flatten()
         s[acc] = A.flatten()
-        e[nam.cum(dst)] = Dcum[-1, :]
-    pars = dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+        e[aux.nam.cum(dst)] = Dcum[-1, :]
+    pars = aux.dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     print('All linear parameters computed')
 
 
 def comp_spatial(s, e, c, mode='minimal'):
-    points = nam.midline(c.Npoints, type='point')
+    points = aux.nam.midline(c.Npoints, type='point')
     if mode == 'full':
         print(f'Computing distances, velocities and accelerations for {len(points)} points')
         points += ['centroid']
@@ -76,16 +76,16 @@ def comp_spatial(s, e, c, mode='minimal'):
         points = [c.point]
     points += ['']
     points = np.unique(points).tolist()
-    points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
+    points = [p for p in points if set(aux.nam.xy(p)).issubset(s.columns.values)]
 
-    xy_params = xy_aux.raw_or_filtered_xy(s, points)
-    xy_params = dNl.group_list_by_n(xy_params, 2)
+    xy_params = aux.xy.raw_or_filtered_xy(s, points)
+    xy_params = aux.dNl.group_list_by_n(xy_params, 2)
 
     # all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
-    dsts = nam.dst(points)
-    cum_dsts = nam.cum(dsts)
-    vels = nam.vel(points)
-    accs = nam.acc(points)
+    dsts = aux.nam.dst(points)
+    cum_dsts = aux.nam.cum(dsts)
+    vels = aux.nam.vel(points)
+    accs = aux.nam.acc(points)
 
     for p, xy, dst, cum_dst, vel, acc in zip(points, xy_params, dsts, cum_dsts, vels, accs):
         D = np.zeros([c.Nticks, c.N]) * np.nan
@@ -94,7 +94,7 @@ def comp_spatial(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, id in enumerate(c.agent_ids):
-            v, d = vel_aux.compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
+            v, d = aux.vel.compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -105,9 +105,9 @@ def comp_spatial(s, e, c, mode='minimal'):
         s[cum_dst] = Dcum.flatten()
         s[vel] = V.flatten()
         s[acc] = A.flatten()
-        e[nam.cum(dst)] = Dcum[-1, :]
+        e[aux.nam.cum(dst)] = Dcum[-1, :]
 
-    pars = dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = aux.dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
@@ -117,13 +117,13 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
     N = c.Npoints
-    points = nam.midline(N, type='point')
-    xy_pars = nam.xy(points, flat=True)
+    points = aux.nam.midline(N, type='point')
+    xy_pars = aux.nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
         print(f'XY coordinates not found for the {N} midline points. Body length can not be computed.')
         return
     Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-    segs = nam.midline(Nsegs, type='seg')
+    segs = aux.nam.midline(Nsegs, type='seg')
     t = len(s)
     xy = s[xy_pars].values
     Nids = xy.shape[0]
@@ -149,10 +149,10 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
 
 
 def comp_centroid(s, c, recompute=False):
-    if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
+    if set(aux.nam.xy('centroid')).issubset(s.columns.values) and not recompute:
         print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
-    contour = nam.contour(c.Ncontour)
-    con_pars = nam.xy(contour, flat=True)
+    contour = aux.nam.contour(c.Ncontour)
+    con_pars = aux.nam.xy(contour, flat=True)
     if not set(con_pars).issubset(s.columns) or c.Ncontour == 0:
         print(f'No contour found. Not computing centroid')
     else:
@@ -162,28 +162,28 @@ def comp_centroid(s, c, recompute=False):
         contour = np.reshape(contour, (N, c.Ncontour, 2))
         c = np.zeros([N, 2]) * np.nan
         for i in range(N):
-            c[i, :] = np.array(xy_aux.compute_centroid(contour[i, :, :]))
-        s[nam.xy('centroid')[0]] = c[:, 0]
-        s[nam.xy('centroid')[1]] = c[:, 1]
+            c[i, :] = np.array(aux.xy.compute_centroid(contour[i, :, :]))
+        s[aux.nam.xy('centroid')[0]] = c[:, 0]
+        s[aux.nam.xy('centroid')[1]] = c[:, 1]
     print('Centroid coordinates computed.')
 
 
 def store_spatial(s, e, c, store=False, also_in_mm=False):
     point = c.point
-    dst = nam.dst('')
-    sdst = nam.scal(dst)
-    cdst = nam.cum(dst)
-    csdst = nam.cum(sdst)
-    v = nam.vel('')
-    a = nam.acc('')
+    dst = aux.nam.dst('')
+    sdst = aux.nam.scal(dst)
+    cdst = aux.nam.cum(dst)
+    csdst = aux.nam.cum(sdst)
+    v = aux.nam.vel('')
+    a = aux.nam.acc('')
 
     dic = {
-        'x': nam.xy(point)[0],
-        'y': nam.xy(point)[1],
-        dst: nam.dst(point),
-        v: nam.vel(point),
-        a: nam.acc(point),
-        cdst: nam.cum(nam.dst(point)),
+        'x': aux.nam.xy(point)[0],
+        'y': aux.nam.xy(point)[1],
+        dst: aux.nam.dst(point),
+        v: aux.nam.vel(point),
+        a: aux.nam.acc(point),
+        cdst: aux.nam.cum(aux.nam.dst(point)),
     }
     for k1, k2 in dic.items():
         try:
@@ -195,16 +195,16 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
     s[cdst] = s[dst].groupby('AgentID').cumsum()
 
     for i in ['x', 'y']:
-        e[nam.final(i)] = s[i].dropna().groupby('AgentID').last()
-        e[nam.initial(i)] = s[i].dropna().groupby('AgentID').first()
-    e[nam.mean(v)] = e[cdst] / e[nam.cum('dur')]
+        e[aux.nam.final(i)] = s[i].dropna().groupby('AgentID').last()
+        e[aux.nam.initial(i)] = s[i].dropna().groupby('AgentID').first()
+    e[aux.nam.mean(v)] = e[cdst] / e[aux.nam.cum('dur')]
 
     scale_to_length(s, e, c, pars=[dst, v, a])
 
     if sdst in s.columns:
         s[csdst] = s[sdst].groupby('AgentID').cumsum()
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
-        e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
+        e[aux.nam.mean(aux.nam.scal(v))] = e[csdst] / e[aux.nam.cum('dur')]
 
     shorts = ['v', 'a', 'sv', 'sa']
 
@@ -213,16 +213,16 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
         s[d_in_mm] = s[dst] * 1000
         s[v_in_mm] = s[v] * 1000
         s[a_in_mm] = s[a] * 1000
-        e[nam.cum(d_in_mm)] = e[cdst] * 1000
-        e[nam.mean(v_in_mm)] = e[nam.mean(v)] * 1000
+        e[aux.nam.cum(d_in_mm)] = e[cdst] * 1000
+        e[aux.nam.mean(v_in_mm)] = e[aux.nam.mean(v)] * 1000
         shorts += ['v_in_mm', 'a_in_mm']
 
     if store:
-        store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
+        aux.stor.store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
         ps=[p for p in [dst,cdst, sdst, csdst] if p in s.columns]
-        storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
+        aux.stor.storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
 
-        storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
+        aux.stor.storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
 
 
 @reg.funcs.proc("spatial")
@@ -263,7 +263,7 @@ def dsp_solo0(xy,s0, s1, c):
 
 
         try:
-            AA[t0:t1, i] = xy_aux.eudi5x(xy_i.values, xy0[0])
+            AA[t0:t1, i] = aux.xy.eudi5x(xy_i.values, xy0[0])
         except:
             print(f'No values to set origin point for {id}')
     return AA.flatten()
@@ -277,9 +277,9 @@ def dsp_solo(s, e, c,s0, s1, p) :
     s[p] = dsp_solo0(xy, s0, s1, c)
     # s[p] = .flatten()
     # ps.append(p)
-    fp = nam.final(p)
-    mp = nam.max(p)
-    mup = nam.mean(p)
+    fp = aux.nam.final(p)
+    mp = aux.nam.max(p)
+    mup = aux.nam.mean(p)
     # pps += [fp, mp, mup]
 
     e[mp] = s[p].groupby('AgentID').max()
@@ -298,7 +298,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
     # dsp_starts = [int(t) for t in dsp_starts]
     # dsp_stops = [int(t) for t in dsp_stops]
     if s is None :
-        xy0 = read(key='default', path=reg.datapath('traj', c.dir))
+        xy0 = aux.stor.read(key='default', path=reg.datapath('traj', c.dir))
     else :
 
         xy0 = s[['x', 'y']]
@@ -311,7 +311,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
 
 
 
-        AA, df = xy_aux.dsp_single(xy0, s0, s1, c.dt)
+        AA, df = aux.xy.dsp_single(xy0, s0, s1, c.dt)
         dsps[p] = df
 
         # dsp_solo(s, e, c, s0, s1, p)
@@ -322,9 +322,9 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
         s[p] = AA0.flatten()
 
         ps.append(p)
-        fp = nam.final(p)
-        mp = nam.max(p)
-        mup = nam.mean(p)
+        fp = aux.nam.final(p)
+        mp = aux.nam.max(p)
+        mup = aux.nam.mean(p)
         # pps += [fp, mp, mup]
 
         e[mp] = s[p].groupby('AgentID').max()
@@ -334,7 +334,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
 
     # scale_to_length(s, e, c, pars=ps + pps)
     if store:
-        dNl.save_dict(dsps, reg.datapath('dsp', c.dir))
+        aux.dNl.save_dict(dsps, reg.datapath('dsp', c.dir))
 
 
 
@@ -355,8 +355,8 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
     if tor_durs is None:
         return
     try:
-        dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
-        e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
+        dsp_par = aux.nam.final('dispersion') if aux.nam.final('dispersion') in e.columns else 'dispersion'
+        e['tortuosity'] = 1 - e[dsp_par] / e[aux.nam.cum(aux.nam.dst(''))]
     except:
         pass
     durs = [int(1 / dt * d) for d in tor_durs]
@@ -369,7 +369,7 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
         for j, r in enumerate(durs):
             # print(j,r)
             par = f'tortuosity_{tor_durs[j]}'
-            par_m, par_s = nam.mean(par), nam.std(par)
+            par_m, par_s = aux.nam.mean(par), aux.nam.std(par)
             T_m = np.ones(Nids) * np.nan
             T_s = np.ones(Nids) * np.nan
             for z, id in enumerate(ids):
@@ -445,7 +445,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        ss = read(key='step', path=reg.datapath('step',c.dir))[['x', 'y']]
+        ss = aux.stor.read(key='step', path=reg.datapath('step',c.dir))[['x', 'y']]
         s = ss
     else:
         ss = s[['x', 'y']]
@@ -465,36 +465,36 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         s[p] = T.flatten()
 
         if e is not None:
-            e[nam.mean(p)] = s[p].groupby('AgentID').mean()
-            e[nam.std(p)] = s[p].groupby('AgentID').std()
+            e[aux.nam.mean(p)] = s[p].groupby('AgentID').mean()
+            e[aux.nam.std(p)] = s[p].groupby('AgentID').std()
 
 
     if store:
-        dic = get_distros(s, pars=pars)
-        storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
+        dic = aux.stor.get_distros(s, pars=pars)
+        aux.stor.storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
 
 @reg.funcs.proc("source")
 def comp_source_metrics(s, e, c, **kwargs):
     fo = reg.getPar('fo')
-    xy = nam.xy('')
+    xy = aux.nam.xy('')
     for n, pos in c.source_xy.items():
         print(f'Computing bearing and distance to {n} based on xy position')
-        o, d = nam.bearing2(n), nam.dst2(n)
-        pmax, pmu, pfin = nam.max(d), nam.mean(d), nam.final(d)
-        pabs = nam.abs(o)
+        o, d = aux.nam.bearing2(n), aux.nam.dst2(n)
+        pmax, pmu, pfin = aux.nam.max(d), aux.nam.mean(d), aux.nam.final(d)
+        pabs = aux.nam.abs(o)
         temp = np.array(pos) - s[xy].values
         s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:, 1], temp[:, 0]))) % 360 - 180
         s[pabs] = s[o].abs()
-        s[d] = xy_aux.eudi5x(s[xy].values, np.array(pos))
+        s[d] = aux.xy.eudi5x(s[xy].values, np.array(pos))
         e[pmax] = s[d].groupby('AgentID').max()
         e[pmu] = s[d].groupby('AgentID').mean()
         e[pfin] = s[d].dropna().groupby('AgentID').last()
-        e[nam.mean(pabs)] = s[pabs].groupby('AgentID').mean()
+        e[aux.nam.mean(pabs)] = s[pabs].groupby('AgentID').mean()
         if 'length' in e.columns:
             l = e['length']
 
             def rowIndex(row):
-                return row.name[1]
+                return row.aux.name[1]
 
             def rowLength(row):
                 return l.loc[rowIndex(row)]
@@ -502,9 +502,9 @@ def comp_source_metrics(s, e, c, **kwargs):
             def rowFunc(row):
                 return row[d] / rowLength(row)
 
-            s[nam.scal(d)] = s.apply(rowFunc, axis=1)
+            s[aux.nam.scal(d)] = s.apply(rowFunc, axis=1)
             for p in [pmax, pmu, pfin]:
-                e[nam.scal(p)] = e[p] / l
+                e[aux.nam.scal(p)] = e[p] / l
 
         print('Bearing and distance to source computed')
 
@@ -523,15 +523,15 @@ def comp_wind_metrics(s, e, c, **kwargs):
         ids = s.index.unique('AgentID').values
         for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
-            origin = e[[nam.initial('x'), nam.initial('y')]].loc[id]
-            d = xy_aux.eudi5x(xy, np.array(origin))
+            origin = e[[aux.nam.initial('x'), aux.nam.initial('y')]].loc[id]
+            d = aux.xy.eudi5x(xy, np.array(origin))
             print(d)
             dx = xy[:, 0] - origin[0]
             dy = xy[:, 1] - origin[1]
             angs = np.arctan2(dy, dx)
-            a = np.array([ang_aux.angle_dif(ang, woo) for ang in angs])
+            a = np.array([aux.ang.angle_dif(ang, woo) for ang in angs])
             s.loc[(slice(None), id), 'anemotaxis'] = d * np.cos(a)
-        s[nam.bearing2('wind')] = s.apply(lambda r: ang_aux.angle_dif(r[nam.orient('front')], wo), axis=1)
+        s[aux.nam.bearing2('wind')] = s.apply(lambda r: aux.ang.angle_dif(r[aux.nam.orient('front')], wo), axis=1)
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 
@@ -546,7 +546,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         dy = xy1.values[:, 1] - xy0.values[:, 1]
         d = np.sqrt(dx ** 2 + dy ** 2)
         angs = np.arctan2(dy, dx)
-        a = np.array([ang_aux.angle_dif(ang, woo) for ang in angs])
+        a = np.array([aux.ang.angle_dif(ang, woo) for ang in angs])
         e['anemotaxis'] = d * np.cos(a)
         # print(e['anemotaxis'])
 
@@ -557,10 +557,10 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
         return
     mode=transposition
 
-    xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
+    xy_pairs = aux.nam.xy(aux.nam.midline(c.Npoints, type='point') + ['centroid', ''] + aux.nam.contour(c.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-    xy_flat=np.unique(dNl.flatten_list(xy_pairs))
-    xy_pairs = dNl.group_list_by_n(xy_flat, 2)
+    xy_flat=np.unique(aux.dNl.flatten_list(xy_pairs))
+    xy_pairs = aux.dNl.group_list_by_n(xy_flat, 2)
 
     if replace :
         ss=s
@@ -582,7 +582,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
     else:
         if track_point is None:
             track_point = c.point
-        XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
+        XY = aux.nam.xy(track_point) if set(aux.nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
         if not set(XY).issubset(s.columns):
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
         ids = s.index.unique(level='AgentID').values
@@ -607,19 +607,18 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
             ss[y] = ss[y].values-ys
 
         if store:
-            storeH5(df= ss, key=mode, path=reg.datapath('traj', c.dir))
-            # storage[f'traj_aligned2{mode}'] = ss
-            # storage.close()
+            aux.stor.storeH5(df= ss, key=mode, path=reg.datapath('traj', c.dir))
+
             print(f'traj_aligned2{mode} stored')
         return ss
 
 
 def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     ids = s.index.unique(level='AgentID').values
-    points = nam.midline(c.Npoints, type='point') + ['centroid']
-    points_xy = nam.xy(points, flat=True)
-    contour = nam.contour(c.Ncontour)
-    contour_xy = nam.xy(contour, flat=True)
+    points = aux.nam.midline(c.Npoints, type='point') + ['centroid']
+    points_xy = aux.nam.xy(points, flat=True)
+    contour = aux.nam.contour(c.Ncontour)
+    contour_xy = aux.nam.xy(contour, flat=True)
 
     all_xy_pars = points_xy + contour_xy
     if len(ids) != 1:
@@ -634,7 +633,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
             point = points[point]
 
     pars = [p for p in all_xy_pars if p in s.columns.values]
-    xy_ps = nam.xy(point)
+    xy_ps = aux.nam.xy(point)
     if set(xy_ps).issubset(s.columns):
         print(f'Fixing {point} to arena center')
         if arena_dims is None :
@@ -647,13 +646,13 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     else:
         raise ValueError(f" The requested {point} is not part of the dataset")
     for id, p in zip(ids, xy):
-        for x, y in dNl.group_list_by_n(pars, 2):
+        for x, y in aux.dNl.group_list_by_n(pars, 2):
             s.loc[(slice(None), id), [x, y]] -= p
 
     if fix_segment is not None:
-        if set(nam.xy(fix_segment)).issubset(s.columns):
+        if set(aux.nam.xy(fix_segment)).issubset(s.columns):
             print(f'Fixing {fix_segment} as secondary point on vertical axis')
-            xy_sec = [s[nam.xy(fix_segment)].xs(id, level='AgentID').copy(deep=True).values for id in ids]
+            xy_sec = [s[aux.nam.xy(fix_segment)].xs(id, level='AgentID').copy(deep=True).values for id in ids]
             bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(len(xy_sec))])
         else:
             raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
@@ -661,7 +660,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
             s.loc[(slice(None), id), pars] = [
-                dNl.flatten_list(ang_aux.rotate_multiple_points(points=np.array(dNl.group_list_by_n(d[i].tolist(), 2)),
+                aux.dNl.flatten_list(aux.ang.rotate_multiple_points(points=np.array(aux.dNl.group_list_by_n(d[i].tolist(), 2)),
                                                     radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
@@ -680,8 +679,8 @@ def comp_PI2(arena_xdim, xys, x=0.04):
     dLR = np.zeros([N, Nticks]) * np.nan
     for i, id in enumerate(ids):
         xy = xys.xs(id, level='AgentID').values
-        dL = xy_aux.eudi5x(xy, np.array((-x, 0)))
-        dR = xy_aux.eudi5x(xy, np.array((x, 0)))
+        dL = aux.xy.eudi5x(xy, np.array((-x, 0)))
+        dR = aux.xy.eudi5x(xy, np.array((x, 0)))
         dLR[i, :] = (dR - dL) / (2 * x)
     dLR_mu = np.mean(dLR, axis=1)
     mu_dLR_mu = np.mean(dLR_mu)
@@ -715,12 +714,12 @@ def scale_to_length(s, e, c=None, pars=None, keys=None):
         if keys is not None:
             pars = reg.getPar(keys)
         else:
-            raise ValueError('No parameter names or keys provided.')
+            raise ValueError('No parameter aux.names or keys provided.')
     s_pars = [p for p in pars if p in s.columns]
     ids = s.index.get_level_values('AgentID').values
     ls = l.loc[ids].values
     if len(s_pars) > 0:
-        s[nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
+        s[aux.nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
     e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
-        e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T
+        e[aux.nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T

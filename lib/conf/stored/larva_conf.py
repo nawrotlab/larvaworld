@@ -356,13 +356,13 @@ def create_mod_dict(b):
     return grouped_mod_dict
 
 def all_mod_dict():
-    dnew = reg.Dic.MD.autostored_confs
+    dnew = reg.model.autostored_confs
     b = dnew['RE_NEU_SQ_DEF_nav'].brain
     return create_mod_dict(b)
 
 @reg.funcs.stored_conf("Model")
 def Model_dict():
-    dnew = reg.Dic.MD.autostored_confs
+    dnew = reg.model.autostored_confs
     b = dnew['RE_NEU_SQ_DEF_nav'].brain
     d = create_mod_dict(b)
 
