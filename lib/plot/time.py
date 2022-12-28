@@ -11,8 +11,8 @@ from lib.plot.aux import plot_quantiles
 
 @reg.funcs.graph('ethogram')
 def plot_ethogram(subfolder='timeplots', **kwargs):
-    P = Plot(name='ethogram', subfolder=subfolder, **kwargs)
-    P.build(Nrows=P.Ndatasets, Ncols=2, sharex=True)
+    P = Plot(name='ethogram', subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'Ncols': 2, 'sharex': True}, **kwargs)
+    P.build()
     Cbouts = {
         # 'lin': {'stridechain': 'green',
         'lin': {'exec': 'green',
@@ -301,7 +301,7 @@ def plot_navigation_index(subfolder='source', **kwargs):
 
     for d, c, g in zip(P.datasets, P.colors, P.labels):
         dt = 1 / d.fr
-        Nticks = d.Nticks
+        Nticks = P.Nticks
         Nsec = int(Nticks * dt)
         # s = d.read(key='trajectories', file='aux_h5')
         s=d.load_traj(mode='default')[['x', 'y']]
@@ -365,7 +365,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         xlabel = 'time, $min$'
     P = AutoPlot(name=name,figsize=(7, 6), **kwargs)
 
-    p=reg.par.PI['cum_d']
+    p=reg.par.kdict['cum_d']
 
     x = P.trange()
     for d, lab, c in zip(P.datasets, P.labels, P.colors):

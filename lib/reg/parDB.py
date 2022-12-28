@@ -2020,4 +2020,3 @@ class ParamRegistry:
 from lib.reg import parFunc
 # print(funcs.param_computing)
 par = ParamRegistry(func_dict = reg.funcs.param_computing)
-

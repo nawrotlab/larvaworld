@@ -6,5 +6,5 @@ from .brain import Brain, DefaultBrain
 from .turner import NeuralOscillator
 from .crawler import SquareOscillator, PhaseOscillator, GaussOscillator
 from .sensor import Olfactor, Toucher, Thermosensor, WindSensor
-from .memory import RLOlfMemory, RLTouchMemory
+from .memory import RLOlfMemory, RLTouchMemory, RemoteBrianModelMemory
 from .feeder import Feeder

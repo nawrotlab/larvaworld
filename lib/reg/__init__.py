@@ -23,8 +23,7 @@ from .models import model
 from .parser import parsers
 from .graph import graphs
 vprint("Registry configured!", 2)
-print(graphs.dict.keys())
-print(graphs.graphgroups)
+
 
 def getPar(k=None, p=None, d=None, to_return='d'):
     return par.getPar(k=k, d=d, p=p, to_return=to_return)

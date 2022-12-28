@@ -13,8 +13,8 @@ from lib.aux.shapely_aux import line_through_point
 
 
 
-class Space(ContinuousSpace):
-    def __init__(self, dims):
+class Space2(ContinuousSpace):
+    def __init__(self, dims, Box2D=False):
         X, Y = self.dims = dims
         super().__init__(x_min = -X / 2, x_max = X / 2, y_min = -Y / 2, y_max = Y / 2, torus = False)
         self.edges = np.array([(-X / 2, -Y / 2),
@@ -26,50 +26,61 @@ class Space(ContinuousSpace):
 
 
         self.obstacles = []
+        self.Box2D=Box2D
 
     def place_obstacle(self, ob) -> None:
 
         if self.Box2D:
-            b = self.Box2D.CreateStaticBody(position=(.0, .0))
+            b = self.CreateStaticBody(position=(.0, .0))
             b.CreateFixture(shape=b2EdgeShape(vertices=ob.edges * self.scaling_factor))
             ob.Box2D_body=b
         self.obstacles.append(ob)
 
 
-#
-# class Space:
-#     def __new__(cls, arena_dims, Box2D=False, scaling_factor=1):
-#         cls.Box2D = Box2D
-#         if cls.Box2D:
-#             scaling_factor *= 1000
-#         s = cls.scaling_factor = scaling_factor
-#         X, Y = cls.dims = arena_dims * s
-#         cls.edges = np.array([(-X / 2, -Y / 2),
-#                               (-X / 2, Y / 2),
-#                               (X / 2, Y / 2),
-#                               (X / 2, -Y / 2)])
-#
-#         if cls.Box2D:
-#             from Box2D import b2World, b2ChainShape
-#             instance = super().__new__(b2World)
-#             cls.gravity = (0, 0)
-#             cls._sim_velocity_iterations = 6
-#             cls._sim_position_iterations = 2
-#
-#             cls.friction_body = cls.CreateStaticBody(position=(.0, .0))
-#             cls.friction_body.CreateFixture(shape=b2ChainShape(vertices=cls.edges))
-#
-#
-#         else:
-#             from mesa.space import ContinuousSpace
-#             instance = super().__new__(ContinuousSpace, x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2,
-#                                        torus=False)
-#         cls.obstacles = []
-#         print(f"I'm a {type(instance).__name__}!")
-#         return instance
-#
-#     def __init__(self):
-#         print("Never runs!")
+
+class Space:
+
+
+    def __new__(cls, arena_dims, use_Box2D=False, scaling_factor=1):
+        cls.use_Box2D = use_Box2D
+        if use_Box2D:
+            scaling_factor *= 1000
+        s = cls.scaling_factor = scaling_factor
+        X, Y = cls.dims = arena_dims * s
+        cls.edges = np.array([(-X / 2, -Y / 2),
+                              (-X / 2, Y / 2),
+                              (X / 2, Y / 2),
+                              (X / 2, -Y / 2)])
+
+        if use_Box2D:
+            from Box2D import b2World, b2ChainShape
+            instance = super().__new__(b2World)
+            cls.gravity = (0, 0)
+            cls._sim_velocity_iterations = 6
+            cls._sim_position_iterations = 2
+
+            cls.friction_body = instance.CreateStaticBody(position=(.0, .0))
+            cls.friction_body.CreateFixture(shape=b2ChainShape(vertices=cls.edges))
+
+
+        else:
+            from mesa.space import ContinuousSpace
+            instance = super().__new__(ContinuousSpace, x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2,
+                                       torus=False)
+        cls.obstacles = []
+        print(f"I'm a {type(instance).__name__}!")
+        return instance
+
+    # def __init__(self):
+    #     print("Never runs!")
+
+    def place_obstacle(self, ob) -> None:
+
+        if self.use_Box2D:
+            b = self.CreateStaticBody(position=(.0, .0))
+            b.CreateFixture(shape=b2EdgeShape(vertices=ob.edges * self.scaling_factor))
+            ob.Box2D_body=b
+        self.obstacles.append(ob)
 
 
 class ValueGrid:

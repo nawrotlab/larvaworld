@@ -12,25 +12,6 @@ def entry(ID, name=None, **kwargs):
 
 
 
-
-
-
-
-def source_anal_list(sources, **kwargs):
-    d0 = []
-    for n, pos in sources.items():
-        for ref_angle, name in zip([None, 270], [f'bearing to {n}', 'bearing to 270deg']):
-            d0.append(entry('bearing/turn', name, min_angle=5.0, ref_angle=ref_angle, source_ID=n, **kwargs))
-
-        d0 += [entry('timeplot', pars=[p], **kwargs) for p in [nam.bearing2(n), nam.dst2(n), nam.scal(nam.dst2(n))]],
-
-        for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
-            for dur in [0.0, 0.5, 1.0]:
-                name = f'{chunk}_bearing2_{n}_min_{dur}_sec'
-                d0.append(entry('bearing to source/epoch', name, min_dur=dur, chunk=chunk, source_ID=n, **kwargs))
-    return d0
-
-
 analysis_dict = dNl.NestDict({
     'tactile': [
         entry('endpoint pars (hist)','time ratio on food (final)',ks=['on_food_tr']),
@@ -153,6 +134,3 @@ entry('boxplot (simple)', ks=['l', 'fv', 'v_mu', 'run_tr']),
     ]
 })
 
-# for gID, entrylist in analysis_dict.items():
-#     print(gID)
-#     reg.graphs.group_entry(gID, entrylist)

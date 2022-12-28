@@ -60,8 +60,6 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
         else:
             for ax in axs:
                 dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
-    # dataset_legend(gIDs, colors, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
-    # fig.subplots_adjust(left=0.1, right=0.95, wspace=0.08, hspace=0.3, bottom=0.05)
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)
 

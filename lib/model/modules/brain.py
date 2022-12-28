@@ -8,7 +8,12 @@ from lib import reg
 class Brain:
     def __init__(self, agent=None, dt=None):
         self.agent = agent
+        self.A_olf = 0
+        self.A_touch = 0
+        self.A_thermo = 0
+        self.A_wind = 0
 
+        # A dictionary of the possibly existing sensors along with the sensing functions and the possibly existing memory modules
         self.sensor_dict = dNl.NestDict({
             'olfactor': {'func': self.sense_odors, 'A': 0.0, 'mem': 'memory'},
             'toucher': {'func': self.sense_food, 'A': 0.0, 'mem': 'touch_memory'},
@@ -65,22 +70,39 @@ class Brain:
         return cons
 
     def sense(self, reward=False, **kwargs):
-        for k in self.sensor_dict.keys():
-            sensor = getattr(self, k)
-            if sensor:
-                mem = self.sensor_dict[k]['mem']
-                if mem is not None:
-                    sensor_memory = getattr(self, mem)
-                    if sensor_memory:
-                        dx = sensor.get_dX()
-                        sensor.gain = sensor_memory.step(dx, reward, brain=self)
+        if self.olfactor :
+            if self.memory:
+                dx = self.olfactor.get_dX()
+                self.olfactor.gain = self.memory.step(dx, reward)
+            self.A_olf = self.olfactor.step(self.sense_odors(**kwargs), brain=self)
+        if self.toucher :
+            if self.touch_memory:
+                dx = self.toucher.get_dX()
+                self.toucher.gain = self.touch_memory.step(dx, reward)
+            self.A_touch = self.toucher.step(self.sense_food(**kwargs), brain=self)
+        if self.thermosensor :
+            self.A_thermo = self.thermosensor.step(self.sense_thermo(**kwargs), brain=self)
+        if self.windsensor :
+            self.A_wind = self.windsensor.step(self.sense_wind(**kwargs), brain=self)
 
-                func = self.sensor_dict[k]['func']
-                self.sensor_dict[k]['A'] = sensor.step(func(**kwargs), brain=self)
+
+        # for k in self.sensor_dict.keys():
+        #     sensor = getattr(self, k)
+        #     if sensor:
+        #         mem = self.sensor_dict[k]['mem']
+        #         if mem is not None:
+        #             sensor_memory = getattr(self, mem)
+        #             if sensor_memory:
+        #                 dx = sensor.get_dX()
+        #                 sensor.gain = sensor_memory.step(dx, reward)
+        #
+        #         func = self.sensor_dict[k]['func']
+        #         self.sensor_dict[k]['A'] = sensor.step(func(**kwargs), brain=self)
 
     @ property
     def A_in(self):
-        return np.sum([v['A'] for v in self.sensor_dict.values()])
+        return self.A_olf + self.A_touch + self.A_thermo + self.A_wind
+        # return np.sum([v['A'] for v in self.sensor_dict.values()])
 
 
 class DefaultBrain(Brain):
@@ -109,15 +131,33 @@ class DefaultBrain(Brain):
         self.memory = None
         if conf.modules['memory']:
             mm = conf['memory_params']
-            mode = mm['modality']
-            kws = {kw: getattr(self, kw) for kw in D['memory'].kwargs.keys()}
-            if mode == 'olfaction' and self.olfactor:
+            # modality = mm['modality']
+            mode = mm['mode']
+            kws = {"brain" : self, "dt" : self.dt}
+            # kws = {kw: getattr(self, kw) for kw in D['memory'].kwargs.keys()}
+            if self.olfactor:
+            # if modality == 'olfaction' and self.olfactor:
                 mm.gain = self.olfactor.gain
                 self.memory = D['memory'].mode[mode].class_func(**mm, **kws)
-            elif mode == 'touch' and self.toucher:
+            if self.toucher:
                 mm.gain = self.toucher.gain
                 self.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
         # return B
+
+
+        # if m.memory and c.memory_params.modality == 'olfaction':
+        #     mode = c.memory_params.mode if 'mode' in c.memory_params.keys() else 'RL'
+        #     if mode == 'RL':
+        #         self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
+        #         # raise
+        #     elif mode == 'MB':
+        #         # raise
+        #         self.memory = RemoteBrianModelMemory(sim_id=self.agent.model.id, brain=self, dt=self.dt, gain=self.olfactor.gain,**c['memory_params'])
+        #
+        # if m['toucher']:
+        #     t = self.toucher = Toucher(brain=self, dt=self.dt, **c['toucher_params'])
+        # if m.memory and c.memory_params.modality == 'touch':
+        #     self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
 
 
 

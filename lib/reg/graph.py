@@ -1,6 +1,6 @@
 import os
 
-from lib.aux import dictsNlists as dNl
+from lib.aux import dictsNlists as dNl, naming as nam
 from lib import reg
 from lib import plot
 
@@ -36,12 +36,20 @@ class GraphRegistry:
 
     def eval_graphgroups(self, graphgroups,save_to=None,**kws):
         kws.update({'subfolder' : None})
-        ds = {}
-        for graphgroup in graphgroups:
-            if graphgroup in self.graphgroups.keys():
-                entries = self.graphgroups[graphgroup]
-                dir= f'{save_to}/{graphgroup}' if save_to is not None else None
-                ds[graphgroup] = self.eval(entries, save_to=dir,**kws)
+        ds = dNl.NestDict()
+        for gg in graphgroups:
+            if isinstance(gg, dict):
+                for ggID, entries in gg.items() :
+                    dir = f'{save_to}/{ggID}' if save_to is not None else None
+                    ds[ggID] = self.eval(entries, save_to=dir, **kws)
+            elif isinstance(gg, str) and gg in self.graphgroups.keys():
+                ggID=gg
+                entries = self.graphgroups[ggID]
+                dir = f'{save_to}/{ggID}' if save_to is not None else None
+                ds[ggID] = self.eval(entries, save_to=dir, **kws)
+            else :
+                raise
+
         return ds
 
 
@@ -101,5 +109,58 @@ class GraphRegistry:
         })
         return graphs
 
+    def source_graphgroup(self, source_ID, pos=None, **kwargs):
+        gID = f"locomotion relative to source {source_ID}"
+        d0 = []
+        for ref_angle, name in zip([None, 270], [f'bearing to {source_ID}', 'bearing to 270deg']):
+            entry=self.entry('bearing/turn', name=name, args={"min_angle":5.0, "ref_angle":ref_angle, "source_ID":source_ID, **kwargs} )
+            d0.append(entry)
+
+        d0 += [self.entry('timeplot', args={"pars":[p], **kwargs}) for p in
+               [nam.bearing2(source_ID), nam.dst2(source_ID), nam.scal(nam.dst2(source_ID))]],
+
+        for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
+            for dur in [0.0, 0.5, 1.0]:
+                name = f'{chunk}_bearing2_{source_ID}_min_{dur}_sec'
+                d0.append(
+                    self.entry('bearing to source/epoch', name=name, args={
+                        "min_dur" : dur, "chunk" : chunk, "source_ID":source_ID, **kwargs}))
+        return dNl.NestDict({gID: d0})
+
+    def multisource_graphgroup(self, sources, **kwargs):
+        graphgroups = []
+        for source_ID, pos in sources.items():
+            graphgroups.append(self.source_graphgroup(source_ID, pos=pos, **kwargs))
+        return graphgroups
+
+    def get_analysis_graphgroups(self, exp, sources, **kwargs):
+        groups = ["traj", "general"]
+        groups += self.multisource_graphgroup(sources, **kwargs)
+
+        if exp in ['random_food']:
+            groups.append("survival")
+        else:
+            dic = {
+                'patch': ["patch"],
+                'tactile': ["tactile"],
+                'thermo': ["thermo"],
+                'RvsS': ["deb", "intake"],
+                'growth': ["deb", "intake"],
+                'anemo': ["anemotaxis"],
+                'puff': ["puff"],
+                'chemo': ["chemo"],
+                'RL': ["RL"],
+                # 'dispersion': ['comparative_analysis'],
+                'dispersion': ["endpoint", "distro", "dsp"],
+
+            }
+            for k, v in dic.items():
+                if k in exp:
+                    groups += v
+
+        return groups
+
+
 
 graphs = GraphRegistry()
+

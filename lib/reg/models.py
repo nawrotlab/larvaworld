@@ -372,11 +372,13 @@ def init_brain_modules():
                           'h': 'The duration of the training period after which no further learning will take place.'}
         }
 
+        touchRLargs = {}
         MBargs = {}
 
-        d = {'olfaction': {'args': RLargs, 'class_func': modules.RLOlfMemory,
+        d = {'RL': {'args': RLargs, 'class_func': modules.RLOlfMemory,
                            'variable': ['Delta', 'update_dt', 'alpha', 'epsilon']},
-             'touch': {'args': MBargs, 'class_func': modules.RLTouchMemory, 'variable': []},
+             'MB': {'args': MBargs, 'class_func': modules.RemoteBrianModelMemory, 'variable': []},
+             'touchRL': {'args': touchRLargs, 'class_func': modules.RLTouchMemory, 'variable': []},
              }
         return dNl.NestDict(d)
 
