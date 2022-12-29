@@ -356,29 +356,29 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     P.fig.align_ylabels(P.axs[:])
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()
-
-@reg.funcs.graph('ggboxplot')
-def ggboxplot(ks=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
-    pars, syms, labs, lims = reg.getPar(ks, to_return=['d', 's', 'lab', 'lim'])
-    from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
-    Npars = len(pars)
-    if Npars == 1:
-        name = pars[0]
-    else:
-        name = f'ggboxplot_{len(pars)}_end_pars'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
-    e = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
-    Cdict = dict(zip(P.labels, P.colors))
-    ggs = [ggplot(e, aes(x='DatasetID', y=p, color='DatasetID')) for p in pars]
-    if Npars == 1:
-        P.fig = (ggs[0] + geom_boxplot() + scale_color_manual(Cdict) + theme(
-            figure_size=figsize)).draw()
-    else:
-
-        P.fig = (ggs[0] + geom_boxplot() + scale_color_manual(
-            Cdict) + theme(
-            figure_size=figsize)).draw()
-    return P.get()
+#
+# @reg.funcs.graph('ggboxplot')
+# def ggboxplot(ks=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
+#     pars, syms, labs, lims = reg.getPar(ks, to_return=['d', 's', 'lab', 'lim'])
+#     from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
+#     Npars = len(pars)
+#     if Npars == 1:
+#         name = pars[0]
+#     else:
+#         name = f'ggboxplot_{len(pars)}_end_pars'
+#     P = Plot(name=name, subfolder=subfolder, **kwargs)
+#     e = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
+#     Cdict = dict(zip(P.labels, P.colors))
+#     ggs = [ggplot(e, aes(x='DatasetID', y=p, color='DatasetID')) for p in pars]
+#     if Npars == 1:
+#         P.fig = (ggs[0] + geom_boxplot() + scale_color_manual(Cdict) + theme(
+#             figure_size=figsize)).draw()
+#     else:
+#
+#         P.fig = (ggs[0] + geom_boxplot() + scale_color_manual(
+#             Cdict) + theme(
+#             figure_size=figsize)).draw()
+#     return P.get()
 
 @reg.funcs.graph('foraging')
 def plot_foraging(**kwargs):

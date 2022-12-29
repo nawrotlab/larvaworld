@@ -3,12 +3,36 @@ import json
 import os
 import pickle
 import numpy as np
-from unflatten import unflatten
+# from unflatten import unflatten
 import typing
 
+class AttrDict(dict):
+    '''
+    Dictionary subclass whose entries can be accessed by attributes (as well as normally).
+    '''
 
-def flatten_list(l):
-    return [item for sublist in l for item in sublist]
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+    @classmethod
+    def from_nested_dicts(cls, data):
+        """ Construct nested AttrDicts from nested dictionaries. """
+        if not isinstance(data, dict):
+            return data
+        else:
+            return cls({key: cls.from_nested_dicts(data[key]) for key in data})
+
+
+def NestDict(data=None):
+    if data is None:
+        return AttrDict()
+    else:
+        return AttrDict.from_nested_dicts(data)
+
+def copyDict(d):
+    return NestDict(copy.deepcopy(d))
+
 
 
 def flatten_dict(d, parent_key='', sep='.'):
@@ -23,18 +47,22 @@ def flatten_dict(d, parent_key='', sep='.'):
 
         else:
             items.append((new_key, v))
-    dd= NestDict(dict(items))
-    return dd
+    return NestDict(dict(items))
 
 
-
-def group_list_by_n(l, n):
-    Nmore = int(len(l) % n)
-    N = int((len(l) - Nmore) / n)
-    g = [l[i * n:(i + 1) * n] for i in range(N)]
-    if Nmore != 0:
-        g.append(l[-Nmore:])
-    return g
+def unflatten_dict(d, sep='.'):
+    resultDict = NestDict()
+    for key, value in d.items():
+        if value=='empty_dict' :
+            value={}
+        parts = key.split(sep)
+        dd = resultDict
+        for part in parts[:-1]:
+            if part not in dd:
+                dd[part] = NestDict()
+            dd = dd[part]
+        dd[parts[-1]] = value
+    return resultDict
 
 
 def merge_dicts(dict_list):
@@ -96,15 +124,6 @@ def save_dict(d, file, use_pickle=True):
 
 
 
-def unique_list(l):
-    if len(l) == 0:
-        return []
-    elif len(l) == 1:
-        return l
-    else:
-        seen = set()
-        seen_add = seen.add
-        return [x for x in l if not (x in seen or seen_add(x))]
 
 
 def replace_in_dict(d0, d1, inv_d0=False, inv_d1=False, replace_key=False):
@@ -141,12 +160,12 @@ def update_nestdict(dic0, dic):
     for k,v in dic0_f.items():
         if v=='empty_dict':
             dic0_f[k]={}
-    return NestDict(unflatten(dic0_f))
+    return NestDict(unflatten_dict(dic0_f))
 
 def update_existingnestdict(dic0, dic):
     dic0_f = flatten_dict(dic0)
     dic0_f = update_existingdict(dic0_f, dic)
-    return NestDict(unflatten(dic0_f))
+    return NestDict(unflatten_dict(dic0_f))
 
 
 def group_epoch_dicts(individual_epochs):
@@ -156,45 +175,7 @@ def group_epoch_dicts(individual_epochs):
 
 
 
-class AttrDict(dict):
-    '''
-    Dictionary subclass whose entries can be accessed by attributes (as well as normally).
-    obj = AttrDict()
-    obj['test'] = 'hi'
-    print obj.test
-    >> hi
-    del obj.test
-    obj.test = 'bye'
-    print obj['test']
-    >> bye
-    print len(obj)
-    >> 1
-    obj.clear()
-    print len(obj)
-    >> 0
-    '''
 
-    def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-
-    @classmethod
-    def from_nested_dicts(cls, data):
-        """ Construct nested AttrDicts from nested dictionaries. """
-        if not isinstance(data, dict):
-            return data
-        else:
-            return cls({key: cls.from_nested_dicts(data[key]) for key in data})
-
-
-def NestDict(data=None):
-    if data is None:
-        return AttrDict()
-    else:
-        return AttrDict.from_nested_dicts(data)
-
-def copyDict(d):
-    return NestDict(copy.deepcopy(d))
 
 class bidict(dict):
     def __init__(self, *args, **kwargs):
@@ -217,5 +198,25 @@ class bidict(dict):
 
 
 
+def flatten_list(l):
+    return [item for sublist in l for item in sublist]
+
+def group_list_by_n(l, n):
+    Nmore = int(len(l) % n)
+    N = int((len(l) - Nmore) / n)
+    g = [l[i * n:(i + 1) * n] for i in range(N)]
+    if Nmore != 0:
+        g.append(l[-Nmore:])
+    return g
 
 
+
+def unique_list(l):
+    if len(l) == 0:
+        return []
+    elif len(l) == 1:
+        return l
+    else:
+        seen = set()
+        seen_add = seen.add
+        return [x for x in l if not (x in seen or seen_add(x))]

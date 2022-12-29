@@ -1,5 +1,5 @@
 import numpy as np
-import six
+
 
 
 from lib.plot.base import BasePlot, AutoBasePlot
@@ -114,7 +114,7 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
     mpl.auto_set_font_size(False)
     mpl.set_fontsize(font_size)
 
-    for k, cell in six.iteritems(mpl._cells):
+    for k, cell in mpl._cells.items():
         cell.set_edgecolor(edge_color)
         if k in highlight_idx:
             cell.set_facecolor(highlight_color)
