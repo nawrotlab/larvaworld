@@ -316,6 +316,3 @@ class Gut:
     def ingested_volume(self):
         return self.mol_ingested * self.deb.w_X / self.deb.d_X
 
-
-if __name__ == '__main__':
-    Ndays = 5

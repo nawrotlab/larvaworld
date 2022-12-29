@@ -5,13 +5,11 @@ import progressbar
 import os
 
 
-import lib.aux.sample_aux
-from lib.screen.drawing import ScreenManager
-
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 from lib import reg
-
+import lib.aux.sample_aux
+from lib.screen.drawing import ScreenManager
 import lib.screen.rendering as ren
 
 from lib.model.envs.base_world import BaseWorld

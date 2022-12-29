@@ -10,7 +10,6 @@ from lib.aux.stor_aux import read, storeH5, loadSoloDics
 from lib.decorators.timer import warn_slow
 
 from lib.decorators.property import dic_manager_kwargs
-# from lib.registry.function_facade import funcs
 from lib.stor.config import retrieve_config, update_config, update_metric_definition
 from lib import reg
 

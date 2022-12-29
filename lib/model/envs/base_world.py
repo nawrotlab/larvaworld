@@ -50,7 +50,6 @@ class BaseWorld:
         self.save_to = save_to
         self.larva_collisions = larva_collisions
 
-        #
         os.makedirs(save_to, exist_ok=True)
         self.sim_epochs = trials
         for idx, ep in self.sim_epochs.items():

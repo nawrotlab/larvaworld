@@ -116,7 +116,4 @@ class LarvaworldAgent:
             # viewer.draw_circle(p, r * 1.2, self.model.selection_color, False, r / 5)
 
 
-if __name__ == '__main__':
-    # d=LarvaDataset(dir=None, load_data=False)
-    # print(d.config.N)
-    lll = LarvaworldAgent('ddd', None)
+
