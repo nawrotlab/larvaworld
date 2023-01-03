@@ -8,7 +8,7 @@ import progressbar
 import numpy as np
 
 from lib.aux import dictsNlists as dNl, naming as nam, colsNstr as cNs
-from lib.sim.ga.functions import GA_optimization
+from lib.aux.eval_aux import GA_optimization
 from lib import reg
 from lib.aux.time_util import TimeUtil
 

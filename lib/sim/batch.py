@@ -12,9 +12,8 @@ import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-from lib.sim.batch.aux import grid_search_dict, delete_traj
-from lib.sim.batch.functions import single_run, batch_method_unpack
+from lib.aux import dictsNlists as dNl
+from lib.sim.batch_aux import single_run, batch_method_unpack, delete_traj
 from lib import reg
 ''' Default batch exec.
 Arguments :
@@ -191,3 +190,22 @@ class BatchRun:
                         v = np.array(v)
                 traj.f_apar(k, v)
         return traj
+
+
+def grid_search_dict(space_dict):
+    import pypet
+    dic={}
+    for p, args in space_dict.items() :
+        if args['values'] is not None :
+            dic[p]=args['values']
+        else :
+            r0,r1=args['range']
+            vs = np.linspace(r0, r1, args['Ngrid'])
+            # print(type(r0), type(vs[0]))
+            # raise
+            if type(r0) == int and type(r1) == int:
+                vs = vs.astype(int)
+            dic[p] = vs.tolist()
+    return pypet.cartesian_product(dic)
+
+

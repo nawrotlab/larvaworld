@@ -1,5 +1,5 @@
 from typing import Union
-
+import agentpy
 import numpy as np
 from scipy.stats import multivariate_normal
 from shapely.geometry import Point
@@ -7,30 +7,21 @@ from shapely.geometry import Point
 from lib.aux.colsNstr import colorname2tuple
 from lib.screen.rendering import InputBox
 
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
-# @dataclass
-class LarvaworldAgent:
-    # unique_id: str
-    # model: object = None
-    # pos: tuple = None
-    # default_color: Union[str, tuple] = 'black'
-    # radius: float = None
-    # visible: bool = True
-    # regeneration: bool = False
-    # regeneration_pos: tuple = None
-    # group: str = None
 
-    # odor:dict=
-    # **kwargs
+
+
+
+class LarvaworldAgent(agentpy.Agent):
     def __init__(self, unique_id: str, model=None, pos=None, default_color='black', radius=None, visible=True,
-                 odor=None,
-                 regeneration=False, regeneration_pos=None,
-                 group=None, **kwargs):
+                 odor=None, regeneration=False, regeneration_pos=None, group='larvaworld_agent', *args, **kwargs):
 
+        super().__init__(model, *args, **kwargs)
         self.visible = visible
         self.selected = False
         self.unique_id = unique_id
-        self.model = model
+        # self.model = model
         self.group = group
         self.base_odor_id = f'{group}_base_odor'
         self.gain_for_base_odor = 100
@@ -55,6 +46,42 @@ class LarvaworldAgent:
             self.id_box = InputBox(text=self.unique_id, color_inactive=self.default_color,
                                    color_active=self.default_color,
                                    agent=self)
+
+    def nest_record(self, reporter_dic):
+
+
+        # Connect log to the model's dict of logs
+        if self.group not in self.model._logs:
+            self.model._logs[self.group] = {}
+        self.model._logs[self.group][self.unique_id] = self.log
+        self.log['t'] = [self.model.t]  # Initiate time dimension
+
+        # Perform initial recording
+        for name, codename in reporter_dic.items():
+            v = cNs.rgetattr(self, codename)
+            self.log[name] = [v]
+
+        # Set default recording function from now on
+        self.nest_record = self._nest_record  # noqa
+
+    def _nest_record(self, reporter_dic):
+
+        for name, codename in reporter_dic.items():
+
+            # Create empty lists
+            if name not in self.log:
+                self.log[name] = [None] * len(self.log['t'])
+
+            if self.model.t != self.log['t'][-1]:
+
+                # Create empty slot for new documented time step
+                for v in self.log.values():
+                    v.append(None)
+
+                # Store time step
+                self.log['t'][-1] = self.model.t
+            self.log[name][-1] = cNs.rgetattr(self, codename)
+
 
     def get_position(self):
         return tuple(self.pos)

@@ -9,7 +9,9 @@ import PySimpleGUI as sg
 
 
 import matplotlib.pyplot as plt
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, dir_aux
+
+import lib.process.building
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.aux.par_aux import base_dtype
 from lib import reg
 
@@ -595,7 +597,7 @@ class DataList(NamedList):
         # print(kks)
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
-            new = dir_aux.detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
+            new = lib.process.building.detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
             self.add(w, new)
         elif e == f'SELECT_ALL {n}':
             ks = np.arange(len(d0)).tolist()
@@ -618,7 +620,7 @@ class DataList(NamedList):
             if len(v0) > 0:
                 if d0[kks[0]].config['refID'] is None:
                     gui_win.save_ref_window(d0[kks[0]])
-                from lib.sim.single.imitation import imitation_exp
+                from lib.sim.imitation import imitation_exp
                 exp_conf = imitation_exp(d0[kks[0]].config['refID'])
                 exp_conf['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)

@@ -6,7 +6,7 @@ from shapely.ops import split
 from scipy.signal import sosfiltfilt, butter
 
 
-from lib.aux import naming as nam, ang_aux
+from lib.aux import naming as nam, ang
 
 
 def LvsRtoggle(side):
@@ -341,3 +341,52 @@ class Collision(Exception):
     def __init__(self, object1, object2):
         self.object1 = object1
         self.object2 = object2
+
+def generate_agentConfs(larva_groups, parameter_dict={}):
+    from lib.aux import xy_aux, sample_aux
+    agent_confs = []
+    for gID, gConf in larva_groups.items():
+        d = gConf.distribution
+        kws = {
+            'm': gConf.model,
+            'refID': gConf.sample,
+            'Nids': d.N,
+            'parameter_dict': parameter_dict,
+        }
+
+        if not gConf.imitation:
+
+            ps, ors = xy_aux.generate_xyNor_distro(d)
+            ids = [f'{gID}_{i}' for i in range(d.N)]
+            all_pars, refID = sample_aux.sampleRef(**kws)
+        else:
+            ids, ps, ors, all_pars = sample_aux.imitateRef(**kws)
+        gConf.ids = ids
+        for id, p, o, pars in zip(ids, ps, ors, all_pars):
+            conf = {
+                'pos': p,
+                'orientation': o,
+                'unique_id': id,
+                'larva_pars': pars,
+                'group': gID,
+                'odor': gConf.odor,
+                'default_color': gConf.default_color,
+                'life_history': gConf.life_history
+            }
+
+            agent_confs.append(conf)
+    return agent_confs
+
+
+def generate_sourceConfs(groups={}, units={}) :
+    from lib.aux import xy_aux
+    confs = []
+    for gID, gConf in groups.items():
+        ps = xy_aux.generate_xy_distro(**gConf.distribution)
+        for i, p in enumerate(ps):
+            conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
+            confs.append(conf)
+    for uID, uConf in units.items():
+        conf = {'unique_id': uID, **uConf}
+        confs.append(conf)
+    return confs

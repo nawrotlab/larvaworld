@@ -90,7 +90,7 @@ class ScreenManager:
         media_name = self.vis_kwargs.render.media_name
         video_speed = self.vis_kwargs.render.video_speed
         if media_name is None:
-            media_name = m.id
+            media_name = str(m.id)
 
         self.space_bounds = get_arena_bounds(m.arena_dims, self.s)
         self.window_dims = get_window_dims(m.arena_dims)

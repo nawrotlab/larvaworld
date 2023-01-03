@@ -1,7 +1,9 @@
 import os
 import pandas as pd
+
+
 from lib.aux import dictsNlists as dNl
-#
+
 
 
 
@@ -109,14 +111,3 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
 
 
 
-def loadSoloDics(agent_ids, path=None, use_pickle=False):
-    if os.path.isdir(path) :
-        files = [f'{id}.txt' for id in agent_ids]
-        return dNl.load_dicts(files=files, folder=path, use_pickle=use_pickle)
-
-
-def storeSoloDics(agent_dics, path=None, use_pickle=False):
-    if path is not None :
-        os.makedirs(path, exist_ok=True)
-        for id, dic in agent_dics.items():
-            dNl.save_dict(dic, f'{path}/{id}.txt', use_pickle=use_pickle)

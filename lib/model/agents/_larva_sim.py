@@ -31,24 +31,11 @@ class LarvaSim(BodySim, Larva):
                               self.model.foodtypes.keys()})
 
     def update_larva(self):
-        # t0 = []
-        # t0.append(time.time())
-
-        # pos = self.olfactor_pos
-        # self.food_detected, foodtype = self.detect_food(pos)
-        # t0.append(time.time())
-
-
-
-        # t0.append(time.time())
         self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
-        # t0.append(time.time())
         self.update_foraging_dict(self.current_foodtype, self.current_V_eaten)
         self.run_energetics(self.current_V_eaten)
         self.update_behavior()
 
-        # t0.append(time.time())
-        # print(np.array(np.diff(t0) * 1000000).astype(int))
 
     def feed(self, source, motion):
 

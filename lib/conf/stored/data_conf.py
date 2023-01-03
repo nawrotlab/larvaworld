@@ -1,4 +1,4 @@
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
+from lib.aux import dictsNlists as dNl, naming as nam
 from lib import reg
 
 
@@ -58,8 +58,7 @@ def Tracker_dict():
 
 @reg.funcs.stored_conf("Ref")
 def Ref_dict(DATA=None):
-    from lib.stor.larva_dataset import LarvaDataset
-    from lib.stor.config import update_config
+    from lib.process.larva_dataset import LarvaDataset, update_config
     if DATA is None :
         DATA = reg.Path["DATA"]
     dds = [

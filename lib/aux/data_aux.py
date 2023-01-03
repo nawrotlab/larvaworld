@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 import random
 import typing
@@ -573,17 +571,3 @@ def ConfID_entry(conftype,ids=None,default=None,k=None, symbol=None, single_choi
     return dNl.NestDict(d)
 
 
-def next_idx(id, conftype='Exp'):
-    f = reg.Path.SimIdx
-    if not os.path.isfile(f):
-        d = dNl.NestDict({k: dNl.NestDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
-    else:
-        d = dNl.load_dict(f, use_pickle=False)
-
-    if not conftype in d.keys():
-        d[conftype] = {}
-    if not id in d[conftype].keys():
-        d[conftype][id] = 0
-    d[conftype][id] += 1
-    dNl.save_dict(d, f, use_pickle=False)
-    return d[conftype][id]

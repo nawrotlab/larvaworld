@@ -14,8 +14,8 @@ import lib.aux.sim_aux
 from lib.plot.hist import plot_endpoint_params, plot_endpoint_scatter
 from lib.plot.deb import plot_debs
 from lib.plot.scape import plot_3pars, plot_heatmap_PI, plot_2d
-from lib.sim.single.single_run import SingleRun
-from lib.stor.larva_dataset import LarvaDataset
+from lib.sim.single_run import SingleRun
+from lib.process.larva_dataset import LarvaDataset
 
 
 def get_Nbest(traj, mutate=True, recombine=False):
@@ -337,3 +337,10 @@ def retrieve_results(batch_type, batch_id):
     traj = load_traj(batch_type, batch_id)
     func = finfunc_dict[traj.config.batch_methods.final]
     return func(traj)
+
+
+def delete_traj(batch_type, traj_name):
+    import h5py
+    filename = f'{reg.Path["BATCH"]}/{batch_type}/{batch_type}.hdf5'
+    with h5py.File(filename, 'r+') as f:
+        del f[traj_name]

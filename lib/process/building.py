@@ -1,4 +1,5 @@
 import copy
+import os
 import os.path
 import numpy as np
 import pandas as pd
@@ -6,12 +7,140 @@ import shutil
 import warnings
 
 from lib import reg
-from lib.stor.larva_dataset import LarvaDataset
-from lib.stor.match_ids import match_larva_ids
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, xy_aux, dir_aux
+
+from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, xy_aux
+from lib.process.larva_dataset import LarvaDataset
+
+
+def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, verbose=1, **kwargs):
+    pairs = {}
+
+    def common_member(a, b):
+        a_set = set(a)
+        b_set = set(b)
+        return a_set & b_set
+
+    def eval(t0, xy0, l0, t1, xy1, l1):
+        tt = t1 - t0
+        if tt <= 0:
+            return max_error * 2
+        ll = np.abs(l1 - l0)
+        dd = np.sqrt(np.sum((xy1 - xy0) ** 2))
+        # print(tt,ll,dd)
+        return wt * tt + wl * ll + ws * dd
+
+    def get_extrema(ss, pars):
+        ids = ss.index.unique().tolist()
+
+        mins = ss['Step'].groupby('AgentID').min()
+        maxs = ss['Step'].groupby('AgentID').max()
+        durs = ss['Step'].groupby('AgentID').count()
+        first_xy, last_xy = {}, {}
+        for id in ids:
+            first_xy[id] = ss[pars].xs(id).dropna().values[0, :]
+            last_xy[id] = ss[pars].xs(id).dropna().values[-1, :]
+        return ids, mins, maxs, first_xy, last_xy, durs
+
+    def update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy):
+        mins[id1], first_xy[id1] = mins[id0], first_xy[id0]
+        del mins[id0]
+        del maxs[id0]
+        del first_xy[id0]
+        del last_xy[id0]
+        ids.remove(id0)
+        return ids, mins, maxs, first_xy, last_xy
+
+    ls = e['length']
+    if pars is None:
+        pars = s.columns.values.tolist()
+    s.reset_index(level='Step', drop=False, inplace=True)
+    s['Step'] = s['Step'].values.astype(int)
+    ids, mins, maxs, first_xy, last_xy, durs = get_extrema(s, pars)
+    Nids0 = len(ids)
+    while Nidx <= len(ids):
+        cur_er, id0, id1 = max_error, None, None
+        t0s = maxs.nsmallest(Nidx)
+        t1s = mins.loc[mins > t0s.min()].nsmallest(Nidx)
+        if len(t1s) > 0:
+            for i in range(Nidx):
+                cur_id0, t0 = t0s.index[i], t0s.values[i]
+                xy0, l0 = last_xy[cur_id0], ls[cur_id0]
+                ee = [eval(t0, xy0, l0, mins[id], first_xy[id], ls[id]) for id in t1s.index]
+                temp_err = np.min(ee)
+                if temp_err < cur_er:
+                    cur_er, id0, id1 = temp_err, cur_id0, t1s.index[np.argmin(ee)]
+        if id0 is not None:
+            pairs[id0] = id1
+            ls[id1] = (ls[id0] * durs[id0] + ls[id1] * durs[id1]) / (durs[id0] + durs[id1])
+            durs[id1] += durs[id0]
+            del durs[id0]
+            ls.drop([id0], inplace=True)
+            ids, mins, maxs, first_xy, last_xy = update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy)
+            if verbose >= 2:
+                print(len(ids), int(cur_er))
+        else:
+            Nidx += 1
+    Nids1 = len(ids)
+    if verbose >= 2:
+        print('Finalizing dataset')
+    while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
+        for id0, id1 in pairs.items():
+            if id1 in pairs.keys():
+                pairs[id0] = pairs[id1]
+                break
+    s.rename(index=pairs, inplace=True)
+    s.reset_index(drop=False, inplace=True)
+    s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+    if verbose >= 1:
+        print(f'**--- Track IDs reduced from {Nids0} to {Nids1} by the matchIDs algorithm -----')
+    return s
 
 def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode='semifull',
                    max_Nagents=None, min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0, **kwargs):
+
+    def read_Schleyer_metadata(dir):
+        meta_filename = os.path.join(dir, 'vidAndLogs/metadata.txt')
+        dictionary = {}
+        with open(meta_filename) as f:
+            for j, line in enumerate(f):
+                try:
+                    nb, list = line.rstrip('\n').split('=')
+                    dictionary[nb] = list
+                except:
+                    pass
+        return dictionary
+
+    def get_invert_x_array(meta_dict, Nfiles):
+        try:
+            odor_side = meta_dict['OdorA_Side']
+            if odor_side == 'right':
+                invert_x_array = [True for i in range(Nfiles)]
+            elif odor_side == 'left':
+                invert_x_array = [False for i in range(Nfiles)]
+            else:
+                raise ValueError(f'Odor side found in metadata is not consistent : {odor_side}')
+            return invert_x_array
+        except:
+            print('Odor side not found in metadata. Assuming left side')
+            invert_x_array = [False for i in range(Nfiles)]
+            return invert_x_array
+
+    def get_odor_pos(meta_dict, arena_dims):
+        ar_x, ar_y = arena_dims
+        try:
+            odor_side = meta_dict['OdorA_Side']
+            x, y = meta_dict['OdorALocation'].split(',')
+            x, y = float(x), float(y)
+            # meta_dict.pop('OdorALocation', None)
+            # meta_dict['OdorPos']=[x,y]
+            x, y = 2 * x / ar_x, 2 * y / ar_y
+            if odor_side == 'left':
+                return [x, y]
+            elif odor_side == 'right':
+                return [-x, y]
+        except:
+            return [-0.8, 0]
+
     d = dataset
     dt=d.dt
     cols0 = build_conf.read_sequence
@@ -190,7 +319,48 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         columns=step.columns.values
         return step, e, columns
 
+    def import_smaller_dataset(step, dt, max_Nagents=None, min_duration_in_sec=0.0, time_slice=None):
+        min_ticks = min_duration_in_sec / dt
 
+        if time_slice is not None:
+            tmin, tmax = time_slice
+            tickmin, tickmax = int(tmin / dt), int(tmax / dt)
+            step = copy.deepcopy(step.loc[(slice(tickmin, tickmax), slice(None)), :])
+        end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
+        end.columns = ['num_ticks']
+
+        if max_Nagents is not None:
+            selected = end.nlargest(max_Nagents, 'num_ticks').index.values
+            step = step.loc[(slice(None), selected), :]
+            end = end.loc[selected]
+        selected = end[end['num_ticks'] > min_ticks].index.values
+        step = step.loc[(slice(None), selected), :]
+        end = end.loc[selected]
+        end['cum_dur'] = end['num_ticks'] * dt
+        return step, end
+
+    def reset_AgentIDs(s):
+        s.reset_index(level='Step', drop=False, inplace=True)
+        trange = np.arange(int(s['Step'].max())).astype(int)
+        old_ids = s.index.unique().tolist()
+        new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
+        new_pairs = dict(zip(old_ids, new_ids))
+        s.rename(index=new_pairs, inplace=True)
+
+        s.reset_index(drop=False, inplace=True)
+        s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+        s.sort_index(level=['Step', 'AgentID'], inplace=True)
+        s.drop_duplicates(inplace=True)
+
+        my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
+        return s, my_index
+
+    def reset_MultiIndex(s, columns=None):
+        s, my_index = reset_AgentIDs(s)
+        if columns is None:
+            columns = s.columns.values
+        step = pd.DataFrame(s, index=my_index, columns=columns)
+        return step
 
 
     try:
@@ -203,8 +373,8 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
 
 
-    step=dir_aux.reset_MultiIndex(temp, columns=columns)
-    step, end=dir_aux.import_smaller_dataset(step, dt=d.dt,
+    step=reset_MultiIndex(temp, columns=columns)
+    step, end=import_smaller_dataset(step, dt=d.dt,
                                              max_Nagents=max_Nagents, min_duration_in_sec=min_duration_in_sec,time_slice=time_slice)
 
     return step, end
@@ -293,50 +463,13 @@ def build_Arguello(dataset, build_conf, source_files, source_dir=None, max_Nagen
     end.set_index('AgentID', inplace=True)
     return step, end
 
-def read_Schleyer_metadata(dir):
-    meta_filename = os.path.join(dir, 'vidAndLogs/metadata.txt')
-    dictionary = {}
-    with open(meta_filename) as f:
-        for j, line in enumerate(f):
-            try:
-                nb, list = line.rstrip('\n').split('=')
-                dictionary[nb] = list
-            except:
-                pass
-    return dictionary
 
 
-def get_invert_x_array(meta_dict, Nfiles):
-    try:
-        odor_side = meta_dict['OdorA_Side']
-        if odor_side == 'right':
-            invert_x_array = [True for i in range(Nfiles)]
-        elif odor_side == 'left':
-            invert_x_array = [False for i in range(Nfiles)]
-        else:
-            raise ValueError(f'Odor side found in metadata is not consistent : {odor_side}')
-        return invert_x_array
-    except:
-        print('Odor side not found in metadata. Assuming left side')
-        invert_x_array = [False for i in range(Nfiles)]
-        return invert_x_array
 
 
-def get_odor_pos(meta_dict, arena_dims):
-    ar_x, ar_y = arena_dims
-    try:
-        odor_side = meta_dict['OdorA_Side']
-        x, y = meta_dict['OdorALocation'].split(',')
-        x, y = float(x), float(y)
-        # meta_dict.pop('OdorALocation', None)
-        # meta_dict['OdorPos']=[x,y]
-        x, y = 2 * x / ar_x, 2 * y / ar_y
-        if odor_side == 'left':
-            return [x, y]
-        elif odor_side == 'right':
-            return [-x, y]
-    except:
-        return [-0.8, 0]
+
+
+
 
 def import_datasets(source_ids, ids=None, colors=None, refIDs=None, **kwargs):
     if colors is None:
@@ -423,7 +556,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'env_params': reg.get_null('env_conf', arena=g.tracker.arena),
         **g.tracker.resolution
     }
-
+    from lib.process.larva_dataset import LarvaDataset
     d = LarvaDataset(**conf)
     kws0 = {
         'dataset': d,
@@ -440,3 +573,81 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         # print(f'xxxxx Failed to create dataset {id}! -----')
         # d.delete()
         return None
+
+
+def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
+    dic = {}
+    if folder_path in ['', None]:
+        return dic
+    if raw:
+        conf = reg.loadConf(id=datagroup_id, conftype='Group').tracker.filesystem
+        dF, df = conf.folder, conf.file
+        dFp, dFs = dF.pref, dF.suf
+        dfp, dfs, df_ = df.pref, df.suf, df.sep
+
+        fn = folder_path.split('/')[-1]
+        if dFp is not None:
+            if fn.startswith(dFp):
+                dic[fn] = folder_path
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
+                for id, dr in zip(ids, dirs):
+                    dic[id] = dr
+        elif dFs is not None:
+            if fn.startswith(dFs):
+                dic[fn] = folder_path
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, folder_path, fn, **kwargs)
+                for id, dr in zip(ids, dirs):
+                    dic[id] = dr
+        elif dfp is not None:
+            fs = os.listdir(folder_path)
+            ids, dirs = [f.split(df_)[1:][0] for f in fs if f.startswith(dfp)], [folder_path]
+            for id, dr in zip(ids, dirs):
+                dic[id] = dr
+        elif dfs is not None:
+            fs = os.listdir(folder_path)
+            ids = [f.split(df_)[:-1][0] for f in fs if f.endswith(dfs)]
+            for id in ids:
+                dic[id] = folder_path
+        elif df_ is not None:
+            fs = os.listdir(folder_path)
+            ids = dNl.unique_list([f.split(df_)[0] for f in fs if df_ in f])
+            for id in ids:
+                dic[id] = folder_path
+        return dic
+    else:
+        if os.path.exists(f'{folder_path}/data'):
+            dd = LarvaDataset(dir=folder_path)
+            dic[dd.id] = dd
+        else:
+            for ddr in [x[0] for x in os.walk(folder_path)]:
+                if os.path.exists(f'{ddr}/data'):
+                    dd = LarvaDataset(dir=ddr)
+                    dic[dd.id] = dd
+        return dic
+
+
+def detect_dataset_in_subdirs(datagroup_id, folder_path, last_dir, full_ID=False):
+    fn = last_dir
+    ids, dirs = [], []
+    if os.path.isdir(folder_path):
+        fs = os.listdir(folder_path)
+        for f in fs:
+            dic = detect_dataset(datagroup_id, f'{folder_path}/{f}', full_ID=full_ID, raw=True)
+            for id, dr in dic.items():
+                if full_ID:
+                    ids += [f'{fn}/{id0}' for id0 in id]
+                else:
+                    ids.append(id)
+                dirs.append(dr)
+    return ids, dirs
+
+
+def split_dataset(step,end, food, larva_groups,dir, **kwargs):
+    ds = []
+    for gID, gConf in larva_groups.items():
+        d = LarvaDataset(f'{dir}/{gID}', id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
+        d.set_data(step=step.loc[(slice(None), gConf.ids), :], end=end.loc[gConf.ids], food=food)
+        ds.append(d)
+    return ds

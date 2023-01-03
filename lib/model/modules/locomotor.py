@@ -2,7 +2,6 @@ import numpy as np
 
 from lib.model.body.controller import PhysicsController
 from lib import reg
-from lib.aux.ang_aux import restore_bend_2seg
 
 class Locomotor:
     def __init__(self, dt=0.1):
@@ -58,6 +57,16 @@ class OfflineLocomotor(Locomotor):
 
 
         self.last_dist = self.lin_vel * self.dt
+
+        def restore_bend_2seg(bend, d, l, correction_coef=1.0):
+            k0 = 2 * d * correction_coef / l
+            if 0 <= k0 < 1:
+                return bend * (1 - k0)
+            elif 1 <= k0:
+                return 0
+            elif k0 < 0:
+                return bend
+
         self.bend = restore_bend_2seg(self.bend, self.last_dist, length,
                                       correction_coef=self.controller.bend_correction_coef)
         self.bend_body()

@@ -151,11 +151,16 @@ def comp_orientation_1point(s, e, c):
 
 
 def unwrap_orientations(s, segs):
+    def unwrap_deg(ts):
+        b = np.copy(ts)
+        b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
+        return b
+
     pars = list(set([p for p in [aux.nam.orient('front'), aux.nam.orient('rear')] + aux.nam.orient(segs) if p in s.columns.values]))
     for p in pars:
         for id in s.index.unique('AgentID').values:
             ts = s.loc[(slice(None), id), p].values
-            s.loc[(slice(None), id), aux.nam.unwrap(p)] = aux.ang.unwrap_deg(ts)
+            s.loc[(slice(None), id), aux.nam.unwrap(p)] = unwrap_deg(ts)
     print('All orients unwrapped')
 
 

@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from lib.model.body.body import LarvaBody
-from lib.aux import dictsNlists as dNl, ang_aux, sim_aux, shapely_aux
+from lib.aux import dictsNlists as dNl, ang, sim_aux, shapely_aux
 
 
 class PhysicsController:
@@ -173,7 +173,10 @@ class BodySim(BodyManager, PhysicsController):
             self.negative_speed_errors += 1
             self.head.set_lin_vel(0)
         if not self.model.Box2D:
-            self.model.space.move_agent(self, self.pos)
+            try:
+                self.model.space.move_agent(self, self.pos)
+            except:
+                self.model.space.move_to(self, np.array(self.pos))
         self.update_larva()
         for o in self.carried_objects:
             o.pos = self.pos

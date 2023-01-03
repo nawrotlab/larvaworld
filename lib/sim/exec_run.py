@@ -1,13 +1,12 @@
 import subprocess
-import sys
 import argparse
 
 from lib import reg
-from lib.stor.larva_dataset import LarvaDataset
-from lib.sim.batch.functions import retrieve_results
+from lib.process.larva_dataset import LarvaDataset
+from lib.sim.batch_aux import retrieve_results
 import lib.aux.dictsNlists as dNl
-from lib.sim.single.single_run import SingleRun
-from lib.sim.batch.batch import BatchRun
+from lib.sim.single_run import SingleRun
+from lib.sim.batch import BatchRun
 
 
 class Exec:

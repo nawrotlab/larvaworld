@@ -8,7 +8,7 @@ from shapely.ops import cascaded_union
 # from dataclasses import dataclass
 
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
-from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang_aux
+from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang
 from lib import reg
 
 
@@ -234,9 +234,9 @@ class LarvaBody(LarvaShape):
                                                  rotation_ps, joint_types)
         else:
             self.segs = self.generate_segs(self.initial_orientation, self.seg_positions, self.seg_lengths, rotation_ps)
-            from lib.model.agents._agent import LarvaworldAgent
-            if isinstance(self, LarvaworldAgent):
-                self.model.space.place_agent(self, self.initial_pos)
+            # from lib.model.agents._agent import LarvaworldAgent
+            # if isinstance(self, LarvaworldAgent):
+            #     self.model.space.place_agent(self, self.initial_pos)
 
         self.contour = self.set_contour(self.segs)
 

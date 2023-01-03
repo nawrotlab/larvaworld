@@ -1,16 +1,20 @@
 import math
 import os
 import sys
+import warnings
 
 import numpy as np
 
+import lib.aux
+import lib.reg
+import lib.registry
 from lib.aux.sim_aux import get_source_xy
 from lib.reg.base import BaseRun
 from lib import reg
 from lib.screen.rendering import  Viewer
 from lib.aux.colsNstr import Color
 from lib.screen.screen_aux import get_arena_bounds
-from lib.sim.ga.ga_engine import GAbuilder
+from lib.sim.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil
 from lib.model.envs.base_world import BaseWorld
 
@@ -254,3 +258,39 @@ class GAlauncher(BaseGAlauncher):
         if self.viewer.speed > self.SCENE_MIN_SPEED:
             self.viewer.speed /= self.SCENE_SPEED_CHANGE_COEFF
         print('viewer.speed:', self.viewer.speed)
+
+
+def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
+                 offline=False,show_screen=False,exclusion_mode=False,experiment='exploration',
+                 sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=30, Nelits=6, Ngenerations=20,
+                 **kwargs):
+
+    warnings.filterwarnings('ignore')
+    if mID1 is None:
+        mID1 = mID0
+
+    if sim_ID is None:
+        sim_ID = f'{experiment}_{lib.reg.next_idx(id=experiment, conftype="Ga")}'
+
+    kws = {
+        'sim_params': reg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt,
+                                   path = f'ga_runs/{experiment}'),
+        'show_screen': show_screen,
+        'offline': offline,
+        'save_to': save_to,
+        'experiment': experiment,
+        'env_params': 'arena_200mm',
+        'ga_select_kws': reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
+        'ga_build_kws': reg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,exclusion_mode=exclusion_mode,
+                                      bestConfID=mID1, fitness_target_refID=refID)
+    }
+
+    conf = reg.get_null('GAconf', **kws)
+    conf.env_params = reg.expandConf(id=conf.env_params, conftype='Env')
+
+    conf.ga_build_kws.fit_dict = fit_dict
+
+    GA = GAlauncher(**conf)
+    best_genome = GA.run()
+    entry = {mID1: best_genome.mConf}
+    return entry

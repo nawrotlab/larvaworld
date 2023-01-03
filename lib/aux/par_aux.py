@@ -1,16 +1,5 @@
 from typing import Tuple, List
 
-import numpy as np
-
-
-
-
-def base(method, input, **kwargs):
-    if type(input) == str:
-        return method(input, **kwargs)
-    elif type(input) == list:
-        return [method(i, **kwargs) for i in input]
-
 
 def bar(p):
     return rf'$\bar{{{p.replace("$", "")}}}$'
@@ -34,13 +23,13 @@ def sup(p, q):
 def subsup(p, q, z):
     return rf'${{{p.replace("$", "")}}}_{{{q}}}^{{{z}}}$'
 
-
-def hat(p):
-    return f'$\hat{{{p.replace("$", "")}}}$'
-
-
-def ast(p):
-    return f'${p.replace("$", "")}^{{*}}$'
+#
+# def hat(p):
+#     return f'$\hat{{{p.replace("$", "")}}}$'
+#
+#
+# def ast(p):
+#     return f'${p.replace("$", "")}^{{*}}$'
 
 
 def th(p):
@@ -84,60 +73,40 @@ def circledast(p):
     return f'${p.replace("$", "")}^{{\circledast}}$'
 
 
-def odot(p):
-    return f'${p.replace("$", "")}^{{\odot}}$'
-    # return fr'$\odot{{{p.replace("$", "")}}}$'
+# def odot(p):
+#     return f'${p.replace("$", "")}^{{\odot}}$'
 
 
-def paren(p):
-    return fr'$({{{p.replace("$", "")}}})$'
+# def paren(p):
+#     return fr'$({{{p.replace("$", "")}}})$'
 
 
-def brack(p):
-    return fr'$[{{{p.replace("$", "")}}}]$'
+# def brack(p):
+#     return fr'$[{{{p.replace("$", "")}}}]$'
 
 
 def ddot(p):
     return fr'$\ddot{{{p.replace("$", "")}}}$'
 
 
-def dot_th(p):
-    return fr'$\dot{{\theta}}_{{{p.replace("$", "")}}}$'
+# def dot_th(p):
+#     return fr'$\dot{{\theta}}_{{{p.replace("$", "")}}}$'
 
 
-def ddot_th(p):
-    return fr'$\ddot{{\theta}}_{{{p.replace("$", "")}}}$'
+# def ddot_th(p):
+#     return fr'$\ddot{{\theta}}_{{{p.replace("$", "")}}}$'
 
 
-def dot_hat_th(p):
-    return fr'$\dot{{\hat{{\theta}}}}_{{{p}}}$'
+# def dot_hat_th(p):
+#     return fr'$\dot{{\hat{{\theta}}}}_{{{p}}}$'
+#
+#
+# def ddot_hat_th(p):
+#     return fr'$\ddot{{\hat{{\theta}}}}_{{{p}}}$'
 
 
-def ddot_hat_th(p):
-    return fr'$\ddot{{\hat{{\theta}}}}_{{{p}}}$'
-
-
-def lin(p):
-    return fr'${{{p.replace("$", "")}}}_{{l}}$'
-
-def dtype_name(v) :
-    def typing_arg(v):
-        return v.__args__[0]
-    if v is None :
-        n= ' '
-    else :
-        try :
-            n= v.__name__
-        except :
-            try :
-                n= f'{v._name}[{typing_arg(v).__name__}]'
-            except :
-                try:
-                    v0=typing_arg(v)
-                    n = f'{v._name}[{v0._name}[{typing_arg(v0).__name__}]]'
-                except:
-                    n = v
-    return n
+# def lin(p):
+#     return fr'${{{p.replace("$", "")}}}_{{l}}$'
 
 
 
@@ -151,55 +120,11 @@ def base_dtype(t):
     return base_t
 
 
-def define_dv(dv, cur_dtype):
-    if dv is None:
-        if cur_dtype == int:
-            dv = 1
-        elif cur_dtype == float:
-            dv = 0.1
-    return dv
 
 
-def define_vs(vs, dv, lim, cur_dtype):
-    if vs is not None:
-        return vs
-    if dv is not None and lim is not None:
-        ar = np.arange(lim[0], lim[1] + dv, dv)
-        if cur_dtype == float:
-            Ndec = len(str(format(dv, 'f')).split('.')[1])
-            ar = np.round(ar, Ndec)
-        vs = ar.astype(cur_dtype)
-
-        vs = vs.tolist()
-    return vs
 
 
-def define_lim(lim, vs, u, wrap_mode, cur_dtype):
-    if lim is not None:
-        return lim
-    if wrap_mode is not None and u is not None:
-        from lib.reg import units as ureg
-        if u == ureg.deg:
-            if wrap_mode == 'positive':
-                lim = (0.0, 360.0)
-            elif wrap_mode == 'zero':
-                lim = (-180.0, 180.0)
-        elif u == ureg.rad:
-            if wrap_mode == 'positive':
-                lim = (0.0, 2 * np.pi)
-            elif wrap_mode == 'zero':
-                lim = (-np.pi, np.pi)
-    else:
-        if cur_dtype in [float, int]:
-            if vs is not None:
-                lim = (np.min(vs), np.max(vs))
-    return lim
 
-def define_range(dtype, lim, vs, dv, u, wrap_mode):
-    cur_dtype = base_dtype(dtype)
-    dv = define_dv(dv, cur_dtype)
-    lim = define_lim(lim, vs, u, wrap_mode, cur_dtype)
-    vs = define_vs(vs, dv, lim, cur_dtype)
-    return dv, lim, vs
+
 
 

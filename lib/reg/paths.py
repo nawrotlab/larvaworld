@@ -184,7 +184,9 @@ def build_datapath_dict(kd):
 
 
 def build_datafunc_dict(kd):
-    from lib.aux.stor_aux import read,loadSoloDics,storeSoloDics,storeH5
+    from lib.aux.stor_aux import read, storeH5
+    from lib.aux.dictsNlists import storeSoloDics
+    from lib.aux.dictsNlists import loadSoloDics
     func_dic0 = {'h5':
                      {'load': read, 'save': storeH5},
                  'dic': {'load': dNl.load_dict, 'save': dNl.save_dict},

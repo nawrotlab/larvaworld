@@ -2,7 +2,6 @@ import random
 import numpy as np
 import os
 from typing import Any
-#from shapely.geometry import Polygon
 
 
 
@@ -13,23 +12,21 @@ from shapely.geometry import Polygon
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import NamedRandomActivation
-# import lib.aux.sim_aux
-# import lib.aux.xy_aux
+
 
 
 class BaseWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
         """Create a new model object_class and instantiate its RNG automatically."""
         cls._seed = kwargs.get("seed", None)
-        # print(cls._seed)
-        # raise
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 
     def __init__(self, env_params,  id='unnamed', dt=0.1, save_to='.',trials={},Nsteps=None,
                  Box2D=False, experiment=None, larva_collisions=True, dur=None):
 
-
+        self._id_counter=-1
+        self.p=env_params
 
         self.experiment = experiment
         self.Box2D = Box2D
@@ -69,7 +66,11 @@ class BaseWorld:
         else:
             self.windscape = None
         if 'thermoscape' in self.env_pars.keys() and self.env_pars.thermoscape not in [None,{}]:
-            self.Ntemps, self.thermo_layers = self._create_thermo_layers(self.env_pars.thermoscape)
+            # self.Ntemps, self.thermoscape = self._create_thermo_layers(self.env_pars.thermoscape)
+            from lib.model.envs._space import ThermoScape
+            self.thermoscape = ThermoScape(**self.env_pars.thermoscape)
+        else:
+            self.thermoscape = None
 
 
 
@@ -84,11 +85,10 @@ class BaseWorld:
         self._place_food(self.env_pars.food_params)
         self._create_odor_layers(self.get_food(), self.env_pars.odorscape)
 
-    def future(self):
-        from lib.model.envs.obstacle import Arena
-        from lib.model.envs._space import Space
-        self.arena=Arena(**self.env_pars.arena)
-        self.space = Space(Box2D=self.Box2D, arena=self.arena)
+    def _new_id(self):
+        """ Returns a new unique object id (int). """
+        self._id_counter += 1
+        return self._id_counter
 
     def create_arena(self, arena_dims, arena_shape):
         self.arena_dims = X, Y = np.array(arena_dims)
@@ -132,73 +132,56 @@ class BaseWorld:
         return space
 
     def add_border(self, b):
-        b.border_bodies=self.Box2D_border_bodies(b.border_xy)
+        if self.Box2D:
+            from Box2D import b2EdgeShape
+            bs = []
+            for xy in b.border_xy:
+                _body = self.space.CreateStaticBody(position=(.0, .0))
+                _body.CreateFixture(shape=b2EdgeShape(vertices=xy.tolist()))
+                bs.append(_body)
+            b.border_bodies = bs
+        else :
+            b.border_bodies = []
+
         self.borders.append(b)
         self.border_lines += b.border_lines
         self.border_walls += b.border_walls
 
     def create_borders(self, border_list=None):
-        if border_list is not None and len(border_list)>0:
-            for id, pars in self.env_pars.border_list.items():
-                from lib.model.envs.obstacle import Border
-                b = Border(model=self, unique_id=id,scaling_factor=self.scaling_factor, **pars)
-                self.add_border(b)
-        pass
+        for id, pars in self.env_pars.border_list.items():
+            from lib.model.envs.obstacle import Border
+            b = Border(unique_id=id, **pars)
+            self.add_border(b)
 
 
-    def Box2D_border_bodies(self, border_xy):
-        from Box2D import b2EdgeShape
-        if self.Box2D:
-            bs = []
-            for xy in border_xy:
-                b = self.space.CreateStaticBody(position=(.0, .0))
-                b.CreateFixture(shape=b2EdgeShape(vertices=xy.tolist()))
-                bs.append(b)
-            return bs
-        else:
-            return []
 
-    # @todo use _create_thermo_layers
-    def _create_thermo_layers(self, pars):
-        from lib.model.envs._space import ThermoScape
-        # print(pars['thermo_sources'])
-        sources = pars['thermo_sources']  # dictionary
-
-        N = 1;
-        id = 'temp'
-        cols = cNs.N_colors(N, as_rgb=True)
-        layers = {}
-        plate_temp = pars['plate_temp']  # int/float
-        source_temp_diff = pars['thermo_source_dTemps']  # dict
-        kwargs = {
-            'model': self,
-            'unique_id': id,
-            'default_color': 'green',
-            'space_range': self.space_edges_for_screen,
-        }
-        kwargs = {}
-        tlayers = ThermoScape(pTemp=plate_temp, spread=None, origins=sources, tempDiff=source_temp_diff, **kwargs)
-        tlayers.generate_thermoscape()
-        return N, tlayers
 
     def _place_food(self, food_pars):
-        if food_pars is not None:
-            if food_pars.food_grid is not None :
-                from lib.model.envs._space import FoodGrid
-                self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
-            for gID, gConf in food_pars.source_groups.items():
-                ps = xy_aux.generate_xy_distro(**gConf.distribution)
+        if food_pars.food_grid is not None :
+            from lib.model.envs._space import FoodGrid
+            self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
+        for gID, gConf in food_pars.source_groups.items():
+            ps = xy_aux.generate_xy_distro(**gConf.distribution)
 
 
-                for i, p in enumerate(ps):
-                    self.add_food(id=f'{gID}_{i}', pos=p, group=gID, **gConf)
+            for i, p in enumerate(ps):
+                self.add_food(id=f'{gID}_{i}', pos=p, group=gID, **gConf)
 
-            for id, f_pars in food_pars.source_units.items():
-                self.add_food(id=id, **f_pars)
+        for id, f_pars in food_pars.source_units.items():
+            self.add_food(id=id, **f_pars)
 
     def add_food(self, pos, id=None, **food_pars):
         from lib.model.agents._source import Food
         f = Food(unique_id=self.next_id(type='Food') if id is None else id, pos=pos, model=self, **food_pars)
+        if self.Box2D:
+            from Box2D import b2World, b2ChainShape, b2EdgeShape
+            f._body = self.space.CreateStaticBody(position=pos)
+            shape = sim_aux.circle_to_polygon(60, f.radius)
+            f._body.CreateFixture(shape=b2ChainShape(vertices=shape.tolist()))
+            f._body.fixtures[0].filterData.groupIndex = -1
+        else:
+
+            self.space.place_agent(f, pos)
         self.active_food_schedule.add(f)
         self.all_food_schedule.add(f)
         return f
@@ -256,9 +239,8 @@ class BaseWorld:
     def _create_odor_layers(self, sources, pars=None):
         if pars is None :
             return
-        Xdim, Ydim = self.arena_dims
-        s = self.scaling_factor
-        dt = self.dt
+        # Xdim, Ydim = self.arena_dims
+
         from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
         # sources = self.get_food() + self.get_flies()
         ids = dNl.unique_list([s.odor_id for s in sources if s.odor_id is not None])
@@ -277,18 +259,16 @@ class BaseWorld:
                 'unique_id': id,
                 'sources': od_sources,
                 'default_color': c0,
-                'space_range': np.array([-Xdim * s / 2, Xdim * s / 2, -Ydim * s / 2, Ydim * s / 2]),
+                # 'space_range': np.array([-Xdim * s / 2, Xdim * s / 2, -Ydim * s / 2, Ydim * s / 2]),
             }
             if pars.odorscape == 'Diffusion':
-                self.odor_layers[id] = DiffusionValueLayer(dt=dt, scaling_factor=s,
-                                                 grid_dims=pars['grid_dims'],
+                self.odor_layers[id] = DiffusionValueLayer(grid_dims=pars['grid_dims'],
                                                  evap_const=pars['evap_const'],
                                                  gaussian_sigma=pars['gaussian_sigma'],
                                                  **kwargs)
             elif pars.odorscape == 'Gaussian':
                 self.odor_layers[id] = GaussianValueLayer(**kwargs)
-        # self.refresh_odor_dicts(ids)
-        # return layers
+
 
     @property
     def configuration_text(self):

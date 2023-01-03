@@ -64,7 +64,7 @@ class Brain:
         ad = a.model.arena_dims
         pos_adj = [(pos[0] + (ad[0] * 0.5)) / ad[0], (pos[1] + (ad[1] * 0.5)) / ad[1]]
         try:
-            cons = a.model.thermo_layers.get_thermo_value(pos_adj)
+            cons = a.model.thermoscape.get_thermo_value(pos_adj)
         except AttributeError:
             return {'cool': 0, 'warm': 0}
         return cons

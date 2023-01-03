@@ -1,7 +1,7 @@
 import numpy as np
 from Box2D import b2EdgeShape
 
-from lib.aux import sim_aux
+
 from mesa.space import ContinuousSpace
 from scipy.ndimage.filters import gaussian_filter
 from shapely.geometry import LineString, Point, Polygon
@@ -10,7 +10,7 @@ from lib.screen.rendering import InputBox
 from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.model.DEB.substrate import Substrate
 from lib.aux.shapely_aux import line_through_point
-
+from lib.aux import sim_aux
 
 
 class Space2(ContinuousSpace):
@@ -401,7 +401,7 @@ class WindScape:
         if self.obstructed(agent.pos):
             return 0
         else:
-            from lib.aux.ang_aux import angle_dif
+            from lib.aux.ang import angle_dif
             o = np.rad2deg(agent.head.get_orientation())
             return np.abs(angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
 
@@ -422,7 +422,7 @@ class WindScape:
         self.draw_phi += self.wind_speed
 
     def generate_scapelines(self, D, N, A):
-        from lib.aux.ang_aux import rotate_around_center_multi
+        from lib.aux.ang import rotate_around_center_multi
         ds = self.max_dim / N * np.sqrt(2)
         p0s = rotate_around_center_multi([(-D, (i - N / 2) * ds) for i in range(N)], -A)
         p1s = rotate_around_center_multi([(D, (i - N / 2) * ds) for i in range(N)], -A)
@@ -454,7 +454,7 @@ class WindScape:
                 self.wind_speed = args['wind_speed']
 
 
-class ThermoScape(ValueGrid):
+class ThermoScape:
     def __init__(self, pTemp, spread, origins=[], tempDiff=[], default_color='green', visible=False):
         # print("pTemp")
         self.plate_temp = pTemp

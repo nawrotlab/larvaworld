@@ -1,13 +1,11 @@
 import shutil
 
-import numpy as np
-import pandas as pd
-
 import lib.aux.data_aux
+import lib.reg
+import lib.registry
 from lib import reg
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
-
+from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 
 class Essay:
@@ -29,7 +27,7 @@ class Essay:
         self.enrichment = enrichment
         self.collections = collections
         if essay_id is None:
-            essay_id=f'{type}_{lib.aux.data_aux.next_idx(id=type, conftype="Essay")}'
+            essay_id=f'{type}_{lib.reg.next_idx(id=type, conftype="Essay")}'
         self.essay_id = essay_id
         self.path = f'essays/{type}/{self.essay_id}/data'
         path = reg.Path.ESSAY
@@ -47,7 +45,7 @@ class Essay:
                              collections=self.collections, **kwargs)
 
     def run(self):
-        from lib.sim.single.single_run import SingleRun
+        from lib.sim.single_run import SingleRun
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
             print(f'Running {len(cs)} versions of experiment {exp}')

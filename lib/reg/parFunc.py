@@ -128,7 +128,7 @@ def tr_func(pc):
 
 @funcs.param("unwrap")
 def unwrap_func(par, in_deg):
-    from lib.aux.ang_aux import unwrap_rad
+    from lib.aux.ang import unwrap_rad
 
     def func(d):
         s, c = d.step_data, d.config

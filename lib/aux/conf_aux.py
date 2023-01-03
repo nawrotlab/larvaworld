@@ -1,4 +1,6 @@
 import lib.aux.data_aux
+import lib.reg
+import lib.registry
 from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib import reg
 
@@ -14,7 +16,7 @@ def adjust_sim(exp, conf_type, sim):
                 sim.duration = 3.0
 
         if sim.sim_ID is None:
-            sim.sim_ID = f'{exp}_{lib.aux.data_aux.next_idx(id=exp, conftype=conf_type)}'
+            sim.sim_ID = f'{exp}_{lib.reg.next_idx(id=exp, conftype=conf_type)}'
         if sim.path is None:
             if conf_type == 'Exp':
                 sim.path = f'single_runs/{exp}'
@@ -32,7 +34,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
         exp_conf = reg.loadConf(conftype=conf_type, id=exp)
         batch_id = d['batch_setup']['batch_id']
         if batch_id is None:
-            idx = lib.aux.data_aux.next_idx(id=exp, conftype='Batch')
+            idx = lib.reg.next_idx(id=exp, conftype='Batch')
             batch_id = f'{exp}_{idx}'
 
         exp_conf.exp = update_exp_conf(exp_conf.exp, d, N, models)

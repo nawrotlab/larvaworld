@@ -5,7 +5,7 @@ import numpy as np
 
 
 from lib import reg
-from lib.aux import naming as nam, dictsNlists as dNl, sim_aux, dir_aux
+from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
 
 from lib.model.envs.world_sim import WorldSim
 
@@ -64,7 +64,8 @@ class SingleRun:
 
 
     def store(self):
-        from lib.aux.stor_aux import storeSoloDics,storeH5
+        from lib.aux.stor_aux import storeH5
+        from lib.aux.dictsNlists import storeSoloDics
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():

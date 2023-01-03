@@ -154,7 +154,7 @@ def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
     from lib.model.modules.locomotor import DefaultLocomotor
     from lib.model.body.controller import PhysicsController
-    from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
+    from lib.aux.ang import rear_orientation_change, wrap_angle_to_0
     if fo0 is None :
         fo0=0.0
     if p0 is None :
@@ -264,7 +264,7 @@ def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color=
         'mID': mID,
     }
 
-    from lib.stor.larva_dataset import LarvaDataset
+    from lib.process.larva_dataset import LarvaDataset
     d = LarvaDataset(**c_kws, load_data=False)
     s, e = sim_multi_agents(Nticks, Nids, ms, dataset_id, dt=dt, ids=ids, p0s=p0s, fo0s=fo0s)
 

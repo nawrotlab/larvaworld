@@ -1,9 +1,6 @@
-import warnings
-
 import numpy as np
 import pandas as pd
 
-import lib.aux.data_aux
 from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
@@ -68,7 +65,7 @@ class Calibration:
         self.KS_dic = None
 
     def sim_turner(self, N=2000):
-        from lib.aux.ang_aux import wrap_angle_to_0
+        from lib.aux.ang import wrap_angle_to_0
         T = self.Tfunc(**self.mconfs.turner, dt=self.dt)
         PH = PhysicsController(**self.mconfs.physics)
         simFOV = np.zeros(N) * np.nan
@@ -156,93 +153,3 @@ class Calibration:
         return best, Ks_dic
 
 
-#
-def epar(e, k=None, par=None, average=True):
-    if par is None:
-        par = reg.par.PI[k].d
-    vs = e[par]
-    if average:
-        return np.round(vs.median(), 2)
-    else:
-        return vs
-
-
-def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
-                 offline=False,show_screen=False,exclusion_mode=False,experiment='exploration',
-                 sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=30, Nelits=6, Ngenerations=20,
-                 **kwargs):
-
-    warnings.filterwarnings('ignore')
-    if mID1 is None:
-        mID1 = mID0
-
-    if sim_ID is None:
-        sim_ID = f'{experiment}_{lib.aux.data_aux.next_idx(id=experiment, conftype="Ga")}'
-
-    kws = {
-        'sim_params': reg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt,
-                                   path = f'ga_runs/{experiment}'),
-        'show_screen': show_screen,
-        'offline': offline,
-        'save_to': save_to,
-        'experiment': experiment,
-        'env_params': 'arena_200mm',
-        'ga_select_kws': reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
-        'ga_build_kws': reg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,exclusion_mode=exclusion_mode,
-                                      bestConfID=mID1, fitness_target_refID=refID)
-    }
-
-    conf = reg.get_null('GAconf', **kws)
-    conf.env_params = reg.expandConf(id=conf.env_params, conftype='Env')
-
-    conf.ga_build_kws.fit_dict = fit_dict
-
-    from lib.sim.ga.ga_launcher import GAlauncher
-
-    GA = GAlauncher(**conf)
-    best_genome = GA.run()
-    entry = {mID1: best_genome.mConf}
-    return entry
-
-#
-# if __name__ == '__main__':
-#     from lib.aux import dictsNlists as dNl
-#     import pandas as pd
-#
-#     # print(kkk)
-#
-#     # raise
-#     # print(mmm)
-#     # print('GAU_CON_SQ_DEF' in mmm)
-#
-#
-#     # raise
-#
-#     refID = 'None.150controls'
-#     # mID0 = 'GAU_SIN_SQ_DEF'
-#     mID0 = 'GAU_SIN_SQ_DEF_fit'
-#     mID1 = 'GAU_SIN_SQ_DEF_exc_mode'
-#     # space_mkeys = ['crawler', 'turner']
-#     space_mkeys = ['crawler', 'turner', 'interference']
-#
-#     from lib.sim.ga.functions import GA_optimization
-#
-#     eval_metrics = {
-#         'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
-#         'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-#                                  'dsp_0_40_max', 'dsp_0_60_max', 'str_N'],
-#         'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr'],
-#         # 'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-#         # 'epochs': ['run_t', 'pau_t'],
-#         # 'tortuosity': ['tor5', 'tor20']
-#     }
-#
-#     fit_dict=GA_optimization(fitness_target_refID=refID, fitness_target_kws={
-#         'eval_metrics':eval_metrics,
-#         'cycle_curves':['b', 'fov', 'foa'],
-#     })
-#
-#
-#
-#     entry = optimize_mID(mID0=mID0,mID1=mID1, refID=refID, space_mkeys=space_mkeys, init='model',show_screen=True,
-#                          sim_ID=mID1, Nagents=20, Nelits=0, Ngenerations=20, dur=0.6, fit_dict=fit_dict, exclusion_mode=False)

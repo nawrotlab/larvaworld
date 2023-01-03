@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 
 
-
+from lib.aux import dictsNlists as dNl
 
 def join(s, p, loc, c='_'):
     if loc == 'suf':
@@ -240,7 +240,7 @@ def epoch_ps(c):
 
 
 def epochs_ps(cs=['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']):
-    from lib.aux import dictsNlists as dNl
+
     cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']
     pars = dNl.flatten_list([epoch_ps(c) for c in cs])
     return pars
@@ -312,7 +312,6 @@ def retrieve_metrics(obj, c):
 
 
 def define_metrics(obj, N=None, Nc=None, p=None, use_component_vel=False):
-    from lib.aux import dictsNlists as dNl
     obj.points = midline(N, type='point')
     obj.Nangles = np.clip(N - 2, a_min=0, a_max=None)
     obj.angles = angles(obj.Nangles)
@@ -335,7 +334,6 @@ def define_metrics(obj, N=None, Nc=None, p=None, use_component_vel=False):
     return obj
 
 def h5_kdic(p, N, Nc):
-    from lib.aux import dictsNlists as dNl
     dic = dNl.NestDict({
         'contour': contour_xy(Nc, flat=True),
         'midline': midline_xy(N, flat=True),

@@ -536,7 +536,7 @@ class DrawEnvTab(DrawTab):
 
     def draw_larva(self, P0, color, orientation_range, **kwargs):
         from lib.aux.sim_aux import body
-        from lib.aux.ang_aux import rotate_multiple_points
+        from lib.aux.ang import rotate_multiple_points
         points = np.array([[0.9, 0.1], [0.05, 0.1]])
         xy0 = body(points) - np.array([0.5, 0.0])
         xy0 = rotate_multiple_points(xy0, random.uniform(*np.deg2rad(orientation_range)), origin=[0, 0])

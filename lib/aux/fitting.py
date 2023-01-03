@@ -4,6 +4,7 @@ from scipy.stats import levy, norm, rv_discrete, ks_2samp
 
 
 from lib import reg
+from lib import aux
 from lib.aux import dictsNlists as dNl
 
 
@@ -15,13 +16,12 @@ def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
 
 
 def get_powerlaw_alpha(dur, dur0=None, dur1=None, discrete=False):
-    from lib.aux.stdout import suppress_stdout_stderr
     from powerlaw import Fit
     if dur0 is None :
         dur0=np.min(dur)
     if dur1 is None :
         dur1=np.max(dur)
-    with suppress_stdout_stderr():
+    with aux.stdout.suppress_stdout_stderr():
 
         return Fit(dur, xmin=dur0, xmax=dur1, discrete=discrete).power_law.alpha
 
@@ -91,25 +91,6 @@ def logNpow_switch(x, xmax, u2, du2, c2cum, c2, discrete=False, fit_by='cdf'):
         return xmids[ii], overlaps[jj]
 
 
-
-
-
-
-
-
-
-# def fit_bouts(c, aux_dic):
-#
-#
-#
-#
-#
-#
-#     fitted_epochs,c.bout_distros = fit_epochs(aux_dic)
-#
-#
-#
-#     return fitted_epochs
 
 
 
@@ -327,6 +308,8 @@ def get_best_distro(bout, f, idx_Kmax=None):
     elif idx_Kmax == 6:
         distro = {'range': r,
                   'name': 'uniform'}
+    else:
+        raise ValueError
     return distro
 
 

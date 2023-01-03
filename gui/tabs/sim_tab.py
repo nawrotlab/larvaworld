@@ -2,12 +2,14 @@ import copy
 import PySimpleGUI as sg
 
 import lib.aux.data_aux
+import lib.reg
+import lib.registry
 from gui.tabs.tab import GuiTab
 from gui.aux import functions as gui_fun, elements as gui_el
 from lib import reg
 from gui.tabs.draw_env_tab import DrawEnvTab
 from gui.tabs.env_tab import EnvTab
-from lib.sim.exec.exec_run import Exec
+from lib.sim.exec_run import Exec
 
 
 
@@ -90,7 +92,7 @@ class SimTab(GuiTab):
         # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
-        sim.update({'sim_ID': f'{id}_{lib.aux.data_aux.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
+        sim.update({'sim_ID': f'{id}_{lib.reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
         c['trials'].update(w, reg.loadConf(id=conf['trials'], conftype='Trial'))
         self.draw_tab.set_env_db(env=reg.expandConf(id=conf['env_params'], conftype='Env'), lg=conf['larva_groups'])

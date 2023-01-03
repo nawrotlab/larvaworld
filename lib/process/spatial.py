@@ -494,7 +494,7 @@ def comp_source_metrics(s, e, c, **kwargs):
             l = e['length']
 
             def rowIndex(row):
-                return row.aux.name[1]
+                return row.name[1]
 
             def rowLength(row):
                 return l.loc[rowIndex(row)]

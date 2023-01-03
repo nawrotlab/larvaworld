@@ -1,7 +1,6 @@
 import random
 import functools
 import numpy as np
-import pandas as pd
 from matplotlib import cm, colors
 
 #
@@ -100,10 +99,6 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
     return res
 
 
-
-
-# for q in np.arange(0,1,0.1):
-#     print(q, col_range(q, low=(255, 0, 0), high=(0, 128, 0)))
 
 def get_class_by_name(name):
     components = name.split('.')

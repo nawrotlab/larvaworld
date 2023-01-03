@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from lib.aux import naming as nam, dictsNlists as dNl, dir_aux
+from lib.aux import naming as nam, dictsNlists as dNl
 from lib import reg
 
 from lib.plot.base import BasePlot, Plot, AutoPlot, AutoBasePlot
@@ -32,6 +32,20 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
               equal_aspect=True)
     return P.get()
 
+
+def get_traj(d, mode='default'):
+    if mode=='default':
+        return d.load_traj(mode)
+    elif mode == 'origin':
+        try:
+            ss=d.load_traj(mode)
+            return ss[['x', 'y']]
+        except:
+            s = d.load_step(h5_ks=['contour', 'midline'])
+            from lib.process.spatial import align_trajectories
+            ss=align_trajectories(s, c=d.config, store=True, replace=False, transposition='origin')
+            return ss[['x', 'y']]
+
 @reg.funcs.graph('trajectories')
 def traj_grouped(unit='mm', name=None, subfolder='trajectories',
                  range=None, mode='default', single_color=False, **kwargs):
@@ -41,7 +55,7 @@ def traj_grouped(unit='mm', name=None, subfolder='trajectories',
     P = AutoPlot(name=name, subfolder=subfolder,  # subplot_kw=dict(projection='polar'),
                  build_kws={'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'mode': 'both'}, **kwargs)
     for ii, (l, d) in enumerate(P.data_dict.items()):
-        xy = dir_aux.get_traj(d, mode)
+        xy = get_traj(d, mode)
         c = d.config
         if range is not None:
             t0, t1 = range

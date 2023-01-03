@@ -14,15 +14,7 @@ class Source(LarvaworldAgent):
         self.can_be_carried = can_be_carried
         self.can_be_displaced = can_be_displaced
         self.is_carried_by = None
-        shape = sim_aux.circle_to_polygon(60, self.radius)
 
-        if self.model.Box2D:
-            self._body: Box2D.b2Body = self.model.space.CreateStaticBody(position=self.pos)
-            self.Box2D_shape = b2ChainShape(vertices=shape.tolist())
-            self._body.CreateFixture(shape=self.Box2D_shape)
-            self._body.fixtures[0].filterData.groupIndex = -1
-        else:
-            self.model.space.place_agent(self, self.pos)
         # # put all agents into same group (negative so that no collisions are detected)
         # self._fixtures[0].filterData.groupIndex = -1
 

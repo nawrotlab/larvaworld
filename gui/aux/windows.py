@@ -238,7 +238,6 @@ def delete_conf_window(id, conftype, disp=None) :
 
 def add_ref_window():
     from gui.aux.elements import NamedList
-    from lib.stor.larva_dataset import LarvaDataset
     k = 'ID'
     temp = NamedList('Reference ID : ', key=k, choices=reg.storedConf('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
@@ -248,7 +247,8 @@ def add_ref_window():
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Load reference datasets', l).read(close=True)
     if e == 'Ok':
-        return {id: LarvaDataset(dir=reg.loadConf(id=id, conftype='Ref')['dir'], load_data=False) for id in v[k]}
+        return {id: reg.loadRef(id=id) for id in v[k]}
+        # return {id: LarvaDataset(dir=reg.loadConf(id=id, conftype='Ref')['dir'], load_data=False) for id in v[k]}
     elif e == 'Cancel':
         return None
 
@@ -332,7 +332,7 @@ def import_window(datagroup_id, raw_dic):
                     # 'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
-                from lib.stor.building import build_dataset
+                from lib.process.building import build_dataset
                 targets = [f.replace(raw_folder, proc_folder) for f in raw_dirs]
                 if not merge:
                     print(f'------ Building {N} discrete datasets ------')

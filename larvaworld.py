@@ -2,15 +2,11 @@ from argparse import ArgumentParser
 
 
 from lib import reg
-# from lib.registry import reg
-# reg.init()
-
+from lib.aux import dictsNlists as dNl
 from cli.cli_argparsers import run_template, get_parser
 
-dest='sim_mode'
-
 p=ArgumentParser()
-subps = p.add_subparsers(dest=dest, help='The simulation mode')
+subps = p.add_subparsers(dest='sim_mode', help='The simulation mode')
 
 MPs=dict()
 ps=dict()
@@ -20,15 +16,10 @@ for mode in ['Exp','Batch', 'Ga', 'Eval', 'Rep'] :
 
 
 if __name__ == "__main__":
-    from lib.aux import dictsNlists as dNl
     args = p.parse_args()
-
-
     sim_mode = args.sim_mode
     d = MPs[sim_mode].get(args)
-
     kwargs = dNl.NestDict(vars(args))
-    kwargs.pop(dest)
-
+    kwargs.pop('sim_mode')
     run_template(sim_mode, kwargs, d)
 

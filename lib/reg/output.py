@@ -65,3 +65,41 @@ def set_output(collections, Npoints=3, Ncontour=0):
               'end': dNl.unique_list(end),
               'tables': tables,
               })
+
+def output_reporters(ks, D, agents):
+    from lib.aux import dictsNlists as dNl, colsNstr as cNs
+    # D=reg.par.dict
+    # ks = [k for k in ks if k in D.keys()]
+    dic = {}
+    # invalid_keys=dNl.NestDict({'not_in_registry' : [k for k in ks if k not in D.keys()], 'not_in_agent':{}})
+    for k in ks:
+        if k in D.keys() :
+            d, p = D[k].d, D[k].codename
+        try:
+            temp = [cNs.rgetattr(l, p) for l in agents]
+            dic.update({d: p})
+        except:
+        #     invalid_keys.not_in_agent[d]=p
+            pass
+    return dic
+
+def get_reporters(agents, **kwargs):
+    from lib import reg
+    ks = set_output(**kwargs)
+    output = {
+        "step": output_reporters(ks=ks['step'], D=reg.par.dict, agents=agents),
+        "end": output_reporters(ks=ks['end'], D=reg.par.dict, agents=agents),
+    }
+    return output
+
+
+# if __name__ == "__main__":
+#
+#
+#     ks=set_output(collections=['pose', 'olfactor'], Npoints=3, Ncontour=0)
+#     output= {
+#         "step" : output_reporters(ks=ks['step'], D=reg.par.dict),
+#         "end" : output_reporters(ks=ks['end'], D=reg.par.dict),
+#              }
+#
+#     print(output)

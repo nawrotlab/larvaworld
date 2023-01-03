@@ -1,7 +1,7 @@
 from lib.registry import reg
 reg.init()
 
-from lib.sim.replay.replay import ReplayRun
+from lib.sim.replay import ReplayRun
 
 mode = 'dispersal'
 # refID = 'Rehydration/AttP2.Deprived'

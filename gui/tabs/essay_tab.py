@@ -1,6 +1,8 @@
 import os
 
 import lib.aux.data_aux
+import lib.reg
+import lib.registry
 from gui.tabs.tab import GuiTab
 from gui.aux import functions as gui_fun, elements as gui_el
 from lib import reg
@@ -36,7 +38,7 @@ class EssayTab(GuiTab):
         # from lib.registry.dtypes import null_dict
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
-        essay = reg.get_null('essay_params', essay_ID=f'{id}_{lib.aux.data_aux.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
+        essay = reg.get_null('essay_params', essay_ID=f'{id}_{lib.reg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
         c['essay_params'].update(w, essay)
         fdir = conf['exp_fig_folder']
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}

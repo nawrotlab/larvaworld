@@ -1,8 +1,60 @@
 import numpy as np
 from typing import TypedDict
 
-from lib.aux.par_aux import define_range
 from lib import reg
+from lib.aux.par_aux import base_dtype
+
+
+def define_dv(dv, cur_dtype):
+    if dv is None:
+        if cur_dtype == int:
+            dv = 1
+        elif cur_dtype == float:
+            dv = 0.1
+    return dv
+
+
+def define_vs(vs, dv, lim, cur_dtype):
+    if vs is not None:
+        return vs
+    if dv is not None and lim is not None:
+        ar = np.arange(lim[0], lim[1] + dv, dv)
+        if cur_dtype == float:
+            Ndec = len(str(format(dv, 'f')).split('.')[1])
+            ar = np.round(ar, Ndec)
+        vs = ar.astype(cur_dtype)
+
+        vs = vs.tolist()
+    return vs
+
+
+def define_lim(lim, vs, u, wrap_mode, cur_dtype):
+    if lim is not None:
+        return lim
+    if wrap_mode is not None and u is not None:
+        if u == reg.units.deg:
+            if wrap_mode == 'positive':
+                lim = (0.0, 360.0)
+            elif wrap_mode == 'zero':
+                lim = (-180.0, 180.0)
+        elif u == reg.units.rad:
+            if wrap_mode == 'positive':
+                lim = (0.0, 2 * np.pi)
+            elif wrap_mode == 'zero':
+                lim = (-np.pi, np.pi)
+    else:
+        if cur_dtype in [float, int]:
+            if vs is not None:
+                lim = (np.min(vs), np.max(vs))
+    return lim
+
+
+def define_range(dtype, lim, vs, dv, u, wrap_mode):
+    cur_dtype = base_dtype(dtype)
+    dv = define_dv(dv, cur_dtype)
+    lim = define_lim(lim, vs, u, wrap_mode, cur_dtype)
+    vs = define_vs(vs, dv, lim, cur_dtype)
+    return dv, lim, vs
 
 
 def par(name, dtype=float, v=None, vs=None, lim=None, dv=None, aux_vs=None, disp=None, Ndigits=None,

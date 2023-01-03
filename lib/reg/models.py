@@ -1,5 +1,4 @@
-from typing import List, Tuple
-import copy
+from typing import List
 from typing import Tuple
 import numpy as np
 import pandas as pd
@@ -1081,7 +1080,7 @@ class ModelRegistry:
 
         self.ct.saveConf(conf=m0, id=mID)
 
-        from lib.sim.eval.model_fit import optimize_mID
+        from lib.sim.ga_launcher import optimize_mID
         entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys, dt=c.dt, refID=refID,
                              sim_ID=mID, save_to=save_to, **kwargs)
         return entry

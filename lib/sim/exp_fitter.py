@@ -5,9 +5,9 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
+from lib.aux import dictsNlists as dNl, naming as nam
 from lib import reg
-from lib.stor.larva_dataset import LarvaDataset
+from lib.process.larva_dataset import LarvaDataset
 
 class ExpFitter:
 
@@ -219,7 +219,6 @@ class ExpFitter:
 if __name__ == '__main__':
     ref_dir = '/home/panos/nawrot_larvaworld/larvaworld/data/SchleyerGroup/processed/FRUvsQUI/FRU->PUR/AM/test_10l'
     d_dir = '/home/panos/nawrot_larvaworld/larvaworld/data/SimGroup/single_runs/imitation/test_10l_imitation_0'
-    from lib.stor.larva_dataset import LarvaDataset
 
     ref = LarvaDataset(ref_dir)
     c = ref.config

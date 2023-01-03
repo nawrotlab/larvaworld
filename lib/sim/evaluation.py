@@ -1,22 +1,22 @@
 import warnings
 
 
-from lib.reg.base import BaseRun
+
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
-import os
 
 import numpy as np
 import seaborn as sns
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 from lib import reg
 from lib.reg import base
 from lib.aux import dictsNlists as dNl, colsNstr as cNs, data_aux
-from lib.sim.eval.eval_aux import arrange_evaluation, torsNdsps, eval_fast, std_norm, minmax
+from lib.aux.eval_aux import arrange_evaluation, torsNdsps, eval_fast, GA_optimization
 from lib.aux.sample_aux import sim_models
 
 
@@ -194,9 +194,11 @@ class EvalRun(base.BaseRun):
             if mode == 'raw':
                 df = df
             elif mode == 'minmax':
-                df = minmax(df)
+                df = pd.DataFrame(MinMaxScaler().fit(df).transform(df), index=df.index, columns=df.columns)
+                # df = minmax(df)
             elif mode == 'std':
-                df = std_norm(df)
+                df = pd.DataFrame(StandardScaler().fit(df).transform(df), index=df.index, columns=df.columns)
+                # df = std_norm(df)
             dic[k] = df
         return dNl.NestDict(dic)
 
@@ -365,7 +367,7 @@ class EvalRun(base.BaseRun):
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir)
         else:
-            from lib.sim.single.single_run import SingleRun
+            from lib.sim.single_run import SingleRun
 
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = SingleRun(**self.exp_conf, progress_bar=self.progress_bar)
@@ -426,7 +428,6 @@ def adapt_6mIDs(refID, e=None, c=None):
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
-    from lib.sim.ga.functions import GA_optimization
     fit_kws = {
         'eval_metrics': {
             'angular kinematics': ['b', 'fov', 'foa'],
@@ -457,7 +458,6 @@ def adapt_3modules(refID, e=None, c=None):
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
-    from lib.sim.ga.functions import GA_optimization
     fit_kws = {
         'eval_metrics': {
             'angular kinematics': ['b', 'fov', 'foa'],

@@ -86,7 +86,7 @@ def Batch_dict():
 
 
 def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
-    from lib.sim.single.imitation import imitation_exp
+    from lib.sim.imitation import imitation_exp
     conf = batch(exp=None,
                  ss={'activation_noise': [[0.0, 2.0], 3], 'base_activation': [[15.0, 25.0], 3]},
                  o='tortuosity_20_mean', o_kws={'max_Nsims': 120, 'operations': {'mean': True}},
@@ -101,7 +101,7 @@ def fit_tortuosity_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 
 
 def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
-    from lib.sim.single.imitation import imitation_exp
+    from lib.sim.imitation import imitation_exp
     conf = batch(exp=None,
                  ss={
                      'turner_params.initial_amp': [[25.0, 50.0], 4],
@@ -121,7 +121,7 @@ def fit_global_batch(sample, model='explorer', exp='dish', idx=0, **kwargs):
 
 
 def run_fit_global_batch(sample, **kwargs):
-    from lib.sim.exec.exec_run import Exec
+    from lib.sim.exec_run import Exec
     from lib.sim.exp_fitter import ExpFitter
     conf = fit_global_batch(sample=sample, **kwargs)
     conf['proc_kws']['exp_fitter'] = ExpFitter(sample, valid_fields=['angular motion'])

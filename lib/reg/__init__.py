@@ -1,4 +1,4 @@
-
+import os
 
 VERBOSE =2
 
@@ -11,7 +11,7 @@ from lib.aux import dictsNlists as dNl
 from .paths import ROOT_DIR, Path, SampleDic, datapath, datafunc, conftree
 
 
-from .output import output_dict,set_output
+from .output import output_dict,set_output, get_reporters
 from .units import units
 from .facade import funcs
 from . import base
@@ -45,7 +45,7 @@ def lg(**kwargs):
 def loadRef(id, load=False, **kwargs):
     c = retrieveRef(id)
     if c is not None:
-        from lib.stor.larva_dataset import LarvaDataset
+        from lib.process.larva_dataset import LarvaDataset
         d = LarvaDataset(c.dir, load_data=False)
         if not load:
             vprint(f'Loaded stored reference configuration : {id}')
@@ -138,3 +138,18 @@ def expandConf(conftype, id=None):
 def storedConf(conftype):
     return conf.dict[conftype].ConfIDs
 
+
+def next_idx(id, conftype='Exp'):
+    f = Path.SimIdx
+    if not os.path.isfile(f):
+        d = dNl.NestDict({k: dNl.NestDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
+    else:
+        d = dNl.load_dict(f, use_pickle=False)
+
+    if not conftype in d.keys():
+        d[conftype] = {}
+    if not id in d[conftype].keys():
+        d[conftype][id] = 0
+    d[conftype][id] += 1
+    dNl.save_dict(d, f, use_pickle=False)
+    return d[conftype][id]

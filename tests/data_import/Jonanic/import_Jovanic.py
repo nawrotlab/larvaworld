@@ -1,5 +1,5 @@
 
-from lib.stor.building import import_datasets
+from lib.process.building import import_datasets
 
 
 ds = import_datasets(datagroup_id = 'Jovanic lab', parent_dir='SS888',source_ids=['AttP240', 'SS888Imp', 'SS888'], enrich=True, merged=False)

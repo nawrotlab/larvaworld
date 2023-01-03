@@ -9,36 +9,6 @@ def wrap_angle_to_0(a, in_deg=False):
         a = (a + lim) % (lim * 2) - lim
     return a
 
-def _restore_angle(a, d, l, n, num_segments, correction_coef):
-    k0 = (l * n / num_segments) / correction_coef
-    k1 = (l * (n + 1) / num_segments) / correction_coef
-    if d <= k0:
-        return a, 0
-    elif k0 < d < k1:
-        da = 1.0 * a * d / (l / num_segments)
-        return a - da, da
-    elif k1 <= d:
-        return 0, a
-
-
-def restore_bend(angles, d, l, num_segments, correction_coef=1.0):
-    new_angles = []
-    da = 0
-    for i, angle in enumerate(angles):
-        new_angle, k = _restore_angle(angle + da, d, l, i, num_segments, correction_coef=correction_coef)
-        da = k
-        new_angles.append(new_angle)
-    return new_angles
-
-
-def restore_bend_2seg(bend, d, l, correction_coef=1.0):
-    k0 = 2*d*correction_coef/ l
-    if 0 <= k0 < 1:
-        return bend * (1 - k0)
-    elif 1 <= k0:
-        return 0
-    elif k0 < 0:
-        return bend
 
 def rear_orientation_change(bend, d, l, correction_coef=1.0):
     k0 = 2*d*correction_coef/ l
@@ -127,11 +97,6 @@ def rotate_multiple_points(points, radians, origin=None):
     qx, qy = rotate_around_point(points.T, radians, origin=origin)
     return np.vstack((qx, qy)).T
 
-
-def unwrap_deg(ts):
-    b = np.copy(ts)
-    b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
-    return b
 
 def unwrap_rad(s,c, par, in_deg=False) :
     import lib.aux.naming as nam

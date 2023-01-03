@@ -1,20 +1,14 @@
 import warnings
-import numpy as np
-import pandas as pd
 import progressbar
 import os
 
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
-from lib import reg
-import lib.aux.sample_aux
 from lib.screen.drawing import ScreenManager
-import lib.screen.rendering as ren
 
 from lib.model.envs.base_world import BaseWorld
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
-from lib.sim.single.conditions import get_exp_condition
+from lib.sim.conditions import get_exp_condition
 
 class World(BaseWorld):
 

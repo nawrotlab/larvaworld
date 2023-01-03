@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from lib.aux.ang_aux import rear_orientation_change, wrap_angle_to_0
+from lib.aux.ang import rear_orientation_change, wrap_angle_to_0
 from lib.model.body.controller import PhysicsController
 from lib.model.modules.brain import DefaultBrain
 

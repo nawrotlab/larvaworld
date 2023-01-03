@@ -5,11 +5,13 @@ import PySimpleGUI as sg
 import h5py
 
 import lib.aux.data_aux
+import lib.reg
+import lib.registry
 from gui.tabs.tab import GuiTab
 from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib.plot.table import mpl_table
 from lib import reg
-from lib.sim.exec.exec_run import Exec
+from lib.sim.exec_run import Exec
 
 class BatchTab(GuiTab):
     def __init__(self, **kwargs):
@@ -31,7 +33,7 @@ class BatchTab(GuiTab):
         return self.datalists[self.k_stored]
 
     def update(self, w, c, conf, id):
-        w.Element(self.batch_id_key).Update(value=f'{id}_{lib.aux.data_aux.next_idx(id=id, conftype="Batch")}')
+        w.Element(self.batch_id_key).Update(value=f'{id}_{lib.reg.next_idx(id=id, conftype="Batch")}')
         for n in ['batch_methods', 'optimization', 'space_search']:
             c[n].update(w, conf[n])
         self.DL1.add(w, stored_trajs(id), replace=True)
@@ -94,12 +96,12 @@ class BatchTab(GuiTab):
             if len(stor_ids) > 0:
                 traj0 = stor_ids[0]
                 w.Element(self.batch_id_key).Update(value=traj0)
-                from lib.sim.batch.functions import retrieve_results
+                from lib.sim.batch_aux import retrieve_results
                 df, fig_dict = retrieve_results(id0, traj0)
                 self.draw(df, fig_dict, w)
 
         elif e == f'REMOVE {self.k_stored}':
-            from lib.sim.batch.aux import delete_traj
+            from lib.sim.batch_aux import delete_traj
             for stor_id in stor_ids:
                 delete_traj(id0, stor_id)
             self.DL1.add(w, stored_trajs(id0), replace=True)

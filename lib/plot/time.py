@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import collections as mc
 
-from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl
+from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl, xy_aux
 from lib import reg
 
 from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
@@ -280,7 +280,9 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         try :
-            dsp = d.comp_dsp(r0, r1)
+            xy0 = d.load_traj()
+            AA, dsp = xy_aux.dsp_single(xy0, r0, r1, d.dt)
+            # dsp = d.comp_dsp(r0, r1)
             mean = dsp['median'].values
             lb = dsp['upper'].values
             ub = dsp['lower'].values

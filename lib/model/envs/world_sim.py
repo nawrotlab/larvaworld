@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from mesa.datacollection import DataCollector
 
-
+import lib.process.building
 from lib import reg
-from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, dir_aux, sample_aux
+from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, sample_aux
 from lib.model.envs.world import World
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import TargetedDataCollector
@@ -21,7 +21,11 @@ class WorldSim(World):
 
         self.larva_groups = dNl.NestDict(larva_groups)
         self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
-        self.create_larvae(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
+
+        agentConfs=sim_aux.generate_agentConfs(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
+        for conf in agentConfs:
+            l = self.add_larva(**conf)
+
         self.create_collectors(output)
         self._create_odor_layers(self.get_flies(), self.env_pars.odorscape)
 
@@ -30,47 +34,6 @@ class WorldSim(World):
 
         if not self.larva_collisions:
             self.eliminate_overlap()
-
-
-
-
-    def create_larvae(self, larva_groups, parameter_dict={}):
-        for gID, gConf in larva_groups.items():
-            d = gConf.distribution
-            kws = {
-                'm': gConf.model,
-                'refID': gConf.sample,
-                'Nids': d.N,
-                'parameter_dict': parameter_dict,
-            }
-
-            if not gConf.imitation:
-
-                ps, ors = xy_aux.generate_xyNor_distro(d)
-                ids = [f'{gID}_{i}' for i in range(d.N)]
-                all_pars, refID = sample_aux.sampleRef(**kws)
-
-
-
-
-
-
-            else:
-                ids, ps, ors, all_pars = sample_aux.imitateRef(**kws)
-            gConf.ids=ids
-            for id, p, o, pars in zip(ids, ps, ors, all_pars):
-                conf = {
-                    'pos': p,
-                    'orientation': o,
-                    'unique_id': id,
-                    'larva_pars': pars,
-                    'group': gID,
-                    'odor': gConf.odor,
-                    'default_color': gConf.default_color,
-                    'life_history': gConf.life_history
-                }
-
-                l = self.add_larva(**conf)
 
     def _add_larva(self, pos):
         gID, gConf = list(self.larva_groups.items())[0]
@@ -103,7 +66,7 @@ class WorldSim(World):
         l = LarvaSim(model=self, pos=pos,**kwargs)
         self.active_larva_schedule.add(l)
         self.all_larva_schedule.add(l)
-
+        self.space.place_agent(l, pos)
         return l
 
     def add_agent(self, agent_class=None, p0=None, p1=None):
@@ -119,30 +82,6 @@ class WorldSim(World):
         except:
             pass
 
-    # def step(self):
-    #     self.sim_clock.tick_clock()
-    #     if not self.larva_collisions:
-    #         self.larva_bodies = self.get_larva_bodies()
-    #     # Update value_layers
-    #     for id, layer in self.odor_layers.items():
-    #         layer.update_values()  # Currently doing something only for the DiffusionValueLayer
-    #     if self.windscape is not None:
-    #         self.windscape.update()
-    #     self.active_larva_schedule.step()
-    #     self.active_food_schedule.step()
-    #     if self.Box2D:
-    #         self.space.Step(self.dt, self._sim_velocity_iterations, self._sim_position_iterations)
-    #         for fly in self.get_flies():
-    #             fly.update_trajectory()
-    #     if self.step_collector is not None:
-    #         self.step_collector.collect(self)
-    #     # if self.step_group_collector is not None:
-    #     #     self.step_group_collector.collect()
-    #     self.Nticks += 1
-    #     if self.exp_condition is not None:
-    #         self.end_condition_met=self.exp_condition.check(self)
-    #     if self.Nsteps is not None and self.Nticks >= self.Nsteps :
-    #         self.end_condition_met = True
 
 
     def get_larva_bodies(self, scale=1.0):
@@ -292,9 +231,9 @@ class WorldSim(World):
         else:
             food = None
 
-        ds = dir_aux.split_dataset(step, end, food, env_params=self.env_pars, larva_groups=self.larva_groups,
-                                   source_xy=self.source_xy,
-                                   fr=1 / self.dt, dir=f'{self.save_to}/{self.id}')
+        ds = lib.process.building.split_dataset(step, end, food, env_params=self.env_pars, larva_groups=self.larva_groups,
+                                                source_xy=self.source_xy,
+                                                fr=1 / self.dt, dir=f'{self.save_to}/{self.id}')
         for d in ds:
 
 

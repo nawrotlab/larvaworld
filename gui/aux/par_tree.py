@@ -35,7 +35,26 @@ def tree_dict(d, parent_key='', sep='.'):
 
 def pars_to_tree(name):
     from lib.reg.dtypes import par, par_dict
-    from lib.aux.par_aux import dtype_name
+
+    def dtype_name(v):
+        def typing_arg(v):
+            return v.__args__[0]
+
+        if v is None:
+            n = ' '
+        else:
+            try:
+                n = v.__name__
+            except:
+                try:
+                    n = f'{v._name}[{typing_arg(v).__name__}]'
+                except:
+                    try:
+                        v0 = typing_arg(v)
+                        n = f'{v._name}[{v0._name}[{typing_arg(v0).__name__}]]'
+                    except:
+                        n = v
+        return n
 
     invalid = []
     valid = []

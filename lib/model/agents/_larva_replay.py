@@ -6,7 +6,7 @@ import numpy as np
 from lib.model.agents._larva import Larva
 from lib.model.body.body import draw_body_orientation, draw_body
 from lib.model.body.controller import BodyReplay
-from lib.aux import dictsNlists as dNl, ang_aux
+from lib.aux import dictsNlists as dNl, ang
 
 class LarvaReplay(Larva, BodyReplay):
     def __init__(self, unique_id, model, length=5, data=None, **kwargs):

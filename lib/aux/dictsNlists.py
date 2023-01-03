@@ -3,7 +3,6 @@ import json
 import os
 import pickle
 import numpy as np
-# from unflatten import unflatten
 import typing
 
 class AttrDict(dict):
@@ -220,3 +219,16 @@ def unique_list(l):
         seen = set()
         seen_add = seen.add
         return [x for x in l if not (x in seen or seen_add(x))]
+
+
+def loadSoloDics(agent_ids, path=None, use_pickle=False):
+    if os.path.isdir(path) :
+        files = [f'{id}.txt' for id in agent_ids]
+        return load_dicts(files=files, folder=path, use_pickle=use_pickle)
+
+
+def storeSoloDics(agent_dics, path=None, use_pickle=False):
+    if path is not None :
+        os.makedirs(path, exist_ok=True)
+        for id, dic in agent_dics.items():
+            save_dict(dic, f'{path}/{id}.txt', use_pickle=use_pickle)

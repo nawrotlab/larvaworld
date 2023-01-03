@@ -8,7 +8,7 @@ import pygame
 from lib.aux.colsNstr import Color
 from lib.aux.time_util import TimeUtil
 from lib.aux import shapely_aux
-from lib.model.envs.obstacle import Wall,Box
+
 from lib.model.modules.rot_surface import LightSource
 
 class Viewer(object):
@@ -271,6 +271,7 @@ class Viewer(object):
 
     @staticmethod
     def load_from_file(file_path, scene_speed,  **kwargs):
+        from lib.model.envs.obstacle import Wall, Box
         with open(file_path) as f:
             line_number = 1
 

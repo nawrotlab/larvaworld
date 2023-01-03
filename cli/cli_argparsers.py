@@ -50,16 +50,16 @@ def run_template(sim_mode, args, d):
     # MP, p = get_parser(conftype)
 
     if sim_mode == 'Rep':
-        from lib.sim.replay.replay import ReplayRun
+        from lib.sim.replay import ReplayRun
         run = ReplayRun(**d['replay'])
         run.run()
     elif sim_mode == 'Batch':
-        from lib.sim.exec.exec_run import Exec
+        from lib.sim.exec_run import Exec
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Batch')
         exec = Exec(mode='batch', conf=conf, run_externally=False)
         exec.run()
     elif sim_mode == 'Exp':
-        from lib.sim.single.single_run import SingleRun
+        from lib.sim.single_run import SingleRun
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
 
 
@@ -72,7 +72,7 @@ def run_template(sim_mode, args, d):
         if args.analysis:
             fig_dict, results = run.analyze(show=args.show)
     elif sim_mode == 'Ga':
-        from lib.sim.ga.ga_launcher import GAlauncher
+        from lib.sim.ga_launcher import GAlauncher
         conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,
                                conf_type='Ga')
 
@@ -86,7 +86,7 @@ def run_template(sim_mode, args, d):
         GA = GAlauncher(**conf)
         best_genome = GA.run()
     elif sim_mode == 'Eval':
-        from lib.sim.eval.evaluation import EvalRun
+        from lib.sim.evaluation import EvalRun
         evrun = EvalRun(**d.eval_conf, show=args.show_screen)
         evrun.simulate()
         evrun.analyze()
