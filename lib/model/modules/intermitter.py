@@ -2,12 +2,12 @@ import os
 import numpy as np
 import pandas as pd
 
-from lib.aux.fitting import BoutGenerator
+from lib.util.fitting import BoutGenerator
 
-from lib.aux import naming as nam,dictsNlists as dNl
 
 from lib.model.modules.basic import Effector
-from lib import reg
+from lib import reg, aux
+from lib.aux import naming as nam
 
 
 class BaseIntermitter(Effector):
@@ -228,7 +228,7 @@ class BaseIntermitter(Effector):
         file = f'{path}/{self.locomotor.agent.unique_id}.txt'
         if not os.path.exists(path):
             os.makedirs(path)
-        dNl.save_dict(dic, file)
+        aux.save_dict(dic, file)
 
     def update(self, max_refeed_rate=0.9, refeed_rate_coef=0, food_present=None, feed_success=None):
         if food_present is None:
@@ -273,7 +273,7 @@ class BaseIntermitter(Effector):
 class Intermitter(BaseIntermitter):
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist= None, run_mode='stridechain',**kwargs):
         super().__init__(**kwargs)
-        from lib.aux.fitting import BoutGenerator
+        from lib.util.fitting import BoutGenerator
         pause_dist, stridechain_dist = self.check_distros(pause_dist=pause_dist,stridechain_dist=stridechain_dist)
 
         if run_mode=='stridechain' :
@@ -439,11 +439,11 @@ class BranchIntermitter(BaseIntermitter):
         self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
 
     def generate_stridechain(self):
-        from lib.aux.fitting import exp_bout
+        from lib.util.fitting import exp_bout
         return exp_bout(beta=self.beta, tmax=self.stridechain_max, tmin=self.stridechain_min)
 
     def generate_pause(self):
-        from lib.aux.fitting import critical_bout
+        from lib.util.fitting import critical_bout
         return critical_bout(c=self.c, sigma=self.sigma, N=1000, tmax=self.pau_max, tmin=self.pau_min)*self.dt
 
 

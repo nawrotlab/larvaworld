@@ -12,7 +12,7 @@ from lib.aux.sim_aux import get_source_xy
 from lib.reg.base import BaseRun
 from lib import reg
 from lib.screen.rendering import  Viewer
-from lib.aux.colsNstr import Color
+from lib.aux.color import Color
 from lib.screen.screen_aux import get_arena_bounds
 from lib.sim.ga_engine import GAbuilder
 from lib.aux.time_util import TimeUtil

@@ -1,7 +1,7 @@
 import copy
 import PySimpleGUI as sg
 
-import lib.aux.data_aux
+import lib.util.data_aux
 import lib.reg
 import lib.registry
 from gui.tabs.tab import GuiTab

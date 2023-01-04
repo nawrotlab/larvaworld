@@ -5,9 +5,7 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
-from lib.aux import dictsNlists as dNl
-from lib.aux.dictsNlists import NestDict
-from lib import reg
+from lib import reg, aux, plot
 from lib.plot.aux import save_plot
 from lib.plot.base import GridPlot, Plot
 
@@ -59,8 +57,8 @@ def calibration_plot(save_to=None, files=None):
 
 @reg.funcs.graph('model summary')
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
-    from lib.aux.fitting import test_boutGens
-    from lib.aux.sample_aux import sim_model
+    from lib.util.fitting import test_boutGens
+    from lib.util.sample_aux import sim_model
     if refDataset is None:
         d = reg.loadRef(refID)
         d.load(step=False)
@@ -240,7 +238,7 @@ def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
 
     for i, (subID, RnS) in enumerate(datasets.items()):
         if len(RnS)==1 :
-            RnS=dNl.flatten_list(RnS)
+            RnS=aux.flatten_list(RnS)
         ls+=[f'{subID}_{d.id}' for d in RnS]
         ds+=RnS
     kws1 = {
@@ -285,7 +283,7 @@ def chemo_summary(datasets, mdiff_df, title, **kwargs):
     h1k = int(h1exp / (Nks + 1))
     for i, (exp, dds) in enumerate(datasets.items()):
         h0 = i * h1exp + (i + 1) * 1 + hh_mpl
-        dds = dNl.flatten_list(dds)
+        dds = aux.flatten_list(dds)
         Ndds = len(dds)
         kws1 = {
             'datasets': dds,
@@ -344,9 +342,9 @@ def result_summary(datasets, target, **kwargs):
 def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.plot.traj import track_annotated
     if d is None:
-        from lib.aux.sample_aux import sim_model
+        from lib.util.sample_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
-    kws0 = NestDict({
+    kws0 = aux.NestDict({
         'datasets': [d],
         # 'labels' : [d],
     })
@@ -360,7 +358,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     Nrows = len(pars)
     P = Plot(name=f'{mID}_test', **kws0, **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, axs=axs, fig=fig)
-    kws1 = NestDict({
+    kws1 = aux.NestDict({
         'agent_idx': 0,
         'slice': (0, dur * 60),
         'dt': dt,

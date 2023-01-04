@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 from mesa.datacollection import DataCollector
 
+import lib.util.sample_aux
 import lib.process.building
-from lib import reg
-from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, sample_aux
+from lib import reg, aux
+from lib.util import sample_aux
 from lib.model.envs.world import World
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import TargetedDataCollector
@@ -19,10 +20,10 @@ class WorldSim(World):
 
 
 
-        self.larva_groups = dNl.NestDict(larva_groups)
+        self.larva_groups = aux.NestDict(larva_groups)
         self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
 
-        agentConfs=sim_aux.generate_agentConfs(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
+        agentConfs= lib.util.sample_aux.generate_agentConfs(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         for conf in agentConfs:
             l = self.add_larva(**conf)
 
@@ -59,7 +60,7 @@ class WorldSim(World):
 
 
     def add_larva(self, pos, **kwargs):
-        while not sim_aux.inside_polygon([pos], self.tank_polygon):
+        while not aux.inside_polygon([pos], self.tank_polygon):
             pos = tuple(np.array(pos) * 0.999)
 
 
@@ -153,7 +154,7 @@ class WorldSim(World):
 
     def get_larva_dicts(self, ids=None):
 
-        ls=dNl.NestDict({l.unique_id:l for l in self.get_flies(ids=ids)})
+        ls=aux.NestDict({l.unique_id:l for l in self.get_flies(ids=ids)})
 
         from lib.model.modules.nengobrain import NengoBrain
         deb_dicts = {}
@@ -173,11 +174,11 @@ class WorldSim(World):
                 foraging_dicts[id] = l.finalize_foraging_dict()
             # self.config.foodtypes = env.foodtypes
 
-        dic0=dNl.NestDict({'deb': deb_dicts,
+        dic0=aux.NestDict({'deb': deb_dicts,
                       'nengo': nengo_dicts, 'bouts': bout_dicts,
                       'foraging': foraging_dicts})
 
-        dic=dNl.NestDict({k:v for k,v in dic0.items() if len(v)>0})
+        dic=aux.NestDict({k:v for k,v in dic0.items() if len(v)>0})
 
         # print({k:len(v) for k,v in dic0.items()})
         return dic
@@ -197,7 +198,7 @@ class WorldSim(World):
                         df.set_index(['Step', 'AgentID'], inplace=True)
                         df.sort_index(level=['Step', 'AgentID'], inplace=True)
                         dic[name] = df
-        return dNl.NestDict(dic)
+        return aux.NestDict(dic)
 
     def simulate(self):
         reg.vprint()
@@ -246,5 +247,5 @@ def get_all_odors(larva_groups, food_params):
     lg = [conf.odor.odor_id for conf in larva_groups.values()]
     su = [conf.odor.odor_id for conf in food_params.source_units.values()]
     sg = [conf.odor.odor_id for conf in food_params.source_groups.values()]
-    ids = dNl.unique_list([id for id in lg + su + sg if id is not None])
+    ids = aux.unique_list([id for id in lg + su + sg if id is not None])
     return ids

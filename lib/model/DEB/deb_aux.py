@@ -3,7 +3,6 @@ import math
 import numpy as np
 from numpy.lib import scimath
 from scipy.optimize import minimize
-from lib.aux import naming as nam, dictsNlists as dNl
 
 
 def simplex(func, x0, args=()):

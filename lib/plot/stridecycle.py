@@ -3,8 +3,8 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
-from lib.aux import naming as nam, dictsNlists as dNl
-from lib import reg
+from lib.aux import naming as nam
+from lib import reg, aux, plot
 from lib.plot.aux import plot_quantiles, suf
 from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
 
@@ -200,7 +200,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
     x = np.linspace(0, pi2, Nbins)
 
     from lib.process.aux import detect_strides, stride_interp
-    from lib.aux.vel_aux import compute_velocity
+    from lib.aux.xy import compute_velocity
     l, sv, fv, fov = reg.getPar(['l', 'sv', 'fv', 'fov'])
 
 

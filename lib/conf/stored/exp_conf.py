@@ -1,8 +1,7 @@
 import numpy as np
 
 
-from lib.aux import dictsNlists as dNl
-from lib import reg
+from lib import reg, aux
 
 def grouped_exp_dic():
 
@@ -18,7 +17,7 @@ def grouped_exp_dic():
         return reg.par.enr_dict(**kwargs)
 
     def lgs(models, ids=None, **kwargs):
-        from lib.aux.colsNstr import N_colors
+        from lib.aux.color import N_colors
         if ids is None:
             ids = models
         N = len(models)
@@ -252,7 +251,7 @@ def grouped_exp_dic():
 
 @reg.funcs.stored_conf("Exp")
 def Exp_dict() :
-    exp_dict = dNl.merge_dicts(list(grouped_exp_dic().values()))
+    exp_dict = aux.merge_dicts(list(grouped_exp_dic().values()))
     return exp_dict
 
 @reg.funcs.stored_conf("ExpGroup")

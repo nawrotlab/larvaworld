@@ -5,8 +5,9 @@ from shapely.geometry import Point, Polygon, LineString
 from shapely.ops import split
 from scipy.signal import sosfiltfilt, butter
 
-
-from lib.aux import naming as nam, ang
+from lib import aux
+from lib.aux import naming as nam
+from lib.aux.np import circle_to_polygon
 
 
 def LvsRtoggle(side):
@@ -18,43 +19,8 @@ def LvsRtoggle(side):
         raise ValueError(f'Argument {side} is neither Left nor Right')
 
 
-def mutate_value(v, range, scale=0.01):
-    r0, r1 = range
-    return np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1).astype(float)
-
-
-def circle_to_polygon(sides, radius, rotation=0, translation=None):
-    one_segment = np.pi * 2 / sides
-
-    points = [
-        (math.sin(one_segment * i + rotation) * radius,
-         math.cos(one_segment * i + rotation) * radius)
-        for i in range(sides)]
-
-    if translation:
-        points = [[sum(pair) for pair in zip(point, translation)]
-                  for point in points]
-
-    return np.array(points)
-
-
 def inside_polygon(points, tank_polygon):
     return all([tank_polygon.contains(Point(x, y)) for x, y in points])
-
-
-def body(points, start=None, stop=None):
-    if start is None:
-        start = [1, 0]
-    if stop is None:
-        stop = [0, 0]
-    xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
-    xy[0, :] = start
-    xy[len(points) + 1, :] = stop
-    for i in range(len(points)):
-        x, y = points[i]
-        xy[1 + i, :] = x, y
-        xy[-1 - i, :] = x, -y
-    return xy
 
 
 def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
@@ -283,7 +249,7 @@ def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, s
     hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
     def get_hf0(ang_vel):
         d_or = ang_vel * dt
-        return np.array(ang_aux.rotate_around_point(origin=hr0, point=hf0, radians=-d_or))
+        return np.array(aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or))
 
 
     def fov(ang_vel, turn_err =0):
@@ -342,51 +308,4 @@ class Collision(Exception):
         self.object1 = object1
         self.object2 = object2
 
-def generate_agentConfs(larva_groups, parameter_dict={}):
-    from lib.aux import xy_aux, sample_aux
-    agent_confs = []
-    for gID, gConf in larva_groups.items():
-        d = gConf.distribution
-        kws = {
-            'm': gConf.model,
-            'refID': gConf.sample,
-            'Nids': d.N,
-            'parameter_dict': parameter_dict,
-        }
 
-        if not gConf.imitation:
-
-            ps, ors = xy_aux.generate_xyNor_distro(d)
-            ids = [f'{gID}_{i}' for i in range(d.N)]
-            all_pars, refID = sample_aux.sampleRef(**kws)
-        else:
-            ids, ps, ors, all_pars = sample_aux.imitateRef(**kws)
-        gConf.ids = ids
-        for id, p, o, pars in zip(ids, ps, ors, all_pars):
-            conf = {
-                'pos': p,
-                'orientation': o,
-                'unique_id': id,
-                'larva_pars': pars,
-                'group': gID,
-                'odor': gConf.odor,
-                'default_color': gConf.default_color,
-                'life_history': gConf.life_history
-            }
-
-            agent_confs.append(conf)
-    return agent_confs
-
-
-def generate_sourceConfs(groups={}, units={}) :
-    from lib.aux import xy_aux
-    confs = []
-    for gID, gConf in groups.items():
-        ps = xy_aux.generate_xy_distro(**gConf.distribution)
-        for i, p in enumerate(ps):
-            conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
-            confs.append(conf)
-    for uID, uConf in units.items():
-        conf = {'unique_id': uID, **uConf}
-        confs.append(conf)
-    return confs

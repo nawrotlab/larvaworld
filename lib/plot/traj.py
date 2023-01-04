@@ -3,10 +3,10 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from lib.aux import naming as nam, dictsNlists as dNl
-from lib import reg
+from lib.aux import naming as nam
+from lib import reg, aux, plot
 
-from lib.plot.base import BasePlot, Plot, AutoPlot, AutoBasePlot
+from lib.plot.base import Plot, AutoPlot, AutoBasePlot
 
 
 
@@ -122,7 +122,7 @@ def epoch_func(**kwargs):
         epochs0 = Lturns.tolist() + Rturns.tolist()
         return epochs, epochs0, func
 
-    epoch_dict = dNl.NestDict({
+    epoch_dict = aux.NestDict({
         'stride': {
             'ylab': "velocity (1/sec)",
             'ylim': (0.0,1.0),
@@ -152,7 +152,7 @@ def epoch_func(**kwargs):
                 aa2plot = a2plot
             else:
                 if moving_average_interval:
-                    from lib.aux.data_aux import moving_average
+                    from lib.aux.np import moving_average
                     a = moving_average(a, n=int(moving_average_interval / dt))
                 aa2plot = a
 
@@ -234,7 +234,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
         epochs0 = Lturns.tolist() + Rturns.tolist()
         return epochs, epochs0
 
-    epoch_dict = dNl.NestDict({
+    epoch_dict = aux.NestDict({
         'stride': {
             'ylab': "velocity (1/sec)",
             'labels': ['runs', 'pauses'],
@@ -265,7 +265,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
         aa2plot = a2plot
     else:
         if moving_average_interval:
-            from lib.aux.data_aux import moving_average
+            from lib.aux.np import moving_average
             a = moving_average(a, n=int(moving_average_interval / dt))
         aa2plot = a
 
@@ -337,7 +337,7 @@ def track_annotated_data(name=None, subfolder='tracks',
 
         s, e, c = d.step_data, d.endpoint_data, d.config
         Nticks = int(dur * 60 / c.dt)
-        kws0 = dNl.NestDict({
+        kws0 = aux.NestDict({
             'datasets': [d],
             'labels': [l],
             # 'agent_idx': idx,
@@ -362,7 +362,7 @@ def track_annotated_data(name=None, subfolder='tracks',
             # run_tr = int(ee[preg.getPar('run_tr')] * 100)
             # title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
             title=get_title(idx,c,e,l)
-            kws1 = dNl.NestDict({
+            kws1 = aux.NestDict({
                 'agent_idx': idx,
                 'a': get_a(ss),
                 'axs': P.axs[ii],

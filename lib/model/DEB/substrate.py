@@ -1,4 +1,3 @@
-# from lib.registry.init_pars import substrate_dict
 
 # Compound densities (g/cm**3)
 substrate_dict = {

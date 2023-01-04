@@ -1,8 +1,8 @@
 import pygame
 import numpy as np
 
-from lib.aux.colsNstr import Color
-from lib.aux.time_util import TimeUtil
+from lib import aux
+
 
 
 class SidePanel:
@@ -40,7 +40,7 @@ class SidePanel:
         self.gen_sim_t = gen_sim_t
 
     def display_ga_info(self):
-        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=Color.WHITE)
+        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=aux.Color.WHITE)
 
         if pygame.font:
             font = pygame.font.Font(None, self.FONT_SIZE)
@@ -50,11 +50,11 @@ class SidePanel:
             fitness_best = '-' if self.best_genome is None else str(round(self.best_genome.fitness, 2))
 
 
-            self.render_line(font, 'Total time: ' + TimeUtil.format_time_seconds(self.cum_t))
+            self.render_line(font, 'Total time: ' + aux.TimeUtil.format_time_seconds(self.cum_t))
             self.render_line(font, 'Generation: ' + str(self.generation_num))
             self.render_line(font, 'Population: ' + str(self.Nalive) +'/'+ str(self.Nagents))
 
-            self.render_line(font, 'Generation real-time: ' + TimeUtil.format_time_seconds(self.gen_sim_t))
+            self.render_line(font, 'Generation real-time: ' + aux.TimeUtil.format_time_seconds(self.gen_sim_t))
             self.render_line(font, '')
             self.render_line(font, 'Max fitness: ' + fitness_best)
             if self.best_genome is not None and self.best_genome.fitness_dict is not None :
@@ -76,7 +76,7 @@ class SidePanel:
             self.render_line(font, 'ESC : quit', self.LEFT_MARGIN)
 
     def display_info(self, object_to_place):
-        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=Color.WHITE)
+        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=aux.Color.WHITE)
 
         if pygame.font:
             font = pygame.font.Font(None, self.FONT_SIZE)
@@ -95,7 +95,7 @@ class SidePanel:
             self.render_line(font, 'ESC : quit', self.LEFT_MARGIN)
 
     def render_line(self, font, text, extra_margin=0):
-        line = font.render(text, 1, Color.WHITE)
+        line = font.render(text, 1, aux.Color.WHITE)
         x = self.viewer.width + self.DEFAULT_MARGIN + extra_margin
         y = self.line_num * self.line_spacing
         lint_pos = pygame.Rect(x, y, 20, 20)

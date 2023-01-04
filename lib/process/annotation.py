@@ -1,6 +1,6 @@
 
-from lib.aux import dictsNlists as dNl, naming as nam
-
+from lib.aux import naming as nam
+from lib import reg, aux
 
 def register_bout_distros(c,e):
     from lib.model.modules.intermitter import get_EEB_poly1d
@@ -24,7 +24,7 @@ def register_bout_distros(c,e):
 
 
 def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
-    from lib.aux.fitting import fit_epochs, get_bout_distros
+    from lib.util.fitting import fit_epochs, get_bout_distros
     from lib.process import aux, patch
     s, e ,c= d.step_data, d.endpoint_data,d.config
 
@@ -34,7 +34,7 @@ def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
     patch.comp_patch(s, e, c)
     if interference:
         d.cycle_curves = aux.compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts)
-        d.grouped_epochs = dNl.group_epoch_dicts(d.chunk_dicts)
+        d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
         d.pooled_epochs = fit_epochs(d.grouped_epochs)
         c.bout_distros = get_bout_distros(d.pooled_epochs)
         register_bout_distros(c, e)

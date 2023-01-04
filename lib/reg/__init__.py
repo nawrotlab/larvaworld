@@ -14,6 +14,7 @@ from .paths import ROOT_DIR, Path, SampleDic, datapath, datafunc, conftree
 from .output import output_dict,set_output, get_reporters
 from .units import units
 from .facade import funcs
+from .parFunc import *
 from . import base
 from .distro import distro_database,get_dist
 from .parDB import par
@@ -118,9 +119,9 @@ def testRef(id):
         print()
 
 
-def simRef(id, mID, **kwargs):
-    from lib.aux.sample_aux import sim_model
-    return sim_model(mID,  refID=id, **kwargs)
+# def simRef(id, mID, **kwargs):
+#     from lib.aux.sample_aux import sim_model
+#     return sim_model(mID,  refID=id, **kwargs)
 
 
 def loadConf(conftype, id=None):

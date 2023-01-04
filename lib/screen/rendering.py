@@ -5,9 +5,9 @@ import imageio
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-from lib.aux.colsNstr import Color
+from lib import aux
 from lib.aux.time_util import TimeUtil
-from lib.aux import shapely_aux
+
 
 from lib.model.modules.rot_surface import LightSource
 
@@ -302,7 +302,7 @@ class Viewer(object):
                     x = int(words[1])
                     y = int(words[2])
                     size = int(words[3])
-                    box = Box(x, y, size, Color.random_bright())
+                    box = Box(x, y, size, aux.Color.random_bright())
                     box.label = line_number
                     viewer.put(box)
                 elif words[0] == 'Wall':
@@ -311,16 +311,16 @@ class Viewer(object):
                     x2 = int(words[3])
                     y2 = int(words[4])
 
-                    point1 = shapely_aux.Point(x1, y1)
-                    point2 = shapely_aux.Point(x2, y2)
-                    wall = Wall(point1, point2, Color.random_bright())
+                    point1 = aux.Point(x1, y1)
+                    point2 = aux.Point(x2, y2)
+                    wall = Wall(point1, point2, aux.Color.random_bright())
                     wall.label = line_number
                     viewer.put(wall)
                 elif words[0] == 'Light':
                     x = int(words[1])
                     y = int(words[2])
                     emitting_power = int(words[3])
-                    light = LightSource(x, y, emitting_power, Color.YELLOW, Color.BLACK)
+                    light = LightSource(x, y, emitting_power, aux.Color.YELLOW, aux.Color.BLACK)
                     light.label = line_number
                     viewer.put(light)
 

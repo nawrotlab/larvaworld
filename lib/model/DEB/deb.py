@@ -6,9 +6,9 @@ import math
 import os
 import numpy as np
 
-from lib import reg
+from lib import reg, aux
 from lib.model.DEB.deb_aux import beta0, simplex, get_lb, get_E0, get_E_Rm
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import naming as nam
 from lib.model.DEB.gut import Gut
 from lib.model.DEB.substrate import Substrate, substrate_dict
 
@@ -599,7 +599,7 @@ class DEB:
                 d = {**self.dict, **self.gut.dict}
             else:
                 d = self.dict
-            dNl.save_dict(d, self.dict_file, use_pickle=False)
+            aux.save_dict(d, self.dict_file, use_pickle=False)
 
     def get_p_A(self, f, assimilation_mode, X_V):
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V

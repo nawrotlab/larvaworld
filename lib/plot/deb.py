@@ -5,11 +5,10 @@ import numpy as np
 from matplotlib import pyplot as plt, ticker
 from scipy import signal
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
 
 from lib.plot.aux import plot_quantiles, plot_mean_and_range, suf, process_plot
 from lib.plot.base import AutoPlot
-from lib import reg
+from lib import reg, aux, plot
 
 
 @reg.funcs.graph('gut')
@@ -73,7 +72,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     if save_as is None:
         save_as = f'debs.{suf}'
     if deb_dicts is None:
-        deb_dicts = dNl.flatten_list([d.load_dicts('deb') for d in datasets])
+        deb_dicts = aux.flatten_list([d.load_dicts('deb') for d in datasets])
     Ndebs = len(deb_dicts)
     ids = [d['id'] for d in deb_dicts]
     if Ndebs == 1:
@@ -247,7 +246,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             if d['simulation']:
                 ax.axvspan(t0, t3, color='grey', alpha=0.05)
             for (st0, st1), qq in zip(epochs, epoch_qs):
-                q_col = cNs.col_range(qq, low=(255, 0, 0), high=(255, 255, 255)) if color_epoch_quality else c
+                q_col = aux.col_range(qq, low=(255, 0, 0), high=(255, 255, 255)) if color_epoch_quality else c
                 ax.axvspan(st0, st1, color=q_col, alpha=0.2)
 
             ax.set_ylabel(yl, labelpad=15, fontsize=10)
@@ -366,7 +365,7 @@ def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitt
 
     fig, axs = plt.subplots(3, len(samples), figsize=(10 * len(samples), 20))
     axs = axs.ravel()
-    cols = cNs.N_colors(len(species_list))
+    cols = aux.N_colors(len(species_list))
 
     for i, sample in enumerate(samples):
         z = get_EEB_poly1d(sample=sample, dt=dt)

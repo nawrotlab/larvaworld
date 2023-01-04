@@ -7,11 +7,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
 
-from lib.aux import dictsNlists as dNl
-
-# from lib.plot.aux import dual_half_circle, plot_config, process_plot, NcolNrows
-from lib import reg
-from lib import plot
+from lib import reg, aux, plot
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -239,7 +235,7 @@ class BasePlot:
                 's':'fontsize',
                 # 't':title_kws.t,
             }
-            kws=dNl.replace_in_dict(title_kws, pairs, replace_key=True)
+            kws=aux.replace_in_dict(title_kws, pairs, replace_key=True)
             self.fig.suptitle(t=title,**kws)
         if adjust_kws is not None :
             self.adjust(**adjust_kws)
@@ -279,7 +275,7 @@ class Plot(BasePlot):
                  **kwargs):
 
         if add_samples:
-            targetIDs = dNl.unique_list([d.config['sample'] for d in datasets])
+            targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
 
             targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedConf('Ref')]
             datasets += targets
@@ -395,21 +391,21 @@ class Plot(BasePlot):
     @property
     def Nticks(self):
         Nticks_list = [d.config.Nticks for d in self.datasets]
-        return np.max(dNl.unique_list(Nticks_list))
+        return np.max(aux.unique_list(Nticks_list))
 
     @property
     def N(self):
         N_list = [d.config.N for d in self.datasets]
-        return np.max(dNl.unique_list(N_list))
+        return np.max(aux.unique_list(N_list))
 
     @property
     def fr(self):
         fr_list = [d.fr for d in self.datasets]
-        return np.max(dNl.unique_list(fr_list))
+        return np.max(aux.unique_list(fr_list))
 
     @property
     def dt(self):
-        dt_list = dNl.unique_list([d.dt for d in self.datasets])
+        dt_list = aux.unique_list([d.dt for d in self.datasets])
         return np.max(dt_list)
 
     @property
@@ -489,8 +485,8 @@ def load_ks(ks, ds,ls,cols, d0):
             # print(d0.get(k=k, d=d, compute=True))
 
             vs = d0.get(k=k, d=d, compute=True)
-            dic[k][l] = dNl.NestDict({'df':vs, 'col':col})
-    return dNl.NestDict(dic)
+            dic[k][l] = aux.NestDict({'df':vs, 'col':col})
+    return aux.NestDict(dic)
 
 
 class AutoLoadPlot(AutoPlot) :
@@ -498,8 +494,8 @@ class AutoLoadPlot(AutoPlot) :
         super().__init__(**kwargs)
         d0 = reg.par.PI
         self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, d0)
-        self.pdict=dNl.NestDict({k:d0.dict[k] for k in ks})
-        self.kpdict=dNl.NestDict({k:[self.kdict[k],self.pdict[k]] for k in ks})
+        self.pdict=aux.NestDict({k:d0.dict[k] for k in ks})
+        self.kpdict=aux.NestDict({k:[self.kdict[k],self.pdict[k]] for k in ks})
         self.ks=ks
         self.pars=[self.pdict[k].d for k in ks]
 

@@ -20,14 +20,14 @@ def rear_orientation_change(bend, d, l, correction_coef=1.0):
         return 0
 
 
-def angle(a, b, c, in_deg=True):
-    if np.isnan(a).any() or np.isnan(b).any() or np.isnan(c).any():
+def angle_from_3points(p1, pmid, p2, in_deg=True):
+    if np.isnan(p1).any() or np.isnan(pmid).any() or np.isnan(p2).any():
         return np.nan
     if in_deg:
-        ang = (math.degrees(math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])) - 180) % 360
+        ang = (math.degrees(math.atan2(p2[1] - pmid[1], p2[0] - pmid[0]) - math.atan2(p1[1] - pmid[1], p1[0] - pmid[0])) - 180) % 360
         return ang if ang <= 180 else ang - 360
     else:
-        ang = (math.degrees(math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])) - np.pi) % (
+        ang = (math.degrees(math.atan2(p2[1] - pmid[1], p2[0] - pmid[0]) - math.atan2(p1[1] - pmid[1], p1[0] - pmid[0])) - np.pi) % (
                 2 * np.pi)
         return ang if ang <= np.pi else ang - 2 * np.pi
 
@@ -53,8 +53,8 @@ def angle_dif(angle_1, angle_2, in_deg=True):
 
 
 
-def rotate_around_point(point, radians, origin=None):
-    """Rotate a point around a given point.
+def rotate_point_around_point(point, radians, origin=None):
+    """Rotate a point around a given point clockwise.
 
     I call this the "high performance" version since we're caching some
     values that are needed >1 time. It'sigma less readable than the previous
@@ -74,27 +74,11 @@ def rotate_around_point(point, radians, origin=None):
     return qx, qy
 
 
-def rotate_around_center(point, radians):
-    x, y = point
-    cos_rad = math.cos(radians)
-    sin_rad = math.sin(radians)
-    qx = cos_rad * x + sin_rad * y
-    qy = -sin_rad * x + cos_rad * y
-    return np.array([qx, qy])
 
-
-
-def rotate_around_center_multi(points : np.array, radians):
-    cos_rad = math.cos(radians)
-    sin_rad = math.sin(radians)
-    k = np.array([[cos_rad,sin_rad],[-sin_rad, cos_rad]])
-    return np.dot(k,points.T).T
-
-
-def rotate_multiple_points(points, radians, origin=None):
+def rotate_points_around_point(points, radians, origin=None):
     if origin is None:
         origin = [0, 0]
-    qx, qy = rotate_around_point(points.T, radians, origin=origin)
+    qx, qy = rotate_point_around_point(points.T, radians, origin=origin)
     return np.vstack((qx, qy)).T
 
 

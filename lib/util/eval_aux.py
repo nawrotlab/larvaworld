@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.stats import ks_2samp
 from matplotlib import cm, colors
 
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs
+from lib.aux import naming as nam, dictsNlists as dNl, color as cNs
 from lib import reg
 
 def eval_end_fast(ee, e_data, e_sym, mode='pooled'):

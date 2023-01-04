@@ -1,7 +1,4 @@
-
-from lib.aux.sim_aux import Collision
-
-from lib.aux.colsNstr import Color
+from lib import aux
 from lib.model.body.controller import BodySim
 from lib.model.modules.brain import DefaultBrain
 from lib.model.modules.motor_controller import MotorController, Actuator
@@ -11,7 +8,7 @@ class LarvaRobot(BodySim):
 
     def __init__(self, unique_id, model, larva_pars, orientation=0, pos=(0, 0), **kwargs):
 
-        super().__init__(model=model, pos=pos, orientation=orientation, default_color=Color.random_color(127, 127, 127),
+        super().__init__(model=model, pos=pos, orientation=orientation, default_color=aux.Color.random_color(127, 127, 127),
                          physics=larva_pars.physics, **larva_pars.body, **larva_pars.Box2D_params)
 
         self.Nticks = 0
@@ -62,7 +59,7 @@ class LarvaRobot(BodySim):
         import pygame
         if pygame.font and self.unique_id is not None:
             font = pygame.font.Font(None, 24)
-            text = font.render(str(self.unique_id), 1, Color.YELLOW, Color.DARK_GRAY)
+            text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
             text_pos = pygame.Rect(self.x + (self.sim_length / 2), self.y + (self.sim_length / 2), 50, 50)
             screen.blit(text, text_pos)
 
@@ -134,7 +131,7 @@ class ObstacleLarvaRobot(LarvaRobot):
                 # else :
                 #     self.brain.locomotor.turner.neural_oscillator.E_l += np.abs(dRL)
                 self.step()
-            except Collision:
+            except aux.Collision:
                 self.collision_with_object = True
                 self.brain.locomotor.intermitter.interrupt_locomotion()
         else:

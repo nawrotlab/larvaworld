@@ -3,7 +3,7 @@ import numpy as np
 
 
 from lib.plot.base import BasePlot, AutoBasePlot
-from lib import reg
+from lib import reg, aux, plot
 
 
 
@@ -16,7 +16,8 @@ def modelConfTable(mID, **kwargs):
 @reg.funcs.graph('mtable')
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
-    from lib.aux.data_aux import mdict2df, init2mdict
+    from lib.util.data_aux import init2mdict
+    from lib.aux.np import mdict2df
     mdict = init2mdict(reg.par.PI[k])
     df = mdict2df(mdict, columns=columns)
 
@@ -193,7 +194,7 @@ def error_table(data, k='', title=None, **kwargs):
 
 
 def store_model_graphs(mIDs=None):
-    from lib.aux.combining import combine_pdfs
+    from lib.util.combining import combine_pdfs
     from lib.plot.grid import model_summary
     f1 = reg.Path['model_tables']
     f2 = reg.Path['model_summaries']

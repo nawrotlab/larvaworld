@@ -1,13 +1,11 @@
 import numpy as np
 
-from lib.aux import colsNstr as cNs
-from lib import reg
+from lib import reg, aux
 
 
 @reg.funcs.stored_conf("Env")
 def Env_dict() :
-# from lib.conf.stored.facade import stored_conf
-    from lib import reg
+
 
 
 
@@ -71,7 +69,7 @@ def Env_dict() :
         if qs is None:
             qs = np.linspace(0.1, 1, Ngs)
         if cs is None:
-            cs = [tuple(cNs.col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
+            cs = [tuple(aux.col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
         if os is None:
             os = [oG(id=f'Odor{i}') for i in range(Ngs)]
         l = [sg(id=ids[i], c=cs[i], r=rs[i], a=ams[i], o=os[i], quality=qs[i], **kwargs) for i in range(Ngs)]
@@ -213,7 +211,7 @@ def Env_dict() :
     'thermo_arena': env((0.3, 0.3), th={}),
     'windy_arena': env((0.3, 0.3), w={'wind_speed': 10.0}),
     'windy_blob_arena': env((0.128, 0.014),
-                            f_pars(sg=sgs(1, qs=np.ones(4), cs=cNs.N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
+                            f_pars(sg=sgs(1, qs=np.ones(4), cs=aux.N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
                                           m='uniform', shape='rectangular', can_be_displaced=True,
                                           regeneration=True,
                                           regeneration_pos={'loc': (0.005, 0.0), 'scale': (0.0, 0.0)})),

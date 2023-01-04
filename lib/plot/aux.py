@@ -5,12 +5,10 @@ from matplotlib import pyplot as plt, patches, transforms, ticker
 from scipy.stats import mannwhitneyu
 import warnings
 
-from lib import reg
+from lib import reg, aux
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from lib.aux import dictsNlists as dNl
-from lib.aux.colsNstr import N_colors
 
 suf = 'pdf'
 
@@ -329,16 +327,16 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     def get_colors(datasets):
         try:
             cs = [d.config['color'] for d in datasets]
-            u_cs = dNl.unique_list(cs)
+            u_cs = aux.unique_list(cs)
             if len(u_cs) == len(cs) and None not in u_cs:
                 colors = cs
             elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
                 cs[-1] = 'black'
                 colors = cs
             else:
-                colors = N_colors(Ndatasets)
+                colors = aux.N_colors(Ndatasets)
         except:
-            colors = N_colors(Ndatasets)
+            colors = aux.N_colors(Ndatasets)
         return colors
 
     cols = get_colors(datasets)

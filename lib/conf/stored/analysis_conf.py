@@ -1,6 +1,6 @@
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, naming as nam
 
-from lib import reg
+
+from lib import reg, aux
 
 def entry(ID, name=None, **kwargs):
     return reg.graphs.entry(ID, name=name, args=kwargs)
@@ -12,7 +12,7 @@ def entry(ID, name=None, **kwargs):
 
 
 
-analysis_dict = dNl.NestDict({
+analysis_dict = aux.NestDict({
     'tactile': [
         entry('endpoint pars (hist)','time ratio on food (final)',ks=['on_food_tr']),
         entry('timeplot', 'time ratio on food',ks=['on_food_tr'],  unit='min'),

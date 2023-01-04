@@ -1,11 +1,10 @@
 import numpy as np
-from Box2D import Box2D, b2ChainShape
 from shapely import affinity
 from shapely.geometry import Point, Polygon
 
 from lib.model.DEB.substrate import Substrate
 from lib.model.agents._agent import LarvaworldAgent
-from lib.aux import xy_aux,sim_aux
+from lib import aux
 
 class Source(LarvaworldAgent):
     def __init__(self, shape_vertices=None, can_be_carried=False, can_be_displaced=False, shape='circle', **kwargs):
@@ -46,11 +45,10 @@ class Source(LarvaworldAgent):
                 ws, wo = w.wind_speed, w.wind_direction
                 if ws != 0.0:
                     self.pos = (self.pos[0] + np.cos(wo) * ws * dt / r, self.pos[1] + np.sin(wo) * ws * dt / r)
-                    from lib.aux.sim_aux import inside_polygon
-                    in_tank = inside_polygon(points=[self.pos], tank_polygon=self.model.tank_polygon)
+                    in_tank = aux.inside_polygon(points=[self.pos], tank_polygon=self.model.tank_polygon)
                     if not in_tank:
                         if self.regeneration:
-                            self.pos = xy_aux.xy_uniform_circle(1, **self.regeneration_pos)[0]
+                            self.pos = aux.xy_uniform_circle(1, **self.regeneration_pos)[0]
                         else :
                             self.model.delete_agent(self)
 
@@ -101,7 +99,7 @@ class Food(Source):
             viewer.draw_circle(p, r * 1.1, self.model.selection_color, False, r / 5)
 
     def contained(self, point):
-        return xy_aux.eudis5(self.get_position(), point) <= self.radius
+        return aux.eudis5(self.get_position(), point) <= self.radius
         # return euclidean(self.get_position(), point)<=self.radius
         # return Point(self.get_position()).distance(Point(point))<=self.radius
         # return Circle(self.get_position(), radius=self.radius).contains_point(point)

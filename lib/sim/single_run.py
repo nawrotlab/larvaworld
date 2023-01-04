@@ -3,7 +3,7 @@ import random
 import time
 import numpy as np
 
-
+import lib.aux.np
 from lib import reg
 from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
 

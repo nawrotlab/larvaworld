@@ -2,9 +2,9 @@ import math
 
 import numpy as np
 
-from lib.aux.ang import rear_orientation_change, wrap_angle_to_0
 from lib.model.body.controller import PhysicsController
 from lib.model.modules.brain import DefaultBrain
+from lib import aux
 
 
 class LarvaOffline:
@@ -58,10 +58,10 @@ class LarvaOffline:
         d_or = self.ang_vel * dt
         self.fo = (self.fo + d_or) % (2 * np.pi)
         self.dst = self.lin_vel * dt
-        self.rear_orientation_change = rear_orientation_change(self.body_bend, self.dst, self.real_length,
+        self.rear_orientation_change = aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
                                        correction_coef=self.controller.bend_correction_coef)
         self.ro = (self.ro + self.rear_orientation_change) % (2 * np.pi)
-        self.body_bend = wrap_angle_to_0(self.fo - self.ro)
+        self.body_bend = aux.wrap_angle_to_0(self.fo - self.ro)
         self.cum_dst += self.dst
         k1 = np.array([math.cos(self.fo), math.sin(self.fo)])
         self.pos += k1 * self.dst
@@ -73,9 +73,6 @@ class LarvaOffline:
         if self.lin_vel<0:
             self.negative_speed_errors+=1
             self.lin_vel=0
-        # if self.model.engine.step_df:
-        #     self.model.engine.step_df[self.Nticks, self.unique_id, :]=[self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
-        #                                                            self.lin_vel, self.pos[0],self.pos[1]]
         self.Nticks += 1
 
     @property

@@ -4,10 +4,9 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from shapely.geometry import Point
 
-from lib.aux.colsNstr import colorname2tuple
-from lib.screen.rendering import InputBox
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
+from lib.screen.rendering import InputBox
+from lib import aux
 
 
 
@@ -29,7 +28,7 @@ class LarvaworldAgent(agentpy.Agent):
         self.initial_pos = pos
         self.pos = self.initial_pos
         if type(default_color) == str:
-            default_color = colorname2tuple(default_color)
+            default_color = aux.colorname2tuple(default_color)
         self.default_color = default_color
         self.color = self.default_color
         self.radius = radius
@@ -58,7 +57,7 @@ class LarvaworldAgent(agentpy.Agent):
 
         # Perform initial recording
         for name, codename in reporter_dic.items():
-            v = cNs.rgetattr(self, codename)
+            v = aux.rgetattr(self, codename)
             self.log[name] = [v]
 
         # Set default recording function from now on
@@ -80,7 +79,7 @@ class LarvaworldAgent(agentpy.Agent):
 
                 # Store time step
                 self.log['t'][-1] = self.model.t
-            self.log[name][-1] = cNs.rgetattr(self, codename)
+            self.log[name][-1] = aux.rgetattr(self, codename)
 
 
     def get_position(self):

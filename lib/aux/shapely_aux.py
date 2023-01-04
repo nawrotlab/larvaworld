@@ -3,15 +3,15 @@ from typing import Optional, List
 import math
 from shapely.geometry import LineString, Point
 
-def move_point(point: geometry.Point, angle: float, distance: float) -> geometry.Point:
+def move_point(p0: geometry.Point, angle: float, distance: float) -> geometry.Point:
     return geometry.Point(
-        point.x + math.cos(angle) * distance,
-        point.y + math.sin(angle) * distance)
+        p0.x + math.cos(angle) * distance,
+        p0.y + math.sin(angle) * distance)
 
 
-def radar_line(starting_point: geometry.Point, angle: float, distance: float) -> geometry.LineString:
-    distant_point = move_point(starting_point, angle, distance)
-    return geometry.LineString((starting_point, distant_point))
+def radar_line(p0: geometry.Point, angle: float, distance: float) -> geometry.LineString:
+    p1 = move_point(p0, angle, distance)
+    return geometry.LineString((p0, p1))
 
 def radar_tuple(p0: geometry.Point, angle: float, distance: float):
     p1 = geometry.Point(
@@ -20,25 +20,24 @@ def radar_tuple(p0: geometry.Point, angle: float, distance: float):
     return p0, p1
 
 
-def distance(point: tuple, angle: float, way: geometry.LineString, max_distance: float = 1000) -> Optional[float]:
-    starting_point = geometry.Point(point)
-    radar = radar_line(starting_point, angle, max_distance)
+def distance(p0: tuple, angle: float, way: geometry.LineString, max_distance: float = 1000) -> Optional[float]:
+    p00 = geometry.Point(p0)
+    radar = radar_line(p00, angle, max_distance)
 
-    intersection_points = radar.intersection(way)
-    if intersection_points.is_empty:
+    ps = radar.intersection(way)
+    if ps.is_empty:
         return None
-    return starting_point.distance(intersection_points)
+    return p00.distance(ps)
 
-def distance_multi(point: tuple, angle: float, ways: List[geometry.LineString], max_distance: float = 1000) -> Optional[float]:
-    starting_point = geometry.Point(point)
-    radar = radar_line(starting_point, angle, max_distance)
+def min_dst_to_lines_along_vector(point: tuple, angle: float, target_lines: List[geometry.LineString], max_distance: float = 1000) -> Optional[float]:
+    p0 = geometry.Point(point)
+    radar = radar_line(p0, angle, max_distance)
 
     min_dst=None
-    # dsts=[]
-    for way in ways :
-        intersection_points = radar.intersection(way)
-        if not intersection_points.is_empty:
-            dst=starting_point.distance(intersection_points)
+    for line in target_lines :
+        ps = radar.intersection(line)
+        if not ps.is_empty:
+            dst=p0.distance(ps)
             if min_dst is None or dst<min_dst:
                 min_dst=dst
     return min_dst
@@ -77,34 +76,46 @@ def segments_intersection_p(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y):
 
 
 def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
-    from lib.model.envs.obstacle import Obstacle
+
     min_dst = None
     nearest_obstacle = None
 
     for obj in obstacles:
-        if issubclass(type(obj), Obstacle):
-            obstacle = obj
+        # check collision between obstacle edges and sensor ray
+        for edge in obj.edges:
+            intersection_point = segments_intersection(sensor_ray, edge)
 
-            # check collision between obstacle edges and sensor ray
-            for edge in obstacle.edges:
-                intersection_point = segments_intersection(sensor_ray, edge)
+            if intersection_point is not None:
+                dst = distance(p0, intersection_point)
 
-                if intersection_point is not None:
-                    dst = distance(p0, intersection_point)
+                if min_dst is None or dst < min_dst:
+                    min_dst = dst
+                    nearest_obstacle = obj
 
-                    if min_dst is None or dst < min_dst:
-                        min_dst = dst
-                        nearest_obstacle = obstacle
+        # from lib.model.envs.obstacle import Obstacle
+        # if issubclass(type(obj), Obstacle):
+        #     obstacle = obj
+        #
+        #     # check collision between obstacle edges and sensor ray
+        #     for edge in obstacle.edges:
+        #         intersection_point = segments_intersection(sensor_ray, edge)
+        #
+        #         if intersection_point is not None:
+        #             dst = distance(p0, intersection_point)
+        #
+        #             if min_dst is None or dst < min_dst:
+        #                 min_dst = dst
+        #                 nearest_obstacle = obstacle
     return min_dst, nearest_obstacle
 
 
 def line_through_point(pos, angle, length, pos_as_start=False) :
     if not pos_as_start :
         length=-length
-    start = Point(pos)
-    end = Point(start.x + length * math.cos(angle),
-                start.y + length * math.sin(angle))
-    return LineString([start, end])
+    p0 = Point(pos)
+    p1 = Point(p0.x + length * math.cos(angle),
+                p0.y + length * math.sin(angle))
+    return LineString([p0, p1])
 
 
 class Point:

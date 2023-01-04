@@ -1,4 +1,3 @@
-import pandas as pd
 import random
 import typing
 from types import FunctionType
@@ -6,80 +5,9 @@ from typing import Tuple, List
 import numpy as np
 import param
 
-from lib import reg
+
 from lib.aux import dictsNlists as dNl
-
-
-def maxNdigits(array, Min=None):
-    N = len(max(array.astype(str), key=len))
-    if Min is not None:
-        N = max([N, Min])
-    return N
-
-
-def boolean_indexing(v, fillval=np.nan):
-    lens = np.array([len(item) for item in v])
-    mask = lens[:, None] > np.arange(lens.max())
-    out = np.full(mask.shape, fillval)
-    out[mask] = np.concatenate(v)
-    return out
-
-
-def concat_datasets(ddic, key='end', unit='sec'):
-    dfs = []
-    for l, d in ddic.items():
-        if key == 'end':
-            try:
-                df = d.endpoint_data
-            except:
-                df = d.read(key='end')
-        elif key == 'step':
-            try:
-                df = d.step_data
-            except:
-                df = d.read(key='step')
-        else :
-            raise
-        df['DatasetID'] = l
-        df['GroupID'] = d.group_id
-        dfs.append(df)
-    df0 = pd.concat(dfs)
-    if key == 'step':
-        df0.reset_index(level='Step', drop=False, inplace=True)
-        dts = np.unique([d.config['dt'] for l, d in ddic.items()])
-        if len(dts) == 1:
-            dt = dts[0]
-            dic = {'sec': 1, 'min': 60, 'hour': 60 * 60, 'day': 24 * 60 * 60}
-            df0['Step'] *= dt / dic[unit]
-    return df0
-
-
-def moving_average(a, n=3):
-    return np.convolve(a, np.ones((n,)) / n, mode='same')
-
-
-def arrange_index_labels(index):
-
-    ks=index.unique().tolist()
-    Nks = index.value_counts(sort=False)
-
-    def merge(k, Nk):
-        Nk1 = int((Nk - 1) / 2)
-        Nk2 = Nk - 1 - Nk1
-        return [''] * Nk1 + [k.upper()] + [''] * Nk2
-
-    new = dNl.flatten_list([merge(k, Nks[k]) for k in ks])
-    return new
-
-
-def mdict2df(mdict, columns=['symbol', 'value', 'description']):
-    data = []
-    for k, p in mdict.items():
-        entry = [getattr(p, col) for col in columns]
-        data.append(entry)
-    df = pd.DataFrame(data, columns=columns)
-    df.set_index(columns[0], inplace=True)
-    return df
+from lib import reg
 
 
 def init2mdict(d0):
@@ -129,41 +57,6 @@ def gConf(mdict, **kwargs):
         return dNl.NestDict(conf)
     else:
         return dNl.NestDict(mdict)
-
-
-def update_mdict(mdict, mmdic):
-    if mmdic is None or mdict is None:
-        return None
-    elif not isinstance(mmdic, dict) or not isinstance(mdict, dict):
-        return mdict
-    else:
-        for d, p in mdict.items():
-            new_v = mmdic[d] if d in mmdic.keys() else None
-            if isinstance(p, param.Parameterized):
-                if type(new_v) == list:
-                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
-                        new_v = tuple(new_v)
-                p.v = new_v
-            else:
-                mdict[d] = update_mdict(mdict=p, mmdic=new_v)
-        return mdict
-
-
-def update_existing_mdict(mdict, mmdic):
-    if mmdic is None:
-        return mdict
-    else:
-        for d, v in mmdic.items():
-            p = mdict[d]
-            if isinstance(p, param.Parameterized):
-                if type(v) == list:
-                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
-                        v = tuple(v)
-
-                p.v = v
-            elif isinstance(p, dict) and isinstance(v, dict):
-                mdict[d] = update_existing_mdict(mdict=p, mmdic=v)
-        return mdict
 
 
 def get_ks(d0, k0=None, ks=[]):
@@ -223,7 +116,6 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
             if self.mdict is None:
                 return None
             else :
-                from lib.aux.data_aux import gConf
                 return gConf(self.mdict)
 
         @property
@@ -487,6 +379,52 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
     h = lab if h is None else h
 
     if vparfunc is None:
+
+        def get_vfunc(dtype, lim, vs):
+            func_dic = {
+                float: param.Number,
+                int: param.Integer,
+                str: param.String,
+                bool: param.Boolean,
+                dict: param.Dict,
+                list: param.List,
+                type: param.ClassSelector,
+                List[int]: param.List,
+                List[str]: param.List,
+                List[float]: param.List,
+                List[Tuple[float]]: param.List,
+                FunctionType: param.Callable,
+                Tuple[float]: param.Range,
+                Tuple[int]: param.NumericTuple,
+                typing.TypedDict: param.Dict
+            }
+            if dtype == float and lim == (0.0, 1.0):
+                return param.Magnitude
+            if type(vs) == list and dtype in [str, int]:
+                return param.Selector
+            elif dtype in func_dic.keys():
+                return func_dic[dtype]
+            else:
+                return param.Parameter
+
+        def vpar(vfunc, v0, h, lab, lim, dv, vs):
+            f_kws = {
+                'default': v0,
+                'doc': h,
+                'label': lab,
+                'allow_None': True
+            }
+            if vfunc in [param.List, param.Number, param.Range]:
+                if lim is not None:
+                    f_kws['bounds'] = lim
+            if vfunc in [param.Range, param.Number]:
+                if dv is not None:
+                    f_kws['step'] = dv
+            if vfunc in [param.Selector]:
+                f_kws['objects'] = vs
+            func = vfunc(**f_kws, instantiate=True)
+            return func
+
         if vfunc is None:
             vfunc = get_vfunc(dtype=dtype, lim=lim, vs=vs)
         vparfunc = vpar(vfunc, v0, h, lab, lim, dv, vs)
@@ -515,59 +453,9 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
     return dNl.NestDict(kws)
 
 
-def loadConfDic(k) :
-    path = f'{reg.ROOT_DIR}/lib/conf/confDicts/{k}.txt'
-    return dNl.load_dict2(path)
 
 
-def selector_func(objects,default=None, single_choice=True, **kwargs):
-    kws = {
-        'objects': objects,
-        'default': default,
-        'allow_None': True,
-    }
-
-    kwargs.update(kws)
-    if single_choice:
-        func = param.Selector
-    else:
-        func = param.ListSelector
-    try:
-        f= func(empty_default= True,**kwargs)
-    except :
-        f=func(**kwargs)
-    return f
 
 
-def ConfID_entry(conftype,ids=None,default=None,k=None, symbol=None, single_choice=True):
-    if ids is None :
-        ids=list(loadConfDic(conftype).keys())
-
-    def ConfSelector(**kwargs):
-        def func():
-            return selector_func(objects=ids, **kwargs)
-
-        return func
-
-    from typing import List
-    from lib.aux.par_aux import sub
-
-    if single_choice:
-        t = str
-        IDstr = 'ID'
-    else:
-        t = List[str]
-        IDstr = 'IDs'
-
-    low = conftype.lower()
-    if k is None:
-        k = f'{low}{IDstr}'
-    if symbol is None:
-        symbol = sub(IDstr, low)
-    d = {'dtype': t, 'vparfunc': ConfSelector(default=default, single_choice=single_choice),
-         'vs': ids, 'v': default,
-         'symbol': symbol, 'k': k, 'h': f'The {conftype} configuration {IDstr}',
-         'disp': f'{conftype} {IDstr}'}
-    return dNl.NestDict(d)
 
 

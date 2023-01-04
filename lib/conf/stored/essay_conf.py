@@ -1,11 +1,7 @@
 import shutil
 
-import lib.aux.data_aux
-import lib.reg
-import lib.registry
-from lib import reg
-
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
+import lib.util.data_aux
+from lib import reg, aux
 
 
 class Essay:
@@ -179,7 +175,7 @@ class RvsS_Essay(Essay):
 
     def get_entrylist(self, datasets, substrates, durs, qs, hs, G):
         entrylist = []
-        pathlength_ls = dNl.flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in substrates])
+        pathlength_ls = aux.flatten_list([[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in substrates])
         ls0 = [r'$for^{R}$', r'$for^{S}$']
         kws00 = {
             'leg_cols': ['black', 'white'],
@@ -187,8 +183,8 @@ class RvsS_Essay(Essay):
         }
         for exp, dds in datasets.items():
             Ndds = len(dds)
-            ds = dNl.flatten_list(dds)
-            ls = pathlength_ls if exp == 'PATHLENGTH' else dNl.flatten_list([ls0] * Ndds)
+            ds = aux.flatten_list(dds)
+            ls = pathlength_ls if exp == 'PATHLENGTH' else aux.flatten_list([ls0] * Ndds)
             kws0 = {
                 'datasets': ds,
                 'labels': ls,
@@ -238,7 +234,7 @@ class RvsS_Essay(Essay):
                 plotID = 'food intake (timeplot)'
             else:
                 raise
-            entry = G.entry(ID=plotID, name=exp, args=dNl.NestDict(kws))
+            entry = G.entry(ID=plotID, name=exp, args=aux.NestDict(kws))
             entrylist.append(entry)
         return entrylist
 
@@ -267,9 +263,9 @@ class RvsS_Essay(Essay):
             #
             def dsNls(ds0, lls=None):
                 if lls is None:
-                    lls = dNl.flatten_list([ls] * len(ds0))
-                dds = dNl.flatten_list(ds0)
-                deb_dicts = dNl.flatten_list([d.load_dicts('deb') for d in dds])
+                    lls = aux.flatten_list([ls] * len(ds0))
+                dds = aux.flatten_list(ds0)
+                deb_dicts = aux.flatten_list([d.load_dicts('deb') for d in dds])
                 return {'datasets': dds,
                         'labels': lls,
                         'deb_dicts': deb_dicts,
@@ -377,7 +373,7 @@ class DoublePatch_Essay(Essay):
             'sample': 'None.150controls',
         }
 
-        return dNl.NestDict({
+        return aux.NestDict({
             mID0: self.GT.dict.LarvaGroup.gConf(default_color=mcol,
                                                             model=self.CT.dict.Model.loadConf(mID),
                                                             **kws0)
@@ -393,7 +389,7 @@ class DoublePatch_Essay(Essay):
 
                 }
 
-        return dNl.NestDict({
+        return aux.NestDict({
             'Left_patch': self.CT.dict.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
             'Right_patch': self.CT.dict.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
 
@@ -441,8 +437,8 @@ class DoublePatch_Essay(Essay):
 
             }
 
-            confs[n]=[dNl.NestDict(self.CT.dict.Exp.gConf(**kws))]
-        return dNl.NestDict(confs)
+            confs[n]=[aux.NestDict(self.CT.dict.Exp.gConf(**kws))]
+        return aux.NestDict(confs)
 
 
 
@@ -522,10 +518,10 @@ class Chemotaxis_Essay(Essay):
             'controls': {'model': mC, 'color': 'magenta'},
 
         }
-        return dNl.NestDict(models)
+        return aux.NestDict(models)
 
     def get_models2(self, gain):
-        cols = cNs.N_colors(6)
+        cols = aux.N_colors(6)
         i = 0
         models = {}
         for Tmod in ['NEU', 'SIN']:
@@ -538,10 +534,10 @@ class Chemotaxis_Essay(Essay):
                     f'brain.interference_params.attenuation_max': 0.0,
                 }), 'color': cols[i]}
                 i += 1
-        return dNl.NestDict(models)
+        return aux.NestDict(models)
 
     def get_models3(self, gain):
-        cols = cNs.N_colors(6)
+        cols = aux.N_colors(6)
         i = 0
         models = {}
         for Tmod in ['NEU', 'SIN']:
@@ -556,10 +552,10 @@ class Chemotaxis_Essay(Essay):
                 }), 'color': cols[i]}
                 i += 1
 
-        return dNl.NestDict(models)
+        return aux.NestDict(models)
 
     def get_models4(self, gain):
-        cols = cNs.N_colors(4)
+        cols = aux.N_colors(4)
         i = 0
         models = {}
         for Tmod in ['NEU', 'SIN']:
@@ -572,7 +568,7 @@ class Chemotaxis_Essay(Essay):
                 }), 'color': cols[i]}
                 i += 1
 
-        return dNl.NestDict(models)
+        return aux.NestDict(models)
 
     def chemo_exps(self, models):
         lg_kws = {
@@ -721,7 +717,7 @@ def Essay_dict():
     for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
         e=E()
         d[e.type]=e.exp_dict
-    return dNl.NestDict(d)
+    return aux.NestDict(d)
 
 
 

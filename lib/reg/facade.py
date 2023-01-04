@@ -1,15 +1,15 @@
-from lib.aux import dictsNlists as dNl
+from lib import aux
 
 class FunctionDict:
     def __init__(self):
-        self.graphs = dNl.NestDict()
-        self.stored_confs = dNl.NestDict()
+        self.graphs = aux.NestDict()
+        self.stored_confs = aux.NestDict()
         # from lib.registry.distro import generate_distro_database
         # self.distro_database = generate_distro_database()
-        self.preprocessing = dNl.NestDict()
-        self.processing = dNl.NestDict()
-        self.annotating = dNl.NestDict()
-        self.param_computing = dNl.NestDict()
+        self.preprocessing = aux.NestDict()
+        self.processing = aux.NestDict()
+        self.annotating = aux.NestDict()
+        self.param_computing = aux.NestDict()
         # self.annotation = annotation_funcs()
 
     def param(self, name):

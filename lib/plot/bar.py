@@ -5,12 +5,11 @@ import numpy as np
 from matplotlib.patches import Patch
 from scipy.stats import ttest_ind
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
+
 
 from lib.plot.aux import label_diff
 from lib.plot.base import AutoLoadPlot, AutoPlot, AutoBasePlot
-from lib import reg
-# from lib import plot
+from lib import reg, aux
 
 
 @reg.funcs.graph('error barplot')
@@ -34,8 +33,8 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
     for ii, (k, eval_df) in enumerate(evaluation.items()):
         lab = labels[k] if labels is not None else k
         df = error_dict[k]
-        color = dNl.flatten_list(eval_df['par_colors'].values.tolist())
-        df = df[dNl.flatten_list(eval_df['symbols'].values.tolist())]
+        color = aux.flatten_list(eval_df['par_colors'].values.tolist())
+        df = df[aux.flatten_list(eval_df['symbols'].values.tolist())]
         df.plot(kind='bar', ax=P.axs[ii], ylabel=lab, rot=0, legend=False, color=color, width=0.6)
         build_legend(P.axs[ii], eval_df)
         P.conf_ax(ii, title=titles[ii], xlab='', yMaxN=4)
@@ -59,7 +58,7 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
         Npairs = len(coupled_labels)
         N = int(Nds / Npairs)
         if leg_cols is None:
-            leg_cols = cNs.N_colors(N)
+            leg_cols = aux.N_colors(N)
         colors = leg_cols * Npairs
         leg_ids = P.labels[:N]
         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
@@ -119,7 +118,7 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
         Npairs = len(coupled_labels)
         N = int(Nds / Npairs)
         if leg_cols is None:
-            leg_cols = cNs.N_colors(N)
+            leg_cols = aux.N_colors(N)
         colors = leg_cols * Npairs
         leg_ids = P.labels[:N]
         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])

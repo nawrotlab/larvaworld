@@ -5,12 +5,11 @@ from typing import Union
 import numpy as np
 from shapely.geometry import Point
 from shapely.ops import cascaded_union
-# from dataclasses import dataclass
+
+
 
 from lib.model.body.segment import Box2DPolygon, DefaultSegment
-from lib.aux import dictsNlists as dNl, sim_aux, xy_aux, ang
-from lib import reg
-
+from lib import reg, aux
 
 
 class LarvaShape:
@@ -34,7 +33,7 @@ class LarvaShape:
             seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = np.array(seg_ratio)
         self.contour_points = Body_dict()[shape]['points']
-        self.base_seg_vertices = sim_aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
+        self.base_seg_vertices = aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
         self.seg_lengths = self.sim_length * self.seg_ratio
         self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
 
@@ -519,8 +518,8 @@ class LarvaBody(LarvaShape):
 
     def set_contour(self, segs, Ncontour=22):
         vertices = [np.array(seg.vertices[0]) for seg in segs]
-        l_side = dNl.flatten_list([v[:int(len(v) / 2)] for v in vertices])
-        r_side = dNl.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+        l_side = aux.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+        r_side = aux.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
         r_side.reverse()
         total_contour = l_side + r_side
         if len(total_contour) > Ncontour:
@@ -560,7 +559,7 @@ class LarvaBody(LarvaShape):
         jdx = idx + 1
         if self.Nsegs > jdx:
             o_bound = self.segs[jdx].get_orientation()
-            dang = ang_aux.wrap_angle_to_0(o_bound - ho0)
+            dang = aux.wrap_angle_to_0(o_bound - ho0)
         else:
             dang = 0
         return (-np.pi + dang), (np.pi + dang)
@@ -592,7 +591,7 @@ class LarvaBody(LarvaShape):
         self.rotator.bullet = True
         l0 = np.mean(self.seg_lengths)
         w = l0 / 10
-        rotator_shape = Box2D.b2ChainShape(vertices=sim_aux.circle_to_polygon(5, l0).tolist())
+        rotator_shape = Box2D.b2ChainShape(vertices=aux.circle_to_polygon(5, l0).tolist())
         self.rotator.CreateFixture(shape=rotator_shape)
 
         dist_kws = {'collideConnected': False, 'length': l0 * 0.01}
@@ -714,7 +713,7 @@ def draw_selected_body(viewer, pos, contour_xy, radius, color):
 
 
 def draw_body_orientation(viewer, pos, orientation, radius, color):
-    viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
+    viewer.draw_line(pos, aux.xy_projection(pos, orientation, radius * 3),
                      color=color, width=radius / 10)
     # viewer.draw_line(self.midline[-1], xy_aux.xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),
     #                  color=self.color, width=self.radius / 10)

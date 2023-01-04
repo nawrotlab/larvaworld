@@ -4,8 +4,7 @@ import pygame
 from shapely.affinity import affine_transform
 from shapely.geometry import LineString, Polygon
 
-from lib.aux import dictsNlists as dNl, ang, sim_aux, shapely_aux
-from lib.aux.colsNstr import colorname2tuple, Color
+from lib import aux
 
 
 class Obstacle:
@@ -28,10 +27,10 @@ class Box(Obstacle):
         self.y = y
         self.size = size
 
-        vert1 = shapely_aux.Point(x - size / 2, y - size / 2)
-        vert2 = shapely_aux.Point(x + size / 2, y - size / 2)
-        vert3 = shapely_aux.Point(x + size / 2, y + size / 2)
-        vert4 = shapely_aux.Point(x - size / 2, y + size / 2)
+        vert1 = aux.Point(x - size / 2, y - size / 2)
+        vert2 = aux.Point(x + size / 2, y - size / 2)
+        vert3 = aux.Point(x + size / 2, y + size / 2)
+        vert4 = aux.Point(x - size / 2, y + size / 2)
 
         vertices = [(vert1.x, vert1.y), (vert2.x, vert2.y), (vert3.x, vert3.y), (vert4.x, vert4.y)]
         edges = [[vert1, vert2], [vert2, vert3], [vert3, vert4], [vert4, vert1]]
@@ -43,7 +42,7 @@ class Box(Obstacle):
     def draw_label(self, screen):
         if pygame.font and self.unique_id is not None:
             font = pygame.font.Font(None, 24)
-            text = font.render(str(self.unique_id), 1, Color.YELLOW, Color.DARK_GRAY)
+            text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
             text_pos = pygame.Rect(self.x, self.y, 50, 50)
             screen.blit(text, text_pos)
 
@@ -65,7 +64,7 @@ class Wall(Obstacle):
     def draw_label(self, screen):
         if pygame.font and self.unique_id is not None:
             font = pygame.font.Font(None, 24)
-            text = font.render(str(self.unique_id), 1, Color.YELLOW, Color.DARK_GRAY)
+            text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
             rect_x = (self.point1.x + self.point2.x) / 2
             rect_y = (self.point1.y + self.point2.y) / 2
 
@@ -94,8 +93,8 @@ class Border(Obstacle):
         for l in self.border_lines:
             # print(list(l.coords))
             (x1, y1), (x2, y2) = list(l.coords)
-            point1 = shapely_aux.Point(x1, y1)
-            point2 = shapely_aux.Point(x2, y2)
+            point1 = aux.Point(x1, y1)
+            point2 = aux.Point(x2, y2)
             edges.append([point1, point2])
 
             # wall = Wall(point1, point2, color=self.default_color)
@@ -106,7 +105,7 @@ class Border(Obstacle):
         super().__init__(vertices, edges, default_color, unique_id)
 
     def define_lines(self, points, s=1):
-        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in dNl.group_list_by_n(points, 2)]
+        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
 
         T = [s, 0, 0, s, 0, 0]
         ls = [affine_transform(l, T) for l in lines]
@@ -121,7 +120,7 @@ class Border(Obstacle):
             #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 
     def contained(self, p):
-        return any([l.distance(shapely_aux.Point(p)) < self.width for l in self.border_lines])
+        return any([l.distance(aux.Point(p)) < self.width for l in self.border_lines])
 
     def set_id(self, id):
         self.unique_id = id
@@ -135,7 +134,7 @@ class Arena(Obstacle):
         if vertices is None :
             if arena_shape == 'circular':
                 # This is a circle_to_polygon shape from the function
-                vertices = sim_aux.circle_to_polygon(60, X / 2)
+                vertices = aux.circle_to_polygon(60, X / 2)
             elif arena_shape == 'rectangular':
                 # This is a rectangular shape
                 vertices = np.array([(-X / 2, -Y / 2),
@@ -145,5 +144,5 @@ class Arena(Obstacle):
             else :
                 raise
         self.polygon = Polygon(vertices * k)
-        edges = [[shapely_aux.Point(x1,y1), shapely_aux.Point(x2,y2)] for (x1,y1), (x2,y2) in dNl.group_list_by_n(vertices, 2)]
+        edges = [[aux.Point(x1,y1), aux.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
         super().__init__(vertices, edges, default_color, unique_id)

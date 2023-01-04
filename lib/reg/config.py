@@ -1,12 +1,12 @@
 import copy
 
 import param
-from lib import reg
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, data_aux
+from lib import reg, aux
+
 
 def confInit_ks(k):
 
-    d = dNl.NestDict({
+    d = aux.NestDict({
         'Ref': None,
         'Eval': 'eval_conf',
         'Replay': 'replay',
@@ -32,7 +32,39 @@ def confInit_ks(k):
     return d[k]
 
 
+def update_mdict(mdict, mmdic):
+    if mmdic is None or mdict is None:
+        return None
+    elif not isinstance(mmdic, dict) or not isinstance(mdict, dict):
+        return mdict
+    else:
+        for d, p in mdict.items():
+            new_v = mmdic[d] if d in mmdic.keys() else None
+            if isinstance(p, param.Parameterized):
+                if type(new_v) == list:
+                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
+                        new_v = tuple(new_v)
+                p.v = new_v
+            else:
+                mdict[d] = update_mdict(mdict=p, mmdic=new_v)
+        return mdict
 
+
+def update_existing_mdict(mdict, mmdic):
+    if mmdic is None:
+        return mdict
+    else:
+        for d, v in mmdic.items():
+            p = mdict[d]
+            if isinstance(p, param.Parameterized):
+                if type(v) == list:
+                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
+                        v = tuple(v)
+
+                p.v = v
+            elif isinstance(p, dict) and isinstance(v, dict):
+                mdict[d] = update_existing_mdict(mdict=p, mmdic=v)
+        return mdict
 
 
 class ConfType(reg.base.BaseType):
@@ -47,14 +79,14 @@ class ConfType(reg.base.BaseType):
         # print(self.k, self.use_pickle)
         try:
 
-            return dNl.load_dict(self.path, self.use_pickle)
+            return aux.load_dict(self.path, self.use_pickle)
         except:
-            return dNl.NestDict()
+            return aux.NestDict()
 
     def loadConf(self, id):
         d = self.loadDict()
         if id in d.keys():
-            return dNl.NestDict(d[id])
+            return aux.NestDict(d[id])
         else:
             print(f'{self.k} Configuration {id} does not exist')
             raise ValueError()
@@ -76,7 +108,7 @@ class ConfType(reg.base.BaseType):
                     conf = ct.loadConf(p.v)
             if conf is not None:
                 mm = copy.deepcopy(ct.mdict)
-                mm = data_aux.update_existing_mdict(mm, conf)
+                mm = update_existing_mdict(mm, conf)
                 return mm
             else :
                 return ct.mdict
@@ -134,14 +166,14 @@ class ConfType(reg.base.BaseType):
         d = self.loadDict()
 
         if id in d.keys() and mode == 'update':
-            d[id] = dNl.update_nestdict(d[id], dNl.flatten_dict(conf))
+            d[id] = aux.update_nestdict(d[id], aux.flatten_dict(conf))
         else:
-            d[id] = dNl.NestDict(conf)
+            d[id] = aux.NestDict(conf)
         self.saveDict(d)
         reg.vprint(f'{self.k} Configuration saved under the id : {id}')
 
     def saveDict(self, d):
-        dNl.save_dict(d, self.path, self.use_pickle)
+        aux.save_dict(d, self.path, self.use_pickle)
 
 
     def resetDict(self):
@@ -212,7 +244,7 @@ class ConfType(reg.base.BaseType):
         eval = {}
         for id, conf in d.items():
             try:
-                eval[id] =data_aux.update_mdict(self.mdict, conf)
+                eval[id] =update_mdict(self.mdict, conf)
             except:
                 eval[id] = None
         return eval
@@ -225,7 +257,7 @@ class ConfTypeDict:
                           'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
 
         subk_dict = self.build_subk_dict()
-        self.dict = dNl.NestDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in subk_dict.items()})
+        self.dict = aux.NestDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in subk_dict.items()})
         # self.dict = self.build(self.conftypes)
         self.build_mDicts(init_dic)
         reg.vprint('completed ConfTypes',0)
@@ -301,7 +333,7 @@ class GroupType(reg.base.BaseType):
                 mm = copy.deepcopy(ct.mdict)
                 # print(m, conf)
 
-                mm = data_aux.update_existing_mdict(mm, conf)
+                mm = update_existing_mdict(mm, conf)
 
                 return mm
             else :
@@ -428,7 +460,7 @@ class GroupType(reg.base.BaseType):
             }
 
             lgs.update(self.entry(id, **kws))
-        return dNl.NestDict(lgs)
+        return aux.NestDict(lgs)
 
     def lg_entry(self, id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors=(0.0, 360.0),
            s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
@@ -453,8 +485,8 @@ class GroupType(reg.base.BaseType):
             ids = mIDs
         N = len(mIDs)
         if cs is None :
-            cs = cNs.N_colors(N)
-        return dNl.NestDict(dNl.merge_dicts([self.lg_entry(id, c=c, mID=mID, **kwargs) for mID, c, id in zip(mIDs, cs, ids)]))
+            cs = aux.N_colors(N)
+        return aux.NestDict(aux.merge_dicts([self.lg_entry(id, c=c, mID=mID, **kwargs) for mID, c, id in zip(mIDs, cs, ids)]))
 
 
 
@@ -467,14 +499,14 @@ class GroupTypeDict:
         self.grouptypes = ['LarvaGroup', 'SourceGroup', 'epoch']
         subk_dict = self.build_subk_dict(self.grouptypes)
 
-        self.dict = dNl.NestDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in subk_dict.items()})
+        self.dict = aux.NestDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in subk_dict.items()})
         # self.dict = self.build(self.grouptypes, init_dic)
 
         reg.vprint('completed GroupTypes',0)
 
     def build_subk_dict(self, ks):
-        d0 = dNl.NestDict({k: {} for k in ks})
-        d1 = dNl.NestDict({
+        d0 = aux.NestDict({k: {} for k in ks})
+        d1 = aux.NestDict({
             'LarvaGroup': {'Model'},
             # 'Ga': {'env_params': 'Env'},
             # 'Exp': {'env_params': 'Env',

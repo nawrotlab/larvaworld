@@ -3,14 +3,13 @@ import shutil
 import numpy as np
 import warnings
 
-from lib.aux import dictsNlists as dNl, xy_aux, naming as nam, stdout
+
+
+
+from lib import reg, aux, decorators
+from lib.aux import naming as nam
 
 from lib.process.annotation import annotate
-from lib.aux.stor_aux import read, storeH5
-from lib.aux.dictsNlists import loadSoloDics
-
-from lib import reg
-from lib import decorators
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
@@ -94,7 +93,7 @@ class _LarvaDataset:
         for h5_k in h5_ks:
 
             pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
-            pps=dNl.unique_list(pps)
+            pps=aux.unique_list(pps)
             if len(pps) > 0:
                 self.storeH5(df=s[pps], key=h5_k, mode=self.load_h5_kdic[h5_k])
 
@@ -152,7 +151,7 @@ class _LarvaDataset:
         refID=self.retrieveRefID(add_reference=add_reference, refID=refID)
 
         self.config=update_config(self, self.config)
-        dNl.save_dict(self.config,reg.datapath('conf', self.config.dir))
+        aux.save_dict(self.config,reg.datapath('conf', self.config.dir))
 
 
 
@@ -196,13 +195,13 @@ class _LarvaDataset:
     def storeH5(self, df, key, filepath_key=None, mode=None):
         if filepath_key is None :
             filepath_key=key
-        storeH5(df=df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
+        aux.storeH5(df=df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
 
     def read(self, key=None,file=None):
         filepath_key = file
         if filepath_key is None :
             filepath_key=key
-        return read(reg.datapath(filepath_key,self.dir), key)
+        return aux.read(reg.datapath(filepath_key,self.dir), key)
 
     def store_distros(self, ks=None):
         if ks is None :
@@ -221,10 +220,10 @@ class _LarvaDataset:
 
 
     def storeDic(self, d, filepath_key,**kwargs):
-        dNl.save_dict(d,reg.datapath(filepath_key,self.dir),**kwargs)
+        aux.save_dict(d,reg.datapath(filepath_key,self.dir),**kwargs)
 
     def loadDic(self, filepath_key,**kwargs):
-        return dNl.load_dict(reg.datapath(filepath_key,self.dir),**kwargs)
+        return aux.load_dict(reg.datapath(filepath_key,self.dir),**kwargs)
 
     def load_traj(self, mode='default'):
         df=self.read(key=mode, file='traj')
@@ -249,7 +248,7 @@ class _LarvaDataset:
         if type in ds0 and all([id in ds0[type].keys() for id in ids]):
             ds = [ds0[type][id] for id in ids]
         else:
-            ds= loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
+            ds= aux.loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
         return ds
 
     def visualize(self, **kwargs):
@@ -312,7 +311,7 @@ class _LarvaDataset:
                 add_reference=False, store=False, **kwargs):
 
 
-        with stdout.suppress_stdout(show_output):
+        with aux.suppress_stdout(show_output):
             warnings.filterwarnings('ignore')
             cc0 = {
                     'recompute': recompute,
@@ -370,7 +369,7 @@ class _LarvaDataset:
 
         if key=='distro':
             try:
-                return read(key=par,path=reg.datapath("distro", self.dir))
+                return aux.read(key=par,path=reg.datapath("distro", self.dir))
             except:
                 return self.get_par(par, key='step')
 
@@ -538,18 +537,18 @@ def retrieve_config(dir=None,verbose=1, **kwargs):
         f=reg.datapath('conf',dir)
         if os.path.isfile(f):
             try:
-                c = dNl.load_dict(f, use_pickle=False)
+                c = aux.load_dict(f, use_pickle=False)
                 reg.vprint(f'Loaded existing conf {c.id} with pickle False',verbose)
-                return dNl.NestDict(c)
+                return aux.NestDict(c)
             except:
                 try:
-                    c = dNl.load_dict(f, use_pickle=True)
+                    c = aux.load_dict(f, use_pickle=True)
                     reg.vprint(f'Loaded existing conf {c.id} with pickle True', verbose)
-                    return dNl.NestDict(c)
+                    return aux.NestDict(c)
                 except:
                     pass
     reg.vprint(f'Generated new conf {c.id} with pickle True', verbose)
-    return dNl.NestDict(c)
+    return aux.NestDict(c)
 
 
 def update_config(obj, c) :

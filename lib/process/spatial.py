@@ -4,11 +4,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-
-# from lib.aux.stor_aux import read, storeH5, aux.stor.store_distros, get_distros
-from lib import reg
-# from lib.aux import dictsNlists as aux.dNl, aux.naming as aux.nam, aux.xy, aux.ang,aux.vel
-from lib import aux
+from lib import reg, aux
 
 
 def comp_linear(s, e, c, mode='minimal'):
@@ -48,7 +44,7 @@ def comp_linear(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = aux.vel.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
+            v, d = aux.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -94,7 +90,7 @@ def comp_spatial(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, id in enumerate(c.agent_ids):
-            v, d = aux.vel.compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
+            v, d = aux.compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -529,9 +525,9 @@ def comp_wind_metrics(s, e, c, **kwargs):
             dx = xy[:, 0] - origin[0]
             dy = xy[:, 1] - origin[1]
             angs = np.arctan2(dy, dx)
-            a = np.array([aux.ang.angle_dif(ang, woo) for ang in angs])
+            a = np.array([aux.angle_dif(ang, woo) for ang in angs])
             s.loc[(slice(None), id), 'anemotaxis'] = d * np.cos(a)
-        s[aux.nam.bearing2('wind')] = s.apply(lambda r: aux.ang.angle_dif(r[aux.nam.orient('front')], wo), axis=1)
+        s[aux.nam.bearing2('wind')] = s.apply(lambda r: aux.angle_dif(r[aux.nam.orient('front')], wo), axis=1)
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 
@@ -546,7 +542,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         dy = xy1.values[:, 1] - xy0.values[:, 1]
         d = np.sqrt(dx ** 2 + dy ** 2)
         angs = np.arctan2(dy, dx)
-        a = np.array([aux.ang.angle_dif(ang, woo) for ang in angs])
+        a = np.array([aux.angle_dif(ang, woo) for ang in angs])
         e['anemotaxis'] = d * np.cos(a)
         # print(e['anemotaxis'])
 
@@ -660,8 +656,8 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
             s.loc[(slice(None), id), pars] = [
-                aux.dNl.flatten_list(aux.ang.rotate_multiple_points(points=np.array(aux.dNl.group_list_by_n(d[i].tolist(), 2)),
-                                                    radians=a)) for i, a in enumerate(angle)]
+                aux.dNl.flatten_list(aux.rotate_points_around_point(points=np.array(aux.dNl.group_list_by_n(d[i].tolist(), 2)),
+                                                                        radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
     bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(len(ids))]

@@ -1,7 +1,7 @@
 import math
 import pygame
-from lib.aux.colsNstr import Color
 
+from lib import aux
 
 class RotSurface:
 
@@ -78,7 +78,7 @@ class LightSource(RotSurface):
     def draw_label(self, screen):
         if pygame.font and self.label is not None:
             font = pygame.font.Font(None, 24)
-            text = font.render(str(self.label), 1, Color.YELLOW, Color.DARK_GRAY)
+            text = font.render(str(self.label), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
             text_pos = pygame.Rect(self.x + (self.size / 2), self.y + (self.size / 2), 50, 50)
             screen.blit(text, text_pos)
 

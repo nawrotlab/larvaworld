@@ -9,10 +9,10 @@ from typing import Any
 from mesa.space import ContinuousSpace
 from shapely.geometry import Polygon
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, sim_aux, xy_aux
+
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import NamedRandomActivation
-
+from lib import aux
 
 
 class BaseWorld:
@@ -52,7 +52,7 @@ class BaseWorld:
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
-        self.env_pars = dNl.NestDict(env_params)
+        self.env_pars = aux.NestDict(env_params)
 
         self.create_arena(self.env_pars.arena.arena_dims, self.env_pars.arena.arena_shape)
         self.space = self.create_space(torus=self.env_pars.arena.torus)
@@ -79,7 +79,7 @@ class BaseWorld:
 
         self.food_grid = None
         self.foodtypes = get_all_foodtypes(self.env_pars.food_params)
-        self.source_xy = sim_aux.get_source_xy(self.env_pars.food_params)
+        self.source_xy = aux.get_source_xy(self.env_pars.food_params)
 
         self.create_schedules()
         self._place_food(self.env_pars.food_params)
@@ -99,7 +99,7 @@ class BaseWorld:
                                               (X / 2, -Y / 2)])
         if arena_shape == 'circular':
             # This is a circle_to_polygon shape from the function
-            self.unscaled_tank_shape = sim_aux.circle_to_polygon(60, X / 2)
+            self.unscaled_tank_shape = aux.circle_to_polygon(60, X / 2)
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
@@ -161,7 +161,7 @@ class BaseWorld:
             from lib.model.envs._space import FoodGrid
             self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
         for gID, gConf in food_pars.source_groups.items():
-            ps = xy_aux.generate_xy_distro(**gConf.distribution)
+            ps = aux.generate_xy_distro(**gConf.distribution)
 
 
             for i, p in enumerate(ps):
@@ -176,7 +176,7 @@ class BaseWorld:
         if self.Box2D:
             from Box2D import b2World, b2ChainShape, b2EdgeShape
             f._body = self.space.CreateStaticBody(position=pos)
-            shape = sim_aux.circle_to_polygon(60, f.radius)
+            shape = aux.circle_to_polygon(60, f.radius)
             f._body.CreateFixture(shape=b2ChainShape(vertices=shape.tolist()))
             f._body.fixtures[0].filterData.groupIndex = -1
         else:
@@ -242,18 +242,17 @@ class BaseWorld:
         # Xdim, Ydim = self.arena_dims
 
         from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
-        # sources = self.get_food() + self.get_flies()
-        ids = dNl.unique_list([s.odor_id for s in sources if s.odor_id is not None])
+        ids = aux.unique_list([s.odor_id for s in sources if s.odor_id is not None])
         # layers = {}
         for id in ids:
             od_sources = [f for f in sources if f.odor_id == id]
-            temp = dNl.unique_list([s.default_color for s in od_sources])
+            temp = aux.unique_list([s.default_color for s in od_sources])
             if len(temp) == 1:
                 c0 = temp[0]
             elif len(temp) == 3 and all([type(k) == float] for k in temp):
                 c0 = temp
             else:
-                c0 = cNs.random_colors(1)[0]
+                c0 = aux.random_colors(1)[0]
             kwargs = {
                 'model': self,
                 'unique_id': id,
@@ -284,7 +283,7 @@ class BaseWorld:
     def move_larvae_to_center(self):
         N = len(self.get_flies())
         orientations = np.random.uniform(low=0.0, high=np.pi * 2, size=N).tolist()
-        positions = xy_aux.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0),
+        positions = aux.generate_xy_distro(N=N, mode='uniform', scale=(0.005, 0.015), loc=(0.0, 0.0),
                                               shape='oval')
 
         for l, p, o in zip(self.get_flies(), positions, orientations):
@@ -309,7 +308,7 @@ def get_all_foodtypes(food_params):
     gr = {
         food_params.food_grid.unique_id: food_params.food_grid.default_color} if food_params.food_grid is not None else {}
     ids = {**gr, **su, **sg}
-    ks = dNl.unique_list(list(ids.keys()))
+    ks = aux.unique_list(list(ids.keys()))
     try:
         ids = {k: list(np.array(ids[k]) / 255) for k in ks}
     except:

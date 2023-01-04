@@ -1,9 +1,9 @@
 import numpy as np
 
 
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import naming as nam
 from lib.reg import funcs
-
+from lib import aux
 
 @funcs.param("track_par")
 def track_par_func(chunk, par):
@@ -32,7 +32,7 @@ def chunk_func(kc, store=False):
     else:
         func = None
         required_ks = []
-    return dNl.NestDict({'func': func, 'required_ks': required_ks})
+    return aux.NestDict({'func': func, 'required_ks': required_ks})
 
 @funcs.param("dsp")
 def dsp_func(range):
@@ -128,17 +128,17 @@ def tr_func(pc):
 
 @funcs.param("unwrap")
 def unwrap_func(par, in_deg):
-    from lib.aux.ang import unwrap_rad
+    # from lib.aux.ang import unwrap_rad
 
     def func(d):
         s, c = d.step_data, d.config
-        unwrap_rad(s, c, par, in_deg)
+        aux.unwrap_rad(s, c, par, in_deg)
 
     return func
 
 @funcs.param("dst")
 def dst_func(point=''):
-    from lib.aux.xy_aux import comp_dst
+    from lib.aux.xy import comp_dst
 
     def func(d):
         s, c = d.step_data, d.config

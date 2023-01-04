@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from lib.aux import dictsNlists as dNl, naming as nam, sim_aux, xy_aux
-from lib import reg
+from lib.aux import naming as nam
+from lib import reg, aux
 
 
 
@@ -22,7 +22,7 @@ def filter(s, c, filter_f=2, inplace=True, recompute=False, **kwargs):
     pars = nam.xy(points, flat=True)
     pars = [p for p in pars if p in s.columns]
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
-    f_array = sim_aux.apply_filter_to_array_with_nans_multidim(data, freq=filter_f, fr=1 / c.dt)
+    f_array = aux.apply_filter_to_array_with_nans_multidim(data, freq=filter_f, fr=1 / c.dt)
     fpars = nam.filt(pars) if not inplace else pars
     for j, p in enumerate(fpars):
         s[p] = f_array[:, j, :].flatten()
@@ -37,7 +37,7 @@ def interpolate_nan_values(s, c, pars=None, **kwargs):
     pars = [p for p in pars if p in s.columns]
     for p in pars:
         for id in s.index.unique('AgentID').values:
-            s.loc[(slice(None), id), p] = xy_aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
+            s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     print('All parameters interpolated')
 
 @reg.funcs.preproc("rescale_by")

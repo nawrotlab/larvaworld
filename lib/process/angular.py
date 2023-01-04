@@ -1,11 +1,9 @@
 import numpy as np
 
-# from lib.aux.stor_aux import store_distros, get_distros, storeH5
-# from lib.aux import dictsNlists as dNl, colsNstr as cNs, aux.naming as aux.nam, aux.ang
 from lib.process.aux import comp_extrema
 
-from lib import aux
-from lib import reg
+from lib import reg, aux
+
 
 
 def comp_angles(s, e, c, mode='full'):
@@ -32,7 +30,7 @@ def comp_angles(s, e, c, mode='full'):
     Axy = np.reshape(Axy, (Nticks, Npoints, 2))
     A = np.zeros([Nangles, Nticks]) * np.nan
     for i in range(Nticks):
-        A[:, i] = np.array([aux.ang.angle(Axy[i, j + 2, :], Axy[i, j + 1, :], Axy[i, j, :]) for j in range(Nangles)])
+        A[:, i] = np.array([aux.angle_from_3points(Axy[i, j + 2, :], Axy[i, j + 1, :], Axy[i, j, :]) for j in range(Nangles)])
     for z, a in enumerate(angles):
         s[a] = A[z].T
     print('All angles computed')
@@ -51,7 +49,7 @@ def comp_bend(s, e, c, mode='minimal'):
         return
     elif b_conf == 'from_vectors':
         print(f'Computing bending angle as the difference between front and rear orients')
-        s['bend'] = s.apply(lambda r: aux.ang.angle_dif(r[aux.nam.orient('front')], r[aux.nam.orient('rear')]), axis=1)
+        s['bend'] = s.apply(lambda r: aux.angle_dif(r[aux.nam.orient('front')], r[aux.nam.orient('rear')]), axis=1)
     elif b_conf == 'from_angles':
         bend_angles = comp_angles(s, e, c, mode=mode)
         print(f'Computing bending angle as the sum of the first {len(bend_angles)} front angles')
@@ -108,7 +106,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     cc = np.zeros([Npars, Nticks]) * np.nan
     for i in range(Nticks):
         for j in range(Npars):
-            cc[j, i] = aux.ang.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
+            cc[j, i] = aux.angle_to_x_axis(xy_ar[i, 2 * j, :], xy_ar[i, 2 * j + 1, :])
     for z, a in enumerate(pars):
         s[a] = cc[z].T
         e[aux.nam.initial(a)] = s[a].dropna().groupby('AgentID').first()
@@ -125,7 +123,7 @@ def comp_orientations(s, e, c, mode='minimal'):
         xy_ar = np.reshape(xy_ar0, (Nticks, N + 1, 2))
         cc = np.zeros([N, Nticks]) * np.nan
         for i in range(Nticks):
-            cc[:, i] = np.array([aux.ang.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
+            cc[:, i] = np.array([aux.angle_to_x_axis(xy_ar[i, j + 1, :], xy_ar[i, j, :]) for j in range(N)])
         for z, a in enumerate(ors):
             s[a] = cc[z].T
     print('All orientations computed')
@@ -143,7 +141,7 @@ def comp_orientation_1point(s, e, c):
     for j, id in enumerate(ids):
         xy = s[['x', 'y']].xs(id, level='AgentID').values
         for i in range(Nticks - 1):
-            c[i + 1, j] = aux.ang.angle_to_x_axis(xy[i, :], xy[i + 1, :], in_deg=True)
+            c[i + 1, j] = aux.angle_to_x_axis(xy[i, :], xy[i + 1, :], in_deg=True)
     s[fov] = c.flatten()
     e[aux.nam.initial(fov)] = s[fov].dropna().groupby('AgentID').first()
     print('All orientations computed')

@@ -1,6 +1,6 @@
 from lib.registry import reg
 from lib.sim.evaluation import EvalRun
-from lib.aux.eval_aux import GA_optimization
+from lib.util.eval_aux import GA_optimization
 
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'

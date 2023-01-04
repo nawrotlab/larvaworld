@@ -4,8 +4,7 @@ import random
 import numpy as np
 
 from lib.model.body.body import LarvaBody
-from lib.aux import dictsNlists as dNl, ang, sim_aux, shapely_aux
-
+from lib import aux
 
 class PhysicsController:
     def __init__(self, lin_vel_coef=1.0, ang_vel_coef=1.0, lin_force_coef=1.0, torque_coef=0.5,
@@ -276,7 +275,7 @@ class BodySim(BodyManager, PhysicsController):
 
         if tank_contact:
             tank = self.model.tank_polygon
-            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = sim_aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
+            d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
 
             self.border_turn_errors+=turn_err
             self.border_go_errors+=go_err
@@ -288,7 +287,7 @@ class BodySim(BodyManager, PhysicsController):
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         self.dst = d
         self.cum_dst += self.dst
-        self.rear_orientation_change = ang_aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
+        self.rear_orientation_change = aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
                                                                        correction_coef=self.bend_correction_coef)
 
 
@@ -304,9 +303,9 @@ class BodySim(BodyManager, PhysicsController):
 
     def compute_body_bend(self):
         self.spineangles = [
-            ang_aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in
+            aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in
             range(self.Nangles)]
-        self.body_bend = ang_aux.wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
+        self.body_bend = aux.wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
 
     @property
     def border_collision(self):
@@ -314,11 +313,11 @@ class BodySim(BodyManager, PhysicsController):
             return False
         else:
             x, y = self.pos
-            p0 = shapely_aux.Point(x, y)
+            p0 = aux.Point(x, y)
             d0 = self.sim_length / 4
             oM = self.head.get_orientation()
-            sensor_ray = shapely_aux.radar_tuple(p0=p0, angle=oM, distance=d0)
-            min_dst, nearest_obstacle = shapely_aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray, p0)
+            sensor_ray = aux.radar_tuple(p0=p0, angle=oM, distance=d0)
+            min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray, p0)
 
             if min_dst is None:
                 return False
@@ -348,21 +347,17 @@ class BodySim(BodyManager, PhysicsController):
         if len(self.model.border_lines) == 0:
             return False
         else:
-            from lib.aux.shapely_aux import distance, distance_multi
             oM = self.head.get_orientation()
             oL = oM + np.pi / 3
             oR = oM - np.pi / 3
             p0 = self.pos
-            # p0 = tuple(self.get_sensor_position('olfactor'))
-            # p0 = tuple(self.olfactor_pos)
-            # p0=Point(p0)
             d0 = self.sim_length / 3
-            dM = distance_multi(point=p0, angle=oM, ways=self.model.border_lines, max_distance=d0)
+            dM = aux.min_dst_to_lines_along_vector(point=p0, angle=oM, target_lines=self.model.border_lines, max_distance=d0)
             if dM is not None:
                 if simple:
                     return True
-                dL = distance_multi(point=p0, angle=oL, ways=self.model.border_lines, max_distance=d0)
-                dR = distance_multi(point=p0, angle=oR, ways=self.model.border_lines, max_distance=d0)
+                dL = aux.min_dst_to_lines_along_vector(point=p0, angle=oL, target_lines=self.model.border_lines, max_distance=d0)
+                dR = aux.min_dst_to_lines_along_vector(point=p0, angle=oR, target_lines=self.model.border_lines, max_distance=d0)
                 if dL is None and dR is None:
                     return 'M'
                 elif dL is None and dR is not None:
@@ -431,8 +426,8 @@ class BodySim(BodyManager, PhysicsController):
                 s = self.sim_length / 1000
                 L, R = self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
                 Ld, Rd = self.model.tank_polygon.exterior.distance(
-                    shapely_aux.Point(L)), self.model.tank_polygon.exterior.distance(
-                    shapely_aux.Point(R))
+                    aux.Point(L)), self.model.tank_polygon.exterior.distance(
+                    aux.Point(R))
                 Ld, Rd = Ld / s, Rd / s
                 LRd = Ld - Rd
                 ang_vel += dd * LRd
@@ -452,7 +447,7 @@ class BodySim(BodyManager, PhysicsController):
                 hr1 = None
                 hp1 = hp0 + sim_dxy
             points = [hp1 + k1 * l0 / 2]
-            in_tank = sim_aux.inside_polygon(points=points, tank_polygon=self.model.tank_polygon)
+            in_tank = aux.inside_polygon(points=points, tank_polygon=self.model.tank_polygon)
             return in_tank, o1, hr1, hp1
 
         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
@@ -479,7 +474,7 @@ class BodySim(BodyManager, PhysicsController):
         # hf=hp + k * self.seg_lengths[0] / 2
         # hr=hp - k * self.seg_lengths[0] / 2
         # ps=[hf, hp]
-        return sim_aux.inside_polygon(points=ps, tank_polygon=self.model.tank_polygon)
+        return aux.inside_polygon(points=ps, tank_polygon=self.model.tank_polygon)
 
     # def wind_obstructed(self, wind_direction):
     #     from lib.aux.ang_aux import line_through_point

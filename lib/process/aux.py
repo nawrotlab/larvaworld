@@ -3,8 +3,7 @@ import numpy as np
 from scipy.signal import find_peaks, argrelextrema
 
 
-from lib import reg
-from lib import aux
+from lib import reg, aux
 
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):

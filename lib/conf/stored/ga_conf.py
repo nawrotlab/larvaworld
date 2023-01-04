@@ -3,9 +3,8 @@ import numpy as np
 
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
-from lib import reg
-import lib.aux.dictsNlists as dNl
-from lib.aux.xy_aux import eudi5x
+from lib import reg, aux
+
 
 def dst2source_evaluation(robot, source_xy):
     traj = np.array(robot.trajectory)
@@ -13,7 +12,7 @@ def dst2source_evaluation(robot, source_xy):
     cum_dst = np.sum(dst)
     l=[]
     for label, pos in source_xy.items():
-        dst2source = eudi5x(traj, np.array(pos))
+        dst2source = aux.eudi5x(traj, np.array(pos))
         l.append(dst2source)
     m=np.mean(np.min(np.vstack(l),axis=0))
     fitness= - m/ cum_dst
@@ -32,14 +31,14 @@ def bend_error_exclusion(robot):
         return False
 
 
-fitness_funcs = dNl.NestDict({
+fitness_funcs = aux.NestDict({
     'dst2source': dst2source_evaluation,
     'cum_dst': cum_dst,
 })
 
 
 
-exclusion_funcs = dNl.NestDict({
+exclusion_funcs = aux.NestDict({
     'bend_errors': bend_error_exclusion
 })
 
@@ -80,7 +79,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
 
 @reg.funcs.stored_conf("Ga")
 def Ga_dict() :
-    d = dNl.NestDict({
+    d = aux.NestDict({
     **ga_conf('interference', dt=1 / 16, dur=3, refID='exploration.150controls', m0='loco_default',
               m1='NEU_PHI',
               fit_kws={'cycle_curves': ['fov', 'rov', 'foa']}, init='model',

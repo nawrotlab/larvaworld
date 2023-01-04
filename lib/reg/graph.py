@@ -1,8 +1,7 @@
 import os
 
-from lib.aux import dictsNlists as dNl, naming as nam
-from lib import reg
-from lib import plot
+from lib.aux import naming as nam
+from lib import reg, aux
 
 
 class GraphRegistry:
@@ -36,7 +35,7 @@ class GraphRegistry:
 
     def eval_graphgroups(self, graphgroups,save_to=None,**kws):
         kws.update({'subfolder' : None})
-        ds = dNl.NestDict()
+        ds = aux.NestDict()
         for gg in graphgroups:
             if isinstance(gg, dict):
                 for ggID, entries in gg.items() :
@@ -71,7 +70,7 @@ class GraphRegistry:
         return analysis_dict
 
     def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):
-        from lib.aux.combining import combine_pdfs
+        from lib.util.combining import combine_pdfs
         ds = {}
         ds['mdiff_table'] = self.dict['model diff'](mIDs,dIDs=dIDs, save_to=save_to, **kwargs)
         gfunc=self.dict['model table']
@@ -82,10 +81,10 @@ class GraphRegistry:
                 print('TABLE FAIL', mID)
         if save_to is not None and len(ds)>1 :
             combine_pdfs(file_dir=save_to, save_as="_MODEL_TABLES_.pdf", deep=False)
-        return dNl.NestDict(ds)
+        return aux.NestDict(ds)
 
     def model_summaries(self, mIDs, save_to=None, **kwargs):
-        from lib.aux.combining import combine_pdfs
+        from lib.util.combining import combine_pdfs
         ds = {}
         for mID in mIDs:
             try:
@@ -103,7 +102,7 @@ class GraphRegistry:
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
 
-        graphs = dNl.NestDict({
+        graphs = aux.NestDict({
             'tables': self.model_tables(mIDs, save_to=f1),
             'summaries': self.model_summaries(mIDs, Nids=10, refDataset=self, save_to=f2)
         })
@@ -125,7 +124,7 @@ class GraphRegistry:
                 d0.append(
                     self.entry('bearing to source/epoch', name=name, args={
                         "min_dur" : dur, "chunk" : chunk, "source_ID":source_ID, **kwargs}))
-        return dNl.NestDict({gID: d0})
+        return aux.NestDict({gID: d0})
 
     def multisource_graphgroup(self, sources, **kwargs):
         graphgroups = []

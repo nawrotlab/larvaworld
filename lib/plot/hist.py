@@ -4,8 +4,10 @@ import time
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from lib.aux import naming as nam, dictsNlists as dNl
-from lib import reg
+
+
+from lib.aux import naming as nam
+from lib import reg, aux, plot
 from lib.plot.aux import scatter_hist, annotate_plot
 from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 

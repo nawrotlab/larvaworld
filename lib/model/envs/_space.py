@@ -7,11 +7,8 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely.geometry import LineString, Point, Polygon
 
 from lib.screen.rendering import InputBox
-from lib.aux.colsNstr import colorname2tuple, col_range
 from lib.model.DEB.substrate import Substrate
-from lib.aux.shapely_aux import line_through_point
-from lib.aux import sim_aux
-
+from lib import aux
 
 class Space2(ContinuousSpace):
     def __init__(self, dims, Box2D=False):
@@ -84,9 +81,10 @@ class Space:
 
 
 class ValueGrid:
-    def __init__(self, model, unique_id, space_range, grid_dims=[51, 51], distribution='uniform', visible=False,
+    def __init__(self, model, unique_id, grid_dims=[51, 51], distribution='uniform', visible=False,
                  initial_value=0.0, default_color=(255, 255, 255), max_value=None, min_value=0.0, fixed_max=False):
         self.model = model
+        space_range=self.model.space_edges_for_screen
         self.visible = visible
         self.unique_id = unique_id
         self.initial_value = initial_value
@@ -94,7 +92,7 @@ class ValueGrid:
         self.min_value = min_value
         self.fixed_max = fixed_max
         if type(default_color) == str:
-            default_color = colorname2tuple(default_color)
+            default_color = aux.colorname2tuple(default_color)
         self.default_color = default_color
         self.grid_dims = grid_dims
         self.X, self.Y = grid_dims
@@ -247,7 +245,7 @@ class ValueGrid:
         q = np.clip(q, a_min=0, a_max=1)
         # print()
         # print(v0,v1,g.shape, self.grid_dims)
-        return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
+        return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def get_grid(self):
         return self.grid
@@ -262,7 +260,7 @@ class FoodGrid(ValueGrid):
     def get_color(self, v):
         v0, v1 = self.min_value, self.max_value
         q = (v - v0) / (v1 - v0)
-        return col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
+        return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def draw(self, viewer):
         viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
@@ -401,13 +399,12 @@ class WindScape:
         if self.obstructed(agent.pos):
             return 0
         else:
-            from lib.aux.ang import angle_dif
             o = np.rad2deg(agent.head.get_orientation())
-            return np.abs(angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
+            return np.abs(aux.angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
 
     def obstructed(self, pos):
 
-        ll = line_through_point(pos, self.wind_direction, self.max_dim)
+        ll = aux.line_through_point(pos, self.wind_direction, self.max_dim)
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, viewer):
@@ -422,10 +419,9 @@ class WindScape:
         self.draw_phi += self.wind_speed
 
     def generate_scapelines(self, D, N, A):
-        from lib.aux.ang import rotate_around_center_multi
         ds = self.max_dim / N * np.sqrt(2)
-        p0s = rotate_around_center_multi([(-D, (i - N / 2) * ds) for i in range(N)], -A)
-        p1s = rotate_around_center_multi([(D, (i - N / 2) * ds) for i in range(N)], -A)
+        p0s = aux.rotate_points_around_point([(-D, (i - N / 2) * ds) for i in range(N)], -A)
+        p1s = aux.rotate_points_around_point([(D, (i - N / 2) * ds) for i in range(N)], -A)
         return [(p0, p1) for p0, p1 in zip(p0s, p1s)]
 
     def set_wind_direction(self, A):

@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from lib.aux.conf_aux import update_exp_conf
+from lib.util.conf_aux import update_exp_conf
 from lib.aux import dictsNlists as dNl
 from lib import reg
 

@@ -4,14 +4,10 @@ import seaborn as sns
 from matplotlib import cm, pyplot as plt
 from scipy.stats import multivariate_normal
 
-from lib.aux import colsNstr as cNs
-from lib import reg
+from lib import reg, aux, plot
 from lib.plot.base import ParPlot, Plot
 
-# from lib.plot.facade import graph
-#
-#
-# @graph('gut')
+
 def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, azim=115, elev=15, **kwargs):
     P = ParPlot(name='3d_surface', **kwargs)
     P.build(fig=fig, axs=ax, dim3=True, azim=azim, elev=elev)
@@ -51,7 +47,7 @@ def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims
             fig, axs = plt.subplots(1, 1, figsize=(10, 10 * Ydim / Xdim))
         q = grid.flatten() - np.min(grid)
         q /= np.max(q)
-        cols = cNs.col_range(q, low=(255, 255, 255), high=col_max, mul255=False)
+        cols = aux.col_range(q, low=(255, 255, 255), high=col_max, mul255=False)
         x, y = Xmesh * 1000 / s, Ymesh * 1000 / s,
         axs.scatter(x=x, y=y, color=cols)
         axs.set_aspect('equal', adjustable='box')
@@ -214,7 +210,7 @@ def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
     if P.Ndatasets == 1 and larva_legend:
         d = P.datasets[0]
         Nids = len(d.agent_ids)
-        cs = cNs.N_colors(Nids)
+        cs = aux.N_colors(Nids)
         s = d.read('step')
         for j, id in enumerate(d.agent_ids):
             ss = s.xs(id, level='AgentID', drop_level=True)

@@ -1,8 +1,7 @@
 import numpy as np
 
 from lib.model.modules.locomotor import DefaultLocomotor
-from lib.aux import dictsNlists as dNl
-from lib import reg
+from lib import reg, aux
 
 
 class Brain:
@@ -14,7 +13,7 @@ class Brain:
         self.A_wind = 0
 
         # A dictionary of the possibly existing sensors along with the sensing functions and the possibly existing memory modules
-        self.sensor_dict = dNl.NestDict({
+        self.sensor_dict = aux.NestDict({
             'olfactor': {'func': self.sense_odors, 'A': 0.0, 'mem': 'memory'},
             'toucher': {'func': self.sense_food, 'A': 0.0, 'mem': 'touch_memory'},
             'thermosensor': {'func': self.sense_thermo, 'A': 0.0, 'mem': None},

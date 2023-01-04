@@ -3,16 +3,14 @@ import pygame
 
 from math import sin, cos, pi
 
-from lib.aux.sim_aux import Collision
 from lib.model.modules.rot_surface import RotTriangle
-from lib.aux.colsNstr import Color
-
+from lib import aux
 
 class DifferentialDriveRobot(RotTriangle):
 
     def __init__(self,  unique_id, model,x, y, length, wheel_radius):
         direction = random.uniform(-pi, pi)
-        super().__init__(x, y, length, Color.random_color(127, 127, 127), Color.BLACK, direction)
+        super().__init__(x, y, length, aux.Color.random_color(127, 127, 127), aux.Color.BLACK, direction)
         self.model = model
         self.unique_id = unique_id
         self.length = length
@@ -74,7 +72,7 @@ class SensorDrivenRobot(DifferentialDriveRobot):
                 self.speed_left_wheel = self.left_motor_controller.get_actuator_value()
                 self.speed_right_wheel = self.right_motor_controller.get_actuator_value()
                 self.step()
-            except Collision:
+            except aux.Collision:
                 self.collision_with_object = True
                 self.speed_left_wheel = 0
                 self.speed_right_wheel = 0
@@ -103,6 +101,6 @@ class SensorDrivenRobot(DifferentialDriveRobot):
     def draw_label(self, screen):
         if pygame.font and self.label is not None:
             font = pygame.font.Font(None, 24)
-            text = font.render(str(self.label), 1, Color.YELLOW, Color.DARK_GRAY)
+            text = font.render(str(self.label), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
             text_pos = pygame.Rect(self.x + (self.length / 2), self.y + (self.length / 2), 50, 50)
             screen.blit(text, text_pos)

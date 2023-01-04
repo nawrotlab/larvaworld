@@ -1,9 +1,7 @@
 import random
-import functools
 import numpy as np
 from matplotlib import cm, colors
 
-#
 
 
 def invert_color(col, return_self=False):
@@ -59,33 +57,6 @@ def colorname2tuple(name):
     return c1
 
 
-def remove_prefix(text, prefix):
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text  # or whatever
-
-
-def remove_suffix(text, suffix):
-    if text.endswith(suffix):
-        return text[:-len(suffix)]
-    return text  # or whatever
-
-
-
-
-
-def rsetattr(obj, attr, val):
-    pre, _, post = attr.rpartition('.')
-    return setattr(rgetattr(obj, pre) if pre else obj, post, val)
-
-
-# using wonder's beautiful simplification: https://stackoverflow.com/questions/31174295/getattr-and-setattr-on-nested-objects/31174427?noredirect=1#comment86638618_31174427
-
-def rgetattr(obj, attr, *args):
-    def _getattr(obj, attr):
-        return getattr(obj, attr, *args)
-
-    return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
 def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):

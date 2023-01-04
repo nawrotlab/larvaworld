@@ -4,7 +4,7 @@ import pandas as pd
 from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
-from lib import reg
+from lib import reg, aux
 
 
 class Calibration:
@@ -65,7 +65,6 @@ class Calibration:
         self.KS_dic = None
 
     def sim_turner(self, N=2000):
-        from lib.aux.ang import wrap_angle_to_0
         T = self.Tfunc(**self.mconfs.turner, dt=self.dt)
         PH = PhysicsController(**self.mconfs.physics)
         simFOV = np.zeros(N) * np.nan
@@ -76,7 +75,7 @@ class Calibration:
             ang = T.step(0)
             fov = PH.compute_ang_vel(torque=PH.torque_coef * ang, v=fov, b=b,
                                      c=PH.ang_damping, k=PH.body_spring_k, dt=T.dt)
-            b = wrap_angle_to_0(b + fov * self.dt)
+            b = aux.wrap_angle_to_0(b + fov * self.dt)
             simFOV[i] = fov
             simB[i] = b
 

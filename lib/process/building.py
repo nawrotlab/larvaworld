@@ -6,9 +6,9 @@ import pandas as pd
 import shutil
 import warnings
 
-from lib import reg
+from lib import reg, aux
 
-from lib.aux import naming as nam, dictsNlists as dNl, colsNstr as cNs, xy_aux
+from lib.aux import naming as nam
 from lib.process.larva_dataset import LarvaDataset
 
 
@@ -260,7 +260,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
 
                 xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
                 ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-                xcs, ycs = xy_aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
+                xcs, ycs = aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
                 xcs = pd.DataFrame(xcs, columns=xc_pars, index=None)
                 ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
                 par_list += [xcs, ycs]
@@ -292,7 +292,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
             xy = data[xy_pars].values
             spinelength = np.zeros(len(data)) * np.nan
             for j in range(xy.shape[0]):
-                k = np.sum(np.diff(np.array(dNl.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
+                k = np.sum(np.diff(np.array(aux.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
                 if not np.isnan(np.sum(k)):
                     spinelength[j] = np.sum([np.sqrt(kk) for kk in k])
                 # else:
@@ -473,7 +473,7 @@ def build_Arguello(dataset, build_conf, source_files, source_dir=None, max_Nagen
 
 def import_datasets(source_ids, ids=None, colors=None, refIDs=None, **kwargs):
     if colors is None:
-        colors = cNs.N_colors(len(source_ids))
+        colors = aux.N_colors(len(source_ids))
     if ids is None:
         ids = source_ids
     ds = []
@@ -612,7 +612,7 @@ def detect_dataset(datagroup_id=None, folder_path=None, raw=True, **kwargs):
                 dic[id] = folder_path
         elif df_ is not None:
             fs = os.listdir(folder_path)
-            ids = dNl.unique_list([f.split(df_)[0] for f in fs if df_ in f])
+            ids = aux.unique_list([f.split(df_)[0] for f in fs if df_ in f])
             for id in ids:
                 dic[id] = folder_path
         return dic

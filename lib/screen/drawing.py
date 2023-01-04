@@ -3,10 +3,9 @@ import os
 import numpy as np
 import pygame
 
-from lib import reg
+from lib import reg, aux
 from lib.screen.rendering import Viewer, InputBox, SimulationClock, SimulationScale, SimulationState, draw_trajectories
 from lib.screen.screen_aux import get_window_dims, get_arena_bounds
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
 from lib.screen.input_lib import evaluate_input, evaluate_graphs
 
 
@@ -16,7 +15,7 @@ class ScreenManager:
         self.model = model
         if vis_kwargs is None:
             vis_kwargs = reg.get_null('visualization', mode=None)
-        self.vis_kwargs = dNl.NestDict(vis_kwargs)
+        self.vis_kwargs = aux.NestDict(vis_kwargs)
         self.mode = self.vis_kwargs.render.mode
         show_display = self.vis_kwargs.render.show_display
 
@@ -394,7 +393,7 @@ class ScreenManager:
                     f.set_color(f.default_color)
         elif name == 'random_colors':
             for f in m.get_flies():
-                color = cNs.random_colors(1)[0] if self.random_colors else f.default_color
+                color = aux.random_colors(1)[0] if self.random_colors else f.default_color
                 f.set_color(color)
         elif name == 'black_background':
             self.update_default_colors()
@@ -433,7 +432,7 @@ class ScreenManager:
             self.screen_texts[name] = text
 
     def generate_larva_color(self):
-        return cNs.random_colors(1)[0] if self.random_colors else self.default_larva_color
+        return aux.random_colors(1)[0] if self.random_colors else self.default_larva_color
 
     # @property
     # def configuration_text(self):

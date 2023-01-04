@@ -1,5 +1,5 @@
-from lib.aux import dictsNlists as dNl, naming as nam
-from lib import reg
+from lib.aux import naming as nam
+from lib import reg, aux
 
 
 @reg.funcs.stored_conf("Tracker")
@@ -53,7 +53,7 @@ def Tracker_dict():
 
     }}
 
-    return dNl.NestDict({k:reg.get_null('tracker', kws=kws) for k,kws in dkws.items()})
+    return aux.NestDict({k:reg.get_null('tracker', kws=kws) for k,kws in dkws.items()})
 
 
 @reg.funcs.stored_conf("Ref")
@@ -64,7 +64,7 @@ def Ref_dict(DATA=None):
     dds = [
         [f'{DATA}/JovanicGroup/processed/AttP{g}/{c}' for g
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
-    dds = dNl.flatten_list(dds)
+    dds = aux.flatten_list(dds)
     # dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200controls')
     dds.append(f'{DATA}/SchleyerGroup/processed/exploration/dish')
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/150controls')
@@ -82,7 +82,7 @@ def Ref_dict(DATA=None):
         except:
             # print(f'Failed to retrieve reference dataset from path {dr}')
             pass
-    return dNl.NestDict(entries)
+    return aux.NestDict(entries)
 
 
 
@@ -104,18 +104,18 @@ def Group_dict():
             'Berni': [[None, None, None, 0], [0.1, None, False, 'arena']],
             # 'Sim': [],
         }
-        kw_list = dNl.flatten_list([[f'{k0}.{k}' for k in ks] for i, (k0, ks) in enumerate(kws.items())])
+        kw_list = aux.flatten_list([[f'{k0}.{k}' for k in ks] for i, (k0, ks) in enumerate(kws.items())])
         enr = {}
         for i, (k, vs) in enumerate(dkws.items()):
-            v_list = dNl.flatten_list(vs)
+            v_list = aux.flatten_list(vs)
             dF = dict(zip(kw_list, v_list))
             enr[k] = reg.get_null('enrichment', kws=dF)
-        return dNl.NestDict(enr)
+        return aux.NestDict(enr)
 
 
     tracker_dic = Tracker_dict()
     enr_dic = Enr_dict()
-    d = dNl.NestDict({f'{k} lab': {'path': f'{reg.Path["DATA"]}/{k}Group',
+    d = aux.NestDict({f'{k} lab': {'path': f'{reg.Path["DATA"]}/{k}Group',
                              'tracker': tr,
                              'enrichment': enr_dic[k]} for k, tr in tracker_dic.items()})
 

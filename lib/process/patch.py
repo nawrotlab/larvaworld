@@ -5,7 +5,6 @@ from lib import aux
 
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
-    from lib.aux.xy_aux import comp_bearing
 
     c0 = aux.nam.start(chunk)
     c1 = aux.nam.stop(chunk)
@@ -17,8 +16,8 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
         b0_par = aux.nam.at(b, c0)
         b1_par = aux.nam.at(b, c1)
         db_par = aux.nam.chunk_track(chunk, b)
-        b0 = comp_bearing(s[aux.nam.at('x', c0)].dropna().values, s[aux.nam.at('y', c0)].dropna().values, ho0s, loc=pos)
-        b1 = comp_bearing(s[aux.nam.at('x', c1)].dropna().values, s[aux.nam.at('y', c1)].dropna().values, ho1s, loc=pos)
+        b0 = aux.comp_bearing(s[aux.nam.at('x', c0)].dropna().values, s[aux.nam.at('y', c0)].dropna().values, ho0s, loc=pos)
+        b1 = aux.comp_bearing(s[aux.nam.at('x', c1)].dropna().values, s[aux.nam.at('y', c1)].dropna().values, ho1s, loc=pos)
         s[b0_par] = np.nan
         s.loc[s[c0] == True, b0_par] = b0
         s[b1_par] = np.nan
@@ -30,8 +29,7 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
 
 
 def comp_patch_metrics(s, e, **kwargs):
-    # v=aux.nam.vel('')
-    # v_mu=aux.nam.mean(v)
+
     cum_t = aux.nam.cum('dur')
     on = 'on_food'
     off = 'off_food'

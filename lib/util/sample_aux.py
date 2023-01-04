@@ -2,8 +2,35 @@ import random
 import numpy as np
 import pandas as pd
 
+import lib.aux.np
 from lib.aux import dictsNlists as dNl
-from lib import reg
+from lib import reg, aux
+from lib.aux.color import N_colors
+
+def get_sample_bout_distros(model, sample):
+    def get_sample_bout_distros0(Im, bout_distros):
+        dic = {
+            'pause_dist': ['pause', 'pause_dur'],
+            'stridechain_dist': ['stride', 'run_count'],
+            'run_dist': ['exec', 'run_dur'],
+        }
+
+        ds = [ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if
+              (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
+        for d in ds:
+            for sample_d in dic[d]:
+                if sample_d in bout_distros.keys() and bout_distros[sample_d] is not None:
+                    Im[d] = bout_distros[sample_d]
+        return Im
+
+    if sample in [None, {}]:
+        return model
+    m = dNl.copyDict(model)
+    if m.brain.intermitter_params:
+        m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
+                                                              bout_distros=sample.bout_distros)
+
+    return m
 
 
 def generate_larvae(N, sample_dict, base_model):
@@ -17,31 +44,10 @@ def generate_larvae(N, sample_dict, base_model):
     return all_pars
 
 
-def get_sample_bout_distros0(Im, bout_distros):
-    dic = {
-        'pause_dist': ['pause', 'pause_dur'],
-        'stridechain_dist': ['stride', 'run_count'],
-        'run_dist': ['exec', 'run_dur'],
-    }
-
-    ds = [ii for ii in ['pause_dist', 'stridechain_dist', 'run_dist'] if
-          (ii in Im.keys()) and (Im[ii] is not None) and ('fit' in Im[ii].keys()) and (Im[ii]['fit'])]
-    for d in ds:
-        for sample_d in dic[d]:
-            if sample_d in bout_distros.keys() and bout_distros[sample_d] is not None:
-                Im[d] = bout_distros[sample_d]
-    return Im
 
 
-def get_sample_bout_distros(model, sample):
-    if sample in [None, {}]:
-        return model
-    m = dNl.copyDict(model)
-    if m.brain.intermitter_params:
-        m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
-                                                              bout_distros=sample.bout_distros)
 
-    return m
+
 
 
 def sample_group(e, N=1, ps=[]):
@@ -96,7 +102,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
     return generate_larvae(Nids, sample_dict, m), refID
 
 
-def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_dict={}):
+def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nids=1, parameter_dict={}):
     if refDataset is None:
         if refID is not None:
             refDataset = reg.loadRef(refID, load=True, step=False)
@@ -136,10 +142,67 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None, Nids=1, parameter_
     return ids, ps, ors, ms
 
 
+def generate_agentGroup(gID, Nids,imitation=False, distribution=None, **kwargs):
+    if not imitation:
+
+        if distribution is not None :
+            from lib.aux import xy
+            ps, ors = xy.generate_xyNor_distro(distribution)
+        else :
+            ps = [(0.0, 0.0) for j in range(Nids)]
+            ors = [0.0 for j in range(Nids)]
+        ids = [f'{gID}_{i}' for i in range(Nids)]
+        all_pars, refID = sampleRef(Nids=Nids, **kwargs)
+    else:
+        ids, ps, ors, all_pars = imitateRef(Nids=Nids, **kwargs)
+    return ids, ps, ors, all_pars
+
+
+def generate_agentConfs(larva_groups, parameter_dict={}):
+    agent_confs = []
+    for gID, gConf in larva_groups.items():
+        d = gConf.distribution
+        ids, ps, ors, all_pars = generate_agentGroup(gID=gID, Nids=d.N,
+                                                     m=gConf.model, refID=gConf.sample,
+                                                     imitation=gConf.imitation,
+                                                     distribution = d,
+                                                     parameter_dict=parameter_dict)
+
+        gConf.ids = ids
+        for id, p, o, pars in zip(ids, ps, ors, all_pars):
+            conf = {
+                'pos': p,
+                'orientation': o,
+                'unique_id': id,
+                'larva_pars': pars,
+                'group': gID,
+                'odor': gConf.odor,
+                'default_color': gConf.default_color,
+                'life_history': gConf.life_history
+            }
+
+            agent_confs.append(conf)
+    return agent_confs
+
+
+def generate_sourceConfs(groups={}, units={}) :
+    from lib.aux import xy
+    confs = []
+    for gID, gConf in groups.items():
+        ps = xy.generate_xy_distro(**gConf.distribution)
+        for i, p in enumerate(ps):
+            conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
+            confs.append(conf)
+    for uID, uConf in units.items():
+        conf = {'unique_id': uID, **uConf}
+        confs.append(conf)
+    return confs
+
+
 def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
     N = len(mIDs)
     if colors is None:
-        from lib.aux.colsNstr import N_colors
+
         colors = N_colors(N)
     if dataset_ids is None:
         dataset_ids = mIDs
@@ -151,10 +214,23 @@ def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
     return ds
 
 
+def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_LarvaConfDict=False, imitation=False,
+              **kwargs):
+    if use_LarvaConfDict:
+        pass
+
+    ids, p0s, fo0s, ms = generate_agentGroup(gID=mID, mID=mID, refID=refID, Nids=Nids,
+                                                 refDataset=refDataset, sample_ks=sample_ks,
+                                                 imitation=imitation)
+    if refID is None:
+        refID = refDataset.refID
+    d = sim_model_dataset(ms, mID=mID, Nids=Nids, refID=refID, ids=ids, p0s=p0s, fo0s=fo0s, **kwargs)
+    return d
+
+
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
     from lib.model.modules.locomotor import DefaultLocomotor
     from lib.model.body.controller import PhysicsController
-    from lib.aux.ang import rear_orientation_change, wrap_angle_to_0
     if fo0 is None :
         fo0=0.0
     if p0 is None :
@@ -165,14 +241,13 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
     controller = PhysicsController(**m.physics)
-    l = m.body.initial_length
+    l = lib.aux.np.body.initial_length
     bend_errors = 0
     DL = DefaultLocomotor(dt=dt, conf=m.brain)
     for qq in range(100):
         if random.uniform(0, 1) < 0.5:
             DL.step(A_in=0, length=l)
     b, fo, ro, fov, x, y, dst, v = 0, fo0, 0, 0, x0, y0, 0, 0
-    #print(fo0,x0,y0)
     for i in range(Nticks):
         lin, ang, feed = DL.step(A_in=0, length=l)
         v, fov = controller.get_vels(lin, ang, fov, v, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
@@ -181,10 +256,8 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         if np.abs(d_or) > np.pi:
             bend_errors += 1
         dst = v * dt
-        d_ro = rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
-        # if d_ro is None :
-        #     print(i, lin, DL.crawler.stride_dst_mean, DL.crawler.stride_dst_std, DL.crawler.Act_coef, DL.crawler.new_stride, DL.crawler.Act)
-        b = wrap_angle_to_0(b + d_or - d_ro)
+        d_ro = aux.rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
+        b = aux.wrap_angle_to_0(b + d_or - d_ro)
         fo = (fo + d_or) % (2 * np.pi)
         ro = (ro + d_ro) % (2 * np.pi)
         x += dst * np.cos(fo)
@@ -209,9 +282,6 @@ def sim_multi_agents(Nticks, Nids, ms, group_id, dt=0.1, ids=None, p0s=None, fo0
 
     for j, id in enumerate(ids):
         m = ms[j]
-        #x0, y0 = p0s[j]
-        # mConf = mConfs[j]
-
         AA[:, j, :] = sim_single_agent(m, Nticks, dt=dt, df_columns=df_columns, p0=p0s[j], fo0=fo0s[j])
 
     AA = AA.reshape(Nticks * Nids, len(df_columns))
@@ -221,26 +291,11 @@ def sim_multi_agents(Nticks, Nids, ms, group_id, dt=0.1, ids=None, p0s=None, fo0
     e = pd.DataFrame(index=ids)
     e['cum_dur'] = Nticks * dt
     e['num_ticks'] = Nticks
-    e['length'] = [m.body.initial_length for m in ms]
+    e['length'] = [lib.aux.np.body.initial_length for m in ms]
 
     from lib.process.spatial import scale_to_length
     scale_to_length(s, e, keys=['v'])
     return s, e
-
-
-def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_LarvaConfDict=False, imitation=False,
-              **kwargs):
-    if use_LarvaConfDict:
-        pass
-    if not imitation:
-        ms, refID = sampleRef(mID=mID, refID=refID, Nids=Nids, refDataset=refDataset, sample_ks=sample_ks)
-        ids, p0s, fo0s = None, None, None
-    else:
-        ids, p0s, fo0s, ms = imitateRef(mID=mID, refID=refID, Nids=Nids, refDataset=refDataset)
-        if refID is None:
-            refID = refDataset.refID
-    d = sim_model_dataset(ms, mID=mID, Nids=Nids, refID=refID, ids=ids, p0s=p0s, fo0s=fo0s, **kwargs)
-    return d
 
 
 def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color='blue', dataset_id=None, tor_durs=[],
@@ -269,12 +324,15 @@ def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color=
     s, e = sim_multi_agents(Nticks, Nids, ms, dataset_id, dt=dt, ids=ids, p0s=p0s, fo0s=fo0s)
 
     d.set_data(step=s, end=e)
-    print(d.config.agent_ids)
-    print(d.step_data.index.unique('AgentID').values)
-    print(d.endpoint_data.index.values)
+    # print(d.config.agent_ids)
+    # print(d.step_data.index.unique('AgentID').values)
+    # print(d.endpoint_data.index.values)
     if enrichment:
         d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'], bout_annotation=bout_annotation,
                       store=dir is not None,
                       dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
 
     return d
+
+
+

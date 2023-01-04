@@ -1,8 +1,7 @@
 import numpy as np
 from matplotlib import collections as mc
 
-from lib.aux import naming as nam, colsNstr as cNs, dictsNlists as dNl, xy_aux
-from lib import reg
+from lib import reg, aux, plot
 
 from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
 from lib.plot.aux import plot_quantiles
@@ -107,7 +106,7 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     else:
         name = f'{probes[0]}_VS_{probes[1]}'
     N = len(probes)
-    Cprobes = cNs.N_colors(N)
+    Cprobes = aux.N_colors(N)
     P = Plot(name=name, subfolder=subfolder, **kwargs)
     Nds = P.Ndatasets
     Nids = np.max([len(d.agent_ids) for d in P.datasets])
@@ -160,7 +159,7 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
         ylabs0 = pars
         ylims = [None] * len(pars)
     N = len(pars)
-    cols = ['grey'] if N == 1 else cNs.N_colors(N)
+    cols = ['grey'] if N == 1 else aux.N_colors(N)
     if not same_plot:
         raise NotImplementedError
     if name is None:
@@ -281,7 +280,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         try :
             xy0 = d.load_traj()
-            AA, dsp = xy_aux.dsp_single(xy0, r0, r1, d.dt)
+            AA, dsp = aux.dsp_single(xy0, r0, r1, d.dt)
             # dsp = d.comp_dsp(r0, r1)
             mean = dsp['median'].values
             lb = dsp['upper'].values
@@ -299,7 +298,8 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
 @reg.funcs.graph('navigation index')
 def plot_navigation_index(subfolder='source', **kwargs):
     P = AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 20, 'h': 10,'mode':'both'}, **kwargs)
-    from lib.aux.vel_aux import compute_component_velocity,compute_velocity
+    from lib.aux.xy import compute_component_velocity
+    from lib.aux.xy import compute_velocity
 
     for d, c, g in zip(P.datasets, P.colors, P.labels):
         dt = 1 / d.fr

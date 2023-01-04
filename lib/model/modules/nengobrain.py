@@ -2,7 +2,8 @@ from nengo import *
 import numpy as np
 from nengo.networks import EnsembleArray
 
-from lib.aux.dictsNlists import save_dict
+
+from lib import aux
 from lib.model.modules.brain import Brain
 from lib.model.modules.crawl_bend_interference import SquareCoupling
 from lib.model.modules.intermitter import NengoIntermitter
@@ -304,7 +305,7 @@ class NengoBrain(Network, Brain):
 
     def save_dicts(self, path):
         if self.dict is not None:
-            save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt', use_pickle=False)
+            aux.save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt', use_pickle=False)
 
 class NengoEffector:
     def __init__(self, initial_freq=None, freq_range=None, initial_amp=None, amp_range=None,

@@ -1,5 +1,4 @@
-import lib.aux.dictsNlists as dNl
-from lib import reg
+from lib import reg, aux
 
 
 def get_pygame_key(key):
@@ -124,10 +123,10 @@ class ControlRegistry :
     def save(self, conf=None):
         if conf is None:
             conf = self.conf
-        dNl.save_dict(conf, self.path)
+        aux.save_dict(conf, self.path)
 
     def load(self):
-        return dNl.load_dict(self.path)
+        return aux.load_dict(self.path)
 
 
 controls=ControlRegistry(reg.Path["controls"])

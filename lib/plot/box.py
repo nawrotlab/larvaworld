@@ -6,10 +6,10 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
 
-from lib.aux import dictsNlists as dNl, data_aux, colsNstr as cNs
-from lib import reg
+
+from lib import reg, aux, plot
 from lib.plot.aux import label_diff, annotate_plot
-from lib.plot.base import AutoPlot, Plot
+from lib.plot.base import AutoPlot
 
 
 @reg.funcs.graph('boxplot (simple)')
@@ -21,9 +21,9 @@ def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, s
         name = f'boxplot_{Npars}_{key}_pars'
     P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
     pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
-    group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
+    group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
-    data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
+    data = aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
     if not grouped:
         x = "DatasetID"
         hue = None
@@ -32,7 +32,7 @@ def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, s
     else:
         x = "DatasetID"
         hue = 'GroupID'
-        palette = dict(zip(group_ids, cNs.N_colors(Ngroups)))
+        palette = dict(zip(group_ids, aux.N_colors(Ngroups)))
         data = data[pars + [x, hue]]
     for sh in in_mm:
         data[reg.getPar(sh)] *= 1000
@@ -84,14 +84,14 @@ def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common
 
     # P.build(**kws0)
 
-    group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
+    group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
     if common_ids is None:
-        common_ids = dNl.unique_list([l.split('_')[-1] for l in group_ids])
+        common_ids = aux.unique_list([l.split('_')[-1] for l in group_ids])
 
     Ncommon = len(common_ids)
     if pair_ids is None:
-        pair_ids = dNl.unique_list([l.split('_')[0] for l in group_ids])
+        pair_ids = aux.unique_list([l.split('_')[0] for l in group_ids])
     Npairs = len(pair_ids)
     if coupled_labels is None:
         coupled_labels = True if Ngroups == Npairs * Ncommon else False
@@ -112,24 +112,24 @@ def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common
             # vs = [d.endpoint_data[p].values for d in group_ds]
             all_vs.append(vs)
             all_vs_dict[group_id] = vs
-        all_vs = dNl.flatten_list(all_vs)
+        all_vs = aux.flatten_list(all_vs)
         if coupled_labels:
-            colors = cNs.N_colors(Ncommon)
+            colors = aux.N_colors(Ncommon)
             palette = {id: c for id, c in zip(common_ids, colors)}
             pair_dfs = []
             for pair_id in pair_ids:
                 paired_group_ids = [f'{pair_id}_{common_id}' for common_id in common_ids]
                 pair_vs = [all_vs_dict[id] for id in paired_group_ids]
-                pair_vs = dNl.flatten_list(pair_vs)
-                pair_array = data_aux.boolean_indexing(pair_vs).T
+                pair_vs = aux.flatten_list(pair_vs)
+                pair_array = aux.boolean_indexing(pair_vs).T
                 pair_df = pd.DataFrame(pair_array, columns=common_ids).assign(Trial=pair_id)
                 pair_dfs.append(pair_df)
                 cdf = pd.concat(pair_dfs)  # CONCATENATE
 
         else:
-            colors = cNs.N_colors(Ngroups)
+            colors = aux.N_colors(Ngroups)
             palette = {id: c for id, c in zip(group_ids, colors)}
-            array = data_aux.boolean_indexing(all_vs).T
+            array = aux.boolean_indexing(all_vs).T
             df = pd.DataFrame(array, columns=group_ids).assign(Trial=1)
             cdf = pd.concat([df])  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
@@ -146,12 +146,12 @@ def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common
 def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
     P = AutoPlot(name='PI_boxplot', figsize=(10, 5), **kwargs)
 
-    group_ids = dNl.unique_list([d.config['group_id'] for d in P.datasets])
+    group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
-    common_ids = dNl.unique_list([l.split('_')[-1] for l in group_ids])
+    common_ids = aux.unique_list([l.split('_')[-1] for l in group_ids])
 
     Ncommon = len(common_ids)
-    pair_ids = dNl.unique_list([l.split('_')[0] for l in group_ids])
+    pair_ids = aux.unique_list([l.split('_')[0] for l in group_ids])
 
     Npairs = len(pair_ids)
     coupled_labels = True if Ngroups == Npairs * Ncommon else False
@@ -179,21 +179,21 @@ def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
         all_PIs_dict[group_id] = PIs
 
     if coupled_labels:
-        colors = cNs.N_colors(Ncommon)
+        colors = aux.N_colors(Ncommon)
         palette = {id: c for id, c in zip(common_ids, colors)}
         pair_dfs = []
         for pair_id in pair_ids:
             paired_group_ids = [f'{pair_id}_{common_id}' for common_id in common_ids]
             pair_PIs = [all_PIs_dict[id] for id in paired_group_ids]
-            pair_PI_array = data_aux.boolean_indexing(pair_PIs).T
+            pair_PI_array = aux.boolean_indexing(pair_PIs).T
             pair_df = pd.DataFrame(pair_PI_array, columns=common_ids).assign(Trial=pair_id)
             pair_dfs.append(pair_df)
             cdf = pd.concat(pair_dfs)  # CONCATENATE
 
     else:
-        colors = cNs.N_colors(Ngroups)
+        colors = aux.N_colors(Ngroups)
         palette = {id: c for id, c in zip(group_ids, colors)}
-        PI_array = data_aux.boolean_indexing(all_PIs).T
+        PI_array = aux.boolean_indexing(all_PIs).T
         df = pd.DataFrame(PI_array, columns=group_ids).assign(Trial=1)
         cdf = pd.concat([df])  # CONCATENATE
     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Group'])  # MELT
@@ -232,14 +232,14 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
     mIDs = ['rover', 'sitter']
     Cmods = dict(zip(mIDs, ['dark', 'light']))
-    subIDs = dNl.unique_list([l.split('_')[0] for l in P.labels])
+    subIDs = aux.unique_list([l.split('_')[0] for l in P.labels])
     Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
     # gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
 
     # ks =
     # ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr']
 
-    DataDic = dNl.NestDict({
+    DataDic = aux.NestDict({
         subID: {
             mID: {
                 'data': dict(P.data_dict)[f'{subID}_{mID}'],
@@ -260,7 +260,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
             for id, dic in RvSdic.items():
                 vs = dic.data.endpoint_data[par].values * scale
                 pair_vs.append(vs)
-            pair_dfs.append(pd.DataFrame(data_aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
+            pair_dfs.append(pd.DataFrame(aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
         cdf = pd.concat(pair_dfs)  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
         # print(mdf)
@@ -428,7 +428,7 @@ def lineplot(markers, ks=['f_am'], name=None, coupled_labels=None, xlabel=None, 
         Npairs = len(coupled_labels)
         N = int(Nds / Npairs)
         if leg_cols is None:
-            leg_cols = cNs.N_colors(N)
+            leg_cols = aux.N_colors(N)
         leg_ids = P.labels[:N]
         ind = np.arange(Npairs)
         xticks, xticklabels = ind, coupled_labels

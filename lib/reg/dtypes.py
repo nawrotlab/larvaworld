@@ -1,8 +1,7 @@
 import numpy as np
 from typing import TypedDict
 
-from lib import reg
-from lib.aux.par_aux import base_dtype
+from lib import reg, aux
 
 
 def define_dv(dv, cur_dtype):
@@ -50,11 +49,17 @@ def define_lim(lim, vs, u, wrap_mode, cur_dtype):
 
 
 def define_range(dtype, lim, vs, dv, u, wrap_mode):
-    cur_dtype = base_dtype(dtype)
+    cur_dtype = aux.base_dtype(dtype)
     dv = define_dv(dv, cur_dtype)
     lim = define_lim(lim, vs, u, wrap_mode, cur_dtype)
     vs = define_vs(vs, dv, lim, cur_dtype)
     return dv, lim, vs
+
+def maxNdigits(array, Min=None):
+    N = len(max(array.astype(str), key=len))
+    if Min is not None:
+        N = max([N, Min])
+    return N
 
 
 def par(name, dtype=float, v=None, vs=None, lim=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
@@ -66,7 +71,6 @@ def par(name, dtype=float, v=None, vs=None, lim=None, dv=None, aux_vs=None, disp
     dv, lim, vs = define_range(dtype=dtype, lim=lim, vs=vs, dv=dv, u=u, wrap_mode=None)
 
     if vs not in [None, []]:
-        from lib.aux.data_aux import maxNdigits
         Ndigits = maxNdigits(np.array(vs), 4)
     if aux_vs is not None and vs is not None:
         vs += aux_vs

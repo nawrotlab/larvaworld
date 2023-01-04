@@ -1,7 +1,6 @@
 import warnings
 
-
-
+import lib.aux.np
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -15,9 +14,10 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from lib import reg
 from lib.reg import base
-from lib.aux import dictsNlists as dNl, colsNstr as cNs, data_aux
-from lib.aux.eval_aux import arrange_evaluation, torsNdsps, eval_fast, GA_optimization
-from lib.aux.sample_aux import sim_models
+from lib.aux import dictsNlists as dNl, color as cNs
+from lib.util import data_aux
+from lib.util.eval_aux import arrange_evaluation, torsNdsps, eval_fast, GA_optimization
+from lib.util.sample_aux import sim_models
 
 
 
@@ -329,7 +329,7 @@ class EvalRun(base.BaseRun):
             P.adjust(W=0.01, H=0.5)
 
         elif type == 'box':
-            data = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
+            data = lib.aux.np.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
                 data[reg.getPar(sh)] *= 1000

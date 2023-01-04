@@ -1,3 +1,4 @@
+import lib.aux.naming
 
 output_dict = {
     'olfactor': {
@@ -67,7 +68,7 @@ def set_output(collections, Npoints=3, Ncontour=0):
               })
 
 def output_reporters(ks, D, agents):
-    from lib.aux import dictsNlists as dNl, colsNstr as cNs
+    from lib.aux import dictsNlists as dNl, color as cNs
     # D=reg.par.dict
     # ks = [k for k in ks if k in D.keys()]
     dic = {}
@@ -76,7 +77,7 @@ def output_reporters(ks, D, agents):
         if k in D.keys() :
             d, p = D[k].d, D[k].codename
         try:
-            temp = [cNs.rgetattr(l, p) for l in agents]
+            temp = [lib.aux.naming.rgetattr(l, p) for l in agents]
             dic.update({d: p})
         except:
         #     invalid_keys.not_in_agent[d]=p

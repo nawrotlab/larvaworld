@@ -3,8 +3,7 @@ import random
 import pygame
 from math import atan2, sin, cos
 
-from lib.aux.colsNstr import Color
-from lib.aux import sim_aux, shapely_aux
+from lib import aux
 from lib.model.modules.rot_surface import LightSource
 
 
@@ -73,7 +72,7 @@ class LightSensor(Sensor2):
         y_sensor_eol = self.robot.y + self.LENGTH_SENSOR_LINE * -sin(dir_sensor)
         # viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
         #                  color=color, width=radius / 10)
-        pygame.draw.line(self.robot.model.screen, Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
+        pygame.draw.line(self.robot.model.screen, aux.Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
 
 
 class ProximitySensor(Sensor2):
@@ -97,13 +96,13 @@ class ProximitySensor(Sensor2):
 
         x, y = pos
         angle = -direction - self.delta_direction
-        p0 = shapely_aux.Point(x, y)
-        p1 = shapely_aux.Point(
+        p0 = aux.Point(x, y)
+        p1 = aux.Point(
             x + cos(angle) * self.max_distance,
             y + sin(angle) * self.max_distance)
         # sensor_ray = radar_tuple(p0=p0, angle=angle, distance=self.max_distance)
         # print('m',x, y,sensor_ray[1].x,sensor_ray[1].y, self.max_distance/self.robot.model.scene._scale[0, 0],self.robot.real_length)
-        min_dst, nearest_obstacle = shapely_aux.detect_nearest_obstacle(self.scene.objects, (p0,p1), p0)
+        min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.scene.objects, (p0,p1), p0)
 
         if min_dst is None:
             # no obstacle detected
@@ -111,7 +110,7 @@ class ProximitySensor(Sensor2):
         else:
             # check collision
             if min_dst < self.collision_distance:
-                raise sim_aux.Collision(self.robot, nearest_obstacle)
+                raise aux.Collision(self.robot, nearest_obstacle)
 
             proximity_value = 1 / random.gauss(min_dst, self.error * min_dst)
 
@@ -132,4 +131,4 @@ class ProximitySensor(Sensor2):
         y1=y0 + sin(angle) * self.max_distance
 
         # self.scene.draw_line((x, y), (x_sensor_eol, y_sensor_eol),Color.RED, width=0.0005)
-        pygame.draw.line(self.robot.model.screen, Color.RED, (x0, y0), (x1, y1))
+        pygame.draw.line(self.robot.model.screen, aux.Color.RED, (x0, y0), (x1, y1))

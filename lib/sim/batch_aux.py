@@ -19,6 +19,10 @@ from lib.process.larva_dataset import LarvaDataset
 
 
 def get_Nbest(traj, mutate=True, recombine=False):
+    def mutate_value(v, range, scale=0.01):
+        r0, r1 = range
+        return np.clip(np.random.normal(loc=v, scale=scale * np.abs(r1 - r0)), a_min=r0, a_max=r1).astype(float)
+
     N = traj.config.Nbest
     df=traj_df(traj)
     p_n0s = df.columns[:-1]
@@ -26,7 +30,7 @@ def get_Nbest(traj, mutate=True, recombine=False):
     if mutate:
         space = []
         for v0s, r in zip(V0s, traj.config.ranges):
-            vs = lib.aux.sim_aux.mutate_value(v0s, r, scale=0.01)
+            vs = mutate_value(v0s, r, scale=0.01)
             if recombine:
                 random.shuffle(vs)
             vs=[float(v) for v in vs]

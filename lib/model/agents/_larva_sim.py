@@ -1,7 +1,7 @@
 import random
 import numpy as np
 
-from lib.aux import dictsNlists as dNl, sim_aux
+from lib import aux
 from lib.model.agents._larva import Larva
 from lib.model.body.controller import BodySim
 
@@ -15,9 +15,9 @@ class LarvaSim(BodySim, Larva):
                        odor=odor, group=group, default_color=default_color)
         self.build_energetics(larva_pars.energetics, life_history=life_history)
 
-        BodySim.__init__(self, model=model, pos=self.pos, orientation=orientation,default_color=self.default_color,
+        BodySim.__init__(self, model=model, pos=self.pos, orientation=orientation, default_color=self.default_color,
                          physics=larva_pars.physics, **larva_pars.body,
-                         **larva_pars.Box2D_params,**kwargs)
+                         **larva_pars.Box2D_params, **kwargs)
 
         self.brain = self.build_brain(larva_pars.brain)
         if self.deb is not None:
@@ -27,7 +27,7 @@ class LarvaSim(BodySim, Larva):
 
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0,0
         self.cum_food_detected = 0
-        self.foraging_dict = dNl.NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+        self.foraging_dict = aux.NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
                               self.model.foodtypes.keys()})
 
     def update_larva(self):
@@ -125,7 +125,7 @@ class LarvaSim(BodySim, Larva):
 
 
     def update_behavior_dict(self):
-        d = dNl.NestDict(self.null_behavior_dict.copy())
+        d = aux.NestDict(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter
         if inter is not None:
             s, f, p, r = inter.active_bouts
@@ -202,7 +202,7 @@ class LarvaSim(BodySim, Larva):
             elif self.model.experiment == 'keep_the_flag':
                 carrier_group = self.group
                 carrier_group_odor_id = self.odor_id
-                opponent_group = sim_aux.LvsRtoggle(carrier_group)
+                opponent_group = aux.LvsRtoggle(carrier_group)
                 opponent_group_odor_id = f'{opponent_group}_odor'
                 for f in self.model.get_flies():
                     if f.group == carrier_group:

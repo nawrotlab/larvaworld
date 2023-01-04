@@ -3,7 +3,8 @@ import operator
 import os
 import PySimpleGUI as sg
 
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
+import lib.aux.naming
+from lib.aux import dictsNlists as dNl, color as cNs
 from gui.aux import buttons as gui_but, functions as gui_fun
 from lib import reg
 
@@ -276,8 +277,8 @@ def import_window(datagroup_id, raw_dic):
     N = len(raw_dic)
     raw_ids = list(raw_dic.keys())
     raw_dirs = list(raw_dic.values())
-    temp = cNs.remove_prefix(raw_dirs[0], f'{raw_folder}/')
-    groupID0 = cNs.remove_suffix(temp, f'/{raw_ids[0]}')
+    temp = lib.aux.naming.remove_prefix(raw_dirs[0], f'{raw_folder}/')
+    groupID0 = lib.aux.naming.remove_suffix(temp, f'/{raw_ids[0]}')
     if N == 0:
         return proc_dir
     w_size = (1200, 800)

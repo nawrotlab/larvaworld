@@ -11,9 +11,8 @@ import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 
 import lib.process.building
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
-from lib.aux.par_aux import base_dtype
-from lib import reg
+
+from lib import reg, aux
 
 
 
@@ -226,7 +225,7 @@ class MultiSpin(sg.Pane):
             ss = [sg.Col([[sg.T(i, **gui_fun.t_kws(1)), s]]) for i, s in enumerate(ss)]
 
         if Ng is not None and self.Nspins >= Ng:
-            spins = dNl.group_list_by_n(ss, Ng)
+            spins = aux.group_list_by_n(ss, Ng)
             spins = [sg.Col(spins)]
             return spins
         else:
@@ -766,7 +765,7 @@ class Collapsible(HeadedElement, GuiElement):
             content = [[content[i] for i in idx] for idx in col_idx]
             content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
         elif Ncols > 1:
-            content = dNl.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
+            content = aux.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
             content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
         return content
 
@@ -828,7 +827,7 @@ class CollapsibleTable(Collapsible):
                     c2, c1 = ['lightblue', 'black']
                 else:
                     try:
-                        c2, c1 = cNs.invert_color(c0, return_self=True)
+                        c2, c1 = aux.invert_color(c0, return_self=True)
                     except:
                         c2, c1 = ['lightblue', 'black']
                 row_cols.append((i, c1, c2))
@@ -846,7 +845,7 @@ class CollapsibleTable(Collapsible):
         d = self.dict
         data = []
         for id in d.keys():
-            dF = dNl.flatten_dict(d[id])
+            dF = aux.flatten_dict(d[id])
             row = [id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data
@@ -868,8 +867,6 @@ class CollapsibleTable(Collapsible):
 
 
 def v_layout(k0, args, value_kws0={}, **kwargs):
-    # print(k0,kwargs)
-    # from lib.registry.dtypes import base_dtype
     t = args['dtype']
     v = args['initial_value']
     vs = args['values']
@@ -893,7 +890,7 @@ def v_layout(k0, args, value_kws0={}, **kwargs):
             'values': vs,
             'initial_value': v,
             'key': k0,
-            'dtype': base_dtype(t),
+            'dtype': aux.base_dtype(t),
             'value_kws': value_kws,
             **kwargs
         }
@@ -921,7 +918,7 @@ def combo_layout(name, title, dic, **kwargs):
         }
         spin_kws = {
             'initial_value': args['initial_value'],
-            'dtype': base_dtype(args['dtype']),
+            'dtype': aux.base_dtype(args['dtype']),
             'value_kws': gui_fun.t_kws(5),
             **kws
         }
@@ -986,7 +983,7 @@ class CollapsibleDict(Collapsible):
                 k0 = f'{self.name}_{k}'
                 if t == bool:
                     d[k] = w[f'TOGGLE_{k0}'].get_state()
-                elif base_dtype(t) in [int, float]:
+                elif aux.base_dtype(t) in [int, float]:
                     d[k] = w[k0].get()
                 elif t == dict or type(t) == dict:
                     d[k] = self.subdicts[k0].get_dict(v, w)
@@ -1122,7 +1119,7 @@ class PadDict(PadElement):
         elif row_idx is not None:
             content = [[content[i] for i in idx] for idx in row_idx]
         elif Ncols > 1:
-            content = dNl.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
+            content = aux.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
             content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
         return content
 
@@ -1137,7 +1134,7 @@ class PadDict(PadElement):
             k0 = f'{self.name}_{k}'
             if t == bool:
                 d[k] = w[f'TOGGLE_{k0}'].get_state()
-            elif base_dtype(t) in [int, float]:
+            elif aux.base_dtype(t) in [int, float]:
                 d[k] = w[k0].get()
             elif t in [dict, TypedDict] or type(t) == dict:
                 d[k] = self.subdicts[k0].get_dict(v, w)
@@ -1191,7 +1188,7 @@ class PadDict(PadElement):
                 k0 = f'{self.name}_{k}'
                 if t == bool:
                     w[f'TOGGLE_{k0}'].set_state(d[k])
-                elif base_dtype(t) in [int, float]:
+                elif aux.base_dtype(t) in [int, float]:
                     w[k0].update(d[k])
                 elif t in [dict, TypedDict] or type(t) == dict:
                     self.subdicts[k0].update(w, d[k])
@@ -1270,7 +1267,7 @@ class PadTable(PadElement):
                     c2, c1 = ['lightblue', 'black']
                 else:
                     try:
-                        c2, c1 = cNs.invert_color(c0, return_self=True)
+                        c2, c1 = aux.invert_color(c0, return_self=True)
                     except:
                         c2, c1 = ['lightblue', 'black']
                 row_cols.append((i, c1, c2))
@@ -1286,7 +1283,7 @@ class PadTable(PadElement):
         d = self.dict
         data = []
         for id in d.keys():
-            dF = dNl.flatten_dict(d[id])
+            dF = aux.flatten_dict(d[id])
             row = [id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data

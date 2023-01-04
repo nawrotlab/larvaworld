@@ -1,7 +1,8 @@
 import numpy as np
 
+from lib import aux
 from lib.model.modules.basic import Effector
-from lib.aux import naming as nam, dictsNlists as dNl
+
 
 class Sensor(Effector):
     def __init__(self, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
@@ -189,7 +190,7 @@ class WindSensor(Sensor):
 # @todo add class Thermosensor(Sensor) here with a double gain dict
 class Thermosensor(Sensor):
     def __init__(self, cool_gain=0.0,warm_gain=0.0, **kwargs): #thermodict={"cool", "warm"}
-        thermo_dict = dNl.NestDict({'warm': warm_gain, 'cool': cool_gain})
+        thermo_dict = aux.NestDict({'warm': warm_gain, 'cool': cool_gain})
         super().__init__(gain_dict=thermo_dict, **kwargs)
 
     # def affect_locomotion(self):

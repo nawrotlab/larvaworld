@@ -4,9 +4,8 @@ import numpy as np
 from scipy.special import erf
 from scipy.stats import uniform, levy, norm
 
-import lib.aux.dictsNlists as dNl
 from lib.aux.par_aux import sub, subsup
-from lib import reg
+from lib import reg, aux
 
 
 def powerlaw_cdf(x, xmin, alpha):
@@ -84,7 +83,7 @@ def get_powerlaw_alpha2(x, xmin=None, xmax=None, discrete=False):
     with suppress_stdout_stderr():
         from powerlaw import Fit
         a = Fit(x, xmin=xmin, xmax=xmax, discrete=discrete).power_law.alpha
-        return dNl.NestDict({'xmin': xmin, 'alpha': a})
+        return aux.NestDict({'xmin': xmin, 'alpha': a})
 
 
 def get_exp_beta2(x, xmin=None):
@@ -113,7 +112,7 @@ def fit_uni(x, xmin=None, xmax=None):
 
 
 def get_logNpow2(x, xmax, xmid, overlap=0, discrete=False):
-    dic = dNl.NestDict()
+    dic = aux.NestDict()
     dic.ratio = len(x[x < xmid]) / len(x)
     xx = np.log(x[x < xmid + overlap * (xmax - xmid)])
     dic.mu = np.mean(xx)
@@ -129,7 +128,7 @@ def get_logNpow2(x, xmax, xmid, overlap=0, discrete=False):
 
 
 def generate_distro_database():
-    d = dNl.NestDict({
+    d = aux.NestDict({
         'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha'],
                      'lab_func': lambda v: f'Powerlaw(a={np.round(v.alpha, 2)})',
                      'func': lambda x, xmin=None, xmax=None, discrete=False: get_powerlaw_alpha2(x, xmin, xmax,

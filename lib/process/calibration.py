@@ -11,8 +11,7 @@ from sklearn.linear_model import LinearRegression
 
 
 from lib.process.spatial import comp_centroid
-from lib import reg
-from lib import aux
+from lib import reg, aux
 
 def comp_stride_variation(d, component_vels=True):
     from lib.process.aux import detect_strides, process_epochs

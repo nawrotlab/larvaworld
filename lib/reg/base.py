@@ -2,8 +2,7 @@ import os
 import numpy as np
 import random
 
-from lib import aux
-from lib import reg
+from lib import reg, aux
 
 
 class BaseType:
@@ -16,7 +15,7 @@ class BaseType:
         self.ks = None
 
     def build_mdict(self):
-        from lib.aux.data_aux import init2mdict,get_ks
+        from lib.util.data_aux import init2mdict,get_ks
         self.mdict = init2mdict(self.dict0)
         self.ks = get_ks(self.mdict)
 
@@ -41,7 +40,7 @@ class BaseType:
         if kwdic is not None:
             kws0 = self.gConf_kws(kwdic)
             kwargs.update(kws0)
-        from lib.aux.data_aux import gConf
+        from lib.util.data_aux import gConf
         return aux.NestDict(gConf(m0, **kwargs))
 
     def entry(self, id, **kwargs):

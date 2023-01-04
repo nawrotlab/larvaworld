@@ -3,8 +3,7 @@ from typing import List
 
 
 
-import lib.aux.dictsNlists as dNl
-from lib import reg
+from lib import reg, aux
 
 class ParsArg:
     """
@@ -64,7 +63,7 @@ def get_ParsDict(d0):
 
 
 def build_ParsDict(dic):
-    return dNl.NestDict({k: ParsArg(**v) for k, v in dic.items()})
+    return aux.NestDict({k: ParsArg(**v) for k, v in dic.items()})
     # return parsargs
 
 
@@ -110,7 +109,7 @@ class ParserDict(reg.base.BaseConfDict):
 
     def build(self):
         init_dict = reg.par.PI
-        d = dNl.NestDict()
+        d = aux.NestDict()
         for name in self.names:
             d0 = init_dict[name]
             try:
@@ -130,7 +129,7 @@ class ParserDict(reg.base.BaseConfDict):
         d = {}
         for name, dic in self.dict.items():
             d[name] = self.prepare(dic)
-        return dNl.NestDict(d)
+        return aux.NestDict(d)
 
     def retrieve(self, name):
         if name in self.parser_dict.keys():

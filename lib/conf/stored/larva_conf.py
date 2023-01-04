@@ -5,8 +5,7 @@ import copy
 
 import numpy as np
 
-from lib import reg
-from lib.aux import dictsNlists as dNl
+from lib import reg, aux
 
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
 OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
@@ -66,7 +65,7 @@ def brain(ks, nengo=False, OD=None, **kwargs):
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo
-    return dNl.NestDict(d)
+    return aux.NestDict(d)
 
 
 def nengo_brain(module_shorts, EEB, OD=None):
@@ -221,9 +220,9 @@ def create_mod_dict(b):
     M0 = mod()
 
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
-        M1 = dNl.NestDict(copy.deepcopy(M0))
+        M1 = aux.NestDict(copy.deepcopy(M0))
         M1.brain = brain
-        M1.body.update(**bod)
+        aux.body.update(**bod)
         M1.physics.update(**phys)
         M1.Box2D_params.update(**Box2D)
         return M1
@@ -248,12 +247,12 @@ def create_mod_dict(b):
     LTh = brain(['L', 'Th'])
 
     def add_OD(OD, B0=LOF):
-        B1 = dNl.NestDict(copy.deepcopy(B0))
+        B1 = aux.NestDict(copy.deepcopy(B0))
         B1.olfactor_params.odor_dict = OD
         return B1
 
     def add_Im(Im, B0=LOFM):
-        B1 = dNl.NestDict(copy.deepcopy(B0))
+        B1 = aux.NestDict(copy.deepcopy(B0))
         B1.intermitter_params = Im
         return B1
 
@@ -367,7 +366,7 @@ def Model_dict():
     d = create_mod_dict(b)
 
 
-    dd = dNl.merge_dicts(list(d.values()))
+    dd = aux.merge_dicts(list(d.values()))
 
     dnew.update(dd)
     return dnew
@@ -375,4 +374,4 @@ def Model_dict():
 @reg.funcs.stored_conf("ModelGroup")
 def ModelGroup_dict():
     d = all_mod_dict()
-    return dNl.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})
+    return aux.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})

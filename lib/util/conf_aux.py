@@ -1,7 +1,7 @@
-import lib.aux.data_aux
+import lib.util.data_aux
 import lib.reg
-import lib.registry
-from lib.aux import dictsNlists as dNl, colsNstr as cNs
+
+from lib.aux import dictsNlists as dNl, color as cNs
 from lib import reg
 
 
