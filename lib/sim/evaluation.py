@@ -12,17 +12,15 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
-from lib import reg
-from lib.reg import base
-from lib.aux import dictsNlists as dNl, color as cNs
-from lib.util import data_aux
+from lib import reg, aux
+
 from lib.util.eval_aux import arrange_evaluation, torsNdsps, eval_fast, GA_optimization
 from lib.util.sample_aux import sim_models
 
 
 
 
-class EvalRun(base.BaseRun):
+class EvalRun(reg.base.BaseRun):
     def __init__(self, refID, eval_metrics=None, N=5, dur=None,
                  bout_annotation=True, modelIDs=None, dataset_ids=None,
                  enrichment=True, norm_modes=['raw'], eval_modes=['pooled'],
@@ -37,7 +35,7 @@ class EvalRun(base.BaseRun):
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.offline = offline
-        self.figs = dNl.NestDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
+        self.figs = aux.NestDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
 
         self.N = N
@@ -63,20 +61,20 @@ class EvalRun(base.BaseRun):
         target.color = 'grey'
         target.config.color = 'grey'
 
-        self.mID_colors = cNs.N_colors(len(self.dataset_ids))
+        self.mID_colors = aux.N_colors(len(self.dataset_ids))
         self.model_colors = dict(zip(self.dataset_ids, self.mID_colors))
 
         return target
 
 
     def define_eval_args(self, ev):
-        self.e_shorts = dNl.flatten_list(ev['end']['shorts'].values.tolist())
-        self.s_shorts = dNl.flatten_list(ev['step']['shorts'].values.tolist())
-        self.s_pars = dNl.flatten_list(ev['step']['pars'].values.tolist())
-        s_symbols = dNl.flatten_list(ev['step']['symbols'].values.tolist())
-        self.e_pars = dNl.flatten_list(ev['end']['pars'].values.tolist())
-        e_symbols = dNl.flatten_list(ev['end']['symbols'].values.tolist())
-        self.eval_symbols = dNl.NestDict(
+        self.e_shorts = aux.flatten_list(ev['end']['shorts'].values.tolist())
+        self.s_shorts = aux.flatten_list(ev['step']['shorts'].values.tolist())
+        self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
+        s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
+        self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
+        e_symbols = aux.flatten_list(ev['end']['symbols'].values.tolist())
+        self.eval_symbols = aux.NestDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
     # def exec(self, **kwargs):
@@ -118,7 +116,7 @@ class EvalRun(base.BaseRun):
         else:
             vis_kwargs = reg.get_null('visualization', mode=None)
 
-        kws = dNl.NestDict({
+        kws = aux.NestDict({
             'enrichment': exp_conf.enrichment,
             'vis_kwargs': vis_kwargs,
             'save_to': self.storage_path,
@@ -136,8 +134,8 @@ class EvalRun(base.BaseRun):
 
     def store(self):
         if self.store_data:
-            dNl.save_dict(self.sim_data, self.dir_dict.sim_data)
-            dNl.save_dict(self.error_dicts, self.dir_dict.error_dicts)
+            aux.save_dict(self.sim_data, self.dir_dict.sim_data)
+            aux.save_dict(self.error_dicts, self.dir_dict.error_dicts)
             print(f'Results saved at {self.dir}')
 
     def run_evaluation(self, d, suf='fitted', min_size=20):
@@ -147,7 +145,7 @@ class EvalRun(base.BaseRun):
             self.error_dicts[k] = eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
                                             min_size=min_size)
 
-        self.error_dicts = dNl.NestDict(self.error_dicts)
+        self.error_dicts = aux.NestDict(self.error_dicts)
 
         # self.store()
 
@@ -186,7 +184,7 @@ class EvalRun(base.BaseRun):
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
 
             dic[norm] = {'tables': tabs, 'barplots': bars}
-        return dNl.NestDict(dic)
+        return aux.NestDict(dic)
 
     def norm_error_dict(self, error_dict, mode='raw'):
         dic = {}
@@ -200,7 +198,7 @@ class EvalRun(base.BaseRun):
                 df = pd.DataFrame(StandardScaler().fit(df).transform(df), index=df.index, columns=df.columns)
                 # df = std_norm(df)
             dic[k] = df
-        return dNl.NestDict(dic)
+        return aux.NestDict(dic)
 
     def plot_models(self):
         GD = reg.GD.dict
@@ -260,7 +258,7 @@ class EvalRun(base.BaseRun):
                 fig1 = GD['dispersal'](range=(r0, r1), subfolder=None, **kws)
                 fig2 = GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
                 fig3 = GD['dispersal summary'](range=(r0, r1), **kws2)
-                self.figs.loco[k] = dNl.NestDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
+                self.figs.loco[k] = aux.NestDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
 
     def preprocess(self,ds):
         Ddata, Edata = {}, {}
@@ -268,7 +266,7 @@ class EvalRun(base.BaseRun):
             Ddata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
         for p, sh in zip(self.e_pars, self.e_shorts):
             Edata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
-        return dNl.NestDict({'step': Ddata, 'end': Edata})
+        return aux.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
         from lib.plot.aux import annotate_plot
@@ -416,8 +414,8 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     kwargs = {k: 'sample' for k in sample_ks}
     entries = {}
     for mID0, mID in zip(mID0s, mIDs):
-        m0 = dNl.copyDict(reg.loadConf(id=mID0, conftype='Model'))
-        m = dNl.update_existingnestdict(m0, kwargs)
+        m0 = aux.copyDict(reg.loadConf(id=mID0, conftype='Model'))
+        m = aux.update_existingnestdict(m0, kwargs)
         reg.saveConf(conf=m, id=mID, conftype='Model')
         entries[mID] = m
     return entries
@@ -477,7 +475,7 @@ def adapt_3modules(refID, e=None, c=None):
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
                 mID = f'{mID0}_fit'
-                entry = reg.MD.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+                entry = reg.model.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
                                        space_mkeys=['crawler', 'turner', 'interference'],
                                        fit_dict=fit_dict)
                 entries.update(entry)
@@ -491,8 +489,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
     e = d.endpoint_data
     refID = c.refID
     if 'modelConfs' not in c.keys():
-        c.modelConfs = dNl.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
-    M = reg.MD
+        c.modelConfs = aux.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
     if avgVSvar:
         entries_avg, mIDs_avg = adapt_6mIDs(refID=c.refID, e=e, c=c)
         c.modelConfs.average = entries_avg

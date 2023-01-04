@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt, patches
 from lib.aux import naming as nam
 from lib import reg, aux, plot
 
-from lib.plot.base import Plot, AutoPlot, AutoBasePlot
+# from lib.plot.base import Plot, AutoPlot, AutoBasePlot
 
 
 
@@ -15,11 +15,10 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
     ids = xy.index.unique('AgentID').values
     color = c.color if single_color else None
     scale = 1000 if unit == 'mm' else 1
-    from lib.aux.sim_aux import get_tank_polygon
-    P = AutoBasePlot(name=f'trajectories', **kwargs)
+    P = plot.AutoBasePlot(name=f'trajectories', **kwargs)
     # P.build(fig=fig, axs=axs)
     ax = P.axs[0]
-    tank = get_tank_polygon(c, return_polygon=False) * scale
+    tank = aux.get_tank_polygon(c, return_polygon=False) * scale
     for id in ids:
         xy0 = xy.xs(id, level="AgentID").values * scale
         ax.plot(xy0[:, 0], xy0[:, 1], color=color)
@@ -52,7 +51,7 @@ def traj_grouped(unit='mm', name=None, subfolder='trajectories',
     if name is None:
         name = f'comparative_trajectories_{mode}'
 
-    P = AutoPlot(name=name, subfolder=subfolder,  # subplot_kw=dict(projection='polar'),
+    P = plot.AutoPlot(name=name, subfolder=subfolder,  # subplot_kw=dict(projection='polar'),
                  build_kws={'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'mode': 'both'}, **kwargs)
     for ii, (l, d) in enumerate(P.data_dict.items()):
         xy = get_traj(d, mode)
@@ -87,7 +86,10 @@ def ax_conf_kws(kws, trange, Ndatasets,Nrows, i=0, ylab=None, ylim=None, xlim=No
     return {**conf_kws, **leg_kws}
 
 def epoch_func(**kwargs):
-    from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
+    from lib.process.annotation import detect_turns
+    from lib.process.annotation import detect_strides
+    from lib.process.annotation import detect_pauses
+    from lib.process.annotation import process_epochs
     def stride_epochs(a, trange, show_extrema=True, a2plot=None, dt=0.1, **kwargs):
 
         if show_extrema and a2plot is None:
@@ -198,10 +200,13 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
                     slice=None, agent_idx=0, agent_id=None,
                     subfolder='tracks', moving_average_interval=None, epoch_boundaries=True, show_extrema=True,
                     min_amp=None, **kwargs):
-    from lib.process.aux import detect_strides, detect_pauses, detect_turns, process_epochs
+    from lib.process.annotation import detect_turns
+    from lib.process.annotation import detect_strides
+    from lib.process.annotation import detect_pauses
+    from lib.process.annotation import process_epochs
     temp = f'track_{slice[0]}-{slice[1]}' if slice is not None else f'track'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = AutoPlot(name=name, subfolder=subfolder,
+    P = plot.AutoPlot(name=name, subfolder=subfolder,
                  build_kws={'Nrows': 'Ndatasets', 'Ncols': 1, 'w': 20, 'h': 5, 'mode': 'both'} ** kwargs)
 
     trange = np.arange(0, a.shape[0] * dt, dt)
@@ -302,7 +307,7 @@ def track_annotated_data(name=None, subfolder='tracks',
         name = f'annotated_{epoch}plot'
     Nidx = len(agent_idx)
 
-    P = AutoPlot(name=name, subfolder=subfolder,
+    P = plot.AutoPlot(name=name, subfolder=subfolder,
                  build_kws={'Nrows': 'Ndatasets', 'Nrows_coef': Nidx, 'Ncols': 1, 'w': 15, 'h': 3, 'mode': 'both'},
                  **kwargs)
     epoch_kdic = {
@@ -388,7 +393,7 @@ def annotated_turnplot_data(**kwargs):
 def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals', **kwargs):
     temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     Nds = P.Ndatasets
 
     chunks = ['stride', 'pause']
@@ -432,7 +437,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
     t0, t1 = slice
     temp = f'sample_marked_{suf}_{t0}-{t1}'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     Nds = P.Ndatasets
 
     figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
@@ -504,7 +509,7 @@ if __name__ == '__main__':
         title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
         return title,ss
 
-    P = AutoPlot(name='name', subfolder=None, show=True,
+    P = plot.AutoPlot(name='name', subfolder=None, show=True,
                  build_kws={'Nrows': 5, 'Ncols': 2, 'w': 20, 'h':6, 'mode':'box'}, datasets=[d])
 
     # epoch = 'turn'

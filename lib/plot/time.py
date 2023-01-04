@@ -3,14 +3,14 @@ from matplotlib import collections as mc
 
 from lib import reg, aux, plot
 
-from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
-from lib.plot.aux import plot_quantiles
+# from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
+# from lib.plot.aux import plot_quantiles
 
 
 
 @reg.funcs.graph('ethogram')
 def plot_ethogram(subfolder='timeplots', **kwargs):
-    P = Plot(name='ethogram', subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'Ncols': 2, 'sharex': True}, **kwargs)
+    P = plot.Plot(name='ethogram', subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'Ncols': 2, 'sharex': True}, **kwargs)
     P.build()
     Cbouts = {
         # 'lin': {'stridechain': 'green',
@@ -107,7 +107,7 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
         name = f'{probes[0]}_VS_{probes[1]}'
     N = len(probes)
     Cprobes = aux.N_colors(N)
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     Nds = P.Ndatasets
     Nids = np.max([len(d.agent_ids) for d in P.datasets])
     Nticks = np.max([d.num_ticks for d in P.datasets])
@@ -169,7 +169,7 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
             name = f'{pars[0]}_VS_{pars[1]}'
         else:
             name = f'{N}_pars'
-    P = AutoPlot(name=name, subfolder=subfolder, figsize=figsize, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, figsize=figsize, **kwargs)
 
     ax = P.axs[0]
     counter = 0
@@ -201,7 +201,7 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
                         ax.plot(x, dc_single, color=c, linewidth=1)
                     ax.plot(x, dc_m, color=c, linewidth=2)
                 else:
-                    plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol, linewidth=2)
+                    plot.plot_quantiles(df=dc, x=x, axis=ax, color_shading=c, label=symbol, linewidth=2)
                     if show_first:
                         cc='red' if P.Ndatasets == 1 else c
                         dc0 = dc.xs(dc.index.get_level_values('AgentID')[0], level='AgentID')
@@ -224,7 +224,7 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
     Nks=len(ks)
     if name is None :
         name=f'timeplot_x{Nks}'
-    P = AutoLoadPlot(ks=ks,name=name, subfolder=subfolder, figsize=(15,5*Nks),Ncols=1,Nrows=Nks,sharex=True, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks,name=name, subfolder=subfolder, figsize=(15,5*Nks),Ncols=1,Nrows=Nks,sharex=True, **kwargs)
     x=P.trange(unit)
     for i,k in enumerate(P.ks) :
         dic,p=P.kpdict[k]
@@ -241,7 +241,7 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
                     ax.plot(x, dc_single, color=c, linewidth=1)
                 ax.plot(x, df_m, color=c, linewidth=2)
             else:
-                plot_quantiles(df=df, x=x, axis=ax, color_shading=c, linewidth=2)
+                plot.plot_quantiles(df=df, x=x, axis=ax, color_shading=c, linewidth=2)
                 if show_first:
                     cc = 'red' if P.Ndatasets == 1 else c
 
@@ -272,7 +272,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
     # par = f'dispersion_{r0}_{r1}'
     name = f'scaled_dispersal_{r0}-{r1}' if scaled else f'dispersal_{r0}-{r1}'
     k = f'sdsp_{r0}_{r1}' if scaled else f'dsp_{r0}_{r1}'
-    P = AutoPlot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     t0, t1 = int(r0 * P.datasets[0].config.fr), int(r1 * P.datasets[0].config.fr)
     x = np.linspace(r0, r1, t1 - t0)
 
@@ -297,9 +297,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
 
 @reg.funcs.graph('navigation index')
 def plot_navigation_index(subfolder='source', **kwargs):
-    P = AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 20, 'h': 10,'mode':'both'}, **kwargs)
-    from lib.aux.xy import compute_component_velocity
-    from lib.aux.xy import compute_velocity
+    P = plot.AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 20, 'h': 10,'mode':'both'}, **kwargs)
 
     for d, c, g in zip(P.datasets, P.colors, P.labels):
         dt = 1 / d.fr
@@ -312,9 +310,9 @@ def plot_navigation_index(subfolder='source', **kwargs):
         vys = []
         for id in d.agent_ids:
             s0 = s.xs(id, level='AgentID').values
-            v0 = compute_velocity(s0, dt=dt)
-            vx = compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
-            vy = compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
+            v0 = aux.compute_velocity(s0, dt=dt)
+            vx = aux.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
+            vy = aux.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
             vx = np.divide(vx, v0, out=np.zeros_like(v0), where=v0 != 0)
             vy = np.divide(vy, v0, out=np.zeros_like(v0), where=v0 != 0)
             vxs.append(vx)
@@ -342,13 +340,13 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
         ylab = f'{ylab0} $({unit})$'
         k = 'cum_d'
     p=reg.par[k]
-    P = AutoPlot(ks=[k], name=name, subfolder=subfolder, figsize=(15, 5),**kwargs)
+    P = plot.AutoPlot(ks=[k], name=name, subfolder=subfolder, figsize=(15, 5),**kwargs)
     x = P.trange(t_unit)
     # dic,p=P.kpdict[k]
     P.conf_ax(0, xlab=f'time, ${t_unit}$', ylab=ylab, xlim=(x[0], x[-1]), ylim=[0, None], xMaxN=5, leg_loc='upper left')
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         df = d.read(key='pathlength', file='aux')[p.d]
-        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
+        plot.plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
@@ -365,7 +363,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
         ylab = f'{lab} $({unit})$'
     if xlabel is None:
         xlabel = 'time, $min$'
-    P = AutoPlot(name=name,figsize=(7, 6), **kwargs)
+    P = plot.AutoPlot(name=name,figsize=(7, 6), **kwargs)
 
     p=reg.par.kdict['cum_d']
 
@@ -376,7 +374,7 @@ def plot_pathlength(scaled=True, unit='mm', xlabel=None, **kwargs):
             from lib.reg import units as ureg
             if p.u == ureg.m:
                 df *= 100
-        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
+        plot.plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 
     P.conf_ax(xlab=xlabel, ylab=ylab, xlim=(x[0], x[-1]), ylim=[0, None], xMaxN=5, leg_loc='upper left')
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)

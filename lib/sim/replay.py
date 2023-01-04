@@ -2,9 +2,9 @@ import copy
 
 import numpy as np
 
-from lib import reg
+from lib import reg, aux
 from lib.model.envs.world_replay import WorldReplay
-from lib.aux import naming as nam, dictsNlists as dNl
+from lib.aux import naming as nam
 from lib.process.spatial import fixate_larva
 
 class ReplayRun:
@@ -79,7 +79,7 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
 
 
     c=d.config
-    c0=dNl.copyDict(c)
+    c0=aux.copyDict(c)
 
 
     if track_point is None:

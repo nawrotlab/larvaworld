@@ -4,8 +4,7 @@ import pandas as pd
 from scipy.stats import ks_2samp
 from matplotlib import cm, colors
 
-from lib.aux import naming as nam, dictsNlists as dNl, color as cNs
-from lib import reg
+from lib import reg, aux
 
 def eval_end_fast(ee, e_data, e_sym, mode='pooled'):
     Eend = {}
@@ -135,7 +134,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
 
 
     Edata, Ddata = {}, {}
-    dic = dNl.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
+    dic = aux.NestDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         Eshorts, Dshorts = [], []
         ps = reg.getPar(shs)
@@ -160,7 +159,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
         if len(Dshorts) > 0:
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
-    target_data = dNl.NestDict({'step': Ddata, 'end': Edata})
+    target_data = aux.NestDict({'step': Ddata, 'end': Edata})
 
 
     ev = {k: col_df(**v) for k, v in dic.items()}
@@ -178,7 +177,7 @@ def torsNdsps(pars):
     dsp_starts = np.unique([int(ii[0]) for ii in dsp_temp]).tolist()
     dsp_stops = np.unique([int(ii[1]) for ii in dsp_temp]).tolist()
     dsp_shorts0 = [f'dsp_{s0}_{s1}' for s0, s1 in itertools.product(dsp_starts, dsp_stops)]
-    dsp_shorts = dNl.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
+    dsp_shorts = aux.flatten_list([[f'{ii}_max', f'{ii}_mu', f'{ii}_fin'] for ii in dsp_shorts0])
     return tor_durs, dsp_starts, dsp_stops
 
 
@@ -213,7 +212,7 @@ def RSS_dic(dd, d):
         dic[sh] = RSS1(ff, f, sh)
 
     stat = np.round(np.mean([dic[sh]['norm'] for sh in f.keys() if sh != 'sv']), 2)
-    dd.config.pooled_cycle_curves_errors = dNl.NestDict({'dict': dic, 'stat': stat})
+    dd.config.pooled_cycle_curves_errors = aux.NestDict({'dict': dic, 'stat': stat})
     return stat
 
 
@@ -229,7 +228,7 @@ def GA_optimization(fitness_target_refID, fitness_target_kws):
             fit_dicts.update(kfunc(s))
         return fit_dicts
 
-    return dNl.NestDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg': 's'})
+    return aux.NestDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg': 's'})
 
 
 def build_fitness(dic, refDataset):
@@ -242,49 +241,49 @@ def build_fitness(dic, refDataset):
             cycle_dict = {'sv': 'abs', 'fov': 'norm', 'rov': 'norm', 'foa': 'norm', 'b': 'norm'}
             cycle_ks = vs
             cycle_modes = {sh: cycle_dict[sh] for sh in cycle_ks}
-            target = dNl.NestDict({sh: np.array(c.pooled_cycle_curves[sh][mod]) for sh, mod in cycle_modes.items()})
+            target = aux.NestDict({sh: np.array(c.pooled_cycle_curves[sh][mod]) for sh, mod in cycle_modes.items()})
             rss_sym = {sh: sh for sh in vs}
             keys += cycle_ks
 
             def func(ss):
-                from lib.process.aux import cycle_curve_dict
+                from lib.process.annotation import cycle_curve_dict
                 c0 = cycle_curve_dict(s=ss, dt=c.dt, shs=vs)
-                eval_curves = dNl.NestDict(({sh: c0[sh][mode] for sh, mode in cycle_modes.items()}))
-                return dNl.NestDict(
+                eval_curves = aux.NestDict(({sh: c0[sh][mode] for sh, mode in cycle_modes.items()}))
+                return aux.NestDict(
                     {'RSS': {sh: RSS(ref_curve, eval_curves[sh]) for sh, ref_curve in target.items()}})
 
             func_solo_dict[k] = func
 
             def gfunc(s):
-                from lib.process.aux import cycle_curve_dict_multi
+                from lib.process.annotation import cycle_curve_dict_multi
 
                 rss0 = cycle_curve_dict_multi(s=s, dt=c.dt, shs=cycle_ks)
-                rss = dNl.NestDict(
+                rss = aux.NestDict(
                     {id: {sh: dic[sh][mod] for sh, mod in cycle_modes.items()} for id, dic in rss0.items()})
-                return dNl.NestDict({'RSS': eval_RSS(rss, target, rss_sym, mode='1:pooled')})
+                return aux.NestDict({'RSS': eval_RSS(rss, target, rss_sym, mode='1:pooled')})
 
             func_global_dict[k] = gfunc
 
         if k == 'eval_metrics':
 
             evaluation, target_data = arrange_evaluation(d, evaluation_metrics=vs)
-            s_shorts = dNl.flatten_list(evaluation['step']['shorts'].values.tolist())
-            s_pars = dNl.flatten_list(evaluation['step']['pars'].values.tolist())
-            s_symbols = dNl.NestDict(dict(zip(s_pars, s_shorts)))
+            s_shorts = aux.flatten_list(evaluation['step']['shorts'].values.tolist())
+            s_pars = aux.flatten_list(evaluation['step']['pars'].values.tolist())
+            s_symbols = aux.NestDict(dict(zip(s_pars, s_shorts)))
             keys += s_shorts
 
             def func(ss):
-                return dNl.NestDict(
+                return aux.NestDict(
                     {'KS': {sym: ks_2samp(target_data.step[p].values, ss[p].dropna().values)[0] for p, sym in
                             s_symbols.items()}})
 
             func_solo_dict[k] = func
 
             def gfunc(s):
-                return dNl.NestDict(
+                return aux.NestDict(
                     {'KS': eval_distro_fast(s, target_data.step, s_symbols, mode='1:pooled', min_size=10)})
 
             func_global_dict[k] = gfunc
 
-    keys = dNl.unique_list(keys)
-    return dNl.NestDict({'func_global_dict': func_global_dict, 'func_solo_dict': func_solo_dict, 'keys': keys})
+    keys = aux.unique_list(keys)
+    return aux.NestDict({'func_global_dict': func_global_dict, 'func_solo_dict': func_solo_dict, 'keys': keys})

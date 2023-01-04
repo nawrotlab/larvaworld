@@ -8,8 +8,8 @@ from scipy.stats import ttest_ind
 
 
 from lib import reg, aux, plot
-from lib.plot.aux import label_diff, annotate_plot
-from lib.plot.base import AutoPlot
+# from lib.plot.aux import label_diff, annotate_plot
+# from lib.plot.base import AutoPlot
 
 
 @reg.funcs.graph('boxplot (simple)')
@@ -19,7 +19,7 @@ def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, s
     Npars = len(ks)
     if name is None:
         name = f'boxplot_{Npars}_{key}_pars'
-    P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
+    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
     pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
@@ -57,7 +57,7 @@ def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, s
             pass
         if annotation:
             try:
-                annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+                plot.annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
             except:
                 pass
 
@@ -78,7 +78,7 @@ def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common
     if name is None:
         name = ks[0]
 
-    P = AutoPlot(name=name, build_kws={'N': Npars, 'Nrows': int(np.ceil(Npars / 3)), 'w': 8, 'h': 7}, **kwargs)
+    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Nrows': int(np.ceil(Npars / 3)), 'w': 8, 'h': 7}, **kwargs)
     # P = Plot(name=ks[0], **kwargs)
     pars, sim_labels, exp_labels, labs, lims = reg.getPar(ks, to_return=['d', 's', 's', 'l', 'lim'])
 
@@ -144,7 +144,7 @@ def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common
 
 @reg.funcs.graph('PI (combo)')
 def boxplot_PI(sort_labels=False, xlabel='Trials', **kwargs):
-    P = AutoPlot(name='PI_boxplot', figsize=(10, 5), **kwargs)
+    P = plot.AutoPlot(name='PI_boxplot', figsize=(10, 5), **kwargs)
 
     group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
@@ -228,7 +228,7 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
 def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     if ks is None:
         ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
-    P = AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
+    P = plot.AutoPlot(name='double_patch', Ncols=2, Nrows=3, figsize=(14 * 2, 8 * 3), **kwargs)
     RStexts = [r'$\bf{Rovers}$' + f' (N={P.N})', r'$\bf{Sitters}$' + f' (N={P.N})']
     mIDs = ['rover', 'sitter']
     Cmods = dict(zip(mIDs, ['dark', 'light']))
@@ -295,7 +295,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
             # print(data)
             # print(data.shape)
             try:
-                annotate_plot(show_ns=show_ns, **kws)
+                plot.annotate_plot(show_ns=show_ns, **kws)
             except:
                 pass
             g1.set(xlabel=None)
@@ -382,7 +382,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
 
 @reg.funcs.graph('foraging')
 def plot_foraging(**kwargs):
-    P = AutoPlot(name='foraging', build_kws={'Nrows': 1, 'Ncols': 2, 'w': 8, 'h': 10, 'mode': 'box'}, **kwargs)
+    P = plot.AutoPlot(name='foraging', build_kws={'Nrows': 1, 'Ncols': 2, 'w': 8, 'h': 10, 'mode': 'box'}, **kwargs)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
         dfs = []
         for i, d in enumerate(P.datasets):
@@ -418,7 +418,7 @@ def lineplot(markers, ks=['f_am'], name=None, coupled_labels=None, xlabel=None, 
     if name is None:
         name = ks[0]
 
-    P = AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': 1, 'w': 8, 'h': 7 / Npars}, **kwargs)
+    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': 1, 'w': 8, 'h': 7 / Npars}, **kwargs)
 
     # Npars = len(ks)
     # P = AutoPlot(name=ks[0], Nrows=Npars, figsize=(8, 7), **kwargs)
@@ -457,7 +457,7 @@ def lineplot(markers, ks=['f_am'], name=None, coupled_labels=None, xlabel=None, 
             for i, j in itertools.combinations(np.arange(Nds).tolist(), 2):
                 st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
                 pv = np.round(pv, 4)
-                label_diff(i, j, f'p={pv}', ind, means, ax)
+                plot.label_diff(i, j, f'p={pv}', ind, means, ax)
         else:
             for k in range(Npairs):
                 i, j = k * N, k * N + 1

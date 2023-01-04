@@ -6,8 +6,7 @@ import numpy as np
 import param
 
 
-from lib.aux import dictsNlists as dNl
-from lib import reg
+from lib import reg, aux
 
 
 def init2mdict(d0):
@@ -35,7 +34,7 @@ def init2mdict(d0):
         return D
 
     d = check(d0)
-    return dNl.NestDict(d)
+    return aux.NestDict(d)
 
 
 def gConf(mdict, **kwargs):
@@ -53,10 +52,10 @@ def gConf(mdict, **kwargs):
                 conf[d] = p.v
             else:
                 conf[d] = gConf(mdict=p)
-            conf = dNl.update_existingdict(conf, kwargs)
-        return dNl.NestDict(conf)
+            conf = aux.update_existingdict(conf, kwargs)
+        return aux.NestDict(conf)
     else:
-        return dNl.NestDict(mdict)
+        return aux.NestDict(mdict)
 
 
 def get_ks(d0, k0=None, ks=[]):
@@ -212,7 +211,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
         def exists(self, dataset):
             par = self.d
             d = dataset
-            dic = dNl.NestDict({'step': False, 'end': False})
+            dic = aux.NestDict({'step': False, 'end': False})
             if hasattr(d, 'step_data'):
                 s = d.step_data
                 if par in s.columns:
@@ -450,7 +449,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         'v0': v0,
 
     }
-    return dNl.NestDict(kws)
+    return aux.NestDict(kws)
 
 
 

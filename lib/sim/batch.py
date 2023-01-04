@@ -12,9 +12,8 @@ import time
 import numpy as np
 from pypet import Environment, load_trajectory, pypetconstants
 
-from lib.aux import dictsNlists as dNl
 from lib.sim.batch_aux import single_run, batch_method_unpack, delete_traj
-from lib import reg
+from lib import reg, aux
 ''' Default batch exec.
 Arguments :
 - Experiment mode eg 'chemorbit'
@@ -158,11 +157,11 @@ class BatchRun:
 
     def config(self, traj, optimization, batch_methods):
         if optimization is not None:
-            opt_dict = dNl.flatten_dict(optimization, parent_key='optimization', sep='.')
+            opt_dict = aux.flatten_dict(optimization, parent_key='optimization', sep='.')
             for k, v in opt_dict.items():
                 traj.f_aconf(k, v)
         if batch_methods is not None:
-            opt_dict = dNl.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
+            opt_dict = aux.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
             for k, v in opt_dict.items():
                 traj.f_aconf(k, v)
         return traj
@@ -181,7 +180,7 @@ class BatchRun:
 
     def load_exp(self, traj, exp):
         for k0 in ['env_params', 'sim_params', 'trials', 'enrichment', 'larva_groups']:
-            dic = dNl.flatten_dict(exp[k0], parent_key=k0, sep='.')
+            dic = aux.flatten_dict(exp[k0], parent_key=k0, sep='.')
             for k, v in dic.items():
                 if type(v) == list:
                     if len(v) == 0:

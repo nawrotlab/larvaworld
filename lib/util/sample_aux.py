@@ -2,10 +2,7 @@ import random
 import numpy as np
 import pandas as pd
 
-import lib.aux.np
-from lib.aux import dictsNlists as dNl
 from lib import reg, aux
-from lib.aux.color import N_colors
 
 def get_sample_bout_distros(model, sample):
     def get_sample_bout_distros0(Im, bout_distros):
@@ -25,7 +22,7 @@ def get_sample_bout_distros(model, sample):
 
     if sample in [None, {}]:
         return model
-    m = dNl.copyDict(model)
+    m = aux.copyDict(model)
     if m.brain.intermitter_params:
         m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
                                                               bout_distros=sample.bout_distros)
@@ -37,8 +34,8 @@ def generate_larvae(N, sample_dict, base_model):
     if len(sample_dict) > 0:
         all_pars = []
         for i in range(N):
-            dic= dNl.NestDict({p: vs[i] for p, vs in sample_dict.items()})
-            all_pars.append(dNl.update_nestdict(dNl.copyDict(base_model), dic))
+            dic= aux.NestDict({p: vs[i] for p, vs in sample_dict.items()})
+            all_pars.append(aux.update_nestdict(aux.copyDict(base_model), dic))
     else:
         all_pars = [base_model] * N
     return all_pars
@@ -68,7 +65,7 @@ def sample_group(e, N=1, ps=[]):
 def get_sample_ks(m, sample_ks=None):
     if sample_ks is None:
         sample_ks = []
-    modF = dNl.flatten_dict(m)
+    modF = aux.flatten_dict(m)
     sample_ks += [p for p in modF if modF[p] == 'sample']
     return sample_ks
 
@@ -203,7 +200,7 @@ def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
     N = len(mIDs)
     if colors is None:
 
-        colors = N_colors(N)
+        colors = aux.N_colors(N)
     if dataset_ids is None:
         dataset_ids = mIDs
     if data_dir is None:
@@ -241,7 +238,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
     controller = PhysicsController(**m.physics)
-    l = lib.aux.np.body.initial_length
+    l = m.body.initial_length
     bend_errors = 0
     DL = DefaultLocomotor(dt=dt, conf=m.brain)
     for qq in range(100):
@@ -291,7 +288,7 @@ def sim_multi_agents(Nticks, Nids, ms, group_id, dt=0.1, ids=None, p0s=None, fo0
     e = pd.DataFrame(index=ids)
     e['cum_dur'] = Nticks * dt
     e['num_ticks'] = Nticks
-    e['length'] = [lib.aux.np.body.initial_length for m in ms]
+    e['length'] = [m.body.initial_length for m in ms]
 
     from lib.process.spatial import scale_to_length
     scale_to_length(s, e, keys=['v'])

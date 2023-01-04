@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from lib.aux import dictsNlists as dNl
 
 from lib.model.body.controller import PhysicsController
 from lib import reg, aux
@@ -29,18 +28,18 @@ class Calibration:
         elif turner_mode == 'constant':
             turner_keys = ['initial_amp']
 
-        self.mkeys = dNl.NestDict({
+        self.mkeys = aux.NestDict({
             'turner': turner_keys,
             'physics': physics_keys,
             'all': physics_keys + turner_keys
         })
 
         self.D = reg.model
-        self.mdicts = dNl.NestDict({
+        self.mdicts = aux.NestDict({
             'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
             'physics': self.D.dict.model.m['physics'].args
         })
-        self.mconfs = dNl.NestDict({
+        self.mconfs = aux.NestDict({
             'turner': None,
             'physics': None
         })
@@ -84,7 +83,8 @@ class Calibration:
         simFOA = np.diff(simFOV, prepend=[0]) / self.dt
 
         if 'tur_t' in self.shorts or 'tur_fou' in self.shorts:
-            from lib.process.aux import detect_turns, process_epochs
+            from lib.process.annotation import detect_turns
+            from lib.process.annotation import process_epochs
 
             Lturns, Rturns = detect_turns(pd.Series(simFOV), self.dt)
             Ldurs, Lamps, Lmaxs = process_epochs(simFOV, Lturns, self.dt, return_idx=False)
@@ -111,7 +111,7 @@ class Calibration:
     def retrieve_modules(self, q, Ndec=None):
         if Ndec is not None:
             q = [np.round(q0, Ndec) for q0 in q]
-        dic = dNl.NestDict({k: q0 for k, q0 in zip(self.mkeys.all, q)})
+        dic = aux.NestDict({k: q0 for k, q0 in zip(self.mkeys.all, q)})
 
         for k, mdict in self.mdicts.items():
             kwargs = {kk: dic[kk] for kk in self.mkeys[k]}

@@ -5,8 +5,8 @@ from matplotlib import pyplot as plt, ticker, cm
 
 from lib.aux import naming as nam
 from lib import reg, aux, plot
-from lib.plot.aux import plot_quantiles, suf
-from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
+# from lib.plot.aux import plot_quantiles, suf
+# from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
 
 
 
@@ -21,8 +21,8 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         save_to = os.path.join(d.plot_dir, 'plot_vel_during_strides')
     if not os.path.exists(save_to):
         os.makedirs(save_to)
-    save_as_lin = f'linear_velocities_during_strides.{suf}'
-    save_as_ang = f'angular_velocity_during_strides.{suf}'
+    save_as_lin = f'linear_velocities_during_strides.{plot.suf}'
+    save_as_ang = f'angular_velocity_during_strides.{plot.suf}'
     filepath_lin = os.path.join(save_to, save_as_lin)
     filepath_ang = os.path.join(save_to, save_as_ang)
     filepaths = [filepath_lin, filepath_ang]
@@ -71,7 +71,7 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         for serie, vel, col, c, l in zip(vel_timeseries[i], vels[i], cs[i], cs[i], labels[i]):
             array = [np.interp(x=np.linspace(0, 2 * np.pi, Npoints), xp=np.linspace(0, 2 * np.pi, dur), fp=ts, left=0,
                                right=0) for dur, ts in zip(durations, serie)]
-            plot_quantiles(df=array, from_np=True, axis=ax, color_mean=c, color_shading=col, label=l)
+            plot.plot_quantiles(df=array, from_np=True, axis=ax, color_mean=c, color_shading=col, label=l)
 
         Nticks = 5
         ticks = np.linspace(0, Npoints - 1, Nticks)
@@ -90,14 +90,14 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
 @reg.funcs.graph('stride cycle')
 def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None, subfolder='stride',
                  Nbins=64, individuals=False, pooled=True, **kwargs):
-    from lib.process.aux import compute_interference
+    from lib.process.annotation import compute_interference
     if name is None:
         if individuals:
             name = f'stride_cycle_curves_all_larvae'
         else:
             name = f'stride_cycle_curves'
     Nsh = len(shorts)
-    P = AutoPlot(name=name, subfolder=subfolder, build_kws={'N': Nsh, 'Ncols': 1, 'w': 8, 'h': 5, 'mode': 'box'},
+    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N': Nsh, 'Ncols': 1, 'w': 8, 'h': 5, 'mode': 'box'},
                  **kwargs)
 
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -123,7 +123,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
                 if cycle_curves is not None:
                     df = cycle_curves[sh][mode]
                     if pooled:
-                        plot_quantiles(df=df, from_np=True, axis=P.axs[ii], color_shading=col, x=x, label=d.id)
+                        plot.plot_quantiles(df=df, from_np=True, axis=P.axs[ii], color_shading=col, x=x, label=d.id)
                     else:
                         for j in range(df.shape[0]):
                             P.axs[ii].plot(x, df[j, :], color=col)
@@ -147,7 +147,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
                             color_solo='grey', color='red',
                             absolute=False, save_to=None, pooled=False,
                             ylim=None, axs=None, fig=None, show=False):
-    from lib.process.aux import detect_strides
+    from lib.process.annotation import detect_strides
     p, sv, fv = reg.getPar([short, 'sv', 'fv'])
     if ss is None:
         id = c.agent_ids[idx]
@@ -171,7 +171,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
             axs.plot(x, aa[ii, :], color_solo, linewidth=1, alpha=0.5, zorder=2)
 
     if pooled:
-        plot_quantiles(df=aa, from_np=True, axis=axs, color_shading=color, x=x)
+        plot.plot_quantiles(df=aa, from_np=True, axis=axs, color_shading=color, x=x)
     else:
         aa_mu = np.nanquantile(aa, q=0.5, axis=0)
         axs.plot(x, aa_mu, color, linewidth=5, alpha=1.0, zorder=10)
@@ -190,7 +190,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
 def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
                             axx=None, **kwargs):
 
-    P = AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
+    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
                  **kwargs)
 
 
@@ -199,7 +199,8 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
     pi2 = 2 * np.pi
     x = np.linspace(0, pi2, Nbins)
 
-    from lib.process.aux import detect_strides, stride_interp
+    from lib.process.annotation import stride_interp
+    from lib.process.annotation import detect_strides
     from lib.aux.xy import compute_velocity
     l, sv, fv, fov = reg.getPar(['l', 'sv', 'fv', 'fov'])
 
@@ -223,7 +224,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
             aa_plus = aa[da > 0]
             aa_norm = np.vstack([aa_plus, -aa_minus])
 
-            plot_quantiles(df=aa_norm, from_np=True, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
+            plot.plot_quantiles(df=aa_norm, from_np=True, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
 
             P.axs[1].set_ylabel(lab)
 
@@ -249,7 +250,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
             aa_mu = np.nanquantile(aa, q=0.5, axis=0)
             aa_max = np.max(aa_mu)
             phi_max = x[np.argmax(aa_mu)]
-            plot_quantiles(df=aa, from_np=True, axis=P.axs[0], color_shading=col, x=x, label=p)
+            plot.plot_quantiles(df=aa, from_np=True, axis=P.axs[0], color_shading=col, x=x, label=p)
             P.axs[0].axvline(phi_max, ymax=aa_max / ymax, color=col, alpha=1, linestyle='dashed', linewidth=2, zorder=20)
             P.axs[0].scatter(phi_max, aa_max + 0.02 * ymax, color=col, marker='v', linewidth=2, zorder=20)
 
@@ -289,7 +290,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
 
 @reg.funcs.graph('stride Dbend')
 def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
-    P = Plot(name='stride_bend_change', subfolder=subfolder, **kwargs)
+    P = plot.Plot(name='stride_bend_change', subfolder=subfolder, **kwargs)
     P.build()
     ax = P.axs[0]
 
@@ -318,7 +319,7 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
 
 @reg.funcs.graph('stride Dor')
 def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
-    P = Plot(name='stride_orient_change', subfolder=subfolder, **kwargs)
+    P = plot.Plot(name='stride_orient_change', subfolder=subfolder, **kwargs)
     shorts = ['str_fo', 'str_ro']
     P.build(1, len(shorts))
     for i, sh in enumerate(shorts):
@@ -347,7 +348,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
     Npars = len(shorts)
 
     pars, ylabs = reg.getPar(shorts, to_return=['d', 'l'])
-    P = AutoPlot(name=name, subfolder=subfolder, Nrows=Npars, figsize=(10, Npars * 5), sharex=True, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, Nrows=Npars, figsize=(10, Npars * 5), sharex=True, **kwargs)
 
     ylim = [0, 60] if mode in ['bend', 'orientation', 'orientation_x2'] else None
 
@@ -361,7 +362,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
             if mode in ['bend', 'orientation']:
                 df = np.abs(df)
             Npoints = df.shape[1] - 1
-            plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
+            plot.plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
         P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right',
                   xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],

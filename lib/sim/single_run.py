@@ -3,9 +3,7 @@ import random
 import time
 import numpy as np
 
-import lib.aux.np
-from lib import reg
-from lib.aux import naming as nam, dictsNlists as dNl, sim_aux
+from lib import reg, aux
 
 from lib.model.envs.world_sim import WorldSim
 
@@ -35,7 +33,7 @@ class SingleRun:
         self.data_dir = f'{self.storage_path}/data'
         # self.vis_dir = f'{self.storage_path}/visuals'
         self.start = time.time()
-        self.source_xy = sim_aux.get_source_xy(env_params['food_params'])
+        self.source_xy = aux.get_source_xy(env_params['food_params'])
         Npoints = np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()])
         output = reg.set_output(collections=collections, Npoints=Npoints)
 
@@ -92,7 +90,7 @@ class SingleRun:
             return None, {'PIs': PIs, 'PI2s': PI2s}
 
         if 'disp' in exp:
-            samples = dNl.unique_list([d.config.sample for d in ds])
+            samples = aux.unique_list([d.config.sample for d in ds])
             ds += [reg.loadRef(sd) for sd in samples]
 
         kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
@@ -112,7 +110,7 @@ class SingleRun:
     #     # FIXME Substituted "comparative analysis" of dispersion simulation to automatize analysis. Probably will fail
     #     # if 'disp' in exp:
     #     #     from lib.sim.single.analysis import comparative_analysis
-    #     #     samples = dNl.unique_list([d.config.sample for d in self.datasets])
+    #     #     samples = aux.unique_list([d.config.sample for d in self.datasets])
     #     #     targets = [reg.loadRef(sd) for sd in samples]
     #     #     kkws = copy.deepcopy(kws)
     #     #     kkws['datasets'] = self.datasets + targets

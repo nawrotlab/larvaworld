@@ -7,10 +7,8 @@ import pandas as pd
 import progressbar
 import numpy as np
 
-from lib.aux import dictsNlists as dNl, color as cNs
 from lib.util.eval_aux import GA_optimization
-from lib import reg
-from lib.aux.time_util import TimeUtil
+from lib import reg, aux
 
 
 class GAselector:
@@ -36,7 +34,7 @@ class GAselector:
         self.best_fitness = None
         self.generation_num = 1
         self.num_cpu = multiprocessing.cpu_count()
-        self.start_total_time = TimeUtil.current_time_millis()
+        self.start_total_time = aux.TimeUtil.current_time_millis()
         self.start_generation_time = self.start_total_time
         self.generation_step_num = 0
         self.generation_sim_time = 0
@@ -61,7 +59,7 @@ class GAselector:
 
         self.generation_step_num = 0
         self.generation_sim_time = 0
-        self.start_generation_time = TimeUtil.current_time_millis()
+        self.start_generation_time = aux.TimeUtil.current_time_millis()
         self.printd(1, '\nGeneration', self.generation_num, 'started')
 
     def sort_genomes(self):
@@ -75,7 +73,7 @@ class GAselector:
             if self.bestConfID is not None:
                 reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
                 # self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
-        end_generation_time = TimeUtil.current_time_millis()
+        end_generation_time = aux.TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
         reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
         # reg.vprint(f'Generation {self.generation_num} duration : {total_generation_time}',self.verbose)
@@ -153,8 +151,8 @@ class GAselector:
         return gConf_a, gConf_b
 
     def new_genome(self, gConf, mConf0):
-        mConf = dNl.update_nestdict(mConf0, gConf)
-        return dNl.NestDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
+        mConf = aux.update_nestdict(mConf0, gConf)
+        return aux.NestDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
 
     def crossover(self, gConf_a, gConf_b):
         gConf={}
@@ -194,7 +192,7 @@ class GAbuilder(GAselector):
             gConf=self.M.conf(self.space_dict)
             self.gConfs=[gConf]*self.Nagents
         elif init_mode=='model':
-            mF=dNl.flatten_dict(self.mConf0)
+            mF=aux.flatten_dict(self.mConf0)
             gConf={k:mF[k] for k,p in self.space_dict.items()}
             self.gConfs = [gConf] * self.Nagents
         elif init_mode == 'random':
@@ -239,7 +237,7 @@ class GAbuilder(GAselector):
 
 
     def init_dataset(self):
-        c = dNl.NestDict(
+        c = aux.NestDict(
             {'id': self.model.id, 'group_id': 'GA_robots', 'dt': self.model.dt, 'fr': 1 / self.model.dt,
              'agent_ids': np.arange(self.Nagents), 'duration': self.model.Nsteps * self.model.dt,
              'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': self.Nagents, 'Nticks': self.model.Nsteps,
@@ -255,10 +253,10 @@ class GAbuilder(GAselector):
         e['cum_dur'] = c.duration
         e['num_ticks'] = c.Nticks
 
-        return dNl.NestDict({'step_data': None, 'endpoint_data': e, 'config': c})
+        return aux.NestDict({'step_data': None, 'endpoint_data': e, 'config': c})
 
     def init_step_df(self):
-        self.dataset = dNl.copyDict(self.dataset0)
+        self.dataset = aux.copyDict(self.dataset0)
 
         step_df = np.ones([self.dataset.config.Nticks, self.dataset.config.N, self.df_Ncols]) * np.nan
         self.dataset.endpoint_data['length'] = [robot.real_length for robot in self.robots]
@@ -401,7 +399,7 @@ class GAbuilder(GAselector):
         if self.model.sim_params.store_data:
             self.all_genomes_dic += [
             {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
-             'fitness': g.fitness, **dNl.flatten_dict(g.fitness_dict)}
+             'fitness': g.fitness, **aux.flatten_dict(g.fitness_dict)}
             for g in self.sorted_genomes if g.fitness_dict is not None]
 
 
@@ -531,7 +529,7 @@ def get_robot_class(robot_class=None, offline=False):
             class_name = f'lib.model.agents.larva_offline.LarvaOffline'
         else :
             raise
-        return cNs.get_class_by_name(class_name)
+        return aux.get_class_by_name(class_name)
     elif type(robot_class) == type:
         return robot_class
 
@@ -539,4 +537,4 @@ def arrange_fitness(fitness_func, **kwargs):
     def func(robot):
         return fitness_func(robot, **kwargs)
 
-    return dNl.NestDict({'func': func, 'func_arg': 'robot'})
+    return aux.NestDict({'func': func, 'func_arg': 'robot'})

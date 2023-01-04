@@ -5,11 +5,11 @@ from matplotlib import cm, pyplot as plt
 from scipy.stats import multivariate_normal
 
 from lib import reg, aux, plot
-from lib.plot.base import ParPlot, Plot
+# from lib.plot.base import ParPlot, Plot
 
 
 def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, azim=115, elev=15, **kwargs):
-    P = ParPlot(name='3d_surface', **kwargs)
+    P = plot.ParPlot(name='3d_surface', **kwargs)
     P.build(fig=fig, axs=ax, dim3=True, azim=azim, elev=elev)
     P.conf_ax_3d(vars, target, lims=lims, title=title)
     P.axs[0].plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=True)
@@ -100,7 +100,7 @@ def plot_3pars(df, vars, target, z0=None, **kwargs):
 def plot_3d(df, vars, target, lims=None, title=None, surface=True, line=False, ax=None, fig=None, dfID=None,
             color='black', **kwargs):
     from statsmodels import api as sm
-    P = ParPlot(name='3d_plot', **kwargs)
+    P = plot.ParPlot(name='3d_plot', **kwargs)
     P.build(fig=fig, axs=ax, dim3=True)
     P.conf_ax_3d(vars, target, lims=lims, title=title)
 
@@ -147,7 +147,7 @@ def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     base_heat_kws.update(heat_kws)
     base_cbar_kws = {"orientation": "vertical"}
     base_cbar_kws.update(cbar_kws)
-    P = ParPlot(name='heatmap', **kwargs)
+    P = plot.ParPlot(name='heatmap', **kwargs)
     P.build()
     sns.heatmap(z, ax=P.axs[0], **base_heat_kws, cbar_kws=base_cbar_kws)
     cax = plt.gcf().axes[-1]
@@ -190,7 +190,7 @@ def plot_heatmap_PI(csv_filepath='PIs.csv', save_as='PI_heatmap.pdf', **kwargs):
 
 
 def plot_2d(df, labels, **kwargs):
-    P = ParPlot(name='2d_plot', **kwargs)
+    P = plot.ParPlot(name='2d_plot', **kwargs)
     par = labels[0]
     res = labels[1]
     p = df[par].values
@@ -204,7 +204,7 @@ def plot_2d(df, labels, **kwargs):
 def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
     ypar, ylab, ylim = reg.getPar(shorts[1], to_return=['d', 'l', 'lim'])
     xpar, xlab, xlim = reg.getPar(shorts[0], to_return=['d', 'l', 'lim'])
-    P = Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
+    P = plot.Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
     P.build()
     ax = P.axs[0]
     if P.Ndatasets == 1 and larva_legend:

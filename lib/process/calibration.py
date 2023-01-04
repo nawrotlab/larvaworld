@@ -9,12 +9,15 @@ from scipy.stats import stats
 from sklearn.linear_model import LinearRegression
 
 
-
-from lib.process.spatial import comp_centroid
 from lib import reg, aux
+from lib.process.spatial import comp_centroid
+from lib.process.annotation import detect_strides
+from lib.process.annotation import process_epochs
+
+
 
 def comp_stride_variation(d, component_vels=True):
-    from lib.process.aux import detect_strides, process_epochs
+
     s, e, c = d.step_data, d.endpoint_data, d.config
     N = c.Npoints
     points = aux.nam.midline(N, type='point')

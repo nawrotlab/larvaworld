@@ -7,10 +7,8 @@ import pypet
 
 
 
-from lib import reg
-from lib.aux.stdout import suppress_stdout
-import lib.aux.dictsNlists as dNl
-import lib.aux.sim_aux
+from lib import reg, aux
+
 from lib.plot.hist import plot_endpoint_params, plot_endpoint_scatter
 from lib.plot.deb import plot_debs
 from lib.plot.scape import plot_3pars, plot_heatmap_PI, plot_2d
@@ -171,7 +169,7 @@ def deb_analysis(traj):
         plot_endpoint_params(ds, new_ids, mode='deb', save_to=save_to)
     # deb_dicts = fun.flatten_list(
     #     [[deb_dict(d, id, new_id=new_id) for id in d.agent_ids] for d, new_id in zip(ds, new_ids)])
-    deb_dicts = dNl.flatten_list([d.load_dicts('deb') for d in ds])
+    deb_dicts = aux.flatten_list([d.load_dicts('deb') for d in ds])
     fig_dict = {}
     for m in ['energy', 'growth', 'full']:
         f = plot_debs(deb_dicts=deb_dicts, save_to=save_to, save_as=f'deb_{m}.pdf', mode=m)
@@ -243,7 +241,7 @@ def retrieve_exp_conf(traj):
 
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
-    with suppress_stdout(False):
+    with aux.suppress_stdout(False):
         ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
         if procfunc is None:
             results = np.nan

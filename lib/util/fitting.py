@@ -3,9 +3,8 @@ import numpy as np
 from scipy.stats import levy, norm, rv_discrete, ks_2samp
 
 
-from lib import reg
-from lib import aux
-from lib.aux import dictsNlists as dNl
+from lib import reg, aux
+
 
 
 def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
@@ -107,7 +106,7 @@ def fit_epochs(grouped_epochs):
                 fitted[k] = None
         else:
             fitted[k] = None
-    return dNl.NestDict(fitted)
+    return aux.NestDict(fitted)
 
 
 def get_bout_distros(fitted_epochs) :
@@ -117,7 +116,7 @@ def get_bout_distros(fitted_epochs) :
             d[k]=dic['best']
         else :
             d[k]=None
-    return dNl.NestDict(d)
+    return aux.NestDict(d)
 
 
 
@@ -229,7 +228,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
               'xmin', 'xmax']
     res_dict2 = dict(zip(names2, res))
 
-    dic = dNl.NestDict({
+    dic = aux.NestDict({
         'values': values, 'pdfs': pdfs, 'cdfs': cdfs, 'Ks': Ks, 'idx_Kmax': idx_Kmax, 'res': res, 'res_dict': res_dict,
         'best': get_best_distro(p, res_dict, idx_Kmax=idx_Kmax), 'fits': dict(zip(names2, res))
     })
@@ -390,7 +389,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
         refDataset=d
     c=refDataset.config
     chunk_dicts = refDataset.load_chunk_dicts()
-    aux_dic = dNl.group_epoch_dicts(chunk_dicts)
+    aux_dic = aux.group_epoch_dicts(chunk_dicts)
     Npau = aux_dic['pause_dur'].shape[0]
     Nrun = aux_dic['run_dur'].shape[0]
 
@@ -412,6 +411,6 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'},
               {'id' : 'experiment', 'pooled_epochs': refDataset.load_pooled_epochs(), 'color': 'red'}]
-    datasets = [dNl.NestDict(dd) for dd in datasets]
+    datasets = [aux.NestDict(dd) for dd in datasets]
     return datasets
 

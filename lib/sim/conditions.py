@@ -1,7 +1,7 @@
 import random
 import numpy as np
 
-from lib.aux.xy import eudis5
+from lib import aux
 from lib.process.spatial import comp_PI
 
 def get_exp_condition(exp):
@@ -119,7 +119,7 @@ class CatchMeCondition:
                 f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
         targets_pos = [f.get_position() for f in env.targets]
         for f in env.followers:
-            if any([eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
+            if any([aux.eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
                 set_target_group(f.group)
                 break
         env.score[env.target_group] += env.dt

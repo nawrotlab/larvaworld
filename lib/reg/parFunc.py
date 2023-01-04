@@ -8,7 +8,7 @@ from lib import aux
 @funcs.param("track_par")
 def track_par_func(chunk, par):
     def func(d):
-        from lib.process.aux import track_par_in_chunk
+        from lib.process.annotation import track_par_in_chunk
         track_par_in_chunk(d, chunk, par)
 
     return func
@@ -17,14 +17,14 @@ def track_par_func(chunk, par):
 def chunk_func(kc, store=False):
     if kc in ['str', 'pau', 'exec', 'str_c', 'run']:
         def func(d):
-            from lib.process.aux import crawl_annotation
+            from lib.process.annotation import crawl_annotation
             s, e, c = d.step_data, d.endpoint_data, d.config
             crawl_annotation(s, e, c, strides_enabled=True, store=store)
 
         required_ks = ['a', 'sa', 'ba', 'foa', 'fv']
     elif kc in ['tur', 'Ltur', 'Rtur']:
         def func(d):
-            from lib.process.aux import turn_annotation
+            from lib.process.annotation import turn_annotation
             s, e, c = d.step_data, d.endpoint_data, d.config
             turn_annotation(s, e, c, store=store)
 

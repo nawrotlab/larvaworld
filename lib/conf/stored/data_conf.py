@@ -1,6 +1,6 @@
 from lib.aux import naming as nam
 from lib import reg, aux
-
+from lib.process.larva_dataset import LarvaDataset, update_config
 
 @reg.funcs.stored_conf("Tracker")
 def Tracker_dict():
@@ -58,7 +58,7 @@ def Tracker_dict():
 
 @reg.funcs.stored_conf("Ref")
 def Ref_dict(DATA=None):
-    from lib.process.larva_dataset import LarvaDataset, update_config
+
     if DATA is None :
         DATA = reg.Path["DATA"]
     dds = [

@@ -1,10 +1,9 @@
 import subprocess
 import argparse
 
-from lib import reg
+from lib import reg, aux
 from lib.process.larva_dataset import LarvaDataset
 from lib.sim.batch_aux import retrieve_results
-import lib.aux.dictsNlists as dNl
 from lib.sim.single_run import SingleRun
 from lib.sim.batch import BatchRun
 
@@ -28,7 +27,7 @@ class Exec:
         # f0, f1 = preg.path_dict["EXECONF"],preg.path_dict["EXEC"]
         f0, f1 = reg.Path.EXECONF, reg.Path.EXEC
         if self.run_externally:
-            dNl.save_dict(self.conf, f0)
+            aux.save_dict(self.conf, f0)
             self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
         else:
             res = self.exec_run()
@@ -86,7 +85,7 @@ if __name__ == "__main__":
                         help='Whether we are running a single simulation or a batch-exec')
     parser.add_argument('conf_file', type=str, help='The configuration file of the batch-exec/simulation')
     args = parser.parse_args()
-    conf = dNl.load_dict(args.conf_file)
+    conf = aux.load_dict(args.conf_file)
     k = Exec(args.mode, conf)
     k.exec_run()
 

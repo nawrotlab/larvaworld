@@ -3,10 +3,9 @@ import operator
 import os
 import PySimpleGUI as sg
 
-import lib.aux.naming
-from lib.aux import dictsNlists as dNl, color as cNs
+
 from gui.aux import buttons as gui_but, functions as gui_fun
-from lib import reg
+from lib import reg, aux
 
 
 def get_table(v, pars_dict, Nagents):
@@ -277,8 +276,8 @@ def import_window(datagroup_id, raw_dic):
     N = len(raw_dic)
     raw_ids = list(raw_dic.keys())
     raw_dirs = list(raw_dic.values())
-    temp = lib.aux.naming.remove_prefix(raw_dirs[0], f'{raw_folder}/')
-    groupID0 = lib.aux.naming.remove_suffix(temp, f'/{raw_ids[0]}')
+    temp = aux.remove_prefix(raw_dirs[0], f'{raw_folder}/')
+    groupID0 = aux.remove_suffix(temp, f'/{raw_ids[0]}')
     if N == 0:
         return proc_dir
     w_size = (1200, 800)
@@ -385,7 +384,7 @@ def import_window(datagroup_id, raw_dic):
                         kws0 = {
                             'id': target_id0,
                             'target_dir':  f'{targets[0]}/{target_id0}',
-                            'source_files': dNl.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
+                            'source_files': aux.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
                                                       n.startswith(source_id)] for source_id, source in
                                                      raw_dic.items()]),
                             **kws

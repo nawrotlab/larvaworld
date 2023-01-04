@@ -7,9 +7,9 @@ from scipy.stats import ttest_ind
 
 
 
-from lib.plot.aux import label_diff
-from lib.plot.base import AutoLoadPlot, AutoPlot, AutoBasePlot
-from lib import reg, aux
+# from lib.plot.aux import label_diff
+# from lib.plot.base import AutoLoadPlot, AutoPlot, AutoBasePlot
+from lib import reg, aux, plot
 
 
 @reg.funcs.graph('error barplot')
@@ -26,7 +26,7 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
         ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
 
     Nplots = len(error_dict)
-    P = AutoBasePlot(name=name,build_kws = {'Nrows': Nplots, 'Ncols': 1, 'w': 20, 'h': 6}, **kwargs)
+    P = plot.AutoBasePlot(name=name,build_kws = {'Nrows': Nplots, 'Ncols': 1, 'w': 20, 'h': 6}, **kwargs)
 
 
     P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
@@ -49,7 +49,7 @@ def intake_barplot(**kwargs):
 def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
-    P = AutoPlot(name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
+    P = plot.AutoPlot(name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15
@@ -87,7 +87,7 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
             for i, j in itertools.combinations(np.arange(Nds).tolist(), 2):
                 st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
                 pv = np.round(pv, 4)
-                label_diff(i, j, f'p={pv}', ind, means, ax)
+                plot.label_diff(i, j, f'p={pv}', ind, means, ax)
         else:
             for k in range(Npairs):
                 i, j = k * N, k * N + 1
@@ -109,7 +109,7 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
 def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
-    P = AutoLoadPlot(ks=ks, name=ks[0], build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks, name=ks[0], build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15
@@ -160,7 +160,7 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
 
 
             if finfuncN==1:
-                label_diff(i, j, f'p={pv}', ind, means, P.axs[ii])
+                plot.label_diff(i, j, f'p={pv}', ind, means, P.axs[ii])
 
             elif finfuncN==2:
                 if pv <= 0.05:

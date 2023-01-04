@@ -2,7 +2,7 @@ import numpy as np
 
 
 
-from lib.plot.base import BasePlot, AutoBasePlot
+# from lib.plot.base import BasePlot, AutoBasePlot
 from lib import reg, aux, plot
 
 
@@ -31,7 +31,7 @@ def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
                              **kwargs)
     if save_as is None:
         save_as = k
-    P = BasePlot('mtable', save_as=save_as, save_to=save_to, show=show)
+    P = plot.BasePlot('mtable', save_as=save_as, save_to=save_to, show=show)
     P.set(fig)
     return P.get()
 
@@ -49,7 +49,7 @@ def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
 
     if save_as is None:
         save_as = mID
-    P = BasePlot('conf_table', save_as=save_as, save_to=save_to, show=show)
+    P = plot.BasePlot('conf_table', save_as=save_as, save_to=save_to, show=show)
     P.set(fig)
     return P.get()
 
@@ -103,7 +103,7 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
         highlight_idx = get_idx(highlighted_cells)
     except:
         highlight_idx = []
-    P = AutoBasePlot(name=name, **kwargs)
+    P = plot.AutoBasePlot(name=name, **kwargs)
 
     ax = P.axs[0]
     ax.axis('off')
@@ -179,7 +179,7 @@ def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
 
     if save_as is None:
         save_as = 'mdiff_table'
-    P = BasePlot('mdiff_table', save_as=save_as, save_to=save_to, show=show)
+    P = plot.BasePlot('mdiff_table', save_as=save_as, save_to=save_to, show=show)
     P.set(fig)
     return P.get()
 

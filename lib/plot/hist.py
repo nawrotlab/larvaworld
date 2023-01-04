@@ -8,8 +8,8 @@ import seaborn as sns
 
 from lib.aux import naming as nam
 from lib import reg, aux, plot
-from lib.plot.aux import scatter_hist, annotate_plot
-from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
+# from lib.plot.aux import scatter_hist, annotate_plot
+# from lib.plot.base import BasePlot, AutoPlot, Plot, AutoLoadPlot
 
 
 
@@ -28,7 +28,7 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     var_mdict = reg.MD.variable_mdict(mkey, mode=mode)
     N = len(list(var_mdict.keys()))
 
-    P = BasePlot(name=f'{mkey}_endpoint_hists', **kwargs)
+    P = plot.BasePlot(name=f'{mkey}_endpoint_hists', **kwargs)
     P.build(1, N, figsize=(7 * N, 6), sharey=True, fig=fig, axs=axs)
 
     for i, (k,p) in enumerate(var_mdict.items()):
@@ -63,9 +63,8 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
         rs += [200, 2000]
 
     Nps = len(shorts)
-    P = AutoPlot(name='ang_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':8, 'mode':'hist'}, **kwargs)
+    P = plot.AutoPlot(name='ang_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':8, 'mode':'hist'}, **kwargs)
 
-    # P = AutoPlot(name='ang_pars', subfolder=subfolder, Ncols=Nps, figsize=(Nps * 8, 8), sharey=True, **kwargs)
     P.init_fits(reg.getPar(shorts))
     for i, (k,r) in enumerate(zip(shorts, rs)):
         p=reg.PD.dict[k]
@@ -87,7 +86,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         name = f'distros_{mode}_{Nps}'
     legloc = 'upper left' if half_circles else 'upper right'
 
-    P = AutoPlot(name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':8, 'mode':mode}, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':8, 'mode':mode}, **kwargs)
     P.init_fits(reg.getPar(ks))
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
@@ -135,7 +134,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
                 pass
             if annotation:
                 try:
-                    annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+                    plot.annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
                 except:
                     pass
 
@@ -177,7 +176,7 @@ def plot_crawl_pars(shorts=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint', pa
                     half_circles=False, kde=True,  **kwargs):
     sns_kws={'kde' : kde, 'stat' : "probability", 'element': "step", 'fill':True, 'multiple' : "layer", 'shrink' :1}
     Nps = len(shorts)
-    P = AutoPlot(name='crawl_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':5, 'mode':'hist'}, **kwargs)
+    P = plot.AutoPlot(name='crawl_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':5, 'mode':'hist'}, **kwargs)
     P.init_fits(reg.getPar(shorts))
     for i, k in enumerate(shorts):
         p=reg.PD.dict[k]
@@ -201,7 +200,7 @@ def plot_turn_duration(absolute=True, **kwargs):
 def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='hist', cumy=True, absolute=True, **kwargs):
     nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
     name = f'{nn}_VS_{par_short}_{mode}'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     ypar, ylab, ylim = reg.getPar('tur_fou', to_return=['d', 'l', 'lim'])
 
     if ref_angle is not None:
@@ -238,7 +237,7 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
             P.conf_ax(xlab=xlab, ylab=ylab, ylim=ylim, yMaxN=4, leg_loc='upper left')
             P.adjust((0.15, 0.95), (0.1, 0.95), 0.01)
     elif mode == 'hist':
-        P.fig = scatter_hist(xs, ys, P.labels, P.colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab,
+        P.fig = plot.scatter_hist(xs, ys, P.labels, P.colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab,
                              cumy=cumy)
     return P.get()
 
@@ -246,7 +245,7 @@ def plot_turn_amp(par_short='tur_t', ref_angle=None, subfolder='turn', mode='his
 def plot_bout_ang_pars(absolute=True, include_rear=True, subfolder='turn', **kwargs):
     shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     Nps=len(shorts)
-    P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':2, 'wh':7, 'mode':'hist'}, **kwargs)
+    P = plot.AutoPlot(name='bout_ang_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':2, 'wh':7, 'mode':'hist'}, **kwargs)
 
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
 
@@ -297,7 +296,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
         name = f'endpoint_scatterplot'
     else:
         name = f'{keys[1]}_vs_{keys[0]}'
-    P = Plot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     P.build(Nx, Ny, figsize=(10 * Ny, 10 * Nx))
     for i, (p0, p1) in enumerate(pairs):
         pars, labs = reg.getPar([p0, p1], to_return=['d', 'l'])
@@ -317,7 +316,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 
 @reg.funcs.graph('turn amplitude')
 def plot_turns(absolute=True, subfolder='turn', **kwargs):
-    P = Plot(name='turn_amplitude', subfolder=subfolder, **kwargs)
+    P = plot.Plot(name='turn_amplitude', subfolder=subfolder, **kwargs)
     P.build()
     p, xlab = reg.getPar('tur_fou', to_return=['d', 'l'])
     bins, xlim = P.angrange(150, absolute, 30)
@@ -377,7 +376,7 @@ def plot_endpoint_params(mode='basic', ks=None, subfolder='endpoint',
 
 
 
-    P = AutoLoadPlot(ks=ks, name=f'endpoint_params_{mode}', subfolder=subfolder, build_kws={'N':Nks, 'Ncols':Ncols, 'w':7, 'h':5, 'mode': 'hist'}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks, name=f'endpoint_params_{mode}', subfolder=subfolder, build_kws={'N':Nks, 'Ncols':Ncols, 'w':7, 'h':5, 'mode': 'hist'}, **kwargs)
 
     def build_df(vs, ax, bins):
         Nvalues = [len(i) for i in vs]

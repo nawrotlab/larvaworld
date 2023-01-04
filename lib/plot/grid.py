@@ -6,8 +6,8 @@ from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
 from lib import reg, aux, plot
-from lib.plot.aux import save_plot
-from lib.plot.base import GridPlot, Plot
+# from lib.plot.aux import save_plot
+# from lib.plot.base import GridPlot, Plot
 
 
 
@@ -52,7 +52,7 @@ def calibration_plot(save_to=None, files=None):
         ax.axis('off')
         ax.imshow(im, cmap=None, aspect=None)
     filepath = os.path.join(save_to, filename)
-    save_plot(fig, filepath, filename)
+    plot.save_plot(fig, filepath, filename)
     return fig
 
 @reg.funcs.graph('model summary')
@@ -76,7 +76,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
         hh0 = 0
     h, w = 67 + hh0, 74
 
-    P = GridPlot(name=f'{mID}_summary', width=w, height=h, scale=(0.25, 0.25), **kwargs)
+    P = plot.GridPlot(name=f'{mID}_summary', width=w, height=h, scale=(0.25, 0.25), **kwargs)
 
     if model_table:
         P.plot(func='configuration', kws={'mID': mID}, h=hh0, w0=8, x0=True, y0=True)
@@ -136,7 +136,7 @@ def velocity_definition(d, save_to=None, save_as='vel_definition.pdf', component
 @reg.funcs.graph('dispersal summary')
 def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
     w, h = 54, 26
-    P = GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
+    P = plot.GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
     ds = [target] + datasets if target is not None else datasets
     Nds = len(ds)
     kws = {
@@ -162,7 +162,7 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
 @reg.funcs.graph('kinematic analysis')
 def kinematic_analysis(datasets, **kwargs):
     w, h = 50, 28
-    P = GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.94), **kwargs)
+    P = plot.GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.94), **kwargs)
 
     kws = {
         'datasets': datasets,
@@ -198,7 +198,7 @@ def kinematic_analysis(datasets, **kwargs):
 def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     h_mpl = 4
     w, h = 30, 60 + h_mpl * 2
-    P = GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
+    P = plot.GridPlot(name=f'RvsS_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
     Nexps = len(entrylist)
     h1exp = int((h - h_mpl * 2) / Nexps)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
@@ -224,7 +224,7 @@ def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
     w, h = 32, 50 + hh_mpl
     if name is None:
         name = f'DoublePatch_summary',
-    P = GridPlot(name=name, width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
+    P = plot.GridPlot(name=name, width=w, height=h, scale=(0.8, 0.8), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
     P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4 + int(Nmods / 2),
            h0=0)
@@ -271,7 +271,7 @@ def chemo_summary(datasets, mdiff_df, title, **kwargs):
     h_mpl = len(mdiff_df.index)
     hh_mpl = h_mpl + 4
     w, h = 30, 42 + hh_mpl
-    P = GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
+    P = plot.GridPlot(name=f'chemo_summary', width=w, height=h, scale=(0.7, 0.7), text_xy0=(0.05, 0.95), **kwargs)
     P.fig.text(x=0.5, y=0.98, s=title, size=35, weight='bold', horizontalalignment='center')
     P.plot(func='mpl', kws={'data': mdiff_df, 'font_size': 18}, w=w, x0=True, y0=True, h=h_mpl, w0=4 + int(Nmods / 2),
            h0=0)
@@ -311,7 +311,7 @@ def chemo_summary(datasets, mdiff_df, title, **kwargs):
 @reg.funcs.graph('eval summary')
 def result_summary(datasets, target, **kwargs):
     w, h = 50, 34
-    P = GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)
+    P = plot.GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)
     ds = [target] + datasets
     Nds = len(ds)
     kws = {
@@ -356,7 +356,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     pars, labs = reg.getPar(['sv', 'c_CT', 'A_T', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
-    P = Plot(name=f'{mID}_test', **kws0, **kwargs)
+    P = plot.Plot(name=f'{mID}_test', **kws0, **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, axs=axs, fig=fig)
     kws1 = aux.NestDict({
         'agent_idx': 0,
@@ -390,7 +390,7 @@ def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled', **
     labels = label_dic[eval_mode]
 
     w, h = 36, 56
-    P = GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45), **kwargs)
+    P = plot.GridPlot(name=f'{norm_mode}_{eval_mode}_error_summary', width=w, height=h, scale=(0.45, 0.45), **kwargs)
 
     P.plot(func='error barplot', kws={'error_dict': error_dict, 'evaluation': evaluation, 'labels': labels},
            N=2, share_w=True, dh=3, h=23, w=24, x0=True, y0=True)

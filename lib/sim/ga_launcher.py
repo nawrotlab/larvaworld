@@ -5,20 +5,14 @@ import warnings
 
 import numpy as np
 
-import lib.aux
-import lib.reg
-import lib.registry
-from lib.aux.sim_aux import get_source_xy
-from lib.reg.base import BaseRun
-from lib import reg
+
+from lib import reg, aux
 from lib.screen.rendering import  Viewer
-from lib.aux.color import Color
 from lib.screen.screen_aux import get_arena_bounds
 from lib.sim.ga_engine import GAbuilder
-from lib.aux.time_util import TimeUtil
 from lib.model.envs.base_world import BaseWorld
 
-class GenAlgRun(BaseRun):
+class GenAlgRun(reg.base.BaseRun):
     def __init__(self, sim_params, env_params=None, experiment='exploration',
                  offline=False, **kwargs):
 
@@ -103,7 +97,7 @@ class BaseGAlauncher(BaseWorld):
             self.id = id
             self.save_to = save_to
             self.Box2D = False
-            self.source_xy = get_source_xy(self.env_pars.food_params)
+            self.source_xy = aux.get_source_xy(self.env_pars.food_params)
 
 
 
@@ -166,19 +160,19 @@ class GAlauncher(BaseGAlauncher):
                     self.side_panel.update_ga_data(self.engine.generation_num, self.engine.best_genome)
 
                 # update statistics time
-                cur_t = TimeUtil.current_time_millis()
+                cur_t = aux.TimeUtil.current_time_millis()
                 cum_t = math.floor((cur_t - self.engine.start_total_time) / 1000)
                 gen_t = math.floor((cur_t - self.engine.start_generation_time) / 1000)
                 self.side_panel.update_ga_time(cum_t, gen_t, self.engine.generation_sim_time)
                 self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
-                self.screen.fill(Color.BLACK)
+                self.screen.fill(aux.Color.BLACK)
 
                 for obj in self.viewer.objects:
                     obj.draw(self.viewer)
 
                 # draw a black background for the side panel
                 side_panel_bg_rect = Rect(self.viewer.width, 0, self.SIDE_PANEL_WIDTH, self.viewer.height)
-                draw.rect(self.screen, Color.BLACK, side_panel_bg_rect)
+                draw.rect(self.screen, aux.Color.BLACK, side_panel_bg_rect)
 
                 self.display_info()
 
@@ -270,7 +264,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
         mID1 = mID0
 
     if sim_ID is None:
-        sim_ID = f'{experiment}_{lib.reg.next_idx(id=experiment, conftype="Ga")}'
+        sim_ID = f'{experiment}_{reg.next_idx(id=experiment, conftype="Ga")}'
 
     kws = {
         'sim_params': reg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt,

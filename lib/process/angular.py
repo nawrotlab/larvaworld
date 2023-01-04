@@ -1,6 +1,5 @@
 import numpy as np
-
-from lib.process.aux import comp_extrema
+from scipy.signal import argrelextrema
 
 from lib import reg, aux
 
@@ -220,8 +219,8 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
     compute_LR_bias(s, e)
     if store :
         pars=ang_pars + aux.nam.vel(ang_pars) + aux.nam.acc(ang_pars)
-        dic = aux.stor.get_distros(s, pars=pars)
-        aux.stor.storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
+        dic = aux.get_distros(s, pars=pars)
+        aux.storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
 
     print(f'Completed {mode} angular processing.')
 
@@ -281,3 +280,46 @@ def comp_ang_from_xy(s, e, dt):
     e[aux.nam.mean(p_vel)] = s[p_vel].dropna().groupby('AgentID').mean()
     e[aux.nam.mean(p_acc)] = s[p_acc].dropna().groupby('AgentID').mean()
 
+
+def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
+    if abs_threshold is None:
+        abs_threshold = [+np.inf, -np.inf]
+    order = np.round(interval_in_sec / dt).astype(int)
+    ids = s.index.unique('AgentID').values
+    Nids = len(ids)
+    Npars = len(parameters)
+    Nticks = len(s.index.unique('Step'))
+    t0 = s.index.unique('Step').min()
+
+    min_array = np.ones([Nticks, Npars, Nids]) * np.nan
+    max_array = np.ones([Nticks, Npars, Nids]) * np.nan
+    for i, p in enumerate(parameters):
+        p_min, p_max = aux.nam.min(p), aux.nam.max(p)
+        s[p_min] = np.nan
+        s[p_max] = np.nan
+        d = s[p]
+        std = d.std()
+        mu = d.mean()
+        if threshold_in_std is not None:
+            thr_min = mu - threshold_in_std * std
+            thr_max = mu + threshold_in_std * std
+        else:
+            thr_min, thr_max = abs_threshold
+        for j, id in enumerate(ids):
+            df = d.xs(id, level='AgentID', drop_level=True)
+            i_min = argrelextrema(df.values, np.less_equal, order=order)[0]
+            i_max = argrelextrema(df.values, np.greater_equal, order=order)[0]
+
+            i_min_dif = np.diff(i_min, append=order)
+            i_max_dif = np.diff(i_max, append=order)
+            i_min = i_min[i_min_dif >= order]
+            i_max = i_max[i_max_dif >= order]
+
+            i_min = i_min[df.loc[i_min + t0] < thr_min]
+            i_max = i_max[df.loc[i_max + t0] > thr_max]
+
+            min_array[i_min, i, j] = True
+            max_array[i_max, i, j] = True
+
+        s[p_min] = min_array[:, i, :].flatten()
+        s[p_max] = max_array[:, i, :].flatten()

@@ -5,8 +5,8 @@ from matplotlib import cm
 from scipy.stats import ks_2samp
 import pandas as pd
 
-from lib.aux import dictsNlists as dNl, naming as nam
-from lib import reg
+from lib.aux import naming as nam
+from lib import reg, aux
 from lib.process.larva_dataset import LarvaDataset
 
 class ExpFitter:
@@ -28,7 +28,7 @@ class ExpFitter:
         key = 's' if use_symbols else 'd'
         self.valid_fields = valid_fields
         self.df = self.multicol_df(key)
-        columns = dNl.flatten_list(self.df['cols'].values.tolist())
+        columns = aux.flatten_list(self.df['cols'].values.tolist())
         self.m_col = pd.MultiIndex.from_tuples(columns, names=['Field', 'Pars'])
 
         if overwrite:
@@ -83,7 +83,7 @@ class ExpFitter:
         # temp={'sample_data': sample_data_lists, 'df': self.df.to_dict(),
         temp = {'sample_data': sample_data_lists, 'stat_coefs': self.stat_coefs,
                 'stats': self.df_st.values.tolist()}
-        dNl.save_dict(temp, reg.datapath('ExpFitter', self.sample.dir))
+        aux.save_dict(temp, reg.datapath('ExpFitter', self.sample.dir))
 
 
     def multicol_df(self, key='s'):

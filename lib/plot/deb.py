@@ -6,18 +6,18 @@ from matplotlib import pyplot as plt, ticker
 from scipy import signal
 
 
-from lib.plot.aux import plot_quantiles, plot_mean_and_range, suf, process_plot
-from lib.plot.base import AutoPlot
+# from lib.plot.aux import plot_quantiles, plot_mean_and_range, suf, process_plot
+# from lib.plot.base import AutoPlot
 from lib import reg, aux, plot
 
 
 @reg.funcs.graph('gut')
 def plot_gut(**kwargs):
-    P = AutoPlot(name='gut', **kwargs)
+    P = plot.AutoPlot(name='gut', **kwargs)
     x = P.trange()
     for d, l, c in zip(P.datasets, P.labels, P.colors):
         df = d.step_data['gut_occupancy'] * 100
-        plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=l)
+        plot.plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=l)
     P.conf_ax(xlab='time, $min$', ylab='% gut occupied',
               xlim=(x[0], x[-1]), ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
@@ -37,7 +37,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
         ylab = r'Food intake $(mg)$'
     if filt_amount and scaled:
         ylab = 'Food intake as % larval mass'
-    P = AutoPlot(name=name, **kwargs)
+    P = plot.AutoPlot(name=name, **kwargs)
 
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         dst_df = d.step_data[par]
@@ -56,7 +56,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
             dst_b.iloc[0] = 0
             dst_b = signal.sosfiltfilt(sos, dst_b)
         x = P.trange()
-        plot_mean_and_range(x=x, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
+        plot.plot_mean_and_range(x=x, mean=dst_m, lb=dst_b, ub=dst_u, axis=P.axs[0], color_shading=c, label=lab)
     P.conf_ax(xlab='time, $min$', ylab=ylab, xlim=(x[0], x[-1]), xMaxN=5, leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.05, 0.005)
     return P.get()
@@ -70,7 +70,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         save_to = reg.Path["DEB"]
     os.makedirs(save_to, exist_ok=True)
     if save_as is None:
-        save_as = f'debs.{suf}'
+        save_as = f'debs.{plot.suf}'
     if deb_dicts is None:
         deb_dicts = aux.flatten_list([d.load_dicts('deb') for d in datasets])
     Ndebs = len(deb_dicts)
@@ -350,7 +350,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
     dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15, right=0.93, hspace=0.15)
-    return process_plot(fig, save_to, save_as, return_fig, show)
+    return plot.process_plot(fig, save_to, save_as, return_fig, show)
 
 #@graph('bearing/turn')
 def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitter', 'default'],
@@ -360,7 +360,7 @@ def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitt
     from lib.model.modules.intermitter import get_EEB_poly1d
     from lib.model.DEB.deb import DEB
 
-    filename = f'EEB_vs_food_quality.{suf}'
+    filename = f'EEB_vs_food_quality.{plot.suf}'
     qs = np.arange(0.01, 1, 0.01)
 
     fig, axs = plt.subplots(3, len(samples), figsize=(10 * len(samples), 20))
@@ -395,7 +395,7 @@ def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitt
         axs[3 * i + 2].set_ylim([0, 1])
     for ax in axs:
         ax.legend()
-    return process_plot(fig, save_to, filename, return_fig, show)
+    return plot.process_plot(fig, save_to, filename, return_fig, show)
 
 
 

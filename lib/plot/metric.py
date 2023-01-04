@@ -2,8 +2,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from lib.plot.base import AutoPlot
-from lib.plot.aux import confidence_ellipse, process_plot, suf
+# from lib.plot.base import AutoPlot
+# from lib.plot.aux import confidence_ellipse, process_plot, suf
 from lib import reg, aux, plot
 
 
@@ -11,7 +11,7 @@ from lib import reg, aux, plot
 def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
     build_kws = {'Nrows': 2, 'Ncols': 1, 'wh': 5, 'sharex': False, 'sharey': False}
 
-    P = AutoPlot(name=f'segmentation_definition', subfolder=subfolder,build_kws=build_kws, **kwargs)
+    P = plot.AutoPlot(name=f'segmentation_definition', subfolder=subfolder,build_kws=build_kws, **kwargs)
     Nbest = 5
     for ii, d in enumerate(P.datasets):
         ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
@@ -47,7 +47,7 @@ def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
 def plot_stride_variability(component_vels=True, subfolder='metric_definition', **kwargs):
     build_kws = {'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True}
 
-    P = AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,build_kws=build_kws,  **kwargs)
+    P = plot.AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,build_kws=build_kws,  **kwargs)
     for ii, d in enumerate(P.datasets):
         ax = P.axs[ii]
 
@@ -69,7 +69,7 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
     return P.get()
 
 
-def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlated_pars.{suf}', return_fig=False):
+def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlated_pars.{plot.suf}', return_fig=False):
     if len(pars) != 3:
         raise ValueError('Currently implemented only for 3 parameters')
     if save_to is None:
@@ -86,6 +86,6 @@ def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlat
         ax.yaxis.set_label_text(labels[j])
     for ax, (i, j) in zip([g.axes[0, 1], g.axes[0, 2], g.axes[1, 2]], [(1, 0), (2, 0), (2, 1)]):
         for std, a in zip([0.5, 1, 2, 3], [0.4, 0.3, 0.2, 0.1]):
-            confidence_ellipse(x=e[pars[i]].values, y=e[pars[j]].values,
+            plot.confidence_ellipse(x=e[pars[i]].values, y=e[pars[j]].values,
                                ax=ax, n_std=std, facecolor='red', alpha=a)
-    return process_plot(g, save_to, save_as, return_fig)
+    return plot.process_plot(g, save_to, save_as, return_fig)

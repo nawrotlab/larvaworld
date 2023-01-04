@@ -214,11 +214,11 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
         shorts += ['v_in_mm', 'a_in_mm']
 
     if store:
-        aux.stor.store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
+        aux.store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
         ps=[p for p in [dst,cdst, sdst, csdst] if p in s.columns]
-        aux.stor.storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
+        aux.storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
 
-        aux.stor.storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
+        aux.storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
 
 
 @reg.funcs.proc("spatial")
@@ -294,7 +294,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
     # dsp_starts = [int(t) for t in dsp_starts]
     # dsp_stops = [int(t) for t in dsp_stops]
     if s is None :
-        xy0 = aux.stor.read(key='default', path=reg.datapath('traj', c.dir))
+        xy0 = aux.read(key='default', path=reg.datapath('traj', c.dir))
     else :
 
         xy0 = s[['x', 'y']]
@@ -441,7 +441,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        ss = aux.stor.read(key='step', path=reg.datapath('step',c.dir))[['x', 'y']]
+        ss = aux.read(key='step', path=reg.datapath('step',c.dir))[['x', 'y']]
         s = ss
     else:
         ss = s[['x', 'y']]
@@ -466,8 +466,8 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
 
     if store:
-        dic = aux.stor.get_distros(s, pars=pars)
-        aux.stor.storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
+        dic = aux.get_distros(s, pars=pars)
+        aux.storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
 
 @reg.funcs.proc("source")
 def comp_source_metrics(s, e, c, **kwargs):
@@ -603,7 +603,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
             ss[y] = ss[y].values-ys
 
         if store:
-            aux.stor.storeH5(df= ss, key=mode, path=reg.datapath('traj', c.dir))
+            aux.storeH5(df= ss, key=mode, path=reg.datapath('traj', c.dir))
 
             print(f'traj_aligned2{mode} stored')
         return ss

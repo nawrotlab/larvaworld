@@ -5,14 +5,14 @@ import pandas as pd
 
 from lib.aux import naming as nam
 
-from lib.plot.base import AutoPlot
+# from lib.plot.base import AutoPlot
 from lib import reg, aux, plot
 
 
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
                      marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
-    from lib.plot.aux import dataset_legend
+    # from lib.plot.aux import dataset_legend
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
     num_distros = len(distro_ls)
@@ -56,10 +56,10 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
         axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
     if len(distro_ls0) > 1:
         if legend_outside:
-            dataset_legend(distro_ls0, distro_cs0, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+            plot.dataset_legend(distro_ls0, distro_cs0, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
         else:
             for ax in axs:
-                dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
+                plot.dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
     for jj in [0]:
         axs[jj].set_ylabel(ylabel)
 
@@ -69,7 +69,7 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
         name = f'runsNpauses{plot_fits}'
     else:
         name = f'turn_epochs{plot_fits}'
-    P = AutoPlot(name=name, sharey=True, Ncols=2, figsize=(10, 5), **kwargs)
+    P = plot.AutoPlot(name=name, sharey=True, Ncols=2, figsize=(10, 5), **kwargs)
     valid_labs = {}
     for j, d in enumerate(P.datasets):
         id = d.id
@@ -127,7 +127,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
     warnings.filterwarnings('ignore')
     nn = f'stridesNpauses_{mode}_{range}_{plot_fits}'
     name = nn if not only_fit_one else f'{nn}_0'
-    P = AutoPlot(name=name, subfolder=subfolder, Ncols=2, figsize=(10, 5), sharey=True, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, Ncols=2, figsize=(10, 5), sharey=True, **kwargs)
     pause_par = nam.dur('pause')
     if stridechain_duration:
         chain_par = nam.dur('exec')  # nam.dur(nam.chain('stride'))

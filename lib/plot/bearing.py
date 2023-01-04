@@ -1,8 +1,8 @@
 import numpy as np
 
 from lib.aux import naming as nam
-from lib.plot.aux import circNarrow, circular_hist
-from lib.plot.base import Plot, AutoPlot
+# from lib.plot.aux import circNarrow, circular_hist
+# from lib.plot.base import Plot, AutoPlot
 from lib import reg, aux, plot
 
 
@@ -20,7 +20,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
         name = f'turn_Dorient_to_{ang0}deg'
         p = nam.unwrap(nam.orient('front'))
 
-    P = AutoPlot(name=name, subfolder=subfolder,subplot_kw=dict(projection='polar'),
+    P = plot.AutoPlot(name=name, subfolder=subfolder,subplot_kw=dict(projection='polar'),
                  build_kws={'Nrows':'Ndatasets','Ncols':Nplots, 'wh':5, 'mode':'hist'}, **kwargs)
 
 
@@ -50,7 +50,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
             B1 = np.deg2rad(b1[(np.abs(db) > min_angle) & (np.abs(db) < max_angle)])
             if Nplots == 2:
                 for tt, BB, aa in zip(['start', 'stop'], [B0, B1], [0.3, 0.6]):
-                    circNarrow(P.axs[ii + k], BB, aa, tt, c)
+                    plot.circNarrow(P.axs[ii + k], BB, aa, tt, c)
                 P.axs[ii + 1].legend(bbox_to_anchor=(-0.7, 0.1), loc='center', fontsize=12)
             elif Nplots == 4:
                 B00 = B0[B0 < 0]
@@ -60,7 +60,7 @@ def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_I
                 for tt, BB, aa in zip([r'$\theta^{init}_{or}$', r'$\theta^{fin}_{or}$'], [(B01, B00), (B11, B10)],
                                       [0.3, 0.6]):
                     for kk, ss, BBB in zip([0, 1], [r'$L_{sided}$', r'$R_{sided}$'], BB):
-                        circNarrow(P.axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
+                        plot.circNarrow(P.axs[ii + k + 2 * kk], BBB, aa, f'{ss} {tt}', c)
                         for iii in [ii + 1, ii + 2 + 1]:
                             P.axs[iii].legend(bbox_to_anchor=(-0.3, 0.1), loc='center', fontsize=12)
             if i == P.Ndatasets - 1:
@@ -93,7 +93,7 @@ def plot_chunk_Dorient2source(source_ID, datasets,subfolder='bouts', chunk='stri
     Nrows = Ncols - 1 if N < Ncols ** 2 - Ncols else Ncols
 
 
-    P = AutoPlot(name=f'{chunk}_Dorient_to_{source_ID}', subfolder=subfolder, datasets=datasets, subplot_kw=dict(projection='polar'),
+    P = plot.AutoPlot(name=f'{chunk}_Dorient_to_{source_ID}', subfolder=subfolder, datasets=datasets, subplot_kw=dict(projection='polar'),
                  build_kws={'Nrows':Nrows,'Ncols':Ncols, 'wh':8, 'mode':'hist'}, **kwargs)
 
     if plot_merged:
@@ -143,8 +143,8 @@ def plot_chunk_Dorient2source(source_ID, datasets,subfolder='bouts', chunk='stri
     for i, (b0, b1, db, label, c) in enumerate(zip(b0s, b1s, dbs, P.labels, P.colors)):
         ax = P.axs[i]
         dbm = np.round(np.mean(np.deg2rad(db)), 2)
-        circNarrow(ax, np.deg2rad(b0), alpha=0.3, label='start', color=c)
-        circNarrow(ax, np.deg2rad(b1), alpha=0.6, label='stop', color=c)
+        plot.circNarrow(ax, np.deg2rad(b0), alpha=0.3, label='start', color=c)
+        plot.circNarrow(ax, np.deg2rad(b1), alpha=0.6, label='stop', color=c)
         text_x = -0.3
         text_y = 1.2
         for dy,text in zip([0,0.1,0.2,0.3],

@@ -3,8 +3,8 @@ from matplotlib import ticker, cm
 
 
 from lib import reg, aux, plot
-from lib.plot.aux import plot_quantiles
-from lib.plot.base import AutoPlot, AutoLoadPlot, AutoBasePlot
+# from lib.plot.aux import plot_quantiles
+# from lib.plot.base import AutoPlot, AutoLoadPlot, AutoBasePlot
 
 
 
@@ -14,7 +14,7 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     from lib.aux.sim_aux import fft_max
     if palette is None:
         palette = {'v': 'red', 'fov': 'blue'}
-    P = AutoBasePlot(name=f'fft_powerspectrum',build_kws={'w': 15, 'h': 12}, **kwargs)
+    P = plot.AutoBasePlot(name=f'fft_powerspectrum',build_kws={'w': 15, 'h': 12}, **kwargs)
     #P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])
@@ -30,8 +30,8 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
         ss = s.xs(id, level='AgentID')
         fvs[j], v_ys[j, :] = fft_max(ss[v], c.dt, fr_range=(1.0, 2.5), return_amps=True)
         ffovs[j], fov_ys[j, :] = fft_max(ss[fov], c.dt, fr_range=(0.1, 0.8), return_amps=True)
-    plot_quantiles(v_ys, from_np=True, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
-    plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
+    plot.plot_quantiles(v_ys, from_np=True, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
+    plot.plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
     xmax = 3.5
     P.conf_ax(0, ylim=(0, 4), xlim=(0, xmax), ylab='Amplitude', xlab='Frequency (Hz)',
               title='Fourier analysis',titlefontsize=25, leg_loc='lower left', yMaxN=5)
@@ -51,7 +51,7 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
 
 @reg.funcs.graph('fft multi')
 def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
-    P = AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
+    P = plot.AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
     # P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.3, 0.25])
@@ -92,7 +92,7 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
         name = f'{pars[0]}_VS_{pars[1]}'
     else:
         name = f'{N}_pars'
-    P = AutoPlot(name=name, subfolder=subfolder, figsize=(10, 8), **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, figsize=(10, 8), **kwargs)
 
     ax = P.axs[0]
     counter = 0
@@ -149,7 +149,7 @@ def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums'
 
     if name is None :
         name=f'fft_powerspectrum_x{Nks}'
-    P = AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, figsize=(10, 8), **kwargs)
+    P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, figsize=(10, 8), **kwargs)
     P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0, 3.5),ylim=(0, 5))
     ax = P.axs[0]
     from scipy.fft import fft, fftfreq

@@ -1,8 +1,7 @@
 from argparse import ArgumentParser
 
 
-from lib import reg
-from lib.aux import dictsNlists as dNl
+from lib import reg, aux
 from cli.cli_argparsers import run_template, get_parser
 
 p=ArgumentParser()
@@ -19,7 +18,7 @@ if __name__ == "__main__":
     args = p.parse_args()
     sim_mode = args.sim_mode
     d = MPs[sim_mode].get(args)
-    kwargs = dNl.NestDict(vars(args))
+    kwargs = aux.NestDict(vars(args))
     kwargs.pop('sim_mode')
     run_template(sim_mode, kwargs, d)
 
