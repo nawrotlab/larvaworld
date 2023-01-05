@@ -184,10 +184,11 @@ class RemoteBrianModelMemory(Memory):
         with Client((self.server_host, self.server_port)) as client:
             [response] = client.send([msg])  # this is a LarvaMessage object again
             # extract returned model results
-            # mbon_p = response.param('MBONp')
-            # mbon_n = response.param('MBONn')
-            # mbon_dif = mbon_p - mbon_n
-            return response.param('preference_index')
+            mbon_p = response.param('MBONp')
+            mbon_n = response.param('MBONn')
+            mbon_dif = mbon_p - mbon_n
+            return mbon_dif
+            # return response.param('preference_index')
 
     def step(self, dx={}, reward=False, t_warmup=0):
         # Default message arguments
