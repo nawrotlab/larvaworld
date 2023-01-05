@@ -168,6 +168,7 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
     elif save_mode == 'semifull':
         N,Nc=d.Npoints, d.Ncontour
         cols1 = nam.midline_xy(N, flat=True) + nam.contour_xy(Nc, flat=True)+ ['collision_flag']
+        #print(cols1)
         # cols1 = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + ['collision_flag']
 
     elif save_mode == 'points':
@@ -503,7 +504,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
     source_dir = f'{raw_folder}/{parent_dir}'
-
+    # print(g.tracker.resolution)
     if merged:
         source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
     kws = {
@@ -556,6 +557,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'env_params': reg.get_null('env_conf', arena=g.tracker.arena),
         **g.tracker.resolution
     }
+    # print(conf)
     from lib.process.larva_dataset import LarvaDataset
     d = LarvaDataset(**conf)
     kws0 = {
@@ -563,6 +565,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'build_conf': g.tracker.filesystem,
         **kwargs
     }
+
     try:
 
         step, end = func_dict[datagroup_id](**kws0)

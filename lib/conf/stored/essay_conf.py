@@ -17,7 +17,7 @@ class Essay:
         self.M = reg.model
         self.G = reg.graphs
         self.GT = reg.group
-        self.CT = reg.conf
+        self.CT = reg.conf0
         self.show = show
         self.type = type
         self.enrichment = enrichment

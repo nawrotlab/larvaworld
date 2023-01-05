@@ -339,7 +339,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
         dic[id]=cycle_curve_dict(ss, dt=dt, shs=shs)
     return aux.NestDict(dic)
 
-
+@reg.funcs.annotation("interference")
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     x = np.linspace(0, 2 * np.pi, Nbins)
 
@@ -415,7 +415,7 @@ def turn_mode_annotation(e, chunk_dicts):
         wNh[id] = dict(zip(wNh_ps, weathervanesNheadcasts(dic.run_idx, dic.pause_idx, dic.turn_slice, dic.turn_amp)))
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
 
-
+@reg.funcs.annotation("turn")
 def turn_annotation(s, e, c, store=False):
     fov, foa = reg.getPar(['fov', 'foa'])
 
@@ -459,6 +459,7 @@ def turn_annotation(s, e, c, store=False):
     return turn_dict
 
 
+@reg.funcs.annotation("crawl")
 def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
     if vel_thr is None:
         vel_thr = c.vel_thr

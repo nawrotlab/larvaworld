@@ -81,6 +81,8 @@ class BaseGAlauncher(BaseWorld):
         self.plot_dir = f'{self.dir_path}/plots'
         os.makedirs(self.plot_dir, exist_ok=True)
         if not self.offline:
+            # print(Nsteps)
+            # raise
             super().__init__(id=id, dt=dt, Box2D=sim_params.Box2D, env_params=env_params,
                              save_to=f'{self.dir_path}/visuals',
                              Nsteps=Nsteps, experiment=experiment, **kwargs)

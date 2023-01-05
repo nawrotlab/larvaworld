@@ -12,7 +12,6 @@ from lib import reg, aux, plot
 
 def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
                      marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
-    # from lib.plot.aux import dataset_legend
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
     num_distros = len(distro_ls)

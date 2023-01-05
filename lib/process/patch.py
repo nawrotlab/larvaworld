@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from lib import aux
-
+from lib import reg, aux
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
 
@@ -85,7 +84,7 @@ def comp_patch(s, e, c):
         except:
             pass
 
-
+@reg.funcs.annotation("on_food")
 def comp_on_food(s, e, c):
     on = 'on_food'
     if on in s.columns and aux.nam.dur_ratio(on) in e.columns:

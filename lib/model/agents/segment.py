@@ -1,81 +1,23 @@
-import math
-
 import Box2D
 import numpy as np
 from shapely import affinity
 from shapely.geometry import Polygon
-
 
 from lib import aux
 
 
 class BodySegment:
     def __init__(self, pos, orientation, seg_vertices, color,seg_length, idx, rotation_point=None):
-        # self.space = space
         self.color = color
         self.pos = pos
         self.orientation = orientation % (np.pi * 2)
         self.seg_vertices = seg_vertices
         self.seg_length = seg_length
         self.idx = idx
+
         self.rotation_point = rotation_point
 
-        self.reset_rotation_pos()
 
-
-    @property
-    def rotation_pos(self):
-
-        p= self._rotation_pos
-        # if p is None and self.rotation_point is not None :
-        #     p=self.comp_rotation_pos()
-        #     self._rotation_pos = p
-        return p
-
-
-
-    #@property
-    # @timer
-    def reset_rotation_pos(self):
-        rp=self.rotation_point
-        if rp is None :
-            rpos= None
-        else :
-            p=self.get_position()
-            o=self.get_orientation()
-            if rp=='mid':
-                rpos= p
-            elif rp=='rear':
-                k = np.array([math.cos(o), math.sin(o)])
-                rpos= p-k*self.seg_length/2
-            elif rp=='front':
-                k = np.array([math.cos(o), math.sin(o)])
-                rpos= p+k*self.seg_length/2
-            else :
-                raise
-        self.rotation_pos = rpos
-
-    @rotation_pos.setter
-    def rotation_pos(self, p=None):
-        # if p is None and self.rotation_point is not None:
-        #     p = self.comp_rotation_pos()
-
-        self._rotation_pos = p
-
-    def test_rotation(self, dho=0,d=0,to_return=['mid','front']):
-        rp=self.rotation_pos
-        if rp is None :
-            return None
-        p0 = self.get_position()
-        o0 = self.get_orientation()
-
-        o1 = o0 + dho
-        k = np.array([math.cos(o1), math.sin(o1)])
-        if self.rotation_point=='rear':
-            if to_return==['mid','front']:
-                pf1 = rp + k * (self.seg_length+d)
-                p1 = rp + k * (self.seg_length/2+d)
-                return pf1,p1
 
     def draw(self, viewer, color=None, filled=True):
         if color is None:
@@ -83,7 +25,6 @@ class BodySegment:
         for vertices in self.vertices:
             viewer.draw_polygon(vertices, filled=filled, color=color)
 
-    # @property
     def get_color(self):
         return self.color
 
@@ -110,16 +51,10 @@ class BodySegment:
         angle = self.get_orientation()
         # I normalize the angle_to_x_axis in [-pi,pi]
         angle %= 2 * np.pi
-        # if angle > np.pi:
-        #     angle -= 2 * np.pi
         return angle
 
     def get_shape(self, scale=1):
         p0 = Polygon(self.vertices[0])
-        # print(list(p0.exterior.coords))
-        # print(list(p0.bounds))
-        #
-        # raise
         if scale==1:
             return p0
         else :

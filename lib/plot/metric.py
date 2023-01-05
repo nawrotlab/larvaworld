@@ -2,8 +2,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
 
-# from lib.plot.base import AutoPlot
-# from lib.plot.aux import confidence_ellipse, process_plot, suf
 from lib import reg, aux, plot
 
 

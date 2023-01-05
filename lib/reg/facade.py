@@ -26,6 +26,7 @@ class FunctionDict:
         return self.register_func(name, "annotating")
 
     def graph(self, name):
+        # print(name)
         return self.register_func(name, "graphs")
 
     def stored_conf(self, name):

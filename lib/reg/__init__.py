@@ -8,21 +8,34 @@ def vprint(text='', verbose=0):
 vprint("Initializing larvaworld registry", 2)
 
 from lib.aux import dictsNlists as dNl
+
+vprint("Initializing path registry", 0)
 from .paths import ROOT_DIR, Path, SampleDic, datapath, datafunc, conftree
 
-
+vprint("Initializing output registry", 0)
 from .output import output_dict,set_output, get_reporters
 from .units import units
+
+vprint("Initializing function registry", 0)
 from .facade import funcs
 from .parFunc import *
 from . import base
 from .distro import distro_database,get_dist
+
+vprint("Initializing parameter registry", 0)
 from .parDB import par
-from .config import conf, group
+
+vprint("Initializing configuration registry", 0)
+from .config import conf0, group
 from .controls import controls
+
+vprint("Initializing model registry", 0)
 from .models import model
 from .parser import parsers
+
+vprint("Initializing graph registry", 0)
 from .graph import graphs
+
 vprint("Registry configured!", 2)
 
 
@@ -125,19 +138,19 @@ def testRef(id):
 
 
 def loadConf(conftype, id=None):
-    return conf.dict[conftype].loadConf(id=id)
+    return conf0.dict[conftype].loadConf(id=id)
 
 def saveConf(conftype, id, conf):
-    return conf.dict[conftype].saveConf(id=id, conf=conf)
+    return conf0.dict[conftype].saveConf(id=id, conf=conf)
 
 def deleteConf(conftype, id=None):
-    return conf.dict[conftype].deleteConf(id=id)
+    return conf0.dict[conftype].deleteConf(id=id)
 
 def expandConf(conftype, id=None):
-    return conf.dict[conftype].expandConf(id=id)
+    return conf0.dict[conftype].expandConf(id=id)
 
 def storedConf(conftype):
-    return conf.dict[conftype].ConfIDs
+    return conf0.dict[conftype].ConfIDs
 
 
 def next_idx(id, conftype='Exp'):

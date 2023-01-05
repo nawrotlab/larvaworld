@@ -123,7 +123,6 @@ def get_bout_distros(fitted_epochs) :
 
 def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, overlap=0.0, Nbins=64, print_fits=False,
                      dataset_id='dataset', bout='pause', combine=True, fit_by='pdf', eval_func_id='KS2'):
-    from lib.aux.stdout import suppress_stdout
     eval_func_dic={
         'MSE':MSE,
         'KS':KS,
@@ -135,7 +134,7 @@ def fit_bout_distros(x0, xmin=None, xmax=None, discrete=False, xmid=np.nan, over
         xmin=np.nanmin(x0)
     if xmax is None :
         xmax=np.nanmax(x0)
-    with suppress_stdout(False):
+    with aux.suppress_stdout(False):
         warnings.filterwarnings('ignore')
         distros=reg.distro_database
         x = x0[x0 >= xmin]

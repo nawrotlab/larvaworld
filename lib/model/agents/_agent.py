@@ -1,4 +1,3 @@
-from typing import Union
 import agentpy
 import numpy as np
 from scipy.stats import multivariate_normal

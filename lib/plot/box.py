@@ -8,8 +8,6 @@ from scipy.stats import ttest_ind
 
 
 from lib import reg, aux, plot
-# from lib.plot.aux import label_diff, annotate_plot
-# from lib.plot.base import AutoPlot
 
 
 @reg.funcs.graph('boxplot (simple)')

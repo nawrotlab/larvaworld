@@ -5,8 +5,6 @@ from matplotlib import pyplot as plt, ticker, cm
 
 from lib.aux import naming as nam
 from lib import reg, aux, plot
-# from lib.plot.aux import plot_quantiles, suf
-# from lib.plot.base import AutoPlot, Plot, AutoLoadPlot
 
 
 

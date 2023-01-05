@@ -6,9 +6,6 @@ from matplotlib.patches import Patch
 from scipy.stats import ttest_ind
 
 
-
-# from lib.plot.aux import label_diff
-# from lib.plot.base import AutoLoadPlot, AutoPlot, AutoBasePlot
 from lib import reg, aux, plot
 
 

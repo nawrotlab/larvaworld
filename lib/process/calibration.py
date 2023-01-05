@@ -11,8 +11,7 @@ from sklearn.linear_model import LinearRegression
 
 from lib import reg, aux
 from lib.process.spatial import comp_centroid
-from lib.process.annotation import detect_strides
-from lib.process.annotation import process_epochs
+from lib.process.annotation import detect_strides, process_epochs
 
 
 

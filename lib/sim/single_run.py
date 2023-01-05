@@ -49,7 +49,7 @@ class SingleRun:
             for d in self.datasets:
                 if self.enrichment:
                     reg.vprint()
-                    reg.vprint(f'--- Enriching dataset {self.id} with derived parameters ---')
+                    reg.vprint(f'--- Enriching dataset {self.id} with derived parameters ---', 1)
                     d.enrich(**self.enrichment, is_last=False, store=self.store_data)
             if self.sim_params.store_data and self.store_data:
                 self.store()

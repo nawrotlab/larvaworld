@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.model.body.controller import PhysicsController
+
 from lib import reg
 
 class Locomotor:
@@ -39,61 +39,10 @@ class Locomotor:
         return self.lin_activity, self.ang_activity, self.feed_motion
 
 
-class OfflineLocomotor(Locomotor):
-    def __init__(self, dt=0.1, **kwargs):
-        super().__init__(dt)
-        self.controller = PhysicsController(**kwargs)
-        self.bend = 0.0
-        self.ang_vel = 0.0
-        self.lin_vel = 0.0
-        self.last_dist = 0
 
-    def update_body(self, length):
-        self.lin_vel, self.ang_vel = self.controller.get_vels(lin=self.lin_activity, ang=self.ang_activity,
-                                                              prev_ang_vel=self.ang_vel,
-                                                              prev_lin_vel=self.lin_vel,
-                                                              bend=self.bend, dt=self.dt,
-                                                              ang_suppression=self.cur_ang_suppression)
-
-
-        self.last_dist = self.lin_vel * self.dt
-
-        def restore_bend_2seg(bend, d, l, correction_coef=1.0):
-            k0 = 2 * d * correction_coef / l
-            if 0 <= k0 < 1:
-                return bend * (1 - k0)
-            elif 1 <= k0:
-                return 0
-            elif k0 < 0:
-                return bend
-
-        self.bend = restore_bend_2seg(self.bend, self.last_dist, length,
-                                      correction_coef=self.controller.bend_correction_coef)
-        self.bend_body()
-
-    def bend_body(self):
-        self.bend += self.ang_vel * self.dt
-        if self.bend > np.pi:
-            self.bend = np.pi
-        elif self.bend < -np.pi:
-            self.bend = -np.pi
-
-    # @property
-    def output(self, length=None):
-        if length is None :
-            length=1
-        self.update_body(length)
-        return self.lin_vel, self.ang_vel, self.feed_motion
-
-class DefaultLocomotor(OfflineLocomotor, Locomotor):
-    def __init__(self, conf, offline=False, **kwargs):
-        self.offline = offline
-        if offline:
-            OfflineLocomotor.__init__(self, **kwargs)
-        else:
-            Locomotor.__init__(self, **kwargs)
-
-    # def init_loco(self, conf, L):
+class DefaultLocomotor(Locomotor):
+    def __init__(self, conf, **kwargs):
+        super().__init__()
         D = reg.model.dict.model.m
         for k in ['crawler', 'turner', 'interference', 'feeder', 'intermitter']:
 
@@ -144,8 +93,4 @@ class DefaultLocomotor(OfflineLocomotor, Locomotor):
             cT = 1
         self.cur_ang_suppression=cT
         self.ang_activity = self.turner.step(A_in=A_in) if self.turner else 0
-        if self.offline:
-            self.update_body(length)
-            return self.lin_vel, self.ang_vel, self.feed_motion
-        else:
-            return self.lin_activity, self.ang_activity, self.feed_motion
+        return self.lin_activity, self.ang_activity, self.feed_motion

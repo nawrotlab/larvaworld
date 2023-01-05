@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
-from lib import reg, aux
+from lib import reg, aux, plot
 
 from lib.util.eval_aux import arrange_evaluation, torsNdsps, eval_fast, GA_optimization
 from lib.util.sample_aux import sim_models
@@ -269,8 +269,6 @@ class EvalRun(reg.base.BaseRun):
         return aux.NestDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
-        from lib.plot.aux import annotate_plot
-        from lib.plot.base import AutoPlot
         self.sim_data = self.preprocess()
         if mode == 'step':
             if Nbins is None:
@@ -300,7 +298,7 @@ class EvalRun(reg.base.BaseRun):
             sharex = True
             sharey = False
 
-        P = AutoPlot(name=filename, subfolder=None, Nrows=Nrows, Ncols=Ncols, figsize=(5 * Ncols, 8 * Nrows),
+        P = plot.AutoPlot(name=filename, subfolder=None, Nrows=Nrows, Ncols=Ncols, figsize=(5 * Ncols, 8 * Nrows),
                      sharex=sharex, sharey=sharey, show=self.show, save_to=self.plot_dir,
                      datasets=[self.target] + self.datasets)
 
@@ -346,7 +344,7 @@ class EvalRun(reg.base.BaseRun):
                     'linewidth': None
                 }
                 g1 = sns.boxplot(**kws)
-                annotate_plot(show_ns=False, target_only=self.target.id, **kws)
+                plot.annotate_plot(show_ns=False, target_only=self.target.id, **kws)
                 P.conf_ax(i, xticklabelrotation=30, ylab=sym, yMaxN=4, xvis=False if i < (Nrows - 1) * Ncols else True)
 
             P.adjust((0.1, 0.95), (0.15, 0.9), 0.5, 0.1)

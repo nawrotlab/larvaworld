@@ -1,11 +1,11 @@
-from lib.registry import reg
-reg.init()
+from lib import reg
 
 from lib.sim.replay import ReplayRun
 
-mode = 'dispersal'
+mode = 'normal'
 # refID = 'Rehydration/AttP2.Deprived'
-refID = 'naive_locomotion.20controls'
+refID = 'None.40controls'
+# refID = 'naive_locomotion.20controls'
 # refID = 'exploration.150controls'
 
 replay_kws = {

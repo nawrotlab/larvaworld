@@ -24,7 +24,7 @@ class BaseWorld:
 
     def __init__(self, env_params,  id='unnamed', dt=0.1, save_to='.',trials={},Nsteps=None,
                  Box2D=False, experiment=None, larva_collisions=True, dur=None):
-
+        # raise
         self._id_counter=-1
         self.p=env_params
 
@@ -44,6 +44,8 @@ class BaseWorld:
             dur=np.round(Nsteps*self.dt/60,2)
         self.duration = dur
         self.Nsteps = Nsteps
+        # print(self.Nsteps)
+        # raise
         self.save_to = save_to
         self.larva_collisions = larva_collisions
 
@@ -55,7 +57,7 @@ class BaseWorld:
         self.env_pars = aux.NestDict(env_params)
 
         self.create_arena(self.env_pars.arena.arena_dims, self.env_pars.arena.arena_shape)
-        self.space = self.create_space(torus=self.env_pars.arena.torus)
+        self.space = self.create_space(torus=self.env_pars.arena.torus if 'torus' in self.env_pars.arena.keys() else False)
         self.borders, self.border_walls, self.border_lines = [], [], []
         self.create_borders(self.env_pars.border_list)
 

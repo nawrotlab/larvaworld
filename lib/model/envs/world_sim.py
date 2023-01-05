@@ -202,19 +202,19 @@ class WorldSim(World):
 
     def simulate(self):
         reg.vprint()
-        reg.vprint(f'---- Simulating {self.id} ----')
+        reg.vprint(f'---- Simulating {self.id} ----', 1)
         # Run the simulation
         start = time.time()
         completed = self.run()
         if not completed:
-            reg.vprint(f'---- Simulation {self.id} aborted!---- ')
+            reg.vprint(f'---- Simulation {self.id} aborted!---- ', 1)
             datasets=None
         else:
             datasets = self.retrieve()
             self.close()
             end = time.time()
             dur = np.round(end - start).astype(int)
-            reg.vprint(f'---- Simulation {self.id} completed in {dur} seconds!---- ')
+            reg.vprint(f'---- Simulation {self.id} completed in {dur} seconds!---- ', 1)
         # self.data=self.datasets
         return datasets
 

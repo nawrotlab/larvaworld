@@ -1,5 +1,5 @@
 from lib.aux import naming as nam
-from lib import reg, aux
+from lib import reg, aux,process
 from lib.process.larva_dataset import LarvaDataset, update_config
 
 @reg.funcs.stored_conf("Tracker")
@@ -53,7 +53,7 @@ def Tracker_dict():
 
     }}
 
-    return aux.NestDict({k:reg.get_null('tracker', kws=kws) for k,kws in dkws.items()})
+    return aux.NestDict({k:reg.par.null('tracker', **kws) for k,kws in dkws.items()})
 
 
 @reg.funcs.stored_conf("Ref")
@@ -109,7 +109,7 @@ def Group_dict():
         for i, (k, vs) in enumerate(dkws.items()):
             v_list = aux.flatten_list(vs)
             dF = dict(zip(kw_list, v_list))
-            enr[k] = reg.get_null('enrichment', kws=dF)
+            enr[k] = reg.par.null('enrichment', **dF)
         return aux.NestDict(enr)
 
 

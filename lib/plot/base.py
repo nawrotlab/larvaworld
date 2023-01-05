@@ -58,7 +58,7 @@ class BasePlot:
                 ax = Axes3D(self.fig, azim=azim, elev=elev)
                 self.axs = [ax]
             else:
-                self.fig_kws = plot.aux.NcolNrows(**self.build_kws)
+                self.fig_kws = plot.NcolNrows(**self.build_kws)
                 self.fig, axs = plt.subplots(**self.fig_kws)
                 self.axs = axs.ravel() if self.Ncols*self.Nrows > 1 else [axs]
 
@@ -198,7 +198,7 @@ class BasePlot:
     def get(self):
         if self.fit_df is not None:
             self.fit_df.to_csv(self.fit_filename, index=True, header=True)
-        return plot.aux.process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show, verbose=self.verbose)
+        return plot.process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show, verbose=self.verbose)
 
     def add_letter(self, ax, letter=True, x0=False, y0=False):
         if letter:
@@ -281,7 +281,7 @@ class Plot(BasePlot):
             datasets += targets
             if labels is not None:
                 labels += targetIDs
-        self.Ndatasets, self.colors, save_to, self.labels = plot.aux.plot_config(datasets, labels, save_to,
+        self.Ndatasets, self.colors, save_to, self.labels = plot.plot_config(datasets, labels, save_to,
                                                                         subfolder=subfolder)
 
         super().__init__(name, save_to=save_to, **kwargs)
@@ -344,7 +344,7 @@ class Plot(BasePlot):
             rad = 0.04
             yy = 0.95 - coef * 0.08
             xx = 0.75
-            plot.aux.dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
+            plot.dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
             pv = self.fit_df[f'P_{p}'].loc[ind]
             if pv == 0:
                 pvi = -9

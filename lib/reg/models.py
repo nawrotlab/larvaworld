@@ -1160,7 +1160,7 @@ def epar(e, k=None, par=None, average=True, Nround=2):
 
 
 
-model = ModelRegistry(reg.conf.dict["Model"])
+model = ModelRegistry(reg.conf0.dict["Model"])
 
 
 

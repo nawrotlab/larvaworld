@@ -222,7 +222,7 @@ def create_mod_dict(b):
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
         M1 = aux.NestDict(copy.deepcopy(M0))
         M1.brain = brain
-        aux.body.update(**bod)
+        M1.body.update(**bod)
         M1.physics.update(**phys)
         M1.Box2D_params.update(**Box2D)
         return M1

@@ -6,8 +6,7 @@ from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
 from lib import reg, aux, plot
-# from lib.plot.aux import save_plot
-# from lib.plot.base import GridPlot, Plot
+
 
 
 

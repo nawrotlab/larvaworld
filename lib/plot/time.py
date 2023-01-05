@@ -3,8 +3,6 @@ from matplotlib import collections as mc
 
 from lib import reg, aux, plot
 
-# from lib.plot.base import Plot, AutoPlot, AutoLoadPlot
-# from lib.plot.aux import plot_quantiles
 
 
 

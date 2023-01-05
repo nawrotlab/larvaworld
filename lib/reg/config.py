@@ -519,5 +519,5 @@ class GroupTypeDict:
 
 
 # # from lib.registry.conf import ConfTypeDict, GroupTypeDict
-conf =ConfTypeDict(reg.par.PI, reg.Path)
+conf0 =ConfTypeDict(reg.par.PI, reg.Path)
 group =GroupTypeDict(reg.par.PI)

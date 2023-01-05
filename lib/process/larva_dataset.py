@@ -114,7 +114,7 @@ class _LarvaDataset:
             self.storeH5(df=self.food_endpoint_data, key='food')
         self.save_config(add_reference=add_reference, refID=refID)
 
-        print(f'***** Dataset {self.id} stored.-----')
+        reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
     def save_vel_definition(self, component_vels=True):
         from lib.process.calibration import comp_stride_variation, comp_segmentation

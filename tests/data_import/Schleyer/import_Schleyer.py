@@ -1,5 +1,5 @@
-from lib.registry import reg
-reg.init()
+from lib import reg
+
 
 from lib.process.building import import_dataset
 

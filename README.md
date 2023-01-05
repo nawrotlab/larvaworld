@@ -161,4 +161,11 @@ Larvaworld can be run directly from linux terminal.
        This line optimizes a model for kinematic realism against a reference experimental dataset
 
            python larvaworld.py Ga realism -N 20 -t 0.5
+
+   4. Experiment replay
+   
+      Replay a real-world experiment.
+      This line replays a reference experimental dataset
+
+           python larvaworld.py Rep -refID None.40controls
     

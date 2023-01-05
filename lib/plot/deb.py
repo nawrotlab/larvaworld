@@ -6,8 +6,6 @@ from matplotlib import pyplot as plt, ticker
 from scipy import signal
 
 
-# from lib.plot.aux import plot_quantiles, plot_mean_and_range, suf, process_plot
-# from lib.plot.base import AutoPlot
 from lib import reg, aux, plot
 
 
@@ -346,9 +344,8 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         # ax.set_xlim([0, np.max(max_ages)])
         for ax in axs:
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
-    from lib.plot.aux import dataset_legend
 
-    dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
+    plot.dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15, right=0.93, hspace=0.15)
     return plot.process_plot(fig, save_to, save_as, return_fig, show)
 

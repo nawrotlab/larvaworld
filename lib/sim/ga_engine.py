@@ -310,11 +310,11 @@ class GAbuilder(GAselector):
 
 
 
-    def eval(self, gd):
-        for i, g in gd.items():
-            if g.fitness is None:
-                gdict =self.fit_dict.robot_func(ss=g['step'])
-                g.fitness, g.fitness_dict = self.get_fitness(gdict)
+    # def eval(self, gd):
+    #     for i, g in gd.items():
+    #         if g.fitness is None:
+    #             gdict =self.fit_dict.robot_func(ss=g['step'])
+    #             g.fitness, g.fitness_dict = self.get_fitness(gdict)
 
 
     def build_generation(self):
@@ -358,7 +358,6 @@ class GAbuilder(GAselector):
 
         self.generation_sim_time += self.model.dt
         self.generation_step_num += 1
-
 
         if self.generation_step_num == self.model.Nsteps or len(self.robots)<=self.Nagents_min:
             self.end_generation()
@@ -440,7 +439,7 @@ class GAbuilder(GAselector):
 
     def check(self, robot):
         if not self.model.offline:
-            if robot.x < 0 or robot.x > self.viewer.width or robot.y < 0 or robot.y > self.viewer.height:
+            if robot.xx < 0 or robot.xx > self.viewer.width or robot.yy < 0 or robot.yy > self.viewer.height:
                 # if robot.x < 0 or robot.x > self.viewer.width or robot.y < 0 or robot.y > self.viewer.height:
                 self.destroy_robot(robot)
 

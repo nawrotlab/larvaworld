@@ -1,8 +1,6 @@
 import numpy as np
 
 from lib.aux import naming as nam
-# from lib.plot.aux import circNarrow, circular_hist
-# from lib.plot.base import Plot, AutoPlot
 from lib import reg, aux, plot
 
 

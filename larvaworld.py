@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 
-from lib import reg, aux
+from lib import reg, aux, plot
 from cli.cli_argparsers import run_template, get_parser
 
 p=ArgumentParser()

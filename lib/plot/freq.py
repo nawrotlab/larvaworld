@@ -3,8 +3,6 @@ from matplotlib import ticker, cm
 
 
 from lib import reg, aux, plot
-# from lib.plot.aux import plot_quantiles
-# from lib.plot.base import AutoPlot, AutoLoadPlot, AutoBasePlot
 
 
 
