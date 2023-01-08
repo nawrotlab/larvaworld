@@ -513,7 +513,7 @@ def buildInitDict():
             'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'],
                               'h': 'Whether to transpose spatial coordinates.'}
         }
-        d['processing'] = {t: {**bF, 'h': f'Whether to apply {t} processing'} for t in proc_type_keys}
+        d['processing'] = {t: {**bT, 'h': f'Whether to apply {t} processing'} for t in proc_type_keys}
         d['annotation'] = {
             **{b: {**bF, 'h': f'Whether to annotate {b} epochs'} for b in ['stride', 'pause', 'turn']},
             'on_food': {**bF, 'h': f'Whether to compute patch residency'},

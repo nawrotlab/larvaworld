@@ -4,7 +4,8 @@ from lib.sim.replay import ReplayRun
 
 mode = 'normal'
 # refID = 'Rehydration/AttP2.Deprived'
-refID = 'None.40controls'
+refID = 'exploration.dish'
+# refID = 'None.40controls'
 # refID = 'naive_locomotion.20controls'
 # refID = 'exploration.150controls'
 

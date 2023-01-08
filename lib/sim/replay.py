@@ -22,6 +22,9 @@ class ReplayRun:
         s,e,c=smaller_dataset(d=self.dataset,ids=agent_ids, transposition=transposition, time_range=time_range, track_point=track_point,
                               env_params=env_params,close_view=close_view)
 
+        # print(s[['x','y']].max())
+
+
         c.env_params.windscape=None
         if id is None:
             if transposition is not None:

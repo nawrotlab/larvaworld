@@ -524,7 +524,8 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
             print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
             if enrich_conf is None:
                 enrich_conf = g.enrichment
-
+            # print(enrich_conf)
+            # raise
             d = d.enrich(**enrich_conf, store=True, is_last=False)
         d.save(food=False, add_reference=add_reference, refID=refID)
     else:

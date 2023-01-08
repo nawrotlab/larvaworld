@@ -270,19 +270,19 @@ class _LarvaDataset:
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
 
-        cc = {
-            's': self.step_data,
-            'e': self.endpoint_data,
-            'c': self.config,
-            'recompute': recompute,
-            'store': store,
-            **kwargs
-        }
+
         for k, v in pre_kws.items():
             if v:
-                func = reg.funcs.preprocessing[k]
-                # func = D.preproc[k]
-                func(**cc, k=v)
+                cc = {
+                    's': self.step_data,
+                    'e': self.endpoint_data,
+                    'c': self.config,
+                    'recompute': recompute,
+                    'store': store,
+                    **kwargs,
+                    k:v
+                }
+                reg.funcs.preprocessing[k](**cc)
 
         if is_last:
             self.save(add_reference=add_reference)

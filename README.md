@@ -165,7 +165,7 @@ Larvaworld can be run directly from linux terminal.
    4. Experiment replay
    
       Replay a real-world experiment.
-      This line replays a reference experimental dataset
+      This line replays a reference experimental dataset (note that this is imported by the tests/data_import/Schleyer/import_Schleyer.py)
 
-           python larvaworld.py Rep -refID None.40controls
+           python larvaworld.py Rep -refID exploration.dish
     
