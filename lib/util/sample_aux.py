@@ -83,7 +83,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
         if refDataset is not None:
             m = get_sample_bout_distros(m, refDataset.config)
             e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
-            Sinv=reg.SampleDic.inverse
+            Sinv=reg.SAMPLING_PARS.inverse
             sample_ps=[]
             for k in ks:
                 if k in Sinv.keys():
@@ -93,7 +93,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
 
             if len(sample_ps) > 0:
                 sample_dict_p = sample_group(N=Nids, ps=sample_ps, e=e)
-                sample_dict={reg.SampleDic[p]:vs for p,vs in sample_dict_p.items()}
+                sample_dict={reg.SAMPLING_PARS[p]:vs for p,vs in sample_dict_p.items()}
                 refID = refDataset.refID
     sample_dict.update(parameter_dict)
     return generate_larvae(Nids, sample_dict, m), refID
@@ -113,7 +113,7 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nid
     e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
     ids = random.sample(e.index.values.tolist(), Nids)
     sample_dict = {}
-    for p,k in reg.SampleDic.items():
+    for p,k in reg.SAMPLING_PARS.items():
         if p in e.columns:
             pmu = e[p].mean()
             vs = []

@@ -83,7 +83,7 @@ def update_exp_models(exp_conf, mIDs=None, N=None):
         lgs = aux.NestDict({mID: {} for mID in mIDs})
         for mID, conf in zip(mIDs, confs):
             lgs[mID] = conf
-            lgs[mID].model = reg.conftree.Model[mID]
+            lgs[mID].model = reg.CONFTREE.Model[mID]
     if N is not None:
         for mID, conf in lgs.items():
             conf.distribution.N = N

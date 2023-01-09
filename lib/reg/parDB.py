@@ -71,8 +71,7 @@ def update_default(name, dic, **kwargs):
 
 def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_choice=True):
     def loadConfDic(k):
-        path = f'{reg.ROOT_DIR}/lib/conf/confDicts/{k}.txt'
-        return aux.load_dict2(path)
+        return aux.load_dict2(reg.Path[k])
 
     def selector_func(objects, default=None, single_choice=True, **kwargs):
         kws = {
@@ -123,7 +122,6 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
     return aux.NestDict(d)
 
 def buildInitDict():
-    # from lib.aux.data_aux import ConfID_entry
     bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
 
     def pCol(v, obj, **kwargs):

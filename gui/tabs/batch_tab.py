@@ -127,7 +127,7 @@ class BatchTab(GuiTab):
 
 
 def stored_trajs(batch_type):
-    filename = f'{reg.Path["BATCH"]}/{batch_type}/{batch_type}.hdf5'
+    filename = f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5'
     try:
         f = h5py.File(filename, 'r')
         return {k:f for k in f.keys()}

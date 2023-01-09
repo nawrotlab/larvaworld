@@ -1453,7 +1453,7 @@ class ButtonGraphList(GraphList):
             l = [
                 [sg.T('Filename', **gui_fun.t_kws(10)), sg.In(default_text=self.save_as, k=kDir, **gui_fun.t_kws(80))],
                 [sg.T('Directory', **gui_fun.t_kws(10)), sg.In(self.save_to, k=kFil, **gui_fun.t_kws(80)),
-                 sg.FolderBrowse(initial_folder=reg.Path["parent"], key=kFil, change_submits=True)],
+                 sg.FolderBrowse(initial_folder=reg.ROOT_DIR, key=kFil, change_submits=True)],
                 [sg.Ok(), sg.Cancel()]]
             e, v = sg.Window('Save figure', l).read(close=True)
             if e == 'Ok':
@@ -1721,7 +1721,7 @@ class GuiTreeData(sg.TreeData):
             self.insert(**entry)
 
     def save(self, **kwargs):
-        with open(reg.Path["ParGlossaryTxT"], 'w') as f:
+        with open(reg.GLOSSARY_PATH, 'w') as f:
             f.write(self._NodeStr(**kwargs))
 
     def build_layout(self):

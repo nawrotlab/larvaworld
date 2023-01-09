@@ -60,7 +60,7 @@ def Tracker_dict():
 def Ref_dict(DATA=None):
 
     if DATA is None :
-        DATA = reg.Path["DATA"]
+        DATA = reg.DATA_DIR
     dds = [
         [f'{DATA}/JovanicGroup/processed/AttP{g}/{c}' for g
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
@@ -115,7 +115,7 @@ def Group_dict():
 
     tracker_dic = Tracker_dict()
     enr_dic = Enr_dict()
-    d = aux.NestDict({f'{k} lab': {'path': f'{reg.Path["DATA"]}/{k}Group',
+    d = aux.NestDict({f'{k} lab': {'path': f'{reg.DATA_DIR}/{k}Group',
                              'tracker': tr,
                              'enrichment': enr_dic[k]} for k, tr in tracker_dic.items()})
 

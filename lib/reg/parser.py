@@ -1,7 +1,4 @@
-import time
 from typing import List
-
-
 
 from lib import reg, aux
 
@@ -64,7 +61,6 @@ def get_ParsDict(d0):
 
 def build_ParsDict(dic):
     return aux.NestDict({k: ParsArg(**v) for k, v in dic.items()})
-    # return parsargs
 
 
 def get_ParsDict2(d0):
@@ -99,12 +95,11 @@ def build_ParsDict2(dic):
 
 
 
-class ParserDict(reg.base.BaseConfDict):
+class ParserDict :
 
-    def __init__(self, mode='load',
-                 names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
+    def __init__(self, names=['sim_params', 'batch_setup', 'eval_conf', 'visualization', 'ga_select_kws', 'replay']):
         self.names = names
-        super().__init__(mode=mode)
+        self.dict = self.build()
         self.parser_dict = self.build_parser_dict()
 
     def build(self):
@@ -141,5 +136,3 @@ class ParserDict(reg.base.BaseConfDict):
             raise
 
 parsers=ParserDict()
-
-# print('tt')

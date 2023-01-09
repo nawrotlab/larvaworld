@@ -12,7 +12,7 @@ from lib.screen.screen_aux import get_arena_bounds
 from lib.sim.ga_engine import GAbuilder
 from lib.model.envs.base_world import BaseWorld
 
-class GenAlgRun(reg.base.BaseRun):
+class GenAlgRun(lib.sim.base.BaseRun):
     def __init__(self, sim_params, env_params=None, experiment='exploration',
                  offline=False, **kwargs):
 
@@ -75,7 +75,7 @@ class BaseGAlauncher(BaseWorld):
         dt = sim_params.timestep
         Nsteps = int(sim_params.duration * 60 / dt)
         if save_to is None:
-            save_to = reg.Path.SIM
+            save_to = reg.SIM_DIR
         self.save_to = save_to
         self.dir_path = f'{save_to}/{sim_params.path}/{id}'
         self.plot_dir = f'{self.dir_path}/plots'

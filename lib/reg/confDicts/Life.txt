@@ -1,0 +1,1 @@
+{"default": {"age": 0.0, "epochs": {"0": {"start": 0.0, "stop": 0.0, "substrate": {"type": "standard", "quality": 1.0}}}}, "72h_q50": {"age": 72.0, "epochs": {"0": {"start": 0.0, "stop": 72.0, "substrate": {"type": "standard", "quality": 0.5}}}}}

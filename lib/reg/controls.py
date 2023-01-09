@@ -116,8 +116,8 @@ def init_controls():
     return d
 
 class ControlRegistry :
-    def __init__(self, path):
-        self.path=path
+    def __init__(self):
+        self.path=reg.CONTROLS_PATH
         self.conf=init_controls()
 
     def save(self, conf=None):
@@ -129,6 +129,6 @@ class ControlRegistry :
         return aux.load_dict(self.path)
 
 
-controls=ControlRegistry(reg.Path["controls"])
+controls=ControlRegistry()
 # if __name__ == '__main__':
 #     control_reg=ControlRegistry()

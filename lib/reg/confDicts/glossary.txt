@@ -1,0 +1,93 @@
+root                                               : None
+    explorer                                       : None
+        brain
+            modules
+                turner                             : True
+                crawler                            : True
+                interference                       : True
+                intermitter                        : True
+                olfactor                           : False
+                windsensor                         : True
+                toucher                            : False
+                feeder                             : False
+                memory                             : False
+            turner_params
+                mode                               : neural
+                base_activation                    : 20.0
+                activation_range                   : [10.0, 40.0]
+                noise                              : 0.15
+                activation_noise                   : 0.5
+                initial_amp                        : None
+                amp_range                          : None
+                initial_freq                       : None
+                freq_range                         : None
+            crawler_params
+                waveform                           : realistic
+                freq_range                         : [0.5, 2.5]
+                initial_freq                       : 1.418
+                freq_std                           : 0.184
+                step_to_length_mu                  : 0.224
+                step_to_length_std                 : 0.033
+                initial_amp                        : None
+                noise                              : 0.1
+                max_vel_phase                      : 1.0
+            interference_params
+                crawler_phi_range                  : [0.45, 1.0]
+                feeder_phi_range                   : [0.0, 0.0]
+                attenuation                        : 0.1
+            intermitter_params
+                mode                               : default
+                stridechain_dist
+                    fit                            : True
+                    range                          : None
+                    name                           : None
+                    mu                             : None
+                    sigma                          : None
+                pause_dist
+                    fit                            : True
+                    range                          : None
+                    name                           : None
+                    mu                             : None
+                    sigma                          : None
+                EEB                                : 0.0
+                EEB_decay                          : 1.0
+                crawl_bouts                        : True
+                feed_bouts                         : False
+                crawl_freq                         : 1.43
+                feed_freq                          : 2.0
+                feeder_reoccurence_rate            : None
+            olfactor_params                        : None
+            windsensor_params
+                weights
+                    hunch_lin                      : 10.0
+                    hunch_ang                      : 0.0
+                    bend_lin                       : 0.0
+                    bend_ang                       : -10.0
+            toucher_params                         : None
+            feeder_params                          : None
+            memory_params                          : None
+            nengo                                  : False
+        body
+            initial_length                         : 0.004
+            length_std                             : 0.0004
+            Nsegs                                  : 2
+            seg_ratio                              : None
+            touch_sensors                          : None
+            shape                                  : drosophila_larva
+        energetics                                 : None
+        physics
+            torque_coef                            : 0.41
+            ang_damping                            : 2.5
+            body_spring_k                          : 0.02
+            bend_correction_coef                   : 1.4
+        Box2D_params
+            joint_types
+                friction
+                    N                              : 0
+                    args
+                revolute
+                    N                              : 0
+                    args
+                distance
+                    N                              : 0
+                    args

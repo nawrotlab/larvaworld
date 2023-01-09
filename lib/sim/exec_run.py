@@ -18,14 +18,14 @@ class Exec:
         self.type = self.conf['batch_type'] if mode == 'batch' else self.conf['experiment']
         self.done = False
 
+
     def terminate(self):
         if self.process is not None:
             self.process.terminate()
             self.process.kill()
 
     def run(self, **kwargs):
-        # f0, f1 = preg.path_dict["EXECONF"],preg.path_dict["EXEC"]
-        f0, f1 = reg.Path.EXECONF, reg.Path.EXEC
+        f0, f1 = f'{reg.ROOT_DIR}/lib/sim/exec_conf.txt', f'{reg.ROOT_DIR}/lib/sim/exec_run.py'
         if self.run_externally:
             aux.save_dict(self.conf, f0)
             self.process = subprocess.Popen(['python', f1, self.mode, f0], **kwargs)
@@ -54,7 +54,7 @@ class Exec:
         elif self.mode == 'sim':
             sim_id = self.conf['sim_params']['sim_ID']
             if res is None and self.run_externally:
-                dir0 = f"{reg.Path.SIM}/{self.conf['sim_params']['path']}/{sim_id}"
+                dir0 = f"{reg.SIM_DIR}/{self.conf['sim_params']['path']}/{sim_id}"
                 res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
 
             if res is not None:

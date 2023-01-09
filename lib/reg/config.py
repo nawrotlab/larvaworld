@@ -4,6 +4,66 @@ import param
 from lib import reg, aux
 
 
+def build_ConfTypeSubkeys():
+    d0 = {k: {} for k in reg.CONFTYPES}
+    d1 = {
+        'Batch': {'exp': 'Exp'},
+        'Ga': {'env_params': 'Env'},
+        'Exp': {'env_params': 'Env',
+                'trials': 'Trial',
+                'larva_groups': 'Model',
+                }
+    }
+    d0.update(d1)
+    return aux.NestDict(d0)
+
+CONFTYPE_SUBKEYS = build_ConfTypeSubkeys()
+
+
+def build_GroupTypeSubkeys():
+    d0 = {k: {} for k in reg.GROUPTYPES}
+    d1 = {
+        'LarvaGroup': {'Model'},
+        # 'Ga': {'env_params': 'Env'},
+        # 'Exp': {'env_params': 'Env',
+        #         'trials': 'Trial',
+        #         'larva_groups': 'Model',
+        #         }
+    }
+    d0.update(d1)
+    return aux.NestDict(d0)
+
+GROUPTYPE_SUBKEYS = build_GroupTypeSubkeys()
+
+
+CONFTREE = aux.NestDict({k : aux.load_dict2(f'{reg.CONF_DIR}/{k}.txt')  for k in reg.CONFTYPES})
+
+def build_conf_tree_expanded(c0=CONFTREE, sk=CONFTYPE_SUBKEYS):
+
+    for confType0 in c0.keys():
+        if confType0 in sk.keys():
+            pairs = sk[confType0]
+            for id, conf in c0[confType0].items():
+                for subID, confType in pairs.items():
+
+
+                    if subID in conf.keys():
+                        if isinstance(conf[subID], str) and conf[subID] in c0[confType].keys():
+                            conf[subID]=c0[confType][conf[subID]]
+                        elif (subID, confType) == ('larva_groups', 'Model'):
+                            for gID, gConf in conf[subID].items():
+                                mID=gConf.model
+                                if mID in c0['Model'].keys():
+                                    gConf.model=c0['Model'][mID]
+                                else:
+                                    # print(f'{mID} not found')
+                                    pass
+                                    # raise
+    return c0
+
+CONFTREE_EXPANDED = build_conf_tree_expanded()
+
+
 def confInit_ks(k):
 
     d = aux.NestDict({
@@ -66,8 +126,49 @@ def update_existing_mdict(mdict, mmdic):
                 mdict[d] = update_existing_mdict(mdict=p, mmdic=v)
         return mdict
 
+class BaseType:
+    def __init__(self, parent, k, subks={}):
+        self.parent = parent
+        self.k = k
+        self.subks = subks
+        self.mdict = None
+        self.dict0 = None
+        self.ks = None
 
-class ConfType(reg.base.BaseType):
+    def build_mdict(self):
+        from lib.util.data_aux import init2mdict,get_ks
+        self.mdict = init2mdict(self.dict0)
+        self.ks = get_ks(self.mdict)
+
+    def set_dict0(self, dict0):
+        self.dict0 = dict0
+        if self.dict0 is not None and self.mdict is None:
+            self.build_mdict()
+
+    def gConf_kws(self, dic):
+        kws0 = {}
+        for k, kws in dic.items():
+            m0 = self.mdict[k]
+            kws0[k] = self.gConf(m0, **kws)
+        return aux.NestDict(kws0)
+
+    def gConf(self, m0=None, kwdic=None, **kwargs):
+        if m0 is None:
+            if self.mdict is None:
+                return None
+            else:
+                m0 = self.mdict
+        if kwdic is not None:
+            kws0 = self.gConf_kws(kwdic)
+            kwargs.update(kws0)
+        from lib.util.data_aux import gConf
+        return aux.NestDict(gConf(m0, **kwargs))
+
+    def entry(self, id, **kwargs):
+        return aux.NestDict({id: self.gConf(**kwargs)})
+
+
+class ConfType(BaseType):
     def __init__(self,path, **kwargs):
         super().__init__(**kwargs)
         self.path = path
@@ -111,7 +212,7 @@ class ConfType(reg.base.BaseType):
 
         if len(self.subks) > 0:
             for subID, subk in self.subks.items():
-                ct = self.CT.dict[subk]
+                ct = self.parent.dict[subk]
                 if ct.mdict is None :
                     continue
 
@@ -203,24 +304,9 @@ class ConfType(reg.base.BaseType):
 
 class ConfTypeDict:
     def __init__(self, init_dic, Path):
-        self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
-                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
-        subk_dict = self.build_subk_dict()
-        self.dict = aux.NestDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in subk_dict.items()})
+        self.dict = aux.NestDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in CONFTYPE_SUBKEYS.items()})
         self.build_mDicts(init_dic)
 
-    def build_subk_dict(self):
-        d0 = {k: {} for k in self.conftypes}
-        d1 = {
-            'Batch': {'exp': 'Exp'},
-            'Ga': {'env_params': 'Env'},
-            'Exp': {'env_params': 'Env',
-                    'trials': 'Trial',
-                    'larva_groups': 'Model',
-                    }
-        }
-        d0.update(d1)
-        return d0
 
 
     def build_mDicts(self, init_dic):
@@ -235,13 +321,13 @@ class ConfTypeDict:
 
     def resetConfs(self, ks=None):
         if ks is None:
-            ks = self.conftypes
+            ks = reg.CONFTYPES
 
         for k in ks:
             self.dict[k].resetDict()
 
 
-class GroupType(reg.base.BaseType):
+class GroupType(BaseType):
     def __init__(self, dict0, **kwargs):
         super().__init__(**kwargs)
         self.set_dict0(dict0)
@@ -370,24 +456,26 @@ class GroupType(reg.base.BaseType):
 
 class GroupTypeDict:
     def __init__(self,init_dic):
-        self.grouptypes = ['LarvaGroup', 'SourceGroup', 'epoch']
-        subk_dict = self.build_subk_dict(self.grouptypes)
-        self.dict = aux.NestDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in subk_dict.items()})
+        self.dict = aux.NestDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in GROUPTYPE_SUBKEYS.items()})
 
-    def build_subk_dict(self, ks):
-        d0 = aux.NestDict({k: {} for k in ks})
-        d1 = aux.NestDict({
-            'LarvaGroup': {'Model'},
-            # 'Ga': {'env_params': 'Env'},
-            # 'Exp': {'env_params': 'Env',
-            #         'trials': 'Trial',
-            #         'larva_groups': 'Model',
-            #         }
-        })
-        d0.update(d1)
-        return d0
+
 
 
 # # from lib.registry.conf import ConfTypeDict, GroupTypeDict
 conf0 =ConfTypeDict(reg.par.PI, reg.Path)
 group =GroupTypeDict(reg.par.PI)
+
+def loadConf(conftype, id=None):
+    return conf0.dict[conftype].loadConf(id=id)
+
+def saveConf(conftype, id, conf):
+    return conf0.dict[conftype].saveConf(id=id, conf=conf)
+
+def deleteConf(conftype, id=None):
+    return conf0.dict[conftype].deleteConf(id=id)
+
+def expandConf(conftype, id=None):
+    return conf0.dict[conftype].expandConf(id=id)
+
+def storedConf(conftype):
+    return conf0.dict[conftype].ConfIDs

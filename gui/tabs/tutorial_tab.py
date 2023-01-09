@@ -7,10 +7,11 @@ from gui.tabs.tab import GuiTab
 from lib import reg
 
 class TutorialTab(GuiTab):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.path = f'{reg.ROOT_DIR}/gui/media/tutorial'
 
     def build(self):
-        # f0=reg.Path["tutorials"]
-        f0 = f'{reg.ROOT_DIR}/gui/media/tutorial'
         c2 = {'size': (80, 1),
               'pad': (20, 5),
               'justification': 'left'
@@ -19,13 +20,13 @@ class TutorialTab(GuiTab):
               'pad': (10, 35)
               }
 
-        col1 = [[sg.B(image_filename=os.path.join(f0, '1.png'), key='BUTTON 1',
+        col1 = [[sg.B(image_filename=os.path.join(self.path, '1.png'), key='BUTTON 1',
                       image_subsample=2, image_size=(70, 70), pad=(20, 10))],
-                [sg.B(image_filename=os.path.join(f0, '2.png'), key='BUTTON 2',
+                [sg.B(image_filename=os.path.join(self.path, '2.png'), key='BUTTON 2',
                       image_subsample=3, image_size=(70, 70), pad=(20, 10))],
-                [sg.B(image_filename=os.path.join(f0, '3.png'), key='BUTTON 3',
+                [sg.B(image_filename=os.path.join(self.path, '3.png'), key='BUTTON 3',
                       image_subsample=3, image_size=(70, 70), pad=(20, 10))],
-                [sg.B(image_filename=os.path.join(f0, '4.png'), key='BUTTON 4',
+                [sg.B(image_filename=os.path.join(self.path, '4.png'), key='BUTTON 4',
                       image_subsample=2, image_size=(70, 70), pad=(20, 10))]]
         col2 = [
             [sg.T('1. Run and analyze a single exec experiment with selected larva model and environment',
@@ -44,7 +45,7 @@ class TutorialTab(GuiTab):
             [sg.T('')],
             [sg.T('Further information:', font=("Lobster", 15, "bold"), **c2)],
             [sg.T('')],
-            [sg.B(image_filename=os.path.join(f0, 'Glossary.png'), key='GLOSSARY', image_subsample=3,
+            [sg.B(image_filename=os.path.join(self.path, 'Glossary.png'), key='GLOSSARY', image_subsample=3,
                   image_size=(70, 70), pad=(25, 10)),
              sg.T('Here you find a glossary explaining all variables in Larvaworld', font='Lobster 12', **c1)]
 
@@ -53,15 +54,14 @@ class TutorialTab(GuiTab):
         return l_tut, {}, {}, {}
 
     def eval(self, e, v, w, c, d, g):
-        f0=reg.Path["tutorials"]
         if 'BUTTON 1' in e:
-            webbrowser.open_new(f0 + "/1.mp4")
+            webbrowser.open_new(self.path + "/1.mp4")
         if 'BUTTON 2' in e:
-            webbrowser.open_new(f0 + "/2.mp4")
+            webbrowser.open_new(self.path + "/2.mp4")
         if 'BUTTON 3' in e:
-            webbrowser.open_new(f0 + "/3.mp4")
+            webbrowser.open_new(self.path + "/3.mp4")
         if 'BUTTON 4' in e:
-            webbrowser.open_new(f0 + "/4.mp4")
+            webbrowser.open_new(self.path + "/4.mp4")
         if 'GLOSSARY' in e:
-            webbrowser.open_new(f0 + "/Glossary.pdf")
+            webbrowser.open_new(self.path + "/Glossary.pdf")
         return d, g

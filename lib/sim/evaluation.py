@@ -20,7 +20,7 @@ from lib.util.sample_aux import sim_models
 
 
 
-class EvalRun(reg.base.BaseRun):
+class EvalRun(lib.sim.base.BaseRun):
     def __init__(self, refID, eval_metrics=None, N=5, dur=None,
                  bout_annotation=True, modelIDs=None, dataset_ids=None,
                  enrichment=True, norm_modes=['raw'], eval_modes=['pooled'],

@@ -6,7 +6,7 @@ datagroup_id = 'Jovanic lab'
 parent_dir = '18h'
 idx = 5
 g = reg.loadConf(id=datagroup_id, conftype='Group')
-group_dir = f'{reg.Path["DATA"]}/{g.path}'
+group_dir = f'{reg.DATA_DIR}/{g.path}'
 group_plotdir = f'{group_dir}/plots'
 save_to = f'{group_plotdir}/{parent_dir}/trial{idx}'
 

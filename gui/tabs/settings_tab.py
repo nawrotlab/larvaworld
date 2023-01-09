@@ -12,7 +12,6 @@ import lib.aux.dictsNlists as dNl
 class SettingsTab(GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.path = reg.Path.controls
         self.k = 'controls'
         self.k_reset = f'RESET_{self.k}'
         self.k_edit = f'EDIT_{self.k}'

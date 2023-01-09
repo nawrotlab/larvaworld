@@ -646,8 +646,6 @@ class ModelRegistry:
 
         self.autostored_confs=self.autogenerate_confs()
 
-        reg.vprint(f'Completed Model Registry successfully')
-
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:
             raise ValueError('Module key must be one of larva-model configuration keys')

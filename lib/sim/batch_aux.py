@@ -329,7 +329,7 @@ def batch_method_unpack(run='default', post='default', final='null'):
 
 def load_traj(batch_type, batch_id):
 
-    parent_dir_path = f'{reg.Path["BATCH"]}/{batch_type}'
+    parent_dir_path = f'{reg.BATCH_DIR}/{batch_type}'
     filename = f'{parent_dir_path}/{batch_type}.hdf5'
     traj = pypet.load_trajectory(filename=filename, name=batch_id, load_all=2)
     return traj
@@ -343,6 +343,6 @@ def retrieve_results(batch_type, batch_id):
 
 def delete_traj(batch_type, traj_name):
     import h5py
-    filename = f'{reg.Path["BATCH"]}/{batch_type}/{batch_type}.hdf5'
+    filename = f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5'
     with h5py.File(filename, 'r+') as f:
         del f[traj_name]

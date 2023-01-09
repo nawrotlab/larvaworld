@@ -25,7 +25,7 @@ class SingleRun:
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:
-            save_to = reg.Path.SIM
+            save_to = reg.SIM_DIR
         self.save_to = save_to
         # self.storage_path = f'{sim_params.path}/{self.id}'
         self.storage_path = f'{self.save_to}/{self.id}'

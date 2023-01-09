@@ -266,7 +266,7 @@ def import_window(datagroup_id, raw_dic):
     from gui.tabs.gui import check_togglesNcollapsibles
     from gui.aux.elements import PadDict
     g = reg.loadConf(id=datagroup_id, conftype='Group')
-    group_dir = f'{reg.Path["DATA"]}/{g["path"]}'
+    group_dir = f'{reg.DATA_DIR}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
 

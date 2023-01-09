@@ -105,7 +105,7 @@ def load_dict2(file):
             with open(file, 'rb') as tfp:
                 d = pickle.load(tfp)
         except:
-            raise
+            d= {}
     return NestDict(d)
 
 

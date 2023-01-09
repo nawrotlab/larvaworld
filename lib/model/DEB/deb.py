@@ -34,8 +34,9 @@ class DEB:
 
         # Drosophila model by default
         self.species = species
-        # fdir = ParDict.path_dict["DEB_MODS"]
-        with open(reg.Path["DEB_MODS"][species]) as tfp:
+
+        # with open(reg.Path["DEB_MODS"][species]) as tfp:
+        with open(f'{reg.ROOT_DIR}/lib/model/DEB/models/deb_{species}') as tfp:
             self.species_dict = json.load(tfp)
         self.__dict__.update(self.species_dict)
 

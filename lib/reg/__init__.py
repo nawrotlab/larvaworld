@@ -1,5 +1,3 @@
-import os
-
 VERBOSE =2
 
 def vprint(text='', verbose=0):
@@ -7,10 +5,11 @@ def vprint(text='', verbose=0):
         print(text)
 vprint("Initializing larvaworld registry", 2)
 
-from lib.aux import dictsNlists as dNl
 
 vprint("Initializing path registry", 0)
-from .paths import ROOT_DIR, Path, SampleDic, datapath, datafunc, conftree
+from .paths import *
+from .data_structure import datapath, datafunc
+
 
 vprint("Initializing output registry", 0)
 from .output import output_dict,set_output, get_reporters
@@ -19,14 +18,13 @@ from .units import units
 vprint("Initializing function registry", 0)
 from .facade import funcs
 from .parFunc import *
-from . import base
 from .distro import distro_database,get_dist
 
 vprint("Initializing parameter registry", 0)
 from .parDB import par
 
 vprint("Initializing configuration registry", 0)
-from .config import conf0, group
+from .config import conf0, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf
 from .controls import controls
 
 vprint("Initializing model registry", 0)
@@ -130,38 +128,5 @@ def testRef(id):
         print()
 
 
-# def simRef(id, mID, **kwargs):
-#     from lib.aux.sample_aux import sim_model
-#     return sim_model(mID,  refID=id, **kwargs)
 
 
-def loadConf(conftype, id=None):
-    return conf0.dict[conftype].loadConf(id=id)
-
-def saveConf(conftype, id, conf):
-    return conf0.dict[conftype].saveConf(id=id, conf=conf)
-
-def deleteConf(conftype, id=None):
-    return conf0.dict[conftype].deleteConf(id=id)
-
-def expandConf(conftype, id=None):
-    return conf0.dict[conftype].expandConf(id=id)
-
-def storedConf(conftype):
-    return conf0.dict[conftype].ConfIDs
-
-
-def next_idx(id, conftype='Exp'):
-    f = Path.SimIdx
-    if not os.path.isfile(f):
-        d = dNl.NestDict({k: dNl.NestDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
-    else:
-        d = dNl.load_dict(f, use_pickle=False)
-
-    if not conftype in d.keys():
-        d[conftype] = {}
-    if not id in d[conftype].keys():
-        d[conftype][id] = 0
-    d[conftype][id] += 1
-    dNl.save_dict(d, f, use_pickle=False)
-    return d[conftype][id]
