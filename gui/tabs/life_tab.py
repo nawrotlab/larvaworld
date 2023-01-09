@@ -81,7 +81,6 @@ class LifeTab(GuiTab):
         w.write_event_value('Draw', 'Draw the initial plot')
 
     def get(self, w, v, c, as_entry=False):
-        # from lib.registry.dtypes import null_dict
         rows = w.Element(self.K).get()
         return {
             'epochs': {i : {'start': r[0], 'stop': r[1], 'substrate': reg.get_null('substrate', type=r[3], quality=r[2])} for

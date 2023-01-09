@@ -196,8 +196,10 @@ def error_table(data, k='', title=None, **kwargs):
 def store_model_graphs(mIDs=None):
     from lib.util.combining import combine_pdfs
     from lib.plot.grid import model_summary
-    f1 = reg.Path['model_tables']
-    f2 = reg.Path['model_summaries']
+    f1 = f'{reg.ROOT_DIR}/media/model_tables'
+    # f1 = reg.Path['model_tables']
+    f2 = f'{reg.ROOT_DIR}/media/model_summaries'
+    # f2 = reg.Path['model_summaries']
     if mIDs is None:
         mIDs = reg.storedConf('Model')
     for mID in mIDs:

@@ -9,8 +9,8 @@ from lib import reg
 class TutorialTab(GuiTab):
 
     def build(self):
-        f0=reg.Path["tutorials"]
-        # f0=path('tutorials')
+        # f0=reg.Path["tutorials"]
+        f0 = f'{reg.ROOT_DIR}/gui/media/tutorial'
         c2 = {'size': (80, 1),
               'pad': (20, 5),
               'justification': 'left'

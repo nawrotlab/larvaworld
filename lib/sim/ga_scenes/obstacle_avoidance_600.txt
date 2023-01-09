@@ -1,0 +1,34 @@
+# First uncommented line must starts with "Scene"
+# This is the syntax for each kind of object:
+# Scene WIDTH HEIGHT
+# Wall X1 Y1 X2 Y2
+# Box X Y SIZE
+# Light X Y EMITTING_POWER
+
+Scene 600 600
+Wall 5 5 595 5
+Wall 595 5 595 595
+Wall 595 595 5 595
+Wall 5 595 5 5
+Box 497 209 55
+Box 481 483 55
+Box 141 400 52
+Box 183 262 40
+Box 354 80 45
+Box 352 489 50
+Box 495 331 59
+Box 170 178 43
+Box 210 518 45
+Box 522 74 40
+Box 235 86 40
+Box 72 235 40
+Box 94 505 40
+Box 88 100 40
+Box 394 186 40
+Box 25 25 40
+Box 575 25 40
+Box 25 575 40
+Box 575 575 40
+Box 570 423 40
+Box 293 570 40
+Box 28 352 40

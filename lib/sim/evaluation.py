@@ -492,7 +492,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
         entries_avg, mIDs_avg = adapt_6mIDs(refID=c.refID, e=e, c=c)
         c.modelConfs.average = entries_avg
 
-        reg.GD.store_model_graphs(mIDs_avg, d.dir)
+        reg.graphs.store_model_graphs(mIDs_avg, d.dir)
         eval_model_graphs(refID, mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
 
         entries_var = add_var_mIDs(refID=c.refID, e=e, c=c,
@@ -507,7 +507,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
     if mods3:
         entries_3m, mIDs_3m = adapt_3modules(refID=c.refID, e=e, c=c)
         c.modelConfs['3modules'] = entries_3m
-        reg.GD.store_model_graphs(mIDs_3m, d.dir)
+        reg.graphs.store_model_graphs(mIDs_3m, d.dir)
 
         dIDs = ['NEU', 'SIN', 'CON']
         for Cmod in ['RE', 'SQ', 'GAU', 'CON']:

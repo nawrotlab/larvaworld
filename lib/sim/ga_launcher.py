@@ -124,7 +124,7 @@ class GAlauncher(BaseGAlauncher):
         if caption is None:
             caption = f'GA {self.experiment} : {self.id}'
         self.caption = caption
-        self.scene_file = f'{reg.Path.ga_scene}/{scene}.txt'
+        self.scene_file = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt'
         self.scene_speed = scene_speed
         self.obstacles = []
 

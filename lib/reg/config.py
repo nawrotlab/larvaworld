@@ -71,14 +71,10 @@ class ConfType(reg.base.BaseType):
     def __init__(self,path, **kwargs):
         super().__init__(**kwargs)
         self.path = path
-        # self.path = reg.Path[self.k]
         self.use_pickle = False if self.k != 'Ga' else True
 
-    # @property
     def loadDict(self):
-        # print(self.k, self.use_pickle)
         try:
-
             return aux.load_dict(self.path, self.use_pickle)
         except:
             return aux.NestDict()
@@ -113,10 +109,6 @@ class ConfType(reg.base.BaseType):
             else :
                 return ct.mdict
 
-
-
-
-
         if len(self.subks) > 0:
             for subID, subk in self.subks.items():
                 ct = self.CT.dict[subk]
@@ -130,22 +122,15 @@ class ConfType(reg.base.BaseType):
                             p=dic.model
                             mm=retrieve(p,ct)
                             dic.model=mm
-
                 else:
                     m0[subID] = retrieve(m0[subID],ct)
-                    # m0[subID]=mm
             return m0
-
-
-
-
 
 
     def expandConf(self, id=None,conf=None):
         if conf is None:
             if id in self.ConfIDs:
 
-            # from lib.registry.pars import preg
                 conf = self.loadConf(id=id)
             else :
                 return None
@@ -177,9 +162,7 @@ class ConfType(reg.base.BaseType):
 
 
     def resetDict(self):
-        # from lib.conf.stored.facade import stored_confs
-        from lib.reg import funcs
-        dd = funcs.stored_confs[self.k]()
+        dd = reg.funcs.stored_confs[self.k]()
         d = self.loadDict()
 
         N0, N1 = len(d), len(dd)
@@ -207,38 +190,6 @@ class ConfType(reg.base.BaseType):
     def ConfIDs(self):
         return list(self.loadDict().keys())
 
-    # def ConfSelector(self, **kwargs):
-    #     def func():
-    #         return selector_func(objects=self.ConfIDs, **kwargs)
-    #
-    #     return func
-
-    def ConfParsarg(self):
-        return {'dest': f'{self.k}_experiment', 'choices': self.ConfIDs, 'help': f'The {self.k} mode'}
-
-    # def ConfID_entry(self, default=None, k=None, symbol=None, single_choice=True):
-    #     from typing import List
-    #     from lib.aux.par_aux import sub
-    #     low = self.k.lower()
-    #     if single_choice:
-    #         t = str
-    #         IDstr = 'ID'
-    #     else:
-    #         t = List[str]
-    #         IDstr = 'IDs'
-    #     if k is None:
-    #         k = f'{low}{IDstr}'
-    #     if symbol is None:
-    #         symbol = sub(IDstr, low)
-    #     d = {'dtype': t, 'vparfunc': self.ConfSelector(default=default, single_choice=single_choice),
-    #          'vs': self.ConfIDs, 'v': default,
-    #          'symbol': symbol, 'k': k, 'h': f'The {self.k} configuration {IDstr}',
-    #          'disp': f'{self.k} {IDstr}'}
-    #     return dNl.NestDict(d)
-
-
-
-
     def checkDict(self):
         d = self.loadDict()
         eval = {}
@@ -252,15 +203,11 @@ class ConfType(reg.base.BaseType):
 
 class ConfTypeDict:
     def __init__(self, init_dic, Path):
-        reg.vprint('started ConfTypes',0)
         self.conftypes = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
                           'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
-
         subk_dict = self.build_subk_dict()
         self.dict = aux.NestDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in subk_dict.items()})
-        # self.dict = self.build(self.conftypes)
         self.build_mDicts(init_dic)
-        reg.vprint('completed ConfTypes',0)
 
     def build_subk_dict(self):
         d0 = {k: {} for k in self.conftypes}
@@ -285,26 +232,13 @@ class ConfTypeDict:
                 dict0 = None
 
             ct.set_dict0(dict0)
-    # def build(self, ks):
-    #
-    #     self.subk_dict = self.build_subk_dict(ks)
-    #
-    #     d = dNl.NestDict({k: ConfType(k=k, subks=subks, parent=self) for k, subks in self.subk_dict.items()})
-    #
-    #     return d
 
     def resetConfs(self, ks=None):
         if ks is None:
             ks = self.conftypes
 
         for k in ks:
-
             self.dict[k].resetDict()
-            # try :
-            #     self.dict[k].resetDict()
-            # except :
-                # print(f'{k} configuration reset failed')
-                # pass
 
 
 class GroupType(reg.base.BaseType):
@@ -324,17 +258,13 @@ class GroupType(reg.base.BaseType):
         def retrieve(p,ct):
             conf = None
             if p in ct.ConfIDs:
-                # print(v)
                 conf = ct.loadConf(p)
             elif isinstance(p, param.Parameterized):
                 if p.v in ct.ConfIDs:
                     conf = ct.loadConf(p.v)
             if conf is not None:
                 mm = copy.deepcopy(ct.mdict)
-                # print(m, conf)
-
                 mm = update_existing_mdict(mm, conf)
-
                 return mm
             else :
                 return ct.mdict
@@ -353,57 +283,8 @@ class GroupType(reg.base.BaseType):
                         dic.model=mm
 
             else:
-                # ct=CT[subk]
-                # mm=copy.deepcopy(ct.mdict)
-                # p = m0[subID]
                 m0[subID] = retrieve(m0[subID], self.parent.dict[subk])
-                # m0[subID]=mm
         return m0
-
-
-
-
-
-
-
-    #
-    # def ConfID_entry(self, default=None, k=None, symbol=None, single_choice=True):
-    #     from typing import List
-    #     from lib.aux.par_aux import sub
-    #     low = self.k.lower()
-    #     if single_choice:
-    #         t = str
-    #         IDstr = 'ID'
-    #     else:
-    #         t = List[str]
-    #         IDstr = 'IDs'
-    #     if k is None:
-    #         k = f'{low}{IDstr}'
-    #     if symbol is None:
-    #         symbol = sub(IDstr, low)
-    #     d = {'dtype': t, 'vparfunc': self.ConfSelector(default=default, single_choice=single_choice),
-    #          'vs': self.ConfIDs, 'v': default,
-    #          'symbol': symbol, 'k': k, 'h': f'The {self.k} configuration {IDstr}',
-    #          'disp': f'{self.k} {IDstr}'}
-    #     return dNl.NestDict(d)
-
-
-
-
-
-
-    #
-    #
-    #
-    # def checkDict(self):
-    #     d = self.loadDict()
-    #     eval = {}
-    #     for id, conf in d.items():
-    #         try:
-    #             eval[id] =update_mdict(self.mdict, conf)
-    #         except:
-    #             eval[id] = None
-    #     return eval
 
 
     def RvsS_groups(self,N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard',pref='',
@@ -423,9 +304,6 @@ class GroupType(reg.base.BaseType):
             epochs={}
             for id,kws in eps.items():
                 epochs.update(reg.group.dict.epoch.entry(id=id,**kws))
-
-
-
 
         kws0 = {
             'kwdic': {
@@ -492,17 +370,9 @@ class GroupType(reg.base.BaseType):
 
 class GroupTypeDict:
     def __init__(self,init_dic):
-
-
-
-        reg.vprint('started GroupTypes',0)
         self.grouptypes = ['LarvaGroup', 'SourceGroup', 'epoch']
         subk_dict = self.build_subk_dict(self.grouptypes)
-
         self.dict = aux.NestDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in subk_dict.items()})
-        # self.dict = self.build(self.grouptypes, init_dic)
-
-        reg.vprint('completed GroupTypes',0)
 
     def build_subk_dict(self, ks):
         d0 = aux.NestDict({k: {} for k in ks})

@@ -12,7 +12,8 @@ class IntroTab(GuiTab):
                'pad': (20, 5),
                'justification': 'center'
                }
-        f0 = reg.Path["intro"]
+        f0 = f'{reg.ROOT_DIR}/gui/media/intro'
+        # f0 = reg.Path["intro"]
         fs = sorted(os.listdir(f0))
         bl = [sg.B(image_filename=os.path.join(f0, f), image_subsample=3, pad=(15, 70)) for f in fs]
         l = [[sg.Col([[sg.T('', size=(5, 5))],

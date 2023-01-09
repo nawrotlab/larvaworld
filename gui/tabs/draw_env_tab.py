@@ -276,7 +276,6 @@ class DrawEnvTab(DrawTab):
                                 else:
                                     info.update(value=f"Draw a sample item for the distribution")
                             elif v[G]:
-                                # from lib.registry.dtypes import null_dict
 
                                 self.update_window_distro(v, w, o)
                                 temp_dic = {
@@ -297,8 +296,6 @@ class DrawEnvTab(DrawTab):
                                                  'odor': c[od].get_dict(v, w),
                                                  }
                             if v[G]:
-                                # from lib.registry.dtypes import null_dict
-
                                 self.update_window_distro(v, w, o)
                                 temp = c[D].get_dict(v, w)
                                 model = temp['model']

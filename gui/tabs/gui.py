@@ -189,5 +189,5 @@ def speed_test():
         res.append(r)
     df = pd.DataFrame(res)
     # fdir = ParDict.path_dict["GUITEST"]
-    df.to_csv(reg.Path["GUITEST"], index=0, header=['Tabs', 'Open', 'Close'])
+    df.to_csv(f'{reg.ROOT_DIR}/gui/gui_speed_test.csv', index=0, header=['Tabs', 'Open', 'Close'])
 

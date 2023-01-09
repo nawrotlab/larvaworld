@@ -47,11 +47,9 @@ def get_null(name, **kwargs):
 
 
 def lgs(**kwargs):
-    # d = init_Dic('GT')
     return group.dict.LarvaGroup.lgs(**kwargs)
 
 def lg(**kwargs):
-    # d = init_Dic('GT')
     return group.dict.LarvaGroup.lg_entry(**kwargs)
 
 

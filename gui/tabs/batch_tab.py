@@ -5,8 +5,6 @@ import PySimpleGUI as sg
 import h5py
 
 import lib.util.data_aux
-import lib.reg
-import lib.registry
 from gui.tabs.tab import GuiTab
 from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib.plot.table import mpl_table
