@@ -18,7 +18,6 @@ plt_conf = {'axes.labelsize': 20,
             'legend.title_fontsize': 20}
 plt.rcParams.update(plt_conf)
 
-# PintAxisInfo
 
 class BasePlot:
     def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),verbose=1,

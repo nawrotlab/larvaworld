@@ -24,7 +24,7 @@ vprint("Initializing parameter registry", 0)
 from .parDB import par
 
 vprint("Initializing configuration registry", 0)
-from .config import conf0, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf
+from .config import conf0, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf, lgs, lg
 from .controls import controls
 
 vprint("Initializing model registry", 0)
@@ -44,11 +44,7 @@ def get_null(name, **kwargs):
     return par.get_null(name=name, **kwargs)
 
 
-def lgs(**kwargs):
-    return group.dict.LarvaGroup.lgs(**kwargs)
 
-def lg(**kwargs):
-    return group.dict.LarvaGroup.lg_entry(**kwargs)
 
 
 

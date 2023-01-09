@@ -2,7 +2,7 @@ import copy
 
 import param
 from lib import reg, aux
-
+from lib.util.data_aux import gConf,init2mdict,get_ks
 
 def build_ConfTypeSubkeys():
     d0 = {k: {} for k in reg.CONFTYPES}
@@ -136,7 +136,7 @@ class BaseType:
         self.ks = None
 
     def build_mdict(self):
-        from lib.util.data_aux import init2mdict,get_ks
+
         self.mdict = init2mdict(self.dict0)
         self.ks = get_ks(self.mdict)
 
@@ -161,7 +161,7 @@ class BaseType:
         if kwdic is not None:
             kws0 = self.gConf_kws(kwdic)
             kwargs.update(kws0)
-        from lib.util.data_aux import gConf
+
         return aux.NestDict(gConf(m0, **kwargs))
 
     def entry(self, id, **kwargs):
@@ -198,7 +198,6 @@ class ConfType(BaseType):
         def retrieve(p,ct):
             conf = None
             if p in ct.ConfIDs:
-                # print(v)
                 conf = ct.loadConf(p)
             elif isinstance(p, param.Parameterized):
                 if p.v in ct.ConfIDs:
@@ -479,3 +478,9 @@ def expandConf(conftype, id=None):
 
 def storedConf(conftype):
     return conf0.dict[conftype].ConfIDs
+
+def lgs(**kwargs):
+    return group.dict.LarvaGroup.lgs(**kwargs)
+
+def lg(**kwargs):
+    return group.dict.LarvaGroup.lg_entry(**kwargs)

@@ -152,12 +152,3 @@ class Substrate:
         C=self.get_C(quality = quality)
         return X/C
 
-if __name__ == '__main__':
-    from lib.model.DEB.deb import test_substrates
-    #test_substrates()
-    for s in substrate_dict.keys():
-        try:
-            S=Substrate(s,1)
-            print(s,S.X, S.C, S.X_ratio)
-        except:
-            pass
