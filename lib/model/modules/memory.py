@@ -203,13 +203,13 @@ class RemoteBrianModelMemory(Memory):
             # Default :
             'odor_id' : 0,
             # The concentration change :
-            'concentration' : dx['CS'],
+            'concentration' : dx['Odor'],
             # reward as 0 or 1
             'reward' : int(reward)
 
         }
 
         mbon_dif = self.runRemoteModel(**msg_kws0, **msg_kws)
-        self.gain['CS']=self.G * mbon_dif
+        self.gain['Odor']=self.G * mbon_dif
         self.step_id += 1
         return self.gain

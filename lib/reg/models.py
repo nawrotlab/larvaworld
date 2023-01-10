@@ -890,6 +890,10 @@ class ModelRegistry:
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
+        MB_pars = aux.NestDict({'mode': 'MB'})
+        # MB_pars = self.generate_configuration(self.dict.brain.m['memory'].mode['MB'].args)
+        MB_kws = {'brain.modules.memory': True, 'brain.memory_params': MB_pars}
+
         feed_pars = self.generate_configuration(self.dict.brain.m['feeder'].mode['default'].args)
         feed_kws = {'brain.modules.feeder': True, 'brain.feeder_params': feed_pars, 'brain.intermitter_params.EEB': 0.5}
         RvSkws={}
@@ -918,7 +922,12 @@ class ModelRegistry:
             entries[mID11] = self.newConf(m0=entries[mID1], kwargs=feed_kws)
             mID12 = f'{mID0}_max_forager'
             entries[mID12] = self.newConf(m0=entries[mID11], kwargs={'brain.intermitter_params.EEB': 0.9})
+            mID21 = f'{mID0}_forager_MB'
+            entries[mID21] = self.newConf(m0=entries[mID11], kwargs=MB_kws)
+            mID22 = f'{mID0}_max_forager_MB'
+            entries[mID22] = self.newConf(m0=entries[mID21], kwargs={'brain.intermitter_params.EEB': 0.9})
 
+        entries['MB_forager'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
         entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
         entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
