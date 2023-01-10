@@ -943,8 +943,10 @@ class ModelRegistry:
             mID22 = f'{mID0}_max_forager_MB'
             entries[mID22] = self.newConf(m0=entries[mID21], kwargs={'brain.intermitter_params.EEB': 0.9})
 
-        entries['MB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager0_MB'], kwargs={})
-        entries['MB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
+        entries['noMB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager0'], kwargs={})
+        entries['noMB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager'], kwargs={})
+        entries['MB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager0_MB'], kwargs={})
+        entries['MB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager_MB'], kwargs={})
         entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
         entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
