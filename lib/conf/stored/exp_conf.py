@@ -178,7 +178,7 @@ def grouped_exp_dic():
         'foraging': {
             'patchy_food': food_exp('patchy_food', l=lg(m='forager', N=25)),
             'patch_grid': food_exp('patch_grid', l=lgs_x4()),
-            'MB_patch_grid': food_exp('patch_grid', l=lg(m='MB_forager', N=5)),
+            'MB_patch_grid': food_exp('patch_grid', l=lgs(models=['MB_untrained', 'MB_trained'], N=3)),
             'random_food': food_exp('random_food', c=['feeder', 'toucher'], l=lgs(models=['Orco_forager', 'RL_forager'],
                                                                                   ids=['Orco', 'RL'], N=5,
                                                                                   mode='uniform',

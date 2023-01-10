@@ -882,11 +882,14 @@ class ModelRegistry:
                         # mID0s.append(mm)
                         # m0s.append(self.loadConf(mm))
 
+        olf_pars0 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
+                                                odor_dict={'Odor': {'mean': 0.0, 'std': 0.0}})
         olf_pars1 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
                                                 odor_dict={'Odor': {'mean': 150.0, 'std': 0.0}})
         olf_pars2 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
                                                 odor_dict={'CS': {'mean': 150.0, 'std': 0.0},
                                                            'UCS': {'mean': 0.0, 'std': 0.0}})
+        kwargs0 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars0}
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
@@ -905,6 +908,8 @@ class ModelRegistry:
 
         # for m0 in m0s:
         for mID0, m0 in mID0dic.items():
+            mID00 = f'{mID0}_nav0'
+            entries[mID00] = self.newConf(m0=m0, kwargs=kwargs0)
             mID1 = f'{mID0}_nav'
             entries[mID1] = self.newConf(m0=m0, kwargs=kwargs1)
             mID1br = f'{mID1}_brute'
@@ -918,16 +923,28 @@ class ModelRegistry:
             entries[mID01] = self.newConf(m0=m0, kwargs=feed_kws)
             mID02 = f'{mID0}_max_feeder'
             entries[mID02] = self.newConf(m0=entries[mID01], kwargs={'brain.intermitter_params.EEB': 0.9})
+
+            mID110 = f'{mID0}_forager0'
+            entries[mID110] = self.newConf(m0=entries[mID00], kwargs=feed_kws)
+            mID120 = f'{mID0}_max_forager0'
+            entries[mID120] = self.newConf(m0=entries[mID110], kwargs={'brain.intermitter_params.EEB': 0.9})
+
             mID11 = f'{mID0}_forager'
             entries[mID11] = self.newConf(m0=entries[mID1], kwargs=feed_kws)
             mID12 = f'{mID0}_max_forager'
             entries[mID12] = self.newConf(m0=entries[mID11], kwargs={'brain.intermitter_params.EEB': 0.9})
+
+            mID210 = f'{mID0}_forager0_MB'
+            entries[mID210] = self.newConf(m0=entries[mID110], kwargs=MB_kws)
+            mID220 = f'{mID0}_max_forager0_MB'
+            entries[mID220] = self.newConf(m0=entries[mID210], kwargs={'brain.intermitter_params.EEB': 0.9})
             mID21 = f'{mID0}_forager_MB'
             entries[mID21] = self.newConf(m0=entries[mID11], kwargs=MB_kws)
             mID22 = f'{mID0}_max_forager_MB'
             entries[mID22] = self.newConf(m0=entries[mID21], kwargs={'brain.intermitter_params.EEB': 0.9})
 
-        entries['MB_forager'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
+        entries['MB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager0_MB'], kwargs={})
+        entries['MB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
         entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
         entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
