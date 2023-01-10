@@ -13,9 +13,9 @@ def test_import_Schleyer() :
 
     # Merged case
     kws1 = {
-        'parent_dir': 'no_odor',
+        'parent_dir': 'exploration',
         'merged': True,
-        'N': 22,
+        'N': 15,
         'min_duration_in_sec': 180,
         'id': f'merged_dishes',
         **kws0
@@ -23,7 +23,7 @@ def test_import_Schleyer() :
 
     # Single dish case
     kws2 = {
-        'parent_dir': 'no_odor/box1-2017-06-22_09_53_27',
+        'parent_dir': 'exploration/dish01',
         'merged': False,
         'N': None,
         'min_duration_in_sec': 90,
@@ -46,23 +46,43 @@ def test_import_Jovanic() :
         'merged' : False
     }
 
-    kws1 = {
-        'parent_dir': 'SS888',
-        'source_ids': ['AttP240', 'SS888Imp', 'SS888'],
-        # 'id': f'merged_dishes',
-        **kws0
-    }
-
     # kws2 = {
-    #     'parent_dir': 'SS888_0_60',
+    #     'parent_dir': 'SS888',
     #     'source_ids': ['AttP240', 'SS888Imp', 'SS888'],
-    #     # 'id': f'dish',
+    #     # 'id': f'merged_dishes',
     #     **kws0
     # }
+
+    kws1 = {
+        'parent_dir': 'AttP240',
+        'source_ids': ['Fed', 'Deprived', 'Starved'],
+        # 'id': f'dish',
+        **kws0
+    }
 
 
 
     for kws in [kws1] :
         ds = import_datasets(**kws)
         for d in ds :
+            assert isinstance(d, LarvaDataset)
+
+def xxtest_import_Berni() :
+    kws0 = {
+        'datagroup_id': 'Berni lab',
+        # 'group_id': 'exploration',
+        'add_reference': True,
+        'enrich' : True,
+        'merged' : False
+    }
+
+    kws1 = {
+        'parent_dir': 'exploration',
+        'source_ids': ['BL_22_control', 'BL_33_control', 'BL_rprhid'],
+        **kws0
+    }
+
+    for kws in [kws1]:
+        ds = import_datasets(**kws)
+        for d in ds:
             assert isinstance(d, LarvaDataset)

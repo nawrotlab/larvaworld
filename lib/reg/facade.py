@@ -4,16 +4,12 @@ class FunctionDict:
     def __init__(self):
         self.graphs = aux.NestDict()
         self.stored_confs = aux.NestDict()
-        # from lib.registry.distro import generate_distro_database
-        # self.distro_database = generate_distro_database()
         self.preprocessing = aux.NestDict()
         self.processing = aux.NestDict()
         self.annotating = aux.NestDict()
         self.param_computing = aux.NestDict()
-        # self.annotation = annotation_funcs()
 
     def param(self, name):
-        # print(name)
         return self.register_func(name, "param_computing")
 
     def preproc(self, name):
@@ -26,7 +22,6 @@ class FunctionDict:
         return self.register_func(name, "annotating")
 
     def graph(self, name):
-        # print(name)
         return self.register_func(name, "graphs")
 
     def stored_conf(self, name):

@@ -309,8 +309,6 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
 
         AA, df = aux.xy.dsp_single(xy0, s0, s1, c.dt)
         dsps[p] = df
-
-        # dsp_solo(s, e, c, s0, s1, p)
         t00=int(s0 / c.dt)
         t11=t00+AA.shape[0]
         AA0 = np.zeros([c.Nticks, c.N]) * np.nan

@@ -18,7 +18,7 @@ class BaseRun:
         random.seed(seed)
         self.runtype = runtype
         self.parent_storage_path = f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
-        self.SimIdx_path = reg.Path.SimIdx
+        self.SimIdx_path = reg.SimIdx_PATH
 
         if experiment is None:
             experiment = self.runtype

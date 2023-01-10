@@ -3,6 +3,28 @@ import numpy as np
 import pandas as pd
 
 from lib import reg, aux
+from lib.aux import naming as nam
+
+SAMPLING_PARS = aux.bidict(
+    aux.NestDict(
+        {
+            'length': 'body.initial_length',
+            nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
+            'stride_reoccurence_rate': 'brain.intermitter_params.crawler_reoccurence_rate',
+            nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_mean',
+            nam.std(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_std',
+            nam.freq('feed'): 'brain.feeder_params.initial_freq',
+            nam.max(nam.chunk_track('stride', nam.scal(nam.vel('')))): 'brain.crawler_params.max_scaled_vel',
+            'phi_scaled_velocity_max': 'brain.crawler_params.max_vel_phase',
+            'attenuation': 'brain.interference_params.attenuation',
+            'attenuation_max': 'brain.interference_params.attenuation_max',
+            nam.freq(nam.vel(nam.orient(('front')))): 'brain.turner_params.initial_freq',
+            nam.max('phi_attenuation'): 'brain.interference_params.max_attenuation_phase',
+        }
+    )
+)
+
+
 
 def get_sample_bout_distros(model, sample):
     def get_sample_bout_distros0(Im, bout_distros):
@@ -41,12 +63,6 @@ def generate_larvae(N, sample_dict, base_model):
     return all_pars
 
 
-
-
-
-
-
-
 def sample_group(e, N=1, ps=[]):
     means = [e[p].mean() for p in ps]
     if len(ps) >= 2:
@@ -83,7 +99,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
         if refDataset is not None:
             m = get_sample_bout_distros(m, refDataset.config)
             e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
-            Sinv=reg.SAMPLING_PARS.inverse
+            Sinv=SAMPLING_PARS.inverse
             sample_ps=[]
             for k in ks:
                 if k in Sinv.keys():
@@ -93,7 +109,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
 
             if len(sample_ps) > 0:
                 sample_dict_p = sample_group(N=Nids, ps=sample_ps, e=e)
-                sample_dict={reg.SAMPLING_PARS[p]:vs for p,vs in sample_dict_p.items()}
+                sample_dict={SAMPLING_PARS[p]:vs for p,vs in sample_dict_p.items()}
                 refID = refDataset.refID
     sample_dict.update(parameter_dict)
     return generate_larvae(Nids, sample_dict, m), refID
@@ -113,7 +129,7 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nid
     e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
     ids = random.sample(e.index.values.tolist(), Nids)
     sample_dict = {}
-    for p,k in reg.SAMPLING_PARS.items():
+    for p,k in SAMPLING_PARS.items():
         if p in e.columns:
             pmu = e[p].mean()
             vs = []

@@ -27,11 +27,9 @@ class SingleRun:
         if save_to is None:
             save_to = reg.SIM_DIR
         self.save_to = save_to
-        # self.storage_path = f'{sim_params.path}/{self.id}'
         self.storage_path = f'{self.save_to}/{self.id}'
         self.plot_dir = f'{self.storage_path}/plots'
         self.data_dir = f'{self.storage_path}/data'
-        # self.vis_dir = f'{self.storage_path}/visuals'
         self.start = time.time()
         self.source_xy = aux.get_source_xy(env_params['food_params'])
         Npoints = np.min([lg.model.body.Nsegs + 1 for id, lg in larva_groups.items()])
@@ -84,9 +82,6 @@ class SingleRun:
             for d in ds:
                 PIs[d.id] = d.config.PI["PI"]
                 PI2s[d.id] = d.config.PI2
-                # if self.show_output:
-                #     print(f'Group {d.id} -> PI : {PIs[d.id]}')
-                #     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             return None, {'PIs': PIs, 'PI2s': PI2s}
 
         if 'disp' in exp:
@@ -95,31 +90,9 @@ class SingleRun:
 
         kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         sources = self.source_xy
-        # from lib.conf.stored.analysis_conf import get_analysis_graphgroups
 
         graphgroups=reg.graphs.get_analysis_graphgroups(exp, sources)
         figs=reg.graphs.eval_graphgroups(graphgroups, **kws)
         return figs, None
 
-    # def run_analysis(self, entry_list, **kws):
-    #     # exp = self.experiment
-    #     figs, results = {}, {}
-    #     if len(entry_list) > 0:
-    #         graph_entries = reg.graphs.eval(entries=entry_list, **kws)
-    #         figs.update(graph_entries)
-    #     # FIXME Substituted "comparative analysis" of dispersion simulation to automatize analysis. Probably will fail
-    #     # if 'disp' in exp:
-    #     #     from lib.sim.single.analysis import comparative_analysis
-    #     #     samples = aux.unique_list([d.config.sample for d in self.datasets])
-    #     #     targets = [reg.loadRef(sd) for sd in samples]
-    #     #     kkws = copy.deepcopy(kws)
-    #     #     kkws['datasets'] = self.datasets + targets
-    #     #     figs.update(**comparative_analysis(**kkws))
-    #     # if 'dish' in exp:
-    #     #     from lib.sim.single.analysis import targeted_analysis
-    #     #     figs.update(**targeted_analysis(**kws))
-    #     if len(figs) == 0 and len(results) == 0:
-    #         return None, None
-    #     else:
-    #         return figs, results
 

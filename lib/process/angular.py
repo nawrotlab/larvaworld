@@ -163,27 +163,23 @@ def unwrap_orientations(s, segs):
 
 
 def comp_angular(s, e, c, mode='minimal'):
-    ors = aux.nam.orient(['front','rear', 'head', 'tail'])
-    ang_pars = ors + ['bend']
-
-    dt = c.dt
-    Nangles = np.clip(c.Npoints - 2, a_min=0, a_max=None)
-    angles = [f'angle{i}' for i in range(Nangles)]
+    ang_pars = aux.nam.orient(['front','rear', 'head', 'tail']) + ['bend']
     segs = aux.nam.midline(c.Npoints - 1, type='seg')
+    unwrap_orientations(s, segs)
+    if mode == 'full':
+        Nangles = np.clip(c.Npoints - 2, a_min=0, a_max=None)
+        angles = [f'angle{i}' for i in range(Nangles)]
+        pars = angles + aux.nam.orient(segs) + ang_pars
+    elif mode == 'minimal':
+        pars = ang_pars
+    pars = [a for a in pars if a in s.columns]
+    Npars = len(pars)
+    print(f'Computing angular velocities and accelerations for {Npars} angular parameters')
 
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Nticks = len(s.index.unique('Step'))
-    unwrap_orientations(s, segs)
 
-    if mode == 'full':
-        pars = angles + aux.nam.orient(segs) + ang_pars
-    elif mode == 'minimal':
-        pars = ang_pars
-
-    pars = [a for a in pars if a in s.columns]
-    Npars = len(pars)
-    print(f'Computing angular velocities and accelerations for {Npars} angular parameters')
 
     V = np.zeros([Nticks, Npars, Nids]) * np.nan
     A = np.zeros([Nticks, Npars, Nids]) * np.nan
@@ -194,8 +190,8 @@ def comp_angular(s, e, c, mode='minimal'):
         if aux.nam.unwrap(p) in s.columns:
             p = aux.nam.unwrap(p)
         for j, d in enumerate(all_d):
-            avel = np.diff(d[p].values) / dt
-            aacc = np.diff(avel) / dt
+            avel = np.diff(d[p].values) / c.dt
+            aacc = np.diff(avel) / c.dt
             V[1:, i, j] = avel
             A[2:, i, j] = aacc
     for k, p in enumerate(pars):

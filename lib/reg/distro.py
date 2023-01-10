@@ -1,5 +1,4 @@
 from typing import Tuple
-
 import numpy as np
 from scipy.special import erf
 from scipy.stats import uniform, levy, norm

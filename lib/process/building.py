@@ -247,7 +247,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
         par_list = [ids, ts, xs, ys]
         try:
-            states = pd.read_csv(f'{pref}_global_state_large_state.txt', header=None, sep='\t', names=['state'])
+            states = pd.read_csv(f'{pref}_state.txt', header=None, sep='\t', names=['state'])
             par_list.append(states)
             columns.append('state')
 

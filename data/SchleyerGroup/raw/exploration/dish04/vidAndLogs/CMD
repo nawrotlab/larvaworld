@@ -1,0 +1,1 @@
+/home/epaisios/sources/lrvTrack.local/src/lrvTrack -x --use-model --model-duration 8  -z 138  --brightness 200 --contrast 1.6  -m 16  --min-obj-size=110 --max-obj-size=8000  -p --thread-count 9 -o -v 16 -d 13 -w 0.04 -u -t --metadata-file -i experiment.mp4
