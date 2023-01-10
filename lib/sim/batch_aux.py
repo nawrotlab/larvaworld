@@ -321,8 +321,8 @@ finfunc_dict = {
 }
 
 
-def batch_method_unpack(run='default', post='default', final='null'):
-    return {'procfunc': procfunc_dict[run],
+def batch_method_unpack(exec='default', post='default', final='null'):
+    return {'procfunc': procfunc_dict[exec],
             'postfunc': postfunc_dict[post],
             'finfunc': finfunc_dict[final], }
 

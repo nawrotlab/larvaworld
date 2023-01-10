@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 from cli.conf_aux import update_exp_conf
-from lib import reg, aux
+from lib import reg, aux, sim
 
 
 class Parser:
@@ -46,48 +46,34 @@ class MultiParser:
 
 
 def run_template(sim_mode, args, d):
-    # MP, p = get_parser(conftype)
-
     if sim_mode == 'Rep':
-        from lib.sim.replay import ReplayRun
-        run = ReplayRun(**d['replay'])
+        run = sim.ReplayRun(**d['replay'])
         run.run()
     elif sim_mode == 'Batch':
-        from lib.sim.exec_run import Exec
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Batch')
-        exec = Exec(mode='batch', conf=conf, run_externally=False)
+        exec = sim.Exec(mode='batch', conf=conf, run_externally=False)
         exec.run()
     elif sim_mode == 'Exp':
-        from lib.sim.single_run import SingleRun
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
-
-
-        run = SingleRun(**conf, vis_kwargs=d['visualization'])
-
-
-
+        run = sim.SingleRun(**conf, vis_kwargs=d['visualization'])
         ds = run.run()
 
         if args.analysis:
             fig_dict, results = run.analyze(show=args.show)
     elif sim_mode == 'Ga':
-        from lib.sim.ga_launcher import GAlauncher
         conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,
                                conf_type='Ga')
-
         conf.ga_select_kws = d['ga_select_kws']
 
         if args.base_model is not None:
             conf.ga_build_kws.base_model = args.base_model
         if args.bestConfID is not None:
             conf.ga_build_kws.bestConfID = args.bestConfID
-        GA = GAlauncher(**conf)
+        GA = sim.GAlauncher(**conf)
         best_genome = GA.run()
     elif sim_mode == 'Eval':
-        from lib.sim.evaluation import EvalRun
-        evrun = EvalRun(**d.eval_conf, show=args.show_screen)
-        evrun.simulate()
-        evrun.analyze()
+        evrun = sim.EvalRun(**d.eval_conf, show=args.show_screen)
+        evrun.run()
         evrun.plot_results()
         evrun.plot_models()
 

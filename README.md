@@ -168,4 +168,11 @@ Larvaworld can be run directly from linux terminal.
       This line replays a reference experimental dataset (note that this is imported by the tests/data_import/Schleyer/import_Schleyer.py)
 
            python larvaworld.py Rep -refID exploration.dish
+
+   5. Model evaluation / comparison to real data
+   
+      Evaluate diverse model configurations against real data.
+      This line evaluates two models against a reference experimental dataset
+
+           python larvaworld.py Eval -refID exploration.merged_dishes -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
     

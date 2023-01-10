@@ -1295,9 +1295,7 @@ def buildInitDict():
 
         d['eval_conf'] = {
             'refID': ConfID_entry('Ref', default='None.150controls'),
-            # 'refID': confID_entry('Ref', default='None.150controls'),
             'modelIDs': ConfID_entry('Model', single_choice=False, k='mIDs'),
-            # 'modelIDs': confID_entry('Model', single_choice=False, k='mIDs'),
             'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
             'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
@@ -1320,9 +1318,7 @@ def buildInitDict():
 
     def larvaGroup(d):
         d['LarvaGroup'] = {
-             # **m,
              'model': ConfID_entry('Model', default='explorer'),
-            # 'model': confID_entry('Model', default='explorer'),
             'sample': {'dtype': str, 'v': 'None.150controls', 'h': 'The reference dataset to sample from.'},
             'default_color': pCol('black', 'larva group'),
             'imitation': {**bF, 'h': 'Whether to imitate the reference dataset.'},
@@ -1352,8 +1348,6 @@ def buildInitDict():
     for f in [food,life,larvaGroup,batch,conftypes,Ga0,Ga1]:
         dic0 = f(d)
         d.update(dic0)
-        # print(f)
-
     return aux.NestDict(d)
 
 
@@ -1366,8 +1360,6 @@ def buildDefaultDict(d0):
 
 class ParamRegistry:
     def __init__(self,func_dict,in_rad=True, in_m=True):
-
-
         self.PI = buildInitDict()
         self.DEF = buildDefaultDict(self.PI)
 
@@ -1404,7 +1396,6 @@ class ParamRegistry:
 
     def oD(self, c=1, id='Odor'):
         return self.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
-        # return self.odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
 
     def arena(self, x, y=None):
         if y is None:
@@ -1485,7 +1476,6 @@ class ParamRegistry:
 
         b_num = self.dict[k_num]
         b_den = self.dict[k_den]
-        # u = b_num.u / b_den.u
 
         kws = {
             'p': p,
@@ -1494,7 +1484,6 @@ class ParamRegistry:
             'sym': sym,
             'u': b_num.u / b_den.u,
             'required_ks': [k_num, k_den],
-            # **kwargs
         }
         kws.update(kwargs)
         self.add(**kws)
@@ -1504,7 +1493,6 @@ class ParamRegistry:
         kws0 = {'u': b.u, 'required_ks': [k0]}
 
         funcs = self.func_dict
-        # funcs = self.func_dict.ops
 
         mu_kws = {'d': nam.mean(b.d), 'p': nam.mean(b.p), 'sym': bar(b.sym), 'disp': f'mean {b.disp}',
                   'func': funcs.mean(b.d), 'k': f'{b.k}_mu'}

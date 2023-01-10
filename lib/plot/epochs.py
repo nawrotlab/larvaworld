@@ -10,7 +10,7 @@ from lib import reg, aux, plot
 
 
 
-def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_fits='best',
+def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits='best',
                      marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
@@ -22,24 +22,18 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
         xmin, xmax = np.min(x0), np.max(x0)
         fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
     idx_Kmax = fit_dic['idx_Kmax']
-    cdfs = fit_dic['cdfs']
-    pdfs = fit_dic['pdfs']
-    u2, du2, c2, c2cum = fit_dic['values']
+    xrange, du2, c2, y = fit_dic['values']
     lws[idx_Kmax] = 4
-    ylabel = 'probability'
-    xlabel = xlabel
-    xrange = u2
-    y = c2cum
-    ddfs = cdfs
+    ddfs = fit_dic['cdfs']
     for ii in ddfs:
         if ii is not None:
             ii /= ii[0]
-    axs[i].loglog(xrange, y, marker, color=color, alpha=0.7, label=label)
-    axs[i].set_title(bout)
-    axs[i].set_xlabel(xlabel)
-    axs[i].set_ylim([10 ** -3.5, 10 ** 0.2])
+    ax.loglog(xrange, y, marker, color=color, alpha=0.7, label=label)
+    ax.set_title(bout)
+    ax.set_xlabel(xlabel)
+    ax.set_ylim([10 ** -3.5, 10 ** 0.2])
     if xlim is not None :
-        axs[i].set_xlim(xlim)
+        ax.set_xlim(xlim)
     distro_ls0, distro_cs0 = [], []
     for z, (l, col, lw, ddf) in enumerate(zip(distro_ls, distro_cs, lws, ddfs)):
         if ddf is None:
@@ -52,15 +46,13 @@ def plot_single_bout(x0, discr, bout, i, color, label, axs, fit_dic=None, plot_f
             cc = col
         else:
             continue
-        axs[i].loglog(xrange, ddf, color=cc, lw=lw, label=l)
+        ax.loglog(xrange, ddf, color=cc, lw=lw, label=l)
     if len(distro_ls0) > 1:
         if legend_outside:
-            plot.dataset_legend(distro_ls0, distro_cs0, ax=axs[1], loc='center left', fontsize=25, anchor=(1.0, 0.5))
+            plot.dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='center left', fontsize=25, anchor=(1.0, 0.5))
         else:
-            for ax in axs:
-                plot.dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
-    for jj in [0]:
-        axs[jj].set_ylabel(ylabel)
+            plot.dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
+
 
 @reg.funcs.graph('epochs')
 def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
@@ -68,20 +60,13 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
         name = f'runsNpauses{plot_fits}'
     else:
         name = f'turn_epochs{plot_fits}'
-    P = plot.AutoPlot(name=name, sharey=True, Ncols=2, figsize=(10, 5), **kwargs)
+    P = plot.AutoPlot(name=name,build_kws={'Ncols': 2, 'sharey': True, 'wh' : 5}, **kwargs)
     valid_labs = {}
     for j, d in enumerate(P.datasets):
         id = d.id
         v = d.pooled_epochs
         if v is None:
             continue
-        # try:
-        #     v = d.pooled_epochs
-        # except:
-        #     v = d.loadDic('pooled_epochs')
-        #
-        # if v is None :
-        #     v = comp_pooled_epochs(s=d.step_data, e=d.endpoint_data,c = d.config )
 
         kws = {
             'marker': 'o',
@@ -89,27 +74,29 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
             'label': id,
             'color': d.color,
             'legend_outside': legend_outside,
-            'axs': P.axs,
+            # 'axs': P.axs,
             'x0': None
         }
+
         if not turns:
             if 'pause_dur' in v.keys() and v.pause_dur is not None:
-                plot_single_bout(fit_dic=v.pause_dur, discr=False, bout='pauses', i=1, **kws)
+                plot_single_bout(fit_dic=v.pause_dur, discr=False, bout='pauses', ax=P.axs[1], **kws)
                 valid_labs[id] = kws['color']
             if stridechain_duration and 'run_dur' in v.keys() and v.run_dur is not None:
-                plot_single_bout(fit_dic=v.run_dur, discr=False, bout='runs', i=0, **kws)
+                plot_single_bout(fit_dic=v.run_dur, discr=False, bout='runs', ax=P.axs[0], **kws)
                 valid_labs[id] = kws['color']
             elif not stridechain_duration and 'run_count' in v.keys() and v.run_count is not None:
-                plot_single_bout(fit_dic=v.run_count, discr=True, bout='stridechains', xlabel='# strides', i=0, **kws)
+                plot_single_bout(fit_dic=v.run_count, discr=True, bout='stridechains', xlabel='# strides', ax=P.axs[0], **kws)
                 valid_labs[id] = kws['color']
         else:
             if 'turn_dur' in v.keys() and v.turn_dur is not None:
-                plot_single_bout(fit_dic=v.turn_dur, discr=False, bout='turn duration', i=0, **kws)
+                plot_single_bout(fit_dic=v.turn_dur, discr=False, bout='turn duration', ax=P.axs[0], **kws)
                 valid_labs[id] = kws['color']
             if 'turn_amp' in v.keys() and v.turn_amp is not None:
                 plot_single_bout(fit_dic=v.turn_amp, discr=False, bout='turn amplitude', xlabel='angle (deg)',
-                                 xlim=(10 ** -0.5, 10 ** 3), i=1, **kws)
+                                 xlim=(10 ** -0.5, 10 ** 3), ax=P.axs[1], **kws)
                 valid_labs[id] = kws['color']
+    P.axs[0].set_ylabel('probability')
     P.axs[1].yaxis.set_visible(False)
     if P.Ndatasets > 1:
         P.data_leg(0, labels=valid_labs.keys(), colors=valid_labs.values(), loc='lower left', fontsize=15)

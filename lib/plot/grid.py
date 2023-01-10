@@ -395,7 +395,7 @@ def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled', **
            N=2, share_w=True, dh=3, h=23, w=24, x0=True, y0=True)
     for i, (k, df) in enumerate(error_dict.items()):
         h0 = 28 + i * 14
-        P.plot(func='error table', kws={'data': df, 'k': k, 'bbox': [0.5, 0, 1, 1]}, h=12, h0=h0, w=24, x0=True)
+        P.plot(func='error table', kws={'data': df, 'k': k, 'title' : labels[k]}, h=12, h0=h0, w=24, x0=True, N=1)
     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
     P.annotate()
     return P.get()

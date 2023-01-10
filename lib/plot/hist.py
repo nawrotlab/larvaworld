@@ -65,14 +65,13 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
 
     P.init_fits(reg.getPar(shorts))
     for i, (k,r) in enumerate(zip(shorts, rs)):
-        p=reg.PD.dict[k]
-        vs=[reg.PD.get(k,d) for d in P.datasets]
+        p=reg.par.kdict[k]
+        vs=[reg.par.get(k,d) for d in P.datasets]
         bins, xlim = P.angrange(r, absolute, Nbins)
         P.plot_par(vs=vs, bins=bins, i=i, absolute=absolute, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
                    pvalues=False, half_circles=half_circles)
         P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, ylim=[0, 0.1], yMaxN=3)
     P.data_leg(0, loc='upper left' if half_circles else 'upper right')
-    # dataset_legend(P.labels, P.colors, ax=P.axs[0], loc='upper left' if half_circles else 'upper right')
     P.adjust((0.3 / Nps, 0.99), (0.15, 0.95), 0.01)
     return P.get()
 # ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
@@ -177,8 +176,8 @@ def plot_crawl_pars(shorts=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint', pa
     P = plot.AutoPlot(name='crawl_pars', subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':5, 'mode':'hist'}, **kwargs)
     P.init_fits(reg.getPar(shorts))
     for i, k in enumerate(shorts):
-        p=reg.PD.dict[k]
-        vs=[reg.PD.get(k,d) for d in P.datasets]
+        p=reg.par.kdict[k]
+        vs=[reg.par.get(k,d) for d in P.datasets]
         P.plot_par(vs=vs, bins='broad', nbins=40, labels=p.disp, i=i, sns_kws = sns_kws,
                    type=type, pvalues=pvalues, half_circles=half_circles, key='end')
         P.conf_ax(i, ylab='probability', yvis=True if i == 0 else False, xlab=p.label, xlim=p.lim, yMaxN=4,

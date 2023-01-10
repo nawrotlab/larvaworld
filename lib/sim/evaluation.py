@@ -1,6 +1,7 @@
 import warnings
 
 import lib.aux.np
+from lib.sim.base import BaseRun
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -20,18 +21,19 @@ from lib.util.sample_aux import sim_models
 
 
 
-class EvalRun(lib.sim.base.BaseRun):
+class EvalRun(BaseRun):
     def __init__(self, refID, eval_metrics=None, N=5, dur=None,
                  bout_annotation=True, modelIDs=None, dataset_ids=None,
-                 enrichment=True, norm_modes=['raw'], eval_modes=['pooled'],
+                 enrichment=True, norm_modes=['raw', 'minmax'], eval_modes=['pooled'],
                  offline=False, **kwargs):
         super().__init__(runtype='eval', experiment=refID,analysis=True, **kwargs)
 
         self.refID = refID
         self.modelIDs = modelIDs
+
+        if dataset_ids is None:
+            dataset_ids = self.modelIDs
         self.dataset_ids = dataset_ids
-        if self.dataset_ids is None:
-            self.dataset_ids = self.modelIDs
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.offline = offline
@@ -52,6 +54,7 @@ class EvalRun(lib.sim.base.BaseRun):
         self.enrichment = enrichment
         self.bout_annotation = bout_annotation
         self.exp_conf = self.prepare_exp_conf(dur=dur)
+
 
     def define_target(self, refID):
         target = reg.loadRef(refID)
@@ -77,6 +80,7 @@ class EvalRun(lib.sim.base.BaseRun):
         self.eval_symbols = aux.NestDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
+        self.tor_durs, self.dsp_starts, self.dsp_stops = torsNdsps(self.s_pars + self.e_pars)
     # def exec(self, **kwargs):
     #     self.sim_models(**kwargs)
 
@@ -134,9 +138,9 @@ class EvalRun(lib.sim.base.BaseRun):
 
     def store(self):
         if self.store_data:
-            aux.save_dict(self.sim_data, self.dir_dict.sim_data)
-            aux.save_dict(self.error_dicts, self.dir_dict.error_dicts)
-            print(f'Results saved at {self.dir}')
+            # aux.save_dict(self.sim_data, f'{self.data_dir}/sim_data.txt')
+            aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
+            print(f'Results saved at {self.data_dir}')
 
     def run_evaluation(self, d, suf='fitted', min_size=20):
         print('Evaluating all models')
@@ -144,18 +148,15 @@ class EvalRun(lib.sim.base.BaseRun):
             k = f'{mode}_{suf}'
             self.error_dicts[k] = eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
                                             min_size=min_size)
-
         self.error_dicts = aux.NestDict(self.error_dicts)
-
-        # self.store()
 
     def plot_eval(self, suf='fitted'):
         for mode in self.eval_modes:
             k = f'{mode}_{suf}'
-            self.figs.errors[k] = self.get_error_plots(self.error_dicts[k], mode, show=self.show)
+            self.figs.errors[k] = self.get_error_plots(self.error_dicts[k], mode)
 
-    def get_error_plots(self, error_dict, mode='pooled', **kwargs):
-        GD = reg.GD.dict
+    def get_error_plots(self, error_dict, mode='pooled'):
+        GD = reg.graphs.dict
         label_dic = {
             '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
             'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
@@ -168,13 +169,12 @@ class EvalRun(lib.sim.base.BaseRun):
             df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(error_dict0.items())})
             kws = {
                 'save_to': f'{self.error_plot_dir}/{norm}',
-                **kwargs
+                'show' : self.show
             }
 
             bars = {}
             tabs = {}
-            bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=error_dict0,
-                                                  evaluation=self.evaluation, **kws)
+
 
             for i, (k, df) in enumerate(error_dict0.items()):
                 tabs[k] = GD['error table'](df, k, labels[k], **kws)
@@ -182,7 +182,8 @@ class EvalRun(lib.sim.base.BaseRun):
             bars['full'] = GD['error barplot'](error_dict=error_dict0, evaluation=self.evaluation, labels=labels, **kws)
 
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
-
+            bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=error_dict0,
+                                                  evaluation=self.evaluation, **kws)
             dic[norm] = {'tables': tabs, 'barplots': bars}
         return aux.NestDict(dic)
 
@@ -201,14 +202,14 @@ class EvalRun(lib.sim.base.BaseRun):
         return aux.NestDict(dic)
 
     def plot_models(self):
-        GD = reg.GD.dict
-        save_to = self.dir_dict.models
+        GD = reg.graphs.dict
+        save_to = self.plot_dir
         for mID in self.modelIDs:
             self.figs.models.table[mID] = GD['model table'](mID=mID, save_to=save_to, figsize=(14, 11))
             self.figs.models.summary[mID] = GD['model summary'](mID=mID, save_to=save_to, refID=self.refID)
 
     def plot_results(self, plots=['hists', 'trajectories', 'dispersion', 'bouts', 'fft', 'boxplots']):
-        GD = reg.GD.dict
+        GD = reg.graphs.dict
 
         print('Generating comparative graphs')
 
@@ -234,12 +235,19 @@ class EvalRun(lib.sim.base.BaseRun):
 
         self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True,
                                                          **kws)
-
+        if 'dispersion' in plots:
+            for r0, r1 in itertools.product(self.dsp_starts, self.dsp_stops):
+                k = f'dsp_{r0}_{r1}'
+                fig1 = GD['dispersal'](range=(r0, r1), subfolder=None, **kws)
+                fig2 = GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
+                fig3 = GD['dispersal summary'](range=(r0, r1), **kws2)
+                self.figs.loco[k] = aux.NestDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
+        if 'bouts' in plots:
+            self.figs.epochs.turn = GD['epochs'](turns=True, **kws)
+            self.figs.epochs.runNpause = GD['epochs'](stridechain_duration=True, **kws)
         if 'fft' in plots:
-            self.figs.loco.fft = GD['fft'](**kws)
+            self.figs.loco.fft = GD['fft multi'](**kws)
         if 'hists' in plots:
-            # self.figs.hist.step = self.plot_data(mode='step', type='hist')
-            # self.figs.hist.end = self.plot_data(mode='end', type='hist')
             self.figs.hist.ang = GD['angular pars'](half_circles=False, absolute=False, Nbins=100, Npars=3,
                                                     include_rear=False, subfolder=None, **kws)
             self.figs.hist.crawl = GD['crawl pars'](subfolder=None, pvalues=False, **kws)
@@ -249,16 +257,9 @@ class EvalRun(lib.sim.base.BaseRun):
             pass
             # self.figs.boxplot.end = self.plot_data(mode='end', type='box')
             # self.figs.boxplot.step = self.plot_data(mode='step', type='box')
-        if 'bouts' in plots:
-            self.figs.epochs.runNpause = GD['epochs'](stridechain_duration=True, **kws)
-            self.figs.epochs.turn = GD['epochs'](turns=True, **kws)
-        if 'dispersion' in plots:
-            for r0, r1 in itertools.product(self.dsp_starts, self.dsp_stops):
-                k = f'dsp_{r0}_{r1}'
-                fig1 = GD['dispersal'](range=(r0, r1), subfolder=None, **kws)
-                fig2 = GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
-                fig3 = GD['dispersal summary'](range=(r0, r1), **kws2)
-                self.figs.loco[k] = aux.NestDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
+
+
+
 
     def preprocess(self,ds):
         Ddata, Edata = {}, {}
@@ -355,9 +356,9 @@ class EvalRun(lib.sim.base.BaseRun):
         c = self.target.config
         if self.offline:
             print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
-            tor_durs, dsp_starts, dsp_stops = torsNdsps(self.s_pars + self.e_pars)
-            self.datasets += sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=tor_durs,
-                                        dsp_starts=dsp_starts, dsp_stops=dsp_stops,
+
+            self.datasets += sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=self.tor_durs,
+                                        dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
                                         dataset_ids=self.dataset_ids, bout_annotation=self.bout_annotation,
                                         enrichment=self.enrichment,
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
@@ -367,7 +368,8 @@ class EvalRun(lib.sim.base.BaseRun):
 
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = SingleRun(**self.exp_conf, progress_bar=self.progress_bar)
-            self.datasets += run.run()
+            run.run()
+            self.datasets += run.datasets
             # return self.datasets
 
 
