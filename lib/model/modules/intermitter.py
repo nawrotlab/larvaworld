@@ -2,11 +2,10 @@ import os
 import numpy as np
 import pandas as pd
 
-from lib.util.fitting import BoutGenerator
 
 
 from lib.model.modules.basic import Effector
-from lib import reg, aux
+from lib import reg, aux, util
 from lib.aux import naming as nam
 
 
@@ -274,22 +273,21 @@ class BaseIntermitter(Effector):
 class Intermitter(BaseIntermitter):
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist= None, run_mode='stridechain',**kwargs):
         super().__init__(**kwargs)
-        from lib.util.fitting import BoutGenerator
         pause_dist, stridechain_dist = self.check_distros(pause_dist=pause_dist,stridechain_dist=stridechain_dist)
 
         if run_mode=='stridechain' :
             if stridechain_dist is not None :
-                self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
+                self.stridechain_dist = util.BoutGenerator(**stridechain_dist, dt=1)
                 self.run_dist = None
             else :
                 run_mode = 'exec'
         if run_mode=='exec' :
             if run_dist is not None :
-                self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
+                self.run_dist = util.BoutGenerator(**run_dist, dt=self.dt)
                 self.stridechain_dist = None
             else :
                 raise ValueError ('None of stidechain or exec distribution exist')
-        self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
+        self.pause_dist = util.BoutGenerator(**pause_dist, dt=self.dt)
         # print(stridechain_dist)
 
 
@@ -425,19 +423,19 @@ class BranchIntermitter(BaseIntermitter):
             if stridechain_dist is not None:
                 # print(stridechain_dist.range)
                 self.stridechain_min, self.stridechain_max = stridechain_dist.range
-                self.stridechain_dist = BoutGenerator(**stridechain_dist, dt=1)
+                self.stridechain_dist = util.BoutGenerator(**stridechain_dist, dt=1)
                 self.run_dist = None
             else:
                 run_mode = 'exec'
         if run_mode == 'exec':
             if run_dist is not None:
-                self.run_dist = BoutGenerator(**run_dist, dt=self.dt)
+                self.run_dist = util.BoutGenerator(**run_dist, dt=self.dt)
                 self.stridechain_min, self.stridechain_max = run_dist.range
                 self.stridechain_dist = None
             else:
                 raise ValueError('None of stidechain or exec distribution exist')
         self.pau_min, self.pau_max = (np.array(pause_dist.range)/self.dt).astype(int)
-        self.pause_dist = BoutGenerator(**pause_dist, dt=self.dt)
+        self.pause_dist = util.BoutGenerator(**pause_dist, dt=self.dt)
 
     def generate_stridechain(self):
         from lib.util.fitting import exp_bout

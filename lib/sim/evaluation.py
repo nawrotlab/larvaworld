@@ -13,10 +13,8 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
-from lib import reg, aux, plot
+from lib import reg, aux, plot, util
 
-from lib.util.eval_aux import arrange_evaluation, torsNdsps, eval_fast, GA_optimization
-from lib.util.sample_aux import sim_models
 
 
 
@@ -43,7 +41,7 @@ class EvalRun(BaseRun):
         self.N = N
         self.dur = dur
         self.target = self.define_target(refID)
-        self.evaluation, self.target_data = arrange_evaluation(self.target, eval_metrics)
+        self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
         self.define_eval_args(self.evaluation)
         self.datasets = []
         self.error_dicts = {}
@@ -80,7 +78,7 @@ class EvalRun(BaseRun):
         self.eval_symbols = aux.AttrDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
-        self.tor_durs, self.dsp_starts, self.dsp_stops = torsNdsps(self.s_pars + self.e_pars)
+        self.tor_durs, self.dsp_starts, self.dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
     # def exec(self, **kwargs):
     #     self.sim_models(**kwargs)
 
@@ -109,7 +107,7 @@ class EvalRun(BaseRun):
         if self.enrichment is None:
             exp_conf.enrichment = None
         else:
-            tor_durs, dsp_starts, dsp_stops = torsNdsps(self.s_pars + self.e_pars)
+            tor_durs, dsp_starts, dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
             exp_conf.enrichment.metric_definition.dispersion.dsp_starts = dsp_starts
             exp_conf.enrichment.metric_definition.dispersion.dsp_stops = dsp_stops
             exp_conf.enrichment.metric_definition.tortuosity.tor_durs = tor_durs
@@ -146,7 +144,7 @@ class EvalRun(BaseRun):
         print('Evaluating all models')
         for mode in self.eval_modes:
             k = f'{mode}_{suf}'
-            self.error_dicts[k] = eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
+            self.error_dicts[k] = util.eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
                                             min_size=min_size)
         self.error_dicts = aux.AttrDict(self.error_dicts)
 
@@ -357,7 +355,7 @@ class EvalRun(BaseRun):
         if self.offline:
             print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
 
-            self.datasets += sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=self.tor_durs,
+            self.datasets += util.sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=self.tor_durs,
                                         dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
                                         dataset_ids=self.dataset_ids, bout_annotation=self.bout_annotation,
                                         enrichment=self.enrichment,
@@ -438,7 +436,7 @@ def adapt_6mIDs(refID, e=None, c=None):
         'cycle_curves': ['fov', 'foa', 'b']
     }
 
-    fit_dict = GA_optimization(refID, fitness_target_kws=fit_kws)
+    fit_dict = util.GA_optimization(refID, fitness_target_kws=fit_kws)
     entries = {}
     mIDs = []
     for Tmod in ['NEU', 'SIN']:
@@ -468,7 +466,7 @@ def adapt_3modules(refID, e=None, c=None):
         'cycle_curves': ['fov', 'foa', 'b']
     }
 
-    fit_dict = GA_optimization(refID, fitness_target_kws=fit_kws)
+    fit_dict = util.GA_optimization(refID, fitness_target_kws=fit_kws)
     entries = {}
     mIDs = []
     # for Cmod in ['GAU', 'CON']:

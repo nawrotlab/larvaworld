@@ -6,9 +6,8 @@ import param
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from lib.aux import naming as nam
-from lib.util import data_aux
 from lib.aux.par_aux import bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
-from lib import reg, aux
+from lib import reg, aux, util
 
 
 
@@ -122,7 +121,7 @@ def buildInitDict():
         return {'dtype': List[Tuple[float]], 'lim': lim, 'h': h, **kwargs}
 
     def substrate():
-        from lib.model.DEB.substrate import substrate_dict
+        from lib.model.deb.substrate import substrate_dict
         d = aux.AttrDict()
         d['substrate_composition'] = {
             n: {'v': 0.0, 'lim': (0.0, 10.0), 'h': f'{n} density in g/cm**3.'} for
@@ -1424,7 +1423,7 @@ class ParamRegistry:
             **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
 
     def add(self, **kwargs):
-        prepar = data_aux.preparePar(**kwargs)
+        prepar = util.preparePar(**kwargs)
         self.dict[prepar.k] = prepar
         self.dict_entries.append(prepar)
 
@@ -1950,7 +1949,7 @@ class ParamRegistry:
     def finalize_dict(self, entries):
         dic = aux.AttrDict()
         for prepar in entries:
-            p = data_aux.v_descriptor(**prepar)
+            p = util.v_descriptor(**prepar)
             dic[p.k] = p
         return dic
 

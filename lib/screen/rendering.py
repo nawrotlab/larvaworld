@@ -6,7 +6,6 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 from lib import aux
-from lib.aux.time_util import TimeUtil
 
 
 
@@ -62,7 +61,7 @@ class Viewer(object):
         self.objects.remove(obj)
 
     def save(self, filename_pattern='scene', file_path='saved_scenes/'):
-        date_time = TimeUtil.format_date_time()
+        date_time = aux.TimeUtil.format_date_time()
         file_name = filename_pattern + '_' + date_time + ".txt"
         file_path = file_path + file_name
 
@@ -597,7 +596,6 @@ class SimulationState(ScreenItem):
 
 
 def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_color=None):
-    from lib.aux.sim_aux import parse_array_at_nans
     trajs = [fly.trajectory for fly in agents]
     if traj_color is not None:
         traj_cols = [traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
@@ -618,7 +616,7 @@ def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_colo
         # This is the case for larva trajectories derived from experiments where some values are np.nan
         else:
             traj_x = np.array([x for x, y in traj])
-            ds, de = parse_array_at_nans(traj_x)
+            ds, de = aux.parse_array_at_nans(traj_x)
             parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
             parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
 

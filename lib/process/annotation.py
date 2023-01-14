@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.signal import find_peaks
 
 from lib.aux import naming as nam
-from lib import reg, aux
+from lib import reg, aux, util
 
 def register_bout_distros(c,e):
     from lib.model.modules.intermitter import get_EEB_poly1d
@@ -27,7 +27,7 @@ def register_bout_distros(c,e):
 
 
 def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
-    from lib.util.fitting import fit_epochs, get_bout_distros
+    # from lib.util.fitting import fit_epochs, get_bout_distros
     from lib.process import patch
     s, e ,c= d.step_data, d.endpoint_data,d.config
 
@@ -38,8 +38,8 @@ def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
     if interference:
         d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts)
         d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
-        d.pooled_epochs = fit_epochs(d.grouped_epochs)
-        c.bout_distros = get_bout_distros(d.pooled_epochs)
+        d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
+        c.bout_distros = util.get_bout_distros(d.pooled_epochs)
         register_bout_distros(c, e)
     if on_food:
         patch.comp_on_food(s, e, c)

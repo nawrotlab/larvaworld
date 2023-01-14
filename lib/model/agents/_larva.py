@@ -208,7 +208,7 @@ class LarvaMotile(Larva, PhysicsController):
 
 
     def build_energetics(self, energetic_pars, life_history):
-        from lib.model.DEB.deb import DEB
+        from lib.model.deb.deb import DEB
         if energetic_pars is not None:
             pDEB = energetic_pars.DEB
             pGUT = energetic_pars.gut

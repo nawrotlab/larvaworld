@@ -3,11 +3,7 @@ import os
 import numpy as np
 import pygame
 
-from lib import reg, aux
-from lib.screen.rendering import Viewer, InputBox, SimulationClock, SimulationScale, SimulationState, draw_trajectories
-from lib.screen.screen_aux import get_window_dims, get_arena_bounds
-from lib.screen.input_lib import evaluate_input, evaluate_graphs
-
+from lib import reg, aux, screen
 
 class ScreenManager:
     def __init__(self, model,  vis_kwargs=None,**kwargs):
@@ -72,13 +68,13 @@ class ScreenManager:
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
 
-        self.sim_clock = SimulationClock(self.model.dt, color=self.scale_clock_color)
-        self.sim_scale = SimulationScale(self.model.arena_dims[0], color=self.scale_clock_color)
-        self.sim_state = SimulationState(model=self.model, color=self.scale_clock_color)
+        self.sim_clock = screen.SimulationClock(self.model.dt, color=self.scale_clock_color)
+        self.sim_scale = screen.SimulationScale(self.model.arena_dims[0], color=self.scale_clock_color)
+        self.sim_state = screen.SimulationState(model=self.model, color=self.scale_clock_color)
 
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
         self.add_screen_texts(list(self.model.odor_layers.keys()), color=self.scale_clock_color)
-        self.input_box = InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
+        self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                   center=True, w=120 * 4, h=32 * 4, font=pygame.font.SysFont("comicsansms", 32 * 2))
 
 
@@ -91,8 +87,8 @@ class ScreenManager:
         if media_name is None:
             media_name = str(m.id)
 
-        self.space_bounds = get_arena_bounds(m.arena_dims, self.s)
-        self.window_dims = get_window_dims(m.arena_dims)
+        self.space_bounds = screen.get_arena_bounds(m.arena_dims, self.s)
+        self.window_dims = screen.get_window_dims(m.arena_dims)
         screen_kws = {
             'window_dims': self.window_dims,
             'space_bounds': self.space_bounds,
@@ -120,7 +116,7 @@ class ScreenManager:
 
     def add_screen_texts(self, names, color):
         for name in names:
-            text = InputBox(text=name, color_active=color, color_inactive=color)
+            text = screen.InputBox(text=name, color_active=color, color_inactive=color)
             self.screen_texts[name] = text
 
     def step(self, tick=None):
@@ -175,7 +171,7 @@ class ScreenManager:
             'windscape',
             'is_paused',
         ]
-        return {name: InputBox(text=name, color_active=color, color_inactive=color) for name in names}
+        return {name: screen.InputBox(text=name, color_active=color, color_inactive=color) for name in names}
 
     def set_default_colors(self, black_background):
         if black_background:
@@ -222,7 +218,7 @@ class ScreenManager:
         if self.trails:
             if self.trajectory_dt is None:
                 self.trajectory_dt = 0.0
-            draw_trajectories(space_dims=m.arena_dims * self.s, agents=m.get_flies(), screen=screen,
+            screen.draw_trajectories(space_dims=m.arena_dims * self.s, agents=m.get_flies(), screen=screen,
                               decay_in_ticks=int(self.trajectory_dt / m.dt),
                               traj_color=self.traj_color)
 
@@ -245,8 +241,8 @@ class ScreenManager:
         self.draw_agents(self.v)
 
         if self.v.show_display:
-            evaluate_input(self, self.v)
-            evaluate_graphs(self)
+            screen.evaluate_input(self, self.v)
+            screen.evaluate_graphs(self)
         if self.image_mode != 'overlap':
 
             self.draw_aux(self.v)
@@ -254,7 +250,7 @@ class ScreenManager:
 
     def initialize(self, bg):
 
-        v = Viewer(**self.screen_kws)
+        v = screen.Viewer(**self.screen_kws)
 
         self.display_configuration(v)
         self.render_aux()
@@ -267,7 +263,7 @@ class ScreenManager:
 
     def display_configuration(self, screen):
         if self.show_conf_text:
-            box = InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
+            box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                            text=self.model.configuration_text,
                            color_active=pygame.Color('white'),
                            visible=True,
@@ -416,7 +412,7 @@ class ScreenManager:
 
     def apply_screen_zoom(self, screen, d_zoom):
         screen.zoom_screen(d_zoom)
-        self.sim_scale = SimulationScale(self.model.arena_dims[0] * screen.zoom, color=self.sim_scale.color)
+        self.sim_scale = screen.SimulationScale(self.model.arena_dims[0] * screen.zoom, color=self.sim_scale.color)
         self.sim_scale.render_scale(*self.window_dims)
 
 
@@ -428,7 +424,7 @@ class ScreenManager:
 
     def add_screen_texts(self, names, color):
         for name in names:
-            text = InputBox(text=name, color_active=color, color_inactive=color)
+            text = screen.InputBox(text=name, color_active=color, color_inactive=color)
             self.screen_texts[name] = text
 
     def generate_larva_color(self):

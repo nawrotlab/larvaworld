@@ -1,7 +1,5 @@
 import PySimpleGUI as sg
 
-
-
 from lib import reg
 from gui import gui_aux
 
@@ -16,7 +14,7 @@ class LifeTab(gui_aux.GuiTab):
 
     def build(self):
         from lib.plot.deb import plot_debs
-        from lib.model.DEB.substrate import substrate_dict
+        from lib.model.deb.substrate import substrate_dict
         sl1_kws = {
             'size': (30, 20),
             'enable_events': True,
@@ -66,7 +64,6 @@ class LifeTab(gui_aux.GuiTab):
         l = [
             [l0, l3],
             gui_aux.gui_row([l_tab, l1, l2, sub], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3], **pane_kws),
-            # gui_row([l_tab, l1, l2, sub.get_layout(as_col=False)], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3]),
         ]
         return l, {sub.name: sub}, {g1.name: g1}, {}
 
@@ -104,7 +101,7 @@ class LifeTab(gui_aux.GuiTab):
                 w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'Draw':
             if q > 0:
-                from lib.model.DEB.deb import deb_default
+                from lib.model.deb.deb import deb_default
                 from lib.plot.deb import plot_debs
 
                 D = deb_default(**self.get(w, v, c))
@@ -130,5 +127,5 @@ class LifeTab(gui_aux.GuiTab):
 
 if __name__ == "__main__":
     from gui.tabs.larvaworld_gui import LarvaworldGui
-    larvaworld_gui = LarvaworldGui(tabs=['life-history'])
+    larvaworld_gui = LarvaworldGui(tabs=['life'])
     larvaworld_gui.run()

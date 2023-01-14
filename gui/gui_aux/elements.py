@@ -17,6 +17,9 @@ from lib import reg, aux
 from gui import gui_aux
 
 
+SYMBOL_UP = '▲'
+SYMBOL_DOWN = '▼'
+
 col_idx_dict = {
     'LarvaGroup': [[0, 1, 2, 3, 6], [4], [5]],
     'enrichment': [[0], [5, 1, 3], [6, 2, 4]],
@@ -497,7 +500,7 @@ class Header(HeadedElement):
 
 
 class NamedList(Header):
-    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(gui_aux.default_list_width, None),
+    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(gui_aux.w_list, None),
                  readonly=True,
                  enable_events=True, list_kws={}, aux_cols=None, select_mode=None, header_kws={}, **kwargs):
 
@@ -684,7 +687,7 @@ class Collapsible(HeadedElement, GuiElement):
             GuiElement.__init__(self, name=name, layout=content)
 
     def get_symbol(self):
-        return sg.T(gui_aux.SYMBOL_DOWN if self.state else gui_aux.SYMBOL_UP, k=f'OPEN {self.sec_key}',
+        return sg.T(SYMBOL_DOWN if self.state else SYMBOL_UP, k=f'OPEN {self.sec_key}',
                     enable_events=True, text_color='black', **gui_aux.t_kws(2))
 
     def update(self, w, dict, use_prefix=True):
@@ -724,7 +727,7 @@ class Collapsible(HeadedElement, GuiElement):
     def click(self, w):
         if self.state is not None:
             self.state = not self.state
-            self.sec_symbol.update(gui_aux.SYMBOL_DOWN if self.state else gui_aux.YMBOL_UP)
+            self.sec_symbol.update(SYMBOL_DOWN if self.state else gui_aux.YMBOL_UP)
             # self.content.update(visible=self.state)
             w[self.sec_key].update(visible=self.state)
 
@@ -744,12 +747,12 @@ class Collapsible(HeadedElement, GuiElement):
 
     def open(self, w):
         self.state = True
-        self.sec_symbol.update(gui_aux.SYMBOL_DOWN)
+        self.sec_symbol.update(SYMBOL_DOWN)
         w[self.sec_key].update(visible=self.state)
 
     def close(self, w):
         self.state = False
-        self.sec_symbol.update(gui_aux.SYMBOL_UP)
+        self.sec_symbol.update(SYMBOL_UP)
         w[self.sec_key].update(visible=False)
 
     def get_subdicts(self):
@@ -1343,7 +1346,7 @@ class GraphList(NamedList):
         values = list(fig_dict.keys())
         if list_size is None:
             h = int(np.max([len(values), 10]))
-            list_size = (gui_aux.default_list_width, h)
+            list_size = (gui_aux.w_list, h)
         header_kws = {'text': list_header, 'after_header': next_to_header,
                       'text_kws': gui_aux.t_kws(14), 'single_line': False}
         default_value = default_values[0] if default_values is not None else None
@@ -1797,3 +1800,6 @@ def detect_dataset_in_subdirs(datagroup_id, path, last_dir, full_ID=False):
                     ids.append(id)
                 dirs.append(dr)
     return ids, dirs
+
+
+

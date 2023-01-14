@@ -7,7 +7,7 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely.geometry import LineString, Point, Polygon
 
 from lib.screen.rendering import InputBox
-from lib.model.DEB.substrate import Substrate
+from lib.model.deb.substrate import Substrate
 from lib import aux
 
 class Space2(ContinuousSpace):

@@ -1,7 +1,5 @@
 import PySimpleGUI as sg
 
-SYMBOL_UP = '▲'
-SYMBOL_DOWN = '▼'
 window_size = (2400, 1200)  #(1512,982)
 # window_size = sg.Window.get_screen_size() #(2400, 1200)
 
@@ -12,7 +10,7 @@ def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
 
 
-default_list_width = 25
+w_list = 25
 w_kws = {
     'finalize': True,
     'resizable': True,

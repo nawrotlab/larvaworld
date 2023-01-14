@@ -1,6 +1,5 @@
 import param
-from lib import reg, aux
-from lib.util.data_aux import gConf,init2mdict,get_ks
+from lib import reg, aux, util
 
 def build_ConfTypeSubkeys():
     d0 = {k: {} for k in reg.CONFTYPES}
@@ -100,22 +99,12 @@ class BaseType:
         self.k = k
         if k in reg.par.PI.keys():
             self.dict0 = reg.par.PI[k]
-            self.mdict = init2mdict(self.dict0)
-            self.ks = get_ks(self.mdict)
+            self.mdict = util.init2mdict(self.dict0)
+            self.ks = util.get_ks(self.mdict)
         else:
             self.dict0 = None
             self.mdict = None
             self.ks = None
-
-
-    # def build_mdict(self):
-    #     self.mdict = init2mdict(self.dict0)
-    #     self.ks = get_ks(self.mdict)
-    #
-    # def set_dict0(self, dict0):
-    #     self.dict0 = dict0
-    #     if self.dict0 is not None and self.mdict is None:
-    #         self.build_mdict()
 
     def gConf_kws(self, dic):
         kws0 = {}
@@ -134,31 +123,10 @@ class BaseType:
             kws0 = self.gConf_kws(kwdic)
             kwargs.update(kws0)
 
-        return aux.AttrDict(gConf(m0, **kwargs))
+        return aux.AttrDict(util.gConf(m0, **kwargs))
 
     def entry(self, id, **kwargs):
         return aux.AttrDict({id: self.gConf(**kwargs)})
-
-
-# class ConfType(BaseType):
-#     def __init__(self,**kwargs):
-#         super().__init__(**kwargs)
-
-        # k0 = confInit_ks(self.k)
-        # if k0 is not None:
-        #     dict0 = reg.par.PI[k0]
-        # else:
-        #     dict0 = None
-        #
-        # self.set_dict0(dict0)
-
-
-
-
-# class GroupType(BaseType):
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
-#         # self.set_dict0(reg.par.PI[self.k])
 
 
 conf =aux.AttrDict({k: BaseType(k=k) for k in reg.CONFTYPES})

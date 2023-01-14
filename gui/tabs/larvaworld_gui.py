@@ -1,5 +1,5 @@
 from typing import Any
-
+import numpy as np
 import PySimpleGUI as sg
 import time
 
@@ -12,7 +12,7 @@ def build_tab_dict():
     tab_dict = {
         'intro': (tabs.IntroTab, None, None, 'introduction'),
         'model': (tabs.ModelTab, 'Model', 'model_conf', 'larva-model'),
-        'life': (tabs.LifeTab, 'Life', 'life', 'life-history'),
+        'life': (tabs.LifeTab, 'Life', 'Life', 'life-history'),
         'sim': (tabs.SimTab, 'Exp', 'Exp', 'simulation'),
         'batch': (tabs.BatchTab, 'Batch', 'Batch', 'batch-exec'),
         'essay': (tabs.EssayTab, 'Essay', 'essay_conf', 'essay'),
@@ -156,7 +156,7 @@ def gui_terminal(size=gui_aux.col_size(y_frac=0.3)):
 
 
 def speed_test():
-    import numpy as np
+
     ns0 = ['introduction', 'tutorials', 'larva-model', 'environment', 'life-history', 'simulation', 'essay',
            'batch-exec', 'analysis', 'import', 'videos', 'settings']
     ns = [[n] for n in ns0]

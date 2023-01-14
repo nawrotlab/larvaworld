@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 
-from lib import reg, aux, plot
+from lib import reg, aux, plot,util
 
 
 
@@ -56,8 +56,6 @@ def calibration_plot(save_to=None, files=None):
 
 @reg.funcs.graph('model summary')
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
-    from lib.util.fitting import test_boutGens
-    from lib.util.sample_aux import sim_model
     if refDataset is None:
         d = reg.loadRef(refID)
         d.load(step=False)
@@ -66,7 +64,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     refDataset.config.color = 'red'
     e, c = refDataset.endpoint_data, refDataset.config
 
-    dd = sim_model(mID=mID, refDataset=refDataset, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue',
+    dd = util.sim_model(mID=mID, refDataset=refDataset, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue',
                    dataset_id='model')
 
     if model_table:
@@ -91,7 +89,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
                 'save_to': None},
            N=len(shorts), w=29, h=32, h0=hh0 + 18, share_w=True, x0=True)
 
-    ds = test_boutGens(**{'mID': mID, 'refDataset': refDataset})
+    ds = util.test_boutGens(**{'mID': mID, 'refDataset': refDataset})
     P.plot(func='epochs', kws={'datasets': ds, 'save_to': None},
            N=2, w=29, h0=hh0 + 56, share_h=True, dw=1, x0=True)
 

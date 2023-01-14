@@ -3,7 +3,7 @@ import numpy as np
 
 
 # from lib.plot.base import BasePlot, AutoBasePlot
-from lib import reg, aux, plot
+from lib import reg, aux, plot, util
 
 
 
@@ -16,12 +16,9 @@ def modelConfTable(mID, **kwargs):
 @reg.funcs.graph('mtable')
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
-    from lib.util.data_aux import init2mdict
-    from lib.aux.np import mdict2df
-    mdict = init2mdict(reg.par.PI[k])
-    df = mdict2df(mdict, columns=columns)
+    mdict = util.init2mdict(reg.par.PI[k])
+    df = aux.mdict2df(mdict, columns=columns)
 
-    # row_colors = [None] + [None for ii in df.index.values]
     ax, fig, mpl = mpl_table(df, header0=columns[0],
                              # colWidths=[0.35, 0.1, 0.25, 0.15],
                              cellLoc='center', rowLoc='center',
@@ -194,7 +191,6 @@ def error_table(data, k='', title=None, **kwargs):
 
 
 def store_model_graphs(mIDs=None):
-    from lib.util.combining import combine_pdfs
     from lib.plot.grid import model_summary
     f1 = f'{reg.ROOT_DIR}/media/model_tables'
     # f1 = reg.Path['model_tables']
@@ -212,8 +208,8 @@ def store_model_graphs(mIDs=None):
         except:
             print('SUMMARY FAIL', mID)
 
-    combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
-    combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
+    util.combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
+    util.combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
 
 
 if __name__ == '__main__':

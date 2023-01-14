@@ -5,9 +5,8 @@ import pandas as pd
 import param
 
 from lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
-from lib import reg, aux
+from lib import reg, aux, util
 
-from lib.util import data_aux
 
 bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}
 
@@ -576,15 +575,15 @@ def build_aux_module_dict(d0):
             continue
 
         for arg, vs in d0[mkey].args.items():
-            pre_p = data_aux.preparePar(p=arg, **vs)
-            p = data_aux.v_descriptor(**pre_p)
+            pre_p = util.preparePar(p=arg, **vs)
+            p = util.v_descriptor(**pre_p)
             pre_d00[mkey].args[arg] = pre_p
             d00[mkey].args[arg] = p
     for mkey in ['energetics', 'sensorimotor']:
         for m, mdic in d0[mkey].mode.items():
             for arg, vs in mdic.args.items():
-                pre_p = data_aux.preparePar(p=arg, **vs)
-                p = data_aux.v_descriptor(**pre_p)
+                pre_p = util.preparePar(p=arg, **vs)
+                p = util.v_descriptor(**pre_p)
                 pre_d00[mkey].mode[m].args[arg] = pre_p
                 d00[mkey].mode[m].args[arg] = p
     return pre_d00, d00
@@ -597,8 +596,8 @@ def build_brain_module_dict(d0):
     for mkey in d0.keys():
         for m, mdic in d0[mkey].mode.items():
             for arg, vs in mdic.args.items():
-                pre_p = data_aux.preparePar(p=arg, **vs)
-                p = data_aux.v_descriptor(**pre_p)
+                pre_p = util.preparePar(p=arg, **vs)
+                p = util.v_descriptor(**pre_p)
                 pre_d00[mkey].mode[m].args[arg] = pre_p
                 d00[mkey].mode[m].args[arg] = p
     return pre_d00, d00

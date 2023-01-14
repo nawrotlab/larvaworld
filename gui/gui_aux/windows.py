@@ -5,7 +5,6 @@ import PySimpleGUI as sg
 
 
 from gui import gui_aux
-# from gui.aux import buttons as gui_but, functions as aux
 from lib import reg, aux
 
 

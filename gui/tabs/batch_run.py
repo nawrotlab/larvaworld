@@ -65,8 +65,8 @@ class BatchTab(gui_aux.GuiTab):
         s3 = gui_aux.CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
                                       dict_name='space_search_par', state=True, col_widths=[12,8,4], num_rows=5)
         g1 = gui_aux.GraphList(self.name, tab=self, canvas_size=gui_aux.col_size(0.5, 0.8))
-        dl1 = gui_aux.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(gui_aux.default_list_width, 5))
-        dl2 = gui_aux.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(gui_aux.default_list_width, 5))
+        dl1 = gui_aux.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(gui_aux.w_list, 5))
+        dl2 = gui_aux.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(gui_aux.w_list, 5))
 
         l = gui_aux.gui_cols(cols=[[sl2, sl1, dl2, dl1, g1], [s0, s1, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20, 10))
         c = {}

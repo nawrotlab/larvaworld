@@ -2,7 +2,7 @@ import numpy as np
 from shapely import affinity
 from shapely.geometry import Point, Polygon
 
-from lib.model.DEB.substrate import Substrate
+from lib.model.deb.substrate import Substrate
 from lib.model.agents._agent import LarvaworldAgent
 from lib import aux
 

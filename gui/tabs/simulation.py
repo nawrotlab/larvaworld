@@ -43,9 +43,9 @@ class SimTab(gui_aux.GuiTab):
     def build_RUN(self):
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
-        g1 = gui_aux.GraphList(self.name, tab=self, canvas_size=self.canvas_size, list_size = (gui_aux.default_list_width, 15))
-        dl1 = gui_aux.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations', size=(gui_aux.default_list_width, 6))
-        dl2 = gui_aux.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations', size=(gui_aux.default_list_width, 6))
+        g1 = gui_aux.GraphList(self.name, tab=self, canvas_size=self.canvas_size, list_size = (gui_aux.w_list, 15))
+        dl1 = gui_aux.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active simulations', size=(gui_aux.w_list, 6))
+        dl2 = gui_aux.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Completed simulations', size=(gui_aux.w_list, 6))
         l = gui_aux.gui_cols(cols=[[g1.canvas], [dl1, dl2, g1]], x_fracs=[0.53, 0.25], as_pane=True, pad=(10, 10))
         return l, {}, {g1.name: g1}, d
 

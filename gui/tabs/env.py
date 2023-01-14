@@ -3,10 +3,8 @@ from gui import gui_aux
 class EnvTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.canvas_size=(800,800)
         self.S, self.L, self.B = 'Source', 'Larva', 'Border'
         self.Su, self.Sg = f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
-        # self.Lu, self.Lg=f'{self.L.lower()}_units', f'{self.L.lower()}_groups'
         self.Bg = f'{self.B.lower()}_list'
 
     def update(self, w, c, conf, id=None):

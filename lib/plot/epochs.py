@@ -5,8 +5,7 @@ import pandas as pd
 
 from lib.aux import naming as nam
 
-# from lib.plot.base import AutoPlot
-from lib import reg, aux, plot
+from lib import reg, aux, plot,util
 
 
 
@@ -18,9 +17,8 @@ def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits=
     lws = [2] * num_distros
 
     if fit_dic is None:
-        from lib.util.fitting import fit_bout_distros
         xmin, xmax = np.min(x0), np.max(x0)
-        fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
+        fit_dic = util.fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
     idx_Kmax = fit_dic['idx_Kmax']
     xrange, du2, c2, y = fit_dic['values']
     lws[idx_Kmax] = 4
@@ -109,7 +107,6 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
 def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False, test_detection=False, **kwargs):
-    from lib.util.fitting import compute_density, fit_bout_distros
     warnings.filterwarnings('ignore')
     nn = f'stridesNpauses_{mode}_{range}_{plot_fits}'
     name = nn if not only_fit_one else f'{nn}_0'
@@ -205,15 +202,14 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
             lws = [2] * num_distros
 
             if not refit_distros and ref is not None:
-                from lib.util.fitting import BoutGenerator
-                u2, du2, c2, c2cum = compute_density(x0, xmin, xmax)
-                b = BoutGenerator(**ref[bout]['best'])
+                u2, du2, c2, c2cum = util.compute_density(x0, xmin, xmax)
+                b = util.BoutGenerator(**ref[bout]['best'])
                 pdfs = [b.get(x=du2, mode='pdf')] * num_distros
                 cdfs = [1 - b.get(x=u2, mode='cdf')] * num_distros
                 idx_Kmax = 0
 
             else:
-                fit_dic = fit_bout_distros(x0, xmin, xmax, discr, dataset_id=label, bout=bout,
+                fit_dic = util.fit_bout_distros(x0, xmin, xmax, discr, dataset_id=label, bout=bout,
                                            print_fits=print_fits, combine=False)
                 idx_Kmax = fit_dic['idx_Kmax']
                 cdfs = fit_dic['cdfs']
@@ -254,9 +250,7 @@ def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
     for ii in [0, 1]:
         if plot_fits in ['all']:
             P.data_leg(ii,labels=distro_ls, colors=distro_cs, loc='lower left', fontsize=15)
-            # dataset_legend(distro_ls, distro_cs, ax=P.axs[ii], loc='lower left', fontsize=15)
         P.data_leg(ii,loc='upper right', fontsize=15)
-        # dataset_legend(P.labels, P.colors, ax=P.axs[ii], loc='upper right', fontsize=15)
     P.conf_ax(0, xlab=chain_xlabel, ylab=ylabel, xlim=[chn_t0, chn_t1], title=r'$\bf{stridechains}$')
     P.conf_ax(1, xlab=pause_xlabel, xlim=[pau_t0, pau_t1], ylim=[10 ** -3.5, 10 ** 0], title=r'$\bf{pauses}$')
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)

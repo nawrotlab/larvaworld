@@ -355,7 +355,7 @@ def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitt
     if samples is None:
         raise ('No sample configurations provided')
     from lib.model.modules.intermitter import get_EEB_poly1d
-    from lib.model.DEB.deb import DEB
+    from lib.model.deb.deb import DEB
 
     filename = f'EEB_vs_food_quality.{plot.suf}'
     qs = np.arange(0.01, 1, 0.01)

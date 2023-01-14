@@ -7,10 +7,9 @@ import os
 import numpy as np
 
 from lib import reg, aux
-from lib.model.DEB.deb_aux import beta0, simplex, get_lb, get_E0, get_E_Rm
 from lib.aux import naming as nam
-from lib.model.DEB.gut import Gut
-from lib.model.DEB.substrate import Substrate, substrate_dict
+
+from lib.model import deb
 
 '''
 Standard culture medium
@@ -91,7 +90,7 @@ class DEB:
             substrate = reg.get_null('substrate')
         # print(substrate)
         if isinstance(substrate, dict):
-            self.substrate = Substrate(type=substrate['type'], quality=substrate['quality'])
+            self.substrate = deb.Substrate(type=substrate['type'], quality=substrate['quality'])
         else:
             self.substrate = substrate
         self.base_f = self.substrate.get_f(K=self.K)
@@ -104,7 +103,7 @@ class DEB:
             gut_params = reg.get_null('gut')
             # gut_params=null_dict('gut_params')
 
-        self.gut = Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None
+        self.gut = deb.Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None
         self.set_steps_per_day(steps_per_day)
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
@@ -171,9 +170,9 @@ class DEB:
         self.Lm = v / (g * k_M)
         self.T_factor = np.exp(self.T_A / self.T_ref - self.T_A / self.T);  # Arrhenius factor
         # v**-1*L=e*E_G/(g*pM)
-        lb = self.lb = get_lb(eb=self.eb, **self.species_dict)
-        self.E0 = get_E0(eb=self.eb,lb=lb, **self.species_dict)
-        self.E_Rm = get_E_Rm(lb=lb, **self.species_dict)
+        lb = self.lb = deb.get_lb(eb=self.eb, **self.species_dict)
+        self.E0 = deb.get_E0(eb=self.eb,lb=lb, **self.species_dict)
+        self.E_Rm = deb.get_E_Rm(lb=lb, **self.species_dict)
 
         Lb = self.Lb = lb * self.Lm
         self.Lwb = Lb / self.del_M
@@ -215,7 +214,7 @@ class DEB:
     def get_tau_b(self, eb=1.0):
         from scipy.integrate import quad
         def get_tb(x, ab, xb):
-            return x ** (-2 / 3) / (1 - x) / (ab - beta0(x, xb))
+            return x ** (-2 / 3) / (1 - x) / (ab - deb.beta0(x, xb))
 
         g = self.g
         xb = g / (eb + g)
@@ -234,7 +233,7 @@ class DEB:
             ert = np.exp(- tau_j * self.rho_j)
             return np.abs(self.v_Rj - c1 * (1 - ert) + c2 * tau_j * ert)
 
-        self.tau_j = simplex(get_tj, 1)
+        self.tau_j = deb.simplex(get_tj, 1)
         self.lj = lb * np.exp(self.tau_j * self.rho_j / 3)
         self.t_j = self.tau_j / self.k_M / self.T_factor
         self.Lj = self.lj * self.Lm
@@ -486,7 +485,7 @@ class DEB:
         for idx, ep in epochs.items():
             #print(idx,ep)
             q = ep['substrate']['quality']
-            f = Substrate(**ep['substrate']).get_f(K=self.K)
+            f = deb.Substrate(**ep['substrate']).get_f(K=self.K)
             c = {'assimilation_mode': 'sim', 'f': f}
             if ep['stop'] is None:
                 while self.stage == 'larva':
@@ -730,20 +729,20 @@ def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fal
 
 
 def test_substrates():
-    for s in substrate_dict.keys():
+    for s in deb.substrate_dict.keys():
         try:
             q = 1
-            deb = DEB(substrate={'quality': q, 'type': s}, assimilation_mode='sim', steps_per_day=24 * 60)
+            deb0 = DEB(substrate={'quality': q, 'type': s}, assimilation_mode='sim', steps_per_day=24 * 60)
             print()
-            print('half-saturation coefficient : ', np.round(deb.K, 5), ' C-mole/cm**3')
+            print('half-saturation coefficient : ', np.round(deb0.K, 5), ' C-mole/cm**3')
             print('substrate type : ', s)
-            print('w_X : ', int(deb.substrate.get_w_X()), 'g/C-mole')
-            print('d_X : ', np.round(deb.substrate.get_d_X(quality=1), 5), 'g/cm**3')
+            print('w_X : ', int(deb0.substrate.get_w_X()), 'g/C-mole')
+            print('d_X : ', np.round(deb0.substrate.get_d_X(quality=1), 5), 'g/cm**3')
             # print([[q, deb.substrate.get_X(quality=q)] for q in np.arange(0,1.01,0.3)])
             for q in [0.15, 0.25, 0.5, 0.75, 1.00]:
                 print(f'    quality : {int(q * 100)}%')
-                print(f'          X : {np.round(deb.substrate.get_X(quality=q), 5)} C-mole/cm**3')
-                print(f'          f : {np.round(deb.substrate.get_f(K=deb.K, quality=q), 2)}')
+                print(f'          X : {np.round(deb0.substrate.get_X(quality=q), 5)} C-mole/cm**3')
+                print(f'          f : {np.round(deb0.substrate.get_f(K=deb0.K, quality=q), 2)}')
         except:
             pass
 
