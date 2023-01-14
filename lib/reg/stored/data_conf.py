@@ -3,7 +3,6 @@ import os
 
 from lib.aux import naming as nam
 from lib import reg, aux,process
-from lib.process.larva_dataset import LarvaDataset, update_config
 
 @reg.funcs.stored_conf("Tracker")
 def Tracker_dict():

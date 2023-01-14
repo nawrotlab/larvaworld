@@ -134,7 +134,7 @@ class _LarvaDataset:
 
 
 
-    def retrieveRefID(self, add_reference=False, refID=None):
+    def retrieveRefID(self, refID=None):
         if refID is None:
             if self.config.refID is not None:
                 refID = self.config.refID
@@ -149,7 +149,15 @@ class _LarvaDataset:
 
 
     def save_config(self, add_reference=False, refID=None):
-        refID=self.retrieveRefID(add_reference=add_reference, refID=refID)
+        if refID is None:
+            if self.config.refID is not None:
+                refID = self.config.refID
+            else:
+            # elif add_reference:
+                refID = f'{self.group_id}.{self.id}'
+                self.config.refID = refID
+
+        # refID=self.retrieveRefID(refID=refID)
 
         self.config=update_config(self, self.config)
         aux.save_dict(self.config,reg.datapath('conf', self.config.dir))
@@ -158,7 +166,7 @@ class _LarvaDataset:
 
 
         if refID is not None:
-            reg.saveRef(conf=self.config, id=refID)
+            reg.saveConf(conftype='Ref', id=refID, conf=self.config)
 
 
 
@@ -490,8 +498,8 @@ def update_metric_definition(md=None, mdconf=None):
     return mdconf
 
 
-def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_definition=None, env_params={},
-                   larva_groups={}, source_xy={}, **kwargs):
+def generate_dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_definition=None, env_params={},
+                            larva_groups={}, source_xy={}, **kwargs):
 
     group_ids = list(larva_groups.keys())
     samples = aux.unique_list([larva_groups[k]['sample'] for k in group_ids])
@@ -511,7 +519,6 @@ def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_
                          'group_ids': group_ids,
                          'refID': None,
                          'dir': dir,
-                         # 'parent_plot_dir': f'{dir}/plots',
                          'fr': fr,
                          'dt': 1 / fr,
                          'Npoints': Npoints,
@@ -528,30 +535,22 @@ def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_
                          })
 
 
-def retrieve_config(dir=None,verbose=1, **kwargs):
-    c = dataset_config(dir=dir, **kwargs)
-    if dir is not None :
-        os.makedirs(dir, exist_ok=True)
-        os.makedirs(reg.datapath('data', dir), exist_ok=True)
-        f=reg.datapath('conf',dir)
-        if os.path.isfile(f):
-            try:
-                with open(f) as tfp:
-                    c = json.load(tfp)
-                c = aux.AttrDict(c)
-            # try:
-            #     c = aux.load_dict(f)
-                reg.vprint(f'Loaded existing conf {c.id}',verbose)
-                return c
-            except:
-                # try:
-                #     c = aux.load_dict(f)
-                #     reg.vprint(f'Loaded existing conf {c.id} with pickle True', verbose)
-                #     return aux.AttrDict(c)
-                # except:
-                pass
-    reg.vprint(f'Generated new conf {c.id}', verbose)
-    return aux.AttrDict(c)
+def retrieve_config(dir=None,**kwargs):
+    try:
+        with open(reg.datapath('conf',dir)) as tfp:
+            c = json.load(tfp)
+        c = aux.AttrDict(c)
+        reg.vprint(f'Loaded existing conf {c.id}', 1)
+        return c
+
+
+    except:
+        if dir is not None :
+            os.makedirs(dir, exist_ok=True)
+            os.makedirs(f'{dir}/data', exist_ok=True)
+        c = generate_dataset_config(dir=dir, **kwargs)
+        reg.vprint(f'Generated new conf {c.id}', 1)
+        return c
 
 
 def update_config(obj, c) :

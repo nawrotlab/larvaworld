@@ -380,7 +380,8 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enric
     if dIDs is None:
         dIDs = mIDs
     if save_to is None:
-        save_to = reg.datapath('evaluation', reg.retrieveRef(refID).dir)
+        save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
+        # save_to = reg.datapath('evaluation', reg.retrieveRef(refID).dir)
     # from lib.sim.eval.evaluation import EvalRun
     evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
                     save_to=save_to,
