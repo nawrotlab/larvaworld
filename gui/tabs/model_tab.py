@@ -2,13 +2,12 @@ import PySimpleGUI as sg
 import copy
 import os
 
+
 from lib import reg
-from gui.tabs.draw_body_tab import DrawBodyTab
-from gui.tabs.tab import GuiTab
-from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
+from gui import gui_aux
+from gui.tabs import DrawBodyTab
 
-
-class ModelTab(GuiTab):
+class ModelTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.fields = ['physics', 'body']
@@ -101,8 +100,8 @@ class ModelTab(GuiTab):
 
         ss = (500, 650)
         c = {}
-        s1 = gui_el.CollapsibleTable('odor_gains', index='ID', heading_dict={'mean': 'mean', 'std': 'std'}, state=True,
-                              col_widths=[13, 7, 6])
+        s1 = gui_aux.CollapsibleTable('odor_gains', index='ID', heading_dict={'mean': 'mean', 'std': 'std'}, state=True,
+                                      col_widths=[13, 7, 6])
         c.update(s1.get_subdicts())
         tt = []
         pp = {}
@@ -110,7 +109,7 @@ class ModelTab(GuiTab):
             ppp = []
             for v in vs:
                 tS=18 if v in ['gut'] else 16
-                cc = gui_el.PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=gui_fun.t_kws(tS))
+                cc = gui_aux.PadDict(v, toggle=True if v not in ['body', 'physics'] else None, background_color=col_dict[v], text_kws=gui_aux.t_kws(tS))
                 c.update(cc.get_subdicts())
                 if v=='olfactor' :
                     ll = cc.get_layout(size=(ss[0], int(ss[1]/2)))
@@ -121,7 +120,7 @@ class ModelTab(GuiTab):
             pp[k] = [[sg.Pane(ppp, orientation='horizontal', show_handle=False)]]
             tt.append(sg.Tab(k, pp[k], key=f'{k} MODULES'))
 
-        modules_tab = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter', **gui_fun.tab_kws)
+        modules_tab = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter', **gui_aux.tab_kws)
         l=sg.Col([[modules_tab]])
         return l, c
 
@@ -129,19 +128,19 @@ class ModelTab(GuiTab):
         fdir = f'{reg.ROOT_DIR}/gui/media/model_figures'
         # fdir = reg.Path["model"]
         fig_dict = {f: f'{fdir}/{f}' for f in sorted(os.listdir(fdir))}
-        g2 = gui_el.GraphList(self.name, tab=self, list_header='Model', fig_dict=fig_dict, subsample=3,
-                       canvas_size=self.canvas_size)
-        col1 = gui_fun.gui_col([g2], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
-        col2 = sg.Col([g2.canvas.get_layout(as_pane=True, pad=(0, 10))[0]], **gui_fun.col_kws)
+        g2 = gui_aux.GraphList(self.name, tab=self, list_header='Model', fig_dict=fig_dict, subsample=3,
+                               canvas_size=self.canvas_size)
+        col1 = gui_aux.gui_col([g2], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20))
+        col2 = sg.Col([g2.canvas.get_layout(as_pane=True, pad=(0, 10))[0]], **gui_aux.col_kws)
         l2 = [[col1, col2]]
         return l2, {g2.name: g2}
 
     def build(self):
-        sl0 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'tree', 'conf_tree'], root_key='larva_conf')
-        sl1 = gui_el.SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
-                            width=15, text_kws=gui_fun.t_kws(10),sublists={'model families': sl0})
-        b_nengo = gui_but.named_bool_button('nengo', False)
-        l00 = gui_fun.gui_col([sl1, sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20), add_to_bottom=[b_nengo])
+        sl0 = gui_aux.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'tree', 'conf_tree'], root_key='Model')
+        sl1 = gui_aux.SelectionList(tab=self, conftype='ModelGroup', disp='Model family :', buttons=[], single_line=True,
+                                    width=15, text_kws=gui_aux.t_kws(10), sublists={'model families': sl0})
+        b_nengo = gui_aux.named_bool_button('nengo', False)
+        l00 = gui_aux.gui_col([sl1, sl0], x_frac=0.2, y_frac=0.6, as_pane=True, pad=(20, 20), add_to_bottom=[b_nengo])
         l01, c1 = self.build_module_tab()
         l1=[[l00, l01]]
         l2, g2 = self.build_architecture_tab()
@@ -154,7 +153,7 @@ class ModelTab(GuiTab):
         tabs['architecture'] = l2
         tabs['draw'] = l3
         l_tabs=[sg.Tab(k, v, key=f'{k}_TAB') for k,v in tabs.items()]
-        l = [[sg.TabGroup([l_tabs], key='ACTIVE_MODEL_TAB', tab_location='topleft', **gui_fun.tab_kws)]]
+        l = [[sg.TabGroup([l_tabs], key='ACTIVE_MODEL_TAB', tab_location='topleft', **gui_aux.tab_kws)]]
         return l, {**c1, **c3}, {**g2, **g3}, {**{}, **d3}
 
     def eval(self, e, v, w, c, d, g):
@@ -163,7 +162,7 @@ class ModelTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from gui.tabs.gui import LarvaworldGui
+    from gui.tabs.larvaworld_gui import LarvaworldGui
 
     larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
     larvaworld_gui.run()

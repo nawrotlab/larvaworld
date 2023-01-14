@@ -8,9 +8,8 @@ def adjust_sim(exp, conf_type, sim):
     if exp is not None and conf_type is not None:
 
         if sim.duration is None:
-            ct = reg.conf0.dict[conf_type]
-            if exp in ct.ConfIDs:
-                sim.duration =ct.loadConf(exp).sim_params.duration
+            if exp in reg.storedConf(conf_type):
+                sim.duration =reg.loadConf(conf_type, exp).sim_params.duration
             else:
                 sim.duration = 3.0
 

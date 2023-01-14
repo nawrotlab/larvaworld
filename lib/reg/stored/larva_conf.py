@@ -163,7 +163,7 @@ def build_RvsS(b):
             }
         }
 
-        return reg.get_null('larva_conf', brain=bb, body=reg.get_null('body', initial_length=l0, Nsegs=Nsegs),
+        return reg.get_null('Model', brain=bb, body=reg.get_null('body', initial_length=l0, Nsegs=Nsegs),
                              energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
     RvsS = {
@@ -189,7 +189,7 @@ def mod(brain=None, bod={}, energetics=None, phys={}, Box2D={}):
         Box2D_params = null_Box2D_params
     else:
         Box2D_params = reg.get_null('Box2D_params', **Box2D)
-    return reg.get_null('larva_conf', brain=brain,
+    return reg.get_null('Model', brain=brain,
                          energetics=energetics,
                          body=reg.get_null('body', **bod),
                          physics=reg.get_null('physics', **phys),

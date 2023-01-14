@@ -55,7 +55,7 @@ def Tracker_dict():
 
     }}
 
-    return aux.AttrDict({k:reg.par.null('tracker', **kws) for k,kws in dkws.items()})
+    return aux.AttrDict({k:reg.par.null('Tracker', **kws) for k,kws in dkws.items()})
 
 
 @reg.funcs.stored_conf("Ref")
@@ -68,6 +68,7 @@ def Ref_dict(DATA=None):
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     dds = aux.flatten_list(dds)
     dds.append(f'{DATA}/SchleyerGroup/processed/exploration/dish')
+    dds.append(f'{DATA}/SchleyerGroup/processed/exploration/40controls')
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/150controls')
     entries = {}
     for dr in dds:
@@ -123,7 +124,7 @@ def Group_dict():
     tracker_dic = Tracker_dict()
     enr_dic = Enr_dict()
     d = aux.AttrDict({f'{k} lab': {'path': f'{reg.DATA_DIR}/{k}Group',
-                             'tracker': tr,
+                             'Tracker': tr,
                              'enrichment': enr_dic[k]} for k, tr in tracker_dic.items()})
 
     return d

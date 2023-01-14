@@ -41,7 +41,7 @@ def grouped_exp_dic():
 
     def exp(env_name, l={}, exp_name=None, en=False, sim={}, c=[], as_entry=False, **kwargs):
 
-        ct = reg.conf0.dict.Exp
+        ct = reg.conf.Exp
         kw = {'kwdic': {'sim_params': sim},
             'larva_groups': l,
             'env_params': env_name,
@@ -123,7 +123,7 @@ def grouped_exp_dic():
                                                            ids=['forager', 'Orco', 'navigator', 'explorer'], N=N)
 
     def GTRvsS(**kwargs):
-        return reg.group.dict.LarvaGroup.RvsS_groups(**kwargs)
+        return reg.GTRvsS(**kwargs)
 
     d={
         'exploration': {

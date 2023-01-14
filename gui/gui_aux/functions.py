@@ -1,5 +1,3 @@
-
-
 import PySimpleGUI as sg
 
 SYMBOL_UP = '▲'
@@ -129,9 +127,6 @@ def retrieve_value(v, t):
                 vv = tuple(vv)
     elif type(t) == list:
         vv = retrieve_value(v, type(t[0]))
-        # if vv not in t:
-        #     print(vv)
-        #     raise ValueError(f'Retrieved value {vv} not in list {t}')
     else:
         vv = v
     return vv

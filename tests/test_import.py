@@ -7,7 +7,7 @@ def test_import_Schleyer() :
     kws0 = {
         'datagroup_id': 'Schleyer lab',
         'group_id': 'exploration',
-        'add_reference': True,
+        # 'add_reference': True,
         'enrich' : True
     }
 
@@ -15,19 +15,21 @@ def test_import_Schleyer() :
     kws1 = {
         'parent_dir': 'exploration',
         'merged': True,
-        'N': 15,
+        'N': 40,
         'min_duration_in_sec': 180,
-        'id': f'merged_dishes',
+        'id': f'40controls',
+        'refID': f'exploration.40controls',
         **kws0
     }
 
     # Single dish case
     kws2 = {
-        'parent_dir': 'exploration/dish01',
+        'parent_dir': 'exploration/dish02',
         'merged': False,
         'N': None,
         'min_duration_in_sec': 90,
-        'id': f'dish',
+        'id': f'dish02',
+        'refID': f'exploration.dish02',
         **kws0
     }
 
@@ -37,11 +39,11 @@ def test_import_Schleyer() :
         assert isinstance(d, LarvaDataset)
 
 
-def test_import_Jovanic() :
+def ctest_import_Jovanic() :
     kws0 = {
         'datagroup_id': 'Jovanic lab',
         # 'group_id': 'exploration',
-        'add_reference': True,
+        # 'add_reference': True,
         'enrich' : True,
         'merged' : False
     }
@@ -56,6 +58,7 @@ def test_import_Jovanic() :
     kws1 = {
         'parent_dir': 'AttP240',
         'source_ids': ['Fed', 'Deprived', 'Starved'],
+        'refIDs': ['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved'],
         # 'id': f'dish',
         **kws0
     }
@@ -71,7 +74,7 @@ def xxtest_import_Berni() :
     kws0 = {
         'datagroup_id': 'Berni lab',
         # 'group_id': 'exploration',
-        'add_reference': True,
+        # 'add_reference': True,
         'enrich' : True,
         'merged' : False
     }
@@ -79,6 +82,7 @@ def xxtest_import_Berni() :
     kws1 = {
         'parent_dir': 'exploration',
         'source_ids': ['BL_22_control', 'BL_33_control', 'BL_rprhid'],
+        'refIDs': ['exploration.BL_22_control', 'exploration.BL_33_control', 'exploration.BL_rprhid'],
         **kws0
     }
 

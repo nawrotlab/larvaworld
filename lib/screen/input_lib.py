@@ -29,7 +29,7 @@ def evaluate_input(m, screen):
                                         p1=tuple(m.mousebuttondown_pos))
 
                 elif e.button == 3:
-                    from gui.aux.windows import set_agent_kwargs, object_menu
+                    from gui.gui_aux.windows import set_agent_kwargs, object_menu
                     loc = tuple(np.array(screen.w_loc) + np.array(pygame.mouse.get_pos()))
                     if len(m.selected_agents) > 0:
                         for sel in m.selected_agents:
@@ -87,7 +87,7 @@ def eval_keypress(k, screen, model):
         except :
             pass
     elif k == 'delete item':
-        from gui.aux.windows import delete_objects_window
+        from gui.gui_aux.windows import delete_objects_window
         if delete_objects_window(model.selected_agents):
             for f in model.selected_agents:
                 model.selected_agents.remove(f)
@@ -96,13 +96,13 @@ def eval_keypress(k, screen, model):
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
             if isinstance(sel, Larva):
-                from gui.aux.elements import DynamicGraph
+                from gui.gui_aux.elements import DynamicGraph
                 model.dynamic_graphs.append(DynamicGraph(agent=sel))
     elif k == 'odor gains':
         if len(model.selected_agents) > 0:
             sel = model.selected_agents[0]
             if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
-                from gui.aux.windows import set_kwargs
+                from gui.gui_aux.windows import set_kwargs
                 sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
     else:
         model.toggle(k)

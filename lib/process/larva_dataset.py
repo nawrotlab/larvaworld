@@ -104,7 +104,7 @@ class _LarvaDataset:
         self.storeH5(df=ss, key='step')
 
     @decorators.warn_slow
-    def save(self, step=True, end=True, food=False, add_reference=False,refID=None, **kwargs):
+    def save(self, step=True, end=True, food=False, refID=None, **kwargs):
 
         if step:
             self.save_step(s=self.step_data, **kwargs)
@@ -113,7 +113,7 @@ class _LarvaDataset:
             self.storeH5(df=self.endpoint_data, key='end')
         if food:
             self.storeH5(df=self.food_endpoint_data, key='food')
-        self.save_config(add_reference=add_reference, refID=refID)
+        self.save_config(refID=refID)
 
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
@@ -148,14 +148,14 @@ class _LarvaDataset:
 
 
 
-    def save_config(self, add_reference=False, refID=None):
+    def save_config(self, refID=None):
         if refID is None:
             if self.config.refID is not None:
                 refID = self.config.refID
-            else:
-            # elif add_reference:
-                refID = f'{self.group_id}.{self.id}'
-                self.config.refID = refID
+            # else:
+            # # elif add_reference:
+            #     refID = f'{self.group_id}.{self.id}'
+        self.config.refID = refID
 
         # refID=self.retrieveRefID(refID=refID)
 
@@ -277,7 +277,7 @@ class _LarvaDataset:
 
 
 
-    def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,add_reference=False, **kwargs):
+    def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,**kwargs):
 
 
         for k, v in pre_kws.items():
@@ -294,10 +294,10 @@ class _LarvaDataset:
                 reg.funcs.preprocessing[k](**cc)
 
         if is_last:
-            self.save(add_reference=add_reference)
+            self.save()
         # return self
 
-    def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,add_reference=False, **kwargs):
+    def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,**kwargs):
         cc = {
             'mode': mode,
             'is_last': False,
@@ -313,11 +313,11 @@ class _LarvaDataset:
             func(**cc)
 
         if is_last:
-            self.save(add_reference=add_reference)
+            self.save()
 
 
     def _enrich(self,pre_kws={}, proc_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True, bout_annotation=True,
-                add_reference=False, store=False, **kwargs):
+                store=False, **kwargs):
 
 
         with aux.suppress_stdout(show_output):
@@ -342,7 +342,7 @@ class _LarvaDataset:
                 annotate(d=self, store=store, **kwargs)
 
             if is_last:
-                self.save(add_reference=add_reference)
+                self.save()
             return self
 
 

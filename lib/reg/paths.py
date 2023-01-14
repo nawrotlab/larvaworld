@@ -39,7 +39,7 @@ Path = dNl.AttrDict({k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES})
 def next_idx(id, conftype='Exp'):
     f = SimIdx_PATH
     if not os.path.isfile(f):
-        d = dNl.AttrDict({k: dNl.AttrDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
+        d = dNl.AttrDict({k: {} for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
     else:
         d = dNl.load_dict(f)
 

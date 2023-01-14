@@ -7,6 +7,6 @@ p.add_argument('-t', '--tabs', type=str, nargs='+', help='The tabs to include in
 
 if __name__ == "__main__":
     args = p.parse_args()
-    from gui.tabs.gui import LarvaworldGui
+    from gui.tabs.larvaworld_gui import LarvaworldGui
     my_gui = LarvaworldGui(tabs=args.tabs)
     my_gui.run()

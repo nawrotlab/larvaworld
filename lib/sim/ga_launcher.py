@@ -280,7 +280,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
                                       bestConfID=mID1, fitness_target_refID=refID)
     }
 
-    conf = reg.get_null('GAconf', **kws)
+    conf = reg.get_null('Ga', **kws)
     conf.env_params = reg.expandConf(id=conf.env_params, conftype='Env')
 
     conf.ga_build_kws.fit_dict = fit_dict

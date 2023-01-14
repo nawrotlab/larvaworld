@@ -4,14 +4,14 @@ import copy
 import PySimpleGUI as sg
 import h5py
 
-import lib.util.data_aux
-from gui.tabs.tab import GuiTab
-from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
-from lib.plot.table import mpl_table
 from lib import reg
+import lib.util.data_aux
+from gui import gui_aux
+from lib.plot.table import mpl_table
+
 from lib.sim.exec_run import Exec
 
-class BatchTab(GuiTab):
+class BatchTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.batch_id_key = f'{self.name}_id'
@@ -20,7 +20,6 @@ class BatchTab(GuiTab):
         self.k_active = f'{self.name}_active'
         self.k_stored_ids = f'{self.k_stored}_IDS'
         self.k_active_ids = f'{self.k_active}_IDS'
-        # self.tree = GuiTreeData('batch_conf')
 
     @property
     def DL0(self):
@@ -42,7 +41,7 @@ class BatchTab(GuiTab):
         except:
             enrichment = reg.loadConf(id=v[self.selectionlists['Exp'].k],conftype= 'Exp')['enrichment']
         # from lib.registry.dtypes import null_dict
-        conf = reg.get_null('batch_conf',
+        conf = reg.get_null('Batch',
                          save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
                          exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},
                          batch_methods=c['batch_methods'].get_dict(v, w),
@@ -52,24 +51,24 @@ class BatchTab(GuiTab):
         return copy.deepcopy(conf)
 
     def build(self):
-        kws = {'background_color': 'pink', 'text_kws' : gui_fun.t_kws(10)}
+        kws = {'background_color': 'pink', 'text_kws' : gui_aux.t_kws(10)}
         kA, kS = self.k_active, self.k_stored
         d = {kA: {}, kS: {}}
-        sl1 = gui_el.SelectionList(tab=self, conftype='Exp', idx=1)
-        sl2 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'], sublists={'exp': sl1})
-        batch_conf = [[sg.T('Batch id:', **gui_fun.t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **gui_fun.t_kws(16))],
-                      gui_but.named_bool_button('Save data', False, toggle_name='save_hdf5'),
+        sl1 = gui_aux.SelectionList(tab=self, conftype='Exp', idx=1)
+        sl2 = gui_aux.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'], sublists={'exp': sl1})
+        batch_conf = [[sg.T('Batch id:', **gui_aux.t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **gui_aux.t_kws(16))],
+                      gui_aux.named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
-        s0 = gui_el.PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration',dict_name='batch_setup', **kws)
-        s1 = gui_el.PadDict('batch_methods',value_kws=gui_fun.t_kws(13), **kws)
-        s2 = gui_el.PadDict('optimization', toggle=True, disabled=True, **kws)
-        s3 = gui_el.CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
-                              dict_name='space_search_par', state=True, col_widths=[12,8,4], num_rows=5)
-        g1 = gui_el.GraphList(self.name, tab=self, canvas_size=gui_fun.col_size(0.5,0.8))
-        dl1 = gui_el.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(gui_fun.default_list_width, 5))
-        dl2 = gui_el.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(gui_fun.default_list_width, 5))
+        s0 = gui_aux.PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration', dict_name='batch_setup', **kws)
+        s1 = gui_aux.PadDict('batch_methods', value_kws=gui_aux.t_kws(13), **kws)
+        s2 = gui_aux.PadDict('optimization', toggle=True, disabled=True, **kws)
+        s3 = gui_aux.CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
+                                      dict_name='space_search_par', state=True, col_widths=[12,8,4], num_rows=5)
+        g1 = gui_aux.GraphList(self.name, tab=self, canvas_size=gui_aux.col_size(0.5, 0.8))
+        dl1 = gui_aux.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(gui_aux.default_list_width, 5))
+        dl2 = gui_aux.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(gui_aux.default_list_width, 5))
 
-        l = gui_fun.gui_cols(cols=[[sl2, sl1, dl2, dl1, g1],[s0, s1, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20,10))
+        l = gui_aux.gui_cols(cols=[[sl2, sl1, dl2, dl1, g1], [s0, s1, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20, 10))
         c = {}
         for s in [s0, s1, s2, s3]:
             c.update(s.get_subdicts())
@@ -136,6 +135,6 @@ def stored_trajs(batch_type):
 
 
 if __name__ == "__main__":
-    from gui.tabs.gui import LarvaworldGui
+    from gui.tabs.larvaworld_gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['batch-exec'])
     larvaworld_gui.run()

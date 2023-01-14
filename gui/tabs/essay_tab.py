@@ -1,28 +1,27 @@
 import os
 
-from gui.tabs.tab import GuiTab
-from gui.aux import functions as gui_fun, elements as gui_el
+
 from lib import reg
+from gui import gui_aux
 
-
-class EssayTab(GuiTab):
+class EssayTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.essay_exps_key = 'Essay_experiments'
         self.exp_figures_key = 'Essay_exp_figures'
 
     def build(self):
-        kws={'list_size' : (25,15), 'canvas_size' : gui_fun.col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
-        s1 = gui_el.PadDict('essay_params', disp_name='Configuration', background_color='orange', text_kws=gui_fun.t_kws(10),
-                     header_width=25)
-        sl1 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'])
-        dl1 = gui_el.DataList(self.essay_exps_key, tab=self, buttons=['exec'], select_mode=None, size=(24,10))
-        g1 = gui_el.GraphList(self.name, list_header='Simulated', **kws)
-        g2 = gui_el.ButtonGraphList(self.exp_figures_key, list_header='Observed',fig_dict={}, **kws,
-                             buttons=['browse_figs'],button_args={'browse_figs': {'target': (2, -1)}}
-                             )
-        l = gui_fun.gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.55, 0.25],
-                     as_pane=True, pad=(20,10))
+        kws={'list_size' : (25,15), 'canvas_size' : gui_aux.col_size(x_frac=0.5, y_frac=0.4), 'tab' : self}
+        s1 = gui_aux.PadDict('Essay', disp_name='Configuration', background_color='orange', text_kws=gui_aux.t_kws(10),
+                             header_width=25)
+        sl1 = gui_aux.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'])
+        dl1 = gui_aux.DataList(self.essay_exps_key, tab=self, buttons=['exec'], select_mode=None, size=(24, 10))
+        g1 = gui_aux.GraphList(self.name, list_header='Simulated', **kws)
+        g2 = gui_aux.ButtonGraphList(self.exp_figures_key, list_header='Observed', fig_dict={}, **kws,
+                                     buttons=['browse_figs'], button_args={'browse_figs': {'target': (2, -1)}}
+                                     )
+        l = gui_aux.gui_cols(cols=[[sl1, s1, dl1], [g1.canvas, g2.canvas], [g1, g2]], x_fracs=[0.2, 0.55, 0.25],
+                             as_pane=True, pad=(20,10))
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
@@ -34,8 +33,8 @@ class EssayTab(GuiTab):
     def update(self, w, c, conf, id):
         self.datalists[self.essay_exps_key].dict = conf['experiments']
         self.datalists[self.essay_exps_key].update_window(w)
-        essay = reg.get_null('essay_params', essay_ID=f'{id}_{reg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
-        c['essay_params'].update(w, essay)
+        essay = reg.get_null('Essay', essay_ID=f'{id}_{reg.next_idx(id=id, conftype="Essay")}', path=f'essays/{id}')
+        c['Essay'].update(w, essay)
         fdir = conf['exp_fig_folder']
         temp = {f.split('.')[0]: f'{fdir}/{f}' for f in os.listdir(fdir)}
         temp = dict(sorted(temp.items()))
@@ -44,7 +43,6 @@ class EssayTab(GuiTab):
     def get(self, w, v, c, as_entry=True):
         conf = {
             # 'exp_types' :
-            # 'essay_params': c['essay_params'].get_dict(v, w),
             # # 'sim_params': sim,
             # 'collections': [k for k in output_keys if c['Output'].get_dict(v, w)[k]],
             # # 'life_params': c['life'].get_dict(v, w),
@@ -64,7 +62,7 @@ class EssayTab(GuiTab):
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
         from lib.reg.stored.essay_conf import RvsS_Essay, DoublePatch_Essay, Chemotaxis_Essay
         type = self.current_ID(v)
-        pars = c['essay_params'].get_dict(v, w)
+        pars = c['Essay'].get_dict(v, w)
         kws = {
             'essay_id': essay_exp,
             # 'path': f"{pars['path']}/{pars['essay_ID']}",
@@ -92,6 +90,6 @@ class EssayTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from gui.tabs.gui import LarvaworldGui
+    from gui.tabs.larvaworld_gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['essay'])
     larvaworld_gui.run()

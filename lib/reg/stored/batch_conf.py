@@ -22,7 +22,7 @@ def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=
         ss0 = None
 
     enr=reg.get_null('enrichment',processing=reg.get_null('processing', **{pr : True for pr in proc}))
-    conf = reg.get_null('batch_conf',
+    conf = reg.get_null('Batch',
                          exp=exp,
                          exp_kws={'enrichment': enr, 'experiment': exp},
                          optimization=reg.get_null("optimization", fit_par=o, **o_kws) if o is not None else None,

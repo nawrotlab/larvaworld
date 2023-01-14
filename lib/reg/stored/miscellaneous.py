@@ -23,7 +23,7 @@ def Trial_dict() :
 
 
 def life_conf(durs=[], qs=[], age=0.0):
-    return reg.get_null('life_history', epochs=trial_conf(durs, qs), age=age)
+    return reg.get_null('Life', epochs=trial_conf(durs, qs), age=age)
 
 @reg.funcs.stored_conf("Life")
 def Life_dict() :
@@ -34,7 +34,7 @@ def Life_dict() :
     return d
 
 def body_conf(ps, symmetry='bilateral', **kwargs):
-    return reg.get_null('body_shape', points=ps, symmetry=symmetry, **kwargs)
+    return reg.get_null('Body', points=ps, symmetry=symmetry, **kwargs)
 
 @reg.funcs.stored_conf("Body")
 def Body_dict() :

@@ -10,14 +10,11 @@ import PySimpleGUI as sg
 
 import matplotlib.pyplot as plt
 
-import lib.process.building
 
 from lib import reg, aux
 
 
-
-from gui.aux import windows as gui_win, buttons as gui_but, functions as gui_fun
-
+from gui import gui_aux
 
 
 col_idx_dict = {
@@ -40,10 +37,10 @@ class SectionDict:
         d = type_dict
         items = []
         for k, v in self.init_dict.items():
-            k_disp = gui_fun.get_disp_name(k)
+            k_disp = gui_aux.get_disp_name(k)
             k0 = f'{self.name}_{k}'
             if type(v) == bool:
-                ii = gui_but.named_bool_button(k_disp, v, k0)
+                ii = gui_aux.named_bool_button(k_disp, v, k0)
             else:
                 temp = sg.In(v, key=k0, **value_kws)
                 if d is not None:
@@ -97,7 +94,7 @@ class SectionDict:
             elif t == dict or type(t) == dict:
                 d[k] = self.subdicts[k0].get_dict(v, w)
             else:
-                d[k] = gui_fun.retrieve_value(v[k0], t)
+                d[k] = gui_aux.retrieve_value(v[k0], t)
         return d
 
     def get_subdicts(self):
@@ -158,8 +155,8 @@ class MultiSpin(sg.Pane):
         self.spins = self.build_spins()
         self.layout = self.build_layout()
 
-        add_button = gui_but.GraphButton('Button_Add', self.add_key, tooltip='Add another item in the list.')
-        remove_button = gui_but.GraphButton('Button_Remove', self.remove_key, tooltip='Remove last item in the list.')
+        add_button = gui_aux.GraphButton('Button_Add', self.add_key, tooltip='Add another item in the list.')
+        remove_button = gui_aux.GraphButton('Button_Remove', self.remove_key, tooltip='Remove last item in the list.')
         self.buttons = sg.Col([[add_button], [remove_button]])
         pane_list = [sg.Col([self.layout])]
         super().__init__(pane_list=pane_list, key=key)
@@ -222,7 +219,7 @@ class MultiSpin(sg.Pane):
         Ng = self.group_by_N
         ss = self.spins
         if self.indexing:
-            ss = [sg.Col([[sg.T(i, **gui_fun.t_kws(1)), s]]) for i, s in enumerate(ss)]
+            ss = [sg.Col([[sg.T(i, **gui_aux.t_kws(1)), s]]) for i, s in enumerate(ss)]
 
         if Ng is not None and self.Nspins >= Ng:
             spins = aux.group_list_by_n(ss, Ng)
@@ -257,12 +254,12 @@ class ProgressBarLayout:
         self.k = f'{n}_PROGRESSBAR'
         self.k_complete = f'{n}_COMPLETE'
         self.k_incomplete = f'{n}_INCOMPLETE'
-        self.l = [sg.Text('Progress :', **gui_fun.t_kws(8)),
+        self.l = [sg.Text('Progress :', **gui_aux.t_kws(8)),
                   sg.ProgressBar(100, orientation='h', size=size, key=self.k,
                                  bar_color=('green', 'lightgrey'), border_width=3),
-                  gui_but.GraphButton('Button_Check', self.k_complete, visible=False,
+                  gui_aux.GraphButton('Button_Check', self.k_complete, visible=False,
                               tooltip=f'Whether the current {n} was completed.'),
-                  gui_but.GraphButton('Button_stop', self.k_incomplete, visible=False,
+                  gui_aux.GraphButton('Button_stop', self.k_incomplete, visible=False,
                               tooltip=f'Whether the current {n} is running.'),
                   ]
 
@@ -325,7 +322,7 @@ class SelectionList(GuiElement):
         self.root_key = root_key
         self.tree = GuiTreeData(self.root_key) if self.root_key is not None else None
 
-        bs = gui_but.button_row(self.disp, buttons, button_kws)
+        bs = gui_aux.button_row(self.disp, buttons, button_kws)
 
         self.layout = self.build(bs=bs, **kwargs)
 
@@ -334,8 +331,9 @@ class SelectionList(GuiElement):
         if self.with_dict:
             # print(self.tab.gui.tab_dict[n][2])
             self.collapsible = CollapsibleDict(name= self.tab.gui.tab_dict[n][2], default=True,
-                                               header_list_width=self.width, header_dict=reg.conf0.dict[self.conftype].loadDict(),
-                                               next_to_header=bs, header_key=self.k, disp_name=gui_fun.get_disp_name(n),
+                                               header_list_width=self.width, header_dict=aux.load_dict(reg.Path[self.conftype]),
+                                               # header_list_width=self.width, header_dict=reg.conf0.dict[self.conftype].loadDict(),
+                                               next_to_header=bs, header_key=self.k, disp_name=gui_aux.get_disp_name(n),
                                                header_list_kws={'tooltip': f'The currently loaded {n}.'}, **kwargs)
 
             l = self.collapsible.get_layout(as_col=False)
@@ -392,9 +390,8 @@ class SelectionList(GuiElement):
         elif e == f'TREE {n}' and self.tree is not None:
             self.tree.test()
         elif e == f'CONF_TREE {n}' and id != '':
-            from gui.aux.par_tree import tree_dict
             conf = self.get(w, v, c, as_entry=False)
-            entries = tree_dict(d=conf, parent_key=id, sep='.')
+            entries = gui_aux.tree_dict(d=conf, parent_key=id, sep='.')
             tree = GuiTreeData(entries=entries, headings=['value'], col_widths=[40, 20])
             tree.test()
 
@@ -419,10 +416,10 @@ class SelectionList(GuiElement):
                     w[k].update(values=values, value=id)
 
     def save(self, conf):
-        return gui_win.save_conf_window(conf, self.conftype, disp=self.disp)
+        return gui_aux.save_conf_window(conf, self.conftype, disp=self.disp)
 
     def delete(self, id, k0):
-        return gui_win.delete_conf_window(id, conftype=k0, disp=self.disp)
+        return gui_aux.delete_conf_window(id, conftype=k0, disp=self.disp)
 
     def load(self, w, c, id):
         conf = reg.loadConf(id=id, conftype=self.conftype)
@@ -500,7 +497,7 @@ class Header(HeadedElement):
 
 
 class NamedList(Header):
-    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(gui_fun.default_list_width, None),
+    def __init__(self, name, key, choices, default_value=None, drop_down=True, size=(gui_aux.default_list_width, None),
                  readonly=True,
                  enable_events=True, list_kws={}, aux_cols=None, select_mode=None, header_kws={}, **kwargs):
 
@@ -536,13 +533,13 @@ class DataList(NamedList):
     def __init__(self, name, tab, dict={}, buttons=['select_all', 'remove', 'changeID', 'browse'], button_args={},
                  raw=False, select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False, disp=None, **kwargs):
         if disp is None:
-            disp = gui_fun.get_disp_name(name)
+            disp = gui_aux.get_disp_name(name)
         self.tab = tab
         self.dict = dict
         self.raw = raw
         self.browse_key = f'BROWSE {name}'
         self.tab.datalists[name] = self
-        header_kws = {'text': disp, 'single_line': False, 'after_header': gui_but.button_row(name, buttons, button_args)}
+        header_kws = {'text': disp, 'single_line': False, 'after_header': gui_aux.button_row(name, buttons, button_args)}
         super().__init__(name=name, header_kws=header_kws, key=f'{name}_IDS', choices=list(self.dict.keys()),
                          drop_down=drop_down, select_mode=select_mode, **kwargs)
 
@@ -596,7 +593,7 @@ class DataList(NamedList):
         # print(kks)
         datagroup_id = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
-            new = lib.process.building.detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
+            new = detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
             self.add(w, new)
         elif e == f'SELECT_ALL {n}':
             ks = np.arange(len(d0)).tolist()
@@ -607,10 +604,10 @@ class DataList(NamedList):
         elif e == f'REMOVE {n}':
             self.remove(w, kks)
         elif e == f'CHANGE_ID {n}':
-            self.dict = gui_win.change_dataset_id(d0, old_ids=kks)
+            self.dict = gui_aux.change_dataset_id(d0, old_ids=kks)
             self.update_window(w)
         elif e == f'SAVE_REF {n}':
-            gui_win.save_ref_window(d0[kks[0]])
+            gui_aux.save_ref_window(d0[kks[0]])
         elif e == f'REPLAY {n}':
             if len(v0) > 0:
                 d0[kks[0]].visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
@@ -618,13 +615,13 @@ class DataList(NamedList):
         elif e == f'IMITATE {n}':
             if len(v0) > 0:
                 if d0[kks[0]].config['refID'] is None:
-                    gui_win.save_ref_window(d0[kks[0]])
+                    gui_aux.save_ref_window(d0[kks[0]])
                 from lib.sim.imitation import imitation_exp
                 exp_conf = imitation_exp(d0[kks[0]].config['refID'])
                 exp_conf['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
-            dds = gui_win.add_ref_window()
+            dds = gui_aux.add_ref_window()
             if dds is not None:
                 self.add(w, dds)
         elif e == f'IMPORT {n}':
@@ -633,7 +630,7 @@ class DataList(NamedList):
             k1 = dl1.key
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
             if len(raw_dic) > 0:
-                proc_dic = gui_win.import_window(datagroup_id=datagroup_id, raw_dic=raw_dic)
+                proc_dic = gui_aux.import_window(datagroup_id=datagroup_id, raw_dic=raw_dic)
                 d1.update(proc_dic)
                 dl1.update_window(w)
         elif e == f'ENRICH {n}':
@@ -647,9 +644,9 @@ class DataList(NamedList):
 class Collapsible(HeadedElement, GuiElement):
     def __init__(self, name, state=False, content=[], disp_name=None, toggle=None, disabled=False, next_to_header=None,
                  auto_open=False, header_dict=None, header_value=None, header_list_width=10, header_list_kws={},
-                 header_text_kws=gui_fun.t_kws(12), header_key=None, use_header=True, Ncols=1, col_idx=None, **kwargs):
+                 header_text_kws=gui_aux.t_kws(12), header_key=None, use_header=True, Ncols=1, col_idx=None, **kwargs):
         if disp_name is None:
-            disp_name = gui_fun.get_disp_name(name)
+            disp_name = gui_aux.get_disp_name(name)
         self.disp_name = disp_name
         self.state = state
         self.toggle = toggle
@@ -666,7 +663,7 @@ class Collapsible(HeadedElement, GuiElement):
             if header_key is None:
                 header_key = f'SELECT LIST {name}'
             self.header_key = header_key
-            after_header = [gui_but.BoolButton(name, toggle, disabled)] if toggle is not None else []
+            after_header = [gui_aux.BoolButton(name, toggle, disabled)] if toggle is not None else []
             if next_to_header is not None:
                 after_header += next_to_header
             header_kws = {'text': disp_name, 'text_kws': header_text_kws,
@@ -681,14 +678,14 @@ class Collapsible(HeadedElement, GuiElement):
                                      header_kws=header_kws)
             header = header_l.get_layout()
             HeadedElement.__init__(self, name=name, header=header,
-                                   content=[gui_fun.collapse(content, self.sec_key, self.state)],
+                                   content=[gui_aux.collapse(content, self.sec_key, self.state)],
                                    single_line=False)
         else:
             GuiElement.__init__(self, name=name, layout=content)
 
     def get_symbol(self):
-        return sg.T(gui_fun.SYMBOL_DOWN if self.state else gui_fun.SYMBOL_UP, k=f'OPEN {self.sec_key}',
-                    enable_events=True, text_color='black', **gui_fun.t_kws(2))
+        return sg.T(gui_aux.SYMBOL_DOWN if self.state else gui_aux.SYMBOL_UP, k=f'OPEN {self.sec_key}',
+                    enable_events=True, text_color='black', **gui_aux.t_kws(2))
 
     def update(self, w, dict, use_prefix=True):
         if dict is None:
@@ -708,7 +705,7 @@ class Collapsible(HeadedElement, GuiElement):
                     k = f'{prefix}_{k}'
                 if type(v) == bool:
                     b = w[f'TOGGLE_{k}']
-                    if isinstance(b, gui_but.BoolButton):
+                    if isinstance(b, gui_aux.BoolButton):
                         b.set_state(v)
                 elif type(v) == dict:
                     self.update_window(w, v, prefix=k if prefix is not None else None)
@@ -727,7 +724,7 @@ class Collapsible(HeadedElement, GuiElement):
     def click(self, w):
         if self.state is not None:
             self.state = not self.state
-            self.sec_symbol.update(gui_fun.SYMBOL_DOWN if self.state else gui_fun.YMBOL_UP)
+            self.sec_symbol.update(gui_aux.SYMBOL_DOWN if self.state else gui_aux.YMBOL_UP)
             # self.content.update(visible=self.state)
             w[self.sec_key].update(visible=self.state)
 
@@ -747,12 +744,12 @@ class Collapsible(HeadedElement, GuiElement):
 
     def open(self, w):
         self.state = True
-        self.sec_symbol.update(gui_fun.SYMBOL_DOWN)
+        self.sec_symbol.update(gui_aux.SYMBOL_DOWN)
         w[self.sec_key].update(visible=self.state)
 
     def close(self, w):
         self.state = False
-        self.sec_symbol.update(gui_fun.SYMBOL_UP)
+        self.sec_symbol.update(gui_aux.SYMBOL_UP)
         w[self.sec_key].update(visible=False)
 
     def get_subdicts(self):
@@ -763,10 +760,10 @@ class Collapsible(HeadedElement, GuiElement):
     def arrange(self, content, Ncols=1, col_idx=None):
         if col_idx is not None:
             content = [[content[i] for i in idx] for idx in col_idx]
-            content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
+            content = [[sg.Col(ii, **gui_aux.col_kws) for ii in content]]
         elif Ncols > 1:
             content = aux.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
-            content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
+            content = [[sg.Col(ii, **gui_aux.col_kws) for ii in content]]
         return content
 
 
@@ -809,7 +806,7 @@ class CollapsibleTable(Collapsible):
                     col_widths.append(14)
                 else:
                     col_widths.append(10)
-        after_header = gui_but.button_row(name, buttons, button_args)
+        after_header = gui_aux.button_row(name, buttons, button_args)
         content = [[Table(values=self.data, headings=[index] + self.headings,
                           def_col_width=7, key=self.key, num_rows=max([num_rows, len(self.data)]),
                           col_widths=col_widths, visible_column_map=col_visible)]]
@@ -846,7 +843,6 @@ class CollapsibleTable(Collapsible):
         data = []
         for id in d.keys():
             dF = d[id].flatten()
-            # dF = aux.flatten_dict(d[id])
             row = [id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data
@@ -855,9 +851,8 @@ class CollapsibleTable(Collapsible):
         K = self.key
         Ks = v[K]
         if e == f'ADD {self.name}':
-            from gui.aux.windows import entry_window
             id = self.data[Ks[0]][0] if len(Ks) > 0 else None
-            entry = entry_window(id=id, base_dict=self.dict)
+            entry = gui_aux.entry_window(id=id, base_dict=self.dict)
             self.dict.update(**entry)
             self.update(w)
         elif e == f'REMOVE {self.name}':
@@ -876,7 +871,7 @@ def v_layout(k0, args, value_kws0={}, **kwargs):
     if 'size' not in value_kws0.keys() and Ndig is not None:
         value_kws['size'] = (Ndig, 1)
     if t == bool:
-        temp = gui_but.BoolButton(k0, v)
+        temp = gui_aux.BoolButton(k0, v)
     elif t == str:
         if vs is None:
             temp = sg.In(v, key=k0, **value_kws)
@@ -908,7 +903,6 @@ def v_layout(k0, args, value_kws0={}, **kwargs):
 
 
 def combo_layout(name, title, dic, **kwargs):
-    # from lib.registry.dtypes import base_dtype
     d = {p: [] for p in ['mu', 'std', 'r', 'noise']}
     for k, args in dic.items():
         kws = {
@@ -920,28 +914,28 @@ def combo_layout(name, title, dic, **kwargs):
         spin_kws = {
             'initial_value': args['initial_value'],
             'dtype': aux.base_dtype(args['dtype']),
-            'value_kws': gui_fun.t_kws(5),
+            'value_kws': gui_aux.t_kws(5),
             **kws
         }
         disp = args['disp']
         if disp in ['initial', 'mean']:
-            d['mu'] = [sg.T(f'{disp}:', **gui_fun.t_kws(5)), SingleSpin(**spin_kws)]
+            d['mu'] = [sg.T(f'{disp}:', **gui_aux.t_kws(5)), SingleSpin(**spin_kws)]
         elif disp in ['noise']:
-            d['noise'] = [sg.T(f'{disp}:', **gui_fun.t_kws(5)), SingleSpin(**spin_kws)]
+            d['noise'] = [sg.T(f'{disp}:', **gui_aux.t_kws(5)), SingleSpin(**spin_kws)]
         elif disp in ['std']:
-            d['std'] = [sg.T(f'{disp}:', **gui_fun.t_kws(3)), SingleSpin(**spin_kws)]
+            d['std'] = [sg.T(f'{disp}:', **gui_aux.t_kws(3)), SingleSpin(**spin_kws)]
         elif disp in ['range']:
-            d['r'] = [sg.T(f'{disp}:', **gui_fun.t_kws(5)), MultiSpin(**spin_kws, Nspins=2)]
+            d['r'] = [sg.T(f'{disp}:', **gui_aux.t_kws(5)), MultiSpin(**spin_kws, Nspins=2)]
         elif disp in ['name']:
-            d['name'] = [sg.T(f'{title}:', **gui_fun.t_kws(6)),
+            d['name'] = [sg.T(f'{title}:', **gui_aux.t_kws(6)),
                          sg.Combo(**kws, default_value=args['initial_value'], enable_events=True, readonly=True,
-                                  **gui_fun.t_kws(10))]
+                                  **gui_aux.t_kws(10))]
         elif disp in ['fit']:
-            d['fit'] = gui_but.BoolButton(kws['key'], args['initial_value'])
+            d['fit'] = gui_aux.BoolButton(kws['key'], args['initial_value'])
     if 'name' in d.keys():
         ii = d['name']
     else:
-        ii = [sg.T(f'{title}', **gui_fun.t_kws(20), justification='center', font=('Helvetica', 10, 'bold'))]
+        ii = [sg.T(f'{title}', **gui_aux.t_kws(20), justification='center', font=('Helvetica', 10, 'bold'))]
     if 'fit' in d.keys():
         ii.append(d['fit'])
     l = [sg.Col([ii, d['mu'] + d['std'] + d['noise'], d['r']], vertical_alignment=True)]
@@ -989,7 +983,7 @@ class CollapsibleDict(Collapsible):
                 elif t == dict or type(t) == dict:
                     d[k] = self.subdicts[k0].get_dict(v, w)
                 else:
-                    d[k] = gui_fun.retrieve_value(v[k0], t)
+                    d[k] = gui_aux.retrieve_value(v[k0], t)
             if self.as_entry is None:
                 return d
             else:
@@ -999,7 +993,7 @@ class CollapsibleDict(Collapsible):
 
     def set_element_size(self, text_kws, Ncols):
         if 'size' not in text_kws.keys():
-            text_kws['size'] = gui_fun.w_kws['default_element_size']
+            text_kws['size'] = gui_aux.w_kws['default_element_size']
         text_kws['size'] = int(text_kws['size'][0] / Ncols), text_kws['size'][1]
         return text_kws
 
@@ -1014,7 +1008,7 @@ class CollapsibleDict(Collapsible):
                 ii = subdicts[k0].get_layout()
             else:
                 temp = v_layout(k0, args, value_kws)
-                ii = [sg.T(f'{gui_fun.get_disp_name(k)}:', **text_kws), temp]
+                ii = [sg.T(f'{gui_aux.get_disp_name(k)}:', **text_kws), temp]
             content.append(ii)
         return content, subdicts
 
@@ -1035,7 +1029,7 @@ class PadElement:
         self.toggle_key = f'TOGGLE_{name}'
         self.subdicts = {}
         if disp_name is None:
-            disp_name = gui_fun.get_disp_name(self.name)
+            disp_name = gui_aux.get_disp_name(self.name)
         self.disp_name = disp_name
 
         if dict_name is None:
@@ -1046,12 +1040,12 @@ class PadElement:
         header = [
             [sg.T(self.disp_name.upper(), justification='center', background_color=self.background_color,
                   border_width=3,
-                  **gui_fun.t_kws(header_width)
+                  **gui_aux.t_kws(header_width)
                   )]]
         if self.after_header is not None:
             header[0] += self.after_header
         if self.toggle is not None:
-            header[0] += [gui_but.BoolButton(self.name, self.toggle, self.disabled)]
+            header[0] += [gui_aux.BoolButton(self.name, self.toggle, self.disabled)]
         return header
 
     def get_layout(self, as_col=True, as_pane=True, **kwargs):
@@ -1104,11 +1098,11 @@ class PadDict(PadElement):
             if 'size' in self.text_kws.keys():
                 s1 = self.text_kws['size'][0]
             else:
-                s1 = gui_fun.w_kws['default_element_size'][0]
+                s1 = gui_aux.w_kws['default_element_size'][0]
             if 'size' in self.value_kws.keys():
                 s2 = self.value_kws['size'][0]
             else:
-                s2 = gui_fun.w_kws['default_button_element_size'][0]
+                s2 = gui_aux.w_kws['default_button_element_size'][0]
             s = s1 + s2
             return (s + 1) * Ncols
 
@@ -1116,12 +1110,12 @@ class PadDict(PadElement):
         # print(len(content), col_idx, self.name, self.dict_name)
         if col_idx is not None:
             content = [[content[i] for i in idx] for idx in col_idx]
-            content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
+            content = [[sg.Col(ii, **gui_aux.col_kws) for ii in content]]
         elif row_idx is not None:
             content = [[content[i] for i in idx] for idx in row_idx]
         elif Ncols > 1:
             content = aux.group_list_by_n([*content], int(np.ceil(len(content) / Ncols)))
-            content = [[sg.Col(ii, **gui_fun.col_kws) for ii in content]]
+            content = [[sg.Col(ii, **gui_aux.col_kws) for ii in content]]
         return content
 
     def get_dict(self, v, w):
@@ -1140,7 +1134,7 @@ class PadDict(PadElement):
             elif t in [dict, TypedDict] or type(t) == dict:
                 d[k] = self.subdicts[k0].get_dict(v, w)
             else:
-                d[k] = gui_fun.retrieve_value(v[k0], t)
+                d[k] = gui_aux.retrieve_value(v[k0], t)
         return d
 
     def build(self, name, **kwargs):
@@ -1176,7 +1170,7 @@ class PadDict(PadElement):
                 # if 'header_width' in subconfkws.keys():
                 #     subconfkws.pop('header_width' , None)
                 disp = args['disp']
-                ii = [sg.T(f'{gui_fun.get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
+                ii = [sg.T(f'{gui_aux.get_disp_name(disp)}:', tooltip=args['tooltip'], **text_kws),
                       v_layout(f'{name}_{k}', args, self.value_kws, **subconfkws)]
             l.append(ii)
         for title, dic in combos.items():
@@ -1212,7 +1206,7 @@ class PadDict(PadElement):
 class PadTable(PadElement):
     def __init__(self, name, index=None, heading_dict=None, dict={}, header_width=28,
                  buttons=[], button_args={}, col_widths=None, num_rows=5, **kwargs):
-        after_header = gui_but.button_row(name, buttons, button_args)
+        after_header = gui_aux.button_row(name, buttons, button_args)
         super().__init__(name=name, after_header=after_header, **kwargs)
         if index is None:
             index = self.name
@@ -1293,12 +1287,11 @@ class PadTable(PadElement):
         K = self.key
         Ks = v[K]
         if e == f'ADD {self.name}':
-            from gui.aux.windows import entry_window
             if len(Ks) > 0:
                 id = self.data[Ks[0]][0]
             else:
                 id = None
-            entry = entry_window(id=id, base_dict=self.dict, index=self.index, dict_name=self.dict_name)
+            entry = gui_aux.entry_window(id=id, base_dict=self.dict, index=self.index, dict_name=self.dict_name)
             self.dict.update(**entry)
             self.update(w)
         elif e == f'REMOVE {self.name}':
@@ -1307,9 +1300,8 @@ class PadTable(PadElement):
                 self.dict.pop(id, None)
             self.update(w)
         elif e == f'CONF_TREE {self.name}':
-            from gui.aux.par_tree import multiconf_to_tree
             ids = [ff['model'] for ff in list(self.dict.values())]
-            entries = multiconf_to_tree(ids, 'Model')
+            entries = gui_aux.multiconf_to_tree(ids, 'Model')
             tree = GuiTreeData(entries=entries, headings=[ids], col_widths=[40] + [20] * len(ids))
 
             tree.test()
@@ -1351,9 +1343,9 @@ class GraphList(NamedList):
         values = list(fig_dict.keys())
         if list_size is None:
             h = int(np.max([len(values), 10]))
-            list_size = (gui_fun.default_list_width, h)
+            list_size = (gui_aux.default_list_width, h)
         header_kws = {'text': list_header, 'after_header': next_to_header,
-                      'text_kws': gui_fun.t_kws(14), 'single_line': False}
+                      'text_kws': gui_aux.t_kws(14), 'single_line': False}
         default_value = default_values[0] if default_values is not None else None
         super().__init__(name=name, key=self.list_key, choices=values, default_value=default_value, drop_down=False,
                          size=list_size, header_kws=header_kws, auto_size_text=True, **kwargs)
@@ -1407,7 +1399,7 @@ class GraphList(NamedList):
 
 class ButtonGraphList(GraphList):
     def __init__(self, name, buttons=['refresh_figs', 'conf_fig', 'draw_fig', 'save_fig'], button_args={}, **kwargs):
-        super().__init__(name=name, next_to_header=gui_but.button_row(name, buttons, button_args), **kwargs)
+        super().__init__(name=name, next_to_header=gui_aux.button_row(name, buttons, button_args), **kwargs)
         self.fig, self.save_to, self.save_as = None, '', ''
         self.func, self.func_kws = None, {}
 
@@ -1452,8 +1444,8 @@ class ButtonGraphList(GraphList):
         kDir, kFil = 'SAVE_AS', 'SAVE_TO'
         if self.fig is not None:
             l = [
-                [sg.T('Filename', **gui_fun.t_kws(10)), sg.In(default_text=self.save_as, k=kDir, **gui_fun.t_kws(80))],
-                [sg.T('Directory', **gui_fun.t_kws(10)), sg.In(self.save_to, k=kFil, **gui_fun.t_kws(80)),
+                [sg.T('Filename', **gui_aux.t_kws(10)), sg.In(default_text=self.save_as, k=kDir, **gui_aux.t_kws(80))],
+                [sg.T('Directory', **gui_aux.t_kws(10)), sg.In(self.save_to, k=kFil, **gui_aux.t_kws(80)),
                  sg.FolderBrowse(initial_folder=reg.ROOT_DIR, key=kFil, change_submits=True)],
                 [sg.Ok(), sg.Cancel()]]
             e, v = sg.Window('Save figure', l).read(close=True)
@@ -1496,7 +1488,7 @@ class ButtonGraphList(GraphList):
             self.save_fig()
         elif e == f'CONF_FIG {n}':
             if self.func_kws != {}:
-                self.func_kws = gui_win.set_kwargs(self.func_kws, title='Graph arguments')
+                self.func_kws = gui_aux.set_kwargs(self.func_kws, title='Graph arguments')
         elif e == f'DRAW_FIG {n}':
             self.generate(w, self.tab.base_dict)
 
@@ -1556,14 +1548,14 @@ class DynamicGraph:
         Ncols = 4
         par_lists = [list(a) for a in np.array_split(self.available_pars, Ncols)]
         l0 = [[sg.T('Choose parameters')],
-              [sg.Col([*[[sg.CB(p, k=f'k_{p}', **gui_fun.t_kws(24))] for p in par_lists[i]]]) for i in range(Ncols)],
-              [sg.B('Ok', **gui_fun.t_kws(8)), sg.B('Cancel', **gui_fun.t_kws(8))]]
+              [sg.Col([*[[sg.CB(p, k=f'k_{p}', **gui_aux.t_kws(24))] for p in par_lists[i]]]) for i in range(Ncols)],
+              [sg.B('Ok', **gui_aux.t_kws(8)), sg.B('Cancel', **gui_aux.t_kws(8))]]
         l1 = [
             [sg.Canvas(size=(1280, 1200), k='-CANVAS-')],
             [sg.T('Time in seconds to display on screen')],
             [sg.Slider(range=(0.1, 60), default_value=self.init_dur, size=(40, 10), orientation='h',
                        k='-SLIDER-TIME-')],
-            [sg.B('Choose', **gui_fun.t_kws(8))]]
+            [sg.B('Choose', **gui_aux.t_kws(8))]]
         return [[sg.Col(l0, k='-COL1-'), sg.Col(l1, visible=False, k='-COL2-')]]
 
     def evaluate(self):
@@ -1642,7 +1634,7 @@ class DynamicGraph:
 
 
 class GuiTreeData(sg.TreeData):
-    def __init__(self, name='larva_conf', root_key=None, build_tree=False, entries=None, headings=None,
+    def __init__(self, name='Model', root_key=None, build_tree=False, entries=None, headings=None,
                  col_widths=[20, 10, 80], **kwargs):
         super().__init__()
         if root_key is None:
@@ -1697,8 +1689,7 @@ class GuiTreeData(sg.TreeData):
         if not self.build_tree and self.root_key in reg.storedConf('Tree'):
             df = pd.DataFrame.from_dict(reg.loadConf(id=self.root_key, conftype='Tree'))
         else:
-            from gui.aux.par_tree import pars_to_tree
-            df = pars_to_tree(self.root_key)
+            df = gui_aux.pars_to_tree(self.root_key)
             reg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
         return df
 
@@ -1742,7 +1733,67 @@ class GuiTreeData(sg.TreeData):
         w.close()
 
 
-if __name__ == "__main__":
-    t = GuiTreeData('larva_conf')
-    t.save()
-    # t.test()
+def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
+    dic = {}
+    if path in ['', None]:
+        return dic
+    if raw:
+        conf = reg.loadConf(id=datagroup_id, conftype='Group').tracker.filesystem
+        dF, df = conf.folder, conf.file
+        dFp, dFs = dF.pref, dF.suf
+        dfp, dfs, df_ = df.pref, df.suf, df.sep
+
+        fn = path.split('/')[-1]
+        if dFp is not None:
+            if fn.startswith(dFp):
+                dic[fn] = path
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, path, fn, **kwargs)
+                for id, dr in zip(ids, dirs):
+                    dic[id] = dr
+        elif dFs is not None:
+            if fn.startswith(dFs):
+                dic[fn] = path
+            else:
+                ids, dirs = detect_dataset_in_subdirs(datagroup_id, path, fn, **kwargs)
+                for id, dr in zip(ids, dirs):
+                    dic[id] = dr
+        elif dfp is not None:
+            ids, dirs = [f.split(df_)[1:][0] for f in os.listdir(path) if f.startswith(dfp)], [path]
+            for id, dr in zip(ids, dirs):
+                dic[id] = dr
+        elif dfs is not None:
+            ids = [f.split(df_)[:-1][0] for f in os.listdir(path) if f.endswith(dfs)]
+            for id in ids:
+                dic[id] = path
+        elif df_ is not None:
+            ids = aux.unique_list([f.split(df_)[0] for f in os.listdir(path) if df_ in f])
+            for id in ids:
+                dic[id] = path
+        return dic
+    else:
+        from lib.process.larva_dataset import LarvaDataset
+        if os.path.exists(f'{path}/data'):
+            dd = LarvaDataset(dir=path)
+            dic[dd.id] = dd
+        else:
+            for ddr in [x[0] for x in os.walk(path)]:
+                if os.path.exists(f'{ddr}/data'):
+                    dd = LarvaDataset(dir=ddr)
+                    dic[dd.id] = dd
+        return dic
+
+
+def detect_dataset_in_subdirs(datagroup_id, path, last_dir, full_ID=False):
+    fn = last_dir
+    ids, dirs = [], []
+    if os.path.isdir(path):
+        for f in os.listdir(path):
+            dic = detect_dataset(datagroup_id, f'{path}/{f}', full_ID=full_ID, raw=True)
+            for id, dr in dic.items():
+                if full_ID:
+                    ids += [f'{fn}/{id0}' for id0 in id]
+                else:
+                    ids.append(id)
+                dirs.append(dr)
+    return ids, dirs

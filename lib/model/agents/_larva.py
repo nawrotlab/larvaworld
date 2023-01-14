@@ -382,7 +382,7 @@ class LarvaMotile(Larva, PhysicsController):
             d0 = self.sim_length / 4
             oM = self.head.get_orientation()
             sensor_ray = aux.radar_tuple(p0=p0, angle=oM, distance=d0)
-            min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray, p0)
+            min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.model.borders, sensor_ray, p0)
 
             if min_dst is None:
                 return False

@@ -6,35 +6,21 @@ import time
 import pandas as pd
 
 from lib import reg
-from gui.aux.functions import col_size, window_size, w_kws
-
-# matplotlib.use('TkAgg')
+from gui import gui_aux, tabs
 
 def build_tab_dict():
-    from gui.tabs import analysis_tab
-    from gui.tabs import batch_tab
-    from gui.tabs import import_tab
-    from gui.tabs import settings_tab
-    from gui.tabs import intro_tab
-    from gui.tabs import model_tab
-    from gui.tabs import video_tab
-    from gui.tabs import life_tab
-    from gui.tabs import sim_tab
-    from gui.tabs import tutorial_tab
-    from gui.tabs import essay_tab
     tab_dict = {
-        'intro': (intro_tab.IntroTab, None, None, 'introduction'),
-        'model': (model_tab.ModelTab, 'Model', 'model_conf', 'larva-model'),
-        'life': (life_tab.LifeTab, 'Life', 'life', 'life-history'),
-        # 'env': (env_tab.EnvTab, 'Env', 'env_conf', 'environment'),
-        'sim': (sim_tab.SimTab, 'Exp', 'exp_conf', 'simulation'),
-        'batch': (batch_tab.BatchTab, 'Batch', 'batch_conf', 'batch-exec'),
-        'essay': (essay_tab.EssayTab, 'Essay', 'essay_conf', 'essay'),
-        'import': (import_tab.ImportTab, 'Group', None, 'import'),
-        'anal': (analysis_tab.AnalysisTab, None, None, 'analysis'),
-        'vid': (video_tab.VideoTab, None, None, 'videos'),
-        'tutor': (tutorial_tab.TutorialTab, None, None, 'tutorials'),
-        'set': (settings_tab.SettingsTab, None, None, 'settings')
+        'intro': (tabs.IntroTab, None, None, 'introduction'),
+        'model': (tabs.ModelTab, 'Model', 'model_conf', 'larva-model'),
+        'life': (tabs.LifeTab, 'Life', 'life', 'life-history'),
+        'sim': (tabs.SimTab, 'Exp', 'Exp', 'simulation'),
+        'batch': (tabs.BatchTab, 'Batch', 'Batch', 'batch-exec'),
+        'essay': (tabs.EssayTab, 'Essay', 'essay_conf', 'essay'),
+        'import': (tabs.ImportTab, 'Group', None, 'import'),
+        'anal': (tabs.AnalysisTab, None, None, 'analysis'),
+        'vid': (tabs.VideoTab, None, None, 'videos'),
+        'tutor': (tabs.TutorialTab, None, None, 'tutorials'),
+        'set': (tabs.SettingsTab, None, None, 'settings')
     }
     return tab_dict
 
@@ -69,7 +55,7 @@ class LarvaworldGui:
         else:
             self.terminal=None
             layout=l_tabs
-        c = {'layout': layout, 'size': window_size, **w_kws}
+        c = {'layout': layout, 'size': gui_aux.window_size, **gui_aux.w_kws}
 
         self.window = sg.Window('Larvaworld gui', **c)
 
@@ -110,17 +96,15 @@ class LarvaworldGui:
         return l_tabs, cs, ds, gs, ts
 
     def get_vis_kwargs(self, v, **kwargs):
-        # from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
         return c['visualization'].get_dict(v, w) if 'visualization' in c.keys() else reg.get_null('visualization',
                                                                                                      **kwargs)
 
     def get_replay_kwargs(self, v):
-        # from lib.registry.dtypes import null_dict
         c = self.collapsibles
         w = self.window
-        return c['replay'].get_dict(v, w) if 'replay' in c.keys() else reg.get_null('replay')
+        return c['Replay'].get_dict(v, w) if 'Replay' in c.keys() else reg.get_null('Replay')
 
     def run0(self, e, v):
         w = self.window
@@ -165,7 +149,7 @@ def check_togglesNcollapsibles(w, e, v, c):
     return toggled
 
 
-def gui_terminal(size=col_size(y_frac=0.3)):
+def gui_terminal(size=gui_aux.col_size(y_frac=0.3)):
     return sg.Output(size=size, key='Terminal', background_color='black', text_color='white',
                      echo_stdout_stderr=True, font=('Helvetica', 8, 'normal'),
                      tooltip='Terminal output')
@@ -188,6 +172,5 @@ def speed_test():
         r = [n0, np.round(s1 - s0, 1), np.round(s2 - s1, 1)]
         res.append(r)
     df = pd.DataFrame(res)
-    # fdir = ParDict.path_dict["GUITEST"]
     df.to_csv(f'{reg.ROOT_DIR}/gui/gui_speed_test.csv', index=0, header=['Tabs', 'Open', 'Close'])
 

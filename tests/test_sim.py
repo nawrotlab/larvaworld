@@ -2,6 +2,24 @@ from lib import reg, sim
 from lib.process.larva_dataset import LarvaDataset
 
 
+
+
+
+def test_exp_run() :
+    for exp in ['dish'] :
+        conf=reg.expandConf('Exp', exp)
+        conf.sim_params.duration=1
+
+        # exp_run = SingleRun(id=f'test_{exp}',**conf)
+
+        # exp_run = SingleRun(vis_kwargs = reg.get_null(name='visualization', mode='video', video_speed=60), **conf)
+        # exp_run.run()
+
+        exp_run = sim.ExpRun(**conf)
+        exp_run.simulate()
+        for d in exp_run.datasets :
+            assert isinstance(d, LarvaDataset)
+
 def test_replay() :
     refID =  'exploration.dish'
     replay_kws = {
@@ -33,22 +51,6 @@ def test_replay() :
     for mode, kws in replay_kws.items() :
         rep = sim.ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to= '. / media', **kws)
         rep.run()
-
-
-def test_exp_run() :
-    for exp in ['dish'] :
-        conf=reg.expandConf('Exp', exp)
-        conf.sim_params.duration=1
-
-        # exp_run = SingleRun(id=f'test_{exp}',**conf)
-
-        # exp_run = SingleRun(vis_kwargs = reg.get_null(name='visualization', mode='video', video_speed=60), **conf)
-        # exp_run.run()
-
-        exp_run = sim.ExpRun(**conf)
-        exp_run.simulate()
-        for d in exp_run.datasets :
-            assert isinstance(d, LarvaDataset)
 
 
 def test_GA() :

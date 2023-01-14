@@ -2,10 +2,9 @@ import os
 import PySimpleGUI as sg
 
 from lib import reg
-from gui.tabs.tab import GuiTab
+from gui import gui_aux
 
-
-class IntroTab(GuiTab):
+class IntroTab(gui_aux.GuiTab):
 
     def build(self):
         kws = {'size': (80, 1),
@@ -26,6 +25,6 @@ class IntroTab(GuiTab):
         return l, {}, {}, {}
 
 if __name__ == "__main__":
-    from gui.tabs.gui import LarvaworldGui
+    from gui.tabs.larvaworld_gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['intro'])
     larvaworld_gui.run()

@@ -2,13 +2,10 @@ import PySimpleGUI as sg
 
 
 
-from gui.tabs.tab import GuiTab
-
-from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib import reg
+from gui import gui_aux
 
-
-class LifeTab(GuiTab):
+class LifeTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.Sq, self.Sa = 'SLIDER_quality', 'SLIDER_age'
@@ -40,35 +37,35 @@ class LifeTab(GuiTab):
         y = 0.55
         x1 = 0.2
         x2 = 0.8
-        r1_size = gui_fun.col_size(x_frac=1 - x1-0.05, y_frac=y-0.05)
-        sl0 = gui_el.SelectionList(tab=self, buttons=['load', 'save', 'delete'])
-        sub = gui_el.CollapsibleDict('substrate', dict_name='substrate_composition', header_dict=substrate_dict,
-                              header_value='standard', state=True, value_kws=gui_fun.t_kws(8))
-        l1 = [[sg.T('Epoch start (hours) : ', **gui_fun.t_kws(24))],
+        r1_size = gui_aux.col_size(x_frac=1 - x1 - 0.05, y_frac=y - 0.05)
+        sl0 = gui_aux.SelectionList(tab=self, buttons=['load', 'save', 'delete'])
+        sub = gui_aux.CollapsibleDict('substrate', dict_name='substrate_composition', header_dict=substrate_dict,
+                                      header_value='standard', state=True, value_kws=gui_aux.t_kws(8))
+        l1 = [[sg.T('Epoch start (hours) : ', **gui_aux.t_kws(24))],
               [sg.Slider(range=(0, 150), default_value=0, k=self.S0,
                          tick_interval=24, resolution=1, trough_color='green', **sl1_kws)],
-              [sg.T('Epoch stop (hours) : ', **gui_fun.t_kws(24))],
+              [sg.T('Epoch stop (hours) : ', **gui_aux.t_kws(24))],
               [sg.Slider(range=(0, 150), default_value=0, k=self.S1,
                          tick_interval=24, resolution=1, trough_color='red', **sl1_kws)]]
-        l2 = [[sg.T('Food quality : ', **gui_fun.t_kws(24))],
+        l2 = [[sg.T('Food quality : ', **gui_aux.t_kws(24))],
               [sg.Slider(range=(0.0, 1.0), default_value=1.0, k=self.Sq,
                          tick_interval=0.25, resolution=0.01, **sl1_kws)],
-              [sg.T('Starting age (hours post-hatch): ', **gui_fun.t_kws(24))],
+              [sg.T('Starting age (hours post-hatch): ', **gui_aux.t_kws(24))],
               [sg.Slider(range=(0, 150), default_value=0, k=self.Sa,
                          tick_interval=24, resolution=1, **sl1_kws)]]
-        after_header = [gui_but.GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
-                        gui_but.GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
-        content = [gui_el.Table(headings=[self.s0, self.s1, 'quality', 'type'], col_widths=[5,5,6,7], key=self.K, num_rows=8)]
-        l_tab = gui_el.Header('Epochs', text=f'{ep.capitalize()}s (h)', text_kws=gui_fun.t_kws(18),
-                       after_header=after_header, single_line=False, content=content)
-        g1 = gui_el.GraphList(self.name, tab=self, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
-                       canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
+        after_header = [gui_aux.GraphButton('Button_Add', f'ADD {ep}', tooltip=f'Add a new {ep}.'),
+                        gui_aux.GraphButton('Button_Remove', f'REMOVE {ep}', tooltip=f'Remove an existing {ep}.')]
+        content = [gui_aux.Table(headings=[self.s0, self.s1, 'quality', 'type'], col_widths=[5, 5, 6, 7], key=self.K, num_rows=8)]
+        l_tab = gui_aux.Header('Epochs', text=f'{ep.capitalize()}s (h)', text_kws=gui_aux.t_kws(18),
+                               after_header=after_header, single_line=False, content=content)
+        g1 = gui_aux.GraphList(self.name, tab=self, fig_dict={m: plot_debs for m in deb_modes}, default_values=['reserve'],
+                               canvas_size=r1_size, list_header='DEB parameters', auto_eval=False)
         pane_kws={'as_pane': True, 'pad': (20,20)}
-        l0 = gui_fun.gui_col([sl0, g1], x1, y, **pane_kws)
-        l3 = gui_fun.gui_col([g1.canvas], 1 - x1, y, **pane_kws)
+        l0 = gui_aux.gui_col([sl0, g1], x1, y, **pane_kws)
+        l3 = gui_aux.gui_col([g1.canvas], 1 - x1, y, **pane_kws)
         l = [
             [l0, l3],
-            gui_fun.gui_row([l_tab, l1, l2, sub], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3], **pane_kws),
+            gui_aux.gui_row([l_tab, l1, l2, sub], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3], **pane_kws),
             # gui_row([l_tab, l1, l2, sub.get_layout(as_col=False)], y_frac=1 - y, x_fracs=[1 - x2, x2 / 3, x2 / 3, x2 / 3]),
         ]
         return l, {sub.name: sub}, {g1.name: g1}, {}
@@ -132,6 +129,6 @@ class LifeTab(GuiTab):
 
 
 if __name__ == "__main__":
-    from gui.tabs.gui import LarvaworldGui
+    from gui.tabs.larvaworld_gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['life-history'])
     larvaworld_gui.run()

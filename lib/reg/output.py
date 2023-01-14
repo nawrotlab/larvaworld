@@ -1,4 +1,6 @@
-import lib.aux.naming
+from lib import aux
+from lib.aux import naming as nam
+
 
 output_dict = {
     'olfactor': {
@@ -41,11 +43,9 @@ output_dict = {
     # 'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
 }
 
-# output_keys = list(output_dict.keys())
 
 
 def set_output(collections, Npoints=3, Ncontour=0):
-    from lib.aux import naming as nam, dictsNlists as dNl
     if collections is None:
         collections = ['pose']
     step = []
@@ -56,31 +56,25 @@ def set_output(collections, Npoints=3, Ncontour=0):
             step += nam.midline_xy(Npoints, flat=True)
         elif c == 'contour':
             step += nam.contour_xy(Ncontour, flat=True)
-            # step += dNl.flatten_list(nam.xy(nam.contour(Ncontour)))
         else:
             step += output_dict[c]['step']
             end += output_dict[c]['endpoint']
             if 'tables' in list(output_dict[c].keys()):
                 tables.update(output_dict[c]['tables'])
-    return dNl.AttrDict({'step': dNl.unique_list(step),
-              'end': dNl.unique_list(end),
+    return aux.AttrDict({'step': aux.unique_list(step),
+              'end': aux.unique_list(end),
               'tables': tables,
                          })
 
 def output_reporters(ks, D, agents):
-    from lib.aux import dictsNlists as dNl, color as cNs
-    # D=reg.par.dict
-    # ks = [k for k in ks if k in D.keys()]
     dic = {}
-    # invalid_keys=dNl.AttrDict({'not_in_registry' : [k for k in ks if k not in D.keys()], 'not_in_agent':{}})
     for k in ks:
         if k in D.keys() :
             d, p = D[k].d, D[k].codename
         try:
-            temp = [lib.aux.naming.rgetattr(l, p) for l in agents]
+            temp = [aux.rgetattr(l, p) for l in agents]
             dic.update({d: p})
         except:
-        #     invalid_keys.not_in_agent[d]=p
             pass
     return dic
 
@@ -94,13 +88,4 @@ def get_reporters(agents, **kwargs):
     return output
 
 
-# if __name__ == "__main__":
-#
-#
-#     ks=set_output(collections=['pose', 'olfactor'], Npoints=3, Ncontour=0)
-#     output= {
-#         "step" : output_reporters(ks=ks['step'], D=reg.par.dict),
-#         "end" : output_reporters(ks=ks['end'], D=reg.par.dict),
-#              }
-#
-#     print(output)
+

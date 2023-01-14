@@ -65,7 +65,6 @@ def eval_models(mIDs=mIDs,dataset_ids=dIDs,refIDs=refIDs,save_to=save_to,rerun=F
 
 
 if __name__ == '__main__':
-    # print(preg.get_null('replay'))
     pass
     # ds = import_datasets(datagroup_id = 'Jovanic lab', source_ids=dIDs, parent_dir=parent_dir,merged=False,colors=cols)
     # ds=preg.conftype_dict.loadRefDs(refIDs,step=True, end=True, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor'])

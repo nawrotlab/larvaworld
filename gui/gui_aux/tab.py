@@ -1,6 +1,7 @@
-from gui.aux.elements import GuiElement
-from lib import reg
 
+from lib import reg
+# from gui import aux
+from gui.gui_aux.elements import GuiElement
 
 class GuiTab(GuiElement):
     def __init__(self, name, gui, conftype=None, dtype=None):
@@ -163,17 +164,4 @@ class DrawTab(GuiTab):
         dic['dragging'], dic['current'] = False, {}
         dic['start_point'], dic['end_point'], dic['prior_rect'] = None, None, None
 
-if __name__ == "__main__":
-    pass
-    # sg.theme('LightGreen')
-    # n = 'intro'
-    # l, c, g, d = build_intro_tab()
-    # w = sg.Window(f'{n} gui', l, size=(1800, 1200), **w_kws, location=(300, 100))
-    #
-    # while True:
-    #     e, v = w.read()
-    #     if e in (None, 'Exit'):
-    #         break
-    #     run0(w, e, v, c, g)
-    #     d, g = eval_intro_tab(e, v, w, collapsibles=c, dicts=d, graph_lists=g)
-    # w.close()
+

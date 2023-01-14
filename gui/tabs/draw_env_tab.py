@@ -4,15 +4,12 @@ import random
 import numpy as np
 import PySimpleGUI as sg
 
-
-from gui.tabs.tab import DrawTab
-from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
 from lib import reg, aux
+from gui import gui_aux
 
 
 
-
-class DrawEnvTab(DrawTab):
+class DrawEnvTab(gui_aux.DrawTab):
     def __init__(self,canvas_size = (800, 800), **kwargs):
         super().__init__(canvas_size = canvas_size,**kwargs)
         self.S, self.L, self.B = 'Source', 'Larva', 'Border'
@@ -73,8 +70,8 @@ class DrawEnvTab(DrawTab):
     def add_agent_layout(self, o, color, c):
         kws={
             'toggle' : False,
-            'value_kws' : gui_fun.t_kws(12),
-            'text_kws' : gui_fun.t_kws(8),
+            'value_kws' : gui_aux.t_kws(12),
+            'text_kws' : gui_aux.t_kws(8),
             'header_width' : 14
         }
 
@@ -84,35 +81,34 @@ class DrawEnvTab(DrawTab):
         sh,fo=f'{o}_shape',f'{o}_food'
         # o=n0.lower()
 
-        s1 = gui_el.PadDict(D, disabled=True, disp_name='Distribution', **kws)
-        s2 = gui_el.PadDict(od, disp_name='Odor', dict_name='odor', **kws)
+        s1 = gui_aux.PadDict(D, disabled=True, disp_name='Distribution', **kws)
+        s2 = gui_aux.PadDict(od, disp_name='Odor', dict_name='odor', **kws)
         s_all = [s1, s2]
 
         kws2 = {
             'group_id': 2,
             'disabled': True,
             'enable_events': True,
-            **gui_fun.t_kws(5)
+            **gui_aux.t_kws(5)
         }
 
 
-        l = [[sg.R(f'Add {o}', 1, k=o, enable_events=True, **gui_fun.t_kws(10)), *gui_but.color_pick_layout(o, color)],
-             [sg.T('', **gui_fun.t_kws(2)), sg.R('single ID',k=U, **kws2),sg.In(o, k=Uid)],
-             [sg.T('', **gui_fun.t_kws(2)), sg.R('group ID',k=G, **kws2),sg.In(G,k=Gid)],
+        l = [[sg.R(f'Add {o}', 1, k=o, enable_events=True, **gui_aux.t_kws(10)), *gui_aux.color_pick_layout(o, color)],
+             [sg.T('', **gui_aux.t_kws(2)), sg.R('single ID',k=U, **kws2),sg.In(o, k=Uid)],
+             [sg.T('', **gui_aux.t_kws(2)), sg.R('group ID',k=G, **kws2),sg.In(G,k=Gid)],
 
-             # [sg.T('', **gui_fun.t_kws(2)), *s1.get_layout()[0]],
-             # [sg.T('', **gui_fun.t_kws(2)), *s2.get_layout()[0]]
+
              ]
         if o==self.S0 :
-            l.append([sg.T('', **gui_fun.t_kws(2)), sg.T('shape', **gui_fun.t_kws(5)),
+            l.append([sg.T('', **gui_aux.t_kws(2)), sg.T('shape', **gui_aux.t_kws(5)),
                       sg.Combo(['rect', 'circle'], default_value='circle', k=sh, enable_events=True,
                                readonly=True)])
-            ss = gui_el.PadDict(fo,disp_name='Food',dict_name='nutrient', **kws)
+            ss = gui_aux.PadDict(fo,disp_name='Food',dict_name='nutrient', **kws)
             s_all.append(ss)
 
         for ss in s_all:
             c.update(ss.get_subdicts())
-            l.append([sg.T('', **gui_fun.t_kws(2)), *ss.get_layout()[0]])
+            l.append([sg.T('', **gui_aux.t_kws(2)), *ss.get_layout()[0]])
 
         return l, c
 
@@ -141,15 +137,15 @@ class DrawEnvTab(DrawTab):
         lI = [[sg.R('Erase item', 1, k='-ERASE-', enable_events=True)],
               [sg.R('Move item', 1, True, k='-MOVE-', enable_events=True)],
               [sg.R('Inspect item', 1, True, k='-INSPECT-', enable_events=True)]]
-        lB = [[sg.R(f'Add {B0}', 1, k=B0, enable_events=True, **gui_fun.t_kws(10)), *gui_but.color_pick_layout(B0, 'black')],
-              [sg.T('', **gui_fun.t_kws(2)), sg.T('id', **gui_fun.t_kws(5)), sg.In(B0, k=f'{B0}_id')],
-              [sg.T('', **gui_fun.t_kws(2)), sg.T('width', **gui_fun.t_kws(5)),
+        lB = [[sg.R(f'Add {B0}', 1, k=B0, enable_events=True, **gui_aux.t_kws(10)), *gui_aux.color_pick_layout(B0, 'black')],
+              [sg.T('', **gui_aux.t_kws(2)), sg.T('id', **gui_aux.t_kws(5)), sg.In(B0, k=f'{B0}_id')],
+              [sg.T('', **gui_aux.t_kws(2)), sg.T('width', **gui_aux.t_kws(5)),
                sg.Spin(values=np.arange(0.1, 1000, 0.1).tolist(), initial_value=0.001, k=f'{B0}_width')],
               ]
 
-        col2 = sg.Col([[sg.Pane([sg.Col(ll, **gui_fun.col_kws)], border_width=8, pad=(10,10))] for ll in [lL, lB, lI]])
-        col3=sg.Col([[sg.Pane([sg.Col(lS, **gui_fun.col_kws)], border_width=8, pad=(10,10))]], **gui_fun.col_kws)
-        g1 = gui_el.GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
+        col2 = sg.Col([[sg.Pane([sg.Col(ll, **gui_aux.col_kws)], border_width=8, pad=(10,10))] for ll in [lL, lB, lI]])
+        col3=sg.Col([[sg.Pane([sg.Col(lS, **gui_aux.col_kws)], border_width=8, pad=(10,10))]], **gui_aux.col_kws)
+        g1 = gui_aux.GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
             'change_submits': True,
@@ -159,14 +155,13 @@ class DrawEnvTab(DrawTab):
 
         col1 = [
             g1.canvas.get_layout(as_pane=True, pad=(0,10))[0],
-            [sg.T('Hints : '), sg.T('', k='info', **gui_fun.t_kws(40))],
-            [sg.T('Actions : '), sg.T('', k='out', **gui_fun.t_kws(40))],
+            [sg.T('Hints : '), sg.T('', k='info', **gui_aux.t_kws(40))],
+            [sg.T('Actions : '), sg.T('', k='out', **gui_aux.t_kws(40))],
         ]
-        l = [[sg.Col(col1,**gui_fun.col_kws), col2, col3]]
+        l = [[sg.Col(col1,**gui_aux.col_kws), col2, col3]]
 
         self.graph = g1.canvas_element
-        # print(c.keys())
-        # raise
+
         return l, c, {g1.name: g1}, {self.name: dic}
 
     def eval(self, e, v, w, c, d, g):
@@ -510,9 +505,8 @@ class DrawEnvTab(DrawTab):
             N = distribution['N']
             loc = distribution['loc']
             scale = distribution['scale']
-        from lib.aux.xy import generate_xy_distro
 
-        Ps = generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True),
+        Ps = aux.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True),
                                                scale=np.array(scale) * self.s)
         group_figs = []
         for i, P0 in enumerate(Ps):
@@ -532,9 +526,8 @@ class DrawEnvTab(DrawTab):
         return temp
 
     def draw_larva(self, P0, color, orientation_range, **kwargs):
-        from lib.aux.np import body
         points = np.array([[0.9, 0.1], [0.05, 0.1]])
-        xy0 = body(points) - np.array([0.5, 0.0])
+        xy0 = aux.body(points) - np.array([0.5, 0.0])
         xy0 = aux.rotate_points_around_point(xy0, random.uniform(*np.deg2rad(orientation_range)), origin=[0, 0])
         xy0 = xy0 * self.s / 250 + np.array(P0)
         temp = self.graph.draw_polygon(xy0, line_width=3, line_color=color, fill_color=color)

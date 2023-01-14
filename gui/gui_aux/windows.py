@@ -4,7 +4,8 @@ import os
 import PySimpleGUI as sg
 
 
-from gui.aux import buttons as gui_but, functions as gui_fun
+from gui import gui_aux
+# from gui.aux import buttons as gui_but, functions as aux
 from lib import reg, aux
 
 
@@ -13,24 +14,24 @@ def get_table(v, pars_dict, Nagents):
     for i in range(Nagents):
         dic = {}
         for j, (p, t) in enumerate(pars_dict.items()):
-            dic[p] = gui_fun.retrieve_value(v[(i, p)], t)
+            dic[p] = gui_aux.retrieve_value(v[(i, p)], t)
         data.append(dic)
     return data
 
 
 def table_window(data, pars_dict, title, return_layout=False):
     d = pars_dict
-    t12_kws_c = {**gui_fun.t_kws(12),
+    t12_kws_c = {**gui_aux.t_kws(12),
                  'justification': 'center'}
 
     ps = list(d.keys())
     Nagents, Npars = len(data), len(ps)
 
-    l0 = [sg.T(' ', **gui_fun.t_kws(2))] + [sg.T(p, k=p, enable_events=True, **t12_kws_c) for p in ps]
-    l1 = [[sg.T(i + 1, **gui_fun.t_kws(2))] + [sg.In(data[i][p], k=(i, p), **t12_kws_c) if type(d[p]) != list else sg.Combo(
+    l0 = [sg.T(' ', **gui_aux.t_kws(2))] + [sg.T(p, k=p, enable_events=True, **t12_kws_c) for p in ps]
+    l1 = [[sg.T(i + 1, **gui_aux.t_kws(2))] + [sg.In(data[i][p], k=(i, p), **t12_kws_c) if type(d[p]) != list else sg.Combo(
         d[p], default_value=data[i][p], k=(i, p), enable_events=True, readonly=True,
-        **gui_fun.t_kws(12)) for p in ps] for i in range(Nagents)]
-    l2 = [sg.B(ii, **gui_fun.b6_kws) for ii in ['Add', 'Remove', 'Ok', 'Cancel']]
+        **gui_aux.t_kws(12)) for p in ps] for i in range(Nagents)]
+    l2 = [sg.B(ii, **gui_aux.b6_kws) for ii in ['Add', 'Remove', 'Ok', 'Cancel']]
 
     l = [l0, *l1, l2]
 
@@ -156,12 +157,12 @@ def object_menu(selected, **kwargs):
 
 
 def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
-    from gui.tabs.gui import check_toggles
-    from gui.aux.elements import SectionDict
+    from gui.tabs.larvaworld_gui import check_toggles
+    from gui.gui_aux.elements import SectionDict
     sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
     l = sec_dict.layout
     l.append([sg.Ok(), sg.Cancel()])
-    w = sg.Window(title, l, **gui_fun.w_kws, **kwargs)
+    w = sg.Window(title, l, **gui_aux.w_kws, **kwargs)
     while True:
         e, v = w.read()
         if e == 'Ok':
@@ -186,7 +187,7 @@ def set_agent_kwargs(agent, **kwargs):
     if class_name=='Food':
         k='food'
     elif class_name=='Larva':
-        k='larva_conf'
+        k='Model'
     else:
         return agent
     type_dict = reg.get_null(k)
@@ -204,7 +205,7 @@ def set_agent_kwargs(agent, **kwargs):
 
 
 def save_conf_window(conf, conftype, disp=None):
-    from gui.aux.elements import NamedList
+    from gui.gui_aux.elements import NamedList
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
@@ -237,7 +238,7 @@ def delete_conf_window(id, conftype, disp=None) :
 
 
 def add_ref_window():
-    from gui.aux.elements import NamedList
+    from gui.gui_aux.elements import NamedList
     k = 'ID'
     temp = NamedList('Reference ID : ', key=k, choices=reg.storedConf('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
@@ -263,8 +264,8 @@ def save_ref_window(d):
 
 
 def import_window(datagroup_id, raw_dic):
-    from gui.tabs.gui import check_togglesNcollapsibles
-    from gui.aux.elements import PadDict
+    from gui.tabs.larvaworld_gui import check_togglesNcollapsibles
+    from gui.gui_aux.elements import PadDict
     g = reg.loadConf(id=datagroup_id, conftype='Group')
     group_dir = f'{reg.DATA_DIR}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
@@ -281,19 +282,19 @@ def import_window(datagroup_id, raw_dic):
     if N == 0:
         return proc_dir
     w_size = (1200, 800)
-    h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **gui_fun.t_kws(30)}
-    l00 = sg.Col([[sg.T('Group ID :', **gui_fun.t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **gui_fun.t_kws(20))],
-                  [*gui_but.named_bool_button(name=M, state=False, toggle_name=None),
-                   *gui_but.named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
+    h_kws = {'font': ('Helvetica', 8, 'bold'), 'justification': 'center', **gui_aux.t_kws(30)}
+    l00 = sg.Col([[sg.T('Group ID :', **gui_aux.t_kws(8)), sg.In(default_text=groupID0, k='import_group_id', **gui_aux.t_kws(20))],
+                  [*gui_aux.named_bool_button(name=M, state=False, toggle_name=None),
+                   *gui_aux.named_bool_button(name=E, state=False, toggle_name=None, disabled=False)],
                   [sg.Ok(), sg.Cancel()]])
 
-    l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**gui_fun.t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
-                   *[[sg.T(id, **gui_fun.t_kws(30)), sg.T('  -->  ', **gui_fun.t_kws(8)), sg.In(id, k=f'new_{id}', **gui_fun.t_kws(30))] for id
+    l01 = [sg.Col([[sg.T('RAW DATASETS', **h_kws), sg.T(**gui_aux.t_kws(8)), sg.T('NEW DATASETS', **h_kws)],
+                   *[[sg.T(id, **gui_aux.t_kws(30)), sg.T('  -->  ', **gui_aux.t_kws(8)), sg.In(id, k=f'new_{id}', **gui_aux.t_kws(30))] for id
                      in raw_ids]],
                   vertical_scroll_only=True, scrollable=True, expand_y=True, vertical_alignment='top',
-                  size=gui_fun.col_size(y_frac=0.4, win_size=w_size))]
+                  size=gui_aux.col_size(y_frac=0.4, win_size=w_size))]
 
-    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=gui_fun.t_kws(20), header_width=30,
+    s1 = PadDict('build_conf', disp_name='Configuration', text_kws=gui_aux.t_kws(20), header_width=30,
                  background_color='purple')
 
     l2 = [[sg.Frame(title='Options', layout=[[sg.Col(s1.layout), l00]], title_color='green', background_color='blue',
@@ -385,8 +386,8 @@ def import_window(datagroup_id, raw_dic):
                             'id': target_id0,
                             'target_dir':  f'{targets[0]}/{target_id0}',
                             'source_files': aux.flatten_list([[os.path.join(source, n) for n in os.listdir(source) if
-                                                      n.startswith(source_id)] for source_id, source in
-                                                     raw_dic.items()]),
+                                                                   n.startswith(source_id)] for source_id, source in
+                                                                  raw_dic.items()]),
                             **kws
                         }
                     elif datagroup_id in ['Schleyer lab']:
@@ -421,16 +422,16 @@ def change_dataset_id(dic, old_ids):
 
 
 def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
-    from gui.aux.elements import PadDict
+    from gui.gui_aux.elements import PadDict
     c0 = PadDict(dict_name)
     l0 = c0.get_layout(pad=(20, 20))
-    lID = [sg.T(f'{index}:', **gui_fun.t_kws(10), tooltip='The ID of the new entry'),
-           sg.In(key='kID', **gui_fun.t_kws(30), pad=((0, 100), (0, 0)))]
+    lID = [sg.T(f'{index}:', **gui_aux.t_kws(10), tooltip='The ID of the new entry'),
+           sg.In(key='kID', **gui_aux.t_kws(30), pad=((0, 100), (0, 0)))]
     l1 = sg.Pane([sg.Col([[*lID, sg.Ok(), sg.Cancel()]])], border_width=8, pad=(20, 20))
     l = [[l0], [l1]]
-    kws = gui_fun.w_kws
+    kws = gui_aux.w_kws
     kws['default_element_size'] = (16, 1)
-    w = sg.Window(gui_fun.get_disp_name(dict_name), l, size=gui_fun.col_size(0.8, 0.5), **kws, **kwargs)
+    w = sg.Window(gui_aux.get_disp_name(dict_name), l, size=gui_aux.col_size(0.8, 0.5), **kws, **kwargs)
     if id is not None:
         c0.update(w, base_dict[id])
         w.Element('kID').Update(value=id)

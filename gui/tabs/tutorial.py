@@ -1,12 +1,11 @@
 import os
 import webbrowser
-
 import PySimpleGUI as sg
 
-from gui.tabs.tab import GuiTab
 from lib import reg
+from gui import gui_aux
 
-class TutorialTab(GuiTab):
+class TutorialTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.path = f'{reg.ROOT_DIR}/gui/media/tutorial'

@@ -212,3 +212,6 @@ def unique_list(l):
         return [x for x in l if not (x in seen or seen_add(x))]
 
 
+def checkEqual(L1, L2):
+    return len(L1) == len(L2) and sorted(L1) == sorted(L2)
+

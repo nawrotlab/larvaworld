@@ -26,7 +26,7 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
     sim_params = reg.get_null('sim_params', timestep=1 / sample_conf['fr'], duration=duration,
                            path=f'single_runs/{exp}', sim_ID=f'{id}_{exp}_{idx}')
     env_params = sample_conf.env_params
-    exp_conf = reg.get_null('exp_conf', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
+    exp_conf = reg.get_null('Exp', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
                          trials={}, enrichment=I.base_enrich())
     exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)

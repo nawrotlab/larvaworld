@@ -58,7 +58,7 @@ class BaseWorld:
 
         self.create_arena(self.env_pars.arena.arena_dims, self.env_pars.arena.arena_shape)
         self.space = self.create_space(torus=self.env_pars.arena.torus if 'torus' in self.env_pars.arena.keys() else False)
-        self.borders, self.border_walls, self.border_lines = [], [], []
+        self.borders, self.border_lines = [], []
         self.create_borders(self.env_pars.border_list)
 
 
@@ -147,10 +147,9 @@ class BaseWorld:
 
         self.borders.append(b)
         self.border_lines += b.border_lines
-        self.border_walls += b.border_walls
 
-    def create_borders(self, border_list=None):
-        for id, pars in self.env_pars.border_list.items():
+    def create_borders(self, border_list={}):
+        for id, pars in border_list.items():
             from lib.model.envs.obstacle import Border
             b = Border(unique_id=id, **pars)
             self.add_border(b)

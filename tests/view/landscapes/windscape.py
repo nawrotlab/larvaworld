@@ -1,7 +1,6 @@
 import numpy as np
-from lib.model.envs.world import World
 from lib.model.envs.world_sim import WorldSim
-from lib.registry import reg
+from lib import reg
 
 test_direction=True
 test_speed=False
@@ -27,7 +26,7 @@ else :
     puffs={}
     wind_speed = 10.0
 windscape=reg.get_null('windscape', wind_direction=0.0, wind_speed=wind_speed, puffs=puffs)
-env_params=reg.get_null('env_conf', windscape=windscape, border_list={'Border' : reg.get_null('Border', points=[(-0.03,0.02), (0.03,0.02)])})
+env_params=reg.get_null('Env', windscape=windscape, border_list={'Border' : reg.get_null('Border', points=[(-0.03,0.02), (0.03,0.02)])})
 env=WorldSim(env_params=env_params, Nsteps=N, vis_kwargs=reg.get_null('visualization', mode='video', video_speed=5, media_name=media_name))
 
 env.windscape.visible=True
@@ -39,4 +38,4 @@ while env.is_running and env.Nticks < env.Nsteps:
         env.windscape.wind_speed=env.Nticks%100
     env.step()
     env.progress_bar.update(env.Nticks)
-    env.render(env.Nticks)
+    env.screen_manager.step(env.Nticks)

@@ -16,8 +16,8 @@ class Essay:
         self.N = N
         self.M = reg.model
         self.G = reg.graphs
-        self.GT = reg.group
-        self.CT = reg.conf0
+        # self.GT = reg.group
+        # self.CT = reg.conf
         self.show = show
         self.type = type
         self.enrichment = enrichment
@@ -36,7 +36,7 @@ class Essay:
 
     def conf(self, exp, id, dur, lgs, env, **kwargs):
         sim = reg.get_null('sim_params', sim_ID=id, path=self.path, duration=dur)
-        return reg.get_null('exp_conf', sim_params=sim, env_params=env, trials={},
+        return reg.get_null('Exp', sim_params=sim, env_params=env, trials={},
                              larva_groups=lgs, experiment=exp, enrichment=self.enrichment,
                              collections=self.collections, **kwargs)
 
@@ -95,13 +95,13 @@ class RvsS_Essay(Essay):
 
     def RvsS_env(self, on_food=True):
         grid = reg.get_null('food_grid') if on_food else None
-        return reg.get_null('env_conf',
+        return reg.get_null('Env',
                              arena=reg.get_null('arena', arena_shape='rectangular', arena_dims=(0.02, 0.02)),
                              food_params=reg.get_null('food_params', food_grid=grid),
                              )
 
     def GTRvsS(self, **kwargs):
-        return self.GT.dict.LarvaGroup.RvsS_groups(expand=True, N=self.N, **kwargs)
+        return reg.GTRvsS(expand=True, N=self.N, **kwargs)
 
     def pathlength_exp(self):
         dur = self.dur_pathlength
@@ -367,15 +367,16 @@ class DoublePatch_Essay(Essay):
         kws0 = {
             'kwdic': {
                 'distribution': {'N': self.N, 'scale': (0.005, 0.005)},
-                'life_history': {'age': age, 'epochs': self.GT.dict.epoch.entry(0, start=0.0, stop=age)},
+                'life_history': {'age': age, 'epochs': reg.group.epoch.entry(0, start=0.0, stop=age)},
                 'odor': {}
             },
             'sample': 'None.150controls',
         }
 
         return aux.AttrDict({
-            mID0: self.GT.dict.LarvaGroup.gConf(default_color=mcol,
-                                                            model=self.CT.dict.Model.loadConf(mID),
+            mID0: reg.group.LarvaGroup.gConf(default_color=mcol,
+                                                            model=reg.loadConf('Model', mID),
+                                                            # model=self.CT.dict.Model.loadConf(mID),
                                                             **kws0)
 
             for mID0,mID, mcol in zip(['rover', 'sitter'],self.mIDs, ['blue', 'red'])
@@ -390,8 +391,8 @@ class DoublePatch_Essay(Essay):
                 }
 
         return aux.AttrDict({
-            'Left_patch': self.CT.dict.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
-            'Right_patch': self.CT.dict.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
+            'Left_patch': reg.conf.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
+            'Right_patch': reg.conf.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
 
         })
 
@@ -412,7 +413,7 @@ class DoublePatch_Essay(Essay):
 
         }
 
-        return self.CT.dict.Env.gConf(**kws)
+        return reg.conf.Env.gConf(**kws)
 
     def time_ratio_exp(self):
 
@@ -437,7 +438,7 @@ class DoublePatch_Essay(Essay):
 
             }
 
-            confs[n]=[aux.AttrDict(self.CT.dict.Exp.gConf(**kws))]
+            confs[n]=[aux.AttrDict(reg.conf.Exp.gConf(**kws))]
         return aux.AttrDict(confs)
 
 
@@ -585,7 +586,7 @@ class Chemotaxis_Essay(Essay):
 
         exp1 = 'Orbiting behavior'
         kws1 = {
-            'env': reg.get_null('env_conf',
+            'env': reg.get_null('Env',
                                  food_params={'source_groups': {},
                                               'food_grid': None,
                                               'source_units': {
@@ -610,7 +611,7 @@ class Chemotaxis_Essay(Essay):
 
         exp2 = 'Up-gradient navigation'
         kws2 = {
-            'env': reg.get_null('env_conf',
+            'env': reg.get_null('Env',
                                  food_params={'source_groups': {},
                                               'food_grid': None,
                                               'source_units': {

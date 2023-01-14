@@ -9,7 +9,7 @@ from lib import aux
 from lib.aux.time_util import TimeUtil
 
 
-from lib.model.modules.rot_surface import LightSource
+
 
 class Viewer(object):
     def __init__(self, window_dims, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
@@ -317,6 +317,7 @@ class Viewer(object):
                     wall.label = line_number
                     viewer.put(wall)
                 elif words[0] == 'Light':
+                    from lib.model.modules.rot_surface import LightSource
                     x = int(words[1])
                     y = int(words[2])
                     emitting_power = int(words[3])

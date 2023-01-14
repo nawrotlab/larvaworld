@@ -25,12 +25,12 @@ vprint("Initializing parameter registry", 0)
 from .parDB import par
 
 vprint("Initializing configuration registry", 0)
-from .config import conf0, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf, lgs, lg, loadRef, loadRefDs
+from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, loadRefDs
 from .controls import controls
 
 vprint("Initializing model registry", 0)
 from .models import model
-from .parser import parsers
+# from .parser import parsers
 
 vprint("Initializing graph registry", 0)
 from .graph import graphs

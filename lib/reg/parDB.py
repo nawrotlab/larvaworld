@@ -12,32 +12,6 @@ from lib import reg, aux
 
 
 
-def confInit_ks(k):
-
-    d = aux.AttrDict({
-        'Ref': None,
-        'Eval': 'eval_conf',
-        'Replay': 'replay',
-        'Model': 'larva_conf',
-        'Source': 'food',
-        'LarvaGroup': 'LarvaGroup',
-        'ModelGroup': 'ModelGroup',
-        'Env': 'env_conf',
-        'Exp': 'exp_conf',
-        'ExpGroup': 'ExpGroup',
-        # 'essay': 'essay_params',
-        'sim': 'sim_params',
-        'Essay': 'essay_params',
-        'Batch': 'batch_conf',
-        'Ga': 'GAconf',
-        'Tracker': 'tracker',
-        'Group': 'DataGroup',
-        'Trial': 'trials',
-        'Life': 'life_history',
-        'Tree': None,
-        'Body': 'body_shape'
-    })
-    return d[k]
 
 
 def get_default(d,key='v') :
@@ -207,7 +181,6 @@ def buildInitDict():
             'can_be_displaced': {**bF, 'disp': 'displaceable',
                                  'h': 'Whether the source can be displaced by wind/water.'},
 
-            # **d['food'],
 
         }
 
@@ -221,7 +194,7 @@ def buildInitDict():
             **d['substrate']
         }
 
-        d['food'] = {
+        d['Source'] = {
 
             'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
             **d['source'],
@@ -230,10 +203,7 @@ def buildInitDict():
 
         d['SourceGroup'] = {
             'distribution': d['spatial_distro'],
-            **{k:v for k,v in d['food'].items() if k not in ['pos', 'group']}
-            # 'default_color': pCol('green', 'source group'),
-            # **d['food'],
-            # 'odor': d['odor'],
+            **{k:v for k,v in d['Source'].items() if k not in ['pos', 'group']}
 
         }
 
@@ -264,11 +234,11 @@ def buildInitDict():
 
         }
 
-        d['life_history'] = {
+        d['Life'] = {
             'age': {'v': 0.0, 'lim': (0.0, 250.0), 'dv': 1.0,
                     'h': 'The larva age in hours post-hatch.'},
             'epochs': {'dtype': TypedDict, 'v': {}, 'entry': 'epoch', 'disp': 'life epochs',
-                       'h': 'The feeding epochs comprising life-history.'}
+                       'h': 'The feeding epochs comprising life history.'}
 
         }
         return d
@@ -404,7 +374,7 @@ def buildInitDict():
     def runConfs():
 
         d = aux.AttrDict({
-            'essay_params': {
+            'Essay': {
                 'essay_ID': pID('essay'),
                 'path': pPath('essay'),
                 'N': {'dtype': int, 'lim': (1, 100), 'disp': '# larvae',
@@ -1060,7 +1030,7 @@ def buildInitDict():
             'motor_ctrl_min_actuator_value': {'dtype': int, 'v': 35, 'lim': (0, 50),
                                               'h': 'Motor ctrl_min_actuator_value'},
         }
-        d['larva_conf'] = {
+        d['Model'] = {
             'brain': d['brain'],
             'body': d['body'],
             'energetics': d['energetics'],
@@ -1068,7 +1038,7 @@ def buildInitDict():
             'Box2D_params': d['Box2D_params'],
         }
 
-        d['model_conf'] = d['larva_conf']
+        d['model_conf'] = d['Model']
 
         return d
 
@@ -1110,7 +1080,7 @@ def buildInitDict():
         return d
 
     def Ga1(d):
-        d['GAconf'] = {
+        d['Ga'] = {
             'scene': {'dtype': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
             'scene_speed': {'dtype': int, 'v': 0, 'lim': (0, 1000),
                             'h': 'The rendering speed of the scene'},
@@ -1180,7 +1150,7 @@ def buildInitDict():
             }
         })
         d.update(d0)
-        d['batch_conf'] = {'exp': {'dtype': str},
+        d['Batch'] = {'exp': {'dtype': str},
                            'space_search': d['space_search'],
                            'batch_methods': d['batch_methods'],
                            'optimization': d['optimization'],
@@ -1195,7 +1165,7 @@ def buildInitDict():
         # from lib.aux import dictsNlists as aux
 
     def conftypes(d):
-        d['body_shape'] = {
+        d['Body'] = {
             'symmetry': {'dtype': str, 'v': 'bilateral', 'vs': ['bilateral', 'radial'],
                          'h': 'The body symmetry.'},
             'Nsegs': {'dtype': int, 'v': 2, 'lim': (1, 12),
@@ -1210,7 +1180,7 @@ def buildInitDict():
                               'h': 'The indexes of the contour points bearing touch sensors.'},
             'points': pXYs('body contour', lim=(-1.0, 1.0), disp='contour')
         }
-        d['tracker'] = {
+        d['Tracker'] = {
             'resolution': {
                 'fr': {'v': 10.0, 'lim': (0.0, 100.0), 'disp': 'framerate (Hz)',
                        'h': 'The framerate of the tracker recordings.'},
@@ -1235,13 +1205,12 @@ def buildInitDict():
 
         }
 
-        d['DataGroup'] = {
-            # 'id': confID_entry('Group'),
+        d['Group'] = {
             'path': pPath('Group'),
-            'tracker': d['tracker'],
+            'tracker': d['Tracker'],
             'enrichment': d['enrichment'],
         }
-        d['env_conf'] = {'arena': d['arena'],
+        d['Env'] = {'arena': d['arena'],
                          'border_list': {'dtype': dict, 'v': {}},
                          'food_params': d['food_params'],
                          'odorscape': {'dtype': dict},
@@ -1249,7 +1218,7 @@ def buildInitDict():
                          'thermoscape': {'dtype': dict},
                          }
 
-        d['exp_conf'] = {
+        d['Exp'] = {
             'env_params': ConfID_entry('Env'),
             # 'env_params': confID_entry('Env'),
             'larva_groups': {'dtype': dict, 'v': {}},
@@ -1261,7 +1230,7 @@ def buildInitDict():
             'experiment': ConfID_entry('Exp'),
         }
 
-        d['replay'] = {
+        d['Replay'] = {
             'env_params': ConfID_entry('Env'),
             # 'env_params': confID_entry('Env'),
             'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'],
@@ -1289,11 +1258,11 @@ def buildInitDict():
                              'h': 'Whether to draw overlapped image of the track.'},
             'refID': ConfID_entry('Ref'),
             # 'refID': confID_entry('Ref'),
-            'id': pID('replay', k='id'),
+            'id': pID('Replay', k='id'),
             'save_to': pSaveTo()
         }
 
-        d['eval_conf'] = {
+        d['Eval'] = {
             'refID': ConfID_entry('Ref', default='None.150controls'),
             'modelIDs': ConfID_entry('Model', single_choice=False, k='mIDs'),
             'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
@@ -1323,7 +1292,7 @@ def buildInitDict():
             'default_color': pCol('black', 'larva group'),
             'imitation': {**bF, 'h': 'Whether to imitate the reference dataset.'},
             'distribution': d['larva_distro'],
-            'life_history': d['life_history'],
+            'life_history': d['Life'],
             'odor': d['odor']
         }
 

@@ -164,7 +164,7 @@ def rotate_points_around_point(points, radians, origin=None):
 
     if origin is None:
         origin = [0, 0]
-    qx, qy = rotate_point_around_point(points.T, radians, origin=origin)
+    qx, qy = rotate_point_around_point(np.array(points).T, radians, origin=origin)
     ps=np.vstack((qx, qy)).T
     return ps
 

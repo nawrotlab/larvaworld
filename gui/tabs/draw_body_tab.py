@@ -1,15 +1,13 @@
 import numpy as np
 import PySimpleGUI as sg
 
-from gui.tabs.tab import DrawTab
-from gui.aux import buttons as gui_but, functions as gui_fun, elements as gui_el
+from gui import gui_aux
 
-
-class DrawBodyTab(DrawTab):
+class DrawBodyTab(gui_aux.DrawTab):
     def __init__(self, canvas_size=(1200, 800), **kwargs):
         super().__init__(canvas_size=canvas_size, **kwargs)
         self.p_radius = self.canvas_size[0] / 240
-        self.c_key='body_shape'
+        self.c_key='Body'
         self.P, self.S, self.O, self.T='points','segs','olfaction_sensors','touch_sensors'
         self.Cdict = {
             self.P: 'black',
@@ -22,7 +20,6 @@ class DrawBodyTab(DrawTab):
         c = {}
 
         dic = {
-            # 'env_db': self.set_env_db(store=False),
             's': self.canvas_size[0] * 0.7,
             'dragging': None,
             'drag_figures': {},
@@ -36,29 +33,29 @@ class DrawBodyTab(DrawTab):
             'P2': None,
         }
 
-        sl = gui_el.SelectionList(tab=self, disp='Body', buttons=['load', 'save', 'delete', 'exec'],
-                           width=30, text_kws=gui_fun.t_kws(12))
+        sl = gui_aux.SelectionList(tab=self, disp='Body', buttons=['load', 'save', 'delete', 'exec'],
+                                   width=30, text_kws=gui_aux.t_kws(12))
 
-        c1 = gui_el.PadDict(self.c_key, disp_name='Configuration', text_kws=gui_fun.t_kws(8), header_width=25,
-                     background_color='orange',
-                     subconfs={self.P: {'Nspins': 12, 'indexing': True, 'group_by_N': 2, 'text_kws': {'text_color': self.Cdict[self.P]}},
+        c1 = gui_aux.PadDict(self.c_key, disp_name='Configuration', text_kws=gui_aux.t_kws(8), header_width=25,
+                             background_color='orange',
+                             subconfs={self.P: {'Nspins': 12, 'indexing': True, 'group_by_N': 2, 'text_kws': {'text_color': self.Cdict[self.P]}},
                                self.T: {'Nspins': 8, 'group_by_N': 4, 'text_kws': {'text_color': self.Cdict[self.T]}},
                                self.O: {'Nspins': 4, 'text_kws': {'text_color': self.Cdict[self.O]}}
                                },
-                     after_header=[gui_but.GraphButton('Button_Burn', 'RESET_BODY',
-                                               tooltip='Reset to the initial body.'),
-                                   gui_but.GraphButton('Globe_Active', 'NEW_BODY',
-                                               tooltip='Create a new body.All drawn items will be erased.')])
+                             after_header=[gui_aux.GraphButton('Button_Burn', 'RESET_BODY',
+                                                               tooltip='Reset to the initial body.'),
+                                           gui_aux.GraphButton('Globe_Active', 'NEW_BODY',
+                                                               tooltip='Create a new body.All drawn items will be erased.')])
         c.update(c1.get_subdicts())
-        col1 = gui_fun.gui_col([sl, c1], x_frac=0.3, as_pane=True, pad=(10, 10))
-        g1 = gui_el.GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
+        col1 = gui_aux.gui_col([sl, c1], x_frac=0.3, as_pane=True, pad=(10, 10))
+        g1 = gui_aux.GraphList(self.name, tab=self, graph=True, canvas_size=self.canvas_size, canvas_kws={
             'graph_bottom_left': (0, 0),
             'graph_top_right': self.canvas_size,
             'change_submits': True,
             'drag_submits': True,
             'background_color': 'white',
         })
-        col2 = sg.Col([g1.canvas.get_layout(as_pane=True, pad=(0, 10))[0]], **gui_fun.col_kws)
+        col2 = sg.Col([g1.canvas.get_layout(as_pane=True, pad=(0, 10))[0]], **gui_aux.col_kws)
         l = [[col1, col2]]
         self.graph = g1.canvas_element
 

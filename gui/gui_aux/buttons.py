@@ -4,7 +4,7 @@ import webbrowser
 import PySimpleGUI as sg
 
 from lib import reg
-from gui.aux import functions as gui_fun
+from gui import gui_aux
 
 
 sg.theme('LightGreen')
@@ -81,7 +81,7 @@ def named_bool_button(name, state, toggle_name=None, text_kws={}, **kwargs):
 class GraphButton(sg.Button):
     def __init__(self, name, key,from_bs64=True, **kwargs):
         if from_bs64 :
-            from gui.aux import graphics
+            from gui.gui_aux import graphics
             bs64 = getattr(graphics, name)
             super().__init__(image_data=bs64, k=key, **b_kws, **kwargs)
         else :
@@ -100,7 +100,7 @@ class BoolButton(sg.Button):
         self.state = state
         self.disabled = disabled
         super().__init__(image_data=self.get_image(self.state, self.disabled), k=f'TOGGLE_{self.name}',
-                         metadata=BtnInfo(state=self.state), **gui_fun.b6_kws, **b_kws, **kwargs)
+                         metadata=BtnInfo(state=self.state), **gui_aux.b6_kws, **b_kws, **kwargs)
 
     def toggle(self):
         if not self.disabled:
@@ -117,7 +117,7 @@ class BoolButton(sg.Button):
         self.update(image_data=self.get_image(self.state, self.disabled))
 
     def get_image(self, state, disabled):
-        from gui.aux import graphics
+        from gui.gui_aux import graphics
         if not disabled:
             image = graphics.on_image if state else graphics.off_image
         else:
@@ -147,10 +147,10 @@ class ClickableImage(sg.Button):
 
 
 def color_pick_layout(name, color=None, show_text=False):
-    t = [sg.T('', **gui_fun.t_kws(5)), sg.T('color', **gui_fun.t_kws(5))] if show_text else []
+    t = [sg.T('', **gui_aux.t_kws(5)), sg.T('color', **gui_aux.t_kws(5))] if show_text else []
     return [*t,
             sg.Combo(list(color_map.keys()), default_value=color, k=f'{name}_color', enable_events=True, readonly=False,
-                     **gui_fun.t_kws(10)),
+                     **gui_aux.t_kws(10)),
             GraphButton('Button_Color_Circle', f'PICK {name}_color', button_type=sg.BUTTON_TYPE_COLOR_CHOOSER,
                         target=f'{name}_color', enable_events=True)]
 

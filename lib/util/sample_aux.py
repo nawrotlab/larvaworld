@@ -337,9 +337,6 @@ def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color=
     s, e = sim_multi_agents(Nticks, Nids, ms, dataset_id, dt=dt, ids=ids, p0s=p0s, fo0s=fo0s)
 
     d.set_data(step=s, end=e)
-    # print(d.config.agent_ids)
-    # print(d.step_data.index.unique('AgentID').values)
-    # print(d.endpoint_data.index.values)
     if enrichment:
         d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'], bout_annotation=bout_annotation,
                       store=dir is not None,

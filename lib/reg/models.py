@@ -750,7 +750,7 @@ class ModelRegistry:
                  colWidths=[0.35, 0.1, 0.25, 0.15],**kwargs):
         from lib.plot.table import conf_table
         if m is None :
-            m = self.ct.loadConf(mID)
+            m = reg.loadConf('Model', mID)
         df = self.mIDtable_data(m, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
         df.index = arrange_index_labels(df.index)
@@ -833,11 +833,11 @@ class ModelRegistry:
 
     def newConf(self, m0=None, mID0=None, mID=None, kwargs={}):
         if m0 is None:
-            m0 = self.ct.loadConf(id=mID0)
+            m0 = reg.loadConf('Model', mID0)
         T0 = m0.get_copy()
         conf = T0.update_nestdict(kwargs)
         if mID is not None:
-            self.ct.saveConf(conf=conf, id=mID)
+            reg.saveConf('Model',conf=conf, id=mID)
         return conf
 
     def autogenerate_confs(self):
@@ -879,8 +879,8 @@ class ModelRegistry:
                 # mID0s.append(mID0)
                 # m0s.append(entries[mID0])
                 for mm in [f'{mID0}_avg', f'{mID0}_var', f'{mID0}_var2']:
-                    if mm in self.ct.ConfIDs:
-                        mID0dic[mm] = self.ct.loadConf(mm)
+                    if mm in reg.storedConf('Model'):
+                        mID0dic[mm] = reg.loadConf('Model', mm)
                         # mID0s.append(mm)
                         # m0s.append(self.loadConf(mm))
 
@@ -1012,7 +1012,7 @@ class ModelRegistry:
         if dIDs is None:
             dIDs = mIDs
         if ms is None:
-            ms = [self.ct.loadConf(mID) for mID in mIDs]
+            ms = [reg.loadConf('Model', mID) for mID in mIDs]
         ms = [m.flatten() for m in ms]
         ks = aux.unique_list(aux.flatten_list([list(m.keys()) for m in ms]))
 
@@ -1106,7 +1106,7 @@ class ModelRegistry:
             e, c = d.endpoint_data, d.config
         if save_to is None:
             save_to = reg.datapath('GAoptimization', c.dir)
-        m0 = self.ct.loadConf(mID0)
+        m0 = reg.loadConf('Model', mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
         if 'intermitter' not in space_mkeys:
@@ -1114,7 +1114,7 @@ class ModelRegistry:
                                                                  conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
 
-        self.ct.saveConf(conf=m0, id=mID)
+        reg.saveConf('Model', conf=m0, id=mID)
 
         from lib.sim.ga_launcher import optimize_mID
         entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys, dt=c.dt, refID=refID,
@@ -1188,7 +1188,7 @@ def epar(e, k=None, par=None, average=True, Nround=2):
 
 
 
-model = ModelRegistry(reg.conf0.dict["Model"])
+model = ModelRegistry(reg.conf.Model)
 
 
 

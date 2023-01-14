@@ -73,7 +73,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
     kws['ga_build_kws'] = reg.get_null('ga_build_kws', **build_kws, **build)
     kws.update(kwargs)
 
-    conf = reg.get_null('GAconf', **kws)
+    conf = reg.get_null('Ga', **kws)
     return {name: conf}
 
 

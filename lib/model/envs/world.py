@@ -8,7 +8,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from lib.screen.drawing import ScreenManager
 
 from lib.model.envs.base_world import BaseWorld
-from lib.sim.conditions import get_exp_condition
+from lib.model.envs.conditions import get_exp_condition
 
 class World(BaseWorld):
 

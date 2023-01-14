@@ -322,7 +322,7 @@ class GaussianValueLayer(ValueLayer):
 
 class DiffusionValueLayer(ValueLayer):
 
-    def __init__(self, dt, scaling_factor, evap_const, gaussian_sigma, **kwargs):
+    def __init__(self, evap_const, gaussian_sigma, **kwargs):
         super().__init__(**kwargs)
         '''
             A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/sigma           
@@ -335,7 +335,7 @@ class DiffusionValueLayer(ValueLayer):
             Doing the math, sigma ends up reeeeally small
         '''
         D = 10 ** -6
-        cell_width, cell_height = self.x / scaling_factor, self.y / scaling_factor
+        cell_width, cell_height = self.x / self.model.scaling_factor, self.y / self.model.scaling_factor
         # rad_x, rad_y = D * dt / cell_width, D * dt / cell_height
         # temp = 10 ** 5
         # sigma = int(rad_x * temp), int(rad_y * temp)

@@ -50,7 +50,7 @@ def Env_dict() :
         if o is not None:
             kws['odor'] = o
 
-        return reg.group.dict.SourceGroup.entry(id=id, **kws)
+        return reg.group.SourceGroup.entry(id=id, **kws)
 
 
     def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):
@@ -115,7 +115,7 @@ def Env_dict() :
             w = reg.get_null('windscape', **w)
         if th is not None:
             th = reg.get_null('thermoscape', **th)
-        return reg.get_null('env_conf', arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,
+        return reg.get_null('Env', arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,
                              thermoscape=th)
 
 
