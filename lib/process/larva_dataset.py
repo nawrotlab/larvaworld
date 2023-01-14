@@ -10,7 +10,6 @@ import warnings
 from lib import reg, aux, decorators
 from lib.aux import naming as nam
 
-from lib.process.annotation import annotate
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
@@ -315,8 +314,25 @@ class _LarvaDataset:
         if is_last:
             self.save()
 
+    def annotate(self, keys=[], store=True,is_last=False,**kwargs):
+        cc = {
+            # 'is_last': False,
+            'd': self,
+            's': self.step_data,
+            'e': self.endpoint_data,
+            'c': self.config,
+            'store': store,
+            **kwargs
+        }
+        for k in keys:
+            func = reg.funcs.annotating[k]
+            func(**cc)
 
-    def _enrich(self,pre_kws={}, proc_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True, bout_annotation=True,
+        if is_last:
+            self.save()
+
+
+    def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True,
                 store=False, **kwargs):
 
 
@@ -337,20 +353,21 @@ class _LarvaDataset:
             self.preprocess(pre_kws=pre_kws, **cc0)
 
             self.process(proc_keys, **cc)
+            self.annotate(anot_keys, **cc)
 
-            if bout_annotation :
-                annotate(d=self, store=store, **kwargs)
+
 
             if is_last:
                 self.save()
             return self
 
 
-    def enrich(self, metric_definition=None, preprocessing={}, processing={}, **kwargs):
+    def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={}, **kwargs):
         proc_keys=[k for k, v in processing.items() if v]
+        anot_keys=[k for k, v in annotation.items() if v]
         self.config.metric_definition=update_metric_definition(md=metric_definition,mdconf=self.config.metric_definition)
 
-        return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys, **kwargs)
+        return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,anot_keys=anot_keys, **kwargs)
 
 
 

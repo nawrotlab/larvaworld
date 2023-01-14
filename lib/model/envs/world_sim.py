@@ -4,10 +4,8 @@ import numpy as np
 import pandas as pd
 from mesa.datacollection import DataCollector
 
-import lib.util.sample_aux
 import lib.process.building
-from lib import reg, aux
-from lib.util import sample_aux
+from lib import reg, aux, util
 from lib.model.envs.world import World
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import TargetedDataCollector
@@ -23,7 +21,7 @@ class WorldSim(World):
         self.larva_groups = aux.AttrDict(larva_groups)
         self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
 
-        agentConfs= lib.util.sample_aux.generate_agentConfs(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
+        agentConfs= util.generate_agentConfs(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
         for conf in agentConfs:
             l = self.add_larva(**conf)
 
@@ -43,7 +41,7 @@ class WorldSim(World):
             'refID': gConf.sample,
             'Nids': 1,
         }
-        pars, refID = sample_aux.sampleRef(**kws)
+        pars, refID = util.sampleRef(**kws)
 
         conf = {
             'pos': pos,

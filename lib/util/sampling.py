@@ -199,10 +199,9 @@ def generate_agentConfs(larva_groups, parameter_dict={}):
 
 
 def generate_sourceConfs(groups={}, units={}) :
-    from lib.aux import xy
     confs = []
     for gID, gConf in groups.items():
-        ps = xy.generate_xy_distro(**gConf.distribution)
+        ps = aux.generate_xy_distro(**gConf.distribution)
         for i, p in enumerate(ps):
             conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
             confs.append(conf)
@@ -312,8 +311,7 @@ def sim_multi_agents(Nticks, Nids, ms, group_id, dt=0.1, ids=None, p0s=None, fo0
 
 
 def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color='blue', dataset_id=None, tor_durs=[],
-                      dsp_starts=[0], dsp_stops=[40],
-                      bout_annotation=True, enrichment=True, refID=None, Nids=1, ids=None, p0s=None, fo0s=None,
+                      dsp_starts=[0], dsp_stops=[40],enrichment=True, refID=None, Nids=1, ids=None, p0s=None, fo0s=None,
                       **kwargs):
     Nticks = int(dur * 60 / dt)
     if dataset_id is None:
@@ -338,7 +336,8 @@ def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color=
 
     d.set_data(step=s, end=e)
     if enrichment:
-        d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'], bout_annotation=bout_annotation,
+        d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'],
+                      anot_keys=['bout_detection', 'bout_distribution', 'interference'],
                       store=dir is not None,
                       dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
 

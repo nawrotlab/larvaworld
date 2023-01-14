@@ -2,6 +2,9 @@ import math
 import os
 import numpy as np
 import imageio
+
+import lib.aux.xy
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -377,7 +380,7 @@ class InputBox(ScreenItem):
         if self.visible:
             if self.agent is not None:
                 if screen_pos is None :
-                    screen_pos=self.agent.model.space2screen_pos(self.agent.get_position())
+                    screen_pos= lib.aux.xy.space2screen_pos(self.agent.get_position())
                 self.set_shape(screen_pos)
                 # try :
                 #     self.set_shape(self.agent.model.screen_manager.space2screen_pos(self.agent.get_position()))
@@ -593,45 +596,6 @@ class SimulationState(ScreenItem):
 
     def set_text(self, text):
         self.text = text
-
-
-def draw_trajectories(space_dims, agents, screen, decay_in_ticks=None, traj_color=None):
-    trajs = [fly.trajectory for fly in agents]
-    if traj_color is not None:
-        traj_cols = [traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
-    else:
-        traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
-
-    if decay_in_ticks is not None:
-        trajs = [t[-decay_in_ticks:] for t in trajs]
-        traj_cols = [t[-decay_in_ticks:] for t in traj_cols]
-
-    for fly, traj, traj_col in zip(agents, trajs, traj_cols):
-        # This is the case for simulated larvae where no values are np.nan
-        if not np.isnan(traj).any():
-            parsed_traj = [traj]
-            parsed_traj_col = [traj_col]
-        elif np.isnan(traj).all():
-            continue
-        # This is the case for larva trajectories derived from experiments where some values are np.nan
-        else:
-            traj_x = np.array([x for x, y in traj])
-            ds, de = aux.parse_array_at_nans(traj_x)
-            parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
-            parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
-
-        for t, c in zip(parsed_traj, parsed_traj_col):
-            # If trajectory has one point, skip
-
-            if len(t) < 2:
-                pass
-            else:
-                if traj_color is None:
-                    screen.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * space_dims[0])
-                else:
-                    c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
-                    c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
-                    screen.draw_polyline(t, color=c, closed=False, width=0.01 * space_dims[0], dynamic_color=True)
 
 
 def blit_text(surface, text, pos, font=None, color=pygame.Color('white')):

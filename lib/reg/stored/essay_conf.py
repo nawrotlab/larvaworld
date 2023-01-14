@@ -329,8 +329,7 @@ class DoublePatch_Essay(Essay):
                  arena_dims=(0.24, 0.24), patch_x=0.06,patch_radius=0.025,
                  **kwargs):
         super().__init__(N=N,type='DoublePatch', enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                                   bouts=['stride', 'pause', 'turn'],
-                                                                   fits=False, interference=False, on_food=True),
+                                                                   anot=['bout_detection', 'patch_residency']),
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
         self.arena_dims = arena_dims
         self.patch_x = patch_x
@@ -475,7 +474,7 @@ class Chemotaxis_Essay(Essay):
     def __init__(self, dur=5.0, gain=300.0, mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
                          enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                               bouts=[], fits=False, interference=False, on_food=False),
+                                               anot=['bout_detection', 'source_attraction']),
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']
         self.dur = dur

@@ -11,7 +11,7 @@ from gui import gui_aux, tabs
 def build_tab_dict():
     tab_dict = {
         'intro': (tabs.IntroTab, None, None, 'introduction'),
-        'model': (tabs.ModelTab, 'Model', 'model_conf', 'larva-model'),
+        'model': (tabs.ModelTab, 'Model', 'Model', 'larva-model'),
         'life': (tabs.LifeTab, 'Life', 'Life', 'life-history'),
         'sim': (tabs.SimTab, 'Exp', 'Exp', 'simulation'),
         'batch': (tabs.BatchTab, 'Batch', 'Batch', 'batch-exec'),

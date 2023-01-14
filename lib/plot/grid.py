@@ -339,8 +339,7 @@ def result_summary(datasets, target, **kwargs):
 def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from lib.plot.traj import track_annotated
     if d is None:
-        from lib.util.sample_aux import sim_model
-        d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
+        d = util.sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
     kws0 = aux.AttrDict({
         'datasets': [d],
         # 'labels' : [d],

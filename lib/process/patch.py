@@ -73,8 +73,8 @@ def comp_patch_metrics(s, e, **kwargs):
     e[f'handedness_score_{on}'] = e[f"{aux.nam.num('Lturn')}_{on}"] / e[f"{aux.nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{aux.nam.num('Lturn')}_{off}"] / e[f"{aux.nam.num('turn')}_{off}"]
 
-
-def comp_patch(s, e, c):
+@reg.funcs.annotation("source_attraction")
+def comp_bearing_to_source(s, e, c, **kwargs):
     for b in ['stride', 'pause', 'turn']:
         try:
             comp_chunk_bearing(s, c, chunk=b)
@@ -84,8 +84,8 @@ def comp_patch(s, e, c):
         except:
             pass
 
-@reg.funcs.annotation("on_food")
-def comp_on_food(s, e, c):
+@reg.funcs.annotation("patch_residency")
+def comp_time_on_patch(s, e, c, **kwargs):
     on = 'on_food'
     if on in s.columns and aux.nam.dur_ratio(on) in e.columns:
         comp_patch_metrics(s, e)

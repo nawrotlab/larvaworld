@@ -7,7 +7,6 @@ from lib import reg, aux
 class GraphRegistry:
     def __init__(self):
         self.dict = reg.funcs.graphs
-        # self.graphgroups=dNl.AttrDict()
 
     def get(self, f):
         if isinstance(f, str):
@@ -66,7 +65,7 @@ class GraphRegistry:
 
     @property
     def graphgroups(self):
-        from lib.reg.stored import analysis_dict
+        from lib.reg.stored.analysis_conf import analysis_dict
         return analysis_dict
 
     def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):

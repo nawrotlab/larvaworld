@@ -10,7 +10,8 @@ from lib.aux.par_aux import bar, wave, subsup, sub, sup, th, Delta, dot, circled
 from lib import reg, aux, util
 
 
-
+proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
+anot_type_keys = ['bout_detection', 'bout_distribution', 'interference', 'source_attraction', 'patch_residency']
 
 
 def get_default(d,key='v') :
@@ -414,10 +415,9 @@ def buildInitDict():
         return d
 
     def enrConfs():
-        proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
-        to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
-                        'turn',
-                        'unused']
+        # to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
+        #                 'turn',
+        #                 'unused']
         d = aux.AttrDict()
 
         d['ang_definition'] = {
@@ -482,13 +482,17 @@ def buildInitDict():
         }
         d['processing'] = {t: {**bT, 'h': f'Whether to apply {t} processing'} for t in proc_type_keys}
         d['annotation'] = {
-            **{b: {**bF, 'h': f'Whether to annotate {b} epochs'} for b in ['stride', 'pause', 'turn']},
-            'on_food': {**bF, 'h': f'Whether to compute patch residency'},
+            # **{b: {**bF, 'h': f'Whether to annotate {b} epochs'} for b in ['stride', 'pause', 'turn']},
+            'bout_detection': {**bT, 'h': f'Whether to detect epochs'},
+            'bout_distribution': {**bT, 'h': f'Whether to fit distributions to epoch durations'},
             'interference': {**bT, 'h': f'Whether to compute interference'},
-            'fits': {**bT, 'h': f'Whether to fit epochs'}}
-        d['to_drop'] = {kk: {**bF, 'h': f'Whether to drop {kk} parameters'} for kk in to_drop_keys}
+            'source_attraction': {**bF, 'h': f'Whether to compute bearing to sources'},
+            'patch_residency': {**bF, 'h': f'Whether to compute patch residency'},
+            # 'fits': {**bT, 'h': f'Whether to fit epochs'}
+        }
+        # d['to_drop'] = {kk: {**bF, 'h': f'Whether to drop {kk} parameters'} for kk in to_drop_keys}
         d['enrichment'] = {**{k: d[k] for k in
-                              ['metric_definition', 'preprocessing', 'processing', 'annotation', 'to_drop']},
+                              ['metric_definition', 'preprocessing', 'processing', 'annotation']},
                            'recompute': {**bF, 'h': f'Whether to recompute'},
                            'mode': {'dtype': str, 'v': 'minimal', 'vs': ['minimal', 'full'],
                                     'h': f'The processing modee'}
@@ -1037,7 +1041,6 @@ def buildInitDict():
             'Box2D_params': d['Box2D_params'],
         }
 
-        d['model_conf'] = d['Model']
 
         return d
 
@@ -1360,32 +1363,29 @@ class ParamRegistry:
                              spatial=self.get_null('spatial_definition', **sp),
                              **kwargs)
 
-    def oG(self, c=1, id='Odor'):
-        return self.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+    # def oG(self, c=1, id='Odor'):
+    #     return self.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+    #
+    # def oD(self, c=1, id='Odor'):
+    #     return self.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
 
-    def oD(self, c=1, id='Odor'):
-        return self.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
-
-    def arena(self, x, y=None):
-        if y is None:
-            return self.get_null('arena', arena_shape='circular', arena_dims=(x, x))
-        else:
-            return self.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
+    # def arena(self, x, y=None):
+    #     if y is None:
+    #         return self.get_null('arena', arena_shape='circular', arena_dims=(x, x))
+    #     else:
+    #         return self.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
 
 
 
-    def enr_dict(self, proc=[], bouts=[], to_keep=[], pre_kws={}, fits=True, on_food=False, interference=True,
+    def enr_dict(self, proc=[], anot=[], pre_kws={},
                  def_kws={}, metric_definition=None, **kwargs):
-        to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn', 'turn',
-                        'unused']
-        proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
-
         kw_dic0={
             'preprocessing' : pre_kws,
             'processing' : {k: True if k in proc else False for k in proc_type_keys},
-            'annotation' : {**{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']},
-                               **{'fits': fits, 'on_food': on_food,'interference': interference}},
-            'to_drop' : {k: True if k not in to_keep else False for k in to_drop_keys},
+            'annotation' : {k: True if k in anot else False for k in anot_type_keys},
+            # 'annotation' : {**{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']},
+            #                    **{'fits': fits, 'on_food': on_food,'interference': interference}},
+            # 'to_drop' : {k: True if k not in to_keep else False for k in to_drop_keys},
                 }
         kws={k:self.get_null(k,**v) for k,v in kw_dic0.items()}
 
@@ -1397,8 +1397,8 @@ class ParamRegistry:
 
     def base_enrich(self, **kwargs):
         return self.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                             bouts=['stride', 'pause', 'turn'],
-                             to_keep=['midline', 'contour'], **kwargs)
+                             anot=['bout_detection', 'bout_distribution', 'interference'],
+                             **kwargs)
 
     def build(self, in_rad=True, in_m=True):
         self.dict = aux.AttrDict()

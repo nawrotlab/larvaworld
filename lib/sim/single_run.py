@@ -60,13 +60,11 @@ class SingleRun:
 
 
     def store(self):
-        from lib.aux.stor_aux import storeH5
-        from lib.aux.dictsNlists import storeSoloDics
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
-                storeSoloDics(vs, path=reg.datapath(type, d.dir), use_pickle=False)
-            storeH5(df=d.larva_tables, key=None, path=reg.datapath('tables', d.dir))
+                aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
+            aux.storeH5(df=d.larva_tables, key=None, path=reg.datapath('tables', d.dir))
 
 
     def analyze(self, save_to=None, **kwargs):
@@ -86,7 +84,7 @@ class SingleRun:
 
         if 'disp' in exp:
             samples = aux.unique_list([d.config.sample for d in ds])
-            ds += [reg.loadRef(sd) for sd in samples]
+            ds += [reg.loadRef(sd) for sd in samples if sd is not None]
 
         kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         sources = self.source_xy

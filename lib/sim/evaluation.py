@@ -21,7 +21,7 @@ from lib import reg, aux, plot, util
 
 class EvalRun(BaseRun):
     def __init__(self, refID, eval_metrics=None, N=5, dur=None,
-                 bout_annotation=True, modelIDs=None, dataset_ids=None,
+                 modelIDs=None, dataset_ids=None,
                  enrichment=True, norm_modes=['raw', 'minmax'], eval_modes=['pooled'],
                  offline=False, **kwargs):
         super().__init__(runtype='eval', experiment=refID,analysis=True, **kwargs)
@@ -50,7 +50,6 @@ class EvalRun(BaseRun):
 
 
         self.enrichment = enrichment
-        self.bout_annotation = bout_annotation
         self.exp_conf = self.prepare_exp_conf(dur=dur)
 
 
@@ -101,9 +100,6 @@ class EvalRun(BaseRun):
 
 
 
-        # = preg.get_null('sim_params', timestep=c.dt, duration=dur,
-        # exp_conf.sim_params = preg.get_null('sim_params', timestep=c.dt, duration=dur,sim_ID=self.id, store_data=self.store_data)
-
         if self.enrichment is None:
             exp_conf.enrichment = None
         else:
@@ -111,7 +107,6 @@ class EvalRun(BaseRun):
             exp_conf.enrichment.metric_definition.dispersion.dsp_starts = dsp_starts
             exp_conf.enrichment.metric_definition.dispersion.dsp_stops = dsp_stops
             exp_conf.enrichment.metric_definition.tortuosity.tor_durs = tor_durs
-            exp_conf.enrichment.bout_annotation = self.bout_annotation
 
         if video:
             vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
@@ -357,7 +352,7 @@ class EvalRun(BaseRun):
 
             self.datasets += util.sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=self.tor_durs,
                                         dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
-                                        dataset_ids=self.dataset_ids, bout_annotation=self.bout_annotation,
+                                        dataset_ids=self.dataset_ids,
                                         enrichment=self.enrichment,
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir)
@@ -382,8 +377,7 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enric
         # save_to = reg.datapath('evaluation', reg.retrieveRef(refID).dir)
     # from lib.sim.eval.evaluation import EvalRun
     evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
-                    save_to=save_to,
-                    bout_annotation=True, enrichment=enrichment, show=False, offline=offline, **kwargs)
+                    save_to=save_to,enrichment=enrichment, show=False, offline=offline, **kwargs)
     #
     evrun.run(video=False, dur=dur)
     evrun.eval()

@@ -1,6 +1,6 @@
-from lib.registry import reg
+from lib import reg, util
+
 from lib.sim.evaluation import EvalRun
-from lib.util.eval_aux import GA_optimization
 
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'
@@ -39,7 +39,7 @@ def adapt_models(mIDs=mIDs,refIDs=refIDs,mID0 = 'RE_NEU_PHI_DEF_nav',space_mkeys
         entry = reg.Dic.MD.adapt_mID(refID=refID, mID0=mID0, mID=mID, space_mkeys=space_mkeys,
                             init=init, show_screen=True,
                             save_to=f'{save_to}/GA/{mID}', Nagents=50, Nelits=5, Ngenerations=10, dur=0.4,
-                            fit_dict=GA_optimization(fitness_target_refID=refID, **kws))
+                            fit_dict=util.GA_optimization(fitness_target_refID=refID, **kws))
         entries.update(entry)
     return entries
 
@@ -53,7 +53,7 @@ def eval_models(mIDs=mIDs,dataset_ids=dIDs,refIDs=refIDs,save_to=save_to,rerun=F
     for refID in refIDs:
         id = f'{refID}_eval_models'
         evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dataset_ids, N=10, save_to=save_to,
-                        bout_annotation=True, enrichment=True, show=False, offline=False)
+                        enrichment=True, show=False, offline=False)
         if len(evrun.datasets) == 0 or rerun:
             evrun.run(video=False)
             evrun.eval()

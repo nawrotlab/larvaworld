@@ -26,23 +26,25 @@ def register_bout_distros(c,e):
 
 
 
-def annotate(d, interference=True, on_food=True, store=True, **kwargs) :
-    # from lib.util.fitting import fit_epochs, get_bout_distros
-    from lib.process import patch
-    s, e ,c= d.step_data, d.endpoint_data,d.config
-
-    d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store)
-
-    turn_mode_annotation(e, d.chunk_dicts)
-    patch.comp_patch(s, e, c)
-    if interference:
-        d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts)
-        d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
-        d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
-        c.bout_distros = util.get_bout_distros(d.pooled_epochs)
-        register_bout_distros(c, e)
-    if on_food:
-        patch.comp_on_food(s, e, c)
+# def annotate(d, bout_detection = True, bout_distribution=True,interference=True,
+#              patch_residency=True,source_attraction=True,  store=True, **kwargs) :
+#     from lib.process import patch
+#     s, e ,c= d.step_data, d.endpoint_data,d.config
+#
+#     if bout_detection:
+#         d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store)
+#         turn_mode_annotation(e, d.chunk_dicts)
+#     if bout_distribution:
+#         d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
+#         d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
+#         c.bout_distros = util.get_bout_distros(d.pooled_epochs)
+#         register_bout_distros(c, e)
+#     if interference:
+#         d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts)
+#     if source_attraction:
+#         patch.comp_bearing_to_source(s, e, c)
+#     if patch_residency:
+#         patch.comp_time_on_patch(s, e, c)
 
 
 def process_epochs(a, epochs, dt, return_idx=True):
@@ -288,12 +290,24 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
+def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False, **kwargs):
     aux.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
     chunk_dicts = aux.AttrDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
     return chunk_dicts
+
+@reg.funcs.annotation("bout_distribution")
+def bout_distribution(s, e, c, d, **kwargs) :
+    d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
+    d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
+    c.bout_distros = util.get_bout_distros(d.pooled_epochs)
+    register_bout_distros(c, e)
+
+@reg.funcs.annotation("bout_detection")
+def bout_detection(s, e, c, d, store=False, **kwargs):
+    d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
+    turn_mode_annotation(e, d.chunk_dicts)
 
 
 def stride_interp(a, strides, Nbins=64):
@@ -340,6 +354,10 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     return aux.AttrDict(dic)
 
 @reg.funcs.annotation("interference")
+def compute_interference_data(s, e, c, d, Nbins=64, **kwargs) :
+    d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, Nbins=Nbins)
+
+@reg.funcs.annotation("interference2")
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     x = np.linspace(0, 2 * np.pi, Nbins)
 
@@ -406,7 +424,7 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     c.pooled_cycle_curves = pooled_curves
     return cycle_curves
 
-
+@reg.funcs.annotation("turn_mode")
 def turn_mode_annotation(e, chunk_dicts):
     wNh = {}
     wNh_ps = ['weathervane_q25_amp', 'weathervane_q75_amp', 'headcast_q25_amp', 'headcast_q75_amp']

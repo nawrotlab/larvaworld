@@ -7,8 +7,7 @@ import pandas as pd
 import progressbar
 import numpy as np
 
-from lib.util.eval_aux import GA_optimization
-from lib import reg, aux
+from lib import reg, aux, util
 
 
 class GAselector:
@@ -217,7 +216,7 @@ class GAbuilder(GAselector):
         else :
             if fit_dict is None :
                 if fitness_target_refID is not None:
-                    fit_dict=GA_optimization(fitness_target_refID, fitness_target_kws)
+                    fit_dict=util.GA_optimization(fitness_target_refID, fitness_target_kws)
                 else :
                     fit_dict = arrange_fitness(fitness_func,source_xy=self.model.source_xy)
             self.fit_dict =fit_dict

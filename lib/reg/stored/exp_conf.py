@@ -49,8 +49,7 @@ def grouped_exp_dic():
         }
 
         if en:
-            kw['enrichment'] = enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                                             bouts=['stride', 'pause', 'turn'])
+            kw['enrichment'] = reg.par.base_enrich()
         kw.update(kwargs)
 
         if not as_entry:
@@ -63,8 +62,8 @@ def grouped_exp_dic():
 
     def chem_exp(name, c=['olfactor'], dur=5.0, **kwargs):
         return exp(name, sim={'duration': dur}, c=c,
-                   enrichment=enr_dict(proc=['spatial', 'angular', 'source'], bouts=['stride', 'pause', 'turn'],
-                                            fits=False), **kwargs)
+                   enrichment=enr_dict(proc=['spatial', 'angular', 'source'],
+                                       anot=['bout_detection', 'source_attraction']), **kwargs)
 
 
     def food_exp(name, c=['feeder'], dur=10.0, en=True, **kwargs):
@@ -86,7 +85,8 @@ def grouped_exp_dic():
 
 
     def anemo_exp(name, dur=5.0, c=['wind'], en=False, **kwargs):
-        return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs)
+        return exp(name, sim={'duration': dur}, c=c, en=en,
+                   enrichment=enr_dict(proc=['spatial', 'angular', 'wind']), **kwargs)
 
 
     def thermo_exp(name, dur=10.0, c=['thermo'], en=False, enrichment=None, **kwargs):
@@ -95,8 +95,7 @@ def grouped_exp_dic():
 
     def chemanemo_exp(name, dur=5.0, c=['olfactor', 'wind'], en=False,
                       enrichment=enr_dict(proc=['spatial', 'angular', 'source', 'wind'],
-                                               bouts=['stride', 'pause', 'turn'],
-                                               fits=False), **kwargs):
+                                               anot=['bout_detection', 'source_attraction']), **kwargs):
         return exp(name, sim={'duration': dur}, c=c, en=en, enrichment=enrichment, **kwargs)
 
 
@@ -184,7 +183,7 @@ def grouped_exp_dic():
                                                                                   ids=['Orco', 'RL'], N=5,
                                                                                   mode='uniform',
                                                                                   shape='rectangular', s=0.04),
-                                    enrichment=enr_dict(proc=['spatial'], bouts=[]), en=False),
+                                    enrichment=enr_dict(proc=['spatial']), en=False),
             'uniform_food': food_exp('uniform_food', l=lg(m='Orco_forager', N=5, s=0.005)),
             'food_grid': food_exp('food_grid', l=lg(m='Orco_forager', N=25)),
             'single_odor_patch': food_exp('single_odor_patch',
@@ -193,8 +192,8 @@ def grouped_exp_dic():
             'single_odor_patch_x4': food_exp('single_odor_patch', l=lgs_x4()),
             'double_patch': food_exp('double_patch', l=GTRvsS(N=5),
                                      c=['toucher', 'feeder', 'olfactor'],
-                                     enrichment=enr_dict(proc=['spatial', 'angular', 'source'], interference=False,
-                                                         on_food=True, fits=False), en=False),
+                                     enrichment=enr_dict(proc=['spatial', 'angular', 'source'],
+                                                         anot=['bout_detection', 'patch_residency']), en=False),
             'tactile_detection': food_exp('single_patch', dur=5.0, c=['toucher'],
                                           l=lg(m='toucher', N=15, mode='periphery', s=0.03), en=False),
             'tactile_detection_x3': food_exp('single_patch', dur=600.0, c=['toucher'],

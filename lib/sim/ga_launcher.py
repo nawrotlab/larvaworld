@@ -8,7 +8,6 @@ import numpy as np
 
 from lib import reg, aux
 from lib.screen.rendering import  Viewer
-from lib.screen.screen_aux import get_arena_bounds
 from lib.sim.base import BaseRun
 from lib.sim.ga_engine import GAbuilder
 from lib.model.envs.base_world import BaseWorld
@@ -196,7 +195,7 @@ class GAlauncher(BaseGAlauncher):
     def initialize(self, **kwargs):
         self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
                                            panel_width=self.SIDE_PANEL_WIDTH,
-                                           space_bounds=get_arena_bounds(self.arena_dims, self.scaling_factor))
+                                           space_bounds=aux.get_arena_bounds(self.arena_dims, self.scaling_factor))
 
         self.engine = GAbuilder(viewer=self.viewer, model=self, **kwargs)
         if self.show_screen:
@@ -241,7 +240,7 @@ class GAlauncher(BaseGAlauncher):
 
     def init_scene(self):
         self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
-                                           panel_width=self.SIDE_PANEL_WIDTH, space_bounds = get_arena_bounds(self.arena_dims, self.scaling_factor))
+                                           panel_width=self.SIDE_PANEL_WIDTH, space_bounds = aux.get_arena_bounds(self.arena_dims, self.scaling_factor))
 
 
     def increase_scene_speed(self):
