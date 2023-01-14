@@ -155,17 +155,7 @@ def color_pick_layout(name, color=None, show_text=False):
                         target=f'{name}_color', enable_events=True)]
 
 
-def bs64_to_png(bs64, save_as=None, save_to='.'):
-    import base64
-    from PIL import Image
-    from io import BytesIO
 
-    k = Image.open(BytesIO(base64.b64decode(bs64)))
-
-    if save_as is not None:
-        f = f'{save_to}/{save_as}.png'
-        k.save(f, 'PNG')
-    return k
 
 
 color_map = {

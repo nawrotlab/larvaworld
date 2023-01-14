@@ -43,74 +43,74 @@ def table_window(data, pars_dict, title, return_layout=False):
     return Nagents, Npars, ps, w
 
 
-def gui_table(data, pars_dict, title='Agent list', sortable=False):
-    data0 = copy.deepcopy(data)
-    """
-        Another simple table created from Input Text Elements.  This demo adds the ability to "navigate" around the drawing using
-        the arrow keys. The tab key works automatically, but the arrow keys are done in the code below.
-    """
-
-    sg.change_look_and_feel('Dark Brown 2')  # No excuse for gray windows
-    # Show a "splash" mode message so the user doesn't give up waiting
-    sg.popup_quick_message('Hang on for a moment, this will take a bit to create....', auto_close=True,
-                           non_blocking=True)
-
-    Nrows, Npars, ps, w = table_window(data, pars_dict, title)
-    while True:
-        e, v = w.read()
-        if e in (None, 'Cancel'):
-            w.close()
-            return data0
-        if e == 'Ok':
-            data = get_table(v, pars_dict, Nrows)
-            w.close()
-            return data
-        elem = w.find_element_with_focus()
-        cell = elem.Key if elem and type(elem.Key) is tuple else (0, 0)
-        r, c = cell
-        try:
-            if e.startswith('Down'):
-                r = r + 1 * (r < Nrows - 1)
-            elif e.startswith('Left'):
-                c = c - 1 * (c > 0)
-            elif e.startswith('Right'):
-                c = c + 1 * (c < Npars - 1)
-            elif e.startswith('Up'):
-                r = r - 1 * (r > 0)
-        except:
-            pass
-        if sortable and e in ps:  # Perform a sort if a column heading was clicked
-            try:
-                table = [[int(v[(r, c)]) for c in range(Npars)] for r in range(Nrows)]
-                new_table = sorted(table, key=operator.itemgetter(ps.index(e)))
-            except:
-                sg.popup_error('Error in table', 'Your table must contain only ints if you wish to sort by column')
-            else:
-                for i in range(Nrows):
-                    for j in range(Npars):
-                        w[(i, j)].update(new_table[i][j])
-                [w[c].update(font='Any 14') for c in ps]  # make all column headings be normal fonts
-                w[e].update(font='Any 14 bold')  # bold the font that was clicked
-        # if the current cell changed, set focus on new cell
-        if cell != (r, c):
-            cell = r, c
-            w[cell].set_focus()  # set the focus on the element moved to
-            w[cell].update(
-                select=True)  # when setting focus, also highlight the data in the element so typing overwrites
-        if e == 'Add':
-            data = get_table(v, pars_dict, Nrows)
-            try:
-                new_row = data[r]
-            except:
-                new_row = {k: None for k in pars_dict.keys()}
-            data.append(new_row)
-            w.close()
-            Nrows, Npars, ps, w = table_window(data, pars_dict, title)
-        elif e == 'Remove':
-            data = get_table(v, pars_dict, Nrows)
-            data = [d for i, d in enumerate(data) if i != r]
-            w.close()
-            Nrows, Npars, ps, w = table_window(data, pars_dict, title)
+# def gui_table(data, pars_dict, title='Agent list', sortable=False):
+#     data0 = copy.deepcopy(data)
+#     """
+#         Another simple table created from Input Text Elements.  This demo adds the ability to "navigate" around the drawing using
+#         the arrow keys. The tab key works automatically, but the arrow keys are done in the code below.
+#     """
+#
+#     sg.change_look_and_feel('Dark Brown 2')  # No excuse for gray windows
+#     # Show a "splash" mode message so the user doesn't give up waiting
+#     sg.popup_quick_message('Hang on for a moment, this will take a bit to create....', auto_close=True,
+#                            non_blocking=True)
+#
+#     Nrows, Npars, ps, w = table_window(data, pars_dict, title)
+#     while True:
+#         e, v = w.read()
+#         if e in (None, 'Cancel'):
+#             w.close()
+#             return data0
+#         if e == 'Ok':
+#             data = get_table(v, pars_dict, Nrows)
+#             w.close()
+#             return data
+#         elem = w.find_element_with_focus()
+#         cell = elem.Key if elem and type(elem.Key) is tuple else (0, 0)
+#         r, c = cell
+#         try:
+#             if e.startswith('Down'):
+#                 r = r + 1 * (r < Nrows - 1)
+#             elif e.startswith('Left'):
+#                 c = c - 1 * (c > 0)
+#             elif e.startswith('Right'):
+#                 c = c + 1 * (c < Npars - 1)
+#             elif e.startswith('Up'):
+#                 r = r - 1 * (r > 0)
+#         except:
+#             pass
+#         if sortable and e in ps:  # Perform a sort if a column heading was clicked
+#             try:
+#                 table = [[int(v[(r, c)]) for c in range(Npars)] for r in range(Nrows)]
+#                 new_table = sorted(table, key=operator.itemgetter(ps.index(e)))
+#             except:
+#                 sg.popup_error('Error in table', 'Your table must contain only ints if you wish to sort by column')
+#             else:
+#                 for i in range(Nrows):
+#                     for j in range(Npars):
+#                         w[(i, j)].update(new_table[i][j])
+#                 [w[c].update(font='Any 14') for c in ps]  # make all column headings be normal fonts
+#                 w[e].update(font='Any 14 bold')  # bold the font that was clicked
+#         # if the current cell changed, set focus on new cell
+#         if cell != (r, c):
+#             cell = r, c
+#             w[cell].set_focus()  # set the focus on the element moved to
+#             w[cell].update(
+#                 select=True)  # when setting focus, also highlight the data in the element so typing overwrites
+#         if e == 'Add':
+#             data = get_table(v, pars_dict, Nrows)
+#             try:
+#                 new_row = data[r]
+#             except:
+#                 new_row = {k: None for k in pars_dict.keys()}
+#             data.append(new_row)
+#             w.close()
+#             Nrows, Npars, ps, w = table_window(data, pars_dict, title)
+#         elif e == 'Remove':
+#             data = get_table(v, pars_dict, Nrows)
+#             data = [d for i, d in enumerate(data) if i != r]
+#             w.close()
+#             Nrows, Npars, ps, w = table_window(data, pars_dict, title)
 
 
 def delete_objects_window(selected):

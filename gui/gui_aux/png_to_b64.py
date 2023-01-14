@@ -1,9 +1,12 @@
+import PySimpleGUI as sg
+import os
+import base64
+from PIL import Image
+from io import BytesIO
 
 def png_to_b64():
     # Base64 Encoder - encodes a folder of PNG files and creates a .py file with definitions
-    import PySimpleGUI as sg
-    import os
-    import base64
+
     '''
         Make base64 images
         input:  folder with .png .ico .gif 'sigma
@@ -34,6 +37,16 @@ def png_to_b64():
 
     outfile.close()
     sg.popup('Completed!', 'Encoded %s files'%(i+1))
+
+def bs64_to_png(bs64, save_as=None, save_to='.'):
+
+
+    k = Image.open(BytesIO(base64.b64decode(bs64)))
+
+    if save_as is not None:
+        f = f'{save_to}/{save_as}.png'
+        k.save(f, 'PNG')
+    return k
 
 if __name__ == '__main__':
     png_to_b64()

@@ -89,7 +89,7 @@ class SettingsTab(gui_aux.GuiTab):
         w[k_cur].update(disabled=True, value=v_cur)
         d0['keys'][p1][p2] = v_cur
         # d0['keys'][cur] = v_cur
-        d0['pygame_keys'][cur] = gui_aux.get_pygame_key(v_cur)
+        d0['pygame_keys'][cur] = get_pygame_key(v_cur)
         d0['cur'] = None
         reg.controls.save(d0)
 
@@ -135,6 +135,34 @@ class SettingsTab(gui_aux.GuiTab):
                 self.update_controls(v, w)
         return d, g
 
+def get_pygame_key(key):
+    pygame_keys = {
+        'BackSpace': 'BACKSPACE',
+        'tab': 'TAB',
+        'del': 'DELETE',
+        'clear': 'CLEAR',
+        'Return': 'RETURN',
+        'Escape': 'ESCAPE',
+        'space': 'SPACE',
+        'exclam': 'EXCLAIM',
+        'quotedbl': 'QUOTEDBL',
+        '+': 'PLUS',
+        'comma': 'COMMA',
+        '-': 'MINUS',
+        'period': 'PERIOD',
+        'slash': 'SLASH',
+        'numbersign': 'HASH',
+        'Down:': 'DOWN',
+        'Up:': 'UP',
+        'Right:': 'RIGHT',
+        'Left:': 'LEFT',
+        'dollar': 'DOLLAR',
+        'ampersand': 'AMPERSAND',
+        'parenleft': 'LEFTPAREN',
+        'parenright': 'RIGHTPAREN',
+        'asterisk': 'ASTERISK',
+    }
+    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
 
 if __name__ == "__main__":
     from gui.tabs.larvaworld_gui import LarvaworldGui

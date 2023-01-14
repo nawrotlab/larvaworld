@@ -15,9 +15,6 @@ class SimTab(gui_aux.GuiTab):
         self.k_stored = f'{self.name}_stored'
         self.k_active = f'{self.name}_active'
 
-        # self.k_stored_ids = f'{self.k_stored}_IDS'
-        # self.k_active_ids = f'{self.k_active}_IDS'
-
     @property
     def DL0(self):
         return self.datalists[self.k_active]
@@ -84,7 +81,6 @@ class SimTab(gui_aux.GuiTab):
     def update(self, w, c, conf, id):
 
         output_keys=list(reg.output_dict.keys())
-        # print('dd')
         c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})

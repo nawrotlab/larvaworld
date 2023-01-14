@@ -681,7 +681,7 @@ class Collapsible(HeadedElement, GuiElement):
                                      header_kws=header_kws)
             header = header_l.get_layout()
             HeadedElement.__init__(self, name=name, header=header,
-                                   content=[gui_aux.collapse(content, self.sec_key, self.state)],
+                                   content=[collapse(content, self.sec_key, self.state)],
                                    single_line=False)
         else:
             GuiElement.__init__(self, name=name, layout=content)
@@ -943,6 +943,16 @@ def combo_layout(name, title, dic, **kwargs):
         ii.append(d['fit'])
     l = [sg.Col([ii, d['mu'] + d['std'] + d['noise'], d['r']], vertical_alignment=True)]
     return [sg.Pane(l, border_width=4)]
+
+def collapse(layout, key, visible=True):
+    """
+    Helper function that creates a Column that can be later made hidden, thus appearing "collapsed"
+    :param layout: The layout for the section
+    :param key: Key used to make this seciton visible / invisible
+    :return: A pinned column that can be placed directly into your layout
+    :rtype: sg.pin
+    """
+    return sg.pin(sg.Col(layout, key=key, visible=visible))
 
 
 class CollapsibleDict(Collapsible):

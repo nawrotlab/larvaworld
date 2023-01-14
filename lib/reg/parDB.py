@@ -1363,18 +1363,6 @@ class ParamRegistry:
                              spatial=self.get_null('spatial_definition', **sp),
                              **kwargs)
 
-    # def oG(self, c=1, id='Odor'):
-    #     return self.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
-    #
-    # def oD(self, c=1, id='Odor'):
-    #     return self.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
-
-    # def arena(self, x, y=None):
-    #     if y is None:
-    #         return self.get_null('arena', arena_shape='circular', arena_dims=(x, x))
-    #     else:
-    #         return self.get_null('arena', arena_shape='rectangular', arena_dims=(x, y))
-
 
 
     def enr_dict(self, proc=[], anot=[], pre_kws={},
@@ -1382,10 +1370,7 @@ class ParamRegistry:
         kw_dic0={
             'preprocessing' : pre_kws,
             'processing' : {k: True if k in proc else False for k in proc_type_keys},
-            'annotation' : {k: True if k in anot else False for k in anot_type_keys},
-            # 'annotation' : {**{k: True if k in bouts else False for k in ['stride', 'pause', 'turn']},
-            #                    **{'fits': fits, 'on_food': on_food,'interference': interference}},
-            # 'to_drop' : {k: True if k not in to_keep else False for k in to_drop_keys},
+            'annotation' : {k: True if k in anot else False for k in anot_type_keys}
                 }
         kws={k:self.get_null(k,**v) for k,v in kw_dic0.items()}
 

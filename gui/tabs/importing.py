@@ -33,8 +33,8 @@ class ImportTab(gui_aux.GuiTab):
 
         pd2 = gui_aux.PadDict('enrichment', background_color=self.Cenr, header_width=125,
                               subconfs={'preprocessing': {'text_kws': gui_aux.t_kws(14)},
-                               # 'to_drop': {'Ncols': 2, 'text_kws': gui_aux.t_kws(9)},
                                'processing': {'Ncols': 2, 'text_kws': gui_aux.t_kws(9)},
+                               'annotation': {'Ncols': 2, 'text_kws': gui_aux.t_kws(9)},
                                'metric_definition': {'header_width': 60,'text_kws': gui_aux.t_kws(9)}}
                               )
         pd1 = gui_aux.PadDict('Tracker', background_color=self.Ctrac, text_kws=gui_aux.t_kws(8), header_width=22,

@@ -25,14 +25,14 @@ w_kws = {
     # 'border_depth': 4,
 }
 col_kws = {'vertical_alignment': 't', 'expand_x': False, 'expand_y': False}
-b_kws = {'font': ('size', 6)}
-b3_kws = {'font': ('size', 6),
-          'size': (3, 1)}
+# b_kws = {'font': ('size', 6)}
+# b3_kws = {'font': ('size', 6),
+#           'size': (3, 1)}
 b6_kws = {'font': ('size', 6),
           'size': (6, 1)}
-b12_kws = {'font': ('size', 6),
-           'size': (12, 1)}
-spin_size = {'size': (4, 1)}
+# b12_kws = {'font': ('size', 6),
+#            'size': (12, 1)}
+# spin_size = {'size': (4, 1)}
 tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
            'tab_background_color': 'lightgrey'}
 
@@ -130,8 +130,8 @@ def retrieve_value(v, t):
     return vv
 
 
-def retrieve_dict(dic, type_dic):
-    return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
+# def retrieve_dict(dic, type_dic):
+#     return {k: retrieve_value(v, type_dic[k]) for k, v in dic.items()}
 
 
 def gui_col(element_list, x_frac=0.25, y_frac=1.0, as_pane=False, pad=None, add_to_bottom=[], **kwargs):
@@ -196,43 +196,8 @@ def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False):
     return l
 
 
-def collapse(layout, key, visible=True):
-    """
-    Helper function that creates a Column that can be later made hidden, thus appearing "collapsed"
-    :param layout: The layout for the section
-    :param key: Key used to make this seciton visible / invisible
-    :return: A pinned column that can be placed directly into your layout
-    :rtype: sg.pin
-    """
-    return sg.pin(sg.Col(layout, key=key, visible=visible))
 
 
-def get_pygame_key(key):
-    pygame_keys = {
-        'BackSpace': 'BACKSPACE',
-        'tab': 'TAB',
-        'del': 'DELETE',
-        'clear': 'CLEAR',
-        'Return': 'RETURN',
-        'Escape': 'ESCAPE',
-        'space': 'SPACE',
-        'exclam': 'EXCLAIM',
-        'quotedbl': 'QUOTEDBL',
-        '+': 'PLUS',
-        'comma': 'COMMA',
-        '-': 'MINUS',
-        'period': 'PERIOD',
-        'slash': 'SLASH',
-        'numbersign': 'HASH',
-        'Down:': 'DOWN',
-        'Up:': 'UP',
-        'Right:': 'RIGHT',
-        'Left:': 'LEFT',
-        'dollar': 'DOLLAR',
-        'ampersand': 'AMPERSAND',
-        'parenleft': 'LEFTPAREN',
-        'parenright': 'RIGHTPAREN',
-        'asterisk': 'ASTERISK',
-    }
-    return f'K_{pygame_keys[key]}' if key in list(pygame_keys.keys()) else f'K_{key}'
+
+
 
