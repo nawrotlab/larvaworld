@@ -60,7 +60,7 @@ def get_ParsDict(d0):
 
 
 def build_ParsDict(dic):
-    return aux.NestDict({k: ParsArg(**v) for k, v in dic.items()})
+    return aux.AttrDict({k: ParsArg(**v) for k, v in dic.items()})
 
 
 def get_ParsDict2(d0):
@@ -104,7 +104,7 @@ class ParserDict :
 
     def build(self):
         init_dict = reg.par.PI
-        d = aux.NestDict()
+        d = aux.AttrDict()
         for name in self.names:
             d0 = init_dict[name]
             try:
@@ -124,7 +124,7 @@ class ParserDict :
         d = {}
         for name, dic in self.dict.items():
             d[name] = self.prepare(dic)
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def retrieve(self, name):
         if name in self.parser_dict.keys():

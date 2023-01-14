@@ -99,7 +99,7 @@ class LarvaBody(LarvaBody0):
         super().__init__(**kwargs)
 
 
-        from lib.conf.stored.miscellaneous import Body_dict
+        from lib.reg.stored.miscellaneous import Body_dict
 
         self.contour_points = Body_dict()[shape]['points']
         self.base_seg_vertices = aux.generate_seg_shapes(self.Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)

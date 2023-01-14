@@ -1,3 +1,6 @@
+import json
+import os
+
 from lib.aux import naming as nam
 from lib import reg, aux,process
 from lib.process.larva_dataset import LarvaDataset, update_config
@@ -53,7 +56,7 @@ def Tracker_dict():
 
     }}
 
-    return aux.NestDict({k:reg.par.null('tracker', **kws) for k,kws in dkws.items()})
+    return aux.AttrDict({k:reg.par.null('tracker', **kws) for k,kws in dkws.items()})
 
 
 @reg.funcs.stored_conf("Ref")
@@ -65,24 +68,29 @@ def Ref_dict(DATA=None):
         [f'{DATA}/JovanicGroup/processed/AttP{g}/{c}' for g
          in ['2', '240']] for c in ['Fed', 'Deprived', 'Starved']]
     dds = aux.flatten_list(dds)
-    # dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/200controls')
     dds.append(f'{DATA}/SchleyerGroup/processed/exploration/dish')
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/150controls')
-    dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/40controls')
-    dds.append(f'{DATA}/SchleyerGroup/processed/naive_locomotion/20controls')
     entries = {}
     for dr in dds:
-        try:
-            d = LarvaDataset(dr, load_data=False)
-            d.load(step=False)
-            refID=d.retrieveRefID()
-            conf=update_config(d, d.config)
-            entries[refID]=conf
-            # print(f'Added reference dataset under ID {refID}')
-        except:
+        f = reg.datapath('conf', dr)
+        if os.path.isfile(f):
+            try:
+                with open(f) as tfp:
+                    c = json.load(tfp)
+                c = aux.AttrDict(c)
+                entries[c.refID] = c
+                # print(f'Added reference dataset under ID {c.refID}')
+        # try:
+        #     d = LarvaDataset(dr, load_data=False)
+        #     d.load(step=False)
+        #     refID=d.retrieveRefID()
+        #     conf=update_config(d, d.config)
+        #     entries[refID]=conf
+            #
+            except:
             # print(f'Failed to retrieve reference dataset from path {dr}')
-            pass
-    return aux.NestDict(entries)
+                pass
+    return aux.AttrDict(entries)
 
 
 
@@ -110,12 +118,12 @@ def Group_dict():
             v_list = aux.flatten_list(vs)
             dF = dict(zip(kw_list, v_list))
             enr[k] = reg.par.null('enrichment', **dF)
-        return aux.NestDict(enr)
+        return aux.AttrDict(enr)
 
 
     tracker_dic = Tracker_dict()
     enr_dic = Enr_dict()
-    d = aux.NestDict({f'{k} lab': {'path': f'{reg.DATA_DIR}/{k}Group',
+    d = aux.AttrDict({f'{k} lab': {'path': f'{reg.DATA_DIR}/{k}Group',
                              'tracker': tr,
                              'enrichment': enr_dic[k]} for k, tr in tracker_dic.items()})
 

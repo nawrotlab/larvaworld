@@ -151,8 +151,8 @@ class GAselector:
         return gConf_a, gConf_b
 
     def new_genome(self, gConf, mConf0):
-        mConf = aux.update_nestdict(mConf0, gConf)
-        return aux.NestDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
+        mConf = mConf0.update_nestdict(gConf)
+        return aux.AttrDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
 
     def crossover(self, gConf_a, gConf_b):
         gConf={}
@@ -192,7 +192,7 @@ class GAbuilder(GAselector):
             gConf=self.M.conf(self.space_dict)
             self.gConfs=[gConf]*self.Nagents
         elif init_mode=='model':
-            mF=aux.flatten_dict(self.mConf0)
+            mF=self.mConf0.flatten()
             gConf={k:mF[k] for k,p in self.space_dict.items()}
             self.gConfs = [gConf] * self.Nagents
         elif init_mode == 'random':
@@ -237,7 +237,7 @@ class GAbuilder(GAselector):
 
 
     def init_dataset(self):
-        c = aux.NestDict(
+        c = aux.AttrDict(
             {'id': self.model.id, 'group_id': 'GA_robots', 'dt': self.model.dt, 'fr': 1 / self.model.dt,
              'agent_ids': np.arange(self.Nagents), 'duration': self.model.Nsteps * self.model.dt,
              'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': self.Nagents, 'Nticks': self.model.Nsteps,
@@ -253,10 +253,11 @@ class GAbuilder(GAselector):
         e['cum_dur'] = c.duration
         e['num_ticks'] = c.Nticks
 
-        return aux.NestDict({'step_data': None, 'endpoint_data': e, 'config': c})
+        return aux.AttrDict({'step_data': None, 'endpoint_data': e, 'config': c})
 
     def init_step_df(self):
-        self.dataset = aux.copyDict(self.dataset0)
+        self.dataset = self.dataset0.get_copy()
+        # self.dataset = aux.copyDict(self.dataset0)
 
         step_df = np.ones([self.dataset.config.Nticks, self.dataset.config.N, self.df_Ncols]) * np.nan
         self.dataset.endpoint_data['length'] = [robot.real_length for robot in self.robots]
@@ -536,4 +537,4 @@ def arrange_fitness(fitness_func, **kwargs):
     def func(robot):
         return fitness_func(robot, **kwargs)
 
-    return aux.NestDict({'func': func, 'func_arg': 'robot'})
+    return aux.AttrDict({'func': func, 'func_arg': 'robot'})

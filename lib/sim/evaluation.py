@@ -37,7 +37,7 @@ class EvalRun(BaseRun):
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.offline = offline
-        self.figs = aux.NestDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
+        self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
 
         self.N = N
@@ -77,7 +77,7 @@ class EvalRun(BaseRun):
         s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
         self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
         e_symbols = aux.flatten_list(ev['end']['symbols'].values.tolist())
-        self.eval_symbols = aux.NestDict(
+        self.eval_symbols = aux.AttrDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
         self.tor_durs, self.dsp_starts, self.dsp_stops = torsNdsps(self.s_pars + self.e_pars)
@@ -120,7 +120,7 @@ class EvalRun(BaseRun):
         else:
             vis_kwargs = reg.get_null('visualization', mode=None)
 
-        kws = aux.NestDict({
+        kws = aux.AttrDict({
             'enrichment': exp_conf.enrichment,
             'vis_kwargs': vis_kwargs,
             'save_to': self.storage_path,
@@ -148,7 +148,7 @@ class EvalRun(BaseRun):
             k = f'{mode}_{suf}'
             self.error_dicts[k] = eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
                                             min_size=min_size)
-        self.error_dicts = aux.NestDict(self.error_dicts)
+        self.error_dicts = aux.AttrDict(self.error_dicts)
 
     def plot_eval(self, suf='fitted'):
         for mode in self.eval_modes:
@@ -185,7 +185,7 @@ class EvalRun(BaseRun):
             bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=error_dict0,
                                                   evaluation=self.evaluation, **kws)
             dic[norm] = {'tables': tabs, 'barplots': bars}
-        return aux.NestDict(dic)
+        return aux.AttrDict(dic)
 
     def norm_error_dict(self, error_dict, mode='raw'):
         dic = {}
@@ -199,7 +199,7 @@ class EvalRun(BaseRun):
                 df = pd.DataFrame(StandardScaler().fit(df).transform(df), index=df.index, columns=df.columns)
                 # df = std_norm(df)
             dic[k] = df
-        return aux.NestDict(dic)
+        return aux.AttrDict(dic)
 
     def plot_models(self):
         GD = reg.graphs.dict
@@ -241,7 +241,7 @@ class EvalRun(BaseRun):
                 fig1 = GD['dispersal'](range=(r0, r1), subfolder=None, **kws)
                 fig2 = GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
                 fig3 = GD['dispersal summary'](range=(r0, r1), **kws2)
-                self.figs.loco[k] = aux.NestDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
+                self.figs.loco[k] = aux.AttrDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
         if 'bouts' in plots:
             self.figs.epochs.turn = GD['epochs'](turns=True, **kws)
             self.figs.epochs.runNpause = GD['epochs'](stridechain_duration=True, **kws)
@@ -267,7 +267,7 @@ class EvalRun(BaseRun):
             Ddata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
         for p, sh in zip(self.e_pars, self.e_shorts):
             Edata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
-        return aux.NestDict({'step': Ddata, 'end': Edata})
+        return aux.AttrDict({'step': Ddata, 'end': Edata})
 
     def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
         self.sim_data = self.preprocess()
@@ -414,8 +414,9 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     kwargs = {k: 'sample' for k in sample_ks}
     entries = {}
     for mID0, mID in zip(mID0s, mIDs):
-        m0 = aux.copyDict(reg.loadConf(id=mID0, conftype='Model'))
-        m = aux.update_existingnestdict(m0, kwargs)
+        m0 = reg.loadConf(id=mID0, conftype='Model').get_copy()
+        # m0 = aux.copyDict(reg.loadConf(id=mID0, conftype='Model'))
+        m = m0.update_existingnestdict(kwargs)
         reg.saveConf(conf=m, id=mID, conftype='Model')
         entries[mID] = m
     return entries
@@ -489,7 +490,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
     e = d.endpoint_data
     refID = c.refID
     if 'modelConfs' not in c.keys():
-        c.modelConfs = aux.NestDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
+        c.modelConfs = aux.AttrDict({'average': {}, 'variable': {}, 'individual': {}, '3modules': {}})
     if avgVSvar:
         entries_avg, mIDs_avg = adapt_6mIDs(refID=c.refID, e=e, c=c)
         c.modelConfs.average = entries_avg

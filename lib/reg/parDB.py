@@ -14,7 +14,7 @@ from lib import reg, aux
 
 def confInit_ks(k):
 
-    d = aux.NestDict({
+    d = aux.AttrDict({
         'Ref': None,
         'Eval': 'eval_conf',
         'Replay': 'replay',
@@ -43,7 +43,7 @@ def confInit_ks(k):
 def get_default(d,key='v') :
     if d is None:
         return None
-    null = aux.NestDict()
+    null = aux.AttrDict()
     for k, v in d.items():
         if not isinstance(v, dict):
             null[k] = v
@@ -66,12 +66,12 @@ def update_default(name, dic, **kwargs):
                 for k0, v0 in v.items():
                     if k0 in list(kwargs.keys()):
                         dic[k][k0] = kwargs[k0]
-        return aux.NestDict(dic)
+        return aux.AttrDict(dic)
 
 
 def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_choice=True):
     def loadConfDic(k):
-        return aux.load_dict2(reg.Path[k])
+        return aux.load_dict(reg.Path[k])
 
     def selector_func(objects, default=None, single_choice=True, **kwargs):
         kws = {
@@ -119,7 +119,7 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
          'vs': ids, 'v': default,
          'symbol': symbol, 'k': k, 'h': f'The {conftype} configuration {IDstr}',
          'disp': f'{conftype} {IDstr}'}
-    return aux.NestDict(d)
+    return aux.AttrDict(d)
 
 def buildInitDict():
     bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
@@ -149,7 +149,7 @@ def buildInitDict():
 
     def substrate():
         from lib.model.DEB.substrate import substrate_dict
-        d = aux.NestDict()
+        d = aux.AttrDict()
         d['substrate_composition'] = {
             n: {'v': 0.0, 'lim': (0.0, 10.0), 'h': f'{n} density in g/cm**3.'} for
             n in
@@ -274,7 +274,7 @@ def buildInitDict():
         return d
 
     def xy_distros():
-        d = aux.NestDict({
+        d = aux.AttrDict({
             'xy': {'dtype': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0),
                    'vfunc': param.XYCoordinates,
                    'h': 'The xy spatial position coordinates.'},
@@ -312,7 +312,7 @@ def buildInitDict():
 
     def scapeConfs():
 
-        d = aux.NestDict({
+        d = aux.AttrDict({
             # 'xy': {'dtype': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0),
             #        'vfunc': param.XYCoordinates,
             #        'h': 'The xy spatial position coordinates.'},
@@ -403,7 +403,7 @@ def buildInitDict():
 
     def runConfs():
 
-        d = aux.NestDict({
+        d = aux.AttrDict({
             'essay_params': {
                 'essay_ID': pID('essay'),
                 'path': pPath('essay'),
@@ -449,7 +449,7 @@ def buildInitDict():
         to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
                         'turn',
                         'unused']
-        d = aux.NestDict()
+        d = aux.AttrDict()
 
         d['ang_definition'] = {
             'bend': {'dtype': str, 'v': 'from_vectors', 'vs': ['from_angles', 'from_vectors'],
@@ -527,7 +527,7 @@ def buildInitDict():
         return d
 
     def init_vis():
-        d = aux.NestDict()
+        d = aux.AttrDict()
         d['render'] = {
             'mode': {'dtype': str, 'v': None, 'vs': [None, 'video', 'image'], 'h': 'The visualization mode',
                      'k': 'm'},
@@ -574,7 +574,7 @@ def buildInitDict():
     def init_mods():
         from lib.aux.par_aux import subsup, sub, tilde, bar, circle, sup
         # from lib.registry.units import reg.units
-        d = aux.NestDict({
+        d = aux.AttrDict({
             'bout_distro': {
                 'fit': {**bT, 'combo': 'distro',
                         'h': 'Whether the distribution is sampled from a reference dataset. Once this is set to "ON" no other parameter is taken into account.'},
@@ -1132,7 +1132,7 @@ def buildInitDict():
         return d
 
     def batch(d):
-        d0 = aux.NestDict({
+        d0 = aux.AttrDict({
             'optimization': {
                 'fit_par': {'dtype': str, 'disp': 'Utility metric', 'h': 'The utility parameter optimized.'},
                 'minimize': {**bT, 'h': 'Whether to minimize or maximize the utility parameter.'},
@@ -1314,7 +1314,7 @@ def buildInitDict():
             'simulations': ConfID_entry('Exp', single_choice=False)
         }
 
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def larvaGroup(d):
         d['LarvaGroup'] = {
@@ -1348,14 +1348,14 @@ def buildInitDict():
     for f in [food,life,larvaGroup,batch,conftypes,Ga0,Ga1]:
         dic0 = f(d)
         d.update(dic0)
-    return aux.NestDict(d)
+    return aux.AttrDict(d)
 
 
 def buildDefaultDict(d0):
     dic = {}
     for name, d in d0.items():
         dic[name] = get_default(d, key='v')
-    return aux.NestDict(dic)
+    return aux.AttrDict(dic)
 
 
 class ParamRegistry:
@@ -1367,20 +1367,21 @@ class ParamRegistry:
         self.dict_entries = self.build(in_rad=in_rad, in_m=in_m)
 
         self.kdict = self.finalize_dict(self.dict_entries)
-        self.ddict = aux.NestDict({p.d: p for k, p in self.kdict.items()})
-        self.pdict = aux.NestDict({p.p: p for k, p in self.kdict.items()})
+        self.ddict = aux.AttrDict({p.d: p for k, p in self.kdict.items()})
+        self.pdict = aux.AttrDict({p.p: p for k, p in self.kdict.items()})
 
 
     def null(self,name, key='v', **kwargs):
         if key != 'v':
             raise
         d0=self.DEF[name]
-        return aux.update_nestdict(d0,kwargs)
+        return d0.update_nestdict(kwargs)
 
     def get_null(self, name, key='v', **kwargs):
         if key != 'v':
             raise
-        return update_default(name, aux.copyDict(self.DEF[name]), **kwargs)
+        # return update_default(name, aux.copyDict(self.DEF[name]), **kwargs)
+        return update_default(name, self.DEF[name].get_copy(), **kwargs)
 
     def metric_def(self, ang={}, sp={}, **kwargs):
         def ang_def(fv=(1, 2), rv=(-2, -1), **kwargs):
@@ -1432,7 +1433,7 @@ class ParamRegistry:
                              to_keep=['midline', 'contour'], **kwargs)
 
     def build(self, in_rad=True, in_m=True):
-        self.dict = aux.NestDict()
+        self.dict = aux.AttrDict()
         self.dict_entries = []
         self.build_initial()
         self.build_angular(in_rad)
@@ -1978,7 +1979,7 @@ class ParamRegistry:
             self.add(**{'p': p, 'k': k, 'd': d, 'disp': disp})
 
     def finalize_dict(self, entries):
-        dic = aux.NestDict()
+        dic = aux.AttrDict()
         for prepar in entries:
             p = data_aux.v_descriptor(**prepar)
             dic[p.k] = p
@@ -2054,7 +2055,7 @@ class ParamRegistry:
             for d in datasets:
                 vs = self.get(k=k, d=d, compute=True)
                 dic[k][d.id] = vs
-        return aux.NestDict(dic)
+        return aux.AttrDict(dic)
 
 # from lib.reg import funcs
 # print(funcs.param_computing)

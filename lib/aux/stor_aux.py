@@ -71,7 +71,7 @@ def read(path=None, key=None, mode='r',**kwargs):
             store.close()
             return df
         else :
-            dd=dNl.NestDict()
+            dd=dNl.AttrDict()
             for k in ks :
                 dd[k]=store[k]
             store.close()

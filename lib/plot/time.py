@@ -29,7 +29,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
                 idx = 2 * i + k
                 ax = P.axs[idx]
 
-                # legdic=dNl.NestDict({'labels': [], 'colors': []})
+                # legdic=dNl.AttrDict({'labels': [], 'colors': []})
                 for b, bcol in Cbouts[n].items():
                     try :
                         bbs = dic[b] * c.dt

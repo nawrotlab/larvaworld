@@ -62,17 +62,17 @@ def set_output(collections, Npoints=3, Ncontour=0):
             end += output_dict[c]['endpoint']
             if 'tables' in list(output_dict[c].keys()):
                 tables.update(output_dict[c]['tables'])
-    return dNl.NestDict({'step': dNl.unique_list(step),
+    return dNl.AttrDict({'step': dNl.unique_list(step),
               'end': dNl.unique_list(end),
               'tables': tables,
-              })
+                         })
 
 def output_reporters(ks, D, agents):
     from lib.aux import dictsNlists as dNl, color as cNs
     # D=reg.par.dict
     # ks = [k for k in ks if k in D.keys()]
     dic = {}
-    # invalid_keys=dNl.NestDict({'not_in_registry' : [k for k in ks if k not in D.keys()], 'not_in_agent':{}})
+    # invalid_keys=dNl.AttrDict({'not_in_registry' : [k for k in ks if k not in D.keys()], 'not_in_agent':{}})
     for k in ks:
         if k in D.keys() :
             d, p = D[k].d, D[k].codename

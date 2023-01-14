@@ -34,7 +34,7 @@ def init2mdict(d0):
         return D
 
     d = check(d0)
-    return aux.NestDict(d)
+    return aux.AttrDict(d)
 
 
 def gConf(mdict, **kwargs):
@@ -46,16 +46,16 @@ def gConf(mdict, **kwargs):
         return mdict.v
     elif isinstance(mdict, dict):
 
-        conf = {}
+        conf = aux.AttrDict()
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
                 conf[d] = p.v
             else:
                 conf[d] = gConf(mdict=p)
-            conf = aux.update_existingdict(conf, kwargs)
-        return aux.NestDict(conf)
+            conf.update_existingdict(kwargs)
+        return conf
     else:
-        return aux.NestDict(mdict)
+        return aux.AttrDict(mdict)
 
 
 def get_ks(d0, k0=None, ks=[]):
@@ -211,7 +211,7 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
         def exists(self, dataset):
             par = self.d
             d = dataset
-            dic = aux.NestDict({'step': False, 'end': False})
+            dic = aux.AttrDict({'step': False, 'end': False})
             if hasattr(d, 'step_data'):
                 s = d.step_data
                 if par in s.columns:
@@ -449,7 +449,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         'v0': v0,
 
     }
-    return aux.NestDict(kws)
+    return aux.AttrDict(kws)
 
 
 

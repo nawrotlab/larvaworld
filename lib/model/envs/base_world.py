@@ -54,7 +54,7 @@ class BaseWorld:
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
-        self.env_pars = aux.NestDict(env_params)
+        self.env_pars = aux.AttrDict(env_params)
 
         self.create_arena(self.env_pars.arena.arena_dims, self.env_pars.arena.arena_shape)
         self.space = self.create_space(torus=self.env_pars.arena.torus if 'torus' in self.env_pars.arena.keys() else False)

@@ -62,7 +62,7 @@ class EssayTab(GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
-        from lib.conf.stored.essay_conf import RvsS_Essay, DoublePatch_Essay, Chemotaxis_Essay
+        from lib.reg.stored.essay_conf import RvsS_Essay, DoublePatch_Essay, Chemotaxis_Essay
         type = self.current_ID(v)
         pars = c['essay_params'].get_dict(v, w)
         kws = {

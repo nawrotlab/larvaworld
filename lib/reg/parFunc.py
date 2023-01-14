@@ -32,7 +32,7 @@ def chunk_func(kc, store=False):
     else:
         func = None
         required_ks = []
-    return aux.NestDict({'func': func, 'required_ks': required_ks})
+    return aux.AttrDict({'func': func, 'required_ks': required_ks})
 
 @funcs.param("dsp")
 def dsp_func(range):

@@ -292,7 +292,7 @@ def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False):
     aux.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
-    chunk_dicts = aux.NestDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
+    chunk_dicts = aux.AttrDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
     return chunk_dicts
 
 
@@ -309,7 +309,7 @@ def mean_stride_curve(a, strides, da, Nbins=64):
     aa_minus = aa[da < 0]
     aa_plus = aa[da > 0]
     aa_norm = np.vstack([aa_plus, -aa_minus])
-    dic = aux.NestDict({
+    dic = aux.AttrDict({
         'abs': np.nanquantile(np.abs(aa), q=0.5, axis=0).tolist(),
         'plus': np.nanquantile(aa_plus, q=0.5, axis=0).tolist(),
         'minus': np.nanquantile(aa_minus, q=0.5, axis=0).tolist(),
@@ -327,7 +327,7 @@ def cycle_curve_dict(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     #     if any(np.isnan(strides)):
     #         print(any(np.isnan(strides)))
     #         print(any(np.isnan(da)))
-    return aux.NestDict(dic)
+    return aux.AttrDict(dic)
 
 
 def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
@@ -337,7 +337,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     for id in ids:
         ss = s.xs(id, level="AgentID").dropna()
         dic[id]=cycle_curve_dict(ss, dt=dt, shs=shs)
-    return aux.NestDict(dic)
+    return aux.AttrDict(dic)
 
 @reg.funcs.annotation("interference")
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
@@ -378,13 +378,13 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
             curves_minus[jj, :] = np.nanquantile(aa_minus, q=0.5, axis=0)
             curves_norm[jj, :] = np.nanquantile(aa_norm, q=0.5, axis=0)
         mean_curves_abs[sh] = curves_abs
-        cycle_curves[sh] = aux.NestDict({
+        cycle_curves[sh] = aux.AttrDict({
             'abs': curves_abs,
             'plus': curves_plus,
             'minus': curves_minus,
             'norm': curves_norm,
         })
-        pooled_curves[sh] = aux.NestDict({
+        pooled_curves[sh] = aux.AttrDict({
             'abs': np.nanquantile(curves_abs, q=0.5, axis=0).tolist(),
             'plus': np.nanquantile(curves_plus, q=0.5, axis=0).tolist(),
             'minus': np.nanquantile(curves_minus, q=0.5, axis=0).tolist(),

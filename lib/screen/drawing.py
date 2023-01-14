@@ -15,7 +15,7 @@ class ScreenManager:
         self.model = model
         if vis_kwargs is None:
             vis_kwargs = reg.get_null('visualization', mode=None)
-        self.vis_kwargs = aux.NestDict(vis_kwargs)
+        self.vis_kwargs = aux.AttrDict(vis_kwargs)
         self.mode = self.vis_kwargs.render.mode
         show_display = self.vis_kwargs.render.show_display
 

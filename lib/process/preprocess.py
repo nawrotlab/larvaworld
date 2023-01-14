@@ -125,7 +125,7 @@ def comp_dataPI(s,e,c, **kwargs):
 # def processing_funcs():
 #     from lib.process.angular import angular_processing
 #     from lib.process.spatial import spatial_processing, comp_source_metrics, comp_dispersion, comp_straightness_index, comp_wind
-#     func_dict = dNl.NestDict({
+#     func_dict = dNl.AttrDict({
 #         'angular': angular_processing,
 #         'spatial': spatial_processing,
 #         'source': comp_source_metrics,
@@ -140,7 +140,7 @@ def comp_dataPI(s,e,c, **kwargs):
 #
 # def preproccesing_funcs():
 #     from lib.process.spatial import align_trajectories
-#     func_dict = dNl.NestDict({
+#     func_dict = dNl.AttrDict({
 #         'rescale_by': rescale,
 #         'drop_collisions': exclude_rows,
 #         'interpolate_nans': interpolate_nan_values,
@@ -162,7 +162,7 @@ def comp_dataPI(s,e,c, **kwargs):
 #     ['bout_distros', get_bout_distros, ['fitted_epochs']]
 #         ]
 #
-#     func_dict = dNl.NestDict({k[0] : {'func' : k[1], 'required_ks' :k[2]} for k in klist})
+#     func_dict = dNl.AttrDict({k[0] : {'func' : k[1], 'required_ks' :k[2]} for k in klist})
 #
 #
 #
@@ -173,7 +173,7 @@ def comp_dataPI(s,e,c, **kwargs):
 # class ProcFuncDict(BaseConfDict):
 #
 #     def build(self):
-#         d=dNl.NestDict({'preproc' : preproccesing_funcs(), 'proc' : processing_funcs(),
+#         d=dNl.AttrDict({'preproc' : preproccesing_funcs(), 'proc' : processing_funcs(),
 #                         'annotation' : annotation_funcs()})
 #         return d
 

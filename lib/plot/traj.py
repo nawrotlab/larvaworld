@@ -124,7 +124,7 @@ def epoch_func(**kwargs):
         epochs0 = Lturns.tolist() + Rturns.tolist()
         return epochs, epochs0, func
 
-    epoch_dict = aux.NestDict({
+    epoch_dict = aux.AttrDict({
         'stride': {
             'ylab': "velocity (1/sec)",
             'ylim': (0.0,1.0),
@@ -239,7 +239,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
         epochs0 = Lturns.tolist() + Rturns.tolist()
         return epochs, epochs0
 
-    epoch_dict = aux.NestDict({
+    epoch_dict = aux.AttrDict({
         'stride': {
             'ylab': "velocity (1/sec)",
             'labels': ['runs', 'pauses'],
@@ -342,7 +342,7 @@ def track_annotated_data(name=None, subfolder='tracks',
 
         s, e, c = d.step_data, d.endpoint_data, d.config
         Nticks = int(dur * 60 / c.dt)
-        kws0 = aux.NestDict({
+        kws0 = aux.AttrDict({
             'datasets': [d],
             'labels': [l],
             # 'agent_idx': idx,
@@ -367,7 +367,7 @@ def track_annotated_data(name=None, subfolder='tracks',
             # run_tr = int(ee[preg.getPar('run_tr')] * 100)
             # title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
             title=get_title(idx,c,e,l)
-            kws1 = aux.NestDict({
+            kws1 = aux.AttrDict({
                 'agent_idx': idx,
                 'a': get_a(ss),
                 'axs': P.axs[ii],

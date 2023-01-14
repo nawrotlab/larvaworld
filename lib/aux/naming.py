@@ -4,6 +4,7 @@ import numpy as np
 
 
 from lib.aux import dictsNlists as dNl
+# from lib.aux import dictsNlists as dNl
 
 def join(s, p, loc, c='_'):
     if loc == 'suf':
@@ -331,11 +332,11 @@ def define_metrics(obj, N=None, Nc=None, p=None, use_component_vel=False):
         obj.acceleration = lin(obj.acceleration)
 
     obj.h5_kdic = h5_kdic(p, N, Nc)
-    obj.load_h5_kdic = dNl.NestDict({h5k: "w" for h5k in obj.h5_kdic.keys()})
+    obj.load_h5_kdic = dNl.AttrDict({h5k: "w" for h5k in obj.h5_kdic.keys()})
     return obj
 
 def h5_kdic(p, N, Nc):
-    dic = dNl.NestDict({
+    dic = dNl.AttrDict({
         'contour': contour_xy(Nc, flat=True),
         'midline': midline_xy(N, flat=True),
         'epochs': epochs_ps(),

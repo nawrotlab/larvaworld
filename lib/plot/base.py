@@ -234,7 +234,8 @@ class BasePlot:
                 's':'fontsize',
                 # 't':title_kws.t,
             }
-            kws=aux.replace_in_dict(title_kws, pairs, replace_key=True)
+            kws=aux.AttrDict(title_kws).replace_keys(pairs)
+            # kws=aux.replace_in_dict(title_kws, pairs, replace_key=True)
             self.fig.suptitle(t=title,**kws)
         if adjust_kws is not None :
             self.adjust(**adjust_kws)
@@ -484,8 +485,8 @@ def load_ks(ks, ds,ls,cols, d0):
             # print(d0.get(k=k, d=d, compute=True))
 
             vs = d0.get(k=k, d=d, compute=True)
-            dic[k][l] = aux.NestDict({'df':vs, 'col':col})
-    return aux.NestDict(dic)
+            dic[k][l] = aux.AttrDict({'df':vs, 'col':col})
+    return aux.AttrDict(dic)
 
 
 class AutoLoadPlot(AutoPlot) :
@@ -493,8 +494,8 @@ class AutoLoadPlot(AutoPlot) :
         super().__init__(**kwargs)
         d0 = reg.par.PI
         self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, d0)
-        self.pdict=aux.NestDict({k:d0.dict[k] for k in ks})
-        self.kpdict=aux.NestDict({k:[self.kdict[k],self.pdict[k]] for k in ks})
+        self.pdict=aux.AttrDict({k:d0.dict[k] for k in ks})
+        self.kpdict=aux.AttrDict({k:[self.kdict[k], self.pdict[k]] for k in ks})
         self.ks=ks
         self.pars=[self.pdict[k].d for k in ks]
 

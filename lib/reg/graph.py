@@ -7,7 +7,7 @@ from lib import reg, aux
 class GraphRegistry:
     def __init__(self):
         self.dict = reg.funcs.graphs
-        # self.graphgroups=dNl.NestDict()
+        # self.graphgroups=dNl.AttrDict()
 
     def get(self, f):
         if isinstance(f, str):
@@ -35,7 +35,7 @@ class GraphRegistry:
 
     def eval_graphgroups(self, graphgroups,save_to=None,**kws):
         kws.update({'subfolder' : None})
-        ds = aux.NestDict()
+        ds = aux.AttrDict()
         for gg in graphgroups:
             if isinstance(gg, dict):
                 for ggID, entries in gg.items() :
@@ -66,7 +66,7 @@ class GraphRegistry:
 
     @property
     def graphgroups(self):
-        from lib.conf.stored.analysis_conf import analysis_dict
+        from lib.reg.stored import analysis_dict
         return analysis_dict
 
     def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):
@@ -81,7 +81,7 @@ class GraphRegistry:
                 print('TABLE FAIL', mID)
         if save_to is not None and len(ds)>1 :
             combine_pdfs(file_dir=save_to, save_as="_MODEL_TABLES_.pdf", deep=False)
-        return aux.NestDict(ds)
+        return aux.AttrDict(ds)
 
     def model_summaries(self, mIDs, save_to=None, **kwargs):
         from lib.util.combining import combine_pdfs
@@ -102,7 +102,7 @@ class GraphRegistry:
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
 
-        graphs = aux.NestDict({
+        graphs = aux.AttrDict({
             'tables': self.model_tables(mIDs, save_to=f1),
             'summaries': self.model_summaries(mIDs, Nids=10, refDataset=self, save_to=f2)
         })
@@ -124,7 +124,7 @@ class GraphRegistry:
                 d0.append(
                     self.entry('bearing to source/epoch', name=name, args={
                         "min_dur" : dur, "chunk" : chunk, "source_ID":source_ID, **kwargs}))
-        return aux.NestDict({gID: d0})
+        return aux.AttrDict({gID: d0})
 
     def multisource_graphgroup(self, sources, **kwargs):
         graphgroups = []

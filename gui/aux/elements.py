@@ -845,7 +845,8 @@ class CollapsibleTable(Collapsible):
         d = self.dict
         data = []
         for id in d.keys():
-            dF = aux.flatten_dict(d[id])
+            dF = d[id].flatten()
+            # dF = aux.flatten_dict(d[id])
             row = [id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data
@@ -1283,7 +1284,7 @@ class PadTable(PadElement):
         d = self.dict
         data = []
         for id in d.keys():
-            dF = aux.flatten_dict(d[id])
+            dF = d[id].flatten()
             row = [id] + [dF[dH[h]] for h in self.headings]
             data.append(row)
         return data

@@ -20,7 +20,7 @@ class WorldSim(World):
 
 
 
-        self.larva_groups = aux.NestDict(larva_groups)
+        self.larva_groups = aux.AttrDict(larva_groups)
         self.odor_ids = get_all_odors(self.larva_groups, self.env_pars.food_params)
 
         agentConfs= lib.util.sample_aux.generate_agentConfs(larva_groups=self.larva_groups, parameter_dict=parameter_dict)
@@ -154,7 +154,7 @@ class WorldSim(World):
 
     def get_larva_dicts(self, ids=None):
 
-        ls=aux.NestDict({l.unique_id:l for l in self.get_flies(ids=ids)})
+        ls=aux.AttrDict({l.unique_id:l for l in self.get_flies(ids=ids)})
 
         from lib.model.modules.nengobrain import NengoBrain
         deb_dicts = {}
@@ -174,11 +174,11 @@ class WorldSim(World):
                 foraging_dicts[id] = l.finalize_foraging_dict()
             # self.config.foodtypes = env.foodtypes
 
-        dic0=aux.NestDict({'deb': deb_dicts,
+        dic0=aux.AttrDict({'deb': deb_dicts,
                       'nengo': nengo_dicts, 'bouts': bout_dicts,
                       'foraging': foraging_dicts})
 
-        dic=aux.NestDict({k:v for k,v in dic0.items() if len(v)>0})
+        dic=aux.AttrDict({k:v for k,v in dic0.items() if len(v) > 0})
 
         # print({k:len(v) for k,v in dic0.items()})
         return dic
@@ -198,7 +198,7 @@ class WorldSim(World):
                         df.set_index(['Step', 'AgentID'], inplace=True)
                         df.sort_index(level=['Step', 'AgentID'], inplace=True)
                         dic[name] = df
-        return aux.NestDict(dic)
+        return aux.AttrDict(dic)
 
     def simulate(self):
         reg.vprint()

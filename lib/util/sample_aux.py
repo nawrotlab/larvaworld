@@ -6,7 +6,7 @@ from lib import reg, aux
 from lib.aux import naming as nam
 
 SAMPLING_PARS = aux.bidict(
-    aux.NestDict(
+    aux.AttrDict(
         {
             'length': 'body.initial_length',
             nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
@@ -44,7 +44,7 @@ def get_sample_bout_distros(model, sample):
 
     if sample in [None, {}]:
         return model
-    m = aux.copyDict(model)
+    m = model.get_copy()
     if m.brain.intermitter_params:
         m.brain.intermitter_params = get_sample_bout_distros0(Im=m.brain.intermitter_params,
                                                               bout_distros=sample.bout_distros)
@@ -56,8 +56,8 @@ def generate_larvae(N, sample_dict, base_model):
     if len(sample_dict) > 0:
         all_pars = []
         for i in range(N):
-            dic= aux.NestDict({p: vs[i] for p, vs in sample_dict.items()})
-            all_pars.append(aux.update_nestdict(aux.copyDict(base_model), dic))
+            dic= aux.AttrDict({p: vs[i] for p, vs in sample_dict.items()})
+            all_pars.append(base_model.get_copy().update_nestdict(dic))
     else:
         all_pars = [base_model] * N
     return all_pars
@@ -81,7 +81,7 @@ def sample_group(e, N=1, ps=[]):
 def get_sample_ks(m, sample_ks=None):
     if sample_ks is None:
         sample_ks = []
-    modF = aux.flatten_dict(m)
+    modF = m.flatten()
     sample_ks += [p for p in modF if modF[p] == 'sample']
     return sample_ks
 

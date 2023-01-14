@@ -1,7 +1,7 @@
-
+from lib.aux import dictsNlists as dNl
 
 def build_datapath_structure():
-    kd = dNl.NestDict()
+    kd = dNl.AttrDict()
     kd.solo_dicts = ['bouts', 'foraging', 'deb', 'nengo']
 
     kd.folders = {
@@ -29,10 +29,10 @@ def build_datapath_structure():
     datafunc_dict = build_datafunc_dict(kd)
     return datapath_dict, datafunc_dict
 
-from lib.aux import dictsNlists as dNl
+
 
 def build_datapath_dict(kd):
-    d = dNl.NestDict()
+    d = dNl.AttrDict()
     d.parent = ''
     for k0, ks in kd.folders.items():
         for k in ks:
@@ -59,7 +59,7 @@ def build_datafunc_dict(kd):
         ddic = {kk: funcs for kk in kd[k]}
         dic.update(ddic)
 
-    return dNl.NestDict(dic)
+    return dNl.AttrDict(dic)
 
 
 DATAPATH_DIC, DATAFUNC_DIC = build_datapath_structure()

@@ -237,7 +237,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     # ks =
     # ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr']
 
-    DataDic = aux.NestDict({
+    DataDic = aux.AttrDict({
         subID: {
             mID: {
                 'data': dict(P.data_dict)[f'{subID}_{mID}'],

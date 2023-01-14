@@ -1,3 +1,5 @@
+import json
+
 from lib import reg, aux
 
 
@@ -123,10 +125,13 @@ class ControlRegistry :
     def save(self, conf=None):
         if conf is None:
             conf = self.conf
-        aux.save_dict(conf, self.path)
+        with open(self.path, "w") as fp:
+            json.dump(conf, fp)
 
     def load(self):
-        return aux.load_dict(self.path)
+        with open(self.path) as tfp:
+            c = json.load(tfp)
+        return aux.AttrDict(c)
 
 
 controls=ControlRegistry()

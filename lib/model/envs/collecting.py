@@ -40,7 +40,7 @@ class TargetedDataCollector(DataCollector):
         D=reg.par.dict
         ks = [k for k in pars if k in D.keys()]
         dic = {}
-        self.invalid_keys=aux.NestDict({'not_in_registry' : [k for k in pars if k not in D.keys()], 'not_in_agent':{}})
+        self.invalid_keys=aux.AttrDict({'not_in_registry' : [k for k in pars if k not in D.keys()], 'not_in_agent':{}})
         for k in ks:
             d, p = D[k].d, D[k].codename
             try:

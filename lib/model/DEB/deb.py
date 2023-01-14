@@ -600,7 +600,7 @@ class DEB:
                 d = {**self.dict, **self.gut.dict}
             else:
                 d = self.dict
-            aux.save_dict(d, self.dict_file, use_pickle=False)
+            aux.save_dict(d, self.dict_file)
 
     def get_p_A(self, f, assimilation_mode, X_V):
         self.deb_p_A = self.p_Amm_dt * self.base_f * self.V

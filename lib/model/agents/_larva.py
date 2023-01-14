@@ -199,7 +199,7 @@ class LarvaMotile(Larva, PhysicsController):
     def reset_feeder(self):
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0, 0
         self.cum_food_detected, self.feed_success_counter, self.amount_eaten = 0, 0, 0
-        self.foraging_dict = aux.NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+        self.foraging_dict = aux.AttrDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
                                            self.model.foodtypes.keys()})
         try:
             self.brain.feeder.reset()

@@ -234,7 +234,7 @@ class RvsS_Essay(Essay):
                 plotID = 'food intake (timeplot)'
             else:
                 raise
-            entry = G.entry(ID=plotID, name=exp, args=aux.NestDict(kws))
+            entry = G.entry(ID=plotID, name=exp, args=aux.AttrDict(kws))
             entrylist.append(entry)
         return entrylist
 
@@ -373,7 +373,7 @@ class DoublePatch_Essay(Essay):
             'sample': 'None.150controls',
         }
 
-        return aux.NestDict({
+        return aux.AttrDict({
             mID0: self.GT.dict.LarvaGroup.gConf(default_color=mcol,
                                                             model=self.CT.dict.Model.loadConf(mID),
                                                             **kws0)
@@ -389,7 +389,7 @@ class DoublePatch_Essay(Essay):
 
                 }
 
-        return aux.NestDict({
+        return aux.AttrDict({
             'Left_patch': self.CT.dict.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
             'Right_patch': self.CT.dict.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
 
@@ -437,8 +437,8 @@ class DoublePatch_Essay(Essay):
 
             }
 
-            confs[n]=[aux.NestDict(self.CT.dict.Exp.gConf(**kws))]
-        return aux.NestDict(confs)
+            confs[n]=[aux.AttrDict(self.CT.dict.Exp.gConf(**kws))]
+        return aux.AttrDict(confs)
 
 
 
@@ -518,7 +518,7 @@ class Chemotaxis_Essay(Essay):
             'controls': {'model': mC, 'color': 'magenta'},
 
         }
-        return aux.NestDict(models)
+        return aux.AttrDict(models)
 
     def get_models2(self, gain):
         cols = aux.N_colors(6)
@@ -534,7 +534,7 @@ class Chemotaxis_Essay(Essay):
                     f'brain.interference_params.attenuation_max': 0.0,
                 }), 'color': cols[i]}
                 i += 1
-        return aux.NestDict(models)
+        return aux.AttrDict(models)
 
     def get_models3(self, gain):
         cols = aux.N_colors(6)
@@ -552,7 +552,7 @@ class Chemotaxis_Essay(Essay):
                 }), 'color': cols[i]}
                 i += 1
 
-        return aux.NestDict(models)
+        return aux.AttrDict(models)
 
     def get_models4(self, gain):
         cols = aux.N_colors(4)
@@ -568,7 +568,7 @@ class Chemotaxis_Essay(Essay):
                 }), 'color': cols[i]}
                 i += 1
 
-        return aux.NestDict(models)
+        return aux.AttrDict(models)
 
     def chemo_exps(self, models):
         lg_kws = {
@@ -718,7 +718,7 @@ def Essay_dict():
     for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
         e=E()
         d[e.type]=e.exp_dict
-    return aux.NestDict(d)
+    return aux.AttrDict(d)
 
 
 

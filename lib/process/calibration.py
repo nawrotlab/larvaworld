@@ -100,7 +100,7 @@ def comp_stride_variation(d, component_vels=True):
 
     sNt_cv = str_var[reg.getPar(['str_sd_var', 'str_t_var'])].sum(axis=1)
     best_idx = sNt_cv.argmin()
-    c.metric_definition.spatial.fitted = aux.dNl.NestDict(
+    c.metric_definition.spatial.fitted = aux.dNl.AttrDict(
         {'point_idx': int(str_var['point_idx'].iloc[best_idx]),
          'use_component_vel': bool(str_var['use_component_vel'].iloc[best_idx])})
     print('Stride variability analysis complete!')
@@ -170,7 +170,7 @@ def comp_segmentation(d):
     best_combo_max = np.max(best_combo)
     front_body_ratio = best_combo_max / N
 
-    c.metric_definition.angular.fitted = aux.dNl.NestDict(
+    c.metric_definition.angular.fitted = aux.dNl.AttrDict(
         {'best_combo': str(best_combo), 'front_body_ratio': front_body_ratio,
          'bend': 'from_vectors'})
     print('Angular velocity definition analysis complete!')

@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import numpy as np
@@ -471,8 +472,7 @@ def update_metric_definition(md=None, mdconf=None):
 
         if md is None:
             md = reg.get_null('metric_definition')
-        from lib.aux import dictsNlists as dNl
-        mdconf = dNl.NestDict({
+        mdconf = aux.AttrDict({
             'spatial': {
                 'hardcoded': md['spatial'],
                 'fitted': None,
@@ -492,10 +492,9 @@ def update_metric_definition(md=None, mdconf=None):
 
 def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_definition=None, env_params={},
                    larva_groups={}, source_xy={}, **kwargs):
-    from lib.aux import dictsNlists as dNl
 
     group_ids = list(larva_groups.keys())
-    samples = dNl.unique_list([larva_groups[k]['sample'] for k in group_ids])
+    samples = aux.unique_list([larva_groups[k]['sample'] for k in group_ids])
     if len(group_ids) == 1:
         group_id = group_ids[0]
         color = larva_groups[group_id]['default_color']
@@ -507,7 +506,7 @@ def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_
         sample = samples[0] if len(samples) == 1 else None
         life_history = None
 
-    return dNl.NestDict({'id': id,
+    return aux.AttrDict({'id': id,
                          'group_id': group_id,
                          'group_ids': group_ids,
                          'refID': None,
@@ -525,7 +524,7 @@ def dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_
                          'larva_groups': larva_groups,
                          'source_xy': source_xy,
                          'life_history': life_history,
-                        **kwargs
+                         **kwargs
                          })
 
 
@@ -537,18 +536,22 @@ def retrieve_config(dir=None,verbose=1, **kwargs):
         f=reg.datapath('conf',dir)
         if os.path.isfile(f):
             try:
-                c = aux.load_dict(f, use_pickle=False)
-                reg.vprint(f'Loaded existing conf {c.id} with pickle False',verbose)
-                return aux.NestDict(c)
+                with open(f) as tfp:
+                    c = json.load(tfp)
+                c = aux.AttrDict(c)
+            # try:
+            #     c = aux.load_dict(f)
+                reg.vprint(f'Loaded existing conf {c.id}',verbose)
+                return c
             except:
-                try:
-                    c = aux.load_dict(f, use_pickle=True)
-                    reg.vprint(f'Loaded existing conf {c.id} with pickle True', verbose)
-                    return aux.NestDict(c)
-                except:
-                    pass
-    reg.vprint(f'Generated new conf {c.id} with pickle True', verbose)
-    return aux.NestDict(c)
+                # try:
+                #     c = aux.load_dict(f)
+                #     reg.vprint(f'Loaded existing conf {c.id} with pickle True', verbose)
+                #     return aux.AttrDict(c)
+                # except:
+                pass
+    reg.vprint(f'Generated new conf {c.id}', verbose)
+    return aux.AttrDict(c)
 
 
 def update_config(obj, c) :

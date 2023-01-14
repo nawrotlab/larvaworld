@@ -76,7 +76,7 @@ def init_brain_modules():
              'sinusoidal': {'args': SINargs, 'class_func': modules.StepOscillator, 'variable': ['initial_amp', 'initial_freq']},
              'constant': {'args': Tamp, 'class_func': modules.StepEffector, 'variable': ['initial_amp']}
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def Cr0():
 
@@ -142,7 +142,7 @@ def init_brain_modules():
                                        'initial_freq']},
             'constant': {'args': Camp, 'class_func': modules.StepEffector, 'variable': ['initial_amp']}
         }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def If0():
 
@@ -188,7 +188,7 @@ def init_brain_modules():
              'phasic': {'args': PHIargs, 'class_func': modules.PhasicCoupling,
                         'variable': ['attenuation', 'attenuation_max', 'max_attenuation_phase']}
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def Im0():
 
@@ -244,7 +244,7 @@ def init_brain_modules():
              'branch': {'args': BRargs, 'class_func': modules.BranchIntermitter,
                         'variable': ['c', 'sigma', 'beta', 'stridechain_dist', 'run_dist', 'pause_dist']},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def sensor_kws(k0, l0):
         d = {
@@ -273,7 +273,7 @@ def init_brain_modules():
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def Tou0():
         args = {
@@ -294,7 +294,7 @@ def init_brain_modules():
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def W0():
         args = {
@@ -320,7 +320,7 @@ def init_brain_modules():
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def Th0():
         args = {'cool_gain': {'v0': 0.0, 'lim': (-1000.0, 1000.0),
@@ -337,7 +337,7 @@ def init_brain_modules():
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def Fee0():
 
@@ -357,7 +357,7 @@ def init_brain_modules():
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
     def Mem0():
 
@@ -389,7 +389,7 @@ def init_brain_modules():
              'MB': {'args': MBargs, 'class_func': modules.RemoteBrianModelMemory, 'variable': []},
              'touchRL': {'args': touchRLargs, 'class_func': modules.RLTouchMemory, 'variable': []},
              }
-        return aux.NestDict(d)
+        return aux.AttrDict(d)
 
 
 
@@ -407,7 +407,7 @@ def init_brain_modules():
     d0['windsensor'] = {'mode': W0(), 'pref': 'brain.windsensor_params.', **kws}
     d0['memory'] = {'mode': Mem0(), 'pref': 'brain.memory_params.', **kws}
 
-    return aux.NestDict(d0)
+    return aux.AttrDict(d0)
 
 
 
@@ -439,7 +439,7 @@ def init_aux_modules():
         return {'args': args,
              'variable': ['torque_coef', 'ang_damping', 'body_spring_k', 'bend_correction_coef']
              }
-        # return aux.NestDict(d)
+        # return aux.AttrDict(d)
 
     def Bod0():
         args = {
@@ -458,7 +458,7 @@ def init_aux_modules():
                       'k': 'body_shape', 'h': 'The body shape.'},
         }
         return {'args': args, 'variable': ['initial_length', 'Nsegs']}
-        # return aux.NestDict(d)
+        # return aux.AttrDict(d)
 
     def DEB0():
         # from lib.model.DEB import gut,deb
@@ -531,7 +531,7 @@ def init_aux_modules():
              'DEB': {'args': DEB_args, 'variable': ['DEB_dt', 'hunger_gain']},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        # return aux.NestDict(d)
+        # return aux.AttrDict(d)
 
     def SM0():
         args = {
@@ -555,7 +555,7 @@ def init_aux_modules():
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
-        # return aux.NestDict(d)
+        # return aux.AttrDict(d)
 
 
     d0 = {}
@@ -563,12 +563,14 @@ def init_aux_modules():
     d0['body'] = Bod0()
     d0['energetics'] = {'mode': DEB0()}
     d0['sensorimotor'] = {'mode': SM0(), 'pref': 'sensorimotor.'}
-    return aux.NestDict(d0)
+    return aux.AttrDict(d0)
 
 
 def build_aux_module_dict(d0):
-    d00 = aux.copyDict(d0)
-    pre_d00 = aux.copyDict(d0)
+    d00 = d0.get_copy()
+    # d00 = aux.copyDict(d0)
+    pre_d00 = d0.get_copy()
+    # pre_d00 = aux.copyDict(d0)
     for mkey in d0.keys():
         if mkey in ['energetics', 'sensorimotor']:
             continue
@@ -590,8 +592,8 @@ def build_aux_module_dict(d0):
 
 def build_brain_module_dict(d0):
 
-    d00 = aux.copyDict(d0)
-    pre_d00 = aux.copyDict(d0)
+    d00 = d0.get_copy()
+    pre_d00 = d0.get_copy()
     for mkey in d0.keys():
         for m, mdic in d0[mkey].mode.items():
             for arg, vs in mdic.args.items():
@@ -607,16 +609,16 @@ def build_brain_module_dict(d0):
 def build_confdicts():
     b0 = init_brain_modules()
     bpre, bm = build_brain_module_dict(b0)
-    bd = aux.NestDict({'init': b0, 'pre': bpre, 'm': bm, 'keys': list(b0.keys())})
+    bd = aux.AttrDict({'init': b0, 'pre': bpre, 'm': bm, 'keys': list(b0.keys())})
 
     a0 = init_aux_modules()
     apre, am = build_aux_module_dict(a0)
-    ad = aux.NestDict({'init': a0, 'pre': apre, 'm': am, 'keys': list(a0.keys())})
+    ad = aux.AttrDict({'init': a0, 'pre': apre, 'm': am, 'keys': list(a0.keys())})
 
-    d0 = aux.NestDict({**b0, **a0})
+    d0 = aux.AttrDict({**b0, **a0})
 
-    d = aux.NestDict({'init': d0, 'pre': aux.NestDict({**bpre, **apre}), 'm': aux.NestDict({**bm, **am}), 'keys': list(d0.keys())})
-    return aux.NestDict({'brain': bd, 'aux': ad, 'model': d})
+    d = aux.AttrDict({'init': d0, 'pre': aux.AttrDict({**bpre, **apre}), 'm': aux.AttrDict({**bm, **am}), 'keys': list(d0.keys())})
+    return aux.AttrDict({'brain': bd, 'aux': ad, 'model': d})
 
 
 
@@ -627,7 +629,7 @@ class ModelRegistry:
         self.dict = build_confdicts()
         self.full_dict = self.build_full_dict(D=self.dict)
 
-        self.mcolor = aux.NestDict({
+        self.mcolor = aux.AttrDict({
             'body': 'lightskyblue',
             'physics': 'lightsteelblue',
             'energetics': 'lightskyblue',
@@ -656,13 +658,13 @@ class ModelRegistry:
                 return self.dict.model.m[mkey].args
 
     def generate_configuration(self, mdict, **kwargs):
-        conf = aux.NestDict()
+        conf = aux.AttrDict()
         for d, p in mdict.items():
             if isinstance(p, param.Parameterized):
                 conf[d] = p.v
             else:
                 conf[d] = self.generate_configuration(mdict=p)
-        conf = aux.update_existingdict(conf, kwargs)
+        conf.update_existingdict(kwargs)
         # conf.update(kwargs)
         return conf
 
@@ -672,7 +674,7 @@ class ModelRegistry:
         conf0 = self.generate_configuration(mdict, **kwargs)
         if refID is not None and mkey == 'intermitter':
             conf0 = self.adapt_intermitter(refID=refID, mode=mode, conf=conf0)
-        return aux.NestDict(conf0)
+        return aux.AttrDict(conf0)
 
 
     def mutate(self, mdict, Pmut, Cmut):
@@ -694,7 +696,7 @@ class ModelRegistry:
                     data.append(row)
 
 
-        mF = aux.flatten_dict(m)
+        mF = m.flatten()
         data = []
         for mkey in self.dict.brain.keys:
             if m.brain.modules[mkey]:
@@ -725,19 +727,19 @@ class ModelRegistry:
         for aux_key in self.dict.aux.keys:
             if aux_key not in ['energetics', 'sensorimotor']:
                 var_ks = self.dict.aux.init[aux_key].variable
-                var_mdict = aux.NestDict({k: self.dict.aux.m[aux_key].args[k] for k in var_ks})
+                var_mdict = aux.AttrDict({k: self.dict.aux.m[aux_key].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m[aux_key])
                 gen_rows2(var_mdict, aux_key, columns, data)
         if m['energetics']:
             for mod, dic in self.dict.aux.init['energetics'].mode.items():
                 var_ks = dic.variable
-                var_mdict = aux.NestDict({k: self.dict.aux.m['energetics'].mode[mod].args[k] for k in var_ks})
+                var_mdict = aux.AttrDict({k: self.dict.aux.m['energetics'].mode[mod].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m['energetics'].mod)
                 gen_rows2(var_mdict, f'energetics.{mod}', columns, data)
         if 'sensorimotor' in m.keys():
             for mod, dic in self.dict.aux.init['sensorimotor'].mode.items():
                 var_ks = dic.variable
-                var_mdict = aux.NestDict({k: self.dict.aux.m['sensorimotor'].mode[mod].args[k] for k in var_ks})
+                var_mdict = aux.AttrDict({k: self.dict.aux.m['sensorimotor'].mode[mod].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m['sensorimotor'])
                 gen_rows2(var_mdict, 'sensorimotor', columns, data)
         df = pd.DataFrame(data, columns=['field'] + columns)
@@ -763,8 +765,8 @@ class ModelRegistry:
                      'interference': 'phasic',
                      'intermitter': 'default'}
 
-        conf = aux.NestDict()
-        modules = aux.NestDict()
+        conf = aux.AttrDict()
+        modules = aux.AttrDict()
 
         for mkey in self.dict.brain.keys:
             mlongkey = f'{mkey}_params'
@@ -789,7 +791,7 @@ class ModelRegistry:
     def larvaConf(self, modes=None, energetics=None, auxkws={}, modkws={}, nengo=False, mID=None):
         bconf = self.brainConf(modes, modkws, nengo=nengo)
 
-        conf = aux.NestDict()
+        conf = aux.AttrDict()
         conf.brain = bconf
         # for mkey in self.dict.brain.keys:
 
@@ -832,8 +834,8 @@ class ModelRegistry:
     def newConf(self, m0=None, mID0=None, mID=None, kwargs={}):
         if m0 is None:
             m0 = self.ct.loadConf(id=mID0)
-        T0 = aux.copyDict(m0)
-        conf = aux.update_nestdict(T0, kwargs)
+        T0 = m0.get_copy()
+        conf = T0.update_nestdict(kwargs)
         if mID is not None:
             self.ct.saveConf(conf=conf, id=mID)
         return conf
@@ -893,7 +895,7 @@ class ModelRegistry:
         kwargs1 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars1}
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
-        MB_pars = aux.NestDict({'mode': 'MB'})
+        MB_pars = aux.AttrDict({'mode': 'MB'})
         # MB_pars = self.generate_configuration(self.dict.brain.m['memory'].mode['MB'].args)
         MB_kws = {'brain.modules.memory': True, 'brain.memory_params': MB_pars}
 
@@ -903,7 +905,7 @@ class ModelRegistry:
         for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
             DEB_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['DEB'].args,species=species, hunger_gain=1.0,DEB_dt=10.0)
             gut_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['gut'].args,k_abs=k_abs)
-            energy_pars=aux.NestDict({'DEB' : DEB_pars, 'gut':gut_pars})
+            energy_pars=aux.AttrDict({'DEB' : DEB_pars, 'gut':gut_pars})
             RvSkws[species] = {'wF' : {'energetics': energy_pars, 'brain.intermitter_params.EEB': EEB}, 'woF' :{'energetics': energy_pars} }
 
         # for m0 in m0s:
@@ -943,10 +945,10 @@ class ModelRegistry:
             mID22 = f'{mID0}_max_forager_MB'
             entries[mID22] = self.newConf(m0=entries[mID21], kwargs={'brain.intermitter_params.EEB': 0.9})
 
-        entries['noMB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager0'], kwargs={})
-        entries['noMB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager'], kwargs={})
-        entries['MB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager0_MB'], kwargs={})
-        entries['MB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_forager_MB'], kwargs={})
+        entries['noMB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager0'], kwargs={})
+        entries['noMB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager'], kwargs={})
+        entries['MB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager0_MB'], kwargs={})
+        entries['MB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
         entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
         entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
@@ -985,7 +987,7 @@ class ModelRegistry:
                     # print(kk)
                     register(p, kk, full_dic)
 
-        full_dic = aux.NestDict()
+        full_dic = aux.AttrDict()
         for aux_key in D.aux.keys:
             if aux_key in ['energetics', 'sensorimotor']:
                 continue
@@ -1011,7 +1013,7 @@ class ModelRegistry:
             dIDs = mIDs
         if ms is None:
             ms = [self.ct.loadConf(mID) for mID in mIDs]
-        ms = [aux.flatten_dict(m) for m in ms]
+        ms = [m.flatten() for m in ms]
         ks = aux.unique_list(aux.flatten_list([list(m.keys()) for m in ms]))
 
         for k in ks:
@@ -1049,7 +1051,7 @@ class ModelRegistry:
             e = d.endpoint_data
 
         mdict = self.dict.model.m['crawler'].mode[mode].args
-        crawler_conf = aux.NestDict({'mode': mode})
+        crawler_conf = aux.AttrDict({'mode': mode})
         for d, p in mdict.items():
             # print(d, p.codename)
             if isinstance(p, param.Parameterized):
@@ -1143,11 +1145,11 @@ class ModelRegistry:
     def variable_mdict(self, mkey, mode='default'):
         var_ks = self.variable_keys(mkey, mode=mode)
         d00 = self.dict.model.m[mkey].mode[mode].args
-        mdict = aux.NestDict({k: d00[k] for k in var_ks})
+        mdict = aux.AttrDict({k: d00[k] for k in var_ks})
         return mdict
 
     def space_dict(self, mkeys, mConf0):
-        mF = aux.flatten_dict(mConf0)
+        mF = mConf0.flatten()
         dic = {}
         for mkey in mkeys:
             d0 = self.dict.model.init[mkey]
@@ -1166,7 +1168,7 @@ class ModelRegistry:
                         if dic[k0].parclass == param.Range:
                             mF[k0] = tuple(mF[k0])
                     dic[k0].v = mF[k0]
-        return aux.NestDict(dic)
+        return aux.AttrDict(dic)
 
     # def to_string(self, mdict):
     #     s = ''

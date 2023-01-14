@@ -343,7 +343,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     if d is None:
         from lib.util.sample_aux import sim_model
         d = sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
-    kws0 = aux.NestDict({
+    kws0 = aux.AttrDict({
         'datasets': [d],
         # 'labels' : [d],
     })
@@ -357,7 +357,7 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     Nrows = len(pars)
     P = plot.Plot(name=f'{mID}_test', **kws0, **kwargs)
     P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, axs=axs, fig=fig)
-    kws1 = aux.NestDict({
+    kws1 = aux.AttrDict({
         'agent_idx': 0,
         'slice': (0, dur * 60),
         'dt': dt,

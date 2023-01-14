@@ -190,7 +190,7 @@ class WindSensor(Sensor):
 # @todo add class Thermosensor(Sensor) here with a double gain dict
 class Thermosensor(Sensor):
     def __init__(self, cool_gain=0.0,warm_gain=0.0, **kwargs): #thermodict={"cool", "warm"}
-        thermo_dict = aux.NestDict({'warm': warm_gain, 'cool': cool_gain})
+        thermo_dict = aux.AttrDict({'warm': warm_gain, 'cool': cool_gain})
         super().__init__(gain_dict=thermo_dict, **kwargs)
 
     # def affect_locomotion(self):

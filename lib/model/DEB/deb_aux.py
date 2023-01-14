@@ -117,7 +117,7 @@ def run_embryo_stage2(kap, E_Hb, v, E_G, k_J, p_M, p_Am, p_T: float = 0., dt: fl
 
     t, E, L, E_H = 0., float(E_0), 0., 0.
     done = False
-    # dic=dNl.NestDict({'t' : [], 'E':[], 'L' : [] , 'E_H' : []})
+    # dic=dNl.AttrDict({'t' : [], 'E':[], 'L' : [] , 'E_H' : []})
     while not done:
         L2 = L * L
         L3 = L * L2
@@ -147,7 +147,7 @@ def run_embryo_stage(kap, E_Hb, v, E_G, k_J, p_M, p_Am, p_T: float = 0., dt: flo
 
     if E_0 is None:
         E_0 = get_E0(E_Hb=E_Hb, k_J=k_J, kap=kap, p_Am=p_Am, v=v, E_G=E_G, p_M=p_M, **kwargs)
-    # dic = dNl.NestDict({'t': [], 'E': [], 'L': [], 'E_H': []})
+    # dic = dNl.AttrDict({'t': [], 'E': [], 'L': [], 'E_H': []})
     # t, E, V, E_H = 0., float(E_0), 10**-20, 0.
     t, E, L, E_H = 0., float(E_0), 0., 0.
     while E_H < E_Hb:

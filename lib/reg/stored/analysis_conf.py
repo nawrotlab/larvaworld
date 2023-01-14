@@ -12,7 +12,7 @@ def entry(ID, name=None, **kwargs):
 
 
 
-analysis_dict = aux.NestDict({
+analysis_dict = aux.AttrDict({
     'tactile': [
         entry('endpoint pars (hist)','time ratio on food (final)',ks=['on_food_tr']),
         entry('timeplot', 'time ratio on food',ks=['on_food_tr'],  unit='min'),

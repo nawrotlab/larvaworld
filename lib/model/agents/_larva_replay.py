@@ -61,7 +61,7 @@ class LarvaReplay(Larva, LarvaBody):
             self.cen_pos = self.cen_ar[i]
         self.pos = self.pos_ar[i]
         self.trajectory = self.pos_ar[:i, :].tolist()
-        self.beh_dict = aux.NestDict(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
+        self.beh_dict = aux.AttrDict(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
         # if self.Nsegs is not None:
         self.angles = self.ang_ar[i]
         self.orients = self.or_ar[i]
@@ -74,7 +74,7 @@ class LarvaReplay(Larva, LarvaBody):
             setattr(self, p, self.data[p].values[i] if p in self.data.columns else np.nan)
 
     def update_behavior_dict(self):
-        # self.beh_dict = dNl.NestDict(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
+        # self.beh_dict = dNl.AttrDict(dict(zip(self.behavior_pars, self.beh_ar[i, :].tolist())))
         self.color = self.update_color(self.default_color, self.beh_dict)
 
     def step(self):

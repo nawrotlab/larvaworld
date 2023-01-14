@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 import typing
 
+
 class AttrDict(dict):
     '''
     Dictionary subclass whose entries can be accessed by attributes (as well as normally).
@@ -13,25 +14,75 @@ class AttrDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
+        for k, data in self.__dict__.items():
+            self.__dict__[k] = self.from_nested_dicts(data)
 
     @classmethod
     def from_nested_dicts(cls, data):
-        """ Construct nested AttrDicts from nested dictionaries. """
+        """ Construct nested NestDicts from nested dictionaries. """
         if not isinstance(data, dict):
             return data
         else:
-            return cls({key: cls.from_nested_dicts(data[key]) for key in data})
+            return cls(data)
 
+    def replace_keys(self, pairs={}):
+        dic = {}
+        for k, v in self.items():
+            if k in list(pairs.keys()):
+                dic[pairs[k]] = v
+            else:
+                dic[k] = v
+        return AttrDict(dic)
 
-def NestDict(data=None):
-    if data is None:
-        return AttrDict()
-    else:
-        return AttrDict.from_nested_dicts(data)
+    def get_copy(self):
+        return AttrDict(copy.deepcopy(self))
 
-def copyDict(d):
-    return NestDict(copy.deepcopy(d))
+    def flatten(self, parent_key='', sep='.'):
+        items = []
+        for k, v in self.items():
+            new_key = parent_key + sep + k if parent_key else k
+            if isinstance(v, typing.MutableMapping):
+                if len(v) > 0:
+                    items.extend(AttrDict(v).flatten(new_key, sep=sep).items())
+                    # items.extend(flatten_dict(v, new_key, sep=sep).items())
+                else:
+                    items.append((new_key, 'empty_dict'))
 
+            else:
+                items.append((new_key, v))
+        return AttrDict(dict(items))
+
+    def unflatten(self, sep='.'):
+        dic = {}
+        for k, v in self.items():
+            if v == 'empty_dict':
+                v = {}
+            parts = k.split(sep)
+            dd = dic
+            for part in parts[:-1]:
+                if part not in dd:
+                    dd[part] = {}
+                dd = dd[part]
+            dd[parts[-1]] = v
+        return AttrDict(dic)
+
+    def update_existingdict(self, dic):
+        for k, v in dic.items():
+            if k in list(self.keys()):
+                self[k] = v
+
+    def update_nestdict(self, dic):
+        dic0_f = self.flatten()
+        dic0_f.update(dic)
+        # for k, v in dic0_f.items():
+        #     if v == 'empty_dict':
+        #         dic0_f[k] = {}
+        return dic0_f.unflatten()
+
+    def update_existingnestdict(self, dic):
+        dic0_f = self.flatten()
+        dic0_f.update_existingdict(dic)
+        return dic0_f.unflatten()
 
 
 def flatten_dict(d, parent_key='', sep='.'):
@@ -46,22 +97,36 @@ def flatten_dict(d, parent_key='', sep='.'):
 
         else:
             items.append((new_key, v))
-    return NestDict(dict(items))
+    return AttrDict(dict(items))
+
+def load_dict(file):
+    try:
+        with open(file) as tfp:
+            d = json.load(tfp)
+    except:
+        try:
+            with open(file, 'rb') as tfp:
+                d = pickle.load(tfp)
+        except:
+            d= {}
+    return AttrDict(d)
 
 
-def unflatten_dict(d, sep='.'):
-    resultDict = NestDict()
-    for key, value in d.items():
-        if value=='empty_dict' :
-            value={}
-        parts = key.split(sep)
-        dd = resultDict
-        for part in parts[:-1]:
-            if part not in dd:
-                dd[part] = NestDict()
-            dd = dd[part]
-        dd[parts[-1]] = value
-    return resultDict
+def save_dict(d, file):
+    if file is not None :
+        try:
+            with open(file, "w") as fp:
+                json.dump(d, fp)
+        except:
+            try:
+                with open(file, 'wb') as fp:
+                    pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+
+            except :
+                raise
+        return True
+    else :
+        return False
 
 
 def merge_dicts(dict_list):
@@ -72,7 +137,7 @@ def merge_dicts(dict_list):
     return super_dict
 
 
-def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', use_pickle=True):
+def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt'):
     if files is None:
         files = os.listdir(folder)
         suf = extension if suf is None else f'{suf}.{extension}'
@@ -82,99 +147,25 @@ def load_dicts(files=None, pref=None, suf=None, folder=None, extension='txt', us
     ds = []
     for f in files:
         n = f'{folder}/{f}' if folder is not None else f
-        d = load_dict(n, use_pickle=use_pickle)
+        d = load_dict(n)
         ds.append(d)
     return ds
 
-
-def load_dict(file, use_pickle=True):
-    if use_pickle:
-        with open(file, 'rb') as tfp:
-            d = pickle.load(tfp)
-    else:
-        with open(file) as tfp:
-            d = json.load(tfp)
-    return NestDict(d)
-
-def load_dict2(file):
-    try:
-        with open(file) as tfp:
-            d = json.load(tfp)
-    except:
-        try:
-            with open(file, 'rb') as tfp:
-                d = pickle.load(tfp)
-        except:
-            d= {}
-    return NestDict(d)
+def loadSoloDics(agent_ids, path=None):
+    if os.path.isdir(path) :
+        files = [f'{id}.txt' for id in agent_ids]
+        return load_dicts(files=files, folder=path)
 
 
-def save_dict(d, file, use_pickle=True):
-    if file is not None :
-        if use_pickle:
-            with open(file, 'wb') as fp:
-                pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
-            with open(file, "w") as fp:
-                json.dump(d, fp)
-        return True
-    else :
-        return False
-
-
-
-
-
-def replace_in_dict(d0, d1, inv_d0=False, inv_d1=False, replace_key=False):
-    if inv_d0 :
-        d0 = {v0: k0 for k0, v0 in d0.items()}
-
-    if inv_d1:
-        d1 = {v0: k0 for k0, v0 in d1.items()}
-
-    if replace_key :
-        d=NestDict()
-        for k, v in d0.items():
-            if k in list(d1.keys()):
-                d[d1[k]] = v
-
-    else :
-        d = copy.deepcopy(d0)
-        for k, v in d.items():  # for each elem in the list datastreams
-            if type(v) == dict:
-                d[k] = replace_in_dict(v, d1)
-            elif v in list(d1.keys()):
-                d[k] = d1[v]
-    return NestDict(d)
-
-
-def update_existingdict(dic0,dic):
-    dic0.update((k, dic[k]) for k in set(dic).intersection(dic0))
-    return dic0
-
-
-def update_nestdict(dic0, dic):
-    dic0_f = flatten_dict(dic0)
-    dic0_f.update(dic)
-    for k,v in dic0_f.items():
-        if v=='empty_dict':
-            dic0_f[k]={}
-    return NestDict(unflatten_dict(dic0_f))
-
-def update_existingnestdict(dic0, dic):
-    dic0_f = flatten_dict(dic0)
-    dic0_f = update_existingdict(dic0_f, dic)
-    return NestDict(unflatten_dict(dic0_f))
-
+def storeSoloDics(agent_dics, path=None):
+    if path is not None :
+        os.makedirs(path, exist_ok=True)
+        for id, dic in agent_dics.items():
+            save_dict(dic, f'{path}/{id}.txt')
 
 def group_epoch_dicts(individual_epochs):
     keys = ['turn_dur', 'turn_amp', 'turn_vel_max', 'run_dur', 'run_dst', 'pause_dur', 'run_count']
     return {k: np.array(flatten_list([dic[k] for id,dic in individual_epochs.items()])) for k in keys}
-
-
-
-
-
 
 class bidict(dict):
     def __init__(self, *args, **kwargs):
@@ -221,14 +212,3 @@ def unique_list(l):
         return [x for x in l if not (x in seen or seen_add(x))]
 
 
-def loadSoloDics(agent_ids, path=None, use_pickle=False):
-    if os.path.isdir(path) :
-        files = [f'{id}.txt' for id in agent_ids]
-        return load_dicts(files=files, folder=path, use_pickle=use_pickle)
-
-
-def storeSoloDics(agent_dics, path=None, use_pickle=False):
-    if path is not None :
-        os.makedirs(path, exist_ok=True)
-        for id, dic in agent_dics.items():
-            save_dict(dic, f'{path}/{id}.txt', use_pickle=use_pickle)

@@ -39,7 +39,7 @@ class BaseRun:
         self.show = show
         # self.data = None
         self.datasets = None
-        self.figs = aux.NestDict()
+        self.figs = aux.AttrDict()
         self.results = {}
         self.progress_bar = progress_bar
 
@@ -61,15 +61,15 @@ class BaseRun:
         f = self.SimIdx_path
         runtype = self.runtype
         if not os.path.isfile(f):
-            d = aux.NestDict()
+            d = aux.AttrDict()
         else:
-            d = aux.dNl.load_dict(f, use_pickle=False)
+            d = aux.dNl.load_dict(f)
         if not runtype in d.keys():
-            d[runtype] = aux.NestDict()
+            d[runtype] = aux.AttrDict()
         if not exp in d[runtype].keys():
             d[runtype][exp] = 0
         d[runtype][exp] += 1
-        aux.dNl.save_dict(d, f, use_pickle=False)
+        aux.dNl.save_dict(d, f)
         return d[runtype][exp]
 
     def simulate(self):

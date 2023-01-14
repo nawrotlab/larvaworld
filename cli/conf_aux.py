@@ -55,7 +55,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     if d is None:
         d = {'sim_params': reg.get_null('sim_params')}
 
-    exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=aux.NestDict(d['sim_params']))
+    exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=aux.AttrDict(d['sim_params']))
 
     if models is not None:
         if conf_type in ['Exp', 'Eval']:
@@ -80,7 +80,7 @@ def update_exp_models(exp_conf, mIDs=None, N=None):
             confs=[confs[0]]*Nm
             for conf,col in zip(confs,aux.N_colors(Nm)):
                 conf.default_color = col
-        lgs = aux.NestDict({mID: {} for mID in mIDs})
+        lgs = aux.AttrDict({mID: {} for mID in mIDs})
         for mID, conf in zip(mIDs, confs):
             lgs[mID] = conf
             lgs[mID].model = reg.CONFTREE.Model[mID]

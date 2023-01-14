@@ -42,7 +42,7 @@ class MultiParser:
         return parser
 
     def get(self, input):
-        return aux.NestDict({k: v.get(input) for k, v in self.parsers.items()})
+        return aux.AttrDict({k: v.get(input) for k, v in self.parsers.items()})
 
 
 def run_template(sim_mode, args, d):
@@ -79,7 +79,7 @@ def run_template(sim_mode, args, d):
 
 
 def get_parser(sim_mode, parser=None):
-    dic = aux.NestDict({
+    dic = aux.AttrDict({
         'Batch': [['sim_params', 'batch_setup'], ['e', 'N', 'ms']],
         'Eval': [['eval_conf'], ['hide']],
         'Exp': [['sim_params', 'visualization'], ['e', 'N', 'ms', 'a']],

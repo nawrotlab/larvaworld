@@ -15,7 +15,7 @@ def build_ConfTypeSubkeys():
                 }
     }
     d0.update(d1)
-    return aux.NestDict(d0)
+    return aux.AttrDict(d0)
 
 CONFTYPE_SUBKEYS = build_ConfTypeSubkeys()
 
@@ -31,12 +31,12 @@ def build_GroupTypeSubkeys():
         #         }
     }
     d0.update(d1)
-    return aux.NestDict(d0)
+    return aux.AttrDict(d0)
 
 GROUPTYPE_SUBKEYS = build_GroupTypeSubkeys()
 
 
-CONFTREE = aux.NestDict({k : aux.load_dict2(f'{reg.CONF_DIR}/{k}.txt')  for k in reg.CONFTYPES})
+CONFTREE = aux.AttrDict({k : aux.load_dict(f'{reg.CONF_DIR}/{k}.txt') for k in reg.CONFTYPES})
 
 def build_conf_tree_expanded(c0=CONFTREE, sk=CONFTYPE_SUBKEYS):
 
@@ -66,7 +66,7 @@ CONFTREE_EXPANDED = build_conf_tree_expanded()
 
 def confInit_ks(k):
 
-    d = aux.NestDict({
+    d = aux.AttrDict({
         'Ref': None,
         'Eval': 'eval_conf',
         'Replay': 'replay',
@@ -150,7 +150,7 @@ class BaseType:
         for k, kws in dic.items():
             m0 = self.mdict[k]
             kws0[k] = self.gConf(m0, **kws)
-        return aux.NestDict(kws0)
+        return aux.AttrDict(kws0)
 
     def gConf(self, m0=None, kwdic=None, **kwargs):
         if m0 is None:
@@ -162,28 +162,28 @@ class BaseType:
             kws0 = self.gConf_kws(kwdic)
             kwargs.update(kws0)
 
-        return aux.NestDict(gConf(m0, **kwargs))
+        return aux.AttrDict(gConf(m0, **kwargs))
 
     def entry(self, id, **kwargs):
-        return aux.NestDict({id: self.gConf(**kwargs)})
+        return aux.AttrDict({id: self.gConf(**kwargs)})
 
 
 class ConfType(BaseType):
     def __init__(self,path, **kwargs):
         super().__init__(**kwargs)
         self.path = path
-        self.use_pickle = False if self.k != 'Ga' else True
+        # self.use_pickle = False if self.k != 'Ga' else True
 
     def loadDict(self):
         try:
-            return aux.load_dict(self.path, self.use_pickle)
+            return aux.load_dict(self.path)
         except:
-            return aux.NestDict()
+            return aux.AttrDict()
 
     def loadConf(self, id):
         d = self.loadDict()
         if id in d.keys():
-            return aux.NestDict(d[id])
+            return aux.AttrDict(d[id])
         else:
             print(f'{self.k} Configuration {id} does not exist')
             raise ValueError()
@@ -251,14 +251,14 @@ class ConfType(BaseType):
         d = self.loadDict()
 
         if id in d.keys() and mode == 'update':
-            d[id] = aux.update_nestdict(d[id], aux.flatten_dict(conf))
+            d[id] = d[id].update_nestdict(conf.flatten())
         else:
-            d[id] = aux.NestDict(conf)
+            d[id] = aux.AttrDict(conf)
         self.saveDict(d)
         reg.vprint(f'{self.k} Configuration saved under the id : {id}')
 
     def saveDict(self, d):
-        aux.save_dict(d, self.path, self.use_pickle)
+        aux.save_dict(d, self.path)
 
 
     def resetDict(self):
@@ -303,7 +303,7 @@ class ConfType(BaseType):
 
 class ConfTypeDict:
     def __init__(self, init_dic, Path):
-        self.dict = aux.NestDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in CONFTYPE_SUBKEYS.items()})
+        self.dict = aux.AttrDict({k: ConfType(k=k, subks=subks, parent=self, path=Path[k]) for k, subks in CONFTYPE_SUBKEYS.items()})
         self.build_mDicts(init_dic)
 
 
@@ -423,7 +423,7 @@ class GroupType(BaseType):
             }
 
             lgs.update(self.entry(id, **kws))
-        return aux.NestDict(lgs)
+        return aux.AttrDict(lgs)
 
     def lg_entry(self, id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors=(0.0, 360.0),
            s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
@@ -449,13 +449,13 @@ class GroupType(BaseType):
         N = len(mIDs)
         if cs is None :
             cs = aux.N_colors(N)
-        return aux.NestDict(aux.merge_dicts([self.lg_entry(id, c=c, mID=mID, **kwargs) for mID, c, id in zip(mIDs, cs, ids)]))
+        return aux.AttrDict(aux.merge_dicts([self.lg_entry(id, c=c, mID=mID, **kwargs) for mID, c, id in zip(mIDs, cs, ids)]))
 
 
 
 class GroupTypeDict:
     def __init__(self,init_dic):
-        self.dict = aux.NestDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in GROUPTYPE_SUBKEYS.items()})
+        self.dict = aux.AttrDict({k: GroupType(k=k, subks=subks, parent=self, dict0=init_dic[k]) for k, subks in GROUPTYPE_SUBKEYS.items()})
 
 
 

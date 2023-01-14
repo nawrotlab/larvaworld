@@ -65,7 +65,7 @@ def brain(ks, nengo=False, OD=None, **kwargs):
         if k == 'olfactor' and d[p] is not None:
             d[p]['odor_dict'] = OD
     d['nengo'] = nengo
-    return aux.NestDict(d)
+    return aux.AttrDict(d)
 
 
 def nengo_brain(module_shorts, EEB, OD=None):
@@ -220,7 +220,7 @@ def create_mod_dict(b):
     M0 = mod()
 
     def add_brain(brain, M0=M0, bod={}, phys={}, Box2D={}):
-        M1 = aux.NestDict(copy.deepcopy(M0))
+        M1 = aux.AttrDict(copy.deepcopy(M0))
         M1.brain = brain
         M1.body.update(**bod)
         M1.physics.update(**phys)
@@ -247,12 +247,12 @@ def create_mod_dict(b):
     LTh = brain(['L', 'Th'])
 
     def add_OD(OD, B0=LOF):
-        B1 = aux.NestDict(copy.deepcopy(B0))
+        B1 = aux.AttrDict(copy.deepcopy(B0))
         B1.olfactor_params.odor_dict = OD
         return B1
 
     def add_Im(Im, B0=LOFM):
-        B1 = aux.NestDict(copy.deepcopy(B0))
+        B1 = aux.AttrDict(copy.deepcopy(B0))
         B1.intermitter_params = Im
         return B1
 
@@ -374,4 +374,4 @@ def Model_dict():
 @reg.funcs.stored_conf("ModelGroup")
 def ModelGroup_dict():
     d = all_mod_dict()
-    return aux.NestDict({k: {'model families': list(v.keys())} for k, v in d.items()})
+    return aux.AttrDict({k: {'model families': list(v.keys())} for k, v in d.items()})

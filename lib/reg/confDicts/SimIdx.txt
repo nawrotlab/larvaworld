@@ -1,1 +1,1 @@
-{"Exp": {"dish": 22, "patch_grid": 75, "PItest_off": 2, "single_odor_patch_x4": 4, "dispersion": 2, "MB_patch_grid": 6, "noMB_patch_grid": 2}, "Batch": {"PItest_off": 1}, "Essay": {"RvsS": 76, "DoublePatch": 68, "Chemotaxis": 66}, "Eval": {}, "Ga": {"realism": 29}, "exp": {"exp": 40}, "eval": {"None.150controls": 1, "exploration.150controls": 5, "exploration.merged_dishes": 17}}
+{"Essay": {"RvsS": 6, "DoublePatch": 6, "Chemotaxis": 6}, "exp": {"exp": 5}, "eval": {"exploration.merged_dishes": 2}}

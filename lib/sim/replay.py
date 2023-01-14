@@ -82,7 +82,7 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
 
 
     c=d.config
-    c0=aux.copyDict(c)
+    c0=c.get_copy()
 
 
     if track_point is None:

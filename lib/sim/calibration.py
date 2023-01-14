@@ -27,18 +27,18 @@ class Calibration:
         elif turner_mode == 'constant':
             turner_keys = ['initial_amp']
 
-        self.mkeys = aux.NestDict({
+        self.mkeys = aux.AttrDict({
             'turner': turner_keys,
             'physics': physics_keys,
             'all': physics_keys + turner_keys
         })
 
         self.D = reg.model
-        self.mdicts = aux.NestDict({
+        self.mdicts = aux.AttrDict({
             'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
             'physics': self.D.dict.model.m['physics'].args
         })
-        self.mconfs = aux.NestDict({
+        self.mconfs = aux.AttrDict({
             'turner': None,
             'physics': None
         })
@@ -110,7 +110,7 @@ class Calibration:
     def retrieve_modules(self, q, Ndec=None):
         if Ndec is not None:
             q = [np.round(q0, Ndec) for q0 in q]
-        dic = aux.NestDict({k: q0 for k, q0 in zip(self.mkeys.all, q)})
+        dic = aux.AttrDict({k: q0 for k, q0 in zip(self.mkeys.all, q)})
 
         for k, mdict in self.mdicts.items():
             kwargs = {kk: dic[kk] for kk in self.mkeys[k]}

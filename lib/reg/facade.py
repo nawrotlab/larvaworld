@@ -2,12 +2,12 @@ from lib import aux
 
 class FunctionDict:
     def __init__(self):
-        self.graphs = aux.NestDict()
-        self.stored_confs = aux.NestDict()
-        self.preprocessing = aux.NestDict()
-        self.processing = aux.NestDict()
-        self.annotating = aux.NestDict()
-        self.param_computing = aux.NestDict()
+        self.graphs = aux.AttrDict()
+        self.stored_confs = aux.AttrDict()
+        self.preprocessing = aux.AttrDict()
+        self.processing = aux.AttrDict()
+        self.annotating = aux.AttrDict()
+        self.param_computing = aux.AttrDict()
 
     def param(self, name):
         return self.register_func(name, "param_computing")

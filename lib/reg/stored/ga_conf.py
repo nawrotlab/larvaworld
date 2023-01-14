@@ -31,14 +31,14 @@ def bend_error_exclusion(robot):
         return False
 
 
-fitness_funcs = aux.NestDict({
+fitness_funcs = aux.AttrDict({
     'dst2source': dst2source_evaluation,
     'cum_dst': cum_dst,
 })
 
 
 
-exclusion_funcs = aux.NestDict({
+exclusion_funcs = aux.AttrDict({
     'bend_errors': bend_error_exclusion
 })
 
@@ -79,7 +79,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
 
 @reg.funcs.stored_conf("Ga")
 def Ga_dict() :
-    d = aux.NestDict({
+    d = aux.AttrDict({
     **ga_conf('interference', dt=1 / 16, dur=3, refID='exploration.150controls', m0='loco_default',
               m1='NEU_PHI',
               fit_kws={'cycle_curves': ['fov', 'rov', 'foa']}, init='model',

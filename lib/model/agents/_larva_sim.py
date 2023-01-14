@@ -17,7 +17,7 @@ class LarvaSim(LarvaBody, LarvaMotile):
                          **larva_pars.Box2D_params, **kwargs)
 
     def update_behavior_dict(self):
-        d = aux.NestDict(self.null_behavior_dict.copy())
+        d = aux.AttrDict(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter
         if inter is not None:
             s, f, p, r = inter.active_bouts
@@ -118,7 +118,7 @@ class LarvaSim(LarvaBody, LarvaMotile):
         #
         # self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0,0
         # self.cum_food_detected = 0
-        # self.foraging_dict = aux.NestDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
+        # self.foraging_dict = aux.AttrDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
         #                       self.model.foodtypes.keys()})
 
     # def update_larva(self):
@@ -218,7 +218,7 @@ class LarvaSim(LarvaBody, LarvaMotile):
     #
     #
     # def update_behavior_dict(self):
-    #     d = aux.NestDict(self.null_behavior_dict.copy())
+    #     d = aux.AttrDict(self.null_behavior_dict.copy())
     #     inter = self.brain.locomotor.intermitter
     #     if inter is not None:
     #         s, f, p, r = inter.active_bouts

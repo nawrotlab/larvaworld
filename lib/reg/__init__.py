@@ -18,6 +18,7 @@ from .units import units
 vprint("Initializing function registry", 0)
 from .facade import funcs
 from .parFunc import *
+from .stored import *
 from .distro import distro_database,get_dist
 
 vprint("Initializing parameter registry", 0)
@@ -76,7 +77,7 @@ def loadRefDs(ids, **kwargs):
 
 
 def retrieveRef(id):
-    dic = dNl.load_dict(Path.Ref, use_pickle=False)
+    dic = dNl.load_dict(Path.Ref)
     if id in dic.keys():
         return dic[id]
     else:
@@ -86,19 +87,19 @@ def retrieveRef(id):
 
 def saveRef(id, conf):
     path = Path.Ref
-    dic = dNl.load_dict(path, use_pickle=False)
+    dic = dNl.load_dict(path)
     dic[id] = conf
-    dNl.save_dict(dic, path, use_pickle=False)
+    dNl.save_dict(dic, path)
 
 def deleteRef(id):
     import shutil
     path = Path.Ref
-    dic = dNl.load_dict(path, use_pickle=False)
+    dic = dNl.load_dict(path)
     if id in dic.keys():
         shutil.rmtree(dic[id].dir,ignore_errors=True)
         dic.pop(id,None)
         vprint(f'Deleted Ref Configuration {id}')
-        dNl.save_dict(dic, path, use_pickle=False)
+        dNl.save_dict(dic, path)
 
 def testRef(id):
     import os

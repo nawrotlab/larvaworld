@@ -305,7 +305,7 @@ class NengoBrain(Network, Brain):
 
     def save_dicts(self, path):
         if self.dict is not None:
-            aux.save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt', use_pickle=False)
+            aux.save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt')
 
 class NengoEffector:
     def __init__(self, initial_freq=None, freq_range=None, initial_amp=None, amp_range=None,

@@ -31,7 +31,7 @@ CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'B
 
 GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 
-Path = dNl.NestDict({k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES})
+Path = dNl.AttrDict({k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES})
 
 
 
@@ -39,16 +39,16 @@ Path = dNl.NestDict({k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES})
 def next_idx(id, conftype='Exp'):
     f = SimIdx_PATH
     if not os.path.isfile(f):
-        d = dNl.NestDict({k: dNl.NestDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
+        d = dNl.AttrDict({k: dNl.AttrDict() for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
     else:
-        d = dNl.load_dict(f, use_pickle=False)
+        d = dNl.load_dict(f)
 
     if not conftype in d.keys():
         d[conftype] = {}
     if not id in d[conftype].keys():
         d[conftype][id] = 0
     d[conftype][id] += 1
-    dNl.save_dict(d, f, use_pickle=False)
+    dNl.save_dict(d, f)
     return d[conftype][id]
 
 
