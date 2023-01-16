@@ -123,7 +123,6 @@ class ScreenManager:
     def step(self, tick=None):
         if self.active :
             self.sim_clock.tick_clock()
-            m = self.model
             if self.mode == 'video':
                 if self.image_mode != 'snapshots' or self.snapshot_tick:
                     self.render(tick)

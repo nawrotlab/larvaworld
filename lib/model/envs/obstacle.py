@@ -9,20 +9,22 @@ from lib import aux
 
 class Obstacle:
 
-    def __init__(self, vertices, edges, default_color, unique_id=None):
+    def __init__(self, vertices, edges, width=0.001, color='black', unique_id=None):
         self.vertices = vertices
         self.edges = edges
-        self.default_color = default_color
+        self.width = width
+        self.color = color
         self.unique_id = unique_id
 
+        self.selected = False
     def draw(self, viewer):
-        viewer.draw_polyline(vertices=self.vertices,color=self.default_color,closed=True)
+        viewer.draw_polyline(vertices=self.vertices,color=self.color,width=self.width,closed=True)
 
 
 
 class Box(Obstacle):
 
-    def __init__(self, x, y, size, default_color):
+    def __init__(self, x, y, size, **kwargs):
         self.x = x
         self.y = y
         self.size = size
@@ -34,7 +36,7 @@ class Box(Obstacle):
 
         vertices = [(vert1.x, vert1.y), (vert2.x, vert2.y), (vert3.x, vert3.y), (vert4.x, vert4.y)]
         edges = [[vert1, vert2], [vert2, vert3], [vert3, vert4], [vert4, vert1]]
-        super().__init__(vertices, edges, default_color)
+        super().__init__(vertices, edges, **kwargs)
 
     def get_saved_scene_repr(self):
         return self.__class__.__name__ + ' ' + str(self.x) + ' ' + str(self.y) + ' ' + str(self.size)
@@ -49,13 +51,13 @@ class Box(Obstacle):
 
 class Wall(Obstacle):
 
-    def __init__(self, point1, point2, default_color):
+    def __init__(self, point1, point2, **kwargs):
         self.point1 = point1
         self.point2 = point2
 
         vertices = [(point1.x, point1.y), (point2.x, point2.y)]
         edges = [[point1, point2]]
-        super().__init__(vertices, edges, default_color)
+        super().__init__(vertices, edges, **kwargs)
 
     def get_saved_scene_repr(self):
         return self.__class__.__name__ + ' ' + str(self.point1.x) + ' ' + str(self.point1.y) \
@@ -73,36 +75,21 @@ class Wall(Obstacle):
 
 
 class Border(Obstacle):
-    def __init__(self, points=None, unique_id='Border', width=0.001, default_color='black'):
+    def __init__(self, points, unique_id='Border', **kwargs):
 
-
-        # from lib.model.space.obstacle import Wall
-        # self.model = model
-        # if type(default_color) == str:
-        #     default_color = colorname2tuple(default_color)
-        # self.default_color = default_color
-        # self.unique_id = unique_id
-        self.width = width
         self.points = points
 
         self.border_xy, self.border_lines = self.define_lines(points)
-        # self.border_bodies = []
         edges = []
         vertices = self.border_xy
-        # self.border_walls = []
         for l in self.border_lines:
-            # print(list(l.coords))
             (x1, y1), (x2, y2) = list(l.coords)
             point1 = aux.Point(x1, y1)
             point2 = aux.Point(x2, y2)
             edges.append([point1, point2])
 
-            # wall = Wall(point1, point2, color=self.default_color)
-            # edges = [[point1, point2]]
-            # self.border_walls.append(wall)
 
-        self.selected = False
-        super().__init__(vertices, edges, default_color, unique_id)
+        super().__init__(vertices, edges, unique_id= unique_id, **kwargs)
 
     def define_lines(self, points, s=1):
         lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
@@ -115,7 +102,7 @@ class Border(Obstacle):
 
     def draw(self, screen):
         for b in self.border_xy:
-            screen.draw_polyline(b, color=self.default_color, width=self.width, closed=False)
+            screen.draw_polyline(b, color=self.color, width=self.width, closed=False)
             # if self.selected:
             #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 
@@ -127,7 +114,7 @@ class Border(Obstacle):
 
 
 class Arena(Obstacle):
-    def __init__(self, arena_dims=(0.1,0.1), arena_shape='circular',vertices=None, unique_id='Arena', default_color='black', k=0.96):
+    def __init__(self, arena_dims=(0.1,0.1), arena_shape='circular',vertices=None, unique_id='Arena', k=0.96, **kwargs):
 
         X, Y = self.dims = arena_dims
         self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
@@ -145,4 +132,4 @@ class Arena(Obstacle):
                 raise
         self.polygon = Polygon(vertices * k)
         edges = [[aux.Point(x1,y1), aux.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
-        super().__init__(vertices, edges, default_color, unique_id)
+        super().__init__(vertices, edges, unique_id=unique_id, **kwargs)

@@ -26,8 +26,6 @@ class _LarvaDataset:
                 print('Data not found. Load them manually.')
 
 
-
-
     def set_data(self, step=None, end=None, food=None):
         if step is not None:
             step.sort_index(level=['Step', 'AgentID'], inplace=True)
@@ -40,14 +38,6 @@ class _LarvaDataset:
         if food is not None:
             self.food_endpoint_data = food
         self.config=update_config(self,self.config)
-
-
-
-
-
-
-
-
 
 
     def load_step(self, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
@@ -130,9 +120,6 @@ class _LarvaDataset:
         return dic
 
 
-
-
-
     def retrieveRefID(self, refID=None):
         if refID is None:
             if self.config.refID is not None:
@@ -143,8 +130,6 @@ class _LarvaDataset:
                 self.config.refID = refID
 
         return refID
-
-
 
 
     def save_config(self, refID=None):
@@ -166,9 +151,6 @@ class _LarvaDataset:
 
         if refID is not None:
             reg.saveConf(conftype='Ref', id=refID, conf=self.config)
-
-
-
 
 
     def centralize_xy_tracks(self, replace=True, arena_dims=None, is_last=True):
@@ -197,8 +179,6 @@ class _LarvaDataset:
         if is_last:
             self.save_step(s, **kws0)
         return s
-
-
 
     def storeH5(self, df, key, filepath_key=None, mode=None):
         if filepath_key is None :

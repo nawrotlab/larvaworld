@@ -168,8 +168,6 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
     elif save_mode == 'semifull':
         N,Nc=d.Npoints, d.Ncontour
         cols1 = nam.midline_xy(N, flat=True) + nam.contour_xy(Nc, flat=True)+ ['collision_flag']
-        #print(cols1)
-        # cols1 = nam.xy(d.points, flat=True) + nam.xy(d.contour, flat=True) + ['collision_flag']
 
     elif save_mode == 'points':
         cols1 = nam.xy(d.points, flat=True) + ['collision_flag']

@@ -1,22 +1,12 @@
 from lib import aux
 from lib.model.agents._larva import LarvaMotile
-from lib.model.agents.body import LarvaBody
-from lib.model.modules.brain import DefaultBrain
 from lib.model.modules.motor_controller import MotorController, Actuator
 from lib.model.modules.sensor2 import ProximitySensor
 
-class LarvaRobot(LarvaBody, LarvaMotile):
+class LarvaRobot(LarvaMotile):
 
-    def __init__(self, unique_id, model, larva_pars, orientation=0, pos=(0, 0),group='',odor=None,default_color=None, life_history=None, **kwargs):
-        if default_color is None:
-            default_color = aux.Color.random_color(127, 127, 127)
-
-        LarvaMotile.__init__(self, physics=larva_pars.physics, unique_id=unique_id, model=model, pos=pos,
-                       odor=odor, group=group, default_color=default_color, life_history=life_history, energetics=larva_pars.energetics,
-                             brain=larva_pars.brain)
-
-        LarvaBody.__init__(self, model=model, pos=self.pos, orientation=orientation, default_color=self.default_color,
-                         **larva_pars.body, **larva_pars.Box2D_params)
+    def __init__(self, larva_pars,**kwargs):
+        super().__init__(**larva_pars,default_color=aux.Color.random_color(), **kwargs)
 
         self.Nticks = 0
         self.finalized = False
@@ -44,32 +34,16 @@ class LarvaRobot(LarvaBody, LarvaMotile):
                                                                    self.rear_orientation_change/self.model.dt,
                                                                    self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
 
-    def step(self):
-        # raise
-        self.cum_dur += self.model.dt
-        pos = self.olfactor_pos
-        self.food_detected, self.current_foodtype = self.detect_food(pos)
-        lin, ang, self.feeder_motion = self.brain.step(pos, reward=self.food_detected is not None)
-        lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(),
-                                         self.head.get_linearvelocity(),
-                                         self.body_bend, dt=self.model.dt,
-                                         ang_suppression=self.brain.locomotor.cur_ang_suppression)
-        self.position_body(lin_vel=lin_vel, ang_vel=ang_vel, dt=self.model.dt)
-        self.compute_body_bend()
-        self.trajectory.append(self.pos)
-        self.complete_step()
 
     def sense_and_act(self):
         self.step()
-        # print()
-        # print(self.unique_id, self.Nticks)
 
     def draw_label(self, screen):
         import pygame
         if pygame.font and self.unique_id is not None:
             font = pygame.font.Font(None, 24)
             text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
-            text_pos = pygame.Rect(self.xx + (self.sim_length / 2), self.yy + (self.sim_length / 2), 50, 50)
+            text_pos = pygame.Rect(self.xx + (self.real_length / 2), self.yy + (self.real_length / 2), 50, 50)
             screen.blit(text, text_pos)
 
 

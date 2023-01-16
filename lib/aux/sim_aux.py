@@ -1,13 +1,11 @@
 import math
 import numpy as np
+from shapely import geometry, ops
 
-from shapely.geometry import Point, Polygon, LineString
-from shapely.ops import split
 from scipy.signal import sosfiltfilt, butter
 
 from lib import aux
 from lib.aux import naming as nam
-from lib.aux.np import circle_to_polygon
 
 
 def LvsRtoggle(side):
@@ -20,7 +18,7 @@ def LvsRtoggle(side):
 
 
 def inside_polygon(points, tank_polygon):
-    return all([tank_polygon.contains(Point(x, y)) for x, y in points])
+    return all([tank_polygon.contains(geometry.Point(x, y)) for x, y in points])
 
 
 def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
@@ -30,17 +28,17 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
         seg_ratio = [1 / N] * N
 
     # Create a polygon from the given body contour
-    p = Polygon(xy0)
+    p = geometry.Polygon(xy0)
     # Get maximum y value of contour
     y0 = np.max(p.exterior.coords.xy[1])
 
     # Segment body via vertical lines
     ps = [p]
     for cum_r in np.cumsum(seg_ratio):
-        l = LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
+        l = geometry.LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
         new_ps = []
         for p in ps:
-            new_ps += list(split(p, l).geoms)
+            new_ps += list(ops.split(p, l).geoms)
         ps = new_ps
 
     # Sort segments so that front segments come first
@@ -90,7 +88,7 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
     shape = c.env_params.arena.arena_shape
     if shape == 'circular':
         # This is a circle_to_polygon shape from the function
-        tank_shape = circle_to_polygon(60, X / 2)
+        tank_shape = aux.circle_to_polygon(60, X / 2)
     elif shape == 'rectangular':
         # This is a rectangular shape
         tank_shape = np.array([(-X / 2, -Y / 2),
@@ -98,7 +96,7 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
                                (X / 2, Y / 2),
                                (X / 2, -Y / 2)])
     if return_polygon:
-        return Polygon(tank_shape * k)
+        return geometry.Polygon(tank_shape * k)
     else:
         # tank_shape=np.insert(tank_shape,-1,tank_shape[0,:])
         return tank_shape
@@ -234,6 +232,19 @@ def get_source_xy(food_params):
     sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
     sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}
     return {**sources_u, **sources_g}
+
+def get_all_foodtypes(food_params):
+    sg = {k: v.default_color for k, v in food_params.source_groups.items()}
+    su = {conf.group: conf.default_color for conf in food_params.source_units.values()}
+    gr = {
+        food_params.food_grid.unique_id: food_params.food_grid.default_color} if food_params.food_grid is not None else {}
+    ids = {**gr, **su, **sg}
+    ks = aux.unique_list(list(ids.keys()))
+    try:
+        ids = {k: list(np.array(ids[k]) / 255) for k in ks}
+    except:
+        ids = {k: ids[k] for k in ks}
+    return ids
 
 
 def test_rotation(ho0, ang_vel, hr0, l0, dt, to_return='front'):

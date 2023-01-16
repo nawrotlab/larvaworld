@@ -18,7 +18,6 @@ class BaseRun:
         random.seed(seed)
         self.runtype = runtype
         self.parent_storage_path = f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
-        self.SimIdx_path = reg.SimIdx_PATH
 
         if experiment is None:
             experiment = self.runtype
@@ -58,18 +57,18 @@ class BaseRun:
         pass
 
     def next_idx(self, exp):
-        f = self.SimIdx_path
+        f = f'{reg.CONF_DIR}/SimIdx.txt'
         runtype = self.runtype
         if not os.path.isfile(f):
             d = aux.AttrDict()
         else:
-            d = aux.dNl.load_dict(f)
+            d = aux.load_dict(f)
         if not runtype in d.keys():
             d[runtype] = aux.AttrDict()
         if not exp in d[runtype].keys():
             d[runtype][exp] = 0
         d[runtype][exp] += 1
-        aux.dNl.save_dict(d, f)
+        aux.save_dict(d, f)
         return d[runtype][exp]
 
     def simulate(self):

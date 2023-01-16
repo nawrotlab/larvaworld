@@ -2,7 +2,21 @@ from lib import reg, sim
 from lib.process.larva_dataset import LarvaDataset
 
 
+def test_GA() :
+    conf=reg.expandConf('Ga', 'realism')
+    conf.ga_select_kws.Ngenerations = 5
 
+    ga_run = sim.GAlauncher(**conf)
+    best1=ga_run.run()
+    print(best1)
+    assert best1 is not None
+
+    conf.offline=True
+    conf.show_screen=False
+    ga_run = sim.GAlauncher(**conf)
+    best2=ga_run.run()
+    print(best2)
+    assert best2 is not None
 
 
 def test_exp_run() :
@@ -53,12 +67,7 @@ def test_replay() :
         rep.run()
 
 
-def test_GA() :
-    for exp in ['realism'] :
-        conf=reg.expandConf('Ga', exp)
-        # conf.sim_params.duration=1
-        ga_run = sim.GAlauncher(**conf)
-        ga_run.run()
+
 
 def xtest_batch_run() :
     for exp in ['PItest_off'] :

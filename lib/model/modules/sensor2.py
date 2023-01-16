@@ -42,8 +42,8 @@ class LightSensor(Sensor2):
                 light = obj
 
                 # cambio SDR
-                x_robot = self.robot.x
-                y_robot = -self.robot.y
+                x_robot = self.robot.xx
+                y_robot = -self.robot.yy
                 x_light = light.x
                 y_light = -light.y
 

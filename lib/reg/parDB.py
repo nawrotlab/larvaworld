@@ -495,7 +495,7 @@ def buildInitDict():
                               ['metric_definition', 'preprocessing', 'processing', 'annotation']},
                            'recompute': {**bF, 'h': f'Whether to recompute'},
                            'mode': {'dtype': str, 'v': 'minimal', 'vs': ['minimal', 'full'],
-                                    'h': f'The processing modee'}
+                                    'h': f'The processing mode'}
                            }
         return d
 

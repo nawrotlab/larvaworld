@@ -1,5 +1,4 @@
 VERBOSE =0
-
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
         print(text)
@@ -7,7 +6,21 @@ vprint("Initializing larvaworld registry", 2)
 
 
 vprint("Initializing path registry", 0)
-from .paths import *
+from os.path import dirname, abspath
+ROOT_DIR = dirname(dirname(dirname(abspath(__file__))))
+DATA_DIR = f'{ROOT_DIR}/data'
+SIM_DIR = f'{DATA_DIR}/SimGroup'
+BATCH_DIR = f'{SIM_DIR}/batch_runs'
+CONF_DIR = f'{ROOT_DIR}/lib/reg/confDicts'
+
+CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
+                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
+
+GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
+
+Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
+
+
 from .data_structure import datapath, datafunc
 
 
@@ -25,12 +38,11 @@ vprint("Initializing parameter registry", 0)
 from .parDB import par
 
 vprint("Initializing configuration registry", 0)
-from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, loadRefDs
+from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, loadRefDs, next_idx
 from .controls import controls
 
 vprint("Initializing model registry", 0)
 from .models import model
-# from .parser import parsers
 
 vprint("Initializing graph registry", 0)
 from .graph import graphs

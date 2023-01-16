@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-from lib.aux import dictsNlists as dNl
+from lib import aux
 
 
 
@@ -71,7 +71,7 @@ def read(path=None, key=None, mode='r',**kwargs):
             store.close()
             return df
         else :
-            dd=dNl.AttrDict()
+            dd=aux.AttrDict()
             for k in ks :
                 dd[k]=store[k]
             store.close()

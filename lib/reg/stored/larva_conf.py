@@ -79,21 +79,11 @@ def nengo_brain(module_shorts, EEB, OD=None):
                  crawler=reg.get_null('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
                                        mode='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=reg.get_null('feeder', initial_freq=f_fr0, freq_range=f_fr_r),
-                 # olfactor=olfactor,
                  intermitter=reg.get_null('intermitter', feed_bouts=EEB > 0, EEB=EEB, mode='nengo'),
                  nengo=True,
                  OD=OD
                  )
 
-
-
-
-
-# b=RvsS_larva(EEB=0.37, species='rover', OD=OD1, gut_kws={'k_abs': 0.8}).brain
-# print(b.modules.feeder)
-# bb=preg.conftype_dict.dict.Model.loadConf('RE_NEU_SQ_DEF_nav').brain
-# print(bb.modules.feeder)
-# raise
 
 def build_RvsS(b):
     # RvsS = {}
@@ -229,8 +219,6 @@ def create_mod_dict(b):
 
     LOF = brain(['LOF'])
     LOFM = brain(['LOF', 'M'])
-    # LO = brain(['L', 'O'])
-    # LO_brute = brain(['L', 'O'], olfactor=reg.get_null('olfactor', brute_force=True))
     LW = brain(['L', 'W'])
     L = brain(['L'])
     LTo = brain(['L', 'To'], toucher=reg.get_null('toucher', touch_sensors=[]))
@@ -256,36 +244,15 @@ def create_mod_dict(b):
         B1.intermitter_params = Im
         return B1
 
-    def Box2Djoints(N, **kwargs):
-        return {'N': N, 'args': kwargs}
-
     explorers = {
         'explorer': add_brain(LW),
-        # 'phasic_explorer': add_brain(Lphi),
-        # 'uncoupled_explorer': add_brain(LOuncoupled),
-        # 'def_coupled_explorer': add_brain(LOdef),
         'branch_explorer': add_brain(add_Im(reg.get_null('intermitter', feed_bouts=False, EEB=0, mode='branch'), LW)),
-        # 'branch_explorer': add_brain(add_Im(Im(0.0, mode='branch'), LW)),
         'nengo_explorer': add_brain(nengo_brain(['L', 'W'], EEB=0.0)),
-        # 'Levy-walker': add_brain(Levy_brain),
-        # 'explorer_3con': add_brain(brain_3c, bod={'initial_length': 3.85 / 1000, 'length_std': 0.35 / 1000}),
-        'imitator': add_brain(L, bod={'initial_length': 0.0045, 'length_std': 0.0001, 'Nsegs': 11},
-                              phys={'ang_damping': 1.0, 'body_spring_k': 1.0}),
+        'imitator': add_brain(L, bod={'Nsegs': 11}),
 
     }
 
     navigators = {
-        # 'navigator': add_brain(add_OD(OD1, LO)),
-        # 'phasic_navigator': add_brain(add_OD(OD1, LOphi)),
-        # 'uncoupled_navigator': add_brain(add_OD(OD1, LOuncoupled)),
-        # 'def_coupled_navigator': add_brain(add_OD(OD1, LOdef)),
-        # 'navigator_brute': add_brain(add_OD(OD1, LO_brute)),
-        # 'navigator_x2': add_brain(add_OD(OD2, LO)),
-        # 'navigator_x2_brute': add_brain(add_OD(OD2, LO_brute)),
-        # 'basic_navigator': add_brain(brain(['L', 'O'], OD=OD1, turner=Tsin, crawler=Ccon), bod={'Nsegs': 1}),
-        # 'continuous_navigator': add_brain(brain(['C', 'T', 'If', 'O'], OD=OD1, crawler=Ccon,
-        #                                         interference=IfNull),
-        #                                   bod={'Nsegs': 1}),
         'RL_navigator': add_brain(LOFM),
         'nengo_navigator': add_brain(nLO),
         'nengo_navigator_x2': add_brain(add_OD(OD2, nLO)),
@@ -301,14 +268,7 @@ def create_mod_dict(b):
         'nengo_forager': add_brain(nengo_brain(['LOF'], EEB=0.75, OD=OD1))
     }
 
-    # RvsS = {
-    #     'rover': RvsS_larva(species='rover'),
-    #     'sitter': RvsS_larva(species='sitter'),
-    #     'navigator_rover': RvsS_larva(species='rover', OD=OD1),
-    #     'mock_rover': RvsS_larva(species='rover', mock=True),
-    #     'navigator_sitter': RvsS_larva(species='sitter', OD=OD1),
-    #     'mock_sitter': RvsS_larva(species='sitter', mock=True),
-    # }
+
 
     touchers = {
         'toucher': add_brain(LTo),
@@ -335,10 +295,9 @@ def create_mod_dict(b):
     }
     zebrafish = {
         'zebrafish': add_brain(L,
-                               bod={'initial_length': 0.004, 'length_std': 0.0001, 'Nsegs': 2,
-                                    'shape': 'zebrafish_larva'},
+                               bod={'shape': 'zebrafish_larva'},
                                Box2D={
-                                   'joint_types': {'revolute': Box2Djoints(N=1, maxMotorTorque=10 ** 5, motorSpeed=1)}})
+                                   'joint_types': {'revolute': {'N': 1, 'args': {'maxMotorTorque':10 ** 5, 'motorSpeed':1}}}})
     }
 
     grouped_mod_dict = {

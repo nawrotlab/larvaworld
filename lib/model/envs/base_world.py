@@ -80,7 +80,7 @@ class BaseWorld:
         self.odor_layers = {}
 
         self.food_grid = None
-        self.foodtypes = get_all_foodtypes(self.env_pars.food_params)
+        self.foodtypes = aux.get_all_foodtypes(self.env_pars.food_params)
         self.source_xy = aux.get_source_xy(self.env_pars.food_params)
 
         self.create_schedules()
@@ -303,15 +303,3 @@ class BaseWorld:
             self.space.move_agent(l, l.pos)
 
 
-def get_all_foodtypes(food_params):
-    sg = {k: v.default_color for k, v in food_params.source_groups.items()}
-    su = {conf.group: conf.default_color for conf in food_params.source_units.values()}
-    gr = {
-        food_params.food_grid.unique_id: food_params.food_grid.default_color} if food_params.food_grid is not None else {}
-    ids = {**gr, **su, **sg}
-    ks = aux.unique_list(list(ids.keys()))
-    try:
-        ids = {k: list(np.array(ids[k]) / 255) for k in ks}
-    except:
-        ids = {k: ids[k] for k in ks}
-    return ids

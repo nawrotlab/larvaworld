@@ -3,8 +3,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from matplotlib import pyplot as plt
-from scipy.signal import argrelextrema
-from scipy.spatial import ConvexHull
+
 
 from lib.aux import naming as nam
 
@@ -148,7 +147,7 @@ def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
     for i, p in enumerate(ps):
         if len(p) > 0:
             try:
-                b = p[ConvexHull(p).vertices]
+                b = p[sp.spatial.ConvexHull(p).vertices]
                 s = np.min([b.shape[0], N])
                 xxs[i, :s] = b[:s, 0]
                 yys[i, :s] = b[:s, 1]
@@ -278,7 +277,7 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
     density = np.exp(np.convolve(np.log(hist), ker, 'same'))
     plt.semilogy(vals, density)
 
-    mi, ma = argrelextrema(density, np.less)[0], argrelextrema(density, np.greater)[0]
+    mi, ma = sp.signal.argrelextrema(density, np.less)[0], sp.signal.argrelextrema(density, np.greater)[0]
     try:
         minimum = vals[mi][0]
     except:

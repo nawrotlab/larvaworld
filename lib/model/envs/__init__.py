@@ -1,1 +1,2 @@
-from ._space import FoodGrid,Space,GaussianValueLayer,DiffusionValueLayer,WindScape,ThermoScape
+from ._space import *
+from .obstacle import *

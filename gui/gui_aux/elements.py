@@ -1726,7 +1726,7 @@ class GuiTreeData(sg.TreeData):
             self.insert(**entry)
 
     def save(self, **kwargs):
-        with open(reg.GLOSSARY_PATH, 'w') as f:
+        with open(f'{reg.CONF_DIR}/glossary.txt', 'w') as f:
             f.write(self._NodeStr(**kwargs))
 
     def build_layout(self):

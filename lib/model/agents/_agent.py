@@ -1,7 +1,7 @@
 import agentpy
 import numpy as np
 from scipy.stats import multivariate_normal
-from shapely.geometry import Point
+from shapely import geometry
 
 
 from lib.screen.rendering import InputBox
@@ -90,7 +90,7 @@ class LarvaworldAgent(agentpy.Agent):
 
     def get_shape(self, scale=1):
         p = self.get_position()
-        return Point(p).buffer(self.radius * scale) if not np.isnan(p).all() else None
+        return geometry.Point(p).buffer(self.radius * scale) if not np.isnan(p).all() else None
 
     def set_color(self, color):
         self.color = color
@@ -99,7 +99,7 @@ class LarvaworldAgent(agentpy.Agent):
         # return Point(self.get_position()).distance(Point(point))<=self.radius
         # return Circle(self.get_position(), radius=self.radius).contains_point(point)
         shape = self.get_shape()
-        return shape.covers(Point(point)) if shape else False
+        return shape.covers(geometry.Point(point)) if shape else False
 
     # @abc.abstractmethod
     def step(self):
@@ -107,7 +107,6 @@ class LarvaworldAgent(agentpy.Agent):
 
     def set_default_color(self, color):
         self.default_color = color
-        self.id_box.color = self.default_color
         self.set_color(color)
 
     def set_odor_dist(self, intensity=None, spread=None):

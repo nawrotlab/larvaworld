@@ -25,7 +25,7 @@ class SingleRun:
         self.enrichment = enrichment
         self.analysis = analysis
         if save_to is None:
-            save_to = reg.SIM_DIR
+            save_to = f'{reg.SIM_DIR}/single_runs'
         self.save_to = save_to
         self.storage_path = f'{self.save_to}/{self.id}'
         self.plot_dir = f'{self.storage_path}/plots'

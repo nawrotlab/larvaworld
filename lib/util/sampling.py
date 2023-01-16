@@ -262,7 +262,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
     b, fo, ro, fov, x, y, dst, v = 0, fo0, 0, 0, x0, y0, 0, 0
     for i in range(Nticks):
         lin, ang, feed = DL.step(A_in=0, length=l)
-        v, fov = controller.get_vels(lin, ang, fov, v, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
+        v, fov = controller.get_vels(lin, ang, fov, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
 
         d_or = fov * dt
         if np.abs(d_or) > np.pi:

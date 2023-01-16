@@ -379,13 +379,7 @@ class BoutGenerator:
 
 def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     if refDataset is None :
-
-        d = reg.loadRef(refID)
-        d.load(contour=False)
-        # s, e, c = d.step_data, d.endpoint_data, d.config
-        # Npau = s['pause_dur'].dropna().values.shape[0]
-        # Nrun = s['run_dur'].dropna().values.shape[0]
-        refDataset=d
+        refDataset=reg.loadRef(refID, load=True)
     c=refDataset.config
     chunk_dicts = refDataset.load_chunk_dicts()
     aux_dic = aux.group_epoch_dicts(chunk_dicts)

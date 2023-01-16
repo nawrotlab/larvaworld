@@ -23,12 +23,12 @@ class Essay:
         self.enrichment = enrichment
         self.collections = collections
         if essay_id is None:
-            essay_id=f'{type}_{lib.reg.next_idx(id=type, conftype="Essay")}'
+            essay_id=f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
         self.essay_id = essay_id
-        self.path = f'essays/{type}/{self.essay_id}/data'
-        path = reg.ESSAY_DIR
-        self.full_path = f'{path}/{type}/{self.essay_id}/data'
-        self.plot_dir = f'{path}/{type}/{self.essay_id}/plots'
+        # self.path = f'essays/{type}/{self.essay_id}/data'
+        self.path = f'{reg.SIM_DIR}/essays/{type}/{self.essay_id}'
+        self.data_dir = f'{self.path}/data'
+        self.plot_dir = f'{self.path}/plots'
         self.exp_dict = {}
         self.datasets = {}
         self.figs = {}
@@ -56,7 +56,7 @@ class Essay:
             if ds0 is not None and len(ds0) != 0 and all([d0 is not None for d0 in ds0]):
                 self.analyze(exp=exp, ds0=ds0)
 
-        shutil.rmtree(self.full_path, ignore_errors=True)
+        shutil.rmtree(self.path, ignore_errors=True)
         return self.figs, self.results
 
     def analyze(self, exp, ds0):

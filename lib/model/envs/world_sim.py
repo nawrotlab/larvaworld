@@ -76,7 +76,7 @@ class WorldSim(World):
                 f = self._add_larva(p0)
             elif agent_class == 'Border':
                 from lib.model.envs.obstacle import Border
-                b = Border(model=self, points=[p1, p0])
+                b = Border(points=[p1, p0])
                 self.add_border(b)
         except:
             pass

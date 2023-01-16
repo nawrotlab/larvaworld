@@ -5,19 +5,22 @@ import numpy as np
 
 
 from lib import aux
-from lib.model.agents._agent import LarvaworldAgent
+from lib.model.agents import LarvaworldAgent, LarvaBody
 
 
 class Larva(LarvaworldAgent):
-    def __init__(self, unique_id, model, pos=None, radius=None, default_color='black', **kwargs):
+    def __init__(self, unique_id, model,orientation, **kwargs):
 
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
-        super().__init__(unique_id=unique_id, model=model, default_color=default_color, pos=pos, radius=radius,
-                         **kwargs)
+        super().__init__(unique_id=unique_id, model=model,**kwargs)
         self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
         self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
         self.carried_objects = []
+        self.trajectory = [self.initial_pos]
+
+        self.initial_orientation = orientation
+        self.orientation = self.initial_orientation
 
     def update_color(self, default_color,dic, mode='lin'):
 
@@ -78,7 +81,7 @@ class PhysicsController:
         dtI = dt / I
         return v + (-c * v - k * b + torque) * dtI
 
-    def get_vels(self, lin, ang, prev_ang_vel, prev_lin_vel, bend, dt, ang_suppression):
+    def get_vels(self, lin, ang, prev_ang_vel, bend, dt, ang_suppression):
         if self.lin_mode == 'velocity':
             if lin != 0:
                 lin_vel = lin * self.lin_vel_coef
@@ -88,13 +91,11 @@ class PhysicsController:
             raise ValueError(f'Linear mode {self.lin_mode} not implemented for non-physics simulation')
         if self.ang_mode == 'torque':
             torque = ang * self.torque_coef
-            # self.torque =ang * self.torque_coef*ang_suppression
             ang_vel = self.compute_ang_vel(torque=torque,
                                            v=prev_ang_vel, b=bend,
                                            c=self.ang_damping, k=self.body_spring_k, dt=dt)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
-        # ang_vel*=ang_suppression
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
         ang_vel *= ang_suppression
         return lin_vel, ang_vel
@@ -103,9 +104,13 @@ class PhysicsController:
         return lin_vel, ang_vel
 
 
-class LarvaMotile(Larva, PhysicsController):
-    def __init__(self, physics,energetics,brain,life_history=None,  **kwargs):
-        Larva.__init__(self, **kwargs)
+class LarvaMotile(LarvaBody,Larva, PhysicsController):
+    def __init__(self, model,body, physics,energetics,brain,life_history=None,Box2D_params={},orientation=None, pos=None,  **kwargs):
+        if orientation is None:
+            orientation = random.uniform(0, 2 * np.pi)
+        if pos is None:
+            pos = (0.0, 0.0)
+        Larva.__init__(self,model=model, pos = pos, orientation = orientation, **kwargs)
 
         PhysicsController.__init__(self, **physics)
 
@@ -119,27 +124,12 @@ class LarvaMotile(Larva, PhysicsController):
         self.cum_dst = 0.0
         self.dst = 0.0
         self.backward_motion = True
+        LarvaBody.__init__(self, model=self.model,pos=self.pos, orientation=self.orientation, **body, **Box2D_params)
+        self.radius=self.sim_length/2
 
 
 
-        self.trajectory = [self.initial_pos]
 
-        # self.body_bend = 0
-        # self.body_bend_errors = 0
-        # self.negative_speed_errors = 0
-        # self.border_go_errors = 0
-        # self.border_turn_errors = 0
-        # # self.Nangles_b = int(self.Nangles + 1 / 2)
-        # # self.spineangles = [0.0] * self.Nangles
-        # #
-        # # self.mid_seg_index = int(self.Nsegs / 2)
-        # self.rear_orientation_change = 0
-        # # self.compute_body_bend()
-        # self.cum_dur = 0
-        #
-        # self.cum_dst = 0.0
-        # self.dst = 0.0
-        # self.backward_motion = True
 
 
 
@@ -367,176 +357,88 @@ class LarvaMotile(Larva, PhysicsController):
     #     else:
     #         return ang_vel, ho1, k, hf01, border_turn_errors
 
+    def update_behavior_dict(self):
+        d = aux.AttrDict(self.null_behavior_dict.copy())
+        inter = self.brain.locomotor.intermitter
+        if inter is not None:
+            s, f, p, r = inter.active_bouts
+            d.stride_id = s is not None
+            d.feed_id = f is not None
+            d.pause_id = p is not None
+            d.run_id = r is not None
+            d.stride_stop = inter.stride_stop
+
+        orvel = self.front_orientation_vel
+        if orvel > 0:
+            d.Lturn_id = True
+        elif orvel < 0:
+            d.Rturn_id = True
+        color = self.update_color(self.default_color, d)
+        self.set_color([color] * self.Nsegs)
 
 
 
 
 
-    @property
-    def border_collision(self):
-        if len(self.model.borders) == 0:
-            return False
+
+    def step(self):
+        self.cum_dur += self.model.dt
+        pos = self.olfactor_pos
+        self.food_detected, self.current_foodtype = self.detect_food(pos)
+        lin, ang, self.feeder_motion = self.brain.step(pos, reward=self.food_detected is not None)
+
+        if self.model.Box2D:
+            self.Box2D_kinematics(lin, ang)
         else:
-            x, y = self.pos
-            p0 = aux.Point(x, y)
-            d0 = self.sim_length / 4
-            oM = self.head.get_orientation()
-            sensor_ray = aux.radar_tuple(p0=p0, angle=oM, distance=d0)
-            min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.model.borders, sensor_ray, p0)
+            lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(),
+                                             self.body_bend, dt=self.model.dt,
+                                             ang_suppression=self.brain.locomotor.cur_ang_suppression)
+            self.position_body(lin_vel=lin_vel, ang_vel=ang_vel, dt=self.model.dt)
+            self.compute_body_bend()
+            self.trajectory.append(self.pos)
+        self.complete_step()
 
-            if min_dst is None:
-                return False
-            else:
-                return True
-
-    @property
-    def border_collision3(self):
-        if len(self.model.border_lines) == 0:
-            return False
-        else:
-            p0 = self.olfactor_point
-            # p0 = Point(self.olfactor_pos[0],self.olfactor_pos[1])
-            # p0 = Point(self.pos)
-            d0 = self.sim_length / 4
-            # shape = self.head.get_shape()
-            for l in self.model.border_lines:
-
-                if p0.distance(l) < d0:
-                    return True
-            return False
-
-    @property
-    def border_collision2(self):
-        simple = True
-
-        if len(self.model.border_lines) == 0:
-            return False
-        else:
-            oM = self.head.get_orientation()
-            oL = oM + np.pi / 3
-            oR = oM - np.pi / 3
-            p0 = self.pos
-            d0 = self.sim_length / 3
-            dM = aux.min_dst_to_lines_along_vector(point=p0, angle=oM, target_lines=self.model.border_lines, max_distance=d0)
-            if dM is not None:
-                if simple:
-                    return True
-                dL = aux.min_dst_to_lines_along_vector(point=p0, angle=oL, target_lines=self.model.border_lines, max_distance=d0)
-                dR = aux.min_dst_to_lines_along_vector(point=p0, angle=oR, target_lines=self.model.border_lines, max_distance=d0)
-                if dL is None and dR is None:
-                    return 'M'
-                elif dL is None and dR is not None:
-                    if dR < dM:
-                        return 'RRM'
-                    else:
-                        return 'MR'
-                elif dR is None and dL is not None:
-                    if dL < dM:
-                        return 'LLM'
-                    else:
-                        return 'ML'
-                elif dR is not None and dL is not None:
-                    if dL < dR:
-                        return 'LLM'
-                    else:
-                        return 'RRM'
-            else:
-                return False
-
-
-
-    def assess_collisions(self, lin_vel, ang_vel):
-        if not self.model.larva_collisions:
-            ids = self.model.detect_collisions(self.unique_id)
-            larva_collision = False if len(ids) == 0 else True
-        else:
-            larva_collision = False
-        if larva_collision:
-            lin_vel = 0
-            ang_vel += np.sign(ang_vel) * np.pi / 10
-            return lin_vel, ang_vel
-        res = self.border_collision
-        d_ang = np.pi / 20
-        if not res:
-            return lin_vel, ang_vel
-        elif res == True:
-            lin_vel = 0
-            ang_vel += np.sign(ang_vel) * d_ang
-            return lin_vel, ang_vel
-        if 'M' in res:
-            lin_vel = 0
-        if 'RR' in res:
-            ang_vel += 2 * d_ang
-        elif 'R' in res:
-            ang_vel += d_ang
-        if 'LL' in res:
-            ang_vel -= 2 * d_ang
-        elif 'L' in res:
-            ang_vel -= d_ang
-
-        return lin_vel, ang_vel
-
-    def assess_tank_contact(self, ang_vel, o0, d, hr0, hp0, dt, l0):
-        # a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
-        # ang_vel0 = np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
-
-        def avoid_border(ang_vel, counter, dd=0.01):
-            if math.isinf(ang_vel):
-                ang_vel = 1.0
-            if any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
-                counter += 1
-                ang_vel *= -(1 + dd * counter)
-                return ang_vel, counter
-            else:
-                s = self.sim_length / 1000
-                L, R = self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
-                Ld, Rd = self.model.tank_polygon.exterior.distance(
-                    aux.Point(L)), self.model.tank_polygon.exterior.distance(
-                    aux.Point(R))
-                Ld, Rd = Ld / s, Rd / s
-                LRd = Ld - Rd
-                ang_vel += dd * LRd
-                return ang_vel, counter
-
-        def check_in_tank(ang_vel, o0, d, hr0, l0):
-            o1 = o0 + ang_vel * dt
-            k1 = np.array([math.cos(o1), math.sin(o1)])
-            dxy = k1 * d
-            sim_dxy = dxy * self.model.scaling_factor
-            # k = np.array([math.cos(o1), math.sin(o1)])
-            # dxy = k * d
+    def Box2D_kinematics(self, lin, ang):
+        self.compute_body_bend()
+        if self.ang_mode == 'velocity':
+            ang_vel = ang * self.ang_vel_coef
+            self.segs[0].set_ang_vel(ang_vel)
             if self.Nsegs > 1:
-                hr1 = hr0 + sim_dxy
-                hp1 = hr1 + k1 * l0 / 2
-            else:
-                hr1 = None
-                hp1 = hp0 + sim_dxy
-            points = [hp1 + k1 * l0 / 2]
-            in_tank = aux.inside_polygon(points=points, tank_polygon=self.model.tank_polygon)
-            return in_tank, o1, hr1, hp1
+                for i in np.arange(1, self.mid_seg_index, 1):
+                    self.segs[i].set_ang_vel(ang_vel / i)
+        elif self.ang_mode == 'torque':
+            torque = ang * self.torque_coef
+            self.segs[0]._body.ApplyTorque(torque, wake=True)
 
-        in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
-        counter = -1
-        while not in_tank:
-            # o0 += np.pi/180
-            counter += 1
-            ang_vel *= -(1 + 0.01 * counter)
+        # Linear component
+        # Option : Apply to single body segment
+        # We get the orientation of the front segment and compute the linear vector
+        # target_segment = self.get_head()
+        # lin_vec = self.compute_new_lin_vel_vector(target_segment)
+        #
+        # # From web : Impulse = Force x 1 Sec in Box2D
+        # if self.mode == 'impulse':
+        #     imp = lin_vec / target_segment.get_Box2D_mass()
+        #     target_segment._body.ApplyLinearImpulse(imp, target_segment._body.worldCenter, wake=True)
+        # elif self.mode == 'force':
+        #     target_segment._body.ApplyForceToCenter(lin_vec, wake=True)
+        # elif self.mode == 'velocity':
+        #     # lin_vec = lin_vec * target_segment.get_Box2D_mass()
+        #     # Use this with gaussian crawler
+        #     # target_segment.set_lin_vel(lin_vec * self.lin_coef, local=False)
+        #     # Use this with square crawler
+        #     target_segment.set_lin_vel(lin_vec, local=False)
+        #     # pass
 
-            if counter > 1000:
-                #     o0+=np.pi
-                #     d=0
-                ang_vel = 0.01
-                counter = 0
-                o0 -= np.pi
-            in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
-
-        return ang_vel, o1, d, hr1, hp1
-
-    # @ property
-    def in_tank(self, ps):
-        # hp, ho = self.head.get_pose()
-        # k = np.array([math.cos(ho), math.sin(ho)])
-        # hf=hp + k * self.seg_lengths[0] / 2
-        # hr=hp - k * self.seg_lengths[0] / 2
-        # ps=[hf, hp]
-        return aux.inside_polygon(points=ps, tank_polygon=self.model.tank_polygon)
+        # Option : Apply to all body segments. This allows to control velocity for any Npoints. But it has the same shitty visualization as all options
+        # for seg in [self.segs[0]]:
+        for seg in self.segs:
+            if self.lin_mode == 'impulse':
+                impulse = lin * self.lin_vel_coef * seg.get_world_facing_axis() / seg.get_Box2D_mass()
+                seg._body.ApplyLinearImpulse(impulse, seg._body.worldCenter, wake=True)
+            elif self.lin_mode == 'force':
+                force = lin * self.lin_force_coef * seg.get_world_facing_axis()
+                seg._body.ApplyForceToCenter(force, wake=True)
+            elif self.lin_mode == 'velocity':
+                vel = lin * self.lin_vel_coef * seg.get_world_facing_axis()
+                seg.set_lin_vel(vel, local=False)

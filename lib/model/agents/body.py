@@ -1,29 +1,20 @@
 import math
-from random import sample, seed
 import random
+from random import sample, seed
 
 import numpy as np
 from shapely.geometry import Point
 from shapely.ops import cascaded_union
 
-
-
-
 from lib import reg, aux
 from lib.model.agents.segment import Box2DPolygon, DefaultSegment
 
-class LarvaBody0:
-    def __init__(self, model, initial_length=0.005, length_std=0,orientation=None, pos=None,default_color='black',
-                 interval=0, Nsegs=2,seg_ratio=None,  density=300.0):
-        self.model = model
-        self.default_color = default_color
 
-        if orientation is None:
-            orientation = random.uniform(0, 2 * np.pi)
-        self.initial_orientation = orientation
-        if pos is None:
-            pos = (0.0, 0.0)
-        self.initial_pos = pos
+class LarvaBody:
+    def __init__(self, model, pos, orientation, initial_length=0.005,length_std=0,
+                 interval=0, Nsegs=2,seg_ratio=None,shape='drosophila_larva',  density=300.0, joint_types=None):
+
+        self.model = model
         self.body_bend = 0
 
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
@@ -41,10 +32,6 @@ class LarvaBody0:
         self.angles = np.zeros(self.Nangles)
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
-        elif type(seg_ratio) == str:
-            seg_ratio = seg_ratio.replace('(', '')
-            seg_ratio = seg_ratio.replace(')', '')
-            seg_ratio = [float(x) for x in seg_ratio.split(',')]
         self.seg_ratio = np.array(seg_ratio)
         self.body_bend_errors = 0
         self.negative_speed_errors = 0
@@ -52,7 +39,44 @@ class LarvaBody0:
         self.border_turn_errors = 0
 
         self.initialize(initial_length, length_std)
-        self.radius = self.sim_length / 2
+        # self.radius = self.sim_length / 2
+
+        from lib.reg.stored.miscellaneous import Body_dict
+
+        self.contour_points = Body_dict()[shape]['points']
+
+        self.base_seg_vertices = aux.generate_seg_shapes(self.Nsegs, seg_ratio=self.seg_ratio,
+                                                         points=self.contour_points)
+        self.seg_lengths = self.sim_length * self.seg_ratio
+        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
+
+        ls_x = [np.cos(orientation) * l for l in self.seg_lengths]
+        ls_y = np.sin(orientation) * self.real_length / self.Nsegs
+        self.seg_positions = [[pos[0] + (-i + (self.Nsegs - 1) / 2) * ls_x[i],
+                               pos[1] + (-i + (self.Nsegs - 1) / 2) * ls_y] for i in range(self.Nsegs)]
+
+        self.seg_colors = self.generate_seg_colors(self.Nsegs)
+        self.set_head_edges()
+
+        if self.Nsegs == 1:
+            rotation_ps = ['mid']
+        elif self.Nsegs >= 2:
+            rotation_ps = ['rear'] + [None for i in range(self.Nsegs - 1)]
+        else:
+            raise
+
+        if self.model.Box2D:
+            self.segs = self.generate_Box2D_segs(orientation, self.seg_positions, self.seg_lengths,
+                                                 rotation_ps, joint_types)
+        else:
+            self.segs = self.generate_segs(orientation, self.seg_positions, self.seg_lengths, rotation_ps)
+
+        self.contour = self.set_contour(self.segs)
+
+        self.sensors = []
+        self.define_sensor('olfactor', (1, 0))
+
+        self.compute_body_bend()
 
     def initialize(self, initial_length, length_std):
         if not hasattr(self, 'real_length'):
@@ -70,9 +94,7 @@ class LarvaBody0:
         if self.V is None:
             self.V = self.real_length ** 3
 
-    @property
-    def sim_length(self):
-        return self.real_length * self.model.scaling_factor
+
 
     def get_real_mass(self):
         return self.real_mass
@@ -93,46 +115,21 @@ class LarvaBody0:
     def adjust_shape_to_mass(self):
         self.real_length = np.sqrt(self.real_mass / (self.density * self.width_to_length_ratio))
 
-class LarvaBody(LarvaBody0):
-    def __init__(self, shape='drosophila_larva', joint_types=None, **kwargs):
-
-        super().__init__(**kwargs)
 
 
-        from lib.reg.stored.miscellaneous import Body_dict
-
-        self.contour_points = Body_dict()[shape]['points']
-        self.base_seg_vertices = aux.generate_seg_shapes(self.Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
-        self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
-
-
-        ls_x = [np.cos(self.initial_orientation) * l for l in self.seg_lengths]
-        ls_y = np.sin(self.initial_orientation) * self.real_length / self.Nsegs
-        self.seg_positions = [[self.initial_pos[0] + (-i + (self.Nsegs - 1) / 2) * ls_x[i],
-                               self.initial_pos[1] + (-i + (self.Nsegs - 1) / 2) * ls_y] for i in range(self.Nsegs)]
+#
+# class LarvaBody(LarvaBody0):
+#     def __init__(self, joint_types=None, **kwargs):
+#
+#         super().__init__(**kwargs)
 
 
-        self.seg_colors = self.generate_seg_colors(self.Nsegs)
-        self.set_head_edges()
 
-        if self.Nsegs == 1:
-            rotation_ps = ['mid']
-        elif self.Nsegs >= 2:
-            rotation_ps = ['rear'] + [None for i in range(self.Nsegs - 1)]
 
-        if self.model.Box2D:
-            self.segs = self.generate_Box2D_segs(self.initial_orientation, self.seg_positions, self.seg_lengths,
-                                                 rotation_ps, joint_types)
-        else:
-            self.segs = self.generate_segs(self.initial_orientation, self.seg_positions, self.seg_lengths, rotation_ps)
 
-        self.contour = self.set_contour(self.segs)
-
-        self.sensors = []
-        self.define_sensor('olfactor', (1, 0))
-
-        self.compute_body_bend()
+    @property
+    def sim_length(self):
+        return self.real_length * self.model.scaling_factor
 
     def compute_body_bend(self):
         self.spineangles = [
@@ -555,22 +552,6 @@ class LarvaBody(LarvaBody0):
     def add_touch_sensors(self, idx):
         for i in idx:
             self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
-        # y = 0.1
-        # x_f, x_m, x_r = 0.75, 0.5, 0.25
-        # if N == 8:
-        #     self.define_sensor('M_front', (1.0, 0.0))
-        #     self.define_sensor('L_front', (x_f, y))
-        #     self.define_sensor('R_front', (x_f, -y))
-        #     self.define_sensor('L_mid', (x_m, y))
-        #     self.define_sensor('R_mid', (x_m, -y))
-        #     self.define_sensor('L_rear', (x_r, y))
-        #     self.define_sensor('R_rear', (x_r, -y))
-        #     self.define_sensor('M_rear', (0.0, 0.0))
-        # elif N == 2:
-        #     self.define_sensor('R_mid', (x_m, -y))
-        #     self.define_sensor('M_rear', (0.0, 0.0))
-        # elif N == 0:
-        #     pass
 
     def get_shape(self, scale=1):
         p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
@@ -669,7 +650,7 @@ class LarvaBody(LarvaBody0):
     #                                          localAnchorA=tuple(l0 * x for x in (0.0, w)),
     #                                          localAnchorB=tuple(l0 * x for x in (0.5, w)))
 
-    def position_body(self, lin_vel, ang_vel,dt, tank_contact=True):
+    def position_body(self, lin_vel, ang_vel,dt):
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
         hr0 = self.global_rear_end_of_head
@@ -690,7 +671,7 @@ class LarvaBody(LarvaBody0):
             ang_vel = fov1
             self.body_bend_errors += 1
 
-        if tank_contact:
+        if not self.model.env_pars.arena.torus :
             tank = self.model.tank_polygon
             d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
 
@@ -821,62 +802,6 @@ def draw_body_orientation(viewer, pos, orientation, radius, color):
     #                  color=self.color, width=self.radius / 10)
 
 
-# class BodySim(LarvaBody):
-#     def __init__(self, density=300.0, **kwargs):
-#         super().__init__(density=density, **kwargs)
-
-
-    #
-    # def detect_food(self, pos):
-    #     t0 = []
-    #     item, foodtype = None, None
-    #     if self.brain.locomotor.feeder is not None or self.brain.toucher is not None:
-    #         grid = self.model.food_grid
-    #         if grid:
-    #             cell = grid.get_grid_cell(pos)
-    #             if grid.get_cell_value(cell) > 0:
-    #                 item, foodtype = cell, grid.unique_id
-    #
-    #         else:
-    #             valid = [a for a in self.model.get_food() if a.amount > 0]
-    #             accessible_food = [a for a in valid if a.contained(pos)]
-    #             if accessible_food:
-    #                 food = random.choice(accessible_food)
-    #                 self.resolve_carrying(food)
-    #                 item, foodtype = food, food.group
-    #     return item, foodtype
-
-
-
-    # def step(self):
-    #     self.cum_dur += self.model.dt
-    #     pos = self.olfactor_pos
-    #     self.food_detected, self.current_foodtype = self.detect_food(pos)
-    #     lin, ang, self.feeder_motion = self.brain.step(pos, reward=self.food_detected is not None)
-    #
-    #     if self.model.Box2D:
-    #         self.Box2D_kinematics(lin, ang)
-    #     else:
-    #         lin_vel, ang_vel = self.get_vels(lin, ang, self.head.get_angularvelocity(), self.head.get_linearvelocity(),
-    #                                          self.body_bend, dt=self.model.dt,
-    #                                          ang_suppression=self.brain.locomotor.cur_ang_suppression)
-    #         self.position_body(lin_vel=lin_vel, ang_vel=ang_vel, dt=self.model.dt)
-    #         self.compute_body_bend()
-    #         self.trajectory.append(self.pos)
-    #     self.complete_step()
-    #
-    # def complete_step(self):
-    #     if self.head.get_linearvelocity() < 0:
-    #         self.negative_speed_errors += 1
-    #         self.head.set_lin_vel(0)
-    #     if not self.model.Box2D:
-    #         try:
-    #             self.model.space.move_agent(self, self.pos)
-    #         except:
-    #             self.model.space.move_to(self, np.array(self.pos))
-    #     self.update_larva()
-    #     for o in self.carried_objects:
-    #         o.pos = self.pos
 
     # Using the forward Euler method to compute the next theta and theta'
 
@@ -893,288 +818,3 @@ def draw_body_orientation(viewer, pos, orientation, radius, color):
 
     So a=1, b=1, c=n/4g=1, d=0 
     '''
-
-    # def update_trajectory(self):
-    #     last_pos = self.trajectory[-1]
-    #     if self.model.Box2D:
-    #         self.pos = self.global_midspine_of_body
-    #     self.dst = np.sqrt(np.sum(np.array(self.pos - last_pos) ** 2))
-    #     self.cum_dst += self.dst
-    #     self.trajectory.append(self.pos)
-    #
-    # def set_head_contacts_ground(self, value):
-    #     self.head_contacts_ground = value
-    #
-    # # def go_forward(self, lin_vel, k, hf01,dt, tank,scaling_factor=1, delta=0.00011, counter=0, border_go_errors=0):
-    # #     if np.isnan(lin_vel) or counter>100 :
-    # #         border_go_errors += 1
-    # #         return 0, 0, hf01
-    # #     d = lin_vel * dt
-    # #     dxy = k * d * scaling_factor
-    # #     hf1 = hf01 + dxy
-    # #
-    # #     if not sim_aux.inside_polygon([hf01], tank):
-    # #         lin_vel -= delta
-    # #         if lin_vel < 0:
-    # #             return 0, 0, hf01
-    # #         counter += 1
-    # #         return self.go_forward(lin_vel, k, hf01, delta, counter,border_go_errors)
-    # #     else:
-    # #         return lin_vel, d, hf1, border_go_errors
-    # #
-    # # def turn_head(self, ang_vel, hr0, ho0, l0, ang_range,dt, tank, delta=np.pi / 90, counter=0, border_turn_errors=0):
-    # #     def get_hf(ho):
-    # #         kk = np.array([math.cos(ho), math.sin(ho)])
-    # #         hf = hr0 + kk * l0
-    # #         return kk, hf
-    # #     if np.isnan(ang_vel) or counter>100:
-    # #         border_turn_errors+=1
-    # #         k0, hf00 = get_hf(ho0)
-    # #         return 0, ho0, k0, hf00
-    # #     ho1 = ho0 + ang_vel * dt
-    # #     k, hf01 = get_hf(ho1)
-    # #     if not sim_aux.inside_polygon([hf01], tank):
-    # #         if counter == 0:
-    # #             delta *= np.sign(ang_vel)
-    # #         ang_vel -= delta
-    # #
-    # #         if ang_vel < ang_range[0]:
-    # #             ang_vel = ang_range[0]
-    # #             delta = np.abs(delta)
-    # #         elif ang_vel > ang_range[1]:
-    # #             ang_vel = ang_range[1]
-    # #             delta -= np.abs(delta)
-    # #         counter += 1
-    # #
-    # #         return self.turn_head(ang_vel, hr0, ho0, l0, ang_range, delta, counter, border_turn_errors)
-    # #     else:
-    # #         return ang_vel, ho1, k, hf01, border_turn_errors
-    #
-    # def position_body(self, lin_vel, ang_vel,dt, tank_contact=True):
-    #     sf = self.model.scaling_factor
-    #     hp0, ho0 = self.head.get_pose()
-    #     hr0 = self.global_rear_end_of_head
-    #
-    #
-    #
-    #
-    #
-    #     l0 = self.seg_lengths[0]
-    #     A0,A1=self.valid_Dbend_range(0,ho0)
-    #     fov0,fov1 = A0 / dt, A1 / dt
-    #
-    #
-    #     if ang_vel < fov0:
-    #         ang_vel = fov0
-    #         self.body_bend_errors += 1
-    #     elif ang_vel > fov1:
-    #         ang_vel = fov1
-    #         self.body_bend_errors += 1
-    #
-    #     if tank_contact:
-    #         tank = self.model.tank_polygon
-    #         d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
-    #
-    #         self.border_turn_errors+=turn_err
-    #         self.border_go_errors+=go_err
-    #     else:
-    #         ho1 = ho0 + ang_vel * dt
-    #         k = np.array([math.cos(ho1), math.sin(ho1)])
-    #         d = lin_vel * dt
-    #         hp1 = hr0 + k * (d * sf + l0 / 2)
-    #     self.head.update_all(hp1, ho1, lin_vel, ang_vel)
-    #     self.dst = d
-    #     self.cum_dst += self.dst
-    #     self.rear_orientation_change = aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
-    #                                                                    correction_coef=self.bend_correction_coef)
-    #
-    #
-    #     if self.Nsegs > 1:
-    #         d_or = self.rear_orientation_change / (self.Nsegs - 1)
-    #         for i, seg in enumerate(self.segs[1:]):
-    #             o1 = seg.get_orientation() + d_or
-    #             k = np.array([math.cos(o1), math.sin(o1)])
-    #             p1 = self.get_global_rear_end_of_seg(seg_index=i) - k * seg.seg_length / 2
-    #             seg.update_poseNvertices(p1, o1)
-    #     self.pos = self.global_midspine_of_body
-    #
-    #
-    # def compute_body_bend(self):
-    #     self.spineangles = [
-    #         aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in
-    #         range(self.Nangles)]
-    #     self.body_bend = aux.wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
-    #
-    # @property
-    # def border_collision(self):
-    #     if len(self.model.borders) == 0:
-    #         return False
-    #     else:
-    #         x, y = self.pos
-    #         p0 = aux.Point(x, y)
-    #         d0 = self.sim_length / 4
-    #         oM = self.head.get_orientation()
-    #         sensor_ray = aux.radar_tuple(p0=p0, angle=oM, distance=d0)
-    #         min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.model.border_walls, sensor_ray, p0)
-    #
-    #         if min_dst is None:
-    #             return False
-    #         else:
-    #             return True
-    #
-    # @property
-    # def border_collision3(self):
-    #     if len(self.model.border_lines) == 0:
-    #         return False
-    #     else:
-    #         p0 = self.olfactor_point
-    #         # p0 = Point(self.olfactor_pos[0],self.olfactor_pos[1])
-    #         # p0 = Point(self.pos)
-    #         d0 = self.sim_length / 4
-    #         # shape = self.head.get_shape()
-    #         for l in self.model.border_lines:
-    #
-    #             if p0.distance(l) < d0:
-    #                 return True
-    #         return False
-    #
-    # @property
-    # def border_collision2(self):
-    #     simple = True
-    #
-    #     if len(self.model.border_lines) == 0:
-    #         return False
-    #     else:
-    #         oM = self.head.get_orientation()
-    #         oL = oM + np.pi / 3
-    #         oR = oM - np.pi / 3
-    #         p0 = self.pos
-    #         d0 = self.sim_length / 3
-    #         dM = aux.min_dst_to_lines_along_vector(point=p0, angle=oM, target_lines=self.model.border_lines, max_distance=d0)
-    #         if dM is not None:
-    #             if simple:
-    #                 return True
-    #             dL = aux.min_dst_to_lines_along_vector(point=p0, angle=oL, target_lines=self.model.border_lines, max_distance=d0)
-    #             dR = aux.min_dst_to_lines_along_vector(point=p0, angle=oR, target_lines=self.model.border_lines, max_distance=d0)
-    #             if dL is None and dR is None:
-    #                 return 'M'
-    #             elif dL is None and dR is not None:
-    #                 if dR < dM:
-    #                     return 'RRM'
-    #                 else:
-    #                     return 'MR'
-    #             elif dR is None and dL is not None:
-    #                 if dL < dM:
-    #                     return 'LLM'
-    #                 else:
-    #                     return 'ML'
-    #             elif dR is not None and dL is not None:
-    #                 if dL < dR:
-    #                     return 'LLM'
-    #                 else:
-    #                     return 'RRM'
-    #         else:
-    #             return False
-    #
-    #
-    #
-    # def assess_collisions(self, lin_vel, ang_vel):
-    #     if not self.model.larva_collisions:
-    #         ids = self.model.detect_collisions(self.unique_id)
-    #         larva_collision = False if len(ids) == 0 else True
-    #     else:
-    #         larva_collision = False
-    #     if larva_collision:
-    #         lin_vel = 0
-    #         ang_vel += np.sign(ang_vel) * np.pi / 10
-    #         return lin_vel, ang_vel
-    #     res = self.border_collision
-    #     d_ang = np.pi / 20
-    #     if not res:
-    #         return lin_vel, ang_vel
-    #     elif res == True:
-    #         lin_vel = 0
-    #         ang_vel += np.sign(ang_vel) * d_ang
-    #         return lin_vel, ang_vel
-    #     if 'M' in res:
-    #         lin_vel = 0
-    #     if 'RR' in res:
-    #         ang_vel += 2 * d_ang
-    #     elif 'R' in res:
-    #         ang_vel += d_ang
-    #     if 'LL' in res:
-    #         ang_vel -= 2 * d_ang
-    #     elif 'L' in res:
-    #         ang_vel -= d_ang
-    #
-    #     return lin_vel, ang_vel
-    #
-    # def assess_tank_contact(self, ang_vel, o0, d, hr0, hp0, dt, l0):
-    #     # a0 = self.spineangles[0] if len(self.spineangles) > 0 else 0.0
-    #     # ang_vel0 = np.clip(ang_vel, a_min=-np.pi - a0 / dt, a_max=(np.pi - a0) / dt)
-    #
-    #     def avoid_border(ang_vel, counter, dd=0.01):
-    #         if math.isinf(ang_vel):
-    #             ang_vel = 1.0
-    #         if any([ss not in self.get_sensors() for ss in ['L_front', 'R_front']]):
-    #             counter += 1
-    #             ang_vel *= -(1 + dd * counter)
-    #             return ang_vel, counter
-    #         else:
-    #             s = self.sim_length / 1000
-    #             L, R = self.get_sensor_position('L_front'), self.get_sensor_position('R_front')
-    #             Ld, Rd = self.model.tank_polygon.exterior.distance(
-    #                 aux.Point(L)), self.model.tank_polygon.exterior.distance(
-    #                 aux.Point(R))
-    #             Ld, Rd = Ld / s, Rd / s
-    #             LRd = Ld - Rd
-    #             ang_vel += dd * LRd
-    #             return ang_vel, counter
-    #
-    #     def check_in_tank(ang_vel, o0, d, hr0, l0):
-    #         o1 = o0 + ang_vel * dt
-    #         k1 = np.array([math.cos(o1), math.sin(o1)])
-    #         dxy = k1 * d
-    #         sim_dxy = dxy * self.model.scaling_factor
-    #         # k = np.array([math.cos(o1), math.sin(o1)])
-    #         # dxy = k * d
-    #         if self.Nsegs > 1:
-    #             hr1 = hr0 + sim_dxy
-    #             hp1 = hr1 + k1 * l0 / 2
-    #         else:
-    #             hr1 = None
-    #             hp1 = hp0 + sim_dxy
-    #         points = [hp1 + k1 * l0 / 2]
-    #         in_tank = aux.inside_polygon(points=points, tank_polygon=self.model.tank_polygon)
-    #         return in_tank, o1, hr1, hp1
-    #
-    #     in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
-    #     counter = -1
-    #     while not in_tank:
-    #         # o0 += np.pi/180
-    #         counter += 1
-    #         ang_vel *= -(1 + 0.01 * counter)
-    #
-    #         if counter > 1000:
-    #             #     o0+=np.pi
-    #             #     d=0
-    #             ang_vel = 0.01
-    #             counter = 0
-    #             o0 -= np.pi
-    #         in_tank, o1, hr1, hp1 = check_in_tank(ang_vel, o0, d, hr0, l0)
-    #
-    #     return ang_vel, o1, d, hr1, hp1
-    #
-    # # @ property
-    # def in_tank(self, ps):
-    #     # hp, ho = self.head.get_pose()
-    #     # k = np.array([math.cos(ho), math.sin(ho)])
-    #     # hf=hp + k * self.seg_lengths[0] / 2
-    #     # hr=hp - k * self.seg_lengths[0] / 2
-    #     # ps=[hf, hp]
-    #     return aux.inside_polygon(points=ps, tank_polygon=self.model.tank_polygon)
-
-    # def wind_obstructed(self, wind_direction):
-    #     from lib.aux.ang_aux import line_through_point
-    #     ll=line_through_point(self.pos, wind_direction, np.max(self.model.arena_dims))
-    #     return any([l.intersects(ll) for l in self.model.border_lines])

@@ -65,7 +65,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
               datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True, **kwargs):
     warnings.filterwarnings('ignore')
     if save_to is None:
-        save_to = reg.DEB_DIR
+        save_to = f'{reg.SIM_DIR}/deb_runs'
     os.makedirs(save_to, exist_ok=True)
     if save_as is None:
         save_as = f'debs.{plot.suf}'

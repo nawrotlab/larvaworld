@@ -119,7 +119,7 @@ def init_controls():
 
 class ControlRegistry :
     def __init__(self):
-        self.path=reg.CONTROLS_PATH
+        self.path=f'{reg.CONF_DIR}/controls.txt'
         self.conf=init_controls()
 
     def save(self, conf=None):

@@ -1,7 +1,6 @@
-import shapely.geometry as geometry
+from shapely import geometry
 from typing import Optional, List
 import math
-from shapely.geometry import LineString, Point
 
 def move_point(p0: geometry.Point, angle: float, distance: float) -> geometry.Point:
     return geometry.Point(
@@ -115,7 +114,7 @@ def line_through_point(pos, angle, length, pos_as_start=False) :
     p0 = Point(pos)
     p1 = Point(p0.x + length * math.cos(angle),
                 p0.y + length * math.sin(angle))
-    return LineString([p0, p1])
+    return geometry.LineString([p0, p1])
 
 
 class Point:

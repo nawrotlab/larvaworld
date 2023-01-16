@@ -75,7 +75,7 @@ class BaseGAlauncher(BaseWorld):
         dt = sim_params.timestep
         Nsteps = int(sim_params.duration * 60 / dt)
         if save_to is None:
-            save_to = reg.SIM_DIR
+            save_to = f'{reg.SIM_DIR}/ga_runs'
         self.save_to = save_to
         self.dir_path = f'{save_to}/{sim_params.path}/{id}'
         self.plot_dir = f'{self.dir_path}/plots'
@@ -86,9 +86,11 @@ class BaseGAlauncher(BaseWorld):
                              Nsteps=Nsteps, experiment=experiment, **kwargs)
             self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
         else:
+            self._id_counter = -1
+            self.p = env_params
             self.env_pars = env_params
             self.scaling_factor = 1
-            X, Y = self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
+            X,Y=self.arena_dims = self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
             self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
             self.experiment = experiment
             self.dt = dt
@@ -98,6 +100,7 @@ class BaseGAlauncher(BaseWorld):
             self.save_to = save_to
             self.Box2D = False
             self.source_xy = aux.get_source_xy(self.env_pars.food_params)
+            self.foodtypes = aux.get_all_foodtypes(self.env_pars.food_params)
 
 
 
@@ -214,13 +217,13 @@ class GAlauncher(BaseGAlauncher):
     def build_box(self, x, y, size, color):
         from lib.model.envs.obstacle import Box
 
-        box = Box(x, y, size, color)
+        box = Box(x, y, size, color=color)
         self.obstacles.append(box)
         return box
 
     def build_wall(self, point1, point2, color):
         from lib.model.envs.obstacle import Wall
-        wall = Wall(point1, point2, color)
+        wall = Wall(point1, point2, color=color)
         self.obstacles.append(wall)
         return wall
 

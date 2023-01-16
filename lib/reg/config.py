@@ -1,3 +1,5 @@
+import os
+
 import param
 from lib import reg, aux, util
 
@@ -35,8 +37,9 @@ GROUPTYPE_SUBKEYS = build_GroupTypeSubkeys()
 
 CONFTREE = aux.AttrDict({k : aux.load_dict(f'{reg.CONF_DIR}/{k}.txt') for k in reg.CONFTYPES})
 
-def build_conf_tree_expanded(c0=CONFTREE, sk=CONFTYPE_SUBKEYS):
-
+def build_conf_tree_expanded():
+    c0 = aux.AttrDict({k : aux.load_dict(f'{reg.CONF_DIR}/{k}.txt') for k in reg.CONFTYPES})
+    sk = CONFTYPE_SUBKEYS
     for confType0 in c0.keys():
         if confType0 in sk.keys():
             pairs = sk[confType0]
@@ -295,7 +298,6 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
 
 def loadRef(id, load=False, **kwargs):
     c = loadConf('Ref',id)
-    # c = retrieveRef(id)
     if c is not None:
         from lib.process.larva_dataset import LarvaDataset
         d = LarvaDataset(c.dir, load_data=False)
@@ -308,7 +310,6 @@ def loadRef(id, load=False, **kwargs):
             return d
 
     else:
-        # self.vprint(f'Ref Configuration {id} does not exist. Returning None')
         return None
 
 def loadRefD(id, **kwargs):
@@ -319,52 +320,17 @@ def loadRefDs(ids, **kwargs):
     ds = [loadRefD(id, **kwargs) for id in ids]
     return ds
 
+def next_idx(id, conftype='Exp'):
+    f = f'{reg.CONF_DIR}/SimIdx.txt'
+    if not os.path.isfile(f):
+        d = aux.AttrDict({k: {} for k in ['Exp', 'Batch', 'Essay', 'Eval', 'Ga']})
+    else:
+        d = aux.load_dict(f)
 
-
-# def retrieveRef(id):
-#     dic = dNl.load_dict(Path.Ref)
-#     if id in dic.keys():
-#         return dic[id]
-#     else:
-#         vprint(f'Ref Configuration {id} does not exist. Returning None', 1)
-#         return None
-
-
-# def saveRef(id, conf):
-#     path = Path.Ref
-#     dic = dNl.load_dict(path)
-#     dic[id] = conf
-#     dNl.save_dict(dic, path)
-
-# def deleteRef(id):
-#     import shutil
-#     path = Path.Ref
-#     dic = dNl.load_dict(path)
-#     if id in dic.keys():
-#         shutil.rmtree(dic[id].dir,ignore_errors=True)
-#         dic.pop(id,None)
-#         vprint(f'Deleted Ref Configuration {id}')
-#         dNl.save_dict(dic, path)
-
-# def testRef(id):
-#     import os
-#     import time
-#
-#     import numpy as np
-#     from lib.aux.stor_aux import read
-#     config = loadConf('Ref',id)
-#     if config is not None:
-#         D = config.dir_dict
-#         dic={}
-#         for k, d in D.items():
-#             if d.endswith('.h5') and os.path.exists(d):
-#                 try :
-#                     t0=time.time()
-#                     read(d, key=k)
-#                     dic[k]=np.round(time.time()-t0,2)
-#                 except :
-#                     dic[k]='FAIL'
-#         # if k not in D1.keys() :
-#         print(f'------- Loading times for {id}---------------------')
-#         print(dic)
-#         print()
+    if not conftype in d.keys():
+        d[conftype] = {}
+    if not id in d[conftype].keys():
+        d[conftype][id] = 0
+    d[conftype][id] += 1
+    aux.save_dict(d, f)
+    return d[conftype][id]

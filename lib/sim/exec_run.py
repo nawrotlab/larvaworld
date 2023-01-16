@@ -54,7 +54,7 @@ class Exec:
         elif self.mode == 'sim':
             sim_id = self.conf['sim_params']['sim_ID']
             if res is None and self.run_externally:
-                dir0 = f"{reg.SIM_DIR}/{self.conf['sim_params']['path']}/{sim_id}"
+                dir0 = f"{reg.SIM_DIR}/single_runs/{self.conf['sim_params']['path']}/{sim_id}"
                 res = [LarvaDataset(f'{dir0}/{sim_id}.{gID}') for gID in self.conf['larva_groups'].keys()]
 
             if res is not None:

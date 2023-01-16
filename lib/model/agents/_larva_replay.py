@@ -9,35 +9,19 @@ from lib.model.agents.body import draw_body_orientation, draw_body, LarvaBody
 from lib import aux
 
 class LarvaReplay(Larva, LarvaBody):
-    def __init__(self, unique_id, model, length=5, data=None, **kwargs):
-        Larva.__init__(self, unique_id=unique_id, model=model, radius=length / 2, **kwargs)
-        m = self.model
+    def __init__(self, model, length=5, data=None, **kwargs):
+        m = model
         N = m.Nsteps
-        self.chunk_ids = None
-        self.trajectory = []
-        self.color = deepcopy(self.default_color)
-        self.real_length = length
         self.pos_ar = data[m.pos_pars].values
-        self.pos = self.pos_ar[0]
         if len(m.cen_pars) == 2:
             self.cen_ar = data[m.cen_pars].values
             self.cen_pos = self.cen_ar[0]
         else:
             self.cen_ar = None
             self.cen_pos = (np.nan, np.nan)
-
         self.Nsegs = m.draw_Nsegs
         self.mid_ar = data[aux.flatten_list(m.mid_pars)].values.reshape([N, m.Npoints, 2])
         self.con_ar = data[aux.flatten_list(m.con_pars)].values.reshape([N, m.Ncontour, 2])
-
-        vp_beh = [p for p in self.behavior_pars if p in m.chunk_pars]
-        self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
-        for i, p in enumerate(self.behavior_pars):
-            if p in vp_beh:
-                self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
-
-
-
         self.ang_ar = np.deg2rad(data[m.ang_pars].values) if m.Nangles > 0 else np.ones([N, m.Nangles]) * np.nan
         self.or_ar = np.deg2rad(data[m.or_pars].values) if m.Nors > 0 else np.ones([N, m.Nors]) * np.nan
         self.bend_ar = np.deg2rad(data['bend'].values) if 'bend' in data.columns else np.ones(N) * np.nan
@@ -49,8 +33,29 @@ class LarvaReplay(Larva, LarvaBody):
             data['head_orientation'].values) if 'head_orientation' in data.columns else np.ones(N) * np.nan
         self.tail_or_ar = np.deg2rad(
             data['tail_orientation'].values) if 'tail_orientation' in data.columns else np.ones(N) * np.nan
+        Larva.__init__(self, model=model,pos = self.pos_ar[0],orientation = self.or_ar[0][0],
+                       radius=length / 2, **kwargs)
+
+
+        self.chunk_ids = None
+        self.color = deepcopy(self.default_color)
+        self.real_length = length
+
+
+
+
+
+        vp_beh = [p for p in self.behavior_pars if p in m.chunk_pars]
+        self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
+        for i, p in enumerate(self.behavior_pars):
+            if p in vp_beh:
+                self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
+
+
+
+
         if self.Nsegs is not None:
-            LarvaBody.__init__(self, model=model, pos=self.pos,orientation=self.or_ar[0][0],default_color=self.default_color,
+            LarvaBody.__init__(self, model=self.model, pos=self.pos,orientation=self.or_ar[0][0],default_color=self.default_color,
                                 initial_length=self.real_length, Nsegs=self.Nsegs)
         self.data = data
 
@@ -93,7 +98,7 @@ class LarvaReplay(Larva, LarvaBody):
                     o = self.orients[i]
                     seg.update_poseNvertices(pos, o)
             elif len(segs) == 2:
-                l1, l2 = self.sim_length * self.seg_ratio
+                l1, l2 = self.real_length * self.seg_ratio
                 x, y = self.pos
                 h_or = self.front_orientation0
                 b_or = self.front_orientation0 - self.bend0
