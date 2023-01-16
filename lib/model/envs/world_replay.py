@@ -46,11 +46,4 @@ class WorldReplay(World):
             self.active_larva_schedule.add(f)
             self.space.place_agent(f, (0, 0))
 
-    # def step(self):
-    #     self.Nticks += 1
-    #     # Tick sim_clock
-    #     #self.sim_clock.tick_clock()
-    #     self.active_larva_schedule.step()
-    #     self.active_food_schedule.step()
-
 

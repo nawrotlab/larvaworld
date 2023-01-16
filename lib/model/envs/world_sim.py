@@ -58,7 +58,7 @@ class WorldSim(World):
 
 
     def add_larva(self, pos, **kwargs):
-        while not aux.inside_polygon([pos], self.tank_polygon):
+        while not aux.inside_polygon([pos], self.space.polygon):
             pos = tuple(np.array(pos) * 0.999)
 
 

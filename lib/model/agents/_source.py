@@ -45,7 +45,7 @@ class Source(LarvaworldAgent):
                 ws, wo = w.wind_speed, w.wind_direction
                 if ws != 0.0:
                     self.pos = (self.pos[0] + np.cos(wo) * ws * dt / r, self.pos[1] + np.sin(wo) * ws * dt / r)
-                    in_tank = aux.inside_polygon(points=[self.pos], tank_polygon=self.model.tank_polygon)
+                    in_tank = aux.inside_polygon(points=[self.pos], tank_polygon=self.model.space.polygon)
                     if not in_tank:
                         if self.regeneration:
                             self.pos = aux.xy_uniform_circle(1, **self.regeneration_pos)[0]

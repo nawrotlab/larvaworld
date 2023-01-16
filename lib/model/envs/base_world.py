@@ -108,13 +108,14 @@ class BaseWorld:
 
     def create_space(self,torus=False):
         s = self.scaling_factor = 1000.0 if self.Box2D else 1.0
-        X, Y = self.space_dims = self.arena_dims * s
+        X, Y = self.arena_dims * s
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
         self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-        self.tank_shape = self.unscaled_tank_shape * s
+        # self.tank_shape = self.unscaled_tank_shape * s
+        vertices = self.unscaled_tank_shape * s
         k = 0.96
-        self.tank_polygon = Polygon(self.tank_shape * k)
-        self.toroidal_space=torus
+        # self.tank_polygon = Polygon(self.tank_shape * k)
+        # self.toroidal_space=torus
         if self.Box2D:
             from Box2D import b2World, b2ChainShape, b2EdgeShape
             self._sim_velocity_iterations = 6
@@ -124,13 +125,15 @@ class BaseWorld:
             space = b2World(gravity=(0, 0), doSleep=True)
 
             # create a static body for the space borders
-            self.tank = space.CreateStaticBody(position=(.0, .0))
-            self.tank.CreateFixture(shape=b2ChainShape(vertices=self.tank_shape.tolist()))
+            tank = space.CreateStaticBody(position=(.0, .0))
+            tank.CreateFixture(shape=b2ChainShape(vertices=vertices.tolist()))
             #     create second static body to attach friction
             self.friction_body = space.CreateStaticBody(position=(.0, .0))
             self.friction_body.CreateFixture(shape=b2ChainShape(vertices=self.space_edges))
         else:
             space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=torus)
+        space.polygon=Polygon(vertices * k)
+        space.vertices=vertices
         return space
 
     def add_border(self, b):

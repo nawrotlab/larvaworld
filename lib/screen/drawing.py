@@ -281,7 +281,7 @@ class ScreenManager:
         try:
             return self.v._transform(pos)
         except:
-            X, Y = self.model.space_dims
+            X, Y = self.model.arena_dims * self.s
             X0, Y0 = self.window_dims
 
             p = pos[0] * 2 / X, pos[1] * 2 / Y
@@ -289,7 +289,7 @@ class ScreenManager:
             return pp
 
     def draw_aux(self, screen):
-        screen.draw_arena(self.model.tank_shape, self.tank_color, self.screen_color)
+        screen.draw_arena(self.model.space.vertices, self.tank_color, self.screen_color)
         if self.visible_clock:
             self.sim_clock.draw_clock(screen)
         if self.visible_scale:
@@ -320,7 +320,7 @@ class ScreenManager:
             arena_drawn = True
 
         if not arena_drawn:
-            v.draw_polygon(m.tank_shape, color=self.tank_color)
+            v.draw_polygon(m.space.vertices, color=self.tank_color)
             self.draw_background(v, bg)
 
         if m.windscape is not None and m.windscape.visible:
