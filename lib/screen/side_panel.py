@@ -1,5 +1,7 @@
-import pygame
+import os
 import numpy as np
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame
 
 from lib import aux
 

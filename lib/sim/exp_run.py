@@ -57,12 +57,8 @@ class ExpRun(BaseRun):
 
         }
 
-
-
         self.model = self.model_class(**self.model_conf)
         self.datasets = None
-        # self.data=aux.AttrDict({'datas'})
-
 
 
     def simulate(self):
@@ -127,8 +123,6 @@ class ExpRun(BaseRun):
 
         kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
         sources = self.model.source_xy
-        # from lib.conf.stored.analysis_conf import get_analysis_graphgroups
-
         graphgroups = reg.graphs.get_analysis_graphgroups(exp, sources)
         self.figs = reg.graphs.eval_graphgroups(graphgroups, **kws)
 

@@ -1785,7 +1785,7 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
                 dic[id] = path
         return dic
     else:
-        from lib.process.larva_dataset import LarvaDataset
+        from lib.process.dataset import LarvaDataset
         if os.path.exists(f'{path}/data'):
             dd = LarvaDataset(dir=path)
             dic[dd.id] = dd

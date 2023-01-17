@@ -330,7 +330,7 @@ def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color=
         'mID': mID,
     }
 
-    from lib.process.larva_dataset import LarvaDataset
+    from lib.process.dataset import LarvaDataset
     d = LarvaDataset(**c_kws, load_data=False)
     s, e = sim_multi_agents(Nticks, Nids, ms, dataset_id, dt=dt, ids=ids, p0s=p0s, fo0s=fo0s)
 

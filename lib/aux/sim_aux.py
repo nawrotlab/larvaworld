@@ -4,6 +4,7 @@ from shapely import geometry, ops
 
 from scipy.signal import sosfiltfilt, butter
 
+import lib.aux.xy
 from lib import aux
 from lib.aux import naming as nam
 
@@ -88,7 +89,7 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
     shape = c.env_params.arena.arena_shape
     if shape == 'circular':
         # This is a circle_to_polygon shape from the function
-        tank_shape = aux.circle_to_polygon(60, X / 2)
+        tank_shape = lib.aux.xy.circle_to_polygon(60, X / 2)
     elif shape == 'rectangular':
         # This is a rectangular shape
         tank_shape = np.array([(-X / 2, -Y / 2),

@@ -4,7 +4,6 @@ import numpy as np
 
 
 from lib.aux import dictsNlists as dNl
-# from lib.aux import dictsNlists as dNl
 
 def join(s, p, loc, c='_'):
     if loc == 'suf':
@@ -291,49 +290,6 @@ def angular(N) :
 def angles(Nangles):
     return [f'angle{i}' for i in range(Nangles)]
 
-
-
-def retrieve_metrics(obj, c):
-    sp_conf = c.metric_definition.spatial
-    if sp_conf.fitted is None:
-        point_idx = sp_conf.hardcoded.point_idx
-        use_component_vel = sp_conf.hardcoded.use_component_vel
-    else:
-        point_idx = sp_conf.fitted.point_idx
-        use_component_vel = sp_conf.fitted.use_component_vel
-
-    try:
-        points = midline(c.Npoints, type='point')
-        p = points[point_idx - 1]
-    except:
-        p = 'centroid'
-    c.point=p
-    obj = define_metrics(obj, N=c.Npoints, Nc=c.Ncontour, p=c.point, use_component_vel=use_component_vel)
-    return obj
-
-
-
-def define_metrics(obj, N=None, Nc=None, p=None, use_component_vel=False):
-    obj.points = midline(N, type='point')
-    obj.Nangles = np.clip(N - 2, a_min=0, a_max=None)
-    obj.angles = angles(obj.Nangles)
-    obj.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-    obj.segs = segs(obj.Nsegs)
-    obj.midline_xy = midline_xy(N, flat=False)
-    obj.contour = contour(Nc)
-    obj.contour_xy = contour_xy(Nc,flat=False)
-
-    obj.point = p
-    obj.distance = dst(obj.point)
-    obj.velocity = vel(obj.point)
-    obj.acceleration = acc(obj.point)
-    if use_component_vel:
-        obj.velocity = lin(obj.velocity)
-        obj.acceleration = lin(obj.acceleration)
-
-    obj.h5_kdic = h5_kdic(p, N, Nc)
-    obj.load_h5_kdic = dNl.AttrDict({h5k: "w" for h5k in obj.h5_kdic.keys()})
-    return obj
 
 def h5_kdic(p, N, Nc):
     dic = dNl.AttrDict({

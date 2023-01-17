@@ -5,13 +5,13 @@ import numpy as np
 import warnings
 
 from lib import reg, aux, decorators
-
+from lib.aux import naming as nam
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
 
         self.config = retrieve_config(dir=dir, **kwargs)
-        aux.nam.retrieve_metrics(self, self.config)
+        retrieve_metrics(self, self.config)
         self.__dict__.update(self.config)
         self.larva_tables = {}
         self.larva_dicts = {}
@@ -108,7 +108,7 @@ class _LarvaDataset:
         res_v = comp_stride_variation(self, component_vels=component_vels)
         res_fov = comp_segmentation(self)
         dic={**res_v,**res_fov}
-        aux.nam.retrieve_metrics(self, self.config)
+        retrieve_metrics(self, self.config)
         self.save_config()
         self.storeH5(df=dic, filepath_key='vel_definition')
         print(f'Velocity definition dataset stored.')
@@ -571,3 +571,45 @@ def update_config(obj, c) :
         if isinstance(v, np.ndarray):
             c[k] = v.tolist()
     return c
+
+
+def retrieve_metrics(obj, c):
+    sp_conf = c.metric_definition.spatial
+    if sp_conf.fitted is None:
+        point_idx = sp_conf.hardcoded.point_idx
+        use_component_vel = sp_conf.hardcoded.use_component_vel
+    else:
+        point_idx = sp_conf.fitted.point_idx
+        use_component_vel = sp_conf.fitted.use_component_vel
+
+    try:
+        points = nam.midline(c.Npoints, type='point')
+        p = points[point_idx - 1]
+    except:
+        p = 'centroid'
+    c.point=p
+    obj = define_metrics(obj, N=c.Npoints, Nc=c.Ncontour, p=c.point, use_component_vel=use_component_vel)
+    return obj
+
+
+def define_metrics(obj, N=None, Nc=None, p=None, use_component_vel=False):
+    obj.points = nam.midline(N, type='point')
+    obj.Nangles = np.clip(N - 2, a_min=0, a_max=None)
+    obj.angles = nam.angles(obj.Nangles)
+    obj.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
+    obj.segs = nam.segs(obj.Nsegs)
+    obj.midline_xy = nam.midline_xy(N, flat=False)
+    obj.contour = nam.contour(Nc)
+    obj.contour_xy = nam.contour_xy(Nc,flat=False)
+
+    obj.point = p
+    obj.distance = nam.dst(obj.point)
+    obj.velocity = nam.vel(obj.point)
+    obj.acceleration = nam.acc(obj.point)
+    if use_component_vel:
+        obj.velocity = nam.lin(obj.velocity)
+        obj.acceleration = nam.lin(obj.acceleration)
+
+    obj.h5_kdic = nam.h5_kdic(p, N, Nc)
+    obj.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in obj.h5_kdic.keys()})
+    return obj

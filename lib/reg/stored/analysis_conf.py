@@ -5,13 +5,6 @@ from lib import reg, aux
 def entry(ID, name=None, **kwargs):
     return reg.graphs.entry(ID, name=name, args=kwargs)
 
-
-
-
-
-
-
-
 analysis_dict = aux.AttrDict({
     'tactile': [
         entry('endpoint pars (hist)','time ratio on food (final)',ks=['on_food_tr']),

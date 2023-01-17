@@ -1,5 +1,5 @@
 from lib import reg, sim
-from lib.process.larva_dataset import LarvaDataset
+from lib.process.dataset import LarvaDataset
 
 
 def test_GA() :

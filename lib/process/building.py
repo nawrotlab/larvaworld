@@ -9,7 +9,7 @@ import warnings
 from lib import reg, aux
 
 from lib.aux import naming as nam
-from lib.process.larva_dataset import LarvaDataset
+from lib.process.dataset import LarvaDataset
 
 
 def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, verbose=1, **kwargs):
@@ -552,7 +552,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         **g.tracker.resolution
     }
     # print(conf)
-    from lib.process.larva_dataset import LarvaDataset
+    from lib.process.dataset import LarvaDataset
     d = LarvaDataset(**conf)
     kws0 = {
         'dataset': d,

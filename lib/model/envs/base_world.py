@@ -9,7 +9,7 @@ from typing import Any
 from mesa.space import ContinuousSpace
 from shapely.geometry import Polygon
 
-
+import lib.aux.xy
 from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import NamedRandomActivation
 from lib import aux
@@ -101,7 +101,7 @@ class BaseWorld:
                                               (X / 2, -Y / 2)])
         if arena_shape == 'circular':
             # This is a circle_to_polygon shape from the function
-            self.unscaled_tank_shape = aux.circle_to_polygon(60, X / 2)
+            self.unscaled_tank_shape = lib.aux.xy.circle_to_polygon(60, X / 2)
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
@@ -180,7 +180,7 @@ class BaseWorld:
         if self.Box2D:
             from Box2D import b2World, b2ChainShape, b2EdgeShape
             f._body = self.space.CreateStaticBody(position=pos)
-            shape = aux.circle_to_polygon(60, f.radius)
+            shape = lib.aux.xy.circle_to_polygon(60, f.radius)
             f._body.CreateFixture(shape=b2ChainShape(vertices=shape.tolist()))
             f._body.fixtures[0].filterData.groupIndex = -1
         else:

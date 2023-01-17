@@ -2,7 +2,7 @@ import subprocess
 import argparse
 
 from lib import reg, aux
-from lib.process.larva_dataset import LarvaDataset
+from lib.process.dataset import LarvaDataset
 from lib.sim.batch_aux import retrieve_results
 from lib.sim.single_run import SingleRun
 from lib.sim.batch import BatchRun

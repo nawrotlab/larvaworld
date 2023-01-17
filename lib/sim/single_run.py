@@ -4,7 +4,6 @@ import time
 import numpy as np
 
 from lib import reg, aux
-
 from lib.model.envs.world_sim import WorldSim
 
 

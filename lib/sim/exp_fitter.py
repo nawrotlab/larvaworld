@@ -7,7 +7,7 @@ import pandas as pd
 
 from lib.aux import naming as nam
 from lib import reg, aux
-from lib.process.larva_dataset import LarvaDataset
+from lib.process.dataset import LarvaDataset
 
 class ExpFitter:
 

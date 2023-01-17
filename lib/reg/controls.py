@@ -135,5 +135,3 @@ class ControlRegistry :
 
 
 controls=ControlRegistry()
-# if __name__ == '__main__':
-#     control_reg=ControlRegistry()

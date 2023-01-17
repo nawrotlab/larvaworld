@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import ticker, cm
 
-
+import lib.aux.xy
 from lib import reg, aux, plot
 
 
@@ -113,7 +113,7 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
                 yf = fft(dc_single)
                 yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
                 yf = 1000 * yf / np.sum(yf)
-                yf = aux.moving_average(yf, n=21)
+                yf = lib.aux.xy.moving_average(yf, n=21)
                 ax.plot(xf, yf, color=c, alpha=0.2)
                 yf0 += yf
             # xf=np.sort(xf)
@@ -172,7 +172,7 @@ def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums'
             yf = fft(dc_single)
             yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
             yf = 1000 * yf / np.sum(yf)
-            yf = aux.moving_average(yf, n=21)
+            yf = lib.aux.xy.moving_average(yf, n=21)
             ax.plot(xf, yf, color=d_col, alpha=0.2)
             yf0 += yf
         yf0 = 1000 * yf0 / np.sum(yf0)

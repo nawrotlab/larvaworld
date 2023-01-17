@@ -1,12 +1,7 @@
 import warnings
-
-import lib.aux.np
-from lib.sim.base import BaseRun
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
-
 import numpy as np
 import seaborn as sns
 import pandas as pd
@@ -14,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 from lib import reg, aux, plot, util
-
+from lib.sim.base import BaseRun
 
 
 
@@ -319,7 +314,7 @@ class EvalRun(BaseRun):
             P.adjust(W=0.01, H=0.5)
 
         elif type == 'box':
-            data = lib.aux.np.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
+            data = aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
             palette = dict(zip(P.labels, P.colors))
             for sh in in_mm:
                 data[reg.getPar(sh)] *= 1000

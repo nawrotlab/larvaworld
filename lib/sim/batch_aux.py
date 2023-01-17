@@ -13,7 +13,7 @@ from lib.plot.hist import plot_endpoint_params, plot_endpoint_scatter
 from lib.plot.deb import plot_debs
 from lib.plot.scape import plot_3pars, plot_heatmap_PI, plot_2d
 from lib.sim.single_run import SingleRun
-from lib.process.larva_dataset import LarvaDataset
+from lib.process.dataset import LarvaDataset
 
 
 def get_Nbest(traj, mutate=True, recombine=False):

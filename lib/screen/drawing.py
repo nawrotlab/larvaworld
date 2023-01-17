@@ -1,9 +1,8 @@
 import os
-
 import numpy as np
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-import lib.aux.xy
 from lib import reg, aux, screen
 
 class ScreenManager:

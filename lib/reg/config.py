@@ -298,7 +298,7 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
 def loadRef(id, load=False, **kwargs):
     c = loadConf('Ref',id)
     if c is not None:
-        from lib.process.larva_dataset import LarvaDataset
+        from lib.process.dataset import LarvaDataset
         d = LarvaDataset(c.dir, load_data=False)
         if not load:
             reg.vprint(f'Loaded stored reference configuration : {id}')

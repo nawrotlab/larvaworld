@@ -5,7 +5,6 @@ from .ang import *
 from .color import *
 from .dictsNlists import *
 from .xy import *
-from .np import *
 from .shapely_aux import *
 from .combining import *
 

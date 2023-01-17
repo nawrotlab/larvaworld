@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from lib.aux import naming as nam
+from lib.aux import naming as nam, moving_average
 from lib import reg, aux, plot
 
 # from lib.plot.base import Plot, AutoPlot, AutoBasePlot
@@ -154,7 +154,6 @@ def epoch_func(**kwargs):
                 aa2plot = a2plot
             else:
                 if moving_average_interval:
-                    from lib.aux.np import moving_average
                     a = moving_average(a, n=int(moving_average_interval / dt))
                 aa2plot = a
 
@@ -270,8 +269,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
         aa2plot = a2plot
     else:
         if moving_average_interval:
-            from lib.aux.np import moving_average
-            a = moving_average(a, n=int(moving_average_interval / dt))
+            a = aux.moving_average(a, n=int(moving_average_interval / dt))
         aa2plot = a
 
     ax.plot(trange, aa2plot)

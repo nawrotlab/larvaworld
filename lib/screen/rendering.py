@@ -2,9 +2,6 @@ import math
 import os
 import numpy as np
 import imageio
-
-import lib.aux.xy
-
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -380,12 +377,8 @@ class InputBox(ScreenItem):
         if self.visible:
             if self.agent is not None:
                 if screen_pos is None :
-                    screen_pos= lib.aux.xy.space2screen_pos(self.agent.get_position())
+                    screen_pos= aux.space2screen_pos(self.agent.get_position())
                 self.set_shape(screen_pos)
-                # try :
-                #     self.set_shape(self.agent.model.screen_manager.space2screen_pos(self.agent.get_position()))
-                # except :
-                #     self.set_shape(self.agent.model.space2screen_pos(self.agent.get_position()))
                 self.color = self.agent.default_color
             if self.shape is not None:
                 # Render the current text.

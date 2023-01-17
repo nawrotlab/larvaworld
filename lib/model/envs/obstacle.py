@@ -4,6 +4,7 @@ import pygame
 from shapely.affinity import affine_transform
 from shapely.geometry import LineString, Polygon
 
+import lib.aux.xy
 from lib import aux
 
 
@@ -121,7 +122,7 @@ class Arena(Obstacle):
         if vertices is None :
             if arena_shape == 'circular':
                 # This is a circle_to_polygon shape from the function
-                vertices = aux.circle_to_polygon(60, X / 2)
+                vertices = lib.aux.xy.circle_to_polygon(60, X / 2)
             elif arena_shape == 'rectangular':
                 # This is a rectangular shape
                 vertices = np.array([(-X / 2, -Y / 2),
