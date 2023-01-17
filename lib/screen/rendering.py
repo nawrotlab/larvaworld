@@ -2,6 +2,7 @@ import math
 import os
 import numpy as np
 import imageio
+from shapely import geometry
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -310,8 +311,8 @@ class Viewer(object):
                     x2 = int(words[3])
                     y2 = int(words[4])
 
-                    point1 = aux.Point(x1, y1)
-                    point2 = aux.Point(x2, y2)
+                    point1 = geometry.Point(x1, y1)
+                    point2 = geometry.Point(x2, y2)
                     wall = Wall(point1, point2, color=aux.Color.random_bright())
                     wall.label = line_number
                     viewer.put(wall)
@@ -326,7 +327,6 @@ class Viewer(object):
 
                 line_number += 1
 
-        f.closed()
         return viewer
 
 

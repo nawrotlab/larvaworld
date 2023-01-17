@@ -1,8 +1,7 @@
 import numpy as np
 import pygame
-# from Geometry import Point
 from shapely.affinity import affine_transform
-from shapely.geometry import LineString, Polygon
+from shapely import geometry
 
 import lib.aux.xy
 from lib import aux
@@ -30,10 +29,10 @@ class Box(Obstacle):
         self.y = y
         self.size = size
 
-        vert1 = aux.Point(x - size / 2, y - size / 2)
-        vert2 = aux.Point(x + size / 2, y - size / 2)
-        vert3 = aux.Point(x + size / 2, y + size / 2)
-        vert4 = aux.Point(x - size / 2, y + size / 2)
+        vert1 = geometry.Point(x - size / 2, y - size / 2)
+        vert2 = geometry.Point(x + size / 2, y - size / 2)
+        vert3 = geometry.Point(x + size / 2, y + size / 2)
+        vert4 = geometry.Point(x - size / 2, y + size / 2)
 
         vertices = [(vert1.x, vert1.y), (vert2.x, vert2.y), (vert3.x, vert3.y), (vert4.x, vert4.y)]
         edges = [[vert1, vert2], [vert2, vert3], [vert3, vert4], [vert4, vert1]]
@@ -85,15 +84,15 @@ class Border(Obstacle):
         vertices = self.border_xy
         for l in self.border_lines:
             (x1, y1), (x2, y2) = list(l.coords)
-            point1 = aux.Point(x1, y1)
-            point2 = aux.Point(x2, y2)
+            point1 = geometry.Point(x1, y1)
+            point2 = geometry.Point(x2, y2)
             edges.append([point1, point2])
 
 
         super().__init__(vertices, edges, unique_id= unique_id, **kwargs)
 
     def define_lines(self, points, s=1):
-        lines = [LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
+        lines = [geometry.LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
 
         T = [s, 0, 0, s, 0, 0]
         ls = [affine_transform(l, T) for l in lines]
@@ -108,7 +107,7 @@ class Border(Obstacle):
             #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 
     def contained(self, p):
-        return any([l.distance(aux.Point(p)) < self.width for l in self.border_lines])
+        return any([l.distance(geometry.Point(p)) < self.width for l in self.border_lines])
 
     def set_id(self, id):
         self.unique_id = id
@@ -131,6 +130,6 @@ class Arena(Obstacle):
                                           (X / 2, -Y / 2)])
             else :
                 raise
-        self.polygon = Polygon(vertices * k)
-        edges = [[aux.Point(x1,y1), aux.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
+        self.polygon = geometry.Polygon(vertices * k)
+        edges = [[geometry.Point(x1,y1), geometry.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
         super().__init__(vertices, edges, unique_id=unique_id, **kwargs)

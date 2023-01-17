@@ -1,5 +1,5 @@
 import numpy as np
-
+from shapely import geometry
 from lib import aux
 from lib.model.agents._larva import LarvaMotile
 
@@ -14,8 +14,7 @@ class LarvaSim(LarvaMotile):
         if len(self.model.borders) == 0:
             return False
         else:
-            x, y = self.pos
-            p0 = aux.Point(x, y)
+            p0=geometry.Point(self.pos)
             d0 = self.sim_length / 4
             oM = self.head.get_orientation()
             sensor_ray = aux.radar_tuple(p0=p0, angle=oM, distance=d0)

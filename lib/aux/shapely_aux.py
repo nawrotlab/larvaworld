@@ -91,34 +91,13 @@ def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
                     min_dst = dst
                     nearest_obstacle = obj
 
-        # from lib.model.envs.obstacle import Obstacle
-        # if issubclass(type(obj), Obstacle):
-        #     obstacle = obj
-        #
-        #     # check collision between obstacle edges and sensor ray
-        #     for edge in obstacle.edges:
-        #         intersection_point = segments_intersection(sensor_ray, edge)
-        #
-        #         if intersection_point is not None:
-        #             dst = distance(p0, intersection_point)
-        #
-        #             if min_dst is None or dst < min_dst:
-        #                 min_dst = dst
-        #                 nearest_obstacle = obstacle
     return min_dst, nearest_obstacle
 
 
 def line_through_point(pos, angle, length, pos_as_start=False) :
     if not pos_as_start :
         length=-length
-    p0 = Point(pos)
-    p1 = Point(p0.x + length * math.cos(angle),
+    p0 = geometry.Point(pos)
+    p1 = geometry.Point(p0.x + length * math.cos(angle),
                 p0.y + length * math.sin(angle))
     return geometry.LineString([p0, p1])
-
-
-class Point:
-
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y

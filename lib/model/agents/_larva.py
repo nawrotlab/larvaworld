@@ -95,6 +95,8 @@ class PhysicsController:
                                            c=self.ang_damping, k=self.body_spring_k, dt=dt)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
+        else :
+            raise ValueError (f'ang_mode {self.ang_mode} not implemented')
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
         ang_vel *= ang_suppression
         return lin_vel, ang_vel

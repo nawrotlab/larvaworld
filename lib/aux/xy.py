@@ -402,11 +402,7 @@ def mdict2df(mdict, columns=['symbol', 'value', 'description']):
     return df
 
 
-def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=None, stop=None):
-    if start is None:
-        start = [1, 0]
-    if stop is None:
-        stop = [0, 0]
+def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
     xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
     xy[0, :] = start
     xy[len(points) + 1, :] = stop
@@ -415,3 +411,13 @@ def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=None, stop=None):
         xy[1 + i, :] = x, y
         xy[-1 - i, :] = x, -y
     return xy
+
+from shapely.geometry import Point, Polygon
+
+def body_contour2(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
+    ps1 = [Point(p) for p in points]
+    ps2 = [Point(p.x,-p.y) for p in ps1]
+    ps2.reverse()
+    ps=[Point(start)] + ps1 + [Point(stop)] + ps2
+    pol=Polygon([[p.x,p.y] for p in ps])
+    return pol

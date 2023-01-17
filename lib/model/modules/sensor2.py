@@ -2,6 +2,7 @@
 import random
 import pygame
 from math import atan2, sin, cos
+from shapely import geometry
 
 from lib import aux
 from lib.model.modules.rot_surface import LightSource
@@ -94,14 +95,11 @@ class ProximitySensor(Sensor2):
         if direction is None:
             direction = self.robot.direction
 
-        x, y = pos
         angle = -direction - self.delta_direction
-        p0 = aux.Point(x, y)
-        p1 = aux.Point(
-            x + cos(angle) * self.max_distance,
-            y + sin(angle) * self.max_distance)
-        # sensor_ray = radar_tuple(p0=p0, angle=angle, distance=self.max_distance)
-        # print('m',x, y,sensor_ray[1].x,sensor_ray[1].y, self.max_distance/self.robot.model.scene._scale[0, 0],self.robot.real_length)
+        p0 = geometry.Point(pos)
+        p1 = geometry.Point(
+            p0.x + cos(angle) * self.max_distance,
+            p0.y + sin(angle) * self.max_distance)
         min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.scene.objects, (p0,p1), p0)
 
         if min_dst is None:

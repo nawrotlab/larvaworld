@@ -24,7 +24,6 @@ class BaseWorld:
 
     def __init__(self, env_params,  id='unnamed', dt=0.1, save_to='.',trials={},Nsteps=None,
                  Box2D=False, experiment=None, larva_collisions=True, dur=None):
-        # raise
         self._id_counter=-1
         self.p=env_params
 
@@ -44,8 +43,6 @@ class BaseWorld:
             dur=np.round(Nsteps*self.dt/60,2)
         self.duration = dur
         self.Nsteps = Nsteps
-        # print(self.Nsteps)
-        # raise
         self.save_to = save_to
         self.larva_collisions = larva_collisions
 
@@ -68,7 +65,6 @@ class BaseWorld:
         else:
             self.windscape = None
         if 'thermoscape' in self.env_pars.keys() and self.env_pars.thermoscape not in [None,{}]:
-            # self.Ntemps, self.thermoscape = self._create_thermo_layers(self.env_pars.thermoscape)
             from lib.model.envs._space import ThermoScape
             self.thermoscape = ThermoScape(**self.env_pars.thermoscape)
         else:
@@ -111,11 +107,8 @@ class BaseWorld:
         X, Y = self.arena_dims * s
         self.space_edges = [(x * s, y * s) for (x, y) in self.unscaled_space_edges]
         self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-        # self.tank_shape = self.unscaled_tank_shape * s
         vertices = self.unscaled_tank_shape * s
         k = 0.96
-        # self.tank_polygon = Polygon(self.tank_shape * k)
-        # self.toroidal_space=torus
         if self.Box2D:
             from Box2D import b2World, b2ChainShape, b2EdgeShape
             self._sim_velocity_iterations = 6

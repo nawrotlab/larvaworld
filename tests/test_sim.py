@@ -18,6 +18,13 @@ def test_GA() :
     print(best2)
     assert best2 is not None
 
+def test_evaluation() :
+    refID = 'exploration.merged_dishes'
+    mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
+    evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
+    evrun.run()
+    evrun.plot_results()
+    evrun.plot_models()
 
 def test_exp_run() :
     for exp in ['dish'] :
@@ -76,10 +83,3 @@ def xtest_batch_run() :
         batch_run = sim.BatchRun(batch_id=f'test_{exp}',**conf)
         batch_run.run()
 
-def test_evaluation() :
-    refID = 'exploration.merged_dishes'
-    mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
-    evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
-    evrun.run()
-    evrun.plot_results()
-    evrun.plot_models()
