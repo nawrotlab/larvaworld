@@ -222,11 +222,10 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
     Nks=len(ks)
     if name is None :
         name=f'timeplot_x{Nks}'
-    P = plot.AutoLoadPlot(ks=ks,name=name, subfolder=subfolder, figsize=(15,5*Nks),Ncols=1,Nrows=Nks,sharex=True, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks,name=name, subfolder=subfolder,build_kws={'figsize':(15,5*Nks),'Ncols':1,'Nrows':Nks,'sharex':True}, **kwargs)
     x=P.trange(unit)
     for i,k in enumerate(P.ks) :
         dic,p=P.kpdict[k]
-    # for i,(k,(dic,p)) in enumerate(P.kpdict.items()) :
         ax=P.axs[i]
         P.conf_ax(i, xlab=f'time, ${unit}$', ylab=p.label, ylim=p.lim, yMaxN=4,xvis=False if i!=Nks-1 else True)
         for j,l in enumerate(P.labels):

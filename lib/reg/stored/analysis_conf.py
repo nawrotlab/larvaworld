@@ -17,7 +17,7 @@ analysis_dict = aux.AttrDict({
     ],
     'chemo': [
         # autotime(['sv', 'fov', 'b', 'a']),
-entry('autoplot', ks=['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']),
+        entry('autoplot', ks=['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']),
         entry('trajectories'),
         # entry('turn amplitude'),
         # entry('angular pars', Npars=5),

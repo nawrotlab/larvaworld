@@ -482,8 +482,6 @@ def load_ks(ks, ds,ls,cols, d0):
     for k in ks:
         dic[k] = {}
         for d,l,col in zip(ds,ls,cols):
-            # print(d0.get(k=k, d=d, compute=True))
-
             vs = d0.get(k=k, d=d, compute=True)
             dic[k][l] = aux.AttrDict({'df':vs, 'col':col})
     return aux.AttrDict(dic)
@@ -492,9 +490,8 @@ def load_ks(ks, ds,ls,cols, d0):
 class AutoLoadPlot(AutoPlot) :
     def __init__(self, ks, **kwargs):
         super().__init__(**kwargs)
-        d0 = reg.par.PI
-        self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, d0)
-        self.pdict=aux.AttrDict({k:d0.dict[k] for k in ks})
+        self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, reg.par)
+        self.pdict=aux.AttrDict({k:reg.par.kdict[k] for k in ks})
         self.kpdict=aux.AttrDict({k:[self.kdict[k], self.pdict[k]] for k in ks})
         self.ks=ks
         self.pars=[self.pdict[k].d for k in ks]

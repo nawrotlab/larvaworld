@@ -98,6 +98,7 @@ class ScreenManager:
             'show_display': show_display,
             # 'record_video_to':show_display,
         }
+        os.makedirs(m.save_to, exist_ok=True)
         if mode == 'video':
             screen_kws['record_video_to'] = f'{m.save_to}/{media_name}.mp4'
         if mode == 'image':

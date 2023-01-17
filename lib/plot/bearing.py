@@ -5,17 +5,19 @@ from lib import reg, aux, plot
 
 
 @reg.funcs.graph('bearing/turn')
-def plot_turn_Dbearing(min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
+def plot_turn_Dbearing(name=None, min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
                        Nplots=4, subfolder='turn', **kwargs):
     if ref_angle is None:
-        name = f'turn_Dorient_to_center'
+        if name is None :
+            name = f'turn_Dorient_to_center'
         ang0 = 0
         norm = False
         p = nam.bearing2(source_ID)
     else:
         ang0 = ref_angle
         norm = True
-        name = f'turn_Dorient_to_{ang0}deg'
+        if name is None :
+            name = f'turn_Dorient_to_{ang0}deg'
         p = nam.unwrap(nam.orient('front'))
 
     P = plot.AutoPlot(name=name, subfolder=subfolder,subplot_kw=dict(projection='polar'),
@@ -80,7 +82,7 @@ def plot_turn_Dorient2center(**kwargs):
     return plot_turn_Dbearing(ref_angle=None, **kwargs)
 
 @reg.funcs.graph('bearing to source/epoch')
-def plot_chunk_Dorient2source(source_ID, datasets,subfolder='bouts', chunk='stride', Nbins=16, min_dur=0.0, plot_merged=False,
+def plot_chunk_Dorient2source(source_ID, datasets,name=None,subfolder='bouts', chunk='stride', Nbins=16, min_dur=0.0, plot_merged=False,
                               **kwargs):
     N = len(datasets)
     if plot_merged:
@@ -89,9 +91,10 @@ def plot_chunk_Dorient2source(source_ID, datasets,subfolder='bouts', chunk='stri
     Ncols = int(np.ceil(np.sqrt(N)))
 
     Nrows = Ncols - 1 if N < Ncols ** 2 - Ncols else Ncols
+    if name is None:
+        name = f'{chunk}_Dorient_to_{source_ID}'
 
-
-    P = plot.AutoPlot(name=f'{chunk}_Dorient_to_{source_ID}', subfolder=subfolder, datasets=datasets, subplot_kw=dict(projection='polar'),
+    P = plot.AutoPlot(name=name, subfolder=subfolder, datasets=datasets, subplot_kw=dict(projection='polar'),
                  build_kws={'Nrows':Nrows,'Ncols':Ncols, 'wh':8, 'mode':'hist'}, **kwargs)
 
     if plot_merged:

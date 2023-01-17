@@ -50,8 +50,9 @@ class ExpRun(BaseRun):
             for d in self.datasets:
                 if self.enrichment:
                     reg.vprint()
-                    reg.vprint(f'--- Enriching dataset {self.id} with derived parameters ---')
+                    reg.vprint(f'--- Enriching dataset {self.id} with derived parameters ---', 2)
                     d.enrich(**self.enrichment, is_last=False, store=self.store_data)
+                    reg.vprint(f'--- Dataset {self.id} enriched ---', 2)
 
         return self.datasets
 
@@ -102,9 +103,8 @@ class ExpRun(BaseRun):
 
         if 'disp' in exp:
             samples = aux.unique_list([d.config.sample for d in ds])
-            ds += [reg.loadRef(sd) for sd in samples]
-
-        kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir, **kwargs}
+            ds += [reg.loadRef(sd) for sd in samples if sd is not None]
+        kws = {'datasets': ds, 'save_to': save_to if save_to is not None else self.plot_dir,'show':self.show, **kwargs}
         sources = self.model.source_xy
         graphgroups = reg.graphs.get_analysis_graphgroups(exp, sources)
         self.figs = reg.graphs.eval_graphgroups(graphgroups, **kws)
@@ -112,7 +112,9 @@ class ExpRun(BaseRun):
 
 if __name__ == "__main__":
     from lib import reg
-    conf=reg.expandConf(conftype='Exp', id='chemorbit')
-    exp_run=ExpRun(**conf)
+    exp='chemorbit'
+    conf=reg.expandConf(conftype='Exp', id=exp)
+    conf.experiment=exp
+    exp_run=ExpRun(**conf, show=True)
     ds=exp_run.simulate()
     exp_run.analyze()

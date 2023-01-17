@@ -10,7 +10,6 @@ from lib import reg, aux
 class BaseRun:
     def __init__(self, runtype, experiment=None, id=None, progress_bar=False, save_to=None, store_data=True,
                  analysis=True, show=False, seed=None, graph_entries=[]):
-
         np.random.seed(seed)
         random.seed(seed)
         self.runtype = runtype
