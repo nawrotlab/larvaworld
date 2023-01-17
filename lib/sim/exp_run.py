@@ -7,25 +7,9 @@ from lib.sim.base import BaseRun
 
 # TODO Make SingleRun also a subclass of BaseRun
 class ExpRun(BaseRun):
-    def __init__(self, sim_params,env_params, enrichment, collections, larva_groups,parameter_dict={}, progress_bar=False, save_to=None, store_data=True,
-                 analysis=True, show=False, **kwargs):
-
-        kws = {
-            # 'dt': dt,
-            'model_class': Larvaworld,
-            'progress_bar': progress_bar,
-            'save_to': save_to,
-            'store_data': store_data,
-            'analysis': analysis,
-            'show': show,
-            # 'Nsteps': int(sim_params.duration * 60 / dt),
-            # 'output': output,
-            'id': sim_params.sim_ID,
-            # 'Box2D': sim_params.Box2D,
-            # 'larva_groups': larva_groups,
-            # **kwargs
-        }
-        super().__init__(runtype='exp', **kws)
+    def __init__(self, sim_params,env_params, enrichment, collections, larva_groups,
+                 parameter_dict={}, **kwargs):
+        super().__init__(runtype='exp',id=sim_params.sim_ID, **kwargs)
         self.enrichment = enrichment
         self.sim_params = sim_params
 
@@ -57,8 +41,7 @@ class ExpRun(BaseRun):
 
         }
 
-        self.model = self.model_class(**self.model_conf)
-        self.datasets = None
+        self.model = Larvaworld(**self.model_conf)
 
 
     def simulate(self):

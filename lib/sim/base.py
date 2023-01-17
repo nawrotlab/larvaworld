@@ -9,10 +9,7 @@ from lib import reg, aux
 
 class BaseRun:
     def __init__(self, runtype, experiment=None, id=None, progress_bar=False, save_to=None, store_data=True,
-                 analysis=True, show=False, seed=None, model_class=None, graph_entries=[]):
-        if model_class is None :
-            from lib.model.envs.world_sim import WorldSim
-            model_class = WorldSim
+                 analysis=True, show=False, seed=None, graph_entries=[]):
 
         np.random.seed(seed)
         random.seed(seed)
@@ -33,10 +30,8 @@ class BaseRun:
         self.plot_dir = f'{self.storage_path}/plots'
         self.data_dir = f'{self.storage_path}/data'
         self.store_data = store_data
-        self.model_class = model_class
         self.analysis = analysis
         self.show = show
-        # self.data = None
         self.datasets = None
         self.figs = aux.AttrDict()
         self.results = {}
@@ -73,21 +68,7 @@ class BaseRun:
 
     def simulate(self):
         pass
-        # reg.vprint()
-        # reg.vprint(f'---- {self.runtype} exec : {self.id} ----')
-        # # Run the simulation
-        # start = time.time()
-        # is_running = True
-        # while is_running:
-        # #     if self.aborted:
-        # #         reg.vprint(f'---- {self.runtype} exec : {self.id} ----')
-        # #     elif self.completed:
-        # #         self.retrieve()
-        # #         end = time.time()
-        # #         dur = np.round(end - start).astype(int)
-        # #         reg.vprint(f'    {self.runtype} exec : {self.id} completed in {dur} seconds!')
-        # #         self.is_running = False
-        # # return self.data
+
 
     def run(self):
 

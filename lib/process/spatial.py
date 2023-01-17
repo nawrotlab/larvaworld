@@ -29,7 +29,7 @@ def comp_linear(s, e, c, mode='minimal'):
         return
 
     xy_params = aux.xy.raw_or_filtered_xy(s, points)
-    xy_params = aux.dNl.group_list_by_n(xy_params, 2)
+    xy_params = aux.group_list_by_n(xy_params, 2)
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = aux.nam.lin(aux.nam.dst(points))
@@ -57,7 +57,7 @@ def comp_linear(s, e, c, mode='minimal'):
         s[vel] = V.flatten()
         s[acc] = A.flatten()
         e[aux.nam.cum(dst)] = Dcum[-1, :]
-    pars = aux.dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     print('All linear parameters computed')
 
@@ -75,7 +75,7 @@ def comp_spatial(s, e, c, mode='minimal'):
     points = [p for p in points if set(aux.nam.xy(p)).issubset(s.columns.values)]
 
     xy_params = aux.xy.raw_or_filtered_xy(s, points)
-    xy_params = aux.dNl.group_list_by_n(xy_params, 2)
+    xy_params = aux.group_list_by_n(xy_params, 2)
 
     # all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = aux.nam.dst(points)
@@ -103,7 +103,7 @@ def comp_spatial(s, e, c, mode='minimal'):
         s[acc] = A.flatten()
         e[aux.nam.cum(dst)] = Dcum[-1, :]
 
-    pars = aux.dNl.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
@@ -326,9 +326,8 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwar
         e[fp] = s[p].dropna().groupby('AgentID').last()
         scale_to_length(s, e, c, pars=[p, fp, mp, mup])
 
-    # scale_to_length(s, e, c, pars=ps + pps)
     if store:
-        aux.dNl.save_dict(dsps, reg.datapath('dsp', c.dir))
+        aux.save_dict(dsps, reg.datapath('dsp', c.dir))
 
 
 
@@ -553,8 +552,8 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
 
     xy_pairs = aux.nam.xy(aux.nam.midline(c.Npoints, type='point') + ['centroid', ''] + aux.nam.contour(c.Ncontour))
     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-    xy_flat=np.unique(aux.dNl.flatten_list(xy_pairs))
-    xy_pairs = aux.dNl.group_list_by_n(xy_flat, 2)
+    xy_flat=np.unique(aux.flatten_list(xy_pairs))
+    xy_pairs = aux.group_list_by_n(xy_flat, 2)
 
     if replace :
         ss=s
@@ -640,7 +639,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     else:
         raise ValueError(f" The requested {point} is not part of the dataset")
     for id, p in zip(ids, xy):
-        for x, y in aux.dNl.group_list_by_n(pars, 2):
+        for x, y in aux.group_list_by_n(pars, 2):
             s.loc[(slice(None), id), [x, y]] -= p
 
     if fix_segment is not None:
@@ -654,7 +653,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
             s.loc[(slice(None), id), pars] = [
-                aux.dNl.flatten_list(aux.rotate_points_around_point(points=np.array(aux.dNl.group_list_by_n(d[i].tolist(), 2)),
+                aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(d[i].tolist(), 2)),
                                                                         radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
