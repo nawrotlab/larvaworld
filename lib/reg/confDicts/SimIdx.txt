@@ -1,1 +1,1 @@
-{"Essay": {"RvsS": 33, "DoublePatch": 32, "Chemotaxis": 31}, "exp": {"exp": 15}, "eval": {"exploration.merged_dishes": 17}, "Exp": {"chemorbit": 1, "patch_grid": 16, "dispersion": 14, "dish": 1}}
+{"Essay": {"RvsS": 34, "DoublePatch": 33, "Chemotaxis": 32}, "exp": {"exp": 15}, "eval": {"exploration.merged_dishes": 17}, "Exp": {"chemorbit": 1, "patch_grid": 16, "dispersion": 14, "dish": 1}}
