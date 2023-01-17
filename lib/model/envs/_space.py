@@ -285,10 +285,8 @@ class GaussianValueLayer(ValueLayer):
         pass
 
     def get_value(self, pos):
-
         value = 0
         for s in self.sources:
-            # print(s.unique_id, s.odor_peak_value)
             p = s.get_position()
             rel_pos = [pos[0] - p[0], pos[1] - p[1]]
             value += s.get_gaussian_odor_value(rel_pos)
@@ -307,8 +305,6 @@ class GaussianValueLayer(ValueLayer):
         return V
 
     def draw_isocontours(self, viewer):
-        # g=self.get_grid()
-        # vs=np.linspace(np.min(g), np.max(g), 5)
         for s in self.sources:
             p = s.get_position()
             for r in np.arange(0, 0.050, 0.01):
@@ -334,14 +330,8 @@ class DiffusionValueLayer(ValueLayer):
 
             Doing the math, sigma ends up reeeeally small
         '''
-        D = 10 ** -6
-        cell_width, cell_height = self.x / self.model.scaling_factor, self.y / self.model.scaling_factor
-        # rad_x, rad_y = D * dt / cell_width, D * dt / cell_height
-        # temp = 10 ** 5
-        # sigma = int(rad_x * temp), int(rad_y * temp)
         self.evap_const = evap_const
         self.sigma = gaussian_sigma
-        # print(gaussian_sigma)
 
     def update_values(self):
         k = 1000
@@ -353,10 +343,8 @@ class DiffusionValueLayer(ValueLayer):
                 Px, Py = dx / self.x / k, dy / self.y / k
 
                 Pr = np.abs(Px / (Px + Py))
-                # print(Pr, Px, Py, self.max_value)
                 Px = np.clip(Px, a_min=-Pr, a_max=Pr)
                 Py = np.clip(Py, a_min=-1 + Pr, a_max=1 - Pr)
-                # print(Pr, Px, Py, self.max_value)
                 Gx = self.grid * Px
                 Gy = self.grid * Py
                 Gx = np.roll(Gx, 1, axis=0)
@@ -368,9 +356,7 @@ class DiffusionValueLayer(ValueLayer):
                 np.clip(self.grid, a_min=0, a_max=None)
 
         for s in self.sources:
-            source_pos = s.get_position()
-            intensity = s.odor.odor_intensity
-            self.add_value(source_pos, intensity)
+            self.add_value(s.get_position(), s.odor.odor_intensity)
 
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
 
@@ -388,9 +374,6 @@ class WindScape:
         self.N = 40
         self.draw_phi = 0
         self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
-        # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
         self.events = {}
         for idx, puff in puffs.items():
             self.add_puff(**puff)
@@ -451,24 +434,12 @@ class WindScape:
 
 
 class ThermoScape:
-    def __init__(self, pTemp, spread, origins=[], tempDiff=[], default_color='green', visible=False):
-        # print("pTemp")
+    def __init__(self, pTemp, spread= 0.1, origins=[], tempDiff=[], default_color='green', visible=False):
         self.plate_temp = pTemp
         self.thermo_sources = {str(i): o for i, o in enumerate(origins)}
         self.thermo_source_dTemps = {str(i): o for i, o in enumerate(tempDiff)}
-        # self.model = model
-        # self.wind_direction = wind_direction
-        # self.wind_speed = wind_speed
-        # self.max_dim = np.max(self.model.arena_dims)
         self.default_color = default_color
         self.visible = visible
-
-        # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
-
-        if spread is None:
-            spread = 0.1  # just making it so spread is my default of 0.1, if None is given.
 
     def update_values(self):
         pass
@@ -489,47 +460,17 @@ class ThermoScape:
         '''
         from scipy.stats import multivariate_normal
 
-        # size,size2 = [1,1]
-        # size, size2 = self.arena_dims * 1000 #model.grid_dims #it is in m and we want it in mm.
-        # if spread is None:
-        #     spread = size * 10
-
         self.thermo_spread = spread
         self.plate_temp = pTemp
         self.thermo_sources = {str(i): o for i, o in enumerate(origins)}
         self.thermo_source_dTemps = {str(i): o for i, o in enumerate(tempDiff)}
         if len(origins) != len(tempDiff):
             raise ValueError  # need to raise a more informative error.
-        # origins =  [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]] #  [[85,8.5], [8.5,85], [85,161.5], [161.5,85]]
-        # origins_ad = [[size*og[0], size2*og[1]] for og in origins] # origins on arena dimensions
-
-        # x, y = np.mgrid[0:size:rezo, 0:size2:rezo] # setting 170 x 170 grid #don't need to do this anymore
-        # pos = np.dstack((x, y))
 
         rv_dict = {}
-        # thermoDists_Dict = {}
         for k in self.thermo_sources:
-            # v_ad = [size*v[0], size2*v[1]]
             rv_dict[k] = multivariate_normal(self.thermo_sources[k], [[spread, 0], [0, spread]])
-            # thermoDists_Dict[k] = (rv_dict[k].pdf(pos)/rv_dict[k].pdf(v_ad))*(tempDiff[k] * len(origins)) # don't need this either
-
         self.thermoscape_layers = rv_dict
-        # plt.imshow(22 + rv, cmap='hot', interpolation='nearest'); plt.colorbar(); plt.show()
-        # plt.hist(pTemp + rv.flatten(), bins=50 ); plt.show()
-        # self.thermo_dist = pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict) # I do not need to store this anymore! - so i won't need SIZE anymore. alternatively I could just store thermoDists_Dict and get_thermo_value calculate each time with plateTemp (if this is memory inefificent)
-        # return  pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict)
-
-    # def get_thermo_value(self, pos):
-    #     size,size2 = [1,1]
-    #     # size, size2 = self.arena_dims * 1000  #it is in m and we want it in mm.
-    #     pos_ad = [size*pos[0], size2*pos[1]]
-    #     pos_temp = {}
-    #     if self.thermoscape_layers is None:
-    #         return 0 # or np.nan
-    #     for k in self.thermoscape_layers:
-    #         v=self.thermoscape_layers[k]
-    #         pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (self.thermo_source_dTemps[k] * len(self.thermo_source_dTemps)) #@todo need to check if this works
-    #     return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
 
     def get_thermo_value(self, pos):
 
@@ -539,40 +480,20 @@ class ThermoScape:
         nSources = len(self.thermo_source_dTemps)
         thermo_gain = {'cool': 0, 'warm': 0}
 
-        # if self.thermoscape_layers is None:
-        #     print(0) # or np.nan
         for k in self.thermoscape_layers:
             v = self.thermoscape_layers[k]
             pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (
                     self.thermo_source_dTemps[k] * nSources)  # @todo need to check if this works
-            # print(plate_temp + sum(pos_temp.values()) / len(pos_temp))
-            # print(plate_temp + pos_temp[k] / len(pos_temp))
-            # print(pos_temp[k] / nSources)
             if pos_temp[k] < 0:
                 thermo_gain['cool'] += abs(pos_temp[k] / nSources)
             elif pos_temp[k] > 0:
                 thermo_gain['warm'] += abs(pos_temp[k] / nSources)
         return thermo_gain
 
-    def get_grid(self):
-        X, Y = self.meshgrid
-
-        @np.vectorize
-        def func(a, b):
-            v = self.get_value((a, b))
-            return v
-
-        V = func(X, Y)
-        self.max_value = np.max(V.flatten())
-        return V
-
     def draw_isocontours(self, viewer):  # @todo need to make a draw function for thermogrid.
-        # g=self.get_grid()
-        # vs=np.linspace(np.min(g), np.max(g), 5)
         for k in self.thermo_sources:
             p = self.thermo_sources.k
             for r in np.arange(0, 0.050, 0.01):
-                pX = (p[0] + r, p[1])
                 v = self.thermo_source_dTemps[k]
                 if v < 0:
                     color2use = 'blue'
