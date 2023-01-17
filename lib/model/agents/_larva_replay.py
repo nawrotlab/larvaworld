@@ -1,12 +1,10 @@
 from copy import deepcopy
-
 import numpy as np
 
-
+from lib import aux
 from lib.model.agents._larva import Larva
 from lib.model.agents.body import draw_body_orientation, draw_body, LarvaBody
 
-from lib import aux
 
 class LarvaReplay(Larva, LarvaBody):
     def __init__(self, model, length=5, data=None, **kwargs):

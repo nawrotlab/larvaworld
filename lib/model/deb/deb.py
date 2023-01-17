@@ -2,7 +2,6 @@
 DEB pipeline from literature
 '''
 import json
-import math
 import os
 import numpy as np
 
@@ -285,7 +284,7 @@ class DEB:
             print(f'Physical length (mm) :      {np.round(self.Lwe * 10, 3)}')
 
     def time_to_death_by_starvation(self):
-        return self.v ** -1 * self.L * math.log(self.kap ** -1)
+        return self.v ** -1 * self.L * np.log(self.kap ** -1)
 
     def predict_imago_stage(self, f=1.0):
         # if np.abs(self.sG) < 1e-10:

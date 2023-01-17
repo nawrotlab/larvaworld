@@ -1,10 +1,10 @@
 import numpy as np
-from shapely import affinity
-from shapely.geometry import Point, Polygon
+from shapely import affinity, geometry
 
+from lib import aux
 from lib.model.deb.substrate import Substrate
 from lib.model.agents._agent import LarvaworldAgent
-from lib import aux
+
 
 class Source(LarvaworldAgent):
     def __init__(self, shape_vertices=None, can_be_carried=False, can_be_displaced=False, shape='circle', **kwargs):
@@ -30,9 +30,9 @@ class Source(LarvaworldAgent):
         if np.isnan(p).all():
             return None
         elif self.get_vertices() is None:
-            return Point(p).buffer(self.radius * scale)
+            return geometry.Point(p).buffer(self.radius * scale)
         else:
-            p0 = Polygon(self.get_vertices())
+            p0 = geometry.Polygon(self.get_vertices())
             p = affinity.scale(p0, xfact=scale, yfact=scale)
             return p
 
@@ -54,9 +54,7 @@ class Source(LarvaworldAgent):
 
 
 class Food(Source):
-    def __init__(self, amount=1.0, quality=1.0, default_color=None, type='standard', **kwargs):
-        if default_color is None:
-            default_color = 'green'
+    def __init__(self, amount=1.0, quality=1.0, default_color='green', type='standard', **kwargs):
         super().__init__(default_color=default_color, **kwargs)
         self.initial_amount = amount
         self.amount = self.initial_amount
@@ -100,6 +98,3 @@ class Food(Source):
 
     def contained(self, point):
         return aux.eudis5(self.get_position(), point) <= self.radius
-        # return euclidean(self.get_position(), point)<=self.radius
-        # return Point(self.get_position()).distance(Point(point))<=self.radius
-        # return Circle(self.get_position(), radius=self.radius).contains_point(point)

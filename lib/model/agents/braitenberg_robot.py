@@ -1,7 +1,6 @@
 import random
 import pygame
-
-from math import sin, cos, pi
+import numpy as np
 
 from lib.model.modules.rot_surface import RotTriangle
 from lib import aux
@@ -9,7 +8,7 @@ from lib import aux
 class DifferentialDriveRobot(RotTriangle):
 
     def __init__(self,  unique_id, model,x, y, length, wheel_radius):
-        direction = random.uniform(-pi, pi)
+        direction = random.uniform(-np.pi, np.pi)
         super().__init__(x, y, length, aux.Color.random_color(127, 127, 127), aux.Color.BLACK, direction)
         self.model = model
         self.unique_id = unique_id
@@ -38,20 +37,20 @@ class DifferentialDriveRobot(RotTriangle):
         print("direction = " + str(self.direction))
 
     def delta_x(self):
-        self.deltax = self._delta * (self.wheel_radius*0.5) * (self.speed_right_wheel + self.speed_left_wheel) * cos(-self.direction)
+        self.deltax = self._delta * (self.wheel_radius*0.5) * (self.speed_right_wheel + self.speed_left_wheel) * np.cos(-self.direction)
         self.x += self.deltax
 
     def delta_y(self):
-        self.deltay = self._delta * (self.wheel_radius*0.5) * (self.speed_right_wheel + self.speed_left_wheel) * sin(-self.direction)
+        self.deltay = self._delta * (self.wheel_radius*0.5) * (self.speed_right_wheel + self.speed_left_wheel) * np.sin(-self.direction)
         self.y += self.deltay
 
     def delta_direction(self):
         self.direction += self._delta * (self.wheel_radius/self.length) * (self.speed_right_wheel - self.speed_left_wheel)
 
-        if self.direction > pi:
-            self.direction -= 2 * pi
-        elif self.direction < -pi:
-            self.direction += 2 * pi
+        if self.direction > np.pi:
+            self.direction -= 2 * np.pi
+        elif self.direction < -np.pi:
+            self.direction += 2 * np.pi
 
 
 

@@ -19,7 +19,6 @@ class LarvaworldAgent(agentpy.Agent):
         self.visible = visible
         self.selected = False
         self.unique_id = unique_id
-        # self.model = model
         self.group = group
         self.base_odor_id = f'{group}_base_odor'
         self.gain_for_base_odor = 100
@@ -40,8 +39,8 @@ class LarvaworldAgent(agentpy.Agent):
 
         self.regeneration = regeneration
         self.regeneration_pos = regeneration_pos
-        if self.model:
-            self.id_box = InputBox(text=self.unique_id, color_inactive=self.default_color,
+
+        self.id_box = InputBox(text=self.unique_id, color_inactive=self.default_color,
                                    color_active=self.default_color,
                                    agent=self)
 
@@ -96,8 +95,6 @@ class LarvaworldAgent(agentpy.Agent):
         self.color = color
 
     def contained(self, point):
-        # return Point(self.get_position()).distance(Point(point))<=self.radius
-        # return Circle(self.get_position(), radius=self.radius).contains_point(point)
         shape = self.get_shape()
         return shape.covers(geometry.Point(point)) if shape else False
 
@@ -119,9 +116,7 @@ class LarvaworldAgent(agentpy.Agent):
     def get_gaussian_odor_value(self, pos):
         return self.odor_dist.pdf(pos) * self.odor_peak_value
 
-    def draw(self, viewer,model=None, filled=True):
-        if model is None :
-            model=self.model
+    def draw(self, viewer,filled=True):
         if self.get_shape() is None:
             return
         p, c, r = self.get_position(), self.color, self.radius
@@ -136,7 +131,7 @@ class LarvaworldAgent(agentpy.Agent):
             # viewer.draw_circle(p, r * 2.0, c, False, r / 15)
             # viewer.draw_circle(p, r * 3.0, c, False, r / 20)
         if self.selected:
-            viewer.draw_polygon(self.get_shape(1.1).boundary.coords, model.selection_color, False, r / 5)
+            viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
             # viewer.draw_circle(p, r * 1.2, self.model.selection_color, False, r / 5)
 
 

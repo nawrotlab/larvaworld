@@ -1,7 +1,6 @@
 import Box2D
 import numpy as np
-from shapely import affinity
-from shapely.geometry import Polygon
+from shapely import affinity, geometry
 
 from lib import aux
 
@@ -54,7 +53,7 @@ class BodySegment:
         return angle
 
     def get_shape(self, scale=1):
-        p0 = Polygon(self.vertices[0])
+        p0 = geometry.Polygon(self.vertices[0])
         if scale==1:
             return p0
         else :

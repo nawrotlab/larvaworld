@@ -1,10 +1,6 @@
-import math
 import random
-from random import sample, seed
-
 import numpy as np
-from shapely.geometry import Point
-from shapely.ops import cascaded_union
+from shapely import geometry, ops
 
 from lib import reg, aux
 from lib.model.agents.segment import Box2DPolygon, DefaultSegment
@@ -252,9 +248,7 @@ class LarvaBody:
 
     @property
     def olfactor_point(self):
-        # print(tuple(self.olfactor_pos))
-        # raise
-        return Point(self.olfactor_pos[0], self.olfactor_pos[1])
+        return geometry.Point(self.olfactor_pos[0], self.olfactor_pos[1])
 
     @property
     def midline_xy(self):
@@ -543,8 +537,8 @@ class LarvaBody:
         r_side.reverse()
         total_contour = l_side + r_side
         if len(total_contour) > Ncontour:
-            seed(1)
-            contour = [total_contour[i] for i in sorted(sample(range(len(total_contour)), Ncontour))]
+            random.seed(1)
+            contour = [total_contour[i] for i in sorted(random.sample(range(len(total_contour)), Ncontour))]
         else:
             contour = total_contour
         return contour
@@ -554,7 +548,7 @@ class LarvaBody:
             self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
 
     def get_shape(self, scale=1):
-        p = cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
+        p = ops.cascaded_union([seg.get_shape(scale=scale) for seg in self.segs])
         return p
 
     def valid_Dbend_range(self, idx=0, ho0=None):
@@ -679,7 +673,7 @@ class LarvaBody:
             self.border_go_errors+=go_err
         else:
             ho1 = ho0 + ang_vel * dt
-            k = np.array([math.cos(ho1), math.sin(ho1)])
+            k = np.array([np.cos(ho1), np.sin(ho1)])
             d = lin_vel * dt
             hp1 = hr0 + k * (d * sf + l0 / 2)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
@@ -693,7 +687,7 @@ class LarvaBody:
             d_or = self.rear_orientation_change / (self.Nsegs - 1)
             for i, seg in enumerate(self.segs[1:]):
                 o1 = seg.get_orientation() + d_or
-                k = np.array([math.cos(o1), math.sin(o1)])
+                k = np.array([np.cos(o1), np.sin(o1)])
                 p1 = self.get_global_rear_end_of_seg(seg_index=i) - k * seg.seg_length / 2
                 seg.update_poseNvertices(p1, o1)
         self.pos = self.global_midspine_of_body

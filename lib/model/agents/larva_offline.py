@@ -1,9 +1,6 @@
-import math
-
 import numpy as np
 
 from lib.model.agents._larva import LarvaMotile
-from lib.model.agents.body import LarvaBody
 from lib import aux
 
 
@@ -51,7 +48,7 @@ class LarvaOffline(LarvaMotile):
         self.ro = (self.ro + self.rear_orientation_change) % (2 * np.pi)
         self.body_bend = aux.wrap_angle_to_0(self.fo - self.ro)
         self.cum_dst += self.dst
-        k1 = np.array([math.cos(self.fo), math.sin(self.fo)])
+        k1 = np.array([np.cos(self.fo), np.sin(self.fo)])
         self.pos += k1 * self.dst
 
         self.trajectory.append(tuple(self.pos))
