@@ -1,5 +1,5 @@
 import numpy as np
-from typing import TypedDict
+import typing
 
 from lib import reg, aux
 
@@ -65,7 +65,7 @@ def maxNdigits(array, Min=None):
 def par(name, dtype=float, v=None, vs=None, lim=None, dv=None, aux_vs=None, disp=None, Ndigits=None,
         h='', k=None, symbol='', u=reg.units.dimensionless, u_name=None, label='', combo=None, entry=None, codename=None,
         **kwargs):
-    if dtype == TypedDict:
+    if dtype == typing.TypedDict:
         return {name: {'initial_value': v, 'dtype': dtype, 'entry': entry, 'disp': disp, 'tooltip': h}}
 
     dv, lim, vs = define_range(dtype=dtype, lim=lim, vs=vs, dv=dv, u=u, wrap_mode=None)

@@ -112,9 +112,8 @@ def cum_func(par):
 
 @funcs.param("freq")
 def freq_func(par):
-    from lib.aux.sim_aux import get_freq
     def func(d):
-        get_freq(d, par=par, fr_range=(0.0, +np.inf))
+        aux.get_freq(d, par=par, fr_range=(0.0, +np.inf))
 
     return func
 
@@ -128,7 +127,6 @@ def tr_func(pc):
 
 @funcs.param("unwrap")
 def unwrap_func(par, in_deg):
-    # from lib.aux.ang import unwrap_rad
 
     def func(d):
         s, c = d.step_data, d.config
@@ -138,11 +136,10 @@ def unwrap_func(par, in_deg):
 
 @funcs.param("dst")
 def dst_func(point=''):
-    from lib.aux.xy import comp_dst
 
     def func(d):
         s, c = d.step_data, d.config
-        comp_dst(s, c, point)
+        aux.comp_dst(s, c, point)
 
     return func
 

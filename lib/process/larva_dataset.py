@@ -4,18 +4,14 @@ import shutil
 import numpy as np
 import warnings
 
-
-
-
 from lib import reg, aux, decorators
-from lib.aux import naming as nam
 
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
 
         self.config = retrieve_config(dir=dir, **kwargs)
-        nam.retrieve_metrics(self, self.config)
+        aux.nam.retrieve_metrics(self, self.config)
         self.__dict__.update(self.config)
         self.larva_tables = {}
         self.larva_dicts = {}
@@ -112,7 +108,7 @@ class _LarvaDataset:
         res_v = comp_stride_variation(self, component_vels=component_vels)
         res_fov = comp_segmentation(self)
         dic={**res_v,**res_fov}
-        nam.retrieve_metrics(self, self.config)
+        aux.nam.retrieve_metrics(self, self.config)
         self.save_config()
         self.storeH5(df=dic, filepath_key='vel_definition')
         print(f'Velocity definition dataset stored.')
@@ -125,7 +121,6 @@ class _LarvaDataset:
             if self.config.refID is not None:
                 refID = self.config.refID
             else:
-            # elif add_reference:
                 refID = f'{self.group_id}.{self.id}'
                 self.config.refID = refID
 
@@ -136,12 +131,8 @@ class _LarvaDataset:
         if refID is None:
             if self.config.refID is not None:
                 refID = self.config.refID
-            # else:
-            # # elif add_reference:
-            #     refID = f'{self.group_id}.{self.id}'
         self.config.refID = refID
 
-        # refID=self.retrieveRefID(refID=refID)
 
         self.config=update_config(self, self.config)
         aux.save_dict(self.config,reg.datapath('conf', self.config.dir))
@@ -164,18 +155,14 @@ class _LarvaDataset:
             # 'step' : True
         }
         s = self.load_step(**kws0)
-        xy_pairs=self.midline_xy + self.contour_xy + nam.xy(['centroid', ''])
-
-
+        xy_pairs=self.midline_xy + self.contour_xy + aux.nam.xy(['centroid', ''])
         xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-        # xy_flat = np.unique(dNl.flatten_list(xy_pairs))
 
         for x, y in xy_pairs:
             s[x] -= x0 / 2
             s[y] -= y0 / 2
         if replace:
             self.step_data = s
-            # ss = s[xy_flat]
         if is_last:
             self.save_step(s, **kws0)
         return s
@@ -242,7 +229,6 @@ class _LarvaDataset:
     def visualize(self, **kwargs):
         from lib.sim.replay import ReplayRun
         rep = ReplayRun(dataset=self, **kwargs)
-
         rep.run()
 
 
@@ -250,15 +236,12 @@ class _LarvaDataset:
 
     @ property
     def plot_dir(self):
-
         return reg.datapath('plots', self.dir)
 
 
 
 
     def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,**kwargs):
-
-
         for k, v in pre_kws.items():
             if v:
                 cc = {
@@ -274,7 +257,6 @@ class _LarvaDataset:
 
         if is_last:
             self.save()
-        # return self
 
     def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,**kwargs):
         cc = {
@@ -296,7 +278,6 @@ class _LarvaDataset:
 
     def annotate(self, keys=[], store=True,is_last=False,**kwargs):
         cc = {
-            # 'is_last': False,
             'd': self,
             's': self.step_data,
             'e': self.endpoint_data,
@@ -328,7 +309,6 @@ class _LarvaDataset:
                 'mode': mode,
                 **cc0,
                 **kwargs,
-               # **md['dispersion'], **md['tortuosity']
             }
             self.preprocess(pre_kws=pre_kws, **cc0)
 
@@ -346,7 +326,6 @@ class _LarvaDataset:
         proc_keys=[k for k, v in processing.items() if v]
         anot_keys=[k for k, v in annotation.items() if v]
         self.config.metric_definition=update_metric_definition(md=metric_definition,mdconf=self.config.metric_definition)
-
         return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,anot_keys=anot_keys, **kwargs)
 
 
@@ -398,7 +377,7 @@ class _LarvaDataset:
     def delete(self, show_output=True):
         shutil.rmtree(self.dir)
         if show_output:
-            print(f'Dataset {self.id} deleted')
+            reg.vprint(f'Dataset {self.id} deleted',2)
 
     def set_id(self, id, save=True):
         self.id = id
@@ -552,7 +531,6 @@ def retrieve_config(dir=None,**kwargs):
 
 def update_config(obj, c) :
     c.dt = 1 / obj.fr
-    # if 'agent_ids' not in c.keys():
     try:
         ids = obj.agent_ids
     except:
@@ -583,7 +561,7 @@ def update_config(obj, c) :
             c.duration = c.dt * c.Nticks
     if 'quality' not in c.keys():
         try:
-            df = obj.step_data[nam.xy(obj.point)[0]].values.flatten()
+            df = obj.step_data[aux.nam.xy(obj.point)[0]].values.flatten()
             valid = np.count_nonzero(~np.isnan(df))
             c.quality = np.round(valid / df.shape[0], 2)
         except:

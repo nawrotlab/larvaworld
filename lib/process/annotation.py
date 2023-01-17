@@ -337,10 +337,6 @@ def cycle_curve_dict(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     strides = detect_strides(s[reg.getPar('sv')], dt, return_extrema=False, return_runs=False)
     da = np.array([np.trapz(s[reg.getPar('fov')][s0:s1].dropna()) for ii, (s0, s1) in enumerate(strides)])
     dic = {sh: mean_stride_curve(s[reg.getPar(sh)], strides, da) for sh in shs}
-    # for sh,msc in dic.items():
-    #     if any(np.isnan(strides)):
-    #         print(any(np.isnan(strides)))
-    #         print(any(np.isnan(da)))
     return aux.AttrDict(dic)
 
 
@@ -416,7 +412,6 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
     e[reg.getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
     try:
         e['attenuation'] = att0s / e[reg.getPar('pau_fov_mu')]
-        # e[aux.nam.min('attenuation')] = att0s / e[preg.getPar('pau_fov_mu')]<
         e[aux.nam.max('attenuation')] = (att1s - att0s) / e[reg.getPar('pau_fov_mu')]
     except:
         pass
@@ -595,26 +590,16 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
 
 
 def track_par_in_chunk(d, chunk, par):
-    c0 = aux.nam.start(chunk)
-    c1 = aux.nam.stop(chunk)
-    b0_par = aux.nam.at(par, c0)
-    b1_par = aux.nam.at(par, c1)
-    db_par = aux.nam.chunk_track(chunk, par)
-    bpars = [b0_par, b1_par, db_par]
     s, c = d.step_data, d.config
-    A = np.zeros([c.Nticks, c.N, len(bpars)]) * np.nan
-
-    dic0 =d.chunk_dicts
+    A = np.zeros([c.Nticks, c.N, 3]) * np.nan
     for i, id in enumerate(c.agent_ids):
-        epochs = dic0[id][chunk]
+        epochs = d.chunk_dicts[id][chunk]
         ss = s[par].xs(id, level='AgentID')
-        Nepochs = epochs.shape[0]
-        if Nepochs > 0:
+        if epochs.shape[0] > 0:
             t0s, t1s = epochs[:, 0], epochs[:, 1]
             b0s = ss.loc[t0s].values
             b1s = ss.loc[t1s].values
-            # dbs=b1s-b0s
             A[t0s, i, 0] = b0s
             A[t1s, i, 1] = b1s
             A[t1s, i, 2] = b1s - b0s
-    s[bpars] = A.reshape([c.Nticks * c.N, len(bpars)])
+    s[aux.nam.at(par, aux.nam.start(chunk)), aux.nam.at(par, aux.nam.stop(chunk)), aux.nam.chunk_track(chunk, par)] = A.reshape([c.Nticks * c.N, 3])

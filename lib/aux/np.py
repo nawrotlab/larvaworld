@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 import pandas as pd
 
@@ -8,8 +6,8 @@ def circle_to_polygon(sides, radius, rotation=0, translation=None):
     one_segment = np.pi * 2 / sides
 
     points = [
-        (math.sin(one_segment * i + rotation) * radius,
-         math.cos(one_segment * i + rotation) * radius)
+        (np.sin(one_segment * i + rotation) * radius,
+         np.cos(one_segment * i + rotation) * radius)
         for i in range(sides)]
 
     if translation:
@@ -70,7 +68,7 @@ def mdict2df(mdict, columns=['symbol', 'value', 'description']):
     return df
 
 
-def body(points, start=None, stop=None):
+def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=None, stop=None):
     if start is None:
         start = [1, 0]
     if stop is None:

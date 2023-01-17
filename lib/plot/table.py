@@ -1,8 +1,5 @@
 import numpy as np
 
-
-
-# from lib.plot.base import BasePlot, AutoBasePlot
 from lib import reg, aux, plot, util
 
 
@@ -20,10 +17,8 @@ def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
     df = aux.mdict2df(mdict, columns=columns)
 
     ax, fig, mpl = mpl_table(df, header0=columns[0],
-                             # colWidths=[0.35, 0.1, 0.25, 0.15],
                              cellLoc='center', rowLoc='center',
                              figsize=figsize, adjust_kws={'left': 0.2, 'right': 0.95},
-                             # row_colors=row_colors,
                              return_table=True,
                              **kwargs)
     if save_as is None:
@@ -41,7 +36,6 @@ def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
                              row_colors=row_colors, return_table=True, **kwargs)
 
     mmID = mID.replace("_", "-")
-    # ax.set_title(f'Model ID : ' + rf'$\bf{mmID}$', y=1.05, fontsize=30)
     ax.set_title(f'Model ID : ' + rf'${mmID}$', y=1.05, fontsize=30)
 
     if save_as is None:
@@ -92,8 +86,6 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
                 for j in range(d.shape[0]):
                     if d[j, i] == d[idx[i], i] and j != idx[i]:
                         res.append((j + 1, i))
-        # else :
-        #     res=  []
         return res
 
     try:
@@ -105,10 +97,9 @@ def mpl_table(data, cellLoc='center',colLoc='center', rowLoc='center', font_size
     ax = P.axs[0]
     ax.axis('off')
     mpl = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns.values,rowLoc=rowLoc,
-                   rowLabels=data.index.values, colWidths=colWidths, colLoc=colLoc,cellLoc=cellLoc,
-                   )
+                   rowLabels=data.index.values, colWidths=colWidths, colLoc=colLoc,cellLoc=cellLoc)
     # FIXME deleted **kwargs
-                   # rowLabels=data.index.values, **kwargs)
+
     mpl.auto_set_font_size(False)
     mpl.set_fontsize(font_size)
 
@@ -193,9 +184,7 @@ def error_table(data, k='', title=None, **kwargs):
 def store_model_graphs(mIDs=None):
     from lib.plot.grid import model_summary
     f1 = f'{reg.ROOT_DIR}/media/model_tables'
-    # f1 = reg.Path['model_tables']
     f2 = f'{reg.ROOT_DIR}/media/model_summaries'
-    # f2 = reg.Path['model_summaries']
     if mIDs is None:
         mIDs = reg.storedConf('Model')
     for mID in mIDs:
@@ -208,15 +197,7 @@ def store_model_graphs(mIDs=None):
         except:
             print('SUMMARY FAIL', mID)
 
-    util.combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
-    util.combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
+    aux.combine_pdfs(file_dir=f1, save_as="___ALL_MODEL_CONFIGURATIONS___.pdf")
+    aux.combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
 
 
-if __name__ == '__main__':
-    # for mID in kConfDict('Model'):
-    #     print(mID)
-    # raise
-    # pass
-    mID = 'basic_navigator'
-    _ = modelConfTable(mID, show=True)
-    # store_model_graphs()

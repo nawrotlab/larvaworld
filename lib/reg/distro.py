@@ -1,7 +1,7 @@
-from typing import Tuple
 import numpy as np
-from scipy.special import erf
-from scipy.stats import uniform, levy, norm
+import powerlaw
+import typing
+import scipy
 
 from lib.aux.par_aux import sub, subsup
 from lib import reg, aux
@@ -20,7 +20,7 @@ def levy_pdf(x, mu, sigma):
 
 
 def levy_cdf(x, mu, sigma):
-    res = 1 - erf(np.sqrt(sigma / (2 * (x - mu))))
+    res = 1 - scipy.special.erf(np.sqrt(sigma / (2 * (x - mu))))
     if np.isnan(res[0]):
         res[0] = 0
     return res
@@ -31,18 +31,18 @@ def norm_pdf(x, mu, sigma):
 
 
 def norm_cdf(x, mu, sigma):
-    res = 0.5 * (1 + erf((x - mu) / (sigma * np.sqrt(2))))
+    res = 0.5 * (1 + scipy.special.erf((x - mu) / (sigma * np.sqrt(2))))
     if np.isnan(res[0]):
         res[0] = 0
     return res
 
 
 def uniform_pdf(x, xmin, xmax):
-    return uniform.pdf(x, xmin, xmin + xmax)
+    return scipy.stats.uniform.pdf(x, xmin, xmin + xmax)
 
 
 def uniform_cdf(x, xmin, xmax):
-    return uniform.cdf(x, xmin, xmin + xmax)
+    return scipy.stats.uniform.cdf(x, xmin, xmin + xmax)
 
 
 def exponential_cdf(x, xmin, beta):
@@ -54,7 +54,7 @@ def exponential_pdf(x, xmin, beta):
 
 
 def lognorm_cdf(x, mu, sigma):
-    return 0.5 + 0.5 * erf((np.log(x) - mu) / np.sqrt(2) / sigma)
+    return 0.5 + 0.5 * scipy.special.erf((np.log(x) - mu) / np.sqrt(2) / sigma)
 
 
 def lognormal_pdf(x, mu, sigma):
@@ -74,14 +74,12 @@ def logNpow_cdf(x, mu, sigma, alpha, switch, ratio):
 
 
 def get_powerlaw_alpha2(x, xmin=None, xmax=None, discrete=False):
-    from lib.aux.stdout import suppress_stdout_stderr
     if xmin is None:
         xmin = np.min(x)
     if xmax is None:
         xmax = np.max(x)
-    with suppress_stdout_stderr():
-        from powerlaw import Fit
-        a = Fit(x, xmin=xmin, xmax=xmax, discrete=discrete).power_law.alpha
+    with aux.suppress_stdout_stderr():
+        a = powerlaw.Fit(x, xmin=xmin, xmax=xmax, discrete=discrete).power_law.alpha
         return aux.AttrDict({'xmin': xmin, 'alpha': a})
 
 
@@ -93,12 +91,12 @@ def get_exp_beta2(x, xmin=None):
 
 
 def fit_levy(x):
-    m, s = levy.fit(x)
+    m, s = scipy.stats.levy.fit(x)
     return {'mu': m, 'sigma': s}
 
 
 def fit_norm(x):
-    m, s = norm.fit(x)
+    m, s = scipy.stats.norm.fit(x)
     return {'mu': m, 'sigma': s}
 
 
@@ -117,10 +115,8 @@ def get_logNpow2(x, xmax, xmid, overlap=0, discrete=False):
     dic.mu = np.mean(xx)
     dic.sigma = np.std(xx)
     dic.switch = xmid
-    from lib.aux.stdout import suppress_stdout_stderr
-    with suppress_stdout_stderr():
-        from powerlaw import Fit
-        dic.alpha = Fit(x=x[x >= xmid], xmin=xmid, xmax=xmax, discrete=discrete).power_law.alpha
+    with aux.suppress_stdout_stderr():
+        dic.alpha = powerlaw.Fit(x=x[x >= xmid], xmin=xmid, xmax=xmax, discrete=discrete).power_law.alpha
 
 
         return dic
@@ -182,7 +178,7 @@ def get_dist(k, k0='intermitter', v=None, return_tabrows=False, return_all=False
         return vs1, vs2
     elif return_all:
         pD = {'disp': dispD, 'k': kD, 'v0': None, 'vs': list(d0.keys()), 'sym': symD, 'dtype': str}
-        pR = {'disp': dispR, 'k': kR, 'u_name': uname, 'u': u, 'sym': symR, 'v0': None, 'dtype': Tuple[float]}
+        pR = {'disp': dispR, 'k': kR, 'u_name': uname, 'u': u, 'sym': symR, 'v0': None, 'dtype': typing.Tuple[float]}
         return p, pD, pR
     else:
         return p

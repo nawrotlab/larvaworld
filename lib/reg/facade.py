@@ -37,8 +37,5 @@ class FunctionDict:
             return func
         return wrapper
 
-    # def get_dist(self, **kwargs):
-    #     from lib.registry.distro import get_dist
-    #     return get_dist(**kwargs, distro_database=self.distro_database)
 
 funcs=FunctionDict()

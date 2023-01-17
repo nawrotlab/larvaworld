@@ -1,5 +1,4 @@
-from typing import List
-from typing import Tuple
+import typing
 import numpy as np
 import pandas as pd
 import param
@@ -37,7 +36,7 @@ def init_brain_modules():
                                 'disp': 'tonic input', 'sym': '$I_{T}^{0}$', 'k': 'I_T0',
                                 'codename': 'turner_input_constant',
                                 'h': 'The baseline activation/input of the TURNER module.'},
-            'activation_range': {'dtype': Tuple[float], 'v0': (10.0, 40.0),
+            'activation_range': {'dtype': typing.Tuple[float], 'v0': (10.0, 40.0),
                                  'lim': (0.0, 100.0), 'dv': 0.1,
                                  'k': 'I_T_r',
                                  'disp': 'input range',
@@ -167,12 +166,12 @@ def init_brain_modules():
             **IFargs
         }
         SQargs = {
-            'crawler_phi_range': {'dtype': Tuple[float], 'v0': (1.57, 3.14), 'lim': (0.0, 2 * np.pi),
+            'crawler_phi_range': {'dtype': typing.Tuple[float], 'v0': (1.57, 3.14), 'lim': (0.0, 2 * np.pi),
                                   'disp': 'suppression relief phase interval',
                                   'sym': '$[\phi_{C}^{\omega_{0}},\phi_{C}^{\omega_{1}}]$',
                                   'u': reg.units.rad,
                                   'h': 'CRAWLER phase range for TURNER suppression lift.'},
-            'feeder_phi_range': {'dtype': Tuple[float], 'v0': (0.0, 0.0), 'lim': (0.0, 2 * np.pi),
+            'feeder_phi_range': {'dtype': typing.Tuple[float], 'v0': (0.0, 0.0), 'lim': (0.0, 2 * np.pi),
                                  'disp': 'feeder suppression relief phase interval',
                                  'sym': '$[\phi_{F}^{\omega_{0}},\phi_{F}^{\omega_{1}}]$',
                                  'u': reg.units.rad,
@@ -284,7 +283,7 @@ def init_brain_modules():
             'initial_gain': {'v0': 40.0, 'lim': (-100.0, 100.0),
                              'disp': 'tactile sensitivity coef', 'sym': sub('G', 'T'), 'k': 'G_T',
                              'h': 'The initial gain of the tactile sensor.'},
-            'touch_sensors': {'dtype': List[int], 'lim': (0, 8), 'k': 'sens_touch',
+            'touch_sensors': {'dtype': typing.List[int], 'lim': (0, 8), 'k': 'sens_touch',
                               'sym': sub('N', 'T'), 'disp': 'tactile sensor contour locations',
                               'h': 'The number of touch sensors existing on the larva body.'},
         }
@@ -366,7 +365,7 @@ def init_brain_modules():
             'Delta': {'v0': 0.1, 'lim': (0.0, 10.0), 'h': 'The input sensitivity of the memory.'},
             'state_spacePerSide': {'dtype': int, 'v0': 0, 'lim': (0, 20), 'disp': 'state space dim',
                                    'h': 'The number of discrete states to parse the state space on either side of 0.'},
-            'gain_space': {'dtype': List[float], 'v0': [-300.0, -50.0, 50.0, 300.0], 'lim': (-1000.0, 1000.0),
+            'gain_space': {'dtype': typing.List[float], 'v0': [-300.0, -50.0, 50.0, 300.0], 'lim': (-1000.0, 1000.0),
                            'dv': 1.0, 'h': 'The possible values for memory gain to choose from.'},
             'update_dt': {'v0': 1.0, 'lim': (0.0, 10.0), 'dv': 1.0,
                           'h': 'The interval duration between gain switches.'},

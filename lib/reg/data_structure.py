@@ -1,7 +1,7 @@
-from lib.aux import dictsNlists as dNl
+from lib import aux
 
 def build_datapath_structure():
-    kd = dNl.AttrDict()
+    kd = aux.AttrDict()
     kd.solo_dicts = ['bouts', 'foraging', 'deb', 'nengo']
 
     kd.folders = {
@@ -32,7 +32,7 @@ def build_datapath_structure():
 
 
 def build_datapath_dict(kd):
-    d = dNl.AttrDict()
+    d = aux.AttrDict()
     d.parent = ''
     for k0, ks in kd.folders.items():
         for k in ks:
@@ -46,20 +46,19 @@ def build_datapath_dict(kd):
 
 
 def build_datafunc_dict(kd):
-    from lib.aux.stor_aux import read, storeH5
 
     func_dic0 = {'h5':
-                     {'load': read, 'save': storeH5},
-                 'dic': {'load': dNl.load_dict, 'save': dNl.save_dict},
+                     {'load': aux.read, 'save': aux.storeH5},
+                 'dic': {'load': aux.load_dict, 'save': aux.save_dict},
 
-                 'solo_dicts': {'load': dNl.loadSoloDics, 'save': dNl.storeSoloDics}
+                 'solo_dicts': {'load': aux.loadSoloDics, 'save': aux.storeSoloDics}
                  }
     dic = {}
     for k, funcs in func_dic0.items():
         ddic = {kk: funcs for kk in kd[k]}
         dic.update(ddic)
 
-    return dNl.AttrDict(dic)
+    return aux.AttrDict(dic)
 
 
 DATAPATH_DIC, DATAFUNC_DIC = build_datapath_structure()

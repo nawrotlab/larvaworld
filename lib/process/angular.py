@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import argrelextrema
+import scipy
 
 from lib import reg, aux
 
@@ -303,8 +303,8 @@ def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_
             thr_min, thr_max = abs_threshold
         for j, id in enumerate(ids):
             df = d.xs(id, level='AgentID', drop_level=True)
-            i_min = argrelextrema(df.values, np.less_equal, order=order)[0]
-            i_max = argrelextrema(df.values, np.greater_equal, order=order)[0]
+            i_min = scipy.signal.argrelextrema(df.values, np.less_equal, order=order)[0]
+            i_max = scipy.signal.argrelextrema(df.values, np.greater_equal, order=order)[0]
 
             i_min_dif = np.diff(i_min, append=order)
             i_max_dif = np.diff(i_max, append=order)

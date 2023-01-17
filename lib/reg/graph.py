@@ -69,7 +69,6 @@ class GraphRegistry:
         return analysis_dict
 
     def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):
-        from lib.util.combining import combine_pdfs
         ds = {}
         ds['mdiff_table'] = self.dict['model diff'](mIDs,dIDs=dIDs, save_to=save_to, **kwargs)
         gfunc=self.dict['model table']
@@ -79,11 +78,10 @@ class GraphRegistry:
             except:
                 print('TABLE FAIL', mID)
         if save_to is not None and len(ds)>1 :
-            combine_pdfs(file_dir=save_to, save_as="_MODEL_TABLES_.pdf", deep=False)
+            aux.combine_pdfs(file_dir=save_to, save_as="_MODEL_TABLES_.pdf", deep=False)
         return aux.AttrDict(ds)
 
     def model_summaries(self, mIDs, save_to=None, **kwargs):
-        from lib.util.combining import combine_pdfs
         ds = {}
         for mID in mIDs:
             try:
@@ -91,11 +89,10 @@ class GraphRegistry:
             except:
                 print('SUMMARY FAIL', mID)
         if save_to is not None and len(ds)>0 :
-            combine_pdfs(file_dir=save_to, save_as="_MODEL_SUMMARIES_.pdf", deep=False)
+            aux.combine_pdfs(file_dir=save_to, save_as="_MODEL_SUMMARIES_.pdf", deep=False)
         return ds
 
     def store_model_graphs(self, mIDs, dir):
-        from lib import reg
         f1 = reg.datapath('model_tables', dir)
         f2 = reg.datapath('model_summaries', dir)
         os.makedirs(f1, exist_ok=True)

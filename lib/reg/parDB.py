@@ -6,7 +6,7 @@ import param
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from lib.aux import naming as nam
-from lib.aux.par_aux import bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
+from lib.aux.par_aux import tilde, circle, bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 from lib import reg, aux, util
 
 
@@ -74,8 +74,7 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
 
         return func
 
-    from typing import List
-    from lib.aux.par_aux import sub
+
 
     if single_choice:
         t = str
@@ -545,8 +544,6 @@ def buildInitDict():
         return d
 
     def init_mods():
-        from lib.aux.par_aux import subsup, sub, tilde, bar, circle, sup
-        # from lib.registry.units import reg.units
         d = aux.AttrDict({
             'bout_distro': {
                 'fit': {**bT, 'combo': 'distro',
@@ -1164,7 +1161,6 @@ def buildInitDict():
                            }
         return d
 
-        # from lib.aux import dictsNlists as aux
 
     def conftypes(d):
         d['Body'] = {
@@ -1622,18 +1618,16 @@ class ParamRegistry:
 
         if func_v is None:
             def func_v(d):
-                from lib.aux.xy import comp_rate
                 s, e, c = d.step_data, d.endpoint_data, d.config
-                comp_rate(s, c, p=b.d, pv=d_v)
+                aux.comp_rate(s, c, p=b.d, pv=d_v)
 
         self.add(
             **{'p': p_v, 'k': k_v, 'd': d_v, 'u': b.u / b_dt.u, 'sym': sym_v, 'disp': disp_v, 'required_ks': [k0],
                'func': func_v})
 
         def func_a(d):
-            from lib.aux.xy import comp_rate
             s, e, c = d.step_data, d.endpoint_data, d.config
-            comp_rate(s, c, p=d_v, pv=d_a)
+            aux.comp_rate(s, c, p=d_v, pv=d_a)
 
         self.add(
             **{'p': p_a, 'k': k_a, 'd': d_a, 'u': b.u / b_dt.u ** 2, 'sym': sym_a, 'disp': disp_a, 'required_ks': [k_v],
@@ -2010,6 +2004,4 @@ class ParamRegistry:
                 dic[k][d.id] = vs
         return aux.AttrDict(dic)
 
-# from lib.reg import funcs
-# print(funcs.param_computing)
 par = ParamRegistry(func_dict = reg.funcs.param_computing)
