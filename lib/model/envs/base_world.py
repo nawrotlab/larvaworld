@@ -123,6 +123,7 @@ class BaseWorld:
             space = ContinuousSpace(x_min=-X / 2, x_max=X / 2, y_min=-Y / 2, y_max=Y / 2, torus=torus)
         space.polygon=Polygon(vertices * k)
         space.vertices=vertices
+        space.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         return space
 
     def add_border(self, b):
