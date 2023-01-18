@@ -9,11 +9,9 @@ from typing import Any
 from mesa.space import ContinuousSpace
 from shapely.geometry import Polygon
 
-import lib.aux.xy
-from lib.model.agents._larva_sim import LarvaSim
 from lib.model.envs.collecting import NamedRandomActivation
 from lib import aux
-
+from lib.model import envs, agents
 
 class BaseWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -60,13 +58,11 @@ class BaseWorld:
 
 
         if 'windscape' in self.env_pars.keys() and self.env_pars.windscape not in [None,{}] :
-            from lib.model.envs._space import WindScape
-            self.windscape = WindScape(model=self, **self.env_pars.windscape)
+            self.windscape = envs.WindScape(model=self, **self.env_pars.windscape)
         else:
             self.windscape = None
         if 'thermoscape' in self.env_pars.keys() and self.env_pars.thermoscape not in [None,{}]:
-            from lib.model.envs._space import ThermoScape
-            self.thermoscape = ThermoScape(**self.env_pars.thermoscape)
+            self.thermoscape = envs.ThermoScape(**self.env_pars.thermoscape)
         else:
             self.thermoscape = None
 
@@ -97,7 +93,7 @@ class BaseWorld:
                                               (X / 2, -Y / 2)])
         if arena_shape == 'circular':
             # This is a circle_to_polygon shape from the function
-            self.unscaled_tank_shape = lib.aux.xy.circle_to_polygon(60, X / 2)
+            self.unscaled_tank_shape = aux.circle_to_polygon(60, X / 2)
         elif arena_shape == 'rectangular':
             # This is a rectangular shape
             self.unscaled_tank_shape = self.unscaled_space_edges
@@ -155,7 +151,7 @@ class BaseWorld:
 
     def _place_food(self, food_pars):
         if food_pars.food_grid is not None :
-            from lib.model.envs._space import FoodGrid
+            from lib.model.envs.valuegrid import FoodGrid
             self.food_grid = FoodGrid(**food_pars.food_grid, space_range=self.space_edges_for_screen, model=self)
         for gID, gConf in food_pars.source_groups.items():
             ps = aux.generate_xy_distro(**gConf.distribution)
@@ -173,7 +169,7 @@ class BaseWorld:
         if self.Box2D:
             from Box2D import b2World, b2ChainShape, b2EdgeShape
             f._body = self.space.CreateStaticBody(position=pos)
-            shape = lib.aux.xy.circle_to_polygon(60, f.radius)
+            shape = aux.circle_to_polygon(60, f.radius)
             f._body.CreateFixture(shape=b2ChainShape(vertices=shape.tolist()))
             f._body.fixtures[0].filterData.groupIndex = -1
         else:
@@ -192,7 +188,7 @@ class BaseWorld:
     def delete_agent(self, agent):
         from lib.model.envs.obstacle import Border
         from lib.model.agents._source import Food
-        if type(agent) is LarvaSim:
+        if type(agent) is agents.LarvaSim:
             self.active_larva_schedule.remove(agent)
         elif type(agent) is Food:
             self.active_food_schedule.remove(agent)
@@ -236,11 +232,8 @@ class BaseWorld:
     def _create_odor_layers(self, sources, pars=None):
         if pars is None :
             return
-        # Xdim, Ydim = self.arena_dims
 
-        from lib.model.envs._space import DiffusionValueLayer, GaussianValueLayer
         ids = aux.unique_list([s.odor_id for s in sources if s.odor_id is not None])
-        # layers = {}
         for id in ids:
             od_sources = [f for f in sources if f.odor_id == id]
             temp = aux.unique_list([s.default_color for s in od_sources])
@@ -258,12 +251,12 @@ class BaseWorld:
                 # 'space_range': np.array([-Xdim * s / 2, Xdim * s / 2, -Ydim * s / 2, Ydim * s / 2]),
             }
             if pars.odorscape == 'Diffusion':
-                self.odor_layers[id] = DiffusionValueLayer(grid_dims=pars['grid_dims'],
+                self.odor_layers[id] = envs.DiffusionValueLayer(grid_dims=pars['grid_dims'],
                                                  evap_const=pars['evap_const'],
                                                  gaussian_sigma=pars['gaussian_sigma'],
                                                  **kwargs)
             elif pars.odorscape == 'Gaussian':
-                self.odor_layers[id] = GaussianValueLayer(**kwargs)
+                self.odor_layers[id] = envs.GaussianValueLayer(**kwargs)
 
 
     @property

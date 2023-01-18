@@ -1,5 +1,17 @@
 from lib import reg, sim
+
 from lib.process.dataset import LarvaDataset
+
+def test_exp_run() :
+    for exp in ['chemotaxis'] :
+        conf=reg.expandConf('Exp', exp)
+        conf.sim_params.duration=1
+        from lib.model.envs.world_runnable import Larvaworld
+        exp_run = Larvaworld(parameters=conf)
+        # exp_run = sim.ExpRun(**conf)
+        exp_run.simulate()
+        for d in exp_run.datasets :
+            assert isinstance(d, LarvaDataset)
 
 
 def test_GA() :
@@ -26,20 +38,7 @@ def test_evaluation() :
     evrun.plot_results()
     evrun.plot_models()
 
-def test_exp_run() :
-    for exp in ['dish'] :
-        conf=reg.expandConf('Exp', exp)
-        conf.sim_params.duration=1
 
-        # exp_run = SingleRun(id=f'test_{exp}',**conf)
-
-        # exp_run = SingleRun(vis_kwargs = reg.get_null(name='visualization', mode='video', video_speed=60), **conf)
-        # exp_run.run()
-
-        exp_run = sim.ExpRun(**conf)
-        exp_run.simulate()
-        for d in exp_run.datasets :
-            assert isinstance(d, LarvaDataset)
 
 def test_replay() :
     refID =  'exploration.dish'

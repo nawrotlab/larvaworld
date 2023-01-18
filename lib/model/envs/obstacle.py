@@ -75,10 +75,9 @@ class Wall(Obstacle):
 
 
 class Border(Obstacle):
-    def __init__(self, points, unique_id='Border', **kwargs):
-
+    def __init__(self, points=None, unique_id='Border', width=0.001, default_color='black'):
+        self.width = width
         self.points = points
-
         self.border_xy, self.border_lines = self.define_lines(points)
         edges = []
         vertices = self.border_xy
@@ -89,7 +88,8 @@ class Border(Obstacle):
             edges.append([point1, point2])
 
 
-        super().__init__(vertices, edges, unique_id= unique_id, **kwargs)
+        self.selected = False
+        super().__init__(vertices, edges, default_color, unique_id)
 
     def define_lines(self, points, s=1):
         lines = [geometry.LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
@@ -102,7 +102,7 @@ class Border(Obstacle):
 
     def draw(self, screen):
         for b in self.border_xy:
-            screen.draw_polyline(b, color=self.color, width=self.width, closed=False)
+            screen.draw_polyline(b, color=self.default_color, width=self.width, closed=False)
             # if self.selected:
             #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 
@@ -113,23 +113,3 @@ class Border(Obstacle):
         self.unique_id = id
 
 
-class Arena(Obstacle):
-    def __init__(self, arena_dims=(0.1,0.1), arena_shape='circular',vertices=None, unique_id='Arena', k=0.96, **kwargs):
-
-        X, Y = self.dims = arena_dims
-        self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-        if vertices is None :
-            if arena_shape == 'circular':
-                # This is a circle_to_polygon shape from the function
-                vertices = lib.aux.xy.circle_to_polygon(60, X / 2)
-            elif arena_shape == 'rectangular':
-                # This is a rectangular shape
-                vertices = np.array([(-X / 2, -Y / 2),
-                                          (-X / 2, Y / 2),
-                                          (X / 2, Y / 2),
-                                          (X / 2, -Y / 2)])
-            else :
-                raise
-        self.polygon = geometry.Polygon(vertices * k)
-        edges = [[geometry.Point(x1,y1), geometry.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
-        super().__init__(vertices, edges, unique_id=unique_id, **kwargs)

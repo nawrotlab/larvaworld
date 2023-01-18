@@ -1,47 +1,51 @@
 import os
 import time
-
 import agentpy
 import numpy as np
-import pandas as pd
 
-
-
-from lib import reg, aux, util
-
+from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
-from lib.model import envs2, agents
+from lib.model import envs, agents
+
 
 class Larvaworld(agentpy.Model):
-    def setup(self, screen_kws={},larva_collisions=True):
+    def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True, save_to=None):
         """ Initializes the agents and network of the model. """
-        self.experiment = self.p.experiment
-        self.save_to = self.p.save_to
-        os.makedirs(self.save_to, exist_ok=True)
-        self.is_paused = False
-        self.Box2D = self.p.Box2D
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
-        self.dt = self.p.dt
-        # self.id = self.p.id
 
-        self.Nsteps = self._steps
-        self.duration = np.round(self.Nsteps * self.dt / 60, 2) if self.Nsteps is not None else None
+        id = self.p.sim_params.sim_ID
+        if id is None:
+            idx = reg.next_idx(self.p.experiment, conftype='Exp')
+            id = f'{self.p.experiment}_{idx}'
+        self.id = id
+        if save_to is None:
+            save_to = f'{reg.SIM_DIR}/exp_runs'
+        self.dir = f'{save_to}/{self.id}'
+        self.plot_dir = f'{self.dir}/plots'
+        self.data_dir = f'{self.dir}/data'
+        self.save_to = f'{self.dir}/visuals'
+
+        self.is_paused = False
+        self.larva_collisions = larva_collisions
+        self.store_data = self.p.sim_params.store_data
+        self.dt = self.p.sim_params.timestep
+        self.duration = self.p.sim_params.duration
+        self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
+        self._steps = self.Nsteps
+
+        self.experiment = self.p.experiment
+        self.env_pars = self.p.env_params
+        self.Box2D = self.p.sim_params.Box2D
+        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
         self.sim_epochs = self.p.trials
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
 
-        self.env_pars = self.p.env_params
-
-
-
-        self.space = envs2.Arena(self, **self.p.env_params.arena)
-
+        self.space = envs.Arena(self, **self.p.env_params.arena)
         self.arena_dims = self.space.dims
 
         self.place_obstacles(self.p.env_params.border_list)
-
-
         self.place_food(**self.p.env_params.food_params)
 
         '''
@@ -50,21 +54,19 @@ class Larvaworld(agentpy.Model):
         - Wind landscape : windscape
         - Temperature landscape : thermoscape
         '''
-        self.odor_layers = create_odor_layers(model=self, sources=self.sources, pars=self.p.env_params.odorscape)
-        self.windscape = envs2.WindScape(model=self, **self.p.env_params.windscape) if self.p.env_params.windscape else None
-        self.thermoscape = envs2.ThermoScape(**self.p.env_params.thermoscape) if self.p.env_params.thermoscape else None
-
-
-
-
-        self.place_agents(self.p.larva_groups, self.p.parameter_dict)
-
         self.odor_ids = get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
-        self.larva_collisions = larva_collisions
+        self.odor_layers = create_odor_layers(model=self, sources=self.sources, pars=self.p.env_params.odorscape)
+        self.windscape = envs.WindScape(model=self,
+                                         **self.p.env_params.windscape) if self.p.env_params.windscape else None
+        self.thermoscape = envs.ThermoScape(**self.p.env_params.thermoscape) if self.p.env_params.thermoscape else None
+
+        self.place_agents(self.p.larva_groups, parameter_dict)
+        self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
+        self.datasets = None
+        self.results = None
+        self.figs = {}
 
         self.screen_manager = ScreenManager(model=self, **screen_kws)
-
-        self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
 
     def step(self):
         """ Defines the models' events per simulation step. """
@@ -73,7 +75,6 @@ class Larvaworld(agentpy.Model):
         if self.windscape is not None:
             self.windscape.update()
         self.agents.step()
-
         self.screen_manager.step()
 
     def update(self):
@@ -83,52 +84,47 @@ class Larvaworld(agentpy.Model):
     def end(self):
         """ Repord an evaluation measure. """
         self.agents.nest_record(self.collectors['end'])
-        # pass
 
     def simulate(self):
-        reg.vprint()
-        reg.vprint(f'---- Simulating {self.p.id} ----', 2)
-        # Run the simulation
         start = time.time()
-        completed = self.run()
-        if not completed:
-            reg.vprint(f'---- Simulation {self.p.id} aborted!---- ', 2)
-            datasets=None
-        else:
-            datasets = self.retrieve()
-            end = time.time()
-            dur = np.round(end - start).astype(int)
-            reg.vprint(f'---- Simulation {self.id} completed in {dur} seconds!---- ', 2)
-        return datasets
+        self.run()
+        self.datasets = self.retrieve()
+        end = time.time()
+        dur = np.round(end - start).astype(int)
+        reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 2)
+        if self.p.enrichment:
+            for d in self.datasets:
+                # reg.vprint()
+                # reg.vprint(f'--- Enriching dataset {d.id} with derived parameters ---', 2)
+                d.enrich(**self.p.enrichment, is_last=False, store=self.store_data)
+                reg.vprint(f'--- Dataset {d.id} enriched ---', 2)
+        if self.store_data:
+            os.makedirs(self.data_dir, exist_ok=True)
+            self.store()
+        return self.datasets
 
     def retrieve(self):
         from lib.process.dataset import LarvaDataset
-        dir = f'{self.save_to}/{self.p.id}'
         ds = []
         for gID, df in self.output.variables.items():
-
             df.index.set_names(['AgentID', 'Step'], inplace=True)
             df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
             df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
             end = df[list(self.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
             step = df[list(self.collectors['step'].keys())]
-            d = LarvaDataset(f'{dir}/{gID}', id=gID, larva_groups={gID: self.p.larva_groups[gID]},
+            d = LarvaDataset(f'{self.data_dir}/{gID}', id=gID, larva_groups={gID: self.p.larva_groups[gID]},
                              load_data=False, env_params=self.p.env_params,
                              source_xy=self.source_xy,
                              fr=1 / self.dt)
             d.set_data(step=step, end=end, food=None)
-            ds.append(d)
-        # for d in ds:
-
-
             d.larva_dicts = self.get_larva_dicts(ids=d.agent_ids)
-            # d.larva_tables = self.get_larva_tables()
+            ds.append(d)
         return ds
 
     def get_larva_dicts(self, ids=None):
 
-        ls=aux.AttrDict({l.unique_id:l for l in self.get_flies(ids=ids)})
+        ls = aux.AttrDict({l.unique_id: l for l in self.get_flies(ids=ids)})
 
         from lib.model.modules.nengobrain import NengoBrain
         deb_dicts = {}
@@ -136,7 +132,6 @@ class Larvaworld(agentpy.Model):
         bout_dicts = {}
         foraging_dicts = {}
         for id, l in ls.items():
-            # id = l.unique_id
             if hasattr(l, 'deb') and l.deb is not None:
                 deb_dicts[id] = l.deb.finalize_dict()
             if isinstance(l.brain, NengoBrain):
@@ -146,41 +141,23 @@ class Larvaworld(agentpy.Model):
                 bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
             if len(self.foodtypes) > 0:
                 foraging_dicts[id] = l.finalize_foraging_dict()
-            # self.config.foodtypes = env.foodtypes
 
-        dic0=aux.AttrDict({'deb': deb_dicts,
-                      'nengo': nengo_dicts, 'bouts': bout_dicts,
-                      'foraging': foraging_dicts})
+        dic0 = aux.AttrDict({'deb': deb_dicts,
+                             'nengo': nengo_dicts, 'bouts': bout_dicts,
+                             'foraging': foraging_dicts})
 
-        dic=aux.AttrDict({k:v for k,v in dic0.items() if len(v) > 0})
+        dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
         return dic
-
-    def get_larva_tables(self):
-        dic = {}
-        if self.table_collector is not None:
-
-            for name, table in self.table_collector.tables.items():
-                df = pd.DataFrame(table)
-                if 'unique_id' in df.columns:
-                    df.rename(columns={'unique_id': 'AgentID'}, inplace=True)
-                    N = len(df['AgentID'].unique().tolist())
-                    if N > 0:
-                        Nrows = int(len(df.index) / N)
-                        df['Step'] = np.array([[i] * N for i in range(Nrows)]).flatten()
-                        df.set_index(['Step', 'AgentID'], inplace=True)
-                        df.sort_index(level=['Step', 'AgentID'], inplace=True)
-                        dic[name] = df
-        return aux.AttrDict(dic)
 
     def place_obstacles(self, barriers={}):
         self.borders, self.border_lines = [], []
         for id, pars in barriers.items():
-            b = envs2.Border(unique_id=id, **pars)
+            b = envs.Border(unique_id=id, **pars)
             self.borders.append(b)
             self.border_lines += b.border_lines
 
     def place_food(self, food_grid=None, source_groups={}, source_units={}):
-        self.food_grid = envs2.FoodGrid(**food_grid, model=self) if food_grid else None
+        self.food_grid = envs.FoodGrid(**food_grid, model=self) if food_grid else None
         sourceConfs = util.generate_sourceConfs(source_groups, source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.space.add_agents(source_list, positions=[a.pos for a in source_list])
@@ -194,7 +171,6 @@ class Larvaworld(agentpy.Model):
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
-
     def get_food(self):
         return self.sources
 
@@ -205,6 +181,51 @@ class Larvaworld(agentpy.Model):
         if group is not None:
             ls = [l for l in ls if l.group == group]
         return ls
+
+    def analyze(self, **kwargs):
+        os.makedirs(self.plot_dir, exist_ok=True)
+        exp = self.experiment
+        ds = self.datasets
+
+        if ds is None or any([d is None for d in ds]):
+            return
+
+        if 'PI' in exp:
+            PIs = {}
+            PI2s = {}
+            for d in ds:
+                PIs[d.id] = d.config.PI["PI"]
+                PI2s[d.id] = d.config.PI2
+                # if self.show_output:
+                #     print(f'Group {d.id} -> PI : {PIs[d.id]}')
+                #     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
+            self.results = {'PIs': PIs, 'PI2s': PI2s}
+            return
+
+        if 'disp' in exp:
+            samples = aux.unique_list([d.config.sample for d in ds])
+            ds += [reg.loadRef(sd) for sd in samples if sd is not None]
+        graphgroups = reg.graphs.get_analysis_graphgroups(exp, self.source_xy)
+        self.figs = reg.graphs.eval_graphgroups(graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs)
+
+    def store(self):
+
+        for d in self.datasets:
+            d.save()
+            for type, vs in d.larva_dicts.items():
+                aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
+
+    @property
+    def configuration_text(self):
+        text = f"Simulation configuration : \n" \
+               "\n" \
+               f"Experiment : {self.experiment}\n" \
+               f"Simulation ID : {self.id}\n" \
+               f"Duration (min) : {self.duration}\n" \
+               f"Timestep (sec) : {self.dt}\n" \
+               f"Plot path : {self.plot_dir}\n" \
+               f"Parent path : {self.path}"
+        return text
 
 
 def get_all_foodtypes(grid, groups, units):
@@ -219,6 +240,7 @@ def get_all_foodtypes(grid, groups, units):
     except:
         ids = {k: ids[k] for k in ks}
     return ids
+
 
 def get_source_xy(groups, units):
     sources_u = {k: v['pos'] for k, v in units.items()}
@@ -253,10 +275,19 @@ def create_odor_layers(model, sources, pars=None):
             'default_color': c0,
         }
         if pars.odorscape == 'Diffusion':
-            odor_layers[id] = envs2.DiffusionValueLayer(grid_dims=pars['grid_dims'],
-                                                       evap_const=pars['evap_const'],
-                                                       gaussian_sigma=pars['gaussian_sigma'],
-                                                       **kwargs)
+            odor_layers[id] = envs.DiffusionValueLayer(grid_dims=pars['grid_dims'],
+                                                        evap_const=pars['evap_const'],
+                                                        gaussian_sigma=pars['gaussian_sigma'],
+                                                        **kwargs)
         elif pars.odorscape == 'Gaussian':
-            odor_layers[id] = envs2.GaussianValueLayer(**kwargs)
+            odor_layers[id] = envs.GaussianValueLayer(**kwargs)
     return odor_layers
+
+
+if __name__ == "__main__":
+    exp = 'chemorbit'
+
+    m = Larvaworld(parameters=reg.expandConf('Exp', exp),
+                   screen_kws={'vis_kwargs': reg.get_null('visualization', mode=None)})
+    ds = m.simulate()
+    m.analyze(show=True)

@@ -2,7 +2,6 @@ import agentpy
 import numpy as np
 from shapely import geometry
 
-import lib.aux.xy
 from lib import aux
 
 

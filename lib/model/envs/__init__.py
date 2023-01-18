@@ -1,2 +1,2 @@
-from ._space import *
+from .valuegrid import *
 from .obstacle import *
