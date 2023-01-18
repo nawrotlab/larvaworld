@@ -262,10 +262,8 @@ def create_odor_layers(model, sources, pars=None):
 
 if __name__ == "__main__":
     exp = 'chemorbit'
-    conf = reg.expandConf('Exp', exp)
-    conf.experiment = exp
-    screen_kws = {'vis_kwargs': reg.get_null('visualization', mode=None)}
 
-    m = Larvaworld(parameters=conf, screen_kws=screen_kws)
+    m = Larvaworld(parameters=reg.expandConf('Exp', exp),
+                   screen_kws={'vis_kwargs': reg.get_null('visualization', mode=None)})
     ds = m.simulate()
     m.analyze(show=True)
