@@ -89,7 +89,7 @@ class Border(Obstacle):
 
 
         self.selected = False
-        super().__init__(vertices, edges, default_color, unique_id)
+        super().__init__(vertices, edges, color=default_color, unique_id =unique_id)
 
     def define_lines(self, points, s=1):
         lines = [geometry.LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
@@ -102,7 +102,7 @@ class Border(Obstacle):
 
     def draw(self, screen):
         for b in self.border_xy:
-            screen.draw_polyline(b, color=self.default_color, width=self.width, closed=False)
+            screen.draw_polyline(b, color=self.color, width=self.width, closed=False)
             # if self.selected:
             #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 

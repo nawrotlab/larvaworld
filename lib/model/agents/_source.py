@@ -94,7 +94,7 @@ class Food(Source):
                     viewer.draw_circle(p, r * 3.0, c, False, r / 20)
         if self.selected:
             # viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
-            viewer.draw_circle(p, r * 1.1, self.model.selection_color, False, r / 5)
+            viewer.draw_circle(p, r * 1.1, self.model.screen_manager.selection_color, False, r / 5)
 
     def contained(self, point):
         return aux.eudis5(self.get_position(), point) <= self.radius

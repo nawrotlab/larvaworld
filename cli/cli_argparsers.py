@@ -5,6 +5,7 @@ from lib import reg, aux, sim
 from cli.parser import parser_dict
 
 
+
 class Parser:
     """
     Create an argument parser for a group of arguments (normally from a dict).
@@ -57,11 +58,18 @@ def run_template(sim_mode, args, d):
         exec.run()
     elif sim_mode == 'Exp':
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
-        run = sim.SingleRun(**conf, vis_kwargs=d['visualization'])
-        ds = run.run()
-
+        from lib.model.envs.world_runnable import Larvaworld
+        run = Larvaworld(parameters=conf,
+                       screen_kws={'vis_kwargs': d['visualization']})
+        ds = run.simulate()
         if args.analysis:
-            fig_dict, results = run.analyze(show=args.show)
+            run.analyze(show=args.show)
+
+        # run = sim.SingleRun(**conf, vis_kwargs=d['visualization'])
+        # ds = run.run()
+        #
+        # if args.analysis:
+        #     fig_dict, results = run.analyze(show=args.show)
     elif sim_mode == 'Ga':
         conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,
                                conf_type='Ga')

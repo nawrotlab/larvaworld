@@ -45,7 +45,7 @@ output_dict = {
 
 
 
-def set_output(collections, Npoints=3, Ncontour=0):
+def set_output(collections=None, Npoints=3, Ncontour=0):
     if collections is None:
         collections = ['pose']
     step = []

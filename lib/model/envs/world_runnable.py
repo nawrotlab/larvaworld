@@ -6,47 +6,76 @@ import numpy as np
 from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
-
+from lib.model.envs.conditions import get_exp_condition
 
 class Larvaworld(agentpy.Model):
-    def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True, save_to=None):
+    def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True, save_to=None, id=None):
         """ Initializes the agents and network of the model. """
 
-        id = self.p.sim_params.sim_ID
+        # Define ID
+        if id is None:
+            id = self.p.sim_params.sim_ID
         if id is None:
             idx = reg.next_idx(self.p.experiment, conftype='Exp')
             id = f'{self.p.experiment}_{idx}'
         self.id = id
+
+        # Define directories
         if save_to is None:
             save_to = f'{reg.SIM_DIR}/exp_runs'
-        self.dir = f'{save_to}/{self.id}'
+        self.dir = f'{save_to}/{id}'
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
-        self.save_to = f'{self.dir}/visuals'
+        self.save_to = self.dir
+        # self.save_to = f'{self.dir}/visuals'
 
-        self.is_paused = False
-        self.larva_collisions = larva_collisions
+        # Define sim params
         self.store_data = self.p.sim_params.store_data
         self.dt = self.p.sim_params.timestep
         self.duration = self.p.sim_params.duration
         self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
         self._steps = self.Nsteps
 
-        self.experiment = self.p.experiment
-        self.env_pars = self.p.env_params
         self.Box2D = self.p.sim_params.Box2D
         self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
 
         self.sim_epochs = self.p.trials
         for idx, ep in self.sim_epochs.items():
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
 
-        self.space = envs.Arena(self, **self.p.env_params.arena)
+
+        self.build_env(self.p.env_params)
+
+
+
+        self.place_agents(self.p.larva_groups, parameter_dict)
+        self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
+        self.experiment = self.p.experiment
+        self.is_paused = False
+        self.datasets = None
+        self.results = None
+        self.figs = {}
+
+        self.screen_manager = ScreenManager(model=self, **screen_kws)
+
+        self.larva_collisions = larva_collisions
+        if not self.larva_collisions:
+            self.eliminate_overlap()
+
+        k = get_exp_condition(self.experiment)
+        self.exp_condition = k(self) if k is not None else None
+
+    def build_env(self, env_params):
+        # Define environment
+        self.env_pars = env_params
+
+        self.space = envs.Arena(self, **env_params.arena)
         self.arena_dims = self.space.dims
 
-        self.place_obstacles(self.p.env_params.border_list)
-        self.place_food(**self.p.env_params.food_params)
+        self.place_obstacles(env_params.border_list)
+        self.place_food(**env_params.food_params)
 
         '''
         Sensory landscapes of the simulation environment arranged per modality
@@ -54,27 +83,41 @@ class Larvaworld(agentpy.Model):
         - Wind landscape : windscape
         - Temperature landscape : thermoscape
         '''
-        self.odor_ids = get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
-        self.odor_layers = create_odor_layers(model=self, sources=self.sources, pars=self.p.env_params.odorscape)
-        self.windscape = envs.WindScape(model=self,
-                                         **self.p.env_params.windscape) if self.p.env_params.windscape else None
-        self.thermoscape = envs.ThermoScape(**self.p.env_params.thermoscape) if self.p.env_params.thermoscape else None
+        self.odor_ids = get_all_odors(self.p.larva_groups, env_params.food_params)
+        self.odor_layers = create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
+        self.windscape = envs.WindScape(model=self, **env_params.windscape) if env_params.windscape else None
+        self.thermoscape = envs.ThermoScape(**env_params.thermoscape) if env_params.thermoscape else None
 
-        self.place_agents(self.p.larva_groups, parameter_dict)
-        self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-        self.datasets = None
-        self.results = None
-        self.figs = {}
 
-        self.screen_manager = ScreenManager(model=self, **screen_kws)
+    @property
+    def end_condition_met(self):
+        if self.exp_condition is not None:
+            return self.exp_condition.check(self)
+        return False
+
+    def sim_step(self):
+        """ Proceeds the simulation by one step, incrementing `Model.t` by 1
+        and then calling :func:`Model.step` and :func:`Model.update`."""
+        if not self.is_paused:
+            self.t += 1
+            self.step()
+            self.update()
+            if self.t >= self._steps or self.end_condition_met:
+                self.running = False
 
     def step(self):
         """ Defines the models' events per simulation step. """
+        if not self.larva_collisions:
+            self.larva_bodies = self.get_larva_bodies()
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
         self.agents.step()
+        if self.Box2D:
+            self.space.Step(self.dt, 6, 2)
+            for fly in self.agents:
+                fly.update_trajectory()
         self.screen_manager.step()
 
     def update(self):
@@ -83,6 +126,7 @@ class Larvaworld(agentpy.Model):
 
     def end(self):
         """ Repord an evaluation measure. """
+        self.screen_manager.finalize(self.t)
         self.agents.nest_record(self.collectors['end'])
 
     def simulate(self):
@@ -94,8 +138,6 @@ class Larvaworld(agentpy.Model):
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 2)
         if self.p.enrichment:
             for d in self.datasets:
-                # reg.vprint()
-                # reg.vprint(f'--- Enriching dataset {d.id} with derived parameters ---', 2)
                 d.enrich(**self.p.enrichment, is_last=False, store=self.store_data)
                 reg.vprint(f'--- Dataset {d.id} enriched ---', 2)
         if self.store_data:
@@ -182,6 +224,47 @@ class Larvaworld(agentpy.Model):
             ls = [l for l in ls if l.group == group]
         return ls
 
+    def get_all_objects(self):
+        return self.get_food() + self.get_flies() + self.borders
+
+    def eliminate_overlap(self):
+        scale = 3.0
+        while self.collisions_exist(scale=scale):
+            self.larva_bodies = self.get_larva_bodies(scale=scale)
+            for l in self.get_flies():
+                dx, dy = np.random.randn(2) * l.sim_length / 10
+                overlap = True
+                while overlap:
+                    ids = self.detect_collisions(l.unique_id)
+                    if len(ids) > 0:
+                        l.move_body(dx, dy)
+                        self.larva_bodies[l.unique_id] = l.get_polygon(scale=scale)
+                    else:
+                        break
+
+    def collisions_exist(self, scale=1.0):
+        self.larva_bodies = self.get_larva_bodies(scale=scale)
+        for l in self.get_flies():
+            ids = self.detect_collisions(l.unique_id)
+            if len(ids) > 0:
+                return True
+        return False
+
+    def detect_collisions(self, id):
+
+        body = self.larva_bodies[id]
+        # body = self.larva_bodies[id]
+        ids = []
+        for id0, body0 in self.larva_bodies.items():
+            if id0==id :
+                continue
+            if body.intersects(body0):
+                ids.append(id0)
+        return ids
+
+    def get_larva_bodies(self, scale=1.0):
+        return {l.unique_id: l.get_shape(scale=scale) for l in self.get_flies()}
+
     def analyze(self, **kwargs):
         os.makedirs(self.plot_dir, exist_ok=True)
         exp = self.experiment
@@ -214,6 +297,10 @@ class Larvaworld(agentpy.Model):
             d.save()
             for type, vs in d.larva_dicts.items():
                 aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
+
+    @property
+    def Nticks(self):
+        return self.t
 
     @property
     def configuration_text(self):
