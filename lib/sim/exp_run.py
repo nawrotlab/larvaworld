@@ -28,7 +28,6 @@ class ExpRun(BaseRun):
 
         self.place_agents(self.p.larva_groups, parameter_dict)
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-        # self.experiment = self.p.experiment
 
 
         self.screen_manager = ScreenManager(model=self, **screen_kws)

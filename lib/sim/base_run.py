@@ -13,23 +13,7 @@ class BaseRun(agentpy.Model):
         if experiment is None:
             experiment = parameters.experiment
         self.experiment = experiment
-        if id is None:
-            idx = reg.next_idx(self.experiment, conftype=runtype)
-            id = f'{self.experiment}_{idx}'
-        self.id = id
-        # Define directories
-        if save_to is None:
-            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        self.dir = f'{save_to}/{id}'
-        self.plot_dir = f'{self.dir}/plots'
-        self.data_dir = f'{self.dir}/data'
-        self.save_to = self.dir
 
-        self.is_paused = False
-        self.datasets = None
-        self.results = None
-        self.figs = {}
-        self.obstacles = []
 
         if 'sim_params' in parameters.keys() :
             # Define sim params
@@ -48,6 +32,24 @@ class BaseRun(agentpy.Model):
 
 
         super().__init__(parameters=parameters, **kwargs)
+
+        if id is None:
+            idx = reg.next_idx(self.experiment, conftype=runtype)
+            id = f'{self.experiment}_{idx}'
+        self.id = id
+        # Define directories
+        if save_to is None:
+            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
+        self.dir = f'{save_to}/{id}'
+        self.plot_dir = f'{self.dir}/plots'
+        self.data_dir = f'{self.dir}/data'
+        self.save_to = self.dir
+
+        self.is_paused = False
+        self.datasets = None
+        self.results = None
+        self.figs = {}
+        self.obstacles = []
 
     @property
     def configuration_text(self):

@@ -5,26 +5,26 @@ ipykernel
 
 PySimpleGUI~=4.40.0
 
-sklearn~=0.0
-scipy~=1.5.4
-scikit-learn~=0.24.2
-shapely~=1.7.0
+# sklearn~=0.0
+scipy
+scikit-learn
+shapely
 
 matplotlib==3.3.4
 seaborn
 imageio
 imageio-ffmpeg
 
-nengo==3.1.0
-mesa~=0.8.6
+nengo
+# mesa~=0.8.6
 agentpy
 box2d-py
 
-pygame==2.0.1
+pygame
 argparse~=1.4.0
 progressbar2~=3.53.1
 pint
-statsmodels~=0.12.2
+statsmodels
 
 powerlaw~=1.4.6
 h5py

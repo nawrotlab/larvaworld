@@ -40,8 +40,8 @@ Examples of this default batch exec are given in  :
 
 
 class BatchRun:
-    def __init__(self, batch_type='unnamed', batch_id='template', space_search=None, exp=None, params=None, post_kws={},
-                 exp_kws={}, proc_kws={}, multiproc=True, resumable=False, save_hdf5=False, batch_methods=None,
+    def __init__(self, batch_type='unnamed', batch_id='template', space_search=None, exp=None, params=None,
+                 exp_kws={}, multiproc=True, resumable=False, save_hdf5=False, batch_methods=None,
                  optimization=None, ncores=8):
         self.s0 = time.time()
         self.id = batch_id
@@ -70,8 +70,7 @@ class BatchRun:
                         'save_to': self.dir,
                         'vis_kwargs': reg.get_null('visualization', mode=None),
                         'collections': exp['collections']
-                        },
-            'proc_kws': proc_kws
+                        }
         }
         self.resumable = resumable
         self.env2_kws = {
@@ -97,7 +96,7 @@ class BatchRun:
 
         self.env = self.get_env()
         if self.postfunc is not None:
-            self.env.add_postprocessing(self.postfunc, **post_kws)
+            self.env.add_postprocessing(self.postfunc)
 
     def resume(self):
         env = Environment(continuable=True)

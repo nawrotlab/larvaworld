@@ -239,7 +239,7 @@ def retrieve_exp_conf(traj):
     return d
 
 
-def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
+def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}):
     with aux.suppress_stdout(False):
         from lib.sim.exp_run import ExpRun
         conf={**retrieve_exp_conf(traj), **exp_kws}
@@ -250,7 +250,7 @@ def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
         else:
             if len(ds) == 1:
                 d = ds[0]
-                d, results = procfunc(traj, d, **proc_kws)
+                d, results = procfunc(traj, d)
             else:
                 raise ValueError(
                     f'Splitting resulting dataset yielded {len(ds)} datasets but the batch-run is configured for a single one.')

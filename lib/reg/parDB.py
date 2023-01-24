@@ -1155,8 +1155,8 @@ def buildInitDict():
                            'optimization': d['optimization'],
                            'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']},
                                        'h': 'Keywords for the exp exec.'},
-                           'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post exec.'},
-                           'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc exec.'},
+                           # 'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post exec.'},
+                           # 'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc exec.'},
                            'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                            }
         return d
