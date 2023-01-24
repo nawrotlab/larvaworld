@@ -24,13 +24,13 @@ class _LarvaDataset:
 
     def set_data(self, step=None, end=None, food=None):
         if step is not None:
-            step.sort_index(level=['Step', 'AgentID'], inplace=True)
-            self.step_data = step
-            self.agent_ids = step.index.unique('AgentID').values
-            self.num_ticks = step.index.unique('Step').size
+
+            self.step_data = step.sort_index(level=['Step', 'AgentID'])
+            self.agent_ids = self.step_data.index.unique('AgentID').values
+            self.num_ticks = self.step_data.index.unique('Step').size
         if end is not None:
-            end.sort_index(inplace=True)
-            self.endpoint_data = end
+
+            self.endpoint_data = end.sort_index()
         if food is not None:
             self.food_endpoint_data = food
         self.config=update_config(self,self.config)

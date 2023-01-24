@@ -101,9 +101,10 @@ class ExpRun(BaseRun):
         self.screen_manager.finalize(self.t)
         self.agents.nest_record(self.collectors['end'])
 
-    def simulate(self):
+    def simulate(self, **kwargs):
         start = time.time()
-        self.run()
+        self.run(**kwargs)
+        # reg.vprint(self.output.variables['RE_NEU_PHI_DEF_nav'], 2)
         self.datasets = self.retrieve()
         end = time.time()
         dur = np.round(end - start).astype(int)
@@ -118,23 +119,34 @@ class ExpRun(BaseRun):
         return self.datasets
 
     def retrieve(self):
-        from lib.process.dataset import LarvaDataset
         ds = []
         for gID, df in self.output.variables.items():
-            df.index.set_names(['AgentID', 'Step'], inplace=True)
-            df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-            df.sort_index(level=['Step', 'AgentID'], inplace=True)
-
-            end = df[list(self.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
-            step = df[list(self.collectors['step'].keys())]
-            d = LarvaDataset(f'{self.data_dir}/{gID}', id=gID, larva_groups={gID: self.p.larva_groups[gID]},
-                             load_data=False, env_params=self.p.env_params,
-                             source_xy=self.source_xy,
-                             fr=1 / self.dt)
-            d.set_data(step=step, end=end, food=None)
-            d.larva_dicts = self.get_larva_dicts(ids=d.agent_ids)
-            ds.append(d)
+            if 'sample_id' in df.index.names :
+                for sID in df.index.get_level_values('sample_id').unique():
+                    d=self.convert_output_to_dataset(gID, df.xs(sID, level='sample_id'), id=f'{gID}_{sID}')
+                    ds.append(d)
+            else :
+                d=self.convert_output_to_dataset(gID, df)
+                ds.append(d)
         return ds
+
+    def convert_output_to_dataset(self,gID, df, id=None):
+        if id is None :
+            id = gID
+        from lib.process.dataset import LarvaDataset
+        df.index.set_names(['AgentID', 'Step'], inplace=True)
+        df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+        df.sort_index(level=['Step', 'AgentID'], inplace=True)
+
+        end = df[list(self.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
+        step = df[list(self.collectors['step'].keys())]
+        d = LarvaDataset(f'{self.data_dir}/{id}', id=id, larva_groups={gID: self.p.larva_groups[gID]},
+                         load_data=False, env_params=self.p.env_params,
+                         source_xy=self.source_xy,
+                         fr=1 / self.dt)
+        d.set_data(step=step, end=end, food=None)
+        d.larva_dicts = self.get_larva_dicts(ids=d.agent_ids)
+        return d
 
     def get_larva_dicts(self, ids=None):
 

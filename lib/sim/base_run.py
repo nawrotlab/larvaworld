@@ -9,7 +9,7 @@ from lib.model import envs, agents
 from lib.model.envs.conditions import get_exp_condition
 
 class BaseRun(agentpy.Model):
-    def __init__(self, parameters, runtype, save_to=None, id=None,experiment=None, **kwargs):
+    def __init__(self, runtype, parameters={},  save_to=None, id=None,experiment=None, **kwargs):
         if experiment is None:
             experiment = parameters.experiment
         self.experiment = experiment

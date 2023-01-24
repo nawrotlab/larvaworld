@@ -33,10 +33,9 @@ class Calibration:
             'all': physics_keys + turner_keys
         })
 
-        self.D = reg.model
         self.mdicts = aux.AttrDict({
-            'turner': self.D.dict.model.m['turner'].mode[turner_mode].args,
-            'physics': self.D.dict.model.m['physics'].args
+            'turner': reg.model.dict.model.m['turner'].mode[turner_mode].args,
+            'physics': reg.model.dict.model.m['physics'].args
         })
         self.mconfs = aux.AttrDict({
             'turner': None,
@@ -55,7 +54,7 @@ class Calibration:
         self.init = np.array(init)
         self.bounds = bounds
 
-        self.Tfunc = self.D.dict.model.m['turner'].mode[turner_mode].class_func
+        self.Tfunc = reg.model.dict.model.m['turner'].mode[turner_mode].class_func
         self.turner_mode = turner_mode
         self.absolute = absolute
 
@@ -114,7 +113,7 @@ class Calibration:
 
         for k, mdict in self.mdicts.items():
             kwargs = {kk: dic[kk] for kk in self.mkeys[k]}
-            self.mconfs[k] = self.D.conf(mdict=mdict, **kwargs)
+            self.mconfs[k] = reg.model.conf(mdict=mdict, **kwargs)
         # return mconfs
 
     def optimize_turner(self, q=None, return_sim=False, N=2000):

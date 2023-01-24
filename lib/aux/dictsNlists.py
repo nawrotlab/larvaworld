@@ -71,6 +71,16 @@ class AttrDict(dict):
             if k in list(self.keys()):
                 self[k] = v
 
+    def update_existingdict_by_suffix(self, dic):
+        k0s=list(self.keys())
+        for k, v in dic.items():
+            k1s=[k0 for k0 in k0s if k0.endswith(k)]
+            if len(k1s)==1:
+                k1=k1s[0]
+                self[k1] = v
+            elif len(k1s) > 1:
+                print(f'Non unique suffix : {k}')
+
     def update_nestdict(self, dic):
         dic0_f = self.flatten()
         dic0_f.update(dic)
@@ -82,6 +92,11 @@ class AttrDict(dict):
     def update_existingnestdict(self, dic):
         dic0_f = self.flatten()
         dic0_f.update_existingdict(dic)
+        return dic0_f.unflatten()
+
+    def update_existingnestdict_by_suffix(self, dic):
+        dic0_f = self.flatten()
+        dic0_f.update_existingdict_by_suffix(dic)
         return dic0_f.unflatten()
 
 
