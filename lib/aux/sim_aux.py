@@ -229,6 +229,14 @@ def get_freq(d, par, fr_range=(0.0, +np.inf)):
     e[nam.freq(par)] = s[par].groupby("AgentID").apply(fft_max, dt=c.dt, fr_range=fr_range)
 
 
+
+def get_all_odors(larva_groups, food_params):
+    lg = [conf.odor.odor_id for conf in larva_groups.values()]
+    su = [conf.odor.odor_id for conf in food_params.source_units.values()]
+    sg = [conf.odor.odor_id for conf in food_params.source_groups.values()]
+    ids = aux.unique_list([id for id in lg + su + sg if id is not None])
+    return ids
+
 def get_source_xy(food_params):
     sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
     sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}

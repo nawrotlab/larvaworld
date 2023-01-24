@@ -115,8 +115,6 @@ class ReplayRun(agentpy.Model):
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.space.add_agents(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
-        # self.foodtypes = get_all_foodtypes(food_grid, source_groups, source_units)
-        # self.source_xy = get_source_xy(source_groups, source_units)
 
     def sim_step(self):
         """ Proceeds the simulation by one step, incrementing `Model.t` by 1
@@ -154,7 +152,7 @@ class ReplayRun(agentpy.Model):
         - Temperature landscape : thermoscape
         '''
         # self.odor_ids = get_all_odors(self.p.larva_groups, env_params.food_params)
-        self.odor_layers = create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
+        self.odor_layers = envs.create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
         self.windscape = envs.WindScape(model=self, **env_params.windscape) if env_params.windscape else None
         self.thermoscape = envs.ThermoScape(**env_params.thermoscape) if env_params.thermoscape else None
 
@@ -172,32 +170,7 @@ class ReplayRun(agentpy.Model):
     def get_all_objects(self):
         return self.get_food() + self.get_flies() + self.borders
 
-def create_odor_layers(model, sources, pars=None):
-    odor_layers = {}
-    ids = aux.unique_list([s.odor_id for s in sources if s.odor_id is not None])
-    for id in ids:
-        od_sources = [f for f in sources if f.odor_id == id]
-        temp = aux.unique_list([s.default_color for s in od_sources])
-        if len(temp) == 1:
-            c0 = temp[0]
-        elif len(temp) == 3 and all([type(k) == float] for k in temp):
-            c0 = temp
-        else:
-            c0 = aux.random_colors(1)[0]
-        kwargs = {
-            'model': model,
-            'unique_id': id,
-            'sources': od_sources,
-            'default_color': c0,
-        }
-        if pars.odorscape == 'Diffusion':
-            odor_layers[id] = envs.DiffusionValueLayer(grid_dims=pars['grid_dims'],
-                                                        evap_const=pars['evap_const'],
-                                                        gaussian_sigma=pars['gaussian_sigma'],
-                                                        **kwargs)
-        elif pars.odorscape == 'Gaussian':
-            odor_layers[id] = envs.GaussianValueLayer(**kwargs)
-    return odor_layers
+
 
 def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_range=None, pars=None,env_params=None,close_view=False):
 
