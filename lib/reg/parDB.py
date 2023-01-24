@@ -1081,16 +1081,16 @@ def buildInitDict():
     def Ga1(d):
         d['Ga'] = {
             'scene': {'dtype': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
-            'scene_speed': {'dtype': int, 'v': 0, 'lim': (0, 1000),
-                            'h': 'The rendering speed of the scene'},
+            # 'scene_speed': {'dtype': int, 'v': 0, 'lim': (0, 1000),
+            #                 'h': 'The rendering speed of the scene'},
             'env_params': ConfID_entry('Env',default='arena_200mm'),
 
             # 'env_params': confID_entry('Env'),
             'sim_params': d['sim_params'],
             'experiment': ConfID_entry('Ga',default='exploration'),
             # 'experiment': confID_entry('Ga', default='exploration'),
-            'caption': {'dtype': str, 'h': 'The screen caption'},
-            'save_to': pSaveTo(),
+            # 'caption': {'dtype': str, 'h': 'The screen caption'},
+            # 'save_to': pSaveTo(),
             'show_screen': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
             'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
             'ga_build_kws': d['ga_build_kws'],
@@ -1218,11 +1218,9 @@ def buildInitDict():
 
         d['Exp'] = {
             'env_params': ConfID_entry('Env'),
-            # 'env_params': confID_entry('Env'),
             'larva_groups': {'dtype': dict, 'v': {}},
             'sim_params': d['sim_params'],
             'trials': ConfID_entry('Trial', default='default'),
-            # 'trials': confID_entry('Trial', default='default'),
             'collections': {'dtype': List[str], 'v': ['pose']},
             'enrichment': d['enrichment'],
             'experiment': ConfID_entry('Exp'),
@@ -1256,8 +1254,8 @@ def buildInitDict():
                              'h': 'Whether to draw overlapped image of the track.'},
             'refID': ConfID_entry('Ref'),
             # 'refID': confID_entry('Ref'),
-            'id': pID('Replay', k='id'),
-            'save_to': pSaveTo()
+            # 'id': pID('Replay', k='id'),
+            # 'save_to': pSaveTo()
         }
 
         d['Eval'] = {

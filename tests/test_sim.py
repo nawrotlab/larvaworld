@@ -48,14 +48,14 @@ def test_GA() :
     conf=reg.expandConf('Ga', 'realism')
     conf.ga_select_kws.Ngenerations = 5
 
-    ga_run = sim.GAlauncher(**conf)
+    ga_run = sim.GAlauncher(parameters=conf)
     best1=ga_run.run()
     print(best1)
     assert best1 is not None
 
     conf.offline=True
     conf.show_screen=False
-    ga_run = sim.GAlauncher(**conf)
+    ga_run = sim.GAlauncher(parameters=conf)
     best2=ga_run.run()
     print(best2)
     assert best2 is not None

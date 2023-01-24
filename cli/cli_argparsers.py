@@ -73,8 +73,8 @@ def run_template(sim_mode, args, d):
             conf.ga_build_kws.base_model = args.base_model
         if args.bestConfID is not None:
             conf.ga_build_kws.bestConfID = args.bestConfID
-        GA = sim.GAlauncher(**conf)
-        best_genome = GA.run()
+        GA = sim.GAlauncher(parameters=conf)
+        best_genome = GA.simulate()
     elif sim_mode == 'Eval':
         evrun = sim.EvalRun(**d.Eval, show=args.show_screen)
         evrun.run()

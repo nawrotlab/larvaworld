@@ -71,11 +71,9 @@ class GAselector:
 
             if self.bestConfID is not None:
                 reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
-                # self.M.saveConf(conf=self.best_genome.mConf, mID=self.bestConfID)
         end_generation_time = aux.TimeUtil.current_time_millis()
         total_generation_time=end_generation_time-self.start_generation_time
         reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
-        # reg.vprint(f'Generation {self.generation_num} duration : {total_generation_time}',self.verbose)
 
 
 
@@ -105,18 +103,13 @@ class GAselector:
 
     def roulette_select(self, genomes):
         fitness_sum = 0
-
         for genome in genomes:
             fitness_sum += genome.fitness
-
         value = random.uniform(0, fitness_sum)
-
         for i in range(len(genomes)):
             value -= genomes[i].fitness
-
             if value < 0:
                 return genomes[i]
-
         return genomes[-1]
 
     def ga_crossover_mutation(self, gConfs, space_dict):
@@ -125,7 +118,6 @@ class GAselector:
 
         # elitism: keep the best genomes in the new generation
         for i in range(self.Nelits):
-
             new_gConfs.append(gConfs[i])
             num_gConfs_to_create -= 1
 
@@ -162,13 +154,12 @@ class GAselector:
                 gConf[k] = gConf_b[k]
         return gConf
 
-        pass
 
 
 class GAbuilder(GAselector):
-    def __init__(self, viewer, side_panel=None, space_mkeys=[], robot_class=None, base_model='explorer',
+    def __init__(self, viewer, space_mkeys=[], robot_class=None, base_model='explorer',
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
-                 exclude_func=None, plot_func=None,exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
+                 exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
 
         self.is_running = True
@@ -180,7 +171,7 @@ class GAbuilder(GAselector):
         self.exclude_func = exclude_func
         self.multicore = multicore
         self.viewer = viewer
-        self.robot_class = get_robot_class(robot_class, self.model.offline)
+        self.robot_class = get_robot_class(robot_class, self.model.p.offline)
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.excluded_ids = []
@@ -203,16 +194,10 @@ class GAbuilder(GAselector):
 
         self.robots = self.build_generation()
 
-
-
-
-
         if self.exclusion_mode :
             self.fit_dict =None
             self.dataset =None
             self.step_df =None
-
-
         else :
             if fit_dict is None :
                 if fitness_target_refID is not None:
@@ -222,11 +207,9 @@ class GAbuilder(GAselector):
             self.fit_dict =fit_dict
             arg=self.fit_dict.func_arg
             if arg=='s':
-
                 self.dataset0=self.init_dataset()
                 self.step_df = self.init_step_df()
             elif arg=='robot':
-
                 self.dataset = None
                 self.step_df = None
 
@@ -256,7 +239,6 @@ class GAbuilder(GAselector):
 
     def init_step_df(self):
         self.dataset = self.dataset0.get_copy()
-        # self.dataset = aux.copyDict(self.dataset0)
 
         step_df = np.ones([self.dataset.config.Nticks, self.dataset.config.N, self.df_Ncols]) * np.nan
         self.dataset.endpoint_data['length'] = [robot.real_length for robot in self.robots]
@@ -276,12 +258,7 @@ class GAbuilder(GAselector):
         self.dataset.config.agent_ids = s.index.unique('AgentID').values
         self.dataset.config.N=len(self.dataset.config.agent_ids)
 
-        # s[nam.scal('velocity')] = pd.concat([g / e['length'].loc[id] for id, g in s['velocity'].groupby('AgentID')])
-        # s[preg.getPar('sv')] = (s[preg.getPar('v')].values.T / ls).T
-
-
         from lib.process.spatial import scale_to_length
-
         scale_to_length(s, e, c, pars=None, keys=['v'])
         self.dataset.step_data = s
         try :
@@ -306,24 +283,11 @@ class GAbuilder(GAselector):
         self.genome_dict = valid_gs
 
 
-
-
-
-
-    # def eval(self, gd):
-    #     for i, g in gd.items():
-    #         if g.fitness is None:
-    #             gdict =self.fit_dict.robot_func(ss=g['step'])
-    #             g.fitness, g.fitness_dict = self.get_fitness(gdict)
-
-
     def build_generation(self):
         robots = []
         for i, gConf in enumerate(self.gConfs):
             g=self.new_genome(gConf, self.mConf0)
             self.genome_dict[i] = g
-
-
 
             robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
             robot.genome = g
@@ -341,20 +305,14 @@ class GAbuilder(GAselector):
                 self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
 
         if self.multicore:
-
             for thr in self.threads:
                 thr.step()
-
-
-
             for robot in self.robots[:]:
                 self.check(robot)
         else:
             for robot in self.robots[:]:
                 robot.sense_and_act()
                 self.check(robot)
-
-
 
         self.generation_sim_time += self.model.dt
         self.generation_step_num += 1
@@ -372,75 +330,45 @@ class GAbuilder(GAselector):
             else:
                 self.finalize()
 
-
-
-
-
-
     def end_generation(self):
         if self.step_df is not None:
             self.finalize_step_df()
         else :
             self.eval_robots()
 
-
-
         for robot in self.robots[:]:
             self.destroy_robot(robot)
 
-        # check population extinction
-        # if not self.robots:
-
-
-
         self.sort_genomes()
 
-        if self.model.sim_params.store_data:
+        if self.model.p.sim_params.store_data:
             self.all_genomes_dic += [
             {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
              'fitness': g.fitness, **aux.flatten_dict(g.fitness_dict)}
             for g in self.sorted_genomes if g.fitness_dict is not None]
 
-
-
-
-
-
     def destroy_robot(self, robot, excluded=False):
         if excluded:
-
             self.excluded_ids.append(robot.unique_id)
-
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
             robot.genome.fitness =robot.Nticks
         self.viewer.remove(robot)
         self.robots.remove(robot)
 
-
-    def get_fitness2(self, robot):
-        if self.fit_dict.func is not None:
-            return self.fit_dict.func(robot, **self.fit_dict.target_kws)
-        else:
-            return None
-
-    def get_fitness2(self, gdict):
-        return self.fit_dict.func(gdict, **self.fit_dict.target_kws)
-
     def finalize(self):
         self.is_running = False
         if self.progress_bar:
             self.progress_bar.finish()
         self.printd(0, 'Best fittness:', self.best_genome.fitness)
-        if self.model.sim_params.store_data :
+        if self.model.p.sim_params.store_data :
             self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.data_dir)
 
 
 
     def check(self, robot):
-        if not self.model.offline:
+        if not self.model.p.offline:
             if robot.xx < 0 or robot.xx > self.viewer.width or robot.yy < 0 or robot.yy > self.viewer.height:
-                # if robot.x < 0 or robot.x > self.viewer.width or robot.y < 0 or robot.y > self.viewer.height:
                 self.destroy_robot(robot)
 
             # destroy robot if it collides an obstacle
@@ -451,9 +379,6 @@ class GAbuilder(GAselector):
             if self.exclude_func(robot):
                 self.destroy_robot(robot, excluded=True)
 
-
-
-
     def store_genomes(self, dic, save_to):
         self.genome_df = pd.DataFrame.from_records(dic)
         self.genome_df = self.genome_df.round(3)
@@ -463,8 +388,6 @@ class GAbuilder(GAselector):
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
 
     def build_threads(self, robots):
-        # if self.multicore:
-
         threads = []
         num_robots = len(robots)
         num_robots_per_cpu = math.floor(num_robots / self.num_cpu)
@@ -512,8 +435,6 @@ class GA_thread(threading.Thread):
             robot.sense_and_act()
 
 def get_robot_class(robot_class=None, offline=False):
-    # print(robot_class)
-    # print(type(robot_class))
     if offline:
         robot_class = 'LarvaOffline'
     if robot_class is None:
@@ -535,5 +456,4 @@ def get_robot_class(robot_class=None, offline=False):
 def arrange_fitness(fitness_func, **kwargs):
     def func(robot):
         return fitness_func(robot, **kwargs)
-
     return aux.AttrDict({'func': func, 'func_arg': 'robot'})
