@@ -50,3 +50,6 @@ class Arena(agentpy.Space):
     def place_agent(self, agent, pos):
         pos = pos if isinstance(pos, np.ndarray) else np.array(pos)
         self.positions[agent] = pos  # Add pos to agent_dict
+
+    def move_agent(self, agent, pos):
+        self.move_to(agent, pos)

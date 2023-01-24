@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib import reg, aux
-from lib.model.envs.world_runnable import Larvaworld
+from lib.sim.exp_run import ExpRun
 
 exp='Windscape visualization'
 
@@ -40,7 +40,7 @@ def get_conf(puff_mode, wind_mode):
 for puff_mode in ['single', 'repetitive', 'no'] :
     for wind_mode in ['direction', 'speed', 'no'] :
         conf=get_conf(puff_mode, wind_mode)
-        env = Larvaworld(**conf)
+        env = ExpRun(**conf)
         env.setup(**env._setup_kwargs)
         env.windscape.visible=True
 

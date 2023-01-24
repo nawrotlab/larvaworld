@@ -9,9 +9,10 @@ from typing import Any
 from mesa.space import ContinuousSpace
 from shapely.geometry import Polygon
 
-from lib.model.envs.collecting import NamedRandomActivation
 from lib import aux
 from lib.model import envs, agents
+from lib.model.envs.collecting import NamedRandomActivation
+
 
 class BaseWorld:
     def __new__(cls, *args: Any, **kwargs: Any) -> Any:
@@ -20,7 +21,7 @@ class BaseWorld:
         cls.random = random.Random(cls._seed)
         return object.__new__(cls)
 
-    def __init__(self, env_params,  id='unnamed', dt=0.1, save_to='.',trials={},Nsteps=None,
+    def __init__(self, env_params,  id='unnamed', dt=0.1, save_to='.',Nsteps=None,
                  Box2D=False, experiment=None, larva_collisions=True, dur=None):
         self._id_counter=-1
         self.p=env_params
@@ -45,10 +46,7 @@ class BaseWorld:
         self.larva_collisions = larva_collisions
 
         os.makedirs(save_to, exist_ok=True)
-        self.sim_epochs = trials
-        for idx, ep in self.sim_epochs.items():
-            ep['start'] = int(ep['start'] * 60 / self.dt)
-            ep['stop'] = int(ep['stop'] * 60 / self.dt)
+
         self.env_pars = aux.AttrDict(env_params)
 
         self.create_arena(self.env_pars.arena.arena_dims, self.env_pars.arena.arena_shape)

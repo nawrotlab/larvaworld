@@ -433,7 +433,7 @@ class GAbuilder(GAselector):
             self.progress_bar.finish()
         self.printd(0, 'Best fittness:', self.best_genome.fitness)
         if self.model.sim_params.store_data :
-            self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.dir_path)
+            self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.data_dir)
 
 
 

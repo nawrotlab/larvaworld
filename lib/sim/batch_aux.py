@@ -12,7 +12,6 @@ from lib import reg, aux
 from lib.plot.hist import plot_endpoint_params, plot_endpoint_scatter
 from lib.plot.deb import plot_debs
 from lib.plot.scape import plot_3pars, plot_heatmap_PI, plot_2d
-from lib.sim.single_run import SingleRun
 from lib.process.dataset import LarvaDataset
 
 
@@ -242,7 +241,10 @@ def retrieve_exp_conf(traj):
 
 def single_run(traj, procfunc=None, save_hdf5=True, exp_kws={}, proc_kws={}):
     with aux.suppress_stdout(False):
-        ds = SingleRun(**retrieve_exp_conf(traj), **exp_kws).run()
+        from lib.sim.exp_run import ExpRun
+        conf={**retrieve_exp_conf(traj), **exp_kws}
+        run = ExpRun(parameters=conf)
+        ds = run.simulate()
         if procfunc is None:
             results = np.nan
         else:

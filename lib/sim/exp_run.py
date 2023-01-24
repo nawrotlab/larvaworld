@@ -8,7 +8,7 @@ from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
 from lib.model.envs.conditions import get_exp_condition
 
-class Larvaworld(agentpy.Model):
+class ExpRun(agentpy.Model):
     def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True, save_to=None, id=None):
         """ Initializes the agents and network of the model. """
 
@@ -251,19 +251,16 @@ class Larvaworld(agentpy.Model):
         return False
 
     def detect_collisions(self, id):
-
-        body = self.larva_bodies[id]
-        # body = self.larva_bodies[id]
         ids = []
         for id0, body0 in self.larva_bodies.items():
             if id0==id :
                 continue
-            if body.intersects(body0):
+            if self.larva_bodies[id].intersects(body0):
                 ids.append(id0)
         return ids
 
     def get_larva_bodies(self, scale=1.0):
-        return {l.unique_id: l.get_shape(scale=scale) for l in self.get_flies()}
+        return {l.unique_id: l.get_shape(scale=scale) for l in self.agents}
 
     def analyze(self, **kwargs):
         os.makedirs(self.plot_dir, exist_ok=True)
@@ -374,7 +371,7 @@ def create_odor_layers(model, sources, pars=None):
 if __name__ == "__main__":
     exp = 'chemorbit'
 
-    m = Larvaworld(parameters=reg.expandConf('Exp', exp),
-                   screen_kws={'vis_kwargs': reg.get_null('visualization', mode=None)})
+    m = ExpRun(parameters=reg.expandConf('Exp', exp),
+               screen_kws={'vis_kwargs': reg.get_null('visualization', mode=None)})
     ds = m.simulate()
     m.analyze(show=True)

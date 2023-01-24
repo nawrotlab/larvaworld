@@ -31,7 +31,7 @@ class LarvaReplay(Larva, LarvaBody):
             data['head_orientation'].values) if 'head_orientation' in data.columns else np.ones(N) * np.nan
         self.tail_or_ar = np.deg2rad(
             data['tail_orientation'].values) if 'tail_orientation' in data.columns else np.ones(N) * np.nan
-        Larva.__init__(self, model=model,pos = self.pos_ar[0],orientation = self.or_ar[0][0],
+        Larva.__init__(self, model=model,pos = self.pos_ar[0],orientation = self.front_or_ar[0],
                        radius=length / 2, **kwargs)
 
 
@@ -82,7 +82,7 @@ class LarvaReplay(Larva, LarvaBody):
 
     def step(self):
         m = self.model
-        step = m.active_larva_schedule.steps
+        step = m.Nticks
         self.compute_step(step)
         mid = self.midline
         if not np.isnan(self.pos).any():

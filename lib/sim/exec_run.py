@@ -1,11 +1,9 @@
 import subprocess
 import argparse
 
-from lib import reg, aux
+from lib import reg, aux, sim
 from lib.process.dataset import LarvaDataset
 from lib.sim.batch_aux import retrieve_results
-from lib.sim.single_run import SingleRun
-from lib.sim.batch import BatchRun
 
 
 class Exec:
@@ -69,11 +67,11 @@ class Exec:
     def exec_run(self):
 
         if self.mode == 'sim':
-            self.process = SingleRun(**self.conf, progress_bar=self.w_progressbar)
-            res = self.process.run()
+            self.process = sim.ExpRun(parameters=self.conf)
+            res = self.process.simulate()
         elif self.mode == 'batch':
             self.process = None
-            k = BatchRun(**self.conf)
+            k = sim.BatchRun(**self.conf)
             res=k.run()
 
         return res

@@ -233,7 +233,7 @@ class ScreenManager:
         elif self.v.close_requested():
             self.v.close()
             self.v = None
-            m.is_running = False
+            m.running = False
             return
         if self.image_mode != 'overlap':
             self.draw_arena(self.v, bg)

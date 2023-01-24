@@ -1,4 +1,7 @@
 import warnings
+
+
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
@@ -116,6 +119,7 @@ class EvalRun(BaseRun):
             'experiment': exp,
             'id': self.id,
             'sim_params': exp_conf.sim_params,
+            'trials': {},
             'collections': ['pose'],
             'env_params': c.env_params,
             'larva_groups': reg.lgs(sample=self.refID, mIDs=self.modelIDs, ids=self.dataset_ids,
@@ -344,7 +348,6 @@ class EvalRun(BaseRun):
         c = self.target.config
         if self.offline:
             print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
-
             self.datasets += util.sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=self.tor_durs,
                                         dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
                                         dataset_ids=self.dataset_ids,
@@ -352,13 +355,11 @@ class EvalRun(BaseRun):
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir)
         else:
-            from lib.sim.single_run import SingleRun
-
+            from lib.sim.exp_run import ExpRun
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
-            run = SingleRun(**self.exp_conf, progress_bar=self.progress_bar)
-            run.run()
+            run = ExpRun(parameters = self.exp_conf)
+            run.simulate()
             self.datasets += run.datasets
-            # return self.datasets
 
 
 def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,

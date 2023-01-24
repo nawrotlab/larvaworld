@@ -2,44 +2,6 @@ from lib import reg, sim
 
 from lib.process.dataset import LarvaDataset
 
-def test_exp_run() :
-    for exp in ['chemotaxis'] :
-        conf=reg.expandConf('Exp', exp)
-        conf.sim_params.duration=1
-        from lib.model.envs.world_runnable import Larvaworld
-        exp_run = Larvaworld(parameters=conf)
-        # exp_run = sim.ExpRun(**conf)
-        exp_run.simulate()
-        for d in exp_run.datasets :
-            assert isinstance(d, LarvaDataset)
-
-
-def test_GA() :
-    conf=reg.expandConf('Ga', 'realism')
-    conf.ga_select_kws.Ngenerations = 5
-
-    ga_run = sim.GAlauncher(**conf)
-    best1=ga_run.run()
-    print(best1)
-    assert best1 is not None
-
-    conf.offline=True
-    conf.show_screen=False
-    ga_run = sim.GAlauncher(**conf)
-    best2=ga_run.run()
-    print(best2)
-    assert best2 is not None
-
-def test_evaluation() :
-    refID = 'exploration.merged_dishes'
-    mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
-    evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
-    evrun.run()
-    evrun.plot_results()
-    evrun.plot_models()
-
-
-
 def test_replay() :
     refID =  'exploration.dish'
     replay_kws = {
@@ -71,6 +33,44 @@ def test_replay() :
     for mode, kws in replay_kws.items() :
         rep = sim.ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to= '. / media', **kws)
         rep.run()
+
+def test_exp_run() :
+    for exp in ['chemotaxis'] :
+        conf=reg.expandConf('Exp', exp)
+        conf.sim_params.duration=1
+        exp_run = sim.ExpRun(parameters=conf)
+        exp_run.simulate()
+        for d in exp_run.datasets :
+            assert isinstance(d, LarvaDataset)
+
+
+def test_GA() :
+    conf=reg.expandConf('Ga', 'realism')
+    conf.ga_select_kws.Ngenerations = 5
+
+    ga_run = sim.GAlauncher(**conf)
+    best1=ga_run.run()
+    print(best1)
+    assert best1 is not None
+
+    conf.offline=True
+    conf.show_screen=False
+    ga_run = sim.GAlauncher(**conf)
+    best2=ga_run.run()
+    print(best2)
+    assert best2 is not None
+
+def test_evaluation() :
+    refID = 'exploration.merged_dishes'
+    mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
+    evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
+    evrun.run()
+    evrun.plot_results()
+    evrun.plot_models()
+
+
+
+
 
 
 

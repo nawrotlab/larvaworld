@@ -58,9 +58,11 @@ class ImportTab(gui_aux.GuiTab):
 
     def imitate(self, conf):
         from lib.sim.exp_fitter import ExpFitter
-        from lib.sim.single_run import SingleRun
-        dd = SingleRun(**conf).run()
-        for d in dd:
+        from lib.sim.exp_run import ExpRun
+        run = ExpRun(parameters=conf)
+        run.simulate()
+
+        for d in run.datasets:
             f = ExpFitter(d.config['sample'])
             fit = f.compare(d, save_to_config=True)
             print(d.id, fit)

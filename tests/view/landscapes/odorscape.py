@@ -1,20 +1,32 @@
+import numpy as np
 
 from lib import reg, aux
-from lib.model.envs.world_runnable import Larvaworld
+from lib.sim.exp_run import ExpRun
 
 exp='Odorscape visualization'
 
 
+def oG(c=1, id='Odor'):
+    return reg.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+
+
+def oD(c=1, id='Odor'):
+    return reg.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
+
+
 def get_conf(media_name):
     if media_name == 'diffusion_odorscape':
-        odorscape = reg.get_null('odorscape', odorscape='Diffusion', grid_dims=(51, 51), gaussian_sigma=(0.95, 0.5),
-                                  evap_const=0.9)
-        oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=300.0, odor_spread=0.1)
-        oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=300.0, odor_spread=0.1)
+        odorscape = reg.get_null('odorscape', odorscape='Diffusion', gaussian_sigma=(0.95, 0.5),evap_const=0.9)
+        oR = oD(id='Odor_R')
+        oL = oD(id='Odor_L')
+        # oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=300.0, odor_spread=0.1)
+        # oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=300.0, odor_spread=0.1)
     elif media_name == 'gaussian_odorscape':
         odorscape = reg.get_null('odorscape', odorscape='Gaussian')
-        oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=2.0, odor_spread=0.0002)
-        oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=2.0, odor_spread=0.0002)
+        oR = oG(id='Odor_R')
+        oL = oG(id='Odor_L')
+        # oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=2.0, odor_spread=0.0002)
+        # oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=2.0, odor_spread=0.0002)
     else :
         raise ValueError ('Not implemented')
     sus = {
@@ -44,7 +56,7 @@ def get_conf(media_name):
 
 for media_name in ['gaussian_odorscape', 'diffusion_odorscape'] :
     conf=get_conf(media_name)
-    env = Larvaworld(**conf)
+    env = ExpRun(**conf)
     env.setup(**env._setup_kwargs)
     env.odor_layers['Odor_R'].visible = True
     while env.t <= env.Nsteps:

@@ -1,6 +1,5 @@
 import shutil
 
-import lib.util.data_aux
 from lib import reg, aux
 
 
@@ -41,11 +40,11 @@ class Essay:
                              collections=self.collections, **kwargs)
 
     def run(self):
-        from lib.sim.single_run import SingleRun
+        from lib.sim.exp_run import ExpRun
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
             print(f'Running {len(cs)} versions of experiment {exp}')
-            self.datasets[exp] = [SingleRun(**c, vis_kwargs=self.vis_kwargs).run() for c in cs]
+            self.datasets[exp] = [ExpRun(parameters=c, screen_kws={'vis_kwargs': self.vis_kwargs}).simulate() for c in cs]
 
         return self.datasets
 

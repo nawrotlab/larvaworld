@@ -8,64 +8,61 @@ import numpy as np
 
 from lib import reg, aux
 from lib.screen.rendering import  Viewer
-from lib.sim.base import BaseRun
+# from lib.sim.base import BaseRun
 from lib.sim.ga_engine import GAbuilder
 from lib.model.envs.base_world import BaseWorld
 
-class GenAlgRun(BaseRun):
-    def __init__(self, sim_params, env_params=None, experiment='exploration',
-                 offline=False, **kwargs):
-
-        kws = {
-            # 'dt': dt,
-            # 'model_class': WorldSim,
-            # 'progress_bar': progress_bar,
-            # 'save_to': save_to,
-            # 'store_data': store_data,
-            # 'analysis': analysis,
-            # 'show': show,
-            # 'Nsteps': int(sim_params.duration * 60 / dt),
-            # 'output': output,
-            'id': sim_params.sim_ID,
-            # 'Box2D': sim_params.Box2D,
-            # 'larva_groups': larva_groups,
-            # **kwargs
-        }
-        # super().__init__(runtype='exp', **kws)
-
-
-        super().__init__(runtype='ga', **kwargs)
-        self.offline = offline
-        id = sim_params.sim_ID
-        self.sim_params = sim_params
-        dt = sim_params.timestep
-        Nsteps = int(sim_params.duration * 60 / dt)
-        if not self.offline:
-            super().__init__(id=id, dt=dt, Box2D=sim_params.Box2D, env_params=env_params,
-                             save_to=f'{self.dir_path}/visuals',
-                             Nsteps=Nsteps, experiment=experiment, **kwargs)
-            self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
-        else:
-            self.env_pars = env_params
-            self.scaling_factor = 1
-            X, Y = self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
-            self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-            # self.experiment = experiment
-            self.dt = dt
-            self.Nticks = 0
-            self.Nsteps = Nsteps
-            self.id = id
-            # self.save_to = save_to
-            self.Box2D = False
+# class GenAlgRun(BaseRun):
+#     def __init__(self, sim_params, env_params=None, experiment='exploration',
+#                  offline=False, **kwargs):
+#
+#         kws = {
+#             # 'dt': dt,
+#             # 'model_class': WorldSim,
+#             # 'progress_bar': progress_bar,
+#             # 'save_to': save_to,
+#             # 'store_data': store_data,
+#             # 'analysis': analysis,
+#             # 'show': show,
+#             # 'Nsteps': int(sim_params.duration * 60 / dt),
+#             # 'output': output,
+#             'id': sim_params.sim_ID,
+#             # 'Box2D': sim_params.Box2D,
+#             # 'larva_groups': larva_groups,
+#             # **kwargs
+#         }
+#         # super().__init__(runtype='exp', **kws)
+#
+#
+#         super().__init__(runtype='ga', **kwargs)
+#         self.offline = offline
+#         id = sim_params.sim_ID
+#         self.sim_params = sim_params
+#         dt = sim_params.timestep
+#         Nsteps = int(sim_params.duration * 60 / dt)
+#         if not self.offline:
+#             super().__init__(id=id, dt=dt, Box2D=sim_params.Box2D, env_params=env_params,
+#                              save_to=f'{self.dir_path}/visuals',
+#                              Nsteps=Nsteps, experiment=experiment, **kwargs)
+#             self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
+#         else:
+#             self.env_pars = env_params
+#             self.scaling_factor = 1
+#             X, Y = self.arena_width, self.arena_height = self.env_pars.arena.arena_dims
+#             self.space_edges_for_screen = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
+#             # self.experiment = experiment
+#             self.dt = dt
+#             self.Nticks = 0
+#             self.Nsteps = Nsteps
+#             self.id = id
+#             # self.save_to = save_to
+#             self.Box2D = False
 
 
 
 
 
 class BaseGAlauncher(BaseWorld):
-
-
-    # SCREEN_MARGIN = 12
 
     def __init__(self, sim_params,  env_params=None, experiment='exploration',
                   save_to=None,offline=False,  **kwargs):
@@ -136,12 +133,7 @@ class GAlauncher(BaseGAlauncher):
 
     def run(self):
         while True and self.engine.is_running:
-
-
-            # t0 = TimeUtil.current_time_millis()
             self.engine.step()
-            # t1 = TimeUtil.current_time_millis()
-            # self.printd(2, 'Step duration: ', t1 - t0)
             if self.show_screen:
                 from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, Rect, draw, display
                 for e in event.get():
@@ -212,11 +204,9 @@ class GAlauncher(BaseGAlauncher):
             self.side_panel.update_ga_data(self.engine.generation_num, None)
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
-            # self.side_panel.space_dict=self.engine.space_dict
 
     def build_box(self, x, y, size, color):
         from lib.model.envs.obstacle import Box
-
         box = Box(x, y, size, color=color)
         self.obstacles.append(box)
         return box
@@ -228,9 +218,7 @@ class GAlauncher(BaseGAlauncher):
         return wall
 
     def get_larvaworld_food(self):
-
         for label,ff in self.env_pars.food_params.source_units.items():
-            # pos=dic['pos']
             x, y = self.screen_pos(ff.pos)
             size = ff.radius * self.scaling_factor
             col = ff.default_color

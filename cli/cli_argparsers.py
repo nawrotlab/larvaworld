@@ -58,18 +58,12 @@ def run_template(sim_mode, args, d):
         exec.run()
     elif sim_mode == 'Exp':
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
-        from lib.model.envs.world_runnable import Larvaworld
-        run = Larvaworld(parameters=conf,
-                       screen_kws={'vis_kwargs': d['visualization']})
+        run = sim.ExpRun(parameters=conf,
+                     screen_kws={'vis_kwargs': d['visualization']})
         ds = run.simulate()
         if args.analysis:
             run.analyze(show=args.show)
 
-        # run = sim.SingleRun(**conf, vis_kwargs=d['visualization'])
-        # ds = run.run()
-        #
-        # if args.analysis:
-        #     fig_dict, results = run.analyze(show=args.show)
     elif sim_mode == 'Ga':
         conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,
                                conf_type='Ga')

@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib import reg, aux
-from lib.model.envs.world_runnable import Larvaworld
+from lib.sim.exp_run import ExpRun
 
 exp='Wind&Odorscape visualization'
 
@@ -70,7 +70,7 @@ for odor_mode in ['gaussian_odorscape', 'diffusion_odorscape'] :
         for wind_mode in ['direction', 'speed', 'no'] :
 
             conf = get_conf(odor_mode, puff_mode, wind_mode)
-            env = Larvaworld(**conf)
+            env = ExpRun(**conf)
             env.setup(**env._setup_kwargs)
             env.odor_layers['Odor_L'].visible = True
             env.odor_aura = True
