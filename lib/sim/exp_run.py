@@ -7,37 +7,17 @@ from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
 from lib.model.envs.conditions import get_exp_condition
+from lib.sim.base_run import BaseRun
 
-class ExpRun(agentpy.Model):
-    def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True, save_to=None, id=None):
-        """ Initializes the agents and network of the model. """
 
-        # Define ID
-        if id is None:
-            id = self.p.sim_params.sim_ID
-        if id is None:
-            idx = reg.next_idx(self.p.experiment, conftype='Exp')
-            id = f'{self.p.experiment}_{idx}'
-        self.id = id
+class ExpRun(BaseRun):
+    def __init__(self, **kwargs):
+        super().__init__(runtype = 'Exp', **kwargs)
 
-        # Define directories
-        if save_to is None:
-            save_to = f'{reg.SIM_DIR}/exp_runs'
-        self.dir = f'{save_to}/{id}'
-        self.plot_dir = f'{self.dir}/plots'
-        self.data_dir = f'{self.dir}/data'
-        self.save_to = self.dir
-        # self.save_to = f'{self.dir}/visuals'
+    def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True):
 
-        # Define sim params
-        self.store_data = self.p.sim_params.store_data
-        self.dt = self.p.sim_params.timestep
-        self.duration = self.p.sim_params.duration
-        self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
-        self._steps = self.Nsteps
 
-        self.Box2D = self.p.sim_params.Box2D
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
 
 
         self.sim_epochs = self.p.trials
@@ -52,11 +32,8 @@ class ExpRun(agentpy.Model):
 
         self.place_agents(self.p.larva_groups, parameter_dict)
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-        self.experiment = self.p.experiment
-        self.is_paused = False
-        self.datasets = None
-        self.results = None
-        self.figs = {}
+        # self.experiment = self.p.experiment
+
 
         self.screen_manager = ScreenManager(model=self, **screen_kws)
 

@@ -380,8 +380,8 @@ def buildInitDict():
                       'h': 'The number of larvae per larva-group.'}
             },
             'sim_params': {
-                'sim_ID': pID('simulation', k='id'),
-                'path': pPath('simulation', k='path'),
+                # 'sim_ID': pID('simulation', k='id'),
+                # 'path': pPath('simulation', k='path'),
                 'duration': {'v': 5.0,'lim': (0.0, 100000.0), 'h': 'The duration of the simulation in minutes.',
                              'k': 't'},
                 'timestep': {'v': 0.1, 'lim': (0.0, 0.4), 'dv': 0.05,

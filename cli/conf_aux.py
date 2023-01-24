@@ -4,27 +4,27 @@ import lib.reg
 from lib import reg, aux
 
 
-def adjust_sim(exp, conf_type, sim):
-    if exp is not None and conf_type is not None:
-
-        if sim.duration is None:
-            if exp in reg.storedConf(conf_type):
-                sim.duration =reg.loadConf(conf_type, exp).sim_params.duration
-            else:
-                sim.duration = 3.0
-
-        if sim.sim_ID is None:
-            sim.sim_ID = f'{exp}_{lib.reg.next_idx(id=exp, conftype=conf_type)}'
-        if sim.path is None:
-            if conf_type == 'Exp':
-                sim.path = f'single_runs/{exp}'
-            elif conf_type == 'Ga':
-                sim.path = f'ga_runs/{exp}'
-            elif conf_type == 'Batch':
-                sim.path = f'batch_runs/{exp}'
-            elif conf_type == 'Eval':
-                sim.path = f'eval_runs/{exp}'
-        return sim
+# def adjust_sim(exp, conf_type, sim):
+#     if exp is not None and conf_type is not None:
+#
+#         if sim.duration is None:
+#             if exp in reg.storedConf(conf_type):
+#                 sim.duration =reg.loadConf(conf_type, exp).sim_params.duration
+#             else:
+#                 sim.duration = 3.0
+#
+#         # if sim.sim_ID is None:
+#         #     sim.sim_ID = f'{exp}_{lib.reg.next_idx(id=exp, conftype=conf_type)}'
+#         # if sim.path is None:
+#         #     if conf_type == 'Exp':
+#         #         sim.path = f'single_runs/{exp}'
+#         #     elif conf_type == 'Ga':
+#         #         sim.path = f'ga_runs/{exp}'
+#         #     elif conf_type == 'Batch':
+#         #         sim.path = f'batch_runs/{exp}'
+#         #     elif conf_type == 'Eval':
+#         #         sim.path = f'eval_runs/{exp}'
+#         return sim
 
 
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
@@ -54,7 +54,15 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
     if d is None:
         d = {'sim_params': reg.get_null('sim_params')}
 
-    exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=aux.AttrDict(d['sim_params']))
+    exp_conf.sim_params = aux.AttrDict(d['sim_params'])
+    if exp is not None and conf_type is not None:
+
+        if exp_conf.sim_params.duration is None:
+            if exp in reg.storedConf(conf_type):
+                exp_conf.sim_params.duration =reg.loadConf(conf_type, exp).sim_params.duration
+            else:
+                exp_conf.sim_params.duration = 3.0
+    # exp_conf.sim_params = adjust_sim(exp=exp, conf_type=conf_type, sim=aux.AttrDict(d['sim_params']))
 
     if models is not None:
         if conf_type in ['Exp', 'Eval']:

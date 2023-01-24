@@ -76,11 +76,9 @@ class EvalRun(BaseRun):
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
         self.tor_durs, self.dsp_starts, self.dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
-    # def exec(self, **kwargs):
-    #     self.sim_models(**kwargs)
+
 
     def analyze(self):
-
         self.run_evaluation(self.target)
         self.plot_eval()
 

@@ -11,40 +11,20 @@ from lib import reg, aux, util
 from lib.model import agents, envs
 from lib.screen.rendering import  Viewer
 from lib.sim.ga_engine import GAbuilder
+from lib.sim.base_run import BaseRun
 
-class GAlauncher(agentpy.Model):
+class GAlauncher(BaseRun):
     SCENE_MAX_SPEED = 3000
 
     SCENE_MIN_SPEED = 1
     SCENE_SPEED_CHANGE_COEFF = 1.5
 
     SIDE_PANEL_WIDTH = 600
-    def setup(self, save_to=None, id=None):
 
-        # Define ID
-        if id is None:
-            id = self.p.sim_params.sim_ID
-        if id is None:
-            idx = reg.next_idx(self.p.experiment, conftype='Ga')
-            id = f'{self.p.experiment}_{idx}'
-        self.id = id
+    def __init__(self, **kwargs):
+        super().__init__(runtype = 'Ga', **kwargs)
 
-        # Define directories
-        if save_to is None:
-            save_to = f'{reg.SIM_DIR}/ga_runs'
-        self.dir = f'{save_to}/{id}'
-        self.plot_dir = f'{self.dir}/plots'
-        self.data_dir = f'{self.dir}/data'
-        self.save_to = self.dir
-
-        # Define sim params
-        self.dt = self.p.sim_params.timestep
-        self.duration = self.p.sim_params.duration
-        self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
-        self._steps = self.Nsteps
-
-        self.Box2D = self.p.sim_params.Box2D
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+    def setup(self):
 
         self.env_pars = self.p.env_params
 
@@ -99,7 +79,7 @@ class GAlauncher(agentpy.Model):
         self.setup(**self._setup_kwargs)
         while True and self.engine.is_running:
             self.engine.step()
-            if self.p.show_screen:
+            if self.viewer.show_display:
                 from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, Rect, draw, display
                 for e in event.get():
                     if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
@@ -153,17 +133,16 @@ class GAlauncher(agentpy.Model):
         self.side_panel.display_ga_info()
 
     def initialize(self, **kwargs):
-        self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,
+        self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,show_display=self.p.show_screen and not self.p.offline,
                                            panel_width=self.SIDE_PANEL_WIDTH,caption = f'GA {self.p.experiment} : {self.id}',
                                            space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
 
         self.engine = GAbuilder(viewer=self.viewer, model=self, **kwargs)
-        if self.p.show_screen:
+        if self.viewer.show_display:
             from lib.screen.side_panel import SidePanel
 
             from pygame import display
-            if not self.p.offline:
-                self.get_larvaworld_food()
+            self.get_larvaworld_food()
             self.screen = self.viewer._window
             self.side_panel = SidePanel(self.viewer, self.engine.space_dict)
             self.side_panel.update_ga_data(self.engine.generation_num, None)
