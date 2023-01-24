@@ -15,10 +15,6 @@ class ExpRun(BaseRun):
         super().__init__(runtype = 'Exp', **kwargs)
 
     def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True):
-        self._steps = self.Nsteps
-
-
-
 
         self.sim_epochs = self.p.trials
         for idx, ep in self.sim_epochs.items():
@@ -272,21 +268,9 @@ class ExpRun(BaseRun):
             for type, vs in d.larva_dicts.items():
                 aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
 
-    @property
-    def Nticks(self):
-        return self.t
 
-    @property
-    def configuration_text(self):
-        text = f"Simulation configuration : \n" \
-               "\n" \
-               f"Experiment : {self.experiment}\n" \
-               f"Simulation ID : {self.id}\n" \
-               f"Duration (min) : {self.duration}\n" \
-               f"Timestep (sec) : {self.dt}\n" \
-               f"Plot path : {self.plot_dir}\n" \
-               f"Parent path : {self.path}"
-        return text
+
+
 
 
 

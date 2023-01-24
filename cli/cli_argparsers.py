@@ -77,7 +77,7 @@ def run_template(sim_mode, args, d):
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
         evrun = sim.EvalRun(**d.Eval, show=args.show_screen)
-        evrun.run()
+        evrun.simulate()
         evrun.plot_results()
         evrun.plot_models()
 

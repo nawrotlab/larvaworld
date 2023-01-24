@@ -21,7 +21,7 @@ class ReplayRun(agentpy.Model):
                               env_params=env_params,close_view=close_view)
 
 
-        c.env_params.windscape=None
+
 
         if save_to is None:
             save_to = reg.datapath('visuals',c.dir)
@@ -52,23 +52,22 @@ class ReplayRun(agentpy.Model):
         self.experiment = experiment
         self.dt = c.dt
         self.Nsteps = c.Nsteps
-        self._steps = c.Nsteps
+        self._steps = self.Nsteps
         self.scaling_factor = 1
         self.is_paused = False
         self.draw_Nsegs = draw_Nsegs
-        self.step_data = s
-        self.endpoint_data = e
-        self.config = c
-        self.agent_ids = s.index.unique('AgentID').values
         try:
             self.lengths = e['length'].values
         except:
-            self.lengths = np.ones(len(self.agent_ids)) * 5
+            self.lengths = np.ones(c.N) * 5
 
+        self.config = c
+        self.step_data=s
+        self.endpoint_data=e
         self.build_env(c.env_params)
 
-        self.define_pars()
-        self.place_agents()
+        self.define_pars(c, cols=s.columns)
+        self.place_agents(s)
 
         screen_kws = {
             'vis_kwargs': vis_kwargs,
@@ -80,9 +79,8 @@ class ReplayRun(agentpy.Model):
 
 
 
-    def define_pars(self):
-        c=self.config
-        cols=self.step_data.columns
+    def define_pars(self, c, cols):
+
         self.pos_pars = nam.xy(c.point) if set(nam.xy(c.point)).issubset(cols) else ['x','y']
         self.mid_pars = [xy for xy in nam.xy(nam.midline(c.Npoints, type='point')) if
                          set(xy).issubset(cols)]
@@ -97,8 +95,8 @@ class ReplayRun(agentpy.Model):
         self.ang_pars = ['bend'] if 'bend' in cols else []
         self.Nangles = len(self.ang_pars)
 
-    def place_agents(self):
-        agent_list = [agents.LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=self.step_data.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.agent_ids)]
+    def place_agents(self, s):
+        agent_list = [agents.LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.config.agent_ids)]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
@@ -231,4 +229,5 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
         s0 = s0.loc[(slice(a, b), slice(None)), :]
 
     c0.Nsteps = len(s0.index.unique('Step').values)
+    c0.env_params.windscape = None
     return s0,e0, c0

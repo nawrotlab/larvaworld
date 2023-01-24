@@ -7,4 +7,4 @@ from .exec_run import Exec
 from .evaluation import EvalRun
 from .batch import BatchRun
 from .calibration import Calibration
-from .ga_launcher import GAlauncher
+from .ga_run import GAlauncher

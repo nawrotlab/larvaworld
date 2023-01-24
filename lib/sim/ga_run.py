@@ -25,14 +25,14 @@ class GAlauncher(BaseRun):
         super().__init__(runtype = 'Ga', **kwargs)
 
     def setup(self):
-        self._steps = self.Nsteps
+
         self.env_pars = self.p.env_params
 
         self.build_env(self.env_pars)
 
         self.scene_file = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{self.p.scene}.txt'
         self.scene_speed = 0
-        self.obstacles = []
+
 
         self.initialize(**self.p.ga_build_kws, **self.p.ga_select_kws)
 
@@ -113,7 +113,7 @@ class GAlauncher(BaseRun):
                 side_panel_bg_rect = Rect(self.viewer.width, 0, self.SIDE_PANEL_WIDTH, self.viewer.height)
                 draw.rect(self.screen, aux.Color.BLACK, side_panel_bg_rect)
 
-                self.display_info()
+                self.side_panel.display_ga_info()
 
                 display.flip()
                 self.viewer._t.tick(int(round(self.viewer.speed)))
@@ -127,9 +127,6 @@ class GAlauncher(BaseRun):
                 msg += str(arg) + ' '
 
             print(msg)
-
-    def display_info(self):
-        self.side_panel.display_ga_info()
 
     def initialize(self, **kwargs):
         self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,show_display=self.p.show_screen and not self.p.offline,
@@ -148,15 +145,7 @@ class GAlauncher(BaseRun):
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
 
-    def build_box(self, x, y, size, color):
-        box = envs.Box(x, y, size, color=color)
-        self.obstacles.append(box)
-        return box
 
-    def build_wall(self, point1, point2, color):
-        wall = envs.Wall(point1, point2, color=color)
-        self.obstacles.append(wall)
-        return wall
 
     def get_larvaworld_food(self):
         for label,ff in self.env_pars.food_params.source_units.items():

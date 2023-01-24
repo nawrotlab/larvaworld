@@ -55,8 +55,8 @@ def eval_models(mIDs=mIDs,dataset_ids=dIDs,refIDs=refIDs,save_to=save_to,rerun=F
         evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dataset_ids, N=10, save_to=save_to,
                         enrichment=True, show=False, offline=False)
         if len(evrun.datasets) == 0 or rerun:
-            evrun.run(video=False)
-            evrun.eval()
+            evrun.simulate(video=False)
+            # evrun.eval()
         evruns[refID] = evrun
     for refID, evrun in evruns.items():
         evrun.plot_models()

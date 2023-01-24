@@ -13,36 +13,19 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 from lib import reg, aux, plot, util
+from lib.sim.base_run import BaseRun
 
 
 
+class EvalRun(BaseRun):
+    def __init__(self,**kwargs):
+        super().__init__(runtype = 'Eval',experiment='evaluation',parameters={}, **kwargs)
 
-class EvalRun:
-    def __init__(self, refID, eval_metrics=None, N=5, dur=None,
-                 modelIDs=None, dataset_ids=None,
-                 enrichment=True, norm_modes=['raw', 'minmax'], eval_modes=['pooled'],
-                 offline=False, save_to=None, id=None, store_data=True, analysis=True, show=False):
-        runtype='Eval'
-        self.experiment = refID
-        self.store_data = store_data
-        self.analysis = analysis
-        self.show = show
-        if id is None:
-            idx = reg.next_idx(self.experiment, conftype=runtype)
-            id = f'{self.experiment}_{idx}'
-        self.id = id
-        # Define directories
-        if save_to is None:
-            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        self.dir = f'{save_to}/{id}'
-        self.plot_dir = f'{self.dir}/plots'
-        self.data_dir = f'{self.dir}/data'
-        self.save_to = self.dir
 
-        self.datasets = None
-        self.results = None
-        self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
-                                  'models': {'table': {}, 'summary': {}}})
+    def setup(self, refID=None,modelIDs=None, dataset_ids=None,offline=False,
+                 norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None, N=5, dur=None,
+                 enrichment=True,
+                 store_data=True, analysis=True, show=False):
 
         self.refID = refID
         self.modelIDs = modelIDs
@@ -53,11 +36,18 @@ class EvalRun:
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.offline = offline
+        self.store_data = store_data
+        self.analysis = analysis
+        self.show = show
+        self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
+                                  'models': {'table': {}, 'summary': {}}})
+
+
 
 
         self.N = N
 
-        self.target = self.define_target(refID)
+        self.target = self.define_target(self.refID)
         self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
         self.define_eval_args(self.evaluation)
         self.datasets = []
@@ -361,6 +351,7 @@ class EvalRun:
         return P.get()
 
     def simulate(self):
+        self.setup(**self._setup_kwargs)
         c = self.target.config
         if self.offline:
             print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
@@ -379,10 +370,6 @@ class EvalRun:
             run.simulate()
             self.datasets += run.datasets
 
-    def run(self):
-
-        self.simulate()
-
         if self.store_data:
             os.makedirs(self.data_dir, exist_ok=True)
             self.store()
@@ -391,6 +378,19 @@ class EvalRun:
             os.makedirs(self.plot_dir, exist_ok=True)
             self.analyze()
         return self.datasets
+
+    # def run(self):
+    #
+    #     self.simulate()
+    #
+    #     if self.store_data:
+    #         os.makedirs(self.data_dir, exist_ok=True)
+    #         self.store()
+    #
+    #     if self.analysis:
+    #         os.makedirs(self.plot_dir, exist_ok=True)
+    #         self.analyze()
+    #     return self.datasets
 
 
 def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
@@ -403,11 +403,11 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enric
         save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
         # save_to = reg.datapath('evaluation', reg.retrieveRef(refID).dir)
     # from lib.sim.eval.evaluation import EvalRun
-    evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,
+    evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,dur=dur,
                     save_to=save_to,enrichment=enrichment, show=False, offline=offline, **kwargs)
     #
-    evrun.run(video=False, dur=dur)
-    evrun.eval()
+    evrun.simulate()
+    # evrun.eval()
     evrun.plot_models()
     evrun.plot_results()
     return evrun
@@ -553,7 +553,7 @@ if __name__ == '__main__':
     evrun = EvalRun(refID=refID, modelIDs=mIDs, dataset_ids=dataset_ids, offline=False)
 
     #
-    # evrun.exec(video=False)
+    # evrun.simulate(video=False)
     # evrun.eval()
     # evrun.plot_models()
     # evrun.plot_results()

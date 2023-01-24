@@ -64,7 +64,7 @@ def test_evaluation() :
     refID = 'exploration.merged_dishes'
     mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
     evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
-    evrun.run()
+    evrun.simulate()
     evrun.plot_results()
     evrun.plot_models()
 
