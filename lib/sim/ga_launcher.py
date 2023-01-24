@@ -25,12 +25,11 @@ class GAlauncher(BaseRun):
         super().__init__(runtype = 'Ga', **kwargs)
 
     def setup(self):
-
+        self._steps = self.Nsteps
         self.env_pars = self.p.env_params
 
         self.build_env(self.env_pars)
 
-        # self.caption = f'GA {self.p.experiment} : {self.id}'
         self.scene_file = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{self.p.scene}.txt'
         self.scene_speed = 0
         self.obstacles = []

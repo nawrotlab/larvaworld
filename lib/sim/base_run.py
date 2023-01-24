@@ -29,7 +29,7 @@ class BaseRun(agentpy.Model):
         self.dt = self.p.sim_params.timestep
         self.duration = self.p.sim_params.duration
         self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
-        self._steps = self.Nsteps
+
 
         self.Box2D = self.p.sim_params.Box2D
         self.scaling_factor = 1000.0 if self.Box2D else 1.0

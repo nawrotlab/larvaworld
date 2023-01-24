@@ -15,7 +15,7 @@ class ExpRun(BaseRun):
         super().__init__(runtype = 'Exp', **kwargs)
 
     def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True):
-
+        self._steps = self.Nsteps
 
 
 

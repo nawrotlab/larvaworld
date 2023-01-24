@@ -1266,7 +1266,7 @@ def buildInitDict():
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
                   'h': 'Number of agents per model ID',
                   'k': 'N'},
-            'id': pID('evaluation exec', k='id'),
+            # 'id': pID('evaluation exec', k='id'),
 
         }
 

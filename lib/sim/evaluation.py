@@ -1,3 +1,4 @@
+import os
 import warnings
 
 
@@ -12,17 +13,36 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 from lib import reg, aux, plot, util
-from lib.sim.base import BaseRun
 
 
 
 
-class EvalRun(BaseRun):
+class EvalRun:
     def __init__(self, refID, eval_metrics=None, N=5, dur=None,
                  modelIDs=None, dataset_ids=None,
                  enrichment=True, norm_modes=['raw', 'minmax'], eval_modes=['pooled'],
-                 offline=False, **kwargs):
-        super().__init__(runtype='eval', experiment=refID,analysis=True, **kwargs)
+                 offline=False, save_to=None, id=None, store_data=True, analysis=True, show=False):
+        runtype='Eval'
+        self.experiment = refID
+        self.store_data = store_data
+        self.analysis = analysis
+        self.show = show
+        if id is None:
+            idx = reg.next_idx(self.experiment, conftype=runtype)
+            id = f'{self.experiment}_{idx}'
+        self.id = id
+        # Define directories
+        if save_to is None:
+            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
+        self.dir = f'{save_to}/{id}'
+        self.plot_dir = f'{self.dir}/plots'
+        self.data_dir = f'{self.dir}/data'
+        self.save_to = self.dir
+
+        self.datasets = None
+        self.results = None
+        self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
+                                  'models': {'table': {}, 'summary': {}}})
 
         self.refID = refID
         self.modelIDs = modelIDs
@@ -33,11 +53,10 @@ class EvalRun(BaseRun):
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.offline = offline
-        self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
-                                  'models': {'table': {}, 'summary': {}}})
+
 
         self.N = N
-        self.dur = dur
+
         self.target = self.define_target(refID)
         self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
         self.define_eval_args(self.evaluation)
@@ -89,7 +108,7 @@ class EvalRun(BaseRun):
         if dur is None:
             dur = c.Nticks * c.dt / 60
 
-
+        self.dur = dur
 
         exp_conf.sim_params.timestep=c.dt
         exp_conf.sim_params.duration=dur
@@ -112,7 +131,7 @@ class EvalRun(BaseRun):
         kws = aux.AttrDict({
             'enrichment': exp_conf.enrichment,
             'vis_kwargs': vis_kwargs,
-            'save_to': self.storage_path,
+            'save_to': self.save_to,
             'store_data': self.store_data,
             'experiment': exp,
             'id': self.id,
@@ -128,9 +147,8 @@ class EvalRun(BaseRun):
 
     def store(self):
         if self.store_data:
-            # aux.save_dict(self.sim_data, f'{self.data_dir}/sim_data.txt')
             aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
-            print(f'Results saved at {self.data_dir}')
+            reg.vprint(f'Results saved at {self.data_dir}')
 
     def run_evaluation(self, d, suf='fitted', min_size=20):
         print('Evaluating all models')
@@ -353,11 +371,26 @@ class EvalRun(BaseRun):
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir)
         else:
+            # print(self.exp_conf.sim_params)
+            # raise
             from lib.sim.exp_run import ExpRun
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = ExpRun(parameters = self.exp_conf)
             run.simulate()
             self.datasets += run.datasets
+
+    def run(self):
+
+        self.simulate()
+
+        if self.store_data:
+            os.makedirs(self.data_dir, exist_ok=True)
+            self.store()
+
+        if self.analysis:
+            os.makedirs(self.plot_dir, exist_ok=True)
+            self.analyze()
+        return self.datasets
 
 
 def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
