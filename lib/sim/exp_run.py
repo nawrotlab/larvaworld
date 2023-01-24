@@ -104,15 +104,14 @@ class ExpRun(BaseRun):
     def simulate(self, **kwargs):
         start = time.time()
         self.run(**kwargs)
-        # reg.vprint(self.output.variables['RE_NEU_PHI_DEF_nav'], 2)
         self.datasets = self.retrieve()
         end = time.time()
         dur = np.round(end - start).astype(int)
-        reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 2)
+        reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
         if self.p.enrichment:
             for d in self.datasets:
                 d.enrich(**self.p.enrichment, is_last=False, store=self.store_data)
-                reg.vprint(f'--- Dataset {d.id} enriched ---', 2)
+                reg.vprint(f'--- Dataset {d.id} enriched ---', 1)
         if self.store_data:
             os.makedirs(self.data_dir, exist_ok=True)
             self.store()

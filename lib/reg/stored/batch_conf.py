@@ -21,10 +21,10 @@ def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, bm={}, as_entry=
     if len(ss0) == 0:
         ss0 = None
 
-    enr=reg.get_null('enrichment',processing=reg.get_null('processing', **{pr : True for pr in proc}))
+    # enr=reg.get_null('enrichment',processing=reg.get_null('processing', **{pr : True for pr in proc}))
     conf = reg.get_null('Batch',
                          exp=exp,
-                         exp_kws={'enrichment': enr, 'experiment': exp},
+                         exp_kws={'enrichment': reg.par.enr_dict(proc=proc), 'experiment': exp},
                          optimization=reg.get_null("optimization", fit_par=o, **o_kws) if o is not None else None,
                          space_search=ss0,
                          batch_methods=reg.get_null('batch_methods', **bm_kws),
@@ -47,7 +47,7 @@ def Batch_dict():
                 o='final_dst_to_Source',
                 proc=['angular', 'spatial', 'source']),
         **batch('PItest_off',
-                ss={'odor_dict.CS.mean': [[-100.0, 100.0], 6], 'odor_dict.UCS.mean': [[-100.0, 100.0], 6]},
+                ss={'odor_dict.CS.mean': [[-100.0, 100.0], 4], 'odor_dict.UCS.mean': [[-100.0, 100.0], 4]},
                 bm='PI',
                 proc=['PI']),
         **batch('PItrain_mini',

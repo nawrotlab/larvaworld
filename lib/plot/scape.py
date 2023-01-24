@@ -97,10 +97,12 @@ def plot_3pars(df, vars, target, z0=None, **kwargs):
     return figs
 
 
-def plot_3d(df, vars, target, lims=None, title=None, surface=True, line=False, ax=None, fig=None, dfID=None,
+def plot_3d(df, vars, target, name=None,lims=None, title=None, surface=True, line=False, ax=None, fig=None, dfID=None,
             color='black', **kwargs):
+    if name is None :
+        name = '3d_plot'
     from statsmodels import api as sm
-    P = plot.ParPlot(name='3d_plot', **kwargs)
+    P = plot.ParPlot(name=name, **kwargs)
     P.build(fig=fig, axs=ax, dim3=True)
     P.conf_ax_3d(vars, target, lims=lims, title=title)
 
@@ -157,8 +159,9 @@ def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     return P.get()
 
 
-def plot_heatmap_PI(csv_filepath='PIs.csv', save_as='PI_heatmap.pdf', **kwargs):
-    z = pd.read_csv(csv_filepath, index_col=0)
+def plot_heatmap_PI(z=None, csv_filepath='PIs.csv', save_as='PI_heatmap.pdf', **kwargs):
+    if z is None :
+        z = pd.read_csv(csv_filepath, index_col=0)
     Lgains = z.index.values.astype(int)
     Rgains = z.columns.values.astype(int)
     Ngains = len(Lgains)

@@ -9,15 +9,18 @@ from lib.model import envs, agents
 from lib.model.envs.conditions import get_exp_condition
 
 class BaseRun(agentpy.Model):
-    def __init__(self, runtype, parameters={},  save_to=None, id=None,experiment=None, **kwargs):
+    def __init__(self, runtype, parameters={},  store_data=None, save_to=None, id=None,experiment=None, **kwargs):
         if experiment is None:
             experiment = parameters.experiment
         self.experiment = experiment
+        if store_data is not None:
+            self.store_data = store_data
 
 
         if 'sim_params' in parameters.keys() :
             # Define sim params
-            self.store_data = parameters.sim_params.store_data
+            if store_data is None :
+                self.store_data = parameters.sim_params.store_data
             self.dt = parameters.sim_params.timestep
             self.duration = parameters.sim_params.duration
             self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
