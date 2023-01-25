@@ -1,19 +1,16 @@
 import numpy as np
 from matplotlib import ticker, cm
+from scipy.fft import fft, fftfreq
 
-import lib.aux.xy
 from lib import reg, aux, plot
 
 
 
 @reg.funcs.graph('fft')
 def plot_fft(s, c, palette=None, axx=None, **kwargs):
-    from scipy.fft import fftfreq
-    from lib.aux.sim_aux import fft_max
     if palette is None:
         palette = {'v': 'red', 'fov': 'blue'}
     P = plot.AutoBasePlot(name=f'fft_powerspectrum',build_kws={'w': 15, 'h': 12}, **kwargs)
-    #P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
@@ -26,8 +23,8 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
 
     for j, id in enumerate(c.agent_ids):
         ss = s.xs(id, level='AgentID')
-        fvs[j], v_ys[j, :] = fft_max(ss[v], c.dt, fr_range=(1.0, 2.5), return_amps=True)
-        ffovs[j], fov_ys[j, :] = fft_max(ss[fov], c.dt, fr_range=(0.1, 0.8), return_amps=True)
+        fvs[j], v_ys[j, :] = aux.fft_max(ss[v], c.dt, fr_range=(1.0, 2.5), return_amps=True)
+        ffovs[j], fov_ys[j, :] = aux.fft_max(ss[fov], c.dt, fr_range=(0.1, 0.8), return_amps=True)
     plot.plot_quantiles(v_ys, from_np=True, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
     plot.plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
     xmax = 3.5
@@ -50,7 +47,6 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
 @reg.funcs.graph('fft multi')
 def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
     P = plot.AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
-    # P.build(fig=fig, axs=ax, figsize=(15, 12))
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.3, 0.25])
 
@@ -71,7 +67,7 @@ def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
 
 def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powerspectrums', legend_loc='upper left',
                   Nids=None, **kwargs):
-    from scipy.fft import fft, fftfreq
+
 
     if len(pars) == 0:
         if len(par_shorts) == 0:
@@ -113,7 +109,7 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
                 yf = fft(dc_single)
                 yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
                 yf = 1000 * yf / np.sum(yf)
-                yf = lib.aux.xy.moving_average(yf, n=21)
+                yf = aux.moving_average(yf, n=21)
                 ax.plot(xf, yf, color=c, alpha=0.2)
                 yf0 += yf
             # xf=np.sort(xf)
@@ -151,16 +147,9 @@ def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums'
     P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0, 3.5),ylim=(0, 5))
     ax = P.axs[0]
     from scipy.fft import fft, fftfreq
-    # Nticks=P.Nticks
     kcols=['Greens','Reds']
 
-    #
     cols=[[cm.get_cmap(kcols[j])(i) for i in np.linspace(0.6, 0.9, P.Ndatasets)]for j,k in enumerate(ks)]
-    # elif P.Ndatasets :
-
-    # print(xf.shape)
-    # print(P.Nticks, P.datasets[0].Nticks,P.datasets[1].Nticks)
-
 
     def proc(df, ids,ax, d_col, label) :
         Nticks = len(df.index.get_level_values('Step').unique())
@@ -172,7 +161,7 @@ def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums'
             yf = fft(dc_single)
             yf = 2.0 / Nticks * np.abs(yf[0:Nticks // 2])
             yf = 1000 * yf / np.sum(yf)
-            yf = lib.aux.xy.moving_average(yf, n=21)
+            yf = aux.moving_average(yf, n=21)
             ax.plot(xf, yf, color=d_col, alpha=0.2)
             yf0 += yf
         yf0 = 1000 * yf0 / np.sum(yf0)

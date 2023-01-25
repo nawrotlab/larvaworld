@@ -1,5 +1,3 @@
-import copy
-import operator
 import os
 import PySimpleGUI as sg
 
@@ -8,14 +6,6 @@ from gui import gui_aux
 from lib import reg, aux
 
 
-def get_table(v, pars_dict, Nagents):
-    data = []
-    for i in range(Nagents):
-        dic = {}
-        for j, (p, t) in enumerate(pars_dict.items()):
-            dic[p] = gui_aux.retrieve_value(v[(i, p)], t)
-        data.append(dic)
-    return data
 
 
 def table_window(data, pars_dict, title, return_layout=False):

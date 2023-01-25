@@ -2,18 +2,13 @@ import copy
 import inspect
 import os
 import pandas as pd
-# import tkinter
 from typing import Tuple, List, TypedDict
 import numpy as np
 import PySimpleGUI as sg
-
-
 import matplotlib.pyplot as plt
 
 
 from lib import reg, aux
-
-
 from gui import gui_aux
 
 
@@ -959,7 +954,7 @@ class CollapsibleDict(Collapsible):
     def __init__(self, name, dict_name=None, type_dict=None, value_kws={}, text_kws={}, as_entry=None,
                  subdict_state=False, **kwargs):
         if type_dict is None:
-            from lib.reg.dtypes import par,par_dict
+            from gui.gui_aux.dtypes import par,par_dict
             entry = par(name=as_entry, dtype=str, v='Unnamed') if as_entry is not None else {}
             if dict_name is None:
                 dict_name = name
@@ -1091,7 +1086,7 @@ class PadDict(PadElement):
         if col_idx is not None:
             Ncols = len(col_idx)
         if type_dict is None :
-            from lib.reg.dtypes import par_dict
+            from gui.gui_aux.dtypes import par_dict
             D = reg.par.PI
             if self.dict_name in D.keys() :
                 type_dict = par_dict(d0=D[self.dict_name])

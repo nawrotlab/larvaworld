@@ -203,10 +203,10 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
             else:
                 return None
 
-        @property
-        def get_ParsArg(self):
-            from cli.parser import build_ParsArg
-            return build_ParsArg(name=self.name, k=self.k, h=self.help, dtype=self.dtype, v=self.initial_value, vs=None)
+        # @property
+        # def get_ParsArg(self):
+        #     from cli.parser import build_ParsArg
+        #     return build_ParsArg(name=self.name, k=self.k, h=self.help, dtype=self.dtype, v=self.initial_value, vs=None)
 
         def exists(self, dataset):
             par = self.d

@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 
 from lib import reg, aux, plot
-from cli.cli_argparsers import run_template, get_parser
+from cli.parser import run_template, get_parser
 
 p=ArgumentParser()
 subps = p.add_subparsers(dest='sim_mode', help='The simulation mode')

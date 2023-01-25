@@ -6,14 +6,13 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
 
-import lib.aux.xy
+
 from lib import reg, aux, plot
 
 
 @reg.funcs.graph('boxplot (simple)')
 def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=True, grouped=False,
-             ylims=None,
-             in_mm=[], target_only=None, **kwargs):
+             ylims=None,in_mm=[], target_only=None, **kwargs):
     Npars = len(ks)
     if name is None:
         name = f'boxplot_{Npars}_{key}_pars'
@@ -21,7 +20,7 @@ def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, s
     pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
-    data = lib.aux.xy.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
+    data = aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
     if not grouped:
         x = "DatasetID"
         hue = None

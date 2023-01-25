@@ -112,7 +112,7 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
 def retrieve_results(batch_type, batch_id):
     from lib import reg
     f=f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_id}/results.h5'
-    df = aux.read(path=f, key='results')
+    df = read(path=f, key='results')
     figs={}
     return df,figs
 

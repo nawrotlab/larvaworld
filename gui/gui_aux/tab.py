@@ -1,6 +1,5 @@
 
 from lib import reg
-# from gui import aux
 from gui.gui_aux.elements import GuiElement
 
 class GuiTab(GuiElement):
