@@ -7,8 +7,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from lib.aux import naming as nam
 from lib.aux.par_aux import tilde, circle, bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
-from lib import reg, aux, util
-
+from lib import reg, aux, util, decorators
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 anot_type_keys = ['bout_detection', 'bout_distribution', 'interference', 'source_attraction', 'patch_residency']
@@ -94,6 +93,7 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
          'disp': f'{conftype} {IDstr}'}
     return aux.AttrDict(d)
 
+@decorators.timeit
 def buildInitDict():
     bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
 
@@ -1317,14 +1317,13 @@ def buildInitDict():
         d.update(dic0)
     return aux.AttrDict(d)
 
-
 def buildDefaultDict(d0):
     dic = {}
     for name, d in d0.items():
         dic[name] = get_default(d, key='v')
     return aux.AttrDict(dic)
 
-
+@decorators.timeit
 class ParamRegistry:
     def __init__(self,func_dict,in_rad=True, in_m=True):
         self.PI = buildInitDict()
@@ -1381,6 +1380,7 @@ class ParamRegistry:
                              anot=['bout_detection', 'bout_distribution', 'interference'],
                              **kwargs)
 
+    @decorators.timeit
     def build(self, in_rad=True, in_m=True):
         self.dict = aux.AttrDict()
         self.dict_entries = []
@@ -1925,6 +1925,7 @@ class ParamRegistry:
         for k, p, d, disp in zip(ks, ps, ds, disps):
             self.add(**{'p': p, 'k': k, 'd': d, 'disp': disp})
 
+    @decorators.timeit
     def finalize_dict(self, entries):
         dic = aux.AttrDict()
         for prepar in entries:

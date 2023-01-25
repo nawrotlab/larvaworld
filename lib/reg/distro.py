@@ -121,7 +121,6 @@ def get_logNpow2(x, xmax, xmid, overlap=0, discrete=False):
 
         return dic
 
-
 def generate_distro_database():
     d = aux.AttrDict({
         'powerlaw': {'cdf': powerlaw_cdf, 'pdf': powerlaw_pdf, 'args': ['xmin', 'alpha'],

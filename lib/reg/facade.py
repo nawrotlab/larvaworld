@@ -1,5 +1,6 @@
 from lib import aux
 
+
 class FunctionDict:
     def __init__(self):
         self.graphs = aux.AttrDict()

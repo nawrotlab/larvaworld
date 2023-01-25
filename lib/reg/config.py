@@ -1,6 +1,7 @@
 import os
 import param
-from lib import reg, aux, util
+from lib import reg, aux, util, decorators
+
 
 def build_ConfTypeSubkeys():
     d0 = {k: {} for k in reg.CONFTYPES}
@@ -207,6 +208,7 @@ def resetDict(conftype):
 
     reg.vprint(f'{conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',1)
 
+@decorators.timeit
 def resetConfs(conftypes=None):
     if conftypes is None:
         conftypes = reg.CONFTYPES

@@ -4,8 +4,7 @@ import pandas as pd
 import param
 
 from lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
-from lib import reg, aux, util
-
+from lib import reg, aux, util, decorators
 
 bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}
 
@@ -620,7 +619,7 @@ def build_confdicts():
 
 
 
-
+@decorators.timeit
 class ModelRegistry:
     def __init__(self, ct):
         self.ct = ct
