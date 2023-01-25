@@ -3,6 +3,7 @@ import time
 import agentpy
 import numpy as np
 
+
 from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
@@ -22,9 +23,9 @@ class ExpRun(BaseRun):
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
 
 
+
+        self.odor_ids = aux.get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
-
-
 
         self.place_agents(self.p.larva_groups, parameter_dict)
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
@@ -39,26 +40,6 @@ class ExpRun(BaseRun):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
-    def build_env(self, env_params):
-        # Define environment
-        self.env_pars = env_params
-
-        self.space = envs.Arena(self, **env_params.arena)
-        self.arena_dims = self.space.dims
-
-        self.place_obstacles(env_params.border_list)
-        self.place_food(**env_params.food_params)
-
-        '''
-        Sensory landscapes of the simulation environment arranged per modality
-        - Olfactory landscapes : odorscape
-        - Wind landscape : windscape
-        - Temperature landscape : thermoscape
-        '''
-        self.odor_ids = aux.get_all_odors(self.p.larva_groups, env_params.food_params)
-        self.odor_layers = envs.create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
-        self.windscape = envs.WindScape(model=self, **env_params.windscape) if env_params.windscape else None
-        self.thermoscape = envs.ThermoScape(**env_params.thermoscape) if env_params.thermoscape else None
 
 
     @property
@@ -90,7 +71,7 @@ class ExpRun(BaseRun):
             self.space.Step(self.dt, 6, 2)
             for fly in self.agents:
                 fly.update_trajectory()
-        self.screen_manager.step()
+        self.screen_manager.step(self.t)
 
     def update(self):
         """ Record a dynamic variable. """
@@ -118,15 +99,31 @@ class ExpRun(BaseRun):
         return self.datasets
 
     def retrieve(self):
+
         ds = []
         for gID, df in self.output.variables.items():
+
             if 'sample_id' in df.index.names :
-                for sID in df.index.get_level_values('sample_id').unique():
-                    d=self.convert_output_to_dataset(gID, df.xs(sID, level='sample_id'), id=f'{gID}_{sID}')
+                sIDs=df.index.get_level_values('sample_id').unique()
+                if len(sIDs)>1 :
+                    # ss,ee,cc= {},{},{}
+                    for sID in sIDs:
+                        d=self.convert_output_to_dataset(gID, df.xs(sID, level='sample_id'), id=f'{gID}_{sID}')
+                        ds.append(d)
+                        # ss[sID],ee[sID],cc[sID]=d.step_data, d.endpoint_data, d.config
+                else :
+                    d = self.convert_output_to_dataset(gID, df.xs(sIDs[0], level='sample_id'))
+                    # ss, ee, cc = d.step_data, d.endpoint_data, d.config
                     ds.append(d)
             else :
                 d=self.convert_output_to_dataset(gID, df)
+                # ss,ee,cc=d.step_data, d.endpoint_data, d.config
                 ds.append(d)
+            # self.output['step'][gID] = ss
+            # self.output['end'][gID] = ee
+            # self.output['config'][gID] = cc
+        # self.output['datasets'] = agentpy.DataDict()
+
         return ds
 
     def convert_output_to_dataset(self,gID, df, id=None):
@@ -174,21 +171,7 @@ class ExpRun(BaseRun):
         dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
         return dic
 
-    def place_obstacles(self, barriers={}):
-        self.borders, self.border_lines = [], []
-        for id, pars in barriers.items():
-            b = envs.Border(unique_id=id, **pars)
-            self.borders.append(b)
-            self.border_lines += b.border_lines
 
-    def place_food(self, food_grid=None, source_groups={}, source_units={}):
-        self.food_grid = envs.FoodGrid(**food_grid, model=self) if food_grid else None
-        sourceConfs = util.generate_sourceConfs(source_groups, source_units)
-        source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
-        self.space.add_agents(source_list, positions=[a.pos for a in source_list])
-        self.sources = agentpy.AgentList(model=self, objs=source_list)
-        self.foodtypes = aux.get_all_foodtypes(self.env_pars.food_params)
-        self.source_xy = aux.get_source_xy(self.env_pars.food_params)
 
     def place_agents(self, larva_groups, parameter_dict={}):
         agentConfs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)

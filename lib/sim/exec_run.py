@@ -72,7 +72,7 @@ class Exec:
         elif self.mode == 'batch':
             self.process = None
             k = sim.BatchRun(**self.conf)
-            res=k.run()
+            res=k.simulate()
 
         return res
 

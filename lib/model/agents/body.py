@@ -724,7 +724,7 @@ class LarvaBody:
     @property
     def front_orientation_vel(self):
         return np.rad2deg(self.head.get_angularvelocity())
-#
+
 
 def draw_body(viewer, model, pos, midline_xy, contour_xy, radius, vertices, color, selected=False):
     if model.draw_centroid:

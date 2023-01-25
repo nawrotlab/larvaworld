@@ -3,7 +3,6 @@ import pygame
 from shapely.affinity import affine_transform
 from shapely import geometry
 
-import lib.aux.xy
 from lib import aux
 
 

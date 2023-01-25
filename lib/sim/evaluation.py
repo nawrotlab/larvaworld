@@ -214,10 +214,6 @@ class EvalRun(BaseRun):
         self.target.load(h5_ks=['epochs', 'angular', 'dspNtor'])
         ds = [self.target] + self.datasets
 
-        # for d in ds:
-        #     print(d.id)
-        #     print(d.step_data.columns)
-
         kws = {
             'datasets': ds,
             'save_to': self.plot_dir,
@@ -379,19 +375,6 @@ class EvalRun(BaseRun):
             self.analyze()
         return self.datasets
 
-    # def run(self):
-    #
-    #     self.simulate()
-    #
-    #     if self.store_data:
-    #         os.makedirs(self.data_dir, exist_ok=True)
-    #         self.store()
-    #
-    #     if self.analysis:
-    #         os.makedirs(self.plot_dir, exist_ok=True)
-    #         self.analyze()
-    #     return self.datasets
-
 
 def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
                       **kwargs):
@@ -401,13 +384,9 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enric
         dIDs = mIDs
     if save_to is None:
         save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
-        # save_to = reg.datapath('evaluation', reg.retrieveRef(refID).dir)
-    # from lib.sim.eval.evaluation import EvalRun
     evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,dur=dur,
                     save_to=save_to,enrichment=enrichment, show=False, offline=offline, **kwargs)
-    #
     evrun.simulate()
-    # evrun.eval()
     evrun.plot_models()
     evrun.plot_results()
     return evrun
@@ -435,7 +414,6 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     entries = {}
     for mID0, mID in zip(mID0s, mIDs):
         m0 = reg.loadConf(id=mID0, conftype='Model').get_copy()
-        # m0 = aux.copyDict(reg.loadConf(id=mID0, conftype='Model'))
         m = m0.update_existingnestdict(kwargs)
         reg.saveConf(conf=m, id=mID, conftype='Model')
         entries[mID] = m
@@ -464,7 +442,7 @@ def adapt_6mIDs(refID, e=None, c=None):
         for Ifmod in ['PHI', 'SQ', 'DEF']:
             mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
             mID = f'{Ifmod}on{Tmod}'
-            entry = reg.MD.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
+            entry = reg.model.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
                                    space_mkeys=['turner', 'interference'],
                                    fit_dict=fit_dict)
             entries.update(entry)
@@ -490,7 +468,6 @@ def adapt_3modules(refID, e=None, c=None):
     fit_dict = util.GA_optimization(refID, fitness_target_kws=fit_kws)
     entries = {}
     mIDs = []
-    # for Cmod in ['GAU', 'CON']:
     for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
         for Tmod in ['NEU', 'SIN', 'CON']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
@@ -518,8 +495,7 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
         reg.graphs.store_model_graphs(mIDs_avg, d.dir)
         eval_model_graphs(refID, mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
 
-        entries_var = add_var_mIDs(refID=c.refID, e=e, c=c,
-                                     mID0s=mIDs_avg)
+        entries_var = add_var_mIDs(refID=c.refID, e=e, c=c,mID0s=mIDs_avg)
         mIDs_var = list(entries_var.keys())
         c.modelConfs.variable = entries_var
         eval_model_graphs(refID, mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)

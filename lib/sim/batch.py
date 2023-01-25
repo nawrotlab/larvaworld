@@ -1,209 +1,191 @@
-'''
-This file is the template for a batch exec of simulations.
-Simulations are managed through a pypet trajectory.
-Results are saved in hdf5 format.
-CAUTION : save_hdf5 parameters whether step and end pandas dataframes are saved (in the hdf5 not as csvs). This takes LONG!!!
-Created by bagjohn on April 5th 2020
-'''
-
-# !/usr/bin/python
+import copy
+import itertools
 import logging
 import time
+
+import agentpy
 import numpy as np
-from pypet import Environment, load_trajectory, pypetconstants
+import agentpy as ap
+import pandas as pd
 
-from lib.sim.batch_aux import single_run, batch_method_unpack, delete_traj
 from lib import reg, aux
-''' Default batch exec.
-Arguments :
-- Experiment mode eg 'chemorbit'
-- Batchrun configuration as a dict eg :
-                {'fit_par': 'final_scaled_dst_to_center',
-                'minimize': True,
-                'threshold': 0.1,
-                'max_Nsims': 1,
-                'Nbest': 4,
-                'ranges': ranges}
-where ranges is a np.array of shape (Npars,2)
-- Number of larvae
-- Simulation time per exec
-- Parameters to perform space search
-- Values of the parameters to combine. 
-- par_space_density : If values is None then the space to search will be a grid. 
-Each parameter will be sampled at a given number of equally-distanced values within the provided range.
-This number can be the same for all parameters (par_space_steps is an int) or different for each parameter (par_space_steps is a list of ints)
+from lib.plot.scape import plot_heatmap_PI, plot_3d, plot_3pars, plot_2d
+from lib.sim import ExpRun
+# from lib.sim.base_run import BaseRun
 
-Examples of this default batch exec are given in  :
-- chemo_batchrun.py for chemorbit and chemotax experiments
-- feed_scatter_batchrun.py for feed_scatter_experiment
-'''
+class BatchRun(ap.Experiment):
+    def __init__(self, batch_type, save_to=None, batch_id=None,space_search=None,space_kws={},optimization=None,
+                 record=True, exp=None, exp_kws={}, store_data=False,save_hdf5=False, batch_methods=None, **kwargs):
 
+        runtype = 'Batch'
 
-class BatchRun:
-    def __init__(self, batch_type='unnamed', batch_id='template', space_search=None, exp=None, params=None,
-                 exp_kws={}, multiproc=True, resumable=False, save_hdf5=False, batch_methods=None,
-                 optimization=None, ncores=8):
-        self.s0 = time.time()
+        self.batch_type=batch_type
+
+        if batch_id is None:
+            idx = reg.next_idx(self.batch_type, conftype=runtype)
+            batch_id = f'{self.batch_type}_{idx}'
         self.id = batch_id
-        self.type = batch_type
-        self.parent_dir = f'{reg.BATCH_DIR}/{self.type}'
-        self.dir = f'{self.parent_dir}/{self.id}'
-        self.filename = f'{self.parent_dir}/{self.type}.hdf5'
-        bm=batch_method_unpack(**batch_methods)
-        self.finfunc = bm['finfunc']
-        self.procfunc = bm['procfunc']
-        self.postfunc = bm['postfunc']
+        # Define directories
+        if save_to is None:
+            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
+        self.dir = f'{save_to}/{self.batch_type}/{self.id}'
+        self.plot_dir = f'{self.dir}/plots'
+        self.data_dir = f'{self.dir}/data'
+        self.save_to = self.dir
+        self.store_data = store_data
 
-        self.batch_methods = batch_methods
-
+        self.exp_conf = reg.expandConf('Exp', exp)
+        self.exp_conf.update(**exp_kws)
         if optimization is not None:
             optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
-        self.space = grid_search_dict(space_search)
         self.optimization = optimization
-        self.exp = exp
-        self.params = params
-        self.run_kws = {
-            'runfunc': single_run,
-            'procfunc': self.procfunc,
-            'save_hdf5': save_hdf5,
-            'exp_kws': {**exp_kws,
-                        'save_to': self.dir,
-                        'vis_kwargs': reg.get_null('visualization', mode=None),
-                        'collections': exp['collections']
-                        }
-        }
-        self.resumable = resumable
-        self.env2_kws = {
-            'file_title': self.type,
-            'small_overview_tables': True,
-            'large_overview_tables': True,
-            'summary_tables': True,
-        }
+        super().__init__(model_class=ExpRun, sample = space_search_sample(space_search, **space_kws),
+                         record=record, **kwargs)
 
-        self.env1_kws = {
-            'comment': f'{self.type} batch exec!',
-            'multiproc': multiproc,
-            'resumable': self.resumable,
-            'resume_folder': self.dir,
-            'ncores': ncores,
-            'wrap_mode': pypetconstants.WRAP_MODE_QUEUE,
-            'report_progress': (20, 'pypet', logging.CRITICAL),
-            'use_pool': True,  # Our runs are inexpensive we can get rid of overhead by using a pool
-            'freeze_input': True,  # We can avoid some overhead by freezing the input to the pool
-            # wrap_mode=pypetconstants.WRAP_MODE_QUEUE if multiproc else pypetconstants.WRAP_MODE_LOCK,
-            'graceful_exit': True,
-        }
+        self.datasets = {}
+        self.results = None
+        self.figs = {}
 
-        self.env = self.get_env()
-        if self.postfunc is not None:
-            self.env.add_postprocessing(self.postfunc)
+    def _single_sim(self, run_id):
+        """ Perform a single simulation."""
+        sample_id = 0 if run_id[0] is None else run_id[0]
+        parameters = self.exp_conf.update_existingnestdict_by_suffix(self.sample[sample_id])
+        # parameters.larva_groups.RE_NEU_PHI_DEF_nav_x2.distribution.N = 4
+        # parameters.sim_params.duration = 1
+        model = self.model(parameters=parameters, _run_id=run_id,store_data = self.store_data, **self._model_kwargs)
 
-    def resume(self):
-        env = Environment(continuable=True)
-        env.resume(trajectory_name=self.id, resume_folder=self.dir)
-        print('Resumed existing trajectory')
-        return env
+        if self._random:
+            ds = model.simulate(display=False, seed=self._random[run_id])
+        else:
+            ds = model.simulate(display=False)
+        self.datasets[sample_id]=ds
+        # model.output['datasets'] = {sample_id: ds}
+        if 'variables' in model.output and self.record is False:
+            del model.output['variables']  # Remove dynamic variables from record
+        return model.output
 
-    def load(self):
-        traj = load_trajectory(filename=self.filename, name=self.id, load_all=0)
-        env = Environment(trajectory=traj, **self.env1_kws)
-        traj = self.config(traj, self.optimization, self.batch_methods)
-        traj.f_load(index=None, load_parameters=2, load_results=0)
-        traj.f_expand(self.space)
-        print('Loaded existing trajectory')
-        return env
+    def default_processing(self, d=None):
+        p = self.optimization.fit_par
+        s, e = d.step_data, d.endpoint_data
+        if p in e.columns:
+            vals = e[p].values
+        elif p in s.columns:
+            vals = s[p].groupby('AgentID').mean()
+        else:
+            raise ValueError('Could not retrieve fit parameter from dataset')
 
-    def build(self, overwrite_file):
-        env = Environment(trajectory=self.id, filename=self.filename, overwrite_file=overwrite_file,
-                          **self.env1_kws, **self.env2_kws)
-        traj = self.prepare(env.traj, self.exp, self.params, self.id, self.dir)
-        traj = self.config(traj, self.optimization, self.batch_methods)
-        traj.f_explore(self.space)
-        return env
+        ops = self.optimization.operations
+        if ops.abs:
+            vals = np.abs(vals)
+        if ops.mean:
+            fit = np.mean(vals)
+        elif ops.std:
+            fit = np.std(vals)
+        return fit
 
-    def run(self):
-        self.env.run(**self.run_kws)
-        self.env.disable_logging()
-        print('Batch exec complete')
-        if self.finfunc is not None:
-            res = self.finfunc(self.env.traj)
-        print(f'Batch-exec completed in {np.round(time.time() - self.s0).astype(int)} seconds!')
-        return res
+    @property
+    def threshold_reached(self):
+        fits = self.par_df['fit'].values
+        if self.optimization.minimize:
+            return np.nanmin(fits) <= self.optimization.threshold
+        else:
+            return np.nanmax(fits) >= self.optimization.threshold
 
-    def get_env(self):
-        if self.resumable:
-            try:
-                return self.resume()
-            except:
+    def end(self):
+        self.par_df = self.output._combine_pars()
+        self.par_names = self.par_df.columns.values.tolist()
+
+        if self.optimization is not None :
+            self.par_df['fit'] = [self.default_processing(self.datasets[i][0]) for i in self.par_df.index]
+
+
+            if self.par_df.index.size >= self.optimization.max_Nsims:
+                reg.vprint(f'Maximum number of simulations reached. Halting search',2)
+            elif self.threshold_reached:
+                reg.vprint(f'Best result reached threshold. Halting search',2)
+            else:
+                reg.vprint(f'Not reached threshold. Expanding space search', 2)
                 pass
-        try:
-            return self.load()
-        except:
-            try:
-                delete_traj(self.type, self.id)
-            except :
-                pass
-            try:
-                env = self.build(overwrite_file=False)
-                print('Created novel environment without overwriting file')
-            except:
-                try:
-                    env = self.build(overwrite_file=True)
-                    print('Created novel environment by overwriting file')
-                except:
-                    raise ValueError('Loading, resuming or creating a new environment failed')
-        return env
+            # traj.f_expand(get_Nbest(traj))
+            # for sample_id, ds in self.datasets.items():
+            #     for d in ds:
+            #         if d is not None:
 
-    def config(self, traj, optimization, batch_methods):
-        if optimization is not None:
-            opt_dict = aux.flatten_dict(optimization, parent_key='optimization', sep='.')
-            for k, v in opt_dict.items():
-                traj.f_aconf(k, v)
-        if batch_methods is not None:
-            opt_dict = aux.flatten_dict(batch_methods, parent_key='batch_methods', sep='.')
-            for k, v in opt_dict.items():
-                traj.f_aconf(k, v)
-        return traj
+        #     dics=[]
+        #     for d in ds :
+        #         dic = agentpy.DataDict()
+        #         dic['id']=d.id
+        #         dic['step'] = d.step_data
+        #         dic['end'] = d.endpoint_data
+        #         dic['config'] = d.config
+        #         dics.append(dic)
+        #     if len(dics)==1:
+        #         dics=dics[0]
+        #     self.output['datasets'][sample_id] = dics
 
-    def prepare(self, traj, exp, params, batch_id, dir_path):
-        traj = self.load_exp(traj, exp)
-        if params is not None:
-            for p in params:
-                traj.f_apar(p, 0.0)
+    def simulate(self, **kwargs):
+        self.run(**kwargs)
 
-        traj.f_aconf('dir_path', dir_path, comment='Directory for saving data')
-        traj.f_aconf('plot_path', f'{dir_path}/{batch_id}.pdf', comment='File for saving plot')
-        traj.f_aconf('data_path', f'{dir_path}/{batch_id}.csv', comment='File for saving data')
-        traj.f_aconf('dataset_path', f'{dir_path}/datasets', comment='Directory for saving datasets')
-        return traj
+        if 'PI' in self.batch_type :
+            self.PI_heatmap()
+        # if 'chemo' in self.batch_type :
+            # p='final_dst_to_Source'
+            # self.par_df[p] = [self.datasets[i][0].endpoint_data[p].mean() for i in self.par_df.index]
+        self.plot_results()
+        return self.par_df, self.figs
 
-    def load_exp(self, traj, exp):
-        for k0 in ['env_params', 'sim_params', 'trials', 'enrichment', 'larva_groups']:
-            dic = aux.flatten_dict(exp[k0], parent_key=k0, sep='.')
-            for k, v in dic.items():
-                if type(v) == list:
-                    if len(v) == 0:
-                        v = None
-                    elif type(v[0]) == list:
-                        v = np.array(v)
-                traj.f_apar(k, v)
-        return traj
+    def plot_results(self):
+        p_ns = self.par_names
+        target_ns = [p for p in self.par_df.columns if p not in p_ns]
+        kws = {'df': self.par_df,
+               'save_to': self.plot_dir,
+               'show': True}
+        for target in target_ns:
+            if len(p_ns) == 1:
+                self.figs[f'{p_ns[0]}VS{target}'] = plot_2d(labels=p_ns + [target], pref=target, **kws)
+            elif len(p_ns) == 2:
+                self.figs.update(plot_3pars(vars=p_ns, target=target, pref=target, **kws))
+            elif len(p_ns) > 2:
+                for i, pair in enumerate(itertools.combinations(p_ns, 2)):
+                    self.figs.update(plot_3pars(vars=list(pair), target=target, pref=f'{i}_{target}', **kws))
 
+    def PI_heatmap(self, **kwargs):
+        PIs=[self.datasets[i][0].config.PI['PI'] for i in self.par_df.index]
+        Lgains = self.par_df.values[:,0].astype(int)
+        Rgains = self.par_df.values[:,1].astype(int)
+        df = pd.DataFrame(index=pd.Series(np.unique(Lgains), name="left_gain"),
+                          columns=pd.Series(np.unique(Rgains), name="right_gain"), dtype=float)
+        for Lgain, Rgain, PI in zip(Lgains, Rgains, PIs):
+            df[Rgain].loc[Lgain] = PI
+        df.to_csv(f'{self.plot_dir}/PIs.csv', index=True, header=True)
+        self.figs['PI_heatmap'] = plot_heatmap_PI(save_to=self.plot_dir, z=df, **kwargs)
 
-def grid_search_dict(space_dict):
-    import pypet
+def space_search_sample(space_dict,n=1, **kwargs):
     dic={}
     for p, args in space_dict.items() :
-        if args['values'] is not None :
-            dic[p]=args['values']
+        if not isinstance(args, dict) or ('values' not in args.keys() and 'range' not in args.keys()) :
+            dic[p] = args
+        elif args['values'] is not None :
+            dic[p]=ap.Values(*args['values'])
         else :
             r0,r1=args['range']
-            vs = np.linspace(r0, r1, args['Ngrid'])
-            # print(type(r0), type(vs[0]))
-            # raise
-            if type(r0) == int and type(r1) == int:
-                vs = vs.astype(int)
-            dic[p] = vs.tolist()
-    return pypet.cartesian_product(dic)
+            if 'Ngrid' in args.keys() :
+                vs = np.linspace(r0, r1, args['Ngrid'])
+                if type(r0) == int and type(r1) == int:
+                    vs = vs.astype(int)
+                dic[p] = ap.Values(*vs.tolist())
+            else :
+                if type(r0) == int and type(r1) == int:
+                    dic[p] = ap.IntRange(r0, r1)
+                elif type(r0) == float and type(r1) == float:
+                    dic[p] = ap.Range(r0, r1)
+    return ap.Sample(dic,n=n,**kwargs)
 
 
+if __name__ == "__main__":
+    batch_type = 'chemorbit'
+    batch_conf = reg.loadConf('Batch', batch_type)
+
+    m = BatchRun(batch_type=batch_type, **batch_conf)
+    m.simulate(n_jobs=1)
+    # m.PI_heatmap(show=True)

@@ -2,7 +2,7 @@ from lib import reg
 
 from lib.sim.replay import ReplayRun
 
-mode = 'normal'
+mode = 'fixed_segment'
 # refID = 'Rehydration/AttP2.Deprived'
 refID = 'exploration.dish'
 # refID = 'None.40controls'
@@ -11,10 +11,11 @@ refID = 'exploration.dish'
 
 replay_kws = {
     'normal': {
-        # 'id': f'{refID}_replay'
+        'time_range': (60,80)
     },
     'dispersal': {
-        'transposition': 'origin'
+        'transposition': 'origin',
+'time_range': (10,30)
     },
     'fixed_point': {
         # 'id':f'{refID}_replay_solo_fixed_point',

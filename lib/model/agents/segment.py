@@ -192,7 +192,6 @@ class Box2DPolygon(Box2DSegment):
 
         centroid /= area
         self.__local_vertices = vertices
-        # self.__local_vertices = vertices - centroid
         self.__local_vertices.setflags(write=False)
         for v in self.__local_vertices:
             self._body.CreatePolygonFixture(

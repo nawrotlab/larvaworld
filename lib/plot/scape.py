@@ -108,10 +108,10 @@ def plot_3d(df, vars, target, name=None,lims=None, title=None, surface=True, lin
 
     l0, l1 = vars
     X = df[vars]
-    y = df[target]
+    y = df[target].values
 
     X = sm.add_constant(X)
-
+    # print(X[l0], X[l1], y)
     # plot hyperplane
     if surface:
         est = sm.OLS(y, X).fit()
@@ -127,7 +127,7 @@ def plot_3d(df, vars, target, name=None,lims=None, title=None, surface=True, lin
                          facecolor='white')
         P.axs[0].scatter(X[resid < 0][l0], X[resid < 0][l1], y[resid < 0], color='black', alpha=0.4, facecolor=color)
     else:
-        P.axs[0].scatter(X[l0], X[l1], y, color='black', alpha=0.4)
+        P.axs[0].scatter(X[l0].values, X[l1].values, y, color='black', alpha=0.4)
 
     return P.get()
 
@@ -158,7 +158,7 @@ def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     P.adjust((0.15, 0.95), (0.15, 0.95))
     return P.get()
 
-
+@reg.funcs.graph('PI heatmap')
 def plot_heatmap_PI(z=None, csv_filepath='PIs.csv', save_as='PI_heatmap.pdf', **kwargs):
     if z is None :
         z = pd.read_csv(csv_filepath, index_col=0)

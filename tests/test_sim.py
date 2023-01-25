@@ -6,32 +6,36 @@ def test_replay() :
     refID =  'exploration.dish'
     replay_kws = {
         'normal': {
+            'time_range': (60,80)
         },
         'dispersal': {
-            'transposition': 'origin'
+            'transposition': 'origin',
+            'time_range': (10,30)
         },
         'fixed_point': {
             'agent_ids': [1],
             'close_view': True,
             'fix_point': 6,
+            'time_range': (80, 100)
         },
         'fixed_segment': {
             'agent_ids': [1],
             'close_view': True,
             'fix_point': 6,
             'fix_segment': -1,
+            'time_range': (100, 130)
         },
         'fixed_overlap': {
             'agent_ids': [1],
             'close_view': True,
             'fix_point': 6,
             'fix_segment': -1,
-            'overlap_mode': True,
+            'overlap_mode': True
         },
     }
 
     for mode, kws in replay_kws.items() :
-        rep = sim.ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to= '. / media', **kws)
+        rep = sim.ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to= './media', **kws)
         rep.run()
 
 def test_exp_run() :
@@ -79,6 +83,6 @@ def xtest_batch_run() :
     for exp in ['PItest_off'] :
         conf=reg.expandConf('Batch', exp)
         # conf.sim_params.duration=1
-        batch_run = sim.BatchRun(batch_id=f'test_{exp}',**conf)
-        batch_run.run()
+        batch_run = sim.BatchRun(batch_id=f'test_{exp}',batch_type=exp,**conf)
+        batch_run.simulate()
 

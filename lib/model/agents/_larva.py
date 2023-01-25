@@ -313,51 +313,6 @@ class LarvaMotile(LarvaBody,Larva, PhysicsController):
         self.cum_dst += self.dst
         self.trajectory.append(self.pos)
 
-    # def go_forward(self, lin_vel, k, hf01,dt, tank,scaling_factor=1, delta=0.00011, counter=0, border_go_errors=0):
-    #     if np.isnan(lin_vel) or counter>100 :
-    #         border_go_errors += 1
-    #         return 0, 0, hf01
-    #     d = lin_vel * dt
-    #     dxy = k * d * scaling_factor
-    #     hf1 = hf01 + dxy
-    #
-    #     if not sim_aux.inside_polygon([hf01], tank):
-    #         lin_vel -= delta
-    #         if lin_vel < 0:
-    #             return 0, 0, hf01
-    #         counter += 1
-    #         return self.go_forward(lin_vel, k, hf01, delta, counter,border_go_errors)
-    #     else:
-    #         return lin_vel, d, hf1, border_go_errors
-    #
-    # def turn_head(self, ang_vel, hr0, ho0, l0, ang_range,dt, tank, delta=np.pi / 90, counter=0, border_turn_errors=0):
-    #     def get_hf(ho):
-    #         kk = np.array([math.cos(ho), math.sin(ho)])
-    #         hf = hr0 + kk * l0
-    #         return kk, hf
-    #     if np.isnan(ang_vel) or counter>100:
-    #         border_turn_errors+=1
-    #         k0, hf00 = get_hf(ho0)
-    #         return 0, ho0, k0, hf00
-    #     ho1 = ho0 + ang_vel * dt
-    #     k, hf01 = get_hf(ho1)
-    #     if not sim_aux.inside_polygon([hf01], tank):
-    #         if counter == 0:
-    #             delta *= np.sign(ang_vel)
-    #         ang_vel -= delta
-    #
-    #         if ang_vel < ang_range[0]:
-    #             ang_vel = ang_range[0]
-    #             delta = np.abs(delta)
-    #         elif ang_vel > ang_range[1]:
-    #             ang_vel = ang_range[1]
-    #             delta -= np.abs(delta)
-    #         counter += 1
-    #
-    #         return self.turn_head(ang_vel, hr0, ho0, l0, ang_range, delta, counter, border_turn_errors)
-    #     else:
-    #         return ang_vel, ho1, k, hf01, border_turn_errors
-
     def update_behavior_dict(self):
         d = aux.AttrDict(self.null_behavior_dict.copy())
         inter = self.brain.locomotor.intermitter

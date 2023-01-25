@@ -2,7 +2,7 @@ import agentpy
 import numpy as np
 from shapely import geometry
 
-from lib import aux
+from lib import reg, aux
 
 
 class Arena(agentpy.Space):

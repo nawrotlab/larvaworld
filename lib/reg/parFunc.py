@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 
@@ -129,8 +131,8 @@ def tr_func(pc):
 def unwrap_func(par, in_deg):
 
     def func(d):
-        s, c = d.step_data, d.config
-        aux.unwrap_rad(s, c, par, in_deg)
+        s = copy.deepcopy(d.step_data[par])
+        d.step_data[nam.unwrap(par)]=aux.unwrap_rad(s, in_deg)
 
     return func
 

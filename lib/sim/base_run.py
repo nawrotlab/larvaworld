@@ -79,3 +79,41 @@ class BaseRun(agentpy.Model):
         wall = envs.Wall(point1, point2, color=color)
         self.obstacles.append(wall)
         return wall
+
+    def build_env(self, env_params):
+        # Define environment
+        self.env_pars = env_params
+
+        self.space = envs.Arena(self, **env_params.arena)
+        self.arena_dims = self.space.dims
+
+        self.place_obstacles(env_params.border_list)
+        self.place_food(**env_params.food_params)
+
+        '''
+        Sensory landscapes of the simulation environment arranged per modality
+        - Olfactory landscapes : odorscape
+        - Wind landscape : windscape
+        - Temperature landscape : thermoscape
+        '''
+
+        self.odor_layers = envs.create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
+        self.windscape = envs.WindScape(model=self, **env_params.windscape) if env_params.windscape else None
+        self.thermoscape = envs.ThermoScape(**env_params.thermoscape) if env_params.thermoscape else None
+
+
+    def place_obstacles(self, barriers={}):
+        self.borders, self.border_lines = [], []
+        for id, pars in barriers.items():
+            b = envs.Border(unique_id=id, **pars)
+            self.borders.append(b)
+            self.border_lines += b.border_lines
+
+    def place_food(self, food_grid=None, source_groups={}, source_units={}):
+        self.food_grid = envs.FoodGrid(**food_grid, model=self) if food_grid else None
+        sourceConfs = util.generate_sourceConfs(source_groups, source_units)
+        source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
+        self.space.add_agents(source_list, positions=[a.pos for a in source_list])
+        self.sources = agentpy.AgentList(model=self, objs=source_list)
+        self.foodtypes = aux.get_all_foodtypes(self.env_pars.food_params)
+        self.source_xy = aux.get_source_xy(self.env_pars.food_params)

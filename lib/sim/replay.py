@@ -11,14 +11,12 @@ from lib.screen import ScreenManager
 
 
 class ReplayRun(agentpy.Model):
-    def setup(self, experiment='replay', dataset=None, refID=None, id=None, save_to=None, agent_ids=None,  time_range=None,
-                  draw_Nsegs=None, env_params=None,close_view=False, track_point=None, dynamic_color=None,overlap_mode=False,
-                  transposition=None, fix_point=None, fix_segment=None):
+    def setup(self, experiment='replay', id=None, save_to=None,
+                  draw_Nsegs=None, dynamic_color=None,overlap_mode=False,
+                  transposition=None, fix_point=None, fix_segment=None, **kwargs):
 
-        if dataset is None and refID is not None :
-            dataset=reg.loadRef(refID)
-        s,e,c=smaller_dataset(d=dataset,ids=agent_ids, transposition=transposition, time_range=time_range, track_point=track_point,
-                              env_params=env_params,close_view=close_view)
+
+        s,e,c=smaller_dataset(transposition=transposition, **kwargs)
 
 
 
@@ -66,7 +64,6 @@ class ReplayRun(agentpy.Model):
         self.endpoint_data=e
         self.build_env(c.env_params)
 
-        self.define_pars(c, cols=s.columns)
         self.place_agents(s)
 
         screen_kws = {
@@ -74,26 +71,9 @@ class ReplayRun(agentpy.Model):
             'background_motion': bg,
             'traj_color':s[dynamic_color] if dynamic_color is not None and dynamic_color in s.columns else None,
         }
-
         self.screen_manager = ScreenManager(model=self, **screen_kws)
 
 
-
-    def define_pars(self, c, cols):
-
-        self.pos_pars = nam.xy(c.point) if set(nam.xy(c.point)).issubset(cols) else ['x','y']
-        self.mid_pars = [xy for xy in nam.xy(nam.midline(c.Npoints, type='point')) if
-                         set(xy).issubset(cols)]
-        self.Npoints = len(self.mid_pars)
-        self.con_pars = [xy for xy in nam.xy(nam.contour(c.Ncontour)) if set(xy).issubset(cols)]
-        self.Ncontour = len(self.con_pars)
-        self.cen_pars = nam.xy('centroid') if set(nam.xy('centroid')).issubset(cols) else []
-        self.chunk_pars = [p for p in ['stride_stop', 'stride_id', 'pause_id', 'feed_id'] if
-                           p in cols]
-        self.or_pars = [p for p in nam.orient(['front', 'rear', 'head', 'tail']) if p in cols]
-        self.Nors = len(self.or_pars)
-        self.ang_pars = ['bend'] if 'bend' in cols else []
-        self.Nangles = len(self.ang_pars)
 
     def place_agents(self, s):
         agent_list = [agents.LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.config.agent_ids)]
@@ -118,16 +98,21 @@ class ReplayRun(agentpy.Model):
         """ Proceeds the simulation by one step, incrementing `Model.t` by 1
         and then calling :func:`Model.step` and :func:`Model.update`."""
         if not self.is_paused:
-            self.t += 1
+
             self.step()
             self.update()
+            self.t += 1
             if self.t >= self._steps :
                 self.running = False
 
     def step(self):
         """ Defines the models' events per simulation step. """
         self.agents.step()
-        self.screen_manager.step()
+        self.screen_manager.step(self.t)
+
+    def end(self):
+        self.screen_manager.finalize(self.t)
+
 
     @property
     def Nticks(self):
@@ -170,10 +155,12 @@ class ReplayRun(agentpy.Model):
 
 
 
-def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_range=None, pars=None,env_params=None,close_view=False):
+def smaller_dataset(dataset=None,refID=None, track_point=None, agent_ids=None, transposition=None,
+                    time_range=None, pars=None,env_params=None,close_view=False):
+    if dataset is None and refID is not None:
+        dataset = reg.loadRef(refID)
 
-
-    c=d.config
+    c=dataset.config
     c0=c.get_copy()
 
 
@@ -182,9 +169,9 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
     elif type(track_point) == int:
         track_point = 'centroid' if track_point == -1 else nam.midline(c.Npoints, type='point')[track_point]
     c0.point = track_point
-    if ids is not None:
-        if type(ids) == list and all([type(i) == int for i in ids]):
-            ids = [c.agent_ids[i] for i in ids]
+    if agent_ids is not None:
+        if type(agent_ids) == list and all([type(i) == int for i in agent_ids]):
+            ids = [c.agent_ids[i] for i in agent_ids]
     else :
         ids = c.agent_ids
     c0.agent_ids = ids
@@ -198,17 +185,18 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
         s0=copy.deepcopy(s.loc[(slice(None), ids), :])
         return s0,e0
 
-    s0,e0=get_data(d,ids)
+    s0,e0=get_data(dataset,ids)
 
     if pars is not None:
         s0 = s0.loc[(slice(None), slice(None)), pars]
 
     if env_params is not None:
         c0.env_params = env_params
+    c0.env_params.windscape = None
 
     if transposition is not None:
         try:
-            s_tr = d.load_traj(mode=transposition)
+            s_tr = dataset.load_traj(mode=transposition)
             s0.update(s_tr)
 
         except:
@@ -229,5 +217,5 @@ def smaller_dataset(d, track_point=None, ids=None, transposition=None, time_rang
         s0 = s0.loc[(slice(a, b), slice(None)), :]
 
     c0.Nsteps = len(s0.index.unique('Step').values)
-    c0.env_params.windscape = None
+
     return s0,e0, c0

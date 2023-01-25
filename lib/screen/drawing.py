@@ -342,12 +342,15 @@ class ScreenManager:
             try:
                 min_x = int(np.floor(x))
                 min_y = -int(np.floor(y))
-                if a == 0.0:
-                    surface = v._window
-                    for py in np.arange(min_y - 1, self.th_max + min_y, 1):
-                        for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
-                            p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
-                            surface.blit(self.bgimage, p)
+
+                surface = v._window
+                for py in np.arange(min_y - 1, self.th_max + min_y, 1):
+                    for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
+                        if a != 0.0:
+                            # px,py=aux.rotate_point_around_point((px,py),-a)
+                            pass
+                        p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
+                        surface.blit(self.bgimage, p)
             except:
                 pass
 

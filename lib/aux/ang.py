@@ -169,20 +169,34 @@ def rotate_points_around_point(points, radians, origin=None):
     return ps
 
 
-def unwrap_rad(s,c, par, in_deg=False) :
-    import lib.aux.naming as nam
-    ss=copy.deepcopy(s[par])
+def unwrap_rad(s, in_deg=False) :
+    """
+    Unwraps an angular timeseries
 
-    UP = np.zeros([c.Nticks, c.N]) * np.nan
-    for j, id in enumerate(c.agent_ids):
-        b = ss.xs(id, level='AgentID').values
+    Parameters
+    ----------
+    s : pd.Dataframe
+        Index levels : ['Step', 'AgentID']
+        single column : the angular timeseries
+    in_deg : bool, optional
+        Whether angles are in degrees (default is False)
+
+    Returns
+    -------
+    s: np.array of appropriate shape to be inserted in the pd.Dataframe
+        the unwrapped timeseries
+    """
+    ids = s.index.unique('AgentID').values
+    UP = np.zeros([s.index.unique('Step').size, len(ids)]) * np.nan
+    for j, id in enumerate(ids):
+        b = s.xs(id, level='AgentID').values
         if in_deg:
             b = np.deg2rad(b)
         b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)])
         if in_deg:
             b = np.rad2deg(b)
         UP[:, j] = b
-    s[nam.unwrap(par)] = UP.flatten()
+    return UP.flatten()
 
 
 

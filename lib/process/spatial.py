@@ -606,17 +606,16 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
         return ss
 
 
-def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
+def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
     ids = s.index.unique(level='AgentID').values
+    Nids=len(ids)
     points = aux.nam.midline(c.Npoints, type='point') + ['centroid']
     points_xy = aux.nam.xy(points, flat=True)
     contour = aux.nam.contour(c.Ncontour)
     contour_xy = aux.nam.xy(contour, flat=True)
 
     all_xy_pars = points_xy + contour_xy
-    if len(ids) != 1:
-        raise ValueError('Fixation only implemented for a single agent.')
-    # id=ids[0]
+
     if type(point) == int:
         if point == -1:
             point = 'centroid'
@@ -627,28 +626,29 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
 
     pars = [p for p in all_xy_pars if p in s.columns.values]
     xy_ps = aux.nam.xy(point)
-    if set(xy_ps).issubset(s.columns):
-        print(f'Fixing {point} to arena center')
-        if arena_dims is None :
-            arena_dims=c.env_params.arena.arena_dims
-        X, Y = arena_dims
-        xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
-        xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
-        bg_x = np.array([(p[:, 0] - start[0]) / X for p, start in zip(xy, xy_start)])
-        bg_y = np.array([(p[:, 1] - start[1]) / Y for p, start in zip(xy, xy_start)])
-    else:
+    if not set(xy_ps).issubset(s.columns):
         raise ValueError(f" The requested {point} is not part of the dataset")
+    print(f'Fixing {point} to arena center')
+    if arena_dims is None :
+        arena_dims=c.env_params.arena.arena_dims
+    X, Y = arena_dims
+    xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
+    xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
+    bg_x = np.array([(p[:, 0] - start[0]) / X for p, start in zip(xy, xy_start)])
+    bg_y = np.array([(p[:, 1] - start[1]) / Y for p, start in zip(xy, xy_start)])
+
     for id, p in zip(ids, xy):
         for x, y in aux.group_list_by_n(pars, 2):
             s.loc[(slice(None), id), [x, y]] -= p
 
     if fix_segment is not None:
-        if set(aux.nam.xy(fix_segment)).issubset(s.columns):
-            print(f'Fixing {fix_segment} as secondary point on vertical axis')
-            xy_sec = [s[aux.nam.xy(fix_segment)].xs(id, level='AgentID').copy(deep=True).values for id in ids]
-            bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(len(xy_sec))])
-        else:
+        xy_ps2 = aux.nam.xy(fix_segment)
+        if not set(xy_ps2).issubset(s.columns):
             raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
+
+        print(f'Fixing {fix_segment} as secondary point on vertical axis')
+        xy_sec = [s[xy_ps2].xs(id, level='AgentID').copy(deep=True).values for id in ids]
+        bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(Nids)])
 
         for id, angle in zip(ids, bg_a):
             d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
@@ -656,12 +656,70 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
                 aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(d[i].tolist(), 2)),
                                                                         radians=a)) for i, a in enumerate(angle)]
     else:
-        bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(len(ids))])
-    bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(len(ids))]
+        bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(Nids)])
+    bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(Nids)]
 
-    # There is only a single larva so :
-    bg = bg[0]
     print('Fixed-point dataset generated')
+    return s, bg
+
+
+def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
+    ids = s.index.unique(level='AgentID').values
+    Nids = len(ids)
+    N=s.index.unique('Step').size
+    points = aux.nam.midline(c.Npoints, type='point') + ['centroid']
+    points_xy = aux.nam.xy(points, flat=True)
+    contour = aux.nam.contour(c.Ncontour)
+    contour_xy = aux.nam.xy(contour, flat=True)
+
+    all_xy_pars = points_xy + contour_xy
+    if Nids != 1:
+        raise ValueError('Fixation only implemented for a single agent.')
+    id=ids[0]
+    if type(point) == int:
+        if point == -1:
+            point = 'centroid'
+        else:
+            if fix_segment is not None and type(fix_segment) == int and np.abs(fix_segment) == 1:
+                fix_segment = points[point + fix_segment]
+            point = points[point]
+
+    pars = [p for p in all_xy_pars if p in s.columns.values]
+    xy_ps = aux.nam.xy(point)
+    if not set(xy_ps).issubset(s.columns):
+        raise ValueError(f" The requested {point} is not part of the dataset")
+    print(f'Fixing {point} to arena center')
+    if arena_dims is None:
+        arena_dims = c.env_params.arena.arena_dims
+    X, Y = arena_dims
+    xy = s[xy_ps].values
+    xy_start = s[xy_ps].dropna().values[0]
+    bg_x = (xy[:, 0] - xy_start[0]) / X
+    bg_y = (xy[:, 1] - xy_start[1]) / Y
+
+    for x, y in aux.group_list_by_n(pars, 2):
+        s[[x, y]] -= xy
+
+    if fix_segment is not None:
+        xy_ps2 = aux.nam.xy(fix_segment)
+        if not set(xy_ps2).issubset(s.columns):
+            raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
+
+        print(f'Fixing {fix_segment} as secondary point on vertical axis')
+        xy_sec = s[xy_ps2].values
+        bg_a = np.arctan2(xy_sec[:, 1], xy_sec[:, 0]) - np.pi / 2
+
+        s[pars] = [
+            aux.flatten_list(aux.rotate_points_around_point(points=np.reshape(s[pars].values[i,:], (-1, 2)),
+            # aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(s[pars].values[i].tolist(), 2)),
+                                                            radians=bg_a[i])) for i in range(N)]
+    else:
+        bg_a = np.zeros(N)
+
+
+    bg = np.vstack((bg_x, bg_y, bg_a))
+    print('Fixed-point dataset generated')
+
     return s, bg
 
 
