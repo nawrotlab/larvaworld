@@ -328,14 +328,20 @@ def batch_method_unpack(exec='default', post='default', final='null'):
             'finfunc': finfunc_dict[final], }
 
 
-def retrieve_results(batch_type, batch_id):
+def retrieve_results2(batch_type, batch_id):
     traj = pypet.load_trajectory(filename=f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5', name=batch_id, load_all=2)
     func = finfunc_dict[traj.config.batch_methods.final]
     return func(traj)
 
+def retrieve_results(batch_type, batch_id):
+    f=f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_id}/results.h5'
+    df = aux.read(path=f, key='results')
+    figs={}
+    return df,figs
 
-def delete_traj(batch_type, traj_name):
+
+def delete_traj(batch_type, key):
     import h5py
-    filename = f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5'
-    with h5py.File(filename, 'r+') as f:
-        del f[traj_name]
+    ff = f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_type}.hdf5'
+    with h5py.File(ff, 'r+') as f:
+        del f[key]

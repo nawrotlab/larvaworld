@@ -1,6 +1,7 @@
 import copy
 import itertools
 import logging
+import os
 import time
 
 import agentpy
@@ -132,6 +133,8 @@ class BatchRun(ap.Experiment):
             # p='final_dst_to_Source'
             # self.par_df[p] = [self.datasets[i][0].endpoint_data[p].mean() for i in self.par_df.index]
         self.plot_results()
+        self.par_df.to_csv(os.path.join(self.data_dir, 'results.csv'), index=True, header=True)
+        aux.storeH5(df=self.par_df, key='results', path=os.path.join(self.dir, 'results.h5'), mode='w')
         return self.par_df, self.figs
 
     def plot_results(self):
