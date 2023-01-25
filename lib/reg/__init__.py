@@ -1,4 +1,4 @@
-VERBOSE =0
+VERBOSE =2
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
         print(text)

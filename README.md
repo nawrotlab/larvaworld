@@ -153,7 +153,7 @@ Larvaworld can be run directly from linux terminal.
        Run multiple trials of a given experiment with different parameters.
        This line runs a batch run of odor preference experiments for different valences of the two odor sources.
 
-           python larvaworld.py Batch PItest_off -N 25 -t 3.0 -rng -200.0 200.0 -Ngrd 5
+           python larvaworld.py Batch PItest_off -N 5 -t 1.0
 
    3. Genetic Algorithm optimization
    

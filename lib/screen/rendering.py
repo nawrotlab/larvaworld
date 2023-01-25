@@ -84,10 +84,7 @@ class Viewer(object):
 
             f.write(self.get_saved_scene_repr() + '\n')  # scene size
 
-            for obj in self.objects:
-                if hasattr(obj, 'get_saved_scene_repr'):
-                    line = obj.get_saved_scene_repr()
-                    f.write(line + '\n')
+
         f.closed
         print('Scene saved:', file_path)
 

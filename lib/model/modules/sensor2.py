@@ -38,7 +38,8 @@ class LightSensor(Sensor2):
         dir_sensor = self.robot.direction + self.delta_direction
         total_value = 0
 
-        for obj in self.robot.model.viewer.objects:
+        for obj in self.robot.model.obstacles:
+        # for obj in self.robot.model.viewer.objects:
             if issubclass(type(obj), LightSource):
                 light = obj
 
@@ -100,7 +101,7 @@ class ProximitySensor(Sensor2):
         p1 = geometry.Point(
             p0.x + cos(angle) * self.max_distance,
             p0.y + sin(angle) * self.max_distance)
-        min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.scene.objects, (p0,p1), p0)
+        min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.robot.model.obstacles, (p0,p1), p0)
 
         if min_dst is None:
             # no obstacle detected

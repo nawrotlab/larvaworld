@@ -8,13 +8,10 @@ from lib import reg, aux
 def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp', **kwargs):
     if conf_type == 'Batch':
         exp_conf = reg.loadConf(conftype=conf_type, id=exp)
-        batch_id = d['batch_setup']['batch_id']
-        if batch_id is None:
-            idx = reg.next_idx(id=exp, conftype='Batch')
-            batch_id = f'{exp}_{idx}'
+        # batch_id = d['batch_setup']['batch_id']
 
-        exp_conf.exp = update_exp_conf(exp_conf.exp, d, N, models)
-        exp_conf.batch_id = batch_id
+        exp_conf.exp = update_exp_conf(exp_conf.exp, d, N, models, conf_type='Exp')
+        # exp_conf.batch_id = batch_id
         exp_conf.batch_type = exp
 
         exp_conf.update(**kwargs)
@@ -22,10 +19,7 @@ def update_exp_conf(exp, d=None, N=None, models=None, arena=None, conf_type='Exp
 
 
 
-    try:
-        exp_conf = reg.expandConf(id=exp, conftype=conf_type)
-    except:
-        raise
+    exp_conf = reg.expandConf(id=exp, conftype=conf_type)
 
     if arena is not None:
         exp_conf.env_params.arena = arena

@@ -31,7 +31,7 @@ class BatchTab(gui_aux.GuiTab):
 
     def update(self, w, c, conf, id):
         w.Element(self.batch_id_key).Update(value=f'{id}_{lib.reg.next_idx(id=id, conftype="Batch")}')
-        for n in ['batch_methods', 'optimization', 'space_search']:
+        for n in ['optimization', 'space_search']:
             c[n].update(w, conf[n])
         self.DL1.add(w, stored_trajs(id), replace=True)
 
@@ -40,11 +40,8 @@ class BatchTab(gui_aux.GuiTab):
             enrichment = self.current_conf(v)['exp_kws']['enrichment']
         except:
             enrichment = reg.loadConf(id=v[self.selectionlists['Exp'].k],conftype= 'Exp')['enrichment']
-        # from lib.registry.dtypes import null_dict
         conf = reg.get_null('Batch',
-                         save_hdf5=w['TOGGLE_save_hdf5'].metadata.state,
                          exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},
-                         batch_methods=c['batch_methods'].get_dict(v, w),
                          optimization=c['optimization'].get_dict(v, w),
                          space_search=c['space_search'].get_dict(v, w),
                          )
@@ -57,10 +54,8 @@ class BatchTab(gui_aux.GuiTab):
         sl1 = gui_aux.SelectionList(tab=self, conftype='Exp', idx=1)
         sl2 = gui_aux.SelectionList(tab=self, buttons=['load', 'save', 'delete', 'exec'], sublists={'exp': sl1})
         batch_conf = [[sg.T('Batch id:', **gui_aux.t_kws(8)), sg.In('unnamed_batch_0', k=self.batch_id_key, **gui_aux.t_kws(16))],
-                      gui_aux.named_bool_button('Save data', False, toggle_name='save_hdf5'),
                       ]
         s0 = gui_aux.PadDict(f'{self.name}_CONFIGURATION', content=batch_conf, disp_name='Configuration', dict_name='batch_setup', **kws)
-        s1 = gui_aux.PadDict('batch_methods', value_kws=gui_aux.t_kws(13), **kws)
         s2 = gui_aux.PadDict('optimization', toggle=True, disabled=True, **kws)
         s3 = gui_aux.CollapsibleTable('space_search', index='Parameter', heading_dict={'Range': 'range', 'N': 'Ngrid'},
                                       dict_name='space_search_par', state=True, col_widths=[12,8,4], num_rows=5)
@@ -68,15 +63,15 @@ class BatchTab(gui_aux.GuiTab):
         dl1 = gui_aux.DataList(kS, dict=d[kS], tab=self, buttons=['select_all', 'remove'], disp='Stored batch-runs', size=(gui_aux.w_list, 5))
         dl2 = gui_aux.DataList(kA, dict=d[kA], tab=self, buttons=['select_all', 'stop'], disp='Active batch-runs', size=(gui_aux.w_list, 5))
 
-        l = gui_aux.gui_cols(cols=[[sl2, sl1, dl2, dl1, g1], [s0, s1, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20, 10))
+        l = gui_aux.gui_cols(cols=[[sl2, sl1, dl2, dl1, g1], [s0, s2, s3], [g1.canvas]], x_fracs=[0.20, 0.22, 0.55], as_pane=True, pad=(20, 10))
         c = {}
-        for s in [s0, s1, s2, s3]:
+        for s in [s0, s2, s3]:
             c.update(s.get_subdicts())
         return l, c, {g1.name: g1}, {self.name: {'df': None, 'fig_dict': None}}
 
     def run(self, v, w, c, d, g, conf, id):
         batch_id = v[self.batch_id_key]
-        conf['batch_id'] = batch_id
+        conf['id'] = batch_id
         conf['batch_type'] = id
         exec = Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
         self.DL0.add(w, {batch_id: exec})

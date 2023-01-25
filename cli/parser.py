@@ -126,34 +126,34 @@ class MultiParser:
 
 
 def run_template(sim_mode, args, d):
-    if sim_mode == 'Rep':
-        run = sim.ReplayRun(**d['Replay'])
+    kws={'id' : args.id}
+    if sim_mode == 'Replay':
+        run = sim.ReplayRun(**d['Replay'], **kws)
         run.run()
     elif sim_mode == 'Batch':
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Batch')
-        exec = sim.Exec(mode='batch', conf=conf, run_externally=False)
+        exec = sim.Exec(mode='batch', conf=conf, run_externally=False, **kws)
         exec.run()
     elif sim_mode == 'Exp':
         conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
         run = sim.ExpRun(parameters=conf,
-                     screen_kws={'vis_kwargs': d['visualization']})
+                     screen_kws={'vis_kwargs': d['visualization']}, **kws)
         ds = run.simulate()
         if args.analysis:
             run.analyze(show=args.show)
 
     elif sim_mode == 'Ga':
-        conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,
-                               conf_type='Ga')
+        conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,conf_type='Ga')
         conf.ga_select_kws = d['ga_select_kws']
 
         if args.base_model is not None:
             conf.ga_build_kws.base_model = args.base_model
         if args.bestConfID is not None:
             conf.ga_build_kws.bestConfID = args.bestConfID
-        GA = sim.GAlauncher(parameters=conf)
+        GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
-        evrun = sim.EvalRun(**d.Eval, show=args.show_screen)
+        evrun = sim.EvalRun(**d.Eval, show=args.show_screen, **kws)
         evrun.simulate()
         evrun.plot_results()
         evrun.plot_models()
@@ -161,7 +161,7 @@ def run_template(sim_mode, args, d):
 
 def get_parser(sim_mode, parser=None):
     dic = aux.AttrDict({
-        'Batch': [['sim_params', 'batch_setup'], ['e', 'N', 'ms']],
+        'Batch': [['sim_params'], ['e', 'N', 'ms']],
         'Eval': [['Eval'], ['hide']],
         'Exp': [['sim_params', 'visualization'], ['e', 'N', 'ms', 'a']],
         'Ga': [['sim_params', 'ga_select_kws'], ['e', 'mID0', 'mID1', 'offline', 'hide']],
@@ -171,6 +171,7 @@ def get_parser(sim_mode, parser=None):
 
     MP = MultiParser(mks)
     p = MP.add(parser)
+    p.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
     for k in ks:
         if k == 'e':
             p.add_argument('experiment', choices=reg.storedConf(sim_mode), help='The experiment mode')

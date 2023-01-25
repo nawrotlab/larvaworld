@@ -1118,16 +1118,16 @@ def buildInitDict():
                     'abs': {**bF, 'h': 'Whether to use the absolute value of the utility'}
                 },
             },
-            'batch_methods': {
-                'exec': {'dtype': str, 'v': 'default',
-                        'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'],
-                        'h': 'The method to be applied on simulated data derived from every individual exec'},
-                'post': {'dtype': str, 'v': 'default', 'vs': ['null', 'default'],
-                         'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-exec will be terminated.'},
-                'final': {'dtype': str, 'v': 'null',
-                          'vs': ['null', 'scatterplots', 'deb', 'odor_preference'],
-                          'h': 'The method to be applied once the batch-exec is complete to plot/save the results.'}
-            },
+            # 'batch_methods': {
+            #     'exec': {'dtype': str, 'v': 'default',
+            #             'vs': ['null', 'default', 'deb', 'odor_preference', 'exp_fit'],
+            #             'h': 'The method to be applied on simulated data derived from every individual exec'},
+            #     'post': {'dtype': str, 'v': 'default', 'vs': ['null', 'default'],
+            #              'h': 'The method to be applied after a generation of runs is completed to judge whether space-search will continue or batch-exec will be terminated.'},
+            #     'final': {'dtype': str, 'v': 'null',
+            #               'vs': ['null', 'scatterplots', 'deb', 'odor_preference'],
+            #               'h': 'The method to be applied once the batch-exec is complete to plot/save the results.'}
+            # },
             'space_search_par': {
                 'range': {'dtype': Tuple[float], 'lim': (-100.0, 100.0), 'dv': 1.0,
                           'k': 'ss.range',
@@ -1143,21 +1143,21 @@ def buildInitDict():
                            'h': 'The range of the parameters for space search.', 'k': 'ss.ranges'},
                 'Ngrid': {'dtype': int, 'lim': (0, 100), 'h': 'The number of steps for space search.',
                           'k': 'ss.Ngrid'}},
-            'batch_setup': {
-                'batch_id': pID('batch-exec', k='b_id'),
-                'save_hdf5': {**bF, 'h': 'Whether to store the batch-exec data', 'k': 'store_batch'}
-            }
+            # 'batch_setup': {
+            #     'batch_id': pID('batch-exec', k='b_id'),
+            #     'save_hdf5': {**bF, 'h': 'Whether to store the batch-exec data', 'k': 'store_batch'}
+            # }
         })
         d.update(d0)
         d['Batch'] = {'exp': {'dtype': str},
                            'space_search': d['space_search'],
-                           'batch_methods': d['batch_methods'],
+                           # 'batch_methods': d['batch_methods'],
                            'optimization': d['optimization'],
                            'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']},
                                        'h': 'Keywords for the exp exec.'},
                            # 'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post exec.'},
                            # 'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc exec.'},
-                           'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
+                           # 'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                            }
         return d
 

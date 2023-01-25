@@ -15,17 +15,17 @@ from lib.sim import ExpRun
 # from lib.sim.base_run import BaseRun
 
 class BatchRun(ap.Experiment):
-    def __init__(self, batch_type, save_to=None, batch_id=None,space_search=None,space_kws={},optimization=None,
-                 record=True, exp=None, exp_kws={}, store_data=False,save_hdf5=False, batch_methods=None, **kwargs):
+    def __init__(self, batch_type, save_to=None, id=None,space_search=None,space_kws={},optimization=None,
+                 record=True, exp=None, exp_kws={}, store_data=False, **kwargs):
 
         runtype = 'Batch'
 
         self.batch_type=batch_type
 
-        if batch_id is None:
+        if id is None:
             idx = reg.next_idx(self.batch_type, conftype=runtype)
-            batch_id = f'{self.batch_type}_{idx}'
-        self.id = batch_id
+            id = f'{self.batch_type}_{idx}'
+        self.id = id
         # Define directories
         path=f'{reg.SIM_DIR}/{runtype.lower()}_runs'
         if save_to is None:
@@ -39,7 +39,7 @@ class BatchRun(ap.Experiment):
         self.save_to = self.dir
         self.store_data = store_data
 
-        self.exp_conf = reg.expandConf('Exp', exp)
+        self.exp_conf = reg.expandConf('Exp', exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
         if optimization is not None:
             optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
@@ -130,7 +130,7 @@ class BatchRun(ap.Experiment):
 
     def simulate(self, **kwargs):
         self.run(**kwargs)
-
+        os.makedirs(self.plot_dir, exist_ok=True)
         if 'PI' in self.batch_type :
             self.PI_heatmap()
         # if 'chemo' in self.batch_type :

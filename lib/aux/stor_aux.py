@@ -109,9 +109,9 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
 
 
 
-def retrieve_results(batch_type, batch_id):
+def retrieve_results(batch_type, id):
     from lib import reg
-    f=f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_id}/results.h5'
+    f=f'{reg.SIM_DIR}/batch_runs/{batch_type}/{id}/results.h5'
     df = read(path=f, key='results')
     figs={}
     return df,figs

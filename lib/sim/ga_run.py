@@ -131,19 +131,17 @@ class GAlauncher(BaseRun):
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
                  offline=False,show_screen=False,exclusion_mode=False,experiment='exploration',
-                 sim_ID=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=30, Nelits=6, Ngenerations=20,
+                 id=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=30, Nelits=6, Ngenerations=20,
                  **kwargs):
 
     warnings.filterwarnings('ignore')
     if mID1 is None:
         mID1 = mID0
 
-    if sim_ID is None:
-        sim_ID = f'{experiment}_{reg.next_idx(id=experiment, conftype="Ga")}'
+
 
     kws = {
-        'sim_params': reg.get_null('sim_params', duration=dur, sim_ID=sim_ID, store_data=store_data, timestep=dt,
-                                   path = f'ga_runs/{experiment}'),
+        'sim_params': reg.get_null('sim_params', duration=dur, store_data=store_data, timestep=dt),
         'show_screen': show_screen,
         'offline': offline,
         # 'save_to': save_to,
@@ -159,8 +157,8 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
 
     conf.ga_build_kws.fit_dict = fit_dict
 
-    GA = GAlauncher(parameters=conf, save_to=save_to)
-    best_genome = GA.run()
+    GA = GAlauncher(parameters=conf, save_to=save_to, id=id)
+    best_genome = GA.simulate()
     entry = {mID1: best_genome.mConf}
     return entry
 
