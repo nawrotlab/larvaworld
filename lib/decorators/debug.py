@@ -28,3 +28,13 @@ def debug(func):
 #         return (self.stock * self.unit_price)
 
 
+def requires_step_pars(*ps):
+    def check_required(f):
+        def new_f(s, *args, **kwds):
+            missing=[p for p in ps if p not in s.columns]
+            assert len(missing)==0, \
+                       f'Parameters {missing} do not exist in dataset'
+            return f(s=s, *args, **kwds)
+        new_f.__name__ = f.__name__
+        return new_f
+    return check_required

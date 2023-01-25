@@ -2,7 +2,7 @@ import json
 import os
 
 from lib.aux import naming as nam
-from lib import reg, aux,process
+from lib import reg, aux
 
 @reg.funcs.stored_conf("Tracker")
 def Tracker_dict():

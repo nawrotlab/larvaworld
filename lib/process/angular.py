@@ -7,8 +7,10 @@ from lib import reg, aux
 
 def comp_angles(s, e, c, mode='full'):
     N=c.Npoints
+    if N<=2 :
+        return []
     points = aux.nam.midline(N, type='point')
-    Nangles = np.clip(N - 2, a_min=0, a_max=None)
+    Nangles = N - 2
     angles = [f'angle{i}' for i in range(Nangles)]
     ang_conf=c.metric_definition.angular
     if ang_conf.fitted is None :
@@ -16,17 +18,17 @@ def comp_angles(s, e, c, mode='full'):
     else :
         r = ang_conf.fitted.front_body_ratio
     bend_angles = angles[:int(np.round(r * Nangles))]
-    xy = [aux.nam.xy(points[i]) for i in range(N)]
+
     if mode == 'full':
         angles = angles
     elif mode == 'minimal':
         angles = bend_angles
     print(f'Computing {Nangles} angles')
-    xy_pars = aux.dNl.flatten_list([xy[i] for i in range(Nangles + 2)])
-    Axy = s[xy_pars].values
-    Npoints = int(Axy.shape[1] / 2)
+
+    Axy = s[aux.nam.xy(points, flat=True)].values
+
     Nticks = Axy.shape[0]
-    Axy = np.reshape(Axy, (Nticks, Npoints, 2))
+    Axy = np.reshape(Axy, (Nticks, N, 2))
     A = np.zeros([Nangles, Nticks]) * np.nan
     for i in range(Nticks):
         A[:, i] = np.array([aux.angle_from_3points(Axy[i, j + 2, :], Axy[i, j + 1, :], Axy[i, j, :]) for j in range(Nangles)])
@@ -93,7 +95,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     pars=aux.nam.orient(['front','rear', 'head', 'tail'])
     Npars=len(pars)
 
-    xy_pars = aux.dNl.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
+    xy_pars = aux.flatten_list([xy[i] for i in [f2 - 1, f1 - 1, r2 - 1, r1 - 1, 1,0,-1,-2]])
     xy_ar0 = s[xy_pars].values
 
 
@@ -115,9 +117,8 @@ def comp_orientations(s, e, c, mode='minimal'):
         N = len(segs)
         print(f'Computing additional orients for {N} spinesegments')
         ors = aux.nam.orient(segs)
-        xy_pars = aux.dNl.flatten_list([xy[i] for i in range(N + 1)])
+        xy_pars = aux.flatten_list([xy[i] for i in range(N + 1)])
         xy_ar0 = s[xy_pars].values
-        # Npoints = int(xy_ar.shape[1] / 2)
         Nticks = xy_ar0.shape[0]
         xy_ar = np.reshape(xy_ar0, (Nticks, N + 1, 2))
         cc = np.zeros([N, Nticks]) * np.nan
@@ -153,11 +154,12 @@ def unwrap_orientations(s, segs):
         b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
         return b
 
-    pars = list(set([p for p in [aux.nam.orient('front'), aux.nam.orient('rear')] + aux.nam.orient(segs) if p in s.columns.values]))
-    for p in pars:
-        for id in s.index.unique('AgentID').values:
-            ts = s.loc[(slice(None), id), p].values
-            s.loc[(slice(None), id), aux.nam.unwrap(p)] = unwrap_deg(ts)
+    ids=s.index.unique('AgentID').values
+    for p in aux.nam.orient(['front', 'rear']+segs):
+        if p in s.columns.values:
+            for id in ids:
+                ts = s[p].xs(id, level='AgentID').values
+                s.loc[(slice(None), id), aux.nam.unwrap(p)] = unwrap_deg(ts)
     print('All orients unwrapped')
 
 

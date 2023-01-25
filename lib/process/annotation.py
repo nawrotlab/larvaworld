@@ -311,6 +311,7 @@ def mean_stride_curve(a, strides, da, Nbins=64):
     return dic
 
 
+
 def cycle_curve_dict(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     strides = detect_strides(s[reg.getPar('sv')], dt, return_extrema=False, return_runs=False)
     da = np.array([np.trapz(s[reg.getPar('fov')][s0:s1].dropna()) for ii, (s0, s1) in enumerate(strides)])

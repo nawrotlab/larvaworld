@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from lib import reg, aux
+from lib import reg, aux, decorators
 from lib.aux import naming as nam
 
 def comp_linear(s, e, c, mode='minimal'):
