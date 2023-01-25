@@ -2,8 +2,7 @@ import numpy as np
 from matplotlib import collections as mc
 
 from lib import reg, aux, plot
-
-
+from lib.process.spatial import get_disp_df, comp_dispersion
 
 
 @reg.funcs.graph('ethogram')
@@ -264,32 +263,55 @@ def plot_Y_pos(**kwargs):
 @reg.funcs.graph('dispersal')
 def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=None,
                     **kwargs):
-    ylab = 'scaled dispersal' if scaled else r'dispersal $(mm)$'
-    r0, r1 = range
-    # par = f'dispersion_{r0}_{r1}'
-    name = f'scaled_dispersal_{r0}-{r1}' if scaled else f'dispersal_{r0}-{r1}'
-    k = f'sdsp_{r0}_{r1}' if scaled else f'dsp_{r0}_{r1}'
-    P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
-    t0, t1 = int(r0 * P.datasets[0].config.fr), int(r1 * P.datasets[0].config.fr)
-    x = np.linspace(r0, r1, t1 - t0)
+    t0, t1 = range
+    p0 = f'dispersion_{int(t0)}_{int(t1)}'
 
+    if not scaled :
+        par=p0
+        ylab = r'dispersal $(mm)$'
+    else :
+        par=aux.nam.scal(p0)
+        ylab = 'scaled dispersal'
 
+    P = plot.AutoPlot(name=par, subfolder=subfolder, **kwargs)
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
         try :
-            xy0 = d.load_traj()
-            AA, dsp = aux.dsp_single(xy0, r0, r1, d.dt)
-            # dsp = d.comp_dsp(r0, r1)
-            mean = dsp['median'].values
-            lb = dsp['upper'].values
-            ub = dsp['lower'].values
+            dic=aux.load_dict(reg.datapath('dsp', d.config.dir))
+            df=dic[par]
+            reg.vprint(f'Dispersal {par} for dataset {d.id} loaded from stored dictionary')
         except :
-            dsp = reg.par.get(k, d)
-            mean = dsp.groupby(level='Step').quantile(q=0.5).values[t0:t1]
-            ub = dsp.groupby(level='Step').quantile(q=0.75).values[t0:t1]
-            lb = dsp.groupby(level='Step').quantile(q=0.25).values[t0:t1]
-        P.axs[0].fill_between(x, ub, lb, color=c, alpha=.2)
-        P.axs[0].plot(x, mean, c, label=lab, linewidth=3 if lab != 'experiment' else 8, alpha=1.0)
-    P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=[x[0], x[-1]], ylim=[0, ymax], xMaxN=4, yMaxN=4, leg_loc='upper left', legfontsize=15)
+            dt = 1 / d.config.fr
+            s0, s1 = int(t0 / dt), int(t1 / dt)
+            if hasattr(d, 'step_data') and par in d.step_data.columns:
+                dsp=d.step_data[par]
+                df = get_disp_df(dsp, s0, Nt=s1-s0)
+                reg.vprint(f'Dispersal {par} for dataset {d.id} found in step data')
+            else :
+                try :
+                    dsp=d.read(key='step')[par]
+                    df = get_disp_df(dsp, s0, Nt=s1 - s0)
+                    reg.vprint(f'Dispersal {par} for dataset {d.id} found in step h5 file')
+                except :
+                    try :
+                        dsp = d.read(key='dspNtor')[par]
+                        if dsp.dropna().values.shape[0]==0 :
+                            raise
+                        df = get_disp_df(dsp, s0, Nt=s1 - s0)
+                        reg.vprint(f'Dispersal {par} for dataset {d.id} found in dspNtor h5 file')
+                    except :
+                        d.load()
+                        comp_dispersion(d.step_data, d.endpoint_data, d.config, dsp_starts=[t0], dsp_stops=[t1], store=True)
+                        dic = aux.load_dict(reg.datapath('dsp', d.config.dir))
+                        df = dic[par]
+                        reg.vprint(f'Dispersal {par} for dataset {d.id} computed and then loaded from stored dictionary')
+        mean=df['median'].values
+        ub=df['upper'].values
+        lb=df['lower'].values
+        trange=df.index.values*d.config.dt
+
+        P.axs[0].fill_between(trange, ub, lb, color=c, alpha=.2)
+        P.axs[0].plot(trange, mean, c, label=lab, linewidth=3 if lab != 'experiment' else 8, alpha=1.0)
+    P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=range, ylim=[0, ymax], xMaxN=4, yMaxN=4, leg_loc='upper left', legfontsize=15)
     return P.get()
 
 @reg.funcs.graph('navigation index')

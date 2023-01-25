@@ -180,13 +180,6 @@ def interpolate_nans(y):
     return y
 
 
-def compute_centroid(points):
-    x = [p[0] for p in points]
-    y = [p[1] for p in points]
-    centroid = (sum(x) / len(points), sum(y) / len(points))
-    return centroid
-
-
 def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     x0, y0 = loc
     dxs = x0 - np.array(xs)
@@ -196,12 +189,12 @@ def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     drads[drads > 180] -= 360
     return drads if in_deg else np.deg2rad(rads)
 
-def dsp_single(xy0, s0, s1, dt):
-    ids = xy0.index.unique('AgentID').values
-    Nids=len(ids)
-    t0 = int(s0 / dt)
-    t1 = int(s1 / dt)
-    xy = xy0.loc[(slice(t0, t1), slice(None)), ['x', 'y']]
+def dsp_single(xy0, s0, s1):
+
+
+    xy = xy0.loc[(slice(s0, s1), slice(None)), ['x', 'y']]
+    ids = xy.index.unique('AgentID').values
+    Nids = len(ids)
     Nt = xy.index.unique('Step').size
     AA = np.zeros([Nt, Nids]) * np.nan
     fails=0
@@ -214,13 +207,8 @@ def dsp_single(xy0, s0, s1, dt):
             pass
     # print(f'In {fails} out of {Nids} tracks failed to set origin point')
 
-    trange = np.arange(t0, t0+Nt, 1)
-    dsp_ar = np.zeros([Nt, 3]) * np.nan
-    dsp_ar[:, 0] = np.nanquantile(AA, q=0.5, axis=1)
-    dsp_ar[:, 1] = np.nanquantile(AA, q=0.75, axis=1)
-    dsp_ar[:, 2] = np.nanquantile(AA, q=0.25, axis=1)
-    df = pd.DataFrame(dsp_ar, index=trange, columns=['median', 'upper', 'lower'])
-    return AA,df
+
+    return AA
 
 
 def compute_velocity(xy, dt, return_dst=False):
