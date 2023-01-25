@@ -3,7 +3,6 @@ import argparse
 
 from lib import reg, aux, sim
 from lib.process.dataset import LarvaDataset
-from lib.sim.batch_aux import retrieve_results
 
 
 class Exec:
@@ -47,7 +46,7 @@ class Exec:
         if self.mode == 'batch':
             if res is None and self.run_externally:
                 args = {'batch_type': self.type, 'batch_id': self.conf['batch_id']}
-                res = retrieve_results(**args)
+                res = aux.retrieve_results(**args)
             return res
         elif self.mode == 'sim':
             sim_id = self.conf['sim_params']['sim_ID']

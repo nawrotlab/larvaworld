@@ -27,9 +27,13 @@ class BatchRun(ap.Experiment):
             batch_id = f'{self.batch_type}_{idx}'
         self.id = batch_id
         # Define directories
+        path=f'{reg.SIM_DIR}/{runtype.lower()}_runs'
         if save_to is None:
-            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
+            save_to = path
+        self.h5_path=f'{path}/{self.batch_type}/{self.batch_type}.h5'
+
         self.dir = f'{save_to}/{self.batch_type}/{self.id}'
+        self.df_path = f'{self.dir}/results.h5'
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
         self.save_to = self.dir
@@ -133,8 +137,8 @@ class BatchRun(ap.Experiment):
             # p='final_dst_to_Source'
             # self.par_df[p] = [self.datasets[i][0].endpoint_data[p].mean() for i in self.par_df.index]
         self.plot_results()
-        self.par_df.to_csv(os.path.join(self.data_dir, 'results.csv'), index=True, header=True)
-        aux.storeH5(df=self.par_df, key='results', path=os.path.join(self.dir, 'results.h5'), mode='w')
+        # self.par_df.to_csv(os.path.join(self.data_dir, 'results.csv'), index=True, header=True)
+        aux.storeH5(df=self.par_df, key='results', path=self.df_path, mode='w')
         return self.par_df, self.figs
 
     def plot_results(self):

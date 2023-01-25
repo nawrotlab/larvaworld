@@ -4,7 +4,7 @@ import copy
 import PySimpleGUI as sg
 import h5py
 
-from lib import reg
+from lib import reg, aux
 import lib.util.data_aux
 from gui import gui_aux
 from lib.plot.table import mpl_table
@@ -93,14 +93,12 @@ class BatchTab(gui_aux.GuiTab):
             if len(stor_ids) > 0:
                 traj0 = stor_ids[0]
                 w.Element(self.batch_id_key).Update(value=traj0)
-                from lib.sim.batch_aux import retrieve_results
-                df, fig_dict = retrieve_results(id0, traj0)
+                df, fig_dict = aux.retrieve_results(id0, traj0)
                 self.draw(df, fig_dict, w)
 
         elif e == f'REMOVE {self.k_stored}':
-            from lib.sim.batch_aux import delete_traj
             for stor_id in stor_ids:
-                delete_traj(id0, stor_id)
+                aux.delete_traj(id0, stor_id)
             self.DL1.add(w, stored_trajs(id0), replace=True)
 
         if e == f'STOP {self.k_active}':
