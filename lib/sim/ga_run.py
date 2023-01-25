@@ -1,14 +1,11 @@
 import math
-import os
 import sys
 import warnings
 
-import agentpy
 import numpy as np
 
 
 from lib import reg, aux, util
-from lib.model import agents, envs
 from lib.screen.rendering import  Viewer
 from lib.sim.ga_engine import GAbuilder
 from lib.sim.base_run import BaseRun

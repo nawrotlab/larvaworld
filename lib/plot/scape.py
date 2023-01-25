@@ -5,7 +5,6 @@ from matplotlib import cm, pyplot as plt
 from scipy.stats import multivariate_normal
 
 from lib import reg, aux, plot
-# from lib.plot.base import ParPlot, Plot
 
 
 def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, azim=115, elev=15, **kwargs):
@@ -16,6 +15,15 @@ def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, 
     if z0 is not None:
         P.axs[0].plot_surface(x, y, np.ones(x.shape) * z0, alpha=0.5)
     return P.get()
+
+@reg.funcs.graph('odorscape')
+def plot_odorscape(odor_layers, scale=1.0, idx=0, **kwargs):
+    for id, layer in odor_layers.items():
+        X, Y = layer.meshgrid
+        x = X * 1000 / scale
+        y = Y * 1000 / scale
+        plot_surface(x=x, y=y, z=layer.get_grid(), vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
+                     title=f'{id} odorscape', save_as=f'{id}_odorscape_{idx}', **kwargs)
 
 
 def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims=(201, 201), col_max=(0, 0, 0),

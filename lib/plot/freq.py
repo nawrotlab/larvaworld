@@ -140,7 +140,6 @@ def powerspectrum_old(par_shorts=['v', 'fov'], thr=0.2, pars=[], subfolder='powe
 @reg.funcs.graph('powerspectrum')
 def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums', **kwargs):
     Nks=len(ks)
-
     if name is None :
         name=f'fft_powerspectrum_x{Nks}'
     P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, figsize=(10, 8), **kwargs)
@@ -183,7 +182,5 @@ def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums'
 
     if P.Ndatasets > 1:
         P.data_leg(0,colors=[ii[0] for ii in cols],loc='upper left', fontsize=15)
-    # elif Nks > 1:
-    #     ax.legend()
     P.adjust((0.2, 0.95), (0.15, 0.95))
     return P.get()

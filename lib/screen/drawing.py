@@ -1,5 +1,8 @@
 import os
 import numpy as np
+
+
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -87,8 +90,8 @@ class ScreenManager:
         if media_name is None:
             media_name = str(m.id)
 
-        self.space_bounds = aux.get_arena_bounds(m.arena_dims, self.s)
-        self.window_dims = aux.get_window_dims(m.arena_dims)
+        self.space_bounds = aux.get_arena_bounds(m.space.dims, self.s)
+        self.window_dims = aux.get_window_dims(m.space.dims)
         screen_kws = {
             'window_dims': self.window_dims,
             'space_bounds': self.space_bounds,
@@ -364,7 +367,7 @@ class ScreenManager:
             value = self.snapshot_counter
             self.snapshot_counter += 1
         elif name == 'odorscape #':
-            self.plot_odorscape(save_to=m.save_to, show=show, scale=self.s, idx=self.odorscape_counter)
+            reg.graphs.dict['odorscape'](odor_layers = m.odor_layers,save_to=m.plot_dir, show=show, scale=self.s, idx=self.odorscape_counter)
             value = self.odorscape_counter
             self.odorscape_counter += 1
         elif name == 'trajectory_dt':
@@ -433,27 +436,7 @@ class ScreenManager:
     def generate_larva_color(self):
         return aux.random_colors(1)[0] if self.random_colors else self.default_larva_color
 
-    # @property
-    # def configuration_text(self):
-    #     text = f"Simulation configuration : \n" \
-    #            "\n" \
-    #            f"Experiment : {self.experiment}\n" \
-    #            f"Simulation ID : {self.id}\n" \
-    #            f"Duration (min) : {self.duration}\n" \
-    #            f"Timestep (sec) : {self.dt}\n" \
-    #            f"Parent path : {self.save_to}"
-    #     return text
 
-
-
-    def plot_odorscape(self, scale=1.0, idx=0, **kwargs):
-        from lib.plot.scape import plot_surface
-        for id, layer in self.model.odor_layers.items():
-            X, Y = layer.meshgrid
-            x = X * 1000 / scale
-            y = Y * 1000 / scale
-            plot_surface(x=x, y=y, z=layer.get_grid(), vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
-                         title=f'{id} odorscape', save_as=f'{id}_odorscape_{idx}', **kwargs)
 
     def eliminate_overlap(self):
         pass
@@ -462,7 +445,6 @@ class ScreenManager:
 def evaluate_input(m, screen):
 
     if m.pygame_keys is None :
-        from lib import reg
         m.pygame_keys = reg.controls.load()['pygame_keys']
 
     d_zoom = 0.01

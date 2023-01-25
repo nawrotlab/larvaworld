@@ -6,9 +6,6 @@ from matplotlib import pyplot as plt, patches
 from lib.aux import naming as nam, moving_average
 from lib import reg, aux, plot
 
-# from lib.plot.base import Plot, AutoPlot, AutoBasePlot
-
-
 
 
 def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
@@ -16,7 +13,6 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
     color = c.color if single_color else None
     scale = 1000 if unit == 'mm' else 1
     P = plot.AutoBasePlot(name=f'trajectories', **kwargs)
-    # P.build(fig=fig, axs=axs)
     ax = P.axs[0]
     tank = aux.get_tank_polygon(c, return_polygon=False) * scale
     for id in ids:
@@ -86,10 +82,8 @@ def ax_conf_kws(kws, trange, Ndatasets,Nrows, i=0, ylab=None, ylim=None, xlim=No
     return {**conf_kws, **leg_kws}
 
 def epoch_func(**kwargs):
-    from lib.process.annotation import detect_turns
-    from lib.process.annotation import detect_strides
-    from lib.process.annotation import detect_pauses
-    from lib.process.annotation import process_epochs
+    from lib.process.annotation import detect_turns, detect_strides, detect_pauses, process_epochs
+
     def stride_epochs(a, trange, show_extrema=True, a2plot=None, dt=0.1, **kwargs):
 
         if show_extrema and a2plot is None:
@@ -199,10 +193,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
                     slice=None, agent_idx=0, agent_id=None,
                     subfolder='tracks', moving_average_interval=None, epoch_boundaries=True, show_extrema=True,
                     min_amp=None, **kwargs):
-    from lib.process.annotation import detect_turns
-    from lib.process.annotation import detect_strides
-    from lib.process.annotation import detect_pauses
-    from lib.process.annotation import process_epochs
+    from lib.process.annotation import detect_turns, detect_strides, detect_pauses, process_epochs
     temp = f'track_{slice[0]}-{slice[1]}' if slice is not None else f'track'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
     P = plot.AutoPlot(name=name, subfolder=subfolder,

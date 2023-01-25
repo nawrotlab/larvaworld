@@ -15,12 +15,7 @@ class ReplayRun(agentpy.Model):
                   draw_Nsegs=None, dynamic_color=None,overlap_mode=False,
                   transposition=None, fix_point=None, fix_segment=None, **kwargs):
 
-
         s,e,c=smaller_dataset(transposition=transposition, **kwargs)
-
-
-
-
         if save_to is None:
             save_to = reg.datapath('visuals',c.dir)
         self.save_to = save_to

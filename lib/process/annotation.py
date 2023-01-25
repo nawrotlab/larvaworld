@@ -25,28 +25,6 @@ def register_bout_distros(c,e):
 
 
 
-
-# def annotate(d, bout_detection = True, bout_distribution=True,interference=True,
-#              patch_residency=True,source_attraction=True,  store=True, **kwargs) :
-#     from lib.process import patch
-#     s, e ,c= d.step_data, d.endpoint_data,d.config
-#
-#     if bout_detection:
-#         d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store)
-#         turn_mode_annotation(e, d.chunk_dicts)
-#     if bout_distribution:
-#         d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
-#         d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
-#         c.bout_distros = util.get_bout_distros(d.pooled_epochs)
-#         register_bout_distros(c, e)
-#     if interference:
-#         d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts)
-#     if source_attraction:
-#         patch.comp_bearing_to_source(s, e, c)
-#     if patch_residency:
-#         patch.comp_time_on_patch(s, e, c)
-
-
 def process_epochs(a, epochs, dt, return_idx=True):
     if epochs.shape[0] == 0:
         stops = []

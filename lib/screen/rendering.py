@@ -155,7 +155,6 @@ class Viewer(object):
         pygame.draw.circle(self._window, color, p, r, w)
 
     def draw_polygon(self, vertices, color=(0, 0, 0), filled=True, width=.01):
-        # print(color)
         vs = [self._transform(v) for v in vertices]
         w = 0 if filled else int(self._scale[0, 0] * width)
         pygame.draw.polygon(self._window, color, vs, w)
@@ -165,7 +164,6 @@ class Viewer(object):
 
         ps=np.array(points)
         vs = ps[ConvexHull(ps).vertices].tolist()
-        # print(vs)
         self.draw_polygon(vs, **kwargs)
 
     def draw_grid(self, all_vertices, colors, filled=True, width=.01):
@@ -200,8 +198,8 @@ class Viewer(object):
         self._window.blit(text_font, text_position)
 
     def draw_envelope(self, points, **kwargs):
-        from shapely.geometry import MultiPoint
-        vs = list(MultiPoint(points).envelope.exterior.coords)
+
+        vs = list(geometry.MultiPoint(points).envelope.exterior.coords)
         self.draw_polygon(vs, **kwargs)
 
     def draw_arrow_line(self, start, end, color=(0, 0, 0), width=.01, dl=0.02, phi=0, s=10):
