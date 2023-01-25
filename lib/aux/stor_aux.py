@@ -119,8 +119,8 @@ def retrieve_results(batch_type, id):
 
 def delete_traj(batch_type, key):
     from lib import reg
-    import h5py
-    ff = f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_type}.hdf5'
-    with h5py.File(ff, 'r+') as f:
-        del f[key]
+    path = f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_type}.hdf5'
+    store = pd.HDFStore(path, mode='a')
+    del store[key]
+    store.close()
 

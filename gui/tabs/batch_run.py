@@ -2,7 +2,7 @@
 
 import copy
 import PySimpleGUI as sg
-import h5py
+import pandas as pd
 
 from lib import reg, aux
 import lib.util.data_aux
@@ -119,10 +119,12 @@ class BatchTab(gui_aux.GuiTab):
 
 
 def stored_trajs(batch_type):
-    filename = f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5'
+    path = f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5'
     try:
-        f = h5py.File(filename, 'r')
-        return {k:f for k in f.keys()}
+        store = pd.HDFStore(path, mode='r')
+        dic = {k:store for k in store.keys()}
+        store.close()
+        return dic
     except:
         return {}
 

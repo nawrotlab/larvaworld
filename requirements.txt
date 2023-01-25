@@ -27,6 +27,6 @@ pint
 statsmodels
 
 powerlaw~=1.4.6
-h5py
+# h5py
 # pypet~=0.6
 PyPDF2~=1.26.0
