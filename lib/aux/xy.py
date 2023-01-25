@@ -99,14 +99,11 @@ def generate_xyNor_distro(d):
 
 
 
-def eudis5(v1, v2):
-    dist = [(a - b) ** 2 for a, b in zip(v1, v2)]
-    dist = math.sqrt(sum(dist))
-    return dist
+
 
 
 def eudi5x(a, b):
-    return np.sqrt(np.sum((a - b) ** 2, axis=1))
+    return np.sqrt(np.sum((a - np.array(b)) ** 2, axis=1))
 
 
 def xy_projection(point, angle: float, distance: float):
@@ -204,20 +201,20 @@ def dsp_single(xy0, s0, s1, dt):
     Nids=len(ids)
     t0 = int(s0 / dt)
     t1 = int(s1 / dt)
-    Nt = t1 - t0
     xy = xy0.loc[(slice(t0, t1), slice(None)), ['x', 'y']]
+    Nt = xy.index.unique('Step').size
     AA = np.zeros([Nt, Nids]) * np.nan
     fails=0
     for i, id in (enumerate(ids)):
         xy_i = xy.xs(id, level='AgentID')
         try:
-            AA[:, i] = eudi5x(xy_i.values[1:], xy_i.dropna().values[0])
+            AA[:, i] = eudi5x(xy_i.values, xy_i.dropna().values[0])
         except:
             fails+=1
             pass
-    print(f'In {fails} out of {Nids} tracks failed to set origin point')
+    # print(f'In {fails} out of {Nids} tracks failed to set origin point')
 
-    trange = np.arange(t0, t1, 1)
+    trange = np.arange(t0, t0+Nt, 1)
     dsp_ar = np.zeros([Nt, 3]) * np.nan
     dsp_ar[:, 0] = np.nanquantile(AA, q=0.5, axis=1)
     dsp_ar[:, 1] = np.nanquantile(AA, q=0.75, axis=1)
@@ -227,11 +224,8 @@ def dsp_single(xy0, s0, s1, dt):
 
 
 def compute_velocity(xy, dt, return_dst=False):
-    x = xy[:, 0]
-    y = xy[:, 1]
-
-    dx = np.diff(x)
-    dy = np.diff(y)
+    dx = np.diff(xy[:, 0])
+    dy = np.diff(xy[:, 1])
     d = np.sqrt(dx ** 2 + dy ** 2)
     v = d / dt
     v = np.insert(v, 0, np.nan)
@@ -285,14 +279,16 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
     return minimum
 
 
-def comp_rate(s,c, p, pv=None):
-    if pv is None :
-        pv = nam.vel(p)
-    V = np.zeros([c.Nticks, c.N]) * np.nan
-    for i, id in enumerate(c.agent_ids):
-        V[1:, i] = np.diff(s[p].xs(id, level='AgentID').values) / c.dt
+def comp_rate(ss,dt):
+    ids = ss.index.unique(level='AgentID').values
+    Nids = len(ids)
+    N = ss.index.unique('Step').size
 
-    s[pv] = V.flatten()
+    V = np.zeros([N, Nids]) * np.nan
+    for i, id in enumerate(ids):
+        V[1:, i] = np.diff(ss.xs(id, level='AgentID').values) / dt
+
+    return V.flatten()
 
 
 def get_display_dims():

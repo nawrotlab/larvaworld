@@ -1,5 +1,5 @@
 import numpy as np
-from shapely import affinity, geometry
+from shapely import affinity, geometry, measurement
 
 from lib import aux
 from lib.model.deb.substrate import Substrate

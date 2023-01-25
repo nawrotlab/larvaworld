@@ -99,20 +99,10 @@ class AttrDict(dict):
         dic0_f.update_existingdict_by_suffix(dic)
         return dic0_f.unflatten()
 
+    def save(self, file):
+        save_dict(self,file)
 
-def flatten_dict(d, parent_key='', sep='.'):
-    items = []
-    for k, v in d.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, typing.MutableMapping):
-            if len(v) > 0:
-                items.extend(flatten_dict(v, new_key, sep=sep).items())
-            else:
-                items.append((new_key,'empty_dict'))
 
-        else:
-            items.append((new_key, v))
-    return AttrDict(dict(items))
 
 def load_dict(file):
     try:

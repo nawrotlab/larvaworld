@@ -648,11 +648,6 @@ class LarvaBody:
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
         hr0 = self.global_rear_end_of_head
-
-
-
-
-
         l0 = self.seg_lengths[0]
         A0,A1=self.valid_Dbend_range(0,ho0)
         fov0,fov1 = A0 / dt, A1 / dt

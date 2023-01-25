@@ -1,4 +1,4 @@
-from shapely import geometry
+from shapely import geometry, measurement
 from typing import Optional, List
 import math
 
@@ -18,6 +18,8 @@ def radar_tuple(p0: geometry.Point, angle: float, distance: float):
         p0.y + math.sin(angle) * distance)
     return p0, p1
 
+def eudis5(p1, p2):
+    return geometry.Point(p1).distance(geometry.Point(p2))
 
 def distance(p0: tuple, angle: float, way: geometry.LineString, max_distance: float = 1000) -> Optional[float]:
     p00 = geometry.Point(p0)

@@ -270,8 +270,8 @@ class GAbuilder(GAselector):
 
         valid_gs={}
         for i, g in self.genome_dict.items():
-            g.fitness_dict = {k: dic[i] for k, dic in fit_dicts.items()}
-            mus = {k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()}
+            g.fitness_dict = aux.AttrDict({k: dic[i] for k, dic in fit_dicts.items()})
+            mus = aux.AttrDict({k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()})
             if len(mus) == 1:
                 g.fitness = list(mus.values())[0]
             else:
@@ -344,7 +344,7 @@ class GAbuilder(GAselector):
         if self.model.p.sim_params.store_data:
             self.all_genomes_dic += [
             {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
-             'fitness': g.fitness, **aux.flatten_dict(g.fitness_dict)}
+             'fitness': g.fitness, **g.fitness_dict.flatten()}
             for g in self.sorted_genomes if g.fitness_dict is not None]
 
     def destroy_robot(self, robot, excluded=False):

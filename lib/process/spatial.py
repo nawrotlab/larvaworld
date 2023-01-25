@@ -236,83 +236,24 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     print(f'Completed {mode} spatial processing.')
 
 
-
-
-def dsp_solo0(xy,s0, s1, c):
-    dt = c.dt
-    ids = xy.index.unique('AgentID').values
-    t0 = int(s0 / dt)
-    t1 = int(s1 / dt)
-    Nt=t1-t0
-
-    xy_slice=xy.loc[(slice(t0, t1), slice(None)), slice(None)]
-
-
-
-    AA = np.zeros([c.Nticks, len(ids)]) * np.nan
-    # AA = np.zeros([Nt, len(ids)]) * np.nan
-
-
-    for i, id in (enumerate(ids)):
-        xy_i = xy_slice.xs(id, level='AgentID')
-        xy0 = xy_i.dropna().values
-
-
-        try:
-            AA[t0:t1, i] = aux.xy.eudi5x(xy_i.values, xy0[0])
-        except:
-            print(f'No values to set origin point for {id}')
-    return AA.flatten()
-
-def dsp_solo(s, e, c,s0, s1, p) :
-
-    xy = s[['x', 'y']]
-
-    # AAA = np.zeros([c.Nticks, len(xy.index.unique('AgentID').values)]) * np.nan
-    # p = f'dispersion_{s0}_{s1}'
-    s[p] = dsp_solo0(xy, s0, s1, c)
-    # s[p] = .flatten()
-    # ps.append(p)
-    fp = aux.nam.final(p)
-    mp = aux.nam.max(p)
-    mup = aux.nam.mean(p)
-    # pps += [fp, mp, mup]
-
-    e[mp] = s[p].groupby('AgentID').max()
-    e[mup] = s[p].groupby('AgentID').mean()
-    e[fp] = s[p].dropna().groupby('AgentID').last()
-
-    scale_to_length(s, e, c, pars=[p,fp,mp,mup])
-
-
-
 @reg.funcs.proc("dispersion")
 def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=False, **kwargs):
-    # dt = c.dt
     if dsp_starts is None or dsp_stops is None:
         return
-    # dsp_starts = [int(t) for t in dsp_starts]
-    # dsp_stops = [int(t) for t in dsp_stops]
     if s is None :
         xy0 = aux.read(key='default', path=reg.datapath('traj', c.dir))
     else :
-
         xy0 = s[['x', 'y']]
     ps = []
     dsps = {}
-    # pps = []
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
         s0, s1 = int(t0),int(t1)
         p = f'dispersion_{s0}_{s1}'
-
-
-
-        AA, df = aux.xy.dsp_single(xy0, s0, s1, c.dt)
+        AA, df = aux.dsp_single(xy0, s0, s1, c.dt)
         dsps[p] = df
         t00=int(s0 / c.dt)
-        t11=t00+AA.shape[0]
         AA0 = np.zeros([c.Nticks, c.N]) * np.nan
-        AA0[t00:t11,:]=AA
+        AA0[t00:t00+AA.shape[0],:]=AA
         s[p] = AA0.flatten()
 
         ps.append(p)
@@ -478,7 +419,7 @@ def comp_source_metrics(s, e, c, **kwargs):
         temp = np.array(pos) - s[xy].values
         s[o] = (s[fo] + 180 - np.rad2deg(np.arctan2(temp[:, 1], temp[:, 0]))) % 360 - 180
         s[pabs] = s[o].abs()
-        s[d] = aux.xy.eudi5x(s[xy].values, np.array(pos))
+        s[d] = aux.eudi5x(s[xy].values, pos)
         e[pmax] = s[d].groupby('AgentID').max()
         e[pmu] = s[d].groupby('AgentID').mean()
         e[pfin] = s[d].dropna().groupby('AgentID').last()
@@ -517,8 +458,7 @@ def comp_wind_metrics(s, e, c, **kwargs):
         for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
             origin = e[[aux.nam.initial('x'), aux.nam.initial('y')]].loc[id]
-            d = aux.xy.eudi5x(xy, np.array(origin))
-            print(d)
+            d = aux.eudi5x(xy, origin)
             dx = xy[:, 0] - origin[0]
             dy = xy[:, 1] - origin[1]
             angs = np.arctan2(dy, dx)
@@ -579,9 +519,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
         if not set(XY).issubset(s.columns):
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
         ids = s.index.unique(level='AgentID').values
-        # Nids=len(ids)
         Nticks = len(s.index.unique('Step'))
-        # Npairs = len(xy_pairs)
         if mode == 'origin':
             print('Aligning trajectories to common origin')
             xy = [s[XY].xs(id, level='AgentID').dropna().values[0] for id in ids]
@@ -730,8 +668,8 @@ def comp_PI2(arena_xdim, xys, x=0.04):
     dLR = np.zeros([N, Nticks]) * np.nan
     for i, id in enumerate(ids):
         xy = xys.xs(id, level='AgentID').values
-        dL = aux.xy.eudi5x(xy, np.array((-x, 0)))
-        dR = aux.xy.eudi5x(xy, np.array((x, 0)))
+        dL = aux.eudi5x(xy, [-x, 0])
+        dR = aux.eudi5x(xy, [x, 0])
         dLR[i, :] = (dR - dL) / (2 * x)
     dLR_mu = np.mean(dLR, axis=1)
     mu_dLR_mu = np.mean(dLR_mu)

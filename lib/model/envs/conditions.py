@@ -120,6 +120,7 @@ class CatchMeCondition:
         targets_pos = [f.get_position() for f in env.targets]
         for f in env.followers:
             if any([aux.eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
+            # if any([aux.eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
                 set_target_group(f.group)
                 break
         env.score[env.target_group] += env.dt

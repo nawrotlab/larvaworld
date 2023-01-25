@@ -12,10 +12,8 @@ def dst2source_evaluation(robot, source_xy):
     cum_dst = np.sum(dst)
     l=[]
     for label, pos in source_xy.items():
-        dst2source = aux.eudi5x(traj, np.array(pos))
-        l.append(dst2source)
-    m=np.mean(np.min(np.vstack(l),axis=0))
-    fitness= - m/ cum_dst
+        l.append(aux.eudi5x(traj, pos))
+    fitness= - np.mean(np.min(np.vstack(l),axis=0))/ cum_dst
     return fitness
 
 def cum_dst(robot, **kwargs):
