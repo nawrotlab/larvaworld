@@ -421,7 +421,6 @@ class BranchIntermitter(BaseIntermitter):
 
         if run_mode == 'stridechain':
             if stridechain_dist is not None:
-                # print(stridechain_dist.range)
                 self.stridechain_min, self.stridechain_max = stridechain_dist.range
                 self.stridechain_dist = util.BoutGenerator(**stridechain_dist, dt=1)
                 self.run_dist = None
@@ -447,31 +446,22 @@ class BranchIntermitter(BaseIntermitter):
 
 
 class FittedIntermitter(OfflineIntermitter):
-    def __init__(self, sample_dataset, **kwargs):
-        sample = reg.loadRef(sample_dataset)
+    def __init__(self, refID, **kwargs):
+        cRef = reg.retrieveRef(refID)
         stored_conf = {
-            'crawl_freq': sample['crawl_freq'],
-            'feed_freq': sample['feed_freq'],
-            'dt': sample['dt'],
-            'stridechain_dist': sample['stride']['best'],
-            'pause_dist': sample['pause']['best'],
-            'feeder_reoccurence_rate': sample['feeder_reoccurence_rate'],
+            'crawl_freq': cRef['crawl_freq'],
+            'feed_freq': cRef['feed_freq'],
+            'dt': cRef['dt'],
+            'stridechain_dist': cRef['stride']['best'],
+            'pause_dist': cRef['pause']['best'],
+            'feeder_reoccurence_rate': cRef['feeder_reoccurence_rate'],
         }
         stored_conf.update(kwargs)
         stored_conf['crawl_bouts'] = True if stored_conf['crawl_freq'] is not None else False
         stored_conf['feed_bouts'] = True if stored_conf['feed_freq'] is not None else False
-        # print(kwargs)
         super().__init__(**stored_conf)
 
-def get_EEB_poly1d(sample=None, dt=None, **kwargs):
-    if sample is not None:
-        if type(sample) == str:
-            sample = reg.loadRef(sample)
-        kws = sample['intermitter']
-    else:
-        kws = kwargs
-    if dt is not None:
-        kws['dt'] = dt
+def get_EEB_poly1d(**kws):
     max_ticks = int(60 * 60 / kws['dt'])
     EEBs = np.arange(0, 1.05, 0.05)
     ms = []
@@ -484,21 +474,9 @@ def get_EEB_poly1d(sample=None, dt=None, **kwargs):
     z = np.poly1d(np.polyfit(np.array(ms), EEBs, 5))
     return z
 
-
-def get_best_EEB(deb, sample):
-    z = np.poly1d(sample['EEB_poly1d'])
-    if type(deb) == dict:
-        s = deb['feed_freq_estimate']
-    else:
-        s = deb.fr_feed
-    return np.clip(z(s), a_min=0, a_max=1)
-
-
-def get_EEB_time_fractions(sample=None, dt=None, **kwargs):
-    if sample is not None:
-        if type(sample) == str:
-            sample = reg.loadRef(sample)
-        kws = sample['intermitter']
+def get_EEB_time_fractions(refID=None, dt=None, **kwargs):
+    if refID is not None:
+        kws = reg.retrieveRef(refID)['intermitter']
     else:
         kws = kwargs
     if dt is not None:

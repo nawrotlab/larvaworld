@@ -294,6 +294,8 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
         lgs.update(group.LarvaGroup.entry(id, **kws))
     return aux.AttrDict(lgs)
 
+def retrieveRef(id):
+    return loadConf('Ref', id)
 
 def loadRef(id, load=False, **kwargs):
     c = loadConf('Ref',id)

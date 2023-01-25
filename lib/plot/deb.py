@@ -349,10 +349,10 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15, right=0.93, hspace=0.15)
     return plot.process_plot(fig, save_to, save_as, return_fig, show)
 
-#@graph('bearing/turn')
-def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitter', 'default'],
+@reg.funcs.graph('EEBvsQuality')
+def plot_EEB_vs_food_quality(refIDs=None, dt=None, species_list=['rover', 'sitter', 'default'],
                              save_to=None, return_fig=False, show=False, **kwargs):
-    if samples is None:
+    if refIDs is None:
         raise ('No sample configurations provided')
     from lib.model.modules.intermitter import get_EEB_poly1d
     from lib.model.deb.deb import DEB
@@ -360,12 +360,13 @@ def plot_EEB_vs_food_quality(samples=None, dt=None, species_list=['rover', 'sitt
     filename = f'EEB_vs_food_quality.{plot.suf}'
     qs = np.arange(0.01, 1, 0.01)
 
-    fig, axs = plt.subplots(3, len(samples), figsize=(10 * len(samples), 20))
+    fig, axs = plt.subplots(3, len(refIDs), figsize=(10 * len(refIDs), 20))
     axs = axs.ravel()
     cols = aux.N_colors(len(species_list))
 
-    for i, sample in enumerate(samples):
-        z = get_EEB_poly1d(sample=sample, dt=dt)
+    for i, refID in enumerate(refIDs):
+        kws=reg.loadRef(refID)['intermitter']
+        z = get_EEB_poly1d(dt=dt, **kws)
         for col, species in zip(cols, species_list):
             ss = []
             EEBs = []

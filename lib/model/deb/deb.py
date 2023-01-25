@@ -666,12 +666,20 @@ def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
     d = deb.return_dict()
     return d
 
+def get_best_EEB(deb, cRef):
+    z = np.poly1d(cRef['EEB_poly1d'])
+    if type(deb) == dict:
+        s = deb['feed_freq_estimate']
+    else:
+        s = deb.fr_feed
+    return np.clip(z(s), a_min=0, a_max=1)
 
-def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=False, model_id=None, save_dict=True,
+
+def deb_sim(refID, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=False, model_id=None, save_dict=True,
             **kwargs):
-    from lib.model.modules.intermitter import OfflineIntermitter, get_best_EEB
-    sample = reg.loadConf(id=sample, conftype='Ref')
-    kws2 = sample['intermitter']
+    from lib.model.modules.intermitter import OfflineIntermitter
+    cRef = reg.retrieveRef(refID)
+    kws2 = cRef['intermitter']
     if dt is None:
         dt = kws2['dt']
     else:
@@ -682,7 +690,7 @@ def deb_sim(sample, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fal
     steps_per_day = np.round(24 * 60 * 60 / deb_dt).astype(int)
     deb = DEB(id=id, assimilation_mode='gut', save_dict=save_dict, **kwargs)
     if EEB is None:
-        EEB = get_best_EEB(deb, sample)
+        EEB = get_best_EEB(deb, cRef)
     deb.set_steps_per_day(steps_per_day=steps_per_day)
     deb.base_hunger = EEB
     Nticks = np.round(deb_dt / dt).astype(int)

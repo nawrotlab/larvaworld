@@ -700,10 +700,10 @@ def scale_to_length(s, e, c=None, pars=None, keys=None):
         else:
             raise ValueError('No parameter names or keys provided.')
     s_pars = [p for p in pars if p in s.columns]
-    ids = s.index.get_level_values('AgentID').values
-    ls = l.loc[ids].values
-    if len(s_pars) > 0:
 
+    if len(s_pars) > 0:
+        ids = s.index.get_level_values('AgentID').values
+        ls = l.loc[ids].values
         s[nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
     e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
