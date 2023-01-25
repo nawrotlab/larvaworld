@@ -3,7 +3,7 @@
 from lib import reg, aux
 
 def entry(ID, name=None, **kwargs):
-    return reg.graphs.entry(ID, name=name, args=kwargs)
+    return reg.graphs.entry(ID, name=name, **kwargs)
 
 analysis_dict = aux.AttrDict({
     'tactile': [

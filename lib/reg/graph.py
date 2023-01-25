@@ -8,6 +8,10 @@ class GraphRegistry:
     def __init__(self):
         self.dict = reg.funcs.graphs
 
+    @property
+    def ks(self):
+        return list(self.dict.keys())
+
     def get(self, f):
         if isinstance(f, str):
             if f in self.dict.keys():
@@ -50,9 +54,13 @@ class GraphRegistry:
 
         return ds
 
+    def run(self, ID, **kwargs):
+        func = self.get(ID)
+        return func(**kwargs)
 
-    def entry(self, ID, name=None, args={}):
+    def entry(self, ID, name=None, **kwargs):
         assert self.get(ID)
+        args=kwargs
         if name is not None:
             args['name']=name
             key=name
@@ -108,17 +116,17 @@ class GraphRegistry:
         gID = f"locomotion relative to source {source_ID}"
         d0 = []
         for ref_angle, name in zip([None, 270], [f'bearing to {source_ID}', 'bearing to 270deg']):
-            entry=self.entry('bearing/turn', name=name, args={"min_angle":5.0, "ref_angle":ref_angle, "source_ID":source_ID, **kwargs} )
+            entry=self.entry('bearing/turn', name=name, **{"min_angle":5.0, "ref_angle":ref_angle, "source_ID":source_ID, **kwargs} )
             d0.append(entry)
 
         for p in [nam.bearing2(source_ID), nam.dst2(source_ID), nam.scal(nam.dst2(source_ID))] :
-            d0.append(self.entry('timeplot', name=p, args={"pars":[p], **kwargs}))
+            d0.append(self.entry('timeplot', name=p, **{"pars":[p], **kwargs}))
 
         for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
             for dur in [0.0, 0.5, 1.0]:
                 name = f'{chunk}_bearing2_{source_ID}_min_{dur}_sec'
                 d0.append(
-                    self.entry('bearing to source/epoch', name=name, args={
+                    self.entry('bearing to source/epoch', name=name, **{
                         "min_dur" : dur, "chunk" : chunk, "source_ID":source_ID, **kwargs}))
         return aux.AttrDict({gID: d0})
 

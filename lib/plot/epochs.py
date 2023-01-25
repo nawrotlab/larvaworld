@@ -53,11 +53,12 @@ def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits=
 
 
 @reg.funcs.graph('epochs')
-def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
-    if not turns:
-        name = f'runsNpauses{plot_fits}'
-    else:
-        name = f'turn_epochs{plot_fits}'
+def plot_bouts(name=None, plot_fits='', turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
+    if name is None :
+        if not turns:
+            name = f'runsNpauses{plot_fits}'
+        else:
+            name = f'turn_epochs{plot_fits}'
     P = plot.AutoPlot(name=name,build_kws={'Ncols': 2, 'sharey': True, 'wh' : 5}, **kwargs)
     valid_labs = {}
     for j, d in enumerate(P.datasets):
@@ -104,16 +105,17 @@ def plot_bouts(plot_fits='', turns=False, stridechain_duration=False, legend_out
     return P.get()
 
 @reg.funcs.graph('runs & pauses')
-def plot_stridesNpauses(stridechain_duration=False, time_unit='sec',
+def plot_stridesNpauses(name=None, stridechain_duration=False, time_unit='sec',
                         plot_fits='all', range='default', print_fits=False, only_fit_one=True, mode='cdf',
                         subfolder='bouts', refit_distros=False, test_detection=False, **kwargs):
     warnings.filterwarnings('ignore')
-    nn = f'stridesNpauses_{mode}_{range}_{plot_fits}'
-    name = nn if not only_fit_one else f'{nn}_0'
-    P = plot.AutoPlot(name=name, subfolder=subfolder, Ncols=2, figsize=(10, 5), sharey=True, **kwargs)
+    if name is None:
+        nn = f'stridesNpauses_{mode}_{range}_{plot_fits}'
+        name = nn if not only_fit_one else f'{nn}_0'
+    P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Ncols': 2, 'sharey': True, 'wh' : 5}, **kwargs)
     pause_par = nam.dur('pause')
     if stridechain_duration:
-        chain_par = nam.dur('exec')  # nam.dur(nam.chain('stride'))
+        chain_par = nam.dur('exec')
         chn_discr = False
         chain_xlabel = f'time $({time_unit})$'
         chn0 = 0.5

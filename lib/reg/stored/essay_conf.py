@@ -233,7 +233,7 @@ class RvsS_Essay(Essay):
                 plotID = 'food intake (timeplot)'
             else:
                 raise
-            entry = G.entry(ID=plotID, name=exp, args=aux.AttrDict(kws))
+            entry = G.entry(ID=plotID, name=exp, **aux.AttrDict(kws))
             entrylist.append(entry)
         return entrylist
 
@@ -244,7 +244,7 @@ class RvsS_Essay(Essay):
                   'show': self.show}
 
         entry = self.G.entry('RvsS summary',
-                             args={'entrylist': self.entrylist, 'title': f'ROVERS VS SITTERS ESSAY (N={self.N})',
+                             **{'entrylist': self.entrylist, 'title': f'ROVERS VS SITTERS ESSAY (N={self.N})',
                                    'mdiff_df': self.mdiff_df})
         self.figs.update(self.G.eval0(entry, **kwargs))
         self.figs.update(self.G.eval(self.entrylist, **kwargs))
@@ -450,10 +450,10 @@ class DoublePatch_Essay(Essay):
             'mdiff_df': self.mdiff_df
         }
         # entry = self.G.entry('double-patch summary', args={})
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', name='fig1',
-                                                         args={'name':f'{self.mode}_fig1','ks':None}), **kwargs))
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary', name='fig2',
-                                                         args={'name':f'{self.mode}_fig2',
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',
+                                                         **{'name':f'{self.mode}_fig1','ks':None}), **kwargs))
+        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',
+                                                         **{'name':f'{self.mode}_fig2',
                                                                'ks':['tur_tr', 'tur_N_mu', 'pau_tr','cum_d', 'f_am', 'on_food_tr']}), **kwargs))
 
     def analyze(self, exp, ds0):
@@ -663,7 +663,7 @@ class Chemotaxis_Essay(Essay):
             'show': self.show,
             'title': f'CHEMOTAXIS ESSAY (N={self.N})',
         }
-        entry = self.G.entry('chemotaxis summary', args={'mdiff_df': self.mdiff_df})
+        entry = self.G.entry('chemotaxis summary', **{'mdiff_df': self.mdiff_df})
         self.figs.update(self.G.eval0(entry, **kwargs))
 
 

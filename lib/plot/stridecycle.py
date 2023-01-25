@@ -187,7 +187,8 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
 @reg.funcs.graph('stride cycle multi')
 def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
                             axx=None, **kwargs):
-
+    if name is None:
+        name = 'stride cycle multi'
     P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
                  **kwargs)
 

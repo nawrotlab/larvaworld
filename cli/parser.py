@@ -165,7 +165,7 @@ def get_parser(sim_mode, parser=None):
         'Eval': [['Eval'], ['hide']],
         'Exp': [['sim_params', 'visualization'], ['e', 'N', 'ms', 'a']],
         'Ga': [['sim_params', 'ga_select_kws'], ['e', 'mID0', 'mID1', 'offline', 'hide']],
-        'Rep': [['Replay'], []]
+        'Replay': [['Replay'], []]
     })
     mks, ks = dic[sim_mode]
 

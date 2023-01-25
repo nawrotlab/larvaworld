@@ -23,7 +23,7 @@ def dic_loader(self, attr):
         # k=alias(attr,inverse=True)
         # path=preg.datapath(k,self.dir)
         d = dNl.load_dict(self.datapath(attr))
-        print('Loaded')
+        # print('Loaded')
         if d is not None:
             setattr(self, attr, d)
             return d

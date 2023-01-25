@@ -20,7 +20,7 @@ plt.rcParams.update(plt_conf)
 
 
 class BasePlot:
-    def __init__(self, name, save_to='.', save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),verbose=1,
+    def __init__(self, name, save_to=None, save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),verbose=1,
                  subplot_kw={}, build_kws={},
                  **kwargs):
         self.filename = f'{name}.{suf}' if save_as is None else f'{save_as}.{suf}'
