@@ -374,8 +374,8 @@ def buildInitDict():
 
         d = aux.AttrDict({
             'Essay': {
-                'essay_ID': pID('essay'),
-                'path': pPath('essay'),
+                # 'essay_ID': pID('essay'),
+                # 'path': pPath('essay'),
                 'N': {'dtype': int, 'lim': (1, 100), 'disp': '# larvae',
                       'h': 'The number of larvae per larva-group.'}
             },
@@ -511,6 +511,7 @@ def buildInitDict():
                            'h': 'Filename for the saved video/image. File extension mp4/png sutomatically added.',
                            'k': 'media'},
             'show_display': {'dtype': bool, 'v': True, 'h': 'Hide display', 'k': 'hide'},
+            'intro_text': {'dtype': bool, 'v': False, 'h': 'Display an introductory screen before launching the simulation'},
         }
         d['draw'] = {
             'draw_head': {'dtype': bool, 'v': False, 'h': 'Draw the larva head'},
@@ -520,6 +521,7 @@ def buildInitDict():
             'draw_sensors': {'dtype': bool, 'v': False, 'h': 'Draw the larva sensors'},
             'trails': {'dtype': bool, 'v': False, 'h': 'Draw the larva trajectories'},
             'trajectory_dt': {'lim': (0.0, 100.0), 'h': 'Duration of the drawn trajectories'},
+            'odor_aura': {'dtype': bool, 'v': False, 'h': 'Draw the aura around odor sources'},
         }
         d['color'] = {
             'black_background': {'dtype': bool, 'v': False, 'h': 'Set the background color to black'},

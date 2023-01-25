@@ -27,7 +27,7 @@ class ScreenManager:
 
 
 
-    def build(self,show_conf_text=False,background_motion=None, traj_color=None,odor_aura = False, allow_clicks=True, **kwargs):
+    def build(self,background_motion=None, traj_color=None,allow_clicks=True, **kwargs):
         self.s = self.model.scaling_factor
 
         self.image_mode = self.vis_kwargs.render.image_mode
@@ -41,7 +41,6 @@ class ScreenManager:
         self.selected_type = ''
 
 
-        self.odor_aura = odor_aura
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
 
@@ -62,7 +61,6 @@ class ScreenManager:
         self.odorscape_counter = 0
 
 
-        self.show_conf_text = show_conf_text
 
         self.bg = self.background_motion
         self.v = None
@@ -265,7 +263,7 @@ class ScreenManager:
         return v
 
     def display_configuration(self, screen):
-        if self.show_conf_text:
+        if self.intro_text:
             box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                            text=self.model.configuration_text,
                            color_active=pygame.Color('white'),
