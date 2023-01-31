@@ -197,7 +197,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
     temp = f'track_{slice[0]}-{slice[1]}' if slice is not None else f'track'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
     P = plot.AutoPlot(name=name, subfolder=subfolder,
-                 build_kws={'Nrows': 'Ndatasets', 'Ncols': 1, 'w': 20, 'h': 5, 'mode': 'both'} ** kwargs)
+                 build_kws={'Nrows': 'Ndatasets', 'Ncols': 1, 'w': 20, 'h': 5, 'mode': 'both'}, ** kwargs)
 
     trange = np.arange(0, a.shape[0] * dt, dt)
 

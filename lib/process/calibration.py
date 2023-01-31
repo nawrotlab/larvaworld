@@ -114,8 +114,8 @@ def comp_segmentation(d):
 
     if not set(avels).issubset(s.columns.values):
         from lib.process.angular import comp_angles, comp_angular
-        comp_angles(s, e, c, mode='full')
-        comp_angular(s, e, c, mode='full')
+        comp_angles(s, c.Npoints)
+        comp_angular(s, c.dt,c.Npoints, mode='full')
     if not set(avels).issubset(s.columns.values):
         raise ValueError('Spineangle angular velocities do not exist in step')
 

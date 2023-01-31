@@ -89,11 +89,10 @@ def comp_spatial(s, e, c, mode='minimal'):
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, id in enumerate(c.agent_ids):
-            v, d = aux.compute_velocity(xy=s[xy].xs(id, level='AgentID').values, dt=c.dt, return_dst=True)
-            D[:, i] = d
-            Dcum[:, i] = np.nancumsum(d)
-            V[:, i] = v
-            A[1:, i] = np.diff(v) / c.dt
+            D[:, i] = aux.eudist(s[xy].xs(id, level='AgentID').values)
+            Dcum[:, i] = np.nancumsum(D[:, i])
+            V[:, i] = D[:, i]/c.dt
+            A[1:, i] = np.diff(V[:, i]) / c.dt
         s[dst] = D.flatten()
         s[cum_dst] = Dcum.flatten()
         s[vel] = V.flatten()
@@ -104,12 +103,13 @@ def comp_spatial(s, e, c, mode='minimal'):
     scale_to_length(s, e, c, pars=pars)
     print('All spatial parameters computed')
 
-
-def comp_length(s, e, c, mode='minimal', recompute=False):
+@reg.funcs.proc("length")
+def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
         print('Length is already computed. If you want to recompute it, set recompute_length to True')
         return
-    N = c.Npoints
+    if N is None :
+        N = c.Npoints
     points = nam.midline(N, type='point')
     xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
@@ -139,7 +139,7 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
     e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
     print('All lengths computed.')
 
-
+@reg.funcs.proc("centroid")
 def comp_centroid(s, c, recompute=False):
     if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
         print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
@@ -241,7 +241,10 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwarg
 
         s0 = int(t0 / c.dt)
         s1 = int(t1 / c.dt)
-        AA = aux.dsp_single(xy0, s0, s1)
+        xy = xy0.loc[(slice(s0, s1), slice(None)), ['x', 'y']]
+
+
+        AA = aux.apply_per_level(xy, aux.compute_dispersal_solo)
         Nt=AA.shape[0]
         AA0 = np.zeros([c.Nticks, c.N]) * np.nan
         AA0[s0:s0 + Nt, :] = AA
@@ -358,6 +361,10 @@ def tortuosity(xy):
 
 
 def straightness_index(xy, w, match_shape=True):
+    try:
+        xy=xy.values
+    except :
+        pass
     # Compute tortuosity over intervals of duration w
     xys = rolling_window_xy(xy, w)
     k0, k1 = xy.shape[0], xys.shape[0]
@@ -382,18 +389,10 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         s = ss
     else:
         ss = s[['x', 'y']]
-    Nticks = len(s.index.unique('Step'))
-    ids = s.index.unique('AgentID').values
-    Nids = len(ids)
     pars = [reg.getPar(f'tor{dur}') for dur in tor_durs]
     for dur, p in zip(tor_durs, pars):
         r = int(dur / dt / 2)
-        T = np.zeros([Nticks, Nids]) * np.nan
-        for j, id in enumerate(ids):
-            xy = ss.xs(id, level='AgentID').values
-            T[:, j] = straightness_index(xy, r)
-        s[p] = T.flatten()
-
+        s[p] = aux.apply_per_level(ss, straightness_index, w=r).flatten()
         if e is not None:
             e[nam.mean(p)] = s[p].groupby('AgentID').mean()
             e[nam.std(p)] = s[p].groupby('AgentID').std()
@@ -401,7 +400,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
     if store:
         dic = aux.get_distros(s, pars=pars)
-        aux.storeH5(dic, key=None, path=reg.datapath('distro', c.dir))
+        aux.storeH5(dic, path=reg.datapath('distro', c.dir))
 
 @reg.funcs.proc("source")
 def comp_source_metrics(s, e, c, **kwargs):
@@ -451,6 +450,7 @@ def comp_wind_metrics(s, e, c, **kwargs):
         wo, wv = w.wind_direction, w.wind_speed
         woo = np.deg2rad(wo)
         ids = s.index.unique('AgentID').values
+
         for id in ids:
             xy = s[['x', 'y']].xs(id, level='AgentID', drop_level=True).values
             origin = e[[nam.initial('x'), nam.initial('y')]].loc[id]
@@ -534,7 +534,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
             ss[y] = ss[y].values-ys
 
         if store:
-            aux.storeH5(df= ss, key=mode, path=reg.datapath('traj', c.dir))
+            aux.storeH5(ss, key=mode, path=reg.datapath('traj', c.dir))
 
             print(f'traj_aligned2{mode} stored')
         return ss

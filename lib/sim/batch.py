@@ -138,7 +138,7 @@ class BatchRun(ap.Experiment):
             # self.par_df[p] = [self.datasets[i][0].endpoint_data[p].mean() for i in self.par_df.index]
         self.plot_results()
         # self.par_df.to_csv(os.path.join(self.data_dir, 'results.csv'), index=True, header=True)
-        aux.storeH5(df=self.par_df, key='results', path=self.df_path, mode='w')
+        aux.storeH5(self.par_df, key='results', path=self.df_path, mode='w')
         return self.par_df, self.figs
 
     def plot_results(self):

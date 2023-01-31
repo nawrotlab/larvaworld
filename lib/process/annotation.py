@@ -165,7 +165,7 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None, return_extr
 
     """
     if fr is None:
-        fr = aux.sim.fft_max(a, dt, fr_range=(1, 2.5))
+        fr = aux.fft_max(a, dt, fr_range=(1, 2.5))
     tmin = stretch[0] // (fr * dt)
     tmax = stretch[1] // (fr * dt)
     i_min = find_peaks(-a, height=-3 * vel_thr, distance=tmin)[0]

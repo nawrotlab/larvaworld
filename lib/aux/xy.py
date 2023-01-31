@@ -100,7 +100,10 @@ def generate_xyNor_distro(d):
 
 
 
-
+def eudist(xy) :
+    A= np.sqrt(np.nansum(np.diff(xy, axis=0)**2, axis=1))
+    A = np.insert(A, 0, 0)
+    return A
 
 def eudi5x(a, b):
     return np.sqrt(np.sum((a - np.array(b)) ** 2, axis=1))
@@ -111,24 +114,7 @@ def xy_projection(point, angle: float, distance: float):
         point[1] + math.sin(angle) * distance]
 
 
-def raw_or_filtered_xy(s, points):
-    r = nam.xy(points, flat=True)
-    f = nam.filt(r)
-    if all(i in s.columns for i in f):
-        return f
-    elif all(i in s.columns for i in r):
-        return r
-    else:
-        print('No xy coordinates exist. Not computing spatial metrics')
-        return
 
-def comp_dst(s,c,point):
-    xy_params = raw_or_filtered_xy(s, point)
-    D = np.zeros([c.Nticks, c.N])
-    for i, id in enumerate(c.agent_ids):
-        xy=s[xy_params].xs(id, level='AgentID').values
-        D[1:, i] = np.sqrt(np.diff(xy[:, 0]) ** 2 + np.diff(xy[:, 1]) ** 2)
-    s[nam.dst(point)] = D.flatten()
 
 
 def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
@@ -189,39 +175,37 @@ def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     drads[drads > 180] -= 360
     return drads if in_deg else np.deg2rad(rads)
 
-def dsp_single(xy0, s0, s1):
-
-
-    xy = xy0.loc[(slice(s0, s1), slice(None)), ['x', 'y']]
-    ids = xy.index.unique('AgentID').values
-    Nids = len(ids)
-    Nt = xy.index.unique('Step').size
-    AA = np.zeros([Nt, Nids]) * np.nan
-    fails=0
-    for i, id in (enumerate(ids)):
-        xy_i = xy.xs(id, level='AgentID')
-        try:
-            AA[:, i] = eudi5x(xy_i.values, xy_i.dropna().values[0])
-        except:
-            fails+=1
-            pass
-    # print(f'In {fails} out of {Nids} tracks failed to set origin point')
-
-
-    return AA
-
-
-def compute_velocity(xy, dt, return_dst=False):
-    dx = np.diff(xy[:, 0])
-    dy = np.diff(xy[:, 1])
-    d = np.sqrt(dx ** 2 + dy ** 2)
-    v = d / dt
-    v = np.insert(v, 0, np.nan)
-    d = np.insert(d, 0, np.nan)
-    if return_dst:
-        return v, d
+def compute_dispersal_solo(xy):
+    if isinstance(xy, pd.DataFrame):
+        xy_valid =xy.dropna().values
+        xy = xy.values
+    else :
+        xy_valid=xy[~np.isnan(xy)]
+    if xy_valid.shape[0]>1 :
+        return eudi5x(xy, xy_valid[0])
     else:
-        return v
+        return np.zeros(xy.shape[0]) * np.nan
+
+def raw_or_filtered_xy(s, points):
+    r = nam.xy(points, flat=True)
+    f = nam.filt(r)
+    if all(i in s.columns for i in f):
+        return f
+    elif all(i in s.columns for i in r):
+        return r
+    else:
+        print('No xy coordinates exist. Not computing spatial metrics')
+        return
+
+def comp_dst(s,c,point):
+    xy_params = raw_or_filtered_xy(s, point)
+    D = np.zeros([c.Nticks, c.N])
+    for i, id in enumerate(c.agent_ids):
+        D[:, i] = eudist(s[xy_params].xs(id, level='AgentID').values)
+    s[nam.dst(point)] = D.flatten()
+
+
+
 
 
 def compute_component_velocity(xy, angles, dt, return_dst=False):
@@ -405,3 +389,28 @@ def body_contour2(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
     ps=[Point(start)] + ps1 + [Point(stop)] + ps2
     pol=Polygon([[p.x,p.y] for p in ps])
     return pol
+
+
+def apply_per_level(s, func, level='AgentID', **kwargs):
+    '''
+    Apply a function to each subdataframe of a dataframe after grouping by level
+
+    Args:
+        s: MultiIndex Dataframe with levels : ['Step', 'AgentID']
+        func:function to apply on each subdataframe
+
+    Returns:
+        A : Array of dimensions [Nticks, Nids]
+    '''
+
+    ids = s.index.unique('AgentID').values
+    N = s.index.unique('Step').size
+    A = np.zeros([N, len(ids)]) * np.nan
+
+    for i, (v, ss) in enumerate(s.groupby(level=level)):
+        ss = ss.droplevel(level)
+        if level=='AgentID' :
+            A[:, i] = func(ss, **kwargs)
+        elif level=='Step' :
+            A[i, :] = func(ss, **kwargs)
+    return A

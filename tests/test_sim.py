@@ -83,6 +83,6 @@ def xtest_batch_run() :
     for exp in ['PItest_off'] :
         conf=reg.expandConf('Batch', exp)
         # conf.sim_params.duration=1
-        batch_run = sim.BatchRun(batch_id=f'test_{exp}',batch_type=exp,**conf)
+        batch_run = sim.BatchRun(id=f'test_{exp}',batch_type=exp,**conf)
         batch_run.simulate()
 

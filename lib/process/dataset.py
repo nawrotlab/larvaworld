@@ -170,7 +170,7 @@ class _LarvaDataset:
     def storeH5(self, df, key, filepath_key=None, mode=None):
         if filepath_key is None :
             filepath_key=key
-        aux.storeH5(df=df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
+        aux.storeH5(df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
 
     def read(self, key=None,file=None):
         filepath_key = file

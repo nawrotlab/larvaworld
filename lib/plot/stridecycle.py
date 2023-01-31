@@ -200,7 +200,6 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
 
     from lib.process.annotation import stride_interp
     from lib.process.annotation import detect_strides
-    from lib.aux.xy import compute_velocity
     l, sv, fv, fov = reg.getPar(['l', 'sv', 'fv', 'fov'])
 
 
@@ -241,7 +240,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
         ymax = 0.7
         for p, col in zip(points, pointcols):
             v_p = nam.vel(p)
-            a = ss[v_p] if v_p in ss.columns else compute_velocity(ss[nam.xy(p)].values, dt=c.dt)
+            a = ss[v_p] if v_p in ss.columns else aux.eudist(ss[nam.xy(p)].values)/c.dt
             a = a / ee[l]
             aa = np.zeros([len(strides), Nbins])
             for ii, (s0, s1) in enumerate(strides):

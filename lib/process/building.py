@@ -223,88 +223,52 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
     temp_step_path = f'{pref}_step.csv'
     temp_length_path = f'{pref}_length.csv'
 
+    def df_from_csvs(pref, Npoints, Ncontour=0):
+        kws = {'header': None, 'sep': '\t'}
 
-
-
-    def temp_build(d, pref):
-        # fr = d.fr
-        # x_pars = [x for x, y in d.points_xy]
-        # y_pars = [y for x, y in d.points_xy]
-        # xc_pars = [x for x, y in d.contour_xy]
-        # yc_pars = [y for x, y in d.contour_xy]
-        x_pars = [x for x, y in d.midline_xy]
-        y_pars = [y for x, y in d.midline_xy]
-        columns = x_pars + y_pars
-        xy_pars = nam.xy(d.points, flat=True)
-
-        print(f'*---- Buiding temporary data files for dataset {d.id} of group {d.group_id}!-----')
-        xs = pd.read_csv(f'{pref}_x_spine.txt', header=None, sep='\t', names=x_pars)
-        ys = pd.read_csv(f'{pref}_y_spine.txt', header=None, sep='\t', names=y_pars)
-        ts = pd.read_csv(f'{pref}_t.txt', header=None, sep='\t', names=['Step'])
-        ids = pd.read_csv(f'{pref}_larvaid.txt', header=None, sep='\t', names=['AgentID'])
+        midline_xy = aux.nam.midline_xy(Npoints, flat=False)
+        xs = pd.read_csv(f'{pref}_x_spine.txt', names=[x for x, y in midline_xy], **kws)
+        ys = pd.read_csv(f'{pref}_y_spine.txt', names=[y for x, y in midline_xy], **kws)
+        ts = pd.read_csv(f'{pref}_t.txt', names=['Step'], **kws)
+        ids = pd.read_csv(f'{pref}_larvaid.txt', names=['AgentID'], **kws)
         ids['AgentID'] = [f'Larva_{10000 + i[0]}' for i in ids.values]
         par_list = [ids, ts, xs, ys]
         try:
-            states = pd.read_csv(f'{pref}_state.txt', header=None, sep='\t', names=['state'])
+            states = pd.read_csv(f'{pref}_state.txt', names=['state'], **kws)
             par_list.append(states)
-            columns.append('state')
-
         except:
             states = None
 
-        if d.Ncontour > 0:
-            try :
-                xc_pars = [x for x, y in d.contour_xy]
-                yc_pars = [y for x, y in d.contour_xy]
-
-                xcs = pd.read_csv(f'{pref}_x_contour.txt', header=None, sep='\t')
-                ycs = pd.read_csv(f'{pref}_y_contour.txt', header=None, sep='\t')
-                xcs, ycs = aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
-                xcs = pd.DataFrame(xcs, columns=xc_pars, index=None)
-                ycs = pd.DataFrame(ycs, columns=yc_pars, index=None)
+        if Ncontour > 0:
+            try:
+                contour_xy = aux.nam.contour_xy(Ncontour, flat=False)
+                xcs = pd.read_csv(f'{pref}_x_contour.txt', **kws)
+                ycs = pd.read_csv(f'{pref}_y_contour.txt', **kws)
+                xcs, ycs = aux.convex_hull(xs=xcs.values, ys=ycs.values, N=Ncontour)
+                xcs = pd.DataFrame(xcs, columns=[x for x, y in contour_xy], index=None)
+                ycs = pd.DataFrame(ycs, columns=[y for x, y in contour_xy], index=None)
                 par_list += [xcs, ycs]
-                columns = columns + xc_pars + yc_pars
-            except :
+            except:
                 pass
 
-        min_t, max_t = float(ts.min()), float(ts.max())
-        step = pd.concat(par_list, axis=1, sort=False)
-        step.set_index(keys=['AgentID'], inplace=True, drop=True)
-        step['spinelength'] = np.nan
-        agent_ids = np.sort(step.index.unique())
+        df = pd.concat(par_list, axis=1, sort=False)
+        # df.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
+        df.set_index(keys=['AgentID'], inplace=True, drop=True)
+        return df
 
-        durs = []
-        starts = []
-        stops = []
-        ls = []
-        for id in agent_ids:
-            data = step.loc[id]
-            t = data['Step'].values
-            t0 = int((t[0] - min_t) * d.fr)
-            t1 = t0 + len(t)
-            t = np.arange(t0, t1)
-            step.loc[id, 'Step'] = t
-            durs.append(len(t))
-            starts.append(t0)
-            stops.append(t1)
+    def temp_build(step, fr):
+        min_t = step['Step'].min()
 
-            xy = data[xy_pars].values
-            spinelength = np.zeros(len(data)) * np.nan
-            for j in range(xy.shape[0]):
-                k = np.sum(np.diff(np.array(aux.group_list_by_n(xy[j, :], 2)), axis=0) ** 2, axis=1).T
-                if not np.isnan(np.sum(k)):
-                    spinelength[j] = np.sum([np.sqrt(kk) for kk in k])
-                # else:
-                #     sp_l = np.nan
-                # spinelength[j] = sp_l
-            step['spinelength'].loc[id] = spinelength
-            ls.append(np.nanmean(spinelength))
+        for id in np.sort(step.index.unique()):
+            t = step['Step'].loc[id].values
+            t0 = int((t[0] - min_t) * fr)
+            step.loc[id, 'Step'] = np.arange(t0, t0 + len(t))
+
         step['Step'] = step['Step'].values.astype(int)
-        e = pd.DataFrame({'length': ls}, index=agent_ids)
         step.reset_index(drop=False, inplace=True)
         step.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-        temp_save(step, e)
-        return step, e, columns
+
+        return step
 
 
     def temp_save(step, length):
@@ -366,7 +330,14 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         temp, e, columns = temp_load()
         print('**--- Loaded temporary data successfully!----- ')
     except:
-        temp, e, columns = temp_build(d, pref)
+        print(f'*---- Buiding temporary data files for dataset {d.id} of group {d.group_id}!-----')
+        df=df_from_csvs(pref, Npoints=d.Npoints, Ncontour=d.Ncontour)
+        e = pd.DataFrame({}, index=df.index.unique('AgentID').values)
+        reg.funcs.processing['length'](df, e, N=11)
+
+        columns=df.columns.values[1:]
+        temp = temp_build(df,fr = d.fr)
+        temp_save(temp, e)
 
     if match_ids :
         temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
@@ -548,15 +519,15 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'id': id,
         'metric_definition': g.enrichment.metric_definition,
         'larva_groups': reg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs={},age=0.0),
-        'env_params': reg.get_null('Env', arena=g.tracker.arena),
-        **g.tracker.resolution
+        'env_params': reg.get_null('Env', arena=g.Tracker.arena),
+        **g.Tracker.resolution
     }
     # print(conf)
     from lib.process.dataset import LarvaDataset
     d = LarvaDataset(**conf)
     kws0 = {
         'dataset': d,
-        'build_conf': g.tracker.filesystem,
+        'build_conf': g.Tracker.filesystem,
         **kwargs
     }
 

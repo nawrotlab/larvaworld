@@ -2,7 +2,7 @@ import numpy as np
 
 from lib import aux
 
-def test_angle() :
+def test_angular_funcs() :
     p1 = (-1, -1)
     pmid = (0, 0)
     p2 = (-1, 1)

@@ -329,7 +329,8 @@ def plot_navigation_index(subfolder='source', **kwargs):
         vys = []
         for id in d.agent_ids:
             s0 = s.xs(id, level='AgentID').values
-            v0 = aux.compute_velocity(s0, dt=dt)
+            v0 = aux.eudist(s0)/dt
+            # v0 = aux.compute_velocity(s0, dt=dt)
             vx = aux.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
             vy = aux.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
             vx = np.divide(vx, v0, out=np.zeros_like(v0), where=v0 != 0)

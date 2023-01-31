@@ -24,12 +24,12 @@ def test_import_Schleyer() :
 
     # Single dish case
     kws2 = {
-        'parent_dir': 'exploration/dish02',
+        'parent_dir': 'exploration/dish03',
         'merged': False,
         'N': None,
         'min_duration_in_sec': 90,
-        'id': f'dish02',
-        'refID': f'exploration.dish02',
+        'id': f'dish03',
+        'refID': f'exploration.dish03',
         **kws0
     }
 
@@ -39,7 +39,7 @@ def test_import_Schleyer() :
         assert isinstance(d, LarvaDataset)
 
 
-def ctest_import_Jovanic() :
+def test_import_Jovanic() :
     kws0 = {
         'datagroup_id': 'Jovanic lab',
         # 'group_id': 'exploration',
@@ -63,9 +63,17 @@ def ctest_import_Jovanic() :
         **kws0
     }
 
+    kws2 = {
+        'parent_dir': 'Refeeding/AttP2',
+        'source_ids': ['Fed', 'Refed', 'Starved'],
+        'refIDs': ['AttP2.Fed', 'AttP2.Refed', 'AttP2.Starved'],
+        'colors':['green', 'lightblue', 'red'],
+        'time_slice':(0,60),
+        **kws0
+    }
 
 
-    for kws in [kws1] :
+    for kws in [kws2] :
         ds = import_datasets(**kws)
         for d in ds :
             assert isinstance(d, LarvaDataset)

@@ -30,7 +30,7 @@ class BatchTab(gui_aux.GuiTab):
         return self.datalists[self.k_stored]
 
     def update(self, w, c, conf, id):
-        w.Element(self.batch_id_key).Update(value=f'{id}_{lib.reg.next_idx(id=id, conftype="Batch")}')
+        w.Element(self.batch_id_key).Update(value=f'{id}_{reg.next_idx(id=id, conftype="Batch")}')
         for n in ['optimization', 'space_search']:
             c[n].update(w, conf[n])
         self.DL1.add(w, stored_trajs(id), replace=True)

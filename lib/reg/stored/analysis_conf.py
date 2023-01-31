@@ -2,6 +2,7 @@
 
 from lib import reg, aux
 
+
 def entry(ID, name=None, **kwargs):
     return reg.graphs.entry(ID, name=name, **kwargs)
 
@@ -88,7 +89,7 @@ entry('autoplot', ks=['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C', 'A_therm'], show
     ],
     'endpoint': [
 
-entry('boxplot (simple)', ks=['l', 'str_N', 'dsp_0_60_max', 'run_tr', 'fv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
+entry('boxplot (simple)', ks=['l', 'str_N', 'dsp_0_40_max', 'run_tr', 'fv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
                 'tor20_mu', 'tor20_std']),
 entry('boxplot (simple)', ks=['l', 'fv', 'v_mu', 'run_tr']),
         entry('crawl pars')
@@ -102,9 +103,9 @@ entry('boxplot (simple)', ks=['l', 'fv', 'v_mu', 'run_tr']),
     'dsp': [
 
         entry('dispersal', range=(0, 40)),
-        entry('dispersal', range=(0, 60)),
+        # entry('dispersal', range=(0, 60)),
         entry('dispersal summary', range=(0, 40)),
-        entry('dispersal summary', range=(0, 60)),
+        # entry('dispersal summary', range=(0, 60)),
     ],
     'general': [
         entry('ethogram', add_samples=False),
