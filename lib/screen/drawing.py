@@ -38,6 +38,7 @@ class ScreenManager:
         self.__dict__.update(self.vis_kwargs.aux)
         self.dynamic_graphs = []
         self.focus_mode = False
+        self.intro_text = False
         self.selected_type = ''
 
 

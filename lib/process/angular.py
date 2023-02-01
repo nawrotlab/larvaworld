@@ -189,20 +189,14 @@ def comp_angular(s, dt,Npoints, mode='minimal'):
     else :
         raise ValueError ('Not implemented')
 
-    def func(ss) :
-        if isinstance(ss, pd.Series) :
-            ss=ss.values
-        vel_i = np.diff(ss) / dt
-        return np.insert(vel_i, 0, np.nan)
-
     for p in pars:
         if p in s.columns :
             pvel=aux.nam.vel(p)
             avel=aux.nam.acc(p)
             if aux.nam.unwrap(p) in s.columns:
                 p = aux.nam.unwrap(p)
-            s[pvel] = aux.apply_per_level(s[p], func).flatten()
-            s[avel] = aux.apply_per_level(s[pvel], func).flatten()
+            s[pvel] = aux.apply_per_level(s[p], aux.rate, dt=dt).flatten()
+            s[avel] = aux.apply_per_level(s[pvel], aux.rate, dt=dt).flatten()
     print('All angular parameters computed')
 
 @reg.funcs.proc("angular")
@@ -227,9 +221,9 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
     print(f'Completed {mode} angular processing.')
 
 
-def ang_from_xy(x, y):
-    dx_dt = np.gradient(x)
-    dy_dt = np.gradient(y)
+def ang_from_xy(xy):
+    dx_dt = np.gradient(xy[:,0])
+    dy_dt = np.gradient(xy[:,1])
     velocity = np.array([[dx_dt[i], dy_dt[i]] for i in range(dx_dt.size)])
     ds_dt = np.sqrt(dx_dt * dx_dt + dy_dt * dy_dt)
     tangent = np.array([1 / ds_dt] * 2).transpose() * velocity
@@ -261,20 +255,16 @@ def ang_from_xy(x, y):
 
 
 def comp_ang_from_xy(s, e, dt):
+    N = s.index.unique('Step').size
     p = aux.nam.orient('front')
     p_vel, p_acc = aux.nam.vel(p), aux.nam.acc(p)
-    s[p_vel] = np.nan
-    s[p_acc] = np.nan
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
-    Nticks = len(s.index.unique('Step'))
-
-    V = np.zeros([Nticks, 1, Nids]) * np.nan
-    A = np.zeros([Nticks, 1, Nids]) * np.nan
+    V = np.zeros([N, 1, Nids]) * np.nan
+    A = np.zeros([N, 1, Nids]) * np.nan
     for j, id in enumerate(ids):
-        x = s["x"].xs(id, level='AgentID').values
-        y = s["y"].xs(id, level='AgentID').values
-        avel, aacc = ang_from_xy(x, y)
+        xy = s[["x", "y"]].xs(id, level='AgentID').values
+        avel, aacc = ang_from_xy(xy)
         V[:, 0, j] = avel / dt
         A[:, 0, j] = aacc / dt
     s[p_vel] = V[:, 0, :].flatten()
@@ -284,17 +274,18 @@ def comp_ang_from_xy(s, e, dt):
 
 
 def comp_extrema(s, dt, parameters, interval_in_sec, threshold_in_std=None, abs_threshold=None):
+    N = s.index.unique('Step').size
     if abs_threshold is None:
         abs_threshold = [+np.inf, -np.inf]
     order = np.round(interval_in_sec / dt).astype(int)
     ids = s.index.unique('AgentID').values
     Nids = len(ids)
     Npars = len(parameters)
-    Nticks = len(s.index.unique('Step'))
+    # Nticks = len(s.index.unique('Step'))
     t0 = s.index.unique('Step').min()
 
-    min_array = np.ones([Nticks, Npars, Nids]) * np.nan
-    max_array = np.ones([Nticks, Npars, Nids]) * np.nan
+    min_array = np.ones([N, Npars, Nids]) * np.nan
+    max_array = np.ones([N, Npars, Nids]) * np.nan
     for i, p in enumerate(parameters):
         p_min, p_max = aux.nam.min(p), aux.nam.max(p)
         s[p_min] = np.nan

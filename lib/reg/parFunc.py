@@ -138,11 +138,8 @@ def unwrap_func(par, in_deg):
 
 @funcs.param("dst")
 def dst_func(point=''):
-
     def func(d):
-        s, c = d.step_data, d.config
-        aux.comp_dst(s, c, point)
-
+        aux.compute_dst(d.step_data, point)
     return func
 
 @funcs.param("vel")

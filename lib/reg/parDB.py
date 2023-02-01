@@ -1619,7 +1619,8 @@ class ParamRegistry:
         if func_v is None:
             def func_v(d):
                 s, e, c = d.step_data, d.endpoint_data, d.config
-                s[d_v]=aux.comp_rate(s[b.d], c.dt)
+                s[d_v]=aux.apply_per_level(s[b.d], aux.rate, dt=c.dt).flatten()
+                # s[d_v]=aux.comp_rate(s[b.d], c.dt)
 
         self.add(
             **{'p': p_v, 'k': k_v, 'd': d_v, 'u': b.u / b_dt.u, 'sym': sym_v, 'disp': disp_v, 'required_ks': [k0],
@@ -1627,7 +1628,8 @@ class ParamRegistry:
 
         def func_a(d):
             s, e, c = d.step_data, d.endpoint_data, d.config
-            s[d_a]=aux.comp_rate(s[d_v], c.dt)
+            s[d_a] = aux.apply_per_level(s[d_v], aux.rate, dt=c.dt).flatten()
+            # s[d_a]=aux.comp_rate(s[d_v], c.dt)
 
         self.add(
             **{'p': p_a, 'k': k_a, 'd': d_a, 'u': b.u / b_dt.u ** 2, 'sym': sym_a, 'disp': disp_a, 'required_ks': [k_v],

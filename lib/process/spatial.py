@@ -61,6 +61,39 @@ def comp_linear(s, e, c, mode='minimal'):
     scale_to_length(s, e, c, pars=pars)
     print('All linear parameters computed')
 
+def comp_spatial2(s, e, c, mode='minimal'):
+    points = nam.midline(c.Npoints, type='point')
+    if mode == 'full':
+        print(f'Computing distances, velocities and accelerations for {len(points)} points')
+        points += ['centroid']
+    elif mode == 'minimal':
+        print(f'Computing distances, velocities and accelerations for a single spinepoint')
+        points = [c.point]
+    points += ['']
+    points = np.unique(points).tolist()
+
+
+    for p in points :
+        xy=nam.xy(p)
+        if set(xy).issubset(s.columns.values) :
+            dst=nam.dst(p)
+            vel=nam.vel(p)
+            s[dst] = aux.apply_per_level(s[xy], aux.eudist).flatten()
+            s[nam.cum(dst)] = aux.apply_per_level(s[dst], np.nancumsum).flatten()
+            s[vel] = s[dst]/c.dt
+            s[nam.acc(p)] = aux.apply_per_level(s[vel], aux.rate, dt=c.dt).flatten()
+            e[nam.cum(dst)] = s[nam.cum(dst)].values[-1, :]
+
+
+
+    dsts = nam.dst(points)
+    cum_dsts = nam.cum(dsts)
+    vels = nam.vel(points)
+    accs = nam.acc(points)
+
+    pars = aux.raw_or_filtered_xy(s, points) + dsts + cum_dsts + vels + accs
+    scale_to_length(s, e, c, pars=pars)
+    print('All spatial parameters computed')
 
 def comp_spatial(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')

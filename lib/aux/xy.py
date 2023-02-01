@@ -197,16 +197,6 @@ def raw_or_filtered_xy(s, points):
         print('No xy coordinates exist. Not computing spatial metrics')
         return
 
-def comp_dst(s,c,point):
-    xy_params = raw_or_filtered_xy(s, point)
-    D = np.zeros([c.Nticks, c.N])
-    for i, id in enumerate(c.agent_ids):
-        D[:, i] = eudist(s[xy_params].xs(id, level='AgentID').values)
-    s[nam.dst(point)] = D.flatten()
-
-
-
-
 
 def compute_component_velocity(xy, angles, dt, return_dst=False):
     x = xy[:, 0]
@@ -251,16 +241,7 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
     return minimum
 
 
-def comp_rate(ss,dt):
-    ids = ss.index.unique(level='AgentID').values
-    Nids = len(ids)
-    N = ss.index.unique('Step').size
 
-    V = np.zeros([N, Nids]) * np.nan
-    for i, id in enumerate(ids):
-        V[1:, i] = np.diff(ss.xs(id, level='AgentID').values) / dt
-
-    return V.flatten()
 
 
 def get_display_dims():
@@ -414,3 +395,25 @@ def apply_per_level(s, func, level='AgentID', **kwargs):
         elif level=='Step' :
             A[i, :] = func(ss, **kwargs)
     return A
+
+
+def rate(a, dt) :
+    if isinstance(a, pd.Series) :
+        a=a.values
+    v = np.diff(a) / dt
+    return np.insert(v, 0, np.nan)
+
+def eudist(xy) :
+    if isinstance(xy, pd.DataFrame):
+        xy = xy.values
+    A= np.sqrt(np.nansum(np.diff(xy, axis=0)**2, axis=1))
+    A = np.insert(A, 0, 0)
+    return A
+
+def eudi5x(a, b):
+    return np.sqrt(np.sum((a - np.array(b)) ** 2, axis=1))
+
+
+def compute_dst(s,point='') :
+    s[nam.dst(point)] = apply_per_level(s[nam.xy(point)], eudist).flatten()
+
