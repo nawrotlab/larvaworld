@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
-from shapely.geometry import LineString, Point, Polygon
+from shapely import geometry
 
 from lib import reg, aux
 from lib.model.deb.substrate import Substrate
@@ -44,28 +44,16 @@ class ValueGrid:
         self.max_value = max_value
 
     def add_value(self, p, value):
-        cell = self.get_grid_cell(p)
-        # print(p,cell)
-        v = self.add_cell_value(cell, value)
-        return v
+        return self.add_cell_value(self.get_grid_cell(p), value)
 
     def set_value(self, p, value):
-        cell = self.get_grid_cell(p)
-        self.set_cell_value(cell, value)
+        self.set_cell_value(self.get_grid_cell(p), value)
 
     def get_value(self, p):
-        cell = self.get_grid_cell(p)
-        return self.get_cell_value(cell)
+        return self.get_cell_value(self.get_grid_cell(p))
 
     def get_grid_cell(self, p):
-        # print(p)
-        # print(p/ self.xy)
-        # print(p/ self.xy+ self.XY_half)
-        c = np.floor(p / self.xy + self.XY_half).astype(int)
-        # print(c)
-        # raise
-        return tuple(c)
-        # return tuple(c)
+        return tuple(np.floor(p / self.xy + self.XY_half).astype(int))
 
     def get_cell_value(self, cell):
         return self.grid[cell]
@@ -97,11 +85,10 @@ class ValueGrid:
     def cell_vertices(self, i, j):
         x, y = self.x, self.y
         X, Y = self.X / 2, self.Y / 2
-        v = np.array([(x * (i - X), y * (j - Y)),
+        return np.array([(x * (i - X), y * (j - Y)),
                       (x * (i + 1 - X), y * (j - Y)),
                       (x * (i + 1 - X), y * (j + 1 - Y)),
                       (x * (i - X), y * (j + 1 - Y))])
-        return v
 
     def cel_pos(self, i, j):
         return self.x * (i - self.X / 2 + 0.5), self.y * (j - self.Y / 2 + 0.5)
@@ -115,7 +102,7 @@ class ValueGrid:
     def draw_peak(self, viewer):
         idx = np.unravel_index(self.grid.argmax(), self.grid.shape)
         p = self.cel_pos(*idx)
-        vs = self.cell_vertices(*idx)
+        # vs = self.cell_vertices(*idx)
 
         viewer.draw_circle(p, self.cell_radius / 2, self.default_color, filled=True, width=0.0005)
         # viewer.draw_polygon(vs, self.default_color, filled=True, width=0.0005)
@@ -126,7 +113,6 @@ class ValueGrid:
         text_box.draw(viewer)
 
     def draw(self, viewer):
-
         Cgrid = self.get_color_grid().reshape([self.X, self.Y, 3])
         for i in range(self.X):
             for j in range(self.Y):
@@ -161,15 +147,12 @@ class ValueGrid:
 
     def get_color_grid(self):
         g = self.get_grid().flatten()
-
         v0, v1 = self.min_value, self.max_value
         gg = (g - v0) / (v1 - v0)
         k = 10 ** 2
         m = (1 - np.exp(-k)) ** -1
         q = m * (1 - np.exp(-k * gg))
         q = np.clip(q, a_min=0, a_max=1)
-        # print()
-        # print(v0,v1,g.shape, self.grid_dims)
         return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def get_grid(self):
@@ -180,7 +163,6 @@ class FoodGrid(ValueGrid):
     def __init__(self, default_color=(0, 255, 0), quality=1, type='standard', **kwargs):
         super().__init__(default_color=default_color, fixed_max=True, **kwargs)
         self.substrate = Substrate(type=type, quality=quality)
-        # self.max_value=self.initial_value
 
     def get_color(self, v):
         v0, v1 = self.min_value, self.max_value
@@ -232,8 +214,6 @@ class GaussianValueLayer(ValueLayer):
         return V
 
     def draw_isocontours(self, viewer):
-        # g=self.get_grid()
-        # vs=np.linspace(np.min(g), np.max(g), 5)
         for s in self.sources:
             p = s.get_position()
             for r in np.arange(0, 0.050, 0.01):
@@ -259,14 +239,8 @@ class DiffusionValueLayer(ValueLayer):
 
             Doing the math, sigma ends up reeeeally small
         '''
-        D = 10 ** -6
-        # cell_width, cell_height = self.x / scaling_factor, self.y / scaling_factor
-        # rad_x, rad_y = D * dt / cell_width, D * dt / cell_height
-        # temp = 10 ** 5
-        # sigma = int(rad_x * temp), int(rad_y * temp)
         self.evap_const = evap_const
         self.sigma = gaussian_sigma
-        # print(gaussian_sigma)
 
     def update_values(self):
         k = 1000
@@ -278,10 +252,8 @@ class DiffusionValueLayer(ValueLayer):
                 Px, Py = dx / self.x / k, dy / self.y / k
 
                 Pr = np.abs(Px / (Px + Py))
-                # print(Pr, Px, Py, self.max_value)
                 Px = np.clip(Px, a_min=-Pr, a_max=Pr)
                 Py = np.clip(Py, a_min=-1 + Pr, a_max=1 - Pr)
-                # print(Pr, Px, Py, self.max_value)
                 Gx = self.grid * Px
                 Gy = self.grid * Py
                 Gx = np.roll(Gx, 1, axis=0)
@@ -313,9 +285,6 @@ class WindScape:
         self.N = 40
         self.draw_phi = 0
         self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
-        # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
         self.events = {}
         for idx, puff in puffs.items():
             self.add_puff(**puff)
@@ -335,10 +304,10 @@ class WindScape:
     def draw(self, viewer):
         if self.wind_speed > 0:
             for p0, p1 in self.scapelines:
-                l = LineString([p0, p1])
+                l = geometry.LineString([p0, p1])
                 ps = [l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
                 if len(ps) != 0:
-                    p1 = ps[np.argmin([Point(p0).distance(p2) for p2 in ps])].coords[0]
+                    p1 = ps[np.argmin([geometry.Point(p0).distance(p2) for p2 in ps])].coords[0]
                 viewer.draw_arrow_line(p0, p1, self.default_color, width=0.001,
                                        phi=(self.draw_phi % 1000) / 1000)
         self.draw_phi += self.wind_speed
@@ -378,23 +347,14 @@ class WindScape:
 class ThermoScape(ValueGrid):
     def __init__(self, plate_temp=22, spread=0.1, thermo_sources=[[0.5, 0.05], [0.05, 0.5], [0.5, 0.95], [0.95, 0.5]],
                  thermo_source_dTemps=[8, -8, 8, -8], default_color='green', visible=False):
-        # print("pTemp")
         self.plate_temp = plate_temp
         self.thermo_sources = {str(i): o for i, o in enumerate(thermo_sources)}
         self.thermo_source_dTemps = {str(i): o for i, o in enumerate(thermo_source_dTemps)}
 
         if len(thermo_sources) != len(thermo_source_dTemps):
             raise ValueError  # need to raise a more informative error.
-        # self.model = model
-        # self.wind_direction = wind_direction
-        # self.wind_speed = wind_speed
-        # self.max_dim = np.max(self.model.arena_dims)
         self.default_color = default_color
         self.visible = visible
-
-        # p0s = rotate_around_center_multi([(-self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # p1s = rotate_around_center_multi([(self.max_dim, (i - self.N / 2) * ds) for i in range(self.N)], -wind_direction)
-        # self.scapelines=[(p0,p1) for p0,p1 in zip(p0s,p1s)]
 
         if spread is None:
             spread = 0.1  # just making it so spread is my default of 0.1, if None is given.
@@ -404,8 +364,6 @@ class ThermoScape(ValueGrid):
     def update_values(self):
         pass
 
-    # @ todo remove rezo, it is actually only important if I want to draw.
-    # thermo={'temp_spread':None, 'plate_temp':22, 'thermo_sources': None, 'thermo_differences': None}
     def generate_thermoscape(self):
         '''
         size is the length of the square arena in mm.
@@ -419,46 +377,12 @@ class ThermoScape(ValueGrid):
         '''
         from scipy.stats import multivariate_normal
 
-        # size,size2 = [1,1]
-        # size, size2 = self.arena_dims * 1000 #model.grid_dims #it is in m and we want it in mm.
-        # if spread is None:
-        #     spread = size * 10
-
-
-        # self.plate_temp = pTemp
-        # self.thermo_sources = {str(i): o for i, o in enumerate(origins)}
-        # self.thermo_source_dTemps = {str(i): o for i, o in enumerate(tempDiff)}
-
-        # origins =  [[0.5,0.05], [0.05,0.5], [0.5,0.95], [0.95,0.5]] #  [[85,8.5], [8.5,85], [85,161.5], [161.5,85]]
-        # origins_ad = [[size*og[0], size2*og[1]] for og in origins] # origins on arena dimensions
-
-        # x, y = np.mgrid[0:size:rezo, 0:size2:rezo] # setting 170 x 170 grid #don't need to do this anymore
-        # pos = np.dstack((x, y))
-
         rv_dict = {}
-        # thermoDists_Dict = {}
         for k in self.thermo_sources:
-            # v_ad = [size*v[0], size2*v[1]]
             rv_dict[k] = multivariate_normal(self.thermo_sources[k], [[self.thermo_spread, 0], [0, self.thermo_spread]])
-            # thermoDists_Dict[k] = (rv_dict[k].pdf(pos)/rv_dict[k].pdf(v_ad))*(tempDiff[k] * len(origins)) # don't need this either
 
         self.thermoscape_layers = rv_dict
-        # plt.imshow(22 + rv, cmap='hot', interpolation='nearest'); plt.colorbar(); plt.show()
-        # plt.hist(pTemp + rv.flatten(), bins=50 ); plt.show()
-        # self.thermo_dist = pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict) # I do not need to store this anymore! - so i won't need SIZE anymore. alternatively I could just store thermoDists_Dict and get_thermo_value calculate each time with plateTemp (if this is memory inefificent)
-        # return  pTemp + sum(thermoDists_Dict.values()) / len(thermoDists_Dict)
 
-    # def get_thermo_value(self, pos):
-    #     size,size2 = [1,1]
-    #     # size, size2 = self.arena_dims * 1000  #it is in m and we want it in mm.
-    #     pos_ad = [size*pos[0], size2*pos[1]]
-    #     pos_temp = {}
-    #     if self.thermoscape_layers is None:
-    #         return 0 # or np.nan
-    #     for k in self.thermoscape_layers:
-    #         v=self.thermoscape_layers[k]
-    #         pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (self.thermo_source_dTemps[k] * len(self.thermo_source_dTemps)) #@todo need to check if this works
-    #     return self.plate_temp + sum(pos_temp.values()) / len(pos_temp)
 
     def get_thermo_value(self, pos):
 
@@ -468,15 +392,10 @@ class ThermoScape(ValueGrid):
         nSources = len(self.thermo_source_dTemps)
         thermo_gain = {'cool': 0, 'warm': 0}
 
-        # if self.thermoscape_layers is None:
-        #     print(0) # or np.nan
         for k in self.thermoscape_layers:
             v = self.thermoscape_layers[k]
             pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (
                     self.thermo_source_dTemps[k] * nSources)  # @todo need to check if this works
-            # print(plate_temp + sum(pos_temp.values()) / len(pos_temp))
-            # print(plate_temp + pos_temp[k] / len(pos_temp))
-            # print(pos_temp[k] / nSources)
             if pos_temp[k] < 0:
                 thermo_gain['cool'] += abs(pos_temp[k] / nSources)
             elif pos_temp[k] > 0:
@@ -496,8 +415,6 @@ class ThermoScape(ValueGrid):
         return V
 
     def draw_isocontours(self, viewer):  # @todo need to make a draw function for thermogrid.
-        # g=self.get_grid()
-        # vs=np.linspace(np.min(g), np.max(g), 5)
         for k in self.thermo_sources:
             p = self.thermo_sources.k
             for r in np.arange(0, 0.050, 0.01):

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from lib.model.agents._larva import PhysicsController
+from lib.model.agents import PhysicsController
 from lib import reg, aux
 
 

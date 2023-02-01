@@ -242,7 +242,7 @@ def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_Larv
 
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
     from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.model.agents._larva import PhysicsController
+    from lib.model.agents import PhysicsController
     if fo0 is None :
         fo0=0.0
     if p0 is None :

@@ -16,18 +16,15 @@ class StrideOscillator(StepOscillator) :
 
     @property
     def Act(self):
-        c = self.Act_coef
-        Aphi = self.Act_Phi
         if self.complete_iteration:
             self.step_to_length = self.new_stride
-        return self.freq * self.step_to_length * (1 + c*Aphi)
+        return self.freq * self.step_to_length * (1 + self.Act_coef*self.Act_Phi)
 
 
 
 class GaussOscillator(StrideOscillator):
     def __init__(self, std,**kwargs):
         super().__init__(**kwargs)
-
         self.gauss_w=signal.gaussian(360, std=std * 360, sym=False)
 
     @property
@@ -56,9 +53,6 @@ class PhaseOscillator(StrideOscillator):
     def Act_Phi(self):
         return np.cos(self.phi - self.max_vel_phase)
 
-    # @property
-    # def Act_coef(self):
-    #     return self.max_scaled_vel
 
 
 

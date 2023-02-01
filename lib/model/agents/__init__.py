@@ -1,3 +1,4 @@
+from .physics_controller import PhysicsController
 from ._agent import LarvaworldAgent
 from ._source import Food
 from .body import LarvaBody
