@@ -13,10 +13,6 @@ class Essay:
         else:
             self.vis_kwargs = reg.get_null('visualization', mode=None)
         self.N = N
-        self.M = reg.model
-        self.G = reg.graphs
-        # self.GT = reg.group
-        # self.CT = reg.conf
         self.show = show
         self.type = type
         self.enrichment = enrichment
@@ -90,7 +86,7 @@ class RvsS_Essay(Essay):
 
         }
 
-        self.mdiff_df, row_colors = self.M.diff_df(mIDs=['rover', 'sitter'])
+        self.mdiff_df, row_colors = reg.model.diff_df(mIDs=['rover', 'sitter'])
 
     def RvsS_env(self, on_food=True):
         grid = reg.get_null('food_grid') if on_food else None
@@ -239,15 +235,15 @@ class RvsS_Essay(Essay):
 
     def global_anal(self):
         self.entrylist = self.get_entrylist(datasets=self.datasets, substrates=self.substrates,
-                                            durs=self.durs, qs=self.qs, hs=self.hs, G=self.G)
+                                            durs=self.durs, qs=self.qs, hs=self.hs, G=reg.graphs)
         kwargs = {'save_to': self.plot_dir,
                   'show': self.show}
 
-        entry = self.G.entry('RvsS summary',
+        entry = reg.graphs.entry('RvsS summary',
                              **{'entrylist': self.entrylist, 'title': f'ROVERS VS SITTERS ESSAY (N={self.N})',
                                    'mdiff_df': self.mdiff_df})
-        self.figs.update(self.G.eval0(entry, **kwargs))
-        self.figs.update(self.G.eval(self.entrylist, **kwargs))
+        self.figs.update(reg.graphs.eval0(entry, **kwargs))
+        self.figs.update(reg.graphs.eval(self.entrylist, **kwargs))
 
     def analyze(self, exp, ds0):
         if self.all_figs:
@@ -281,7 +277,7 @@ class RvsS_Essay(Essay):
                           'coupled_labels': self.durs,
                           'xlabel': r'Time spent on food $(min)$'}
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = self.G.dict['barplot'](par_shorts=[s],
+                    self.figs[f'{exp} {p}'] = reg.graphs.dict['barplot'](par_shorts=[s],
                                                                      save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
             elif exp == 'POST-STARVATION INTAKE':
@@ -289,11 +285,11 @@ class RvsS_Essay(Essay):
                           'coupled_labels': self.hs,
                           'xlabel': r'Food deprivation $(h)$'}
                 for ii in ['feeding']:
-                    self.figs[ii] = self.G.dict['deb'](mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf',
+                    self.figs[ii] = reg.graphs.dict['deb'](mode=ii, save_as=f'3_POST-STARVATION_{ii}.pdf',
                                                        include_egg=False,
                                                        label_epochs=False, **kwargs)
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = self.G.dict['lineplot'](par_shorts=[s],
+                    self.figs[f'{exp} {p}'] = reg.graphs.dict['lineplot'](par_shorts=[s],
                                                                       save_as=f'3_POST-STARVATION_{p}.pdf',
                                                                       **kwargs)
 
@@ -303,22 +299,22 @@ class RvsS_Essay(Essay):
                           'xlabel': 'Food quality (%)'
                           }
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = self.G.dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf',
+                    self.figs[f'{exp} {p}'] = reg.graphs.dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf',
                                                                      **kwargs)
 
             elif exp == 'REFEEDING AFTER 3h STARVED':
                 h = self.h_refeeding
                 n = f'5_REFEEDING_after_{h}h_starvation_'
                 kwargs = dsNls(ds0)
-                self.figs[f'{exp} food-intake'] = self.G.dict['food intake (timeplot)'](scaled=True,
+                self.figs[f'{exp} food-intake'] = reg.graphs.dict['food intake (timeplot)'](scaled=True,
                                                                                         save_as=f'{n}scaled_intake.pdf',
                                                                                         **kwargs)
-                self.figs[f'{exp} food-intake(filt)'] = self.G.dict['food intake (timeplot)'](scaled=True,
+                self.figs[f'{exp} food-intake(filt)'] = reg.graphs.dict['food intake (timeplot)'](scaled=True,
                                                                                               filt_amount=True,
                                                                                               save_as=f'{n}scaled_intake_filt.pdf',
                                                                                               **kwargs)
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = self.G.dict['timeplot'](par_shorts=[s], show_first=False,
+                    self.figs[f'{exp} {p}'] = reg.graphs.dict['timeplot'](par_shorts=[s], show_first=False,
                                                                       subfolder=None,
                                                                       save_as=f'{n}{p}.pdf', **kwargs)
 
@@ -356,7 +352,7 @@ class DoublePatch_Essay(Essay):
         self.ms=[reg.loadConf(id=mID, conftype='Model') for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
 
-        self.mdiff_df, row_colors = self.M.diff_df(mIDs=self.mID0s,ms=self.ms)
+        self.mdiff_df, row_colors = reg.model.diff_df(mIDs=self.mID0s,ms=self.ms)
 
 
     def get_larvagroups(self,age=120.0):
@@ -449,24 +445,15 @@ class DoublePatch_Essay(Essay):
             'title': f"DOUBLE PATCH ESSAY (N={self.N}, duration={self.dur}')",
             'mdiff_df': self.mdiff_df
         }
-        # entry = self.G.entry('double-patch summary', args={})
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',
+        self.figs.update(reg.graphs.eval0(entry=reg.graphs.entry('double-patch summary',
                                                          **{'name':f'{self.mode}_fig1','ks':None}), **kwargs))
-        self.figs.update(self.G.eval0(entry=self.G.entry('double-patch summary',
+        self.figs.update(reg.graphs.eval0(entry=reg.graphs.entry('double-patch summary',
                                                          **{'name':f'{self.mode}_fig2',
                                                                'ks':['tur_tr', 'tur_N_mu', 'pau_tr','cum_d', 'f_am', 'on_food_tr']}), **kwargs))
 
     def analyze(self, exp, ds0):
         pass
-        # kwargs = {'datasets': flatten_list(ds0),
-        #           'save_to': self.plot_dir,
-        #           # 'save_as': exp,
-        #           'show': self.show}
-        # entry = self.G.entry(ID='double patch',title=exp, args=kwargs)
-        # self.figs[exp]=self.G.eval0(entry=entry)
-        # self.figs.update(self.G.eval0(entry, **kwargs))
-        # self.figs[exp] = fig
-        # self.figs[exp] = self.G.dict['double patch'](**kwargs)
+
 
 
 class Chemotaxis_Essay(Essay):
@@ -478,7 +465,6 @@ class Chemotaxis_Essay(Essay):
         self.time_ks = ['c_odor1', 'dc_odor1']
         self.dur = dur
         self.gain = gain
-        # self.mID0 = mID0
         if mode == 1:
             self.models = self.get_models1(gain)
         elif mode == 2:
@@ -487,22 +473,22 @@ class Chemotaxis_Essay(Essay):
             self.models = self.get_models3(gain)
         elif mode == 4:
             self.models = self.get_models4(gain)
-        self.mdiff_df, row_colors = self.M.diff_df(mIDs=list(self.models.keys()),
+        self.mdiff_df, row_colors = reg.model.diff_df(mIDs=list(self.models.keys()),
                                                    ms=[v.model for v in self.models.values()])
         self.exp_dict = self.chemo_exps(self.models)
 
     def get_models1(self, gain):
         mID0 = 'RE_NEU_SQ_DEF_nav'
         o = 'brain.olfactor_params'
-        mW = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+        mW = reg.model.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
                                                f'{o}.perception': 'log'})
-        mWlin = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+        mWlin = reg.model.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
                                                   f'{o}.perception': 'linear'})
-        mC = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': 0})
-        mT = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+        mC = reg.model.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': 0})
+        mT = reg.model.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
                                                f'{o}.perception': 'log',
                                                f'{o}.brute_force': True})
-        mTlin = self.M.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
+        mTlin = reg.model.newConf(mID0=mID0, kwargs={f'{o}.odor_dict.Odor.mean': gain,
                                                   f'{o}.brute_force': True,
                                                   f'{o}.perception': 'linear'})
 
@@ -526,7 +512,7 @@ class Chemotaxis_Essay(Essay):
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF_nav'
-                models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
+                models[f'{Tmod}_{Ifmod}'] = {'model': reg.model.newConf(mID0=mID0, kwargs={
                     f'brain.olfactor_params.brute_force': True,
                     f'brain.olfactor_params.odor_dict.Odor.mean': gain,
                     f'brain.interference_params.attenuation': 0.1,
@@ -542,7 +528,7 @@ class Chemotaxis_Essay(Essay):
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF_nav'
-                models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
+                models[f'{Tmod}_{Ifmod}'] = {'model': reg.model.newConf(mID0=mID0, kwargs={
                     f'brain.olfactor_params.perception': 'log',
                     f'brain.olfactor_params.decay_coef': 0.1,
                     f'brain.olfactor_params.odor_dict.Odor.mean': gain,
@@ -560,7 +546,7 @@ class Chemotaxis_Essay(Essay):
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF_var2_nav'
-                models[f'{Tmod}_{Ifmod}'] = {'model': self.M.newConf(mID0=mID0, kwargs={
+                models[f'{Tmod}_{Ifmod}'] = {'model': reg.model.newConf(mID0=mID0, kwargs={
                     f'brain.olfactor_params.perception': 'log',
                     f'brain.olfactor_params.decay_coef': 0.1,
                     f'brain.olfactor_params.odor_dict.Odor.mean': gain,
@@ -637,24 +623,7 @@ class Chemotaxis_Essay(Essay):
 
     def analyze(self, exp, ds0):
         pass
-        # kwargs = {'datasets': flatten_list(ds0),
-        #           'save_to': self.plot_dir,
-        #           'show': self.show}
-        # entry_list = [
-        #     self.G.entry('autoplot', args={
-        #         'ks': self.time_ks,
-        #         'show_first': False,
-        #         'individuals': False,
-        #         'subfolder': None,
-        #         'unit': 'min',
-        #         'name': f'{exp}_timeplot'
-        #     }),
-        #     self.G.entry('trajectories', args={
-        #         'subfolder': None,
-        #         'name': f'{exp}_trajectories',
-        #     })
-        # ]
-        # self.figs[exp] = self.G.eval(entry_list, **kwargs)
+
 
     def global_anal(self):
         kwargs = {
@@ -663,8 +632,8 @@ class Chemotaxis_Essay(Essay):
             'show': self.show,
             'title': f'CHEMOTAXIS ESSAY (N={self.N})',
         }
-        entry = self.G.entry('chemotaxis summary', **{'mdiff_df': self.mdiff_df})
-        self.figs.update(self.G.eval0(entry, **kwargs))
+        entry = reg.graphs.entry('chemotaxis summary', **{'mdiff_df': self.mdiff_df})
+        self.figs.update(reg.graphs.eval0(entry, **kwargs))
 
 
 @reg.funcs.stored_conf("Essay")

@@ -643,7 +643,9 @@ class ModelRegistry:
             # 'locomotor': locomotor.DefaultLocomotor,
         })
 
-        self.autostored_confs=self.autogenerate_confs()
+    @property
+    def autostored_confs(self):
+        return self.autogenerate_confs()
 
     def get_mdict(self, mkey, mode='default'):
         if mkey is None or mkey not in self.dict.model.keys:

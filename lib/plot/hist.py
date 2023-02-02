@@ -101,7 +101,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         vvs = np.hstack(vs)
         vmin, vmax = np.quantile(vvs, 0.005), np.quantile(vvs, 0.995)
         lims[par]=(vmin, vmax)
-        parlabs[par]=reg.PD.dict[sh].l
+        parlabs[par]=reg.par.kdict[sh].l
     for i,(par,dic) in enumerate(Ddata.items()):
 
         if mode == 'box':

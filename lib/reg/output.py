@@ -82,8 +82,8 @@ def get_reporters(agents, **kwargs):
     from lib import reg
     ks = set_output(**kwargs)
     output = {
-        "step": output_reporters(ks=ks['step'], D=reg.par.dict, agents=agents),
-        "end": output_reporters(ks=ks['end'], D=reg.par.dict, agents=agents),
+        "step": output_reporters(ks=ks['step'], D=reg.par.kdict, agents=agents),
+        "end": output_reporters(ks=ks['end'], D=reg.par.kdict, agents=agents),
     }
     return output
 

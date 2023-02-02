@@ -13,19 +13,6 @@ proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'P
 anot_type_keys = ['bout_detection', 'bout_distribution', 'interference', 'source_attraction', 'patch_residency']
 
 
-def get_default(d,key='v') :
-    if d is None:
-        return None
-    null = aux.AttrDict()
-    for k, v in d.items():
-        if not isinstance(v, dict):
-            null[k] = v
-        elif 'k' in v.keys() or 'h' in v.keys() or 'dtype' in v.keys():
-            null[k] = None if key not in v.keys() else v[key]
-        else:
-            null[k] = get_default(v,key)
-    return null
-
 def update_default(name, dic, **kwargs):
     if name not in ['visualization', 'enrichment']:
         # aux.update_nestdict(dic, kwargs)
@@ -40,6 +27,21 @@ def update_default(name, dic, **kwargs):
                     if k0 in list(kwargs.keys()):
                         dic[k][k0] = kwargs[k0]
         return aux.AttrDict(dic)
+
+def get_default(d,key='v') :
+    if d is None:
+        return None
+    null = aux.AttrDict()
+    for k, v in d.items():
+        if not isinstance(v, dict):
+            null[k] = v
+        elif 'k' in v.keys() or 'h' in v.keys() or 'dtype' in v.keys():
+            null[k] = None if key not in v.keys() else v[key]
+        else:
+            null[k] = get_default(v,key)
+    return null
+
+
 
 
 def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_choice=True):
@@ -1326,62 +1328,17 @@ def buildDefaultDict(d0):
         dic[name] = get_default(d, key='v')
     return aux.AttrDict(dic)
 
-@decorators.timeit
-class ParamRegistry:
-    def __init__(self,func_dict,in_rad=True, in_m=True):
-        self.PI = buildInitDict()
-        self.DEF = buildDefaultDict(self.PI)
 
+@decorators.timeit
+class ParamClass:
+    def __init__(self,func_dict,in_rad=True, in_m=True):
         self.func_dict = func_dict
         self.dict_entries = self.build(in_rad=in_rad, in_m=in_m)
 
         self.kdict = self.finalize_dict(self.dict_entries)
-        self.ddict = aux.AttrDict({p.d: p for k, p in self.kdict.items()})
-        self.pdict = aux.AttrDict({p.p: p for k, p in self.kdict.items()})
+        # self.ddict = aux.AttrDict({p.d: p for k, p in self.kdict.items()})
+        # self.pdict = aux.AttrDict({p.p: p for k, p in self.kdict.items()})
 
-
-    def null(self,name, key='v', **kwargs):
-        if key != 'v':
-            raise
-        d0=self.DEF[name]
-        return d0.update_nestdict(kwargs)
-
-    def get_null(self, name, key='v', **kwargs):
-        if key != 'v':
-            raise
-        # return update_default(name, aux.copyDict(self.DEF[name]), **kwargs)
-        return update_default(name, self.DEF[name].get_copy(), **kwargs)
-
-    def metric_def(self, ang={}, sp={}, **kwargs):
-        def ang_def(fv=(1, 2), rv=(-2, -1), **kwargs):
-            return self.get_null('ang_definition',front_vector=fv, rear_vector=rv, **kwargs)
-
-        return self.get_null('metric_definition',
-                             angular=ang_def(**ang),
-                             spatial=self.get_null('spatial_definition', **sp),
-                             **kwargs)
-
-
-
-    def enr_dict(self, proc=[], anot=[], pre_kws={},
-                 def_kws={}, metric_definition=None, **kwargs):
-        kw_dic0={
-            'preprocessing' : pre_kws,
-            'processing' : {k: True if k in proc else False for k in proc_type_keys},
-            'annotation' : {k: True if k in anot else False for k in anot_type_keys}
-                }
-        kws={k:self.get_null(k,**v) for k,v in kw_dic0.items()}
-
-        if metric_definition is None:
-            metric_definition = self.metric_def(**def_kws)
-        dic = self.get_null('enrichment',
-                                      metric_definition=metric_definition, **kws, **kwargs)
-        return dic
-
-    def base_enrich(self, **kwargs):
-        return self.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                             anot=['bout_detection', 'bout_distribution', 'interference'],
-                             **kwargs)
 
     @decorators.timeit
     def build(self, in_rad=True, in_m=True):
@@ -1938,6 +1895,58 @@ class ParamRegistry:
             dic[p.k] = p
         return dic
 
+@decorators.timeit
+class ParamRegistry:
+    def __init__(self):
+        self.PI = buildInitDict()
+        self.DEF = buildDefaultDict(self.PI)
+
+        self.dict = None
+
+
+    def null(self,name, key='v', **kwargs):
+        if key != 'v':
+            raise
+        d0=self.DEF[name]
+        return d0.update_nestdict(kwargs)
+
+    def get_null(self, name, key='v', **kwargs):
+        if key != 'v':
+            raise
+        # return update_default(name, aux.copyDict(self.DEF[name]), **kwargs)
+        return update_default(name, self.DEF[name].get_copy(), **kwargs)
+
+    def metric_def(self, ang={}, sp={}, **kwargs):
+        def ang_def(fv=(1, 2), rv=(-2, -1), **kwargs):
+            return self.get_null('ang_definition',front_vector=fv, rear_vector=rv, **kwargs)
+
+        return self.get_null('metric_definition',
+                             angular=ang_def(**ang),
+                             spatial=self.get_null('spatial_definition', **sp),
+                             **kwargs)
+
+
+
+    def enr_dict(self, proc=[], anot=[], pre_kws={},
+                 def_kws={}, metric_definition=None, **kwargs):
+        kw_dic0={
+            'preprocessing' : pre_kws,
+            'processing' : {k: True if k in proc else False for k in proc_type_keys},
+            'annotation' : {k: True if k in anot else False for k in anot_type_keys}
+                }
+        kws={k:self.get_null(k,**v) for k,v in kw_dic0.items()}
+
+        if metric_definition is None:
+            metric_definition = self.metric_def(**def_kws)
+        dic = self.get_null('enrichment',
+                                      metric_definition=metric_definition, **kws, **kwargs)
+        return dic
+
+    def base_enrich(self, **kwargs):
+        return self.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
+                             anot=['bout_detection', 'bout_distribution', 'interference'],
+                             **kwargs)
+
     def get(self, k, d, compute=True):
         p = self.kdict[k]
         res = p.exists(d)
@@ -1977,10 +1986,10 @@ class ParamRegistry:
             d0 = self.kdict
             k0 = k
         elif d is not None:
-            d0 = self.ddict
+            d0 = aux.AttrDict({p.d: p for k, p in self.kdict.items()})
             k0 = d
         elif p is not None:
-            d0 = self.pdict
+            d0 = aux.AttrDict({p.p: p for k, p in self.kdict.items()})
             k0 = p
         else :
             raise
@@ -2010,4 +2019,10 @@ class ParamRegistry:
                 dic[k][d.id] = vs
         return aux.AttrDict(dic)
 
-par = ParamRegistry(func_dict = reg.funcs.param_computing)
+    @property
+    def kdict(self):
+        if self.dict is None :
+            self.dict = ParamClass(func_dict=reg.funcs.param_computing).kdict
+        return self.dict
+
+par = ParamRegistry()

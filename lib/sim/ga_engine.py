@@ -13,10 +13,7 @@ from lib import reg, aux, util
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
                  selection_ratio=0.3, verbose=0, bestConfID=None):
-        self.M = reg.model
         self.bestConfID = bestConfID
-        # print(bestConfID)
-        # raise
         self.model = model
         self.Ngenerations = Ngenerations
         self.Nagents = Nagents
@@ -126,9 +123,9 @@ class GAselector:
         while num_gConfs_to_create > 0:
             gConf_a, gConf_b = self.choose_parents(gConfs)
             gConf0 = self.crossover(gConf_a, gConf_b)
-            space_dict=self.M.update_mdict(space_dict,gConf0)
-            self.M.mutate(space_dict, Pmut=self.Pmutation, Cmut=self.Cmutation)
-            gConf=self.M.conf(space_dict)
+            space_dict=reg.model.update_mdict(space_dict,gConf0)
+            reg.model.mutate(space_dict, Pmut=self.Pmutation, Cmut=self.Cmutation)
+            gConf=reg.model.conf(space_dict)
             new_gConfs.append(gConf)
             num_gConfs_to_create -= 1
 
@@ -174,13 +171,13 @@ class GAbuilder(GAselector):
         self.viewer = viewer
         self.robot_class = get_robot_class(robot_class, self.model.p.offline)
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
-        self.space_dict = self.M.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
+        self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.excluded_ids = []
         self.Nagents_min = round(self.Nagents * self.selection_ratio)
         self.exclusion_mode = exclusion_mode
 
         if init_mode=='default' :
-            gConf=self.M.conf(self.space_dict)
+            gConf=reg.model.conf(self.space_dict)
             self.gConfs=[gConf]*self.Nagents
         elif init_mode=='model':
             mF=self.mConf0.flatten()
@@ -189,8 +186,8 @@ class GAbuilder(GAselector):
         elif init_mode == 'random':
             self.gConfs=[]
             for i in range(self.Nagents):
-                self.M.randomize(self.space_dict)
-                gConf = self.M.conf(self.space_dict)
+                reg.model.randomize(self.space_dict)
+                gConf = reg.model.conf(self.space_dict)
                 self.gConfs.append(gConf)
 
         self.robots = self.build_generation()
