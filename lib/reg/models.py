@@ -821,11 +821,6 @@ class ModelRegistry:
         }
         conf.Box2D_params = null_Box2D_params
 
-        #
-        # T0=
-
-        # self.saveConf(conf, mID)
-
         return {mID: conf}
 
     def newConf(self, m0=None, mID0=None, mID=None, kwargs={}):
@@ -842,7 +837,7 @@ class ModelRegistry:
                     'default': 'DEF', 'neural': 'NEU', 'sinusoidal': 'SIN', 'nengo': 'NENGO', 'phasic': 'PHI',
                     'branch': 'BR'}
         kws = {'modkws': {'interference': {'attenuation': 0.1, 'attenuation_max': 0.6}}}
-        entries = {}
+        E = {}
         for Cmod in ['realistic', 'square', 'gaussian', 'constant']:
             for Tmod in ['neural', 'sinusoidal', 'constant']:
                 for Ifmod in ['phasic', 'square', 'default']:
@@ -855,7 +850,7 @@ class ModelRegistry:
                         }
                         if Ifmod != 'default':
                             kkws.update(**kws)
-                        entries.update(self.larvaConf(**kkws))
+                        E.update(self.larvaConf(**kkws))
         e1 = self.larvaConf(mID='loco_default', **kws)
         kws2 = {'modkws': {'interference': {'attenuation': 0.0}}}
         e2 = self.larvaConf(mID='Levy', modes={'crawler': 'constant', 'turner': 'sinusoidal', 'interference': 'default',
@@ -866,20 +861,15 @@ class ModelRegistry:
                             modes={'crawler': 'constant', 'turner': 'neural', 'interference': 'default'}, **kws2)
 
         e5 = self.larvaConf(mID='CON_SIN', modes={'crawler': 'constant', 'turner': 'sinusoidal'})
-        entries.update(**e1, **e2, **e3, **e4, **e5)
+        E.update(**e1, **e2, **e3, **e4, **e5)
         mID0dic = {}
-        # m0s=[]
         for Tmod in ['NEU', 'SIN']:
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
-                mID0dic[mID0] = entries[mID0]
-                # mID0s.append(mID0)
-                # m0s.append(entries[mID0])
+                mID0dic[mID0] = E[mID0]
                 for mm in [f'{mID0}_avg', f'{mID0}_var', f'{mID0}_var2']:
                     if mm in reg.storedConf('Model'):
                         mID0dic[mm] = reg.loadConf('Model', mm)
-                        # mID0s.append(mm)
-                        # m0s.append(self.loadConf(mm))
 
         olf_pars0 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
                                                 odor_dict={'Odor': {'mean': 0.0, 'std': 0.0}})
@@ -893,12 +883,13 @@ class ModelRegistry:
         kwargs2 = {'brain.modules.olfactor': True, 'brain.olfactor_params': olf_pars2}
 
         MB_pars = aux.AttrDict({'mode': 'MB'})
-        # MB_pars = self.generate_configuration(self.dict.brain.m['memory'].mode['MB'].args)
         MB_kws = {'brain.modules.memory': True, 'brain.memory_params': MB_pars}
 
         feed_pars = self.generate_configuration(self.dict.brain.m['feeder'].mode['default'].args)
         feed_kws = {'brain.modules.feeder': True, 'brain.feeder_params': feed_pars,
                     'brain.intermitter_params.EEB': 0.5, 'brain.intermitter_params.feed_bouts': True}
+        maxEEB_kws ={'brain.intermitter_params.EEB': 0.9}
+
         RvSkws={}
         for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
             DEB_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['DEB'].args,species=species, hunger_gain=1.0,DEB_dt=10.0)
@@ -906,55 +897,54 @@ class ModelRegistry:
             energy_pars=aux.AttrDict({'DEB' : DEB_pars, 'gut':gut_pars})
             RvSkws[species] = {'wF' : {'energetics': energy_pars, 'brain.intermitter_params.EEB': EEB}, 'woF' :{'energetics': energy_pars} }
 
-        # for m0 in m0s:
         for mID0, m0 in mID0dic.items():
             mID00 = f'{mID0}_nav0'
-            entries[mID00] = self.newConf(m0=m0, kwargs=kwargs0)
+            E[mID00] = self.newConf(m0=m0, kwargs=kwargs0)
             mID1 = f'{mID0}_nav'
-            entries[mID1] = self.newConf(m0=m0, kwargs=kwargs1)
+            E[mID1] = self.newConf(m0=m0, kwargs=kwargs1)
             mID1br = f'{mID1}_brute'
-            entries[mID1br] = self.newConf(m0=entries[mID1], kwargs={'brain.olfactor_params.brute_force': True})
+            E[mID1br] = self.newConf(m0=E[mID1], kwargs={'brain.olfactor_params.brute_force': True})
             mID2 = f'{mID0}_nav_x2'
-            entries[mID2] = self.newConf(m0=m0, kwargs=kwargs2)
+            E[mID2] = self.newConf(m0=m0, kwargs=kwargs2)
             mID2br = f'{mID2}_brute'
-            entries[mID2br] = self.newConf(m0=entries[mID2], kwargs={'brain.olfactor_params.brute_force': True})
+            E[mID2br] = self.newConf(m0=E[mID2], kwargs={'brain.olfactor_params.brute_force': True})
 
             mID01 = f'{mID0}_feeder'
-            entries[mID01] = self.newConf(m0=m0, kwargs=feed_kws)
+            E[mID01] = self.newConf(m0=m0, kwargs=feed_kws)
             mID02 = f'{mID0}_max_feeder'
-            entries[mID02] = self.newConf(m0=entries[mID01], kwargs={'brain.intermitter_params.EEB': 0.9})
+            E[mID02] = self.newConf(m0=E[mID01], kwargs=maxEEB_kws)
 
             mID110 = f'{mID0}_forager0'
-            entries[mID110] = self.newConf(m0=entries[mID00], kwargs=feed_kws)
+            E[mID110] = self.newConf(m0=E[mID00], kwargs=feed_kws)
             mID120 = f'{mID0}_max_forager0'
-            entries[mID120] = self.newConf(m0=entries[mID110], kwargs={'brain.intermitter_params.EEB': 0.9})
+            E[mID120] = self.newConf(m0=E[mID110], kwargs=maxEEB_kws)
 
             mID11 = f'{mID0}_forager'
-            entries[mID11] = self.newConf(m0=entries[mID1], kwargs=feed_kws)
+            E[mID11] = self.newConf(m0=E[mID1], kwargs=feed_kws)
             mID12 = f'{mID0}_max_forager'
-            entries[mID12] = self.newConf(m0=entries[mID11], kwargs={'brain.intermitter_params.EEB': 0.9})
+            E[mID12] = self.newConf(m0=E[mID11], kwargs=maxEEB_kws)
 
             mID210 = f'{mID0}_forager0_MB'
-            entries[mID210] = self.newConf(m0=entries[mID110], kwargs=MB_kws)
+            E[mID210] = self.newConf(m0=E[mID110], kwargs=MB_kws)
             mID220 = f'{mID0}_max_forager0_MB'
-            entries[mID220] = self.newConf(m0=entries[mID210], kwargs={'brain.intermitter_params.EEB': 0.9})
+            E[mID220] = self.newConf(m0=E[mID210], kwargs=maxEEB_kws)
             mID21 = f'{mID0}_forager_MB'
-            entries[mID21] = self.newConf(m0=entries[mID11], kwargs=MB_kws)
+            E[mID21] = self.newConf(m0=E[mID11], kwargs=MB_kws)
             mID22 = f'{mID0}_max_forager_MB'
-            entries[mID22] = self.newConf(m0=entries[mID21], kwargs={'brain.intermitter_params.EEB': 0.9})
+            E[mID22] = self.newConf(m0=E[mID21], kwargs=maxEEB_kws)
 
-        entries['noMB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager0'], kwargs={})
-        entries['noMB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager'], kwargs={})
-        entries['MB_untrained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager0_MB'], kwargs={})
-        entries['MB_trained'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
-        entries['explorer'] = self.newConf(m0=entries['loco_default'], kwargs={})
-        entries['navigator'] = self.newConf(m0=entries['explorer'], kwargs=kwargs1)
+        E['noMB_untrained'] = self.newConf(m0=E['RE_NEU_PHI_DEF_max_forager0'], kwargs={})
+        E['noMB_trained'] = self.newConf(m0=E['RE_NEU_PHI_DEF_max_forager'], kwargs={})
+        E['MB_untrained'] = self.newConf(m0=E['RE_NEU_PHI_DEF_max_forager0_MB'], kwargs={})
+        E['MB_trained'] = self.newConf(m0=E['RE_NEU_PHI_DEF_max_forager_MB'], kwargs={})
+        E['explorer'] = self.newConf(m0=E['loco_default'], kwargs={})
+        E['navigator'] = self.newConf(m0=E['explorer'], kwargs=kwargs1)
         for mID0 in ['Levy', 'NEU_Levy', 'NEU_Levy_continuous', 'CON_SIN']:
-            entries[f'{mID0}_nav'] = self.newConf(m0=entries[mID0], kwargs=kwargs1)
-            entries[f'{mID0}_nav_x2'] = self.newConf(m0=entries[mID0], kwargs=kwargs2)
+            E[f'{mID0}_nav'] = self.newConf(m0=E[mID0], kwargs=kwargs1)
+            E[f'{mID0}_nav_x2'] = self.newConf(m0=E[mID0], kwargs=kwargs2)
 
         sm_pars = self.generate_configuration(self.dict.aux.m['sensorimotor'].mode['default'].args)
-        entries['obstacle_avoider'] = self.newConf(m0=entries['RE_NEU_PHI_DEF_nav'], kwargs={'sensorimotor': sm_pars})
+        E['obstacle_avoider'] = self.newConf(m0=E['RE_NEU_PHI_DEF_nav'], kwargs={'sensorimotor': sm_pars})
 
 
         sample_ks = [
@@ -965,14 +955,14 @@ class ModelRegistry:
             'brain.crawler_params.initial_freq',
         ]
         for mID0,RvSsuf,Fexists in zip(['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_feeder', 'RE_NEU_PHI_DEF_nav','RE_NEU_PHI_DEF_forager'], ['_loco', '', '_nav', '_forager'], ['woF', 'wF', 'woF', 'wF']):
-            entries[f'v{mID0}'] = self.newConf(m0=entries[mID0], kwargs={k: 'sample' for k in sample_ks})
+            E[f'v{mID0}'] = self.newConf(m0=E[mID0], kwargs={k: 'sample' for k in sample_ks})
             for species,kws in RvSkws.items():
-                entries[f'{species}{RvSsuf}']=self.newConf(m0=entries[mID0], kwargs=kws[Fexists])
+                E[f'{species}{RvSsuf}']=self.newConf(m0=E[mID0], kwargs=kws[Fexists])
 
 
 
 
-        return entries
+        return E
 
     def build_full_dict(self, D):
 

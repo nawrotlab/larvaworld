@@ -130,8 +130,6 @@ def grouped_exp_dic():
             'anemotaxis_bordered': anemo_exp('anemotaxis_bordered', 'windy_arena_bordered', dur=0.5, l=reg.lg(mID='nengo_explorer', N=4)),
             'puff_anemotaxis_bordered': anemo_exp('puff_anemotaxis_bordered', 'puff_arena_bordered', dur=0.5, l=reg.lg(mID='nengo_explorer', N=4)),
             'single_puff': chemanemo_exp('single_puff', 'single_puff', dur=2.5, l=reg.lg(mID='nengo_explorer', N=20, sample='Puff.Starved')),
-            # 'anemotaxis_x2': anemo_exp('windy_arena', dur=2, l=lgs(mIDs=['nengo_explorer', 'explorer'],
-            #                                                        ids=['nengo', 'control'], N=10))
         },
         'thermotaxis': {
             'thermotaxis': thermo_exp('thermotaxis', 'thermo_arena', l=reg.lg(mID='thermo_navigator', N=10)),

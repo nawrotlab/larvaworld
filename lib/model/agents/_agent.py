@@ -10,7 +10,6 @@ from lib import aux
 
 
 
-
 class LarvaworldAgent(agentpy.Agent):
     def __init__(self, unique_id: str, model=None, pos=None, default_color='black', radius=None, visible=True,
                  odor=None, regeneration=False, regeneration_pos=None, group='larvaworld_agent', *args, **kwargs):
