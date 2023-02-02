@@ -38,7 +38,7 @@ def get_conf(media_name):
 
     conf= {
         'parameters' : aux.AttrDict({
-        'sim_params': reg.get_null('sim_params', sim_ID=exp, duration=1.0, store_data=False),
+        'sim_params': reg.get_null('sim_params',duration=1),
         'env_params': reg.get_null('Env',
                                    food_params={'source_groups': {},
                                                 'food_grid': None,

@@ -278,7 +278,7 @@ class WindScape:
         self.model = model
         self.wind_direction = wind_direction
         self.wind_speed = wind_speed
-        self.max_dim = np.max(self.model.arena_dims)
+        self.max_dim = np.max(self.model.space.dims)
         self.default_color = default_color
         self.visible = visible
 

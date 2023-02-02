@@ -85,8 +85,8 @@ def rearrange_contour(ps0):
     return ps_plus + ps_minus
 
 def get_tank_polygon(c, k=0.97, return_polygon=True):
-    X, Y = c.env_params.arena.arena_dims
-    shape = c.env_params.arena.arena_shape
+    X, Y = c.env_params.arena.dims
+    shape = c.env_params.arena.shape
     if shape == 'circular':
         # This is a circle_to_polygon shape from the function
         tank_shape = lib.aux.xy.circle_to_polygon(60, X / 2)

@@ -64,7 +64,7 @@ class DrawEnvTab(gui_aux.DrawTab):
 
     def arena_pars(self, v, w, c):
         dic = c['arena'].get_dict(v, w)
-        return dic['arena_shape'], dic['arena_dims']
+        return dic['shape'], dic['dims']
 
 
 

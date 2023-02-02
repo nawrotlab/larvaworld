@@ -188,8 +188,6 @@ def buildInitDict():
             'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
             'radius': {'v': 0.003, 'lim': (0.0, 0.1), 'dv': 0.001,
                        'h': 'The spatial radius of the source in meters.'},
-            # 'shape': {'v': 'circle', 'dtype': str,'vs': ['circle', 'rect'],
-            #            'h': 'The shape of the food source.'},
             **d['substrate']
         }
 
@@ -282,16 +280,6 @@ def buildInitDict():
     def scapeConfs():
 
         d = aux.AttrDict({
-            # 'xy': {'dtype': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0),
-            #        'vfunc': param.XYCoordinates,
-            #        'h': 'The xy spatial position coordinates.'},
-            # 'odor': {
-            #     'odor_id': pID('odorant', disp='ID'),
-            #     'odor_intensity': {'lim': (0.0, 10.0), 'disp': 'C peak',
-            #                        'h': 'The peak concentration of the odorant in micromoles.'},
-            #     'odor_spread': {'lim': (0.0, 10.0), 'disp': 'spread',
-            #                     'h': 'The spread of the concentration gradient around the peak.'}
-            # },
             'odorscape': {
                 'odorscape': {'dtype': str, 'v': 'Gaussian', 'vs': ['Gaussian', 'Diffusion'],
                               'k': 'odorscape_mod',
@@ -347,11 +335,11 @@ def buildInitDict():
             },
 
             'arena': {
-                'arena_dims': {'dtype': Tuple[float], 'v': (0.1, 0.1), 'lim': (0.0, 2.0), 'dv': 0.01,
+                'dims': {'dtype': Tuple[float], 'v': (0.1, 0.1), 'lim': (0.0, 2.0), 'dv': 0.01,
                                'disp': 'X,Y (m)',
                                'vfunc': param.NumericTuple,
                                'h': 'The arena dimensions in meters.'},
-                'arena_shape': {'dtype': str, 'v': 'circular', 'vs': ['circular', 'rectangular'],
+                'shape': {'dtype': str, 'v': 'circular', 'vs': ['circular', 'rectangular'],
                                 'disp': 'shape',
                                 'h': 'The arena shape.'},
                 'torus':{**bF, 'h': 'Whether to allow a toroidal space.'}
@@ -387,8 +375,8 @@ def buildInitDict():
                 'timestep': {'v': 0.1, 'lim': (0.0, 0.4), 'dv': 0.05,
                              'h': 'The timestep of the simulation in seconds.',
                              'k': 'dt'},
-                'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
-                'store_data': {**bT, 'h': 'Whether to store the simulation data or not.', 'k': 'no_store'},
+                # 'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
+
             },
             'build_conf': {
                 'min_duration_in_sec': {'v': 170.0, 'lim': (0.0, 3600.0), 'dv': 1.0,
@@ -1166,21 +1154,14 @@ def buildInitDict():
                            'h': 'The range of the parameters for space search.', 'k': 'ss.ranges'},
                 'Ngrid': {'dtype': int, 'lim': (0, 100), 'h': 'The number of steps for space search.',
                           'k': 'ss.Ngrid'}},
-            # 'batch_setup': {
-            #     'batch_id': pID('batch-exec', k='b_id'),
-            #     'save_hdf5': {**bF, 'h': 'Whether to store the batch-exec data', 'k': 'store_batch'}
-            # }
+
         })
         d.update(d0)
         d['Batch'] = {'exp': {'dtype': str},
                            'space_search': d['space_search'],
-                           # 'batch_methods': d['batch_methods'],
                            'optimization': d['optimization'],
                            'exp_kws': {'dtype': dict, 'v': {'enrichment': d['enrichment']},
                                        'h': 'Keywords for the exp exec.'},
-                           # 'post_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the post exec.'},
-                           # 'proc_kws': {'dtype': dict, 'v': {}, 'h': 'Keywords for the proc exec.'},
-                           # 'save_hdf5': {**bF, 'h': 'Whether to store the sur datasets.'}
                            }
         return d
 
@@ -1247,6 +1228,7 @@ def buildInitDict():
             'collections': {'dtype': List[str], 'v': ['pose']},
             'enrichment': d['enrichment'],
             'experiment': ConfID_entry('Exp'),
+            'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
         }
 
         d['Replay'] = {
@@ -1278,10 +1260,7 @@ def buildInitDict():
             'refID': ConfID_entry('Ref'),
             'dir': {'dtype': str, 'symbol': 'dir',
                               'k': 'dir',
-                              'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'},
-            # 'refID': confID_entry('Ref'),
-            # 'id': pID('Replay', k='id'),
-            # 'save_to': pSaveTo()
+                              'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
         }
 
         d['Eval'] = {

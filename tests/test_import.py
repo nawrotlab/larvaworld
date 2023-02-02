@@ -7,7 +7,6 @@ def test_import_Schleyer() :
     kws0 = {
         'datagroup_id': 'Schleyer lab',
         'group_id': 'exploration',
-        # 'add_reference': True,
         'enrich' : True
     }
 

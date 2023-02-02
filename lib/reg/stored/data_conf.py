@@ -17,8 +17,8 @@ def Tracker_dict():
                                      'collision_flag'],
         'filesystem.read_metadata': True,
         'filesystem.folder.pref': 'box',
-        'arena.arena_shape': 'circular',
-        'arena.arena_dims': (0.15, 0.15),
+        'arena.shape': 'circular',
+        'arena.dims': (0.15, 0.15),
 
     },
         'Jovanic': {
@@ -27,8 +27,8 @@ def Tracker_dict():
         'resolution.Ncontour': 0,
         'filesystem.file.suf': 'larvaid.txt',
         'filesystem.file.sep': '_',
-        'arena.arena_shape': 'rectangular',
-        'arena.arena_dims': (0.193, 0.193),
+        'arena.shape': 'rectangular',
+        'arena.dims': (0.193, 0.193),
 
     },
         'Berni': {
@@ -37,8 +37,8 @@ def Tracker_dict():
         'resolution.Ncontour': 0,
         'filesystem.read_sequence': ['Date', 'x', 'y'],
         'filesystem.file.sep': '_-_',
-        'arena.arena_shape': 'rectangular',
-        'arena.arena_dims': (0.24, 0.24),
+        'arena.shape': 'rectangular',
+        'arena.dims': (0.24, 0.24),
 
     },
         'Arguello': {
@@ -50,8 +50,8 @@ def Tracker_dict():
                                      'spinepoint_3_y', 'tail_x', 'tail_y', 'centroid_x', 'centroid_y'],
         # 'filesystem.file.suf': 'larvaid.txt',
         'filesystem.file.sep': '_-_',
-        'arena.arena_shape': 'rectangular',
-        'arena.arena_dims': (0.17, 0.17),
+        'arena.shape': 'rectangular',
+        'arena.dims': (0.17, 0.17),
 
     }}
 

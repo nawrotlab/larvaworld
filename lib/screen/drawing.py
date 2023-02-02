@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-
+from lib.screen import SimulationScale
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -71,7 +71,7 @@ class ScreenManager:
             self.black_background)
 
         self.sim_clock = screen.SimulationClock(self.model.dt, color=self.scale_clock_color)
-        self.sim_scale = screen.SimulationScale(self.model.arena_dims[0], color=self.scale_clock_color)
+        self.sim_scale = screen.SimulationScale(self.model.space.dims[0], color=self.scale_clock_color)
         self.sim_state = screen.SimulationState(model=self.model, color=self.scale_clock_color)
 
         self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
@@ -220,7 +220,7 @@ class ScreenManager:
         if self.trails:
             if self.trajectory_dt is None:
                 self.trajectory_dt = 0.0
-            draw_trajectories(space_dims=m.arena_dims * self.s, agents=m.get_flies(), screen=screen,
+            draw_trajectories(space_dims=m.space.dims * self.s, agents=m.get_flies(), screen=screen,
                               decay_in_ticks=int(self.trajectory_dt / m.dt),
                               traj_color=self.traj_color)
 
@@ -283,7 +283,7 @@ class ScreenManager:
         try:
             return self.v._transform(pos)
         except:
-            X, Y = self.model.arena_dims * self.s
+            X, Y = self.model.space.dims * self.s
             X0, Y0 = self.window_dims
 
             p = pos[0] * 2 / X, pos[1] * 2 / Y
@@ -417,7 +417,7 @@ class ScreenManager:
 
     def apply_screen_zoom(self, screen, d_zoom):
         screen.zoom_screen(d_zoom)
-        self.sim_scale = screen.SimulationScale(self.model.arena_dims[0] * screen.zoom, color=self.sim_scale.color)
+        self.sim_scale = SimulationScale(self.model.space.dims[0] * screen.zoom, color=self.sim_scale.color)
         self.sim_scale.render_scale(*self.window_dims)
 
 

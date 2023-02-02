@@ -40,7 +40,7 @@ def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims
         X, Y = grid_dims
     else:
         X, Y = [51, 51] if env.odorscape.grid_dims is None else env.odorscape.grid_dims
-    Xdim, Ydim = env.arena.arena_dims
+    Xdim, Ydim = env.arena.dims
     s = 1
     Xmesh, Ymesh = np.meshgrid(np.linspace(-Xdim * s / 2, Xdim * s / 2, X), np.linspace(-Ydim * s / 2, Ydim * s / 2, Y))
 

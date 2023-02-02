@@ -152,44 +152,45 @@ def run_template(sim_mode, args, kw_dicts):
     Returns:
         -nothing-
     '''
-    kws={'id' : args.id}
+    kws=aux.AttrDict({'id' : args.id})
     if sim_mode == 'Replay':
         run = sim.ReplayRun(**kw_dicts['Replay'], **kws)
         run.run()
     elif sim_mode == 'Batch':
-        conf = reg.loadConf(conftype='Batch', id=args.experiment)
-        conf.batch_type = args.experiment
-        conf.exp = update_exp_conf(conf.exp, N=args.Nagents, mIDs=args.models)
+        kws.store_data = args.store_data
+        kws.Box2D = args.Box2D
+        kws.mode='batch'
+        kws.run_externally=False
+
+        kws.conf = reg.loadConf(conftype='Batch', id=args.experiment)
+        kws.conf.batch_type = args.experiment
+        kws.conf.exp = update_exp_conf(kws.conf.exp, N=args.Nagents, mIDs=args.models)
         if args.duration is not None:
-            conf.exp.sim_params.duration = args.duration
-        conf.exp.sim_params.store_data = args.store_data
-        conf.exp.sim_params.Box2D = args.Box2D
-        exec = sim.Exec(mode='batch', conf=conf, run_externally=False, **kws)
+            kws.conf.exp.sim_params.duration = args.duration
+        exec = sim.Exec(**kws)
         exec.run()
     elif sim_mode == 'Exp':
-        conf = update_exp_conf(args.experiment, N=args.Nagents, mIDs=args.models)
+        kws.parameters = update_exp_conf(args.experiment, N=args.Nagents, mIDs=args.models)
         if args.duration is not None:
-            conf.sim_params.duration = args.duration
-        conf.sim_params.store_data = args.store_data
-        conf.sim_params.Box2D = args.Box2D
+            kws.parameters.sim_params.duration = args.duration
+        kws.store_data = args.store_data
+        kws.Box2D = args.Box2D
+        kws.screen_kws = {'vis_kwargs': kw_dicts['visualization']}
 
-
-        run = sim.ExpRun(parameters=conf,
-                     screen_kws={'vis_kwargs': kw_dicts['visualization']}, **kws)
+        run = sim.ExpRun(**kws)
         ds = run.simulate()
         if args.analysis:
             run.analyze(show=args.show)
 
     elif sim_mode == 'Ga':
+        kws.store_data = args.store_data
         conf = reg.expandConf(id=args.experiment, conftype='Ga')
         conf.experiment = args.experiment
         conf.offline=args.offline
         conf.show_screen=args.show_screen
         if args.duration is not None:
             conf.sim_params.duration = args.duration
-        conf.sim_params.store_data = args.store_data
         conf.ga_select_kws = kw_dicts['ga_select_kws']
-        # conf.ga_build_kws.update(**)
         temp=kw_dicts['ga_build_kws0']
         if temp.base_model is not None:
             conf.ga_build_kws.base_model = temp.base_model
@@ -201,7 +202,8 @@ def run_template(sim_mode, args, kw_dicts):
         GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
-        evrun = sim.EvalRun(**kw_dicts.Eval, show=args.show_screen, **kws)
+        kws.show=args.show_screen
+        evrun = sim.EvalRun(**kw_dicts.Eval, **kws)
         evrun.simulate()
         evrun.plot_results()
         evrun.plot_models()

@@ -89,9 +89,9 @@ def Env_dict() :
 
     def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None, torus=False):
         if type(arenaXY) == float:
-            arena = reg.get_null('arena', arena_shape='circular', arena_dims=(arenaXY, arenaXY), torus=torus)
+            arena = reg.get_null('arena', shape='circular', dims=(arenaXY, arenaXY), torus=torus)
         elif type(arenaXY) == tuple:
-            arena = reg.get_null('arena', arena_shape='rectangular', arena_dims=arenaXY, torus=torus)
+            arena = reg.get_null('arena', shape='rectangular', dims=arenaXY, torus=torus)
         else:
             raise
         if o == 'D':

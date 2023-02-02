@@ -23,7 +23,7 @@ def get_conf(puff_mode, wind_mode):
     windscape=reg.get_null('windscape', wind_direction=0.0, wind_speed=wind_speed, puffs=puffs)
 
     conf= {'parameters' : aux.AttrDict({
-        'sim_params': reg.get_null('sim_params', sim_ID=exp, duration=2.0, store_data=False),
+        'sim_params': reg.get_null('sim_params', duration=2.0),
         'env_params': reg.get_null('Env', windscape=windscape,
                                    border_list={'Border': reg.get_null('Border', points=[(-0.03, 0.02), (0.03, 0.02)])}),
         'larva_groups': {},

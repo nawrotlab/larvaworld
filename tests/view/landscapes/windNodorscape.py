@@ -44,9 +44,9 @@ def get_conf(odor_mode, puff_mode, wind_mode):
     windscape = reg.get_null('windscape', wind_direction=-np.pi / 2, wind_speed=wind_speed, puffs=puffs)
 
     conf = {'parameters': aux.AttrDict({
-        'sim_params': reg.get_null('sim_params', sim_ID=exp, duration=2.0, store_data=False),
+        'sim_params': reg.get_null('sim_params', duration=2.0),
         'env_params': reg.get_null('Env',
-                               arena=reg.get_null('arena', arena_shape='rectangular', arena_dims=(0.3, 0.3)),
+                               arena=reg.get_null('arena', shape='rectangular', dims=(0.3, 0.3)),
                                food_params={'source_groups': {},
                                             'food_grid': None,
                                             'source_units': sus},

@@ -6,13 +6,13 @@ from lib import reg, aux
 
 
 class Arena(agentpy.Space):
-    def __init__(self, model, arena_dims, arena_shape= 'rectangular',vertices=None, torus=False):
-        X, Y = self.dims = np.array(arena_dims)
+    def __init__(self, model, dims, shape= 'rectangular',vertices=None, torus=False):
+        X, Y = self.dims = np.array(dims)
         if vertices is None:
-            if arena_shape == 'circular':
+            if shape == 'circular':
                 # This is a circle_to_polygon shape from the function
                 vertices = aux.circle_to_polygon(60, X / 2)
-            elif arena_shape == 'rectangular':
+            elif shape == 'rectangular':
                 # This is a rectangular shape
                 vertices = np.array([(-X / 2, -Y / 2),
                                    (-X / 2, Y / 2),
@@ -25,7 +25,7 @@ class Arena(agentpy.Space):
         k = 0.96
         self.polygon = geometry.Polygon(self.vertices * k)
         self.edges = [[geometry.Point(x1,y1), geometry.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
-        super().__init__(model=model, torus=torus, shape=arena_dims)
+        super().__init__(model=model, torus=torus, shape=dims)
 
     @staticmethod
     def _border_behavior(position, shape, torus):

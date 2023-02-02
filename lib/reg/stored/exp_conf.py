@@ -209,7 +209,7 @@ def grouped_exp_dic():
 
         'zebrafish': {
             'prey_detection': exp('prey_detection', 'windy_blob_arena', l=reg.lg(mID='zebrafish', N=4, s=(0.002, 0.005)),
-                                  sim={'Box2D': True, 'duration': 20.0})
+                                  sim={'duration': 20.0})
         },
 
         'other': {

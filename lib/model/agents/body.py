@@ -660,7 +660,7 @@ class LarvaBody:
             ang_vel = fov1
             self.body_bend_errors += 1
 
-        if not self.model.env_pars.arena.torus :
+        if not self.model.p.env_params.arena.torus :
             tank = self.model.space.polygon
             d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
 

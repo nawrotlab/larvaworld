@@ -65,7 +65,7 @@ class PrefTrainCondition:
                 self.toggle_odors(env, 0.0, c)
                 env.move_larvae_to_center()
             elif env.UCS_counter == 4:
-                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.space.dims[0])
                 sec=int(env.Nticks*env.dt)
                 m,s=int(sec/60), sec%60
                 print()
@@ -86,7 +86,7 @@ class PrefTrainCondition:
                     env.food_grid.reset()
                     self.start_trial(env, on_food=True)
             elif env.Nticks == ep['stop'] and i==len(env.sim_epochs)-1 :
-                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.arena_dims[0])
+                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.space.dims[0])
                 print()
                 print(f'Test trial off food ended with PI={PI}')
                 text = f'Test trial off food PI={PI}'

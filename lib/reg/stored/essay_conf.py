@@ -95,7 +95,7 @@ class RvsS_Essay(Essay):
     def RvsS_env(self, on_food=True):
         grid = reg.get_null('food_grid') if on_food else None
         return reg.get_null('Env',
-                             arena=reg.get_null('arena', arena_shape='rectangular', arena_dims=(0.02, 0.02)),
+                             arena=reg.get_null('arena', shape='rectangular', dims=(0.02, 0.02)),
                              food_params=reg.get_null('food_params', food_grid=grid),
                              )
 
@@ -404,7 +404,7 @@ class DoublePatch_Essay(Essay):
             raise
 
         kws = {'kwdic': {
-            'arena': {'arena_dims': self.arena_dims, 'arena_shape': 'rectangular'},
+            'arena': {'dims': self.arena_dims, 'shape': 'rectangular'},
             'food_params': {'source_units': self.get_sources(type=type, q=q, Cpeak=Cpeak, Cscale=Cscale),
                             'source_groups': {}, 'food_grid': None},
         }, 'odorscape': odorscape, 'border_list': {}, 'windscape': None, 'thermoscape': None,
@@ -575,7 +575,7 @@ class Chemotaxis_Essay(Essay):
             'sample': 'None.150controls'
         }
         kws = {
-            'arena': reg.get_null('arena', arena_shape='rectangular', arena_dims=(0.1, 0.06)),
+            'arena': reg.get_null('arena', shape='rectangular', dims=(0.1, 0.06)),
             'odorscape': {'odorscape': 'Gaussian'},
             'windscape': None,
             'thermoscape': None,

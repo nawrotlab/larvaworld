@@ -146,7 +146,7 @@ class _LarvaDataset:
 
     def centralize_xy_tracks(self, replace=True, arena_dims=None, is_last=True):
         if arena_dims is None:
-            arena_dims = self.config.env_params.arena.arena_dims
+            arena_dims = self.config.env_params.arena.dims
         x0, y0 = arena_dims
 
         kws0 = {

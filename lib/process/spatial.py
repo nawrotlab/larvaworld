@@ -533,7 +533,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
     if mode == 'arena':
         print('Centralizing trajectories in arena center')
         if arena_dims is None:
-            arena_dims = c.env_params.arena.arena_dims
+            arena_dims = c.env_params.arena.dims
         x0, y0 = arena_dims
         X, Y = x0 / 2, y0 / 2
 
@@ -597,7 +597,7 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
         raise ValueError(f" The requested {point} is not part of the dataset")
     print(f'Fixing {point} to arena center')
     if arena_dims is None :
-        arena_dims=c.env_params.arena.arena_dims
+        arena_dims=c.env_params.arena.dims
     X, Y = arena_dims
     xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
     xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
@@ -657,7 +657,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
         raise ValueError(f" The requested {point} is not part of the dataset")
     print(f'Fixing {point} to arena center')
     if arena_dims is None:
-        arena_dims = c.env_params.arena.arena_dims
+        arena_dims = c.env_params.arena.dims
     X, Y = arena_dims
     xy = s[xy_ps].values
     xy_start = s[xy_ps].dropna().values[0]

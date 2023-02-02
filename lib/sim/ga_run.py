@@ -107,7 +107,7 @@ class GAlauncher(BaseRun):
 
 
     def get_larvaworld_food(self):
-        for label,ff in self.env_pars.food_params.source_units.items():
+        for label,ff in self.p.env_params.food_params.source_units.items():
             x, y = self.screen_pos(ff.pos)
             size = ff.radius * self.scaling_factor
             col = ff.default_color
@@ -141,10 +141,10 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
 
 
     kws = {
-        'sim_params': reg.get_null('sim_params', duration=dur, store_data=store_data, timestep=dt),
+        'sim_params': reg.get_null('sim_params', duration=dur,timestep=dt),
         'show_screen': show_screen,
         'offline': offline,
-        # 'save_to': save_to,
+        'store_data': store_data,
         'experiment': experiment,
         'env_params': 'arena_200mm',
         'ga_select_kws': reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),

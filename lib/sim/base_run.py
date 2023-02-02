@@ -9,31 +9,19 @@ from lib.model import envs, agents
 from lib.model.envs.conditions import get_exp_condition
 
 class BaseRun(agentpy.Model):
-    def __init__(self, runtype, parameters={},  store_data=None, save_to=None, id=None,experiment=None, **kwargs):
-        if experiment is None:
-            experiment = parameters.experiment
-        self.experiment = experiment
-        if store_data is not None:
-            self.store_data = store_data
-
+    def __init__(self, runtype, parameters={},  store_data=True, save_to=None, id=None,experiment=None,
+                 Box2D=False, **kwargs):
+        self.experiment = experiment if experiment is not None else parameters.experiment
+        self.store_data = store_data
+        self.Box2D = Box2D
+        self.scaling_factor = 1000.0 if self.Box2D else 1.0
 
         if 'sim_params' in parameters.keys() :
             # Define sim params
-            if store_data is None :
-                self.store_data = parameters.sim_params.store_data
             self.dt = parameters.sim_params.timestep
             self.duration = parameters.sim_params.duration
             self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
-
-
-            self.Box2D = parameters.sim_params.Box2D
-            self.scaling_factor = 1000.0 if self.Box2D else 1.0
-
             parameters.steps = self.Nsteps
-
-
-
-
         super().__init__(parameters=parameters, **kwargs)
 
         if id is None:
@@ -82,13 +70,10 @@ class BaseRun(agentpy.Model):
 
     def build_env(self, env_params):
         # Define environment
-        self.env_pars = env_params
-
         self.space = envs.Arena(self, **env_params.arena)
-        self.arena_dims = self.space.dims
 
         self.place_obstacles(env_params.border_list)
-        self.place_food(**env_params.food_params)
+        self.place_food(p=env_params.food_params)
 
         '''
         Sensory landscapes of the simulation environment arranged per modality
@@ -109,11 +94,11 @@ class BaseRun(agentpy.Model):
             self.borders.append(b)
             self.border_lines += b.border_lines
 
-    def place_food(self, food_grid=None, source_groups={}, source_units={}):
-        self.food_grid = envs.FoodGrid(**food_grid, model=self) if food_grid else None
-        sourceConfs = util.generate_sourceConfs(source_groups, source_units)
+    def place_food(self, p):
+        self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
+        sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.space.add_agents(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
-        self.foodtypes = aux.get_all_foodtypes(self.env_pars.food_params)
-        self.source_xy = aux.get_source_xy(self.env_pars.food_params)
+        self.foodtypes = aux.get_all_foodtypes(p)
+        self.source_xy = aux.get_source_xy(p)

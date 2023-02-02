@@ -16,7 +16,7 @@ from lib.sim import ExpRun
 
 class BatchRun(ap.Experiment):
     def __init__(self, batch_type, save_to=None, id=None,space_search=None,space_kws={},optimization=None,
-                 record=True, exp=None, exp_kws={}, store_data=False, **kwargs):
+                 record=True, exp=None, exp_kws={}, store_data=False,Box2D=False,  **kwargs):
 
         runtype = 'Batch'
 
@@ -38,6 +38,7 @@ class BatchRun(ap.Experiment):
         self.data_dir = f'{self.dir}/data'
         self.save_to = self.dir
         self.store_data = store_data
+        self.Box2D = Box2D
 
         self.exp_conf = reg.expandConf('Exp', exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
@@ -55,16 +56,14 @@ class BatchRun(ap.Experiment):
         """ Perform a single simulation."""
         sample_id = 0 if run_id[0] is None else run_id[0]
         parameters = self.exp_conf.update_existingnestdict_by_suffix(self.sample[sample_id])
-        # parameters.larva_groups.RE_NEU_PHI_DEF_nav_x2.distribution.N = 4
-        # parameters.sim_params.duration = 1
-        model = self.model(parameters=parameters, _run_id=run_id,store_data = self.store_data, **self._model_kwargs)
+        model = self.model(parameters=parameters, _run_id=run_id,store_data = self.store_data,
+                           Box2D = self.Box2D, **self._model_kwargs)
 
         if self._random:
             ds = model.simulate(display=False, seed=self._random[run_id])
         else:
             ds = model.simulate(display=False)
         self.datasets[sample_id]=ds
-        # model.output['datasets'] = {sample_id: ds}
         if 'variables' in model.output and self.record is False:
             del model.output['variables']  # Remove dynamic variables from record
         return model.output

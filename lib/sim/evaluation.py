@@ -19,13 +19,12 @@ from lib.sim.base_run import BaseRun
 
 class EvalRun(BaseRun):
     def __init__(self,**kwargs):
-        super().__init__(runtype = 'Eval',experiment='evaluation',parameters={}, **kwargs)
+        super().__init__(runtype = 'Eval',experiment='evaluation', **kwargs)
 
 
     def setup(self, refID=None,modelIDs=None, dataset_ids=None,offline=False,
                  norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None, N=5, dur=None,
-                 enrichment=True,
-                 store_data=True, analysis=True, show=False):
+                 enrichment=True,show=False):
 
         self.refID = refID
         self.modelIDs = modelIDs
@@ -36,8 +35,6 @@ class EvalRun(BaseRun):
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.offline = offline
-        self.store_data = store_data
-        self.analysis = analysis
         self.show = show
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
@@ -358,8 +355,6 @@ class EvalRun(BaseRun):
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir)
         else:
-            # print(self.exp_conf.sim_params)
-            # raise
             from lib.sim.exp_run import ExpRun
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = ExpRun(parameters = self.exp_conf)
@@ -370,9 +365,8 @@ class EvalRun(BaseRun):
             os.makedirs(self.data_dir, exist_ok=True)
             self.store()
 
-        if self.analysis:
-            os.makedirs(self.plot_dir, exist_ok=True)
-            self.analyze()
+        os.makedirs(self.plot_dir, exist_ok=True)
+        self.analyze()
         return self.datasets
 
 

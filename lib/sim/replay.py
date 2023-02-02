@@ -116,11 +116,7 @@ class ReplayRun(agentpy.Model):
 
     def build_env(self, env_params):
         # Define environment
-        # self.env_pars = env_params
-
         self.space = envs.Arena(self, **env_params.arena)
-        self.arena_dims = self.space.dims
-
         self.place_obstacles(env_params.border_list)
         self.place_food(**env_params.food_params)
 
@@ -130,7 +126,6 @@ class ReplayRun(agentpy.Model):
         - Wind landscape : windscape
         - Temperature landscape : thermoscape
         '''
-        # self.odor_ids = get_all_odors(self.p.larva_groups, env_params.food_params)
         self.odor_layers = envs.create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
         self.windscape = envs.WindScape(model=self, **env_params.windscape) if env_params.windscape else None
         self.thermoscape = envs.ThermoScape(**env_params.thermoscape) if env_params.thermoscape else None
@@ -207,10 +202,10 @@ def smaller_dataset(dataset=None,refID=None,dir=None, track_point=None, agent_id
             s0 = align_trajectories(s0, c=c0, transposition=transposition,replace=True)
 
         xy_max=2*np.max(s0[nam.xy(c0.point)].dropna().abs().values.flatten())
-        c0.env_params.arena = reg.get_null('arena', arena_dims=(xy_max, xy_max))
+        c0.env_params.arena = reg.get_null('arena', dims=(xy_max, xy_max))
 
     if close_view:
-        c0.env_params.arena = reg.get_null('arena', arena_dims=(0.01, 0.01))
+        c0.env_params.arena = reg.get_null('arena', dims=(0.01, 0.01))
 
 
     if time_range is not None:

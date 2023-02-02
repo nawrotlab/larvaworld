@@ -163,8 +163,6 @@ class GAbuilder(GAselector):
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
                  exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
-        print(init_mode)
-        raise
         self.is_running = True
         if progress_bar and self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
@@ -227,7 +225,7 @@ class GAbuilder(GAselector):
              'agent_ids': np.arange(self.Nagents), 'duration': self.model.Nsteps * self.model.dt,
              'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': self.Nagents, 'Nticks': self.model.Nsteps,
              'mID': self.bestConfID,
-             'color': 'blue', 'env_params': self.model.env_pars})
+             'color': 'blue', 'env_params': self.model.p.env_params})
 
         self.my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), c.agent_ids],
                                                    names=['Step', 'AgentID'])
@@ -344,7 +342,7 @@ class GAbuilder(GAselector):
 
         self.sort_genomes()
 
-        if self.model.p.sim_params.store_data:
+        if self.model.store_data:
             self.all_genomes_dic += [
             {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
              'fitness': g.fitness, **g.fitness_dict.flatten()}
@@ -364,7 +362,7 @@ class GAbuilder(GAselector):
         if self.progress_bar:
             self.progress_bar.finish()
         self.printd(0, 'Best fittness:', self.best_genome.fitness)
-        if self.model.p.sim_params.store_data :
+        if self.model.store_data :
             self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.data_dir)
 
 

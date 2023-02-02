@@ -162,14 +162,13 @@ Larvaworld can be run directly from linux terminal.
 
            python larvaworld.py Ga realism -N 20 -t 0.5 -mID1 GA_test_loco -mGA model
 
-
    4. Experiment replay
    
       Replay a real-world experiment.
       This line replays a reference experimental dataset (note that this is imported by the tests/data_import/Schleyer/import_Schleyer.py)
 
            python larvaworld.py Replay -refID exploration.dish
-           python larvaworld.py Replay -dir SchleyerGroup/processed/exploration/dish
+           python larvaworld.py Replay -dir SchleyerGroup/processed/exploration/dish03
 
    5. Model evaluation / comparison to real data
    
