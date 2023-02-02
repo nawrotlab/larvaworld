@@ -134,24 +134,12 @@ def run_template(sim_mode, args, d):
     elif sim_mode == 'Batch':
         conf = reg.loadConf(conftype='Batch', id=args.experiment)
         conf.batch_type = args.experiment
-        conf.exp = update_exp_conf(conf.exp, sim_params=d['sim_params'], N=args.Nagents, mIDs=args.models)
+        conf.exp = update_exp_conf(conf.exp, duration=args.duration,store_data=args.store_data,Box2D=args.Box2D, N=args.Nagents, mIDs=args.models)
 
         exec = sim.Exec(mode='batch', conf=conf, run_externally=False, **kws)
         exec.run()
     elif sim_mode == 'Exp':
-        # conf = reg.expandConf(id=args.experiment, conftype='Exp')
-        # conf.experiment = args.experiment
-        # conf.sim_params = aux.AttrDict(d['sim_params'])
-        # if conf.sim_params.duration is None:
-        #     conf.sim_params.duration =reg.loadConf(id=args.experiment, conftype='Exp').sim_params.duration
-        # if args.models is not None:
-        #     conf = update_exp_models(conf, args.models)
-        # if args.Nagents is not None:
-        #     for gID, gConf in conf.larva_groups.items():
-        #         gConf.distribution.N = args.Nagents
-
-
-        conf = update_exp_conf(exp=args.experiment, sim_params=d['sim_params'], N=args.Nagents, mIDs=args.models)
+        conf = update_exp_conf(exp=args.experiment, duration=args.duration,store_data=args.store_data,Box2D=args.Box2D, N=args.Nagents, mIDs=args.models)
         run = sim.ExpRun(parameters=conf,
                      screen_kws={'vis_kwargs': d['visualization']}, **kws)
         ds = run.simulate()
@@ -163,7 +151,10 @@ def run_template(sim_mode, args, d):
         conf.experiment = args.experiment
         conf.offline=args.offline
         conf.show_screen=args.show_screen
-        conf.sim_params = aux.AttrDict(d['sim_params'])
+        if args.duration is not None:
+            conf.sim_params.duration = args.duration
+        conf.sim_params.store_data = args.store_data
+        #conf.sim_params = aux.AttrDict(d['sim_params'])
         # conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,conf_type='Ga')
         conf.ga_select_kws = d['ga_select_kws']
 
@@ -182,10 +173,10 @@ def run_template(sim_mode, args, d):
 
 def get_parser(sim_mode, parser=None):
     dic = aux.AttrDict({
-        'Batch': [['sim_params'], ['e', 'N', 'ms']],
+        'Batch': [[], ['e','t','Box2D', 'N', 'ms']],
         'Eval': [['Eval'], ['hide']],
-        'Exp': [['sim_params', 'visualization'], ['e', 'N', 'ms', 'a']],
-        'Ga': [['sim_params', 'ga_select_kws'], ['e', 'mID0', 'mID1', 'offline', 'hide']],
+        'Exp': [['visualization'], ['e','t','Box2D', 'N', 'ms', 'a']],
+        'Ga': [['ga_select_kws'], ['e','t', 'mID0', 'mID1', 'offline', 'hide']],
         'Replay': [['Replay'], []]
     })
     mks, ks = dic[sim_mode]
@@ -193,9 +184,14 @@ def get_parser(sim_mode, parser=None):
     MP = MultiParser(mks)
     p = MP.add(parser)
     p.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
+    p.add_argument('-no_store', '--store_data', action="store_false", help='Whether to store the simulation data or not')
     for k in ks:
         if k == 'e':
             p.add_argument('experiment', choices=reg.storedConf(sim_mode), help='The experiment mode')
+        elif k == 't':
+            p.add_argument('-t', '--duration', type=float, help='The duration of the simulation in minutes')
+        elif k == 'Box2D':
+            p.add_argument('-Box2D', '--Box2D', action="store_true", help='Whether to use the Box2D physics engine or not')
         elif k == 'N':
             p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
         elif k == 'ms':

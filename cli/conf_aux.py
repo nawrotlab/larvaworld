@@ -5,24 +5,28 @@ from lib import reg, aux
 
 
 
-def update_exp_conf(exp, sim_params, N=None, mIDs=None):
+def update_exp_conf(exp, duration=None,store_data=True,Box2D=False, N=None, mIDs=None):
     conf = reg.expandConf(id=exp, conftype='Exp')
     conf.experiment = exp
-    conf.sim_params = aux.AttrDict(sim_params)
+    if duration is not None:
+        conf.sim_params.duration =duration
+    conf.sim_params.store_data = store_data
+    conf.sim_params.Box2D = Box2D
 
-    if conf.sim_params.duration is None:
-        conf.sim_params.duration =reg.loadConf(id=exp, conftype='Exp').sim_params.duration
+    # conf.sim_params = aux.AttrDict(sim_params)
+    #
+    # if conf.sim_params.duration is None:
+    #     conf.sim_params.duration =reg.loadConf(id=exp, conftype='Exp').sim_params.duration
 
     if mIDs is not None:
         Nm = len(mIDs)
-
-        confs = list(conf.larva_groups.values())
+        gConfs = list(conf.larva_groups.values())
         if len(conf.larva_groups) != Nm:
-            confs = [confs[0]] * Nm
-            for gConf, col in zip(confs, aux.N_colors(Nm)):
+            gConfs = [gConfs[0]] * Nm
+            for gConf, col in zip(gConfs, aux.N_colors(Nm)):
                 gConf.default_color = col
         conf.larva_groups = aux.AttrDict({mID: {} for mID in mIDs})
-        for mID, gConf in zip(mIDs, confs):
+        for mID, gConf in zip(mIDs, gConfs):
             conf.larva_groups[mID] = gConf
             conf.larva_groups[mID].model = reg.loadConf('Model', mID)
 
