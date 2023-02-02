@@ -306,52 +306,8 @@ def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
     return par
 
 
-def get_vfunc(dtype, lim, vs):
-    func_dic = {
-        float: param.Number,
-        int: param.Integer,
-        str: param.String,
-        bool: param.Boolean,
-        dict: param.Dict,
-        list: param.List,
-        type: param.ClassSelector,
-        List[int]: param.List,
-        List[str]: param.List,
-        List[float]: param.List,
-        List[Tuple[float]]: param.List,
-        FunctionType: param.Callable,
-        Tuple[float]: param.Range,
-        Tuple[int]: param.NumericTuple,
-        typing.TypedDict: param.Dict
-    }
-    if dtype == float and lim == (0.0, 1.0):
-        return param.Magnitude
-    if type(vs) == list and dtype in [str, int]:
-        return param.Selector
-    elif dtype in func_dic.keys():
-        return func_dic[dtype]
-    else :
-        return param.Parameter
 
 
-
-def vpar(vfunc, v0, h, lab, lim, dv, vs):
-    f_kws = {
-        'default': v0,
-        'doc': h,
-        'label': lab,
-        'allow_None': True
-    }
-    if vfunc in [param.List, param.Number, param.Range]:
-        if lim is not None:
-            f_kws['bounds'] = lim
-    if vfunc in [param.Range, param.Number]:
-        if dv is not None:
-            f_kws['step'] = dv
-    if vfunc in [param.Selector]:
-        f_kws['objects'] = vs
-    func = vfunc(**f_kws, instantiate=True)
-    return func
 
 
 

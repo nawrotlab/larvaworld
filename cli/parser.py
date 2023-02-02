@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from lib import reg, aux, sim
 from cli.conf_aux import update_exp_conf
 
+
 class ParsArg:
     """
     Create a single parser argument
@@ -131,11 +132,26 @@ def run_template(sim_mode, args, d):
         run = sim.ReplayRun(**d['Replay'], **kws)
         run.run()
     elif sim_mode == 'Batch':
-        conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Batch')
+        conf = reg.loadConf(conftype='Batch', id=args.experiment)
+        conf.batch_type = args.experiment
+        conf.exp = update_exp_conf(conf.exp, sim_params=d['sim_params'], N=args.Nagents, mIDs=args.models)
+
         exec = sim.Exec(mode='batch', conf=conf, run_externally=False, **kws)
         exec.run()
     elif sim_mode == 'Exp':
-        conf = update_exp_conf(exp=args.experiment, d=d, N=args.Nagents, models=args.models, conf_type='Exp')
+        # conf = reg.expandConf(id=args.experiment, conftype='Exp')
+        # conf.experiment = args.experiment
+        # conf.sim_params = aux.AttrDict(d['sim_params'])
+        # if conf.sim_params.duration is None:
+        #     conf.sim_params.duration =reg.loadConf(id=args.experiment, conftype='Exp').sim_params.duration
+        # if args.models is not None:
+        #     conf = update_exp_models(conf, args.models)
+        # if args.Nagents is not None:
+        #     for gID, gConf in conf.larva_groups.items():
+        #         gConf.distribution.N = args.Nagents
+
+
+        conf = update_exp_conf(exp=args.experiment, sim_params=d['sim_params'], N=args.Nagents, mIDs=args.models)
         run = sim.ExpRun(parameters=conf,
                      screen_kws={'vis_kwargs': d['visualization']}, **kws)
         ds = run.simulate()
@@ -143,7 +159,12 @@ def run_template(sim_mode, args, d):
             run.analyze(show=args.show)
 
     elif sim_mode == 'Ga':
-        conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,conf_type='Ga')
+        conf = reg.expandConf(id=args.experiment, conftype='Ga')
+        conf.experiment = args.experiment
+        conf.offline=args.offline
+        conf.show_screen=args.show_screen
+        conf.sim_params = aux.AttrDict(d['sim_params'])
+        # conf = update_exp_conf(exp=args.experiment, d=d, offline=args.offline, show_screen=args.show_screen,conf_type='Ga')
         conf.ga_select_kws = d['ga_select_kws']
 
         if args.base_model is not None:
