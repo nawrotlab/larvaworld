@@ -55,32 +55,6 @@ def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
     return d
 
 
-# def par_dict(d0):
-#     if d0 is None:
-#         return None
-#
-#     d = {}
-#     for n, v in d0.items():
-#         if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
-#             d[n] = build_ParsArg(n, **v)
-#         else:
-#             d[n] = {'dtype': dict, 'content': par_dict(d0=v)}
-#         # d.update(entry)
-#     return d
-#
-#
-# def parser_dict2(d0):
-#     dic = par_dict(d0)
-#     try:
-#         return aux.AttrDict({k: ParsArg(**v) for k, v in dic.items()})
-#     except:
-#         p = aux.AttrDict()
-#         for k, v in dic.items():
-#             for kk, vv in v['content'].items():
-#                 p[kk] = ParsArg(**vv)
-#         return p
-
-
 def parser_dict(d0):
     p = aux.AttrDict()
     for n, v in d0.items():
@@ -113,7 +87,6 @@ class Parser:
     def get(self, input):
         dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
         return dic.unflatten()
-        # return reg.get_null(name=self.name, **dic)
 
 
 class MultiParser:

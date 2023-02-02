@@ -255,22 +255,7 @@ class ExpRun(BaseRun):
         self.figs = reg.graphs.eval_graphgroups(graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs)
 
     def store(self):
-
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
                 aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    exp = 'chemorbit'
-
-    m = ExpRun(parameters=reg.expandConf('Exp', exp),
-               screen_kws={'vis_kwargs': reg.get_null('visualization', mode=None)})
-    ds = m.simulate()
-    m.analyze(show=True)

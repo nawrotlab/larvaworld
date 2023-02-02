@@ -897,7 +897,8 @@ class ModelRegistry:
         MB_kws = {'brain.modules.memory': True, 'brain.memory_params': MB_pars}
 
         feed_pars = self.generate_configuration(self.dict.brain.m['feeder'].mode['default'].args)
-        feed_kws = {'brain.modules.feeder': True, 'brain.feeder_params': feed_pars, 'brain.intermitter_params.EEB': 0.5}
+        feed_kws = {'brain.modules.feeder': True, 'brain.feeder_params': feed_pars,
+                    'brain.intermitter_params.EEB': 0.5, 'brain.intermitter_params.feed_bouts': True}
         RvSkws={}
         for species, k_abs, EEB in zip(['rover', 'sitter'], [0.8, 0.4], [0.67, 0.37]):
             DEB_pars=self.generate_configuration(self.dict.aux.m['energetics'].mode['DEB'].args,species=species, hunger_gain=1.0,DEB_dt=10.0)

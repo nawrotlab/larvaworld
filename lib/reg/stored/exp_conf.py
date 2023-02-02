@@ -151,7 +151,7 @@ def grouped_exp_dic():
             'patchy_food': food_exp('patchy_food', 'patchy_food', l=reg.lg(mID='forager', N=25)),
             'patch_grid': food_exp('patch_grid', 'patch_grid', l=lgs_x4()),
             'MB_patch_grid': food_exp('MB_patch_grid', 'patch_grid', l=reg.lgs(mIDs=['MB_untrained', 'MB_trained'], N=3)),
-            'noMB_patch_grid': food_exp('noMB_patch_grid', 'patch_grid', l=reg.lgs(mIDs=['noMB_untrained', 'noMB_trained'], N=10)),
+            'noMB_patch_grid': food_exp('noMB_patch_grid', 'patch_grid', l=reg.lgs(mIDs=['noMB_untrained', 'noMB_trained'], N=4)),
             'random_food': food_exp('random_food', 'random_food', c=['feeder', 'toucher'], l=reg.lgs(mIDs=['Orco_forager', 'RL_forager'],
                                                                                   ids=['Orco', 'RL'], N=5,
                                                                                   mode='uniform',

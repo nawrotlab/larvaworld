@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 
 
 from lib import aux
-from cli.parser import run_template, get_parser
+from cli.argparsing import run_template, get_parser
 
 p=ArgumentParser()
 subps = p.add_subparsers(dest='sim_mode', help='The simulation mode to launch')
