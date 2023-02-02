@@ -6,6 +6,7 @@ import numpy as np
 from lib import reg, aux, util
 from lib.model import envs, agents
 from lib.aux import naming as nam
+from lib.process.dataset import LarvaDataset
 from lib.process.spatial import fixate_larva
 from lib.screen import ScreenManager
 
@@ -150,10 +151,17 @@ class ReplayRun(agentpy.Model):
 
 
 
-def smaller_dataset(dataset=None,refID=None, track_point=None, agent_ids=None, transposition=None,
+def smaller_dataset(dataset=None,refID=None,dir=None, track_point=None, agent_ids=None, transposition=None,
                     time_range=None, pars=None,env_params=None,close_view=False):
-    if dataset is None and refID is not None:
-        dataset = reg.loadRef(refID)
+    if dataset is None :
+        if refID is not None:
+            dataset = reg.loadRef(refID)
+        elif dir is not None :
+            path=f'{reg.DATA_DIR}/{dir}'
+            dataset = LarvaDataset(path, load_data=False)
+        else :
+            raise ValueError ('Unable to load dataset. Either refID or storage path must be provided. ')
+
 
     c=dataset.config
     c0=c.get_copy()

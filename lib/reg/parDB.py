@@ -1276,6 +1276,9 @@ def buildInitDict():
             'overlap_mode': {**bF, 'symbol': sub('mod', 'overlap'), 'k': 'overlap',
                              'h': 'Whether to draw overlapped image of the track.'},
             'refID': ConfID_entry('Ref'),
+            'dir': {'dtype': str, 'symbol': 'dir',
+                              'k': 'dir',
+                              'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'},
             # 'refID': confID_entry('Ref'),
             # 'id': pID('Replay', k='id'),
             # 'save_to': pSaveTo()
