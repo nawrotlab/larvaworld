@@ -281,5 +281,5 @@ def get_parser(sim_mode, parser=None):
             p.add_argument('-hide', '--show_screen', action="store_false",
                            help='Whether to render the screen visualization')
 
-    return MP, p
+    return MP
 

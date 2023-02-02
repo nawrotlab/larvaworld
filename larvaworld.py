@@ -8,10 +8,10 @@ p=ArgumentParser()
 subps = p.add_subparsers(dest='sim_mode', help='The simulation mode to launch')
 
 MPs=dict()
-ps=dict()
+# ps=dict()
 for mode in ['Exp','Batch', 'Ga', 'Eval', 'Replay'] :
     subp = subps.add_parser(mode)
-    MPs[mode], ps[mode] = get_parser(mode,subp)
+    MPs[mode] = get_parser(mode,subp)
 
 
 if __name__ == "__main__":
