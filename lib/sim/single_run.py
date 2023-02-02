@@ -8,7 +8,7 @@ from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
 from lib.model.envs.conditions import get_exp_condition
-from lib.sim.base_run import BaseRun
+from lib.sim.run_template import BaseRun
 
 
 class ExpRun(BaseRun):

@@ -36,7 +36,7 @@ class Essay:
                              collections=self.collections, **kwargs)
 
     def run(self):
-        from lib.sim.exp_run import ExpRun
+        from lib.sim.single_run import ExpRun
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
             print(f'Running {len(cs)} versions of experiment {exp}')

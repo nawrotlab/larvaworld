@@ -4,12 +4,10 @@ import copy
 import PySimpleGUI as sg
 import pandas as pd
 
-from lib import reg, aux
+from lib import reg, aux,sim
 import lib.util.data_aux
 from gui import gui_aux
 from lib.plot.table import mpl_table
-
-from lib.sim.exec_run import Exec
 
 class BatchTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
@@ -73,7 +71,7 @@ class BatchTab(gui_aux.GuiTab):
         batch_id = v[self.batch_id_key]
         conf['id'] = batch_id
         conf['batch_type'] = id
-        exec = Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
+        exec = sim.Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
         self.DL0.add(w, {batch_id: exec})
         exec.run()
         return d, g

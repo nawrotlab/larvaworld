@@ -9,7 +9,7 @@ from lib import reg, aux, plot,util
 
 
 
-def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits='best',
+def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits='best',print_fits=False,
                      marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):
     distro_ls = ['powerlaw', 'exponential', 'lognormal', 'lognorm-pow', 'levy', 'normal', 'uniform']
     distro_cs = ['c', 'g', 'm', 'k', 'orange', 'brown', 'purple']
@@ -18,7 +18,7 @@ def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits=
 
     if fit_dic is None:
         xmin, xmax = np.min(x0), np.max(x0)
-        fit_dic = util.fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout, **kwargs)
+        fit_dic = util.fit_bout_distros(x0, xmin, xmax, discr, dataset_id='test', bout=bout,print_fits=print_fits, **kwargs)
     idx_Kmax = fit_dic['idx_Kmax']
     xrange, du2, c2, y = fit_dic['values']
     lws[idx_Kmax] = 4
@@ -53,7 +53,7 @@ def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits=
 
 
 @reg.funcs.graph('epochs')
-def plot_bouts(name=None, plot_fits='', turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
+def plot_bouts(name=None, plot_fits='',print_fits=False, turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
     if name is None :
         if not turns:
             name = f'runsNpauses{plot_fits}'
@@ -70,6 +70,7 @@ def plot_bouts(name=None, plot_fits='', turns=False, stridechain_duration=False,
         kws = {
             'marker': 'o',
             'plot_fits': plot_fits,
+            'print_fits': print_fits,
             'label': id,
             'color': d.color,
             'legend_outside': legend_outside,

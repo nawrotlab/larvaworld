@@ -1,7 +1,7 @@
 from typing import List
 from argparse import ArgumentParser
 
-
+import lib.sim.genetic_algorithm
 from lib import reg, aux, sim
 
 
@@ -199,7 +199,7 @@ def run_template(sim_mode, args, kw_dicts):
         if temp.bestConfID is not None:
             conf.ga_build_kws.bestConfID = temp.bestConfID
         conf.ga_build_kws.init_mode = temp.init_mode
-        GA = sim.GAlauncher(parameters=conf, **kws)
+        GA = lib.sim.ga_engine.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
         kws.show=args.show_screen

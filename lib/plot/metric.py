@@ -51,7 +51,7 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
 
         dic = d.read(file='vel_definition')
         if dic is None :
-            dic=d.save_vel_definition(component_vels=component_vels)
+            dic=d.save_vel_definition()
 
 
         stvar = dic['/stride_variability']

@@ -1,6 +1,6 @@
 from lib import reg
 
-from lib.sim.replay import ReplayRun
+from lib.sim.dataset_replay import ReplayRun
 
 mode = 'fixed_segment'
 # refID = 'Rehydration/AttP2.Deprived'

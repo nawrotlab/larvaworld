@@ -1,7 +1,7 @@
 import numpy as np
 
 from lib import reg, aux
-from lib.sim.exp_run import ExpRun
+from lib.sim.single_run import ExpRun
 
 exp='Odorscape visualization'
 

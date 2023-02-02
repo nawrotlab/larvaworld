@@ -13,7 +13,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 from lib import reg, aux, plot, util
-from lib.sim.base_run import BaseRun
+from lib.sim.run_template import BaseRun
 
 
 
@@ -355,7 +355,7 @@ class EvalRun(BaseRun):
                                         Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir)
         else:
-            from lib.sim.exp_run import ExpRun
+            from lib.sim.single_run import ExpRun
             print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
             run = ExpRun(parameters = self.exp_conf)
             run.simulate()

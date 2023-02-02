@@ -102,10 +102,10 @@ class _LarvaDataset:
 
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
-    def save_vel_definition(self, component_vels=True):
+    def save_vel_definition(self):
         from lib.process.calibration import comp_stride_variation, comp_segmentation
         warnings.filterwarnings('ignore')
-        res_v = comp_stride_variation(self, component_vels=component_vels)
+        res_v = comp_stride_variation(self)
         res_fov = comp_segmentation(self)
         dic={**res_v,**res_fov}
         retrieve_metrics(self, self.config)
@@ -227,7 +227,7 @@ class _LarvaDataset:
         return ds
 
     def visualize(self, **kwargs):
-        from lib.sim.replay import ReplayRun
+        from lib.sim.dataset_replay import ReplayRun
         rep = ReplayRun(dataset=self, **kwargs)
         rep.run()
 

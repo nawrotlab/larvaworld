@@ -1108,7 +1108,7 @@ def buildInitDict():
             'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
             'ga_build_kws': d['ga_build_kws'],
             'ga_select_kws': d['ga_select_kws'],
-            # 'ga_kws': {**d['GAbuilder'], **d['GAselector']},
+            # 'ga_kws': {**d['GAengine'], **d['GAselector']},
         }
 
         return d

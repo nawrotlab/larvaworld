@@ -15,7 +15,7 @@ from lib.process.annotation import detect_strides, process_epochs
 
 
 
-def comp_stride_variation(d, component_vels=True):
+def comp_stride_variation(d):
 
     s, e, c = d.step_data, d.endpoint_data, d.config
     N = c.Npoints
@@ -77,7 +77,7 @@ def comp_stride_variation(d, component_vels=True):
         for i, vv in enumerate(svels):
             cum_dur = ss[vv].dropna().values.shape[0] * c.dt
             a = ss[vv].values
-            fr = aux.sim.fft_max(a, c.dt, fr_range=(1, 2.5))
+            fr = aux.fft_max(a, c.dt, fr_range=(1, 2.5))
             strides = detect_strides(a, fr=fr, dt=c.dt, return_extrema=False, return_runs=False)
             if len(strides) == 0:
                 row = [fr, 0, np.nan, np.nan, np.nan,
@@ -100,7 +100,7 @@ def comp_stride_variation(d, component_vels=True):
 
     sNt_cv = str_var[reg.getPar(['str_sd_var', 'str_t_var'])].sum(axis=1)
     best_idx = sNt_cv.argmin()
-    c.metric_definition.spatial.fitted = aux.dNl.AttrDict(
+    c.metric_definition.spatial.fitted = aux.AttrDict(
         {'point_idx': int(str_var['point_idx'].iloc[best_idx]),
          'use_component_vel': bool(str_var['use_component_vel'].iloc[best_idx])})
     print('Stride variability analysis complete!')
@@ -170,7 +170,7 @@ def comp_segmentation(d):
     best_combo_max = np.max(best_combo)
     front_body_ratio = best_combo_max / N
 
-    c.metric_definition.angular.fitted = aux.dNl.AttrDict(
+    c.metric_definition.angular.fitted = aux.AttrDict(
         {'best_combo': str(best_combo), 'front_body_ratio': front_body_ratio,
          'bend': 'from_vectors'})
     print('Angular velocity definition analysis complete!')

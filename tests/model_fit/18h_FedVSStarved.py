@@ -1,6 +1,6 @@
 from lib import reg, util
 
-from lib.sim.evaluation import EvalRun
+from lib.sim.model_evaluation import EvalRun
 
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'

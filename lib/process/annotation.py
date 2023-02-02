@@ -41,8 +41,8 @@ def process_epochs(a, epochs, dt, return_idx=True):
     else:
         if epochs.shape == (2,):
             epochs = np.array([epochs, ])
-        durs = (np.diff(epochs).flatten() + 1) * dt
-        slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
+        durs = (np.diff(epochs).flatten()) * dt
+        slices = [np.arange(r0, r1, 1) for r0, r1 in epochs]
         amps = np.array([np.trapz(a[p][~np.isnan(a[p])], dx=dt) for p in slices])
         maxs = np.array([np.max(a[p]) for p in slices])
         if return_idx:
@@ -93,7 +93,7 @@ def detect_epochs(idx, dt, min_dur=None):
     p0s = idx[np.where(np.diff(idx, prepend=[-np.inf]) != 1)[0]]
     p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     epochs = np.vstack([p0s, p1s]).T
-    durs = (np.diff(epochs).flatten() + 1) * dt
+    durs = (np.diff(epochs).flatten()) * dt
     epochs = epochs[durs >= min_dur]
     return epochs
 

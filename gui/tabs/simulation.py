@@ -2,9 +2,8 @@ import copy
 import PySimpleGUI as sg
 
 
-from lib import reg
+from lib import reg, aux, sim
 
-from lib.sim.exec_run import Exec
 from gui import gui_aux
 from gui.tabs import DrawEnvTab, EnvTab
 
@@ -108,7 +107,7 @@ class SimTab(gui_aux.GuiTab):
         conf['experiment'] = id
         conf['vis_kwargs'] = self.gui.get_vis_kwargs(v)
         self.active_id = conf['sim_params']['sim_ID']
-        exec = Exec(mode='sim', conf=conf, progressbar=p, w_progressbar=w[p.k],
+        exec = sim.Exec(mode='sim', conf=conf, progressbar=p, w_progressbar=w[p.k],
                     run_externally=self.gui.run_externally['sim'])
         self.DL0.add(w, {self.active_id: exec})
         exec.run()
