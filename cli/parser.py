@@ -25,7 +25,7 @@ class ParsArg:
         return getattr(input, self.key)
 
 
-def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None):
+def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
     if k is None:
         k = name
     d = {
@@ -52,36 +52,45 @@ def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None):
         if v is not None:
             d['default'] = v
             d['nargs'] = '?'
-    return {name: d}
-
-
-def par_dict(d0):
-    if d0 is None:
-        return None
-
-    def par(name, dtype=float, v=None, vs=None, h='', k=None, **kwargs):
-        return build_ParsArg(name, k, h, dtype, v, vs)
-
-    d = {}
-    for n, v in d0.items():
-        if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
-            entry = par(n, **v)
-        else:
-            entry = {n: {'dtype': dict, 'content': par_dict(d0=v)}}
-        d.update(entry)
     return d
 
 
-def parser_dict(name):
-    dic = par_dict(reg.par.PI[name])
-    try:
-        parsargs = {k: ParsArg(**v) for k, v in dic.items()}
-    except:
-        parsargs = {}
-        for k, v in dic.items():
-            for kk, vv in v['content'].items():
-                parsargs[kk] = ParsArg(**vv)
-    return aux.AttrDict(parsargs)
+# def par_dict(d0):
+#     if d0 is None:
+#         return None
+#
+#     d = {}
+#     for n, v in d0.items():
+#         if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+#             d[n] = build_ParsArg(n, **v)
+#         else:
+#             d[n] = {'dtype': dict, 'content': par_dict(d0=v)}
+#         # d.update(entry)
+#     return d
+#
+#
+# def parser_dict2(d0):
+#     dic = par_dict(d0)
+#     try:
+#         return aux.AttrDict({k: ParsArg(**v) for k, v in dic.items()})
+#     except:
+#         p = aux.AttrDict()
+#         for k, v in dic.items():
+#             for kk, vv in v['content'].items():
+#                 p[kk] = ParsArg(**vv)
+#         return p
+
+
+def parser_dict(d0):
+    p = aux.AttrDict()
+    for n, v in d0.items():
+        if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+            entry = build_ParsArg(n, **v)
+            p[n] = ParsArg(**entry)
+        else:
+            p[n] = parser_dict(v)
+
+    return p.flatten()
 
 
 class Parser:
@@ -91,8 +100,8 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        self.parsargs = parser_dict(name)
-        # self.parsargs = reg.parsers.parser_dict[name]
+        d0=reg.par.PI[name]
+        self.parsargs = parser_dict(d0)
 
     def add(self, parser=None):
         if parser is None:
@@ -102,9 +111,9 @@ class Parser:
         return parser
 
     def get(self, input):
-        dic = {k: v.get(input) for k, v in self.parsargs.items()}
-        d = reg.get_null(name=self.name, **dic)
-        return d
+        dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
+        return dic.unflatten()
+        # return reg.get_null(name=self.name, **dic)
 
 
 class MultiParser:
@@ -126,9 +135,20 @@ class MultiParser:
         return aux.AttrDict({k: v.get(input) for k, v in self.parsers.items()})
 
 
-def update_exp_conf(exp, N=None, mIDs=None):
-    conf = reg.expandConf(id=exp, conftype='Exp')
-    conf.experiment = exp
+def update_exp_conf(type, N=None, mIDs=None):
+    '''
+    Loads the configuration of an experiment based on its ID.
+    Modifies the included larvagroups
+    Args:
+        type: The experiment type
+        N: Overwrite the number of agents per larva group
+        mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.
+
+    Returns:
+        The experiment's configuration
+    '''
+    conf = reg.expandConf(id=type, conftype='Exp')
+    conf.experiment = type
 
     if mIDs is not None:
         Nm = len(mIDs)
@@ -148,10 +168,20 @@ def update_exp_conf(exp, N=None, mIDs=None):
 
     return conf
 
-def run_template(sim_mode, args, d):
+def run_template(sim_mode, args, kw_dicts):
+    '''
+    Generates the simulation configuration and launches it
+    Args:
+        sim_mode: The simulation mode
+        args: Parsed arguments
+        kw_dicts: Parsed argument dicts
+
+    Returns:
+        -nothing-
+    '''
     kws={'id' : args.id}
     if sim_mode == 'Replay':
-        run = sim.ReplayRun(**d['Replay'], **kws)
+        run = sim.ReplayRun(**kw_dicts['Replay'], **kws)
         run.run()
     elif sim_mode == 'Batch':
         conf = reg.loadConf(conftype='Batch', id=args.experiment)
@@ -164,7 +194,7 @@ def run_template(sim_mode, args, d):
         exec = sim.Exec(mode='batch', conf=conf, run_externally=False, **kws)
         exec.run()
     elif sim_mode == 'Exp':
-        conf = update_exp_conf(exp=args.experiment, N=args.Nagents, mIDs=args.models)
+        conf = update_exp_conf(args.experiment, N=args.Nagents, mIDs=args.models)
         if args.duration is not None:
             conf.sim_params.duration = args.duration
         conf.sim_params.store_data = args.store_data
@@ -172,7 +202,7 @@ def run_template(sim_mode, args, d):
 
 
         run = sim.ExpRun(parameters=conf,
-                     screen_kws={'vis_kwargs': d['visualization']}, **kws)
+                     screen_kws={'vis_kwargs': kw_dicts['visualization']}, **kws)
         ds = run.simulate()
         if args.analysis:
             run.analyze(show=args.show)
@@ -185,7 +215,7 @@ def run_template(sim_mode, args, d):
         if args.duration is not None:
             conf.sim_params.duration = args.duration
         conf.sim_params.store_data = args.store_data
-        conf.ga_select_kws = d['ga_select_kws']
+        conf.ga_select_kws = kw_dicts['ga_select_kws']
 
         if args.base_model is not None:
             conf.ga_build_kws.base_model = args.base_model
@@ -194,13 +224,22 @@ def run_template(sim_mode, args, d):
         GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
-        evrun = sim.EvalRun(**d.Eval, show=args.show_screen, **kws)
+        evrun = sim.EvalRun(**kw_dicts.Eval, show=args.show_screen, **kws)
         evrun.simulate()
         evrun.plot_results()
         evrun.plot_models()
 
 
 def get_parser(sim_mode, parser=None):
+    '''
+    Prepares a dedicated parser for each simulation mode and adds it to the main parser
+    Args:
+        sim_mode: The simulation mode
+        parser: Main parser
+
+    Returns:
+        MPs : Dictionary of dedicated parsers for each simulation mode
+    '''
     dic = aux.AttrDict({
         'Batch': [[], ['e','t','Box2D', 'N', 'ms']],
         'Eval': [['Eval'], ['hide']],

@@ -15,9 +15,11 @@ for mode in ['Exp','Batch', 'Ga', 'Eval', 'Replay'] :
 
 
 if __name__ == "__main__":
-    kwargs = aux.AttrDict(vars(p.parse_args()))
-    sim_mode = kwargs.sim_mode
-    d = MPs[sim_mode].get(kwargs)
-    kwargs.pop('sim_mode')
-    run_template(sim_mode, kwargs, d)
+    kws = aux.AttrDict(vars(p.parse_args()))
+    # print(kws)
+    # raise
+    sim_mode = kws.sim_mode
+    kw_dicts = MPs[sim_mode].get(kws)
+    kws.pop('sim_mode')
+    run_template(sim_mode, kws, kw_dicts)
 
