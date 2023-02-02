@@ -216,11 +216,15 @@ def run_template(sim_mode, args, kw_dicts):
             conf.sim_params.duration = args.duration
         conf.sim_params.store_data = args.store_data
         conf.ga_select_kws = kw_dicts['ga_select_kws']
-
-        if args.base_model is not None:
-            conf.ga_build_kws.base_model = args.base_model
-        if args.bestConfID is not None:
-            conf.ga_build_kws.bestConfID = args.bestConfID
+        # conf.ga_build_kws.update(**)
+        temp=kw_dicts['ga_build_kws0']
+        if temp.base_model is not None:
+            conf.ga_build_kws.base_model = temp.base_model
+        if temp.fitness_target_refID is not None:
+            conf.ga_build_kws.fitness_target_refID = temp.fitness_target_refID
+        if temp.bestConfID is not None:
+            conf.ga_build_kws.bestConfID = temp.bestConfID
+        conf.ga_build_kws.init_mode = temp.init_mode
         GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
@@ -244,7 +248,7 @@ def get_parser(sim_mode, parser=None):
         'Batch': [[], ['e','t','Box2D', 'N', 'ms']],
         'Eval': [['Eval'], ['hide']],
         'Exp': [['visualization'], ['e','t','Box2D', 'N', 'ms', 'a']],
-        'Ga': [['ga_select_kws'], ['e','t', 'mID0', 'mID1', 'offline', 'hide']],
+        'Ga': [['ga_select_kws', 'ga_build_kws0'], ['e','t', 'offline', 'hide']],
         'Replay': [['Replay'], []]
     })
     mks, ks = dic[sim_mode]
@@ -265,12 +269,12 @@ def get_parser(sim_mode, parser=None):
         elif k == 'ms':
             p.add_argument('-ms', '--models', type=str, nargs='+',
                            help='The larva models to use for creating the simulation larva groups')
-        elif k == 'mID0':
-            p.add_argument('-mID0', '--base_model', choices=reg.storedConf('Model'),
-                           help='The model configuration to optimize')
-        elif k == 'mID1':
-            p.add_argument('-mID1', '--bestConfID', type=str,
-                           help='The model configuration ID to store the best genome')
+        # elif k == 'mID0':
+        #     p.add_argument('-mID0', '--base_model', choices=reg.storedConf('Model'),
+        #                    help='The model configuration to optimize')
+        # elif k == 'mID1':
+        #     p.add_argument('-mID1', '--bestConfID', type=str,
+        #                    help='The model configuration ID to store the best genome')
         elif k == 'a':
             p.add_argument('-a', '--analysis', action="store_true", help='Whether to exec analysis')
             p.add_argument('-show', '--show', action="store_true", help='Whether to show the analysis plots')

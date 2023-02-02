@@ -148,19 +148,20 @@ Larvaworld can be run directly from linux terminal.
 
            python larvaworld.py Exp dispersion -N 30 -t 3.0 -m image -a
 
-   2. Batch run
-       (needs debugging)
-       Run multiple trials of a given experiment with different parameters.
-       This line runs a batch run of odor preference experiments for different valences of the two odor sources.
+      2. Batch run
+          (needs debugging)
+          Run multiple trials of a given experiment with different parameters.
+          This line runs a batch run of odor preference experiments for different valences of the two odor sources.
 
-           python larvaworld.py Batch PItest_off -N 5 -t 1.0
+              python larvaworld.py Batch PItest_off -N 5 -t 1.0
 
-   3. Genetic Algorithm optimization
+         3. Genetic Algorithm optimization
    
-       Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
-       This line optimizes a model for kinematic realism against a reference experimental dataset
+             Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
+             This line optimizes a model for kinematic realism against a reference experimental dataset
 
-           python larvaworld.py Ga realism -N 20 -t 0.5
+                 python larvaworld.py Ga realism -N 20 -t 0.5 -mID1 GA_test_loco -mGA model
+
 
    4. Experiment replay
    

@@ -80,7 +80,8 @@ def Ga_dict() :
     d = aux.AttrDict({
     **ga_conf('interference', dt=1 / 16, dur=3, refID='exploration.150controls', m0='loco_default',
               m1='NEU_PHI',
-              fit_kws={'cycle_curves': ['fov', 'rov', 'foa']}, init='model',
+              fit_kws={'cycle_curves': ['fov', 'rov', 'foa']},
+              # init='model',
               space_mkeys=['interference', 'turner'],
               Nel=2, N=6, env_params='arena_200mm'),
     **ga_conf('exploration', dur=0.5, dt=1 / 16, refID='exploration.150controls', m0='loco_default',
@@ -91,7 +92,8 @@ def Ga_dict() :
                             'temporal dynamics': ['fsv', 'ffov', 'run_tr', 'pau_tr']}
                        },
               # fit_kws={'eval_shorts': ['b', 'bv', 'ba', 'tur_t', 'tur_fou', 'tor2', 'tor10']},
-              space_mkeys=['interference', 'turner'], init='random',
+              space_mkeys=['interference', 'turner'],
+              # init='random',
               excludeID='bend_errors',
               Nel=2, N=10, env_params='arena_200mm'),
     **ga_conf('realism', dur=1, dt=1 / 16, refID='exploration.150controls', m0='loco_default', m1='PHIonSIN',
@@ -100,14 +102,16 @@ def Ga_dict() :
                        'pooled_cycle_curves': ['fov', 'foa', 'b']},
               excludeID='bend_errors',
               space_mkeys=['interference', 'turner'],
-              init='model',
+              # init='model',
               Nel=3, N=10, env_params='arena_200mm'),
-    **ga_conf('chemorbit', dur=1, m0='RE_NEU_PHI_DEF_nav', m1='RE_NEU_PHI_DEF_nav2',init='random',
+    **ga_conf('chemorbit', dur=1, m0='RE_NEU_PHI_DEF_nav', m1='RE_NEU_PHI_DEF_nav2',
+              # init='random',
               space_mkeys=['olfactor'], fitID='dst2source', fit_kws={'source_xy': None},
               Nel=5, N=50, env_params='mid_odor_gaussian_square'),
     **ga_conf('obstacle_avoidance', dur=0.5, m0='obstacle_avoider', m1='obstacle_avoider2',
               space_mkeys=['sensorimotor'], fitID='cum_dst', robot_class='ObstacleLarvaRobot',
-              Nel=2, N=15, env_params='dish_40mm', init='default',
+              Nel=2, N=15, env_params='dish_40mm',
+              # init='default',
               scene='obstacle_avoidance_700')
     })
     return d

@@ -1060,18 +1060,39 @@ def buildInitDict():
                         'h': 'Verbose argument for GA launcher', 'k': 'verb'}
         }
 
-        d['ga_build_kws'] = {
-            'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
-            'robot_class': {'v':'LarvaRobot', 'dtype': str,'vs': ['LarvaRobot', 'LarvaOffline'], 'h': 'The agent class to use in the simulations'},
+        d['ga_build_kws0'] = {
+            # 'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
+            # 'robot_class': {'v': 'LarvaRobot', 'dtype': str, 'vs': ['LarvaRobot', 'LarvaOffline'],
+            #                 'h': 'The agent class to use in the simulations'},
             'base_model': ConfID_entry('Model', default='RE_NEU_PHI_DEF_nav', k='mID0', symbol=sub('mID', 0)),
             'bestConfID': {'dtype': str,
                            'h': 'The model configuration ID to store the best genome',
                            'k': 'mID1'},
             'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
                           'h': 'The initialization mode for the first generation', 'k': 'mGA'},
+            # 'exclusion_mode': {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
+            # 'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
+            'fitness_target_refID': ConfID_entry('Ref'),
+            # 'fitness_target_kws': {'dtype': dict, 'v': {},
+            #                        'h': 'The target data to derive from the reference dataset for evaluation'},
+            # 'fitness_func': {'dtype': FunctionType, 'h': 'The method for fitness evaluation'},
+            # 'exclude_func': {'dtype': FunctionType,
+            #                  'h': 'The method for real-time excluding agents'},
+        }
+
+        d['ga_build_kws'] = {
+            **d['ga_build_kws0'],
+            'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
+            'robot_class': {'v':'LarvaRobot', 'dtype': str,'vs': ['LarvaRobot', 'LarvaOffline'], 'h': 'The agent class to use in the simulations'},
+            # 'base_model': ConfID_entry('Model', default='RE_NEU_PHI_DEF_nav', k='mID0', symbol=sub('mID', 0)),
+            # 'bestConfID': {'dtype': str,
+            #                'h': 'The model configuration ID to store the best genome',
+            #                'k': 'mID1'},
+            # 'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
+            #               'h': 'The initialization mode for the first generation', 'k': 'mGA'},
             'exclusion_mode': {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
             'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
-            'fitness_target_refID': ConfID_entry('Ref'),
+            # 'fitness_target_refID': ConfID_entry('Ref'),
             'fitness_target_kws': {'dtype': dict, 'v': {},
                                    'h': 'The target data to derive from the reference dataset for evaluation'},
             'fitness_func': {'dtype': FunctionType, 'h': 'The method for fitness evaluation'},

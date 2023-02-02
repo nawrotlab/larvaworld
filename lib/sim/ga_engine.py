@@ -15,6 +15,8 @@ class GAselector:
                  selection_ratio=0.3, verbose=0, bestConfID=None):
         self.M = reg.model
         self.bestConfID = bestConfID
+        # print(bestConfID)
+        # raise
         self.model = model
         self.Ngenerations = Ngenerations
         self.Nagents = Nagents
@@ -161,7 +163,8 @@ class GAbuilder(GAselector):
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
                  exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
-
+        print(init_mode)
+        raise
         self.is_running = True
         if progress_bar and self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
