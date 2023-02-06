@@ -11,7 +11,7 @@ from lib import reg, aux, plot
 
 
 @reg.funcs.graph('boxplot (simple)')
-def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=True, grouped=False,
+def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=False, grouped=False,
              ylims=None,in_mm=[], target_only=None, **kwargs):
     Npars = len(ks)
     if name is None:

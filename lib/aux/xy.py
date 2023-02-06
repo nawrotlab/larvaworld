@@ -417,3 +417,16 @@ def eudi5x(a, b):
 def compute_dst(s,point='') :
     s[nam.dst(point)] = apply_per_level(s[nam.xy(point)], eudist).flatten()
 
+def epochs_by_thr(a, thr, lower=True, min_size=1) :
+    if lower:
+        b=np.where(a<= thr,1,0)
+    else:
+        b=np.where(a>= thr,1,0)
+    c=np.where(b[:-1] != b[1:])[0]
+    if b[0]==1 and c[0]!=0:
+        c=np.insert(c,0,0)
+    if c.shape[0]%2==1 :
+        c=np.append(c,a.shape[0])
+    epochs = c.reshape(-1,2)
+    return epochs[(np.diff(epochs)>=min_size).T[0]]
+

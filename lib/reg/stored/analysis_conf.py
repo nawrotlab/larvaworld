@@ -110,7 +110,7 @@ entry('boxplot (simple)', ks=['l', 'fv', 'v_mu', 'run_tr']),
     'general': [
         entry('ethogram', add_samples=False),
         entry('pathlength', scaled=False),
-        entry('navigation index'),
+        # entry('navigation index'),
         entry('epochs', stridechain_duration=True),
 
     ],

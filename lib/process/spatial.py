@@ -98,10 +98,10 @@ def comp_spatial2(s, e, c, mode='minimal'):
 def comp_spatial(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
     if mode == 'full':
-        print(f'Computing distances, velocities and accelerations for {len(points)} points')
+        reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points',1)
         points += ['centroid']
     elif mode == 'minimal':
-        print(f'Computing distances, velocities and accelerations for a single spinepoint')
+        reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint',1)
         points = [c.point]
     points += ['']
     points = np.unique(points).tolist()
@@ -130,23 +130,24 @@ def comp_spatial(s, e, c, mode='minimal'):
         s[cum_dst] = Dcum.flatten()
         s[vel] = V.flatten()
         s[acc] = A.flatten()
-        e[nam.cum(dst)] = Dcum[-1, :]
+        # e[nam.cum(dst)] = Dcum[-1, :]
+        e[nam.cum(dst)] = s[cum_dst].dropna().groupby('AgentID').last()
 
     pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
-    print('All spatial parameters computed')
+    reg.vprint('All spatial parameters computed',1)
 
 @reg.funcs.proc("length")
 def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
-        print('Length is already computed. If you want to recompute it, set recompute_length to True')
+        reg.vprint('Length is already computed. If you want to recompute it, set recompute_length to True',1)
         return
     if N is None :
         N = c.Npoints
     points = nam.midline(N, type='point')
     xy_pars = nam.xy(points, flat=True)
     if not set(xy_pars).issubset(s.columns):
-        print(f'XY coordinates not found for the {N} midline points. Body length can not be computed.')
+        reg.vprint(f'XY coordinates not found for the {N} midline points. Body length can not be computed.',1)
         return
     xy = s[xy_pars].values
 
@@ -156,7 +157,7 @@ def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
         t = len(s)
         S = np.zeros([Nsegs, t]) * np.nan
         L = np.zeros([1, t]) * np.nan
-        print(f'Computing lengths for {Nsegs} segments and total body length')
+        reg.vprint(f'Computing lengths for {Nsegs} segments and total body length',1)
         for j in range(t):
             for i, seg in enumerate(segs):
                 S[i, j] = np.sqrt(np.nansum((xy[j, 2 * i:2 * i + 2] - xy[j, 2 * i + 2:2 * i + 4]) ** 2))
@@ -164,13 +165,13 @@ def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
         for i, seg in enumerate(segs):
             s[seg] = S[i, :].flatten()
     elif mode == 'minimal':
-        print(f'Computing body length')
+        reg.vprint(f'Computing body length')
         xy2 = xy.reshape(xy.shape[0], N, 2)
         xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
         L = np.sum(np.sqrt(xy3), axis=1)
     s['length'] = L
     e['length'] = s['length'].groupby('AgentID').quantile(q=0.5)
-    print('All lengths computed.')
+    reg.vprint('All lengths computed.',1)
 
 @reg.funcs.proc("centroid")
 def comp_centroid(s, c, recompute=False):

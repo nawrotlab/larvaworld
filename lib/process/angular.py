@@ -205,11 +205,13 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
     if set(ang_pars).issubset(s.columns.values) and not recompute:
         print('Orientation and bend are already computed. If you want to recompute them, set recompute to True')
     else:
-        try:
-            comp_orientations(s, e, c, mode=mode)
-            comp_bend(s, c, mode=mode)
-        except:
-            comp_ang_from_xy(s, e, dt=c.dt)
+        comp_orientations(s, e, c, mode=mode)
+        comp_bend(s, c, mode=mode)
+        # try:
+        #     comp_orientations(s, e, c, mode=mode)
+        #     comp_bend(s, c, mode=mode)
+        # except:
+        #     comp_ang_from_xy(s, e, dt=c.dt)
     comp_angular(s, c.dt,c.Npoints, mode=mode)
     comp_extrema(s, dt=c.dt, parameters=[aux.nam.vel(aux.nam.orient('front'))], interval_in_sec=0.3)
     compute_LR_bias(s, e)

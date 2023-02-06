@@ -199,7 +199,7 @@ def run_template(sim_mode, args, kw_dicts):
         if temp.bestConfID is not None:
             conf.ga_build_kws.bestConfID = temp.bestConfID
         conf.ga_build_kws.init_mode = temp.init_mode
-        GA = lib.sim.ga_engine.GAlauncher(parameters=conf, **kws)
+        GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
         kws.show=args.show_screen

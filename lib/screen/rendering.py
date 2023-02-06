@@ -13,17 +13,19 @@ from lib import aux
 
 class Viewer(object):
     def __init__(self, window_dims, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
-                 record_image_to=None, zoom=1, space_bounds=None,speed=None, panel_width=0):
+                 record_image_to=None, zoom=1, space_bounds=None, panel_width=0):
         pygame.init()
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
         self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
-        self.speed = speed
-        self.panel_width = panel_width
+        # self.speed = speed
+
         self.zoom = zoom
         self.caption = caption
         self.width,self.height = window_dims
         self.window_dims = window_dims
         self.space_bounds = space_bounds
+        self.panel_width = panel_width
+        self.panel_rect = pygame.Rect(self.width, 0, self.panel_width, self.height)
         self.show_display = show_display
         self._t = pygame.time.Clock()
         self._fps = fps
@@ -51,6 +53,16 @@ class Viewer(object):
         self._translation = np.zeros(2)
         if self.space_bounds is not None:
             self.set_bounds(*self.space_bounds)
+
+    def increase_fps(self):
+        if self._fps < 60:
+            self._fps += 1
+        print('viewer.fps:', self._fps)
+
+    def decrease_fps(self):
+        if self._fps > 1:
+            self._fps -= 1
+        print('viewer.fps:', self._fps)
 
     def put(self, obj):
         if isinstance(obj, list):
@@ -91,6 +103,8 @@ class Viewer(object):
     def get_saved_scene_repr(self):
         return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
 
+    def draw_panel_rect(self):
+        pygame.draw.rect(self._window, aux.Color.BLACK, self.panel_rect)
 
     @ property
     def display_dims(self):
@@ -265,7 +279,7 @@ class Viewer(object):
             self.set_bounds(*self.space_bounds)
 
     @staticmethod
-    def load_from_file(file_path, scene_speed,  **kwargs):
+    def load_from_file(file_path,  **kwargs):
         from lib.model.envs.obstacle import Wall, Box
         with open(file_path) as f:
             line_number = 1
@@ -286,7 +300,7 @@ class Viewer(object):
                 if words[0] == 'Scene':
                     width = int(words[1])
                     height = int(words[2])
-                    viewer = Viewer((width, height), speed=scene_speed, **kwargs)
+                    viewer = Viewer((width, height), **kwargs)
                 # elif words[0] == 'SensorDrivenRobot':
                 #     x = float(words[1])
                 #     y = float(words[2])

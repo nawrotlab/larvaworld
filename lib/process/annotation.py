@@ -94,8 +94,7 @@ def detect_epochs(idx, dt, min_dur=None):
     p1s = idx[np.where(np.diff(idx, append=[np.inf]) != 1)[0]]
     epochs = np.vstack([p0s, p1s]).T
     durs = (np.diff(epochs).flatten()) * dt
-    epochs = epochs[durs >= min_dur]
-    return epochs
+    return epochs[durs >= min_dur]
 
 
 def detect_runs(a, dt, vel_thr=0.3, min_dur=0.5):
@@ -255,7 +254,9 @@ def detect_turns(a, dt, min_dur=None):
                 Rturns.append([s0, s1])
     Lturns = np.array(Lturns)
     Rturns = np.array(Rturns)
-    return Lturns, Rturns
+    Ldurs = (np.diff(Lturns).flatten()) * dt
+    Rdurs = (np.diff(Rturns).flatten()) * dt
+    return Lturns[Ldurs >= min_dur], Rturns[Rdurs >= min_dur]
 
 
 def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
@@ -409,20 +410,27 @@ def turn_mode_annotation(e, chunk_dicts):
 
 @reg.funcs.annotation("turn")
 def turn_annotation(s, e, c, store=False):
+    ids = s.index.unique('AgentID').values
+    N = s.index.unique('Step').size
+
+    # reg.vprint((len(ids), c.N),3)
+    # reg.vprint([id for id in ids if id not in e.index.values.tolist()])
+
+
     fov, foa = reg.getPar(['fov', 'foa'])
 
     eTur_ps = reg.getPar( ['Ltur_N', 'Rtur_N', 'tur_N', 'tur_H'])
-    eTur_vs = np.zeros([c.N, len(eTur_ps)]) * np.nan
+    eTur_vs = np.zeros([len(ids), len(eTur_ps)]) * np.nan
     turn_ps = reg.getPar(['tur_fou', 'tur_t','Ltur_t','Rtur_t', 'tur_fov_max'])
-    turn_vs = np.zeros([c.Nticks, c.N, len(turn_ps)]) * np.nan
+    turn_vs = np.zeros([N, len(ids), len(turn_ps)]) * np.nan
     turn_dict = {}
 
-    for jj, id in enumerate(c.agent_ids):
+    for jj, id in enumerate(ids):
         a_fov = s[fov].xs(id, level="AgentID")
         Lturns, Rturns = detect_turns(a_fov, c.dt)
 
-        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, c.dt)
-        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, c.dt)
+        Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a_fov.values, Lturns, c.dt, return_idx=True)
+        Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a_fov.values, Rturns, c.dt, return_idx=True)
         Lturns_N,Rturns_N = Lturns.shape[0],Rturns.shape[0]
         turns_N=Lturns_N+Rturns_N
         tur_H=Lturns_N/turns_N if turns_N!=0 else 0
@@ -443,18 +451,15 @@ def turn_annotation(s, e, c, store=False):
         turn_dict[id] = {'Lturn': Lturns, 'Rturn': Rturns, 'turn_slice': Tslices, 'turn_amp': Tamps,
                          'turn_dur': Tdurs, 'Lturn_dur': Ldurs, 'Rturn_dur': Rdurs, 'turn_vel_max': Tmaxs}
         eTur_vs[jj, :] = [Lturns_N,Rturns_N, turns_N, tur_H]
-    s[turn_ps] = turn_vs.reshape([c.Nticks * c.N, len(turn_ps)])
+    s[turn_ps] = turn_vs.reshape([N * len(ids), len(turn_ps)])
     e[eTur_ps] = eTur_vs
     if store:
-        turn_ps = reg.getPar(['tur_fou', 'tur_t', 'tur_fov_max'])
-        aux.store_distros(s, pars=turn_ps, parent_dir=c.dir)
+        aux.store_distros(s, pars=reg.getPar(['tur_fou', 'tur_t', 'tur_fov_max']), parent_dir=c.dir)
     return turn_dict
 
 
 @reg.funcs.annotation("crawl")
 def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
-    if vel_thr is None:
-        vel_thr = c.vel_thr
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
         reg.getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
 
@@ -496,7 +501,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
                                  np.nansum(str_chain_ls),
                                  ]
             else:
-                runs = detect_runs(a_sv, dt)
+                runs = detect_runs(a_sv, dt, vel_thr=vel_thr)
             pauses = detect_pauses(a_sv, dt, vel_thr=vel_thr, runs=runs)
         else:
 

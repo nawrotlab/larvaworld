@@ -15,13 +15,6 @@ from lib.sim.run_template import BaseRun
 
 
 class GAlauncher(BaseRun):
-    SCENE_MAX_SPEED = 3000
-
-    SCENE_MIN_SPEED = 1
-    SCENE_SPEED_CHANGE_COEFF = 1.5
-
-    SIDE_PANEL_WIDTH = 600
-
     def __init__(self, **kwargs):
         super().__init__(runtype = 'Ga', **kwargs)
 
@@ -29,11 +22,6 @@ class GAlauncher(BaseRun):
 
         self.odor_ids = aux.get_all_odors({}, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
-
-        self.scene_file = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{self.p.scene}.txt'
-        self.scene_speed = 0
-
-
         self.initialize(**self.p.ga_build_kws, **self.p.ga_select_kws)
 
 
@@ -49,9 +37,9 @@ class GAlauncher(BaseRun):
                     elif e.type == KEYDOWN and e.key == K_r:
                         self.initialize(**self.p.ga_select_kws, **self.p.ga_build_kws)
                     elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
-                        self.increase_scene_speed()
+                        self.viewer.increase_fps()
                     elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
-                        self.decrease_scene_speed()
+                        self.viewer.decrease_fps()
                     elif e.type == KEYDOWN and e.key == K_s:
                         pass
                         # self.engine.save_genomes()
@@ -67,42 +55,31 @@ class GAlauncher(BaseRun):
                 gen_t = math.floor((cur_t - self.engine.start_generation_time) / 1000)
                 self.side_panel.update_ga_time(cum_t, gen_t, self.engine.generation_sim_time)
                 self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
-                self.screen.fill(aux.Color.BLACK)
+                self.viewer._window.fill(aux.Color.BLACK)
 
                 for obj in self.viewer.objects:
                     obj.draw(self.viewer)
 
                 # draw a black background for the side panel
-                side_panel_bg_rect = Rect(self.viewer.width, 0, self.SIDE_PANEL_WIDTH, self.viewer.height)
-                draw.rect(self.screen, aux.Color.BLACK, side_panel_bg_rect)
-
+                self.viewer.draw_panel_rect()
                 self.side_panel.display_ga_info()
 
                 display.flip()
-                self.viewer._t.tick(int(round(self.viewer.speed)))
+                self.viewer._t.tick(self.viewer._fps)
         return self.engine.best_genome
 
-    def printd(self, min_debug_level, *args):
-        if self.engine.verbose >= min_debug_level:
-            msg = ''
-
-            for arg in args:
-                msg += str(arg) + ' '
-
-            print(msg)
-
     def initialize(self, **kwargs):
-        self.viewer = Viewer.load_from_file(self.scene_file, scene_speed=self.scene_speed,show_display=self.p.show_screen and not self.p.offline,
-                                           panel_width=self.SIDE_PANEL_WIDTH,caption = f'GA {self.p.experiment} : {self.id}',
+        self.viewer = Viewer.load_from_file(f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{self.p.scene}.txt',
+                                            show_display=self.p.show_screen and not self.p.offline,
+                                           panel_width=600,caption = f'GA {self.p.experiment} : {self.id}',
                                            space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
 
-        self.engine = GAengine(viewer=self.viewer, model=self, **kwargs)
+        self.engine = GAengine(model=self, **kwargs)
         if self.viewer.show_display:
             from lib.screen.side_panel import SidePanel
 
             from pygame import display
             self.get_larvaworld_food()
-            self.screen = self.viewer._window
             self.side_panel = SidePanel(self.viewer, self.engine.space_dict)
             self.side_panel.update_ga_data(self.engine.generation_num, None)
             self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
@@ -122,15 +99,7 @@ class GAlauncher(BaseRun):
     def screen_pos(self, real_pos):
         return np.array(real_pos) * self.scaling_factor + np.array([self.viewer.width / 2, self.viewer.height / 2])
 
-    def increase_scene_speed(self):
-        if self.viewer.speed < self.SCENE_MAX_SPEED:
-            self.viewer.speed *= self.SCENE_SPEED_CHANGE_COEFF
-        print('viewer.speed:', self.viewer.speed)
 
-    def decrease_scene_speed(self):
-        if self.viewer.speed > self.SCENE_MIN_SPEED:
-            self.viewer.speed /= self.SCENE_SPEED_CHANGE_COEFF
-        print('viewer.speed:', self.viewer.speed)
 
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
@@ -140,9 +109,16 @@ class GAselector:
         self.Ngenerations = Ngenerations
         self.Nagents = Nagents
         self.Nelits = Nelits
+
+        self.selection_ratio = selection_ratio
+
+        self.Nagents_min = round(self.Nagents * self.selection_ratio)
+        if self.Nagents_min < 2:
+            raise ValueError('The number of parents selected to breed a new generation is < 2. ' +
+                             'Please increase population (' + str(self.Nagents) + ') or selection ratio (' +
+                             str(self.selection_ratio) + ')')
         self.Pmutation = Pmutation
         self.Cmutation = Cmutation
-        self.selection_ratio = selection_ratio
         self.verbose = verbose
         self.sorted_genomes = None
         self.gConfs = []
@@ -159,28 +135,19 @@ class GAselector:
         self.generation_step_num = 0
         self.generation_sim_time = 0
 
-    def printd(self, min_debug_level, *args):
-        if self.verbose >= min_debug_level:
-            msg = ''
-
-            for arg in args:
-                msg += str(arg) + ' '
-
-            print(msg)
-
     def create_new_generation(self, space_dict):
         self.genome_dict={}
-        self.gConfs =None
+        # self.gConfs =None
         self.generation_num += 1
         gConfs_selected = self.ga_selection()  # parents of the new generation
-        self.printd(1, '\ngenomes selected:', gConfs_selected)
+        reg.vprint(f'genomes selected: {gConfs_selected}', 1)
 
         self.gConfs = self.ga_crossover_mutation(gConfs_selected, space_dict)
 
         self.generation_step_num = 0
         self.generation_sim_time = 0
         self.start_generation_time = aux.TimeUtil.current_time_millis()
-        self.printd(1, '\nGeneration', self.generation_num, 'started')
+        reg.vprint(f'Generation {self.generation_num} started', 1)
 
     def sort_genomes(self):
         sorted_idx = sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)
@@ -192,65 +159,50 @@ class GAselector:
 
             if self.bestConfID is not None:
                 reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
-        end_generation_time = aux.TimeUtil.current_time_millis()
-        total_generation_time=end_generation_time-self.start_generation_time
         reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
 
 
 
 
     def ga_selection(self):
-        num_gConfs_to_select = round(self.Nagents * self.selection_ratio)
-        if num_gConfs_to_select < 2:
-            raise ValueError('The number of parents selected to breed a new generation is < 2. ' +
-                             'Please increase population (' + str(self.Nagents) + ') or selection ratio (' +
-                             str(self.selection_ratio) + ')')
-
         gConfs_selected = []
 
         # elitism: keep the best genomes in the new generation
         for i in range(self.Nelits):
             g = self.sorted_genomes.pop(0)
             gConfs_selected.append(g.gConf)
-            num_gConfs_to_select -= 1
 
-        while num_gConfs_to_select > 0:
+        while len(gConfs_selected) < self.Nagents_min:
             g = self.roulette_select(self.sorted_genomes)
             gConfs_selected.append(g.gConf)
             self.sorted_genomes.remove(g)
-            num_gConfs_to_select -= 1
-
         return gConfs_selected
 
     def roulette_select(self, genomes):
         fitness_sum = 0
-        for genome in genomes:
-            fitness_sum += genome.fitness
-        value = random.uniform(0, fitness_sum)
+        for g in genomes:
+            fitness_sum += g.fitness
+        v = random.uniform(0, fitness_sum)
         for i in range(len(genomes)):
-            value -= genomes[i].fitness
-            if value < 0:
+            v -= genomes[i].fitness
+            if v < 0:
                 return genomes[i]
         return genomes[-1]
 
     def ga_crossover_mutation(self, gConfs, space_dict):
-        num_gConfs_to_create = self.Nagents
         new_gConfs = []
 
         # elitism: keep the best genomes in the new generation
         for i in range(self.Nelits):
             new_gConfs.append(gConfs[i])
-            num_gConfs_to_create -= 1
 
-        while num_gConfs_to_create > 0:
+        while len(new_gConfs) < self.Nagents:
             gConf_a, gConf_b = self.choose_parents(gConfs)
             gConf0 = self.crossover(gConf_a, gConf_b)
             space_dict=reg.model.update_mdict(space_dict,gConf0)
             reg.model.mutate(space_dict, Pmut=self.Pmutation, Cmut=self.Cmutation)
             gConf=reg.model.conf(space_dict)
             new_gConfs.append(gConf)
-            num_gConfs_to_create -= 1
-
         return new_gConfs
 
     def choose_parents(self, gConfs):
@@ -276,7 +228,7 @@ class GAselector:
         return gConf
 
 class GAengine(GAselector):
-    def __init__(self, viewer, space_mkeys=[], robot_class=None, base_model='explorer',
+    def __init__(self, space_mkeys=[], robot_class=None, base_model='explorer',
                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
                  exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random', progress_bar=True, **kwargs):
         super().__init__(bestConfID=bestConfID, **kwargs)
@@ -288,27 +240,13 @@ class GAengine(GAselector):
             self.progress_bar = None
         self.exclude_func = exclude_func
         self.multicore = multicore
-        self.viewer = viewer
         self.robot_class = get_robot_class(robot_class, self.model.p.offline)
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.excluded_ids = []
-        self.Nagents_min = round(self.Nagents * self.selection_ratio)
         self.exclusion_mode = exclusion_mode
 
-        if init_mode=='default' :
-            gConf=reg.model.conf(self.space_dict)
-            self.gConfs=[gConf]*self.Nagents
-        elif init_mode=='model':
-            mF=self.mConf0.flatten()
-            gConf={k:mF[k] for k,p in self.space_dict.items()}
-            self.gConfs = [gConf] * self.Nagents
-        elif init_mode == 'random':
-            self.gConfs=[]
-            for i in range(self.Nagents):
-                reg.model.randomize(self.space_dict)
-                gConf = reg.model.conf(self.space_dict)
-                self.gConfs.append(gConf)
+        self.gConfs=self.create_first_generation(init_mode, self.Nagents, self.space_dict, self.mConf0)
 
         self.robots = self.build_generation()
 
@@ -331,10 +269,24 @@ class GAengine(GAselector):
                 self.dataset = None
                 self.step_df = None
 
-        self.printd(1, 'Generation', self.generation_num, 'started')
-        self.printd(1, 'multicore:', self.multicore, 'num_cpu:', self.num_cpu)
+        reg.vprint(f'Generation {self.generation_num} started', 1)
+        reg.vprint(f'multicore: {self.multicore} num_cpu: {self.num_cpu}', 1)
 
 
+    def create_first_generation(self, mode, N, space_dict, baseConf):
+        if mode=='default' :
+            gConf=reg.model.conf(space_dict)
+            gConfs=[gConf]*N
+        elif mode=='model':
+            gConf={k:baseConf.flatten()[k] for k,p in space_dict.items()}
+            gConfs = [gConf] * N
+        elif mode == 'random':
+            gConfs=[]
+            for i in range(N):
+                reg.model.randomize(space_dict)
+                gConf = reg.model.conf(space_dict)
+                gConfs.append(gConf)
+        return gConfs
 
     def init_dataset(self):
         c = aux.AttrDict(
@@ -410,7 +362,7 @@ class GAengine(GAselector):
             robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
             robot.genome = g
             robots.append(robot)
-            self.viewer.put(robot)
+            self.model.viewer.put(robot)
 
         if self.multicore:
             self.threads=self.build_threads(robots)
@@ -471,14 +423,14 @@ class GAengine(GAselector):
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
             robot.genome.fitness =robot.Nticks
-        self.viewer.remove(robot)
+        self.model.viewer.remove(robot)
         self.robots.remove(robot)
 
     def finalize(self):
         self.is_running = False
         if self.progress_bar:
             self.progress_bar.finish()
-        self.printd(0, 'Best fittness:', self.best_genome.fitness)
+        reg.vprint(f'Best fittness: {self.best_genome.fitness}', 2)
         if self.model.store_data :
             self.store_genomes(dic=self.all_genomes_dic, save_to=self.model.data_dir)
 
@@ -486,7 +438,7 @@ class GAengine(GAselector):
 
     def check(self, robot):
         if not self.model.p.offline:
-            if robot.xx < 0 or robot.xx > self.viewer.width or robot.yy < 0 or robot.yy > self.viewer.height:
+            if robot.xx < 0 or robot.xx > self.model.viewer.width or robot.yy < 0 or robot.yy > self.model.viewer.height:
                 self.destroy_robot(robot)
 
             # destroy robot if it collides an obstacle
@@ -510,27 +462,27 @@ class GAengine(GAselector):
         num_robots = len(robots)
         num_robots_per_cpu = math.floor(num_robots / self.num_cpu)
 
-        self.printd(2, 'num_robots_per_cpu:', num_robots_per_cpu)
+        reg.vprint(f'num_robots_per_cpu: {num_robots_per_cpu}', 2)
 
         for i in range(self.num_cpu - 1):
             start_pos = i * num_robots_per_cpu
             end_pos = (i + 1) * num_robots_per_cpu
-            self.printd(2, 'core:', i + 1, 'positions:', start_pos, ':', end_pos)
+            reg.vprint(f'core: {i + 1} positions: {start_pos} : {end_pos}', 1)
             robot_list = robots[start_pos:end_pos]
 
             thread = GA_thread(robot_list)
             thread.start()
-            self.printd(2, 'thread', i + 1, 'started')
+            reg.vprint(f'thread {i + 1} started', 1)
             threads.append(thread)
 
         # last sublist of robots
         start_pos = (self.num_cpu - 1) * num_robots_per_cpu
-        self.printd(2, 'last core, start_pos', start_pos)
+        reg.vprint(f'last core, start_pos {start_pos}', 1)
         robot_list = robots[start_pos:]
 
         thread = GA_thread(robot_list)
         thread.start()
-        self.printd(2, 'last thread started')
+        reg.vprint(f'last thread started', 1)
         threads.append(thread)
 
         for t in threads:

@@ -74,7 +74,7 @@ class LightSensor(Sensor2):
         y_sensor_eol = self.robot.y + self.LENGTH_SENSOR_LINE * -sin(dir_sensor)
         # viewer.draw_line(pos, xy_aux.xy_projection(pos, orientation, radius * 3),
         #                  color=color, width=radius / 10)
-        pygame.draw.line(self.robot.model.screen, aux.Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
+        pygame.draw.line(self.robot.model.viewer._window, aux.Color.YELLOW, (self.robot.x, self.robot.y), (x_sensor_eol, y_sensor_eol))
 
 
 class ProximitySensor(Sensor2):
@@ -130,4 +130,4 @@ class ProximitySensor(Sensor2):
         y1=y0 + sin(angle) * self.max_distance
 
         # self.scene.draw_line((x, y), (x_sensor_eol, y_sensor_eol),Color.RED, width=0.0005)
-        pygame.draw.line(self.robot.model.screen, aux.Color.RED, (x0, y0), (x1, y1))
+        pygame.draw.line(self.robot.model.viewer._window, aux.Color.RED, (x0, y0), (x1, y1))

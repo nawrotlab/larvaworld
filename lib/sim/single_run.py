@@ -148,7 +148,7 @@ class ExpRun(BaseRun):
 
         ls = aux.AttrDict({l.unique_id: l for l in self.get_flies(ids=ids)})
 
-        from lib.model.modules.nengobrain import NengoBrain
+
         deb_dicts = {}
         nengo_dicts = {}
         bout_dicts = {}
@@ -156,9 +156,13 @@ class ExpRun(BaseRun):
         for id, l in ls.items():
             if hasattr(l, 'deb') and l.deb is not None:
                 deb_dicts[id] = l.deb.finalize_dict()
-            if isinstance(l.brain, NengoBrain):
-                if l.brain.dict is not None:
-                    nengo_dicts[id] = l.brain.dict
+            try :
+                from lib.model.modules.nengobrain import NengoBrain
+                if isinstance(l.brain, NengoBrain):
+                    if l.brain.dict is not None:
+                        nengo_dicts[id] = l.brain.dict
+            except :
+                pass
             if l.brain.locomotor.intermitter is not None:
                 bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
             if len(self.foodtypes) > 0:

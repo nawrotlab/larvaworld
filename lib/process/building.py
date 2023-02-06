@@ -216,7 +216,7 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
     return step, end
 
 
-def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
+def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, max_Nagents=None, min_duration_in_sec=1.0,time_slice=None,
                   match_ids=True,**kwargs):
     d = dataset
     pref=f'{source_dir}/{source_id}'
@@ -271,81 +271,56 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         return step
 
 
-    def temp_save(step, length):
-        step.to_csv(temp_step_path, index=True, header=True)
-        length.to_csv(temp_length_path, index=True, header=True)
-        # print(f'**---- Saved temporary dataset {dataset.id} successfully!----- ')
 
-    def temp_load():
-        step = pd.read_csv(temp_step_path, index_col=['Step', 'AgentID'])
-        e = pd.read_csv(temp_length_path, index_col=0)
-        columns=step.columns.values
-        return step, e, columns
 
-    def import_smaller_dataset(step, dt, max_Nagents=None, min_duration_in_sec=0.0, time_slice=None):
-        min_ticks = min_duration_in_sec / dt
-
-        if time_slice is not None:
-            tmin, tmax = time_slice
-            tickmin, tickmax = int(tmin / dt), int(tmax / dt)
-            step = copy.deepcopy(step.loc[(slice(tickmin, tickmax), slice(None)), :])
-        end = step['head_x'].dropna().groupby('AgentID').count().to_frame()
-        end.columns = ['num_ticks']
-
-        if max_Nagents is not None:
-            selected = end.nlargest(max_Nagents, 'num_ticks').index.values
-            step = step.loc[(slice(None), selected), :]
-            end = end.loc[selected]
-        selected = end[end['num_ticks'] > min_ticks].index.values
-        step = step.loc[(slice(None), selected), :]
-        end = end.loc[selected]
-        end['cum_dur'] = end['num_ticks'] * dt
-        return step, end
-
-    def reset_AgentIDs(s):
+    def reset_MultiIndex(s):
         s.reset_index(level='Step', drop=False, inplace=True)
         trange = np.arange(int(s['Step'].max())).astype(int)
-        old_ids = s.index.unique().tolist()
-        new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
-        new_pairs = dict(zip(old_ids, new_ids))
-        s.rename(index=new_pairs, inplace=True)
+        # old_ids = s.index.unique().tolist()
+        # new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
+        # new_pairs = dict(zip(old_ids, new_ids))
+        # s.rename(index=new_pairs, inplace=True)
 
         s.reset_index(drop=False, inplace=True)
         s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
         s.sort_index(level=['Step', 'AgentID'], inplace=True)
         s.drop_duplicates(inplace=True)
 
-        my_index = pd.MultiIndex.from_product([trange, new_ids], names=['Step', 'AgentID'])
-        return s, my_index
-
-    def reset_MultiIndex(s, columns=None):
-        s, my_index = reset_AgentIDs(s)
-        if columns is None:
-            columns = s.columns.values
-        step = pd.DataFrame(s, index=my_index, columns=columns)
+        my_index = pd.MultiIndex.from_product([trange, s.index.unique('AgentID').values], names=['Step', 'AgentID'])
+        step = pd.DataFrame(s, index=my_index, columns=s.columns.values)
         return step
 
+    print(f'*---- Buiding dataset {d.id} of group {d.group_id}!-----')
+    df = df_from_csvs(pref, Npoints=d.Npoints, Ncontour=d.Ncontour)
 
-    try:
-        temp, e, columns = temp_load()
-        print('**--- Loaded temporary data successfully!----- ')
-    except:
-        print(f'*---- Buiding temporary data files for dataset {d.id} of group {d.group_id}!-----')
-        df=df_from_csvs(pref, Npoints=d.Npoints, Ncontour=d.Ncontour)
-        e = pd.DataFrame({}, index=df.index.unique('AgentID').values)
-        reg.funcs.processing['length'](df, e, N=11)
+    if time_slice is not None:
+        tmin, tmax = time_slice
+        df = df[df['Step'] < tmax]
+        df = df[df['Step'] >= tmin]
 
-        columns=df.columns.values[1:]
-        temp = temp_build(df,fr = d.fr)
-        temp_save(temp, e)
+    df=df[df['head_x'].dropna().groupby('AgentID').count()>min_duration_in_sec / d.dt]
+    if max_Nagents is not None:
+        df=df.loc[df['head_x'].dropna().groupby('AgentID').count().nlargest(max_Nagents).index]
+
+    e = pd.DataFrame({}, index=df.index.unique('AgentID').values)
+    reg.funcs.processing['length'](df, e, N=11)
+
+    # print('df')
+    # print(df.columns)
+    # raise
+    df = temp_build(df, fr=d.fr)
 
     if match_ids :
-        temp = match_larva_ids(s=temp, e=e, pars=['head_x', 'head_y'], **kwargs)
+        step = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'], **kwargs)
+    step = reset_MultiIndex(df)
+    end = pd.DataFrame({}, index=step.index.unique('AgentID').values)
+    reg.funcs.processing['length'](df, end, N=11)
+    # print('step')
+    # print(step.columns)
+    # raise
+    end['num_ticks'] = step['head_x'].dropna().groupby('AgentID').count()
+    end['cum_dur'] = end['num_ticks'] * d.dt
 
-
-    step=reset_MultiIndex(temp, columns=columns)
-    step, end=import_smaller_dataset(step, dt=d.dt,
-                                             max_Nagents=max_Nagents, min_duration_in_sec=min_duration_in_sec,time_slice=time_slice)
 
     return step, end
 
@@ -490,8 +465,12 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
             print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
             if enrich_conf is None:
                 enrich_conf = g.enrichment
+            # print('before enrich')
+            # print(d.step_data.columns)
+            # raise
             d = d.enrich(**enrich_conf, store=True, is_last=False)
         d.save(food=False, refID=refID)
+        print(f'***** Completed dataset {d.id} -----')
     else:
         print(f'xxxxx Failed to create dataset {id}! -----')
     return d

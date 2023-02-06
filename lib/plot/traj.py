@@ -220,8 +220,8 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
         ax.axhline(0, color='black', alpha=1, linestyle='dashed', linewidth=1)
         Lturns, Rturns = detect_turns(a, dt)
         if min_amp is not None:
-            Lturns1, Ldurs, Lturn_slices, Lamps, Lturn_idx, Lmaxs = process_epochs(a, Lturns, dt)
-            Rturns1, Rdurs, Rturn_slices, Ramps, Rturn_idx, Rmaxs = process_epochs(a, Rturns, dt)
+            Ldurs, Lamps, Lmaxs = process_epochs(a, Lturns, dt, return_idx=False)
+            Rdurs, Ramps, Rmaxs = process_epochs(a, Rturns, dt, return_idx=False)
             Lturns = Lturns[np.abs(Lamps) > min_amp]
             Rturns = Rturns[np.abs(Ramps) > min_amp]
 

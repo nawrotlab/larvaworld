@@ -76,7 +76,7 @@ def plot_ang_pars(absolute=False, include_rear=False, half_circles=False, subfol
 # ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
 @reg.funcs.graph('distros')
 def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],mode='hist',
-                 pvalues=True, half_circles=True,annotation=False,target_only=None, show_ns=True, subfolder='distro', Nbins=100, **kwargs):
+                 pvalues=True, half_circles=True,annotation=False,target_only=None, show_ns=False, subfolder='distro', Nbins=100, **kwargs):
     Nps = len(ks)
     if name is None:
         name = f'distros_{mode}_{Nps}'
