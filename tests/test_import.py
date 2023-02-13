@@ -1,6 +1,6 @@
-from lib import reg
-from lib.process.building import import_dataset, import_datasets
-from lib.process.dataset import LarvaDataset
+from larvaworld.lib import reg
+from larvaworld.lib.process.building import import_dataset, import_datasets
+from larvaworld.lib.process.dataset import LarvaDataset
 
 
 def test_import_Schleyer() :

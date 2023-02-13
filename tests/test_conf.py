@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib import reg,aux
+from larvaworld.lib import reg,aux
 
 
 def test_conf() :

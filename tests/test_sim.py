@@ -1,7 +1,7 @@
-import lib.sim.genetic_algorithm
-from lib import reg, sim
+import larvaworld.lib.sim.genetic_algorithm
+from larvaworld.lib import reg, sim
 
-from lib.process.dataset import LarvaDataset
+from larvaworld.lib.process.dataset import LarvaDataset
 
 def test_replay() :
     refID =  'exploration.dish'
@@ -53,14 +53,14 @@ def test_GA() :
     conf=reg.expandConf('Ga', 'realism')
     conf.ga_select_kws.Ngenerations = 5
 
-    ga_run = lib.sim.ga_engine.GAlauncher(parameters=conf)
+    ga_run = larvaworld.sim.ga_engine.GAlauncher(parameters=conf)
     best1=ga_run.run()
     print(best1)
     assert best1 is not None
 
     conf.offline=True
     conf.show_screen=False
-    ga_run = lib.sim.ga_engine.GAlauncher(parameters=conf)
+    ga_run = larvaworld.sim.ga_engine.GAlauncher(parameters=conf)
     best2=ga_run.run()
     print(best2)
     assert best2 is not None
