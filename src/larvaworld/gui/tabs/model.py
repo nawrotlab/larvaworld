@@ -5,7 +5,7 @@ import os
 
 from larvaworld.lib import reg
 from gui import gui_aux
-from gui.tabs import DrawBodyTab
+from larvaworld.gui.tabs import DrawBodyTab
 
 class ModelTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
@@ -162,7 +162,7 @@ class ModelTab(gui_aux.GuiTab):
 
 
 if __name__ == "__main__":
-    from gui.tabs.larvaworld_gui import LarvaworldGui
+    from larvaworld.gui.tabs.larvaworld_gui import LarvaworldGui
 
     larvaworld_gui = LarvaworldGui(tabs=['larva-model'])
     larvaworld_gui.run()

@@ -67,6 +67,6 @@ class ImportTab(gui_aux.GuiTab):
 
 
 if __name__ == "__main__":
-    from gui.tabs.larvaworld_gui import LarvaworldGui
+    from larvaworld.gui.tabs.larvaworld_gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['import'])
     larvaworld_gui.run()

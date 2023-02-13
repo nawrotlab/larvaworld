@@ -34,7 +34,7 @@ def tree_dict(d, parent_key='', sep='.'):
 
 
 def pars_to_tree(name):
-    from gui.gui_aux.dtypes import par, par_dict
+    from larvaworld.gui.gui_aux.dtypes import par, par_dict
 
     def dtype_name(v):
         def typing_arg(v):

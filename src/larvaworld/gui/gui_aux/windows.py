@@ -146,8 +146,8 @@ def object_menu(selected, **kwargs):
 
 
 def set_kwargs(dic, title='Arguments', type_dict=None, **kwargs):
-    from gui.tabs.larvaworld_gui import check_toggles
-    from gui.gui_aux.elements import SectionDict
+    from larvaworld.gui.tabs.larvaworld_gui import check_toggles
+    from larvaworld.gui.gui_aux.elements import SectionDict
     sec_dict = SectionDict(name=title, dict=dic, type_dict=type_dict)
     l = sec_dict.layout
     l.append([sg.Ok(), sg.Cancel()])
@@ -194,7 +194,7 @@ def set_agent_kwargs(agent, **kwargs):
 
 
 def save_conf_window(conf, conftype, disp=None):
-    from gui.gui_aux.elements import NamedList
+    from larvaworld.gui.gui_aux.elements import NamedList
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
@@ -227,7 +227,7 @@ def delete_conf_window(id, conftype, disp=None) :
 
 
 def add_ref_window():
-    from gui.gui_aux.elements import NamedList
+    from larvaworld.gui.gui_aux.elements import NamedList
     k = 'ID'
     temp = NamedList('Reference ID : ', key=k, choices=reg.storedConf('Ref'), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
@@ -253,8 +253,8 @@ def save_ref_window(d):
 
 
 def import_window(datagroup_id, raw_dic):
-    from gui.tabs.larvaworld_gui import check_togglesNcollapsibles
-    from gui.gui_aux.elements import PadDict
+    from larvaworld.gui.tabs.larvaworld_gui import check_togglesNcollapsibles
+    from larvaworld.gui.gui_aux.elements import PadDict
     g = reg.loadConf(id=datagroup_id, conftype='Group')
     group_dir = f'{reg.DATA_DIR}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
@@ -411,7 +411,7 @@ def change_dataset_id(dic, old_ids):
 
 
 def entry_window(index, dict_name, base_dict={}, id=None, **kwargs):
-    from gui.gui_aux.elements import PadDict
+    from larvaworld.gui.gui_aux.elements import PadDict
     c0 = PadDict(dict_name)
     l0 = c0.get_layout(pad=(20, 20))
     lID = [sg.T(f'{index}:', **gui_aux.t_kws(10), tooltip='The ID of the new entry'),

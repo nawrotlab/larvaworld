@@ -81,7 +81,7 @@ def named_bool_button(name, state, toggle_name=None, text_kws={}, **kwargs):
 class GraphButton(sg.Button):
     def __init__(self, name, key,from_bs64=True, **kwargs):
         if from_bs64 :
-            from gui.gui_aux import graphics
+            from larvaworld.gui.gui_aux import graphics
             bs64 = getattr(graphics, name)
             super().__init__(image_data=bs64, k=key, **b_kws, **kwargs)
         else :
@@ -117,7 +117,7 @@ class BoolButton(sg.Button):
         self.update(image_data=self.get_image(self.state, self.disabled))
 
     def get_image(self, state, disabled):
-        from gui.gui_aux import graphics
+        from larvaworld.gui.gui_aux import graphics
         if not disabled:
             image = graphics.on_image if state else graphics.off_image
         else:

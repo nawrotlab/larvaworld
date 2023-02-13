@@ -128,6 +128,6 @@ def stored_trajs(batch_type):
 
 
 if __name__ == "__main__":
-    from gui.tabs.larvaworld_gui import LarvaworldGui
+    from larvaworld.gui.tabs.larvaworld_gui import LarvaworldGui
     larvaworld_gui = LarvaworldGui(tabs=['batch-exec'])
     larvaworld_gui.run()

@@ -590,7 +590,7 @@ class ScreenManager(BaseScreenManager):
                                         p1=tuple(self.mousebuttondown_pos))
 
                     elif e.button == 3:
-                        from gui.gui_aux.windows import set_agent_kwargs, object_menu
+                        from larvaworld.gui.gui_aux.windows import set_agent_kwargs, object_menu
                         loc = tuple(np.array(self.v.w_loc) + np.array(pygame.mouse.get_pos()))
                         if len(self.selected_agents) > 0:
                             for sel in self.selected_agents:
@@ -647,7 +647,7 @@ class ScreenManager(BaseScreenManager):
             except:
                 pass
         elif k == 'delete item':
-            from gui.gui_aux.windows import delete_objects_window
+            from larvaworld.gui.gui_aux.windows import delete_objects_window
             if delete_objects_window(self.selected_agents):
                 for f in self.selected_agents:
                     self.selected_agents.remove(f)
@@ -656,13 +656,13 @@ class ScreenManager(BaseScreenManager):
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]
                 if isinstance(sel, Larva):
-                    from gui.gui_aux.elements import DynamicGraph
+                    from larvaworld.gui.gui_aux.elements import DynamicGraph
                     self.dynamic_graphs.append(DynamicGraph(agent=sel))
         elif k == 'odor gains':
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]
                 if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
-                    from gui.gui_aux.windows import set_kwargs
+                    from larvaworld.gui.gui_aux.windows import set_kwargs
                     sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
         else:
             self.toggle(k)

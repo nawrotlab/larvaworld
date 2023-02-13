@@ -31,7 +31,9 @@ dependencies = [
     'scipy',
     'PyPDF2',
     'powerlaw',
-    'progressbar'
+    'progressbar',
+    'param',
+    'decorator'
 ]
 
 [project.urls]
@@ -41,3 +43,4 @@ repository = "https://github.com/nawrotlab/larvaworld"
 
 [project.scripts]
 larvaworld-cli = "larvaworld.cli.main:main"
+larvaworld-gui = "larvaworld.gui.main:main"
