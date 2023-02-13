@@ -44,3 +44,9 @@ repository = "https://github.com/nawrotlab/larvaworld"
 [project.scripts]
 larvaworld-cli = "larvaworld.cli.main:main"
 larvaworld-gui = "larvaworld.gui.main:main"
+larvaworld-examples = "larvaworld.examples.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]

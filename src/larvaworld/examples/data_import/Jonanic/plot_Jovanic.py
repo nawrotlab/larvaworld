@@ -1,4 +1,4 @@
-from larvaworld.lib.registry import reg
+from larvaworld.lib import reg
 import pandas as pd
 # D=preg.dict
 # p=D['cum_sd']
