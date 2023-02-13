@@ -4,8 +4,8 @@ import random
 import numpy as np
 import PySimpleGUI as sg
 
-import larvaworld.aux.xy
-from larvaworld import reg, aux
+import larvaworld.lib.aux.xy
+from larvaworld.lib import reg, aux
 from gui import gui_aux
 
 

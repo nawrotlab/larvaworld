@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 
-from larvaworld import aux
+from larvaworld.lib import aux
 from cli.argparsing import run_template, get_parser
 
 p=ArgumentParser()

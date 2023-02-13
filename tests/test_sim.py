@@ -1,7 +1,7 @@
-import larvaworld.sim.genetic_algorithm
-from larvaworld import reg, sim
+import larvaworld.lib.sim.genetic_algorithm
+from larvaworld.lib import reg, sim
 
-from larvaworld.process.dataset import LarvaDataset
+from larvaworld.lib.process.dataset import LarvaDataset
 
 def test_replay() :
     refID =  'exploration.dish'

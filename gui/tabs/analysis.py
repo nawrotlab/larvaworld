@@ -1,4 +1,4 @@
-from larvaworld import reg
+from larvaworld.lib import reg
 from gui import gui_aux
 
 class AnalysisTab(gui_aux.GuiTab):

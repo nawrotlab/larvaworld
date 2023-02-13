@@ -2,7 +2,7 @@ import os
 import webbrowser
 import PySimpleGUI as sg
 
-from larvaworld import reg
+from larvaworld.lib import reg
 from gui import gui_aux
 
 class TutorialTab(gui_aux.GuiTab):

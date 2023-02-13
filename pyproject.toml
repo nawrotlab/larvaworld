@@ -35,7 +35,3 @@ dependencies = [
 # homepage = "https://example.com"
 # documentation = "https://readthedocs.org"
 repository = "https://github.com/nawrotlab/larvaworld"
-
-
-# [tool.setuptools]
-# packages = ['larvaworld']

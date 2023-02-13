@@ -3,7 +3,7 @@ import copy
 import os
 
 
-from larvaworld import reg
+from larvaworld.lib import reg
 from gui import gui_aux
 from gui.tabs import DrawBodyTab
 

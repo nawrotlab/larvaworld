@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from larvaworld import reg, sim
+from larvaworld.lib import reg, sim
 from gui import gui_aux
 
 

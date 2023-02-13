@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 
 
 from gui import gui_aux
-from larvaworld import reg, aux
+from larvaworld.lib import reg, aux
 
 
 
@@ -322,7 +322,7 @@ def import_window(datagroup_id, raw_dic):
                     # 'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
-                from larvaworld.process.building import build_dataset
+                from larvaworld.lib.process.building import build_dataset
                 targets = [f.replace(raw_folder, proc_folder) for f in raw_dirs]
                 if not merge:
                     print(f'------ Building {N} discrete datasets ------')

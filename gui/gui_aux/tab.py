@@ -1,5 +1,5 @@
 
-from larvaworld import reg
+from larvaworld.lib import reg
 from gui.gui_aux.elements import GuiElement
 
 class GuiTab(GuiElement):

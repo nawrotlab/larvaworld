@@ -1,6 +1,6 @@
-from larvaworld import reg
+from larvaworld.lib import reg
 
-from larvaworld.sim.dataset_replay import ReplayRun
+from larvaworld.lib.sim.dataset_replay import ReplayRun
 
 mode = 'fixed_segment'
 # refID = 'Rehydration/AttP2.Deprived'

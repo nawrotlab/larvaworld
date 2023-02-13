@@ -1,7 +1,7 @@
 import numpy as np
 import typing
 
-from larvaworld import reg, aux
+from larvaworld.lib import reg, aux
 
 
 def define_dv(dv, cur_dtype):

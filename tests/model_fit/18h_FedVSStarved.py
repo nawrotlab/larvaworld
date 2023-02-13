@@ -1,6 +1,6 @@
-from larvaworld import reg, util
+from larvaworld.lib import reg, util
 
-from larvaworld.sim.model_evaluation import EvalRun
+from larvaworld.lib.sim.model_evaluation import EvalRun
 
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'

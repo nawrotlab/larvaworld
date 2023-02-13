@@ -1,7 +1,7 @@
-from larvaworld import reg
+from larvaworld.lib import reg
 
 
-from larvaworld.process.building import import_dataset
+from larvaworld.lib.process.building import import_dataset
 
 kws0 = {
     'datagroup_id': 'Schleyer lab',

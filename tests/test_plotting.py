@@ -1,4 +1,4 @@
-from larvaworld import reg, aux, plot
+from larvaworld.lib import reg, aux, plot
 
 import matplotlib.pyplot as plt
 
