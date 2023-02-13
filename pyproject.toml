@@ -21,7 +21,7 @@ dependencies = [
     'shapely',
     'imageio',
     'agentpy',
-    # 'box2d-py',
+    'box2d-py',
     'pygame',
     'argparse',
     'pint',
@@ -29,9 +29,15 @@ dependencies = [
     'seaborn',
     'scikit-learn',
     'scipy',
+    'PyPDF2',
+    'powerlaw',
+    'progressbar'
 ]
 
 [project.urls]
 # homepage = "https://example.com"
 # documentation = "https://readthedocs.org"
 repository = "https://github.com/nawrotlab/larvaworld"
+
+[project.scripts]
+larvaworld-cli = "larvaworld.cli.main:main"
