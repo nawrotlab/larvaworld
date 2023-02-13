@@ -1,6 +1,6 @@
-from lib import reg, aux, plot
-from lib.process.building import import_datasets
-from lib.process.dataset import LarvaDataset
+from larvaworld import reg, aux, plot
+from larvaworld.process.building import import_datasets
+from larvaworld.process.dataset import LarvaDataset
 
 kws0 = {
     'datagroup_id': 'Jovanic lab',

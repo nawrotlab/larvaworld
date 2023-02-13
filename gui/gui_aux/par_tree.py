@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from lib import reg
+from larvaworld import reg
 
 
 def tree_dict(d, parent_key='', sep='.'):

@@ -2,7 +2,7 @@ import copy
 import PySimpleGUI as sg
 
 
-from lib import reg, aux, sim
+from larvaworld import reg, aux, sim
 
 from gui import gui_aux
 from gui.tabs import DrawEnvTab, EnvTab

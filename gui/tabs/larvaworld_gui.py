@@ -5,7 +5,7 @@ import time
 
 import pandas as pd
 
-from lib import reg
+from larvaworld import reg
 from gui import gui_aux, tabs
 
 def build_tab_dict():

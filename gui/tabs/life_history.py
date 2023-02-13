@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 
-from lib import reg
+from larvaworld import reg
 from gui import gui_aux
 
 class LifeTab(gui_aux.GuiTab):
@@ -13,8 +13,8 @@ class LifeTab(gui_aux.GuiTab):
         self.K = 'EPOCHS'
 
     def build(self):
-        from lib.plot.deb import plot_debs
-        from lib.model.deb.substrate import substrate_dict
+        from larvaworld.plot.deb import plot_debs
+        from larvaworld.model.deb.substrate import substrate_dict
         sl1_kws = {
             'size': (30, 20),
             'enable_events': True,
@@ -101,8 +101,8 @@ class LifeTab(gui_aux.GuiTab):
                 w.write_event_value('Draw', 'Draw the initial plot')
         elif e == 'Draw':
             if q > 0:
-                from lib.model.deb.deb import deb_default
-                from lib.plot.deb import plot_debs
+                from larvaworld.model.deb.deb import deb_default
+                from larvaworld.plot.deb import plot_debs
 
                 D = deb_default(**self.get(w, v, c))
                 for Sii in [S0, S1, Sa]:

@@ -3,10 +3,10 @@ import PySimpleGUI as sg
 
 
 
-from lib import reg
+from larvaworld import reg
 from gui import gui_aux
 
-import lib.aux.dictsNlists as dNl
+import larvaworld.aux.dictsNlists as dNl
 
 class SettingsTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):

@@ -1,7 +1,7 @@
 import os
 import PySimpleGUI as sg
 
-from lib import reg
+from larvaworld import reg
 from gui import gui_aux
 
 

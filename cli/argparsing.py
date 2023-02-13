@@ -1,8 +1,8 @@
 from typing import List
 from argparse import ArgumentParser
 
-import lib.sim.genetic_algorithm
-from lib import reg, aux, sim
+import larvaworld.sim.genetic_algorithm
+from larvaworld import reg, aux, sim
 
 
 

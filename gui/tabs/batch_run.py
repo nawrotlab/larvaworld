@@ -4,10 +4,10 @@ import copy
 import PySimpleGUI as sg
 import pandas as pd
 
-from lib import reg, aux,sim
-import lib.util.data_aux
+from larvaworld import reg, aux,sim
+import larvaworld.util.data_aux
 from gui import gui_aux
-from lib.plot.table import mpl_table
+from larvaworld.plot.table import mpl_table
 
 class BatchTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):

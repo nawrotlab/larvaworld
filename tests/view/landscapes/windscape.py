@@ -1,7 +1,7 @@
 import numpy as np
 
-from lib import reg, aux
-from lib.sim.single_run import ExpRun
+from larvaworld import reg, aux
+from larvaworld.sim.single_run import ExpRun
 
 exp='Windscape visualization'
 
