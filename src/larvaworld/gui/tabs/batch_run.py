@@ -6,7 +6,7 @@ import pandas as pd
 
 from larvaworld.lib import reg, aux,sim
 import larvaworld.lib.util.data_aux
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 from larvaworld.lib.plot.table import mpl_table
 
 class BatchTab(gui_aux.GuiTab):

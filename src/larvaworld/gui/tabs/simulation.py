@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 from larvaworld.lib import reg, aux, sim
 
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 from larvaworld.gui.tabs import DrawEnvTab, EnvTab
 
 class SimTab(gui_aux.GuiTab):

@@ -1,7 +1,7 @@
 import numpy as np
 import PySimpleGUI as sg
 
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 class DrawBodyTab(gui_aux.DrawTab):
     def __init__(self, canvas_size=(1200, 800), **kwargs):

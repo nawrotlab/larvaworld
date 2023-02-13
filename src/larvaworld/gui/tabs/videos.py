@@ -2,7 +2,7 @@ import os
 import PySimpleGUI as sg
 
 from larvaworld.lib import reg
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 
 class VideoTab(gui_aux.GuiTab):

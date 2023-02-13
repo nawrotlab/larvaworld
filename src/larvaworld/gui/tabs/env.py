@@ -1,4 +1,4 @@
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 class EnvTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):

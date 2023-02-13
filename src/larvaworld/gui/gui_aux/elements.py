@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 from larvaworld.lib import reg, aux
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 
 SYMBOL_UP = '▲'

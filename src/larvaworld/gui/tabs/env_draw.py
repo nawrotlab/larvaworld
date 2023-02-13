@@ -6,7 +6,7 @@ import PySimpleGUI as sg
 
 import larvaworld.lib.aux.xy
 from larvaworld.lib import reg, aux
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 
 

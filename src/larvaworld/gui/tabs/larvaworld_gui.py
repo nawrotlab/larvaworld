@@ -6,7 +6,7 @@ import time
 import pandas as pd
 
 from larvaworld.lib import reg
-from gui import gui_aux, tabs
+from larvaworld.gui import gui_aux, tabs
 
 def build_tab_dict():
     tab_dict = {

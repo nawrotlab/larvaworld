@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 
 
 from larvaworld.lib import reg
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 import larvaworld.lib.aux.dictsNlists as dNl
 

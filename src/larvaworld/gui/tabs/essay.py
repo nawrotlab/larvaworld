@@ -2,7 +2,7 @@ import os
 
 
 from larvaworld.lib import reg
-from gui import gui_aux
+from larvaworld.gui import gui_aux
 
 class EssayTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
