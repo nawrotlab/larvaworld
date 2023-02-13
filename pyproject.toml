@@ -2,9 +2,40 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name='larvaworld'
 version = "0.1.0"
+description='Drosophila larva behavioral analysis and simulation platform'
+authors=[
+    {name='Panagiotis Sakagiannis', email='bagjohn0@gmail.com'}
+]
+license = {file = "LICENSE.txt"}
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    'pandas',
+    'numpy',
+    'typing-extensions',
+    'PySimpleGUI',
+    'shapely',
+    'imageio',
+    'agentpy',
+    # 'box2d-py',
+    'pygame',
+    'argparse',
+    'pint',
+    'matplotlib',
+    'seaborn',
+    'scikit-learn',
+    'scipy',
+]
 
-[tool.setuptools]
-packages = ['larvaworld']
+[project.urls]
+# homepage = "https://example.com"
+# documentation = "https://readthedocs.org"
+repository = "https://github.com/nawrotlab/larvaworld"
+
+
+# [tool.setuptools]
+# packages = ['larvaworld']
