@@ -50,3 +50,6 @@ larvaworld-examples = "larvaworld.examples.main:main"
 dev = [
     "pytest"
 ]
+
+[tool.setuptools.package-data]
+"*" = ["*.png", "*.pdf", "*.txt"]
