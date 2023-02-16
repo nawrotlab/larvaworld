@@ -78,102 +78,74 @@ Finally, some games are available for fun where opposite larva groups try to cap
 Supporting resources
 =====================
 
+- Agent and simulation classes extend on the agent-based modeling library [agentpy](https://agentpy.readthedocs.io/en/latest/index.html).
 
-Scheduling of the agents is based on the [mesa](https://mesa.readthedocs.io/en/master/) agent-based modeling library
+- The homeostasis/energetics module is based on the [DEB](http://www.debtheory.org/wiki/index.php?title=Main_Page) (Dynamic Energy Budget) Theory
+ 
+- Optionally, for multi-segment larvae the spatial environment and bodies are simulated through [Box2D](https://box2d.org/) physics engine based on [box2d-py](https://pypi.org/project/box2d-py/) package.
 
-For multi-segment larvae the spatial environment and bodies are simulated through [Box2D](https://box2d.org/) physics engine.
-
-Optionally neural modules can be implemented using the [Nengo](https://www.nengo.ai/) neural simulator
-
-The homeostasis/energetics module is based on the [DEB](http://www.debtheory.org/wiki/index.php?title=Main_Page) (Dynamic Energy Budget) Theory
+- Optionally neural modules can be implemented using the [Nengo](https://www.nengo.ai/) neural simulator
 
 -----------------------------------------------------------------------------------------------------------------
 
 **Installation**
 
-Open linux/macOS terminal.
-Navigate to a directory of your choice.
-Download or clone the repository to your local drive :
+The platform comes as a Pypi package. Install easily using pip. This will additionally install all package dependencies. Note that a python version >=3.8 is required :
 
-    git clone https://github.com/nawrotlab/larvaworld.git
-
-Either make sure python 3.9 is your default python interpreter or optionally create a python 3.9 virtual environment, for example in folder `larvaworld_venv`, and activate it:
-
-    python3.9 -m venv larvaworld_venv
-
-    source larvaworld_venv/bin/activate
-
-
-Install package dependencies :
-
-    cd larvaworld
-
-    pip install -r requirements.txt
-    
-Add the virtual environment to jupyter so that you can run the notebooks
-
-    python -m ipykernel install --user --name=larvaworld_venv
+    pip install larvaworld
     
 
 **Run Larvaworld**
 
-Larvaworld can be run directly from linux terminal.
-    
-    
-   Larvaworld-GUI
-   =====================
-   All functionalities are available via the respective tabs of the larvaworld GUI.
-   Launch the GUI :
+The platform is mainly accessed through the command line interface via the *larvaworld-cli* command.
+Five different modes are available. The mode has to declared after the command as a first positional argument. Mode-specific argumants can be declared afterwards :
 
-      python larvaworld-gui
+1. Single Simulation
 
+    Run a single simulation of one of multiple available experiments. 
+    Optionally run the respective analysis.
 
-   Larvaworld via Linux terminal
-   =========================================
-   Optionally Larvaworld can be launched through Linux terminal.
-   Different modes are available :
+    This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
 
-   1. Single Simulation
+        larvaworld-cli Exp dish -N 30 -t 3.0 -m video
+        larvaworld-cli Exp patch_grid -N 30 -t 3.0 -m video
 
-       Run a single simulation of one of multiple available experiments. 
-       Optionally run the respective analysis.
+    This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
+    We choose to only produce a final image of the simulation.
 
-       This line runs a dish simulation (30 larvae, 3 minutes) without analysis. 
+        larvaworld-cli Exp dispersion -N 30 -t 3.0 -m image -a
 
-           python larvaworld.py Exp dish -N 30 -t 3.0 -m video
-           python larvaworld.py Exp patch_grid -N 30 -t 3.0 -m video
+2. Batch run
+    (needs debugging)
+    Run multiple trials of a given experiment with different parameters.
+    This line runs a batch run of odor preference experiments for different valences of the two odor sources.
 
-       This line runs a dispersion simulation and compares the results to the existing reference dataset (`larvaworld/data/reference`)
-       We choose to only produce a final image of the simulation.
+        larvaworld-cli Batch PItest_off -N 5 -t 1.0
 
-           python larvaworld.py Exp dispersion -N 30 -t 3.0 -m image -a
+3. Genetic Algorithm optimization
 
-   2. Batch run
-       (needs debugging)
-       Run multiple trials of a given experiment with different parameters.
-       This line runs a batch run of odor preference experiments for different valences of the two odor sources.
+    Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
+    This line optimizes a model for kinematic realism against a reference experimental dataset
 
-           python larvaworld.py Batch PItest_off -N 5 -t 1.0
+        larvaworld-cli Ga realism -N 20 -t 0.5 -mID1 GA_test_loco -mGA model
 
-   3. Genetic Algorithm optimization
+4. Experiment replay
+
+   Replay a real-world experiment.
+   This line replays a reference experimental dataset (note that this is imported by the tests/data_import/Schleyer/import_Schleyer.py)
+
+        larvaworld-cli Replay -refID exploration.dish03
+        larvaworld-cli Replay -dir SchleyerGroup/processed/exploration/dish03
+
+5. Model evaluation / comparison to real data
+
+   Evaluate diverse model configurations against real data.
+   This line evaluates two models against a reference experimental dataset
+
+        larvaworld-cli Eval -refID exploration.merged_dishes -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
+
    
-       Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
-       This line optimizes a model for kinematic realism against a reference experimental dataset
+A graphical user interface is also available. All functionalities are available via the respective tabs.
+Launch the GUI :
 
-           python larvaworld.py Ga realism -N 20 -t 0.5 -mID1 GA_test_loco -mGA model
-
-   4. Experiment replay
-   
-      Replay a real-world experiment.
-      This line replays a reference experimental dataset (note that this is imported by the tests/data_import/Schleyer/import_Schleyer.py)
-
-           python larvaworld.py Replay -refID exploration.dish03
-           python larvaworld.py Replay -dir SchleyerGroup/processed/exploration/dish03
-
-   5. Model evaluation / comparison to real data
-   
-      Evaluate diverse model configurations against real data.
-      This line evaluates two models against a reference experimental dataset
-
-           python larvaworld.py Eval -refID exploration.merged_dishes -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
-    
+      larvaworld-gui
