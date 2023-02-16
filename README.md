@@ -78,14 +78,13 @@ Finally, some games are available for fun where opposite larva groups try to cap
 Supporting resources
 =====================
 
+- Agent and simulation classes extend on the agent-based modeling library [agentpy](https://agentpy.readthedocs.io/en/latest/index.html).
 
-Scheduling of the agents is based on the [mesa](https://mesa.readthedocs.io/en/master/) agent-based modeling library
+- The homeostasis/energetics module is based on the [DEB](http://www.debtheory.org/wiki/index.php?title=Main_Page) (Dynamic Energy Budget) Theory
+ 
+- Optionally, for multi-segment larvae the spatial environment and bodies are simulated through [Box2D](https://box2d.org/) physics engine based on [box2d-py](https://pypi.org/project/box2d-py/) package.
 
-For multi-segment larvae the spatial environment and bodies are simulated through [Box2D](https://box2d.org/) physics engine.
-
-Optionally neural modules can be implemented using the [Nengo](https://www.nengo.ai/) neural simulator
-
-The homeostasis/energetics module is based on the [DEB](http://www.debtheory.org/wiki/index.php?title=Main_Page) (Dynamic Energy Budget) Theory
+- Optionally neural modules can be implemented using the [Nengo](https://www.nengo.ai/) neural simulator
 
 -----------------------------------------------------------------------------------------------------------------
 
