@@ -8,7 +8,7 @@ kws0 = {
     # 'add_reference': True,
     'enrich' : True,
     'merged' : False,
-    'match_ids' : False,
+    'match_ids' : True,
 }
 
 # kws2 = {
@@ -48,6 +48,36 @@ kws3 = {
     **kws0
 }
 
+kws4 = {
+    'parent_dir': 'attP2 x sNPFR-RNAi (ctrl)',
+    'source_ids': ['Fe', 'Pd', 'St'],
+    'ids': ['Fed', 'Sucrose', 'Starved'],
+    'refIDs': ['attP2sNPFR_RNAi.Fed', 'attP2sNPFR_RNAi.Sucrose', 'attP2sNPFR_RNAi.Starved'],
+    'colors':['black', 'red', 'purple'],
+    'time_slice':(0,60),
+    **kws0
+}
+
+kws5 = {
+    'parent_dir': 'NPF-GAL4 x attP2-40 (ctrl)',
+    'source_ids': ['Fe', 'Pd', 'St'],
+    'ids': ['Fed', 'Sucrose', 'Starved'],
+    'refIDs': ['NPF_attP240.Fed', 'NPF_attP240.Sucrose', 'NPF_attP240.Starved'],
+    'colors':['black', 'red', 'purple'],
+    'time_slice':(0,60),
+    **kws0
+}
+
+kws6 = {
+    'parent_dir': 'NPF-GAL4 x NPF-RNAi',
+    'source_ids': ['Fe', 'Pd', 'St'],
+    'ids': ['Fed', 'Sucrose', 'Starved'],
+    'refIDs': ['NPF_NPF_RNAi.Fed', 'NPF_NPF_RNAi.Sucrose', 'NPF_NPF_RNAi.Starved'],
+    'colors':['black', 'red', 'purple'],
+    'time_slice':(0,60),
+    **kws0
+}
+
 # G=reg.graphs
 
 # entry_list=analysis_dict.general
@@ -55,10 +85,11 @@ kws3 = {
 ggs=['endpoint', 'dsp', 'general']
 
 # for kws in [kws3] :
-for kws in [kws1, kws2, kws3] :
+for kws in [kws4, kws5, kws6] :
+# for kws in [kws1, kws2, kws3] :
 #     try:
     ds = import_datasets(**kws)
-    gd = reg.graphs.eval_graphgroups(graphgroups=ggs, datasets=ds, save_to=f'{reg.DATA_DIR}/JovanicGroup/plots_submission/3/{kws["parent_dir"]}', subfolder=None)
+    gd = reg.graphs.eval_graphgroups(graphgroups=ggs, datasets=ds, save_to=f'{reg.DATA_DIR}/JovanicGroup/plots_submission/batch_2/{kws["parent_dir"]}', subfolder=None)
     # except :
     #     pass
     # for d in ds :

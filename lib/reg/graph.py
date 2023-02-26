@@ -119,7 +119,7 @@ class GraphRegistry:
             entry=self.entry('bearing/turn', name=name, **{"min_angle":5.0, "ref_angle":ref_angle, "source_ID":source_ID, **kwargs} )
             d0.append(entry)
 
-        for p in [nam.bearing2(source_ID), nam.dst2(source_ID), nam.scal(nam.dst2(source_ID))] :
+        for p in [nam.bearing_to(source_ID), nam.dst_to(source_ID), nam.scal(nam.dst_to(source_ID))] :
             d0.append(self.entry('timeplot', name=p, **{"pars":[p], **kwargs}))
 
         for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:

@@ -98,13 +98,30 @@ def comp_stride_variation(d):
         str_var[ii]= [dic[jj][ii] for jj in str_var.index.values]
     dic = {'stride_data': df, 'stride_variability': str_var}
 
-    sNt_cv = str_var[reg.getPar(['str_sd_var', 'str_t_var'])].sum(axis=1)
-    best_idx = sNt_cv.argmin()
-    c.metric_definition.spatial.fitted = aux.AttrDict(
-        {'point_idx': int(str_var['point_idx'].iloc[best_idx]),
-         'use_component_vel': bool(str_var['use_component_vel'].iloc[best_idx])})
+
     print('Stride variability analysis complete!')
     return dic
+
+def fit_metric_definition(str_var, df_corr, c) :
+    Nangles=0 if c.Npoints<3 else c.Npoints-2
+    sNt_cv = str_var[reg.getPar(['str_sd_var', 'str_t_var'])].sum(axis=1)
+    best_idx = sNt_cv.argmin()
+
+    best_combo = df_corr.index.values[0]
+    best_combo_max = np.max(best_combo)
+
+    md=c.metric_definition
+    if not 'spatial' in md.keys():
+        md.spatial=aux.AttrDict()
+    md.spatial.point_idx=int(str_var['point_idx'].iloc[best_idx])
+    md.spatial.use_component_vel=bool(str_var['use_component_vel'].iloc[best_idx])
+    if not 'angular' in md.keys():
+        md.angular=aux.AttrDict()
+    md.angular.best_combo = str(best_combo)
+    md.angular.front_body_ratio = best_combo_max / Nangles
+    md.angular.bend = 'from_vectors'
+
+
 
 
 def comp_segmentation(d):
@@ -113,9 +130,9 @@ def comp_segmentation(d):
     hov = aux.nam.vel(aux.nam.orient('front'))
 
     if not set(avels).issubset(s.columns.values):
-        from lib.process.angular import comp_angles, comp_angular
-        comp_angles(s, c.Npoints)
-        comp_angular(s, c.dt,c.Npoints, mode='full')
+        func=reg.funcs.processing['angular']
+        func(s=s,e=e,c=c,  mode='full', recompute=True)
+
     if not set(avels).issubset(s.columns.values):
         raise ValueError('Spineangle angular velocities do not exist in step')
 
@@ -166,12 +183,5 @@ def comp_segmentation(d):
     df_corr.set_index('idx', inplace=True)
     df_corr.sort_values('corr', ascending=False, inplace=True)
     dic = {'bend2or_regression': df_reg, 'bend2or_correlation': df_corr}
-    best_combo = df_corr.index.values[0]
-    best_combo_max = np.max(best_combo)
-    front_body_ratio = best_combo_max / N
-
-    c.metric_definition.angular.fitted = aux.AttrDict(
-        {'best_combo': str(best_combo), 'front_body_ratio': front_body_ratio,
-         'bend': 'from_vectors'})
     print('Angular velocity definition analysis complete!')
     return dic

@@ -9,6 +9,21 @@ class FunctionDict:
         self.processing = aux.AttrDict()
         self.annotating = aux.AttrDict()
         self.param_computing = aux.AttrDict()
+        # self.nam = aux.AttrDict()
+
+    # def naming(self, name):
+    #     return self.register_func(name, "nam")
+
+    # def namfunc(self, s, loc='suf'):
+    #     # def naming_func(s, loc='suf'):
+    #     def func(ps, loc=loc, **kwargs):
+    #         return aux.nam.name(s=s, ps=ps, loc=loc, **kwargs)
+    #     self.naming(s)(func)
+    #     return func
+    #
+    #
+    # def naming(self, name):
+    #     return self.register_func(name, "nam")
 
     def param(self, name):
         return self.register_func(name, "param_computing")

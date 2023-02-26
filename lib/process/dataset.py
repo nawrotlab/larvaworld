@@ -11,7 +11,7 @@ class _LarvaDataset:
     def __init__(self, dir=None, load_data=True, **kwargs):
 
         self.config = retrieve_config(dir=dir, **kwargs)
-        retrieve_metrics(self, self.config)
+        self.retrieve_metrics()
         self.__dict__.update(self.config)
         self.larva_tables = {}
         self.larva_dicts = {}
@@ -33,7 +33,7 @@ class _LarvaDataset:
             self.endpoint_data = end.sort_index()
         if food is not None:
             self.food_endpoint_data = food
-        self.config=update_config(self,self.config)
+        self.update_config()
 
 
     def load_step(self, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
@@ -70,12 +70,12 @@ class _LarvaDataset:
             self.food_endpoint_data.sort_index(inplace=True)
 
 
+
     def save_step(self, s=None, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
         if s is None:
             s = self.step_data
         s = s.loc[:, ~s.columns.duplicated()]
         stored_ps = []
-        # s = self.step_data
         for h5_k in h5_ks:
 
             pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
@@ -103,12 +103,16 @@ class _LarvaDataset:
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
     def save_vel_definition(self):
-        from lib.process.calibration import comp_stride_variation, comp_segmentation
+        from lib.process.calibration import comp_stride_variation, comp_segmentation, fit_metric_definition
         warnings.filterwarnings('ignore')
         res_v = comp_stride_variation(self)
         res_fov = comp_segmentation(self)
+
+        fit_metric_definition(str_var=res_v['stride_variability'], df_corr=res_fov['bend2or_correlation'], c=self.config)
+
+
         dic={**res_v,**res_fov}
-        retrieve_metrics(self, self.config)
+        self.retrieve_metrics()
         self.save_config()
         self.storeH5(df=dic, filepath_key='vel_definition')
         print(f'Velocity definition dataset stored.')
@@ -134,7 +138,7 @@ class _LarvaDataset:
         self.config.refID = refID
 
 
-        self.config=update_config(self, self.config)
+        self.update_config()
         aux.save_dict(self.config,reg.datapath('conf', self.config.dir))
 
 
@@ -325,7 +329,9 @@ class _LarvaDataset:
     def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={}, **kwargs):
         proc_keys=[k for k, v in processing.items() if v]
         anot_keys=[k for k, v in annotation.items() if v]
-        self.config.metric_definition=update_metric_definition(md=metric_definition,mdconf=self.config.metric_definition)
+        if metric_definition is not None :
+
+            self.config.metric_definition.update(metric_definition)
         return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,anot_keys=anot_keys, **kwargs)
 
 
@@ -447,169 +453,140 @@ class _LarvaDataset:
             shorts = reg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
+    def retrieve_metrics(self):
+        c = self.config
+        N = c.Npoints
+        Nc = c.Ncontour
+
+        sp = c.metric_definition.spatial
+        self.points = nam.midline(N, type='point')
+        try:
+            p = self.points[sp.point_idx - 1]
+        except:
+            p = 'centroid'
+        c.point = p
+
+
+
+        self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
+        self.angles = [f'angle{i}' for i in range(self.Nangles)]
+        self.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
+        self.segs = nam.segs(self.Nsegs)
+        self.midline_xy = nam.xy(self.points, flat=False)
+        self.contour = nam.contour(Nc)
+        self.contour_xy = nam.xy(self.contour, flat=False)
+
+
+        self.distance = nam.dst(p)
+        self.velocity = nam.vel(p)
+        self.acceleration = nam.acc(p)
+        if sp.use_component_vel:
+            self.velocity = nam.lin(self.velocity)
+            self.acceleration = nam.lin(self.acceleration)
+
+        self.h5_kdic = nam.h5_kdic(p, N, Nc)
+        self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
+
+    def update_config(self):
+        s,e=self.step_data, self.endpoint_data
+        c=self.config
+        c.dt = 1 / self.fr
+        try:
+            ids = self.agent_ids
+        except:
+            try:
+                ids = e.index.values
+            except:
+                ids = self.read('end').index.values
+
+        c.agent_ids = list(ids)
+        c.N = len(ids)
+        if 't0' not in c.keys():
+            try:
+                c.t0 = int(s.index.unique('Step')[0])
+            except:
+                c.t0 = 0
+        if 'Nticks' not in c.keys():
+            try:
+                c.Nticks = s.index.unique('Step').size
+            except:
+                try:
+                    c.Nticks = e['num_ticks'].max()
+                except:
+                    pass
+        if 'duration' not in c.keys():
+            try:
+                c.duration = int(e['cum_dur'].max())
+            except:
+                c.duration = c.dt * c.Nticks
+        if 'quality' not in c.keys():
+            try:
+                df = s[aux.nam.xy(c.point)[0]].values.flatten()
+                valid = np.count_nonzero(~np.isnan(df))
+                c.quality = np.round(valid / df.shape[0], 2)
+            except:
+                pass
+
+        for k, v in c.items():
+            if isinstance(v, np.ndarray):
+                c[k] = v.tolist()
+
+
 
 LarvaDataset = type('LarvaDataset', (_LarvaDataset,), decorators.dic_manager_kwargs)
 
 
-def update_metric_definition(md=None, mdconf=None):
-    if mdconf is None :
+def generate_dataset_config(**kwargs):
 
-        if md is None:
-            md = reg.get_null('metric_definition')
-        mdconf = aux.AttrDict({
-            'spatial': {
-                'hardcoded': md['spatial'],
-                'fitted': None,
-            },
-            'angular': {
-                'hardcoded': md['angular'],
-                'fitted': None
-            }
-        })
+    c0=aux.AttrDict({'id': 'unnamed',
+                  'group_id': None,
+                  'refID': None,
+                  'dir': None,
+                  'fr': 16,
+                  'Npoints': 3,
+                  'Ncontour': 0,
+                  'sample': None,
+                  'color': None,
+                  'metric_definition': None,
+                  'env_params': {},
+                  'larva_groups': {},
+                  'source_xy': {},
+                  'life_history': None,
+                  })
 
-    else :
-        if md is not None:
-            mdconf.angular.hardcoded.update(**md['angular'])
-            mdconf.spatial.hardcoded.update(**md['spatial'])
-    return mdconf
+    c0.update(kwargs)
+    c0.dt=1/c0.fr
+    if c0.metric_definition is None:
+        c0.metric_definition = reg.get_null('metric_definition')
 
 
-def generate_dataset_config(dir=None, id='unnamed', fr=16, Npoints=3, Ncontour=0, metric_definition=None, env_params={},
-                            larva_groups={}, source_xy={}, **kwargs):
 
-    group_ids = list(larva_groups.keys())
-    samples = aux.unique_list([larva_groups[k]['sample'] for k in group_ids])
-    if len(group_ids) == 1:
-        group_id = group_ids[0]
-        color = larva_groups[group_id]['default_color']
-        sample = larva_groups[group_id]['sample']
-        life_history = larva_groups[group_id]['life_history']
-    else:
-        group_id = None
-        color = None
-        sample = samples[0] if len(samples) == 1 else None
-        life_history = None
+    if len(c0.larva_groups) == 1:
+        c0.group_id, gConf = list(c0.larva_groups.items())[0]
+        c0.color = gConf['default_color']
+        c0.sample = gConf['sample']
+        c0.life_history = gConf['life_history']
 
-    return aux.AttrDict({'id': id,
-                         'group_id': group_id,
-                         'group_ids': group_ids,
-                         'refID': None,
-                         'dir': dir,
-                         'fr': fr,
-                         'dt': 1 / fr,
-                         'Npoints': Npoints,
-                         'Ncontour': Ncontour,
-                         'sample': sample,
-                         'color': color,
-
-                         'metric_definition': update_metric_definition(md=metric_definition),
-                         'env_params': env_params,
-                         'larva_groups': larva_groups,
-                         'source_xy': source_xy,
-                         'life_history': life_history,
-                         **kwargs
-                         })
+    return c0
 
 
 def retrieve_config(dir=None,**kwargs):
-    try:
-        with open(reg.datapath('conf',dir)) as tfp:
-            c = json.load(tfp)
-        c = aux.AttrDict(c)
-        reg.vprint(f'Loaded existing conf {c.id}', 1)
-        return c
-
-
-    except:
-        if dir is not None :
+    if dir is not None:
+        path=reg.datapath('conf',dir)
+        if os.path.isfile(path) :
+            c=aux.load_dict(path)
+            if 'id' in c.keys():
+                reg.vprint(f'Loaded existing conf {c.id}', 1)
+                return c
+        else :
             os.makedirs(dir, exist_ok=True)
             os.makedirs(f'{dir}/data', exist_ok=True)
-        c = generate_dataset_config(dir=dir, **kwargs)
-        reg.vprint(f'Generated new conf {c.id}', 1)
-        return c
-
-
-def update_config(obj, c) :
-    c.dt = 1 / obj.fr
-    try:
-        ids = obj.agent_ids
-    except:
-        try:
-            ids = obj.endpoint_data.index.values
-        except:
-            ids = obj.read('end').index.values
-
-    c.agent_ids = list(ids)
-    c.N = len(ids)
-    if 't0' not in c.keys():
-        try:
-            c.t0 = int(obj.step_data.index.unique('Step')[0])
-        except:
-            c.t0 = 0
-    if 'Nticks' not in c.keys():
-        try:
-            c.Nticks = obj.step_data.index.unique('Step').size
-        except:
-            try:
-                c.Nticks = obj.endpoint_data['num_ticks'].max()
-            except:
-                pass
-    if 'duration' not in c.keys():
-        try:
-            c.duration = int(obj.endpoint_data['cum_dur'].max())
-        except:
-            c.duration = c.dt * c.Nticks
-    if 'quality' not in c.keys():
-        try:
-            df = obj.step_data[aux.nam.xy(obj.point)[0]].values.flatten()
-            valid = np.count_nonzero(~np.isnan(df))
-            c.quality = np.round(valid / df.shape[0], 2)
-        except:
-            pass
-
-    for k, v in c.items():
-        if isinstance(v, np.ndarray):
-            c[k] = v.tolist()
+    c = generate_dataset_config(dir=dir, **kwargs)
+    reg.vprint(f'Generated new conf {c.id}', 1)
     return c
 
 
-def retrieve_metrics(obj, c):
-    sp_conf = c.metric_definition.spatial
-    if sp_conf.fitted is None:
-        point_idx = sp_conf.hardcoded.point_idx
-        use_component_vel = sp_conf.hardcoded.use_component_vel
-    else:
-        point_idx = sp_conf.fitted.point_idx
-        use_component_vel = sp_conf.fitted.use_component_vel
-
-    try:
-        points = nam.midline(c.Npoints, type='point')
-        p = points[point_idx - 1]
-    except:
-        p = 'centroid'
-    c.point=p
-    obj = define_metrics(obj, N=c.Npoints, Nc=c.Ncontour, p=c.point, use_component_vel=use_component_vel)
-    return obj
 
 
-def define_metrics(obj, N=None, Nc=None, p=None, use_component_vel=False):
-    obj.points = nam.midline(N, type='point')
-    obj.Nangles = np.clip(N - 2, a_min=0, a_max=None)
-    obj.angles = nam.angles(obj.Nangles)
-    obj.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-    obj.segs = nam.segs(obj.Nsegs)
-    obj.midline_xy = nam.midline_xy(N, flat=False)
-    obj.contour = nam.contour(Nc)
-    obj.contour_xy = nam.contour_xy(Nc,flat=False)
 
-    obj.point = p
-    obj.distance = nam.dst(obj.point)
-    obj.velocity = nam.vel(obj.point)
-    obj.acceleration = nam.acc(obj.point)
-    if use_component_vel:
-        obj.velocity = nam.lin(obj.velocity)
-        obj.acceleration = nam.lin(obj.acceleration)
 
-    obj.h5_kdic = nam.h5_kdic(p, N, Nc)
-    obj.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in obj.h5_kdic.keys()})
-    return obj

@@ -21,6 +21,24 @@ def name(s, ps, loc='suf', c='_'):
     elif type(ps) == list:
         return [join(s, p, loc, c) if p != '' else s for p in ps]
 
+def naming_func(s, loc='suf'):
+    def func(ps, loc=loc, **kwargs):
+        return name(s = s,ps=ps,loc=loc, **kwargs)
+    return func
+
+def func_dict() :
+    ddic={
+        'pref' : ['final', 'initial', 'cum', 'lin', 'scaled', 'abs'],
+        'suf' : ['filt', 'min', 'max', 'freq'],
+          }
+    dic = dNl.AttrDict()
+    for loc, ss in ddic.items() :
+        for s in ss:
+            dic[s] = naming_func(s, loc=loc)
+    return dic
+
+
+# nam_gen=func_dict()
 
 def xy(points, flat=False):
     if type(points) == str:
@@ -41,12 +59,12 @@ def dst(points):
         return name(s, points, 'suf')
 
 
-def dst2(points, **kwargs):
+def dst_to(points, **kwargs):
     s = 'dst_to'
     return name(s, points, 'pref', **kwargs)
 
 
-def bearing2(points, **kwargs):
+def bearing_to(points, **kwargs):
     s = 'bearing_to'
     return name(s, points, 'pref', **kwargs)
 
@@ -96,15 +114,24 @@ def initial(params):
     s = 'initial'
     return name(s, params, 'pref')
 
+#@reg.funcs.param("track_par")
+
 
 def cum(params):
     s = 'cum'
     return name(s, params, 'pref')
 
-
 def filt(params):
     s = 'filt'
     return name(s, params, 'suf')
+
+
+
+
+
+
+
+
 
 
 def min(params):
@@ -235,15 +262,10 @@ def base_spatial_ps(p=''):
     return ps0 + scal(ps0)
 
 
-def epoch_ps(c):
-    pars = ['id', 'start', 'stop', 'dur', 'dst', scal('dst'), 'length', max('vel'), 'count']
-    return chunk_track(c, pars)
-
-
-def epochs_ps(cs=['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']):
-
+def epochs_ps():
     cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']
-    pars = dNl.flatten_list([epoch_ps(c) for c in cs])
+    pars = ['id', 'start', 'stop', 'dur', 'dst', scal('dst'), 'length', max('vel'), 'count']
+    pars = dNl.flatten_list([chunk_track(c, pars) for c in cs])
     return pars
 
 
@@ -279,13 +301,10 @@ def ang_pars(angs):
 
 def angular(N) :
     Nangles = np.clip(N - 2, a_min=0, a_max=None)
-    angs = angles(Nangles)
     Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-    ssegs = segs(Nsegs)
-    ors=orient(['front', 'rear', 'head', 'tail'])+ orient(ssegs)
-    ang=ors+angs+['bend']
-    ang_ps=ang_pars(ang)
-    return ang+ang_ps
+    ors = orient(dNl.unique_list(['front', 'rear', 'head', 'tail']+segs(Nsegs)))
+    ang=ors+[f'angle{i}' for i in range(Nangles)]+['bend']
+    return dNl.unique_list(ang + ang_pars(ang))
 
 def angles(Nangles):
     return [f'angle{i}' for i in range(Nangles)]
@@ -303,29 +322,3 @@ def h5_kdic(p, N, Nc):
     return dic
 
 
-def remove_prefix(text, prefix):
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text  # or whatever
-
-
-def remove_suffix(text, suffix):
-    if text.endswith(suffix):
-        return text[:-len(suffix)]
-    return text  # or whatever
-
-
-
-# using wonder's beautiful simplification: https://stackoverflow.com/questions/31174295/getattr-and-setattr-on-nested-objects/31174427?noredirect=1#comment86638618_31174427
-
-
-def rsetattr(obj, attr, val):
-    pre, _, post = attr.rpartition('.')
-    return setattr(rgetattr(obj, pre) if pre else obj, post, val)
-
-
-def rgetattr(obj, attr, *args):
-    def _getattr(obj, attr):
-        return getattr(obj, attr, *args)
-
-    return functools.reduce(_getattr, [obj] + attr.split('.'))

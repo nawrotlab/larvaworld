@@ -3,26 +3,28 @@ import math
 import numpy as np
 
 
-def wrap_angle_to_0(a, in_deg=False):
-    """Converts an angle to be around 0 meaning within [-lim, +lim]
-        where lim is pi for radians and 180 for degrees
+def wrap_angle_to_0(angle: float, in_deg: bool = False) -> float:
+    """
+    Wraps an angle within an absolute range of pi if in radians,
+    or 180 if in degrees around 0.
 
-        Parameters
-        ----------
-        a : float
-            The angle to be wrapped
-        in_deg : bool, optional
-            Whether angles are in degrees (default is False)
+    Args:
+    - angle (float): The angle to wrap.
+    - in_deg (bool): If True, the angle is assumed to be in degrees.
 
-        Returns
-        -------
-        a
-            the angle wrapped around 0
-        """
-    lim=np.pi if not in_deg else 180
-    if np.abs(a) > lim:
-        a = (a + lim) % (lim * 2) - lim
-    return a
+    Returns:
+    - float: The wrapped angle.
+    """
+    if in_deg:
+        angle = angle % 360.0
+        if angle > 180.0:
+            angle -= 360.0
+    else:
+        angle = angle % (2 * math.pi)
+        if angle > math.pi:
+            angle -= 2 * math.pi
+
+    return angle
 
 
 def rear_orientation_change(bend, d, l, correction_coef=1.0):
@@ -35,55 +37,55 @@ def rear_orientation_change(bend, d, l, correction_coef=1.0):
         return 0
 
 
-def angle_from_3points(p1, pmid, p2, in_deg=True):
-    """Computes an angle from 3 2D points, meaning between 2 line segments :p1->pmid and pmid->p2
+def angles_between_vectors(xy_front: np.ndarray, xy_mid: np.ndarray = None, xy_rear: np.ndarray = None,
+                           in_deg: bool = True, wrap_to_0: bool = True) -> np.ndarray:
+    """
+        Calculate the angles defined by 3 arrays of 2D points.
+        Each line of the 3 arrays defines a pair of vectors :
+            - front vector starting at the midpoint and ending at the frontpoint.
+            - rear vector starting at the rearpoint and ending at the midpoint.
 
-        Parameters
-        ----------
-        p1, pmid, p2 : Tuple[float]
-            The XY coordinates of the first, middle and final point
-        in_deg : bool, optional
-            Whether angles are in degrees (default is False)
+        Parameters:
+            xy_front (np.ndarray):
+                The coordinates of the frontpoints as an array of shape (N,2).
+            xy_mid (np.ndarray):
+                The coordinates of the midpoints as an array of shape (N,2). Defaults to array of (0,0) if not provided.
+            xy_rear (np.ndarray):
+                The coordinates of the rearpoints as an array of shape (N,2). Default to rear vectors parallel to the x-axis if not provided.
+            in_deg (bool):
+                If True, the angle is returned in degrees.
+            wrap_to_0 (bool):
+                If True, the angle is normalized within a range (-lim,lim) where lim=π (180 if in_deg is True).
+                Otherwise the angle is normalized within a range (0,2*lim)
 
-        Returns
-        -------
-        a
-            the angle
-        """
-    if np.isnan(p1).any() or np.isnan(pmid).any() or np.isnan(p2).any():
-        return np.nan
-    if in_deg:
-        a = (math.degrees(math.atan2(p2[1] - pmid[1], p2[0] - pmid[0]) - math.atan2(p1[1] - pmid[1], p1[0] - pmid[0])) - 180) % 360
-        return a if a <= 180 else a - 360
+        Returns:
+            np.ndarray: The array of pairwise angles of the front and rear vectors. Range [-π, π).
+
+    """
+    xy_front = xy_front.astype(float)
+    if xy_mid is None:
+        xy_mid = np.zeros_like(xy_front)
+
+    xy_mid = xy_mid.astype(float)
+    xy_front -= xy_mid
+    a1 = np.arctan2(xy_front[:, 1], xy_front[:, 0])
+
+    if xy_rear is not None:
+        xy_rear = xy_rear.astype(float)
+        xy_rear = xy_mid - xy_rear
+        a2 = np.arctan2(xy_rear[:, 1], xy_rear[:, 0])
+        a = a1 - a2
     else:
-        a = (math.degrees(math.atan2(p2[1] - pmid[1], p2[0] - pmid[0]) - math.atan2(p1[1] - pmid[1], p1[0] - pmid[0])) - np.pi) % (
-                2 * np.pi)
-        return a if a <= np.pi else a - 2 * np.pi
+        a = a1
 
-
-def angle_to_x_axis(point_1, point_2, in_deg=True):
-    """Computes the angle of the line segment p1->p2 relative to the x axis
-
-        Parameters
-        ----------
-        p1, p2 : Tuple[float]
-            The XY coordinates of the start and end point of vector
-        in_deg : bool, optional
-            Whether angles are in degrees (default is True)
-
-        Returns
-        -------
-        a
-            the angle
-        """
-
-    dx, dy = np.array(point_2) - np.array(point_1)
-    a = math.atan2(dy, dx)
-    a %= 2 * np.pi
-    if in_deg:
-        return math.degrees(a)
+    if wrap_to_0:
+        a = np.remainder(a, 2 * np.pi)
+        a[a > np.pi] -= 2 * np.pi
     else:
-        return a
+        a[a < 0] += 2 * np.pi
+    if in_deg:
+        a = np.degrees(a)
+    return a
 
 
 def angle_dif(angle_1, angle_2, in_deg=True):

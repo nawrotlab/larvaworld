@@ -131,7 +131,8 @@ class LarvaBody:
         self.spineangles = [
             aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in
             range(self.Nangles)]
-        self.body_bend = aux.wrap_angle_to_0(sum(self.spineangles[:self.Nangles_b]))
+        a=sum(self.spineangles[:self.Nangles_b])
+        self.body_bend = aux.wrap_angle_to_0(a)
 
 
 

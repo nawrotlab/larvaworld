@@ -33,6 +33,7 @@ from .facade import funcs
 from .parFunc import *
 from .stored import *
 from .distro import distro_database,get_dist
+from .naming_registry import nam
 
 vprint("Initializing parameter registry", 0)
 from .parDB import par

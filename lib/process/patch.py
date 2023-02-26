@@ -11,7 +11,7 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
     ho0s = s[aux.nam.at(ho, c0)].dropna().values
     ho1s = s[aux.nam.at(ho, c1)].dropna().values
     for n, pos in c.sources.items():
-        b = aux.nam.bearing2(n)
+        b = aux.nam.bearing_to(n)
         b0_par = aux.nam.at(b, c0)
         b1_par = aux.nam.at(b, c1)
         db_par = aux.nam.chunk_track(chunk, b)

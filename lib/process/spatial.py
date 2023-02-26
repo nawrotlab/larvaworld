@@ -442,7 +442,7 @@ def comp_source_metrics(s, e, c, **kwargs):
     xy = nam.xy('')
     for n, pos in c.source_xy.items():
         print(f'Computing bearing and distance to {n} based on xy position')
-        o, d = nam.bearing2(n), nam.dst2(n)
+        o, d = nam.bearing_to(n), nam.dst_to(n)
         pmax, pmu, pfin = nam.max(d), nam.mean(d), nam.final(d)
         pabs = nam.abs(o)
         temp = np.array(pos) - s[xy].values
@@ -494,7 +494,7 @@ def comp_wind_metrics(s, e, c, **kwargs):
             angs = np.arctan2(dy, dx)
             a = np.array([aux.angle_dif(ang, woo) for ang in angs])
             s.loc[(slice(None), id), 'anemotaxis'] = d * np.cos(a)
-        s[nam.bearing2('wind')] = s.apply(lambda r: aux.angle_dif(r[nam.orient('front')], wo), axis=1)
+        s[nam.bearing_to('wind')] = s.apply(lambda r: aux.angle_dif(r[nam.orient('front')], wo), axis=1)
         e['anemotaxis'] = s['anemotaxis'].groupby('AgentID').last()
 
 
