@@ -5,7 +5,7 @@ import numpy as np
 
 from lib import reg, aux, util
 from lib.model import envs, agents
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib.process.dataset import LarvaDataset
 from lib.process.spatial import fixate_larva
 from lib.screen import ScreenManager
@@ -198,8 +198,7 @@ def smaller_dataset(dataset=None,refID=None,dir=None, track_point=None, agent_id
             s0.update(s_tr)
 
         except:
-            from lib.process.spatial import align_trajectories
-            s0 = align_trajectories(s0, c=c0, transposition=transposition,replace=True)
+            s0 = reg.funcs.preprocessing["transposition"](s0, c=c0, transposition=transposition,replace=True)
 
         xy_max=2*np.max(s0[nam.xy(c0.point)].dropna().abs().values.flatten())
         c0.env_params.arena = reg.get_null('arena', dims=(xy_max, xy_max))

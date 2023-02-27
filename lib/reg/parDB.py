@@ -5,7 +5,7 @@ from typing import List, Tuple, TypedDict
 import param
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib.aux.par_aux import tilde, circle, bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 from lib import reg, aux, util, decorators
 

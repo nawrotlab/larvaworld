@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib import reg, aux, plot
 
 

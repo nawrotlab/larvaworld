@@ -1,7 +1,7 @@
 import json
 import os
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib import reg, aux
 
 @reg.funcs.stored_conf("Tracker")

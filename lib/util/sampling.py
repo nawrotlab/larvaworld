@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from lib import reg, aux
-from lib.aux import naming as nam
+from lib.aux import nam
 
 SAMPLING_PARS = aux.bidict(
     aux.AttrDict(

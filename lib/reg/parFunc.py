@@ -3,7 +3,7 @@ import copy
 import numpy as np
 
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib.reg import funcs
 from lib import aux
 

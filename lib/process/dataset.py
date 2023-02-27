@@ -5,12 +5,17 @@ import numpy as np
 import warnings
 
 from lib import reg, aux, decorators
-from lib.aux import naming as nam
+from lib.aux import nam
 
 class _LarvaDataset:
-    def __init__(self, dir=None, load_data=True, **kwargs):
+    def __init__(self, dir=None, load_data=True,config = None, **kwargs):
 
-        self.config = retrieve_config(dir=dir, **kwargs)
+        if config is None :
+            config = reg.load_config(dir)
+            if config is None:
+                config = generate_dataset_config(dir=dir, **kwargs)
+
+        self.config = config
         self.retrieve_metrics()
         self.__dict__.update(self.config)
         self.larva_tables = {}
@@ -103,49 +108,24 @@ class _LarvaDataset:
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
     def save_vel_definition(self):
-        from lib.process.calibration import comp_stride_variation, comp_segmentation, fit_metric_definition
+        from lib.process.calibration import vel_definition
         warnings.filterwarnings('ignore')
-        res_v = comp_stride_variation(self)
-        res_fov = comp_segmentation(self)
-
-        fit_metric_definition(str_var=res_v['stride_variability'], df_corr=res_fov['bend2or_correlation'], c=self.config)
-
-
-        dic={**res_v,**res_fov}
-        self.retrieve_metrics()
+        dic=vel_definition(self)
         self.save_config()
         self.storeH5(df=dic, filepath_key='vel_definition')
         print(f'Velocity definition dataset stored.')
 
         return dic
 
-
-    def retrieveRefID(self, refID=None):
-        if refID is None:
-            if self.config.refID is not None:
-                refID = self.config.refID
-            else:
-                refID = f'{self.group_id}.{self.id}'
-                self.config.refID = refID
-
-        return refID
-
-
     def save_config(self, refID=None):
-        if refID is None:
-            if self.config.refID is not None:
-                refID = self.config.refID
-        self.config.refID = refID
-
-
         self.update_config()
+        if refID is not None:
+            self.config.refID = refID
+            reg.Ref_paths(id=refID, dir=self.config.dir)
         aux.save_dict(self.config,reg.datapath('conf', self.config.dir))
 
 
 
-
-        if refID is not None:
-            reg.saveConf(conftype='Ref', id=refID, conf=self.config)
 
 
     def centralize_xy_tracks(self, replace=True, arena_dims=None, is_last=True):
@@ -182,27 +162,6 @@ class _LarvaDataset:
             filepath_key=key
         return aux.read(reg.datapath(filepath_key,self.dir), key)
 
-    def store_distros(self, ks=None):
-        if ks is None :
-            ks=['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou']+['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                     'dsp_0_40_max', 'dsp_0_60_max', 'str_N', 'tor5', 'tor20']+['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr']+['tor5', 'tor20']+['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N']
-        s=self.load_step()
-        ps = reg.getPar(ks)
-        ps = [p for p in ps if p in s.columns]
-        dic = {}
-        for p in ps:
-            df = s[p].dropna().reset_index(level=0, drop=True)
-            df.sort_index(inplace=True)
-            dic[p] = df
-        self.storeH5(dic, key=None,filepath_key='distro')
-
-
-
-    def storeDic(self, d, filepath_key,**kwargs):
-        aux.save_dict(d,reg.datapath(filepath_key,self.dir),**kwargs)
-
-    def loadDic(self, filepath_key,**kwargs):
-        return aux.load_dict(reg.datapath(filepath_key,self.dir),**kwargs)
 
     def load_traj(self, mode='default'):
         df=self.read(key=mode, file='traj')
@@ -213,8 +172,7 @@ class _LarvaDataset:
                 self.storeH5(df=df, key='default', filepath_key='traj')
             elif mode in ['origin', 'center']:
                 s = self.load_step(h5_ks=['contour', 'midline'])
-                from lib.process.spatial import align_trajectories
-                ss = align_trajectories(s, c=self.config, store=True, replace=False, transposition=mode)
+                ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=True, replace=False, transposition=mode)
                 df=ss[['x', 'y']]
         return df
 
@@ -471,7 +429,7 @@ class _LarvaDataset:
         self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
         self.angles = [f'angle{i}' for i in range(self.Nangles)]
         self.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-        self.segs = nam.segs(self.Nsegs)
+        # self.segs = nam.segs(self.Nsegs)
         self.midline_xy = nam.xy(self.points, flat=False)
         self.contour = nam.contour(Nc)
         self.contour_xy = nam.xy(self.contour, flat=False)
@@ -484,23 +442,25 @@ class _LarvaDataset:
             self.velocity = nam.lin(self.velocity)
             self.acceleration = nam.lin(self.acceleration)
 
-        self.h5_kdic = nam.h5_kdic(p, N, Nc)
+        self.h5_kdic = aux.h5_kdic(p, N, Nc)
         self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
 
     def update_config(self):
         s,e=self.step_data, self.endpoint_data
         c=self.config
         c.dt = 1 / self.fr
-        try:
-            ids = self.agent_ids
-        except:
-            try:
-                ids = e.index.values
-            except:
-                ids = self.read('end').index.values
 
-        c.agent_ids = list(ids)
-        c.N = len(ids)
+        if 'agent_ids' not in c.keys():
+            try:
+                ids = self.agent_ids
+            except:
+                try:
+                    ids = e.index.values
+                except:
+                    ids = self.read('end').index.values
+
+            c.agent_ids = list(ids)
+            c.N = len(ids)
         if 't0' not in c.keys():
             try:
                 c.t0 = int(s.index.unique('Step')[0])
@@ -566,24 +526,13 @@ def generate_dataset_config(**kwargs):
         c0.color = gConf['default_color']
         c0.sample = gConf['sample']
         c0.life_history = gConf['life_history']
-
+    reg.vprint(f'Generated new conf {c0.id}', 1)
     return c0
 
 
-def retrieve_config(dir=None,**kwargs):
-    if dir is not None:
-        path=reg.datapath('conf',dir)
-        if os.path.isfile(path) :
-            c=aux.load_dict(path)
-            if 'id' in c.keys():
-                reg.vprint(f'Loaded existing conf {c.id}', 1)
-                return c
-        else :
-            os.makedirs(dir, exist_ok=True)
-            os.makedirs(f'{dir}/data', exist_ok=True)
-    c = generate_dataset_config(dir=dir, **kwargs)
-    reg.vprint(f'Generated new conf {c.id}', 1)
-    return c
+
+
+
 
 
 

@@ -1,9 +1,8 @@
-from . import naming as nam
-
 
 from .ang import *
 from .color import *
 from .dictsNlists import *
+from .naming import h5_kdic, nam
 from .xy import *
 from .shapely_aux import *
 from .combining import *

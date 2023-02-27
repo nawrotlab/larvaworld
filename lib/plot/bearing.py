@@ -1,6 +1,6 @@
 import numpy as np
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib import reg, aux, plot
 
 

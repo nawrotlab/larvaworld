@@ -14,10 +14,17 @@ from lib.process.spatial import comp_centroid
 from lib.process.annotation import detect_strides, process_epochs
 
 
-
-def comp_stride_variation(d):
-
+def vel_definition(d) :
     s, e, c = d.step_data, d.endpoint_data, d.config
+    res_v = comp_stride_variation(s, e, c)
+    res_fov = comp_segmentation(s, e, c)
+    fit_metric_definition(str_var=res_v['stride_variability'], df_corr=res_fov['bend2or_correlation'], c=c)
+    dic = {**res_v, **res_fov}
+    return dic
+
+def comp_stride_variation(s, e, c):
+
+
     N = c.Npoints
     points = aux.nam.midline(N, type='point')
     vels = aux.nam.vel(points)
@@ -113,8 +120,13 @@ def fit_metric_definition(str_var, df_corr, c) :
     md=c.metric_definition
     if not 'spatial' in md.keys():
         md.spatial=aux.AttrDict()
-    md.spatial.point_idx=int(str_var['point_idx'].iloc[best_idx])
+    idx=md.spatial.point_idx=int(str_var['point_idx'].iloc[best_idx])
     md.spatial.use_component_vel=bool(str_var['use_component_vel'].iloc[best_idx])
+    try:
+        p = aux.nam.midline(c.Npoints, type='point')[idx - 1]
+    except:
+        p = 'centroid'
+    c.point = p
     if not 'angular' in md.keys():
         md.angular=aux.AttrDict()
     md.angular.best_combo = str(best_combo)
@@ -123,10 +135,10 @@ def fit_metric_definition(str_var, df_corr, c) :
 
 
 
-
-def comp_segmentation(d):
-    s, e, c = d.step_data, d.endpoint_data, d.config
-    avels = aux.nam.vel(d.angles)
+def comp_segmentation(s, e, c):
+    N = np.clip(c.Npoints - 2, a_min=0, a_max=None)
+    angles=[f'angle{i}' for i in range(N)]
+    avels = aux.nam.vel(angles)
     hov = aux.nam.vel(aux.nam.orient('front'))
 
     if not set(avels).issubset(s.columns.values):
@@ -136,7 +148,6 @@ def comp_segmentation(d):
     if not set(avels).issubset(s.columns.values):
         raise ValueError('Spineangle angular velocities do not exist in step')
 
-    N = d.Nangles
     ss = s.loc[s[hov].dropna().index.values]
     y = ss[hov].values
 

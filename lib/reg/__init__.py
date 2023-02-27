@@ -33,13 +33,12 @@ from .facade import funcs
 from .parFunc import *
 from .stored import *
 from .distro import distro_database,get_dist
-from .naming_registry import nam
 
 vprint("Initializing parameter registry", 0)
 from .parDB import par
 
 vprint("Initializing configuration registry", 0)
-from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf,resetConfs,GTRvsS, lgs, lg, retrieveRef, loadRef, loadRefDs, next_idx
+from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,load_config,Ref_paths, expandConf,resetConfs,GTRvsS, lgs, lg, retrieveRef, loadRef, loadRefDs, next_idx
 from .controls import controls
 
 vprint("Initializing model registry", 0)

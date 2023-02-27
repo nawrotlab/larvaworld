@@ -8,7 +8,7 @@ import warnings
 
 from lib import reg, aux
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib.process.dataset import LarvaDataset
 
 

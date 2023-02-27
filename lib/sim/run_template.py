@@ -1,12 +1,8 @@
 import os
-import time
 import agentpy
-import numpy as np
 
 from lib import reg, aux, util, plot
-from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
-from lib.model.envs.conditions import get_exp_condition
 
 class BaseRun(agentpy.Model):
     def __init__(self, runtype, parameters={},  store_data=True, save_to=None, id=None,experiment=None,

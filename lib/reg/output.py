@@ -1,5 +1,5 @@
 from lib import aux
-from lib.aux import naming as nam
+from lib.aux import nam
 
 
 output_dict = {

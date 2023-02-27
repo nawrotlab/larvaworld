@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from lib import reg, aux
-from lib.aux import naming as nam
+from lib.aux import nam
 
 from lib.model import deb
 

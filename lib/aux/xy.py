@@ -5,7 +5,7 @@ import scipy as sp
 from matplotlib import pyplot as plt
 
 
-from lib.aux import naming as nam
+from lib.aux import nam
 
 
 def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):

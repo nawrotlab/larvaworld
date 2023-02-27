@@ -2,7 +2,7 @@ from copy import deepcopy
 import numpy as np
 
 from lib import aux
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib.model.agents._larva import Larva
 from lib.model.agents.body import draw_body_orientation, draw_body, LarvaBody
 

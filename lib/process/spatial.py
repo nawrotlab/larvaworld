@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from lib import reg, aux, decorators
-from lib.aux import naming as nam
+from lib.aux import nam
 
 def comp_linear(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -370,6 +370,8 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
 
 def rolling_window(a, w):
     # Get windows of size w from array a
+    if a.ndim != 1:
+        raise ValueError("Input array must be 1-dimensional")
     return np.vstack([np.roll(a, -i) for i in range(w)]).T[:-w + 1]
 
 
@@ -383,6 +385,8 @@ def rolling_window_xy(xy, w):
 
 def tortuosity(xy):
     # Compute tortuosity over a 2D xy array
+    if xy.ndim != 2:
+        raise ValueError("Input array must be 2-dimensional")
     xy = xy[~np.isnan(xy).any(axis=1)]
     if xy.shape[0] < 2:
         return np.nan

@@ -3,7 +3,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib import reg, aux, plot
 
 

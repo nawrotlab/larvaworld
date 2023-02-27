@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
 
-from lib.aux import naming as nam
+from lib.aux import nam
 from lib import reg, aux, util
 
 def register_bout_distros(c,e):

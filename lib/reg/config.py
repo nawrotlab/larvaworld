@@ -296,14 +296,36 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
         lgs.update(group.LarvaGroup.entry(id, **kws))
     return aux.AttrDict(lgs)
 
+def Ref_paths(id, dir=None):
+    path = reg.Path['Ref']
+    d = aux.load_dict(path)
+    if dir is not None :
+        d[id] = dir
+    elif id in d.keys():
+        return d[id]
+    else:
+        reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
+        return None
+
+def load_config(dir) :
+    if dir is not None:
+        path=reg.datapath('conf',dir)
+        if os.path.isfile(path) :
+            c=aux.load_dict(path)
+            if 'id' in c.keys():
+                reg.vprint(f'Loaded existing conf {c.id}', 1)
+                return c
+    return None
+
 def retrieveRef(id):
-    return loadConf('Ref', id)
+    dir = Ref_paths(id)
+    return load_config(dir)
 
 def loadRef(id, load=False, **kwargs):
-    c = loadConf('Ref',id)
+    c=retrieveRef(id)
     if c is not None:
         from lib.process.dataset import LarvaDataset
-        d = LarvaDataset(c.dir, load_data=False)
+        d = LarvaDataset(config=c, load_data=False)
         if not load:
             reg.vprint(f'Loaded stored reference configuration : {id}')
             return d

@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from lib.aux import naming as nam
+from lib.aux import nam
 
 from lib import reg, aux, plot,util
 

@@ -6,8 +6,8 @@ from scipy.signal import sosfiltfilt, butter
 
 import lib.aux.xy
 from lib import aux
-from lib.aux import naming as nam
-
+from lib.aux import nam
+# from lib.reg import nam
 
 def LvsRtoggle(side):
     if side == 'Left':
