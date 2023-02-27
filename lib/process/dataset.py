@@ -255,40 +255,38 @@ class _LarvaDataset:
             self.save()
 
 
-    def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], recompute=False, mode='minimal', show_output=False, is_last=True,
+    def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], recompute=False, mode='minimal', is_last=True,
                 store=False, **kwargs):
 
 
-        with aux.suppress_stdout(show_output):
-            warnings.filterwarnings('ignore')
-            cc0 = {
-                    'recompute': recompute,
-                    'is_last': False,
-                    'store': store,
-                }
-
-            cc = {
-                'mode': mode,
-                **cc0,
-                **kwargs,
+        warnings.filterwarnings('ignore')
+        cc0 = {
+                'recompute': recompute,
+                'is_last': False,
+                'store': store,
             }
-            self.preprocess(pre_kws=pre_kws, **cc0)
 
-            self.process(proc_keys, **cc)
-            self.annotate(anot_keys, **cc)
+        cc = {
+            'mode': mode,
+            **cc0,
+            **kwargs,
+        }
+        self.preprocess(pre_kws=pre_kws, **cc0)
+
+        self.process(proc_keys, **cc)
+        self.annotate(anot_keys, **cc)
 
 
 
-            if is_last:
-                self.save()
-            return self
+        if is_last:
+            self.save()
+        return self
 
 
     def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={}, **kwargs):
         proc_keys=[k for k, v in processing.items() if v]
         anot_keys=[k for k, v in annotation.items() if v]
         if metric_definition is not None :
-
             self.config.metric_definition.update(metric_definition)
         return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,anot_keys=anot_keys, **kwargs)
 
@@ -526,6 +524,9 @@ def generate_dataset_config(**kwargs):
         c0.color = gConf['default_color']
         c0.sample = gConf['sample']
         c0.life_history = gConf['life_history']
+    if c0.dir is not None :
+        os.makedirs(c0.dir, exist_ok=True)
+        os.makedirs(f'{c0.dir}/data', exist_ok=True)
     reg.vprint(f'Generated new conf {c0.id}', 1)
     return c0
 

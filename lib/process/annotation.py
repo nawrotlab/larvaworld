@@ -3,7 +3,8 @@ import pandas as pd
 from scipy.signal import find_peaks
 
 from lib.aux import nam
-from lib import reg, aux, util
+from lib import reg, aux, util, decorators
+
 
 def register_bout_distros(c,e):
     from lib.model.modules.intermitter import get_EEB_poly1d
@@ -283,6 +284,7 @@ def bout_distribution(s, e, c, d, **kwargs) :
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
 
+@decorators.timeit
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, store=False, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
@@ -413,8 +415,6 @@ def turn_annotation(s, e, c, store=False):
     ids = s.index.unique('AgentID').values
     N = s.index.unique('Step').size
 
-    # reg.vprint((len(ids), c.N),3)
-    # reg.vprint([id for id in ids if id not in e.index.values.tolist()])
 
 
     fov, foa = reg.getPar(['fov', 'foa'])

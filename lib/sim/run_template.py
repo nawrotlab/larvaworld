@@ -27,16 +27,21 @@ class BaseRun(agentpy.Model):
         # Define directories
         if save_to is None:
             save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        self.dir = f'{save_to}/{id}'
+        self.dir = f'{save_to}/{self.experiment}/{id}'
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
         self.save_to = self.dir
+
+        self.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
+                                   'path': f'{self.data_dir}/agentpy_output'}
+        self.report(['agentpy_output_kws', 'id', 'dir'])
 
         self.is_paused = False
         self.datasets = None
         self.results = None
         self.figs = {}
         self.obstacles = []
+
 
     @property
     def configuration_text(self):

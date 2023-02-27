@@ -208,7 +208,7 @@ def resetDict(conftype):
 
     reg.vprint(f'{conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',1)
 
-@decorators.timeit
+# @decorators.timeit
 def resetConfs(conftypes=None):
     if conftypes is None:
         conftypes = reg.CONFTYPES

@@ -619,7 +619,7 @@ def build_confdicts():
 
 
 
-@decorators.timeit
+# @decorators.timeit
 class ModelRegistry:
     def __init__(self, ct):
         self.ct = ct

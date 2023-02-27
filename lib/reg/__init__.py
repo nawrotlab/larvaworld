@@ -20,11 +20,11 @@ GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 
 Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
 
-
+vprint("Initializing output registry", 0)
 from .data_structure import datapath, datafunc
 
 
-vprint("Initializing output registry", 0)
+
 from .output import output_dict,set_output, get_reporters
 from .units import units
 

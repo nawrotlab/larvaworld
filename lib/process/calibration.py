@@ -196,3 +196,5 @@ def comp_segmentation(s, e, c):
     dic = {'bend2or_regression': df_reg, 'bend2or_correlation': df_corr}
     print('Angular velocity definition analysis complete!')
     return dic
+
+

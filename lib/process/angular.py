@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy
 
-from lib import reg, aux
+from lib import reg, aux, decorators
 
 
 def comp_angles(s, Npoints):
@@ -18,7 +18,7 @@ def comp_angles(s, Npoints):
     Ada = np.degrees(Ada)
     angles=[f'angle{i}' for i in range(Npoints - 2)]
     s[angles]=Ada
-    print('All angles computed')
+    reg.vprint('All angles computed')
 
 
 
@@ -33,7 +33,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     temp=c.metric_definition.angular
     for key in ['front_vector', 'rear_vector']:
         if temp[key] is None:
-            print('Front and rear vectors are not defined. Can not compute orients')
+            reg.vprint('Front and rear vectors are not defined. Can not compute orients')
             return
     else:
         f1, f2 = temp.front_vector
@@ -43,7 +43,7 @@ def comp_orientations(s, e, c, mode='minimal'):
     xy_pars = aux.nam.midline_xy(Np, flat=True)
     Axy=s[xy_pars].values
 
-    print(f'Computing front/rear body-vector and head/tail orientation angles')
+    reg.vprint(f'Computing front/rear body-vector and head/tail orientation angles')
     vector_idx={
         'front' : (f2 - 1, f1 - 1),
         'rear' : (r2 - 1, r1 - 1),
@@ -53,7 +53,7 @@ def comp_orientations(s, e, c, mode='minimal'):
 
 
     if mode == 'full':
-        print(f'Computing additional orients for {Np - 1} spinesegments')
+        reg.vprint(f'Computing additional orients for {Np - 1} spinesegments')
         for i, vec in enumerate(aux.nam.midline(Np - 1, type='seg')):
              vector_idx[vec] = (i+1,i)
 
@@ -66,7 +66,7 @@ def comp_orientations(s, e, c, mode='minimal'):
         e[aux.nam.initial(par)] = s[par].dropna().groupby('AgentID').first()
 
 
-    print('All orientations computed')
+    reg.vprint('All orientations computed')
     return
 
 
@@ -98,7 +98,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
             ang_pars = [f'angle{i}' for i in range(Npoints - 2)]
             pars = base_pars + ang_pars+aux.nam.orient(segs)
         else :
-            pars =base_pars= [ho]
+            pars = [ho]
 
     pars = [p for p in aux.unique_list(pars) if p in s.columns]
 
@@ -114,7 +114,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
         s[pvel] = aux.apply_per_level(ss, aux.rate, dt=dt).flatten()
         s[avel] = aux.apply_per_level(s[pvel], aux.rate, dt=dt).flatten()
 
-        if p in base_pars:
+        if p in ['bend', ho, to, fo, ro]:
             for pp in [p,pvel,avel] :
                 sss=s[pp]
 
@@ -124,12 +124,12 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
                 e[aux.nam.initial(pp)] = temp.first()
                 s[[aux.nam.min(pp), aux.nam.max(pp)]] = comp_extrema_solo(sss, dt=dt, **kwargs).reshape(-1, 2)
 
-    print('All angular parameters computed')
+    reg.vprint('All angular parameters computed')
 
 
 
 
-
+@decorators.timeit
 @reg.funcs.proc("angular")
 def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **kwargs):
     Np=c.Npoints
@@ -147,7 +147,7 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
 
     else :
         Nangles = Np - 2
-        or_pars = [ho, to, fo, ro]
+        or_pars = [fo, ro]
         bend_pars=['bend']
 
 
@@ -158,81 +158,81 @@ def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **
 
 
 
-    if set(or_pars+bend_pars).issubset(s.columns.values) and not recompute:
+    if not set(or_pars+bend_pars).issubset(s.columns.values) or recompute:
+
+
+
+
+        if Np == 1:
+            def func(ss):
+                x, y = ss[:, 0].values, ss[:, 1].values
+                dx, dy = np.diff(x, prepend=np.nan), np.diff(y, prepend=np.nan)
+                aa = np.arctan2(dy, dx)
+                aa[aa < 0] += 2 * np.pi
+                return aa
+
+            s[fo]=  aux.apply_per_level(s[['x', 'y']], func).flatten()
+        else :
+            xy_pars = aux.nam.midline_xy(Np, flat=True)
+            Axy = s[xy_pars].values
+            Ax, Ay = Axy[:, ::2], Axy[:, 1::2]
+            Adx = np.diff(Ax)
+            Ady = np.diff(Ay)
+            Aa = np.arctan2(Ady, Adx) % (2 * np.pi)
+            if Np == 2 :
+                s[fo] = Aa[:, 0]
+            else :
+
+                # s[ho] = Aa[:, 0]
+                # s[to] = Aa[:, -1]
+
+
+
+
+                bend_mode,front_body_ratio, (f1,f2), (r1,r2)= ang_conf()
+                fx, fy = Ax[:, f1] - Ax[:, f2], Ay[:, f1] - Ay[:, f2]
+                rx, ry = Ax[:, r1] - Ax[:, r2], Ay[:, r1] - Ay[:, r2]
+                s[fo] =Afo = np.arctan2(fy, fx)% (2 * np.pi)
+                s[ro] =Aro = np.arctan2(ry, rx)% (2 * np.pi)
+
+                Ada = np.diff(Aa) % (2 * np.pi)
+                Ada[Ada > np.pi] -= 2 * np.pi
+
+                if bend_mode == 'from_vectors':
+                    reg.vprint(f'Computing bending angle as the difference between front and rear orients')
+                    a = np.remainder(Afo-Aro, 2 * np.pi)
+                    a[a > np.pi] -= 2 * np.pi
+                elif bend_mode == 'from_angles':
+                    Nbend_angles = int(np.round(front_body_ratio * Nangles))
+                    reg.vprint(f'Computing bending angle as the sum of the first {Nbend_angles} front angles')
+                    a = np.sum(Ada[:, :Nbend_angles], axis=1)
+                else :
+                    raise
+
+                s['bend'] = np.degrees(a)
+
+                if mode=='full' :
+                    ang_pars = [f'angle{i}' for i in range(Nangles)]
+                    s[ang_pars] = Ada
+                    bend_pars += ang_pars
+
+                    segs = aux.nam.midline(Np - 1, type='seg')
+                    seg_pars = aux.nam.orient(segs)
+                    s[seg_pars] = Aa
+                    or_pars =aux.unique_list(or_pars + seg_pars)
+
+    else :
         reg.vprint(
             'Orientation and bend are already computed. If you want to recompute them, set recompute to True', 1)
-        return
-
-
-    if Np == 1:
-        def func(ss):
-            x, y = ss[:, 0].values, ss[:, 1].values
-            dx, dy = np.diff(x, prepend=np.nan), np.diff(y, prepend=np.nan)
-            aa = np.arctan2(dy, dx)
-            aa[aa < 0] += 2 * np.pi
-            return aa
-
-        s[fo]=  aux.apply_per_level(s[['x', 'y']], func).flatten()
-    else :
-        xy_pars = aux.nam.midline_xy(Np, flat=True)
-        Axy = s[xy_pars].values
-        Ax, Ay = Axy[:, ::2], Axy[:, 1::2]
-        Adx = np.diff(Ax)
-        Ady = np.diff(Ay)
-        Aa = np.arctan2(Ady, Adx) % (2 * np.pi)
-        if Np == 2 :
-            s[fo] = Aa[:, 0]
-        else :
-
-            s[ho] = Aa[:, 0]
-            s[to] = Aa[:, -1]
-
-
-
-
-            bend_mode,front_body_ratio, (f1,f2), (r1,r2)= ang_conf()
-            fx, fy = Ax[:, f1] - Ax[:, f2], Ay[:, f1] - Ay[:, f2]
-            rx, ry = Ax[:, r1] - Ax[:, r2], Ay[:, r1] - Ay[:, r2]
-            s[fo] =Afo = np.arctan2(fy, fx)% (2 * np.pi)
-            s[ro] =Aro = np.arctan2(ry, rx)% (2 * np.pi)
-
-            Ada = np.diff(Aa) % (2 * np.pi)
-            Ada[Ada > np.pi] -= 2 * np.pi
-
-            if bend_mode == 'from_vectors':
-                print(f'Computing bending angle as the difference between front and rear orients')
-                a = np.remainder(Afo-Aro, 2 * np.pi)
-                a[a > np.pi] -= 2 * np.pi
-            elif bend_mode == 'from_angles':
-                Nbend_angles = int(np.round(front_body_ratio * Nangles))
-                print(f'Computing bending angle as the sum of the first {Nbend_angles} front angles')
-                a = np.sum(Ada[:, :Nbend_angles], axis=1)
-            else :
-                raise
-
-            s['bend'] = np.degrees(a)
-
-            if mode=='full' :
-                ang_pars = [f'angle{i}' for i in range(Nangles)]
-                s[ang_pars] = Ada
-                bend_pars += ang_pars
-
-                segs = aux.nam.midline(Np - 1, type='seg')
-                seg_pars = aux.nam.orient(segs)
-                s[seg_pars] = Aa
-                or_pars =aux.unique_list(or_pars + seg_pars)
-
-
-
-    comp_angular(s, e, dt,Np, or_pars , bend_pars)
+    ps = or_pars + bend_pars
+    comp_angular(s, e, dt,Np, pars=ps)
     comp_extrema_multi(s, dt=dt)
     if store :
-        ps = or_pars + bend_pars
         pars = ps + aux.nam.vel(ps) + aux.nam.acc(ps)
         aux.store_distros(s, pars, parent_dir=c.dir)
 
 
-    print(f'Completed {mode} angular processing.')
+    reg.vprint(f'Completed {mode} angular processing.')
 
 
 def ang_from_xy(xy):

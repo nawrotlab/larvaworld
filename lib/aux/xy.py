@@ -2,7 +2,11 @@ import math
 import numpy as np
 import pandas as pd
 import scipy as sp
-from matplotlib import pyplot as plt
+
+
+
+
+
 
 
 from lib.aux import nam
@@ -218,6 +222,7 @@ def compute_component_velocity(xy, angles, dt, return_dst=False):
 
 
 def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
+    import matplotlib.pyplot as plt
     if max_v is None:
         max_v = np.nanmax(v)
     bins = np.linspace(0, max_v, Nbins)

@@ -12,20 +12,20 @@ def comp_linear(s, e, c, mode='minimal'):
     Nsegs = np.clip(c.Npoints - 1, a_min=0, a_max=None)
     segs = nam.midline(Nsegs, type='seg')
     if mode == 'full':
-        print(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
+        reg.vprint(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
         points = points[1:]
         orientations = nam.orient(segs)
     elif mode == 'minimal':
         if c.point == 'centroid' or c.point == points[0]:
-            print('Defined point is either centroid or head. Orientation of front segment not defined.')
+            reg.vprint('Defined point is either centroid or head. Orientation of front segment not defined.')
             return
         else:
-            print(f'Computing linear distances, velocities and accelerations for a single spinepoint')
+            reg.vprint(f'Computing linear distances, velocities and accelerations for a single spinepoint')
             points = [c.point]
             orientations = ['rear_orientation']
 
     if not set(orientations).issubset(s.columns):
-        print('Required orients not found. Component linear metrics not computed.')
+        reg.vprint('Required orients not found. Component linear metrics not computed.')
         return
 
     xy_params = aux.xy.raw_or_filtered_xy(s, points)
@@ -59,15 +59,15 @@ def comp_linear(s, e, c, mode='minimal'):
         e[nam.cum(dst)] = Dcum[-1, :]
     pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
-    print('All linear parameters computed')
+    reg.vprint('All linear parameters computed')
 
 def comp_spatial2(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
     if mode == 'full':
-        print(f'Computing distances, velocities and accelerations for {len(points)} points')
+        reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points')
         points += ['centroid']
     elif mode == 'minimal':
-        print(f'Computing distances, velocities and accelerations for a single spinepoint')
+        reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint')
         points = [c.point]
     points += ['']
     points = np.unique(points).tolist()
@@ -93,12 +93,12 @@ def comp_spatial2(s, e, c, mode='minimal'):
 
     pars = aux.raw_or_filtered_xy(s, points) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
-    print('All spatial parameters computed')
+    reg.vprint('All spatial parameters computed')
 
 def comp_spatial(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
     if mode == 'full':
-        reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points',1)
+        reg.vreg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points',1)
         points += ['centroid']
     elif mode == 'minimal':
         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint',1)
@@ -176,13 +176,13 @@ def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
 @reg.funcs.proc("centroid")
 def comp_centroid(s, c, recompute=False):
     if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
-        print('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
+        reg.vprint('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
     Nc=c.Ncontour
     con_pars = nam.xy(nam.contour(Nc), flat=True)
     if not set(con_pars).issubset(s.columns) or Nc == 0:
-        print(f'No contour found. Not computing centroid')
+        reg.vprint(f'No contour found. Not computing centroid')
     else:
-        print(f'Computing centroid from {Nc} contourpoints')
+        reg.vprint(f'Computing centroid from {Nc} contourpoints')
         xy = s[con_pars].values
         t = xy.shape[0]
         xy = np.reshape(xy, (t, Nc, 2))
@@ -190,7 +190,7 @@ def comp_centroid(s, c, recompute=False):
         for i in range(t):
             cen[i, :] = np.sum(xy[i, :, :], axis=0)/Nc
         s[nam.xy('centroid')] = cen
-    print('Centroid coordinates computed.')
+    reg.vprint('Centroid coordinates computed.')
 
 
 def store_spatial(s, e, c, store=False, also_in_mm=False):
@@ -249,7 +249,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
 
         aux.storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
 
-
+@decorators.timeit
 @reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
@@ -262,7 +262,7 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **
     except :
         pass
 
-    print(f'Completed {mode} spatial processing.')
+    reg.vprint(f'Completed {mode} spatial processing.')
 
 
 @reg.funcs.proc("dispersion")
@@ -365,7 +365,7 @@ def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
             e[par_m] = T_m
             e[par_s] = T_s
 
-    print('Tortuosities computed')
+    reg.vprint('Tortuosities computed')
 
 
 def rolling_window(a, w):
@@ -445,7 +445,7 @@ def comp_source_metrics(s, e, c, **kwargs):
     fo = reg.getPar('fo')
     xy = nam.xy('')
     for n, pos in c.source_xy.items():
-        print(f'Computing bearing and distance to {n} based on xy position')
+        reg.vprint(f'Computing bearing and distance to {n} based on xy position')
         o, d = nam.bearing_to(n), nam.dst_to(n)
         pmax, pmu, pfin = nam.max(d), nam.mean(d), nam.final(d)
         pabs = nam.abs(o)
@@ -473,7 +473,7 @@ def comp_source_metrics(s, e, c, **kwargs):
             for p in [pmax, pmu, pfin]:
                 e[nam.scal(p)] = e[p] / l
 
-        print('Bearing and distance to source computed')
+        reg.vprint('Bearing and distance to source computed')
 
 @reg.funcs.proc("wind")
 def comp_wind(**kwargs) :
@@ -515,7 +515,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         angs = np.arctan2(dy, dx)
         a = np.array([aux.angle_dif(ang, woo) for ang in angs])
         e['anemotaxis'] = d * np.cos(a)
-        # print(e['anemotaxis'])
+        # reg.vprint(e['anemotaxis'])
 
 
 @reg.funcs.preproc("transposition")
@@ -536,7 +536,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
 
 
     if mode == 'arena':
-        print('Centralizing trajectories in arena center')
+        reg.vprint('Centralizing trajectories in arena center')
         if arena_dims is None:
             arena_dims = c.env_params.arena.dims
         x0, y0 = arena_dims
@@ -555,10 +555,10 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
         ids = s.index.unique(level='AgentID').values
         Nticks = len(s.index.unique('Step'))
         if mode == 'origin':
-            print('Aligning trajectories to common origin')
+            reg.vprint('Aligning trajectories to common origin')
             xy = [s[XY].xs(id, level='AgentID').dropna().values[0] for id in ids]
         elif mode == 'center':
-            print('Centralizing trajectories in trajectory center using min-max positions')
+            reg.vprint('Centralizing trajectories in trajectory center using min-max positions')
             xy_max = [s[XY].xs(id, level='AgentID').max().values for id in ids]
             xy_min = [s[XY].xs(id, level='AgentID').min().values for id in ids]
             xy = [(max + min) / 2 for max, min in zip(xy_max, xy_min)]
@@ -574,7 +574,7 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
         if store:
             aux.storeH5(ss, key=mode, path=reg.datapath('traj', c.dir))
 
-            print(f'traj_aligned2{mode} stored')
+            reg.vprint(f'traj_aligned2{mode} stored')
         return ss
 
 
@@ -600,7 +600,7 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
     xy_ps = nam.xy(point)
     if not set(xy_ps).issubset(s.columns):
         raise ValueError(f" The requested {point} is not part of the dataset")
-    print(f'Fixing {point} to arena center')
+    reg.vprint(f'Fixing {point} to arena center')
     if arena_dims is None :
         arena_dims=c.env_params.arena.dims
     X, Y = arena_dims
@@ -618,7 +618,7 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
         if not set(xy_ps2).issubset(s.columns):
             raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
 
-        print(f'Fixing {fix_segment} as secondary point on vertical axis')
+        reg.vprint(f'Fixing {fix_segment} as secondary point on vertical axis')
         xy_sec = [s[xy_ps2].xs(id, level='AgentID').copy(deep=True).values for id in ids]
         bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(Nids)])
 
@@ -631,10 +631,11 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(Nids)])
     bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(Nids)]
 
-    print('Fixed-point dataset generated')
+    reg.vprint('Fixed-point dataset generated')
     return s, bg
 
 
+@reg.funcs.preproc("fixation")
 def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     ids = s.index.unique(level='AgentID').values
     Nids = len(ids)
@@ -660,7 +661,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     xy_ps = nam.xy(point)
     if not set(xy_ps).issubset(s.columns):
         raise ValueError(f" The requested {point} is not part of the dataset")
-    print(f'Fixing {point} to arena center')
+    reg.vprint(f'Fixing {point} to arena center')
     if arena_dims is None:
         arena_dims = c.env_params.arena.dims
     X, Y = arena_dims
@@ -677,7 +678,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
         if not set(xy_ps2).issubset(s.columns):
             raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
 
-        print(f'Fixing {fix_segment} as secondary point on vertical axis')
+        reg.vprint(f'Fixing {fix_segment} as secondary point on vertical axis')
         xy_sec = s[xy_ps2].values
         bg_a = np.arctan2(xy_sec[:, 1], xy_sec[:, 0]) - np.pi / 2
 
@@ -690,7 +691,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
 
 
     bg = np.vstack((bg_x, bg_y, bg_a))
-    print('Fixed-point dataset generated')
+    reg.vprint('Fixed-point dataset generated')
 
     return s, bg
 

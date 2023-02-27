@@ -1,13 +1,15 @@
 import copy
-
 import agentpy
 import numpy as np
 
 from lib import reg, aux, util
-from lib.model import envs, agents
 from lib.aux import nam
+
+
+from lib.model import envs, agents
+
 from lib.process.dataset import LarvaDataset
-from lib.process.spatial import fixate_larva
+
 from lib.screen import ScreenManager
 
 
@@ -40,7 +42,7 @@ class ReplayRun(agentpy.Model):
 
 
         if fix_point is not None:
-            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment, c=c)
+            s, bg = reg.funcs.preprocessing['fixation'](s, point=fix_point, fix_segment=fix_segment, c=c)
         else:
             bg = None
         self.experiment = experiment

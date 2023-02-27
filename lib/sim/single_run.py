@@ -2,7 +2,7 @@ import os
 import time
 import agentpy
 import numpy as np
-
+import pandas as pd
 
 from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
@@ -40,6 +40,7 @@ class ExpRun(BaseRun):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
+        self.report(['source_xy'])
 
 
     @property
@@ -91,10 +92,12 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
         if self.p.enrichment:
             for d in self.datasets:
+                reg.vprint(f'--- Enriching dataset {d.id} ---', 1)
                 d.enrich(**self.p.enrichment, is_last=False, store=self.store_data)
                 reg.vprint(f'--- Dataset {d.id} enriched ---', 1)
+                reg.vprint(f'--------------------------------', 1)
         if self.store_data:
-            os.makedirs(self.data_dir, exist_ok=True)
+
             self.store()
         return self.datasets
 
@@ -117,12 +120,8 @@ class ExpRun(BaseRun):
                     ds.append(d)
             else :
                 d=self.convert_output_to_dataset(gID, df)
-                # ss,ee,cc=d.step_data, d.endpoint_data, d.config
                 ds.append(d)
-            # self.output['step'][gID] = ss
-            # self.output['end'][gID] = ee
-            # self.output['config'][gID] = cc
-        # self.output['datasets'] = agentpy.DataDict()
+
 
         return ds
 
@@ -259,7 +258,15 @@ class ExpRun(BaseRun):
         self.figs = reg.graphs.eval_graphgroups(graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs)
 
     def store(self):
+        self.output.save(**self.agentpy_output_kws)
+        os.makedirs(self.data_dir, exist_ok=True)
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
                 aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
+
+    def load_agentpy_output(self):
+        df=agentpy.DataDict.load(**self.agentpy_output_kws)
+        df1 = pd.concat(df.variables, axis=0).droplevel(1, axis=0)
+        df1.index.rename('Model', inplace=True)
+        return df1

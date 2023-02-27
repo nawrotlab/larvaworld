@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from lib import reg, aux
+from lib import reg, aux, decorators
+
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
 
@@ -24,7 +25,7 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
         s[db_par] = np.nan
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
         aux.store_distros(s, pars=[b0_par, b1_par, db_par], parent_dir=c.dir)
-        print(f'Bearing to source {n} during {chunk} computed')
+        reg.vprint(f'Bearing to source {n} during {chunk} computed')
 
 
 def comp_patch_metrics(s, e, **kwargs):
@@ -73,6 +74,7 @@ def comp_patch_metrics(s, e, **kwargs):
     e[f'handedness_score_{on}'] = e[f"{aux.nam.num('Lturn')}_{on}"] / e[f"{aux.nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{aux.nam.num('Lturn')}_{off}"] / e[f"{aux.nam.num('turn')}_{off}"]
 
+@decorators.timeit
 @reg.funcs.annotation("source_attraction")
 def comp_bearing_to_source(s, e, c, **kwargs):
     for b in ['stride', 'pause', 'turn']:

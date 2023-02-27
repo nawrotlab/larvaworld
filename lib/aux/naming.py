@@ -1,7 +1,7 @@
 import itertools
 
 import numpy as np
-
+from lib import aux
 
 def join(s, p, loc, c='_'):
     if loc == 'suf':
@@ -19,7 +19,7 @@ def name(s, ps, loc='suf', c='_'):
     elif type(ps) == list:
         return [join(s, p, loc, c) if p != '' else s for p in ps]
 
-from lib import aux
+
 
 class NamingRegistry(aux.AttrDict):
     def __init__(self, *args, **kwargs):
