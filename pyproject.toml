@@ -21,7 +21,7 @@ dependencies = [
     'shapely',
     'imageio',
     'agentpy',
-    'box2d-py',
+#    'box2d-py',
     'pygame',
     'argparse',
     'pint',
@@ -50,6 +50,13 @@ larvaworld-examples = "larvaworld.examples.main:main"
 dev = [
     "pytest"
 ]
+box2d = [
+    "box2d-py"
+]
+nengo = [
+    "nengo"
+]
+
 
 [tool.setuptools.package-data]
 "*" = ["*.png", "*.pdf", "*.txt"]
