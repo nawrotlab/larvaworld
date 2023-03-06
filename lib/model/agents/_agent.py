@@ -11,9 +11,26 @@ from lib import aux
 
 
 class LarvaworldAgent(agentpy.Agent):
+    """LarvaworldAgent class that inherits from agentpy.Agent."""
+
     def __init__(self, unique_id: str, model=None, pos=None, default_color='black', radius=None, visible=True,
                  odor=None, regeneration=False, regeneration_pos=None, group='larvaworld_agent', *args, **kwargs):
+        """
+            Initialize a LarvaworldAgent instance.
 
+            Args:
+            - unique_id: str representing the unique ID of the agent.
+            - model: optional model instance.
+            - pos: optional tuple representing the position of the agent.
+            - default_color: optional str or tuple representing the default color of the agent.
+            - radius: optional float representing the radius of the agent.
+            - visible: optional boolean indicating whether the agent is visible or not.
+            - odor: optional dictionary containing odor information of the agent.
+            - regeneration: optional boolean indicating whether the agent is regenerating or not.
+            - regeneration_pos: optional tuple representing the position of the regeneration.
+            - group: optional str representing the group of the agent.
+            - *args, **kwargs: optional arguments to be passed to the super().__init__() method.
+        """
         super().__init__(model, *args, **kwargs)
         self.visible = visible
         self.selected = False
