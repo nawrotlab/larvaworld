@@ -3,7 +3,6 @@ import numpy as np
 
 from lib import aux, reg
 from lib.model.agents.segmented_body import LarvaBody, BaseController
-from lib.model.agents._larva import LarvaMotile
 
 class Box2DSegment:
 
@@ -147,13 +146,16 @@ class Box2DSegment:
                 return True
 
 
-class Box2DController(BaseController, LarvaBody):
+class LarvaBox2D(LarvaBody,BaseController):
+    def __init__(self, physics,Box2D_params,**kwargs):
+        LarvaBody.__init__(self, **kwargs)
 
-
-
-    def __init__(self, joint_types,physics, body,**kwargs):
         BaseController.__init__(self, **physics)
-        LarvaBody.__init__(self, **body,**kwargs)
+
+        joint_types=Box2D_params['joint_types']
+
+    # def __init__(self, joint_types,physics,**kwargs):
+    #     super().__init__(**physics)
 
 
         self.joints = []
@@ -379,9 +381,8 @@ class Box2DController(BaseController, LarvaBody):
                     self.joints.append(j)
 
 
-class LarvaBox2D(Box2DController,LarvaMotile):
-    def __init__(self, physics, body,Box2D_params,**kwargs):
-        LarvaMotile.__init__(self, **kwargs)
-
-        kws = {k: getattr(self, k) for k in ['model', 'pos', 'orientation', 'default_color']}
-        Box2DController.__init__(self, physics, body, **Box2D_params, **kws)
+# class LarvaBox2D(LarvaBody,Box2DController):
+#     def __init__(self, physics,Box2D_params,**kwargs):
+#         LarvaBody.__init__(self, **kwargs)
+#
+#         Box2DController.__init__(self, physics, **Box2D_params)

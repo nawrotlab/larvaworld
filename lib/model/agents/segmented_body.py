@@ -5,6 +5,7 @@ import param
 from shapely import geometry, affinity, ops
 
 from lib import aux
+from lib.model.agents._larva import LarvaMotile
 from lib.model.agents.draw_body import draw_body
 
 
@@ -77,8 +78,23 @@ def generate_segs(N, ps, orient, vs, cs, ls):
     return segs
 
 
-class LarvaShape:
-    def __init__(self, Nsegs=2, seg_ratio=None, shape='drosophila_larva', density=300.0):
+class LarvaBody(LarvaMotile):
+
+
+
+    def __init__(self, brain, energetics, life_history, initial_length=0.005,
+                 length_std=0, Nsegs=2, seg_ratio=None, shape='drosophila_larva', density=300.0, **kwargs):
+
+        super().__init__(brain, energetics, life_history, **kwargs)
+        # print(self.pos)
+        # print(self.pos)
+        # print(self.pos)
+        # print(self.pos)
+        # print(self.pos)
+        # print(self.pos)
+        # raise
+
+
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         self.density = density
         if seg_ratio is None:
@@ -88,16 +104,14 @@ class LarvaShape:
         self.contour_points = Body_dict()[shape]['points']
         self.base_seg_vertices = aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,
                                                          points=self.contour_points)
-        self.Nsegs=Nsegs
+        self.Nsegs = Nsegs
 
 
-class LarvaBody(LarvaShape):
-    def __init__(self, model,pos,orientation,default_color,initial_length=0.005, length_std=0, **kwargs):
-        super().__init__(**kwargs)
-        self.model = model
+
+        # self.model = model
         # self.pos=pos
-        self.orientation=orientation
-        self.default_color=default_color
+        # self.orientation=orientation
+        # self.default_color=default_color
         self.rear_orientation_change = 0
         self.body_bend = 0
         self.cum_dst = 0.0
@@ -118,14 +132,13 @@ class LarvaBody(LarvaShape):
         self.seg_vertices = [s * l for s in self.base_seg_vertices]
         self.set_head_edges()
         self.seg_lengths = l * self.seg_ratio
-        N=self.Nsegs
-        ls_x = np.cos(orientation) * l * self.seg_ratio
-        ls_y = np.sin(orientation) * l / N
-        self.seg_positions = [[pos[0] + (-i + (N - 1) / 2) * ls_x[i],
-                          pos[1] + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
+
+        self.seg_positions = aux.generate_seg_positions(self.Nsegs, self.pos, self.orientation,
+                                                    self.sim_length, self.seg_ratio)
+
         self.set_head_edges()
         if not self.model.Box2D :
-            self.segs = generate_segs(N=N, ps=self.seg_positions, orient=orientation, vs=self.seg_vertices, cs=self.seg_colors, ls=self.seg_lengths)
+            self.segs = generate_segs(N=self.Nsegs, ps=self.seg_positions, orient=self.orientation, vs=self.seg_vertices, cs=self.seg_colors, ls=self.seg_lengths)
         self.sensors = []
         self.define_sensor('olfactor', (1, 0))
 
@@ -344,7 +357,7 @@ class LarvaBody(LarvaShape):
         if self.model.screen_manager.draw_sensors:
             self.draw_sensors(viewer)
         draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline_xy, contour_xy=None,
-                  radius=self.radius, vertices=self.get_shape(), color=self.default_color,segs=self.segs,
+                  radius=self.radius, vertices=None, color=self.default_color,segs=self.segs,
                   selected=self.selected)
 
     def plot_vertices(self, axes, **kwargs):

@@ -2,15 +2,13 @@ import numpy as np
 from shapely import geometry
 
 from lib import aux
-from lib.model.agents._larva import LarvaMotile
 from lib.model.agents.segmented_body import LarvaBody, BaseController
 
 
-class ManualController(BaseController, LarvaBody):
-    def __init__(self, physics,body, **kwargs):
-
+class LarvaSim(LarvaBody, BaseController):
+    def __init__(self, physics, Box2D_params, **kwargs):
+        LarvaBody.__init__(self, **kwargs)
         BaseController.__init__(self, **physics)
-        LarvaBody.__init__(self, **body,**kwargs)
         self.body_bend_errors = 0
         self.negative_speed_errors = 0
         self.border_go_errors = 0
@@ -138,12 +136,5 @@ class ManualController(BaseController, LarvaBody):
             seg.update_vertices(new_p, o)
         self.pos = self.global_midspine_of_body
 
-
-class LarvaSim(ManualController, LarvaMotile):
-    def __init__(self, physics, body,Box2D_params,**kwargs):
-        LarvaMotile.__init__(self, **kwargs)
-
-        kws = {k: getattr(self, k) for k in ['model', 'pos', 'orientation', 'default_color']}
-        ManualController.__init__(self, physics, body, **kws)
 
 
