@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name='larvaworld'
-version = "0.0.2"
+version = "0.0.3"
 description='Drosophila larva behavioral analysis and simulation platform'
 authors=[
     {name='Panagiotis Sakagiannis', email='bagjohn0@gmail.com'}
@@ -59,4 +59,4 @@ nengo = [
 
 
 [tool.setuptools.package-data]
-"*" = ["*.png", "*.pdf", "*.txt"]
+"*" = ["*.png", "*.pdf", "*.txt", "*.csv"]
