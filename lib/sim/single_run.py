@@ -86,6 +86,7 @@ class ExpRun(BaseRun):
         self.agents.nest_record(self.collectors['end'])
 
     def simulate(self, **kwargs):
+        reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
         self.datasets = self.retrieve()
@@ -172,6 +173,7 @@ class ExpRun(BaseRun):
 
 
     def place_agents(self, larva_groups, parameter_dict={}):
+        reg.vprint(f'--- Simulation {self.id} : Generating agent groups!--- ', 1)
         agentConfs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
         if not self.Box2D :
             from lib.model.agents._larva_sim import LarvaSim

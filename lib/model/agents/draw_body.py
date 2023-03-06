@@ -4,27 +4,27 @@ from lib import aux
 
 def draw_body(viewer, model, pos, midline_xy, contour_xy, radius, vertices, color,segs=None, selected=False,
               front_or=None, rear_or=None):
-    if model.draw_centroid:
+    if model.screen_manager.draw_centroid:
         draw_body_centroid(viewer, pos, radius, color)
 
-    if model.draw_contour:
+    if model.screen_manager.draw_contour:
         if segs is not None:
             draw_body_segments(viewer, segs)
         elif contour_xy is not None :
             draw_body_contour(viewer, contour_xy, color, radius)
 
-    if model.draw_midline:
+    if model.screen_manager.draw_midline:
         draw_body_midline(viewer, midline_xy, radius)
 
-    if model.draw_head:
+    if model.screen_manager.draw_head:
         draw_body_head(viewer, midline_xy, radius)
 
     if selected:
         if vertices is not None :
-            draw_selected_body(viewer, pos, vertices, radius, model.selection_color)
+            draw_selected_body(viewer, pos, vertices, radius, model.screen_manager.selection_color)
         elif contour_xy is not None :
 
-            draw_selected_body(viewer, pos, contour_xy, radius, model.selection_color)
+            draw_selected_body(viewer, pos, contour_xy, radius, model.screen_manager.selection_color)
         else :
             pass
 

@@ -71,6 +71,7 @@ class BaseRun(agentpy.Model):
         return wall
 
     def build_env(self, env_params):
+        reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
         # Define environment
         self.space = envs.Arena(self, **env_params.arena)
 

@@ -341,7 +341,7 @@ class LarvaBody(LarvaShape):
 
     def draw(self, viewer, filled=True):
         pos = tuple(self.pos)
-        if self.model.draw_sensors:
+        if self.model.screen_manager.draw_sensors:
             self.draw_sensors(viewer)
         draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline_xy, contour_xy=None,
                   radius=self.radius, vertices=self.get_shape(), color=self.default_color,segs=self.segs,

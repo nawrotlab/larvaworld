@@ -1,6 +1,6 @@
 # import time
 # start_time = time.perf_counter()
-VERBOSE =2
+VERBOSE =0
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
         print(text)
