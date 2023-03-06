@@ -73,12 +73,34 @@ def get_lb(kap, E_Hb, v, p_Am, E_G, k_J, p_M, eb=1.0, **kwargs):
 
 
 def get_E0(kap, v, p_M, p_Am, E_G, eb=1.0, lb=None, **kwargs):
+    """
+        This function calculates the maximum reserve density (E0) that an organism can achieve given its energy budget parameters.
+
+        Parameters:
+            kap (float): Fraction of assimilated energy that is used for somatic maintenance.
+            v (float): Energy conductance.
+            p_M (float): Specific somatic maintenance costs.
+            p_Am (float): Maximum surface-specific assimilation rate.
+            E_G (float): Energy investment ratio.
+            eb (float, optional): Allocation fraction to reserve production. Defaults to 1.0.
+            lb (float, optional): Length at birth. If not provided, it is calculated from the other parameters. Defaults to None.
+            **kwargs: Additional keyword arguments that are not used in this function but may be used in other functions that this function calls.
+
+        Returns:
+            float: Maximum reserve density that an organism can achieve.
+    """
     k_M = p_M / E_G
+
+    # If lb is not provided, calculate it using get_lb function
     if lb is None:
         lb = get_lb(kap=kap, v=v, p_Am=p_Am, p_M=p_M, E_G=E_G, eb=eb, **kwargs)
     g = E_G * v / (kap * p_Am)
     xb = g / (g + eb)
+
+    # Calculate uE0 using the equation in the Dynamic Energy Budget textbook
     uE0 = np.real((3 * g / (3 * g * xb ** (1 / 3) / lb - beta0(0, xb))) ** 3)
+
+    # Calculate U0 and E0 using the equations in the Dynamic Energy Budget textbook
     U0 = uE0 * v ** 2 / g ** 2 / k_M ** 3
     E0 = U0 * p_Am
     return E0
@@ -217,3 +239,41 @@ if __name__ == '__main__':
     # print(t, E, L)
     print(t2, E2, L2)
     pass
+
+
+'''
+# Latex equations
+The equations used in the code are:
+- The beta function used in the DEB textbook (p.58):
+  $$f_1 = - 3 x_1^{1/3} + \sqrt{3}\arctan{\frac{1 + 2 x_1^{1/3}}{\sqrt{3}}} - \ln(x_1^{1/3} - 1) + \frac{1}{2}\ln(1 + x_1 + x_1^2)$$
+  $$f_0 = - 3 x_0^{1/3} + \sqrt{3}\arctan{\frac{1 + 2 x_0^{1/3}}{\sqrt{3}}} - \ln(x_0^{1/3} - 1) + \frac{1}{2}\ln(1 + x_0 + x_0^2)$$
+  $$f = f_1 - f_0$$
+- The scaled reserve density at birth:
+  $$\rho_{0} = \frac{E_{0}}{p_{Am}} = U_{0}k_{M}^{3} = u_{E0} \frac{v^{2}}{g^{2}}k_{M}^{-3}p_{Am}$$
+- The coefficient of investment in maturation:
+  $$\kappa = \frac{\hat{p}_{J}^{Am}}{\hat{p}_{C}^{Am}}$$
+- The ratio of mobilization and maintenance cost coefficients:
+  $$\frac{\hat{p}_{C}^{Am}}{\hat{p}_{M}^{Am}} = \frac{1}{w} + \frac{1}{\phi_{M} E_{G}} + \frac{1}{\phi_{J} E_{G}}$$
+- The maturity at birth:
+  $$\frac{1}{\hat{p}_{M}^{Am}} = \frac{1}{\hat{p}_{C}^{Am}} + \frac{1}{\hat{p}_{J}^{Am}}$$
+- The maturity maintenance rate:
+  $$p_{M} = \kappa \rho_{0} p_{Am}$$
+- The surface area-specific assimilation flux:
+  $$\hat{J}_{C}^{Am} = v g \rho$$
+- The scaled maturity at birth:
+  $$\hat{E}_{Hb} = \frac{\hat{p}_{M}^{Am}}{k_{M}} \rho_{0}$$
+- The scaled length at birth:
+  $$L_{b} = \frac{v}{g}k_{M}^{-1/3}$$
+- The scaled reserve density at birth:
+  $$\rho_{0} = \frac{\hat{E}_{Hb}}{\hat{p}_{Am}^{0}}$$
+- The ratio of surface area-specific assimilation and surface area-specific maintenance costs:
+  $$\frac{\hat{J}_{C}^{Am}}{\hat{J}_{C}^{m}} = \frac{1}{\phi_{M}} + \frac{1}{\phi_{J}}$$
+- The scaled reserve density at birth:
+  $$\rho_{0} = \frac{E_{0}}{p_{Am}}$$
+- The length at birth:
+  $$L_{b} = \frac{v}{g} k_{M}^{-1/3}$$
+- The ratio of mobilization and maintenance costs:
+  $$\frac{p_{C}^{
+
+
+'''

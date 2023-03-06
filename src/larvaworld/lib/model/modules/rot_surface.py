@@ -12,7 +12,7 @@ class RotSurface:
         self.surf = surf
         self.speed = 0
 
-    def move(self):
+    def step(self):
         dx = self.speed * math.cos(self.direction)
         dy = self.speed * math.sin(self.direction)
         self.x += dx

@@ -19,7 +19,7 @@ def get_distros(s, pars):
 
 def store_distros(s, pars, parent_dir):
     dic = get_distros(s, pars=pars)
-    storeH5(dic, filepath_key='distro', parent_dir=parent_dir)
+    storeH5(dic, path=get_path(filepath_key='distro', parent_dir=parent_dir))
 
 
 

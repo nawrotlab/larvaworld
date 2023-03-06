@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from larvaworld.lib import reg, aux
+from larvaworld.lib import reg, aux, decorators
+
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
 
@@ -11,7 +12,7 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
     ho0s = s[aux.nam.at(ho, c0)].dropna().values
     ho1s = s[aux.nam.at(ho, c1)].dropna().values
     for n, pos in c.sources.items():
-        b = aux.nam.bearing2(n)
+        b = aux.nam.bearing_to(n)
         b0_par = aux.nam.at(b, c0)
         b1_par = aux.nam.at(b, c1)
         db_par = aux.nam.chunk_track(chunk, b)
@@ -24,7 +25,7 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
         s[db_par] = np.nan
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
         aux.store_distros(s, pars=[b0_par, b1_par, db_par], parent_dir=c.dir)
-        print(f'Bearing to source {n} during {chunk} computed')
+        reg.vprint(f'Bearing to source {n} during {chunk} computed')
 
 
 def comp_patch_metrics(s, e, **kwargs):
@@ -73,6 +74,7 @@ def comp_patch_metrics(s, e, **kwargs):
     e[f'handedness_score_{on}'] = e[f"{aux.nam.num('Lturn')}_{on}"] / e[f"{aux.nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{aux.nam.num('Lturn')}_{off}"] / e[f"{aux.nam.num('turn')}_{off}"]
 
+# @decorators.timeit
 @reg.funcs.annotation("source_attraction")
 def comp_bearing_to_source(s, e, c, **kwargs):
     for b in ['stride', 'pause', 'turn']:

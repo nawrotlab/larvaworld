@@ -3,7 +3,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt, ticker, cm
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, plot
 
 

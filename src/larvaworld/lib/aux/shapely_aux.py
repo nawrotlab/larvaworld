@@ -21,14 +21,14 @@ def radar_tuple(p0: geometry.Point, angle: float, distance: float):
 def eudis5(p1, p2):
     return geometry.Point(p1).distance(geometry.Point(p2))
 
-def distance(p0: tuple, angle: float, way: geometry.LineString, max_distance: float = 1000) -> Optional[float]:
-    p00 = geometry.Point(p0)
-    radar = radar_line(p00, angle, max_distance)
-
-    ps = radar.intersection(way)
-    if ps.is_empty:
-        return None
-    return p00.distance(ps)
+# def distance(p0: tuple, angle: float, way: geometry.LineString, max_distance: float = 1000) -> Optional[float]:
+#     p00 = geometry.Point(p0)
+#     radar = radar_line(p00, angle, max_distance)
+#
+#     ps = radar.intersection(way)
+#     if ps.is_empty:
+#         return None
+#     return p00.distance(ps)
 
 def min_dst_to_lines_along_vector(point: tuple, angle: float, target_lines: List[geometry.LineString], max_distance: float = 1000) -> Optional[float]:
     p0 = geometry.Point(point)
@@ -87,7 +87,7 @@ def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
             intersection_point = segments_intersection(sensor_ray, edge)
 
             if intersection_point is not None:
-                dst = distance(p0, intersection_point)
+                dst = eudis5(p0, intersection_point)
 
                 if min_dst is None or dst < min_dst:
                     min_dst = dst
@@ -103,3 +103,5 @@ def line_through_point(pos, angle, length, pos_as_start=False) :
     p1 = geometry.Point(p0.x + length * math.cos(angle),
                 p0.y + length * math.sin(angle))
     return geometry.LineString([p0, p1])
+
+

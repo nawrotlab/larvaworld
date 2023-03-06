@@ -3,7 +3,7 @@ import copy
 import numpy as np
 
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib.reg import funcs
 from larvaworld.lib import aux
 

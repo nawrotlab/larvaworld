@@ -10,6 +10,7 @@ class FunctionDict:
         self.annotating = aux.AttrDict()
         self.param_computing = aux.AttrDict()
 
+
     def param(self, name):
         return self.register_func(name, "param_computing")
 

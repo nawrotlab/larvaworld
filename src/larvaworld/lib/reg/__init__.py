@@ -1,4 +1,6 @@
-VERBOSE =2
+# import time
+# start_time = time.perf_counter()
+VERBOSE =1
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
         print(text)
@@ -22,9 +24,9 @@ Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
 
 
 from .data_structure import datapath, datafunc
-
-
 vprint("Initializing output registry", 0)
+
+
 from .output import output_dict,set_output, get_reporters
 from .units import units
 
@@ -38,7 +40,7 @@ vprint("Initializing parameter registry", 0)
 from .parDB import par
 
 vprint("Initializing configuration registry", 0)
-from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf, expandConf,resetConfs,GTRvsS, lgs, lg, retrieveRef, loadRef, loadRefDs, next_idx
+from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,load_config,Ref_paths, expandConf,resetConfs,GTRvsS, lgs, lg, retrieveRef, loadRef, loadRefDs, next_idx
 from .controls import controls
 
 vprint("Initializing model registry", 0)
@@ -47,7 +49,10 @@ from .models import model
 vprint("Initializing graph registry", 0)
 from .graph import graphs
 
-vprint("Registry configured!", 2)
+# end_time = time.perf_counter()
+# total_time = end_time - start_time
+# vprint(f"Registry configured in {total_time:.0f} ms!", 2)
+vprint(f"Registry configured!", 2)
 
 
 def getPar(k=None, p=None, d=None, to_return='d'):

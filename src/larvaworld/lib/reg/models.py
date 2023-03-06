@@ -458,7 +458,6 @@ def init_aux_modules():
         # return aux.AttrDict(d)
 
     def DEB0():
-        # from lib.model.DEB import gut,deb
         gut_args = {
             'M_gm': {'v0': 10 ** -2, 'lim': (0.0, 10.0), 'disp': 'gut scaled capacity',
                      'sym': 'M_gm',
@@ -619,7 +618,7 @@ def build_confdicts():
 
 
 
-@decorators.timeit
+# @decorators.timeit
 class ModelRegistry:
     def __init__(self, ct):
         self.ct = ct

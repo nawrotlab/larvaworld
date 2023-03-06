@@ -1,5 +1,5 @@
 import numpy as np
-import pygame
+#import pygame
 from shapely.affinity import affine_transform
 from shapely import geometry
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, plot
 
 
@@ -12,7 +12,7 @@ def plot_turn_Dbearing(name=None, min_angle=30.0, max_angle=180.0, ref_angle=Non
             name = f'turn_Dorient_to_center'
         ang0 = 0
         norm = False
-        p = nam.bearing2(source_ID)
+        p = nam.bearing_to(source_ID)
     else:
         ang0 = ref_angle
         norm = True
@@ -109,7 +109,7 @@ def plot_chunk_Dorient2source(source_ID, datasets,name=None,subfolder='bouts', c
 
     # P.build(**kws0)
     c_dur=nam.dur(chunk)
-    b = nam.bearing2(source_ID)
+    b = nam.bearing_to(source_ID)
     b0s, b1s, dbs= [], [], []
     try :
         c0 = nam.start(chunk)

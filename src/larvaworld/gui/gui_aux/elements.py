@@ -775,7 +775,6 @@ class CollapsibleTable(Collapsible):
         self.index = index
         self.dict_name = dict_name
         self.key = f'TABLE {name}'
-        # from lib.registry.dtypes import null_dict
 
         self.null_dict = reg.get_null(dict_name)
         if heading_dict is None:
@@ -977,7 +976,6 @@ class CollapsibleDict(Collapsible):
         return {self.name: self, **subdicts}
 
     def get_dict(self, v, w, check_toggle=True):
-        # from lib.registry.dtypes import base_dtype
         if self.state is None or (check_toggle and self.toggle == False):
             return None
         else:
@@ -1127,7 +1125,6 @@ class PadDict(PadElement):
         return content
 
     def get_dict(self, v, w):
-        # from lib.registry.dtypes import base_dtype
         if self.toggle is not None:
             if not w[self.toggle_key].get_state():
                 return None
@@ -1221,7 +1218,6 @@ class PadTable(PadElement):
         self.index = index
         self.key = f'TABLE {self.name}'
         if heading_dict is None:
-            # from lib.registry.dtypes import null_dict
 
             heading_dict = {k: k for k in reg.get_null(self.dict_name).keys()}
         self.heading_dict = heading_dict

@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 
 from larvaworld.lib import reg, aux, plot,util
 

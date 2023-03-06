@@ -1,6 +1,8 @@
 import itertools
 import os
 import numpy as np
+import matplotlib
+# matplotlib.use('Agg')
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from scipy.stats import mannwhitneyu
 import warnings

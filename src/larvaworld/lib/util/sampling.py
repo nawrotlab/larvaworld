@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 
 SAMPLING_PARS = aux.bidict(
     aux.AttrDict(
@@ -186,12 +186,14 @@ def generate_agentConfs(larva_groups, parameter_dict={}):
             conf = {
                 'pos': p,
                 'orientation': o,
+                'default_color': gConf.default_color,
                 'unique_id': id,
-                'larva_pars': pars,
+                # 'larva_pars': pars,
                 'group': gID,
                 'odor': gConf.odor,
-                'default_color': gConf.default_color,
-                'life_history': gConf.life_history
+
+                'life_history': gConf.life_history,
+                **pars
             }
 
             agent_confs.append(conf)
@@ -242,7 +244,7 @@ def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_Larv
 
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
     from larvaworld.lib.model.modules.locomotor import DefaultLocomotor
-    from larvaworld.lib.model.agents import PhysicsController
+    from larvaworld.lib.model.agents.segmented_body import BaseController
     if fo0 is None :
         fo0=0.0
     if p0 is None :
@@ -252,7 +254,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         df_columns = reg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
-    controller = PhysicsController(**m.physics)
+    controller = BaseController(**m.physics)
     l = m.body.initial_length
     bend_errors = 0
     DL = DefaultLocomotor(dt=dt, conf=m.brain)
@@ -262,7 +264,9 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
     b, fo, ro, fov, x, y, dst, v = 0, fo0, 0, 0, x0, y0, 0, 0
     for i in range(Nticks):
         lin, ang, feed = DL.step(A_in=0, length=l)
-        v, fov = controller.get_vels(lin, ang, fov, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
+        v = lin * controller.lin_vel_coef
+        fov += (-controller.ang_damping * fov - controller.body_spring_k * b + ang * controller.torque_coef) * dt
+        fov *= DL.cur_ang_suppression
 
         d_or = fov * dt
         if np.abs(d_or) > np.pi:

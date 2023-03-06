@@ -8,7 +8,7 @@ import warnings
 
 from larvaworld.lib import reg, aux
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib.process.dataset import LarvaDataset
 
 

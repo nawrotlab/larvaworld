@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from larvaworld.lib.aux import naming as nam, moving_average
+from larvaworld.lib.aux import nam, moving_average
 from larvaworld.lib import reg, aux, plot
 
 
@@ -37,8 +37,7 @@ def get_traj(d, mode='default'):
             return ss[['x', 'y']]
         except:
             s = d.load_step(h5_ks=['contour', 'midline'])
-            from larvaworld.lib.process.spatial import align_trajectories
-            ss=align_trajectories(s, c=d.config, store=True, replace=False, transposition='origin')
+            ss=reg.funcs.preprocessing["transposition"](s, c=d.config, store=True, replace=False, transposition='origin')
             return ss[['x', 'y']]
 
 @reg.funcs.graph('trajectories')

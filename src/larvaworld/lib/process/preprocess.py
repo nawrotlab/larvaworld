@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux
 
 
@@ -98,7 +98,6 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
 
 @reg.funcs.proc("PI")
 def comp_dataPI(s,e,c, **kwargs):
-    # from lib.process.angular import angular_processing
     from larvaworld.lib.process.spatial import comp_PI, comp_PI2
     if 'x' in e.keys():
         px = 'x'

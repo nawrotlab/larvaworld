@@ -1,6 +1,5 @@
 import numpy as np
 
-import larvaworld.lib.aux.xy
 from larvaworld.lib import reg, aux, plot, util
 
 
@@ -15,7 +14,7 @@ def modelConfTable(mID, **kwargs):
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
     mdict = util.init2mdict(reg.par.PI[k])
-    df = larvaworld.aux.xy.mdict2df(mdict, columns=columns)
+    df = aux.mdict2df(mdict, columns=columns)
 
     ax, fig, mpl = mpl_table(df, header0=columns[0],
                              cellLoc='center', rowLoc='center',

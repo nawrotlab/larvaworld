@@ -1,5 +1,7 @@
-from larvaworld.lib import aux
+from larvaworld.lib import aux, decorators
 
+
+# @decorators.timeit
 def build_datapath_structure():
     kd = aux.AttrDict()
     kd.solo_dicts = ['bouts', 'foraging', 'deb', 'nengo']

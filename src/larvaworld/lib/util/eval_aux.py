@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from scipy.stats import ks_2samp
-from matplotlib import cm, colors
+
 
 from larvaworld.lib import reg, aux
 
@@ -80,7 +80,7 @@ def eval_RSS(rss,rss_target,rss_sym, mode='1:pooled') :
     return RSS_dic
 
 def col_df(shorts, groups):
-
+    from matplotlib import cm
     group_col_dic = {
         'angular kinematics': 'Blues',
         'spatial displacement': 'Greens',

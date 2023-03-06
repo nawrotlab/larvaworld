@@ -5,7 +5,7 @@ from typing import List, Tuple, TypedDict
 import param
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib.aux.par_aux import tilde, circle, bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 from larvaworld.lib import reg, aux, util, decorators
 
@@ -95,7 +95,7 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
          'disp': f'{conftype} {IDstr}'}
     return aux.AttrDict(d)
 
-@decorators.timeit
+# @decorators.timeit
 def buildInitDict():
     bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
 
@@ -1329,7 +1329,7 @@ def buildDefaultDict(d0):
     return aux.AttrDict(dic)
 
 
-@decorators.timeit
+# @decorators.timeit
 class ParamClass:
     def __init__(self,func_dict,in_rad=True, in_m=True):
         self.func_dict = func_dict
@@ -1340,7 +1340,7 @@ class ParamClass:
         # self.pdict = aux.AttrDict({p.p: p for k, p in self.kdict.items()})
 
 
-    @decorators.timeit
+    # @decorators.timeit
     def build(self, in_rad=True, in_m=True):
         self.dict = aux.AttrDict()
         self.dict_entries = []
@@ -1887,7 +1887,7 @@ class ParamClass:
         for k, p, d, disp in zip(ks, ps, ds, disps):
             self.add(**{'p': p, 'k': k, 'd': d, 'disp': disp})
 
-    @decorators.timeit
+    # @decorators.timeit
     def finalize_dict(self, entries):
         dic = aux.AttrDict()
         for prepar in entries:
@@ -1895,7 +1895,7 @@ class ParamClass:
             dic[p.k] = p
         return dic
 
-@decorators.timeit
+# @decorators.timeit
 class ParamRegistry:
     def __init__(self):
         self.PI = buildInitDict()

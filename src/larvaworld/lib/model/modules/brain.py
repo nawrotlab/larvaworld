@@ -68,21 +68,21 @@ class Brain:
             return {'cool': 0, 'warm': 0}
         return cons
 
-    def sense(self, reward=False, **kwargs):
+    def sense(self, pos=None, reward=False):
         if self.olfactor :
             if self.memory:
                 dx = self.olfactor.get_dX()
                 self.olfactor.gain = self.memory.step(dx, reward)
-            self.A_olf = self.olfactor.step(self.sense_odors(**kwargs), brain=self)
+            self.A_olf = self.olfactor.step(self.sense_odors(pos), brain=self)
         if self.toucher :
             if self.touch_memory:
                 dx = self.toucher.get_dX()
                 self.toucher.gain = self.touch_memory.step(dx, reward)
-            self.A_touch = self.toucher.step(self.sense_food(**kwargs), brain=self)
+            self.A_touch = self.toucher.step(self.sense_food(), brain=self)
         if self.thermosensor :
-            self.A_thermo = self.thermosensor.step(self.sense_thermo(**kwargs), brain=self)
+            self.A_thermo = self.thermosensor.step(self.sense_thermo(pos), brain=self)
         if self.windsensor :
-            self.A_wind = self.windsensor.step(self.sense_wind(**kwargs), brain=self)
+            self.A_wind = self.windsensor.step(self.sense_wind(), brain=self)
 
 
         # for k in self.sensor_dict.keys():
@@ -160,7 +160,7 @@ class DefaultBrain(Brain):
 
 
 
-    def step(self, pos=(0.0, 0.0), reward=False, **kwargs):
+    def step(self, pos=None, reward=False, **kwargs):
         self.sense(pos=pos, reward=reward)
 
         length = self.agent.real_length if self.agent is not None else 1

@@ -12,7 +12,6 @@ import pandas as pd
 from larvaworld.lib import reg, aux
 from larvaworld.lib.plot.scape import plot_heatmap_PI, plot_3d, plot_3pars, plot_2d
 from larvaworld.lib.sim import ExpRun
-# from lib.sim.base_run import BaseRun
 
 class BatchRun(ap.Experiment):
     def __init__(self, batch_type, save_to=None, id=None,space_search=None,space_kws={},optimization=None,

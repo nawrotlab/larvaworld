@@ -365,7 +365,7 @@ def plot_EEB_vs_food_quality(refIDs=None, dt=None, species_list=['rover', 'sitte
     cols = aux.N_colors(len(species_list))
 
     for i, refID in enumerate(refIDs):
-        kws=reg.loadRef(refID)['intermitter']
+        kws=reg.retrieveRef(refID)['intermitter']
         z = get_EEB_poly1d(dt=dt, **kws)
         for col, species in zip(cols, species_list):
             ss = []

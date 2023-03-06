@@ -1,7 +1,7 @@
 import json
 import os
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux
 
 @reg.funcs.stored_conf("Tracker")

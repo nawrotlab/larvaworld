@@ -2,10 +2,14 @@ import math
 import numpy as np
 import pandas as pd
 import scipy as sp
-from matplotlib import pyplot as plt
 
 
-from larvaworld.lib.aux import naming as nam
+
+
+
+
+
+from larvaworld.lib.aux import nam
 
 
 def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):
@@ -218,6 +222,7 @@ def compute_component_velocity(xy, angles, dt, return_dst=False):
 
 
 def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
+    import matplotlib.pyplot as plt
     if max_v is None:
         max_v = np.nanmax(v)
     bins = np.linspace(0, max_v, Nbins)
@@ -384,18 +389,41 @@ def apply_per_level(s, func, level='AgentID', **kwargs):
         A : Array of dimensions [Nticks, Nids]
     '''
 
-    ids = s.index.unique('AgentID').values
-    N = s.index.unique('Step').size
-    A = np.zeros([N, len(ids)]) * np.nan
+
+
+    def init_A(Ndims):
+        ids = s.index.unique('AgentID').values
+        Nids = len(ids)
+        N = s.index.unique('Step').size
+
+        if Ndims == 1:
+            A = np.zeros([N, Nids]) * np.nan
+        elif Ndims == 2:
+            A = np.zeros([N, Nids, Ai.shape[1]]) * np.nan
+        else:
+            raise ValueError('Not implemented')
+        return A
+
+
+    A=None
 
     for i, (v, ss) in enumerate(s.groupby(level=level)):
         ss = ss.droplevel(level)
+        Ai=func(ss, **kwargs)
+        if A is None :
+            A=init_A(len(Ai.shape))
         if level=='AgentID' :
-            A[:, i] = func(ss, **kwargs)
+            A[:, i] = Ai
         elif level=='Step' :
-            A[i, :] = func(ss, **kwargs)
+            A[i, :] = Ai
     return A
 
+def unwrap_deg(a) :
+    if isinstance(a, pd.Series) :
+        a=a.values
+    b = np.copy(a)
+    b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
+    return b
 
 def rate(a, dt) :
     if isinstance(a, pd.Series) :
@@ -429,4 +457,32 @@ def epochs_by_thr(a, thr, lower=True, min_size=1) :
         c=np.append(c,a.shape[0])
     epochs = c.reshape(-1,2)
     return epochs[(np.diff(epochs)>=min_size).T[0]]
+
+
+def comp_extrema(a, order=3, threshold=None, return_2D=True) :
+    A=a.values
+    N=A.shape[0]
+    i_min = sp.signal.argrelextrema(A, np.less_equal, order=order)[0]
+    i_max = sp.signal.argrelextrema(A, np.greater_equal, order=order)[0]
+
+    i_min_dif = np.diff(i_min, append=order)
+    i_max_dif = np.diff(i_max, append=order)
+    i_min = i_min[i_min_dif >= order]
+    i_max = i_max[i_max_dif >= order]
+
+    if threshold is not None:
+        t0 = a.index.min()
+        thr_min, thr_max = threshold
+        i_min = i_min[a.loc[i_min + t0] < thr_min]
+        i_max = i_max[a.loc[i_max + t0] > thr_max]
+
+    if return_2D :
+        aa = np.zeros([N, 2]) * np.nan
+        aa[i_min, 0] = True
+        aa[i_max, 1] = True
+    else :
+        aa = np.zeros(N) * np.nan
+        aa[i_min] = -1
+        aa[i_max] = 1
+    return aa
 

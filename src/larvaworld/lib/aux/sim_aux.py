@@ -1,12 +1,15 @@
 import math
+import random
+
 import numpy as np
 from shapely import geometry, ops
 
 from scipy.signal import sosfiltfilt, butter
 
-import larvaworld.lib.aux.xy
 from larvaworld.lib import aux
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
+
+
 
 
 def LvsRtoggle(side):
@@ -22,59 +25,6 @@ def inside_polygon(points, tank_polygon):
     return all([tank_polygon.contains(geometry.Point(x, y)) for x, y in points])
 
 
-def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
-
-    # If segment ratio is not provided, generate equal-length segments
-    if seg_ratio is None:
-        seg_ratio = [1 / N] * N
-
-    # Create a polygon from the given body contour
-    p = geometry.Polygon(xy0)
-    # Get maximum y value of contour
-    y0 = np.max(p.exterior.coords.xy[1])
-
-    # Segment body via vertical lines
-    ps = [p]
-    for cum_r in np.cumsum(seg_ratio):
-        l = geometry.LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
-        new_ps = []
-        for p in ps:
-            new_ps += list(ops.split(p, l).geoms)
-        ps = new_ps
-
-    # Sort segments so that front segments come first
-    ps.sort(key=lambda x: x.exterior.xy[0], reverse=True)
-
-    # Transform to 2D array of coords
-    ps = [p.exterior.coords.xy for p in ps]
-    ps = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
-
-    # Center segments around 0,0
-    if centered:
-        for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
-            ps[i] -= [(1 - cum_r) + r / 2, 0]
-            # pass
-
-    # Put front point at the start of segment vertices. Drop duplicate rows
-    for i in range(len(ps)):
-        if i == 0:
-            ind = np.argmax(ps[i][:, 0])
-            ps[i] = np.flip(np.roll(ps[i], -ind - 1, axis=0), axis=0)
-        else:
-            ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
-        _, idx = np.unique(ps[i], axis=0, return_index=True)
-        ps[i] = ps[i][np.sort(idx)]
-        if closed:
-            ps[i] = np.concatenate([ps[i], [ps[i][0]]])
-    return ps
-
-
-def generate_seg_shapes(Nsegs, points, seg_ratio=None, centered=True, closed=False, **kwargs):
-    if seg_ratio is None:
-        seg_ratio = np.array([1 / Nsegs] * Nsegs)
-    ps = segment_body(Nsegs, np.array(points), seg_ratio=seg_ratio, centered=centered, closed=closed)
-    seg_vertices = [np.array([p]) for p in ps]
-    return seg_vertices
 
 
 def rearrange_contour(ps0):
@@ -89,7 +39,7 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
     shape = c.env_params.arena.shape
     if shape == 'circular':
         # This is a circle_to_polygon shape from the function
-        tank_shape = larvaworld.aux.xy.circle_to_polygon(60, X / 2)
+        tank_shape = aux.circle_to_polygon(60, X / 2)
     elif shape == 'rectangular':
         # This is a rectangular shape
         tank_shape = np.array([(-X / 2, -Y / 2),
@@ -329,3 +279,111 @@ class Collision(Exception):
         self.object2 = object2
 
 
+
+def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
+
+    # If segment ratio is not provided, generate equal-length segments
+    if seg_ratio is None:
+        seg_ratio = [1 / N] * N
+
+    # Create a polygon from the given body contour
+    p = geometry.Polygon(xy0)
+    # Get maximum y value of contour
+    y0 = np.max(p.exterior.coords.xy[1])
+
+    # Segment body via vertical lines
+    ps = [p]
+    for cum_r in np.cumsum(seg_ratio):
+        l = geometry.LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
+        new_ps = []
+        for p in ps:
+            new_ps += list(ops.split(p, l).geoms)
+        ps = new_ps
+
+    # Sort segments so that front segments come first
+    ps.sort(key=lambda x: x.exterior.xy[0], reverse=True)
+
+    # Transform to 2D array of coords
+    ps = [p.exterior.coords.xy for p in ps]
+    ps = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
+
+    # Center segments around 0,0
+    if centered:
+        for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
+            ps[i] -= [(1 - cum_r) + r / 2, 0]
+            # pass
+
+    # Put front point at the start of segment vertices. Drop duplicate rows
+    for i in range(len(ps)):
+        if i == 0:
+            ind = np.argmax(ps[i][:, 0])
+            ps[i] = np.flip(np.roll(ps[i], -ind - 1, axis=0), axis=0)
+        else:
+            ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
+        _, idx = np.unique(ps[i], axis=0, return_index=True)
+        ps[i] = ps[i][np.sort(idx)]
+        if closed:
+            ps[i] = np.concatenate([ps[i], [ps[i][0]]])
+    return ps
+
+
+def generate_seg_shapes(Nsegs, points, seg_ratio=None, centered=True, closed=False, **kwargs):
+    if seg_ratio is None:
+        seg_ratio = np.array([1 / Nsegs] * Nsegs)
+    ps = segment_body(Nsegs, np.array(points), seg_ratio=seg_ratio, centered=centered, closed=closed)
+    seg_vertices = [np.array([p]) for p in ps]
+    return seg_vertices
+
+def generate_seg_positions(Nsegs, pos, orientation, length,seg_ratio=None) :
+    x,y=pos
+    if seg_ratio is None:
+        seg_ratio = np.array([1 / Nsegs] * Nsegs)
+    ls_x = np.cos(orientation) * length * seg_ratio
+    ls_y = np.sin(orientation) * length / Nsegs
+    return [[x + (-i + (Nsegs - 1) / 2) * ls_x[i],
+                      y + (-i + (Nsegs - 1) / 2) * ls_y] for i in range(Nsegs)]
+
+
+
+def generate_segs_offline(N, pos, orientation, length, shape='drosophila_larva', seg_ratio=None, color=None,
+                 mode='default'):
+    if seg_ratio is None:
+        seg_ratio = np.array([1 / N] * N)
+
+    seg_positions =generate_seg_positions(N, pos, orientation, length,seg_ratio)
+    from larvaworld.lib.reg.stored.miscellaneous import Body_dict
+    contour_points = Body_dict()[shape]['points']
+    base_seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=contour_points)
+    seg_vertices = [s * length for s in base_seg_vertices]
+    seg_lengths = length * seg_ratio
+
+    if color is None:
+        color = [0.0, 0.0, 0.0]
+    seg_colors = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
+    if mode == 'default':
+        from larvaworld.lib.model.agents.segmented_body import generate_segs
+        return generate_segs(N, seg_positions, orientation, seg_vertices, seg_colors, seg_lengths)
+
+
+def get_centroid_position(segs):
+    seg_x_positions = []
+    seg_y_positions = []
+    for i, seg in enumerate(segs):
+        x, y = seg.get_position().tolist()
+        seg_x_positions.append(x)
+        seg_y_positions.append(y)
+    centroid = (sum(seg_x_positions) / len(segs), sum(seg_y_positions) / len(segs))
+    return np.asarray(centroid)
+
+def set_contour(segs, Ncontour=22):
+    vertices = [np.array(seg.vertices[0]) for seg in segs]
+    l_side = aux.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+    r_side = aux.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+    r_side.reverse()
+    total_contour = l_side + r_side
+    if len(total_contour) > Ncontour:
+        random.seed(1)
+        contour = [total_contour[i] for i in sorted(random.sample(range(len(total_contour)), Ncontour))]
+    else:
+        contour = total_contour
+    return contour

@@ -171,7 +171,6 @@ def set_agent_kwargs(agent, **kwargs):
     #if isinstance(agent,)
 
 
-    # from lib.registry.dtypes import null_dict
     class_name = type(agent).__name__
     if class_name=='Food':
         k='food'

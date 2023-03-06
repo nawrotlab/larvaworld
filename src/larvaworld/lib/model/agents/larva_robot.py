@@ -1,9 +1,9 @@
 from larvaworld.lib import aux
-from larvaworld.lib.model.agents._larva import LarvaMotile
+from larvaworld.lib.model.agents._larva_sim import LarvaSim
 from larvaworld.lib.model.modules.motor_controller import MotorController, Actuator
 from larvaworld.lib.model.modules.sensor2 import ProximitySensor
 
-class LarvaRobot(LarvaMotile):
+class LarvaRobot(LarvaSim):
 
     def __init__(self, larva_pars,**kwargs):
         super().__init__(**larva_pars,default_color=aux.Color.random_color(), **kwargs)
@@ -31,12 +31,11 @@ class LarvaRobot(LarvaMotile):
     @ property
     def collect(self):
         return [self.body_bend,self.head.get_angularvelocity(),
-                                                                   self.rear_orientation_change/self.model.dt,
-                                                                   self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
+                self.rear_orientation_change/self.model.dt,
+                self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
 
 
-    def sense_and_act(self):
-        self.step()
+
 
     def draw_label(self, screen):
         import pygame
@@ -88,7 +87,7 @@ class ObstacleLarvaRobot(LarvaRobot):
         self.set_left_motor_controller(Lmot)
         self.set_right_motor_controller(Rmot)
 
-    def sense_and_act(self):
+    def sense(self):
         if not self.collision_with_object:
             pos = self.model.viewer._transform(self.olfactor_pos)
             try:
@@ -113,7 +112,6 @@ class ObstacleLarvaRobot(LarvaRobot):
                 #     self.brain.locomotor.turner.neural_oscillator.E_r += np.abs(dRL)
                 # else :
                 #     self.brain.locomotor.turner.neural_oscillator.E_l += np.abs(dRL)
-                self.step()
             except aux.Collision:
                 self.collision_with_object = True
                 self.brain.locomotor.intermitter.interrupt_locomotion()

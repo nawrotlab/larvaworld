@@ -73,7 +73,6 @@ kws = {
 }
 
 
-# from lib.conf.stored.analysis_conf import analysis_dict
 G=reg.graphs
 
 # entry_list=analysis_dict.general

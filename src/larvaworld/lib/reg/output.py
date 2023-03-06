@@ -1,5 +1,5 @@
 from larvaworld.lib import aux
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 
 
 output_dict = {

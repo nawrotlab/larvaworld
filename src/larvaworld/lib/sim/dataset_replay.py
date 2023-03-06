@@ -1,13 +1,16 @@
 import copy
-
 import agentpy
 import numpy as np
 
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.model import envs, agents
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
+
+
+from larvaworld.lib.model import envs
+from larvaworld.lib.model.agents._larva_replay import LarvaReplay
+from larvaworld.lib.model.agents._source import Food
 from larvaworld.lib.process.dataset import LarvaDataset
-from larvaworld.lib.process.spatial import fixate_larva
+
 from larvaworld.lib.screen import ScreenManager
 
 
@@ -40,7 +43,7 @@ class ReplayRun(agentpy.Model):
 
 
         if fix_point is not None:
-            s, bg = fixate_larva(s, point=fix_point, fix_segment=fix_segment, c=c)
+            s, bg = reg.funcs.preprocessing['fixation'](s, point=fix_point, fix_segment=fix_segment, c=c)
         else:
             bg = None
         self.experiment = experiment
@@ -72,7 +75,7 @@ class ReplayRun(agentpy.Model):
 
 
     def place_agents(self, s):
-        agent_list = [agents.LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.config.agent_ids)]
+        agent_list = [LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.config.agent_ids)]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
@@ -86,7 +89,7 @@ class ReplayRun(agentpy.Model):
     def place_food(self, food_grid=None, source_groups={}, source_units={}):
         self.food_grid = envs.FoodGrid(**food_grid, model=self) if food_grid else None
         sourceConfs = util.generate_sourceConfs(source_groups, source_units)
-        source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
+        source_list = [Food(model=self, **conf) for conf in sourceConfs]
         self.space.add_agents(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
 
@@ -198,8 +201,7 @@ def smaller_dataset(dataset=None,refID=None,dir=None, track_point=None, agent_id
             s0.update(s_tr)
 
         except:
-            from larvaworld.lib.process.spatial import align_trajectories
-            s0 = align_trajectories(s0, c=c0, transposition=transposition,replace=True)
+            s0 = reg.funcs.preprocessing["transposition"](s0, c=c0, transposition=transposition,replace=True)
 
         xy_max=2*np.max(s0[nam.xy(c0.point)].dropna().abs().values.flatten())
         c0.env_params.arena = reg.get_null('arena', dims=(xy_max, xy_max))

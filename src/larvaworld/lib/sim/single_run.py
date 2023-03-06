@@ -2,6 +2,7 @@ import os
 import time
 import agentpy
 import numpy as np
+import pandas as pd
 
 
 from larvaworld.lib import reg, aux, util, plot
@@ -40,6 +41,7 @@ class ExpRun(BaseRun):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
+        self.report(['source_xy'])
 
 
     @property
@@ -66,11 +68,12 @@ class ExpRun(BaseRun):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
+
         self.agents.step()
         if self.Box2D:
             self.space.Step(self.dt, 6, 2)
-            for fly in self.agents:
-                fly.update_trajectory()
+            self.agents.updated_by_Box2D()
+
         self.screen_manager.step(self.t)
 
     def update(self):
@@ -83,6 +86,7 @@ class ExpRun(BaseRun):
         self.agents.nest_record(self.collectors['end'])
 
     def simulate(self, **kwargs):
+        reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
         self.datasets = self.retrieve()
@@ -91,45 +95,35 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
         if self.p.enrichment:
             for d in self.datasets:
+                reg.vprint(f'--- Enriching dataset {d.id} ---', 1)
                 d.enrich(**self.p.enrichment, is_last=False, store=self.store_data)
                 reg.vprint(f'--- Dataset {d.id} enriched ---', 1)
+                reg.vprint(f'--------------------------------', 1)
         if self.store_data:
-            os.makedirs(self.data_dir, exist_ok=True)
+
             self.store()
         return self.datasets
 
     def retrieve(self):
 
-        ds = []
+        dkws=[]
         for gID, df in self.output.variables.items():
-
             if 'sample_id' in df.index.names :
                 sIDs=df.index.get_level_values('sample_id').unique()
                 if len(sIDs)>1 :
-                    # ss,ee,cc= {},{},{}
-                    for sID in sIDs:
-                        d=self.convert_output_to_dataset(gID, df.xs(sID, level='sample_id'), id=f'{gID}_{sID}')
-                        ds.append(d)
-                        # ss[sID],ee[sID],cc[sID]=d.step_data, d.endpoint_data, d.config
+                    dkws+=[{'gID':gID, 'df':df.xs(sID, level='sample_id'), 'id':f'{gID}_{sID}'} for sID in sIDs]
                 else :
-                    d = self.convert_output_to_dataset(gID, df.xs(sIDs[0], level='sample_id'))
-                    # ss, ee, cc = d.step_data, d.endpoint_data, d.config
-                    ds.append(d)
-            else :
-                d=self.convert_output_to_dataset(gID, df)
-                # ss,ee,cc=d.step_data, d.endpoint_data, d.config
-                ds.append(d)
-            # self.output['step'][gID] = ss
-            # self.output['end'][gID] = ee
-            # self.output['config'][gID] = cc
-        # self.output['datasets'] = agentpy.DataDict()
+                    dkws += [{'gID': gID, 'df': df.xs(sIDs[0], level='sample_id')}]
 
+            else :
+                dkws += [{'gID': gID, 'df': df}]
+        ds = [self.convert_output_to_dataset(**kws) for kws in dkws]
         return ds
 
     def convert_output_to_dataset(self,gID, df, id=None):
         if id is None :
             id = gID
-        from larvaworld.lib.process.dataset import LarvaDataset
+        from vlib.process.dataset import LarvaDataset
         df.index.set_names(['AgentID', 'Step'], inplace=True)
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)
@@ -152,7 +146,7 @@ class ExpRun(BaseRun):
         deb_dicts = {}
         nengo_dicts = {}
         bout_dicts = {}
-        foraging_dicts = {}
+        # foraging_dicts = {}
         for id, l in ls.items():
             if hasattr(l, 'deb') and l.deb is not None:
                 deb_dicts[id] = l.deb.finalize_dict()
@@ -165,12 +159,13 @@ class ExpRun(BaseRun):
                 pass
             if l.brain.locomotor.intermitter is not None:
                 bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
-            if len(self.foodtypes) > 0:
-                foraging_dicts[id] = l.finalize_foraging_dict()
+            # if len(self.foodtypes) > 0:
+            #     foraging_dicts[id] = l.finalize_foraging_dict()
 
         dic0 = aux.AttrDict({'deb': deb_dicts,
                              'nengo': nengo_dicts, 'bouts': bout_dicts,
-                             'foraging': foraging_dicts})
+                             # 'foraging': foraging_dicts
+                             })
 
         dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
         return dic
@@ -178,9 +173,16 @@ class ExpRun(BaseRun):
 
 
     def place_agents(self, larva_groups, parameter_dict={}):
+        reg.vprint(f'--- Simulation {self.id} : Generating agent groups!--- ', 1)
         agentConfs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
-        agent_list = [agents.LarvaSim(model=self, **conf) for conf in agentConfs]
-        self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        if not self.Box2D :
+            from larvaworld.lib.model.agents._larva_sim import LarvaSim
+            agent_list = [LarvaSim(model=self, **conf) for conf in agentConfs]
+            self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        else :
+            from larvaworld.lib.model.agents._larva_box2d import LarvaBox2D
+            agent_list = [LarvaBox2D(model=self, **conf) for conf in agentConfs]
+            self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
     def get_food(self):
@@ -259,7 +261,15 @@ class ExpRun(BaseRun):
         self.figs = reg.graphs.eval_graphgroups(graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs)
 
     def store(self):
+        self.output.save(**self.agentpy_output_kws)
+        os.makedirs(self.data_dir, exist_ok=True)
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
                 aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
+
+    def load_agentpy_output(self):
+        df=agentpy.DataDict.load(**self.agentpy_output_kws)
+        df1 = pd.concat(df.variables, axis=0).droplevel(1, axis=0)
+        df1.index.rename('Model', inplace=True)
+        return df1

@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 
+
 from larvaworld.lib.screen import SimulationScale
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -590,7 +591,7 @@ class ScreenManager(BaseScreenManager):
                                         p1=tuple(self.mousebuttondown_pos))
 
                     elif e.button == 3:
-                        from larvaworld.gui.gui_aux.windows import set_agent_kwargs, object_menu
+                        from gui.gui_aux.windows import set_agent_kwargs, object_menu
                         loc = tuple(np.array(self.v.w_loc) + np.array(pygame.mouse.get_pos()))
                         if len(self.selected_agents) > 0:
                             for sel in self.selected_agents:
@@ -608,7 +609,6 @@ class ScreenManager(BaseScreenManager):
                 pass
 
     def eval_keypress(self, k):
-        from larvaworld.lib.model.agents._larva_sim import LarvaSim
         from larvaworld.lib.model.agents._larva import Larva
         # print(k)
         if k == '▲ trail duration':
@@ -647,7 +647,7 @@ class ScreenManager(BaseScreenManager):
             except:
                 pass
         elif k == 'delete item':
-            from larvaworld.gui.gui_aux.windows import delete_objects_window
+            from gui.gui_aux.windows import delete_objects_window
             if delete_objects_window(self.selected_agents):
                 for f in self.selected_agents:
                     self.selected_agents.remove(f)
@@ -656,13 +656,14 @@ class ScreenManager(BaseScreenManager):
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]
                 if isinstance(sel, Larva):
-                    from larvaworld.gui.gui_aux.elements import DynamicGraph
+                    from gui.gui_aux.elements import DynamicGraph
                     self.dynamic_graphs.append(DynamicGraph(agent=sel))
         elif k == 'odor gains':
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]
+                from larvaworld.lib.model.agents._larva_sim import LarvaSim
                 if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
-                    from larvaworld.gui.gui_aux.windows import set_kwargs
+                    from gui.gui_aux.windows import set_kwargs
                     sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
         else:
             self.toggle(k)

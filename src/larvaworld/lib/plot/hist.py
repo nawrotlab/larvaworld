@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 
 
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, plot
 
 

@@ -6,7 +6,7 @@ import pandas as pd
 
 from larvaworld.lib.model.modules.basic import Effector
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.aux import naming as nam
+from larvaworld.lib.aux import nam
 
 
 class BaseIntermitter(Effector):
@@ -191,29 +191,28 @@ class BaseIntermitter(Effector):
         return f
 
     def build_dict(self):
+        cum_t=nam.cum('t')
         d = {}
         if self.total_t != 0:
-            d[nam.cum('t')] = self.total_t
+            d[cum_t] = self.total_t
         else:
-            d[nam.cum('t')] = self.total_ticks * self.dt
+            d[cum_t] = self.total_ticks * self.dt
         d[nam.num('tick')] = int(self.total_ticks)
+        for c0 in ['feed', 'stride']:
+            c = nam.chain(c0)
+            Nc0, Nc = nam.num([c0, c])
+            l = nam.length(c)
+            d[l] = [int(ll) for ll in getattr(self, f'{l}s')]
+            d[Nc0] = int(sum(d[l]))
+            d[nam.mean(nam.freq(c0))] = d[Nc0] / d[cum_t]
+
         for c in ['feedchain', 'stridechain', 'pause']:
             t = nam.dur(c)
-            l = nam.length(c)
-            N = nam.num(c)
-            cum_t = nam.cum(t)
-            rt = nam.dur_ratio(c)
             d[t] = getattr(self, f'{t}s')
-            d[N] = int(getattr(self, f'{c}_counter'))
-            d[cum_t] = getattr(self, cum_t)
-            d[rt] = d[cum_t] / d[nam.cum('t')]
-            if c in ['feedchain', 'stridechain']:
-                d[l] = [int(ll) for ll in getattr(self, f'{l}s')]
-        d[nam.num('feed')] = int(sum(d[nam.length('feedchain')]))
-        d[nam.num('stride')] = int(sum(d[nam.length('stridechain')]))
-        d[nam.mean(nam.freq('feed'))] = d[nam.num('feed')] / d[nam.cum('t')]
-        d[nam.mean(nam.freq('stride'))] = d[nam.num('stride')] / d[nam.cum('t')]
-
+            d[nam.num(c)] = int(getattr(self, f'{c}_counter'))
+            cum_chunk_t = nam.cum(t)
+            d[cum_chunk_t] = getattr(self, cum_chunk_t)
+            d[nam.dur_ratio(c)] = d[cum_chunk_t] / d[cum_t]
         return d
 
     def save_dict(self, path=None, dic=None):

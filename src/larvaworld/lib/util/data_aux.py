@@ -203,7 +203,7 @@ class LarvaworldParNew2(param.Parameterized):
 
     # @property
     # def get_ParsArg(self):
-    #     from larvaworld.cli.parser import build_ParsArg
+    #     from cli.parser import build_ParsArg
     #     return build_ParsArg(name=self.name, k=self.k, h=self.help, dtype=self.dtype, v=self.initial_value, vs=None)
 
     def exists(self, dataset):
