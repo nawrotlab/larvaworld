@@ -129,7 +129,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
 
 
 
-@decorators.timeit
+
 @reg.funcs.proc("angular")
 def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **kwargs):
     Np=c.Npoints

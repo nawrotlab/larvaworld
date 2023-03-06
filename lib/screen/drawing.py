@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 
+
 from lib.screen import SimulationScale
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -608,7 +609,6 @@ class ScreenManager(BaseScreenManager):
                 pass
 
     def eval_keypress(self, k):
-        from lib.model.agents._larva_sim import LarvaSim
         from lib.model.agents._larva import Larva
         # print(k)
         if k == '▲ trail duration':
@@ -661,6 +661,7 @@ class ScreenManager(BaseScreenManager):
         elif k == 'odor gains':
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]
+                from lib.model.agents._larva_sim import LarvaSim
                 if isinstance(sel, LarvaSim) and sel.brain.olfactor is not None:
                     from gui.gui_aux.windows import set_kwargs
                     sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')

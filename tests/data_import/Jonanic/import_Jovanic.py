@@ -78,6 +78,15 @@ kws6 = {
     **kws0
 }
 
+kws7 = {
+    'parent_dir': '61D08 x sNPFR-RNAi',
+    'source_ids': ['Fe', 'Pd', 'St'],
+    'ids': ['Fed', 'Sucrose', 'Starved'],
+    'refIDs': ['61D08sNPFR_RNAi.Fed', '61D08sNPFR_RNAi.Sucrose', '61D08sNPFR_RNAi.Starved'],
+    'colors':['black', 'red', 'purple'],
+    'time_slice':(0,60),
+    **kws0
+}
 # G=reg.graphs
 
 # entry_list=analysis_dict.general
@@ -85,7 +94,7 @@ kws6 = {
 ggs=['endpoint', 'dsp', 'general']
 
 # for kws in [kws3] :
-for kws in [kws4, kws5, kws6] :
+for kws in [kws7] :
 # for kws in [kws1, kws2, kws3] :
 #     try:
     ds = import_datasets(**kws)

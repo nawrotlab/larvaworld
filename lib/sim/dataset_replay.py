@@ -6,8 +6,9 @@ from lib import reg, aux, util
 from lib.aux import nam
 
 
-from lib.model import envs, agents
-
+from lib.model import envs
+from lib.model.agents._larva_replay import LarvaReplay
+from lib.model.agents._source import Food
 from lib.process.dataset import LarvaDataset
 
 from lib.screen import ScreenManager
@@ -74,7 +75,7 @@ class ReplayRun(agentpy.Model):
 
 
     def place_agents(self, s):
-        agent_list = [agents.LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.config.agent_ids)]
+        agent_list = [LarvaReplay(model=self, unique_id=id, length=self.lengths[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(self.config.agent_ids)]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
@@ -88,7 +89,7 @@ class ReplayRun(agentpy.Model):
     def place_food(self, food_grid=None, source_groups={}, source_units={}):
         self.food_grid = envs.FoodGrid(**food_grid, model=self) if food_grid else None
         sourceConfs = util.generate_sourceConfs(source_groups, source_units)
-        source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
+        source_list = [Food(model=self, **conf) for conf in sourceConfs]
         self.space.add_agents(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
 

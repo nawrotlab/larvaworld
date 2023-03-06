@@ -284,7 +284,7 @@ def bout_distribution(s, e, c, d, **kwargs) :
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
 
-@decorators.timeit
+# @decorators.timeit
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, store=False, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)

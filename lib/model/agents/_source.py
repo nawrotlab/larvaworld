@@ -2,8 +2,8 @@ import numpy as np
 from shapely import affinity, geometry, measurement
 
 from lib import aux
+from lib.model.agents import LarvaworldAgent
 from lib.model.deb.substrate import Substrate
-from lib.model.agents._agent import LarvaworldAgent
 
 
 class Source(LarvaworldAgent):
@@ -73,28 +73,3 @@ class Food(Source):
             r = self.amount / self.initial_amount
             self.color = (1 - r) * np.array((255, 255, 255)) + r * np.array(self.default_color)
         return np.min([amount, prev_amount])
-
-    def draw(self, viewer, filled=True):
-        # if not self.visible :
-        #     return
-        # if self.get_shape() is None :
-        #     return
-        p, c, r = self.get_position(), self.color, self.radius
-        # viewer.draw_polygon(self.get_shape().boundary.coords, c, filled, r/5)
-        viewer.draw_circle(p, r, c, filled, r / 5)
-        # viewer.draw_circle((p[0]-r, p[1]), r/20, 'red', filled, r / 15)
-        # viewer.draw_circle((p[0]+r, p[1]), r/20, 'red', filled, r / 15)
-        # print(r)
-
-        if self.odor_id is not None:
-            if self.odor_intensity > 0:
-                if self.model.screen_manager.odor_aura:
-                    viewer.draw_circle(p, r * 1.5, c, False, r / 10)
-                    viewer.draw_circle(p, r * 2.0, c, False, r / 15)
-                    viewer.draw_circle(p, r * 3.0, c, False, r / 20)
-        if self.selected:
-            # viewer.draw_polygon(self.get_shape(1.1).boundary.coords, self.model.selection_color, False, r / 5)
-            viewer.draw_circle(p, r * 1.1, self.model.screen_manager.selection_color, False, r / 5)
-
-    def contained(self, point):
-        return aux.eudis5(self.get_position(), point) <= self.radius

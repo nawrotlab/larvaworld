@@ -186,12 +186,14 @@ def generate_agentConfs(larva_groups, parameter_dict={}):
             conf = {
                 'pos': p,
                 'orientation': o,
+                'default_color': gConf.default_color,
                 'unique_id': id,
-                'larva_pars': pars,
+                # 'larva_pars': pars,
                 'group': gID,
                 'odor': gConf.odor,
-                'default_color': gConf.default_color,
-                'life_history': gConf.life_history
+
+                'life_history': gConf.life_history,
+                **pars
             }
 
             agent_confs.append(conf)
@@ -242,7 +244,7 @@ def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_Larv
 
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
     from lib.model.modules.locomotor import DefaultLocomotor
-    from lib.model.agents import PhysicsController
+    from lib.model.agents._larva_sim import ManualController
     if fo0 is None :
         fo0=0.0
     if p0 is None :
@@ -252,7 +254,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         df_columns = reg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
-    controller = PhysicsController(**m.physics)
+    controller = ManualController(**m.physics)
     l = m.body.initial_length
     bend_errors = 0
     DL = DefaultLocomotor(dt=dt, conf=m.brain)
@@ -262,7 +264,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
     b, fo, ro, fov, x, y, dst, v = 0, fo0, 0, 0, x0, y0, 0, 0
     for i in range(Nticks):
         lin, ang, feed = DL.step(A_in=0, length=l)
-        v, fov = controller.get_vels(lin, ang, fov, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
+        v, fov = controller.prepare_motion(lin, ang, fov, b, dt=dt, ang_suppression=DL.cur_ang_suppression)
 
         d_or = fov * dt
         if np.abs(d_or) > np.pi:

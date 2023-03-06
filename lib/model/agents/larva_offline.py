@@ -1,17 +1,16 @@
 import numpy as np
 
-from lib.model.agents._larva import LarvaMotile
+from lib.model.agents._larva_sim import LarvaSim
 from lib import aux
 
 
 
 
 
-class LarvaOffline(LarvaMotile):
+class LarvaOffline(LarvaSim):
     def __init__(self, larva_pars, **kwargs):
         super().__init__(**larva_pars, **kwargs)
         self.Nticks = 0
-        self.finalized = False
         self.collision_with_object = False
 
         self.fo = self.orientation
@@ -29,7 +28,7 @@ class LarvaOffline(LarvaMotile):
         self.cum_dur += dt
 
         lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
-        self.lin_vel, self.ang_vel = self.get_vels(lin, ang, self.ang_vel, self.body_bend, dt=self.model.dt,
+        self.lin_vel, self.ang_vel = self.prepare_motion(lin, ang, self.ang_vel, self.body_bend,
                                                               ang_suppression=self.brain.locomotor.cur_ang_suppression)
 
         ang_vel_min, ang_vel_max=(-np.pi + self.body_bend) / self.model.dt, (np.pi + self.body_bend) / self.model.dt
@@ -55,9 +54,7 @@ class LarvaOffline(LarvaMotile):
         self.complete_step()
 
     def complete_step(self):
-        if self.lin_vel<0:
-            self.negative_speed_errors+=1
-            self.lin_vel=0
+
         self.Nticks += 1
         self.xx, self.yy = self.model.viewer._transform(self.pos)
 
@@ -66,5 +63,4 @@ class LarvaOffline(LarvaMotile):
         return [self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
                                                                    self.lin_vel, self.pos[0],self.pos[1]]
 
-    def sense_and_act(self):
-        self.step()
+

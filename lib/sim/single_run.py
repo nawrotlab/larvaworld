@@ -4,6 +4,7 @@ import agentpy
 import numpy as np
 import pandas as pd
 
+
 from lib import reg, aux, util, plot
 from lib.screen.drawing import ScreenManager
 from lib.model import envs, agents
@@ -67,11 +68,12 @@ class ExpRun(BaseRun):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
+
         self.agents.step()
         if self.Box2D:
             self.space.Step(self.dt, 6, 2)
-            for fly in self.agents:
-                fly.update_trajectory()
+            self.agents.updated_by_Box2D()
+
         self.screen_manager.step(self.t)
 
     def update(self):
@@ -103,26 +105,18 @@ class ExpRun(BaseRun):
 
     def retrieve(self):
 
-        ds = []
+        dkws=[]
         for gID, df in self.output.variables.items():
-
             if 'sample_id' in df.index.names :
                 sIDs=df.index.get_level_values('sample_id').unique()
                 if len(sIDs)>1 :
-                    # ss,ee,cc= {},{},{}
-                    for sID in sIDs:
-                        d=self.convert_output_to_dataset(gID, df.xs(sID, level='sample_id'), id=f'{gID}_{sID}')
-                        ds.append(d)
-                        # ss[sID],ee[sID],cc[sID]=d.step_data, d.endpoint_data, d.config
+                    dkws+=[{'gID':gID, 'df':df.xs(sID, level='sample_id'), 'id':f'{gID}_{sID}'} for sID in sIDs]
                 else :
-                    d = self.convert_output_to_dataset(gID, df.xs(sIDs[0], level='sample_id'))
-                    # ss, ee, cc = d.step_data, d.endpoint_data, d.config
-                    ds.append(d)
+                    dkws += [{'gID': gID, 'df': df.xs(sIDs[0], level='sample_id')}]
+
             else :
-                d=self.convert_output_to_dataset(gID, df)
-                ds.append(d)
-
-
+                dkws += [{'gID': gID, 'df': df}]
+        ds = [self.convert_output_to_dataset(**kws) for kws in dkws]
         return ds
 
     def convert_output_to_dataset(self,gID, df, id=None):
@@ -151,7 +145,7 @@ class ExpRun(BaseRun):
         deb_dicts = {}
         nengo_dicts = {}
         bout_dicts = {}
-        foraging_dicts = {}
+        # foraging_dicts = {}
         for id, l in ls.items():
             if hasattr(l, 'deb') and l.deb is not None:
                 deb_dicts[id] = l.deb.finalize_dict()
@@ -164,12 +158,13 @@ class ExpRun(BaseRun):
                 pass
             if l.brain.locomotor.intermitter is not None:
                 bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
-            if len(self.foodtypes) > 0:
-                foraging_dicts[id] = l.finalize_foraging_dict()
+            # if len(self.foodtypes) > 0:
+            #     foraging_dicts[id] = l.finalize_foraging_dict()
 
         dic0 = aux.AttrDict({'deb': deb_dicts,
                              'nengo': nengo_dicts, 'bouts': bout_dicts,
-                             'foraging': foraging_dicts})
+                             # 'foraging': foraging_dicts
+                             })
 
         dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
         return dic
@@ -178,8 +173,14 @@ class ExpRun(BaseRun):
 
     def place_agents(self, larva_groups, parameter_dict={}):
         agentConfs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
-        agent_list = [agents.LarvaSim(model=self, **conf) for conf in agentConfs]
-        self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        if not self.Box2D :
+            from lib.model.agents._larva_sim import LarvaSim
+            agent_list = [LarvaSim(model=self, **conf) for conf in agentConfs]
+            self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        else :
+            from lib.model.agents._larva_box2d import LarvaBox2D
+            agent_list = [LarvaBox2D(model=self, **conf) for conf in agentConfs]
+            self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
     def get_food(self):

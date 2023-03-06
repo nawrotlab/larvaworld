@@ -1,5 +1,6 @@
 import os
 import agentpy
+import numpy as np
 
 from lib import reg, aux, util, plot
 from lib.model import envs, agents
@@ -103,3 +104,5 @@ class BaseRun(agentpy.Model):
         self.sources = agentpy.AgentList(model=self, objs=source_list)
         self.foodtypes = aux.get_all_foodtypes(p)
         self.source_xy = aux.get_source_xy(p)
+
+

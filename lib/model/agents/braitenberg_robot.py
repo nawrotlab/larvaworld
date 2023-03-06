@@ -63,7 +63,7 @@ class SensorDrivenRobot(DifferentialDriveRobot):
         self.right_motor_controller = None
         self.label = None
 
-    def sense_and_act(self):
+    def step(self):
         if not self.collision_with_object:
             try:
                 self.left_motor_controller.sense_and_act()

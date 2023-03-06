@@ -1,4 +1,6 @@
 import math
+import random
+
 import numpy as np
 from shapely import geometry, ops
 
@@ -7,6 +9,9 @@ from scipy.signal import sosfiltfilt, butter
 import lib.aux.xy
 from lib import aux
 from lib.aux import nam
+
+
+
 # from lib.reg import nam
 
 def LvsRtoggle(side):
@@ -329,3 +334,50 @@ class Collision(Exception):
         self.object2 = object2
 
 
+
+
+def generate_segs_offline(N, pos, orientation, length, shape='drosophila_larva', seg_ratio=None, color=None,
+                 mode='default'):
+    if seg_ratio is None:
+        seg_ratio = [1 / N] * N
+    ls_x = [np.cos(orientation) * length * np.array([seg_ratio])]
+    ls_y = np.sin(orientation) * length / N
+    seg_positions = [[pos[0] + (-i + (N - 1) / 2) * ls_x[i],
+                      pos[1] + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
+
+    from lib.reg.stored.miscellaneous import Body_dict
+    contour_points = Body_dict()[shape]['points']
+    base_seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=contour_points)
+    seg_vertices = [s * length for s in base_seg_vertices]
+    seg_lengths = length * seg_ratio
+
+    if color is None:
+        color = [0.0, 0.0, 0.0]
+    seg_colors = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
+    if mode == 'default':
+        from lib.model.agents.segmented_body import generate_segs
+        return generate_segs(N, seg_positions, orientation, seg_vertices, seg_colors, seg_lengths)
+
+
+def get_centroid_position(segs):
+    seg_x_positions = []
+    seg_y_positions = []
+    for i, seg in enumerate(segs):
+        x, y = seg.get_position().tolist()
+        seg_x_positions.append(x)
+        seg_y_positions.append(y)
+    centroid = (sum(seg_x_positions) / len(segs), sum(seg_y_positions) / len(segs))
+    return np.asarray(centroid)
+
+def set_contour(segs, Ncontour=22):
+    vertices = [np.array(seg.vertices[0]) for seg in segs]
+    l_side = aux.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+    r_side = aux.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+    r_side.reverse()
+    total_contour = l_side + r_side
+    if len(total_contour) > Ncontour:
+        random.seed(1)
+        contour = [total_contour[i] for i in sorted(random.sample(range(len(total_contour)), Ncontour))]
+    else:
+        contour = total_contour
+    return contour

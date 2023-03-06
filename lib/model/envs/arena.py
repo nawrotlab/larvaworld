@@ -27,25 +27,25 @@ class Arena(agentpy.Space):
         self.edges = [[geometry.Point(x1,y1), geometry.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
         super().__init__(model=model, torus=torus, shape=dims)
 
-    @staticmethod
-    def _border_behavior(position, shape, torus):
-        # Border behavior
-
-        # Connected - Jump to other side
-        if torus:
-            for i in range(len(position)):
-                while position[i] > shape[i]/2:
-                    position[i] -= shape[i]
-                while position[i] < -shape[i]/2:
-                    position[i] += shape[i]
-
-        # Not connected - Stop at border
-        else:
-            for i in range(len(position)):
-                if position[i] > shape[i]/2:
-                    position[i] = shape[i]/2
-                elif position[i] < -shape[i]/2:
-                    position[i] = -shape[i]/2
+    # @staticmethod
+    # def _border_behavior(position, shape, torus):
+    #     # Border behavior
+    #
+    #     # Connected - Jump to other side
+    #     if torus:
+    #         for i in range(len(position)):
+    #             while position[i] > shape[i]/2:
+    #                 position[i] -= shape[i]
+    #             while position[i] < -shape[i]/2:
+    #                 position[i] += shape[i]
+    #
+    #     # Not connected - Stop at border
+    #     else:
+    #         for i in range(len(position)):
+    #             if position[i] > shape[i]/2:
+    #                 position[i] = shape[i]/2
+    #             elif position[i] < -shape[i]/2:
+    #                 position[i] = -shape[i]/2
 
     def place_agent(self, agent, pos):
         pos = pos if isinstance(pos, np.ndarray) else np.array(pos)

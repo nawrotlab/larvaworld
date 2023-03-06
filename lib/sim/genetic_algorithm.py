@@ -27,7 +27,7 @@ class GAlauncher(BaseRun):
 
     def simulate(self):
         self.setup(**self._setup_kwargs)
-        while True and self.engine.is_running:
+        while self.engine.is_running:
             self.engine.step()
             if self.viewer.show_display:
                 from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, Rect, draw, display
@@ -369,25 +369,14 @@ class GAengine(GAselector):
 
         return robots
 
-    def step(self):
-        if self.step_df is not None:
-            for robot in self.robots[:]:
-                self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
-
-        if self.multicore:
-            for thr in self.threads:
-                thr.step()
-            for robot in self.robots[:]:
-                self.check(robot)
-        else:
-            for robot in self.robots[:]:
-                robot.sense_and_act()
-                self.check(robot)
-
+    def sim_step(self):
         self.generation_sim_time += self.model.dt
         self.generation_step_num += 1
 
-        if self.generation_step_num == self.model.Nsteps or len(self.robots)<=self.Nagents_min:
+        self.step()
+        self.update()
+
+        if self.generation_step_num == self.model.Nsteps or len(self.robots) <= self.Nagents_min:
             self.end_generation()
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
                 self.excluded_ids = []
@@ -399,6 +388,28 @@ class GAengine(GAselector):
                     self.step_df = self.init_step_df()
             else:
                 self.finalize()
+
+    def step(self):
+
+
+        if self.multicore:
+            for thr in self.threads:
+                thr.step()
+            for robot in self.robots[:]:
+                self.check(robot)
+        else:
+            for robot in self.robots[:]:
+                robot.step()
+                self.check(robot)
+
+    def update(self):
+        if self.step_df is not None:
+            for robot in self.robots[:]:
+                self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
+
+
+
+
 
     def end_generation(self):
         if self.step_df is not None:
@@ -422,7 +433,7 @@ class GAengine(GAselector):
             self.excluded_ids.append(robot.unique_id)
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
-            robot.genome.fitness =robot.Nticks
+            robot.genome.fitness =robot.cum_dur
         self.model.viewer.remove(robot)
         self.robots.remove(robot)
 
@@ -502,7 +513,7 @@ class GA_thread(threading.Thread):
 
     def step(self):
         for robot in self.robots:
-            robot.sense_and_act()
+            robot.step()
 
 def get_robot_class(robot_class=None, offline=False):
     if offline:

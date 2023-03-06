@@ -98,7 +98,7 @@ def comp_spatial2(s, e, c, mode='minimal'):
 def comp_spatial(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
     if mode == 'full':
-        reg.vreg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points',1)
+        reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points',1)
         points += ['centroid']
     elif mode == 'minimal':
         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint',1)
@@ -249,7 +249,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
 
         aux.storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
 
-@decorators.timeit
+# @decorators.timeit
 @reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)

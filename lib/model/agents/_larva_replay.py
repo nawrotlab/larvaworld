@@ -4,11 +4,12 @@ import numpy as np
 from lib import aux
 from lib.aux import nam
 from lib.model.agents._larva import Larva
-from lib.model.agents.body import draw_body_orientation, draw_body, LarvaBody
+from lib.model.agents.draw_body import draw_body
 
 
-class LarvaReplay(Larva, LarvaBody):
-    def __init__(self, model,  data,length=5, **kwargs):
+class LarvaReplay(Larva):
+    def __init__(self, model, data, length=0.005, **kwargs):
+
         c=model.config
 
         N = data.index.size
@@ -24,7 +25,7 @@ class LarvaReplay(Larva, LarvaBody):
             self.cen_ar = data[cen_pars].values
         else:
             self.cen_ar = np.ones([N, 2]) * np.nan
-        self.Nsegs = model.draw_Nsegs
+
 
         mid_pars = [xy for xy in nam.xy(nam.midline(c.Npoints, type='point')) if set(xy).issubset(cols)]
         con_pars = [xy for xy in nam.xy(nam.contour(c.Ncontour)) if set(xy).issubset(cols)]
@@ -40,34 +41,42 @@ class LarvaReplay(Larva, LarvaBody):
             data['front_orientation'].values) if 'front_orientation' in cols else np.ones(N) * np.nan
         self.rear_or_ar = np.deg2rad(
             data['rear_orientation'].values) if 'rear_orientation' in cols else np.ones(N) * np.nan
-        Larva.__init__(self, model=model,pos = self.pos_ar[0],orientation = self.front_or_ar[0],
-                       radius=length / 2, **kwargs)
-
 
         self.chunk_ids = None
-        self.color = deepcopy(self.default_color)
         self.real_length = length
 
+        self.Nsegs = model.draw_Nsegs
 
+        kws={
+            'model':model,
+            'pos':self.pos_ar[0],
+            'orientation':self.front_or_ar[0],
+            'radius':self.real_length / 2,
+            **kwargs
 
-
-
-        self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
-        for i, p in enumerate(self.behavior_pars):
-            if p in cols:
-                self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
-
-
-
+        }
+        super().__init__(**kws)
 
         if self.Nsegs is not None:
-            LarvaBody.__init__(self, model=self.model, pos=self.pos,orientation=self.orientation,
-                                initial_length=self.real_length, Nsegs=self.Nsegs)
+            self.segs=aux.generate_segs_offline(self.Nsegs , self.pos, self.orientation, length,
+                shape='drosophila_larva', seg_ratio=None, color=self.default_color,
+                 mode='default')
+
             or_pars = aux.nam.orient(aux.nam.midline(self.Nsegs, type='seg'))
             self.or_ar = np.ones([N, self.Nsegs]) * np.nan
             for i, p in enumerate(or_pars):
                 if p in cols:
                     self.or_ar[:, i] = np.deg2rad(data[p].values)
+        else :
+
+            self.segs=None
+
+        self.color = deepcopy(self.default_color)
+
+        self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
+        for i, p in enumerate(self.behavior_pars):
+            if p in cols:
+                self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
         self.data = data
 
 
@@ -78,7 +87,7 @@ class LarvaReplay(Larva, LarvaBody):
     def step(self):
         m = self.model
         mid =self.midline = self.mid_ar[m.t].tolist()
-        self.vertices = self.con_ar[m.t][~np.isnan(self.con_ar[m.t])].reshape(-1, 2)
+        self.contour = self.con_ar[m.t][~np.isnan(self.con_ar[m.t])].reshape(-1, 2)
         self.pos = self.pos_ar[m.t]
         self.cen_pos = self.cen_ar[m.t]
         self.front_or = self.front_or_ar[m.t]
@@ -89,7 +98,7 @@ class LarvaReplay(Larva, LarvaBody):
             setattr(self, p, self.data[p].values[m.t] if p in self.data.columns else np.nan)
 
         if not np.isnan(self.pos).any():
-            m.space.move_agent(self, self.pos)
+            m.space.move_to(self, self.pos)
         if m.draw_Nsegs is not None:
             segs = self.segs
             if len(mid) == len(segs) + 1:
@@ -113,31 +122,13 @@ class LarvaReplay(Larva, LarvaBody):
     def set_color(self, color):
         self.color = color
 
-    def draw(self, viewer, model=None, filled=True):
-        if model is None :
-            model=self.model
-        # r, c, m, v = self.radius, self.color, self.model, self.vertices
+    def draw(self, viewer, filled=True):
 
         pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
 
-        draw_orientations = False
-        if draw_orientations:
-            # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
-            # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
-            draw_body_orientation(viewer, self.midline[5], self.front_or, self.radius, 'green')
-            draw_body_orientation(viewer, self.midline[6], self.rear_or, self.radius, 'red')
-
-        if model.draw_contour:
-
-            if self.Nsegs is not None:
-
-                for seg in self.segs:
-                    seg.draw(viewer)
-            elif len(self.vertices) > 0:
-                viewer.draw_polygon(self.vertices, color=self.color)
-
-        draw_body(viewer=viewer, model=model, pos=pos, midline_xy=self.midline, contour_xy=None,
-                  radius=self.radius, vertices=self.vertices, color=self.color, selected=self.selected)
+        draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline, contour_xy=self.contour,segs=self.segs,
+                  radius=self.radius, vertices=None, color=self.color, selected=self.selected,
+                  front_or=self.front_or, rear_or=self.rear_or)
 
 
 

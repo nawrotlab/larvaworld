@@ -74,7 +74,7 @@ def comp_patch_metrics(s, e, **kwargs):
     e[f'handedness_score_{on}'] = e[f"{aux.nam.num('Lturn')}_{on}"] / e[f"{aux.nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{aux.nam.num('Lturn')}_{off}"] / e[f"{aux.nam.num('turn')}_{off}"]
 
-@decorators.timeit
+# @decorators.timeit
 @reg.funcs.annotation("source_attraction")
 def comp_bearing_to_source(s, e, c, **kwargs):
     for b in ['stride', 'pause', 'turn']:
