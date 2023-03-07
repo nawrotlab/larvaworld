@@ -1496,6 +1496,7 @@ class ParamClass:
              'func': self.func_dict.tr(pc)},
             {
                 'p': pN,
+                'codename': f'brain.locomotor.intermitter.{pc}_counter',
                 'k': kN,
                 'sym': sub('N', f'{pc}s'),
                 'disp': f'# {pc}s',
@@ -1835,8 +1836,19 @@ class ParamClass:
         self.add(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
                     'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'lim': (0.0, 1.0)})
 
-        self.add(**{'p': 'brain.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance', 'lim': (0.0, 1.0),
+        self.add(**{'p': 'brain.locomotor.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance', 'lim': (0.0, 1.0),
                     'disp': 'exploitVSexplore_balance', 'sym': 'EEB'})
+        self.add(**{'p': 'brain.locomotor.intermitter.feeder_reoccurence_rate', 'k': 'fee_reocc', 'd': 'feeder_reoccurence_rate', 'lim': (0.0, 1.0),
+                    'disp': 'feeder_reoccurence_rate', 'sym': 'fee_reocc'})
+        self.add(**{'p': 'brain.locomotor.intermitter.cur_state', 'k': 'beh',
+                    'd': 'behavioral_state', 'vs': ['exec','pause', 'feed'],
+                    'disp': 'behavioral_state', 'sym': 'beh'})
+        self.add(**{'p': 'feed_success_counter', 'k': 'fee_N_success',
+                    'd': 'successful_feeds', 'dtype': int,
+                    'disp': '# successful feeds', 'sym': 'fee_N_success'})
+        self.add(**{'p': 'feed_fail_counter', 'k': 'fee_N_fail',
+                    'd': 'failed_feeds', 'dtype': int,
+                    'disp': '# failed feeds', 'sym': 'fee_N_fail'})
 
         for ii, jj in zip(['1', '2'], ['first', 'second']):
             k = f'c_odor{ii}'

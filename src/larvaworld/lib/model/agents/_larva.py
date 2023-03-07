@@ -117,13 +117,14 @@ class LarvaMotile(Larva):
                 self.amount_eaten += V * 1000
                 return V, 1
             else:
+                self.feed_fail_counter += 1
                 return 0, -1
         else:
             return 0, 0
 
     def reset_feeder(self):
         self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0, 0
-        self.cum_food_detected, self.feed_success_counter, self.amount_eaten = 0, 0, 0
+        self.cum_food_detected, self.feed_success_counter,self.feed_fail_counter, self.amount_eaten = 0, 0, 0,0
         # self.foraging_dict = aux.AttrDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
         #                                    self.model.foodtypes.keys()})
         try:
@@ -243,7 +244,7 @@ class LarvaMotile(Larva):
         self.sense()
         pos = self.olfactor_pos
         self.food_detected, self.current_foodtype = self.detect_food(pos)
-        lin, ang, self.feeder_motion = self.brain.step(pos, reward=self.on_food)
+        lin, ang, self.feeder_motion = self.brain.step(pos, on_food=self.on_food)
         self.update_larva()
         self.prepare_motion(lin=lin, ang=ang)
 

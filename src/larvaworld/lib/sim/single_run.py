@@ -16,7 +16,7 @@ class ExpRun(BaseRun):
     def __init__(self, **kwargs):
         super().__init__(runtype = 'Exp', **kwargs)
 
-    def setup(self, screen_kws={}, parameter_dict={}):
+    def setup(self, screen_kws={},video=None, parameter_dict={}):
 
         self.sim_epochs = self.p.trials
         for idx, ep in self.sim_epochs.items():
@@ -32,7 +32,7 @@ class ExpRun(BaseRun):
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
 
 
-        self.screen_manager = ScreenManager(model=self, **screen_kws)
+        self.screen_manager = ScreenManager(model=self, **screen_kws, video=video)
 
 
         if not self.larva_collisions:

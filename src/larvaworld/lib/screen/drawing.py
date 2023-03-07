@@ -183,9 +183,12 @@ class GA_ScreenManager(BaseScreenManager):
 
 
 class ScreenManager(BaseScreenManager):
-    def __init__(self, model, vis_kwargs=None, **kwargs):
+    def __init__(self, model, vis_kwargs=None,video=None, **kwargs):
         if vis_kwargs is None:
-            vis_kwargs = reg.get_null('visualization', mode=None)
+            if video :
+                vis_kwargs = reg.get_null('visualization', mode='video')
+            else :
+                vis_kwargs = reg.get_null('visualization', mode=None)
         self.vis_kwargs = aux.AttrDict(vis_kwargs)
         self.image_mode = self.vis_kwargs.render.image_mode
         super().__init__(model, mode= self.vis_kwargs.render.mode,

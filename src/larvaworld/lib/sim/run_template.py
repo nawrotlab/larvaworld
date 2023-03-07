@@ -6,9 +6,16 @@ from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 
 class BaseRun(agentpy.Model):
-    def __init__(self, runtype, parameters={},  store_data=True, save_to=None, id=None,experiment=None,
+    def __init__(self, runtype, parameters=None,  store_data=True, save_to=None, id=None,experiment=None,
                  Box2D=False, larva_collisions=True, **kwargs):
         self.larva_collisions = larva_collisions
+        if parameters is None :
+            if experiment is not None :
+                parameters = reg.expandConf('Exp', experiment)
+            else :
+                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
+
+
         self.experiment = experiment if experiment is not None else parameters.experiment
         self.store_data = store_data
         self.Box2D = Box2D

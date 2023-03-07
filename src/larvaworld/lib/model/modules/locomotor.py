@@ -66,11 +66,11 @@ class DefaultLocomotor(Locomotor):
         # return L
 
 
-    def step(self, A_in=0, length=1):
+    def step(self, A_in=0, length=1, on_food=False):
 
         if self.intermitter:
             pre_state = self.intermitter.cur_state
-            self.intermitter.step(locomotor=self)
+            self.intermitter.step(locomotor=self, on_food=on_food)
             if pre_state == 'exec' and self.intermitter.cur_state == 'pause':
                 self.on_new_pause()
             elif pre_state == 'pause' and self.intermitter.cur_state == 'exec':

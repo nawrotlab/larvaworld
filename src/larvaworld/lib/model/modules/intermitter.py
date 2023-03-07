@@ -75,7 +75,7 @@ class BaseIntermitter(Effector):
         self.current_stridechain_length = None
         self.cum_stridechain_dur = 0
         self.current_numstrides = 0
-        # self.stride_counter = 0
+        self.stride_counter = 0
 
         self.feedchain_counter = 0
         self.current_feedchain_length = None
@@ -94,9 +94,9 @@ class BaseIntermitter(Effector):
 
         self.stride_stop = False
 
-    def step(self, locomotor=None):
+    def step(self, locomotor=None,on_food=False):
         super().count_time()
-        self.update_state(locomotor)
+        self.update_state(locomotor,on_food=on_food)
         return self.cur_state
 
     def generate_stridechain(self):
@@ -143,7 +143,20 @@ class BaseIntermitter(Effector):
         if self.feed_bouts and L.feeder is not None:
             L.feeder.stop_effector()
 
-    def update_state(self, L):
+    def update_state(self, L,on_food=False):
+        if on_food and self.current_feedchain_length is None and self.feed_bouts:
+            if np.random.uniform(0, 1, 1) <= self.base_EEB:
+                self.current_feedchain_length = 1
+                if L.feeder is not None:
+                    L.feeder.start_effector()
+                self.cur_state = 'feed'
+                if self.current_stridechain_length is not None:
+                    self.register_stridechain()
+                    if L.crawler is not None:
+                        L.crawler.stop_effector()
+                if self.current_pause_duration is not None:
+                    self.register_pause()
+                return
         self.stride_stop = False
         if self.current_stridechain_length is not None:
             if hasattr(L.crawler, 'complete_iteration'):
@@ -177,6 +190,7 @@ class BaseIntermitter(Effector):
     def register_stridechain(self):
         self.stridechain_counter += 1
         self.cum_stridechain_dur += self.t
+        self.stride_counter += self.current_stridechain_length
         self.stridechain_lengths.append(self.current_stridechain_length)
         self.stridechain_durs.append(self.t)
         self.t = 0
@@ -341,9 +355,21 @@ class OfflineIntermitter(Intermitter):
         self.crawl_ticks = np.round(1 / (crawl_freq * self.dt)).astype(int)
         self.feed_ticks = np.round(1 / (feed_freq * self.dt)).astype(int)
 
-    def step(self, locomotor=None):
+    def step(self, locomotor=None,on_food=False):
         super().count_ticks()
         t = self.ticks
+        if on_food and self.current_feedchain_length is None and self.feed_bouts:
+            if np.random.uniform(0, 1, 1) <= self.base_EEB:
+                self.current_feedchain_length = 1
+                self.cur_state = 'feed'
+                if self.current_stridechain_length is not None:
+                    self.register('stride')
+                    self.current_numstrides = 0
+                    self.current_stridechain_length = None
+                if self.current_pause_duration is not None:
+                    self.register('pause')
+                    self.current_pause_ticks = None
+                return
         self.stride_stop = False
         # print(self.current_stridechain_length, self.current_feedchain_length, self.current_pause_ticks)
         if self.current_stridechain_length and t >= self.current_crawl_ticks:

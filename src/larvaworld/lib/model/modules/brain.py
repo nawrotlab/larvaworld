@@ -68,16 +68,16 @@ class Brain:
             return {'cool': 0, 'warm': 0}
         return cons
 
-    def sense(self, pos=None, reward=False):
+    def sense(self, pos=None, on_food=False):
         if self.olfactor :
             if self.memory:
                 dx = self.olfactor.get_dX()
-                self.olfactor.gain = self.memory.step(dx, reward)
+                self.olfactor.gain = self.memory.step(dx, on_food)
             self.A_olf = self.olfactor.step(self.sense_odors(pos), brain=self)
         if self.toucher :
             if self.touch_memory:
                 dx = self.toucher.get_dX()
-                self.toucher.gain = self.touch_memory.step(dx, reward)
+                self.toucher.gain = self.touch_memory.step(dx, on_food)
             self.A_touch = self.toucher.step(self.sense_food(), brain=self)
         if self.thermosensor :
             self.A_thermo = self.thermosensor.step(self.sense_thermo(pos), brain=self)
@@ -160,8 +160,8 @@ class DefaultBrain(Brain):
 
 
 
-    def step(self, pos=None, reward=False, **kwargs):
-        self.sense(pos=pos, reward=reward)
+    def step(self, pos=None, on_food=False, **kwargs):
+        self.sense(pos=pos, on_food=on_food)
 
         length = self.agent.real_length if self.agent is not None else 1
-        return self.locomotor.step(A_in=self.A_in, length=length)
+        return self.locomotor.step(A_in=self.A_in, length=length, on_food=on_food)

@@ -21,9 +21,9 @@ output_dict = {
         'endpoint': []},
 
     'feeder': {
-        'step': ['l', 'f_am', 'EEB', 'on_food'],
+        'step': ['l', 'f_am', 'EEB', 'on_food', 'fee_reocc', 'beh'],
         # 'step': ['l', 'm', 'f_am', 'sf_am', 'EEB'],
-        'endpoint': ['l', 'f_am', 'on_food_tr']
+        'endpoint': ['l', 'f_am', 'on_food_tr', 'pau_N', 'str_N', 'run_N', 'fee_N','str_c_N', 'fee_c_N', 'fee_N_success',  'fee_N_fail']
         # 'endpoint': ['l', 'm', 'f_am', 'sf_am', 'on_food_tr']
     },
 
