@@ -132,8 +132,7 @@ class BaseType:
         return aux.AttrDict({id: self.gConf(**kwargs)})
 
 
-conf =aux.AttrDict({k: BaseType(k=k) for k in reg.CONFTYPES})
-group =aux.AttrDict({k: BaseType(k=k) for k in reg.GROUPTYPES})
+
 
 def loadConf(conftype, id):
     path = reg.Path[conftype]
@@ -192,10 +191,17 @@ def storedConf(conftype):
     d = aux.load_dict(path)
     return list(d.keys())
 
-def resetDict(conftype):
+def resetDict(conftype, init=False):
     dd = reg.funcs.stored_confs[conftype]()
     path = reg.Path[conftype]
-    d = aux.load_dict(path)
+
+    if os.path.isfile(path):
+        if init:
+            return
+        else :
+            d = aux.load_dict(path)
+    else :
+        d={}
 
     N0, N1 = len(d), len(dd)
 
@@ -209,12 +215,12 @@ def resetDict(conftype):
     reg.vprint(f'{conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',1)
 
 # @decorators.timeit
-def resetConfs(conftypes=None):
+def resetConfs(conftypes=None, **kwargs):
     if conftypes is None:
         conftypes = reg.CONFTYPES
 
     for conftype in conftypes:
-        resetDict(conftype)
+        resetDict(conftype, **kwargs)
 
 def lgs(mIDs, ids=None, cs=None,**kwargs):
 
@@ -387,3 +393,8 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
     exp_conf['experiment'] = exp
     exp_conf.update(**kwargs)
     return exp_conf
+
+
+conf =aux.AttrDict({k: BaseType(k=k) for k in reg.CONFTYPES})
+
+group =aux.AttrDict({k: BaseType(k=k) for k in reg.GROUPTYPES})

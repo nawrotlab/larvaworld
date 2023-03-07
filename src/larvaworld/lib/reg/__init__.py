@@ -1,5 +1,7 @@
 # import time
 # start_time = time.perf_counter()
+import os
+
 VERBOSE =1
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
@@ -21,7 +23,7 @@ CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'B
 GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 
 Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
-
+os.makedirs(CONF_DIR, exist_ok=True)
 
 from .data_structure import datapath, datafunc
 vprint("Initializing output registry", 0)
@@ -52,7 +54,8 @@ from .graph import graphs
 # end_time = time.perf_counter()
 # total_time = end_time - start_time
 # vprint(f"Registry configured in {total_time:.0f} ms!", 2)
-vprint(f"Registry configured!", 2)
+
+
 
 
 def getPar(k=None, p=None, d=None, to_return='d'):
@@ -61,5 +64,6 @@ def getPar(k=None, p=None, d=None, to_return='d'):
 def get_null(name, **kwargs):
     return par.get_null(name=name, **kwargs)
 
+resetConfs(init=True)
 
-
+vprint(f"Registry configured!", 2)

@@ -523,11 +523,11 @@ def get_robot_class(robot_class=None, offline=False):
 
     if type(robot_class) == str:
         if robot_class == 'LarvaRobot':
-            class_name = f'lib.model.agents.larva_robot.LarvaRobot'
+            class_name = f'larvaworld.lib.model.agents.larva_robot.LarvaRobot'
         elif robot_class == 'ObstacleLarvaRobot':
-            class_name = f'lib.model.agents.larva_robot.ObstacleLarvaRobot'
+            class_name = f'larvaworld.lib.model.agents.larva_robot.ObstacleLarvaRobot'
         elif robot_class == 'LarvaOffline':
-            class_name = f'lib.model.agents.larva_offline.LarvaOffline'
+            class_name = f'larvaworld.lib.model.agents.larva_offline.LarvaOffline'
         else :
             raise
         return aux.get_class_by_name(class_name)

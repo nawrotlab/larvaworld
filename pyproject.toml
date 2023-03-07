@@ -60,3 +60,6 @@ nengo = [
 
 [tool.setuptools.package-data]
 "*" = ["*.png", "*.pdf", "*.txt", "*.csv"]
+
+#[tool.poetry.scripts]
+#my_package_cli = 'larvaworld.console:run'

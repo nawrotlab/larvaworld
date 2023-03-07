@@ -280,7 +280,7 @@ class Viewer(object):
 
     @staticmethod
     def load_from_file(file_path,  **kwargs):
-        from vlib.model.envs.obstacle import Wall, Box
+        from larvaworld.lib.model.envs.obstacle import Wall, Box
         with open(file_path) as f:
             line_number = 1
 

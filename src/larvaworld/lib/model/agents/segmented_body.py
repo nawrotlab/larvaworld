@@ -84,7 +84,7 @@ class LarvaBody(LarvaMotile):
 
 
 
-    def __init__(self, brain, energetics, life_history, initial_length=0.005,
+    def __init__(self, brain, energetics=None, life_history={}, initial_length=0.005,
                  length_std=0, Nsegs=2, seg_ratio=None, shape='drosophila_larva', density=300.0, **kwargs):
 
         super().__init__(brain, energetics, life_history, **kwargs)

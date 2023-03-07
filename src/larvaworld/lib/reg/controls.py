@@ -1,4 +1,5 @@
 import json
+import os
 
 from larvaworld.lib import reg, aux
 
@@ -121,6 +122,8 @@ class ControlRegistry :
     def __init__(self):
         self.path=f'{reg.CONF_DIR}/controls.txt'
         self.conf=init_controls()
+        if not os.path.isfile(self.path) :
+            self.save(self.conf)
 
     def save(self, conf=None):
         if conf is None:
