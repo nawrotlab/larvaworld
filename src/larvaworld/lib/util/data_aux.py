@@ -1,10 +1,13 @@
 import random
-import typing
 from types import FunctionType
 from typing import Tuple, List
 import numpy as np
 import param
-
+import sys
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
 
 from larvaworld.lib import reg, aux
 
@@ -354,7 +357,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
                 FunctionType: param.Callable,
                 Tuple[float]: param.Range,
                 Tuple[int]: param.NumericTuple,
-                typing.TypedDict: param.Dict
+                TypedDict: param.Dict
             }
             if dtype == float and lim == (0.0, 1.0):
                 return param.Magnitude

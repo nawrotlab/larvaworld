@@ -123,7 +123,7 @@ class ExpRun(BaseRun):
     def convert_output_to_dataset(self,gID, df, id=None):
         if id is None :
             id = gID
-        from vlib.process.dataset import LarvaDataset
+        from larvaworld.lib.process.dataset import LarvaDataset
         df.index.set_names(['AgentID', 'Step'], inplace=True)
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)

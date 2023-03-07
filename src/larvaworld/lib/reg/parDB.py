@@ -1,7 +1,14 @@
 from types import FunctionType
 import warnings
 import numpy as np
-from typing import List, Tuple, TypedDict
+from typing import List, Tuple
+import sys
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
+
 import param
 warnings.simplefilter(action='ignore', category=FutureWarning)
 

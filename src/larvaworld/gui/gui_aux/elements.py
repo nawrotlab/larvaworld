@@ -2,7 +2,13 @@ import copy
 import inspect
 import os
 import pandas as pd
-from typing import Tuple, List, TypedDict
+from typing import Tuple, List
+import sys
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from typing_extensions import TypedDict
 import numpy as np
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
