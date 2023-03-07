@@ -105,7 +105,6 @@ class ExpRun(BaseRun):
         return self.datasets
 
     def retrieve(self):
-
         dkws=[]
         for gID, df in self.output.variables.items():
             if 'sample_id' in df.index.names :
@@ -139,14 +138,10 @@ class ExpRun(BaseRun):
         return d
 
     def get_larva_dicts(self, ids=None):
-
         ls = aux.AttrDict({l.unique_id: l for l in self.get_flies(ids=ids)})
-
-
         deb_dicts = {}
         nengo_dicts = {}
         bout_dicts = {}
-        # foraging_dicts = {}
         for id, l in ls.items():
             if hasattr(l, 'deb') and l.deb is not None:
                 deb_dicts[id] = l.deb.finalize_dict()
@@ -159,12 +154,9 @@ class ExpRun(BaseRun):
                 pass
             if l.brain.locomotor.intermitter is not None:
                 bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
-            # if len(self.foodtypes) > 0:
-            #     foraging_dicts[id] = l.finalize_foraging_dict()
 
         dic0 = aux.AttrDict({'deb': deb_dicts,
                              'nengo': nengo_dicts, 'bouts': bout_dicts,
-                             # 'foraging': foraging_dicts
                              })
 
         dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})

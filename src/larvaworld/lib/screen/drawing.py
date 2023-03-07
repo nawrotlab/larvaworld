@@ -5,13 +5,13 @@ import sys
 import numpy as np
 
 
-from larvaworld.lib.screen import SimulationScale
+
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 from larvaworld.lib import reg, aux, screen
-
+from larvaworld.lib.screen import SimulationScale
 
 class BaseScreenManager :
     def __init__(self, model,  mode=None, show_display = True,black_background=False, **kwargs):
