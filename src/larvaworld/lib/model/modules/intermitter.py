@@ -9,6 +9,29 @@ from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import nam
 
 
+default_bout_distros=aux.AttrDict({'turn_dur': {'range': [0.25, 3.25], 'name': 'exponential', 'beta': 4.70099},
+ 'turn_amp': {'range': [0.00042, 305.7906],
+  'name': 'lognormal',
+  'mu': 2.08133,
+  'sigma': 1.26487},
+ 'turn_vel_max': {'range': [0.00031, 2752.80403],
+  'name': 'levy',
+  'mu': -1.22434,
+  'sigma': 11.93284},
+ 'run_dur': {'range': [0.44, 114.25],
+  'name': 'lognormal',
+  'mu': 1.148,
+  'sigma': 1.11329},
+ 'run_dst': {'range': [0.00022, 0.14457],
+  'name': 'levy',
+  'mu': 0.00017,
+  'sigma': 0.00125},
+ 'pause_dur': {'range': [0.12, 15.94], 'name': 'exponential', 'beta': 1.01503},
+ 'run_count': {'range': [1, 142],
+  'name': 'lognormal',
+  'mu': 1.39115,
+  'sigma': 1.14667}})
+
 class BaseIntermitter(Effector):
     def __init__(self, crawl_bouts=False, feed_bouts=False,
                  feeder_reoccurence_rate=None, feeder_reocurrence_as_EEB=True,
@@ -262,7 +285,8 @@ class BaseIntermitter(Effector):
 
     def check_distros(self, pause_dist=None, stridechain_dist=None):
         if pause_dist.range is None and stridechain_dist.range is None:
-            bout_distros = reg.loadConf('Ref',f'exploration.150controls').bout_distros
+            bout_distros = default_bout_distros
+            # bout_distros = reg.loadConf('Ref',f'exploration.150controls').bout_distros
             # bout_distros = reg.retrieveRef(f'exploration.150controls').bout_distros
             pause_dist=bout_distros.pause_dur
             stridechain_dist=bout_distros.run_count
