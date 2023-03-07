@@ -16,7 +16,7 @@ class ExpRun(BaseRun):
     def __init__(self, **kwargs):
         super().__init__(runtype = 'Exp', **kwargs)
 
-    def setup(self, screen_kws={}, parameter_dict={}, larva_collisions=True):
+    def setup(self, screen_kws={}, parameter_dict={}):
 
         self.sim_epochs = self.p.trials
         for idx, ep in self.sim_epochs.items():
@@ -34,7 +34,7 @@ class ExpRun(BaseRun):
 
         self.screen_manager = ScreenManager(model=self, **screen_kws)
 
-        self.larva_collisions = larva_collisions
+
         if not self.larva_collisions:
             self.eliminate_overlap()
 
@@ -178,11 +178,10 @@ class ExpRun(BaseRun):
         if not self.Box2D :
             from larvaworld.lib.model.agents._larva_sim import LarvaSim
             agent_list = [LarvaSim(model=self, **conf) for conf in agentConfs]
-            self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         else :
             from larvaworld.lib.model.agents._larva_box2d import LarvaBox2D
             agent_list = [LarvaBox2D(model=self, **conf) for conf in agentConfs]
-            self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
     def get_food(self):

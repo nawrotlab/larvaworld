@@ -127,12 +127,12 @@ Five different modes are available. The mode has to declared after the command a
     Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
     This line optimizes a model for kinematic realism against a reference experimental dataset
 
-        larvaworld-cli Ga realism -N 20 -t 0.5 -mID1 GA_test_loco -mGA model
+        larvaworld-cli Ga realism -refID exploration.40controls -N 20 -t 0.5 -mID1 GA_test_loco -mGA model
 
 4. Experiment replay
 
    Replay a real-world experiment.
-   This line replays a reference experimental dataset (note that this is imported by the tests/data_import/Schleyer/import_Schleyer.py)
+   This line replays a reference experimental dataset (note that this is imported by the example named : import_Schleyer)
 
         larvaworld-cli Replay -refID exploration.dish03
         larvaworld-cli Replay -dir SchleyerGroup/processed/exploration/dish03
@@ -142,10 +142,19 @@ Five different modes are available. The mode has to declared after the command a
    Evaluate diverse model configurations against real data.
    This line evaluates two models against a reference experimental dataset
 
-        larvaworld-cli Eval -refID exploration.merged_dishes -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
+        larvaworld-cli Eval -refID exploration.40controls -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
 
    
 A graphical user interface is also available. All functionalities are available via the respective tabs.
 Launch the GUI :
 
       larvaworld-gui
+
+Samples of experimental datasets are available :
+for import :
+
+        larvaworld-examples import-Jovanic
+        larvaworld-examples import-Schleyer
+and plotting :
+
+        larvaworld-examples plot-Jovanic

@@ -28,7 +28,7 @@ class GAlauncher(BaseRun):
     def simulate(self):
         self.setup(**self._setup_kwargs)
         while self.engine.is_running:
-            self.engine.step()
+            self.engine.sim_step()
             if self.viewer.show_display:
                 from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, Rect, draw, display
                 for e in event.get():
@@ -363,19 +363,19 @@ class GAengine(GAselector):
             robot.genome = g
             robots.append(robot)
             self.model.viewer.put(robot)
-
+        self.model.space.add_agents(robots, positions=[a.pos for a in robots])
         if self.multicore:
             self.threads=self.build_threads(robots)
 
         return robots
 
     def sim_step(self):
-        self.generation_sim_time += self.model.dt
-        self.generation_step_num += 1
+
 
         self.step()
         self.update()
-
+        self.generation_sim_time += self.model.dt
+        self.generation_step_num += 1
         if self.generation_step_num == self.model.Nsteps or len(self.robots) <= self.Nagents_min:
             self.end_generation()
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
@@ -419,7 +419,6 @@ class GAengine(GAselector):
 
         for robot in self.robots[:]:
             self.destroy_robot(robot)
-
         self.sort_genomes()
 
         if self.model.store_data:
@@ -436,6 +435,7 @@ class GAengine(GAselector):
             robot.genome.fitness =robot.cum_dur
         self.model.viewer.remove(robot)
         self.robots.remove(robot)
+        self.model.space.remove_agents([robot])
 
     def finalize(self):
         self.is_running = False

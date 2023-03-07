@@ -78,17 +78,8 @@ def Ref_dict(DATA=None):
                 with open(f) as tfp:
                     c = json.load(tfp)
                 c = aux.AttrDict(c)
-                entries[c.refID] = c
-                # print(f'Added reference dataset under ID {c.refID}')
-        # try:
-        #     d = LarvaDataset(dr, load_data=False)
-        #     d.load(step=False)
-        #     refID=d.retrieveRefID()
-        #     conf=update_config(d, d.config)
-        #     entries[refID]=conf
-            #
+                entries[c.refID] = c.dir
             except:
-            # print(f'Failed to retrieve reference dataset from path {dr}')
                 pass
     return aux.AttrDict(entries)
 

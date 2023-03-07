@@ -7,7 +7,8 @@ from larvaworld.lib.model import envs, agents
 
 class BaseRun(agentpy.Model):
     def __init__(self, runtype, parameters={},  store_data=True, save_to=None, id=None,experiment=None,
-                 Box2D=False, **kwargs):
+                 Box2D=False, larva_collisions=True, **kwargs):
+        self.larva_collisions = larva_collisions
         self.experiment = experiment if experiment is not None else parameters.experiment
         self.store_data = store_data
         self.Box2D = Box2D

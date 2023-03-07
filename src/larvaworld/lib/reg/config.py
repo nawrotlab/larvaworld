@@ -307,6 +307,7 @@ def Ref_paths(id, dir=None):
     d = aux.load_dict(path)
     if dir is not None :
         d[id] = dir
+        aux.save_dict(d, path)
     elif id in d.keys():
         return d[id]
     else:

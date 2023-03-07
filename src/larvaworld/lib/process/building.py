@@ -470,7 +470,8 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
             # raise
             d = d.enrich(**enrich_conf, store=True, is_last=False)
         d.save(food=False, refID=refID)
-        print(f'***** Completed dataset {d.id} -----')
+        if refID is not None :
+            print(f'***** Dataset stored under the reference ID : {refID} -----')
     else:
         print(f'xxxxx Failed to create dataset {id}! -----')
     return d
