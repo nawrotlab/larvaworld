@@ -88,7 +88,7 @@ class BasePlot:
             return 1
 
 
-    def conf_ax(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
+    def conf_ax(self, idx=0,ax=None, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
                 ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
@@ -96,7 +96,8 @@ class BasePlot:
                 xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
                 leg_handles=None, leg_labels=None,legfontsize=None,xvis=None, yvis=None, zvis=None,
                 title=None, title_y=None, titlefontsize=None):
-        ax = self.axs[idx]
+        if ax is None :
+            ax = self.axs[idx]
         if equal_aspect is not None:
             ax.set_aspect('equal', adjustable='box')
         if xvis is not None:
@@ -513,7 +514,7 @@ class GridPlot(BasePlot):
 
 
     def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True,
-            x0=False, y0=False, cols_first=False):
+            x0=False, y0=False, cols_first=False, annotate_all=False):
 
         if w0 is None:
             w0 = self.cur_w
@@ -527,7 +528,7 @@ class GridPlot(BasePlot):
 
         if N == 1:
             axs = self.fig.add_subplot(self.grid[h0:h0 + h, w0:w0 + w])
-            ax_letter = axs
+            self.add_letter(axs, letter, x0=x0, y0=y0)
             # if letter:
             #     self.letter_dict[axs]=self.letters[self.cur_idx]
             #     self.cur_idx += 1
@@ -560,8 +561,16 @@ class GridPlot(BasePlot):
                                                     h0 + dh * i + hh * i:h0 + dh * i + hh * (i + 1),
                                                     w0 + dw * j + ww * j:w0 + dw * j + ww * (j + 1)])
                             axs.append(ax)
-            ax_letter = axs[0]
-        self.add_letter(ax_letter, letter, x0=x0, y0=y0)
+            if annotate_all :
+                for i,ax in enumerate(axs) :
+                    if i==0 :
+                        self.add_letter(ax, letter, x0=x0, y0=y0)
+                    else:
+                        self.add_letter(ax, letter)
+            else:
+                self.add_letter(axs[0], letter, x0=x0, y0=y0)
+            # ax_letter = axs[0]
+        # self.add_letter(ax_letter, letter, x0=x0, y0=y0)
         return axs
 
     def plot(self, func, kws, axs=None, **kwargs):

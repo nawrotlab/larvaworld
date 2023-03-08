@@ -911,8 +911,6 @@ def buildInitDict():
             'EEB_decay': {'v': 1.0, 'lim': (0.0, 2.0), 'symbol': sub('c', 'EEB'),
                           'k': 'c_EEB',
                           'h': 'The exponential decay coefficient of the exploitation-exploration balance when no food is detected.'},
-            'crawl_bouts': {**bT, 'disp': 'crawling bouts',
-                            'h': 'Whether crawling bouts (runs/stridechains) are generated.'},
             'feed_bouts': {**bF, 'disp': 'feeding bouts',
                            'h': 'Whether feeding bouts (feedchains) are generated.'},
             'crawl_freq': {'v': 1.43, 'lim': (0.5, 2.5), 'k': 'f_C', 'dv': 0.01, 'u': reg.units.Hz,
@@ -1732,7 +1730,7 @@ class ParamClass:
         kws = {'dv': np.round(amax / 180, 2), 'u': u, 'v0': 0.0}
         self.add(
             **{'p': 'bend', 'k': 'b', 'sym': th('b'), 'disp': 'bending angle', 'lim': (-amax, amax), **kws})
-        self.add_velNacc(k0='b', sym_v=omega('b'), sym_a=dot(omega('b')), disp_v='bending angular speed',
+        self.add_velNacc(k0='b', sym_v=omega('b'), sym_a=dot(omega('b')), disp_v='bending angular velocity',
                          disp_a='bending angular acceleration')
 
         angs = [
@@ -1753,7 +1751,7 @@ class ParamClass:
             self.add_unwrap(k0=ko)
 
             self.add_velNacc(k0=kou, k_v=f'{suf}ov', k_a=f'{suf}oa', p_v=p_v, d_v=p_v, p_a=p_a, d_a=p_a,
-                             sym_v=omega(ksuf), sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular speed',
+                             sym_v=omega(ksuf), sym_a=dot(omega(ksuf)), disp_v=f'{lsuf}angular velocity',
                              disp_a=f'{lsuf}angular acceleration')
         for k0 in ['b', 'bv', 'ba', 'fov', 'foa', 'rov', 'roa', 'fo', 'ro', 'ho', 'to']:
             self.add_freq(k0=k0)
@@ -1843,10 +1841,10 @@ class ParamClass:
         self.add(**{'p': 'brain.locomotor.intermitter.cur_state', 'k': 'beh',
                     'd': 'behavioral_state', 'vs': ['exec','pause', 'feed'],
                     'disp': 'behavioral_state', 'sym': 'beh'})
-        self.add(**{'p': 'feed_success_counter', 'k': 'fee_N_success',
+        self.add(**{'p': 'brain.locomotor.intermitter.feed_success_counter', 'k': 'fee_N_success',
                     'd': 'successful_feeds', 'dtype': int,
                     'disp': '# successful feeds', 'sym': 'fee_N_success'})
-        self.add(**{'p': 'feed_fail_counter', 'k': 'fee_N_fail',
+        self.add(**{'p': 'brain.locomotor.intermitter.feed_fail_counter', 'k': 'fee_N_fail',
                     'd': 'failed_feeds', 'dtype': int,
                     'disp': '# failed feeds', 'sym': 'fee_N_fail'})
 

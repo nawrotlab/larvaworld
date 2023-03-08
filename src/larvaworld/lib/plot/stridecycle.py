@@ -212,19 +212,19 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
 
 
         if short is not None:
-            par, lab = reg.getPar(short, to_return=['d', 'lab'])
-            a_sh = ss[par].values
-            a_fov = ss[fov].values
-            da = np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-
-            aa = stride_interp(a_sh, strides, Nbins)
+            par, ylab1 = reg.getPar(short, to_return=['d', 'lab'])
+            # a_fov = ss[fov].values
+            da = np.array([np.trapz(ss[fov].values[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
+            # aa_norm=mean_stride_curve(a=ss[par].values, strides=strides,da=da, Nbins=Nbins)['norm']
+            aa = stride_interp(ss[par].values, strides, Nbins)
             aa_minus = aa[da < 0]
             aa_plus = aa[da > 0]
             aa_norm = np.vstack([aa_plus, -aa_minus])
 
             plot.plot_quantiles(df=aa_norm, from_np=True, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
-
-            P.axs[1].set_ylabel(lab)
+        else :
+            ylab1 = None
+            # P.axs[1].set_ylabel(lab)
 
 
         points0 = nam.midline(c.Npoints, type='point')
@@ -237,7 +237,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
             pointcols = ['black', 'darkblue', 'darkgreen', 'seagreen', 'mediumturquoise']
         else:
             pointcols = cm.rainbow(np.linspace(0, 1, len(points)))
-        ymax = 0.7
+        y0max = 0.7
         for p, col in zip(points, pointcols):
             v_p = nam.vel(p)
             a = ss[v_p] if v_p in ss.columns else aux.eudist(ss[nam.xy(p)].values)/c.dt
@@ -249,40 +249,48 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
             aa_max = np.max(aa_mu)
             phi_max = x[np.argmax(aa_mu)]
             plot.plot_quantiles(df=aa, from_np=True, axis=P.axs[0], color_shading=col, x=x, label=p)
-            P.axs[0].axvline(phi_max, ymax=aa_max / ymax, color=col, alpha=1, linestyle='dashed', linewidth=2, zorder=20)
-            P.axs[0].scatter(phi_max, aa_max + 0.02 * ymax, color=col, marker='v', linewidth=2, zorder=20)
+            P.axs[0].axvline(phi_max, ymax=aa_max / y0max, color=col, alpha=1, linestyle='dashed', linewidth=2, zorder=20)
+            P.axs[0].scatter(phi_max, aa_max + 0.02 * y0max, color=col, marker='v', linewidth=2, zorder=20)
+        for i, ymax,ylab in zip([0,1],[y0max,None], [r'scaled velocity $(s^{-1})$',ylab1]):
+            P.conf_ax(i, ylim=(0, ymax), xlim=(0, pi2), ylab=ylab, xlab='$\phi_{stride}$',
+                  legfontsize=15, leg_loc='upper left', yMaxN=5,
+                  xticks=np.linspace(0, pi2, 5),xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
 
-    P.axs[0].set_ylabel(r'scaled velocity $(sec^{-1})$')
-    P.axs[0].set_ylim([0, ymax])
-    for ax in P.axs:
-        ax.set_xlabel('$\phi_{stride}$')
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-        ax.set_xlim([0, pi2])
-        ax.set_xticks(np.linspace(0, pi2, 5))
-        ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-        ax.legend(loc='upper left', fontsize=15)
+    # P.axs[0].set_ylabel(r'scaled velocity $(s^{-1})$')
+    # P.axs[0].set_ylim([0, ymax])
+    # for ax in P.axs:
+    #     ax.set_xlabel('$\phi_{stride}$')
+    #     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
+    #     ax.set_xlim([0, pi2])
+    #     ax.set_xticks(np.linspace(0, pi2, 5))
+    #     ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
+    #     ax.legend(loc='upper left', fontsize=15)
 
-    try:
-        att = 'attenuation'
-        att_max, att_min, phi_att_max, phi_sv_max = nam.max(att), nam.min(att), nam.max(f'phi_{att}'), nam.max(f'phi_{sv}')
-        ps = [nam.max(f'phi_{nam.vel(p)}') for i, p in enumerate(points0)]
-        aa = np.zeros([c.Npoints, c.N]) * np.nan
-        for i, p in enumerate(ps):
-            aa[i, :] = e[p].values - e[phi_att_max].values
-        if axx is None:
-            axx = P.axs[1].inset_axes([0.7, 0.7, 0.3, 0.25])
-        axx.violinplot(aa.T, widths=0.9)
-        axx.set_ylabel(r'$\Delta\phi$')
-        axx.set_xlabel('# point')
-        axx.set_xticks(np.arange(c.Npoints + 1))
-        axx.set_xticklabels([None] + np.arange(1, c.Npoints + 1, 1).tolist())
-        axx.set_yticks([-np.pi / 2, 0, np.pi / 2, np.pi])
-        axx.set_yticklabels([r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'])
-        axx.tick_params(axis='both', which='minor', labelsize=12)
-        axx.tick_params(axis='both', which='major', labelsize=12)
-        axx.axhline(0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
-    except:
-        pass
+        try:
+            att = 'attenuation'
+            ps = [nam.max(f'phi_{nam.vel(p)}') for i, p in enumerate(points0)]
+            aa = np.zeros([c.Npoints, c.N]) * np.nan
+            for i, p in enumerate(ps):
+                aa[i, :] = e[p].values - e[nam.max(f'phi_{att}')].values
+            if axx is None:
+                axx = P.axs[1].inset_axes([0.7, 0.7, 0.3, 0.25])
+            axx.violinplot(aa.T, widths=0.9)
+            P.conf_ax(ax=axx, ylab=r'$\Delta\phi$', xlab='# point',
+                      xticks=np.arange(c.Npoints + 1),yticks=[-np.pi / 2, 0, np.pi / 2, np.pi],
+                      xticklabels=[None] + np.arange(1, c.Npoints + 1, 1).tolist(),
+                      yticklabels=[r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'])
+
+            # axx.set_ylabel(r'$\Delta\phi$')
+            # axx.set_xlabel('# point')
+            # axx.set_xticks(np.arange(c.Npoints + 1))
+            # axx.set_xticklabels([None] + np.arange(1, c.Npoints + 1, 1).tolist())
+            # axx.set_yticks([-np.pi / 2, 0, np.pi / 2, np.pi])
+            # axx.set_yticklabels([r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'])
+            axx.tick_params(axis='both', which='minor', labelsize=12)
+            axx.tick_params(axis='both', which='major', labelsize=12)
+            axx.axhline(0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
+        except:
+            pass
     P.adjust((0.15, 0.9), (0.2, 0.9), 0.1, 0.15)
     return P.get()
 

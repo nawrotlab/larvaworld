@@ -13,7 +13,7 @@ def register_bout_distros(c,e):
             nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
             nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
             'dt': c.dt,
-            'crawl_bouts': True,
+            # 'crawl_bouts': True,
             'feed_bouts': True,
             'stridechain_dist': c.bout_distros.run_count,
             'pause_dist': c.bout_distros.pause_dur,

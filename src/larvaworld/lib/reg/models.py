@@ -199,8 +199,7 @@ def init_brain_modules():
             'EEB_decay': {'v0': 1.0, 'lim': (0.0, 2.0), 'sym': sub('c', 'EEB'),
                           'k': 'c_EEB', 'disp': 'EEB decay coefficient',
                           'h': 'The exponential decay coefficient of the exploitation-exploration balance when no food is detected.'},
-            'crawl_bouts': {**bT, 'disp': 'crawling bouts', 'k': 'epochs_C',
-                            'h': 'Whether crawling bouts (runs/stridechains) are generated.'},
+
             'feed_bouts': {**bF, 'disp': 'feeding bouts', 'k': 'epochs_F',
                            'h': 'Whether feeding bouts (feedchains) are generated.'},
             'crawl_freq': {'v0': 1.43, 'lim': (0.5, 2.5), 'k': 'f_C', 'dv': 0.01, 'u': reg.units.Hz,

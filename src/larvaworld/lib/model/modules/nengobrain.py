@@ -278,26 +278,27 @@ class NengoBrain(Network, Brain):
         return np.mean(data[self.p_angV][-self.Nsteps:], axis=0)[0]
 
     def feed_event(self, data):
-        if self.feeder is not None:
+        if self.locomotor.feeder is not None:
             return np.any(data[self.p_feeV][-self.Nsteps:] >= 1)
         else :
             return False
 
     def step(self, pos=None, on_food=False):
-        length = self.agent.sim_length
+
         if self.olfactor:
             self.olfactor.X = self.sense_odors(pos)
         if self.windsensor:
             self.wind_activation = self.windsensor.step(self.sense_wind())
-        self.locomotor.intermitter.step(self.locomotor, on_food=on_food)
+
         self.sim.run_steps(self.Nsteps, progress_bar=False)
         d = self.sim.data
-
+        self.olfactory_activation = 100 * self.mean_odor_change(d)
         ang = self.mean_ang_s(d) + np.random.normal(scale=self.locomotor.turner.noise)
         lin = self.mean_lin_s(d) + np.random.normal(scale=self.locomotor.crawler.noise)
-        lin*=length
+        lin*=self.agent.sim_length
         feed = self.feed_event(d)
-        self.olfactory_activation = 100 * self.mean_odor_change(d)
+        self.locomotor.step(feed_motion=feed,on_food=on_food)
+
         if self.dict is not None :
             self.update_dict(d)
         self.sim.clear_probes()
@@ -356,7 +357,38 @@ class NengoLocomotor(Locomotor):
             self.interference = SquareCoupling(**c['interference_params'])
         if m['intermitter']:
             self.intermitter = NengoIntermitter(dt=self.dt, **c['intermitter_params'])
-            self.intermitter.disinhibit_locomotion(self)
-            self.intermitter.start_effector()
+            # self.intermitter.disinhibit_locomotion(self)
+            # self.intermitter.start_effector()
         else:
             self.intermitter = None
+
+    def on_new_pause(self):
+        if self.crawler:
+            self.crawler.set_freq(0)
+        if self.feeder:
+            self.feeder.set_freq(0)
+
+    def on_new_run(self):
+        if self.crawler:
+            self.crawler.set_freq(self.crawler.initial_freq)
+        if self.feeder:
+            self.feeder.set_freq(0)
+
+    def on_new_feed(self):
+        if self.crawler:
+            self.crawler.set_freq(0)
+        if self.feeder:
+            self.feeder.set_freq(self.feeder.initial_freq)
+
+    def step(self,feed_motion=False, on_food=False):
+
+
+        if self.intermitter:
+            pre_state = self.intermitter.cur_state
+            self.intermitter.step(stride_completed=False, feed_motion=feed_motion, on_food=on_food)
+            if pre_state != 'pause' and self.intermitter.cur_state == 'pause':
+                self.on_new_pause()
+            elif pre_state != 'exec' and self.intermitter.cur_state == 'exec':
+                self.on_new_run()
+            elif pre_state != 'feed' and self.intermitter.cur_state == 'feed':
+                self.on_new_feed()

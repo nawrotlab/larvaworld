@@ -186,7 +186,7 @@ def kinematic_analysis(datasets, **kwargs):
 
     P.plot(func='fft multi',kws={**kws}, y0=True,N=1, **kws1)
     P.plot(func='epochs', kws={'plot_fits': ['powerlaw', 'exponential', 'lognormal', 'levy'], **kws},h0=int(h/2+2), N=2, **kws1)
-    P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h, w0=int(w/2+2),y0=True,share_w= True, **kws2)
+    # P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h, w0=int(w/2+2),y0=True,share_w= True,annotate_all= True, **kws2)
     P.adjust((0.07, 0.95), (0.1, 0.9), 0.2, 0.1)
     P.annotate()
     return P.get()

@@ -28,7 +28,7 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     plot.plot_quantiles(v_ys, from_np=True, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
     plot.plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
     xmax = 3.5
-    P.conf_ax(0, ylim=(0, 4), xlim=(0, xmax), ylab='Amplitude', xlab='Frequency (Hz)',
+    P.conf_ax(0, ylim=(0, 4), xlim=(0, xmax), ylab='Amplitude (a.u.)', xlab='Frequency (Hz)',
               title='Fourier analysis',titlefontsize=25, leg_loc='lower left', yMaxN=5)
 
     bins = np.linspace(0, 2, 40)

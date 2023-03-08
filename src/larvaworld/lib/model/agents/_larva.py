@@ -90,12 +90,12 @@ class LarvaMotile(Larva):
         return item, foodtype
 
     def update_larva(self):
-        self.current_V_eaten, self.feed_success = self.feed(self.food_detected, self.feeder_motion)
+        self.current_V_eaten = self.feed(self.food_detected, self.feeder_motion)
         self.cum_food_detected += int(self.on_food)
         # self.update_foraging_dict(self.current_foodtype, self.current_V_eaten)
         self.run_energetics(self.current_V_eaten)
-        if self.brain.locomotor.intermitter is not None:
-            self.brain.locomotor.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
+        # if self.brain.locomotor.intermitter is not None:
+        #     self.brain.locomotor.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
 
         for o in self.carried_objects:
             o.pos = self.pos
@@ -113,20 +113,16 @@ class LarvaMotile(Larva):
                     V = -grid.add_cell_value(source, -a_max)
                 else:
                     V = source.subtract_amount(a_max)
-                self.feed_success_counter += 1
                 self.amount_eaten += V * 1000
-                return V, 1
+                return V
             else:
-                self.feed_fail_counter += 1
-                return 0, -1
+                return 0
         else:
-            return 0, 0
+            return 0
 
     def reset_feeder(self):
-        self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype, self.feed_success = None, False, None, 0, 0
-        self.cum_food_detected, self.feed_success_counter,self.feed_fail_counter, self.amount_eaten = 0, 0, 0,0
-        # self.foraging_dict = aux.AttrDict({id: {action: 0 for action in ['on_food_tr', 'sf_am']} for id in
-        #                                    self.model.foodtypes.keys()})
+        self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype = None, False, None, 0
+        self.cum_food_detected, self.amount_eaten = 0, 0
         try:
             self.brain.feeder.reset()
         except:
@@ -176,7 +172,14 @@ class LarvaMotile(Larva):
                 self.adjust_body_vertices()
 
     def get_feed_success(self, t):
-        return self.feed_success
+        if self.feeder_motion :
+            if self.on_food :
+                return 1
+            else:
+                return -1
+        else:
+            return 0
+
 
     @property
     def on_food_dur_ratio(self):
