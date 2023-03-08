@@ -109,7 +109,8 @@ def angle_dif(angle_1, angle_2, in_deg=True):
     else :
         return (a + np.pi) % (np.pi * 2) - np.pi
 
-
+def rotationMatrix(a):
+    return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
 
 def rotate_point_around_point(point, radians, origin=None):
@@ -140,9 +141,7 @@ def rotate_point_around_point(point, radians, origin=None):
     sin_rad = math.sin(radians)
     qx = x0 + cos_rad * xx + sin_rad * yy
     qy = y0 + -sin_rad * xx + cos_rad * yy
-    p = (qx, qy)
-    return p
-
+    return np.array([qx, qy])
 
 
 def rotate_points_around_point(points, radians, origin=None):
@@ -165,9 +164,36 @@ def rotate_points_around_point(points, radians, origin=None):
 
     if origin is None:
         origin = [0, 0]
-    qx, qy = rotate_point_around_point(np.array(points).T, radians, origin=origin)
-    ps=np.vstack((qx, qy)).T
-    return ps
+    # qx, qy = rotate_point_around_point(np.array(points).T, radians, origin=origin)
+    # ps=np.vstack((qx, qy)).T
+    #
+    # newxy = (points - origin) @ rotationMatrix(radians) + origin
+    return (points - origin) @ rotationMatrix(radians) + origin
+
+
+# def rotate_points_around_point2(points, radians, origin=None):
+#     """Rotate multiple points around a given point clockwise
+#
+#         Parameters
+#         ----------
+#         points : List[Tuple[float]]
+#             The XY coordinates of the points to be rotated
+#         radians : float
+#             The rotation angle
+#         origin : Tuple[float], optional
+#             The XY coordinates of the rotation point (default is [0, 0])
+#
+#         Returns
+#         -------
+#         ps : List[Tuple[float]]
+#             The XY coordinates of the rotated points
+#         """
+#
+#     if origin is None:
+#         origin = [0, 0]
+#     qx, qy = rotate_point_around_point(np.array(points).T, radians, origin=origin)
+#     ps=np.vstack((qx, qy)).T
+#     return ps
 
 
 def unwrap_rad(s, in_deg=False) :
@@ -201,4 +227,23 @@ def unwrap_rad(s, in_deg=False) :
 
 
 
+'''
 
+
+a=np.array([5.6,7.8])
+# a=[5.6,7.8]
+b=3.67
+o=[3.4,5.6]
+import time
+t0=time.time()
+for i in range(100000) :
+    a1=rotate_points_around_point(a,b,o)
+    # print(a1)
+t1=time.time()
+for i in range(100000) :
+    a2=rotate_point_around_point(a,b,o)
+    # print(a2)
+t2=time.time()
+print((np.array([t1-t0,t2-t1])*100000).astype(int))
+
+'''

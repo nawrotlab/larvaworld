@@ -111,8 +111,8 @@ class LarvaReplay(Larva):
                 x, y = self.pos
                 h_or = self.front_or
                 b_or = self.front_or - self.bend0
-                p_head = np.array(aux.rotate_point_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or))
-                p_tail = np.array(aux.rotate_point_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or))
+                p_head = aux.rotate_point_around_point(origin=[x, y], point=[l1 + x, y], radians=-h_or)
+                p_tail = aux.rotate_point_around_point(origin=[x, y], point=[l2 + x, y], radians=np.pi - b_or)
                 pos1 = [np.nanmean([p_head[j], [x, y][j]]) for j in [0, 1]]
                 pos2 = [np.nanmean([p_tail[j], [x, y][j]]) for j in [0, 1]]
                 segs[0].update_poseNvertices(pos1, h_or)

@@ -153,8 +153,7 @@ class DefaultBrain(Brain):
         # if m.memory and c.memory_params.modality == 'touch':
         #     self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
 
-
-
+    # @profile
     def step(self, pos, length, on_food=False, **kwargs):
         self.sense(pos=pos, reward=on_food)
         return self.locomotor.step(A_in=self.A_in, length=length, on_food=on_food)

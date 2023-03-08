@@ -220,7 +220,7 @@ def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, s
     hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
     def get_hf0(ang_vel):
         d_or = ang_vel * dt
-        return np.array(aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or))
+        return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
 
 
     def fov(ang_vel, turn_err =0):
@@ -365,15 +365,13 @@ def generate_segs_offline(N, pos, orientation, length, shape='drosophila_larva',
 
     seg_positions =generate_seg_positions(N, pos, orientation, length,seg_ratio)
     from larvaworld.lib.reg.stored.miscellaneous import body_shapes
-    seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=body_shapes[shape]) * length
-    seg_lengths = length * seg_ratio
-
+    base_seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=body_shapes[shape])
     if color is None:
         color = [0.0, 0.0, 0.0]
     seg_colors = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
     if mode == 'default':
         from larvaworld.lib.model.agents.segmented_body import generate_segs
-        return generate_segs(N, seg_positions, orientation, seg_vertices, seg_colors, seg_lengths)
+        return generate_segs(N, seg_positions, orientation, base_seg_vertices, seg_colors, seg_ratio, length)
 
 
 def get_centroid_position(segs):

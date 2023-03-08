@@ -145,9 +145,9 @@ class DrawBodyTab(gui_aux.DrawTab):
 
         dic = self.base_dict
         gg = self.graph
-        seg_vertices=generate_seg_shapes(centered=False, **conf)
-        for i in range(seg_vertices.shape[0]):
-            ps = [self.scale_xy(seg_vertices[i]- np.array([0.5, 0.0]), reverse=True) for i in range(seg_vertices.shape[0])]
+        base_seg_vertices=generate_seg_shapes(centered=False, **conf)
+        for i in range(base_seg_vertices.shape[0]):
+            ps = [self.scale_xy(base_seg_vertices[i]- np.array([0.5, 0.0]), reverse=True) for i in range(base_seg_vertices.shape[0])]
             ps.append(ps[0])
             f = gg.draw_lines(ps, width=2, color=self.Cdict[self.S])
             dic[self.S][i] = {'fig': f, 'pos': ps}

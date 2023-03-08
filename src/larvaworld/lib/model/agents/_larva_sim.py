@@ -66,13 +66,13 @@ class LarvaSim(LarvaBody, BaseController):
             ang_vel += np.sign(ang_vel) * d_ang
             return lin_vel, ang_vel
 
-
+    # @profile
     def position_body(self, lin_vel, ang_vel):
         dt=self.model.dt
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
-        hr0 = self.global_rear_end_of_head
-        l0 = self.seg_lengths[0]
+        hr0 = self.head.global_rear_end
+        l0 = self.head.seg_length
         A0,A1=self.valid_Dbend_range(0,ho0)
         fov0,fov1 = A0 / dt, A1 / dt
 
@@ -106,7 +106,7 @@ class LarvaSim(LarvaBody, BaseController):
             for i, seg in enumerate(self.segs[1:]):
                 o1 = seg.get_orientation() + d_or
                 k = np.array([np.cos(o1), np.sin(o1)])
-                p1 = self.get_global_rear_end_of_seg(seg_index=i) - k * seg.seg_length / 2
+                p1 = self.segs[i].global_rear_end - k * seg.seg_length / 2
                 seg.update_poseNvertices(p1, o1)
 
         self.pos = self.global_midspine_of_body

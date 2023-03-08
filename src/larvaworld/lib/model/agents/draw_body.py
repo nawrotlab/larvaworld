@@ -2,7 +2,7 @@ import numpy as np
 from larvaworld.lib import aux
 
 
-def draw_body(viewer, model, pos, midline_xy, contour_xy, radius, vertices, color,segs=None, selected=False,
+def draw_body(viewer, model, pos,color,radius, midline_xy=None, contour_xy=None,  vertices=None, segs=None, selected=False,
               front_or=None, rear_or=None):
     if model.screen_manager.draw_centroid:
         draw_body_centroid(viewer, pos, radius, color)

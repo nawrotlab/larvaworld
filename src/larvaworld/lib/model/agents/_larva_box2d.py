@@ -6,8 +6,10 @@ from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController
 
 class Box2DSegment:
 
-    def __init__(self, pos,orientation,seg_vertices,color, space, physics_pars, facing_axis):
+    def __init__(self, pos,orientation,base_seg_vertices,base_seg_ratio,color, space, physics_pars, facing_axis, body_length):
 
+        self.base_seg_ratio = base_seg_ratio
+        self.base_seg_vertices = base_seg_vertices
         self.color = color
         self.space = space
         self.physics_pars = physics_pars
@@ -36,8 +38,8 @@ class Box2DSegment:
 
         # TODO: right now this assumes that all subpolygons have the same number of edges
         # TODO: rewrite such that arbitrary subpolygons can be used here
-        # vertices = self.seg_vertices
-
+        self.body_length=body_length
+        seg_vertices=self.base_seg_vertices*body_length
         centroid = np.zeros(2)
         area = .0
         for vs in seg_vertices:
@@ -231,7 +233,7 @@ class LarvaBox2D(LarvaBody,BaseController):
         for i in range(self.Nsegs):
             seg = Box2DSegment(space=self.model.space, pos=self.seg_positions[i], orientation=self.orientation,
                                physics_pars=physics_pars, facing_axis=Box2D.b2Vec2(1.0, 0.0),
-                               seg_vertices=self.seg_vertices[i], color=self.seg_colors[i])
+                               base_seg_vertices=self.base_seg_vertices[i],base_seg_ratio=self.seg_ratio[i], color=self.seg_colors[i], body_length=self.sim_length)
             fixtures.extend(seg._fixtures)
             segs.append(seg)
 

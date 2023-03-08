@@ -212,6 +212,7 @@ class LarvaMotile(Larva):
     def sense(self):
         pass
 
+    # @profile
     def step(self):
         self.cum_dur += self.model.dt
         self.sense()

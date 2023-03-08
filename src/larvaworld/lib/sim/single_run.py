@@ -50,6 +50,7 @@ class ExpRun(BaseRun):
             return self.exp_condition.check(self)
         return False
 
+    # @profile
     def sim_step(self):
         """ Proceeds the simulation by one step, incrementing `Model.t` by 1
         and then calling :func:`Model.step` and :func:`Model.update`."""
@@ -60,6 +61,7 @@ class ExpRun(BaseRun):
             if self.t >= self._steps or self.end_condition_met:
                 self.running = False
 
+    # @profile
     def step(self):
         """ Defines the models' events per simulation step. """
         if not self.larva_collisions:
@@ -68,7 +70,7 @@ class ExpRun(BaseRun):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
-        if True :
+        if len(self.sources)>10 :
             self.space.accessible_sources_multi(self.agents)
         self.agents.step()
         if self.Box2D:
