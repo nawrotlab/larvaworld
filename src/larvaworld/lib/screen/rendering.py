@@ -298,9 +298,10 @@ class Viewer(object):
                     continue
 
                 if words[0] == 'Scene':
-                    width = int(words[1])
-                    height = int(words[2])
-                    viewer = Viewer((width, height), **kwargs)
+                    # pass
+                    # width = int(words[1])
+                    # height = int(words[2])
+                    viewer = Viewer(**kwargs)
                 # elif words[0] == 'SensorDrivenRobot':
                 #     x = float(words[1])
                 #     y = float(words[2])

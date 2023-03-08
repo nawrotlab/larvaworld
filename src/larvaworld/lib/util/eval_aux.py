@@ -237,6 +237,7 @@ def build_fitness(dic, refDataset):
     func_global_dict, func_solo_dict = {},{}
     keys = []
     for k, vs in dic.items():
+
         if k == 'cycle_curves':
             cycle_dict = {'sv': 'abs', 'fov': 'norm', 'rov': 'norm', 'foa': 'norm', 'b': 'norm'}
             cycle_ks = vs

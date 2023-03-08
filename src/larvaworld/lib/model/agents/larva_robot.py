@@ -12,10 +12,12 @@ class LarvaRobot(LarvaSim):
         self.finalized = False
         self.collision_with_object = False
 
-        self.xx, self.yy = self.model.viewer._transform(self.pos)
+
+
 
 
     def draw(self, viewer):
+        self.xx, self.yy = viewer._transform(self.pos)
         for seg in self.segs:
             viewer.draw_polygon(seg.vertices, filled=True, color=seg.color)
 
@@ -24,7 +26,7 @@ class LarvaRobot(LarvaSim):
         return self.head.get_orientation()
 
     def complete_step(self):
-        self.xx, self.yy = self.model.viewer._transform(self.pos)
+        # self.xx, self.yy = self.model.viewer._transform(self.pos)
         self.Nticks += 1
 
     @ property

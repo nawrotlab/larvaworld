@@ -144,7 +144,7 @@ class GA_ScreenManager(BaseScreenManager):
         # self.v.render()
 
     def draw_agents(self, v):
-        for o in self.model.get_food():
+        for o in self.model.sources:
             if o.visible:
                 o.draw(v, filled=True if o.amount > 0 else False)
                 o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
@@ -152,7 +152,7 @@ class GA_ScreenManager(BaseScreenManager):
         for g in self.model.engine.robots:
             if g.visible:
 
-                g.draw(v, self)
+                g.draw(v)
                 g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
 
