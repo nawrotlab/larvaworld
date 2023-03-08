@@ -417,12 +417,10 @@ class BranchIntermitter(Intermitter):
         # self.pause_dist = util.BoutGenerator(**pause_dist, dt=self.dt)
 
     def generate_stridechain(self):
-        from larvaworld.lib.util.fitting import exp_bout
-        return exp_bout(beta=self.beta, tmax=self.stridechain_max, tmin=self.stridechain_min)
+        return util.exp_bout(beta=self.beta, tmax=self.stridechain_max, tmin=self.stridechain_min)
 
     def generate_pause(self):
-        from larvaworld.lib.util.fitting import critical_bout
-        return critical_bout(c=self.c, sigma=self.sigma, N=1000, tmax=self.pau_max, tmin=self.pau_min)*self.dt
+        return util.critical_bout(c=self.c, sigma=self.sigma, N=1000, tmax=self.pau_max, tmin=self.pau_min)*self.dt
 
 
 class FittedIntermitter(OfflineIntermitter):
@@ -441,13 +439,13 @@ class FittedIntermitter(OfflineIntermitter):
         super().__init__(**stored_conf)
 
 def get_EEB_poly1d(**kws):
-    max_ticks = int(60 * 60 / kws['dt'])
+    max_dur = 60 * 60
     EEBs = np.arange(0, 1.05, 0.05)
     ms = []
     for EEB in EEBs:
         inter = OfflineIntermitter(EEB=EEB, **kws)
         # inter.disinhibit_locomotion()
-        while inter.total_ticks < max_ticks:
+        while inter.total_t < max_dur:
             inter.step()
         ms.append(inter.get_mean_feed_freq())
     z = np.poly1d(np.polyfit(np.array(ms), EEBs, 5))
@@ -460,14 +458,14 @@ def get_EEB_time_fractions(refID=None, dt=None, **kwargs):
         kws = kwargs
     if dt is not None:
         kws['dt'] = dt
-    max_ticks = int(60 * 60 / kws['dt'])
+    max_dur = 60 * 60
     rts = {f'{q} ratio': nam.dur_ratio(p) for p, q in
            zip(['stridechain', 'pause', 'feedchain'], ['crawl', 'pause', 'feed'])}
     EEBs = np.round(np.arange(0, 1, 0.02), 2)
     data = []
     for EEB in EEBs:
         inter = OfflineIntermitter(EEB=EEB, **kws)
-        while inter.total_ticks < max_ticks:
+        while inter.total_t < max_dur:
             inter.step()
         dic = inter.build_dict()
         ffr = inter.get_mean_feed_freq()

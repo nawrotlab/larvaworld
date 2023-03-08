@@ -60,7 +60,8 @@ class LarvaMotile(Larva):
         super().__init__(**kwargs)
         self.brain = self.build_brain(brain)
         self.build_energetics(energetics, life_history=life_history)
-        self.reset_feeder()
+        self.food_detected, self.feeder_motion = None, False
+        self.cum_food_detected, self.amount_eaten = 0, 0
 
     def build_brain(self, conf):
         if conf.nengo:
@@ -70,35 +71,8 @@ class LarvaMotile(Larva):
             from larvaworld.lib.model.modules.brain import DefaultBrain
             return DefaultBrain(agent=self, conf=conf, dt=self.model.dt)
 
-    def detect_food(self, pos):
-        item, foodtype = None, None
-        if self.brain.locomotor.feeder is not None or self.brain.toucher is not None:
-            grid = self.model.food_grid
-            if grid:
-                cell = grid.get_grid_cell(pos)
-                if grid.get_cell_value(cell) > 0:
-                    item, foodtype = cell, grid.unique_id
 
-            else:
-                valid = self.model.sources.select(aux.eudi5x(np.array(self.model.sources.pos), pos) <= self.radius)
-                valid.select(valid.amount > 0)
 
-                if len(valid) > 0:
-                    food = random.choice(valid)
-                    self.resolve_carrying(food)
-                    item, foodtype = food, food.group
-        return item, foodtype
-
-    def update_larva(self):
-        self.current_V_eaten = self.feed(self.food_detected, self.feeder_motion)
-        self.cum_food_detected += int(self.on_food)
-        # self.update_foraging_dict(self.current_foodtype, self.current_V_eaten)
-        self.run_energetics(self.current_V_eaten)
-        # if self.brain.locomotor.intermitter is not None:
-        #     self.brain.locomotor.intermitter.update(food_present=self.food_detected, feed_success=self.feed_success)
-
-        for o in self.carried_objects:
-            o.pos = self.pos
 
     def feed(self, source, motion):
 
@@ -113,20 +87,14 @@ class LarvaMotile(Larva):
                     V = -grid.add_cell_value(source, -a_max)
                 else:
                     V = source.subtract_amount(a_max)
-                self.amount_eaten += V * 1000
+
                 return V
             else:
                 return 0
         else:
             return 0
 
-    def reset_feeder(self):
-        self.food_detected, self.feeder_motion, self.current_V_eaten, self.current_foodtype = None, False, None, 0
-        self.cum_food_detected, self.amount_eaten = 0, 0
-        try:
-            self.brain.feeder.reset()
-        except:
-            pass
+
 
     def build_energetics(self, energetic_pars, life_history):
         from larvaworld.lib.model.deb.deb import DEB
@@ -197,6 +165,8 @@ class LarvaMotile(Larva):
         return self.amount_eaten / self.real_mass
 
     def resolve_carrying(self, food):
+        if food is None:
+            return
         if food.can_be_carried and food not in self.carried_objects:
             if food.is_carried_by is not None:
                 prev_carrier = food.is_carried_by
@@ -246,9 +216,26 @@ class LarvaMotile(Larva):
         self.cum_dur += self.model.dt
         self.sense()
         pos = self.olfactor_pos
-        self.food_detected, self.current_foodtype = self.detect_food(pos)
-        lin, ang, self.feeder_motion = self.brain.step(pos, on_food=self.on_food)
-        self.update_larva()
+
+        if self.model.space.accessible_sources :
+            self.food_detected = self.model.space.accessible_sources[self]
+            # if self.food_detected is not None :
+            #     print(self.unique_id, self.food_detected.unique_id)
+        elif self.brain.locomotor.feeder  or self.brain.toucher:
+            self.food_detected = aux.sense_food(pos, sources=self.model.sources, grid=self.model.food_grid,
+                                        radius=self.radius)
+        self.resolve_carrying(self.food_detected)
+
+        lin, ang, self.feeder_motion = self.brain.step(pos, length=self.real_length, on_food=self.on_food)
+        V = self.feed(self.food_detected, self.feeder_motion)
+        self.amount_eaten += V * 1000
+        self.cum_food_detected += int(self.on_food)
+        self.run_energetics(V)
+
+
+        for o in self.carried_objects:
+            o.pos = self.pos
+
         self.prepare_motion(lin=lin, ang=ang)
 
     def prepare_motion(self, lin, ang):

@@ -1,9 +1,10 @@
+
 import math
 import random
-
 import numpy as np
+from numpy import ndarray
 from shapely import geometry, ops
-
+from typing import Optional, List
 from scipy.signal import sosfiltfilt, butter
 
 from larvaworld.lib import aux
@@ -280,14 +281,32 @@ class Collision(Exception):
 
 
 
-def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
+
+
+def generate_seg_shapes(Nsegs: int, points:ndarray, seg_ratio: Optional[ndarray] = None,
+                 centered: bool = True, closed: bool = False) -> ndarray:
+    """
+    Segments a body into equal-length or given-length segments via vertical lines.
+
+    Args:
+    - Nsegs: Number of segments to divide the body into.
+    - points: Array with shape (M,2) representing the contour of the body to be segmented.
+    - seg_ratio: List of N floats specifying the ratio of the length of each segment to the length of the body.
+                Defaults to None, in which case equal-length segments will be generated.
+    - centered: If True, centers the segments around the origin. Defaults to True.
+    - closed: If True, the last point of each segment is connected to the first point. Defaults to False.
+
+    Returns:
+    - ps: Numpy array with shape (Nsegs,L,2), where L is the number of vertices of each segment.
+          The first segment in the list is the front-most segment.
+    """
 
     # If segment ratio is not provided, generate equal-length segments
     if seg_ratio is None:
-        seg_ratio = [1 / N] * N
+        seg_ratio = np.array([1 / Nsegs] * Nsegs)
 
     # Create a polygon from the given body contour
-    p = geometry.Polygon(xy0)
+    p = geometry.Polygon(points)
     # Get maximum y value of contour
     y0 = np.max(p.exterior.coords.xy[1])
 
@@ -311,7 +330,6 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
     if centered:
         for i, (r, cum_r) in enumerate(zip(seg_ratio, np.cumsum(seg_ratio))):
             ps[i] -= [(1 - cum_r) + r / 2, 0]
-            # pass
 
     # Put front point at the start of segment vertices. Drop duplicate rows
     for i in range(len(ps)):
@@ -324,15 +342,10 @@ def segment_body(N, xy0, seg_ratio=None, centered=True, closed=False):
         ps[i] = ps[i][np.sort(idx)]
         if closed:
             ps[i] = np.concatenate([ps[i], [ps[i][0]]])
-    return ps
+    return np.array(ps)
 
 
-def generate_seg_shapes(Nsegs, points, seg_ratio=None, centered=True, closed=False, **kwargs):
-    if seg_ratio is None:
-        seg_ratio = np.array([1 / Nsegs] * Nsegs)
-    ps = segment_body(Nsegs, np.array(points), seg_ratio=seg_ratio, centered=centered, closed=closed)
-    seg_vertices = [np.array([p]) for p in ps]
-    return seg_vertices
+
 
 def generate_seg_positions(Nsegs, pos, orientation, length,seg_ratio=None) :
     x,y=pos
@@ -351,10 +364,8 @@ def generate_segs_offline(N, pos, orientation, length, shape='drosophila_larva',
         seg_ratio = np.array([1 / N] * N)
 
     seg_positions =generate_seg_positions(N, pos, orientation, length,seg_ratio)
-    from larvaworld.lib.reg.stored.miscellaneous import Body_dict
-    contour_points = Body_dict()[shape]['points']
-    base_seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=contour_points)
-    seg_vertices = [s * length for s in base_seg_vertices]
+    from larvaworld.lib.reg.stored.miscellaneous import body_shapes
+    seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=body_shapes[shape]) * length
     seg_lengths = length * seg_ratio
 
     if color is None:
@@ -376,7 +387,7 @@ def get_centroid_position(segs):
     return np.asarray(centroid)
 
 def set_contour(segs, Ncontour=22):
-    vertices = [np.array(seg.vertices[0]) for seg in segs]
+    vertices = [np.array(seg.vertices) for seg in segs]
     l_side = aux.flatten_list([v[:int(len(v) / 2)] for v in vertices])
     r_side = aux.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
     r_side.reverse()
@@ -387,3 +398,17 @@ def set_contour(segs, Ncontour=22):
     else:
         contour = total_contour
     return contour
+
+def sense_food(pos, sources=None, grid=None, radius=None):
+
+    if grid:
+        cell = grid.get_grid_cell(pos)
+        if grid.get_cell_value(cell) > 0:
+            return cell
+    elif sources and radius is not None:
+        valid = sources.select(aux.eudi5x(np.array(sources.pos), pos) <= radius)
+        valid.select(valid.amount > 0)
+
+        if len(valid) > 0:
+            return random.choice(valid)
+    return None

@@ -1,6 +1,3 @@
-import numpy as np
-
-
 from larvaworld.lib import reg
 
 class Locomotor:

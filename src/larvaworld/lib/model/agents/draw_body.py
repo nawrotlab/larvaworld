@@ -68,8 +68,7 @@ def draw_body_contour(viewer, contour_xy, color, radius):
 
 def draw_body_segments(viewer,segs):
     for seg in segs:
-        for vertices in seg.vertices:
-            viewer.draw_polygon(vertices, filled=True, color=seg.color)
+        viewer.draw_polygon(seg.vertices, filled=True, color=seg.color)
 
 
 def draw_body_centroid(viewer, pos, radius, color):

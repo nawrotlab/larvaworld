@@ -109,7 +109,7 @@ class BaseRun(agentpy.Model):
         self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
         sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
-        self.space.add_agents(source_list, positions=[a.pos for a in source_list])
+        self.space.add_sources(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
         self.foodtypes = aux.get_all_foodtypes(p)
         self.source_xy = aux.get_source_xy(p)

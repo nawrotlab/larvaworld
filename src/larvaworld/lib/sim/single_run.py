@@ -30,7 +30,7 @@ class ExpRun(BaseRun):
 
         self.place_agents(self.p.larva_groups, parameter_dict)
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-
+        self.accessible_sources = None
 
         self.screen_manager = ScreenManager(model=self, **screen_kws, video=video)
 
@@ -68,7 +68,8 @@ class ExpRun(BaseRun):
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
-
+        if True :
+            self.space.accessible_sources_multi(self.agents)
         self.agents.step()
         if self.Box2D:
             self.space.Step(self.dt, 6, 2)

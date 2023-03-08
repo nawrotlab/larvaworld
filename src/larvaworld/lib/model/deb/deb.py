@@ -704,15 +704,15 @@ def deb_sim(refID, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fals
         if inter.feed_counter > cum_feeds:
             feeds += 1
             cum_feeds += 1
-        if inter.total_ticks % Nticks == 0:
+        if int(inter.total_t/inter.dt) % Nticks == 0:
             feed_dict.append(feeds)
             X_V = deb.V_bite * deb.V * feeds
             deb.run(X_V=X_V)
             feeds = 0
             if use_hunger:
                 inter.EEB = deb.hunger
-                if inter.feeder_reocurrence_as_EEB:
-                    inter.feeder_reoccurence_rate = inter.EEB
+                # if inter.feeder_reocurrence_as_EEB:
+                #     inter.feeder_reoccurence_rate = inter.EEB
             if deb.age * 24 > counter:
                 # print(counter, int(deb.pupation_buffer * 100))
                 counter += 24

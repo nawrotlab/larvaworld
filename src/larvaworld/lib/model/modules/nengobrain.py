@@ -283,7 +283,7 @@ class NengoBrain(Network, Brain):
         else :
             return False
 
-    def step(self, pos=None, on_food=False):
+    def step(self, pos,length, on_food=False):
 
         if self.olfactor:
             self.olfactor.X = self.sense_odors(pos)
@@ -295,14 +295,16 @@ class NengoBrain(Network, Brain):
         self.olfactory_activation = 100 * self.mean_odor_change(d)
         ang = self.mean_ang_s(d) + np.random.normal(scale=self.locomotor.turner.noise)
         lin = self.mean_lin_s(d) + np.random.normal(scale=self.locomotor.crawler.noise)
-        lin*=self.agent.sim_length
-        feed = self.feed_event(d)
-        self.locomotor.step(feed_motion=feed,on_food=on_food)
+
+
+        lin*=length
+        self.locomotor.feed_motion = self.feed_event(d)
+        self.locomotor.step(on_food=on_food)
 
         if self.dict is not None :
             self.update_dict(d)
         self.sim.clear_probes()
-        return lin, ang, feed
+        return lin, ang, self.locomotor.feed_motion
 
     def save_dicts(self, path):
         if self.dict is not None:
@@ -380,12 +382,12 @@ class NengoLocomotor(Locomotor):
         if self.feeder:
             self.feeder.set_freq(self.feeder.initial_freq)
 
-    def step(self,feed_motion=False, on_food=False):
+    def step(self,on_food=False):
 
 
         if self.intermitter:
             pre_state = self.intermitter.cur_state
-            self.intermitter.step(stride_completed=False, feed_motion=feed_motion, on_food=on_food)
+            self.intermitter.step(stride_completed=False, feed_motion=self.feed_motion, on_food=on_food)
             if pre_state != 'pause' and self.intermitter.cur_state == 'pause':
                 self.on_new_pause()
             elif pre_state != 'exec' and self.intermitter.cur_state == 'exec':

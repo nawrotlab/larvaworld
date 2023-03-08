@@ -1,7 +1,7 @@
 import numpy as np
 
-from larvaworld.lib.model.modules.locomotor import DefaultLocomotor
 from larvaworld.lib import reg, aux
+from larvaworld.lib.model.modules.locomotor import DefaultLocomotor
 
 
 class Brain:
@@ -15,7 +15,7 @@ class Brain:
         # A dictionary of the possibly existing sensors along with the sensing functions and the possibly existing memory modules
         self.sensor_dict = aux.AttrDict({
             'olfactor': {'func': self.sense_odors, 'A': 0.0, 'mem': 'memory'},
-            'toucher': {'func': self.sense_food, 'A': 0.0, 'mem': 'touch_memory'},
+            'toucher': {'func': self.sense_food_multi, 'A': 0.0, 'mem': 'touch_memory'},
             'thermosensor': {'func': self.sense_thermo, 'A': 0.0, 'mem': None},
             'windsensor': {'func': self.sense_wind, 'A': 0.0, 'mem': None}
         })
@@ -36,12 +36,18 @@ class Brain:
             cons[id] = v + np.random.normal(scale=v * self.olfactor.noise)
         return cons
 
-    def sense_food(self,**kwargs):
+    def sense_food_multi(self,**kwargs):
         a = self.agent
         if a is None:
             return {}
         sensors = a.get_sensors()
-        return {s: int(a.detect_food(a.get_sensor_position(s))[0] is not None) for s in sensors}
+        kws={
+            'sources' : a.model.sources, 'grid' : a.model.food_grid, 'radius' : a.radius
+        }
+        return {s: int(aux.sense_food(pos=a.get_sensor_position(s), **kws) is not None) for s in sensors}
+
+
+
 
     def sense_wind(self,**kwargs):
         if self.agent is None:
@@ -68,40 +74,29 @@ class Brain:
             return {'cool': 0, 'warm': 0}
         return cons
 
-    def sense(self, pos=None, on_food=False):
+    def sense(self, pos=None, reward=False):
+
         if self.olfactor :
             if self.memory:
                 dx = self.olfactor.get_dX()
-                self.olfactor.gain = self.memory.step(dx, on_food)
+                self.olfactor.gain = self.memory.step(dx, reward)
             self.A_olf = self.olfactor.step(self.sense_odors(pos), brain=self)
         if self.toucher :
             if self.touch_memory:
                 dx = self.toucher.get_dX()
-                self.toucher.gain = self.touch_memory.step(dx, on_food)
-            self.A_touch = self.toucher.step(self.sense_food(), brain=self)
+                self.toucher.gain = self.touch_memory.step(dx, reward)
+            self.A_touch = self.toucher.step(self.sense_food_multi(), brain=self)
         if self.thermosensor :
             self.A_thermo = self.thermosensor.step(self.sense_thermo(pos), brain=self)
         if self.windsensor :
             self.A_wind = self.windsensor.step(self.sense_wind(), brain=self)
 
 
-        # for k in self.sensor_dict.keys():
-        #     sensor = getattr(self, k)
-        #     if sensor:
-        #         mem = self.sensor_dict[k]['mem']
-        #         if mem is not None:
-        #             sensor_memory = getattr(self, mem)
-        #             if sensor_memory:
-        #                 dx = sensor.get_dX()
-        #                 sensor.gain = sensor_memory.step(dx, reward)
-        #
-        #         func = self.sensor_dict[k]['func']
-        #         self.sensor_dict[k]['A'] = sensor.step(func(**kwargs), brain=self)
+
 
     @ property
     def A_in(self):
         return self.A_olf + self.A_touch + self.A_thermo + self.A_wind
-        # return np.sum([v['A'] for v in self.sensor_dict.values()])
 
 
 class DefaultBrain(Brain):
@@ -160,8 +155,6 @@ class DefaultBrain(Brain):
 
 
 
-    def step(self, pos=None, on_food=False, **kwargs):
-        self.sense(pos=pos, on_food=on_food)
-
-        length = self.agent.real_length if self.agent is not None else 1
+    def step(self, pos, length, on_food=False, **kwargs):
+        self.sense(pos=pos, reward=on_food)
         return self.locomotor.step(A_in=self.A_in, length=length, on_food=on_food)

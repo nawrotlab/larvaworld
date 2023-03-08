@@ -3,12 +3,6 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-
-
-
-
-
-
 from larvaworld.lib.aux import nam
 
 
@@ -441,6 +435,9 @@ def eudist(xy) :
 def eudi5x(a, b):
     return np.sqrt(np.sum((a - np.array(b)) ** 2, axis=1))
 
+def eudiNxN(a,b) :
+    b=np.array(b)
+    return np.sqrt(np.sum(np.array([a-b[i] for i in range(b.shape[0])]) ** 2, axis=2))
 
 def compute_dst(s,point='') :
     s[nam.dst(point)] = apply_per_level(s[nam.xy(point)], eudist).flatten()

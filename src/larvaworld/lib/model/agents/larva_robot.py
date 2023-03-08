@@ -17,8 +17,7 @@ class LarvaRobot(LarvaSim):
 
     def draw(self, viewer):
         for seg in self.segs:
-            for vs in seg.vertices:
-                viewer.draw_polygon(vs, filled=True, color=seg.color)
+            viewer.draw_polygon(seg.vertices, filled=True, color=seg.color)
 
     @property
     def direction(self):

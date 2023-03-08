@@ -33,34 +33,36 @@ def Life_dict() :
     }
     return d
 
-def body_conf(ps, symmetry='bilateral', **kwargs):
-    return reg.get_null('Body', points=ps, symmetry=symmetry, **kwargs)
+
+
+body_shapes= {
+        'drosophila_larva': np.array([
+            [1.0, 0.0],
+            [0.9, 0.1],
+            [0.05, 0.1],
+            [0.0, 0.0],
+            [0.05, -0.1],
+            [0.9, -0.1]
+        ]),
+        'zebrafish_larva': np.array([
+            [1.0, 0.0],
+            [0.9, 0.25],
+            [0.7, 0.25],
+            [0.6, 0.005],
+            [0.05, 0.005],
+            [0.0, 0.0],
+            [0.05, -0.005],
+            [0.6, -0.005],
+            [0.7, -0.25],
+            [0.9, -0.25],
+        ])
+    }
 
 @reg.funcs.stored_conf("Body")
 def Body_dict() :
-    d = {
-        'drosophila_larva': body_conf([
-            (1.0, 0.0),
-            (0.9, 0.1),
-            (0.05, 0.1),
-            (0.0, 0.0),
-            (0.05, -0.1),
-            (0.9, -0.1)
-        ]),
-        'zebrafish_larva': body_conf([
-            (1.0, 0.0),
-            (0.9, 0.25),
-            (0.7, 0.25),
-            (0.6, 0.005),
-            (0.05, 0.005),
-            (0.0, 0.0),
-            (0.05, -0.005),
-            (0.6, -0.005),
-            (0.7, -0.25),
-            (0.9, -0.25),
-        ])
-    }
-    return d
+    return {name : reg.get_null('Body', points=points, symmetry='bilateral') for name,points in body_shapes.items()}
+
+
 
 @reg.funcs.stored_conf("Tree")
 def Tree_dict() :

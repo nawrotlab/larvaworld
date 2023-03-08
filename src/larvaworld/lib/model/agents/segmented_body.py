@@ -5,7 +5,7 @@ import param
 from shapely import geometry, affinity, ops
 
 from larvaworld.lib.model.agents.draw_body import draw_body
-from larvaworld.lib.reg.stored.miscellaneous import Body_dict
+from larvaworld.lib.reg.stored.miscellaneous import body_shapes
 from larvaworld.lib import aux
 
 from larvaworld.lib.model.agents._larva import LarvaMotile
@@ -25,17 +25,17 @@ class DefaultSegment:
         self.ang_acc = 0.0
 
     def update_vertices(self, pos, orient):
-        self.vertices = [pos + aux.rotate_points_around_point(self.seg_vertices[0], -orient)]
+        self.vertices = pos + aux.rotate_points_around_point(self.seg_vertices, -orient)
 
     def update_poseNvertices(self, pos, orientation):
         self.pos=pos
         self.orientation=orientation % (np.pi * 2)
-        self.vertices = [pos + aux.rotate_points_around_point(self.seg_vertices[0], -orientation)]
+        self.vertices = pos + aux.rotate_points_around_point(self.seg_vertices, -orientation)
 
     def update_all(self, pos, orientation, lin_vel, ang_vel):
         self.pos=pos
         self.orientation=orientation % (np.pi * 2)
-        self.vertices = [pos + aux.rotate_points_around_point(self.seg_vertices[0], -orientation)]
+        self.vertices = pos + aux.rotate_points_around_point(self.seg_vertices, -orientation)
         self.lin_vel=lin_vel
         self.ang_vel=ang_vel
 
@@ -88,31 +88,14 @@ class LarvaBody(LarvaMotile):
                  length_std=0, Nsegs=2, seg_ratio=None, shape='drosophila_larva', density=300.0, **kwargs):
 
         super().__init__(brain, energetics, life_history, **kwargs)
-        # print(self.pos)
-        # print(self.pos)
-        # print(self.pos)
-        # print(self.pos)
-        # print(self.pos)
-        # print(self.pos)
-        # raise
-
-
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
         self.density = density
         if seg_ratio is None:
             seg_ratio = [1 / Nsegs] * Nsegs
         self.seg_ratio = np.array(seg_ratio)
-        self.contour_points = Body_dict()[shape]['points']
-        self.base_seg_vertices = aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,
-                                                         points=self.contour_points)
+        self.contour_points = body_shapes[shape]
+        self.base_seg_vertices = aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
         self.Nsegs = Nsegs
-
-
-
-        # self.model = model
-        # self.pos=pos
-        # self.orientation=orientation
-        # self.default_color=default_color
         self.rear_orientation_change = 0
         self.body_bend = 0
         self.cum_dst = 0.0
@@ -130,7 +113,7 @@ class LarvaBody(LarvaMotile):
         self.initialize(initial_length, length_std)
         l = self.sim_length
         self.radius=l/2
-        self.seg_vertices = [s * l for s in self.base_seg_vertices]
+        self.seg_vertices = l * self.base_seg_vertices
         self.set_head_edges()
         self.seg_lengths = l * self.seg_ratio
 
@@ -190,8 +173,8 @@ class LarvaBody(LarvaMotile):
         self.body_bend = aux.wrap_angle_to_0(a)
 
     def set_head_edges(self):
-        self.local_rear_end_of_head = (np.min(self.seg_vertices[0][0], axis=0)[0], 0)
-        self.local_front_end_of_head = (np.max(self.seg_vertices[0][0], axis=0)[0], 0)
+        self.local_rear_end_of_head = np.array([np.min(self.seg_vertices[0][:,0]), 0])
+        self.local_front_end_of_head = np.array([np.max(self.seg_vertices[0][:,0]),0])
 
     def set_color(self, colors):
         if len(colors) != self.Nsegs:
@@ -212,12 +195,10 @@ class LarvaBody(LarvaMotile):
 
 
     def get_local_front_end_of_seg(self, seg_index):
-        front_local_x = np.max(self.seg_vertices[seg_index][0], axis=0)[0]
-        return (front_local_x, 0)
+        return np.array([np.max(self.seg_vertices[seg_index][:,0]),0])
 
     def get_local_rear_end_of_seg(self, seg_index):
-        rear_local_x = np.min(self.seg_vertices[seg_index][0], axis=0)[0]
-        return (rear_local_x, 0)
+        return np.array([np.min(self.seg_vertices[seg_index][:,0]), 0])
 
     # def get_local_rear_end_of_head(self):
     #     return self.local_rear_end_of_head
@@ -280,9 +261,15 @@ class LarvaBody(LarvaMotile):
     def adjust_body_vertices(self):
         self.radius = self.sim_length / 2
         self.seg_lengths = self.sim_length * self.seg_ratio
-        self.seg_vertices = [s * self.sim_length for s in self.base_seg_vertices]
-        for vec, seg in zip(self.seg_vertices, self.segs):
-            seg.seg_vertices = vec
+        self.seg_vertices = self.sim_length *self.base_seg_vertices
+        for i in range(self.Nsegs) :
+            # print(i, self.unique_id)
+            # print(i, self.seg_vertices[i])
+            # print(i, self.base_seg_vertices[i])
+            # print(i, self.segs[i].vertices)
+
+            self.segs[i].seg_vertices=self.seg_vertices[i]
+            # print()
         self.set_head_edges()
         self.update_sensor_position()
 
@@ -377,7 +364,7 @@ class LarvaBody(LarvaMotile):
             self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
 
     def get_shape(self, scale=1):
-        ps=[geometry.Polygon(seg.vertices[0]) for seg in self.segs]
+        ps=[geometry.Polygon(seg.vertices) for seg in self.segs]
         if scale!=1:
             ps=[affinity.scale(p, xfact=scale, yfact=scale) for p in ps]
         return ops.cascaded_union(ps).boundary.coords
