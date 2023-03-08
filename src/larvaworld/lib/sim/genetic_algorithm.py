@@ -5,6 +5,7 @@ import sys
 import threading
 import warnings
 
+import agentpy
 import pandas as pd
 import progressbar
 import numpy as np
@@ -248,7 +249,7 @@ class GAengine(GAselector):
 
         self.gConfs=self.create_first_generation(init_mode, self.Nagents, self.space_dict, self.mConf0)
 
-        self.robots = self.build_generation()
+        self.build_generation()
 
         if self.exclusion_mode :
             self.fit_dict =None
@@ -364,10 +365,11 @@ class GAengine(GAselector):
             robots.append(robot)
             self.model.viewer.put(robot)
         self.model.space.add_agents(robots, positions=[a.pos for a in robots])
+        self.robots = agentpy.AgentList(model=self.model, objs=robots)
         if self.multicore:
             self.threads=self.build_threads(robots)
 
-        return robots
+        # return robots
 
     def sim_step(self):
 
@@ -383,7 +385,7 @@ class GAengine(GAselector):
                 self.create_new_generation(self.space_dict)
                 if self.progress_bar:
                     self.progress_bar.update(self.generation_num)
-                self.robots = self.build_generation()
+                self.build_generation()
                 if not self.exclusion_mode and self.dataset is not None:
                     self.step_df = self.init_step_df()
             else:

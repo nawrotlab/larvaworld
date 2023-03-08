@@ -220,8 +220,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
                   match_ids=True,**kwargs):
     d = dataset
     pref=f'{source_dir}/{source_id}'
-    temp_step_path = f'{pref}_step.csv'
-    temp_length_path = f'{pref}_length.csv'
+
 
     def df_from_csvs(pref, Npoints, Ncontour=0):
         kws = {'header': None, 'sep': '\t'}
@@ -276,10 +275,6 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
     def reset_MultiIndex(s):
         s.reset_index(level='Step', drop=False, inplace=True)
         trange = np.arange(int(s['Step'].max())).astype(int)
-        # old_ids = s.index.unique().tolist()
-        # new_ids = [f'Larva_{100 + i}' for i in range(len(old_ids))]
-        # new_pairs = dict(zip(old_ids, new_ids))
-        # s.rename(index=new_pairs, inplace=True)
 
         s.reset_index(drop=False, inplace=True)
         s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
@@ -305,19 +300,15 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
     e = pd.DataFrame({}, index=df.index.unique('AgentID').values)
     reg.funcs.processing['length'](df, e, N=11)
 
-    # print('df')
-    # print(df.columns)
-    # raise
+
     df = temp_build(df, fr=d.fr)
 
     if match_ids :
-        step = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'], **kwargs)
+        df = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'], **kwargs)
     step = reset_MultiIndex(df)
     end = pd.DataFrame({}, index=step.index.unique('AgentID').values)
     reg.funcs.processing['length'](df, end, N=11)
-    # print('step')
-    # print(step.columns)
-    # raise
+
     end['num_ticks'] = step['head_x'].dropna().groupby('AgentID').count()
     end['cum_dur'] = end['num_ticks'] * d.dt
 
