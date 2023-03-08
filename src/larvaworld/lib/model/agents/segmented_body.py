@@ -330,12 +330,9 @@ class LarvaBody(LarvaMotile):
             ps=[affinity.scale(p, xfact=scale, yfact=scale) for p in ps]
         return ops.cascaded_union(ps).boundary.coords
 
-
-
-
-
-
-
+    @property
+    def velocity(self):
+        return self.head.get_linearvelocity()
 
 
     @property

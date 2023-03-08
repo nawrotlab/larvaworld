@@ -43,10 +43,10 @@ def eval_distro_fast(ss, s_data, s_sym, mode='pooled', min_size=20):
         ids=ss.index.unique('AgentID').values
         Edistro = {id:{} for id in ids}
         for id in ids:
-            sss = ss.xs(id, level="AgentID").dropna()
+            sss = ss.xs(id, level="AgentID")
             for p, sym in s_sym.items():
                 if p in ss.columns:
-                    sp, ssp = s_data[p].values, sss[p].values
+                    sp, ssp = s_data[p].dropna().values, sss[p].dropna().values
                     if sp.shape[0] > min_size and ssp.shape[0] > min_size:
                         Edistro[id][sym] = ks_2samp(sp, ssp)[0]
 
@@ -272,6 +272,10 @@ def build_fitness(dic, refDataset):
             s_pars = aux.flatten_list(evaluation['step']['pars'].values.tolist())
             s_symbols = aux.AttrDict(dict(zip(s_pars, s_shorts)))
             keys += s_shorts
+            # for p, sym in s_symbols.items():
+            #     print(p, target_data.step[p].dropna().mean())
+            # print(s_pars)
+
 
             def func(ss):
                 return aux.AttrDict(
@@ -279,7 +283,7 @@ def build_fitness(dic, refDataset):
                             s_symbols.items()}})
 
             func_solo_dict[k] = func
-
+            # raise
             def gfunc(s):
                 return aux.AttrDict(
                     {'KS': eval_distro_fast(s, target_data.step, s_symbols, mode='1:pooled', min_size=10)})

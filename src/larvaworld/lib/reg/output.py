@@ -31,7 +31,7 @@ output_dict = {
                      'f_am'],
             'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M',
                          'f_faeces_M', 'f_am']},
-    'pose': {'step': ['x', 'y', 'b', 'fo', 'ro'],
+    'pose': {'step': ['x', 'y', 'b', 'fo', 'ro', 'v'],
              'endpoint': ['l', 'cum_t', 'x']},
     'memory': {'step': [],
                'endpoint': [],
