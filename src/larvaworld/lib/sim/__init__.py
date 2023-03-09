@@ -11,5 +11,5 @@ from .batch_run import BatchRun
 
 
 # from .model_calibration import Calibration
-from .genetic_algorithm2 import GAlauncher
+from .genetic_algorithm import GAlauncher
 
