@@ -219,12 +219,13 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
 def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, max_Nagents=None, min_duration_in_sec=1.0,time_slice=None,
                   match_ids=True,**kwargs):
     d = dataset
-    pref=f'{source_dir}/{source_id}'
 
 
-    def df_from_csvs(pref, Npoints, Ncontour=0):
+
+    def df_from_csvs(source_dir,source_id, Npoints=11, Ncontour=0):
+        pref = f'{source_dir}/{source_id}'
         kws = {'header': None, 'sep': '\t'}
-
+        # print('sss')
         midline_xy = aux.nam.midline_xy(Npoints, flat=False)
         xs = pd.read_csv(f'{pref}_x_spine.txt', names=[x for x, y in midline_xy], **kws)
         ys = pd.read_csv(f'{pref}_y_spine.txt', names=[y for x, y in midline_xy], **kws)
@@ -253,6 +254,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         df = pd.concat(par_list, axis=1, sort=False)
         # df.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
         df.set_index(keys=['AgentID'], inplace=True, drop=True)
+
         return df
 
     def temp_build(step, fr):
@@ -286,7 +288,7 @@ def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, 
         return step
 
     print(f'*---- Buiding dataset {d.id} of group {d.group_id}!-----')
-    df = df_from_csvs(pref, Npoints=d.Npoints, Ncontour=d.Ncontour)
+    df = df_from_csvs(source_dir,source_id, Npoints=d.Npoints, Ncontour=d.Ncontour)
 
     if time_slice is not None:
         tmin, tmax = time_slice

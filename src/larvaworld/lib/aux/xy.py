@@ -184,6 +184,22 @@ def compute_dispersal_solo(xy):
     else:
         return np.zeros(xy.shape[0]) * np.nan
 
+def compute_dispersal_multi(xy0, t0,t1,dt):
+    s0 = int(t0 / dt)
+    s1 = int(t1 / dt)
+    xy = xy0.loc[(slice(s0, s1), slice(None)), ['x', 'y']]
+
+    AA = apply_per_level(xy, compute_dispersal_solo)
+    Nt = AA.shape[0]
+    N = xy0.index.unique('AgentID').values.shape[0]
+    Nticks = xy0.index.unique('Step').size
+
+
+    AA0 = np.zeros([Nticks, N]) * np.nan
+    AA0[s0:s0 + Nt, :] = AA
+
+    return AA0.flatten(), Nt
+
 def raw_or_filtered_xy(s, points):
     r = nam.xy(points, flat=True)
     f = nam.filt(r)

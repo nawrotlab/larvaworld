@@ -272,19 +272,15 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwarg
     xy0 = aux.read(key='default', path=reg.datapath('traj', c.dir)) if s is None else s[['x', 'y']]
     dsps = {}
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
+        p = f'dispersion_{int(t0)}_{int(t1)}'
+        s[p],Nt=aux.compute_dispersal_multi(xy0, t0, t1, c.dt)
 
         s0 = int(t0 / c.dt)
-        s1 = int(t1 / c.dt)
-        xy = xy0.loc[(slice(s0, s1), slice(None)), ['x', 'y']]
+        # AA0 = np.zeros([c.Nticks, c.N]) * np.nan
+        # AA0[s0:s0 + Nt, :] = AA
 
 
-        AA = aux.apply_per_level(xy, aux.compute_dispersal_solo)
-        Nt=AA.shape[0]
-        AA0 = np.zeros([c.Nticks, c.N]) * np.nan
-        AA0[s0:s0 + Nt, :] = AA
-
-        p = f'dispersion_{int(t0)}_{int(t1)}'
-        s[p] = AA0.flatten()
+        # s[p] = AA0.flatten()
 
         fp = nam.final(p)
         mp = nam.max(p)
