@@ -381,7 +381,19 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     if refDataset is None :
         refDataset=reg.loadRef(refID, load=True)
     c=refDataset.config
-    chunk_dicts = refDataset.load_chunk_dicts()
+
+    chunk_dicts = refDataset.chunk_dicts
+    if chunk_dicts in [None, {}]:
+        try:
+            s, e,c = refDataset.step_data, refDataset.endpoint_data, refDataset.config
+        except:
+            refDataset.load()
+            s, e,c = refDataset.step_data, refDataset.endpoint_data, refDataset.config
+        from larvaworld.lib.process.annotation import comp_chunk_dicts
+        chunk_dicts = comp_chunk_dicts(s, e, c=c)
+    if chunk_dicts in [None, {}]:
+        raise ValueError
+    # chunk_dicts = refDataset.load_chunk_dicts()
     aux_dic = aux.group_epoch_dicts(chunk_dicts)
     Npau = aux_dic['pause_dur'].shape[0]
     Nrun = aux_dic['run_dur'].shape[0]
@@ -391,7 +403,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params
     dic = {}
-    for n,n0 in zip(['pause', 'exec', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
+    for n,n0 in zip(['pause', 'run', 'stridechain'], ['pause_dur', 'run_dur', 'run_count']) :
         N=Npau if n == 'pause' else Nrun
         discr = True if n == 'stridechain' else False
         dt = 1 if n == 'stridechain' else c.dt
@@ -403,7 +415,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
             vs = B.sample(N)
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'},
-              {'id' : 'experiment', 'pooled_epochs': refDataset.load_pooled_epochs(), 'color': 'red'}]
+              {'id' : 'experiment', 'pooled_epochs': refDataset.pooled_epochs, 'color': 'red'}]
     datasets = [aux.AttrDict(dd) for dd in datasets]
     return datasets
 

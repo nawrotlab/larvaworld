@@ -22,11 +22,11 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     if Nbins is None:
         Nbins = int(e.index.values.shape[0] / 10)
 
-    var_mdict = reg.MD.variable_mdict(mkey, mode=mode)
+    var_mdict = reg.model.variable_mdict(mkey, mode=mode)
     N = len(list(var_mdict.keys()))
 
-    P = plot.BasePlot(name=f'{mkey}_endpoint_hists', **kwargs)
-    P.build(1, N, figsize=(7 * N, 6), sharey=True, fig=fig, axs=axs)
+    P = plot.BasePlot(name=f'{mkey}_endpoint_hists',build_kws={'Ncols':N,'Nrows':1, 'w':7, 'h':6,  'mode':'hist'}, **kwargs)
+    P.build(fig=fig, axs=axs)
 
     for i, (k,p) in enumerate(var_mdict.items()):
         # p=d00.args[k]

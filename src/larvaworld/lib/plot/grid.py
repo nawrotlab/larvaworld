@@ -86,7 +86,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     shorts = ['sv', 'fov', 'foa', 'b']
     P.plot(func='stride cycle',
            kws={'datasets': [refDataset, dd], 'labels': ['experiment', dd.id], 'shorts': shorts, 'individuals': True,
-                'save_to': None},
+                'save_to': None, 'title':None},
            N=len(shorts), w=29, h=32, h0=hh0 + 18, share_w=True, x0=True)
 
     ds = util.test_boutGens(**{'mID': mID, 'refDataset': refDataset})
@@ -100,11 +100,11 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     return P.get()
 
 @reg.funcs.graph('velocity definition')
-def velocity_definition(d, save_to=None, save_as='vel_definition.pdf', component_vels=True, **kwargs):
+def velocity_definition(dataset, save_to=None, save_as='vel_definition.pdf', component_vels=True, **kwargs):
     from larvaworld.lib.plot.metric import plot_segmentation_definition, plot_stride_variability
 
     if save_to is None:
-        save_to = d.plot_dir
+        save_to = dataset.plot_dir
 
     h, w = 10, 22
     dh, dw = 2, 2
@@ -115,12 +115,12 @@ def velocity_definition(d, save_to=None, save_as='vel_definition.pdf', component
 
     ''' Create the linear velocity figure'''
     ax1 = fig.add_subplot(gs[:, :w2])
-    _ = plot_stride_variability(datasets=[d], fig=fig, axs=ax1, component_vels=component_vels)
+    _ = plot_stride_variability(datasets=[dataset], fig=fig, axs=ax1, component_vels=component_vels)
 
     ''' Create the angular velocity figure'''
     ax2 = fig.add_subplot(gs[:h2, w2 + dw:])
     ax3 = fig.add_subplot(gs[h2 + dh:, w2 + dw:])
-    _ = plot_segmentation_definition(datasets=[d], fig=fig, axs=[ax2, ax3])
+    _ = plot_segmentation_definition(datasets=[dataset], fig=fig, axs=[ax2, ax3])
 
     fig.text(0.01, 0.91, r'$\bf{A}$', fontsize=30)
 
@@ -186,7 +186,7 @@ def kinematic_analysis(datasets, **kwargs):
 
     P.plot(func='fft multi',kws={**kws}, y0=True,N=1, **kws1)
     P.plot(func='epochs', kws={'plot_fits': ['powerlaw', 'exponential', 'lognormal', 'levy'], **kws},h0=int(h/2+2), N=2, **kws1)
-    # P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h, w0=int(w/2+2),y0=True,share_w= True,annotate_all= True, **kws2)
+    P.plot(func='stride cycle multi', kws={**kws}, N=2, h=h, w0=int(w/2+2),y0=True,share_w= True,annotate_all= True, **kws2)
     P.adjust((0.07, 0.95), (0.1, 0.9), 0.2, 0.1)
     P.annotate()
     return P.get()
@@ -336,7 +336,7 @@ def result_summary(datasets, target, **kwargs):
     return P.get()
 
 @reg.funcs.graph('sample track')
-def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
+def model_sample_track(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from larvaworld.lib.plot.traj import track_annotated
     if d is None:
         d = util.sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
@@ -352,8 +352,8 @@ def test_model(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, 
     pars, labs = reg.getPar(['sv', 'c_CT', 'A_T', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
-    P = plot.Plot(name=f'{mID}_test', **kws0, **kwargs)
-    P.build(Nrows, 1, figsize=(25, 5 * Nrows), sharex=True, axs=axs, fig=fig)
+    P = plot.Plot(name=f'{mID}_test',build_kws={'Ncols':1,'Nrows':Nrows, 'w':25, 'h':5,  'mode':'box'}, **kws0, **kwargs)
+    P.build(axs=axs, fig=fig)
     kws1 = aux.AttrDict({
         'agent_idx': 0,
         'slice': (0, dur * 60),
@@ -396,3 +396,5 @@ def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled', **
     P.adjust((0.1, 0.9), (0.05, 0.95), 0.1, 0.2)
     P.annotate()
     return P.get()
+
+

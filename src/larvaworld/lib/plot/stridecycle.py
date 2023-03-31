@@ -87,7 +87,7 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
 
 @reg.funcs.graph('stride cycle')
 def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None, subfolder='stride',
-                 Nbins=64, individuals=False, pooled=True, **kwargs):
+                 Nbins=64, individuals=False, pooled=True,title='Stride cycle analysis', **kwargs):
     from larvaworld.lib.process.annotation import compute_interference
     if name is None:
         if individuals:
@@ -111,14 +111,14 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
             col = c.color if 'color' in c.keys() else d.color
             if individuals:
                 cycle_curves = d.cycle_curves
-                if cycle_curves is None:
+                if cycle_curves in [None, {}]:
                     try:
                         s, e = d.step_data, d.endpoint_data
                     except:
                         d.load()
                         s, e = d.step_data, d.endpoint_data
                     cycle_curves = compute_interference(s, e, c=c)
-                if cycle_curves is not None:
+                if cycle_curves not in [None, {}]:
                     df = cycle_curves[sh][mode]
                     if pooled:
                         plot.plot_quantiles(df=df, from_np=True, axis=P.axs[ii], color_shading=col, x=x, label=d.id)
@@ -137,7 +137,10 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
                   xlab='$\phi_{stride}$', ylab=reg.par.kdict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
-    P.conf_fig(title='Stride cycle analysis', title_kws={'w': 'bold', 's': 20}, align=True,
+    print(title)
+    print(title)
+    print(title)
+    P.conf_fig(title=title, title_kws={'w': 'bold', 's': 20}, align=True,
                adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})
     return P.get()
 

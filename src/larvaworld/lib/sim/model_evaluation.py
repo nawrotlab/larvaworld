@@ -18,8 +18,8 @@ from larvaworld.lib.sim.run_template import BaseRun
 
 
 class EvalRun(BaseRun):
-    def __init__(self,**kwargs):
-        super().__init__(runtype = 'Eval',experiment='evaluation', **kwargs)
+    def __init__(self,parameters={}, **kwargs):
+        super().__init__(runtype = 'Eval',experiment='evaluation', parameters=parameters,**kwargs)
 
 
     def setup(self, refID=None,modelIDs=None, dataset_ids=None,offline=False,
@@ -90,7 +90,7 @@ class EvalRun(BaseRun):
 
     def prepare_exp_conf(self, dur=None, video=False):
         exp = 'dispersion'
-        exp_conf = reg.loadConf(id=exp, conftype='Exp')
+        exp_conf = reg.expandConf(id=exp, conftype='Exp')
         c = self.target.config
         if dur is None:
             dur = c.Nticks * c.dt / 60
@@ -125,7 +125,7 @@ class EvalRun(BaseRun):
             'sim_params': exp_conf.sim_params,
             'trials': {},
             'collections': ['pose'],
-            'env_params': c.env_params,
+            'env_params': exp_conf.env_params,
             'larva_groups': reg.lgs(sample=self.refID, mIDs=self.modelIDs, ids=self.dataset_ids,
                                     cs=self.mID_colors,
                                     expand=True, N=self.N)})
@@ -361,12 +361,13 @@ class EvalRun(BaseRun):
             run.simulate()
             self.datasets += run.datasets
 
-        if self.store_data:
-            os.makedirs(self.data_dir, exist_ok=True)
-            self.store()
+
 
         os.makedirs(self.plot_dir, exist_ok=True)
         self.analyze()
+        if self.store_data:
+            os.makedirs(self.data_dir, exist_ok=True)
+            self.store()
         return self.datasets
 
 

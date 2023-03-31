@@ -314,8 +314,10 @@ def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwar
 
 def save_plot(fig, filepath, filename, verbose=1):
     fig.savefig(filepath, dpi=300, facecolor=None)
-
-    plt.close(fig)
+    try:
+        plt.close(fig)
+    except:
+        pass
     reg.vprint(f'Plot {filename} saved as {filepath}', verbose=verbose)
 
 
@@ -353,7 +355,8 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False, verbose=1
     if show:
         # raise
         plt.show()
-    fig.patch.set_visible(False)
+    if hasattr(fig, 'patch'):
+        fig.patch.set_visible(False)
 
     if return_fig:
         res = fig, save_to, filename

@@ -66,14 +66,21 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
         ax.set_xlabel(r'$\overline{cv}_{spatial}$')
     return P.get()
 
-
-def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlated_pars.{plot.suf}', return_fig=False):
+@reg.funcs.graph('correlated metrics')
+def plot_correlated_pars(pars, labels, refID=None,dataset=None, save_to=None, save_as=f'correlated_pars.{plot.suf}', return_fig=False, show=False):
     if len(pars) != 3:
         raise ValueError('Currently implemented only for 3 parameters')
+    if dataset is None :
+        if refID is not None :
+            dataset = reg.loadRef(refID)
+            dataset.load(step=False)
+        else :
+            raise ValueError('No dataset defined')
     if save_to is None:
         save_to = dataset.plot_dir
     e = dataset.endpoint_data
     g = sns.PairGrid(e[pars])
+    g.fig.set_size_inches(15, 15)
     g.map_upper(sns.scatterplot)
     g.map_lower(sns.kdeplot, fill=True)
     g.map_diag(sns.histplot, kde=True, bins=20)
@@ -86,4 +93,4 @@ def plot_correlated_pars(dataset, pars, labels, save_to=None, save_as=f'correlat
         for std, a in zip([0.5, 1, 2, 3], [0.4, 0.3, 0.2, 0.1]):
             plot.confidence_ellipse(x=e[pars[i]].values, y=e[pars[j]].values,
                                ax=ax, n_std=std, facecolor='red', alpha=a)
-    return plot.process_plot(g, save_to, save_as, return_fig)
+    return plot.process_plot(g, save_to=save_to, filename=save_as, return_fig=return_fig,show=show)

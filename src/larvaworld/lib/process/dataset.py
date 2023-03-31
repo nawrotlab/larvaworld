@@ -110,12 +110,12 @@ class _LarvaDataset:
     def save_vel_definition(self):
         from larvaworld.lib.process.calibration import vel_definition
         warnings.filterwarnings('ignore')
-        dic=vel_definition(self)
+        self.vel_definition=vel_definition(self)
         self.save_config()
-        self.storeH5(df=dic, filepath_key='vel_definition')
+        self.storeH5(df=self.vel_definition, filepath_key='vel_definition')
         print(f'Velocity definition dataset stored.')
 
-        return dic
+        return self.vel_definition
 
     def save_config(self, refID=None):
         self.update_config()
@@ -151,7 +151,7 @@ class _LarvaDataset:
             self.save_step(s, **kws0)
         return s
 
-    def storeH5(self, df, key, filepath_key=None, mode=None):
+    def storeH5(self, df, key=None, filepath_key=None, mode=None):
         if filepath_key is None :
             filepath_key=key
         aux.storeH5(df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)

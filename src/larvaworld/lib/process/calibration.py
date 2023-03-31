@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from scipy.stats import stats
+from scipy import stats
 from sklearn.linear_model import LinearRegression
 
 
