@@ -7,9 +7,9 @@ import pandas as pd
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.screen.drawing import ScreenManager
-from larvaworld.lib.model import envs, agents
+# from larvaworld.lib.model import envs, agents
 from larvaworld.lib.model.envs.conditions import get_exp_condition
-from larvaworld.lib.sim.run_template import BaseRun
+from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ExpRun(BaseRun):

@@ -23,47 +23,47 @@ class ParsArg:
     def get(self, input):
         return getattr(input, self.key)
 
+#
+# def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
+#     if k is None:
+#         k = name
+#     d = {
+#         'key': name,
+#         'short': k,
+#         'help': h,
+#     }
+#     if dtype == bool:
+#         d['action'] = 'store_true' if not v else 'store_false'
+#     elif dtype == List[str]:
+#         d['type'] = str
+#         d['nargs'] = '+'
+#         if vs is not None:
+#             d['choices'] = vs
+#     elif dtype == List[int]:
+#         d['type'] = int
+#         d['nargs'] = '+'
+#         if vs is not None:
+#             d['choices'] = vs
+#     else:
+#         d['type'] = dtype
+#         if vs is not None:
+#             d['choices'] = vs
+#         if v is not None:
+#             d['default'] = v
+#             d['nargs'] = '?'
+#     return d
 
-def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
-    if k is None:
-        k = name
-    d = {
-        'key': name,
-        'short': k,
-        'help': h,
-    }
-    if dtype == bool:
-        d['action'] = 'store_true' if not v else 'store_false'
-    elif dtype == List[str]:
-        d['type'] = str
-        d['nargs'] = '+'
-        if vs is not None:
-            d['choices'] = vs
-    elif dtype == List[int]:
-        d['type'] = int
-        d['nargs'] = '+'
-        if vs is not None:
-            d['choices'] = vs
-    else:
-        d['type'] = dtype
-        if vs is not None:
-            d['choices'] = vs
-        if v is not None:
-            d['default'] = v
-            d['nargs'] = '?'
-    return d
 
-
-def parser_dict(d0):
-    p = aux.AttrDict()
-    for n, v in d0.items():
-        if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
-            entry = build_ParsArg(n, **v)
-            p[n] = ParsArg(**entry)
-        else:
-            p[n] = parser_dict(v)
-
-    return p.flatten()
+# def parser_dict(d0):
+#     p = aux.AttrDict()
+#     for n, v in d0.items():
+#         if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+#             entry = build_ParsArg(n, **v)
+#             p[n] = ParsArg(**entry)
+#         else:
+#             p[n] = parser_dict(v)
+#
+#     return p.flatten()
 
 
 class Parser:
@@ -73,8 +73,8 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        d0=reg.par.PI[name]
-        self.parsargs = parser_dict(d0)
+        # d0=reg.par.PI[name]
+        self.parsargs = self.parser_dict(reg.par.PI[name])
 
     def add(self, parser=None):
         if parser is None:
@@ -87,6 +87,45 @@ class Parser:
         dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
         return dic.unflatten()
 
+    def parser_dict(self, d0):
+        p = aux.AttrDict()
+        for n, v in d0.items():
+            if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+                entry = self.build_ParsArg(n, **v)
+                p[n] = ParsArg(**entry)
+            else:
+                p[n] = self.parser_dict(v)
+
+        return p.flatten()
+
+    def build_ParsArg(self, name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
+        if k is None:
+            k = name
+        d = {
+            'key': name,
+            'short': k,
+            'help': h,
+        }
+        if dtype == bool:
+            d['action'] = 'store_true' if not v else 'store_false'
+        elif dtype == List[str]:
+            d['type'] = str
+            d['nargs'] = '+'
+            if vs is not None:
+                d['choices'] = vs
+        elif dtype == List[int]:
+            d['type'] = int
+            d['nargs'] = '+'
+            if vs is not None:
+                d['choices'] = vs
+        else:
+            d['type'] = dtype
+            if vs is not None:
+                d['choices'] = vs
+            if v is not None:
+                d['default'] = v
+                d['nargs'] = '?'
+        return d
 
 class MultiParser:
     """
@@ -153,7 +192,8 @@ def run_template(sim_mode, args, kw_dicts):
     '''
     kws=aux.AttrDict({'id' : args.id})
     if sim_mode == 'Replay':
-        run = sim.ReplayRun(**kw_dicts['Replay'], **kws)
+        kws.parameters =kw_dicts['Replay']
+        run = sim.ReplayRun(**kws)
         run.run()
     elif sim_mode == 'Batch':
         kws.store_data = args.store_data
@@ -202,7 +242,8 @@ def run_template(sim_mode, args, kw_dicts):
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
         kws.show=args.show_screen
-        evrun = sim.EvalRun(**kw_dicts.Eval, **kws)
+        kws.parameters =kw_dicts.Eval
+        evrun = sim.EvalRun(**kws)
         evrun.simulate()
         evrun.plot_results()
         evrun.plot_models()

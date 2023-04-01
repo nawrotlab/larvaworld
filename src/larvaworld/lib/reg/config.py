@@ -3,6 +3,7 @@ import param
 from larvaworld.lib import reg, aux, util, decorators
 
 
+
 def build_ConfTypeSubkeys():
     d0 = {k: {} for k in reg.CONFTYPES}
     d1 = {
@@ -351,6 +352,18 @@ def loadRefD(id, **kwargs):
 def loadRefDs(ids, **kwargs):
     ds = [loadRefD(id, **kwargs) for id in ids]
     return ds
+
+def retrieve_dataset(dataset=None,refID=None,dir=None) :
+    if dataset is None :
+        if refID is not None:
+            dataset = reg.loadRef(refID)
+        elif dir is not None :
+            from larvaworld.lib.process.dataset import LarvaDataset
+            path=f'{reg.DATA_DIR}/{dir}'
+            dataset = LarvaDataset(path, load_data=False)
+        else :
+            raise ValueError ('Unable to load dataset. Either refID or storage path must be provided. ')
+    return dataset
 
 def next_idx(id, conftype='Exp'):
     f = f'{reg.CONF_DIR}/SimIdx.txt'

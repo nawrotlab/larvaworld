@@ -27,6 +27,7 @@ def wrap_angle_to_0(angle: float, in_deg: bool = False) -> float:
 
 
 def rear_orientation_change(bend, d, l, correction_coef=1.0):
+
     k0 = 2*d*correction_coef/ l
     if 0 <= k0 < 1:
         return bend * k0

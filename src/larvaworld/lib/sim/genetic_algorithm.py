@@ -12,7 +12,7 @@ import numpy as np
 
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.screen import Viewer, GA_ScreenManager
-from larvaworld.lib.sim.run_template import BaseRun
+from larvaworld.lib.sim.base_run import BaseRun
 
 
 class GAlauncher(BaseRun):
@@ -39,72 +39,10 @@ class GAlauncher(BaseRun):
             self.t+=1
             self.engine.sim_step()
             self.screen_manager.render(self.t)
-            # if self.viewer.show_display:
-            #     from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, Rect, draw, display
-            #     for e in event.get():
-            #         if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
-            #             sys.exit()
-            #         elif e.type == KEYDOWN and e.key == K_r:
-            #             self.initialize(**self.p.ga_select_kws, **self.p.ga_build_kws)
-            #         elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
-            #             self.viewer.increase_fps()
-            #         elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
-            #             self.viewer.decrease_fps()
-            #         elif e.type == KEYDOWN and e.key == K_s:
-            #             pass
-            #             # self.engine.save_genomes()
-            #         # elif e.type == KEYDOWN and e.key == K_e:
-            #         #     self.engine.evaluation_mode = 'preparing'
-            #
-            #     if self.side_panel.generation_num < self.engine.generation_num:
-            #         self.side_panel.update_ga_data(self.engine.generation_num, self.engine.best_genome)
-            #
-            #     # update statistics time
-            #     cur_t = aux.TimeUtil.current_time_millis()
-            #     cum_t = math.floor((cur_t - self.engine.start_total_time) / 1000)
-            #     gen_t = math.floor((cur_t - self.engine.start_generation_time) / 1000)
-            #     self.side_panel.update_ga_time(cum_t, gen_t, self.engine.generation_sim_time)
-            #     self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
-            #     self.viewer._window.fill(aux.Color.BLACK)
-            #
-            #     for obj in self.viewer.objects:
-            #         obj.draw(self.viewer)
-            #
-            #     # draw a black background for the side panel
-            #     self.viewer.draw_panel_rect()
-            #     self.side_panel.display_ga_info()
-            #
-            #     display.flip()
-            #     self.viewer._t.tick(self.viewer._fps)
         return self.engine.best_genome
 
     def initialize(self, **kwargs):
         self.engine = GAengine(model=self, **kwargs)
-        # if self.viewer.show_display:
-        #     from larvaworld.lib.screen.side_panel import SidePanel
-        #
-        #     from pygame import display
-        #     self.get_larvaworld_food()
-        #     self.side_panel = SidePanel(self.viewer, self.engine.space_dict)
-        #     self.side_panel.update_ga_data(self.engine.generation_num, None)
-        #     self.side_panel.update_ga_population(len(self.engine.robots), self.engine.Nagents)
-        #     self.side_panel.update_ga_time(0, 0, 0)
-
-
-
-    # def get_larvaworld_food(self):
-    #     for label,ff in self.p.env_params.food_params.source_units.items():
-    #         x, y = self.screen_pos(ff.pos)
-    #         size = ff.radius * self.scaling_factor
-    #         col = ff.default_color
-    #         box = self.build_box(x, y, size, col)
-    #         box.label = label
-    #         self.viewer.put(box)
-    #
-    # def screen_pos(self, real_pos):
-    #     return np.array(real_pos) * self.scaling_factor + np.array([self.viewer.width / 2, self.viewer.height / 2])
-
-
 
 class GAselector:
     def __init__(self, model, Ngenerations=None, Nagents=30, Nelits=3, Pmutation=0.3, Cmutation=0.1,
@@ -257,26 +195,13 @@ class GAengine(GAselector):
 
         if self.exclusion_mode :
             self.fit_dict =None
-            # self.dataset =None
-            # self.step_df =None
         else :
             if fit_dict is None :
-                # print(None)
                 if fitness_target_refID is not None:
-                    # print('GA_optimization')
                     fit_dict=util.GA_optimization(fitness_target_refID, fitness_target_kws)
                 else :
                     fit_dict = arrange_fitness(fitness_func,source_xy=self.model.source_xy)
             self.fit_dict =fit_dict
-            # print(self.fit_dict)
-            # raise
-            # arg=self.fit_dict.func_arg
-            # if arg=='s':
-            #     self.dataset0=self.init_dataset()
-            #     self.step_df = self.init_step_df()
-            # elif arg=='robot':
-            #     self.dataset = None
-            #     self.step_df = None
 
         reg.vprint(f'Generation {self.generation_num} started', 1)
         reg.vprint(f'multicore: {self.multicore} num_cpu: {self.num_cpu}', 1)
@@ -297,69 +222,6 @@ class GAengine(GAselector):
                 gConfs.append(gConf)
         return gConfs
 
-    # def init_dataset(self):
-    #     c = aux.AttrDict(
-    #         {'id': self.model.id, 'group_id': 'GA_robots', 'dt': self.model.dt, 'fr': 1 / self.model.dt,
-    #          'agent_ids': np.arange(self.Nagents), 'duration': self.model.Nsteps * self.model.dt,
-    #          'Npoints': 3, 'Ncontour': 0, 'point': '', 'N': self.Nagents, 'Nticks': self.model.Nsteps,
-    #          'mID': self.bestConfID,
-    #          'color': 'blue', 'env_params': self.model.p.env_params})
-    #
-    #     self.my_index = pd.MultiIndex.from_product([np.arange(c.Nticks), c.agent_ids],
-    #                                                names=['Step', 'AgentID'])
-    #     self.df_columns = reg.getPar(['b', 'fov', 'rov', 'v', 'x', 'y'])
-    #     self.df_Ncols = len(self.df_columns)
-    #
-    #     e = pd.DataFrame(index=c.agent_ids)
-    #     e['cum_dur'] = c.duration
-    #     e['num_ticks'] = c.Nticks
-    #
-    #     return aux.AttrDict({'step_data': None, 'endpoint_data': e, 'config': c})
-    #
-    # def init_step_df(self):
-    #     self.dataset = self.dataset0.get_copy()
-    #
-    #     step_df = np.ones([self.dataset.config.Nticks, self.dataset.config.N, self.df_Ncols]) * np.nan
-    #     self.dataset.endpoint_data['length'] = [robot.real_length for robot in self.robots]
-    #     return step_df
-
-    # def finalize_step_df(self):
-    #     e, c = self.dataset.endpoint_data, self.dataset.config
-    #     self.step_df[:, :, :3] = np.rad2deg(self.step_df[:, :, :3])
-    #     self.step_df = self.step_df.reshape(c.Nticks * c.N, self.df_Ncols)
-    #     s = pd.DataFrame(self.step_df, index=self.my_index, columns=self.df_columns)
-    #     s = s.astype(float)
-    #
-    #     s.drop(self.excluded_ids, level='AgentID', axis=0, inplace=True)
-    #     e=e.drop(index=self.excluded_ids)
-    #     for id in self.excluded_ids:
-    #         self.genome_dict.pop(id, None)
-    #     self.dataset.config.agent_ids = s.index.unique('AgentID').values
-    #     self.dataset.config.N=len(self.dataset.config.agent_ids)
-    #
-    #     from larvaworld.lib.process.spatial import scale_to_length
-    #     scale_to_length(s, e, c, pars=None, keys=['v'])
-    #     self.dataset.step_data = s
-    #     try :
-    #         for k in self.fit_dict.keys:
-    #             reg.par.compute(k, self.dataset)
-    #     except:
-    #         pass
-    #     fit_dicts=self.fit_dict.func(s=self.dataset.step_data)
-    #
-    #     valid_gs={}
-    #     for i, g in self.genome_dict.items():
-    #         g.fitness_dict = aux.AttrDict({k: dic[i] for k, dic in fit_dicts.items()})
-    #         mus = aux.AttrDict({k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()})
-    #         if len(mus) == 1:
-    #             g.fitness = list(mus.values())[0]
-    #         else:
-    #             coef_dict = {'KS': 10, 'RSS': 1}
-    #             g.fitness = np.sum([coef_dict[k] * mean for k, mean in mus.items()])
-    #         if not np.isnan(g.fitness) :
-    #
-    #             valid_gs[i]=g
-    #     self.genome_dict = valid_gs
 
 
     def build_generation(self):
@@ -371,18 +233,14 @@ class GAengine(GAselector):
             robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
             robot.genome = g
             robots.append(robot)
-            # self.model.viewer.put(robot)
         self.model.space.add_agents(robots, positions=[a.pos for a in robots])
         self.robots = agentpy.AgentList(model=self.model, objs=robots)
         self.collectors = reg.get_reporters(collections=self.model.collections, agents=self.robots)
         if self.multicore:
             self.threads=self.build_threads(robots)
 
-        # return robots
 
     def sim_step(self):
-
-
         self.step()
         self.update()
         self.generation_sim_time += self.model.dt
@@ -395,14 +253,10 @@ class GAengine(GAselector):
                 if self.progress_bar:
                     self.progress_bar.update(self.generation_num)
                 self.build_generation()
-                # if not self.exclusion_mode and self.dataset is not None:
-                #     self.step_df = self.init_step_df()
             else:
                 self.finalize()
 
     def step(self):
-
-
         if self.multicore:
             for thr in self.threads:
                 thr.step()
@@ -415,26 +269,12 @@ class GAengine(GAselector):
 
     def update(self):
         self.robots.nest_record(self.collectors['step'])
-        # if self.step_df is not None:
-        #     for robot in self.robots[:]:
-        #         self.step_df[self.generation_step_num, robot.unique_id, :] = robot.collect
-
-
-
 
 
     def end_generation(self):
         self.robots.nest_record(self.collectors['end'])
         self.model.create_output()
-
         self.eval_robots2(self.model.output.variables)
-
-
-        # if self.step_df is not None:
-        #     self.finalize_step_df()
-        # else :
-        #     self.eval_robots()
-
         for robot in self.robots[:]:
             self.destroy_robot(robot)
         self.sort_genomes()
@@ -453,7 +293,6 @@ class GAengine(GAselector):
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
             robot.genome.fitness =robot.cum_dur
-        # self.model.viewer.remove(robot)
         self.robots.remove(robot)
         self.model.space.remove_agents([robot])
 
@@ -469,9 +308,6 @@ class GAengine(GAselector):
 
     def check(self, robot):
         if not self.model.p.offline:
-            # if robot.xx < 0 or robot.xx > self.model.viewer.width or robot.yy < 0 or robot.yy > self.model.viewer.height:
-            #     self.destroy_robot(robot)
-
             # destroy robot if it collides an obstacle
             if robot.collision_with_object:
                 self.destroy_robot(robot)
@@ -520,11 +356,6 @@ class GAengine(GAselector):
             t.join()
         return threads
 
-    def eval_robots(self):
-        for robot in self.robots :
-            i=robot.unique_id
-            self.genome_dict[i].fitness=self.fit_dict.func(robot)
-
     def convert_output_to_dataset(self,df, id):
         from larvaworld.lib.process.dataset import LarvaDataset
         df.index.set_names(['AgentID', 'Step'], inplace=True)
@@ -543,7 +374,6 @@ class GAengine(GAselector):
 
     def eval_robots2(self, variables):
         for gID,df in variables.items():
-
             d=self.convert_output_to_dataset(df.copy(), id=f'{self.model.id}_generation:{self.generation_num}')
             d._enrich(proc_keys=['angular', 'spatial'])
 
@@ -555,14 +385,12 @@ class GAengine(GAselector):
             for i, g in self.genome_dict.items():
                 g.fitness_dict = aux.AttrDict({k: dic[i] for k, dic in fit_dicts.items()})
                 mus = aux.AttrDict({k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()})
-                # print(i,mus)
                 if len(mus) == 1:
                     g.fitness = list(mus.values())[0]
                 else:
                     coef_dict = {'KS': 10, 'RSS': 1}
                     g.fitness = np.sum([coef_dict[k] * mean for k, mean in mus.items()])
                 if not np.isnan(g.fitness) :
-
                     valid_gs[i]=g
             self.genome_dict = valid_gs
 

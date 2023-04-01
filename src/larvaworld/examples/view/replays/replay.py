@@ -39,7 +39,10 @@ replay_kws = {
         'overlap_mode': True,
     },
 }
-
-rep = ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to='./media', **replay_kws[mode])
+parameters = {
+    'refID': refID,
+    **replay_kws[mode]
+}
+rep = ReplayRun(parameters=parameters, id=f'{refID}_replay_{mode}', save_to='./media')
 
 rep.run()

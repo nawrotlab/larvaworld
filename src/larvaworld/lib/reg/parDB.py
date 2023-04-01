@@ -1278,7 +1278,10 @@ def buildInitDict():
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
                   'h': 'Number of agents per model ID',
                   'k': 'N'},
-            # 'id': pID('evaluation exec', k='id'),
+
+            'dir': {'dtype': str, 'symbol': 'dir',
+                'k': 'dir',
+                'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
 
         }
 

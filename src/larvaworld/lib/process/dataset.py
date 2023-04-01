@@ -188,9 +188,10 @@ class _LarvaDataset:
             ds= aux.loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
         return ds
 
-    def visualize(self, **kwargs):
+    def visualize(self,parameters={}, **kwargs):
         from larvaworld.lib.sim.dataset_replay import ReplayRun
-        rep = ReplayRun(dataset=self, **kwargs)
+        kwargs['dataset'] = self
+        rep = ReplayRun(parameters=parameters, **kwargs)
         rep.run()
 
 

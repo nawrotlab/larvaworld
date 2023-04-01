@@ -7,73 +7,74 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
 import numpy as np
-import seaborn as sns
+# import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 from larvaworld.lib import reg, aux, plot, util
-from larvaworld.lib.sim.run_template import BaseRun
+from larvaworld.lib.sim.base_run import BaseRun
 
 
 
 class EvalRun(BaseRun):
-    def __init__(self,parameters={}, **kwargs):
-        super().__init__(runtype = 'Eval',experiment='evaluation', parameters=parameters,**kwargs)
+    def __init__(self,dataset=None,dur=None,experiment='evaluation',  **kwargs):
+        super().__init__(runtype = 'Eval',experiment=experiment, **kwargs)
+        self.refID = self.p.refID
+        d = reg.retrieve_dataset(dataset=dataset, refID=self.p.refID, dir=self.p.dir)
+        d.id = 'experiment'
+        d.config.id = 'experiment'
 
+        d.color = 'grey'
+        d.config.color = 'grey'
 
-    def setup(self, refID=None,modelIDs=None, dataset_ids=None,offline=False,
-                 norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None, N=5, dur=None,
-                 enrichment=True,show=False):
+        self.dt =d.config.dt
+        if dur is None:
+            dur = d.config.Nticks * self.dt / 60
 
-        self.refID = refID
-        self.modelIDs = modelIDs
+        self.dur = dur
+        self.target = d
 
-        if dataset_ids is None:
-            dataset_ids = self.modelIDs
-        self.dataset_ids = dataset_ids
+    def setup(self,norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,
+              enrichment=True,show=False):
+
+        # self.refID = refID
+        # self.modelIDs = self.p.modelIDs
+        self.Nmodels = len(self.p.modelIDs)
+        # dIDS=self.p.dataset_ids
+        if self.p.dataset_ids is None:
+            self.p.dataset_ids = self.p.modelIDs
+        # self.dataset_ids = self.p.dataset_ids
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
-        self.offline = offline
+        self.offline = self.p.offline
         self.show = show
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
 
-
-
-
-        self.N = N
-
-        self.target = self.define_target(self.refID)
-        self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
-        self.define_eval_args(self.evaluation)
         self.datasets = []
         self.error_dicts = {}
-        self.error_plot_dir=f'{self.plot_dir}/errors'
-
-
+        self.error_plot_dir = f'{self.plot_dir}/errors'
 
         self.enrichment = enrichment
-        self.exp_conf = self.prepare_exp_conf(dur=dur)
 
 
-    def define_target(self, refID):
-        target = reg.loadRef(refID)
-        target.id = 'experiment'
-        target.config.id = 'experiment'
+        self.N = self.p.N
 
-        target.color = 'grey'
-        target.config.color = 'grey'
 
-        self.mID_colors = aux.N_colors(len(self.dataset_ids))
-        self.model_colors = dict(zip(self.dataset_ids, self.mID_colors))
+        # c = self.target.config
 
-        return target
+        # self.mID_colors = aux.N_colors(self.Nmodels)
+        # self.model_colors = dict(zip(self.p.dataset_ids, self.mID_colors))
+        self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
+        self.define_eval_args(self.evaluation)
+
+
 
 
     def define_eval_args(self, ev):
-        self.e_shorts = aux.flatten_list(ev['end']['shorts'].values.tolist())
-        self.s_shorts = aux.flatten_list(ev['step']['shorts'].values.tolist())
+        # self.e_shorts = aux.flatten_list(ev['end']['shorts'].values.tolist())
+        # self.s_shorts = aux.flatten_list(ev['step']['shorts'].values.tolist())
         self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
         s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
         self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
@@ -81,74 +82,78 @@ class EvalRun(BaseRun):
         self.eval_symbols = aux.AttrDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
-        self.tor_durs, self.dsp_starts, self.dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
 
 
-    def analyze(self):
-        self.run_evaluation(self.target)
-        self.plot_eval()
-
-    def prepare_exp_conf(self, dur=None, video=False):
+    def prepare_exp_conf(self, video=False):
         exp = 'dispersion'
-        exp_conf = reg.expandConf(id=exp, conftype='Exp')
-        c = self.target.config
-        if dur is None:
-            dur = c.Nticks * c.dt / 60
-
-        self.dur = dur
-
-        exp_conf.sim_params.timestep=c.dt
-        exp_conf.sim_params.duration=dur
+        c = reg.expandConf(id=exp, conftype='Exp')
+        c.sim_params.timestep=self.dt
+        c.sim_params.duration=self.dur
 
 
 
         if self.enrichment is None:
-            exp_conf.enrichment = None
+            c.enrichment = None
         else:
             tor_durs, dsp_starts, dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
-            exp_conf.enrichment.metric_definition.dispersion.dsp_starts = dsp_starts
-            exp_conf.enrichment.metric_definition.dispersion.dsp_stops = dsp_stops
-            exp_conf.enrichment.metric_definition.tortuosity.tor_durs = tor_durs
+            c.enrichment.metric_definition.dispersion.dsp_starts = dsp_starts
+            c.enrichment.metric_definition.dispersion.dsp_stops = dsp_stops
+            c.enrichment.metric_definition.tortuosity.tor_durs = tor_durs
 
-        if video:
-            vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
-        else:
-            vis_kwargs = reg.get_null('visualization', mode=None)
+        # if video:
+        #     vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
+        # else:
+        #     vis_kwargs = reg.get_null('visualization', mode=None)
 
         kws = aux.AttrDict({
-            'enrichment': exp_conf.enrichment,
-            'vis_kwargs': vis_kwargs,
+
+            'video': video,
             'save_to': self.save_to,
             'store_data': self.store_data,
             'experiment': exp,
             'id': self.id,
-            'sim_params': exp_conf.sim_params,
-            'trials': {},
-            'collections': ['pose'],
-            'env_params': exp_conf.env_params,
-            'larva_groups': reg.lgs(sample=self.refID, mIDs=self.modelIDs, ids=self.dataset_ids,
-                                    cs=self.mID_colors,
-                                    expand=True, N=self.N)})
+            'parameters' : aux.AttrDict({
+                'sim_params': c.sim_params,
+                'enrichment': c.enrichment,
+                'trials': {},
+                'collections': ['pose'],
+                'env_params': c.env_params,
+                'larva_groups': reg.lgs(sample=self.p.refID, mIDs=self.p.modelIDs, ids=self.p.dataset_ids,
+                                    cs=aux.N_colors(self.Nmodels),
+                                    expand=True, N=self.p.N)
+            })
+        })
 
         return kws
 
-    def store(self):
+    def simulate(self):
+        self.setup(**self._setup_kwargs)
+        c = self.target.config
+        dIDs, mIDs= self.p.dataset_ids, self.p.modelIDs
+        if self.offline:
+            print(f'Simulating offline {self.Nmodels} models : {dIDs} with {self.N} larvae each')
+            tor_durs, dsp_starts, dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
+            self.datasets += util.sim_models(mIDs=mIDs, dur=self.dur, dt=self.dt, tor_durs=tor_durs,
+                                        dsp_starts=dsp_starts, dsp_stops=dsp_stops,
+                                        dataset_ids=dIDs,
+                                        enrichment=self.enrichment,
+                                        Nids=self.N, colors=aux.N_colors(self.Nmodels), env_params=c.env_params,
+                                        refDataset=self.target, data_dir=self.data_dir)
+        else:
+            from larvaworld.lib.sim.single_run import ExpRun
+            print(f'Simulating {self.Nmodels} models : {dIDs} with {self.N} larvae each')
+            run = ExpRun(**self.prepare_exp_conf())
+            run.simulate()
+            self.datasets += run.datasets
+
+
+
+
+        self.analyze()
         if self.store_data:
-            aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
-            reg.vprint(f'Results saved at {self.data_dir}')
-
-    def run_evaluation(self, d, suf='fitted', min_size=20):
-        print('Evaluating all models')
-        for mode in self.eval_modes:
-            k = f'{mode}_{suf}'
-            self.error_dicts[k] = util.eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
-                                            min_size=min_size)
-        self.error_dicts = aux.AttrDict(self.error_dicts)
-
-    def plot_eval(self, suf='fitted'):
-        for mode in self.eval_modes:
-            k = f'{mode}_{suf}'
-            self.figs.errors[k] = self.get_error_plots(self.error_dicts[k], mode)
+            os.makedirs(self.data_dir, exist_ok=True)
+            self.store()
+        return self.datasets
 
     def get_error_plots(self, error_dict, mode='pooled'):
         GD = reg.graphs.dict
@@ -160,8 +165,8 @@ class EvalRun(BaseRun):
         labels = label_dic[mode]
         dic = {}
         for norm in self.norm_modes:
-            error_dict0 = self.norm_error_dict(error_dict, mode=norm)
-            df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(error_dict0.items())})
+            d = self.norm_error_dict(error_dict, mode=norm)
+            df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(d.items())})
             kws = {
                 'save_to': f'{self.error_plot_dir}/{norm}',
                 'show' : self.show
@@ -171,35 +176,51 @@ class EvalRun(BaseRun):
             tabs = {}
 
 
-            for i, (k, df) in enumerate(error_dict0.items()):
+            for i, (k, df) in enumerate(d.items()):
                 tabs[k] = GD['error table'](df, k, labels[k], **kws)
             tabs['mean'] = GD['error table'](df0, 'mean', 'average error', **kws)
-            bars['full'] = GD['error barplot'](error_dict=error_dict0, evaluation=self.evaluation, labels=labels, **kws)
+            bars['full'] = GD['error barplot'](error_dict=d, evaluation=self.evaluation, labels=labels, **kws)
 
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
-            bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=error_dict0,
+            bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=d,
                                                   evaluation=self.evaluation, **kws)
             dic[norm] = {'tables': tabs, 'barplots': bars}
         return aux.AttrDict(dic)
 
     def norm_error_dict(self, error_dict, mode='raw'):
-        dic = {}
-        for k, df in error_dict.items():
-            if mode == 'raw':
-                df = df
-            elif mode == 'minmax':
-                df = pd.DataFrame(MinMaxScaler().fit(df).transform(df), index=df.index, columns=df.columns)
-                # df = minmax(df)
-            elif mode == 'std':
-                df = pd.DataFrame(StandardScaler().fit(df).transform(df), index=df.index, columns=df.columns)
-                # df = std_norm(df)
-            dic[k] = df
-        return aux.AttrDict(dic)
+        if mode == 'raw':
+            return error_dict
+        elif mode == 'minmax':
+            return aux.AttrDict({k : pd.DataFrame(MinMaxScaler().fit(df).transform(df), index=df.index, columns=df.columns) for k, df in error_dict.items()})
+        elif mode == 'std':
+            return aux.AttrDict({k : pd.DataFrame(StandardScaler().fit(df).transform(df), index=df.index, columns=df.columns) for k, df in error_dict.items()})
+
+    def analyze(self, suf='fitted', min_size=20):
+        print('Evaluating all models')
+        os.makedirs(self.plot_dir, exist_ok=True)
+        self.error_dicts = aux.AttrDict()
+        for mode in self.eval_modes:
+            k = f'{mode}_{suf}'
+            d = util.eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
+                                            min_size=min_size)
+            self.figs.errors[k] = self.get_error_plots(d, mode)
+            self.error_dicts[k] = d
+
+
+
+
+    def store(self):
+        if self.store_data:
+            aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
+            reg.vprint(f'Results saved at {self.data_dir}')
+
+
+
 
     def plot_models(self):
         GD = reg.graphs.dict
         save_to = self.plot_dir
-        for mID in self.modelIDs:
+        for mID in self.p.modelIDs:
             self.figs.models.table[mID] = GD['model table'](mID=mID, save_to=save_to, figsize=(14, 11))
             self.figs.models.summary[mID] = GD['model summary'](mID=mID, save_to=save_to, refID=self.refID)
 
@@ -252,135 +273,117 @@ class EvalRun(BaseRun):
 
 
 
-    def preprocess(self,ds):
-        Ddata, Edata = {}, {}
-        for p, sh in zip(self.s_pars, self.s_shorts):
-            Ddata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
-        for p, sh in zip(self.e_pars, self.e_shorts):
-            Edata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
-        return aux.AttrDict({'step': Ddata, 'end': Edata})
+    # def preprocess(self,ds):
+    #     Ddata, Edata = {}, {}
+    #     for p, sh in zip(self.s_pars, self.s_shorts):
+    #         Ddata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
+    #     for p, sh in zip(self.e_pars, self.e_shorts):
+    #         Edata[p] = {d.id: reg.par_dict.get(sh, d) for d in ds}
+    #     return aux.AttrDict({'step': Ddata, 'end': Edata})
 
-    def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
-        self.sim_data = self.preprocess()
-        if mode == 'step':
-            if Nbins is None:
-                Nbins = 100
-            data0 = self.target_data.step
-            pars = self.s_pars
-            shorts = self.s_shorts
-            symbols = self.eval_symbols.step
-            sim_data = self.sim_data.step
-        elif mode == 'end':
-            if Nbins is None:
-                Nbins = 20
-            data0 = self.target_data.end
-            pars = self.e_pars
-            shorts = self.e_shorts
-            symbols = self.eval_symbols.end
-            sim_data = self.sim_data.end
-
-        filename = f'{mode}_{type}'
-        Nps = len(pars)
-        Ncols = 4
-        Nrows = int(np.ceil(Nps / Ncols))
-        if type == 'hist':
-            sharex = False
-            sharey = True
-        elif type == 'box':
-            sharex = True
-            sharey = False
-
-        P = plot.AutoPlot(name=filename, subfolder=None, Nrows=Nrows, Ncols=Ncols, figsize=(5 * Ncols, 8 * Nrows),
-                     sharex=sharex, sharey=sharey, show=self.show, save_to=self.plot_dir,
-                     datasets=[self.target] + self.datasets)
-
-        if type == 'hist':
-
-            for i, (p, sym) in enumerate(symbols.items()):
-                vs0 = data0[p].values
-                ws0 = np.ones_like(vs0) / float(len(vs0))
-                vmin, vmax = np.quantile(vs0, q=0.01), np.quantile(vs0, q=0.99)
-                bins = np.linspace(vmin, vmax, Nbins)
-                col0 = self.target.color
-                _ = P.axs[i].hist(vs0, bins=bins, weights=ws0, label='experiment', color=col0, alpha=0.5)
-                for id, df in sim_data[p].items():
-                    vs = df.values
-                    ws = np.ones_like(vs) / float(len(vs))
-                    col = self.model_colors[id]
-                    _ = P.axs[i].hist(vs, bins=bins, weights=ws, label=id, color=col,
-                                      histtype='step', linewidth=3, facecolor=col, edgecolor=col, fill=False,
-                                      alpha=0.5)
-                P.axs[i].set_xlabel(sym, fontsize=20)
-                if i % Ncols == 0:
-                    P.axs[i].set_ylabel('probability', fontsize=20)
-            P.axs[-1].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
-            P.adjust(W=0.01, H=0.5)
-
-        elif type == 'box':
-            data = aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
-            palette = dict(zip(P.labels, P.colors))
-            for sh in in_mm:
-                data[reg.getPar(sh)] *= 1000
-
-            for i, (p, sym) in enumerate(symbols.items()):
-                kws = {
-                    'x': "DatasetID",
-                    'y': p,
-                    'palette': P.colors,
-                    'hue': None,
-                    'data': data,
-                    'ax': P.axs[i],
-                    'width': 1.0,
-                    'fliersize': 3,
-                    'whis': 1.5,
-                    'linewidth': None
-                }
-                g1 = sns.boxplot(**kws)
-                plot.annotate_plot(show_ns=False, target_only=self.target.id, **kws)
-                P.conf_ax(i, xticklabelrotation=30, ylab=sym, yMaxN=4, xvis=False if i < (Nrows - 1) * Ncols else True)
-
-            P.adjust((0.1, 0.95), (0.15, 0.9), 0.5, 0.1)
-            P.fig.align_ylabels(P.axs[:])
-        return P.get()
-
-    def simulate(self):
-        self.setup(**self._setup_kwargs)
-        c = self.target.config
-        if self.offline:
-            print(f'Simulating offline {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
-            self.datasets += util.sim_models(mIDs=self.modelIDs, dur=self.dur, dt=c.dt, tor_durs=self.tor_durs,
-                                        dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
-                                        dataset_ids=self.dataset_ids,
-                                        enrichment=self.enrichment,
-                                        Nids=self.N, colors=list(self.model_colors.values()), env_params=c.env_params,
-                                        refDataset=self.target, data_dir=self.data_dir)
-        else:
-            from larvaworld.lib.sim.single_run import ExpRun
-            print(f'Simulating {len(self.dataset_ids)} models : {self.dataset_ids} with {self.N} larvae each')
-            run = ExpRun(parameters = self.exp_conf)
-            run.simulate()
-            self.datasets += run.datasets
+    # def plot_data(self, Nbins=None, mode='step', type='hist', in_mm=[]):
+    #     self.sim_data = self.preprocess()
+    #     if mode == 'step':
+    #         if Nbins is None:
+    #             Nbins = 100
+    #         data0 = self.target_data.step
+    #         pars = self.s_pars
+    #         shorts = self.s_shorts
+    #         symbols = self.eval_symbols.step
+    #         sim_data = self.sim_data.step
+    #     elif mode == 'end':
+    #         if Nbins is None:
+    #             Nbins = 20
+    #         data0 = self.target_data.end
+    #         pars = self.e_pars
+    #         shorts = self.e_shorts
+    #         symbols = self.eval_symbols.end
+    #         sim_data = self.sim_data.end
+    #
+    #     filename = f'{mode}_{type}'
+    #     Nps = len(pars)
+    #     Ncols = 4
+    #     Nrows = int(np.ceil(Nps / Ncols))
+    #     if type == 'hist':
+    #         sharex = False
+    #         sharey = True
+    #     elif type == 'box':
+    #         sharex = True
+    #         sharey = False
+    #
+    #     P = plot.AutoPlot(name=filename, subfolder=None, Nrows=Nrows, Ncols=Ncols, figsize=(5 * Ncols, 8 * Nrows),
+    #                  sharex=sharex, sharey=sharey, show=self.show, save_to=self.plot_dir,
+    #                  datasets=[self.target] + self.datasets)
+    #
+    #     if type == 'hist':
+    #
+    #         for i, (p, sym) in enumerate(symbols.items()):
+    #             vs0 = data0[p].values
+    #             ws0 = np.ones_like(vs0) / float(len(vs0))
+    #             vmin, vmax = np.quantile(vs0, q=0.01), np.quantile(vs0, q=0.99)
+    #             bins = np.linspace(vmin, vmax, Nbins)
+    #             col0 = self.target.color
+    #             _ = P.axs[i].hist(vs0, bins=bins, weights=ws0, label='experiment', color=col0, alpha=0.5)
+    #             for id, df in sim_data[p].items():
+    #                 vs = df.values
+    #                 ws = np.ones_like(vs) / float(len(vs))
+    #                 col = self.model_colors[id]
+    #                 _ = P.axs[i].hist(vs, bins=bins, weights=ws, label=id, color=col,
+    #                                   histtype='step', linewidth=3, facecolor=col, edgecolor=col, fill=False,
+    #                                   alpha=0.5)
+    #             P.axs[i].set_xlabel(sym, fontsize=20)
+    #             if i % Ncols == 0:
+    #                 P.axs[i].set_ylabel('probability', fontsize=20)
+    #         P.axs[-1].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+    #         P.adjust(W=0.01, H=0.5)
+    #
+    #     elif type == 'box':
+    #         data = aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=mode)
+    #         palette = dict(zip(P.labels, P.colors))
+    #         for sh in in_mm:
+    #             data[reg.getPar(sh)] *= 1000
+    #
+    #         for i, (p, sym) in enumerate(symbols.items()):
+    #             kws = {
+    #                 'x': "DatasetID",
+    #                 'y': p,
+    #                 'palette': P.colors,
+    #                 'hue': None,
+    #                 'data': data,
+    #                 'ax': P.axs[i],
+    #                 'width': 1.0,
+    #                 'fliersize': 3,
+    #                 'whis': 1.5,
+    #                 'linewidth': None
+    #             }
+    #             g1 = sns.boxplot(**kws)
+    #             plot.annotate_plot(show_ns=False, target_only=self.target.id, **kws)
+    #             P.conf_ax(i, xticklabelrotation=30, ylab=sym, yMaxN=4, xvis=False if i < (Nrows - 1) * Ncols else True)
+    #
+    #         P.adjust((0.1, 0.95), (0.15, 0.9), 0.5, 0.1)
+    #         P.fig.align_ylabels(P.axs[:])
+    #     return P.get()
 
 
 
-        os.makedirs(self.plot_dir, exist_ok=True)
-        self.analyze()
-        if self.store_data:
-            os.makedirs(self.data_dir, exist_ok=True)
-            self.store()
-        return self.datasets
-
-
-def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, enrichment=True, offline=False, dur=None,
+def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10, offline=False,
                       **kwargs):
     if id is None:
         id = f'{len(mIDs)}mIDs'
-    if dIDs is None:
-        dIDs = mIDs
+    # if dIDs is None:
+    #     dIDs = mIDs
     if save_to is None:
         save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
-    evrun = EvalRun(refID=refID, id=id, modelIDs=mIDs, dataset_ids=dIDs, N=N,dur=dur,
-                    save_to=save_to,enrichment=enrichment, show=False, offline=offline, **kwargs)
+
+    parameters = reg.get_null('Eval',**{
+        'refID': refID,
+        'modelIDs': mIDs,
+        'dataset_ids': dIDs,
+        'N': N,
+        'offline': offline,
+    })
+    evrun = EvalRun(parameters=parameters, id=id,
+                    save_to=save_to, **kwargs)
     evrun.simulate()
     evrun.plot_models()
     evrun.plot_results()
@@ -516,12 +519,11 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
 if __name__ == '__main__':
     refID = 'None.150controls'
     # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
-    mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    dataset_ids = mIDs
-    # # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
-    id = '4xee33e'
+    # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
+    # dataset_ids = mIDs
+    # # # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
+    # id = '4xee33e'
     #
-    evrun = EvalRun(refID=refID, modelIDs=mIDs, dataset_ids=dataset_ids, offline=False)
 
     #
     # evrun.simulate(video=False)

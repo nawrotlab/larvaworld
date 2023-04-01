@@ -78,13 +78,13 @@ class BaseRun(agentpy.Model):
         self.obstacles.append(wall)
         return wall
 
-    def build_env(self, env_params):
+    def build_env(self, p):
         reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
         # Define environment
-        self.space = envs.Arena(self, **env_params.arena)
+        self.space = envs.Arena(self, **p.arena)
 
-        self.place_obstacles(env_params.border_list)
-        self.place_food(p=env_params.food_params)
+        self.place_obstacles(p.border_list)
+        self.place_food(p=p.food_params)
 
         '''
         Sensory landscapes of the simulation environment arranged per modality
@@ -93,9 +93,9 @@ class BaseRun(agentpy.Model):
         - Temperature landscape : thermoscape
         '''
 
-        self.odor_layers = envs.create_odor_layers(model=self, sources=self.sources, pars=env_params.odorscape)
-        self.windscape = envs.WindScape(model=self, **env_params.windscape) if env_params.windscape else None
-        self.thermoscape = envs.ThermoScape(**env_params.thermoscape) if env_params.thermoscape else None
+        self.odor_layers = envs.create_odor_layers(model=self, sources=self.sources, pars=p.odorscape)
+        self.windscape = envs.WindScape(model=self, **p.windscape) if p.windscape else None
+        self.thermoscape = envs.ThermoScape(**p.thermoscape) if p.thermoscape else None
 
 
     def place_obstacles(self, barriers={}):
@@ -115,3 +115,16 @@ class BaseRun(agentpy.Model):
         self.source_xy = aux.get_source_xy(p)
 
 
+    def get_food(self):
+        return self.sources
+
+    def get_flies(self, ids=None, group=None):
+        ls = self.agents
+        if ids is not None:
+            ls = [l for l in ls if l.unique_id in ids]
+        if group is not None:
+            ls = [l for l in ls if l.group == group]
+        return ls
+
+    def get_all_objects(self):
+        return self.get_food() + self.get_flies() + self.borders

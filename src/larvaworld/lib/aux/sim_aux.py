@@ -410,3 +410,4 @@ def sense_food(pos, sources=None, grid=None, radius=None):
         if len(valid) > 0:
             return random.choice(valid)
     return None
+

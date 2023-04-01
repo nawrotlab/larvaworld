@@ -36,7 +36,11 @@ def test_replay() :
     }
 
     for mode, kws in replay_kws.items() :
-        rep = sim.ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to= './media', **kws)
+        parameters = {
+            'refID' : refID,
+        **kws
+                      }
+        rep = sim.ReplayRun(parameters=parameters, id=f'{refID}_replay_{mode}', save_to= './media')
         rep.run()
 
 def test_exp_run() :
@@ -60,15 +64,24 @@ def test_GA() :
 
     conf.offline=True
     conf.show_screen=False
-    ga_run = larvaworld.sim.ga_engine.GAlauncher(parameters=conf)
+    ga_run = sim.GAlauncher(parameters=conf)
     best2=ga_run.run()
     print(best2)
     assert best2 is not None
 
 def test_evaluation() :
-    refID = 'exploration.merged_dishes'
-    mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
-    evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
+    # refID = 'exploration.merged_dishes'
+    # mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
+    parameters = reg.get_null('Eval', **{
+        'refID': 'exploration.merged_dishes',
+        'modelIDs': ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF'],
+        # 'dataset_ids': dIDs,
+        'N': 3,
+        # 'offline': False,
+    })
+    evrun = sim.EvalRun(parameters=parameters, id=id,show=False)
+
+    # evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
     evrun.simulate()
     evrun.plot_results()
     evrun.plot_models()
