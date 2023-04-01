@@ -170,50 +170,6 @@ class GAlauncher(BaseRun):
 
         self.build_generation(gConfs)
 
-#
-# class GAengine:
-#     def __init__(self,space_mkeys=[], robot_class=None, base_model='explorer',
-#                  multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
-#                  exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random'):
-#
-#
-#         # self.model = model
-#         self.bestConfID = bestConfID
-#
-#         self.exclude_func = exclude_func
-#         self.multicore = multicore
-#         self.robot_class = get_robot_class(robot_class, self.model.offline)
-#         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
-#         self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
-#         self.excluded_ids = []
-#         self.exclusion_mode = exclusion_mode
-#
-#         self.gConfs=self.create_first_generation(init_mode, self.Nagents, self.space_dict, self.mConf0)
-#
-#         self.build_generation()
-#         self.best_genome = None
-#         self.best_fitness = None
-#         self.sorted_genomes = None
-#         self.all_genomes_dic = []
-#
-#         self.generation_num = 1
-#         self.num_cpu = multiprocessing.cpu_count()
-#         self.start_total_time = aux.TimeUtil.current_time_millis()
-#         self.start_generation_time = self.start_total_time
-#         self.generation_step_num = 0
-#         self.generation_sim_time = 0
-#         if self.exclusion_mode :
-#             self.fit_dict =None
-#         else :
-#             if fit_dict is None :
-#                 if fitness_target_refID is not None:
-#                     fit_dict=util.GA_optimization(fitness_target_refID, fitness_target_kws)
-#                 else :
-#                     fit_dict = arrange_fitness(fitness_func,source_xy=self.model.source_xy)
-#             self.fit_dict =fit_dict
-#
-#         reg.vprint(f'Generation {self.generation_num} started', 1)
-#         reg.vprint(f'multicore: {self.multicore} num_cpu: {self.num_cpu}', 1)
     def define_fitness_func(self, fit_dict=None, fitness_target_refID=None, fitness_target_kws=None, fitness_func=None):
         if self.exclusion_mode:
             return None
@@ -260,6 +216,12 @@ class GAlauncher(BaseRun):
         if self.progress_bar:
             self.progress_bar.update(self.generation_num)
 
+    @ property
+    def generation_completed(self):
+        return self.generation_step_num >= self.Nsteps or len(self.agents) <= self.selector.Nagents_min
+
+    def max_generation_completed(self):
+        return self.selector.Ngenerations is not None and self.generation_num >= self.selector.Ngenerations
 
 
     def sim_step(self):
@@ -267,9 +229,9 @@ class GAlauncher(BaseRun):
         self.update()
         self.generation_sim_time += self.dt
         self.generation_step_num += 1
-        if self.generation_step_num == self.Nsteps or len(self.agents) <= self.selector.Nagents_min:
+        if self.generation_completed:
             self.end_generation()
-            if self.selector.Ngenerations is None or self.generation_num < self.selector.Ngenerations:
+            if not self.max_generation_completed:
                 self.build_generation(self.selector.create_new_generation(self.space_dict, self.sorted_genomes))
 
             else:
