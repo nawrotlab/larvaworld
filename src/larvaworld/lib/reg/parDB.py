@@ -1054,8 +1054,8 @@ def buildInitDict():
             'Cmutation': {'v': 0.1, 'lim': (0.0, 1.0), 'h': 'Mutation coefficient', 'k': 'Cmut'},
             'selection_ratio': {'v': 0.3, 'lim': (0.0, 1.0),
                                 'h': 'Fraction of agents to be selected for the next generation', 'k': 'Rsel'},
-            'verbose': {'dtype': int, 'v': 0, 'vs': [0, 1, 2, 3],
-                        'h': 'Verbose argument for GA launcher', 'k': 'verb'}
+            # 'verbose': {'dtype': int, 'v': 0, 'vs': [0, 1, 2, 3],
+            #             'h': 'Verbose argument for GA launcher', 'k': 'verb'}
         }
 
         d['ga_build_kws0'] = {
