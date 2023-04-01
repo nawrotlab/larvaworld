@@ -6,38 +6,46 @@ from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 
 class BaseRun(agentpy.Model):
-    def __init__(self, runtype, parameters=None,  store_data=True, save_to=None, id=None,experiment=None,offline=False,show_display=True,
-                 Box2D=False, larva_collisions=True,dt=0.1,duration=None,Nsteps=None, **kwargs):
-        self.larva_collisions = larva_collisions
+    def __init__(self, runtype, parameters=None,
+                 store_data=True, save_to=None,
+                 id=None,experiment=None,offline=False,show_display=True,
+                 Box2D=False, larva_collisions=True,
+                 dt=0.1,duration=None,Nsteps=None,
+                 **kwargs):
+
         if parameters is None :
             if experiment is not None :
                 parameters = reg.expandConf('Exp', experiment)
             else :
                 raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
 
-        # if 'offline' in parameters.keys() :
-        #     offline=parameters.offline
-        self.offline = offline
-        self.show_display = show_display
-
-
         self.experiment = experiment if experiment is not None else parameters.experiment
-        self.store_data = store_data
-        self.Box2D = Box2D
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
+        # Define N timesteps
         self.dt = dt
         self.duration = duration
         if Nsteps is None:
-            if self.duration is not None :
-                Nsteps = int(self.duration * 60 / self.dt)
+            if duration is not None :
+                Nsteps = int(duration * 60 / dt)
         self.Nsteps = Nsteps
         parameters.steps = self.Nsteps
         super().__init__(parameters=parameters, **kwargs)
 
+        # Define constant parameters
+        self.offline = offline
+        self.show_display = show_display and not offline
+        self.larva_collisions = larva_collisions
+        self.Box2D = Box2D
+        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
+        # Define ID
         if id is None:
             idx = reg.next_idx(self.experiment, conftype=runtype)
             id = f'{self.experiment}_{idx}'
         self.id = id
+
+
+
         # Define directories
         if save_to is None:
             save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
@@ -45,10 +53,16 @@ class BaseRun(agentpy.Model):
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
         self.save_to = self.dir
-
+        self.store_data = store_data
+        if self.store_data :
+            os.makedirs(self.data_dir, exist_ok=True)
+            os.makedirs(self.plot_dir, exist_ok=True)
         self.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                    'path': f'{self.data_dir}/agentpy_output'}
-        self.report(['agentpy_output_kws', 'id', 'dir'])
+
+
+        self.report(['agentpy_output_kws', 'id', 'dir', 'Box2D', 'offline', 'show_display',
+                     'experiment', 'save_to', 'dt', 'duration', 'Nsteps'])
 
         self.is_paused = False
         self.datasets = None
@@ -133,3 +147,8 @@ class BaseRun(agentpy.Model):
 
     def get_all_objects(self):
         return self.get_food() + self.get_flies() + self.borders
+
+    def place_agents(self, confs, agent_class):
+        agent_list = [agent_class(model=self, **conf) for conf in confs]
+        self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        self.agents = agentpy.AgentList(model=self, objs=agent_list)

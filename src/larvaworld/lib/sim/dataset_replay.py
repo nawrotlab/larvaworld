@@ -17,7 +17,7 @@ class ReplayRun(BaseRun):
     def __init__(self,parameters,  dataset=None, experiment='replay',**kwargs):
 
         self.dataset = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
-        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters)
+        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, self.dataset)
         # self.config = c
         # self.step_data = s
         # self.endpoint_data = e
@@ -41,7 +41,7 @@ class ReplayRun(BaseRun):
 
         self.build_env(c.env_params)
 
-        self.place_agents(s,e,c)
+        self.build_agents(s,e,c)
 
         screen_kws = {
             'video': not self.p.overlap_mode,
@@ -52,15 +52,14 @@ class ReplayRun(BaseRun):
 
 
 
-    def place_agents(self, s,e,c):
+    def build_agents(self, s,e,c):
         try:
             ls = e['length'].values
         except:
             ls = np.ones(c.N) * 5
-        ids=c.agent_ids
-        agent_list = [agents.LarvaReplay(model=self, unique_id=id, length=ls[i], data=s.xs(id, level='AgentID', drop_level=True)) for i, id in enumerate(ids)]
-        self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
-        self.agents = agentpy.AgentList(model=self, objs=agent_list)
+        confs=[{'unique_id':id, 'length':ls[i], 'data':s.xs(id, level='AgentID', drop_level=True)} for i, id in enumerate(c.agent_ids)]
+        self.place_agents(confs, agents.LarvaReplay)
+
 
 
 
@@ -84,8 +83,7 @@ class ReplayRun(BaseRun):
         self.screen_manager.finalize(self.t)
 
 
-    def define_config(self, p):
-        c = self.dataset.config.get_copy()
+    def define_config(self, p, c):
         if type(p.track_point) == int:
             c.point = 'centroid' if p.track_point == -1 else nam.midline(c.Npoints, type='point')[p]
         if p.agent_ids is not None:
@@ -100,18 +98,19 @@ class ReplayRun(BaseRun):
             c.env_params.arena = reg.get_null('arena', dims=(0.01, 0.01))
         return c
 
-    def smaller_dataset(self,p):
-        c=self.define_config(p)
+    def smaller_dataset(self,p, d):
+        c = d.config.get_copy()
+        c=self.define_config(p, c)
 
-        def get_data(d,ids) :
-            if not hasattr(d, 'step_data'):
-                d.load(h5_ks=['contour', 'midline'])
-            s, e = d.step_data, d.endpoint_data
+        def get_data(dd,ids) :
+            if not hasattr(dd, 'step_data'):
+                dd.load(h5_ks=['contour', 'midline'])
+            s, e = dd.step_data, dd.endpoint_data
             e0=copy.deepcopy(e.loc[ids])
             s0=copy.deepcopy(s.loc[(slice(None), ids), :])
             return s0,e0
 
-        s0,e0=get_data(self.dataset,c.agent_ids)
+        s0,e0=get_data(d,c.agent_ids)
 
         if p.time_range is not None:
             a, b = p.time_range
@@ -121,7 +120,7 @@ class ReplayRun(BaseRun):
 
         if p.transposition is not None:
             try:
-                s_tr = self.dataset.load_traj(mode=p.transposition)
+                s_tr = d.load_traj(mode=p.transposition)
                 s0.update(s_tr)
             except:
                 s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)

@@ -5,9 +5,10 @@ from larvaworld.lib.model.modules.sensor2 import ProximitySensor
 
 class LarvaRobot(LarvaSim):
 
-    def __init__(self, larva_pars,**kwargs):
+    def __init__(self, larva_pars,genome=None, **kwargs):
         super().__init__(**larva_pars,default_color=aux.Color.random_color(), **kwargs)
 
+        self.genome = genome
         self.Nticks = 0
         self.finalized = False
         self.collision_with_object = False

@@ -8,8 +8,10 @@ from larvaworld.lib import aux
 
 
 class LarvaOffline(LarvaSim):
-    def __init__(self, larva_pars, **kwargs):
+    def __init__(self, larva_pars,genome=None,  **kwargs):
         super().__init__(**larva_pars, **kwargs)
+
+        self.genome = genome
         self.Nticks = 0
         self.collision_with_object = False
 

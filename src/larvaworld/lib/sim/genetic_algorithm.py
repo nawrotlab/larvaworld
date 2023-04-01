@@ -26,7 +26,7 @@ class GAlauncher(BaseRun):
         self.odor_ids = aux.get_all_odors({}, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
 
-        self.screen_manager=GA_ScreenManager(model=self,show_display=self.show_display and not self.offline,
+        self.screen_manager=GA_ScreenManager(model=self,show_display=self.show_display,
                                            panel_width=600,caption = f'GA {self.p.experiment} : {self.id}',
                                            space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
         self.initialize(**self.p.ga_build_kws, **self.p.ga_select_kws)
@@ -225,19 +225,24 @@ class GAengine(GAselector):
 
 
     def build_generation(self):
-        robots = []
-        for i, gConf in enumerate(self.gConfs):
-            g=self.new_genome(gConf, self.mConf0)
-            self.genome_dict[i] = g
+        self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(self.gConfs)}
 
-            robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
-            robot.genome = g
-            robots.append(robot)
-        self.model.space.add_agents(robots, positions=[a.pos for a in robots])
-        self.robots = agentpy.AgentList(model=self.model, objs=robots)
-        self.collectors = reg.get_reporters(collections=self.model.collections, agents=self.robots)
+        confs= [{'larva_pars' : g.mConf, 'unique_id' : id, 'genome' : g} for id, g in self.genome_dict.items()]
+        self.model.place_agents(confs, self.robot_class)
+
+        # robots = []
+        # for i, gConf in enumerate(self.gConfs):
+        #     g=self.new_genome(gConf, self.mConf0)
+        #     self.genome_dict[i] = g
+        #
+        #     robot = self.robot_class(unique_id=i, model=self.model, larva_pars=g.mConf)
+        #     robot.genome = g
+        #     robots.append(robot)
+        # self.model.space.add_agents(robots, positions=[a.pos for a in robots])
+        # self.robots = agentpy.AgentList(model=self.model, objs=robots)
+        self.collectors = reg.get_reporters(collections=self.model.collections, agents=self.model.agents)
         if self.multicore:
-            self.threads=self.build_threads(robots)
+            self.threads=self.build_threads(self.model.agents)
 
 
     def sim_step(self):
@@ -245,7 +250,7 @@ class GAengine(GAselector):
         self.update()
         self.generation_sim_time += self.model.dt
         self.generation_step_num += 1
-        if self.generation_step_num == self.model.Nsteps or len(self.robots) <= self.Nagents_min:
+        if self.generation_step_num == self.model.Nsteps or len(self.model.agents) <= self.Nagents_min:
             self.end_generation()
             if self.Ngenerations is None or self.generation_num < self.Ngenerations:
                 self.excluded_ids = []
@@ -260,23 +265,23 @@ class GAengine(GAselector):
         if self.multicore:
             for thr in self.threads:
                 thr.step()
-            for robot in self.robots:
+            for robot in self.model.agents:
                 self.check(robot)
         else:
-            for robot in self.robots:
+            for robot in self.model.agents:
                 robot.step()
                 self.check(robot)
 
     def update(self):
-        self.robots.nest_record(self.collectors['step'])
+        self.model.agents.nest_record(self.collectors['step'])
 
 
     def end_generation(self):
-        self.robots.nest_record(self.collectors['end'])
+        self.model.agents.nest_record(self.collectors['end'])
         self.model.create_output()
         self.eval_robots2(self.model.output.variables)
-        for robot in self.robots[:]:
-            self.destroy_robot(robot)
+        for a in self.model.agents[:]:
+            self.destroy_robot(a)
         self.sort_genomes()
 
         if self.model.store_data:
@@ -293,7 +298,7 @@ class GAengine(GAselector):
             robot.genome.fitness = -np.inf
         if self.exclusion_mode:
             robot.genome.fitness =robot.cum_dur
-        self.robots.remove(robot)
+        self.model.agents.remove(robot)
         self.model.space.remove_agents([robot])
 
     def finalize(self):

@@ -7,7 +7,7 @@ import pandas as pd
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.screen.drawing import ScreenManager
-# from larvaworld.lib.model import envs, agents
+from larvaworld.lib.model import envs, agents
 from larvaworld.lib.model.envs.conditions import get_exp_condition
 from larvaworld.lib.sim.base_run import BaseRun
 
@@ -28,7 +28,7 @@ class ExpRun(BaseRun):
         self.odor_ids = aux.get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
 
-        self.place_agents(self.p.larva_groups, parameter_dict)
+        self.build_agents(self.p.larva_groups, parameter_dict)
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
         self.accessible_sources = None
 
@@ -167,21 +167,21 @@ class ExpRun(BaseRun):
 
 
 
-    def place_agents(self, larva_groups, parameter_dict={}):
+    def build_agents(self, larva_groups, parameter_dict={}):
         reg.vprint(f'--- Simulation {self.id} : Generating agent groups!--- ', 1)
-        agentConfs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
+        confs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
         if not self.Box2D :
             if not self.offline :
-                from larvaworld.lib.model.agents._larva_sim import LarvaSim
-                agent_list = [LarvaSim(model=self, **conf) for conf in agentConfs]
+                agent_class=agents.LarvaSim
             else :
-                from larvaworld.lib.model.agents.larva_offline import LarvaOffline
-                agent_list = [LarvaOffline(model=self, **conf) for conf in agentConfs]
+                agent_class = agents.LarvaOffline
         else :
-            from larvaworld.lib.model.agents._larva_box2d import LarvaBox2D
-            agent_list = [LarvaBox2D(model=self, **conf) for conf in agentConfs]
-        self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
-        self.agents = agentpy.AgentList(model=self, objs=agent_list)
+            agent_class = agents.LarvaBox2D
+        self.place_agents(confs, agent_class)
+
+        # agent_list = [agent_class(model=self, **conf) for conf in agentConfs]
+        # self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
+        # self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
     def get_food(self):
         return self.sources
