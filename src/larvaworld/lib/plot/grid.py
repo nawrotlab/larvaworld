@@ -64,7 +64,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     refDataset.config.color = 'red'
     e, c = refDataset.endpoint_data, refDataset.config
 
-    dd = util.sim_model(mID=mID, refDataset=refDataset, dur=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue',
+    dd = util.sim_model(mID=mID, refDataset=refDataset, duration=c.Nticks * c.dt / 60, dt=c.dt, Nids=Nids, color='blue',
                    dataset_id='model')
 
     if model_table:
@@ -339,7 +339,7 @@ def result_summary(datasets, target, **kwargs):
 def model_sample_track(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
     from larvaworld.lib.plot.traj import track_annotated
     if d is None:
-        d = util.sim_model(mID=mID, m=m, dur=dur, dt=dt, Nids=Nids, enrichment=False)
+        d = util.sim_model(mID=mID, m=m, duration=dur, dt=dt, Nids=Nids, enrichment=False)
     kws0 = aux.AttrDict({
         'datasets': [d],
         # 'labels' : [d],

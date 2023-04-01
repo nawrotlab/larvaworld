@@ -213,33 +213,92 @@ def generate_sourceConfs(groups={}, units={}) :
     return confs
 
 
-def sim_models(mIDs, colors=None, dataset_ids=None, data_dir=None, **kwargs):
+def sim_models(mIDs, colors=None, dataset_ids=None,lgs=None, data_dir=None, **kwargs):
     N = len(mIDs)
     if colors is None:
 
         colors = aux.N_colors(N)
     if dataset_ids is None:
         dataset_ids = mIDs
+    if lgs is None:
+        lgs = [None] * N
     if data_dir is None:
         dirs = [None] * N
     else:
         dirs = [f'{data_dir}/{dID}' for dID in dataset_ids]
-    ds = [sim_model(mID=mIDs[i], color=colors[i], dataset_id=dataset_ids[i], dir=dirs[i], **kwargs) for i in range(N)]
+    ds = [sim_model(mID=mIDs[i], color=colors[i], dataset_id=dataset_ids[i],lg=lgs[i], dir=dirs[i], **kwargs) for i in range(N)]
     return ds
 
 
 def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_LarvaConfDict=False, imitation=False,
+tor_durs=[],dsp_starts=[0], dsp_stops=[40], enrichment=True,
+lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id=None,
               **kwargs):
+    from larvaworld.lib.process.dataset import LarvaDataset
     if use_LarvaConfDict:
         pass
+    if refID is None:
+        refID = refDataset.refID
+    if dataset_id is None:
+        dataset_id = mID
+    if lg is None :
 
+        lg=reg.lg(id=dataset_id, c=color, sample=refID, mID=mID, N=Nids, expand=True, **kwargs)
+    # confs=generate_agentConfs(lg)
+
+
+    Nticks = int(duration * 60 / dt)
     ids, p0s, fo0s, ms = generate_agentGroup(gID=mID, mID=mID, refID=refID, Nids=Nids,
                                                  refDataset=refDataset, sample_ks=sample_ks,
                                                  imitation=imitation)
-    if refID is None:
-        refID = refDataset.refID
-    d = sim_model_dataset(ms, mID=mID, Nids=Nids, refID=refID, ids=ids, p0s=p0s, fo0s=fo0s, **kwargs)
+    # ids, p0s, fo0s, ms = generate_agentGroup(gID=mID, mID=mID, Nids=d.N,
+    #                                              m=gConf.model, refID=gConf.sample,
+    #                                              imitation=gConf.imitation,
+    #                                              distribution=d,
+    #                                              parameter_dict=parameter_dict)
+
+
+    s, e = sim_multi_agents(Nticks, Nids, ms, dataset_id, dt=dt, ids=ids, p0s=p0s, fo0s=fo0s)
+    # d = sim_model_dataset(ms, mID=mID, Nids=Nids, refID=refID, ids=ids, p0s=p0s, fo0s=fo0s, **kwargs)
+    # return d
+
+
+
+
+
+# def sim_model_dataset(ms, mID=None, env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id=None,
+#                       tor_durs=[],dsp_starts=[0], dsp_stops=[40], enrichment=True,
+#                       refID=None,Nids=1,lg=None,  ids=None, p0s=None, fo0s=None,
+#                       **kwargs):
+
+
+
+    c_kws = {
+        # 'load_data': False,
+        'dir': dir,
+        'id': dataset_id,
+        # 'metric_definition': g.enrichment.metric_definition,
+        'larva_groups': lg,
+        'env_params': env_params,
+        'Npoints': 3,
+        'Ncontour': 0,
+        'fr': 1 / dt,
+        # 'mID': mID,
+    }
+
+
+    d = LarvaDataset(**c_kws, load_data=False)
+
+
+    d.set_data(step=s, end=e)
+    if enrichment:
+        d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'],
+                      anot_keys=['bout_detection', 'bout_distribution', 'interference'],
+                      store=d.dir is not None,
+                      dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
+
     return d
+
 
 
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
@@ -312,40 +371,3 @@ def sim_multi_agents(Nticks, Nids, ms, group_id, dt=0.1, ids=None, p0s=None, fo0
     from larvaworld.lib.process.spatial import scale_to_length
     scale_to_length(s, e, keys=['v'])
     return s, e
-
-
-def sim_model_dataset(ms, mID, env_params={}, dir=None, dur=3, dt=1 / 16, color='blue', dataset_id=None, tor_durs=[],
-                      dsp_starts=[0], dsp_stops=[40],enrichment=True, refID=None, Nids=1, ids=None, p0s=None, fo0s=None,
-                      **kwargs):
-    Nticks = int(dur * 60 / dt)
-    if dataset_id is None:
-        dataset_id = mID
-
-    c_kws = {
-        # 'load_data': False,
-        'dir': dir,
-        'id': dataset_id,
-        # 'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': reg.lg(id=dataset_id, c=color, sample=refID, mID=mID, N=Nids, expand=True, **kwargs),
-        'env_params': env_params,
-        'Npoints': 3,
-        'Ncontour': 0,
-        'fr': 1 / dt,
-        'mID': mID,
-    }
-
-    from larvaworld.lib.process.dataset import LarvaDataset
-    d = LarvaDataset(**c_kws, load_data=False)
-    s, e = sim_multi_agents(Nticks, Nids, ms, dataset_id, dt=dt, ids=ids, p0s=p0s, fo0s=fo0s)
-
-    d.set_data(step=s, end=e)
-    if enrichment:
-        d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'],
-                      anot_keys=['bout_detection', 'bout_distribution', 'interference'],
-                      store=dir is not None,
-                      dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
-
-    return d
-
-
-

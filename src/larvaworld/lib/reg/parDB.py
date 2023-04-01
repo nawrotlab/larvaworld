@@ -381,10 +381,13 @@ def buildInitDict():
                 # 'path': pPath('simulation', k='path'),
                 'duration': {'v': 5.0,'lim': (0.0, 100000.0), 'h': 'The duration of the simulation in minutes.',
                              'k': 't'},
-                'timestep': {'v': 0.1, 'lim': (0.0, 0.4), 'dv': 0.05,
+                'dt': {'v': 0.1, 'lim': (0.0, 0.4), 'dv': 0.05,
                              'h': 'The timestep of the simulation in seconds.',
                              'k': 'dt'},
-                # 'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
+                'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
+                'show_display': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
+                'store_data': {**bT, 'h': 'Whether to store the simulation data', 'k': 'no_store'},
+                'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
 
             },
             'build_conf': {
@@ -1109,8 +1112,7 @@ def buildInitDict():
             # 'experiment': confID_entry('Ga', default='exploration'),
             # 'caption': {'dtype': str, 'h': 'The screen caption'},
             # 'save_to': pSaveTo(),
-            'show_screen': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
-            'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
+            # 'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
             'ga_build_kws': d['ga_build_kws'],
             'ga_select_kws': d['ga_select_kws'],
             # 'ga_kws': {**d['GAengine'], **d['GAselector']},
@@ -1235,7 +1237,7 @@ def buildInitDict():
             'collections': {'dtype': List[str], 'v': ['pose']},
             'enrichment': d['enrichment'],
             'experiment': ConfID_entry('Exp'),
-            'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
+
         }
 
         d['Replay'] = {
@@ -1274,7 +1276,7 @@ def buildInitDict():
             'refID': ConfID_entry('Ref', default='None.150controls'),
             'modelIDs': ConfID_entry('Model', single_choice=False, k='mIDs'),
             'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
-            'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
+            'sim_params': d['sim_params'],
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
                   'h': 'Number of agents per model ID',
                   'k': 'N'},
@@ -1363,7 +1365,7 @@ class ParamClass:
     def build_initial(self):
         kws = {'u': reg.units.s}
         self.add(
-            **{'p': 'model.dt', 'k': 'dt', 'd': 'timestep', 'sym': '$dt$', 'lim': (0.01, 0.5), 'dv': 0.01, 'v0': 0.1,
+            **{'p': 'model.dt', 'k': 'dt', 'd': 'dt', 'sym': '$dt$', 'lim': (0.01, 0.5), 'dv': 0.01, 'v0': 0.1,
                **kws})
         self.add(
             **{'p': 'cum_dur', 'k': nam.cum('t'), 'sym': sub('t', 'cum'), 'lim': (0.0, None), 'dv': 0.1, 'v0': 0.0,

@@ -26,7 +26,7 @@ class GAlauncher(BaseRun):
         self.odor_ids = aux.get_all_odors({}, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
 
-        self.screen_manager=GA_ScreenManager(model=self,show_display=self.p.show_screen and not self.p.offline,
+        self.screen_manager=GA_ScreenManager(model=self,show_display=self.show_display and not self.offline,
                                            panel_width=600,caption = f'GA {self.p.experiment} : {self.id}',
                                            space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
         self.initialize(**self.p.ga_build_kws, **self.p.ga_select_kws)
@@ -183,7 +183,7 @@ class GAengine(GAselector):
             self.progress_bar = None
         self.exclude_func = exclude_func
         self.multicore = multicore
-        self.robot_class = get_robot_class(robot_class, self.model.p.offline)
+        self.robot_class = get_robot_class(robot_class, self.model.offline)
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
         self.excluded_ids = []
@@ -307,7 +307,7 @@ class GAengine(GAselector):
 
 
     def check(self, robot):
-        if not self.model.p.offline:
+        if not self.model.offline:
             # destroy robot if it collides an obstacle
             if robot.collision_with_object:
                 self.destroy_robot(robot)
@@ -433,8 +433,8 @@ def arrange_fitness(fitness_func, **kwargs):
 
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
-                 offline=False,show_screen=False,exclusion_mode=False,experiment='exploration',
-                 id=None, dt=1 / 16, dur=0.5, save_to=None, store_data=False, Nagents=30, Nelits=6, Ngenerations=20,
+               exclusion_mode=False,experiment='exploration',
+                 id=None, dt=1 / 16, dur=0.5, save_to=None,  Nagents=30, Nelits=6, Ngenerations=20,
                  **kwargs):
 
     warnings.filterwarnings('ignore')
@@ -444,10 +444,10 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
 
 
     kws = {
-        'sim_params': reg.get_null('sim_params', duration=dur,timestep=dt),
-        'show_screen': show_screen,
-        'offline': offline,
-        'store_data': store_data,
+        # 'sim_params': reg.get_null('sim_params', duration=dur,dt=dt),
+        # 'show_display': show_display,
+        # 'offline': offline,
+        # 'store_data': store_data,
         'experiment': experiment,
         'env_params': 'arena_200mm',
         'ga_select_kws': reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
@@ -460,7 +460,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
 
     conf.ga_build_kws.fit_dict = fit_dict
 
-    GA = GAlauncher(parameters=conf, save_to=save_to, id=id)
+    GA = GAlauncher(parameters=conf, save_to=save_to, id=id, duration=dur,dt=dt)
     best_genome = GA.simulate()
     entry = {mID1: best_genome.mConf}
     return entry

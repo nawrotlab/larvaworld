@@ -14,27 +14,31 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ReplayRun(BaseRun):
-    def __init__(self, dataset=None, experiment='replay',**kwargs):
-        super().__init__(runtype = 'Replay', experiment=experiment,**kwargs)
-        self.dataset = reg.retrieve_dataset(dataset=dataset, refID=self.p.refID, dir=self.p.dir)
+    def __init__(self,parameters,  dataset=None, experiment='replay',**kwargs):
+
+        self.dataset = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters)
+        # self.config = c
+        # self.step_data = s
+        # self.endpoint_data = e
+        super().__init__(runtype='Replay', experiment=experiment, parameters=parameters,
+                         dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
 
     def setup(self, screen_kws={}):
-        s,e,c=self.smaller_dataset(self.p)
+        s,e,c=self.step_data,self.endpoint_data,self.config
         fp,fs,dc=self.p.fix_point,self.p.fix_segment,self.p.dynamic_color
 
         if fp is not None:
             s, bg = reg.funcs.preprocessing['fixation'](s, point=fp, fix_segment=fs, c=c)
         else:
             bg = None
-        self.dt = c.dt
-        self.Nsteps = c.Nsteps
-        self._steps = self.Nsteps
+        # self.dt = c.dt
+        # self.Nsteps = c.Nsteps
+        # self._steps = self.Nsteps
         self.draw_Nsegs = self.p.draw_Nsegs
 
 
-        self.config = c
-        self.step_data=s
-        self.endpoint_data=e
+
         self.build_env(c.env_params)
 
         self.place_agents(s,e,c)

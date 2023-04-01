@@ -171,8 +171,12 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} : Generating agent groups!--- ', 1)
         agentConfs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
         if not self.Box2D :
-            from larvaworld.lib.model.agents._larva_sim import LarvaSim
-            agent_list = [LarvaSim(model=self, **conf) for conf in agentConfs]
+            if not self.offline :
+                from larvaworld.lib.model.agents._larva_sim import LarvaSim
+                agent_list = [LarvaSim(model=self, **conf) for conf in agentConfs]
+            else :
+                from larvaworld.lib.model.agents.larva_offline import LarvaOffline
+                agent_list = [LarvaOffline(model=self, **conf) for conf in agentConfs]
         else :
             from larvaworld.lib.model.agents._larva_box2d import LarvaBox2D
             agent_list = [LarvaBox2D(model=self, **conf) for conf in agentConfs]
@@ -242,9 +246,6 @@ class ExpRun(BaseRun):
             for d in ds:
                 PIs[d.id] = d.config.PI["PI"]
                 PI2s[d.id] = d.config.PI2
-                # if self.show_output:
-                #     print(f'Group {d.id} -> PI : {PIs[d.id]}')
-                #     print(f'Group {d.id} -> PI2 : {PI2s[d.id]}')
             self.results = {'PIs': PIs, 'PI2s': PI2s}
             return
 

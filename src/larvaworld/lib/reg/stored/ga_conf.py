@@ -56,7 +56,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
         # 'space_dict': space_dict,
     }
     # print(dur,name)
-    kws = {'sim_params': reg.get_null('sim_params', duration=dur, timestep=dt),
+    kws = {'sim_params': reg.get_null('sim_params', duration=dur, dt=dt),
            'scene': scene,
            'experiment': name,
            'env_params': env_params,

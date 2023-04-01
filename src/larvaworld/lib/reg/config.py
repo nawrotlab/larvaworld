@@ -400,7 +400,7 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
 
     if duration is None:
         duration = sample_conf.duration / 60
-    sim_params = reg.get_null('sim_params', timestep=1 / sample_conf['fr'], duration=duration)
+    sim_params = reg.get_null('sim_params', dt=1 / sample_conf['fr'], duration=duration)
     env_params = sample_conf.env_params
     exp_conf = reg.get_null('Exp', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
                          trials={}, enrichment=reg.par.base_enrich())

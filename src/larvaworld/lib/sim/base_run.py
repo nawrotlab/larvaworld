@@ -6,8 +6,8 @@ from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 
 class BaseRun(agentpy.Model):
-    def __init__(self, runtype, parameters=None,  store_data=True, save_to=None, id=None,experiment=None,
-                 Box2D=False, larva_collisions=True, **kwargs):
+    def __init__(self, runtype, parameters=None,  store_data=True, save_to=None, id=None,experiment=None,offline=False,show_display=True,
+                 Box2D=False, larva_collisions=True,dt=0.1,duration=None,Nsteps=None, **kwargs):
         self.larva_collisions = larva_collisions
         if parameters is None :
             if experiment is not None :
@@ -15,18 +15,23 @@ class BaseRun(agentpy.Model):
             else :
                 raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
 
+        # if 'offline' in parameters.keys() :
+        #     offline=parameters.offline
+        self.offline = offline
+        self.show_display = show_display
+
 
         self.experiment = experiment if experiment is not None else parameters.experiment
         self.store_data = store_data
         self.Box2D = Box2D
         self.scaling_factor = 1000.0 if self.Box2D else 1.0
-
-        if 'sim_params' in parameters.keys() :
-            # Define sim params
-            self.dt = parameters.sim_params.timestep
-            self.duration = parameters.sim_params.duration
-            self.Nsteps = int(self.duration * 60 / self.dt) if self.duration is not None else None
-            parameters.steps = self.Nsteps
+        self.dt = dt
+        self.duration = duration
+        if Nsteps is None:
+            if self.duration is not None :
+                Nsteps = int(self.duration * 60 / self.dt)
+        self.Nsteps = Nsteps
+        parameters.steps = self.Nsteps
         super().__init__(parameters=parameters, **kwargs)
 
         if id is None:

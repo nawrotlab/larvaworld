@@ -101,7 +101,7 @@ class SimTab(gui_aux.GuiTab):
 
     def run(self, v, w, c, d, g, conf, id):
         conf['env_params'] = self.envtab.get(w, v, c, as_entry=False)
-        N = conf['sim_params']['duration'] * 60 / conf['sim_params']['timestep']
+        N = conf['sim_params']['duration'] * 60 / conf['sim_params']['dt']
         p = self.base_list.progressbar
         p.run(w, max=N)
         conf['experiment'] = id

@@ -190,45 +190,46 @@ def run_template(sim_mode, args, kw_dicts):
     Returns:
         -nothing-
     '''
-    kws=aux.AttrDict({'id' : args.id})
+    kws=aux.AttrDict({'id' : args.id, **kw_dicts['sim_params']})
     if sim_mode == 'Replay':
-        kws.parameters =kw_dicts['Replay']
-        run = sim.ReplayRun(**kws)
+        conf =kw_dicts['Replay']
+        run = sim.ReplayRun(parameters=conf, **kws)
         run.run()
     elif sim_mode == 'Batch':
-        kws.store_data = args.store_data
-        kws.Box2D = args.Box2D
+        # kws.store_data = args.store_data
+        # kws.Box2D = args.Box2D
         kws.mode='batch'
         kws.run_externally=False
 
         kws.conf = reg.loadConf(conftype='Batch', id=args.experiment)
         kws.conf.batch_type = args.experiment
         kws.conf.exp = update_exp_conf(kws.conf.exp, N=args.Nagents, mIDs=args.models)
-        if args.duration is not None:
-            kws.conf.exp.sim_params.duration = args.duration
+        if kws.duration is not None:
+            kws.duration = kws.conf.exp.duration
         exec = sim.Exec(**kws)
         exec.run()
     elif sim_mode == 'Exp':
-        kws.parameters = update_exp_conf(args.experiment, N=args.Nagents, mIDs=args.models)
-        if args.duration is not None:
-            kws.parameters.sim_params.duration = args.duration
-        kws.store_data = args.store_data
-        kws.Box2D = args.Box2D
+        conf = update_exp_conf(args.experiment, N=args.Nagents, mIDs=args.models)
+        if kws.duration is None:
+            kws.duration = conf.sim_params.duration
+        # kws.store_data = args.store_data
+        # kws.Box2D = args.Box2D
         kws.screen_kws = {'vis_kwargs': kw_dicts['visualization']}
 
-        run = sim.ExpRun(**kws)
+        run = sim.ExpRun(parameters=conf, **kws)
         ds = run.simulate()
         if args.analysis:
             run.analyze(show=args.show)
 
     elif sim_mode == 'Ga':
-        kws.store_data = args.store_data
+        # kws.store_data = args.store_data
         conf = reg.expandConf(id=args.experiment, conftype='Ga')
-        conf.experiment = args.experiment
-        conf.offline=args.offline
-        conf.show_screen=args.show_screen
-        if args.duration is not None:
-            conf.sim_params.duration = args.duration
+        kws.experiment = args.experiment
+        if kws.duration is None:
+            kws.duration = conf.sim_params.duration
+        # conf.show_display=args.show_display
+        # if args.duration is not None:
+        # conf.duration = args.duration
         conf.ga_select_kws = kw_dicts['ga_select_kws']
         temp=kw_dicts['ga_build_kws0']
         if temp.base_model is not None:
@@ -241,9 +242,11 @@ def run_template(sim_mode, args, kw_dicts):
         GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
-        kws.show=args.show_screen
-        kws.parameters =kw_dicts.Eval
-        evrun = sim.EvalRun(**kws)
+        # kws.show_display=args.show_display
+        conf =kw_dicts.Eval
+        if kws.duration is None:
+            kws.duration = conf.sim_params.duration
+        evrun = sim.EvalRun(parameters=conf, **kws)
         evrun.simulate()
         evrun.plot_results()
         evrun.plot_models()
@@ -260,25 +263,25 @@ def get_parser(sim_mode, parser=None):
         MPs : Dictionary of dedicated parsers for each simulation mode
     '''
     dic = aux.AttrDict({
-        'Batch': [[], ['e','t','Box2D', 'N', 'ms']],
-        'Eval': [['Eval'], ['hide']],
-        'Exp': [['visualization'], ['e','t','Box2D', 'N', 'ms', 'a']],
-        'Ga': [['ga_select_kws', 'ga_build_kws0'], ['e','t', 'offline', 'hide']],
+        'Batch': [[], ['e', 'N', 'ms']],
+        'Eval': [['Eval'], []],
+        'Exp': [['visualization'], ['e', 'N', 'ms', 'a']],
+        'Ga': [['ga_select_kws', 'ga_build_kws0'], ['e']],
         'Replay': [['Replay'], []]
     })
     mks, ks = dic[sim_mode]
-
+    mks.append('sim_params')
     MP = MultiParser(mks)
     p = MP.add(parser)
     p.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
-    p.add_argument('-no_store', '--store_data', action="store_false", help='Whether to store the simulation data or not')
+    # p.add_argument('-no_store', '--store_data', action="store_false", help='Whether to store the simulation data or not')
     for k in ks:
         if k == 'e':
             p.add_argument('experiment', choices=reg.storedConf(sim_mode), help='The experiment mode')
-        elif k == 't':
-            p.add_argument('-t', '--duration', type=float, help='The duration of the simulation in minutes')
-        elif k == 'Box2D':
-            p.add_argument('-Box2D', '--Box2D', action="store_true", help='Whether to use the Box2D physics engine or not')
+        # elif k == 't':
+        #     p.add_argument('-t', '--duration', type=float, help='The duration of the simulation in minutes')
+        # elif k == 'Box2D':
+        #     p.add_argument('-Box2D', '--Box2D', action="store_true", help='Whether to use the Box2D physics engine or not')
         elif k == 'N':
             p.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
         elif k == 'ms':
@@ -293,12 +296,12 @@ def get_parser(sim_mode, parser=None):
         elif k == 'a':
             p.add_argument('-a', '--analysis', action="store_true", help='Whether to exec analysis')
             p.add_argument('-show', '--show', action="store_true", help='Whether to show the analysis plots')
-        elif k == 'offline':
-            p.add_argument('-offline', '--offline', action="store_true",
-                           help='Whether to exec a full LarvaworldSim environment')
-        elif k == 'hide':
-            p.add_argument('-hide', '--show_screen', action="store_false",
-                           help='Whether to render the screen visualization')
+        # elif k == 'offline':
+        #     p.add_argument('-offline', '--offline', action="store_true",
+        #                    help='Whether to exec a full LarvaworldSim environment')
+        # elif k == 'hide':
+        #     p.add_argument('-hide', '--show_display', action="store_false",
+        #                    help='Whether to render the screen visualization')
 
     return MP
 
