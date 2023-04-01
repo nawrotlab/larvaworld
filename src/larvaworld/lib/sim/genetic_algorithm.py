@@ -260,15 +260,7 @@ class GAlauncher(BaseRun):
         if self.progress_bar:
             self.progress_bar.update(self.generation_num)
 
-    # def sim_step(self):
-    #     """ Proceeds the simulation by one step, incrementing `Model.t` by 1
-    #     and then calling :func:`Model.step` and :func:`Model.update`."""
-    #     if not self.is_paused:
-    #         self.t += 1
-    #         self.step()
-    #         self.update()
-    #         if self.t >= self._steps or self.end_condition_met:
-    #             self.running = False
+
 
     def sim_step(self):
         self.step()
@@ -278,8 +270,7 @@ class GAlauncher(BaseRun):
         if self.generation_step_num == self.Nsteps or len(self.agents) <= self.selector.Nagents_min:
             self.end_generation()
             if self.selector.Ngenerations is None or self.generation_num < self.selector.Ngenerations:
-                gConfs = self.selector.create_new_generation(self.space_dict, self.sorted_genomes)
-                self.build_generation(gConfs)
+                self.build_generation(self.selector.create_new_generation(self.space_dict, self.sorted_genomes))
 
             else:
                 self.finalize()
@@ -288,14 +279,18 @@ class GAlauncher(BaseRun):
         if self.multicore:
             for thr in self.threads:
                 thr.step()
-            for robot in self.agents:
-                self.check(robot)
+
         else:
-            for robot in self.agents:
-                robot.step()
-                self.check(robot)
+            self.agents.step()
+
+
 
     def update(self):
+        if self.exclude_func is not None  :
+            for robot in self.agents:
+                if self.exclude_func(robot):
+                    robot.genome.fitness = -np.inf
+                    self.delete_agent(robot)
         self.agents.nest_record(self.collectors['step'])
 
 
@@ -332,17 +327,6 @@ class GAlauncher(BaseRun):
         if self.store_data :
             self.store_genomes(dic=self.all_genomes_dic, save_to=self.data_dir)
 
-
-
-    def check(self, robot):
-        if not self.offline:
-            # destroy robot if it collides an obstacle
-            if robot.collision_with_object:
-                self.delete_agent(robot)
-
-        if self.exclude_func is not None and  self.exclude_func(robot):
-            robot.genome.fitness = -np.inf
-            self.delete_agent(robot)
 
     def store_genomes(self, dic, save_to):
         self.genome_df = pd.DataFrame.from_records(dic)
