@@ -244,8 +244,8 @@ def run_template(sim_mode, args, kw_dicts):
     elif sim_mode == 'Eval':
         # kws.show_display=args.show_display
         conf =kw_dicts.Eval
-        if kws.duration is None:
-            kws.duration = conf.sim_params.duration
+        # if kws.duration is None:
+        #     kws.duration = conf.sim_params.duration
         evrun = sim.EvalRun(parameters=conf, **kws)
         evrun.simulate()
         evrun.plot_results()

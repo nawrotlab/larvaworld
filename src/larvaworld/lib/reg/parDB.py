@@ -385,7 +385,7 @@ def buildInitDict():
                              'h': 'The timestep of the simulation in seconds.',
                              'k': 'dt'},
                 'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
-                'show_display': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
+                # 'show_display': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
                 'store_data': {**bT, 'h': 'Whether to store the simulation data', 'k': 'no_store'},
                 'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
 
@@ -1276,7 +1276,7 @@ def buildInitDict():
             'refID': ConfID_entry('Ref', default='None.150controls'),
             'modelIDs': ConfID_entry('Model', single_choice=False, k='mIDs'),
             'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
-            'sim_params': d['sim_params'],
+            # 'sim_params': d['sim_params'],
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
                   'h': 'Number of agents per model ID',
                   'k': 'N'},

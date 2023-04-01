@@ -85,9 +85,7 @@ class GAselector:
         gConfs.insert(pos_a, gConf_a)  # reinsert the first parent in the list
         return gConf_a, gConf_b
 
-    def new_genome(self, gConf, mConf0):
-        mConf = mConf0.update_nestdict(gConf)
-        return aux.AttrDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
+
 
     def crossover(self, gConf_a, gConf_b):
         gConf={}
@@ -197,6 +195,9 @@ class GAlauncher(BaseRun):
                 gConfs.append(gConf)
         return gConfs
 
+    def new_genome(self, gConf, mConf0):
+        mConf = mConf0.update_nestdict(gConf)
+        return aux.AttrDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
 
     def build_generation(self, gConfs):
         self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gConfs)}
@@ -207,7 +208,6 @@ class GAlauncher(BaseRun):
         self.collectors = reg.get_reporters(collections=self.collections, agents=self.agents)
         if self.multicore:
             self.threads=self.build_threads(self.agents)
-        # self.excluded_ids = []
         self.generation_num += 1
         self.generation_step_num = 0
         self.generation_sim_time = 0
