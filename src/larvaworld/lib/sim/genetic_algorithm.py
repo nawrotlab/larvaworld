@@ -119,12 +119,6 @@ class GAlauncher(BaseRun):
             self.progress_bar.start()
         else:
             self.progress_bar = None
-
-
-        # self.engine = GAengine(**self.p.ga_build_kws)
-
-
-
         self.collections=['pose']
 
 
@@ -146,46 +140,35 @@ class GAlauncher(BaseRun):
             self.screen_manager.render(self.t)
         return self.best_genome
 
-    def initialize(self, space_mkeys=[], robot_class=None, base_model='explorer',
-                 multicore=True, fitness_func=None, fitness_target_kws=None, fitness_target_refID=None,fit_dict =None,
-                 exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random'):
+    def initialize(self, space_mkeys=[], robot_class=None, base_model='explorer', multicore=True,
+                 exclude_func=None, exclusion_mode=False, bestConfID=None, init_mode='random', **kwargs):
         self.bestConfID = bestConfID
 
+        self.exclusion_mode = exclusion_mode
         self.exclude_func = exclude_func
         self.multicore = multicore
         self.robot_class = get_robot_class(robot_class, self.offline)
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
-        self.excluded_ids = []
-        self.exclusion_mode = exclusion_mode
 
-        self.gConfs = self.create_first_generation(init_mode, self.selector.Nagents, self.space_dict, self.mConf0)
+        self.generation_num = 0
 
-        self.build_generation()
         self.best_genome = None
         self.best_fitness = None
-        self.sorted_genomes = None
+
         self.all_genomes_dic = []
 
-        self.generation_num = 1
+
         self.num_cpu = multiprocessing.cpu_count()
         self.start_total_time = aux.TimeUtil.current_time_millis()
-        self.start_generation_time = self.start_total_time
-        self.generation_step_num = 0
-        self.generation_sim_time = 0
-        if self.exclusion_mode:
-            self.fit_dict = None
-        else:
-            if fit_dict is None:
-                if fitness_target_refID is not None:
-                    fit_dict = util.GA_optimization(fitness_target_refID, fitness_target_kws)
-                else:
-                    fit_dict = arrange_fitness(fitness_func, source_xy=self.source_xy)
-            self.fit_dict = fit_dict
+        self.fit_dict=self.define_fitness_func(**kwargs)
 
-        reg.vprint(f'Generation {self.generation_num} started', 1)
+
         reg.vprint(f'multicore: {self.multicore} num_cpu: {self.num_cpu}', 1)
 
+        gConfs = self.create_first_generation(init_mode, self.selector.Nagents, self.space_dict, self.mConf0)
+
+        self.build_generation(gConfs)
 
 #
 # class GAengine:
@@ -231,6 +214,16 @@ class GAlauncher(BaseRun):
 #
 #         reg.vprint(f'Generation {self.generation_num} started', 1)
 #         reg.vprint(f'multicore: {self.multicore} num_cpu: {self.num_cpu}', 1)
+    def define_fitness_func(self, fit_dict=None, fitness_target_refID=None, fitness_target_kws=None, fitness_func=None):
+        if self.exclusion_mode:
+            return None
+        else:
+            if fit_dict is None:
+                if fitness_target_refID is not None:
+                    fit_dict = util.GA_optimization(fitness_target_refID, fitness_target_kws)
+                else:
+                    fit_dict = arrange_fitness(fitness_func, source_xy=self.source_xy)
+            return fit_dict
 
 
     def create_first_generation(self, mode, N, space_dict, baseConf):
@@ -249,8 +242,8 @@ class GAlauncher(BaseRun):
         return gConfs
 
 
-    def build_generation(self):
-        self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(self.gConfs)}
+    def build_generation(self, gConfs):
+        self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gConfs)}
 
         confs= [{'larva_pars' : g.mConf, 'unique_id' : id, 'genome' : g} for id, g in self.genome_dict.items()]
         self.place_agents(confs, self.robot_class)
@@ -258,7 +251,14 @@ class GAlauncher(BaseRun):
         self.collectors = reg.get_reporters(collections=self.collections, agents=self.agents)
         if self.multicore:
             self.threads=self.build_threads(self.agents)
-
+        # self.excluded_ids = []
+        self.generation_num += 1
+        self.generation_step_num = 0
+        self.generation_sim_time = 0
+        self.start_generation_time = aux.TimeUtil.current_time_millis()
+        reg.vprint(f'Generation {self.generation_num} started', 1)
+        if self.progress_bar:
+            self.progress_bar.update(self.generation_num)
 
     # def sim_step(self):
     #     """ Proceeds the simulation by one step, incrementing `Model.t` by 1
@@ -278,16 +278,8 @@ class GAlauncher(BaseRun):
         if self.generation_step_num == self.Nsteps or len(self.agents) <= self.selector.Nagents_min:
             self.end_generation()
             if self.selector.Ngenerations is None or self.generation_num < self.selector.Ngenerations:
-                self.excluded_ids = []
-                self.gConfs = self.selector.create_new_generation(self.space_dict, self.sorted_genomes)
-                self.build_generation()
-                self.generation_num += 1
-                self.generation_step_num = 0
-                self.generation_sim_time = 0
-                self.start_generation_time = aux.TimeUtil.current_time_millis()
-                reg.vprint(f'Generation {self.generation_num} started', 1)
-                if self.progress_bar:
-                    self.progress_bar.update(self.generation_num)
+                gConfs = self.selector.create_new_generation(self.space_dict, self.sorted_genomes)
+                self.build_generation(gConfs)
 
             else:
                 self.finalize()
@@ -310,13 +302,19 @@ class GAlauncher(BaseRun):
     def end_generation(self):
         self.agents.nest_record(self.collectors['end'])
         self.create_output()
-        self.eval_robots2(self.output.variables)
+        self.eval_robots(self.output.variables)
         for a in self.agents[:]:
-            self.destroy_robot(a)
+            self.delete_agent(a)
 
+        self.sorted_genomes = [self.genome_dict[i] for i in
+                               sorted(list(self.genome_dict.keys()), key=lambda i: self.genome_dict[i].fitness, reverse=True)]
+        if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
+            self.best_genome = self.sorted_genomes[0]
+            self.best_fitness = self.best_genome.fitness
 
-        self.sort_genomes(self.genome_dict)
-
+            if self.bestConfID is not None:
+                reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
+        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
         if self.store_data:
             self.all_genomes_dic += [
             {'generation': self.generation_num, **{p.name : g.gConf[k] for k,p in self.space_dict.items()},
@@ -325,26 +323,6 @@ class GAlauncher(BaseRun):
         self._logs = {}
         self.t = 0
 
-    def sort_genomes(self, gdict):
-        sorted_idx = sorted(list(gdict.keys()), key=lambda i: gdict[i].fitness, reverse=True)
-        self.sorted_genomes = [gdict[i] for i in sorted_idx]
-
-        if self.best_genome is None or self.sorted_genomes[0].fitness > self.best_genome.fitness:
-            self.best_genome = self.sorted_genomes[0]
-            self.best_fitness = self.best_genome.fitness
-
-            if self.bestConfID is not None:
-                reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
-        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}',2)
-
-    def destroy_robot(self, robot, excluded=False):
-        if excluded:
-            self.excluded_ids.append(robot.unique_id)
-            robot.genome.fitness = -np.inf
-        if self.exclusion_mode:
-            robot.genome.fitness =robot.cum_dur
-        self.agents.remove(robot)
-        self.space.remove_agents([robot])
 
     def finalize(self):
         self.running = False
@@ -360,11 +338,11 @@ class GAlauncher(BaseRun):
         if not self.offline:
             # destroy robot if it collides an obstacle
             if robot.collision_with_object:
-                self.destroy_robot(robot)
+                self.delete_agent(robot)
 
-        if self.exclude_func is not None:
-            if self.exclude_func(robot):
-                self.destroy_robot(robot, excluded=True)
+        if self.exclude_func is not None and  self.exclude_func(robot):
+            robot.genome.fitness = -np.inf
+            self.delete_agent(robot)
 
     def store_genomes(self, dic, save_to):
         self.genome_df = pd.DataFrame.from_records(dic)
@@ -422,7 +400,7 @@ class GAlauncher(BaseRun):
         return d
 
 
-    def eval_robots2(self, variables):
+    def eval_robots(self, variables):
         for gID,df in variables.items():
             d=self.convert_output_to_dataset(df.copy(), id=f'{self.id}_generation:{self.generation_num}')
             d._enrich(proc_keys=['angular', 'spatial'])

@@ -152,3 +152,7 @@ class BaseRun(agentpy.Model):
         agent_list = [agent_class(model=self, **conf) for conf in confs]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
+
+    def delete_agent(self, a):
+        self.agents.remove(a)
+        self.space.remove_agents([a])

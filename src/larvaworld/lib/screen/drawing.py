@@ -104,8 +104,8 @@ class GA_ScreenManager(BaseScreenManager):
             for e in event.get():
                 if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
                     sys.exit()
-                elif e.type == KEYDOWN and e.key == K_r:
-                    self.model.run()
+                # elif e.type == KEYDOWN and e.key == K_r:
+                #     self.model.run()
                 elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
                     self.v.increase_fps()
                 elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
@@ -116,15 +116,15 @@ class GA_ScreenManager(BaseScreenManager):
                 # elif e.type == KEYDOWN and e.key == K_e:
                 #     self.engine.evaluation_mode = 'preparing'
 
-            if self.side_panel.generation_num < self.model.engine.generation_num:
-                self.side_panel.update_ga_data(self.model.engine.generation_num, self.model.engine.best_genome)
+            if self.side_panel.generation_num < self.model.generation_num:
+                self.side_panel.update_ga_data(self.model.generation_num, self.model.best_genome)
 
             # update statistics time
             cur_t = aux.TimeUtil.current_time_millis()
-            cum_t = math.floor((cur_t - self.model.engine.start_total_time) / 1000)
-            gen_t = math.floor((cur_t - self.model.engine.start_generation_time) / 1000)
-            self.side_panel.update_ga_time(cum_t, gen_t, self.model.engine.generation_sim_time)
-            self.side_panel.update_ga_population(len(self.model.engine.robots), self.model.engine.Nagents)
+            cum_t = math.floor((cur_t - self.model.start_total_time) / 1000)
+            gen_t = math.floor((cur_t - self.model.start_generation_time) / 1000)
+            self.side_panel.update_ga_time(cum_t, gen_t, self.model.generation_sim_time)
+            self.side_panel.update_ga_population(len(self.model.agents), self.model.selector.Nagents)
             self.v._window.fill(aux.Color.BLACK)
 
             self.draw_agents(self.v)
@@ -149,7 +149,7 @@ class GA_ScreenManager(BaseScreenManager):
                 o.draw(v, filled=True if o.amount > 0 else False)
                 o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
 
-        for g in self.model.engine.robots:
+        for g in self.model.agents:
             if g.visible:
 
                 g.draw(v)
@@ -165,9 +165,9 @@ class GA_ScreenManager(BaseScreenManager):
             from larvaworld.lib.screen.side_panel import SidePanel
             from pygame import display
             # self.get_larvaworld_food()
-            self.side_panel = SidePanel(v, self.model.engine.space_dict)
-            self.side_panel.update_ga_data(self.model.engine.generation_num, None)
-            self.side_panel.update_ga_population(len(self.model.engine.robots), self.model.engine.Nagents)
+            self.side_panel = SidePanel(v, self.model.space_dict)
+            self.side_panel.update_ga_data(self.model.generation_num, None)
+            self.side_panel.update_ga_population(len(self.model.agents), self.model.selector.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
 
         # self.display_configuration(v)
