@@ -142,21 +142,16 @@ class GAevaluator(GAconf_generator):
 
         self.num_cpu = multiprocessing.cpu_count()
 
-        self.fit_dict = self.define_fitness_func(fit_dict=self.fit_dict,
-                                                 fitness_target_refID=self.fitness_target_refID,
-                                                 fitness_target_kws=self.fitness_target_kws,
-                                                 fitness_func=self.fitness_func)
-
-    def define_fitness_func(self, fit_dict=None, fitness_target_refID=None, fitness_target_kws=None, fitness_func=None):
         if self.exclusion_mode:
-            return None
-        else:
-            if fit_dict is None:
-                if fitness_target_refID is not None:
-                    fit_dict = util.GA_optimization(fitness_target_refID, fitness_target_kws)
-                else:
-                    fit_dict = arrange_fitness(fitness_func, source_xy=self.source_xy)
-            return fit_dict
+            self.fit_dict = None
+        elif self.fit_dict is None:
+            if self.fitness_target_refID is not None:
+                self.fit_dict = util.GA_optimization(self.fitness_target_refID, self.fitness_target_kws)
+            else:
+                self.fit_dict = arrange_fitness(self.fitness_func, source_xy=self.source_xy)
+
+
+
 
 
 
