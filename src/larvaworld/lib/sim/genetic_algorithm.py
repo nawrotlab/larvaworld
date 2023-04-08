@@ -215,9 +215,15 @@ class GAlauncher(BaseRun, GAevaluator):
         # self.selector = GAevaluator(**self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
         self.generation_num = 0
         self.start_total_time = aux.TimeUtil.current_time_millis()
+        reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
+        temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
+        reg.vprint(f'Launching {temp} generations of {self.duration} seconds, with {self.Nagents} agents each!', 2)
+        reg.vprint('', 2)
         if self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
             self.progress_bar.start()
+
+
         else:
             self.progress_bar = None
         self.collections = ['pose']
@@ -234,8 +240,7 @@ class GAlauncher(BaseRun, GAevaluator):
 
 
     def simulate(self):
-        reg.vprint(f'--- Genetic Algorithm  {self.id} initialized!--- ', 2)
-        # reg.vprint(f'--- {self.id} initialized!--- ', 2)
+
         self.running = True
         self.setup(**self._setup_kwargs)
         while self.running:
