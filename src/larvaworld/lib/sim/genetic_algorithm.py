@@ -44,15 +44,19 @@ class GAselector(param.Parameterized):
 
 
 class GAconf_generator(GAselector):
-    def __init__(self, ga_select_kws, space_mkeys=[], base_model='explorer', bestConfID=None, init_mode='random'):
-        super().__init__(**ga_select_kws)
+    init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
+                               doc='Mode of initial generation')
+    base_model = param.Selector(default='explorer', objects=reg.storedConf('Model'), doc='ID of the model to optimize')
+    bestConfID = param.String(default=None, doc='ID for the optimized model')
+    space_mkeys = param.List(default=[], doc='Keys of the modules where the optimization parameters are')
 
-        self.bestConfID = bestConfID
-        self.base_model = base_model
-        self.init_mode = init_mode
-        self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
-        self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
-        self.space_columns=[p.name for k,p in self.space_dict.items()]
+
+    def __init__(self, ga_select_kws={}, **kwargs):
+        super().__init__(**ga_select_kws, **kwargs)
+
+        self.mConf0 = reg.loadConf(id=self.base_model, conftype='Model')
+        self.space_dict = reg.model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
+        self.space_columns = [p.name for k, p in self.space_dict.items()]
         self.gConf0 = reg.model.conf(self.space_dict)
 
 
