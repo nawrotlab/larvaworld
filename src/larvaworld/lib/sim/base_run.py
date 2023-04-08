@@ -156,3 +156,9 @@ class BaseRun(agentpy.Model):
     def delete_agent(self, a):
         self.agents.remove(a)
         self.space.remove_agents([a])
+
+    def delete_agents(self, agent_list=None):
+        if agent_list is None :
+            agent_list = self.agents
+        for a in agent_list:
+            self.delete_agent(a)

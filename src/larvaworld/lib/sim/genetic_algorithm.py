@@ -48,6 +48,7 @@ class GAconf_generator(GAselector):
         super().__init__(**ga_select_kws)
 
         self.bestConfID = bestConfID
+        self.base_model = base_model
         self.init_mode = init_mode
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
@@ -212,6 +213,7 @@ class GAlauncher(BaseRun, GAevaluator):
         return self.best_genome
 
     def build_generation(self, sorted_genomes=None):
+
         self.create_generation(sorted_genomes)
         # self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gConfs)}
 
@@ -219,6 +221,8 @@ class GAlauncher(BaseRun, GAevaluator):
         self.place_agents(confs, self.robot_class)
 
         self.collectors = reg.get_reporters(collections=self.collections, agents=self.agents)
+        self.step_output_keys=list(self.collectors['step'].keys())
+        self.end_output_keys=list(self.collectors['end'].keys())
         if self.multicore:
             self.threads = self.build_threads(self.agents)
         else:
@@ -237,17 +241,19 @@ class GAlauncher(BaseRun, GAevaluator):
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
-        end = df[list(self.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
-        step = df[list(self.collectors['step'].keys())]
+        end = df[self.end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
+        # step = df[self.step_output_keys]
         d = LarvaDataset(dir=None, id=id,
                          load_data=False, env_params=self.p.env_params,
                          source_xy=self.source_xy,
                          fr=1 / self.dt)
-        d.set_data(step=step, end=end, food=None)
+        d.set_data(step=df[self.step_output_keys], end=end, food=None)
         return d
 
     def eval_robots(self):
-        data=self.output.variables
+        reg.vprint(f'Evaluating generation {self.generation_num}', 1)
+        data = df_from_log(self._logs)
+        # data=self.output.variables
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
@@ -255,9 +261,9 @@ class GAlauncher(BaseRun, GAevaluator):
             d = self.convert_output_to_dataset(df.copy(), id=f'{self.id}_generation:{self.generation_num}')
             d._enrich(proc_keys=['angular', 'spatial'])
 
-            s, e, c = d.step_data, d.endpoint_data, d.config
+            # s, e, c = d.step_data, d.endpoint_data, d.config
 
-            fit_dicts = func(s=s)
+            fit_dicts = func(s=d.step_data)
 
             valid_gs = {}
             for i, g in self.genome_dict.items():
@@ -273,6 +279,7 @@ class GAlauncher(BaseRun, GAevaluator):
             sorted_gs = [valid_gs[i] for i in
                          sorted(list(valid_gs.keys()), key=lambda i: valid_gs[i].fitness, reverse=True)]
             self.store(sorted_gs)
+            reg.vprint(f'Generation {self.generation_num} evaluated', 1)
             return sorted_gs
 
     def store(self, sorted_gs):
@@ -282,7 +289,7 @@ class GAlauncher(BaseRun, GAevaluator):
 
             if self.bestConfID is not None:
                 reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
-        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}', 2)
+        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}', 1)
         self.all_genomes_dic += [
             {'generation': self.generation_num, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},
              'fitness': g.fitness, **g.fitness_dict.flatten()}
@@ -303,10 +310,10 @@ class GAlauncher(BaseRun, GAevaluator):
         self.generation_step_num += 1
         if self.generation_completed:
             self.agents.nest_record(self.collectors['end'])
-            self.create_output()
+
+            # self.create_output()
             sorted_genomes = self.eval_robots()
-            for a in self.agents[:]:
-                self.delete_agent(a)
+            self.delete_agents()
             self._logs = {}
             self.t = 0
             if not self.max_generation_completed:
@@ -349,6 +356,7 @@ class GAlauncher(BaseRun, GAevaluator):
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
 
         self.corr_df=self.genome_df[['fitness']+self.space_columns].corr()
+        self.diff_df, row_colors=reg.model.diff_df(mIDs=[self.base_model, self.bestConfID], ms=[self.mConf0,self.best_genome.mConf])
 
     def build_threads(self, robots):
         N = self.num_cpu
@@ -426,3 +434,30 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     best_genome = GA.simulate()
     entry = {mID1: best_genome.mConf}
     return entry
+
+def df_from_log(log_dict):
+    ddf={}
+    obj_types = {}
+    for obj_type, log_subdict in log_dict.items():
+
+        if obj_type not in obj_types.keys():
+            obj_types[obj_type] = {}
+
+        for obj_id, log in log_subdict.items():
+
+            # Add object id/key to object log
+            log['obj_id'] = [obj_id] * len(log['t'])
+
+            # Add object log to aggregate log
+            for k, v in log.items():
+                if k not in obj_types[obj_type]:
+                    obj_types[obj_type][k] = []
+                obj_types[obj_type][k].extend(v)
+
+    # Transform logs into dataframes
+    for obj_type, log in obj_types.items():
+        index_keys = ['obj_id', 't']
+        df = pd.DataFrame(log)
+        df = df.set_index(index_keys)
+        ddf[obj_type] = df
+        return ddf
