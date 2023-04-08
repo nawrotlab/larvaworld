@@ -124,7 +124,7 @@ class GA_ScreenManager(BaseScreenManager):
             cum_t = math.floor((cur_t - self.model.start_total_time) / 1000)
             gen_t = math.floor((cur_t - self.model.start_generation_time) / 1000)
             self.side_panel.update_ga_time(cum_t, gen_t, self.model.generation_sim_time)
-            self.side_panel.update_ga_population(len(self.model.agents), self.model.selector.Nagents)
+            self.side_panel.update_ga_population(len(self.model.agents), self.model.Nagents)
             self.v._window.fill(aux.Color.BLACK)
 
             self.draw_agents(self.v)
@@ -167,7 +167,7 @@ class GA_ScreenManager(BaseScreenManager):
             # self.get_larvaworld_food()
             self.side_panel = SidePanel(v, self.model.space_dict)
             self.side_panel.update_ga_data(self.model.generation_num, None)
-            self.side_panel.update_ga_population(len(self.model.agents), self.model.selector.Nagents)
+            self.side_panel.update_ga_population(len(self.model.agents), self.model.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
 
         # self.display_configuration(v)

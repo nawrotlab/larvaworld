@@ -85,10 +85,10 @@ class GAconf_generator(GAselector):
             g1, g2 = random.sample(gs0, 2)
             g0 = self.crossover(g1, g2)
             space_dict = reg.model.update_mdict(self.space_dict, g0)
-            for d, p in self.space_dict.items():
+            for d, p in space_dict.items():
                 p.mutate(Pmut=self.Pmutation, Cmut=self.Cmutation)
 
-            g = reg.model.generate_configuration(self.space_dict)
+            g = reg.model.generate_configuration(space_dict)
             gs.append(g)
         self.genome_dict = {i: self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gs)}
 
@@ -123,25 +123,24 @@ class GAevaluator(GAconf_generator):
                     fit_dict = arrange_fitness(fitness_func, source_xy=self.source_xy)
             return fit_dict
 
-    def convert_output_to_dataset(self, df, id, model):
+    def convert_output_to_dataset(self, df, id):
         from larvaworld.lib.process.dataset import LarvaDataset
         df.index.set_names(['AgentID', 'Step'], inplace=True)
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
-        end = df[list(model.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
-        step = df[list(model.collectors['step'].keys())]
+        end = df[list(self.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
+        step = df[list(self.collectors['step'].keys())]
         d = LarvaDataset(dir=None, id=id,
-                         load_data=False, env_params=model.p.env_params,
-                         source_xy=model.source_xy,
-                         fr=1 / model.dt)
+                         load_data=False, env_params=self.p.env_params,
+                         source_xy=self.source_xy,
+                         fr=1 / self.dt)
         d.set_data(step=step, end=end, food=None)
         return d
 
-    def eval_robots(self, variables, model):
+    def eval_robots(self, variables):
         for gID, df in variables.items():
-            d = self.convert_output_to_dataset(df.copy(), id=f'{model.id}_generation:{model.generation_num}',
-                                               model=model)
+            d = self.convert_output_to_dataset(df.copy(), id=f'{self.id}_generation:{self.generation_num}')
             d._enrich(proc_keys=['angular', 'spatial'])
 
             s, e, c = d.step_data, d.endpoint_data, d.config
@@ -161,19 +160,19 @@ class GAevaluator(GAconf_generator):
                     valid_gs[i] = g
             sorted_gs = [valid_gs[i] for i in
                          sorted(list(valid_gs.keys()), key=lambda i: valid_gs[i].fitness, reverse=True)]
-            self.store(sorted_gs, model)
+            self.store(sorted_gs)
             self.sorted_genomes = sorted_gs
 
-    def store(self, sorted_gs, model):
+    def store(self, sorted_gs):
         if self.best_genome is None or sorted_gs[0].fitness > self.best_genome.fitness:
             self.best_genome = sorted_gs[0]
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
                 reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
-        reg.vprint(f'Generation {model.generation_num} best_fitness : {self.best_fitness}', 2)
+        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}', 2)
         self.all_genomes_dic += [
-            {'generation': model.generation_num, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},
+            {'generation': self.generation_num, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},
              'fitness': g.fitness, **g.fitness_dict.flatten()}
             for g in sorted_gs if g.fitness_dict is not None]
 
@@ -205,21 +204,23 @@ def arrange_fitness(fitness_func, **kwargs):
     return aux.AttrDict({'func': func, 'func_arg': 'robot'})
 
 
-class GAlauncher(BaseRun):
+class GAlauncher(BaseRun, GAevaluator):
     def __init__(self, **kwargs):
-        super().__init__(runtype='Ga', **kwargs)
+        # super().__init__(runtype='Ga', **kwargs)
+        BaseRun.__init__(self,runtype='Ga', **kwargs)
+        # GAevaluator.__init__(self,**self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
 
     def setup(self):
-        self.selector = GAevaluator(**self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
+        GAevaluator.__init__(self, **self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
+        # self.selector = GAevaluator(**self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
         self.generation_num = 0
         self.start_total_time = aux.TimeUtil.current_time_millis()
-        if self.selector.Ngenerations is not None:
-            self.progress_bar = progressbar.ProgressBar(self.selector.Ngenerations)
+        if self.Ngenerations is not None:
+            self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
             self.progress_bar.start()
         else:
             self.progress_bar = None
         self.collections = ['pose']
-        # self.space_dict=self.selector.space_dict
 
         self.odor_ids = aux.get_all_odors({}, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
@@ -230,17 +231,11 @@ class GAlauncher(BaseRun):
         # self.initialize(**self.p.ga_build_kws)
         self.build_generation()
 
-    @property
-    def space_dict(self):
-        return self.selector.space_dict
+
 
     @property
-    def best_genome(self):
-        return self.selector.best_genome
-
-    @property
-    def best_fitness(self):
-        return self.selector.best_fitness
+    def Ngens(self):
+        return self.Ngenerations
 
     def simulate(self):
         self.running = True
@@ -249,16 +244,16 @@ class GAlauncher(BaseRun):
             self.t += 1
             self.sim_step()
             self.screen_manager.render(self.t)
-        return self.selector.best_genome
+        return self.best_genome
 
     def build_generation(self):
         # self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gConfs)}
 
-        confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.selector.genome_dict.items()]
-        self.place_agents(confs, self.selector.robot_class)
+        confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
+        self.place_agents(confs, self.robot_class)
 
         self.collectors = reg.get_reporters(collections=self.collections, agents=self.agents)
-        if self.selector.multicore:
+        if self.multicore:
             self.threads = self.build_threads(self.agents)
         else:
             self.threads = None
@@ -272,11 +267,11 @@ class GAlauncher(BaseRun):
 
     @property
     def generation_completed(self):
-        return self.generation_step_num >= self.Nsteps or len(self.agents) <= self.selector.Nagents_min
+        return self.generation_step_num >= self.Nsteps or len(self.agents) <= self.Nagents_min
 
     @property
     def max_generation_completed(self):
-        return self.selector.Ngenerations is not None and self.generation_num >= self.selector.Ngenerations
+        return self.Ngenerations is not None and self.generation_num >= self.Ngenerations
 
     def sim_step(self):
         self.step()
@@ -286,13 +281,13 @@ class GAlauncher(BaseRun):
         if self.generation_completed:
             self.agents.nest_record(self.collectors['end'])
             self.create_output()
-            self.selector.eval_robots(self.output.variables, model=self)
+            self.eval_robots(self.output.variables)
             for a in self.agents[:]:
                 self.delete_agent(a)
             self._logs = {}
             self.t = 0
             if not self.max_generation_completed:
-                self.selector.create_new_generation(self.selector.sorted_genomes)
+                self.create_new_generation(self.sorted_genomes)
                 self.build_generation()
 
             else:
@@ -307,9 +302,9 @@ class GAlauncher(BaseRun):
             self.agents.step()
 
     def update(self):
-        if self.selector.exclude_func is not None:
+        if self.exclude_func is not None:
             for robot in self.agents:
-                if self.selector.exclude_func(robot):
+                if self.exclude_func(robot):
                     robot.genome.fitness = -np.inf
                     self.delete_agent(robot)
         self.agents.nest_record(self.collectors['step'])
@@ -318,20 +313,20 @@ class GAlauncher(BaseRun):
         self.running = False
         if self.progress_bar:
             self.progress_bar.finish()
-        reg.vprint(f'Best fittness: {self.selector.best_genome.fitness}', 2)
+        reg.vprint(f'Best fittness: {self.best_genome.fitness}', 2)
         if self.store_data:
-            self.store_genomes(dic=self.selector.all_genomes_dic, save_to=self.data_dir)
+            self.store_genomes(dic=self.all_genomes_dic, save_to=self.data_dir)
 
     def store_genomes(self, dic, save_to):
         self.genome_df = pd.DataFrame.from_records(dic)
         self.genome_df = self.genome_df.round(3)
         self.genome_df.sort_values(by='fitness', ascending=False, inplace=True)
         reg.graphs.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
-                               name=self.selector.bestConfID)
-        self.genome_df.to_csv(f'{save_to}/{self.selector.bestConfID}.csv')
+                               name=self.bestConfID)
+        self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
 
     def build_threads(self, robots):
-        N = self.selector.num_cpu
+        N = self.num_cpu
         threads = []
         num_robots = len(robots)
         num_robots_per_cpu = math.floor(num_robots / N)
