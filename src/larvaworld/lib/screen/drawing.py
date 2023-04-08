@@ -35,7 +35,7 @@ class BaseScreenManager :
             self.active=True
             # self.screen_kws = self.define_screen_kws()
 
-            self.build(**kwargs)
+        self.build(**kwargs)
 
 
         self.v = None
