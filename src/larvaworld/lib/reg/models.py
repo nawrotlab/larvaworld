@@ -663,7 +663,7 @@ class ModelRegistry:
                 conf[d] = self.generate_configuration(mdict=p)
         conf.update_existingdict(kwargs)
         # conf.update(kwargs)
-        return conf
+        return aux.AttrDict(conf)
 
     def conf(self, mdict=None, mkey=None, mode=None, refID=None, **kwargs):
         if mdict is None:
