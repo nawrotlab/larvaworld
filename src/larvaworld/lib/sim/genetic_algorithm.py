@@ -233,11 +233,9 @@ class GAlauncher(BaseRun, GAevaluator):
 
 
 
-    @property
-    def Ngens(self):
-        return self.Ngenerations
-
     def simulate(self):
+        reg.vprint(f'--- Genetic Algorithm  {self.id} initialized!--- ', 2)
+        # reg.vprint(f'--- {self.id} initialized!--- ', 2)
         self.running = True
         self.setup(**self._setup_kwargs)
         while self.running:
