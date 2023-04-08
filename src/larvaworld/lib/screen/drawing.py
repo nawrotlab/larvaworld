@@ -169,14 +169,14 @@ class GA_ScreenManager(BaseScreenManager):
             self.side_panel.update_ga_data(self.model.generation_num, None)
             self.side_panel.update_ga_population(len(self.model.agents), self.model.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
-
+            print('Screen opened')
         # self.display_configuration(v)
         # self.render_aux()
         # self.set_background(*v.display_dims)
         #
         # self.draw_arena(v)
 
-        print('Screen opened')
+
         return v
 
 

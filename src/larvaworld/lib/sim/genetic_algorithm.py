@@ -51,7 +51,8 @@ class GAconf_generator(GAselector):
         self.init_mode = init_mode
         self.mConf0 = reg.loadConf(id=base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=space_mkeys, mConf0=self.mConf0)
-        self.create_generation()
+        self.space_columns=[p.name for k,p in self.space_dict.items()]
+        self.gConf0 = reg.model.conf(self.space_dict)
 
 
 
@@ -179,7 +180,7 @@ class GAlauncher(BaseRun, GAevaluator):
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
         reg.vprint(f'Launching {temp} generations of {self.duration} seconds, with {self.Nagents} agents each!', 2)
-        reg.vprint('', 2)
+        # reg.vprint('', 2)
         if self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
             self.progress_bar.start()
@@ -210,7 +211,8 @@ class GAlauncher(BaseRun, GAevaluator):
             self.screen_manager.render(self.t)
         return self.best_genome
 
-    def build_generation(self):
+    def build_generation(self, sorted_genomes=None):
+        self.create_generation(sorted_genomes)
         # self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gConfs)}
 
         confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
@@ -244,11 +246,12 @@ class GAlauncher(BaseRun, GAevaluator):
         d.set_data(step=step, end=end, food=None)
         return d
 
-    def eval_robots(self, variables):
+    def eval_robots(self):
+        data=self.output.variables
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
-        for gID, df in variables.items():
+        for gID, df in data.items():
             d = self.convert_output_to_dataset(df.copy(), id=f'{self.id}_generation:{self.generation_num}')
             d._enrich(proc_keys=['angular', 'spatial'])
 
@@ -301,14 +304,14 @@ class GAlauncher(BaseRun, GAevaluator):
         if self.generation_completed:
             self.agents.nest_record(self.collectors['end'])
             self.create_output()
-            sorted_genomes = self.eval_robots(self.output.variables)
+            sorted_genomes = self.eval_robots()
             for a in self.agents[:]:
                 self.delete_agent(a)
             self._logs = {}
             self.t = 0
             if not self.max_generation_completed:
-                self.create_generation(sorted_genomes)
-                self.build_generation()
+
+                self.build_generation(sorted_genomes)
 
             else:
                 self.finalize()
@@ -344,6 +347,8 @@ class GAlauncher(BaseRun, GAevaluator):
         reg.graphs.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
                                name=self.bestConfID)
         self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
+
+        self.corr_df=self.genome_df[['fitness']+self.space_columns].corr()
 
     def build_threads(self, robots):
         N = self.num_cpu
