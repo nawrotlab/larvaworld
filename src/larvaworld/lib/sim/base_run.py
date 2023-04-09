@@ -23,11 +23,12 @@ class BaseRun(agentpy.Model):
 
         # Define N timesteps
         self.dt = dt
-        self.duration = duration
-        if Nsteps is None:
-            if duration is not None :
-                Nsteps = int(duration * 60 / dt)
+        if Nsteps is None and duration is not None :
+            Nsteps = int(duration * 60 / dt)
+        if duration is None and Nsteps is not None :
+            duration = Nsteps* dt/60
         self.Nsteps = Nsteps
+        self.duration = duration
         parameters.steps = self.Nsteps
         super().__init__(parameters=parameters, **kwargs)
 

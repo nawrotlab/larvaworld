@@ -254,12 +254,13 @@ class GAlauncher(BaseRun, GAengine):
 
     def simulate(self):
 
-        self.running = True
-        self.setup(**self._setup_kwargs)
+        # self.running = True
+        # self.setup(**self._setup_kwargs)
+        self.sim_setup()
         while self.running:
-            self.t += 1
+
             self.sim_step()
-            self.screen_manager.render(self.t)
+
         return self.best_genome
 
     def build_generation(self, sorted_genomes=None):
@@ -338,6 +339,7 @@ class GAlauncher(BaseRun, GAengine):
         return self.Ngenerations is not None and self.generation_num >= self.Ngenerations
 
     def sim_step(self):
+        self.t += 1
         self.step()
         self.update()
         self.generation_sim_time += self.dt
@@ -359,6 +361,7 @@ class GAlauncher(BaseRun, GAengine):
                 thr.step()
         else:
             self.agents.step()
+        self.screen_manager.render(self.t)
 
     def update(self):
         if self.exclude_func is not None:
