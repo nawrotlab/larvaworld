@@ -133,20 +133,16 @@ class BaseRun(agentpy.Model):
         self.foodtypes = aux.get_all_foodtypes(p)
         self.source_xy = aux.get_source_xy(p)
 
-
-    def get_food(self):
-        return self.sources
-
-    def get_flies(self, ids=None, group=None):
-        ls = self.agents
-        if ids is not None:
-            ls = [l for l in ls if l.unique_id in ids]
-        if group is not None:
-            ls = [l for l in ls if l.group == group]
-        return ls
+    # def get_flies(self, ids=None, group=None):
+    #     ls = self.agents
+    #     if ids is not None:
+    #         ls = [l for l in ls if l.unique_id in ids]
+    #     if group is not None:
+    #         ls = [l for l in ls if l.group == group]
+    #     return ls
 
     def get_all_objects(self):
-        return self.get_food() + self.get_flies() + self.borders
+        return self.sources + self.agents + self.borders
 
     def place_agents(self, confs, agent_class):
         agent_list = [agent_class(model=self, **conf) for conf in confs]

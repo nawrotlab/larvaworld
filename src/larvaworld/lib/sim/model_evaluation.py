@@ -171,6 +171,11 @@ class EvalRun(BaseRun):
             'save_to': self.plot_dir,
             'show': self.show
         }
+        kws1={
+            'subfolder' : None,
+            **kws
+        }
+
         kws2 = {
             'target': self.target,
             'datasets': self.datasets,
@@ -178,15 +183,15 @@ class EvalRun(BaseRun):
             'show': self.show
         }
         self.figs.summary = GD['eval summary'](**kws2)
-        self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True,
-                                                         **kws)
+        self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'],
+                                                         individuals=True,**kws)
         if 'dispersion' in plots:
             for r0, r1 in itertools.product(self.dsp_starts, self.dsp_stops):
-                k = f'dsp_{r0}_{r1}'
-                fig1 = GD['dispersal'](range=(r0, r1), subfolder=None, **kws)
-                fig2 = GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), subfolder=None, mode='origin', **kws)
-                fig3 = GD['dispersal summary'](range=(r0, r1), **kws2)
-                self.figs.loco[k] = aux.AttrDict({'plot': fig1, 'traj': fig2, 'summary': fig3})
+                self.figs.loco[f'dsp_{r0}_{r1}'] = aux.AttrDict({
+                    'plot': GD['dispersal'](range=(r0, r1), **kws1),
+                    'traj': GD['trajectories'](name=f'traj_{r0}_{r1}', range=(r0, r1), mode='origin', **kws1),
+                    'summary': GD['dispersal summary'](range=(r0, r1), **kws2)
+                })
         if 'bouts' in plots:
             self.figs.epochs.turn = GD['epochs'](turns=True, **kws)
             self.figs.epochs.runNpause = GD['epochs'](stridechain_duration=True, **kws)
@@ -194,10 +199,10 @@ class EvalRun(BaseRun):
             self.figs.loco.fft = GD['fft multi'](**kws)
         if 'hists' in plots:
             self.figs.hist.ang = GD['angular pars'](half_circles=False, absolute=False, Nbins=100, Npars=3,
-                                                    include_rear=False, subfolder=None, **kws)
-            self.figs.hist.crawl = GD['crawl pars'](subfolder=None, pvalues=False, **kws)
+                                                    include_rear=False, **kws1)
+            self.figs.hist.crawl = GD['crawl pars'](pvalues=False, **kws1)
         if 'trajectories' in plots:
-            self.figs.loco.trajectories = GD['trajectories'](subfolder=None, **kws)
+            self.figs.loco.trajectories = GD['trajectories'](**kws1)
         if 'boxplots' in plots:
             pass
             # self.figs.boxplot.end = self.plot_data(mode='end', type='box')

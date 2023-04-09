@@ -20,8 +20,8 @@ class PrefTrainCondition:
         self.peak_intensity=2.0
         env.CS_counter = 0
         env.UCS_counter = 0
-        env.CS_sources = [f for f in env.get_food() if f.odor_id=='CS']
-        env.UCS_sources = [f for f in env.get_food() if f.odor_id=='UCS']
+        env.CS_sources = [f for f in env.sources if f.odor_id=='CS']
+        env.UCS_sources = [f for f in env.sources if f.odor_id=='UCS']
 
 
     def toggle_odors(self, env, CS_intensity=2.0, UCS_intensity=0.0):
@@ -65,7 +65,7 @@ class PrefTrainCondition:
                 self.toggle_odors(env, 0.0, c)
                 env.move_larvae_to_center()
             elif env.UCS_counter == 4:
-                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.space.dims[0])
+                PI = comp_PI(xs=[l.pos[0] for l in env.agents], arena_xdim=env.space.dims[0])
                 sec=int(env.Nticks*env.dt)
                 m,s=int(sec/60), sec%60
                 print()
@@ -86,7 +86,7 @@ class PrefTrainCondition:
                     env.food_grid.reset()
                     self.start_trial(env, on_food=True)
             elif env.Nticks == ep['stop'] and i==len(env.sim_epochs)-1 :
-                PI = comp_PI(xs=[l.pos[0] for l in env.get_flies()], arena_xdim=env.space.dims[0])
+                PI = comp_PI(xs=[l.pos[0] for l in env.agents], arena_xdim=env.space.dims[0])
                 print()
                 print(f'Test trial off food ended with PI={PI}')
                 text = f'Test trial off food PI={PI}'
@@ -100,8 +100,8 @@ class CatchMeCondition:
     def __init__(self, env):
         env.target_group = 'Left' if random.uniform(0, 1) > 0.5 else 'Right'
         env.follower_group = 'Right' if env.target_group == 'Left' else 'Left'
-        env.targets = [f for f in env.get_flies() if f.group == env.target_group]
-        env.followers = [f for f in env.get_flies() if f.group == env.follower_group]
+        env.targets = [f for f in env.agents if f.group == env.target_group]
+        env.followers = [f for f in env.agents if f.group == env.follower_group]
         for f in env.targets:
             f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
         env.score = {env.target_group: 0.0,
@@ -113,9 +113,9 @@ class CatchMeCondition:
         def set_target_group(group):
             env.target_group = group
             env.follower_group = 'Right' if env.target_group == 'Left' else 'Left'
-            env.targets=[f for f in env.get_flies() if f.group == env.target_group]
-            env.followers = [f for f in env.get_flies() if f.group == env.follower_group]
-            for f in env.get_flies():
+            env.targets=[f for f in env.agents if f.group == env.target_group]
+            env.followers = [f for f in env.agents if f.group == env.follower_group]
+            for f in env.agents:
                 f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
         targets_pos = [f.get_position() for f in env.targets]
         for f in env.followers:
@@ -136,7 +136,7 @@ class CatchMeCondition:
 
 class KeepFlagCondition:
     def __init__(self, env):
-        for f in env.get_food():
+        for f in env.sources:
             if f.unique_id == 'Flag':
                 env.flag = f
         env.l_t = 0
@@ -170,7 +170,7 @@ class KeepFlagCondition:
 
 class CaptureFlagCondition:
     def __init__(self, env):
-        for f in env.get_food():
+        for f in env.sources:
             if f.unique_id == 'Flag':
                 env.flag = f
             elif f.unique_id == 'Left_base':

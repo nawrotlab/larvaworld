@@ -18,9 +18,6 @@ class ReplayRun(BaseRun):
 
         self.dataset = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
         self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, self.dataset)
-        # self.config = c
-        # self.step_data = s
-        # self.endpoint_data = e
         super().__init__(runtype='Replay', experiment=experiment, parameters=parameters,
                          dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
 
@@ -32,17 +29,9 @@ class ReplayRun(BaseRun):
             s, bg = reg.funcs.preprocessing['fixation'](s, point=fp, fix_segment=fs, c=c)
         else:
             bg = None
-        # self.dt = c.dt
-        # self.Nsteps = c.Nsteps
-        # self._steps = self.Nsteps
         self.draw_Nsegs = self.p.draw_Nsegs
-
-
-
         self.build_env(c.env_params)
-
         self.build_agents(s,e,c)
-
         screen_kws = {
             'video': not self.p.overlap_mode,
             'background_motion': bg,

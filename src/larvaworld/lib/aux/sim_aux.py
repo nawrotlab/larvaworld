@@ -411,15 +411,18 @@ def sense_food(pos, sources=None, grid=None, radius=None):
             return random.choice(valid)
     return None
 
-def convert_output_to_dataset(df, id, step_keys, end_keys, **kwargs):
+def convert_output_to_dataset(df, step_keys, end_keys,agents=None, **kwargs):
     from larvaworld.lib.process.dataset import LarvaDataset
     df.index.set_names(['AgentID', 'Step'], inplace=True)
     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
     df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
     end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-    d = LarvaDataset(id=id,**kwargs)
+    d = LarvaDataset(**kwargs)
     d.set_data(step=df[step_keys], end=end, food=None)
+    if agents :
+        ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
+        d.larva_dicts = aux.get_larva_dicts(ls)
     return d
 
 def get_larva_dicts(ls):

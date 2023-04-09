@@ -351,12 +351,12 @@ class ScreenManager(BaseScreenManager):
             self.bgimagerect = None
 
     def draw_agents(self, v):
-        for o in self.model.get_food():
+        for o in self.model.sources:
             if o.visible:
                 o.draw(v, filled=True if o.amount > 0 else False)
                 o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
 
-        for g in self.model.get_flies():
+        for g in self.model.agents:
             if g.visible:
                 if self.color_behavior:
                     g.update_behavior_dict()
@@ -513,14 +513,14 @@ class ScreenManager(BaseScreenManager):
         # self.screen_texts[name].start_time = pygame.time.get_ticks() + int(self.dt * 1000)
 
         if name == 'visible_ids':
-            for a in self.model.get_flies() + self.model.get_food():
+            for a in self.model.agents + self.model.sources:
                 a.id_box.visible = not a.id_box.visible
         elif name == 'color_behavior':
             if not self.color_behavior:
-                for f in self.model.get_flies():
+                for f in self.model.agents:
                     f.set_color(f.default_color)
         elif name == 'random_colors':
-            for f in self.model.get_flies():
+            for f in self.model.agents:
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
                 f.set_color(color)
         elif name == 'black_background':
@@ -699,7 +699,7 @@ class ScreenManager(BaseScreenManager):
 
     def draw_trajectories(self):
         space_dims = self.model.space.dims * self.s
-        agents = self.model.get_flies()
+        agents = self.model.agents
         decay_in_ticks = int(self.trajectory_dt / self.model.dt)
 
         trajs = [fly.trajectory for fly in agents]

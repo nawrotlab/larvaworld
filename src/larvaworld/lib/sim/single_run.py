@@ -115,6 +115,7 @@ class ExpRun(BaseRun):
             'load_data' : False, 'env_params' : self.p.env_params,
         'source_xy' : self.source_xy,
         'fr' : 1 / self.dt,
+        'agents' : self.agents
         }
         dkws=[]
         for gID, df in self.output.variables.items():
@@ -128,20 +129,20 @@ class ExpRun(BaseRun):
 
             else :
                 dkws += [{'df': df, 'id': gID, **kws1}]
-        ds = [self.convert_output_to_dataset(**kws, **kws0, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
+        ds = [aux.convert_output_to_dataset(**kws, **kws0, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
         return ds
 
-    def convert_output_to_dataset(self,id,df,step_keys, end_keys,  **kwargs):
-        from larvaworld.lib.process.dataset import LarvaDataset
-        df.index.set_names(['AgentID', 'Step'], inplace=True)
-        df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-        df.sort_index(level=['Step', 'AgentID'], inplace=True)
-
-        d = LarvaDataset(id=id, **kwargs)
-        d.set_data(step=df[step_keys], end=df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step'), food=None)
-        ls = aux.AttrDict({l.unique_id: l for l in self.agents if l.unique_id in d.agent_ids})
-        d.larva_dicts = aux.get_larva_dicts(ls)
-        return d
+    # def convert_output_to_dataset(self,id,df,step_keys, end_keys,  **kwargs):
+    #     from larvaworld.lib.process.dataset import LarvaDataset
+    #     df.index.set_names(['AgentID', 'Step'], inplace=True)
+    #     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+    #     df.sort_index(level=['Step', 'AgentID'], inplace=True)
+    #
+    #     d = LarvaDataset(id=id, **kwargs)
+    #     d.set_data(step=df[step_keys], end=df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step'), food=None)
+    #     ls = aux.AttrDict({l.unique_id: l for l in self.agents if l.unique_id in d.agent_ids})
+    #     d.larva_dicts = aux.get_larva_dicts(ls)
+    #     return d
 
 
 
@@ -157,29 +158,12 @@ class ExpRun(BaseRun):
             agent_class = agents.LarvaBox2D
         self.place_agents(confs, agent_class)
 
-        # agent_list = [agent_class(model=self, **conf) for conf in agentConfs]
-        # self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
-        # self.agents = agentpy.AgentList(model=self, objs=agent_list)
-
-    def get_food(self):
-        return self.sources
-
-    def get_flies(self, ids=None, group=None):
-        ls = self.agents
-        if ids is not None:
-            ls = [l for l in ls if l.unique_id in ids]
-        if group is not None:
-            ls = [l for l in ls if l.group == group]
-        return ls
-
-    def get_all_objects(self):
-        return self.get_food() + self.get_flies() + self.borders
 
     def eliminate_overlap(self):
         scale = 3.0
         while self.collisions_exist(scale=scale):
             self.larva_bodies = self.get_larva_bodies(scale=scale)
-            for l in self.get_flies():
+            for l in self.agents:
                 dx, dy = np.random.randn(2) * l.sim_length / 10
                 overlap = True
                 while overlap:
@@ -192,7 +176,7 @@ class ExpRun(BaseRun):
 
     def collisions_exist(self, scale=1.0):
         self.larva_bodies = self.get_larva_bodies(scale=scale)
-        for l in self.get_flies():
+        for l in self.agents:
             ids = self.detect_collisions(l.unique_id)
             if len(ids) > 0:
                 return True

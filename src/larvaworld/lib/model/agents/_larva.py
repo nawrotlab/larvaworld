@@ -183,7 +183,7 @@ class LarvaMotile(Larva):
                 carrier_group_odor_id = self.odor_id
                 opponent_group = aux.LvsRtoggle(carrier_group)
                 opponent_group_odor_id = f'{opponent_group}_odor'
-                for f in self.model.get_flies():
+                for f in self.model.agents:
                     if f.group == carrier_group:
                         f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_group_odor_id)
                     else:
