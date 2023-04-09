@@ -196,11 +196,8 @@ def run_template(sim_mode, args, kw_dicts):
         run = sim.ReplayRun(parameters=conf, **kws)
         run.run()
     elif sim_mode == 'Batch':
-        # kws.store_data = args.store_data
-        # kws.Box2D = args.Box2D
         kws.mode='batch'
         kws.run_externally=False
-
         kws.conf = reg.loadConf(conftype='Batch', id=args.experiment)
         kws.conf.batch_type = args.experiment
         kws.conf.exp = update_exp_conf(kws.conf.exp, N=args.Nagents, mIDs=args.models)
@@ -212,8 +209,6 @@ def run_template(sim_mode, args, kw_dicts):
         conf = update_exp_conf(args.experiment, N=args.Nagents, mIDs=args.models)
         if kws.duration is None:
             kws.duration = conf.sim_params.duration
-        # kws.store_data = args.store_data
-        # kws.Box2D = args.Box2D
         kws.screen_kws = {'vis_kwargs': kw_dicts['visualization']}
 
         run = sim.ExpRun(parameters=conf, **kws)
@@ -222,14 +217,10 @@ def run_template(sim_mode, args, kw_dicts):
             run.analyze(show=args.show)
 
     elif sim_mode == 'Ga':
-        # kws.store_data = args.store_data
         conf = reg.expandConf(id=args.experiment, conftype='Ga')
         kws.experiment = args.experiment
         if kws.duration is None:
             kws.duration = conf.sim_params.duration
-        # conf.show_display=args.show_display
-        # if args.duration is not None:
-        # conf.duration = args.duration
         conf.ga_build_kws.ga_select_kws = kw_dicts['ga_select_kws']
         temp=kw_dicts['ga_space_kws']
         if temp.base_model is not None:
@@ -242,10 +233,7 @@ def run_template(sim_mode, args, kw_dicts):
         GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
-        # kws.show_display=args.show_display
         conf =kw_dicts.Eval
-        # if kws.duration is None:
-        #     kws.duration = conf.sim_params.duration
         evrun = sim.EvalRun(parameters=conf, **kws)
         evrun.simulate()
         evrun.plot_results()
