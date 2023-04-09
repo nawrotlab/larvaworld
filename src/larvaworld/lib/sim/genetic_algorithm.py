@@ -15,7 +15,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 
-class GAselector(param.Parameterized):
+class GAselection(param.Parameterized):
     Ngenerations = param.Integer(default=None, allow_None=True,
                                  doc='Number of generations to run for the genetic algorithm engine')
     Nagents = param.Integer(default=30, doc='Number of agents per generation')
@@ -43,23 +43,19 @@ class GAselector(param.Parameterized):
         return g
 
 
-class GAconf_generator(GAselector):
+class GAspace(param.Parameterized):
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
                                doc='Mode of initial generation')
     base_model = param.Selector(default='explorer', objects=reg.storedConf('Model'), doc='ID of the model to optimize')
     bestConfID = param.String(default=None, doc='ID for the optimized model')
-    space_mkeys = param.List(default=[], doc='Keys of the modules where the optimization parameters are')
-
+    space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,doc='Keys of the modules where the optimization parameters are')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
         self.mConf0 = reg.loadConf(id=self.base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
         self.space_columns = [p.name for k, p in self.space_dict.items()]
         self.gConf0 = reg.model.conf(self.space_dict)
-
-
 
     def create_first_generation(self):
         mode=self.init_mode
@@ -112,51 +108,84 @@ class GAconf_generator(GAselector):
             self.gConfs = self.create_new_generation(sorted_gs)
         self.genome_dict = {i: self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(self.gConfs)}
 
-class GAevaluator(GAconf_generator):
-    robot_class = param.String(default=None, doc='The agent class', allow_None=True)
-    multicore = param.Boolean(default=True, doc='Whether to use parallel processing')
+class GAevaluation(param.Parameterized):
     exclusion_mode = param.Boolean(default=False, doc='Whether to apply exclusion mode')
-    offline = param.Boolean(default=False, doc='Whether to simulate offline')
-    exclude_func = param.Callable(default=None, doc='The function that evaluates exclusion', allow_None=True)
-    fitness_func = param.Callable(default=None, doc='The function that evaluates fitness', allow_None=True)
-    fitness_target_refID = param.Selector(default=None, allow_None=True, objects=reg.storedConf('Ref'), doc='ID of the reference dataset')
+    exclude_func = param.Parameter(default=None, doc='The function that evaluates exclusion', allow_None=True)
+    fitness_func = param.Parameter(default=None, doc='The function that evaluates fitness', allow_None=True)
+    fitness_target_refID = param.Selector(default=None, objects=reg.storedConf('Ref'), allow_None=True,
+                                          doc='ID of the reference dataset')
     fitness_target_kws = param.Parameter(default=None, doc='The target metrics to optimize against')
     fit_dict = param.Dict(default=None, doc='The complete dictionary of the fitness evaluation process')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        if type(self.exclude_func)==str:
+            self.exclude_func = exclusion_funcs[self.exclude_func]
+        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, self.fitness_target_refID, self.fitness_target_kws, self.fitness_func)
 
-    # def __init__(self, ga_select_kws, robot_class=None, multicore=True, exclude_func=None, exclusion_mode=False,
-    #              space_mkeys=[], base_model='explorer', bestConfID=None, init_mode='random', offline=False, **kwargs):
-    #     super().__init__(ga_select_kws=ga_select_kws, space_mkeys=space_mkeys, base_model=base_model,
-    #                      bestConfID=bestConfID, init_mode=init_mode)
-    #     self.exclusion_mode = exclusion_mode
-    #     self.exclude_func = exclude_func
-    #     self.multicore = multicore
-        self.robot_class_func = get_robot_class(self.robot_class, self.offline)
+    def define_fitness_evaluation(self,d, refID, target_kws, func):
+        if self.exclusion_mode:
+            return None
+        elif d is not None:
+            return d
+        elif refID is not None and target_kws is not None:
+            return util.GA_optimization(refID, target_kws)
+        elif func is not None:
+            if type(func) == str:
+                self.fitness_func = fitness_funcs[func]
+            return arrange_fitness(self.fitness_func, source_xy=self.source_xy)
 
+class GAengine(GAselection,GAspace, GAevaluation):
+    agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'], doc='The agent class', allow_None=True)
+    multicore = param.Boolean(default=True, doc='Whether to use parallel processing')
+    offline = param.Boolean(default=False, doc='Whether to simulate offline')
+
+
+    def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
+        super().__init__(**ga_select_kws,**ga_space_kws,**ga_eval_kws,**kwargs)
+        self.agent_class = get_agent_class(self.agent_class_name, self.offline)
         self.best_genome = None
         self.best_fitness = None
-
         self.all_genomes_dic = []
-
         self.num_cpu = multiprocessing.cpu_count()
 
-        if self.exclusion_mode:
-            self.fit_dict = None
-        elif self.fit_dict is None:
-            if self.fitness_target_refID is not None:
-                self.fit_dict = util.GA_optimization(self.fitness_target_refID, self.fitness_target_kws)
-            else:
-                self.fit_dict = arrange_fitness(self.fitness_func, source_xy=self.source_xy)
+
+def dst2source_evaluation(robot, source_xy):
+    traj = np.array(robot.trajectory)
+    dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
+    cum_dst = np.sum(dst)
+    l=[]
+    for label, pos in source_xy.items():
+        l.append(aux.eudi5x(traj, pos))
+    fitness= - np.mean(np.min(np.vstack(l),axis=0))/ cum_dst
+    return fitness
+
+def cum_dst(robot, **kwargs):
+    return robot.cum_dst / robot.real_length
+
+
+def bend_error_exclusion(robot):
+    if robot.body_bend_errors >= 20:
+        return True
+    # elif robot.negative_speed_errors >= 5:
+    #     return True
+    else:
+        return False
+
+
+fitness_funcs = aux.AttrDict({
+    'dst2source': dst2source_evaluation,
+    'cum_dst': cum_dst,
+})
 
 
 
+exclusion_funcs = aux.AttrDict({
+    'bend_errors': bend_error_exclusion
+})
 
 
-
-
-def get_robot_class(robot_class=None, offline=False):
+def get_agent_class(robot_class=None, offline=False):
     if offline:
         robot_class = 'LarvaOffline'
     if robot_class is None:
@@ -183,19 +212,16 @@ def arrange_fitness(fitness_func, **kwargs):
     return aux.AttrDict({'func': func, 'func_arg': 'robot'})
 
 
-class GAlauncher(BaseRun, GAevaluator):
+class GAlauncher(BaseRun, GAengine):
     def __init__(self, **kwargs):
         BaseRun.__init__(self,runtype='Ga', **kwargs)
-        GAevaluator.__init__(self, **self.p.ga_build_kws, **self.p.ga_select_kws, offline=self.offline)
+        GAengine.__init__(self, **self.p.ga_build_kws, offline=self.offline)
     def setup(self):
-        # GAevaluator.__init__(self, **self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
-        # self.selector = GAevaluator(**self.p.ga_build_kws, ga_select_kws=self.p.ga_select_kws, offline=self.offline)
         self.generation_num = 0
         self.start_total_time = aux.TimeUtil.current_time_millis()
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
         reg.vprint(f'Launching {temp} generations of {self.duration} seconds, with {self.Nagents} agents each!', 2)
-        # reg.vprint('', 2)
         if self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
             self.progress_bar.start()
@@ -232,7 +258,7 @@ class GAlauncher(BaseRun, GAevaluator):
         # self.genome_dict = {i : self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(gConfs)}
 
         confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
-        self.place_agents(confs, self.robot_class_func)
+        self.place_agents(confs, self.agent_class)
 
         self.collectors = reg.get_reporters(collections=self.collections, agents=self.agents)
         self.step_output_keys=list(self.collectors['step'].keys())

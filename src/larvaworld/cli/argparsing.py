@@ -230,15 +230,15 @@ def run_template(sim_mode, args, kw_dicts):
         # conf.show_display=args.show_display
         # if args.duration is not None:
         # conf.duration = args.duration
-        conf.ga_select_kws = kw_dicts['ga_select_kws']
-        temp=kw_dicts['ga_build_kws0']
+        conf.ga_build_kws.ga_select_kws = kw_dicts['ga_select_kws']
+        temp=kw_dicts['ga_space_kws']
         if temp.base_model is not None:
-            conf.ga_build_kws.base_model = temp.base_model
-        if temp.fitness_target_refID is not None:
-            conf.ga_build_kws.fitness_target_refID = temp.fitness_target_refID
+            conf.ga_build_kws.ga_space_kws.base_model = temp.base_model
+        # if temp.fitness_target_refID is not None:
+        #     conf.ga_build_kws.fitness_target_refID = temp.fitness_target_refID
         if temp.bestConfID is not None:
-            conf.ga_build_kws.bestConfID = temp.bestConfID
-        conf.ga_build_kws.init_mode = temp.init_mode
+            conf.ga_build_kws.ga_space_kws.bestConfID = temp.bestConfID
+        conf.ga_build_kws.ga_space_kws.init_mode = temp.init_mode
         GA = sim.GAlauncher(parameters=conf, **kws)
         best_genome = GA.simulate()
     elif sim_mode == 'Eval':
@@ -266,7 +266,7 @@ def get_parser(sim_mode, parser=None):
         'Batch': [[], ['e', 'N', 'ms']],
         'Eval': [['Eval'], []],
         'Exp': [['visualization'], ['e', 'N', 'ms', 'a']],
-        'Ga': [['ga_select_kws', 'ga_build_kws0'], ['e']],
+        'Ga': [['ga_select_kws', 'ga_space_kws'], ['e']],
         'Replay': [['Replay'], []]
     })
     mks, ks = dic[sim_mode]
