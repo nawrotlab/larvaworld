@@ -158,15 +158,15 @@ class GAevaluation(param.Parameterized):
     fit_dict = param.Dict(default=None,
                           label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
 
-    def __init__(self, **kwargs):
+    def __init__(self,fit_kws={}, **kwargs):
         super().__init__(**kwargs)
         if type(self.exclude_func_name)==str:
             self.exclude_func = exclusion_funcs[self.exclude_func_name]
         else:
             self.exclude_func = None
-        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, self.fitness_target_refID, self.fitness_target_kws, self.fitness_func_name)
+        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, self.fitness_target_refID, self.fitness_target_kws, self.fitness_func_name, **fit_kws)
 
-    def define_fitness_evaluation(self,d, refID, target_kws, func_name):
+    def define_fitness_evaluation(self,d, refID, target_kws, func_name, **kwargs):
         if self.exclusion_mode:
             return None
         elif d is not None:
@@ -176,7 +176,7 @@ class GAevaluation(param.Parameterized):
         elif func_name is not None:
             if type(func_name) == str:
                 fitness_func = fitness_funcs[func_name]
-            return arrange_fitness(fitness_func, source_xy=self.source_xy)
+                return arrange_fitness(fitness_func, **kwargs)
 
 class GAengine(GAselection,GAspace, GAevaluation):
     agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'],
@@ -192,6 +192,8 @@ class GAengine(GAselection,GAspace, GAevaluation):
         self.best_fitness = None
         self.all_genomes_dic = []
         self.num_cpu = multiprocessing.cpu_count()
+        self.generation_num = 0
+        self.start_total_time = aux.TimeUtil.current_time_millis()
 
 
 
@@ -228,8 +230,6 @@ class GAlauncher(BaseRun, GAengine):
         BaseRun.__init__(self,runtype='Ga', **kwargs)
         GAengine.__init__(self, **self.p.ga_build_kws, offline=self.offline)
     def setup(self):
-        self.generation_num = 0
-        self.start_total_time = aux.TimeUtil.current_time_millis()
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
         reg.vprint(f'Launching {temp} generations of {self.duration} seconds, with {self.Nagents} agents each!', 2)
@@ -249,6 +249,10 @@ class GAlauncher(BaseRun, GAengine):
                                                panel_width=600, caption=f'GA {self.p.experiment} : {self.id}',
                                                space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
         # self.initialize(**self.p.ga_build_kws)
+        self.dataset_kws=aux.AttrDict({'dir' : None,
+                         'load_data':False, 'env_params':self.p.env_params,
+                         'source_xy':self.source_xy,
+                         'fr':1 / self.dt})
         self.build_generation()
 
 
@@ -286,30 +290,22 @@ class GAlauncher(BaseRun, GAengine):
         if self.progress_bar:
             self.progress_bar.update(self.generation_num)
 
-    def convert_output_to_dataset(self, df, id):
-        from larvaworld.lib.process.dataset import LarvaDataset
-        df.index.set_names(['AgentID', 'Step'], inplace=True)
-        df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-        df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
-        end = df[self.end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-        # step = df[self.step_output_keys]
-        d = LarvaDataset(dir=None, id=id,
-                         load_data=False, env_params=self.p.env_params,
-                         source_xy=self.source_xy,
-                         fr=1 / self.dt)
-        d.set_data(step=df[self.step_output_keys], end=end, food=None)
-        return d
 
-    def eval_robots(self):
-        reg.vprint(f'Evaluating generation {self.generation_num}', 1)
-        data = df_from_log(self._logs)
+    def eval_robots(self, log, Ngen, genome_dict):
+        reg.vprint(f'Evaluating generation {Ngen}', 1)
+        data = df_from_log(log)
         # data=self.output.variables
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
         for gID, df in data.items():
-            d = self.convert_output_to_dataset(df.copy(), id=f'{self.id}_generation:{self.generation_num}')
+            d = convert_output_to_dataset(df=df.copy(),
+                                               id=f'{gID}_generation:{Ngen}',
+                                               step_keys=self.step_output_keys,
+                                               end_keys=self.end_output_keys,
+                                               **self.dataset_kws
+                                               )
             d._enrich(proc_keys=['angular', 'spatial'])
 
             # s, e, c = d.step_data, d.endpoint_data, d.config
@@ -317,7 +313,7 @@ class GAlauncher(BaseRun, GAengine):
             fit_dicts = func(s=d.step_data)
 
             valid_gs = {}
-            for i, g in self.genome_dict.items():
+            for i, g in genome_dict.items():
                 g.fitness_dict = aux.AttrDict({k: dic[i] for k, dic in fit_dicts.items()})
                 mus = aux.AttrDict({k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()})
                 if len(mus) == 1:
@@ -329,20 +325,20 @@ class GAlauncher(BaseRun, GAengine):
                     valid_gs[i] = g
             sorted_gs = [valid_gs[i] for i in
                          sorted(list(valid_gs.keys()), key=lambda i: valid_gs[i].fitness, reverse=True)]
-            self.store(sorted_gs)
-            reg.vprint(f'Generation {self.generation_num} evaluated', 1)
+            self.store(sorted_gs, Ngen)
+            reg.vprint(f'Generation {Ngen} evaluated', 1)
             return sorted_gs
 
-    def store(self, sorted_gs):
+    def store(self, sorted_gs, Ngen):
         if self.best_genome is None or sorted_gs[0].fitness > self.best_genome.fitness:
             self.best_genome = sorted_gs[0]
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
                 reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
-        reg.vprint(f'Generation {self.generation_num} best_fitness : {self.best_fitness}', 1)
+        reg.vprint(f'Generation {Ngen} best_fitness : {self.best_fitness}', 1)
         self.all_genomes_dic += [
-            {'generation': self.generation_num, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},
+            {'generation': Ngen, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},
              'fitness': g.fitness, **g.fitness_dict.flatten()}
             for g in sorted_gs if g.fitness_dict is not None]
 
@@ -363,7 +359,7 @@ class GAlauncher(BaseRun, GAengine):
             self.agents.nest_record(self.collectors['end'])
 
             # self.create_output()
-            sorted_genomes = self.eval_robots()
+            sorted_genomes = self.eval_robots(log=self._logs, Ngen=self.generation_num, genome_dict=self.genome_dict)
             self.delete_agents()
             self._logs = {}
             self.t = 0
@@ -394,7 +390,7 @@ class GAlauncher(BaseRun, GAengine):
         self.running = False
         if self.progress_bar:
             self.progress_bar.finish()
-        reg.vprint(f'Best fittness: {self.best_genome.fitness}', 2)
+        reg.vprint(f'Best fittness: {self.best_genome.fitness}', 1)
         if self.store_data:
             self.store_genomes(dic=self.all_genomes_dic, save_to=self.data_dir)
 
@@ -517,3 +513,14 @@ def df_from_log(log_dict):
         df = df.set_index(index_keys)
         ddf[obj_type] = df
         return ddf
+
+def convert_output_to_dataset(df, id, step_keys, end_keys, **kwargs):
+    from larvaworld.lib.process.dataset import LarvaDataset
+    df.index.set_names(['AgentID', 'Step'], inplace=True)
+    df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+    df.sort_index(level=['Step', 'AgentID'], inplace=True)
+
+    end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
+    d = LarvaDataset(id=id,**kwargs)
+    d.set_data(step=df[step_keys], end=end, food=None)
+    return d
