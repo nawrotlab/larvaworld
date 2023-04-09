@@ -462,7 +462,10 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     if mID1 is None:
         mID1 = mID0
 
-
+    ga_select_kws= reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1)
+    ga_space_kws= reg.get_null('ga_space_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,bestConfID=mID1)
+    ga_eval_kws= reg.get_null('ga_eval_kws', exclusion_mode=exclusion_mode,fitness_target_refID=refID)
+    ga_eval_kws.fit_dict = fit_dict
 
     kws = {
         # 'sim_params': reg.get_null('sim_params', duration=dur,dt=dt),
@@ -471,15 +474,17 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
         # 'store_data': store_data,
         'experiment': experiment,
         'env_params': 'arena_200mm',
-        'ga_select_kws': reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1),
-        'ga_build_kws': reg.get_null('ga_build_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,exclusion_mode=exclusion_mode,
-                                      bestConfID=mID1, fitness_target_refID=refID)
+        'ga_build_kws': reg.get_null('ga_build_kws',
+                                     ga_select_kws=ga_select_kws,
+                                     ga_space_kws=ga_space_kws,
+                                     ga_eval_kws=ga_eval_kws,
+                                       )
     }
 
     conf = reg.get_null('Ga', **kws)
     conf.env_params = reg.expandConf(id=conf.env_params, conftype='Env')
 
-    conf.ga_build_kws.fit_dict = fit_dict
+    # conf.ga_build_kws.
 
     GA = GAlauncher(parameters=conf, save_to=save_to, id=id, duration=dur,dt=dt)
     best_genome = GA.simulate()
