@@ -411,3 +411,37 @@ def sense_food(pos, sources=None, grid=None, radius=None):
             return random.choice(valid)
     return None
 
+def convert_output_to_dataset(df, id, step_keys, end_keys, **kwargs):
+    from larvaworld.lib.process.dataset import LarvaDataset
+    df.index.set_names(['AgentID', 'Step'], inplace=True)
+    df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+    df.sort_index(level=['Step', 'AgentID'], inplace=True)
+
+    end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
+    d = LarvaDataset(id=id,**kwargs)
+    d.set_data(step=df[step_keys], end=end, food=None)
+    return d
+
+def get_larva_dicts(ls):
+    deb_dicts = {}
+    nengo_dicts = {}
+    bout_dicts = {}
+    for id, l in ls.items():
+        if hasattr(l, 'deb') and l.deb is not None:
+            deb_dicts[id] = l.deb.finalize_dict()
+        try :
+            from larvaworld.lib.model.modules.nengobrain import NengoBrain
+            if isinstance(l.brain, NengoBrain):
+                if l.brain.dict is not None:
+                    nengo_dicts[id] = l.brain.dict
+        except :
+            pass
+        if l.brain.locomotor.intermitter is not None:
+            bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
+
+    dic0 = aux.AttrDict({'deb': deb_dicts,
+                         'nengo': nengo_dicts, 'bouts': bout_dicts,
+                         })
+
+    dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
+    return dic

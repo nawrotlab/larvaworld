@@ -1,38 +1,24 @@
 import os
 import warnings
-
-
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
 import numpy as np
-# import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-
 
 from larvaworld.lib import reg, aux, plot, util
 from larvaworld.lib.sim.base_run import BaseRun
 
-
-
 class EvalRun(BaseRun):
     def __init__(self,parameters, dataset=None,dur=None,experiment='dispersion',  **kwargs):
-
-
         d = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
         d.id = 'experiment'
         d.config.id = 'experiment'
-
         d.color = 'grey'
         d.config.color = 'grey'
-
-        # self.dt =d.config.dt
         if dur is None:
             dur = d.config.Nticks * d.config.dt / 60
-
-        # self.dur = dur
         self.target = d
         super().__init__(runtype='Eval', experiment=experiment, parameters=parameters,
                          dt =d.config.dt, duration = dur, **kwargs)
@@ -40,36 +26,21 @@ class EvalRun(BaseRun):
     def setup(self,norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,
               enrichment=True,show=False):
         self.refID = self.p.refID
-        # self.refID = refID
-        # self.modelIDs = self.p.modelIDs
-
-        # dIDS=self.p.dataset_ids
         if self.p.dataset_ids is None:
             self.p.dataset_ids = self.p.modelIDs
-        # self.dataset_ids = self.p.dataset_ids
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
-        # self.offline = self.p.offline
         self.show = show
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
 
-        # self.datasets = []
         self.error_dicts = {}
         self.error_plot_dir = f'{self.plot_dir}/errors'
-
         self.enrichment = enrichment
-
-
         self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
         self.define_eval_args(self.evaluation)
 
-
-
-
     def define_eval_args(self, ev):
-        # self.e_shorts = aux.flatten_list(ev['end']['shorts'].values.tolist())
-        # self.s_shorts = aux.flatten_list(ev['step']['shorts'].values.tolist())
         self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
         s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
         self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
@@ -77,19 +48,14 @@ class EvalRun(BaseRun):
         self.eval_symbols = aux.AttrDict(
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
-
-
-
     def simulate(self, video=False):
         dIDs, mIDs = self.p.dataset_ids, self.p.modelIDs
         N, Nm=self.p.N, len(self.p.modelIDs)
         lgs = reg.lgs(sample=self.p.refID, mIDs=mIDs, ids=dIDs,
                                  cs=aux.N_colors(Nm),expand=True, N=N)
-
         kws={
             'dt': self.dt,
             'duration': self.duration,
-
         }
         self.setup(**self._setup_kwargs)
         c = self.target.config
@@ -97,7 +63,6 @@ class EvalRun(BaseRun):
         tor_durs, dsp_starts, dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
         if self.offline is None:
             print(f'Simulating offline {Nm} models : {dIDs} with {N} larvae each')
-
             self.datasets = util.sim_models(mIDs=mIDs, tor_durs=tor_durs,
                                         dsp_starts=dsp_starts, dsp_stops=dsp_stops,
                                         dataset_ids=dIDs,lgs=lgs,
@@ -112,31 +77,21 @@ class EvalRun(BaseRun):
             if self.enrichment is None:
                 conf.enrichment = None
             else:
-                # tor_durs, dsp_starts, dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
                 conf.enrichment.metric_definition.dispersion.update({'dsp_starts': dsp_starts, 'dsp_stops': dsp_stops})
-                # c.enrichment.metric_definition.dispersion.dsp_starts = dsp_starts
-                # c.enrichment.metric_definition.dispersion.dsp_stops = dsp_stops
                 conf.enrichment.metric_definition.tortuosity.tor_durs = tor_durs
             kws0 = aux.AttrDict({
-
                 'video': video,
                 'save_to': self.save_to,
                 'store_data': self.store_data,
                 'experiment': self.experiment,
                 'id': self.id,
                 'offline': self.offline,
-                # 'dt': self.dt,
-                # 'duration': self.duration,
                 'parameters': conf,
                 **kws
             })
             run = ExpRun(**kws0)
             run.simulate()
             self.datasets = run.datasets
-
-
-
-
         self.analyze()
         if self.store_data:
             os.makedirs(self.data_dir, exist_ok=True)
@@ -148,10 +103,9 @@ class EvalRun(BaseRun):
         label_dic = {
             '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},
             'pooled': {'end': 'Pooled endpoint values KS$_{D}$', 'step': 'Pooled distributions KS$_{D}$'}
-
         }
         labels = label_dic[mode]
-        dic = {}
+        dic = aux.AttrDict()
         for norm in self.norm_modes:
             d = self.norm_error_dict(error_dict, mode=norm)
             df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(d.items())})
@@ -159,16 +113,12 @@ class EvalRun(BaseRun):
                 'save_to': f'{self.error_plot_dir}/{norm}',
                 'show' : self.show
             }
-
             bars = {}
             tabs = {}
-
-
             for i, (k, df) in enumerate(d.items()):
                 tabs[k] = GD['error table'](df, k, labels[k], **kws)
             tabs['mean'] = GD['error table'](df0, 'mean', 'average error', **kws)
             bars['full'] = GD['error barplot'](error_dict=d, evaluation=self.evaluation, labels=labels, **kws)
-
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
             bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=d,
                                                   evaluation=self.evaluation, **kws)
@@ -194,9 +144,6 @@ class EvalRun(BaseRun):
             self.figs.errors[k] = self.get_error_plots(d, mode)
             self.error_dicts[k] = d
 
-
-
-
     def store(self):
         if self.store_data:
             aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
@@ -219,7 +166,6 @@ class EvalRun(BaseRun):
 
         self.target.load(h5_ks=['epochs', 'angular', 'dspNtor'])
         ds = [self.target] + self.datasets
-
         kws = {
             'datasets': ds,
             'save_to': self.plot_dir,
@@ -232,7 +178,6 @@ class EvalRun(BaseRun):
             'show': self.show
         }
         self.figs.summary = GD['eval summary'](**kws2)
-
         self.figs.stride_cycle.norm = GD['stride cycle'](shorts=['sv', 'fov', 'rov', 'foa', 'b'], individuals=True,
                                                          **kws)
         if 'dispersion' in plots:
@@ -268,8 +213,6 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
                       **kwargs):
     if id is None:
         id = f'{len(mIDs)}mIDs'
-    # if dIDs is None:
-    #     dIDs = mIDs
     if save_to is None:
         save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
 
@@ -278,7 +221,6 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
         'modelIDs': mIDs,
         'dataset_ids': dIDs,
         'N': N,
-        # 'offline': offline,
     })
     evrun = EvalRun(parameters=parameters, id=id,
                     save_to=save_to, **kwargs)
@@ -412,19 +354,3 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
                 eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
     d.config = c
     d.save_config()
-
-
-if __name__ == '__main__':
-    refID = 'None.150controls'
-    # mIDs = ['NEU_PHI', 'NEU_PHIx', 'PHIonSIN', 'PHIonSINx']
-    # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    # dataset_ids = mIDs
-    # # # dataset_ids = ['NEU mean', 'NEU var', 'SIN mean', 'SIN var']
-    # id = '4xee33e'
-    #
-
-    #
-    # evrun.simulate(video=False)
-    # evrun.eval()
-    # evrun.plot_models()
-    # evrun.plot_results()

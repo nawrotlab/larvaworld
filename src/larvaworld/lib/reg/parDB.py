@@ -1053,33 +1053,18 @@ def buildInitDict():
                           'k': 'Pmut'},
             'Cmutation': {'v': 0.1, 'lim': (0.0, 1.0), 'h': 'Mutation coefficient', 'k': 'Cmut'},
             'selection_ratio': {'v': 0.3, 'lim': (0.0, 1.0),
-                                'h': 'Fraction of agents to be selected for the next generation', 'k': 'Rsel'},
-            # 'verbose': {'dtype': int, 'v': 0, 'vs': [0, 1, 2, 3],
-            #             'h': 'Verbose argument for GA launcher', 'k': 'verb'}
+                                'h': 'Fraction of agents to be selected for the next generation', 'k': 'Rsel'}
         }
-
         d['ga_space_kws'] = {
             'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
-            # 'agent_class_name': {'v': 'LarvaRobot', 'dtype': str, 'vs': ['LarvaRobot', 'LarvaOffline'],
-            #                 'h': 'The agent class to use in the simulations'},
             'base_model': ConfID_entry('Model', default='RE_NEU_PHI_DEF_nav', k='mID0', symbol=sub('mID', 0)),
             'bestConfID': {'dtype': str,
                            'h': 'The model configuration ID to store the best genome',
                            'k': 'mID1'},
             'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
                           'h': 'The initialization mode for the first generation', 'k': 'mGA'},
-            # 'exclusion_mode': {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
-            # 'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
-            # 'fitness_target_refID': ConfID_entry('Ref'),
-            # 'fitness_target_kws': {'dtype': dict, 'v': {},
-            #                        'h': 'The target data to derive from the reference dataset for evaluation'},
-            # 'fitness_func': {'dtype': FunctionType, 'h': 'The method for fitness evaluation'},
-            # 'exclude_func': {'dtype': FunctionType,
-            #                  'h': 'The method for real-time excluding agents'},
         }
-
         d['ga_eval_kws'] = {
-
             'exclusion_mode': {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
             'fitness_target_refID': ConfID_entry('Ref'),
             'fitness_target_kws': {'dtype': dict, 'v': {},
@@ -1090,47 +1075,21 @@ def buildInitDict():
         }
 
         d['ga_build_kws'] = {
-            # **d['ga_space_kws'],
             'ga_eval_kws': d['ga_eval_kws'],
             'ga_space_kws': d['ga_space_kws'],
             'ga_select_kws': d['ga_select_kws'],
-            # **d['ga_eval_kws'],
-            # 'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
             'agent_class_name': {'v':'LarvaRobot', 'dtype': str,'vs': ['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'], 'h': 'The agent class to use in the simulations'},
-            # 'base_model': ConfID_entry('Model', default='RE_NEU_PHI_DEF_nav', k='mID0', symbol=sub('mID', 0)),
-            # 'bestConfID': {'dtype': str,
-            #                'h': 'The model configuration ID to store the best genome',
-            #                'k': 'mID1'},
-            # 'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
-            #               'h': 'The initialization mode for the first generation', 'k': 'mGA'},
-            # 'exclusion_mode': {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
-            'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
-            # 'fitness_target_refID': ConfID_entry('Ref'),
-            # 'fitness_target_kws': {'dtype': dict, 'v': {},
-            #                        'h': 'The target data to derive from the reference dataset for evaluation'},
-            # 'fitness_func': {'dtype': FunctionType, 'h': 'The method for fitness evaluation'},
-            # 'exclude_func': {'dtype': FunctionType,
-            #                  'h': 'The method for real-time excluding agents'},
+            'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'}
         }
         return d
 
     def Ga1(d):
         d['Ga'] = {
             'scene': {'dtype': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
-            # 'scene_speed': {'dtype': int, 'v': 0, 'lim': (0, 1000),
-            #                 'h': 'The rendering speed of the scene'},
             'env_params': ConfID_entry('Env',default='arena_200mm'),
-
-            # 'env_params': confID_entry('Env'),
             'sim_params': d['sim_params'],
             'experiment': ConfID_entry('Ga',default='exploration'),
-            # 'experiment': confID_entry('Ga', default='exploration'),
-            # 'caption': {'dtype': str, 'h': 'The screen caption'},
-            # 'save_to': pSaveTo(),
-            # 'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
-            'ga_build_kws': d['ga_build_kws'],
-            # 'ga_select_kws': d['ga_select_kws'],
-            # 'ga_kws': {**d['GAengine'], **d['GAselector']},
+            'ga_build_kws': d['ga_build_kws']
         }
 
         return d

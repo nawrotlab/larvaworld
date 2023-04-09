@@ -30,6 +30,8 @@ class ExpRun(BaseRun):
 
         self.build_agents(self.p.larva_groups, parameter_dict)
         self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
+        self.step_output_keys = list(self.collectors['step'].keys())
+        self.end_output_keys = list(self.collectors['end'].keys())
         self.accessible_sources = None
 
         self.screen_manager = ScreenManager(model=self, **screen_kws, video=video)
@@ -103,67 +105,43 @@ class ExpRun(BaseRun):
                 reg.vprint(f'--- Dataset {d.id} enriched ---', 1)
                 reg.vprint(f'--------------------------------', 1)
         if self.store_data:
-
             self.store()
         return self.datasets
 
     def retrieve(self):
+        kws0={
+            'step_keys' : self.step_output_keys,
+        'end_keys' : self.end_output_keys,
+            'load_data' : False, 'env_params' : self.p.env_params,
+        'source_xy' : self.source_xy,
+        'fr' : 1 / self.dt,
+        }
         dkws=[]
         for gID, df in self.output.variables.items():
+            kws1={'larva_groups': {gID: self.p.larva_groups[gID]}}
             if 'sample_id' in df.index.names :
                 sIDs=df.index.get_level_values('sample_id').unique()
                 if len(sIDs)>1 :
-                    dkws+=[{'gID':gID, 'df':df.xs(sID, level='sample_id'), 'id':f'{gID}_{sID}'} for sID in sIDs]
+                    dkws+=[{'df':df.xs(sID, level='sample_id'), 'id':f'{gID}_{sID}', **kws1} for sID in sIDs]
                 else :
-                    dkws += [{'gID': gID, 'df': df.xs(sIDs[0], level='sample_id')}]
+                    dkws += [{'df': df.xs(sIDs[0], level='sample_id'), 'id': gID, **kws1}]
 
             else :
-                dkws += [{'gID': gID, 'df': df}]
-        ds = [self.convert_output_to_dataset(**kws) for kws in dkws]
+                dkws += [{'df': df, 'id': gID, **kws1}]
+        ds = [self.convert_output_to_dataset(**kws, **kws0, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
         return ds
 
-    def convert_output_to_dataset(self,gID, df, id=None):
-        if id is None :
-            id = gID
+    def convert_output_to_dataset(self,id,df,step_keys, end_keys,  **kwargs):
         from larvaworld.lib.process.dataset import LarvaDataset
         df.index.set_names(['AgentID', 'Step'], inplace=True)
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
-        end = df[list(self.collectors['end'].keys())].xs(df.index.get_level_values('Step').max(), level='Step')
-        step = df[list(self.collectors['step'].keys())]
-        d = LarvaDataset(f'{self.data_dir}/{id}', id=id, larva_groups={gID: self.p.larva_groups[gID]},
-                         load_data=False, env_params=self.p.env_params,
-                         source_xy=self.source_xy,
-                         fr=1 / self.dt)
-        d.set_data(step=step, end=end, food=None)
-        d.larva_dicts = self.get_larva_dicts(ids=d.agent_ids)
+        d = LarvaDataset(id=id, **kwargs)
+        d.set_data(step=df[step_keys], end=df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step'), food=None)
+        ls = aux.AttrDict({l.unique_id: l for l in self.agents if l.unique_id in d.agent_ids})
+        d.larva_dicts = aux.get_larva_dicts(ls)
         return d
-
-    def get_larva_dicts(self, ids=None):
-        ls = aux.AttrDict({l.unique_id: l for l in self.get_flies(ids=ids)})
-        deb_dicts = {}
-        nengo_dicts = {}
-        bout_dicts = {}
-        for id, l in ls.items():
-            if hasattr(l, 'deb') and l.deb is not None:
-                deb_dicts[id] = l.deb.finalize_dict()
-            try :
-                from larvaworld.lib.model.modules.nengobrain import NengoBrain
-                if isinstance(l.brain, NengoBrain):
-                    if l.brain.dict is not None:
-                        nengo_dicts[id] = l.brain.dict
-            except :
-                pass
-            if l.brain.locomotor.intermitter is not None:
-                bout_dicts[id] = l.brain.locomotor.intermitter.build_dict()
-
-        dic0 = aux.AttrDict({'deb': deb_dicts,
-                             'nengo': nengo_dicts, 'bouts': bout_dicts,
-                             })
-
-        dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
-        return dic
 
 
 
@@ -236,7 +214,6 @@ class ExpRun(BaseRun):
         os.makedirs(self.plot_dir, exist_ok=True)
         exp = self.experiment
         ds = self.datasets
-
         if ds is None or any([d is None for d in ds]):
             return
 
