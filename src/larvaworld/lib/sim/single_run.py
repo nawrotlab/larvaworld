@@ -29,9 +29,10 @@ class ExpRun(BaseRun):
         self.build_env(self.p.env_params)
 
         self.build_agents(self.p.larva_groups, parameter_dict)
-        self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-        self.step_output_keys = list(self.collectors['step'].keys())
-        self.end_output_keys = list(self.collectors['end'].keys())
+        self.set_collectors(self.p.collections)
+        # self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
+        # self.step_output_keys = list(self.collectors['step'].keys())
+        # self.end_output_keys = list(self.collectors['end'].keys())
         self.accessible_sources = None
 
         self.screen_manager = ScreenManager(model=self, **screen_kws, video=video)

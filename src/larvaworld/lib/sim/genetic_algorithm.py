@@ -238,7 +238,7 @@ class GAlauncher(BaseRun, GAengine):
             self.progress_bar.start()
         else:
             self.progress_bar = None
-        self.collections = ['pose']
+        self.p.collections = ['pose']
         self.odor_ids = aux.get_all_odors({}, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
         self.screen_manager = GA_ScreenManager(model=self, show_display=self.show_display,
@@ -266,9 +266,10 @@ class GAlauncher(BaseRun, GAengine):
         self.create_generation(sorted_genomes)
         confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
         self.place_agents(confs, self.agent_class)
-        self.collectors = reg.get_reporters(collections=self.collections, agents=self.agents)
-        self.step_output_keys=list(self.collectors['step'].keys())
-        self.end_output_keys=list(self.collectors['end'].keys())
+        self.set_collectors(self.p.collections)
+        # self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
+        # self.step_output_keys=list(self.collectors['step'].keys())
+        # self.end_output_keys=list(self.collectors['end'].keys())
         if self.multicore:
             self.threads = self.build_threads(self.agents)
         else:

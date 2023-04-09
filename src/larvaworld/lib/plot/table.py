@@ -172,10 +172,10 @@ def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
     return P.get()
 
 @reg.funcs.graph('error table')
-def error_table(data, k='', title=None, **kwargs):
+def error_table(data, k='', **kwargs):
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
-    fig = mpl_table(data, highlighted_cells='row_min', title=title, figsize=figsize,
+    fig = mpl_table(data, highlighted_cells='row_min', figsize=figsize,
                     adjust_kws={'left': 0.3, 'right': 0.95},
                     name=f'error_table_{k}', **kwargs)
     return fig

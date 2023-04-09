@@ -94,7 +94,7 @@ class EvalRun(BaseRun):
             self.datasets = run.datasets
         self.analyze()
         if self.store_data:
-            os.makedirs(self.data_dir, exist_ok=True)
+            # os.makedirs(self.data_dir, exist_ok=True)
             self.store()
         return self.datasets
 
@@ -115,9 +115,9 @@ class EvalRun(BaseRun):
             }
             bars = {}
             tabs = {}
-            for i, (k, df) in enumerate(d.items()):
-                tabs[k] = GD['error table'](df, k, labels[k], **kws)
-            tabs['mean'] = GD['error table'](df0, 'mean', 'average error', **kws)
+            for k, df in d.items():
+                tabs[k] = GD['error table'](data=df, k=k, title=labels[k], **kws)
+            tabs['mean'] = GD['error table'](data=df0, k='mean', title='average error', **kws)
             bars['full'] = GD['error barplot'](error_dict=d, evaluation=self.evaluation, labels=labels, **kws)
             # Summary figure with barplots and tables for both endpoint and timeseries metrics
             bars['summary'] = GD['error summary'](norm_mode=norm, eval_mode=mode, error_dict=d,
@@ -145,9 +145,8 @@ class EvalRun(BaseRun):
             self.error_dicts[k] = d
 
     def store(self):
-        if self.store_data:
-            aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
-            reg.vprint(f'Results saved at {self.data_dir}')
+        aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
+        reg.vprint(f'Results saved at {self.data_dir}')
 
 
 
@@ -162,12 +161,11 @@ class EvalRun(BaseRun):
     def plot_results(self, plots=['hists', 'trajectories', 'dispersion', 'bouts', 'fft', 'boxplots']):
         GD = reg.graphs.dict
 
-        print('Generating comparative graphs')
+        # print('Generating comparative graphs')
 
         self.target.load(h5_ks=['epochs', 'angular', 'dspNtor'])
-        ds = [self.target] + self.datasets
         kws = {
-            'datasets': ds,
+            'datasets': [self.target] + self.datasets,
             'save_to': self.plot_dir,
             'show': self.show
         }

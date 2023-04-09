@@ -87,15 +87,15 @@ class BaseRun(agentpy.Model):
     def Nticks(self):
         return self.t
 
-    def build_box(self, x, y, size, color):
-        box = envs.Box(x, y, size, color=color)
-        self.obstacles.append(box)
-        return box
-
-    def build_wall(self, point1, point2, color):
-        wall = envs.Wall(point1, point2, color=color)
-        self.obstacles.append(wall)
-        return wall
+    # def build_box(self, x, y, size, color):
+    #     box = envs.Box(x, y, size, color=color)
+    #     self.obstacles.append(box)
+    #     return box
+    #
+    # def build_wall(self, point1, point2, color):
+    #     wall = envs.Wall(point1, point2, color=color)
+    #     self.obstacles.append(wall)
+    #     return wall
 
     def build_env(self, p):
         reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
@@ -158,3 +158,8 @@ class BaseRun(agentpy.Model):
             agent_list = self.agents
         for a in agent_list:
             self.delete_agent(a)
+
+    def set_collectors(self, collections):
+        self.collectors = reg.get_reporters(collections=collections, agents=self.agents)
+        self.step_output_keys = list(self.collectors['step'].keys())
+        self.end_output_keys = list(self.collectors['end'].keys())
