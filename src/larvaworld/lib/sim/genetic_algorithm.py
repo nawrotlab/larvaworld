@@ -16,14 +16,14 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class GAselection(param.Parameterized):
-    Ngenerations = param.Integer(default=None, allow_None=True,
+    Ngenerations = param.Integer(default=None, allow_None=True,label='# generations',
                                  doc='Number of generations to run for the genetic algorithm engine')
-    Nagents = param.Integer(default=30, doc='Number of agents per generation')
-    Nelits = param.Integer(default=3, doc='Number of best agents to include in the next generation')
+    Nagents = param.Integer(default=30,label='# agents per generation', doc='Number of agents per generation')
+    Nelits = param.Integer(default=3,label='# best agents for next generation', doc='Number of best agents to include in the next generation')
 
-    selection_ratio = param.Magnitude(default=0.3, doc='Fraction of agent population to include in the next generation')
-    Pmutation = param.Magnitude(default=0.3, doc='Probability of mutation for each agent in the next generation')
-    Cmutation = param.Number(default=0.1, doc='Fraction of allowed parameter range to mutate within')
+    selection_ratio = param.Magnitude(default=0.3,label='selection ratio', doc='Fraction of agent population to include in the next generation')
+    Pmutation = param.Magnitude(default=0.3,label='mutation probability', doc='Probability of mutation for each agent in the next generation')
+    Cmutation = param.Number(default=0.1,label='mutation coeficient', doc='Fraction of allowed parameter range to mutate within')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -45,10 +45,12 @@ class GAselection(param.Parameterized):
 
 class GAspace(param.Parameterized):
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
-                               doc='Mode of initial generation')
-    base_model = param.Selector(default='explorer', objects=reg.storedConf('Model'), doc='ID of the model to optimize')
-    bestConfID = param.String(default=None, doc='ID for the optimized model')
-    space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,doc='Keys of the modules where the optimization parameters are')
+                               label='mode of initial generation',doc='Mode of initial generation')
+    base_model = param.Selector(default='explorer', objects=reg.storedConf('Model'),
+                                label='agent model to optimize',doc='ID of the model to optimize')
+    bestConfID = param.String(default=None,label='model ID for optimized model', doc='ID for the optimized model')
+    space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,
+                                     label='keys of modules to include in space search',doc='Keys of the modules where the optimization parameters are')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -144,13 +146,17 @@ exclusion_funcs = aux.AttrDict({
 })
 
 class GAevaluation(param.Parameterized):
-    exclusion_mode = param.Boolean(default=False, doc='Whether to apply exclusion mode')
-    exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()), doc='The function that evaluates exclusion', allow_None=True)
-    fitness_func_name = param.Selector(default=None,objects=list(fitness_funcs.keys()), doc='The function that evaluates fitness', allow_None=True)
+    exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
+    exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
+                                       label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
+    fitness_func_name = param.Selector(default=None,objects=list(fitness_funcs.keys()),
+                                       label='name of fitness function',doc='The function that evaluates fitness', allow_None=True)
     fitness_target_refID = param.Selector(default=None, objects=reg.storedConf('Ref'), allow_None=True,
-                                          doc='ID of the reference dataset')
-    fitness_target_kws = param.Parameter(default=None, doc='The target metrics to optimize against')
-    fit_dict = param.Dict(default=None, doc='The complete dictionary of the fitness evaluation process')
+                                          label='ID of reference dataset',doc='ID of the reference dataset')
+    fitness_target_kws = param.Parameter(default=None, label='fitness metrics to evaluate',
+                                         doc='The target metrics to optimize against')
+    fit_dict = param.Dict(default=None,
+                          label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -173,9 +179,10 @@ class GAevaluation(param.Parameterized):
             return arrange_fitness(fitness_func, source_xy=self.source_xy)
 
 class GAengine(GAselection,GAspace, GAevaluation):
-    agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'], doc='The agent class', allow_None=True)
-    multicore = param.Boolean(default=True, doc='Whether to use parallel processing')
-    offline = param.Boolean(default=False, doc='Whether to simulate offline')
+    agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'],
+                                      label='name of agent class',doc='The agent class', allow_None=True)
+    multicore = param.Boolean(default=True, label='parallel processing',doc='Whether to use parallel processing')
+    offline = param.Boolean(default=False, label='offline mode', doc='Whether to simulate offline')
 
 
     def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
