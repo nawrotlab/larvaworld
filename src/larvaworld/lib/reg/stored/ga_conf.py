@@ -33,8 +33,8 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
 
     build_kws['ga_eval_kws'] = reg.get_null('ga_eval_kws', fitness_target_refID=refID,
                                             fitness_target_kws=fit_kws,
-                                            fitness_func=fitID,
-                                            exclude_func=excludeID,
+                                            fitness_func_name=fitID,
+                                            exclude_func_name=excludeID,
                                             )
     build_kws['ga_space_kws'] = reg.get_null('ga_space_kws', base_model=m0, bestConfID=m1,
                                              init_mode=init,

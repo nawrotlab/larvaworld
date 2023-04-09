@@ -108,47 +108,6 @@ class GAspace(param.Parameterized):
             self.gConfs = self.create_new_generation(sorted_gs)
         self.genome_dict = {i: self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(self.gConfs)}
 
-class GAevaluation(param.Parameterized):
-    exclusion_mode = param.Boolean(default=False, doc='Whether to apply exclusion mode')
-    exclude_func = param.Parameter(default=None, doc='The function that evaluates exclusion', allow_None=True)
-    fitness_func = param.Parameter(default=None, doc='The function that evaluates fitness', allow_None=True)
-    fitness_target_refID = param.Selector(default=None, objects=reg.storedConf('Ref'), allow_None=True,
-                                          doc='ID of the reference dataset')
-    fitness_target_kws = param.Parameter(default=None, doc='The target metrics to optimize against')
-    fit_dict = param.Dict(default=None, doc='The complete dictionary of the fitness evaluation process')
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        if type(self.exclude_func)==str:
-            self.exclude_func = exclusion_funcs[self.exclude_func]
-        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, self.fitness_target_refID, self.fitness_target_kws, self.fitness_func)
-
-    def define_fitness_evaluation(self,d, refID, target_kws, func):
-        if self.exclusion_mode:
-            return None
-        elif d is not None:
-            return d
-        elif refID is not None and target_kws is not None:
-            return util.GA_optimization(refID, target_kws)
-        elif func is not None:
-            if type(func) == str:
-                self.fitness_func = fitness_funcs[func]
-            return arrange_fitness(self.fitness_func, source_xy=self.source_xy)
-
-class GAengine(GAselection,GAspace, GAevaluation):
-    agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'], doc='The agent class', allow_None=True)
-    multicore = param.Boolean(default=True, doc='Whether to use parallel processing')
-    offline = param.Boolean(default=False, doc='Whether to simulate offline')
-
-
-    def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
-        super().__init__(**ga_select_kws,**ga_space_kws,**ga_eval_kws,**kwargs)
-        self.agent_class = get_agent_class(self.agent_class_name, self.offline)
-        self.best_genome = None
-        self.best_fitness = None
-        self.all_genomes_dic = []
-        self.num_cpu = multiprocessing.cpu_count()
-
 
 def dst2source_evaluation(robot, source_xy):
     traj = np.array(robot.trajectory)
@@ -183,6 +142,51 @@ fitness_funcs = aux.AttrDict({
 exclusion_funcs = aux.AttrDict({
     'bend_errors': bend_error_exclusion
 })
+
+class GAevaluation(param.Parameterized):
+    exclusion_mode = param.Boolean(default=False, doc='Whether to apply exclusion mode')
+    exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()), doc='The function that evaluates exclusion', allow_None=True)
+    fitness_func_name = param.Selector(default=None,objects=list(fitness_funcs.keys()), doc='The function that evaluates fitness', allow_None=True)
+    fitness_target_refID = param.Selector(default=None, objects=reg.storedConf('Ref'), allow_None=True,
+                                          doc='ID of the reference dataset')
+    fitness_target_kws = param.Parameter(default=None, doc='The target metrics to optimize against')
+    fit_dict = param.Dict(default=None, doc='The complete dictionary of the fitness evaluation process')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if type(self.exclude_func_name)==str:
+            self.exclude_func = exclusion_funcs[self.exclude_func_name]
+        else:
+            self.exclude_func = None
+        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, self.fitness_target_refID, self.fitness_target_kws, self.fitness_func_name)
+
+    def define_fitness_evaluation(self,d, refID, target_kws, func_name):
+        if self.exclusion_mode:
+            return None
+        elif d is not None:
+            return d
+        elif refID is not None and target_kws is not None:
+            return util.GA_optimization(refID, target_kws)
+        elif func_name is not None:
+            if type(func_name) == str:
+                fitness_func = fitness_funcs[func_name]
+            return arrange_fitness(fitness_func, source_xy=self.source_xy)
+
+class GAengine(GAselection,GAspace, GAevaluation):
+    agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'], doc='The agent class', allow_None=True)
+    multicore = param.Boolean(default=True, doc='Whether to use parallel processing')
+    offline = param.Boolean(default=False, doc='Whether to simulate offline')
+
+
+    def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
+        super().__init__(**ga_select_kws,**ga_space_kws,**ga_eval_kws,**kwargs)
+        self.agent_class = get_agent_class(self.agent_class_name, self.offline)
+        self.best_genome = None
+        self.best_fitness = None
+        self.all_genomes_dic = []
+        self.num_cpu = multiprocessing.cpu_count()
+
+
 
 
 def get_agent_class(robot_class=None, offline=False):
