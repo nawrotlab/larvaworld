@@ -14,7 +14,16 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 class ExpRun(BaseRun):
     def __init__(self, **kwargs):
+        '''
+        Simulation mode 'Exp' launches a single simulation of a specified experiment type.
+
+        Args:
+            **kwargs: Arguments passed to the setup method
+
+        '''
         super().__init__(runtype = 'Exp', **kwargs)
+
+
 
     def setup(self, screen_kws={},video=None, parameter_dict={}):
 
@@ -230,3 +239,11 @@ class ExpRun(BaseRun):
         df1 = pd.concat(df.variables, axis=0).droplevel(1, axis=0)
         df1.index.rename('Model', inplace=True)
         return df1
+
+'''
+class _ExpRun(ExpRun):
+    def __init__(self,parameters, **kwargs):
+        parameters = self.exp_conf.update_existingnestdict_by_suffix(parameters)
+        super().__init__(parameters=parameters, **kwargs)
+
+'''

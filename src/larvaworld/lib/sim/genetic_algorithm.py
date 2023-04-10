@@ -14,36 +14,20 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 
-
-class GAselection(param.Parameterized):
-    Ngenerations = param.Integer(default=None, allow_None=True,label='# generations',
-                                 doc='Number of generations to run for the genetic algorithm engine')
-    Nagents = param.Integer(default=30,label='# agents per generation', doc='Number of agents per generation')
-    Nelits = param.Integer(default=3,label='# best agents for next generation', doc='Number of best agents to include in the next generation')
-
-    selection_ratio = param.Magnitude(default=0.3,label='selection ratio', doc='Fraction of agent population to include in the next generation')
-    Pmutation = param.Magnitude(default=0.3,label='mutation probability', doc='Probability of mutation for each agent in the next generation')
-    Cmutation = param.Number(default=0.1,label='mutation coeficient', doc='Fraction of allowed parameter range to mutate within')
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.Nagents_min = round(self.Nagents * self.selection_ratio)
-        if self.Nagents_min < 2:
-            raise ValueError('The number of parents selected to breed a new generation is < 2. ' +
-                             'Please increase population (' + str(self.Nagents) + ') or selection ratio (' +
-                             str(self.selection_ratio) + ')')
-
-    def crossover(self, g1, g2):
-        g = {}
-        for k in g1.keys():
-            if np.random.uniform(0, 1, 1) >= 0.5:
-                g[k] = g1[k]
-            else:
-                g[k] = g2[k]
-        return g
-
-
 class GAspace(param.Parameterized):
+    Ngenerations = param.Integer(default=None, allow_None=True, label='# generations',
+                                 doc='Number of generations to run for the genetic algorithm engine')
+    Nagents = param.Integer(default=30, label='# agents per generation', doc='Number of agents per generation')
+    Nelits = param.Integer(default=3, label='# best agents for next generation',
+                           doc='Number of best agents to include in the next generation')
+
+    selection_ratio = param.Magnitude(default=0.3, label='selection ratio',
+                                      doc='Fraction of agent population to include in the next generation')
+    Pmutation = param.Magnitude(default=0.3, label='mutation probability',
+                                doc='Probability of mutation for each agent in the next generation')
+    Cmutation = param.Number(default=0.1, label='mutation coeficient',
+                             doc='Fraction of allowed parameter range to mutate within')
+
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
                                label='mode of initial generation',doc='Mode of initial generation')
     base_model = param.Selector(default='explorer', objects=reg.storedConf('Model'),
@@ -54,6 +38,14 @@ class GAspace(param.Parameterized):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.Nagents_min = round(self.Nagents * self.selection_ratio)
+        if self.Nagents_min < 2:
+            raise ValueError('The number of parents selected to breed a new generation is < 2. ' +
+                             'Please increase population (' + str(self.Nagents) + ') or selection ratio (' +
+                             str(self.selection_ratio) + ')')
+
+
         self.mConf0 = reg.loadConf(id=self.base_model, conftype='Model')
         self.space_dict = reg.model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
         self.space_columns = [p.name for k, p in self.space_dict.items()]
@@ -109,6 +101,16 @@ class GAspace(param.Parameterized):
         else :
             self.gConfs = self.create_new_generation(sorted_gs)
         self.genome_dict = {i: self.new_genome(gConf, self.mConf0) for i, gConf in enumerate(self.gConfs)}
+
+    def crossover(self, g1, g2):
+        g = {}
+        for k in g1.keys():
+            if np.random.uniform(0, 1, 1) >= 0.5:
+                g[k] = g1[k]
+            else:
+                g[k] = g2[k]
+        return g
+
 
 
 def dst2source_evaluation(robot, source_xy):
@@ -178,7 +180,7 @@ class GAevaluation(param.Parameterized):
                 fitness_func = fitness_funcs[func_name]
                 return arrange_fitness(fitness_func, **kwargs)
 
-class GAengine(GAselection,GAspace, GAevaluation):
+class GAengine(GAspace, GAevaluation):
     agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'],
                                       label='name of agent class',doc='The agent class', allow_None=True)
     multicore = param.Boolean(default=True, label='parallel processing',doc='Whether to use parallel processing')
@@ -187,6 +189,10 @@ class GAengine(GAselection,GAspace, GAevaluation):
 
     def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
         super().__init__(**ga_select_kws,**ga_space_kws,**ga_eval_kws,**kwargs)
+
+
+
+
         self.agent_class = get_agent_class(self.agent_class_name, self.offline)
         self.best_genome = None
         self.best_fitness = None
@@ -227,6 +233,14 @@ def arrange_fitness(fitness_func, **kwargs):
 
 class GAlauncher(BaseRun, GAengine):
     def __init__(self, **kwargs):
+        '''
+        Simulation mode 'Ga' launches a genetic algorith optimization simulation of a specified agent model.
+
+        Args:
+            **kwargs: Arguments passed to the setup method
+
+        '''
+
         BaseRun.__init__(self,runtype='Ga', **kwargs)
         GAengine.__init__(self, **self.p.ga_build_kws, offline=self.offline)
     def setup(self):
@@ -268,9 +282,6 @@ class GAlauncher(BaseRun, GAengine):
         confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
         self.place_agents(confs, self.agent_class)
         self.set_collectors(self.p.collections)
-        # self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-        # self.step_output_keys=list(self.collectors['step'].keys())
-        # self.end_output_keys=list(self.collectors['end'].keys())
         if self.multicore:
             self.threads = self.build_threads(self.agents)
         else:
@@ -361,14 +372,15 @@ class GAlauncher(BaseRun, GAengine):
                 thr.step()
         else:
             self.agents.step()
-        self.screen_manager.render(self.t)
-
-    def update(self):
         if self.exclude_func is not None:
             for robot in self.agents:
                 if self.exclude_func(robot):
                     robot.genome.fitness = -np.inf
                     self.delete_agent(robot)
+        self.screen_manager.render(self.t)
+
+    def update(self):
+
         self.agents.nest_record(self.collectors['step'])
 
     def finalize(self):

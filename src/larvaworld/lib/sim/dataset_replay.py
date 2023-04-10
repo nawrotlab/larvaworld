@@ -15,9 +15,22 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 class ReplayRun(BaseRun):
     def __init__(self,parameters,  dataset=None, experiment='replay',**kwargs):
+        '''
+        Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
 
+        Args:
+            parameters: Dictionary of configuration parameters to be passed to the ABM model
+            dataset: The stored dataset to replay. If not specified it is retrieved using either the storage path (parameters.dir) or the respective unique reference ID (parameters.RefID)
+            experiment: The type of experiment. Defaults to 'replay'
+            **kwargs: Arguments passed to parent class
+        '''
+
+        # Specify and load the stored dataset to replay
         self.dataset = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+
+        # Configure the dataset to replay
         self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, self.dataset)
+
         super().__init__(runtype='Replay', experiment=experiment, parameters=parameters,
                          dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
 

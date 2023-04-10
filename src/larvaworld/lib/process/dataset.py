@@ -16,7 +16,11 @@ class _LarvaDataset:
                 config = generate_dataset_config(dir=dir, **kwargs)
 
         self.config = config
-        self.retrieve_metrics()
+        # self.retrieve_metrics()
+
+        self.h5_kdic = aux.h5_kdic(self.config.point, self.config.Npoints, self.config.Ncontour)
+        self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
+
         self.__dict__.update(self.config)
         self.larva_tables = {}
         self.larva_dicts = {}
@@ -28,18 +32,30 @@ class _LarvaDataset:
 
 
     def set_data(self, step=None, end=None, food=None):
+        c=self.config
         if step is not None:
-
             self.step_data = step.sort_index(level=['Step', 'AgentID'])
             self.agent_ids = self.step_data.index.unique('AgentID').values
-            self.num_ticks = self.step_data.index.unique('Step').size
-        if end is not None:
+            self.Nticks = self.step_data.index.unique('Step').size
 
+            c.t0 = int(self.step_data.index.unique('Step')[0])
+            c.agent_ids = self.agent_ids
+            c.N = len(self.agent_ids)
+            c.Nticks = self.Nticks
+            if 'duration' not in c.keys():
+                c.duration = c.dt * c.Nticks
+            if 'quality' not in c.keys():
+                try:
+                    df = self.step_data[aux.nam.xy(c.point)[0]].values.flatten()
+                    valid = np.count_nonzero(~np.isnan(df))
+                    c.quality = np.round(valid / df.shape[0], 2)
+                except:
+                    pass
+
+        if end is not None:
             self.endpoint_data = end.sort_index()
         if food is not None:
             self.food_endpoint_data = food
-        self.update_config()
-
 
     def load_step(self, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
         s = self.read(key='step')
@@ -57,7 +73,7 @@ class _LarvaDataset:
                 self.load_h5_kdic[h5_k] = "w"
         s.sort_index(level=['Step', 'AgentID'], inplace=True)
         self.agent_ids = s.index.unique('AgentID').values
-        self.num_ticks = s.index.unique('Step').size
+        self.Nticks = s.index.unique('Step').size
         return s
 
     @decorators.warn_slow
@@ -107,49 +123,44 @@ class _LarvaDataset:
 
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
-    def save_vel_definition(self):
-        from larvaworld.lib.process.calibration import vel_definition
-        warnings.filterwarnings('ignore')
-        self.vel_definition=vel_definition(self)
-        self.save_config()
-        self.storeH5(df=self.vel_definition, filepath_key='vel_definition')
-        print(f'Velocity definition dataset stored.')
-
-        return self.vel_definition
 
     def save_config(self, refID=None):
-        self.update_config()
+        c=self.config
         if refID is not None:
-            self.config.refID = refID
-            reg.Ref_paths(id=refID, dir=self.config.dir)
-        aux.save_dict(self.config,reg.datapath('conf', self.config.dir))
+            c.refID = refID
+            reg.Ref_paths(id=refID, dir=c.dir)
+
+        for k, v in c.items():
+            if isinstance(v, np.ndarray):
+                c[k] = v.tolist()
+        aux.save_dict(c,reg.datapath('conf', c.dir))
 
 
 
 
 
-    def centralize_xy_tracks(self, replace=True, arena_dims=None, is_last=True):
-        if arena_dims is None:
-            arena_dims = self.config.env_params.arena.dims
-        x0, y0 = arena_dims
-
-        kws0 = {
-            'h5_ks': ['contour', 'midline'],
-            # 'end' : False,
-            # 'step' : True
-        }
-        s = self.load_step(**kws0)
-        xy_pairs=self.midline_xy + self.contour_xy + aux.nam.xy(['centroid', ''])
-        xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
-
-        for x, y in xy_pairs:
-            s[x] -= x0 / 2
-            s[y] -= y0 / 2
-        if replace:
-            self.step_data = s
-        if is_last:
-            self.save_step(s, **kws0)
-        return s
+    # def centralize_xy_tracks(self, replace=True, arena_dims=None, is_last=True):
+    #     if arena_dims is None:
+    #         arena_dims = self.config.env_params.arena.dims
+    #     x0, y0 = arena_dims
+    #
+    #     kws0 = {
+    #         'h5_ks': ['contour', 'midline'],
+    #         # 'end' : False,
+    #         # 'step' : True
+    #     }
+    #     s = self.load_step(**kws0)
+    #     xy_pairs=self.midline_xy + self.contour_xy + aux.nam.xy(['centroid', ''])
+    #     xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
+    #
+    #     for x, y in xy_pairs:
+    #         s[x] -= x0 / 2
+    #         s[y] -= y0 / 2
+    #     if replace:
+    #         self.step_data = s
+    #     if is_last:
+    #         self.save_step(s, **kws0)
+    #     return s
 
     def storeH5(self, df, key=None, filepath_key=None, mode=None):
         if filepath_key is None :
@@ -354,6 +365,7 @@ class _LarvaDataset:
     def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
         if par is None:
             par = reg.getPar(short)
+            
         dic0 = self.chunk_dicts
         dics = [dic0[id] for id in self.agent_ids]
         sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
@@ -410,85 +422,48 @@ class _LarvaDataset:
             shorts = reg.getPar(d=pars, to_return='k')
             return sorted(shorts)
 
-    def retrieve_metrics(self):
-        c = self.config
-        N = c.Npoints
-        Nc = c.Ncontour
+    @ property
+    def Nangles(self):
+        return np.clip(self.config.Npoints - 2, a_min=0, a_max=None)
 
-        sp = c.metric_definition.spatial
-        self.points = nam.midline(N, type='point')
-        try:
-            p = self.points[sp.point_idx - 1]
-        except:
-            p = 'centroid'
-        c.point = p
+    @property
+    def points(self):
+        return nam.midline(self.config.Npoints, type='point')
 
+    # def retrieve_metrics(self):
+    #     c = self.config
+    #     N = c.Npoints
+    #     Nc = c.Ncontour
+    #
+    #     sp = c.metric_definition.spatial
+    #     self.points = nam.midline(N, type='point')
+    #     try:
+    #         p = self.points[sp.point_idx - 1]
+    #     except:
+    #         p = 'centroid'
+    #     c.point = p
+    #
+    #
+    #
+    #     # self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
+    #     # self.angles = [f'angle{i}' for i in range(self.Nangles)]
+    #     # self.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
+    #     # self.segs = nam.segs(self.Nsegs)
+    #     # self.midline_xy = nam.xy(self.points, flat=False)
+    #     # self.contour = nam.contour(Nc)
+    #     # self.contour_xy = nam.xy(self.contour, flat=False)
+    #
+    #
+    #     # self.distance = nam.dst(p)
+    #     # self.velocity = nam.vel(p)
+    #     # self.acceleration = nam.acc(p)
+    #     # if sp.use_component_vel:
+    #     #     self.velocity = nam.lin(self.velocity)
+    #     #     self.acceleration = nam.lin(self.acceleration)
+    #
+    #     self.h5_kdic = aux.h5_kdic(p, N, Nc)
+    #     self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
 
-
-        self.Nangles = np.clip(N - 2, a_min=0, a_max=None)
-        self.angles = [f'angle{i}' for i in range(self.Nangles)]
-        self.Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-        # self.segs = nam.segs(self.Nsegs)
-        self.midline_xy = nam.xy(self.points, flat=False)
-        self.contour = nam.contour(Nc)
-        self.contour_xy = nam.xy(self.contour, flat=False)
-
-
-        self.distance = nam.dst(p)
-        self.velocity = nam.vel(p)
-        self.acceleration = nam.acc(p)
-        if sp.use_component_vel:
-            self.velocity = nam.lin(self.velocity)
-            self.acceleration = nam.lin(self.acceleration)
-
-        self.h5_kdic = aux.h5_kdic(p, N, Nc)
-        self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
-
-    def update_config(self):
-        s,e=self.step_data, self.endpoint_data
-        c=self.config
-        c.dt = 1 / self.fr
-
-        if 'agent_ids' not in c.keys():
-            try:
-                ids = self.agent_ids
-            except:
-                try:
-                    ids = e.index.values
-                except:
-                    ids = self.read('end').index.values
-
-            c.agent_ids = list(ids)
-            c.N = len(ids)
-        if 't0' not in c.keys():
-            try:
-                c.t0 = int(s.index.unique('Step')[0])
-            except:
-                c.t0 = 0
-        if 'Nticks' not in c.keys():
-            try:
-                c.Nticks = s.index.unique('Step').size
-            except:
-                try:
-                    c.Nticks = e['num_ticks'].max()
-                except:
-                    pass
-        if 'duration' not in c.keys():
-            try:
-                c.duration = int(e['cum_dur'].max())
-            except:
-                c.duration = c.dt * c.Nticks
-        if 'quality' not in c.keys():
-            try:
-                df = s[aux.nam.xy(c.point)[0]].values.flatten()
-                valid = np.count_nonzero(~np.isnan(df))
-                c.quality = np.round(valid / df.shape[0], 2)
-            except:
-                pass
-
-        for k, v in c.items():
-            if isinstance(v, np.ndarray):
-                c[k] = v.tolist()
 
 
 
@@ -518,7 +493,12 @@ def generate_dataset_config(**kwargs):
     if c0.metric_definition is None:
         c0.metric_definition = reg.get_null('metric_definition')
 
+    c0.points =nam.midline(c0.Npoints, type='point')
 
+    try:
+        c0.point = c0.points[c0.metric_definition.spatial.point_idx - 1]
+    except:
+        c0.point = 'centroid'
 
     if len(c0.larva_groups) == 1:
         c0.group_id, gConf = list(c0.larva_groups.items())[0]

@@ -51,8 +51,8 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
 
         dic = d.read(file='vel_definition')
         if dic is None :
-            dic=d.save_vel_definition()
-
+            from larvaworld.lib.process.calibration import vel_definition
+            dic = vel_definition(d)
 
         stvar = dic['/stride_variability']
         stvar.sort_values(by='idx', inplace=True)

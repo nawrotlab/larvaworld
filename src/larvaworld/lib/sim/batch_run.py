@@ -13,9 +13,28 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.plot.scape import plot_heatmap_PI, plot_3d, plot_3pars, plot_2d
 from larvaworld.lib.sim import ExpRun
 
+
+
+
 class BatchRun(ap.Experiment):
-    def __init__(self, batch_type, save_to=None, id=None,space_search=None,space_kws={},optimization=None,
-                 record=True, exp=None, exp_kws={}, store_data=False,Box2D=False,  **kwargs):
+    def __init__(self, batch_type, space_search,save_to=None, id=None,space_kws={},optimization=None,
+                 exp=None, exp_kws={}, store_data=False, **kwargs):
+        '''
+        Simulation mode 'Batch' launches a batch-run of a specified experiment type that performs a parameter-space search.
+        Extends the agentpy.Experiment class.
+        Controls the execution of multiple single simulations ('Exp' mode, see ExpRun class) with slightly different parameter-sets to cover a predefined parameter-space.
+        Args:
+            batch_type: The preconfigured type of batch-run to launch
+            save_to: Path to store data. If not specified, it is automatically set to the runtype-specific subdirectory under the platform's ROOT/DATA directory
+            id: Unique ID of the batch-run simulation. If not specified it is automatically set according to the batch-run type
+            space_search: Dictionary that configures the parameter-space to be covered. Each entry is a parameter name and the respective arguments
+            space_kws: Additional arguments for the parameter-space construction
+            optimization: Arguments that define an optional optimization process that guides the space-search. If not specified the space is grid-searched.
+            exp: The type of experiment for single runs launched by the batch-run
+            exp_kws: Additional arguments for the single runs
+            store_data: Whether to store batch-run results
+            **kwargs: Arguments passed to parent class
+        '''
 
         runtype = 'Batch'
 
@@ -35,9 +54,11 @@ class BatchRun(ap.Experiment):
         self.df_path = f'{self.dir}/results.h5'
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
+        os.makedirs(self.plot_dir, exist_ok=True)
+        os.makedirs(self.data_dir, exist_ok=True)
+
         self.save_to = self.dir
         self.store_data = store_data
-        self.Box2D = Box2D
 
         self.exp_conf = reg.expandConf('Exp', exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
@@ -45,7 +66,7 @@ class BatchRun(ap.Experiment):
             optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
         self.optimization = optimization
         super().__init__(model_class=ExpRun, sample = space_search_sample(space_search, **space_kws),
-                         record=record, **kwargs)
+                         store_data=False, **kwargs)
 
         self.datasets = {}
         self.results = None
@@ -55,8 +76,7 @@ class BatchRun(ap.Experiment):
         """ Perform a single simulation."""
         sample_id = 0 if run_id[0] is None else run_id[0]
         parameters = self.exp_conf.update_existingnestdict_by_suffix(self.sample[sample_id])
-        model = self.model(parameters=parameters, _run_id=run_id,store_data = self.store_data,
-                           Box2D = self.Box2D, **self._model_kwargs)
+        model = self.model(parameters=parameters, _run_id=run_id, **self._model_kwargs)
 
         if self._random:
             ds = model.simulate(display=False, seed=self._random[run_id])
@@ -109,26 +129,9 @@ class BatchRun(ap.Experiment):
             else:
                 reg.vprint(f'Not reached threshold. Expanding space search', 2)
                 pass
-            # traj.f_expand(get_Nbest(traj))
-            # for sample_id, ds in self.datasets.items():
-            #     for d in ds:
-            #         if d is not None:
-
-        #     dics=[]
-        #     for d in ds :
-        #         dic = agentpy.DataDict()
-        #         dic['id']=d.id
-        #         dic['step'] = d.step_data
-        #         dic['end'] = d.endpoint_data
-        #         dic['config'] = d.config
-        #         dics.append(dic)
-        #     if len(dics)==1:
-        #         dics=dics[0]
-        #     self.output['datasets'][sample_id] = dics
 
     def simulate(self, **kwargs):
         self.run(**kwargs)
-        os.makedirs(self.plot_dir, exist_ok=True)
         if 'PI' in self.batch_type :
             self.PI_heatmap()
         # if 'chemo' in self.batch_type :

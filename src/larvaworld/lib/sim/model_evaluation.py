@@ -12,6 +12,19 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 class EvalRun(BaseRun):
     def __init__(self,parameters, dataset=None,dur=None,experiment='dispersion',  **kwargs):
+        '''
+        Simulation mode 'Eval' compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.
+
+
+        Args:
+            parameters: Dictionary of configuration parameters to be passed to the ABM model
+            dataset: The stored dataset used as reference to evaluate the performance of the simulated models. If not specified it is retrieved using either the storage path (parameters.dir) or the respective unique reference ID (parameters.RefID)
+            dur: Duration of the simulation. If not specifies defaults to the reference dataset duration.
+            experiment: The type of experiment. Defaults to 'dispersion'
+            **kwargs: Arguments passed to parent class
+        '''
+
+        # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
         d = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
         d.id = 'experiment'
         d.config.id = 'experiment'

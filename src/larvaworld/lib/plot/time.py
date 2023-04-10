@@ -107,7 +107,7 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     Nds = P.Ndatasets
     Nids = np.max([len(d.agent_ids) for d in P.datasets])
-    Nticks = np.max([d.num_ticks for d in P.datasets])
+    Nticks = np.max([d.Nticks for d in P.datasets])
     dt = np.max([d.dt for d in P.datasets])
     x = np.linspace(0, (Nticks * dt) / 60, Nticks)
     if same_plot:
