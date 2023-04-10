@@ -22,7 +22,7 @@ class _LarvaDataset:
         self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
 
         self.__dict__.update(self.config)
-        self.larva_tables = {}
+        # self.larva_tables = {}
         self.larva_dicts = {}
         if load_data:
             try:
@@ -215,15 +215,13 @@ class _LarvaDataset:
 
 
 
-    def preprocess(self, pre_kws={},recompute=False, store=True,is_last=False,**kwargs):
+    def preprocess(self, pre_kws={},is_last=False,**kwargs):
         for k, v in pre_kws.items():
             if v:
                 cc = {
                     's': self.step_data,
                     'e': self.endpoint_data,
                     'c': self.config,
-                    'recompute': recompute,
-                    'store': store,
                     **kwargs,
                     k:v
                 }
@@ -232,15 +230,11 @@ class _LarvaDataset:
         if is_last:
             self.save()
 
-    def process(self, keys=[],recompute=False, mode='minimal', store=True,is_last=False,**kwargs):
+    def process(self, keys=[], is_last=False,**kwargs):
         cc = {
-            'mode': mode,
-            'is_last': False,
             's': self.step_data,
             'e': self.endpoint_data,
             'c': self.config,
-            'recompute': recompute,
-            'store': store,
             **kwargs
         }
         for k in keys:
@@ -250,13 +244,12 @@ class _LarvaDataset:
         if is_last:
             self.save()
 
-    def annotate(self, keys=[], store=True,is_last=False,**kwargs):
+    def annotate(self, keys=[], is_last=False,**kwargs):
         cc = {
             'd': self,
             's': self.step_data,
             'e': self.endpoint_data,
             'c': self.config,
-            'store': store,
             **kwargs
         }
         for k in keys:
@@ -267,28 +260,13 @@ class _LarvaDataset:
             self.save()
 
 
-    def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], recompute=False, mode='minimal', is_last=True,
-                store=False, **kwargs):
+    def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
 
 
         warnings.filterwarnings('ignore')
-        cc0 = {
-                'recompute': recompute,
-                'is_last': False,
-                'store': store,
-            }
-
-        cc = {
-            'mode': mode,
-            **cc0,
-            **kwargs,
-        }
-        self.preprocess(pre_kws=pre_kws, **cc0)
-
-        self.process(proc_keys, **cc)
-        self.annotate(anot_keys, **cc)
-
-
+        self.preprocess(pre_kws=pre_kws, **kwargs)
+        self.process(proc_keys, **kwargs)
+        self.annotate(anot_keys, **kwargs)
 
         if is_last:
             self.save()

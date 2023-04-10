@@ -131,7 +131,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
 
 
 @reg.funcs.proc("angular")
-def angular_processing(s, e, c, recompute=False, mode='minimal', store=False, **kwargs):
+def angular_processing(s, e, c, recompute=False, mode='minimal', store=True, **kwargs):
     Np=c.Npoints
     dt = c.dt
 

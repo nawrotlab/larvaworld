@@ -193,7 +193,7 @@ def comp_centroid(s, c, recompute=False):
     reg.vprint('Centroid coordinates computed.')
 
 
-def store_spatial(s, e, c, store=False, also_in_mm=False):
+def store_spatial(s, e, c, store=True, also_in_mm=False):
     point = c.point
     dst = nam.dst('')
     sdst = nam.scal(dst)
@@ -251,7 +251,7 @@ def store_spatial(s, e, c, store=False, also_in_mm=False):
 
 # @decorators.timeit
 @reg.funcs.proc("spatial")
-def spatial_processing(s, e, c, mode='minimal', recompute=False, store=False, **kwargs):
+def spatial_processing(s, e, c, mode='minimal', recompute=False, store=True, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
@@ -414,7 +414,7 @@ def straightness_index(xy, w, match_shape=True):
     return SI
 
 @reg.funcs.proc("tortuosity")
-def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], store=False, **kwargs):
+def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], store=True, **kwargs):
     if dt is None:
         dt = c.dt
 
@@ -515,7 +515,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
 
 
 @reg.funcs.preproc("transposition")
-def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='origin', store=False,replace=True, **kwargs):
+def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='origin', store=True,replace=True, **kwargs):
     if transposition in ['', None, np.nan]:
         return
     mode=transposition

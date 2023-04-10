@@ -270,7 +270,7 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=False, **kwargs):
+def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=True, **kwargs):
     aux.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
@@ -286,7 +286,7 @@ def bout_distribution(s, e, c, d, **kwargs) :
 
 # @decorators.timeit
 @reg.funcs.annotation("bout_detection")
-def bout_detection(s, e, c, d, store=False, **kwargs):
+def bout_detection(s, e, c, d, store=True, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
     turn_mode_annotation(e, d.chunk_dicts)
 
@@ -412,7 +412,7 @@ def turn_mode_annotation(e, chunk_dicts):
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
 
 @reg.funcs.annotation("turn")
-def turn_annotation(s, e, c, store=False):
+def turn_annotation(s, e, c, store=True):
     ids = s.index.unique('AgentID').values
     N = s.index.unique('Step').size
 
@@ -460,7 +460,7 @@ def turn_annotation(s, e, c, store=False):
 
 
 @reg.funcs.annotation("crawl")
-def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=False):
+def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=True):
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
         reg.getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
 
