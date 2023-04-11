@@ -30,9 +30,7 @@ class _LarvaDataset:
                 config = generate_dataset_config(dir=dir, **kwargs)
 
         self.config = config
-
         self.h5_kdic = aux.h5_kdic(self.config.point, self.config.Npoints, self.config.Ncontour)
-        # self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
         self.__dict__.update(self.config)
         self.larva_dicts = {}
         if load_data:
@@ -47,9 +45,7 @@ class _LarvaDataset:
         if step is not None:
             s = step.sort_index(level=['Step', 'AgentID'])
             self.Nticks = s.index.unique('Step').size
-
             c.t0 = int(s.index.unique('Step')[0])
-
             c.Nticks = self.Nticks
             if 'duration' not in c.keys():
                 c.duration = c.dt * c.Nticks
@@ -66,27 +62,19 @@ class _LarvaDataset:
         if end is not None:
             self.endpoint_data = end.sort_index()
             self.agent_ids = self.endpoint_data.index.values
-
             c.agent_ids = self.agent_ids
             c.N = len(self.agent_ids)
 
     def load_step(self, h5_ks=None):
         s = self.read('step')
-
-        # stored_ps = []
         if h5_ks is None :
             h5_ks=list(self.h5_kdic.keys())
         for h5_k in h5_ks:
             ss = self.read(h5_k)
             if ss is not None :
-                # self.load_h5_kdic[h5_k] = "a"
                 ps = [p for p in ss.columns.values if p not in s.columns.values]
                 if len(ps) > 0:
-                    # stored_ps += ps
                     s = s.join(ss[ps])
-            # else:
-            #     self.load_h5_kdic[h5_k] = "w"
-
         return s
 
 
@@ -113,7 +101,6 @@ class _LarvaDataset:
         if hasattr(self, 'endpoint_data'):
             self.store(key='end', df=self.endpoint_data)
         self.save_config(refID=refID)
-
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
 
@@ -128,15 +115,6 @@ class _LarvaDataset:
 
     def save_config(self, refID=None):
         reg.save_config(self.config, refID=refID)
-        # c=self.config
-        # if refID is not None:
-        #     c.refID = refID
-        #     reg.Ref_paths(id=refID, dir=c.dir)
-        #
-        # for k, v in c.items():
-        #     if isinstance(v, np.ndarray):
-        #         c[k] = v.tolist()
-        # aux.save_dict(c,reg.datapath('conf', c.dir))
 
 
 
@@ -148,7 +126,6 @@ class _LarvaDataset:
             if mode=='default':
                 s=self.load_step(h5_ks=[])
                 df = s[['x', 'y']]
-                # self.storeH5(df=df, key='default', filepath_key='traj')
             elif mode in ['origin', 'center']:
                 s = self.load_step(h5_ks=['contour', 'midline'])
                 ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=False, replace=False, transposition=mode)
