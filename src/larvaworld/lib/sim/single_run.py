@@ -13,7 +13,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ExpRun(BaseRun):
-    def __init__(self, **kwargs):
+    def __init__(self,experiment=None,parameters=None, **kwargs):
         '''
         Simulation mode 'Exp' launches a single simulation of a specified experiment type.
 
@@ -21,7 +21,16 @@ class ExpRun(BaseRun):
             **kwargs: Arguments passed to the setup method
 
         '''
-        super().__init__(runtype = 'Exp', **kwargs)
+        if parameters is None :
+            if experiment is not None :
+                parameters = reg.expandConf('Exp', experiment)
+                kws=parameters.sim_params
+                kws.update(kwargs)
+                kwargs=kws
+            else :
+                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
+
+        super().__init__(runtype = 'Exp',experiment=experiment,parameters=parameters, **kwargs)
 
 
 

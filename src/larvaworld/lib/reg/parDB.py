@@ -1960,7 +1960,7 @@ class ParamRegistry:
         else:
             for key in res.keys():
                 if key not in ['step', 'end'] and res[key]:
-                    return d.read=(key=f'{key}.{p.d}', file= 'aux')
+                    return d.read(key=f'{key}.{p.d}', file= 'aux')
 
         if compute:
             self.compute(k, d)

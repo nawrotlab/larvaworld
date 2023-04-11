@@ -284,7 +284,7 @@ def bout_distribution(s, e, c, d, **kwargs) :
     d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
-    d.store(key='grouped_epochs', df=pd.DataFrame(d.grouped_epochs))
+    # d.store(key='grouped_epochs', df=pd.DataFrame(d.grouped_epochs))
     d.store(key='pooled_epochs', df=pd.DataFrame(d.pooled_epochs))
 
 # @decorators.timeit
@@ -342,7 +342,7 @@ def compute_interference_data(s, e, c, d, Nbins=64, **kwargs) :
     d.store(key='cycle_curves', df=pd.DataFrame(d.cycle_curves))
 
 @reg.funcs.annotation("interference2")
-def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
+def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
     x = np.linspace(0, 2 * np.pi, Nbins)
 
     sss = {id: s.xs(id, level="AgentID") for id in c.agent_ids}
@@ -403,8 +403,9 @@ def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):
         e[aux.nam.max('attenuation')] = (att1s - att0s) / e[reg.getPar('pau_fov_mu')]
     except:
         pass
-
-    c.pooled_cycle_curves = pooled_curves
+    if d is not None :
+        d.store(key='pooled_cycle_curves', df=pd.DataFrame(pooled_curves))
+    # c.pooled_cycle_curves = pooled_curves
     return cycle_curves
 
 @reg.funcs.annotation("turn_mode")

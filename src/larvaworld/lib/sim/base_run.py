@@ -35,11 +35,11 @@ class BaseRun(agentpy.Model):
             **kwargs: Arguments passed to the setup method
         '''
 
-        if parameters is None :
-            if experiment is not None :
-                parameters = reg.expandConf('Exp', experiment)
-            else :
-                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
+        # if parameters is None :
+        #     if experiment is not None :
+        #         parameters = reg.expandConf('Exp', experiment)
+        #     else :
+        #         raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
 
         self.experiment = experiment if experiment is not None else parameters.experiment
 

@@ -396,7 +396,7 @@ def generate_dataset_config(**kwargs):
     if c0.dir is not None :
         os.makedirs(c0.dir, exist_ok=True)
         os.makedirs(f'{c0.dir}/data', exist_ok=True)
-    c0.data_path = f'{c0.dir}/data/data.h5'
+    # c0.data_path = f'{c0.dir}/data/data.h5'
     reg.vprint(f'Generated new conf {c0.id}', 1)
     return c0
 
