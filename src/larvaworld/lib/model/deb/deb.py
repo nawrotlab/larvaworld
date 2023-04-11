@@ -34,7 +34,7 @@ class DEB:
         self.species = species
 
         # with open(reg.Path["DEB_MODS"][species]) as tfp:
-        with open(f'{reg.ROOT_DIR}/lib/model/DEB/models/deb_{species}') as tfp:
+        with open(f'{reg.ROOT_DIR}/lib/model/deb/models/deb_{species}.csv') as tfp:
             self.species_dict = json.load(tfp)
         self.__dict__.update(self.species_dict)
 
