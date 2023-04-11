@@ -1,8 +1,8 @@
 import subprocess
 import argparse
 
+import larvaworld
 from larvaworld.lib import reg, aux, sim
-from larvaworld.lib.process.dataset import LarvaDataset
 
 
 class Exec:
@@ -52,7 +52,7 @@ class Exec:
             id = self.conf['id']
             if res is None and self.run_externally:
                 dir0 = f"{reg.SIM_DIR}/single_runs/{self.conf['sim_params']['path']}/{id}"
-                res = [LarvaDataset(f'{dir0}/{id}.{gID}') for gID in self.conf['larva_groups'].keys()]
+                res = [larvaworld.LarvaDataset(f'{dir0}/{id}.{gID}') for gID in self.conf['larva_groups'].keys()]
 
             if res is not None:
                 # TODO sim analysis independent from SingleRun class. Currently exec does not run analysis for "sim" mode

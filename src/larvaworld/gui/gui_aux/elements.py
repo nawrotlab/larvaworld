@@ -5,6 +5,8 @@ import pandas as pd
 from typing import Tuple, List
 import sys
 
+
+
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
 else:
@@ -13,7 +15,7 @@ import numpy as np
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
 
-
+import larvaworld
 from larvaworld.lib import reg, aux
 from larvaworld.gui import gui_aux
 
@@ -615,7 +617,7 @@ class DataList(NamedList):
         elif e == f'REPLAY {n}':
             if len(v0) > 0:
                 d0[kks[0]].visualize(vis_kwargs=self.tab.gui.get_vis_kwargs(v, mode='video'),
-                                     **self.tab.gui.get_replay_kwargs(v))
+                                     parameters=self.tab.gui.get_replay_kwargs(v))
         elif e == f'IMITATE {n}':
             if len(v0) > 0:
                 if d0[kks[0]].config['refID'] is None:
@@ -1782,14 +1784,13 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
                 dic[id] = path
         return dic
     else:
-        from larvaworld.lib.process.dataset import LarvaDataset
         if os.path.exists(f'{path}/data'):
-            dd = LarvaDataset(dir=path)
+            dd = larvaworld.LarvaDataset(dir=path)
             dic[dd.id] = dd
         else:
             for ddr in [x[0] for x in os.walk(path)]:
                 if os.path.exists(f'{ddr}/data'):
-                    dd = LarvaDataset(dir=ddr)
+                    dd = larvaworld.LarvaDataset(dir=ddr)
                     dic[dd.id] = dd
         return dic
 

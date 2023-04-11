@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from larvaworld.lib import reg, aux, decorators
+from larvaworld.lib import reg, aux
 
-class _LarvaDataset:
+class LarvaDataset:
     def __init__(self, dir=None, load_data=True,config = None, **kwargs):
         '''
         Dataset class that stores a single experiment, real or simulated.
@@ -65,7 +65,7 @@ class _LarvaDataset:
             c.agent_ids = self.agent_ids
             c.N = len(self.agent_ids)
 
-    def load_step(self, h5_ks=None):
+    def _load_step(self, h5_ks=None):
         s = self.read('step')
         if h5_ks is None :
             h5_ks=list(self.h5_kdic.keys())
@@ -79,12 +79,12 @@ class _LarvaDataset:
 
 
     def load(self, step=True, h5_ks=None):
-        s = self.load_step(h5_ks=h5_ks) if step else None
+        s = self._load_step(h5_ks=h5_ks) if step else None
         e = self.read('end')
         self.set_data(step=s, end=e)
 
 
-    def save_step(self, s):
+    def _save_step(self, s):
         s = s.loc[:, ~s.columns.duplicated()]
         stored_ps = []
         for h5_k,ps in self.h5_kdic.items():
@@ -97,7 +97,7 @@ class _LarvaDataset:
 
     def save(self, refID=None):
         if hasattr(self, 'step_data'):
-            self.save_step(s=self.step_data)
+            self._save_step(s=self.step_data)
         if hasattr(self, 'endpoint_data'):
             self.store(key='end', df=self.endpoint_data)
         self.save_config(refID=refID)
@@ -124,10 +124,10 @@ class _LarvaDataset:
             df = self.read(key)
         except :
             if mode=='default':
-                s=self.load_step(h5_ks=[])
+                s=self._load_step(h5_ks=[])
                 df = s[['x', 'y']]
             elif mode in ['origin', 'center']:
-                s = self.load_step(h5_ks=['contour', 'midline'])
+                s = self._load_step(h5_ks=['contour', 'midline'])
                 ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=False, replace=False, transposition=mode)
                 df=ss[['x', 'y']]
             else :
@@ -306,7 +306,7 @@ class _LarvaDataset:
 
 
 
-LarvaDataset = type('LarvaDataset', (_LarvaDataset,), decorators.dic_manager_kwargs)
+# LarvaDataset = type('LarvaDataset', (_LarvaDataset,), decorators.dic_manager_kwargs)
 
 
 def generate_dataset_config(**kwargs):

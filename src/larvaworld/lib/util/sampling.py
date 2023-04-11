@@ -2,6 +2,7 @@ import random
 import numpy as np
 import pandas as pd
 
+import larvaworld
 from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
 
@@ -234,7 +235,6 @@ def sim_model(mID, Nids=1, refID=None, refDataset=None, sample_ks=None, use_Larv
 tor_durs=[],dsp_starts=[0], dsp_stops=[40], enrichment=True,
 lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id=None,
               **kwargs):
-    from larvaworld.lib.process.dataset import LarvaDataset
     if use_LarvaConfDict:
         pass
     if refID is None:
@@ -287,7 +287,7 @@ lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id
     }
 
 
-    d = LarvaDataset(**c_kws, load_data=False)
+    d = larvaworld.LarvaDataset(**c_kws, load_data=False)
 
 
     d.set_data(step=s, end=e)

@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 import param
+
+import larvaworld
 from larvaworld.lib import reg, aux, util, decorators
 
 
@@ -345,8 +347,8 @@ def retrieveRef(id):
 def loadRef(id, load=False, **kwargs):
     c=retrieveRef(id)
     if c is not None:
-        from larvaworld.lib.process.dataset import LarvaDataset
-        d = LarvaDataset(config=c, load_data=False)
+        # from larvaworld.lib.process.dataset import LarvaDataset
+        d = larvaworld.LarvaDataset(config=c, load_data=False)
         if not load:
             reg.vprint(f'Loaded stored reference configuration : {id}')
             return d
@@ -371,9 +373,9 @@ def retrieve_dataset(dataset=None,refID=None,dir=None) :
         if refID is not None:
             dataset = reg.loadRef(refID)
         elif dir is not None :
-            from larvaworld.lib.process.dataset import LarvaDataset
+            # from larvaworld.lib.process.dataset import LarvaDataset
             path=f'{reg.DATA_DIR}/{dir}'
-            dataset = LarvaDataset(path, load_data=False)
+            dataset = larvaworld.LarvaDataset(path, load_data=False)
         else :
             raise ValueError ('Unable to load dataset. Either refID or storage path must be provided. ')
     return dataset

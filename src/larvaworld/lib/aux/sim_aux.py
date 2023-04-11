@@ -7,6 +7,7 @@ from shapely import geometry, ops
 from typing import Optional, List
 from scipy.signal import sosfiltfilt, butter
 
+import larvaworld
 from larvaworld.lib import aux
 from larvaworld.lib.aux import nam
 
@@ -412,13 +413,14 @@ def sense_food(pos, sources=None, grid=None, radius=None):
     return None
 
 def convert_output_to_dataset(df, step_keys, end_keys,agents=None, **kwargs):
-    from larvaworld.lib.process.dataset import LarvaDataset
+    # from larvaworld.lib.process.dataset import LarvaDataset
+
     df.index.set_names(['AgentID', 'Step'], inplace=True)
     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
     df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
     end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-    d = LarvaDataset(**kwargs)
+    d = larvaworld.LarvaDataset(**kwargs)
     d.set_data(step=df[step_keys], end=end)
     if agents :
         ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
@@ -448,3 +450,11 @@ def get_larva_dicts(ls):
 
     dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
     return dic
+
+def get_step_slice(s,e,dt, pars, t0=0, t1=40, track_t0_min=0, track_t1_min=0):
+    s0, s1 = int(t0 / dt), int(t1 / dt)
+    trange = np.arange(s0, s1, 1)
+    tmin = track_t0_min + t0
+    tmax = t1 - track_t1_min
+    valid_ids = e[(e['t0'] <= tmin) & (e['t1'] >= tmax)].index
+    return s.loc[(trange, valid_ids), pars]

@@ -121,6 +121,8 @@ class ReplayRun(BaseRun):
             s0 = s0.loc[(slice(a, b), slice(None)), :]
 
         if p.transposition is not None:
+            # s_tr = d.load_traj(mode=p.transposition)
+            # s0.update(s_tr)
             try:
                 s_tr = d.load_traj(mode=p.transposition)
                 s0.update(s_tr)

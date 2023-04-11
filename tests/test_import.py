@@ -1,6 +1,6 @@
+import larvaworld
 from larvaworld.lib import reg
 from larvaworld.lib.process.building import import_dataset, import_datasets
-from larvaworld.lib.process.dataset import LarvaDataset
 
 
 def test_import_Schleyer() :
@@ -35,7 +35,7 @@ def test_import_Schleyer() :
 
     for kws in [kws1, kws2] :
         d = import_dataset(**kws)
-        assert isinstance(d, LarvaDataset)
+        assert isinstance(d, larvaworld.LarvaDataset)
 
 
 def test_import_Jovanic() :
@@ -75,7 +75,7 @@ def test_import_Jovanic() :
     for kws in [kws2] :
         ds = import_datasets(**kws)
         for d in ds :
-            assert isinstance(d, LarvaDataset)
+            assert isinstance(d, larvaworld.LarvaDataset)
 
 def xxtest_import_Berni() :
     kws0 = {
@@ -96,4 +96,4 @@ def xxtest_import_Berni() :
     for kws in [kws1]:
         ds = import_datasets(**kws)
         for d in ds:
-            assert isinstance(d, LarvaDataset)
+            assert isinstance(d, larvaworld.LarvaDataset)

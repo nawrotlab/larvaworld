@@ -6,10 +6,11 @@ import pandas as pd
 import shutil
 import warnings
 
+
+import larvaworld
 from larvaworld.lib import reg, aux
 
 from larvaworld.lib.aux import nam
-from larvaworld.lib.process.dataset import LarvaDataset
 
 
 def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, verbose=1, **kwargs):
@@ -458,11 +459,8 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
             print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
             if enrich_conf is None:
                 enrich_conf = g.enrichment
-            # print('before enrich')
-            # print(d.step_data.columns)
-            # raise
             d = d.enrich(**enrich_conf, store=True, is_last=False)
-        d.save(food=False, refID=refID)
+        d.save(refID=refID)
         if refID is not None :
             print(f'***** Dataset stored under the reference ID : {refID} -----')
     else:
@@ -495,9 +493,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'env_params': reg.get_null('Env', arena=g.Tracker.arena),
         **g.Tracker.resolution
     }
-    # print(conf)
-    from larvaworld.lib.process.dataset import LarvaDataset
-    d = LarvaDataset(**conf)
+    d = larvaworld.LarvaDataset(**conf)
     kws0 = {
         'dataset': d,
         'build_conf': g.Tracker.filesystem,
@@ -516,10 +512,4 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         return None
 
 
-def split_dataset(step,end, larva_groups,dir, **kwargs):
-    ds = []
-    for gID, gConf in larva_groups.items():
-        d = LarvaDataset(f'{dir}/{gID}', id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
-        d.set_data(step=step.loc[(slice(None), gConf.ids), :], end=end.loc[gConf.ids])
-        ds.append(d)
-    return ds
+

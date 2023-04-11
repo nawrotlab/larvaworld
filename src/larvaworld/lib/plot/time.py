@@ -297,7 +297,7 @@ def plot_navigation_index(subfolder='source', **kwargs):
         Nticks = P.Nticks
         Nsec = int(Nticks * dt)
         # s = d.read(key='trajectories', file='aux_h5')
-        s=d.load_traj(mode='default')[['x', 'y']]
+        s=d.load_traj(mode='default')
 
         vxs = []
         vys = []
