@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import numpy as np
+import pandas as pd
 import warnings
 
 from larvaworld.lib import reg, aux, decorators
@@ -20,7 +21,7 @@ class _LarvaDataset:
 
         self.h5_kdic = aux.h5_kdic(self.config.point, self.config.Npoints, self.config.Ncontour)
         self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
-
+        self.data_path = f'{self.config.dir}/data/data.h5'
         self.__dict__.update(self.config)
         # self.larva_tables = {}
         self.larva_dicts = {}
@@ -34,11 +35,12 @@ class _LarvaDataset:
     def set_data(self, step=None, end=None, food=None):
         c=self.config
         if step is not None:
-            self.step_data = step.sort_index(level=['Step', 'AgentID'])
-            self.agent_ids = self.step_data.index.unique('AgentID').values
-            self.Nticks = self.step_data.index.unique('Step').size
+            s = step.sort_index(level=['Step', 'AgentID'])
+            # self.step_data = step.sort_index(level=['Step', 'AgentID'])
+            self.agent_ids = s.index.unique('AgentID').values
+            self.Nticks = s.index.unique('Step').size
 
-            c.t0 = int(self.step_data.index.unique('Step')[0])
+            c.t0 = int(s.index.unique('Step')[0])
             c.agent_ids = self.agent_ids
             c.N = len(self.agent_ids)
             c.Nticks = self.Nticks
@@ -46,23 +48,46 @@ class _LarvaDataset:
                 c.duration = c.dt * c.Nticks
             if 'quality' not in c.keys():
                 try:
-                    df = self.step_data[aux.nam.xy(c.point)[0]].values.flatten()
+                    df = s[aux.nam.xy(c.point)[0]].values.flatten()
                     valid = np.count_nonzero(~np.isnan(df))
                     c.quality = np.round(valid / df.shape[0], 2)
                 except:
                     pass
 
+            self.step_data = s
+
         if end is not None:
             self.endpoint_data = end.sort_index()
         if food is not None:
-            self.food_endpoint_data = food
+            self.food_endpoint_data = food.sort_index()
 
-    def load_step(self, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
-        s = self.read(key='step')
+    # def load_step2(self, h5_ks=None):
+    #     s = self.read(key='step')
+    #
+    #     stored_ps = []
+    #     if h5_ks is None :
+    #         h5_ks=list(self.load_h5_kdic.keys())
+    #     for h5_k in h5_ks:
+    #         ss = self.read(key=h5_k)
+    #         if ss is not None :
+    #             self.load_h5_kdic[h5_k] = "a"
+    #             ps = [p for p in ss.columns.values if p not in s.columns.values]
+    #             if len(ps) > 0:
+    #                 stored_ps += ps
+    #                 s = s.join(ss[ps])
+    #         else:
+    #             self.load_h5_kdic[h5_k] = "w"
+    #
+    #     return s
+
+    def load_step(self, h5_ks=None):
+        s = self.read_HDF('step')
 
         stored_ps = []
+        if h5_ks is None :
+            h5_ks=list(self.load_h5_kdic.keys())
         for h5_k in h5_ks:
-            ss = self.read(key=h5_k)
+            ss = self.read_HDF(h5_k)
             if ss is not None :
                 self.load_h5_kdic[h5_k] = "a"
                 ps = [p for p in ss.columns.values if p not in s.columns.values]
@@ -71,58 +96,80 @@ class _LarvaDataset:
                     s = s.join(ss[ps])
             else:
                 self.load_h5_kdic[h5_k] = "w"
-        s.sort_index(level=['Step', 'AgentID'], inplace=True)
-        self.agent_ids = s.index.unique('AgentID').values
-        self.Nticks = s.index.unique('Step').size
+
         return s
 
-    @decorators.warn_slow
-    def load(self, step=True, end=True, food=False, **kwargs):
+    # # @decorators.warn_slow
+    # def load2(self, step=True, end=True, food=False, h5_ks=None):
+    #     s = self.load_step(h5_ks=h5_ks) if step else None
+    #     e = self.read(key='end') if end else None
+    #     f = self.read(key='food') if food else None
+    #
+    #     self.set_data(step=s, end=e, food=f)
 
-        if step:
-            self.step_data = self.load_step(**kwargs)
+    def load(self, step=True, end=True, food=False, h5_ks=None):
+        s = self.load_step(h5_ks=h5_ks) if step else None
+        e = self.read_HDF('end') if end else None
+        f = self.read_HDF('food') if food else None
 
-        if end:
-            self.endpoint_data = self.read(key='end')
-            self.endpoint_data.sort_index(inplace=True)
-
-        if food:
-            self.food_endpoint_data = self.read(key='food')
-            self.food_endpoint_data.sort_index(inplace=True)
+        self.set_data(step=s, end=e, food=f)
 
 
 
-    def save_step(self, s=None, h5_ks=['contour', 'midline', 'epochs', 'base_spatial', 'angular', 'dspNtor']):
-        if s is None:
-            s = self.step_data
+    # def save_step2(self, s):
+    #     s = s.loc[:, ~s.columns.duplicated()]
+    #     stored_ps = []
+    #     for h5_k,ps in self.h5_kdic.items():
+    #         pps = aux.unique_list([p for p in ps if p in s.columns])
+    #         if len(pps) > 0:
+    #             self.storeH5(df=s[pps], key=h5_k, mode=self.load_h5_kdic[h5_k])
+    #             stored_ps += pps
+    #     self.storeH5(df=s.drop(stored_ps, axis=1, errors='ignore'), key='step')
+
+    def save_step(self, s):
         s = s.loc[:, ~s.columns.duplicated()]
         stored_ps = []
-        for h5_k in h5_ks:
-
-            pps = [p for p in self.h5_kdic[h5_k] if p in s.columns]
-            pps=aux.unique_list(pps)
+        for h5_k,ps in self.h5_kdic.items():
+            pps = aux.unique_list([p for p in ps if p in s.columns])
             if len(pps) > 0:
-                self.storeH5(df=s[pps], key=h5_k, mode=self.load_h5_kdic[h5_k])
-
+                # s[pps].to_hdf(self.data_path, h5_k, mode=self.load_h5_kdic[h5_k])
+                self.store_HDF(key=h5_k, df=s[pps])
                 stored_ps += pps
+        # s.drop(stored_ps, axis=1, errors='ignore').to_hdf(self.data_path, 'step')
+        self.store_HDF(key='step', df=s.drop(stored_ps, axis=1, errors='ignore'))
 
-        ss = s.drop(stored_ps, axis=1, errors='ignore')
-        self.storeH5(df=ss, key='step')
+    # @decorators.warn_slow
+    # def save2(self, refID=None):
+    #     if hasattr(self, 'step_data'):
+    #         self.save_step(s=self.step_data)
+    #     if hasattr(self, 'endpoint_data'):
+    #         self.storeH5(df=self.endpoint_data, key='end')
+    #     if hasattr(self, 'food_endpoint_data'):
+    #         self.storeH5(df=self.food_endpoint_data, key='food')
+    #     self.save_config(refID=refID)
+    #
+    #     reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
-    @decorators.warn_slow
-    def save(self, step=True, end=True, food=False, refID=None, **kwargs):
-
-        if step:
-            self.save_step(s=self.step_data, **kwargs)
-
-        if end:
-            self.storeH5(df=self.endpoint_data, key='end')
-        if food:
-            self.storeH5(df=self.food_endpoint_data, key='food')
+    def save(self, refID=None):
+        if hasattr(self, 'step_data'):
+            self.save_step(s=self.step_data)
+        if hasattr(self, 'endpoint_data'):
+            # self.endpoint_data.to_hdf(self.data_path, 'end')
+            self.store_HDF(key='end', df=self.endpoint_data)
+        if hasattr(self, 'food_endpoint_data'):
+            # self.food_endpoint_data.to_hdf(self.data_path, 'food')
+            self.store_HDF(key='food', df=self.food_endpoint_data)
         self.save_config(refID=refID)
 
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
+
+    def read_HDF(self, key):
+        df = pd.read_hdf(self.data_path, key)
+        return df
+
+    def store_HDF(self, key, df):
+        df.to_hdf(self.data_path, key)
 
     def save_config(self, refID=None):
         c=self.config
@@ -162,10 +209,10 @@ class _LarvaDataset:
     #         self.save_step(s, **kws0)
     #     return s
 
-    def storeH5(self, df, key=None, filepath_key=None, mode=None):
-        if filepath_key is None :
-            filepath_key=key
-        aux.storeH5(df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
+    # def storeH5(self, df, key=None, filepath_key=None, mode=None):
+    #     if filepath_key is None :
+    #         filepath_key=key
+    #     aux.storeH5(df, key=key, path=reg.datapath(filepath_key,self.dir), mode=mode)
 
     def read(self, key=None,file=None):
         filepath_key = file
@@ -174,17 +221,45 @@ class _LarvaDataset:
         return aux.read(reg.datapath(filepath_key,self.dir), key)
 
 
+    # def load_traj2(self, mode='default'):
+    #     df=self.read(key=mode, file='traj')
+    #     if df is None :
+    #         if mode=='default':
+    #             s=self.load_step(h5_ks=[])
+    #             df = s[['x', 'y']]
+    #             self.storeH5(df=df, key='default', filepath_key='traj')
+    #         elif mode in ['origin', 'center']:
+    #             s = self.load_step(h5_ks=['contour', 'midline'])
+    #             ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=True, replace=False, transposition=mode)
+    #             df=ss[['x', 'y']]
+    #     return df
+
     def load_traj(self, mode='default'):
-        df=self.read(key=mode, file='traj')
-        if df is None :
+        key=f'traj.{mode}'
+        try :
+            df = self.read_HDF(key)
+        except :
             if mode=='default':
                 s=self.load_step(h5_ks=[])
                 df = s[['x', 'y']]
-                self.storeH5(df=df, key='default', filepath_key='traj')
+                # self.storeH5(df=df, key='default', filepath_key='traj')
             elif mode in ['origin', 'center']:
                 s = self.load_step(h5_ks=['contour', 'midline'])
-                ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=True, replace=False, transposition=mode)
+                ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=False, replace=False, transposition=mode)
                 df=ss[['x', 'y']]
+            else :
+                raise ValueError('Not implemented')
+            self.store_HDF(key=key, df=df)
+        # df=self.read(key=mode, file='traj')
+        # if df is None :
+        #     if mode=='default':
+        #         s=self.load_step(h5_ks=[])
+        #         df = s[['x', 'y']]
+        #         self.storeH5(df=df, key='default', filepath_key='traj')
+        #     elif mode in ['origin', 'center']:
+        #         s = self.load_step(h5_ks=['contour', 'midline'])
+        #         ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=True, replace=False, transposition=mode)
+        #         df=ss[['x', 'y']]
         return df
 
 
@@ -285,24 +360,24 @@ class _LarvaDataset:
 
 
 
-    def get_par(self, par, key=None):
-        def get_end_par(par):
-            try:
-                return self.read(key='end', file='end')[par]
-            except:
-                try:
-                    return self.endpoint_data[par]
-                except:
-                    return None
-
-        def get_step_par(par):
-            try:
-                return self.read(key='step')[par]
-            except:
-                try:
-                    return self.step_data[par]
-                except:
-                    return None
+    def get_par(self, par, key='step'):
+        # def get_end_par(par):
+        #     try:
+        #         return self.read_HDF('end')[par]
+        #     except:
+        #         try:
+        #             return self.endpoint_data[par]
+        #         except:
+        #             return None
+        #
+        # def get_step_par(par):
+        #     try:
+        #         return self.read_HDF(key='step')[par]
+        #     except:
+        #         try:
+        #             return self.step_data[par]
+        #         except:
+        #             return None
 
         if key=='distro':
             try:
@@ -312,24 +387,40 @@ class _LarvaDataset:
 
 
         if key == 'end':
-            return get_end_par(par)
-        elif key == 'step':
-            return get_step_par(par)
-        else:
-            e = get_end_par(par)
-            if e is not None:
-                return e
-            else:
-                s = get_step_par(par)
-                if s is not None:
-                    return s
-                else:
-                    return None
+            if not hasattr(self, 'endpoint_data'):
+                self.load(step=False)
+            df=self.endpoint_data
 
-    def delete(self, show_output=True):
+            # else:
+
+
+            # return get_end_par(par)
+        elif key == 'step':
+            if not hasattr(self, 'step_data'):
+                self.load()
+            df=self.step_data
+        else :
+            raise
+
+        if par in df.columns :
+            return df[par]
+        else :
+            return None
+            # return get_step_par(par)
+        # else:
+        #     e = get_end_par(par)
+        #     if e is not None:
+        #         return e
+        #     else:
+        #         s = get_step_par(par)
+        #         if s is not None:
+        #             return s
+        #         else:
+        #             return None
+
+    def delete(self):
         shutil.rmtree(self.dir)
-        if show_output:
-            reg.vprint(f'Dataset {self.id} deleted',2)
+        reg.vprint(f'Dataset {self.id} deleted',2)
 
     def set_id(self, id, save=True):
         self.id = id
@@ -344,7 +435,8 @@ class _LarvaDataset:
         if par is None:
             par = reg.getPar(short)
             
-        dic0 = self.chunk_dicts
+        dic0 = dict(self.read_HDF('chunk_dicts'))
+        # dic0 = self.chunk_dicts
         dics = [dic0[id] for id in self.agent_ids]
         sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
 
@@ -388,10 +480,10 @@ class _LarvaDataset:
 
     def existing(self, key='end', return_shorts=False):
         if key == 'end':
-            e = self.endpoint_data if hasattr(self, 'endpoint_data') else self.read(key='end')
+            e = self.endpoint_data if hasattr(self, 'endpoint_data') else self.read_HDF(key='end')
             pars = e.columns.values.tolist()
         elif key == 'step':
-            s = self.step_data if hasattr(self, 'step_data') else self.read(key='step')
+            s = self.step_data if hasattr(self, 'step_data') else self.read_HDF(key='step')
             pars = s.columns.values.tolist()
 
         if not return_shorts:

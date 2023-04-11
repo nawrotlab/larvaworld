@@ -28,17 +28,17 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
     return P.get()
 
 
-def get_traj(d, mode='default'):
-    if mode=='default':
-        return d.load_traj(mode)
-    elif mode == 'origin':
-        try:
-            ss=d.load_traj(mode)
-            return ss[['x', 'y']]
-        except:
-            s = d.load_step(h5_ks=['contour', 'midline'])
-            ss=reg.funcs.preprocessing["transposition"](s, c=d.config, store=True, replace=False, transposition='origin')
-            return ss[['x', 'y']]
+# def get_traj(d, mode='default'):
+#     if mode=='default':
+#         return d.load_traj(mode)
+#     elif mode == 'origin':
+#         try:
+#             ss=d.load_traj(mode)
+#             return ss[['x', 'y']]
+#         except:
+#             s = d.load_step(h5_ks=['contour', 'midline'])
+#             ss=reg.funcs.preprocessing["transposition"](s, c=d.config, store=True, replace=False, transposition='origin')
+#             return ss[['x', 'y']]
 
 @reg.funcs.graph('trajectories')
 def traj_grouped(unit='mm', name=None, subfolder='trajectories',
@@ -49,7 +49,8 @@ def traj_grouped(unit='mm', name=None, subfolder='trajectories',
     P = plot.AutoPlot(name=name, subfolder=subfolder,  # subplot_kw=dict(projection='polar'),
                  build_kws={'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'mode': 'both'}, **kwargs)
     for ii, (l, d) in enumerate(P.data_dict.items()):
-        xy = get_traj(d, mode)
+        xy = d.load_traj(mode)
+        # xy = get_traj(d, mode)
         c = d.config
         if range is not None:
             t0, t1 = range
@@ -398,7 +399,7 @@ def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='i
         P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=[0, 1.0], xlim=slice,
                   leg_loc='upper right', leg_handles=handles)
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
-        s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
+        s = copy.deepcopy(d.read_HDF('step').xs(temp_id, level='AgentID', drop_level=True))
         s.set_index(s.index * d.dt, inplace=True)
         ax.plot(s[p], color='blue')
         for i, (c, col) in enumerate(zip(chunks, chunk_cols)):
@@ -457,7 +458,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
                       leg_loc='upper right', leg_handles=handles)
 
             temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
-            s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
+            s = copy.deepcopy(d.read_HDF('step').xs(temp_id, level='AgentID', drop_level=True))
             s.set_index(s.index * d.dt, inplace=True)
             ax.plot(s[p], color='blue')
             for i, (c, col) in enumerate(zip(chunks, chunk_cols)):

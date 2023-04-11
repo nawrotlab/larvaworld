@@ -22,7 +22,8 @@ def vel_definition(d) :
     dic = {**res_v, **res_fov}
     d.vel_definition=dic
     d.save_config()
-    d.storeH5(df=dic, filepath_key='vel_definition')
+    # d.storeH5(df=dic, filepath_key='vel_definition')
+    aux.storeH5(dic, key=None, path=reg.datapath('vel_definition', c.dir))
     print(f'Velocity definition dataset stored.')
     return dic
 

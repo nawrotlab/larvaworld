@@ -1951,12 +1951,12 @@ class ParamRegistry:
             if hasattr(d, 'step_data'):
                 return d.step_data[p.d]
             else:
-                return d.read(key='step')[p.d]
+                return d.read_HDF(key='step')[p.d]
         elif res['end']:
             if hasattr(d, 'endpoint_data'):
                 return d.endpoint_data[p.d]
             else:
-                return d.read(key='end')[p.d]
+                return d.read_HDF(key='end')[p.d]
         else:
             for key in res.keys():
                 if key not in ['step', 'end'] and res[key]:

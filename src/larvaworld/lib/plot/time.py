@@ -20,7 +20,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     }
     for i, (d, dlab) in enumerate(zip(P.datasets, P.labels)):
         c=d.config
-
+        d.chunk_dicts = dict(d.read_HDF('chunk_dicts'))
         dic0 = d.chunk_dicts
         # dic0 = d.load_chunk_dicts()
         for j, (id, dic) in enumerate(dic0.items()):
@@ -288,12 +288,12 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
                 reg.vprint(f'Dispersal {par} for dataset {d.id} found in step data')
             else :
                 try :
-                    dsp=d.read(key='step')[par]
+                    dsp=d.read_HDF(key='step')[par]
                     df = get_disp_df(dsp, s0, Nt=s1 - s0)
                     reg.vprint(f'Dispersal {par} for dataset {d.id} found in step h5 file')
                 except :
                     try :
-                        dsp = d.read(key='dspNtor')[par]
+                        dsp = d.read_HDF(key='dspNtor')[par]
                         if dsp.dropna().values.shape[0]==0 :
                             raise
                         df = get_disp_df(dsp, s0, Nt=s1 - s0)

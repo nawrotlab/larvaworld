@@ -59,7 +59,7 @@ def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
         try:
             s = d.step_data
         except:
-            s = d.read(key='step')
+            s = d.read_HDF(key='step')
         c = d.config
         _ = plot_fft(s, c, axx=axx, axs=P.axs[0], fig=P.fig, palette=palette, return_fig=True)
     return P.get()

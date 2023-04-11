@@ -122,7 +122,7 @@ nam=NamingRegistry()
 
 def h5_kdic(p, N, Nc):
     def epochs_ps():
-        cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain']
+        cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain', 'run']
         pars = ['id', 'start', 'stop', 'dur', 'dst', nam.scal('dst'), 'length', nam.max('vel'), 'count']
         pars = aux.flatten_list([nam.chunk_track(c, pars) for c in cs])
         return pars

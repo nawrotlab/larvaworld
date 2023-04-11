@@ -415,7 +415,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
             vs = B.sample(N)
             dic[n0] = fit_bout_distros(vs, dataset_id=mID, bout=n, combine=False, discrete=discr)
     datasets=[{'id' : 'model', 'pooled_epochs': dic, 'color': 'blue'},
-              {'id' : 'experiment', 'pooled_epochs': refDataset.pooled_epochs, 'color': 'red'}]
+              {'id' : 'experiment', 'pooled_epochs': dict(refDataset.read_HDF('pooled_epochs')), 'color': 'red'}]
     datasets = [aux.AttrDict(dd) for dd in datasets]
     return datasets
 
