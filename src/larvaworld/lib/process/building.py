@@ -516,10 +516,10 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         return None
 
 
-def split_dataset(step,end, food, larva_groups,dir, **kwargs):
+def split_dataset(step,end, larva_groups,dir, **kwargs):
     ds = []
     for gID, gConf in larva_groups.items():
         d = LarvaDataset(f'{dir}/{gID}', id=gID, larva_groups={gID: gConf}, load_data=False, **kwargs)
-        d.set_data(step=step.loc[(slice(None), gConf.ids), :], end=end.loc[gConf.ids], food=food)
+        d.set_data(step=step.loc[(slice(None), gConf.ids), :], end=end.loc[gConf.ids])
         ds.append(d)
     return ds

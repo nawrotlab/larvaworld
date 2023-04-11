@@ -419,7 +419,7 @@ def convert_output_to_dataset(df, step_keys, end_keys,agents=None, **kwargs):
 
     end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
     d = LarvaDataset(**kwargs)
-    d.set_data(step=df[step_keys], end=end, food=None)
+    d.set_data(step=df[step_keys], end=end)
     if agents :
         ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
         d.larva_dicts = aux.get_larva_dicts(ls)

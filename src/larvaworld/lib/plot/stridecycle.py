@@ -110,7 +110,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
             c = d.config
             col = c.color if 'color' in c.keys() else d.color
             if individuals:
-                cycle_curves = dict(d.read_HDF('cycle_curves'))
+                cycle_curves = dict(d.read('cycle_curves'))
                 if cycle_curves in [None, {}]:
                     try:
                         s, e = d.step_data, d.endpoint_data

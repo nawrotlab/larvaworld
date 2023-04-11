@@ -20,7 +20,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     }
     for i, (d, dlab) in enumerate(zip(P.datasets, P.labels)):
         c=d.config
-        d.chunk_dicts = dict(d.read_HDF('chunk_dicts'))
+        d.chunk_dicts = dict(d.read('chunk_dicts'))
         dic0 = d.chunk_dicts
         # dic0 = d.load_chunk_dicts()
         for j, (id, dic) in enumerate(dic0.items()):
@@ -50,32 +50,6 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.05, 0.05)
     return P.get()
 
-    #     # N = d.config['N']
-    #     # try:
-    #     #     s = d.step_data
-    #     # except:
-    #     #     s = d.read('step')
-    #     for k, (n, title) in enumerate(zip(['lin', 'ang'], [r'$\bf{runs & pauses}$', r'$\bf{left & right turns}$'])):
-    #         idx = 2 * i + k
-    #         ax = P.axs[idx]
-    #         P.conf_ax(idx, xlab='time $(sec)$', ylab='Individuals $(idx)$', ylim=(0, c.N + 2),
-    #                   xlim=(0, c.Nticks * d.dt), title=title if i == 0 else None)
-    #         for b, bcol in Cbouts[n].items():
-    #             try :
-    #
-    #                 for j, (id, dic) in enumerate(dic0.items()):
-    #                     bbs = dic[b]*c.dt
-    #                     # bbs*=c.dt
-    #                     b0s, b1s=bbs[:,0], bbs[:,1]
-    #
-    #                     lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
-    #                     lc = mc.LineCollection(lines, colors=bcol, linewidths=2)
-    #                     ax.add_collection(lc)
-    #             except:
-    #                 pass
-    #         P.data_leg(idx, labels=list(Cbouts[n].keys()), colors=list(Cbouts[n].values()))
-    # P.adjust((0.1, 0.95), (0.15, 0.92), 0.15, 0.1)
-    # return P.get()
 
 
 
@@ -288,12 +262,12 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
                 reg.vprint(f'Dispersal {par} for dataset {d.id} found in step data')
             else :
                 try :
-                    dsp=d.read_HDF(key='step')[par]
+                    dsp=d.read(key='step')[par]
                     df = get_disp_df(dsp, s0, Nt=s1 - s0)
                     reg.vprint(f'Dispersal {par} for dataset {d.id} found in step h5 file')
                 except :
                     try :
-                        dsp = d.read_HDF(key='dspNtor')[par]
+                        dsp = d.read(key='dspNtor')[par]
                         if dsp.dropna().values.shape[0]==0 :
                             raise
                         df = get_disp_df(dsp, s0, Nt=s1 - s0)
@@ -365,7 +339,7 @@ def plot_pathlength2(scaled=True, unit='mm',subfolder='timeplots', **kwargs):
     # dic,p=P.kpdict[k]
     P.conf_ax(0, xlab=f'time, ${t_unit}$', ylab=ylab, xlim=(x[0], x[-1]), ylim=[0, None], xMaxN=5, leg_loc='upper left')
     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-        df = d.read(key='pathlength', file='aux')[p.d]
+        df = d.read('pathlength')[p.d]
         plot.plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=lab)
 
     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)

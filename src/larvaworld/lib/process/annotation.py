@@ -279,19 +279,19 @@ def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=True, **k
 
 @reg.funcs.annotation("bout_distribution")
 def bout_distribution(s, e, c, d, **kwargs) :
-    d.chunk_dicts = dict(d.read_HDF('chunk_dicts'))
+    d.chunk_dicts = dict(d.read('chunk_dicts'))
     d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
     d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
-    d.store_HDF(key='grouped_epochs', df=pd.DataFrame(d.grouped_epochs))
-    d.store_HDF(key='pooled_epochs', df=pd.DataFrame(d.pooled_epochs))
+    d.store(key='grouped_epochs', df=pd.DataFrame(d.grouped_epochs))
+    d.store(key='pooled_epochs', df=pd.DataFrame(d.pooled_epochs))
 
 # @decorators.timeit
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, store=True, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
-    d.store_HDF(key='chunk_dicts', df=pd.DataFrame(d.chunk_dicts))
+    d.store(key='chunk_dicts', df=pd.DataFrame(d.chunk_dicts))
     turn_mode_annotation(e, d.chunk_dicts)
 
 
@@ -339,7 +339,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
 @reg.funcs.annotation("interference")
 def compute_interference_data(s, e, c, d, Nbins=64, **kwargs) :
     d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, Nbins=Nbins)
-    d.store_HDF(key='cycle_curves', df=pd.DataFrame(d.cycle_curves))
+    d.store(key='cycle_curves', df=pd.DataFrame(d.cycle_curves))
 
 @reg.funcs.annotation("interference2")
 def compute_interference(s, e, c, Nbins=64, chunk_dicts=None):

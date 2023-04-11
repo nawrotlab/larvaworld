@@ -427,13 +427,10 @@ if __name__ == '__main__':
     ds=[]
     for refID in ['None.100controls','None.150controls' ] :
 
-    # refID = 'None.100controls'
-    # refID='None.Sims2019_controls'
 
         d = reg.loadRef(refID)
-        d.load(contour=False,step=True)
+        d.load()
         ds.append(d)
-    # s, e, c = d.step_data, d.endpoint_data, d.config
     ks=['str_sd_mu','fv', 'v_mu', 'str_d_mu',
                         'cum_t', 'run_tr', 'pau_tr',
                         'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',

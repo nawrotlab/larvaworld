@@ -193,7 +193,7 @@ def comp_centroid(s, c, recompute=False):
     reg.vprint('Centroid coordinates computed.')
 
 
-def store_spatial(s, e, c, store=True, also_in_mm=False):
+def store_spatial(s, e, c, d=None,store=True, also_in_mm=False):
     point = c.point
     dst = nam.dst('')
     sdst = nam.scal(dst)
@@ -244,21 +244,21 @@ def store_spatial(s, e, c, store=True, also_in_mm=False):
 
     if store:
         aux.store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
-        ps=[p for p in [dst,cdst, sdst, csdst] if p in s.columns]
-        aux.storeH5(s[ps], key='pathlength', path=reg.datapath('aux', c.dir))
-
-        aux.storeH5(df=s[['x', 'y']], key='default', path=reg.datapath('traj', c.dir))
+        if d is not None :
+            ps = [p for p in [dst, cdst, sdst, csdst] if p in s.columns]
+            d.store(key='pathlength', df=s[ps])
+            d.store(key='traj.default', df=s[['x', 'y']])
 
 # @decorators.timeit
 @reg.funcs.proc("spatial")
-def spatial_processing(s, e, c, mode='minimal', recompute=False, store=True, **kwargs):
+def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=True, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
-    store_spatial(s, e, c, store=store)
+    store_spatial(s, e, c,d=d, store=store)
     try:
-        align_trajectories(s, c, store=store, replace=False, transposition='origin')
+        align_trajectories(s, c,d=d,  store=store, replace=False, transposition='origin')
     except :
         pass
 
@@ -269,7 +269,8 @@ def spatial_processing(s, e, c, mode='minimal', recompute=False, store=True, **k
 def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwargs):
     if dsp_starts is None or dsp_stops is None:
         return
-    xy0 = aux.read(key='default', path=reg.datapath('traj', c.dir)) if s is None else s[['x', 'y']]
+
+    xy0 = pd.read_hdf(f'{c.dir}/data/data.h5','traj.default') if s is None else s[['x', 'y']]
     dsps = {}
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
         p = f'dispersion_{int(t0)}_{int(t1)}'
@@ -433,8 +434,10 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
 
     if store:
-        dic = aux.get_distros(s, pars=pars)
-        aux.storeH5(dic, path=reg.datapath('distro', c.dir))
+        aux.store_distros(s, pars=pars, parent_dir=c.dir)
+
+        # dic = aux.get_distros(s, pars=pars)
+        # aux.storeH5(dic, path=reg.datapath('distro', c.dir))
 
 @reg.funcs.proc("source")
 def comp_source_metrics(s, e, c, **kwargs):
@@ -515,7 +518,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
 
 
 @reg.funcs.preproc("transposition")
-def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='origin', store=True,replace=True, **kwargs):
+def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transposition='origin', store=True,replace=True, **kwargs):
     if transposition in ['', None, np.nan]:
         return
     mode=transposition
@@ -568,9 +571,10 @@ def align_trajectories(s, c, track_point=None, arena_dims=None, transposition='o
             ss[y] = ss[y].values-ys
 
         if store:
-            aux.storeH5(ss, key=mode, path=reg.datapath('traj', c.dir))
+            if d is not None :
+                d.store(key=f'traj.{mode}', df=ss)
 
-            reg.vprint(f'traj_aligned2{mode} stored')
+                reg.vprint(f'traj_aligned2{mode} stored')
         return ss
 
 

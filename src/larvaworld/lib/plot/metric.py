@@ -14,9 +14,14 @@ def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
     for ii, d in enumerate(P.datasets):
         ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
         N = d.Nangles
-        dic = d.read(file='vel_definition')
-        df_reg = dic['/bend2or_regression']
-        df_corr = dic['/bend2or_correlation']
+        try:
+            df_reg = d.read(key='bend2or_regression', file='vel_definition')
+            df_corr = d.read(key='bend2or_correlation', file='vel_definition')
+        except :
+            from larvaworld.lib.process.calibration import vel_definition
+            dic = vel_definition(d)
+            df_reg = dic['/bend2or_regression']
+            df_corr = dic['/bend2or_correlation']
 
         df_reg.sort_index(inplace=True)
         single_scores = df_reg['single_score'].values
@@ -48,13 +53,13 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
     P = plot.AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,build_kws=build_kws,  **kwargs)
     for ii, d in enumerate(P.datasets):
         ax = P.axs[ii]
+        try :
+            stvar = d.read(key='stride_variability', file='vel_definition')
 
-        dic = d.read(file='vel_definition')
-        if dic is None :
+        except :
             from larvaworld.lib.process.calibration import vel_definition
             dic = vel_definition(d)
-
-        stvar = dic['/stride_variability']
+            stvar = dic['/stride_variability']
         stvar.sort_values(by='idx', inplace=True)
         ps = stvar.index if component_vels else [p for p in stvar.index if 'lin' not in p]
         for p in ps:

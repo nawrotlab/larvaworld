@@ -98,7 +98,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
                 refDataset = reg.loadRef(refID, load=True, step=False)
         if refDataset is not None:
             m = get_sample_bout_distros(m, refDataset.config)
-            e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read_HDF(key='end')
+            e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read(key='end')
             Sinv=SAMPLING_PARS.inverse
             sample_ps=[]
             for k in ks:

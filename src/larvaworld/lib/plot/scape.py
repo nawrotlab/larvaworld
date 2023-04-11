@@ -222,14 +222,14 @@ def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
         d = P.datasets[0]
         Nids = len(d.agent_ids)
         cs = aux.N_colors(Nids)
-        s = d.read_HDF('step')
+        s = d.read('step')
         for j, id in enumerate(d.agent_ids):
             ss = s.xs(id, level='AgentID', drop_level=True)
             ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
             ax.legend()
     else:
         for d, c in zip(P.datasets, P.colors):
-            s = d.read_HDF('step')
+            s = d.read('step')
             ax.scatter(s[xpar], s[ypar], color=c, marker='.')
         P.data_leg(0, loc='upper left')
         # dataset_legend(P.labels, P.colors, ax=ax, loc='upper left')
