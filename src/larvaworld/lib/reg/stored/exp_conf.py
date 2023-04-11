@@ -182,7 +182,7 @@ def grouped_exp_dic():
             'double_patch': food_exp('double_patch',env= 'double_patch', l=reg.GTRvsS(N=5),
                                      c=['toucher', 'feeder', 'olfactor'],
                                      enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                         anot=['bout_detection', 'patch_residency']), en=False),
+                                                         anot=['bout_detection', 'bout_distribution', 'interference', 'patch_residency']), en=False),
             'tactile_detection': food_exp('tactile_detection',env= 'single_patch', dur=5.0, c=['toucher'],
                                           l=reg.lg(mID='toucher', N=15, mode='periphery', s=0.03), en=False),
             'tactile_detection_x3': food_exp('tactile_detection_x3', env='single_patch', dur=600.0, c=['toucher'],

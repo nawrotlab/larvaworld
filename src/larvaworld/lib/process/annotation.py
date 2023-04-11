@@ -279,7 +279,7 @@ def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=True, **k
 
 @reg.funcs.annotation("bout_distribution")
 def bout_distribution(s, e, c, d, **kwargs) :
-    d.chunk_dicts = dict(d.read('chunk_dicts'))
+    d.chunk_dicts = aux.AttrDict(d.read('chunk_dicts'))
     d.grouped_epochs = aux.group_epoch_dicts(d.chunk_dicts)
     d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)

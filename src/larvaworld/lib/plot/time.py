@@ -20,7 +20,7 @@ def plot_ethogram(subfolder='timeplots', **kwargs):
     }
     for i, (d, dlab) in enumerate(zip(P.datasets, P.labels)):
         c=d.config
-        d.chunk_dicts = dict(d.read('chunk_dicts'))
+        d.chunk_dicts = aux.AttrDict(d.read('chunk_dicts'))
         dic0 = d.chunk_dicts
         # dic0 = d.load_chunk_dicts()
         for j, (id, dic) in enumerate(dic0.items()):

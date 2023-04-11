@@ -240,7 +240,7 @@ class LarvaBody(LarvaMotile):
             self.segs[i].body_length=self.sim_length
 
             self.segs[i].seg_vertices=self.sim_length *self.segs[i].base_seg_vertices
-        self.update_sensor_position()
+        # self.update_sensor_position()
 
     '''
     seg_vertices of 2 segments example :

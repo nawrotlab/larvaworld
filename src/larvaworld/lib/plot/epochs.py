@@ -63,7 +63,7 @@ def plot_bouts(name=None, plot_fits='',print_fits=False, turns=False, stridechai
     valid_labs = {}
     for j, d in enumerate(P.datasets):
         id = d.id
-        v = dict(d.read('pooled_epochs'))
+        v = aux.AttrDict(d.read('pooled_epochs'))
         if v is None:
             continue
 

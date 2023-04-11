@@ -263,7 +263,7 @@ class _LarvaDataset:
         if par is None:
             par = reg.getPar(short)
             
-        dic0 = dict(self.read('chunk_dicts'))
+        dic0 = aux.AttrDict(self.read('chunk_dicts'))
         dics = [dic0[id] for id in self.agent_ids]
         sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
 
