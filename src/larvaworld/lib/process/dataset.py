@@ -9,6 +9,20 @@ from larvaworld.lib import reg, aux, decorators
 
 class _LarvaDataset:
     def __init__(self, dir=None, load_data=True,config = None, **kwargs):
+        '''
+        Dataset class that stores a single experiment, real or simulated.
+        Metadata and configuration parameters are stored in the 'config' dictionary.
+        This can be provided as an argument, retrieved from a stored experiment or generated for a new experiment.
+        Timeseries data are loaded as a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
+        Endpoint measurements are loaded as a pd.Dataframe 'endpoint_data' with 'AgentID' indexing
+        Data is stored as HDF5 files or nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
+
+        Args:
+            dir: Path to stored data. Ignored if 'config' is provided. Defaults to None for no storage to disc
+            load_data: Whether to load stored data
+            config: The metadata dictionary. Defaults to None for attempting to load it from disc or generate a new.
+            **kwargs: Any arguments to store in a novel configuration dictionary
+        '''
 
         if config is None :
             config = reg.load_config(dir)
@@ -171,62 +185,23 @@ class _LarvaDataset:
         return reg.datapath('plots', self.dir)
 
 
-
-
-    def preprocess(self, pre_kws={},is_last=False,**kwargs):
-        for k, v in pre_kws.items():
-            if v:
-                cc = {
-                    'd': self,
-                    's': self.step_data,
-                    'e': self.endpoint_data,
-                    'c': self.config,
-                    **kwargs,
-                    k:v
-                }
-                reg.funcs.preprocessing[k](**cc)
-
-        if is_last:
-            self.save()
-
-    def process(self, keys=[], is_last=False,**kwargs):
-        cc = {
-            'd': self,
-            's': self.step_data,
-            'e': self.endpoint_data,
-            'c': self.config,
-            **kwargs
-        }
-        for k in keys:
-            func = reg.funcs.processing[k]
-            func(**cc)
-
-        if is_last:
-            self.save()
-
-    def annotate(self, keys=[], is_last=False,**kwargs):
-        cc = {
-            'd': self,
-            's': self.step_data,
-            'e': self.endpoint_data,
-            'c': self.config,
-            **kwargs
-        }
-        for k in keys:
-            func = reg.funcs.annotating[k]
-            func(**cc)
-
-        if is_last:
-            self.save()
-
-
     def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
-
+        cc = {
+            'd': self,
+            's': self.step_data,
+            'e': self.endpoint_data,
+            'c': self.config,
+            **kwargs
+        }
 
         warnings.filterwarnings('ignore')
-        self.preprocess(pre_kws=pre_kws, **kwargs)
-        self.process(proc_keys, **kwargs)
-        self.annotate(anot_keys, **kwargs)
+        for k, v in pre_kws.items():
+            if v:
+                reg.funcs.preprocessing[k](k=v, **cc)
+        for k in proc_keys:
+            reg.funcs.processing[k](**cc)
+        for k in anot_keys:
+            reg.funcs.annotating[k](**cc)
 
         if is_last:
             self.save()
