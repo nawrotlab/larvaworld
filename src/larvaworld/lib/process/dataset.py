@@ -18,7 +18,7 @@ class _LarvaDataset:
         self.config = config
 
         self.h5_kdic = aux.h5_kdic(self.config.point, self.config.Npoints, self.config.Ncontour)
-        self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
+        # self.load_h5_kdic = aux.AttrDict({h5k: "w" for h5k in self.h5_kdic.keys()})
         self.__dict__.update(self.config)
         self.larva_dicts = {}
         if load_data:
@@ -63,17 +63,17 @@ class _LarvaDataset:
 
         stored_ps = []
         if h5_ks is None :
-            h5_ks=list(self.load_h5_kdic.keys())
+            h5_ks=list(self.h5_kdic.keys())
         for h5_k in h5_ks:
             ss = self.read(h5_k)
             if ss is not None :
-                self.load_h5_kdic[h5_k] = "a"
+                # self.load_h5_kdic[h5_k] = "a"
                 ps = [p for p in ss.columns.values if p not in s.columns.values]
                 if len(ps) > 0:
                     stored_ps += ps
                     s = s.join(ss[ps])
-            else:
-                self.load_h5_kdic[h5_k] = "w"
+            # else:
+            #     self.load_h5_kdic[h5_k] = "w"
 
         return s
 
@@ -392,6 +392,7 @@ def generate_dataset_config(**kwargs):
         c0.group_id, gConf = list(c0.larva_groups.items())[0]
         c0.color = gConf['default_color']
         c0.sample = gConf['sample']
+        c0.model = gConf['model']
         c0.life_history = gConf['life_history']
     if c0.dir is not None :
         os.makedirs(c0.dir, exist_ok=True)

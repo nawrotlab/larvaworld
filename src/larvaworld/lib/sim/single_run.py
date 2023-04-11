@@ -113,7 +113,7 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
-        self.datasets = self.retrieve()
+        self.datasets = self.retrieve(self.output.variables)
         end = time.time()
         dur = np.round(end - start).astype(int)
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
@@ -127,17 +127,18 @@ class ExpRun(BaseRun):
             self.store()
         return self.datasets
 
-    def retrieve(self):
+    def retrieve(self, log):
         kws0={
             'step_keys' : self.step_output_keys,
-        'end_keys' : self.end_output_keys,
-            'load_data' : False, 'env_params' : self.p.env_params,
-        'source_xy' : self.source_xy,
-        'fr' : 1 / self.dt,
-        'agents' : self.agents
+            'end_keys' : self.end_output_keys,
+            'load_data' : False,
+            'env_params' : self.p.env_params,
+            'source_xy' : self.source_xy,
+            'fr' : 1 / self.dt,
+            'agents' : self.agents
         }
         dkws=[]
-        for gID, df in self.output.variables.items():
+        for gID, df in log.items():
             kws1={'larva_groups': {gID: self.p.larva_groups[gID]}}
             if 'sample_id' in df.index.names :
                 sIDs=df.index.get_level_values('sample_id').unique()
@@ -150,18 +151,6 @@ class ExpRun(BaseRun):
                 dkws += [{'df': df, 'id': gID, **kws1}]
         ds = [aux.convert_output_to_dataset(**kws, **kws0, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
         return ds
-
-    # def convert_output_to_dataset(self,id,df,step_keys, end_keys,  **kwargs):
-    #     from larvaworld.lib.process.dataset import LarvaDataset
-    #     df.index.set_names(['AgentID', 'Step'], inplace=True)
-    #     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-    #     df.sort_index(level=['Step', 'AgentID'], inplace=True)
-    #
-    #     d = LarvaDataset(id=id, **kwargs)
-    #     d.set_data(step=df[step_keys], end=df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step'), food=None)
-    #     ls = aux.AttrDict({l.unique_id: l for l in self.agents if l.unique_id in d.agent_ids})
-    #     d.larva_dicts = aux.get_larva_dicts(ls)
-    #     return d
 
 
 
