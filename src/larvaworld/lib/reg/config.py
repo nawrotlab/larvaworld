@@ -1,4 +1,6 @@
 import os
+
+import numpy as np
 import param
 from larvaworld.lib import reg, aux, util, decorators
 
@@ -324,6 +326,17 @@ def load_config(dir) :
                 reg.vprint(f'Loaded existing conf {c.id}', 1)
                 return c
     return None
+
+def save_config(c,refID=None):
+    if refID is not None:
+        c.refID = refID
+        reg.Ref_paths(id=refID, dir=c.dir)
+
+    for k, v in c.items():
+        if isinstance(v, np.ndarray):
+            c[k] = v.tolist()
+    path = reg.datapath('conf', c.dir)
+    aux.save_dict(c,path)
 
 def retrieveRef(id):
     dir = Ref_paths(id)

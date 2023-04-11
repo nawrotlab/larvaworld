@@ -46,8 +46,6 @@ class _LarvaDataset:
         c=self.config
         if step is not None:
             s = step.sort_index(level=['Step', 'AgentID'])
-            # self.step_data = step.sort_index(level=['Step', 'AgentID'])
-
             self.Nticks = s.index.unique('Step').size
 
             c.t0 = int(s.index.unique('Step')[0])
@@ -75,7 +73,7 @@ class _LarvaDataset:
     def load_step(self, h5_ks=None):
         s = self.read('step')
 
-        stored_ps = []
+        # stored_ps = []
         if h5_ks is None :
             h5_ks=list(self.h5_kdic.keys())
         for h5_k in h5_ks:
@@ -84,7 +82,7 @@ class _LarvaDataset:
                 # self.load_h5_kdic[h5_k] = "a"
                 ps = [p for p in ss.columns.values if p not in s.columns.values]
                 if len(ps) > 0:
-                    stored_ps += ps
+                    # stored_ps += ps
                     s = s.join(ss[ps])
             # else:
             #     self.load_h5_kdic[h5_k] = "w"
@@ -129,15 +127,16 @@ class _LarvaDataset:
         df.to_hdf(path, key)
 
     def save_config(self, refID=None):
-        c=self.config
-        if refID is not None:
-            c.refID = refID
-            reg.Ref_paths(id=refID, dir=c.dir)
-
-        for k, v in c.items():
-            if isinstance(v, np.ndarray):
-                c[k] = v.tolist()
-        aux.save_dict(c,reg.datapath('conf', c.dir))
+        reg.save_config(self.config, refID=refID)
+        # c=self.config
+        # if refID is not None:
+        #     c.refID = refID
+        #     reg.Ref_paths(id=refID, dir=c.dir)
+        #
+        # for k, v in c.items():
+        #     if isinstance(v, np.ndarray):
+        #         c[k] = v.tolist()
+        # aux.save_dict(c,reg.datapath('conf', c.dir))
 
 
 
