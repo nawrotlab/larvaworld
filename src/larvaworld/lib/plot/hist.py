@@ -227,7 +227,7 @@ def plot_turn_amp(name=None,par_short='tur_t', ref_angle=None, subfolder='turn',
     xs = [d.get_par(xpar).dropna().values.flatten() for d in P.datasets]
 
     if mode == 'scatter':
-        P.build(1, 1, figsize=(10, 10))
+        P.build(1, 1)
         ax = P.axs[0]
         for x, y, l, c in zip(xs, ys, P.labels, P.colors):
             ax.scatter(x=x, y=y, marker='o', s=5.0, color=c, alpha=0.5)
