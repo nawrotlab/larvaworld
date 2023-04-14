@@ -7,8 +7,7 @@ from larvaworld.lib.process.spatial import get_disp_df, comp_dispersion
 
 @reg.funcs.graph('ethogram')
 def plot_ethogram(subfolder='timeplots', **kwargs):
-    P = plot.Plot(name='ethogram', subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'Ncols': 2, 'sharex': True}, **kwargs)
-    P.build()
+    P = plot.AutoPlot(name='ethogram', subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'Ncols': 2, 'sharex': True}, **kwargs)
     Cbouts = {
         # 'lin': {'stridechain': 'green',
         'lin': {'exec': 'green',
@@ -78,26 +77,25 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
         name = f'{probes[0]}_VS_{probes[1]}'
     N = len(probes)
     Cprobes = aux.N_colors(N)
-    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
-    Nds = P.Ndatasets
+    P = plot.Plot(name=name, subfolder=subfolder,build_kws={'sharex': True, 'w' : 30, 'h' : 15}, **kwargs)
     Nids = np.max([len(d.agent_ids) for d in P.datasets])
     Nticks = np.max([d.Nticks for d in P.datasets])
     dt = np.max([d.dt for d in P.datasets])
     x = np.linspace(0, (Nticks * dt) / 60, Nticks)
     if same_plot:
-        Nrows = Nds
-        sharey = False
+        Nrows = P.Ndatasets
         yMaxN = 8
     else:
-        Nrows = N * Nds
-        sharey = False
+        Nrows = N * P.Ndatasets
         yMaxN = 3
-    P.build(Nrows, Nids, figsize=(Nids * 30, Nrows * 15), sharex=True, sharey=sharey)
+    P.build_kws['Nrows']=Nrows
+    P.build_kws['Ncols']=Nids
+    P.build()
     for i, d in enumerate(P.datasets):
         dics = d.load_dicts('nengo')
         for j, dic in enumerate(dics):
             for k, (p, c) in enumerate(zip(probes, Cprobes)):
-                Nrow = i if same_plot else i * Nds + k
+                Nrow = i if same_plot else i * P.Ndatasets + k
                 idx = j + Nrow * Nids
                 y = np.array(dic[p])
                 dim = y.shape[1]

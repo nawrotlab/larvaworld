@@ -299,8 +299,7 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
 
 @reg.funcs.graph('stride Dbend')
 def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
-    P = plot.Plot(name='stride_bend_change', subfolder=subfolder, **kwargs)
-    P.build()
+    P = plot.AutoPlot(name='stride_bend_change', subfolder=subfolder, **kwargs)
     ax = P.axs[0]
 
     fits = {}
@@ -328,9 +327,8 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
 
 @reg.funcs.graph('stride Dor')
 def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
-    P = plot.Plot(name='stride_orient_change', subfolder=subfolder, **kwargs)
     shorts = ['str_fo', 'str_ro']
-    P.build(1, len(shorts))
+    P = plot.AutoPlot(name='stride_orient_change', subfolder=subfolder,build_kws={'Ncols': len(shorts)}, **kwargs)
     for i, sh in enumerate(shorts):
         p, sl, xlab = reg.getPar(sh, to_return=['d', 's', 'l'])
         bins, xlim = P.angrange(80, absolute, 200)

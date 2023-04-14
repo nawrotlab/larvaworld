@@ -312,13 +312,13 @@ def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwar
     return [w1, w2]
 
 
-def save_plot(fig, filepath, filename, verbose=1):
+def save_plot(fig, filepath, filename):
     fig.savefig(filepath, dpi=300, facecolor=None)
     try:
         plt.close(fig)
     except:
         pass
-    reg.vprint(f'Plot {filename} saved as {filepath}', verbose=verbose)
+    reg.vprint(f'Plot {filename} saved as {filepath}', 1)
 
 
 def plot_config(datasets, labels, save_to, subfolder=None):
@@ -351,7 +351,7 @@ def plot_config(datasets, labels, save_to, subfolder=None):
     return Ndatasets, cols, save_to, labels
 
 
-def process_plot(fig, save_to, filename, return_fig=False, show=False, verbose=1):
+def process_plot(fig, save_to, filename, return_fig=False, show=False):
     if show:
         # raise
         plt.show()
@@ -365,7 +365,7 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False, verbose=1
         if save_to is not None:
             os.makedirs(save_to, exist_ok=True)
             filepath = os.path.join(save_to, filename)
-            save_plot(fig, filepath, filename, verbose=verbose)
+            save_plot(fig, filepath, filename)
     return res
 
 

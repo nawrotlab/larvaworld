@@ -12,8 +12,7 @@ from larvaworld.lib import reg, aux, plot
 
 
 @reg.funcs.graph('module hists')
-def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, Nbins=None, show_median=True, fig=None, axs=None,
-                          **kwargs):
+def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, Nbins=None, show_median=True, **kwargs):
 
     if e is None and refID is not None:
         d = reg.loadRef(refID)
@@ -25,8 +24,7 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     var_mdict = reg.model.variable_mdict(mkey, mode=mode)
     N = len(list(var_mdict.keys()))
 
-    P = plot.BasePlot(name=f'{mkey}_endpoint_hists',build_kws={'Ncols':N,'Nrows':1, 'w':7, 'h':6,  'mode':'hist'}, **kwargs)
-    P.build(fig=fig, axs=axs)
+    P = plot.AutoBasePlot(name=f'{mkey}_endpoint_hists',build_kws={'Ncols':N,'Nrows':1, 'w':7, 'h':6,  'mode':'hist'}, **kwargs)
 
     for i, (k,p) in enumerate(var_mdict.items()):
         # p=d00.args[k]
@@ -199,6 +197,8 @@ def plot_turn_amp(name=None,par_short='tur_t', ref_angle=None, subfolder='turn',
     if name is None:
         nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
         name = f'{nn}_VS_{par_short}_{mode}'
+
+
     P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
     ypar, ylab, ylim = reg.getPar('tur_fou', to_return=['d', 'l', 'lim'])
 
@@ -297,8 +297,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
         name = f'endpoint_scatterplot'
     else:
         name = f'{keys[1]}_vs_{keys[0]}'
-    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
-    P.build(Nx, Ny, figsize=(10 * Ny, 10 * Nx))
+    P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Nrows': Nx,'Ncols': Ny, 'wh' : 10}, **kwargs)
     for i, (p0, p1) in enumerate(pairs):
         pars, labs = reg.getPar([p0, p1], to_return=['d', 'l'])
 
@@ -319,8 +318,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 def plot_turns(name=None,absolute=True, subfolder='turn', **kwargs):
     if name is None:
         name = 'turn_amplitude'
-    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
-    P.build()
+    P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     p, xlab = reg.getPar('tur_fou', to_return=['d', 'l'])
     bins, xlim = P.angrange(150, absolute, 30)
     P.plot_par(p, bins, i=0, absolute=absolute, alpha=1.0, histtype='step')

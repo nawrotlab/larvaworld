@@ -60,15 +60,14 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
     return P.get()
 
 @reg.funcs.graph('deb')
-def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSsitters=False, include_egg=True,
-              time_unit='hours', return_fig=False, sim_only=False, force_ymin=None, color_epoch_quality=True,
-              datasets=None, labels=None, show=False, label_epochs=True, label_lifestages=True, **kwargs):
+def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitters=False, include_egg=True,
+              time_unit='hours', sim_only=False, force_ymin=None, color_epoch_quality=True,
+              datasets=None, labels=None, label_epochs=True, label_lifestages=True, **kwargs):
     warnings.filterwarnings('ignore')
+    if name is None :
+        name=f'debs'
     if save_to is None:
         save_to = f'{reg.SIM_DIR}/deb_runs'
-    os.makedirs(save_to, exist_ok=True)
-    if save_as is None:
-        save_as = f'debs.{plot.suf}'
     if deb_dicts is None:
         deb_dicts = aux.flatten_list([d.load_dicts('deb') for d in datasets])
     Ndebs = len(deb_dicts)
@@ -178,8 +177,11 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
     labels = [labels0[i] for i in idx]
     ylabels = [ylabels0[i] for i in idx]
     Npars = len(labels)
-    fig, axs = plt.subplots(Npars, figsize=(20, 6 * Npars), sharex=True, sharey=sharey)
-    axs = axs.ravel() if Npars > 1 else [axs]
+
+    P = plot.AutoBasePlot(name=name,save_to=save_to, build_kws={'Nrows': Npars, 'Ncols': 1,'sharex': True,'sharey': sharey, 'w': 20, 'h': 6}, **kwargs)
+
+    # fig, axs = plt.subplots(Npars, figsize=(20, 6 * Npars), sharex=True, sharey=sharey)
+    # axs = axs.ravel() if Npars > 1 else [axs]
 
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for jj, (d, id, c) in enumerate(zip(deb_dicts, ids, cols)):
@@ -228,13 +230,13 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
         for j, (l, yl) in enumerate(zip(labels, ylabels)):
             if l == 'f_filt':
-                P = d['f']
+                ppp = d['f']
                 sos = signal.butter(N=1, Wn=d['fr'] / 1000, btype='lowpass', analog=False, fs=d['fr'], output='sos')
-                P = signal.sosfiltfilt(sos, P)
+                ppp = signal.sosfiltfilt(sos, ppp)
             else:
-                P = d[l]
-            ax = axs[j]
-            ax.plot(age, P, color=c, label=id, linewidth=2, alpha=1.0)
+                ppp = d[l]
+            ax = P.axs[j]
+            ax.plot(age, ppp, color=c, label=id, linewidth=2, alpha=1.0)
             ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
             ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
@@ -260,9 +262,9 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
             if not sim_only:
                 ax.set_xlim(xmin=0)
             if l == 'f' or mode == 'fs':
-                ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
+                ax.axhline(np.nanmean(ppp), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
             if mode == 'assimilation':
-                ax.axhline(np.nanmean(P), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
+                ax.axhline(np.nanmean(ppp), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
             if label_lifestages and not sim_only:
                 y0, y1 = ax.get_ylim()
                 x0, x1 = ax.get_xlim()
@@ -323,9 +325,7 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
 
     fontsize = 20
     y = -0.2
-    # texts = ['hatch', 'pupation', 'death']
     texts = ['egg', 'hatch', 'pupation', 'death']
-    # text_xs = [T0, T1, T2]
     text_xs = [0, T0, T1, T2]
     for text, x in zip(texts, text_xs):
         try:
@@ -341,27 +341,31 @@ def plot_debs(deb_dicts=None, save_to=None, save_as=None, mode='full', roversVSs
         ax.set_xlim([0, np.max(max_ages)])
         ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
     else:
-        # ax.set_xlim([0, np.max(max_ages)])
-        for ax in axs:
+        for ax in P.axs:
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
 
-    plot.dataset_legend(leg_ids, leg_cols, ax=axs[0], loc='upper left', fontsize=20, prop={'size': 15})
-    fig.subplots_adjust(top=0.95, bottom=0.15, left=0.15, right=0.93, hspace=0.15)
-    return plot.process_plot(fig, save_to, save_as, return_fig, show)
+    plot.dataset_legend(leg_ids, leg_cols, ax=P.axs[0], loc='upper left', fontsize=20, prop={'size': 15})
+
+    # P.data_leg(0, colors=[ii[0] for ii in cols], loc='upper left', fontsize=15)
+    P.adjust((0.15, 0.93), (0.15, 0.95), H=0.15)
+    return P.get()
 
 @reg.funcs.graph('EEBvsQuality')
-def plot_EEB_vs_food_quality(refIDs=None, dt=None, species_list=['rover', 'sitter', 'default'],
-                             save_to=None, return_fig=False, show=False, **kwargs):
+def plot_EEB_vs_food_quality(refIDs=None, dt=None,name=None, species_list=['rover', 'sitter', 'default'], **kwargs):
     if refIDs is None:
         raise ('No sample configurations provided')
     from larvaworld.lib.model.modules.intermitter import get_EEB_poly1d
     from larvaworld.lib.model.deb.deb import DEB
 
-    filename = f'EEB_vs_food_quality.{plot.suf}'
+    if name is None :
+        name=f'EEB_vs_food_quality'
+    # filename = f'EEB_vs_food_quality.{plot.suf}'
     qs = np.arange(0.01, 1, 0.01)
 
-    fig, axs = plt.subplots(3, len(refIDs), figsize=(10 * len(refIDs), 20))
-    axs = axs.ravel()
+    P = plot.AutoBasePlot(name=name, build_kws={'Nrows': 3, 'Ncols': len(refIDs), 'w': 10, 'h': 7}, **kwargs)
+
+    # fig, axs = plt.subplots(3, len(refIDs), figsize=(10 * len(refIDs), 20))
+    # axs = axs.ravel()
     cols = aux.N_colors(len(species_list))
 
     for i, refID in enumerate(refIDs):
@@ -379,21 +383,21 @@ def plot_EEB_vs_food_quality(refIDs=None, dt=None, species_list=['rover', 'sitte
                 ss.append(s)
                 EEBs.append(z(s))
 
-            axs[3 * i].scatter(qs, ss, **cc)
-            axs[3 * i + 1].scatter(qs, EEBs, **cc)
-            axs[3 * i + 2].scatter(ss, EEBs, **cc)
+            P.axs[3 * i].scatter(qs, ss, **cc)
+            P.axs[3 * i + 1].scatter(qs, EEBs, **cc)
+            P.axs[3 * i + 2].scatter(ss, EEBs, **cc)
 
-        axs[3 * i + 0].set_xlabel('food quality')
-        axs[3 * i + 1].set_xlabel('food quality')
-        axs[3 * i + 2].set_xlabel(r'estimated feed freq $Hz$')
-        axs[3 * i + 0].set_ylabel(r'estimated feed freq $Hz$')
-        axs[3 * i + 1].set_ylabel('EEB')
-        axs[3 * i + 2].set_ylabel('EEB')
-        axs[3 * i + 1].set_ylim([0, 1])
-        axs[3 * i + 2].set_ylim([0, 1])
-    for ax in axs:
+        P.axs[3 * i + 0].set_xlabel('food quality')
+        P.axs[3 * i + 1].set_xlabel('food quality')
+        P.axs[3 * i + 2].set_xlabel(r'estimated feed freq $Hz$')
+        P.axs[3 * i + 0].set_ylabel(r'estimated feed freq $Hz$')
+        P.axs[3 * i + 1].set_ylabel('EEB')
+        P.axs[3 * i + 2].set_ylabel('EEB')
+        P.axs[3 * i + 1].set_ylim([0, 1])
+        P.axs[3 * i + 2].set_ylim([0, 1])
+    for ax in P.axs:
         ax.legend()
-    return plot.process_plot(fig, save_to, filename, return_fig, show)
+    return P.get()
 
 
 

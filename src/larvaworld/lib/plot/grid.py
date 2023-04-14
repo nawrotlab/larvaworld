@@ -336,7 +336,7 @@ def result_summary(datasets, target, **kwargs):
     return P.get()
 
 @reg.funcs.graph('sample track')
-def model_sample_track(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, fig=None, axs=None, **kwargs):
+def model_sample_track(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_amp=20, d=None, **kwargs):
     from larvaworld.lib.plot.traj import track_annotated
     if d is None:
         d = util.sim_model(mID=mID, m=m, duration=dur, dt=dt, Nids=Nids, enrichment=False)
@@ -352,8 +352,7 @@ def model_sample_track(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_
     pars, labs = reg.getPar(['sv', 'c_CT', 'A_T', 'fov', 'b'], to_return=['d', 'symbol'])
 
     Nrows = len(pars)
-    P = plot.Plot(name=f'{mID}_test',build_kws={'Ncols':1,'Nrows':Nrows, 'w':25, 'h':5,  'mode':'box'}, **kws0, **kwargs)
-    P.build(axs=axs, fig=fig)
+    P = plot.AutoPlot(name=f'{mID}_test',build_kws={'Ncols':1,'Nrows':Nrows, 'w':25, 'h':5,  'mode':'box'}, **kws0, **kwargs)
     kws1 = aux.AttrDict({
         'agent_idx': 0,
         'slice': (0, dur * 60),

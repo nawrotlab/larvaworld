@@ -257,8 +257,7 @@ def plot_stridesNpauses(name=None, stridechain_duration=False, time_unit='sec',
     P.conf_ax(0, xlab=chain_xlabel, ylab=ylabel, xlim=[chn_t0, chn_t1], title=r'$\bf{stridechains}$')
     P.conf_ax(1, xlab=pause_xlabel, xlim=[pau_t0, pau_t1], ylim=[10 ** -3.5, 10 ** 0], title=r'$\bf{pauses}$')
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
-    fit_df = pd.DataFrame.from_dict(fits, orient="index")
-    fit_df.to_csv(P.fit_filename, index=True, header=True)
+    P.fit_df = pd.DataFrame.from_dict(fits, orient="index")
     return P.get()
 
 

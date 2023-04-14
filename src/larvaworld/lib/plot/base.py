@@ -24,17 +24,16 @@ plt.rcParams.update(plt_conf)
 
 
 class BasePlot:
-    def __init__(self, name, save_to=None, save_as=None, return_fig=False, show=False, suf='pdf', text_xy0=(0.05, 0.98),verbose=1,
-                 subplot_kw={}, build_kws={},
-                 **kwargs):
+    def __init__(self, name, save_to=None, save_as=None, return_fig=False, show=False, suf='pdf', pref=None,
+                 subplot_kw={}, build_kws={}, **kwargs):
+        if pref is not None:
+            name = f'{pref}_{name}'
         self.filename = f'{name}.{suf}' if save_as is None else f'{save_as}.{suf}'
         self.return_fig = return_fig
-        self.verbose = verbose
         self.show = show
         self.fit_df = None
         self.save_to = save_to
         self.cur_idx = 0
-        self.text_x0, self.text_y0 = text_xy0
         self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
         self.letter_dict = {}
         self.x0s, self.y0s = [], []
@@ -50,6 +49,17 @@ class BasePlot:
 
 
     def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15):
+        '''
+        Method that defines the figure and axes on which to draw.
+        These can be provided externally as arguments to create a composite figure. Otherwise they are created independently.
+        Args:
+            fig: The figure of the plot (optional)
+            axs: The axes of the figure (optional)
+            dim3: Whether the figure will be 3-dimensional. Default : False
+            azim: The azimuth of a 3D figure. Default : 115
+            elev: The elevation of a 3D figure. Default : 15
+
+        '''
         if fig is not None and axs is not None:
             self.fig = fig
             self.axs = axs if type(axs) == list else [axs]
@@ -71,8 +81,6 @@ class BasePlot:
 
     @property
     def Ncols(self):
-        # if self.Naxs==1 :
-        #     return 1
         if 'ncols' in self.fig_kws.keys() :
             return self.fig_kws['ncols']
         else :
@@ -80,8 +88,6 @@ class BasePlot:
 
     @property
     def Nrows(self):
-        # if self.Naxs == 1:
-        #     return 1
         if 'nrows' in self.fig_kws.keys():
             return self.fig_kws['nrows']
         else:
@@ -182,6 +188,16 @@ class BasePlot:
             ax.legend(**kws)
 
 
+    def conf_ax_3d(self, vars, target, lims=None, title=None, maxN=3, labelpad=15, tickpad=5, idx=0):
+        if lims is None:
+            xlim, ylim, zlim = None, None, None
+        else:
+            xlim, ylim, zlim = lims
+        self.conf_ax(idx=idx, xlab=vars[0], ylab=vars[1], zlab=target, xlim=xlim, ylim=ylim, zlim=zlim,
+                     xtickpad=tickpad, ytickpad=tickpad, ztickpad=tickpad,
+                     xlabelpad=labelpad, ylabelpad=labelpad, zlabelpad=labelpad,
+                     xMaxN=maxN, yMaxN=maxN, zMaxN=maxN, title=title)
+
     def adjust(self, LR=None, BT=None, W=None, H=None):
         kws = {}
         if LR is not None:
@@ -202,7 +218,7 @@ class BasePlot:
     def get(self):
         if self.fit_df is not None:
             self.fit_df.to_csv(self.fit_filename, index=True, header=True)
-        return plot.process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show, verbose=self.verbose)
+        return plot.process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
 
     def add_letter(self, ax, letter=True, x0=False, y0=False):
         if letter:
@@ -214,13 +230,15 @@ class BasePlot:
                 self.y0s.append(ax)
 
     def annotate(self, dx=-0.05, dy=0.005, full_dict=False):
+        text_x0, text_y0 = 0.05, 0.98
+
         if full_dict:
 
             for i, ax in enumerate(self.axs):
                 self.letter_dict[ax] = self.letters[i]
         for i, (ax, text) in enumerate(self.letter_dict.items()):
-            X = self.text_x0 if ax in self.x0s else ax.get_position().x0 + dx
-            Y = self.text_y0 if ax in self.y0s else ax.get_position().y1 + dy
+            X = text_x0 if ax in self.x0s else ax.get_position().x0 + dx
+            Y = text_y0 if ax in self.y0s else ax.get_position().y1 + dy
             self.fig.text(X, Y, text, size=30, weight='bold')
 
     def conf_fig(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
@@ -252,28 +270,11 @@ class BasePlot:
             self.fig.align_ylabels(ax_list)
 
 
-class ParPlot(BasePlot):
-    def __init__(self, name, pref=None, **kwargs):
-        if pref is not None:
-            name = f'{pref}_{name}'
-        super().__init__(name, **kwargs)
-
-    def conf_ax_3d(self, vars, target, lims=None, title=None, maxN=3, labelpad=15, tickpad=5, idx=0):
-        if lims is None:
-            xlim, ylim, zlim = None, None, None
-        else:
-            xlim, ylim, zlim = lims
-        self.conf_ax(idx=idx, xlab=vars[0], ylab=vars[1], zlab=target, xlim=xlim, ylim=ylim, zlim=zlim,
-                     xtickpad=tickpad, ytickpad=tickpad, ztickpad=tickpad,
-                     xlabelpad=labelpad, ylabelpad=labelpad, zlabelpad=labelpad,
-                     xMaxN=maxN, yMaxN=maxN, zMaxN=maxN, title=title)
-
-
 class AutoBasePlot(BasePlot):
-    def __init__(self, fig=None, axs=None, **kwargs):
+    def __init__(self, fig=None, axs=None, dim3=False, azim=115, elev=15, **kwargs):
         super().__init__(**kwargs)
 
-        self.build(fig=fig, axs=axs)
+        self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
 class Plot(BasePlot):
     def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, add_samples=False,
@@ -291,7 +292,6 @@ class Plot(BasePlot):
 
         super().__init__(name, save_to=save_to, **kwargs)
         self.datasets = datasets
-        # print([d.id for d in self.datasets], self.labels)
         ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
         self.fit_filename = os.path.join(self.save_to, ff) if ff is not None and self.save_to is not None else None
         self.fit_ind = None
@@ -322,8 +322,6 @@ class Plot(BasePlot):
         else :
             t=-1
         self.fit_df.loc[ind, [p,f'S_{p}',f'P_{p}']]=[t,st,np.round(pv, 11)]
-        # self.fit_df[f'S_{p}'].loc[ind] = st
-        # self.fit_df[f'P_{p}'].loc[ind] = np.round(pv, 11)
 
     def plot_half_circles(self, p, i):
         if self.fit_df is not None:
@@ -482,20 +480,23 @@ class AutoPlot(Plot):
         self.build(fig=fig, axs=axs)
 
 
-def load_ks(ks, ds,ls,cols, d0):
-    dic = {}
-    for k in ks:
-        dic[k] = {}
-        for d,l,col in zip(ds,ls,cols):
-            vs = d0.get(k=k, d=d, compute=True)
-            dic[k][l] = aux.AttrDict({'df':vs, 'col':col})
-    return aux.AttrDict(dic)
+# def load_ks(ks, ds,ls,cols, d0):
+#     dic = {}
+#     for k in ks:
+#         dic[k] = {}
+#         for d,l,col in zip(ds,ls,cols):
+#             dic[k][l] = aux.AttrDict({'df':d0.get(k=k, d=d, compute=True), 'col':col})
+#     return aux.AttrDict(dic)
+#
+# def load_ks(ks, ds,ls,cols, d0):
+#     return aux.AttrDict({k : {l: {'df': d0.get(k=k, d=d, compute=True), 'col': col} for d, l, col in zip(ds, ls, cols)} for k in ks})
 
 
 class AutoLoadPlot(AutoPlot) :
     def __init__(self, ks, **kwargs):
         super().__init__(**kwargs)
-        self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, reg.par)
+        self.kdict= aux.AttrDict({k : {l: {'df': reg.par.get(k=k, d=d, compute=True), 'col': col} for d, l, col in zip(self.datasets,self.labels,self.colors)} for k in ks})
+        # self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, reg.par)
         self.pdict=aux.AttrDict({k:reg.par.kdict[k] for k in ks})
         self.kpdict=aux.AttrDict({k:[self.kdict[k], self.pdict[k]] for k in ks})
         self.ks=ks
@@ -529,10 +530,6 @@ class GridPlot(BasePlot):
         if N == 1:
             axs = self.fig.add_subplot(self.grid[h0:h0 + h, w0:w0 + w])
             self.add_letter(axs, letter, x0=x0, y0=y0)
-            # if letter:
-            #     self.letter_dict[axs]=self.letters[self.cur_idx]
-            #     self.cur_idx += 1
-            # return axs
         else:
             if share_h and not share_w:
                 ww = int((w - (N - 1) * dw) / N)
@@ -570,7 +567,6 @@ class GridPlot(BasePlot):
             else:
                 self.add_letter(axs[0], letter, x0=x0, y0=y0)
             # ax_letter = axs[0]
-        # self.add_letter(ax_letter, letter, x0=x0, y0=y0)
         return axs
 
     def plot(self, func, kws, axs=None, **kwargs):

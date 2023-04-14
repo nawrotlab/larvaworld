@@ -382,21 +382,16 @@ def annotated_turnplot_data(**kwargs):
 def plot_marked_strides(agent_idx=0, agent_id=None, slice=[20, 40], subfolder='individuals', **kwargs):
     temp = f'marked_strides_{slice[0]}-{slice[1]}' if slice is not None else f'marked_strides'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
-    Nds = P.Ndatasets
-
+    figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
     chunks = ['stride', 'pause']
     chunk_cols = ['lightblue', 'grey']
     p, ylab = reg.getPar('sv', to_return=['d', 'l'])
-    figx = 15 * 6 * 3 if slice is None else int((slice[1] - slice[0]) / 3)
-    figy = 5
-
-    P.build(Nds, 1, figsize=(figx, figy * Nds), sharey=True, sharex=True)
+    P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'sharex': True,'sharey': True, 'w' : figx, 'h' : 5}, **kwargs)
     handles = [patches.Patch(color=col, label=n) for n, col in zip(['stride', 'pause'], chunk_cols)]
 
     for ii, (d, l) in enumerate(zip(P.datasets, P.labels)):
         ax = P.axs[ii]
-        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == Nds - 1 else None, ylab=ylab, ylim=[0, 1.0], xlim=slice,
+        P.conf_ax(ii, xlab=r'time $(sec)$' if ii == P.Ndatasets - 1 else None, ylab=ylab, ylim=[0, 1.0], xlim=slice,
                   leg_loc='upper right', leg_handles=handles)
         temp_id = d.agent_ids[agent_idx] if agent_id is None else agent_id
         s = copy.deepcopy(d.read('step').xs(temp_id, level='AgentID', drop_level=True))
@@ -424,15 +419,11 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
     else:
         suf = mode[0]
     t0, t1 = slice
+    figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
     temp = f'sample_marked_{suf}_{t0}-{t1}'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
-    Nds = P.Ndatasets
+    P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Ncols':'Ndatasets','Nrows':Nrows, 'w':figx, 'h':5,  'mode':'hist'},  **kwargs)
 
-    figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
-    figy = 5
-
-    P.build(Nrows, Nds, figsize=(figx * Nds, figy * Nrows), sharey=False, sharex=True)
     for ii, (l, d) in enumerate(P.data_dict.items()):
         for jj, key in enumerate(mode):
             kk = ii + Nrows * jj

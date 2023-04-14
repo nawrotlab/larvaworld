@@ -7,10 +7,9 @@ from scipy.stats import multivariate_normal
 from larvaworld.lib import reg, aux, plot
 
 
-def plot_surface(x, y, z, vars, target, z0=None, ax=None, fig=None, title=None, lims=None, azim=115, elev=15, **kwargs):
-    P = plot.ParPlot(name='3d_surface', **kwargs)
-    P.build(fig=fig, axs=ax, dim3=True, azim=azim, elev=elev)
-    P.conf_ax_3d(vars, target, lims=lims, title=title)
+def plot_surface(x, y, z, vars, target, z0=None, title=None, lims=None, azim=115, elev=15, **kwargs):
+    P = plot.AutoBasePlot(name='3d_surface', dim3=True, azim=azim, elev=elev, **kwargs)
+    P.conf_ax_3d(vars=vars, target=target, lims=lims, title=title)
     P.axs[0].plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=True)
     if z0 is not None:
         P.axs[0].plot_surface(x, y, np.ones(x.shape) * z0, alpha=0.5)
@@ -67,7 +66,7 @@ def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims
             plt.show()
     elif mode == '3D':
         return plot_surface(x=Xmesh * 1000 / s, y=Ymesh * 1000 / s, z=grid, vars=[r'X $(mm)$', r'Y $(mm)$'],
-                            target=r'concentration $(μM)$', save_as=f'odorscape', show=show, fig=fig, ax=axs, azim=0,
+                            target=r'concentration $(μM)$', save_as=f'odorscape', show=show, fig=fig, axs=axs, azim=0,
                             elev=0)
 
 
@@ -105,21 +104,19 @@ def plot_3pars(df, vars, target, z0=None, **kwargs):
     return figs
 
 
-def plot_3d(df, vars, target, name=None,lims=None, title=None, surface=True, line=False, ax=None, fig=None, dfID=None,
+def plot_3d(df, vars, target, name=None, lims=None, title=None, surface=True, line=False, dfID=None,
             color='black', **kwargs):
     if name is None :
         name = '3d_plot'
     from statsmodels import api as sm
-    P = plot.ParPlot(name=name, **kwargs)
-    P.build(fig=fig, axs=ax, dim3=True)
-    P.conf_ax_3d(vars, target, lims=lims, title=title)
+    P = plot.AutoBasePlot(name=name, dim3=True, **kwargs)
+    P.conf_ax_3d(vars=vars, target=target, lims=lims, title=title)
 
     l0, l1 = vars
     X = df[vars]
     y = df[target].values
 
     X = sm.add_constant(X)
-    # print(X[l0], X[l1], y)
     # plot hyperplane
     if surface:
         est = sm.OLS(y, X).fit()
@@ -147,7 +144,7 @@ def plot_3d_multi(dfs, dfIDs, df_colors=None, show=True, **kwargs):
     fig = plt.figure(figsize=(18, 12))
     ax = Axes3D(fig, azim=115, elev=15)
     for df, dfID, dfC in zip(dfs, dfIDs, df_colors):
-        plot_3d(df, dfID=dfID, color=dfC, ax=ax, fig=fig, show=False, **kwargs)
+        plot_3d(df, dfID=dfID, color=dfC, axs=ax, fig=fig, show=False, **kwargs)
     if show:
         plt.show()
 
@@ -157,8 +154,7 @@ def plot_heatmap(z, heat_kws={}, ax_kws={}, cbar_kws={}, **kwargs):
     base_heat_kws.update(heat_kws)
     base_cbar_kws = {"orientation": "vertical"}
     base_cbar_kws.update(cbar_kws)
-    P = plot.ParPlot(name='heatmap', **kwargs)
-    P.build()
+    P = plot.AutoBasePlot(name='heatmap', **kwargs)
     sns.heatmap(z, ax=P.axs[0], **base_heat_kws, cbar_kws=base_cbar_kws)
     cax = plt.gcf().axes[-1]
     cax.tick_params(length=0)
@@ -201,12 +197,11 @@ def plot_heatmap_PI(z=None, csv_filepath='PIs.csv', save_as='PI_heatmap.pdf', **
 
 
 def plot_2d(df, labels, **kwargs):
-    P = plot.ParPlot(name='2d_plot', **kwargs)
+    P = plot.AutoBasePlot(name='2d_plot', **kwargs)
     par = labels[0]
     res = labels[1]
     p = df[par].values
     r = df[res].values
-    P.build()
     P.axs[0].scatter(p, r)
     P.conf_ax(xlab=par, ylab=res)
     return P.get()
@@ -215,8 +210,7 @@ def plot_2d(df, labels, **kwargs):
 def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
     ypar, ylab, ylim = reg.getPar(shorts[1], to_return=['d', 'l', 'lim'])
     xpar, xlab, xlim = reg.getPar(shorts[0], to_return=['d', 'l', 'lim'])
-    P = plot.Plot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
-    P.build()
+    P = plot.AutoPlot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
     ax = P.axs[0]
     if P.Ndatasets == 1 and larva_legend:
         d = P.datasets[0]
