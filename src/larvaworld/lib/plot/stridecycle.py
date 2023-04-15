@@ -137,9 +137,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
                   xlab='$\phi_{stride}$', ylab=reg.par.kdict[sh].symunit, xvis=True if ii == Nsh - 1 else False)
     P.axs[0].legend(loc='upper left', fontsize=15)
-    print(title)
-    print(title)
-    print(title)
+
     P.conf_fig(title=title, title_kws={'w': 'bold', 's': 20}, align=True,
                adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})
     return P.get()
@@ -188,10 +186,9 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
         plt.show()
 
 @reg.funcs.graph('stride cycle multi')
-def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
+def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
                             axx=None, **kwargs):
-    if name is None:
-        name = 'stride cycle multi'
+
     P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
                  **kwargs)
 
@@ -298,8 +295,8 @@ def stride_cycle_all_points(name=None,  idx=0, Nbins=64, short='fov',subfolder='
     return P.get()
 
 @reg.funcs.graph('stride Dbend')
-def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
-    P = plot.AutoPlot(name='stride_bend_change', subfolder=subfolder, **kwargs)
+def plot_stride_Dbend(name='stride_bend_change',show_text=False, subfolder='stride', **kwargs):
+    P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     ax = P.axs[0]
 
     fits = {}
@@ -326,14 +323,11 @@ def plot_stride_Dbend(show_text=False, subfolder='stride', **kwargs):
     return P.get()
 
 @reg.funcs.graph('stride Dor')
-def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
-    shorts = ['str_fo', 'str_ro']
-    P = plot.AutoPlot(name='stride_orient_change', subfolder=subfolder,build_kws={'Ncols': len(shorts)}, **kwargs)
-    for i, sh in enumerate(shorts):
-        p, sl, xlab = reg.getPar(sh, to_return=['d', 's', 'l'])
-        bins, xlim = P.angrange(80, absolute, 200)
-        P.plot_par(par=p, bins=bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
-        P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, yMaxN=4, leg_loc='upper left')
+def plot_stride_Dorient(name='stride_orient_change',absolute=True, subfolder='stride',Nbins=200, **kwargs):
+    ks = ['str_fo', 'str_ro']
+    Nks = len(ks)
+    P = plot.AutoLoadPlot(ks=ks,ranges=[80,80],absolute=absolute, name=name, subfolder=subfolder,build_kws={'Ncols': Nks}, **kwargs)
+    P.plot_hist(alpha=0.5,nbins=Nbins)
     P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()
 

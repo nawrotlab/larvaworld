@@ -471,19 +471,22 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0, 1.6) if cumy else None, fontsize=10)
     return fig
 
-def prob_hist(vs,colors, labels,ax,type='plt.hist',bins='broad',nbins=None, sns_kws={},plot_fit=False, **kwargs) :
-    if bins == 'broad' and nbins is not None:
-        bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
+def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},plot_fit=False, **kwargs) :
+    # if bins is None:
+    #     bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
     for v, c, l in zip(vs, colors, labels):
+        ax_kws={'label':l, 'color':c}
         if type == 'sns.hist':
-            sns.histplot(v, color=c, bins=bins, ax=ax, label=l, **sns_kws, **kwargs)
+            sns_kws0 = {'kde': kde, 'stat': "probability", 'element': "step", 'fill': True, 'multiple': "layer",'shrink': 1}
+            sns_kws0.update(sns_kws)
+            sns.histplot(v,  bins=bins, ax=ax, **ax_kws, **sns_kws0, **kwargs)
         elif type == 'plt.hist':
-            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
+            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), **ax_kws, **kwargs)
             if plot_fit:
                 x = x[:-1] + (x[1] - x[0]) / 2
                 y_smooth = np.polyfit(x, y, 5)
                 poly_y = np.poly1d(y_smooth)(x)
-                ax.plot(x, poly_y, color=c, label=l, linewidth=3)
+                ax.plot(x, poly_y, **ax_kws, linewidth=3)
 
 
 def get_figsize(Ncols, Nrows, wh=None, w=8, h=8):
@@ -586,3 +589,18 @@ def define_ks(ks=None, mode='basic'):
         else:
             raise ValueError('Provide parameter shortcuts or define a mode')
     return ks
+
+def get_vs(datasets, par, key='step',absolute=False, rad2deg=False):
+    vs = []
+    for d in datasets:
+        v = d.get_par(par, key=key)
+        if v is not None:
+            v = v.dropna().values
+        else:
+            continue
+        if absolute:
+            v = np.abs(v)
+        if rad2deg:
+            v = np.rad2deg(v)
+        vs.append(v)
+    return vs

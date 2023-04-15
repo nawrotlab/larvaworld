@@ -55,7 +55,7 @@ def intake_barplot(**kwargs):
 def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
-    P = plot.AutoPlot(name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks, name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15
@@ -80,9 +80,9 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
     err_kwargs = {'zorder': 20, 'fmt': 'none', 'linewidth': 4, 'ecolor': 'k', 'barsabove': True, 'capsize': 10}
 
 
-    for ii, sh in enumerate(ks):
+    for ii, k in enumerate(P.ks):
         ax = P.axs[ii]
-        p, u = reg.getPar(sh, to_return=['d', 'l'])
+        p, u = reg.getPar(k, to_return=['d', 'l'])
         vs = [d.get_par(key='end', par=p) for d in P.datasets]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]

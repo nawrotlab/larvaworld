@@ -7,10 +7,10 @@ from larvaworld.lib import reg, aux, plot
 
 
 @reg.funcs.graph('fft')
-def plot_fft(s, c, palette=None, axx=None, **kwargs):
+def plot_fft(s, c, name=f'fft_powerspectrum',palette=None, axx=None, **kwargs):
     if palette is None:
         palette = {'v': 'red', 'fov': 'blue'}
-    P = plot.AutoBasePlot(name=f'fft_powerspectrum',build_kws={'w': 15, 'h': 12}, **kwargs)
+    P = plot.AutoBasePlot(name=name,build_kws={'w': 15, 'h': 12}, **kwargs)
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])
     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
@@ -42,8 +42,8 @@ def plot_fft(s, c, palette=None, axx=None, **kwargs):
     return P.get()
 
 @reg.funcs.graph('fft multi')
-def plot_fft_multi(axx=None, dataset_colors=False, **kwargs):
-    P = plot.AutoPlot(name=f'fft_powerspectrum', build_kws={'w': 15, 'h': 12},**kwargs)
+def plot_fft_multi(name=f'fft_powerspectrum',axx=None, dataset_colors=False, **kwargs):
+    P = plot.AutoPlot(name=name, build_kws={'w': 15, 'h': 12},**kwargs)
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.3, 0.25])
 

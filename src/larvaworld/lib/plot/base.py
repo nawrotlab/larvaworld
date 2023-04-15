@@ -316,10 +316,11 @@ class Plot(BasePlot):
     def comp_pvalues(self, values, p):
         if self.fit_ind is not None:
             for ind, (v1, v2) in zip(self.fit_ind, itertools.combinations(values, 2)):
-                self.comp_pvalue(ind, v1, v2, p)
+                self.comp_pvalue(ind, list(v1), list(v2), p)
 
     def comp_pvalue(self, ind, v1, v2, p):
         from scipy.stats import ttest_ind
+
         st, pv = ttest_ind(v1, v2, equal_var=False)
         if not pv <= 0.01:
             t = 0
@@ -439,56 +440,38 @@ class Plot(BasePlot):
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
-    def plot_par(self, k=None, par=None, vs=None, bins='broad', i=0, labels=None, absolute=False, nbins=None,
-                 type='plt.hist', sns_kws={},plot_fit=False,rad2deg=False,
-                 pvalues=False, half_circles=False, key='step', **kwargs):
 
-        if par is None and k is not None :
-            par = reg.getPar(k)
-        if labels is None:
-            labels = self.labels
-        if vs is None:
-            vs = []
-            for d in self.datasets:
-                if key == 'step':
-                    try:
-                        v = d.step_data[par]
-                    except:
-                        v = d.get_par(par, key=key)
-                elif key == 'end':
-                    try:
-                        v = d.endpoint_data[par]
-                    except:
-                        v = d.get_par(par, key=key)
-                if v is not None:
-                    v = v.dropna().values
-                else:
-                    continue
-                if absolute:
-                    v = np.abs(v)
-                if rad2deg:
-                    v = np.rad2deg(v)
-                vs.append(v)
-
-        plot.prob_hist(vs,self.colors, labels,ax=self.axs[i],type=type,bins=bins,nbins=nbins, sns_kws=sns_kws,plot_fit=plot_fit, **kwargs)
-
-        # if bins == 'broad' and nbins is not None:
-        #     bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
-        # for v, c, l in zip(vs, self.colors, labels):
-        #     if type == 'sns.hist':
-        #         sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **sns_kws, **kwargs)
-        #     elif type == 'plt.hist':
-        #         y, x, patches = self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
-        #         if plot_fit:
-        #             x = x[:-1] + (x[1] - x[0]) / 2
-        #             y_smooth = np.polyfit(x, y, 5)
-        #             poly_y = np.poly1d(y_smooth)(x)
-        #             self.axs[i].plot(x, poly_y, color=c, label=l, linewidth=3)
-        if pvalues:
-            self.comp_pvalues(vs, par)
-        if half_circles:
-            self.plot_half_circles(par, i)
-        return vs
+    # def plot_par(self, k=None, par=None, vs=None, i=0, labels=None,
+    #              absolute=False, rad2deg=False,key='step',
+    #              pvalues=False, half_circles=False,  **kwargs):
+    #
+    #     if par is None and k is not None :
+    #         par = reg.getPar(k)
+    #     if labels is None:
+    #         labels = self.labels
+    #     if vs is None:
+    #         vs=plot.get_vs(self.datasets, par, key=key,absolute=absolute, rad2deg=rad2deg)
+    #
+    #
+    #     plot.prob_hist(vs,self.colors, labels,ax=self.axs[i],  **kwargs)
+    #
+    #     # if bins == 'broad' and nbins is not None:
+    #     #     bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
+    #     # for v, c, l in zip(vs, self.colors, labels):
+    #     #     if type == 'sns.hist':
+    #     #         sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **sns_kws, **kwargs)
+    #     #     elif type == 'plt.hist':
+    #     #         y, x, patches = self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
+    #     #         if plot_fit:
+    #     #             x = x[:-1] + (x[1] - x[0]) / 2
+    #     #             y_smooth = np.polyfit(x, y, 5)
+    #     #             poly_y = np.poly1d(y_smooth)(x)
+    #     #             self.axs[i].plot(x, poly_y, color=c, label=l, linewidth=3)
+    #     if pvalues:
+    #         self.comp_pvalues(vs, par)
+    #     if half_circles:
+    #         self.plot_half_circles(par, i)
+    #     return vs
 
 
 
@@ -512,10 +495,12 @@ class AutoPlot(Plot):
 
 
 class AutoLoadPlot(AutoPlot) :
-    def __init__(self, ks, **kwargs):
+    def __init__(self, ks,key='step',ranges=None,absolute=False, rad2deg=False, **kwargs):
         super().__init__(**kwargs)
 
 
+        self.ranges = ranges
+        self.absolute = absolute
         self.vdict = aux.AttrDict()
         self.kdict = aux.AttrDict()
         self.pdict = aux.AttrDict()
@@ -524,20 +509,51 @@ class AutoLoadPlot(AutoPlot) :
         self.pars=[]
         for k in ks :
             try :
-                self.kdict[k] = aux.AttrDict({l: {'df': reg.par.get(k=k, d=d, compute=True), 'col': col} for l, d, col in self.data_palette})
-                self.vdict[k] = [dic.df.values.tolist() for l,dic in self.kdict[k].items()]
-                self.pdict[k] = reg.par.kdict[k]
-                self.kpdict[k] = [self.kdict[k], self.pdict[k]]
+                p = reg.par.kdict[k]
+                par=p.d
+                vs = plot.get_vs(self.datasets, par, key=key, absolute=absolute, rad2deg=rad2deg)
+                # print(k, len(vs))
+                # print(vs)
+                assert len(vs)==self.Ndatasets
+                self.kdict[k] = aux.AttrDict({l: {'df': vs[i], 'col': col} for i, (l, d, col) in enumerate(self.data_palette)})
+                # self.kdict[k] = aux.AttrDict({l: {'df': reg.par.get(k=k, d=d, compute=True), 'col': col} for l, d, col in self.data_palette})
+
+
+                self.kpdict[k] = [self.kdict[k], p]
+                self.vdict[k] = vs
+                self.pdict[k] = p
                 self.ks.append(k)
-                self.pars.append(self.pdict[k].d)
+                self.pars.append(par)
+
             except :
                 reg.vprint(f'Failed to retrieve key {k}', 1)
                 pass
         self.Nks=len(self.ks)
 
 
-
-
+    def plot_hist(self,pvalues=False, half_circles=False, use_title=False,par_legend=False,
+                  nbins=40,alpha=0.5,ylim=[0, 0.25],xlab=None,  **kwargs):
+        loc = 'upper left' if half_circles else 'upper right'
+        self.init_fits(self.pars)
+        for i, k in enumerate(self.ks):
+            p = self.pdict[k]
+            par=p.d
+            vs = self.vdict[k]
+            if self.ranges :
+                bins, xlim = self.angrange(self.ranges[i], self.absolute, nbins)
+            else :
+                bins= np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
+                xlim=p.lim
+            plot.prob_hist(vs=vs, colors=self.colors, labels=self.labels, ax=self.axs[i], bins=bins, alpha=alpha, **kwargs)
+            self.conf_ax(i, ylab='probability', yvis=True if i % self.Ncols == 0 else False,
+                         xlab=p.label if  xlab is None else xlab, xlim=xlim,ylim=ylim,
+                      xMaxN=4, yMaxN=4, xMath=True, title=p.disp if use_title else None,
+                         leg_loc=loc if par_legend else None)
+            if pvalues:
+                self.comp_pvalues(vs, par)
+            if half_circles:
+                self.plot_half_circles(par, i)
+        self.data_leg(0, loc=loc)
 
 class GridPlot(BasePlot):
     def __init__(self, name, width, height, scale=(1, 1), **kwargs):

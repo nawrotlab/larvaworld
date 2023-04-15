@@ -196,7 +196,9 @@ class LarvaDataset:
 
 
 
-    def get_par(self, par, key='step'):
+    def get_par(self, par=None, k=None, key='step'):
+        if par is None and k is not None:
+            par=reg.getPar(k)
 
         if key=='distro':
             try:
@@ -220,7 +222,7 @@ class LarvaDataset:
         if par in df.columns :
             return df[par]
         else :
-            return None
+            return reg.par.get(k=k, d=self, compute=True)
 
     def delete(self):
         shutil.rmtree(self.dir)

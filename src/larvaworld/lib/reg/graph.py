@@ -68,12 +68,12 @@ class GraphRegistry:
 
     def run(self, ID, **kwargs):
         assert self.exists(ID)
-        # return self.dict[ID](**kwargs)
-        try:
-            return self.dict[ID](**kwargs)
-        except :
-            reg.vprint(f'Failed to run graph {ID}',2)
-            return None
+        return self.dict[ID](**kwargs)
+        # try:
+        #     return self.dict[ID](**kwargs)
+        # except :
+        #     reg.vprint(f'Failed to run graph {ID}',2)
+        #     return None
 
     def run_group(self, gID, **kwargs):
         assert self.group_exists(gID)
