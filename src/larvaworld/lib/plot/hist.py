@@ -242,40 +242,52 @@ def plot_turn_amp(name=None,par_short='tur_t', ref_angle=None, subfolder='turn',
 
 @reg.funcs.graph('angular/epoch')
 def plot_bout_ang_pars(name=None,absolute=True, include_rear=True, subfolder='turn', **kwargs):
-    shorts = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
-    Nps=len(shorts)
+    ks = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
+    Nps=len(ks)
     if name is None:
         name = 'bout_ang_pars'
     P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N':Nps,'Nrows':2, 'wh':7, 'mode':'hist'}, **kwargs)
-
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
-
-    pars, sim_ls, xlabels, disps = reg.getPar(shorts, to_return=['d', 's', 'l', 'd'])
-    # Ncols = int(len(pars) / 2)
-    chunks = ['stride', 'pause']
+    # pars, sim_ls, xlabels, disps = reg.getPar(ks, to_return=['d', 's', 'l', 'd'])
+    chunks = ['run', 'pause']
     chunk_cols = ['green', 'purple']
-    # P = AutoPlot(name='bout_ang_pars', subfolder=subfolder, Nrows=2, Ncols=Ncols, figsize=(Ncols * 7, 14), sharey=True,
-    #              **kwargs)
-    p_labs = [[sl] * P.Ndatasets for sl in sim_ls]
+    # p_labs = [[sl] * P.Ndatasets for sl in sim_ls]
 
-    P.init_fits(pars, multiindex=False)
+    # P.init_fits(pars, multiindex=False)
 
-    for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labs, xlabels, disps)):
+    for i, k in enumerate(ks):
+        p=reg.par.kdict[k]
+        r=ranges[i]
+    # for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labs, xlabels, disps)):
         bins, xlim = P.angrange(r, absolute, 200)
-        ax = P.axs[i]
+        P.conf_ax(i, xlab=p.disp, xlim=xlim, yMaxN=3)
+        # ax = P.axs[i]
+        # for c, col in zip(chunks, chunk_cols):
+        #     vs = [d.get_chunk_par(chunk=c,par=p) for d in P.datasets]
+        #     if absolute:
+        #         vs = [np.abs(v) for v in vs]
+        #     P.plot_par(vs=vs,bins=bins, i=i, alpha=1.0, histtype='step', linewidth=2)
+        # vs = []
         for d, l in zip(P.datasets, P.labels):
-            vs = []
-            for c, col in zip(chunks, chunk_cols):
-                v = d.step_data.dropna(subset=[nam.id(c)])[p].values
-                if absolute:
-                    v = np.abs(v)
-                vs.append(v)
-                ax.hist(v, color=col, bins=bins, label=c, weights=np.ones_like(v) / float(len(v)),
-                        alpha=1.0, histtype='step', linewidth=2)
-            P.comp_pvalue(l, vs[0], vs[1], p)
-            P.plot_half_circle(p, ax, col1=chunk_cols[0], col2=chunk_cols[1], v=P.fit_df[p].loc[l], ind=l)
+            vs = [d.get_chunk_par(chunk=c, par=p.d) for c in chunks]
+            if absolute:
+                vs = [np.abs(v) for v in vs]
+            plot.prob_hist(vs, chunk_cols, chunks, ax=P.axs[i], bins=bins,alpha=1.0, histtype='step', linewidth=2)
 
-        P.conf_ax(i, xlab=xlab, xlim=xlim, yMaxN=3)
+            # vs = []
+            # for c, col in zip(chunks, chunk_cols):
+            #     v=d.get_chunk_par(chunk=c,par=p)
+            #     v = d.step_data.dropna(subset=[nam.id(c)])[p].values
+                # if absolute:
+                #     v = np.abs(v)
+                # vs.append(v)
+                # ax.hist(v, color=col, bins=bins, label=c, weights=np.ones_like(v) / float(len(v)),
+                #         alpha=1.0, histtype='step', linewidth=2)
+            # if P.Ndatasets>1:
+            #     P.comp_pvalue(l, vs[0], vs[1], p)
+            #     P.plot_half_circle(p, ax, col1=chunk_cols[0], col2=chunk_cols[1], v=P.fit_df[p].loc[l], ind=l)
+
+
     P.conf_ax(0, ylab='probability', ylim=[0, 0.04], leg_loc='upper left')
     P.conf_ax(ylab='probability', leg_loc='upper left')
     P.adjust((0.1, 0.95), (0.1, 0.9), 0.1, 0.3)
@@ -321,7 +333,7 @@ def plot_turns(name=None,absolute=True, subfolder='turn', **kwargs):
     P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     p, xlab = reg.getPar('tur_fou', to_return=['d', 'l'])
     bins, xlim = P.angrange(150, absolute, 30)
-    P.plot_par(p, bins, i=0, absolute=absolute, alpha=1.0, histtype='step')
+    P.plot_par(par=p, bins=bins, i=0, absolute=absolute, alpha=1.0, histtype='step')
     P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
@@ -345,26 +357,29 @@ def plot_endpoint_params(name=None,mode='basic', ks=None, subfolder='endpoint',
 
     P.init_fits(P.pars)
     for i, k in enumerate(P.ks):
-        ax=P.axs[i]
+        # ax=P.axs[i]
         p=P.pdict[k]
-        par=p.d
+        # par=p.d
         P.conf_ax(i, ylab='probability' if i % Ncols == 0 else None, xlab=p.label, xlim=p.lim, ylim=[0.0, 0.25],
                   xMaxN=4, yMaxN=4, xMath=True, title=p.disp if use_title else None)
         if p.lim is None or None in p.lim:
             bins = nbins
         else:
             bins = np.linspace(p.lim[0], p.lim[1], nbins)
-        for l, ddic in P.kdict[k].items() :
-            v=ddic.df.dropna().values
-            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)),
-                                    color=ddic.col, alpha=0.5)
-            if plot_fit:
-                x = x[:-1] + (x[1] - x[0]) / 2
-                y_smooth = np.polyfit(x, y, 5)
-                poly_y = np.poly1d(y_smooth)(x)
-                ax.plot(x, poly_y, color=ddic.col, label=l, linewidth=3)
-        P.comp_pvalues(P.vdict[k], par)
-        P.plot_half_circles(par, i)
+        P.plot_par(par=p.d, vs=P.vdict[k], bins=bins, labels=p.disp, i=i, plot_fit=plot_fit, pvalues=True, half_circles=True, alpha=0.5)
+
+
+        # for l, ddic in P.kdict[k].items() :
+        #     v=ddic.df.dropna().values
+        #     y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)),
+        #                             color=ddic.col, alpha=0.5)
+        #     if plot_fit:
+        #         x = x[:-1] + (x[1] - x[0]) / 2
+        #         y_smooth = np.polyfit(x, y, 5)
+        #         poly_y = np.poly1d(y_smooth)(x)
+        #         ax.plot(x, poly_y, color=ddic.col, label=l, linewidth=3)
+        # P.comp_pvalues(P.vdict[k], par)
+        # P.plot_half_circles(par, i)
     P.adjust((0.1, 0.97), (0.1, 1 - (0.1 / 2)), 0.1, 0.2 * 2)
     P.data_leg(0, loc='upper right', fontsize=15)
     return P.get()

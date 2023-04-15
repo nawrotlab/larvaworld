@@ -249,7 +249,7 @@ class LarvaDataset:
             vs = []
             for ss, dic in zip(sss, dics):
                 if min_dur == 0:
-                    idx = dic[chunk_idx]
+                    idx = dic[chunk_idx]+self.t0
                 else:
                     epochs = dic[chunk][dic[chunk_dur] >= min_dur]
                     Nepochs = epochs.shape[0]
@@ -260,7 +260,7 @@ class LarvaDataset:
                     else:
                         slices = [np.arange(r0, r1 + 1, 1) for r0, r1 in epochs]
                         idx = np.concatenate(slices)
-                vs.append(ss.loc[idx].values)
+                vs.append(ss.loc[idx].dropna().values)
             vs = np.concatenate(vs)
             return vs
         elif mode == 'extrema':

@@ -332,7 +332,7 @@ def plot_stride_Dorient(absolute=True, subfolder='stride', **kwargs):
     for i, sh in enumerate(shorts):
         p, sl, xlab = reg.getPar(sh, to_return=['d', 's', 'l'])
         bins, xlim = P.angrange(80, absolute, 200)
-        P.plot_par(p, bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
+        P.plot_par(par=p, bins=bins, i=i, absolute=absolute, labels=[sl] * P.Ndatasets, alpha=0.5)
         P.conf_ax(i, ylab='probability' if i == 0 else None, xlab=xlab, yMaxN=4, leg_loc='upper left')
     P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()

@@ -440,7 +440,7 @@ class Plot(BasePlot):
         return x, lim
 
     def plot_par(self, short=None, par=None, vs=None, bins='broad', i=0, labels=None, absolute=False, nbins=None,
-                 type='plt.hist', sns_kws={},
+                 type='plt.hist', sns_kws={},plot_fit=False,
                  pvalues=False, half_circles=False, key='step', **kwargs):
         if labels is None:
             labels = self.labels
@@ -464,13 +464,21 @@ class Plot(BasePlot):
                 if absolute:
                     v = np.abs(v)
                 vs.append(v)
-        if bins == 'broad' and nbins is not None:
-            bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
-        for v, c, l in zip(vs, self.colors, labels):
-            if type == 'sns.hist':
-                sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **sns_kws, **kwargs)
-            elif type == 'plt.hist':
-                self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
+
+        plot.prob_hist(vs,self.colors, labels,ax=self.axs[i],type=type,bins=bins,nbins=nbins, sns_kws=sns_kws,plot_fit=plot_fit, **kwargs)
+
+        # if bins == 'broad' and nbins is not None:
+        #     bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
+        # for v, c, l in zip(vs, self.colors, labels):
+        #     if type == 'sns.hist':
+        #         sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **sns_kws, **kwargs)
+        #     elif type == 'plt.hist':
+        #         y, x, patches = self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
+        #         if plot_fit:
+        #             x = x[:-1] + (x[1] - x[0]) / 2
+        #             y_smooth = np.polyfit(x, y, 5)
+        #             poly_y = np.poly1d(y_smooth)(x)
+        #             self.axs[i].plot(x, poly_y, color=c, label=l, linewidth=3)
         if pvalues:
             self.comp_pvalues(vs, par)
         if half_circles:

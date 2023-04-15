@@ -1,6 +1,4 @@
 import os
-
-from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, plot
 
 
@@ -70,12 +68,12 @@ class GraphRegistry:
 
     def run(self, ID, **kwargs):
         assert self.exists(ID)
-        return self.dict[ID](**kwargs)
-        # try:
-        #     return self.dict[ID](**kwargs)
-        # except :
-        #     reg.vprint(f'Failed to run graph {ID}',2)
-        #     return None
+        # return self.dict[ID](**kwargs)
+        try:
+            return self.dict[ID](**kwargs)
+        except :
+            reg.vprint(f'Failed to run graph {ID}',2)
+            return None
 
     def run_group(self, gID, **kwargs):
         assert self.group_exists(gID)
@@ -95,13 +93,6 @@ class GraphRegistry:
     def entry_list(self, dict, ID='timeplot', **kwargs):
         return [self.entry(ID=ID,name=name,  **args, **kwargs) for name, args in dict.items()]
 
-    # def group_entry(self, gID, entrylist):
-    #     self.graphgroups[gID]=entrylist
-
-    def entry_timeplot(self, name, ks, **kwargs):
-        return self.entry('timeplot', name=name,ks=ks,  **kwargs)
-
-    # self.entry_list(ID='timeplot', dict={'time ratio on food' : 'ks' : }, unit='min')
 
     def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):
         ds = {}
@@ -145,7 +136,7 @@ class GraphRegistry:
         d0 = [
             self.entry('bearing/turn', name=f'bearing to {ID}',min_angle=5.0,ref_angle=None,source_ID=ID, **kwargs),
             self.entry('bearing/turn', name='bearing to 270deg',min_angle=5.0,ref_angle=270,source_ID=ID, **kwargs),
-            *[self.entry('timeplot', name=p, pars=[p], **kwargs) for p in [nam.bearing_to(ID), nam.dst_to(ID), nam.scal(nam.dst_to(ID))]],
+            *[self.entry('timeplot', name=p, pars=[p], **kwargs) for p in [aux.nam.bearing_to(ID), aux.nam.dst_to(ID), aux.nam.scal(aux.nam.dst_to(ID))]],
 
         ]
 
@@ -308,8 +299,6 @@ class GraphRegistry:
             self.entry('turn track'),
         ]
         })
-
-
         return d
 
 graphs = GraphRegistry()

@@ -102,12 +102,6 @@ def plot_chunk_Dorient2source(source_ID, datasets,name=None,subfolder='bouts', c
         P.colors.insert(0, 'black')
         P.labels.insert(0, 'merged')
 
-
-
-
-
-
-    # P.build(**kws0)
     c_dur=nam.dur(chunk)
     b = nam.bearing_to(source_ID)
     b0s, b1s, dbs= [], [], []

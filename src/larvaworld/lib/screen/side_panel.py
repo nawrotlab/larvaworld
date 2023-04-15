@@ -77,24 +77,24 @@ class SidePanel:
             self.render_line(font, 'R : restart', self.LEFT_MARGIN)
             self.render_line(font, 'ESC : quit', self.LEFT_MARGIN)
 
-    def display_info(self, object_to_place):
-        self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=aux.Color.WHITE)
-
-        if pygame.font:
-            font = pygame.font.Font(None, self.FONT_SIZE)
-            self.line_num = 1
-            self.line_spacing = self.LINE_SPACING_MAX
-
-            self.render_line(font, 'Controls:')
-            self.render_line(font, 'Click left : add ' + object_to_place, self.LEFT_MARGIN)
-            self.render_line(font, 'Click right : remove ' + object_to_place, self.LEFT_MARGIN)
-            self.render_line(font, 'J : add a vehicle', self.LEFT_MARGIN)
-            self.render_line(font, 'K : remove a vehicle', self.LEFT_MARGIN)
-            # self.render_line(font, 'S : save current scene to file', self.LEFT_MARGIN)
-            self.render_line(font, '+ : incrase scene speed', self.LEFT_MARGIN)
-            self.render_line(font, '- : decrase scene speed', self.LEFT_MARGIN)
-            self.render_line(font, 'R : restart', self.LEFT_MARGIN)
-            self.render_line(font, 'ESC : quit', self.LEFT_MARGIN)
+    # def display_info(self, object_to_place):
+    #     self.viewer.draw_line((self.viewer.width, 0), (self.viewer.width, self.viewer.height), color=aux.Color.WHITE)
+    #
+    #     if pygame.font:
+    #         font = pygame.font.Font(None, self.FONT_SIZE)
+    #         self.line_num = 1
+    #         self.line_spacing = self.LINE_SPACING_MAX
+    #
+    #         self.render_line(font, 'Controls:')
+    #         self.render_line(font, 'Click left : add ' + object_to_place, self.LEFT_MARGIN)
+    #         self.render_line(font, 'Click right : remove ' + object_to_place, self.LEFT_MARGIN)
+    #         self.render_line(font, 'J : add a vehicle', self.LEFT_MARGIN)
+    #         self.render_line(font, 'K : remove a vehicle', self.LEFT_MARGIN)
+    #         # self.render_line(font, 'S : save current scene to file', self.LEFT_MARGIN)
+    #         self.render_line(font, '+ : incrase scene speed', self.LEFT_MARGIN)
+    #         self.render_line(font, '- : decrase scene speed', self.LEFT_MARGIN)
+    #         self.render_line(font, 'R : restart', self.LEFT_MARGIN)
+    #         self.render_line(font, 'ESC : quit', self.LEFT_MARGIN)
 
     def render_line(self, font, text, extra_margin=0):
         line = font.render(text, 1, aux.Color.WHITE)

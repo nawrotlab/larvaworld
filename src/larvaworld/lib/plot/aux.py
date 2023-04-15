@@ -6,7 +6,7 @@ import matplotlib
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from scipy.stats import mannwhitneyu
 import warnings
-
+import seaborn as sns
 from larvaworld.lib import reg, aux
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -270,31 +270,31 @@ def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs
         annotator.annotate_custom_annotations(f_pvs)
 
 
-def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, labelpad=30, tickpad=10):
-    if fig is None and ax is None:
-        from mpl_toolkits.mplot3d import Axes3D
-        fig = plt.figure(figsize=(15, 10))
-        ax = Axes3D(fig, azim=115, elev=15)
-
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(maxN))
-    ax.yaxis.set_major_locator(ticker.MaxNLocator(maxN))
-    ax.zaxis.set_major_locator(ticker.MaxNLocator(maxN))
-    ax.xaxis.set_tick_params(pad=tickpad)
-    ax.yaxis.set_tick_params(pad=tickpad)
-    ax.zaxis.set_tick_params(pad=tickpad)
-
-    ax.set_xlabel(vars[0], labelpad=labelpad)
-    ax.set_ylabel(vars[1], labelpad=labelpad)
-    ax.set_zlabel(target, labelpad=labelpad)
-    if lims is not None:
-        ax.set_xlim(lims[0])
-        ax.set_ylim(lims[1])
-        ax.set_zlim(lims[2])
-
-    if title is not None:
-        ax.set_suptitle(title, fontsize=20)
-
-    return fig, ax
+# def conf_ax_3d(vars, target, ax=None, fig=None, lims=None, title=None, maxN=5, labelpad=30, tickpad=10):
+#     if fig is None and ax is None:
+#         from mpl_toolkits.mplot3d import Axes3D
+#         fig = plt.figure(figsize=(15, 10))
+#         ax = Axes3D(fig, azim=115, elev=15)
+#
+#     ax.xaxis.set_major_locator(ticker.MaxNLocator(maxN))
+#     ax.yaxis.set_major_locator(ticker.MaxNLocator(maxN))
+#     ax.zaxis.set_major_locator(ticker.MaxNLocator(maxN))
+#     ax.xaxis.set_tick_params(pad=tickpad)
+#     ax.yaxis.set_tick_params(pad=tickpad)
+#     ax.zaxis.set_tick_params(pad=tickpad)
+#
+#     ax.set_xlabel(vars[0], labelpad=labelpad)
+#     ax.set_ylabel(vars[1], labelpad=labelpad)
+#     ax.set_zlabel(target, labelpad=labelpad)
+#     if lims is not None:
+#         ax.set_xlim(lims[0])
+#         ax.set_ylim(lims[1])
+#         ax.set_zlim(lims[2])
+#
+#     if title is not None:
+#         ax.set_suptitle(title, fontsize=20)
+#
+#     return fig, ax
 
 
 def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwargs):
@@ -470,6 +470,20 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     ax_histy.set_xlim([0.0, np.max(ymax_ps) + 0.05])
     dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0, 1.6) if cumy else None, fontsize=10)
     return fig
+
+def prob_hist(vs,colors, labels,ax,type='plt.hist',bins='broad',nbins=None, sns_kws={},plot_fit=False, **kwargs) :
+    if bins == 'broad' and nbins is not None:
+        bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
+    for v, c, l in zip(vs, colors, labels):
+        if type == 'sns.hist':
+            sns.histplot(v, color=c, bins=bins, ax=ax, label=l, **sns_kws, **kwargs)
+        elif type == 'plt.hist':
+            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
+            if plot_fit:
+                x = x[:-1] + (x[1] - x[0]) / 2
+                y_smooth = np.polyfit(x, y, 5)
+                poly_y = np.poly1d(y_smooth)(x)
+                ax.plot(x, poly_y, color=c, label=l, linewidth=3)
 
 
 def get_figsize(Ncols, Nrows, wh=None, w=8, h=8):

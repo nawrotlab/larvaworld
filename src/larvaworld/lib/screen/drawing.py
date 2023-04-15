@@ -698,20 +698,27 @@ class ScreenManager(BaseScreenManager):
 
 
     def draw_trajectories(self):
-        space_dims = self.model.space.dims * self.s
+        X = self.model.space.dims * self.s[0]
         agents = self.model.agents
-        decay_in_ticks = int(self.trajectory_dt / self.model.dt)
+        Nfade = int(self.trajectory_dt / self.model.dt)
 
-        trajs = [fly.trajectory for fly in agents]
-        if self.traj_color is not None:
-            traj_cols = [self.traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
-        else:
-            traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
+        for fly in agents :
+            traj = fly.trajectory[-Nfade:]
+            if self.traj_color is not None:
+                traj_col = self.traj_color.xs(fly.unique_id, level='AgentID')[-Nfade:]
+            else:
+                traj_col = np.array([(0, 0, 0) for t in traj])
 
-        trajs = [t[-decay_in_ticks:] for t in trajs]
-        traj_cols = [t[-decay_in_ticks:] for t in traj_cols]
-
-        for fly, traj, traj_col in zip(agents, trajs, traj_cols):
+        # trajs = [fly.trajectory for fly in agents]
+        # if self.traj_color is not None:
+        #     traj_cols = [self.traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
+        # else:
+        #     traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
+        #
+        # trajs = [t[-Nfade:] for t in trajs]
+        # traj_cols = [t[-Nfade:] for t in traj_cols]
+        #
+        # for fly, traj, traj_col in zip(agents, trajs, traj_cols):
             # This is the case for simulated larvae where no values are np.nan
             if not np.isnan(traj).any():
                 parsed_traj = [traj]
@@ -732,10 +739,10 @@ class ScreenManager(BaseScreenManager):
                     pass
                 else:
                     if self.traj_color is None:
-                        self.v.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * space_dims[0])
+                        self.v.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * X)
                     else:
                         c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
                         c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
-                        self.v.draw_polyline(t, color=c, closed=False, width=0.01 * space_dims[0], dynamic_color=True)
+                        self.v.draw_polyline(t, color=c, closed=False, width=0.01 * X, dynamic_color=True)
 
 

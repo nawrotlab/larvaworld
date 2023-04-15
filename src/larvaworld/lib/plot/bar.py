@@ -28,11 +28,20 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
 
     P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
     for ii, (k, eval_df) in enumerate(evaluation.items()):
-        lab = labels[k] if labels is not None else k
-        df = error_dict[k]
-        color = aux.flatten_list(eval_df['par_colors'].values.tolist())
-        df = df[aux.flatten_list(eval_df['symbols'].values.tolist())]
-        df.plot(kind='bar', ax=P.axs[ii], ylabel=lab, rot=0, legend=False, color=color, width=0.6)
+        kws={
+            'ylabel' : labels[k] if labels is not None else k,
+            'color' : aux.flatten_list(eval_df['par_colors'].values.tolist()),
+            'ax' : P.axs[ii],
+            'kind' : 'bar',
+            'rot' : 0,
+            'legend' : False,
+            'width' : 0.6,
+        }
+        # lab = labels[k] if labels is not None else k
+        # df = error_dict[k]
+        # color = aux.flatten_list(eval_df['par_colors'].values.tolist())
+        df = error_dict[k][aux.flatten_list(eval_df['symbols'].values.tolist())]
+        df.plot(**kws)
         build_legend(P.axs[ii], eval_df)
         P.conf_ax(ii, title=titles[ii], xlab='', yMaxN=4)
     return P.get()
@@ -117,26 +126,29 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
         if leg_cols is None:
             leg_cols = aux.N_colors(N)
         colors = leg_cols * Npairs
-        leg_ids = P.labels[:N]
+        # leg_ids = P.labels[:N]
+        leg_kws={'labels' : P.labels[:N], 'colors' : leg_cols}
         ind = np.hstack([np.linspace(0 + i / N, w + i / N, N) for i in range(Npairs)])
         new_ind = ind[::N] + (ind[N - 1] - ind[0]) / N
-        xticks, xticklabels = new_ind, coupled_labels
+        # xticks, xticklabels = new_ind, coupled_labels
+        ax_kws = {'xticks': new_ind, 'xticklabels': coupled_labels}
         ijs=[(kk * N, kk * N + 1) for kk in range(Npairs)]
 
         ij_pairs = ijs
-        finfuncN = 2
+        # finfuncN = 2
 
     else:
         ind = np.arange(0, w * Nds, w)
         colors = P.colors
-        leg_ids = P.labels
-        xticks, xticklabels = ind, P.labels
+        # leg_ids = P.labels
+        # xticks, xticklabels = ind, P.labels
+        ax_kws = {'xticks': ind, 'xticklabels': P.labels}
         ijs =[]
         for i, j in itertools.combinations(np.arange(Nds).tolist(), 2):
             ijs.append((i,j))
 
         ij_pairs=ijs
-        finfuncN=1
+        # finfuncN=1
 
 
     bar_kwargs = {'width': w, 'color': colors, 'linewidth': 2, 'zorder': 5, 'align': 'center', 'edgecolor': 'black'}
@@ -155,18 +167,16 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
         for i, j in ij_pairs:
             st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
             pv = np.round(pv, 4)
-
-
-            if finfuncN==1:
-                plot.label_diff(i, j, f'p={pv}', ind, means, P.axs[ii])
-
-            elif finfuncN==2:
+            if coupled_labels is not None:
                 if pv <= 0.05:
-                    P.axs[ii].text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
-                P.data_leg(ii, labels=leg_ids, colors=leg_cols, loc='upper left', handlelength=1, handleheight=1)
+                    ax.text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
+                P.data_leg(ii, **leg_kws, loc='upper left', handlelength=1, handleheight=1)
+            else:
+                plot.label_diff(i, j, f'p={pv}', ind, means, ax)
+
 
         P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=p.label if ylabel is None else ylabel,
-                  ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), xticks=xticks, xticklabels=xticklabels)
+                  ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), **ax_kws)
     P.adjust((0.15, 0.95), (0.15, 0.95), W=0.1,H=0.1)
     P.fig.align_ylabels(P.axs[:])
     return P.get()
