@@ -331,10 +331,9 @@ def plot_turns(name=None,absolute=True, subfolder='turn', **kwargs):
     if name is None:
         name = 'turn_amplitude'
     P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
-    p, xlab = reg.getPar('tur_fou', to_return=['d', 'l'])
-    bins, xlim = P.angrange(150, absolute, 30)
-    P.plot_par(par=p, bins=bins, i=0, absolute=absolute, alpha=1.0, histtype='step')
-    P.conf_ax(xlab=xlab, ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
+    bins, xlim = P.angrange(100, absolute, 30)
+    P.plot_par(k='tur_fou', bins=bins, i=0, absolute=absolute, alpha=1.0, histtype='step', rad2deg=True)
+    P.conf_ax(xlab='Turn amplitude ($deg$)', ylab='probability, $P$', xlim=xlim, yMaxN=4, leg_loc='upper right')
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
@@ -366,7 +365,7 @@ def plot_endpoint_params(name=None,mode='basic', ks=None, subfolder='endpoint',
             bins = nbins
         else:
             bins = np.linspace(p.lim[0], p.lim[1], nbins)
-        P.plot_par(par=p.d, vs=P.vdict[k], bins=bins, labels=p.disp, i=i, plot_fit=plot_fit, pvalues=True, half_circles=True, alpha=0.5)
+        P.plot_par(par=p.d, vs=P.vdict[k], bins=bins, i=i, plot_fit=plot_fit, pvalues=True, half_circles=True, alpha=0.5)
 
 
         # for l, ddic in P.kdict[k].items() :

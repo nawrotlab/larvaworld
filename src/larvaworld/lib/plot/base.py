@@ -439,9 +439,12 @@ class Plot(BasePlot):
         x = np.linspace(r0, r1, nbins)
         return x, lim
 
-    def plot_par(self, short=None, par=None, vs=None, bins='broad', i=0, labels=None, absolute=False, nbins=None,
-                 type='plt.hist', sns_kws={},plot_fit=False,
+    def plot_par(self, k=None, par=None, vs=None, bins='broad', i=0, labels=None, absolute=False, nbins=None,
+                 type='plt.hist', sns_kws={},plot_fit=False,rad2deg=False,
                  pvalues=False, half_circles=False, key='step', **kwargs):
+
+        if par is None and k is not None :
+            par = reg.getPar(k)
         if labels is None:
             labels = self.labels
         if vs is None:
@@ -463,6 +466,8 @@ class Plot(BasePlot):
                     continue
                 if absolute:
                     v = np.abs(v)
+                if rad2deg:
+                    v = np.rad2deg(v)
                 vs.append(v)
 
         plot.prob_hist(vs,self.colors, labels,ax=self.axs[i],type=type,bins=bins,nbins=nbins, sns_kws=sns_kws,plot_fit=plot_fit, **kwargs)
