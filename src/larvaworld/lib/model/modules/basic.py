@@ -40,10 +40,11 @@ class Effector:
 
 
 class Oscillator(Effector):
-    def __init__(self, initial_freq=None, initial_freq_std=0, random_phi=True, **kwargs):
+    def __init__(self, initial_freq=None,freq_range=None,  initial_freq_std=0, random_phi=True, **kwargs):
         super().__init__(**kwargs)
         self.initial_freq = float(np.random.normal(loc=initial_freq, scale=initial_freq_std, size=1))
         self.freq = self.initial_freq
+        self.freq_range = freq_range
         self.complete_iteration = False
         self.iteration_counter = 0
         self.d_phi = 2 * np.pi * self.dt * self.freq
@@ -59,6 +60,11 @@ class Oscillator(Effector):
 
     def get_freq(self, t):
         return self.freq
+
+    def set_initial_freq(self, value):
+        if self.freq_range:
+            value = np.clip(value, self.freq_range[0], self.freq_range[1])
+        self.initial_freq = value
 
     def oscillate(self):
         super().count_time()
@@ -77,6 +83,9 @@ class Oscillator(Effector):
         self.phi = 0
         self.complete_iteration = False
         self.iteration_counter = 0
+
+    def phi_in_range(self, phi_range):
+        return phi_range[0] < self.phi < phi_range[1]
 
 class StepModule:
     def __init__(self, initial_amp, amp_range=None,input_noise=0,output_noise=0, **kwargs):

@@ -28,17 +28,6 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
     return P.get()
 
 
-# def get_traj(d, mode='default'):
-#     if mode=='default':
-#         return d.load_traj(mode)
-#     elif mode == 'origin':
-#         try:
-#             ss=d.load_traj(mode)
-#             return ss[['x', 'y']]
-#         except:
-#             s = d.load_step(h5_ks=['contour', 'midline'])
-#             ss=reg.funcs.preprocessing["transposition"](s, c=d.config, store=True, replace=False, transposition='origin')
-#             return ss[['x', 'y']]
 
 @reg.funcs.graph('trajectories')
 def traj_grouped(unit='mm', name=None, subfolder='trajectories',
@@ -464,51 +453,3 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
             ax.plot(s[p].loc[s[nam.min(p)] == True], linestyle='None', lw=10, color='red', marker='^')
     P.adjust((0.08, 0.95), (0.12, 0.95), H=0.2)
     return P.get()
-
-
-if __name__ == '__main__':
-
-
-
-
-
-    refID = 'exploration.dish'
-    d = reg.loadRef(refID)
-    d.load()
-    s, e,c = d.step_data,d.endpoint_data, d.config
-    def get_title(idx):
-        l=d.id
-
-        id = c.agent_ids[idx]
-        ss = s.xs(id, level='AgentID', drop_level=True)
-        ee = e.loc[id]
-
-        length = np.round(ee['length'] * 1000, 2)
-        cum_sd = np.round(ee[reg.getPar('cum_sd')], 2)
-        run_tr = int(ee[reg.getPar('run_tr')] * 100)
-        title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
-        return title,ss
-
-    P = plot.AutoPlot(name='name', subfolder=None, show=True,
-                 build_kws={'Nrows': 5, 'Ncols': 2, 'w': 20, 'h':6, 'mode':'box'}, datasets=[d])
-
-    # epoch = 'turn'
-
-    f0 = epoch_func()
-    # print(0, f0, type(f0))
-
-    # f1 = f0(epoch=epoch)
-
-    # print(1, f1, type(f1))
-
-
-    for ii in range(P.Nrows):
-        title, ss = get_title(idx=ii)
-        for jj,ep in enumerate(['stride', 'turn']):
-            f1 = f0(epoch=ep)
-            f2 = f1(ss=ss, min_amp=30)
-            f3 = f2(P=P, i=2*ii+jj, title=title)
-
-     # print(3, f3, type(f3))
-
-    P.get()

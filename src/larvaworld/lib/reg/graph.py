@@ -1,65 +1,88 @@
 import os
 
 from larvaworld.lib.aux import nam
-from larvaworld.lib import reg, aux
+from larvaworld.lib import reg, aux, plot
+
+
+
 
 
 class GraphRegistry:
     def __init__(self):
         self.dict = reg.funcs.graphs
+        self.graphgroups = self.build_graphgroups()
 
     @property
     def ks(self):
         return list(self.dict.keys())
 
-    def get(self, f):
-        if isinstance(f, str):
-            if f in self.dict.keys():
-                f = self.dict[f]
-            else:
-                raise
-        return f
+    def exists(self, ID):
+        if isinstance(ID, str) and ID in self.dict.keys():
+            return True
+        else:
+            return False
 
-    def eval0(self, entry, **kws):
-        func = self.get(entry['plotID'])
-        d = {entry['key']: func(**entry['args'], **kws)}
-        return d
+    def group_exists(self, gID):
+        if isinstance(gID, str) and gID in self.graphgroups.keys():
+            return True
+        else:
+            return False
 
-
-
-    def eval(self, entries, **kws):
-
-        ds = {}
-        for entry in entries:
-
-            d = self.eval0(entry, **kws)
-            ds.update(d)
-        return ds
 
     def eval_graphgroups(self, graphgroups,save_to=None,**kws):
         kws.update({'subfolder' : None})
         ds = aux.AttrDict()
-        for gg in graphgroups:
-            if isinstance(gg, dict):
-                for ggID, entries in gg.items() :
-                    dir = f'{save_to}/{ggID}' if save_to is not None else None
-                    ds[ggID] = self.eval(entries, save_to=dir, **kws)
-            elif isinstance(gg, str) and gg in self.graphgroups.keys():
-                ggID=gg
-                entries = self.graphgroups[ggID]
-                dir = f'{save_to}/{ggID}' if save_to is not None else None
-                ds[ggID] = self.eval(entries, save_to=dir, **kws)
-            else :
-                raise
-
+        for gID, entries in self.graphgrouplist_to_dict(graphgroups).items():
+            kws0 = {'save_to': f'{save_to}/{gID}' if save_to is not None else None, **kws}
+            ds[gID] = self.eval_entries(entries, **kws0)
         return ds
 
+    def graphgrouplist_to_dict(self, graphgroups):
+        if isinstance(graphgroups, list) :
+            ds = aux.AttrDict()
+            for gg in graphgroups:
+                if isinstance(gg, str) and gg in self.graphgroups.keys():
+                    gg = self.graphgroups[gg]
+                assert isinstance(gg, dict)
+                assert len(gg) == 1
+                gID = list(gg)[0]
+                ds[gID]=gg[gID]
+            return ds
+        elif isinstance(graphgroups, dict):
+            return graphgroups
+
+    # def run_group(self, gg,save_to=None, **kwargs):
+    #     if isinstance(gg, str) and gg in self.graphgroups.keys():
+    #         gg = self.graphgroups[gg]
+    #     assert isinstance(gg, dict)
+    #     assert len(gg)==1
+    #     gID = list(gg)[0]
+    #     entries=gg[gID]
+    #     # dir = f'{save_to}/{gID}' if save_to is not None else None
+    #     kws0={'save_to' : f'{save_to}/{gID}' if save_to is not None else None, **kwargs}
+    #     return aux.AttrDict({gID: self.eval_entries(entries, **kws0)})
+
+
+
+    def eval_entries(self, entries, **kwargs):
+        return aux.AttrDict({e['key']: self.run(ID=e['plotID'], **e['args'], **kwargs) for e in entries})
+
+
     def run(self, ID, **kwargs):
-        func = self.get(ID)
-        return func(**kwargs)
+        assert self.exists(ID)
+        return self.dict[ID](**kwargs)
+        # try:
+        #     return self.dict[ID](**kwargs)
+        # except :
+        #     reg.vprint(f'Failed to run graph {ID}',2)
+        #     return None
+
+    def run_group(self, gID, **kwargs):
+        assert self.group_exists(gID)
+        return self.eval_entries(self.graphgroups[gID], **kwargs)
 
     def entry(self, ID, name=None, **kwargs):
-        assert self.get(ID)
+        assert self.exists(ID)
         args=kwargs
         if name is not None:
             args['name']=name
@@ -68,13 +91,17 @@ class GraphRegistry:
             key = ID
         return {'key': key, 'plotID': ID, 'args': args}
 
-    def group_entry(self, gID, entrylist):
-        self.graphgroups[gID]=entrylist
 
-    @property
-    def graphgroups(self):
-        from larvaworld.lib.reg.stored.analysis_conf import analysis_dict
-        return analysis_dict
+    def entry_list(self, dict, ID='timeplot', **kwargs):
+        return [self.entry(ID=ID,name=name,  **args, **kwargs) for name, args in dict.items()]
+
+    # def group_entry(self, gID, entrylist):
+    #     self.graphgroups[gID]=entrylist
+
+    def entry_timeplot(self, name, ks, **kwargs):
+        return self.entry('timeplot', name=name,ks=ks,  **kwargs)
+
+    # self.entry_list(ID='timeplot', dict={'time ratio on food' : 'ks' : }, unit='min')
 
     def model_tables(self, mIDs,dIDs=None, save_to=None, **kwargs):
         ds = {}
@@ -113,21 +140,19 @@ class GraphRegistry:
         return graphs
 
     def source_graphgroup(self, source_ID, pos=None, **kwargs):
-        gID = f"locomotion relative to source {source_ID}"
-        d0 = []
-        for ref_angle, name in zip([None, 270], [f'bearing to {source_ID}', 'bearing to 270deg']):
-            entry=self.entry('bearing/turn', name=name, **{"min_angle":5.0, "ref_angle":ref_angle, "source_ID":source_ID, **kwargs} )
-            d0.append(entry)
+        ID=source_ID
+        gID = f"locomotion relative to source {ID}"
+        d0 = [
+            self.entry('bearing/turn', name=f'bearing to {ID}',min_angle=5.0,ref_angle=None,source_ID=ID, **kwargs),
+            self.entry('bearing/turn', name='bearing to 270deg',min_angle=5.0,ref_angle=270,source_ID=ID, **kwargs),
+            *[self.entry('timeplot', name=p, pars=[p], **kwargs) for p in [nam.bearing_to(ID), nam.dst_to(ID), nam.scal(nam.dst_to(ID))]],
 
-        for p in [nam.bearing_to(source_ID), nam.dst_to(source_ID), nam.scal(nam.dst_to(source_ID))] :
-            d0.append(self.entry('timeplot', name=p, **{"pars":[p], **kwargs}))
+        ]
 
         for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
             for dur in [0.0, 0.5, 1.0]:
-                name = f'{chunk}_bearing2_{source_ID}_min_{dur}_sec'
-                d0.append(
-                    self.entry('bearing to source/epoch', name=name, **{
-                        "min_dur" : dur, "chunk" : chunk, "source_ID":source_ID, **kwargs}))
+                d0.append(self.entry('bearing to source/epoch', name=f'{chunk}_bearing2_{ID}_min_{dur}_sec',
+                               min_dur=dur,chunk=chunk,source_ID=ID, **kwargs))
         return aux.AttrDict({gID: d0})
 
     def multisource_graphgroup(self, sources, **kwargs):
@@ -163,7 +188,129 @@ class GraphRegistry:
 
         return groups
 
+    # @property
+    def build_graphgroups(self) :
+        d= aux.AttrDict({
+        'tactile': [
+            self.entry('endpoint pars (hist)','time ratio on food (final)',ks=['on_food_tr']),
+            self.entry('timeplot', 'time ratio on food',ks=['on_food_tr'],  unit='min'),
+            self.entry('timeplot', 'time on food',ks=['cum_f_det'],  unit='min'),
+            self.entry('timeplot', 'turner input',ks=['A_tur'],  unit='min', show_first=True),
+            self.entry('timeplot', 'turner output',ks=['Act_tur'],  unit='min', show_first=True),
+            self.entry('timeplot', 'tactile activation',ks=['A_touch'],  unit='min', show_first=True),
+            self.entry('ethogram'),
+        ],
+        'chemo': [
+            # autotime(['sv', 'fov', 'b', 'a']),
+            self.entry('autoplot', ks=['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']),
+            self.entry('trajectories'),
+            # self.entry('turn amplitude'),
+            # self.entry('angular pars', Npars=5),
 
+        ],
+        'intake': [
+            # 'deb_analysis',
+            # *[time(p) for p in ['sf_faeces_M', 'f_faeces_M', 'sf_abs_M', 'f_abs_M', 'f_am']],
+            self.entry('food intake (timeplot)', 'food intake (raw)'),
+            self.entry('food intake (timeplot)', 'food intake (filtered)', filt_amount=True),
+            self.entry('pathlength', scaled=False),
+            self.entry('barplot', name='food intake (barplot)', ks=['f_am']),
+            self.entry('ethogram')
+
+        ],
+        'anemotaxis': [
+            *[self.entry('nengo', name=p, group=p, same_plot=True if p == 'anemotaxis' else False)for p in
+              ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V',
+               'wind_effect_on_Fr']],
+            *[self.entry('timeplot', ks=[p]) for p in ['A_wind', 'anemotaxis']],
+            # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
+            self.entry('endpoint pars (hist)', name='final anemotaxis', ks=['anemotaxis'])
+
+        ],
+        'thermo': [
+            self.entry('trajectories'),
+            self.entry('autoplot', ks=['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C', 'A_therm'], show_first=True, individuals=False)
+        ],
+        'puff': [
+
+            # self.entry('trajectories'),
+            # self.entry('ethogram', add_samples=False),
+            self.entry('pathlength', scaled=False),
+            *[self.entry('timeplot', ks=[p], absolute=True) for p in ['fov', 'foa']],
+            # *[time(p, abs=True) for p in ['fov', 'foa','b', 'bv', 'ba']],
+            *[self.entry('timeplot', ks=[p]) for p in ['sv', 'sa']],
+            # *[time(p) for p in ['sv', 'sa', 'v', 'a']],
+        ],
+        'RL': [
+            self.entry('timeplot', 'olfactor_decay_table', ks=['D_olf'], table='best_gains'),
+            self.entry('timeplot', 'olfactor_decay_table_inds',ks=['D_olf'],  table='best_gains', individuals=True),
+            self.entry('timeplot', 'reward_table', ks=['cum_reward'], table='best_gains'),
+            self.entry('timeplot', 'best_gains_table',ks=['g_odor1'], table='best_gains'),
+            self.entry('timeplot', 'best_gains_table_x2',ks=['g_odor1', 'g_odor2'],  table='best_gains'),
+        ],
+        'patch': [self.entry('timeplot', 'Y position', ks=['y'], legend_loc='lower left'),
+                  self.entry('navigation index'),
+                  self.entry('turn amplitude'),
+                  self.entry('turn duration'),
+                  self.entry('turn amplitude VS Y pos', 'turn angle VS Y pos (scatter)', mode='scatter'),
+                  self.entry('turn amplitude VS Y pos', 'turn angle VS Y pos (hist)', mode='hist'),
+                  self.entry('turn amplitude VS Y pos', 'bearing correction VS Y pos', mode='hist', ref_angle=270),
+                  ],
+        'survival': [
+            # 'foraging_list',
+            self.entry('timeplot', 'time ratio on food', ks=['on_food_tr'], unit='min'),
+            self.entry('food intake (timeplot)', 'food intake (raw)'),
+            self.entry('pathlength', scaled=False)
+
+        ],
+        'deb': [
+            *[self.entry('deb',  name = f'DEB.{m} (hours)',sim_only = False, mode=m, save_as=f"{m}_in_hours.pdf") for m in ['energy', 'growth', 'full']],
+            *[self.entry('deb',  name = f'FEED.{m} (hours)',sim_only = True, mode=m, save_as=f"{m}_in_hours.pdf") for m in
+              ['feeding', 'reserve_density', 'assimilation', 'food_ratio_1', 'food_ratio_2', 'food_mass_1',
+               'food_mass_2', 'hunger', 'EEB', 'fs']],
+        ],
+        'endpoint': [
+
+            self.entry('boxplot (simple)', ks=['l', 'str_N', 'dsp_0_40_max', 'run_tr', 'fv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
+                    'tor20_mu', 'tor20_std']),
+            self.entry('boxplot (simple)', ks=['l', 'fv', 'v_mu', 'run_tr']),
+            self.entry('crawl pars')
+        ],
+        'distro': [
+            self.entry('distros', mode='box'),
+            self.entry('distros', mode='hist'),
+            self.entry('angular pars', Npars=5)
+        ],
+
+        'dsp': [
+            self.entry('dispersal', range=(0, 40)),
+            # self.entry('dispersal', range=(0, 60)),
+            self.entry('dispersal summary', range=(0, 40)),
+            # self.entry('dispersal summary', range=(0, 60)),
+        ],
+        'general': [
+            self.entry('ethogram', add_samples=False),
+            self.entry('pathlength', scaled=False),
+            # self.entry('navigation index'),
+            self.entry('epochs', stridechain_duration=True),
+
+        ],
+        'stride': [
+            self.entry('stride cycle'),
+            self.entry('stride cycle', individuals=True),
+        ],
+        'traj': [
+            self.entry('trajectories', mode='default', unit='mm'),
+            self.entry('trajectories', name='aligned2origin', mode='origin', unit='mm', single_color=True),
+        ],
+        'track': [
+            self.entry('stride track'),
+            self.entry('turn track'),
+        ]
+        })
+
+
+        return d
 
 graphs = GraphRegistry()
 

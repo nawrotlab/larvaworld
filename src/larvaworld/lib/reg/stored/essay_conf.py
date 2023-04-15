@@ -239,11 +239,13 @@ class RvsS_Essay(Essay):
         kwargs = {'save_to': self.plot_dir,
                   'show': self.show}
 
-        entry = reg.graphs.entry('RvsS summary',
-                             **{'entrylist': self.entrylist, 'title': f'ROVERS VS SITTERS ESSAY (N={self.N})',
-                                   'mdiff_df': self.mdiff_df})
-        self.figs.update(reg.graphs.eval0(entry, **kwargs))
-        self.figs.update(reg.graphs.eval(self.entrylist, **kwargs))
+        self.figs['RvsS summary']=reg.graphs.run(ID='RvsS summary', entrylist= self.entrylist,
+                                                 title=f'ROVERS VS SITTERS ESSAY (N={self.N})',
+                                                 mdiff_df=self.mdiff_df, **kwargs)
+
+        for e in self.entrylist :
+            self.figs[e['key']]=reg.graphs.run(ID=e['plotID'], **e['args'], **kwargs)
+
 
     def analyze(self, exp, ds0):
         if self.all_figs:
@@ -445,11 +447,11 @@ class DoublePatch_Essay(Essay):
             'title': f"DOUBLE PATCH ESSAY (N={self.N}, duration={self.dur}')",
             'mdiff_df': self.mdiff_df
         }
-        self.figs.update(reg.graphs.eval0(entry=reg.graphs.entry('double-patch summary',
-                                                         **{'name':f'{self.mode}_fig1','ks':None}), **kwargs))
-        self.figs.update(reg.graphs.eval0(entry=reg.graphs.entry('double-patch summary',
-                                                         **{'name':f'{self.mode}_fig2',
-                                                               'ks':['tur_tr', 'tur_N_mu', 'pau_tr','cum_d', 'f_am', 'on_food_tr']}), **kwargs))
+
+        self.figs[f'{self.mode}_fig1'] = reg.graphs.run(ID='double-patch summary', name=f'{self.mode}_fig1',
+                                                        ks=None, **kwargs)
+        self.figs[f'{self.mode}_fig2'] = reg.graphs.run(ID='double-patch summary', name=f'{self.mode}_fig2',
+                                                        ks=['tur_tr', 'tur_N_mu', 'pau_tr','cum_d', 'f_am', 'on_food_tr'], **kwargs)
 
     def analyze(self, exp, ds0):
         pass
@@ -632,8 +634,7 @@ class Chemotaxis_Essay(Essay):
             'show': self.show,
             'title': f'CHEMOTAXIS ESSAY (N={self.N})',
         }
-        entry = reg.graphs.entry('chemotaxis summary', **{'mdiff_df': self.mdiff_df})
-        self.figs.update(reg.graphs.eval0(entry, **kwargs))
+        self.figs['chemotaxis summary'] = reg.graphs.run(ID='chemotaxis summary', mdiff_df=self.mdiff_df, **kwargs)
 
 
 @reg.funcs.stored_conf("Essay")

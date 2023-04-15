@@ -95,17 +95,7 @@ class DefaultLocomotor(Locomotor):
             elif pre_state != 'feed' and cur_state == 'feed':
                 self.on_new_feed()
         if self.interference:
-            cT0 = self.interference.step(self.crawler, self.feeder)
-
-            mm = self.interference.suppression_mode
-            if mm == 'oscillation':
-                A_in -= (1 - cT0)
-                cT = 1
-            elif mm == 'amplitude':
-                cT = cT0
-            elif mm == 'both':
-                A_in -= (1 - cT0)
-                cT = cT0
+            A_in, cT = self.interference.step(A_in, self.crawler, self.feeder)
         else :
             cT = 1
         self.cur_ang_suppression=cT

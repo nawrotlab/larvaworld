@@ -329,45 +329,11 @@ def plot_turns(name=None,absolute=True, subfolder='turn', **kwargs):
 @reg.funcs.graph('endpoint pars (hist)')
 def plot_endpoint_params(name=None,mode='basic', ks=None, subfolder='endpoint',
                          plot_fit=True, nbins=20, use_title=True, **kwargs):
-    ylim = [0.0, 0.25]
-    nbins = nbins
-    l_par = 'l'
-    if ks is None:
-        dic = {
-            'basic': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
-                      'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
-                      'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu'],
-            'minimal': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
-                        'cum_t', 'str_tr', 'pau_tr', 'tor5_std',
-                        'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
-                        'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
-            'tiny': ['fsv', 'sv_mu', 'str_tr', 'pau_tr',
-                     'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
-            'stride_def': [l_par, 'fsv', 'str_sd_mu', 'str_sd_std'],
-            'reorientation': ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std'],
-            'tortuosity': ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu'],
-            'result': ['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu'],
-            'limited': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
-                        'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
-                        'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
-                        'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
-                        'b_mu', 'b_std', 'bv_mu', 'bv_std',
-                        'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu'],
+    # ylim = [0.0, 0.25]
+    # nbins = nbins
 
-            'deb': [
-                'deb_f_mu', 'hunger', 'reserve_density', 'puppation_buffer',
-                'cum_d', 'cum_sd', 'str_N', 'fee_N',
-                'str_tr', 'pau_tr', 'fee_tr', 'f_am',
-                l_par, 'm'
-                # 'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
-                # 'v_mu', 'sv_mu',
+    ks=plot.define_ks(ks, mode)
 
-            ]
-        }
-        if mode in dic.keys():
-            ks = dic[mode]
-        else:
-            raise ValueError('Provide parameter shortcuts or define a mode')
 
     Nks = len(ks)
     Ncols = int(np.ceil(Nks / 3))
@@ -377,70 +343,30 @@ def plot_endpoint_params(name=None,mode='basic', ks=None, subfolder='endpoint',
         name = f'endpoint_params_{mode}'
     P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, build_kws={'N':Nks, 'Ncols':Ncols, 'w':7, 'h':5, 'mode': 'hist'}, **kwargs)
 
-    def build_df(vs, ax, bins):
-        Nvalues = [len(i) for i in vs]
-        a = np.empty((np.max(Nvalues), len(vs),)) * np.nan
-        for ll in range(len(vs)):
-            a[:Nvalues[ll], ll] = vs[ll]
-        df = pd.DataFrame(a, columns=P.labels)
-        for j, (col, lab) in enumerate(zip(df.columns, P.labels)):
-
-            v = df[[col]].dropna().values
-            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)),
-                                    color=P.colors[j], alpha=0.5)
-            if plot_fit:
-                x = x[:-1] + (x[1] - x[0]) / 2
-                y_smooth = np.polyfit(x, y, 5)
-                poly_y = np.poly1d(y_smooth)(x)
-                ax.plot(x, poly_y, color=P.colors[j], label=lab, linewidth=3)
-
     P.init_fits(P.pars)
-    for i,k in enumerate(P.ks) :
-        dic,p=P.kpdict[k]
+    for i, k in enumerate(P.ks):
+        ax=P.axs[i]
+        p=P.pdict[k]
         par=p.d
-        P.conf_ax(i, ylab='probability' if i % Ncols == 0 else None, xlab=p.label, xlim=p.lim, ylim=ylim,
+        P.conf_ax(i, ylab='probability' if i % Ncols == 0 else None, xlab=p.label, xlim=p.lim, ylim=[0.0, 0.25],
                   xMaxN=4, yMaxN=4, xMath=True, title=p.disp if use_title else None)
         if p.lim is None or None in p.lim:
             bins = nbins
         else:
             bins = np.linspace(p.lim[0], p.lim[1], nbins)
-        ax = P.axs[i]
-        vs=[ddic.df.tolist() for l,ddic in dic.items()]
-        P.comp_pvalues(vs, par)
+        for l, ddic in P.kdict[k].items() :
+            v=ddic.df.dropna().values
+            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)),
+                                    color=ddic.col, alpha=0.5)
+            if plot_fit:
+                x = x[:-1] + (x[1] - x[0]) / 2
+                y_smooth = np.polyfit(x, y, 5)
+                poly_y = np.poly1d(y_smooth)(x)
+                ax.plot(x, poly_y, color=ddic.col, label=l, linewidth=3)
+        P.comp_pvalues(P.vdict[k], par)
         P.plot_half_circles(par, i)
-
-
-        try :
-            build_df(vs, ax, bins)
-        except:
-            pass
     P.adjust((0.1, 0.97), (0.1, 1 - (0.1 / 2)), 0.1, 0.2 * 2)
     P.data_leg(0, loc='upper right', fontsize=15)
     return P.get()
 
-
-
-if __name__ == '__main__':
-
-    ds=[]
-    for refID in ['None.100controls','None.150controls' ] :
-
-
-        d = reg.loadRef(refID)
-        d.load()
-        ds.append(d)
-    ks=['str_sd_mu','fv', 'v_mu', 'str_d_mu',
-                        'cum_t', 'run_tr', 'pau_tr',
-                        'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
-                        'b_mu', 'bv_mu']
-
-    # kws={'datasets' : ds, 'show':True, 'mode' : 'minimal'}
-    kws={'datasets' : ds, 'show':True, 'ks' : ks}
-
-    t0=time.time()
-    # _ = plot_endpoint_params(**kws)
-    t1 = time.time()
-    _=plot_endpoint_params(**kws)
-    t2= time.time()
-    print(t1-t0,t2-t1)
 

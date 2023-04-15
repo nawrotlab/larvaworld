@@ -9,8 +9,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
 
-
-
+import larvaworld
 from larvaworld.lib import reg, aux, plot
 
 plt_conf = {'axes.labelsize': 20,
@@ -98,6 +97,7 @@ class BasePlot:
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
                 ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
+                major_ticklabelsize=None,minor_ticklabelsize=None,
                 xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
                 xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
                 leg_handles=None, leg_labels=None,legfontsize=None,xvis=None, yvis=None, zvis=None,
@@ -137,6 +137,11 @@ class BasePlot:
             ax.tick_params(axis='y', which='major', labelsize=yticklabelsize)
         if zticklabelsize is not None:
             ax.tick_params(axis='z', which='major', labelsize=zticklabelsize)
+        if major_ticklabelsize is not None:
+            ax.tick_params(axis='both', which='major', labelsize=major_ticklabelsize)
+        if minor_ticklabelsize is not None:
+            ax.tick_params(axis='both', which='minor', labelsize=minor_ticklabelsize)
+
         if xticklabels is not None:
             ax.set_xticklabels(labels=xticklabels, rotation=xticklabelrotation)
         if yticks is not None:
@@ -279,7 +284,8 @@ class AutoBasePlot(BasePlot):
 class Plot(BasePlot):
     def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, add_samples=False,
                  **kwargs):
-
+        for d in datasets:
+            assert isinstance(d, larvaworld.LarvaDataset)
         if add_samples:
             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
 
@@ -289,9 +295,9 @@ class Plot(BasePlot):
                 labels += targetIDs
         self.Ndatasets, self.colors, save_to, self.labels = plot.plot_config(datasets, labels, save_to,
                                                                         subfolder=subfolder)
-
-        super().__init__(name, save_to=save_to, **kwargs)
         self.datasets = datasets
+        super().__init__(name, save_to=save_to, **kwargs)
+
         ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
         self.fit_filename = os.path.join(self.save_to, ff) if ff is not None and self.save_to is not None else None
         self.fit_ind = None
@@ -495,16 +501,37 @@ class AutoPlot(Plot):
 class AutoLoadPlot(AutoPlot) :
     def __init__(self, ks, **kwargs):
         super().__init__(**kwargs)
-        self.kdict= aux.AttrDict({k : {l: {'df': reg.par.get(k=k, d=d, compute=True), 'col': col} for d, l, col in zip(self.datasets,self.labels,self.colors)} for k in ks})
-        # self.kdict= load_ks(ks, self.datasets,self.labels,self.colors, reg.par)
-        self.pdict=aux.AttrDict({k:reg.par.kdict[k] for k in ks})
-        self.kpdict=aux.AttrDict({k:[self.kdict[k], self.pdict[k]] for k in ks})
-        self.ks=ks
-        self.pars=[self.pdict[k].d for k in ks]
+
+
+        self.vdict = aux.AttrDict()
+        self.kdict = aux.AttrDict()
+        self.pdict = aux.AttrDict()
+        self.kpdict = aux.AttrDict()
+        self.ks=[]
+        self.pars=[]
+        for k in ks :
+            try :
+                self.kdict[k] = aux.AttrDict({l: {'df': reg.par.get(k=k, d=d, compute=True), 'col': col} for l, d, col in self.data_palette})
+                self.vdict[k] = [dic.df.values.tolist() for l,dic in self.kdict[k].items()]
+                self.pdict[k] = reg.par.kdict[k]
+                self.kpdict[k] = [self.kdict[k], self.pdict[k]]
+                self.ks.append(k)
+                self.pars.append(self.pdict[k].d)
+            except :
+                reg.vprint(f'Failed to retrieve key {k}', 1)
+                pass
+        self.Nks=len(self.ks)
+
+
+
 
 
 class GridPlot(BasePlot):
     def __init__(self, name, width, height, scale=(1, 1), **kwargs):
+        '''
+        Class for compiling composite plots
+
+        '''
         super().__init__(name, **kwargs)
         ws, hs = scale
         self.width, self.height = width, height
@@ -572,5 +599,4 @@ class GridPlot(BasePlot):
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:
             axs = self.add(**kwargs)
-        func=reg.graphs.get(func)
-        _ = func(fig=self.fig, axs=axs, **kws)
+        _ = reg.graphs.run(ID = func,fig=self.fig, axs=axs, **kws)

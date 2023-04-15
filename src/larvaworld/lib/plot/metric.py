@@ -48,11 +48,9 @@ def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
 
 
 def plot_stride_variability(component_vels=True, subfolder='metric_definition', **kwargs):
-    build_kws = {'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True}
-
-    P = plot.AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,build_kws=build_kws,  **kwargs)
+    P = plot.AutoPlot(name=f'stride_spatiotemporal_variation', subfolder=subfolder,
+                      build_kws={'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True},  **kwargs)
     for ii, d in enumerate(P.datasets):
-        ax = P.axs[ii]
         try :
             stvar = d.read(key='stride_variability', file='vel_definition')
 
@@ -64,11 +62,12 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
         ps = stvar.index if component_vels else [p for p in stvar.index if 'lin' not in p]
         for p in ps:
             row = stvar.loc[p]
-            ax.scatter(x=row[reg.getPar('str_sd_var')], y=row[reg.getPar('str_t_var')], marker=row['marker'], s=200,
+            P.axs[ii].scatter(x=row[reg.getPar('str_sd_var')], y=row[reg.getPar('str_t_var')], marker=row['marker'], s=200,
                        color=row['color'], label=row['symbol'])
-        ax.legend(ncol=2, handleheight=1.7, labelspacing=0.01, loc='lower right')
-        ax.set_ylabel(r'$\overline{cv}_{temporal}$')
-        ax.set_xlabel(r'$\overline{cv}_{spatial}$')
+        P.axs[ii].legend(ncol=2, handleheight=1.7, labelspacing=0.01, loc='lower right')
+        # ax.set_ylabel(r'$\overline{cv}_{temporal}$')
+        # ax.set_xlabel(r'$\overline{cv}_{spatial}$')
+        P.conf_ax(ii, xlab=r'$\overline{cv}_{spatial}$', ylab=r'$\overline{cv}_{temporal}$')
     return P.get()
 
 @reg.funcs.graph('correlated metrics')

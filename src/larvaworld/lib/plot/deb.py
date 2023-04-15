@@ -13,7 +13,7 @@ from larvaworld.lib import reg, aux, plot
 def plot_gut(**kwargs):
     P = plot.AutoPlot(name='gut', **kwargs)
     x = P.trange()
-    for d, l, c in zip(P.datasets, P.labels, P.colors):
+    for l, d, c in P.data_palette:
         df = d.step_data['gut_occupancy'] * 100
         plot.plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=l)
     P.conf_ax(xlab='time, $min$', ylab='% gut occupied',
@@ -37,7 +37,7 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
         ylab = 'Food intake as % larval mass'
     P = plot.AutoPlot(name=name, **kwargs)
 
-    for d, lab, c in zip(P.datasets, P.labels, P.colors):
+    for lab, d, c in P.data_palette:
         dst_df = d.step_data[par]
         dst_m = dst_df.groupby(level='Step').quantile(q=0.5)
         dst_u = dst_df.groupby(level='Step').quantile(q=0.75)
@@ -243,6 +243,8 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
             ax.axvspan(t00, t0, color='darkgrey', alpha=0.5)
             ax.axvspan(t0, t0_sim, color='lightgrey', alpha=0.5)
 
+
+
             if d['simulation']:
                 ax.axvspan(t0, t3, color='grey', alpha=0.05)
             for (st0, st1), qq in zip(epochs, epoch_qs):
@@ -253,6 +255,9 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
             ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
             ax.tick_params(axis='y', labelsize=10)
             ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
+
+            # P.conf_ax(j, xlab=r'angular velocity, $\dot{\theta}_{i}$', ylab='regression score',
+            #           xticks=x, yMaxN=4, leg_loc='lower left')
 
             if l in ['pupation_buffer', 'EEB', 'R_faeces', 'R_absorbed', 'R_not_digested',
                      'gut_occupancy']:
@@ -359,19 +364,14 @@ def plot_EEB_vs_food_quality(refIDs=None, dt=None,name=None, species_list=['rove
 
     if name is None :
         name=f'EEB_vs_food_quality'
-    # filename = f'EEB_vs_food_quality.{plot.suf}'
     qs = np.arange(0.01, 1, 0.01)
 
     P = plot.AutoBasePlot(name=name, build_kws={'Nrows': 3, 'Ncols': len(refIDs), 'w': 10, 'h': 7}, **kwargs)
 
-    # fig, axs = plt.subplots(3, len(refIDs), figsize=(10 * len(refIDs), 20))
-    # axs = axs.ravel()
-    cols = aux.N_colors(len(species_list))
-
     for i, refID in enumerate(refIDs):
         kws=reg.retrieveRef(refID)['intermitter']
         z = get_EEB_poly1d(dt=dt, **kws)
-        for col, species in zip(cols, species_list):
+        for col, species in zip(aux.N_colors(len(species_list)), species_list):
             ss = []
             EEBs = []
             cc = {'color': col,
@@ -387,14 +387,10 @@ def plot_EEB_vs_food_quality(refIDs=None, dt=None,name=None, species_list=['rove
             P.axs[3 * i + 1].scatter(qs, EEBs, **cc)
             P.axs[3 * i + 2].scatter(ss, EEBs, **cc)
 
-        P.axs[3 * i + 0].set_xlabel('food quality')
-        P.axs[3 * i + 1].set_xlabel('food quality')
-        P.axs[3 * i + 2].set_xlabel(r'estimated feed freq $Hz$')
-        P.axs[3 * i + 0].set_ylabel(r'estimated feed freq $Hz$')
-        P.axs[3 * i + 1].set_ylabel('EEB')
-        P.axs[3 * i + 2].set_ylabel('EEB')
-        P.axs[3 * i + 1].set_ylim([0, 1])
-        P.axs[3 * i + 2].set_ylim([0, 1])
+        P.conf_ax(3 * i + 0, xlab='food quality', ylab=r'estimated feed freq $Hz$')
+        P.conf_ax(3 * i + 1, xlab='food quality', ylab='EEB', ylim=[0,1])
+        P.conf_ax(3 * i + 2, xlab=r'estimated feed freq $Hz$', ylab='EEB', ylim=[0,1])
+
     for ax in P.axs:
         ax.legend()
     return P.get()

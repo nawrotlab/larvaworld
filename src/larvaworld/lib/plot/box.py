@@ -10,6 +10,64 @@ from scipy.stats import ttest_ind
 from larvaworld.lib import reg, aux, plot
 
 
+# @reg.funcs.graph('boxplot (simple)')
+# class BoxPlots(plot.AutoPlot) :
+#     def __init__(self, ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=False, grouped=False,
+#              ylims=None,in_mm=[], target_only=None, **kwargs):
+#         Npars = len(ks)
+#         if name is None:
+#             name = f'boxplot_{Npars}_{key}_pars'
+#         super().__init__(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
+#         pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
+#         group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
+#         Ngroups = len(group_ids)
+#         data = aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
+#         if not grouped:
+#             x = "DatasetID"
+#             hue = None
+#             palette = dict(zip(self.labels, self.colors))
+#             data = data[pars + [x]]
+#         else:
+#             x = "DatasetID"
+#             hue = 'GroupID'
+#             palette = dict(zip(group_ids, aux.N_colors(Ngroups)))
+#             data = data[pars + [x, hue]]
+#         for sh in in_mm:
+#             data[reg.getPar(sh)] *= 1000
+#
+#         for ii in range(Npars):
+#             kws = {
+#                 'x': x,
+#                 'y': pars[ii],
+#                 'palette': palette,
+#                 'hue': hue,
+#                 'data': data,
+#                 'ax': self.axs[ii],
+#                 'width': 0.8,
+#                 'fliersize': 3,
+#                 'whis': 1.5,
+#                 'linewidth': None
+#             }
+#             g1 = sns.boxplot(**kws)  # RUN PLOT
+#             try:
+#                 g1.get_legend().remove()
+#             except:
+#                 pass
+#             if annotation:
+#                 try:
+#                     plot.annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+#                 except:
+#                     pass
+#
+#             self.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
+#                       xvis=False if ii < (self.Nrows - 1) * Ncols else True)
+#         self.conf_fig(align=True, adjust_kws={'LR': (0.1, 0.95), 'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
+#         return P.get()
+
+
+
+
+
 @reg.funcs.graph('boxplot (simple)')
 def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=False, grouped=False,
              ylims=None,in_mm=[], target_only=None, **kwargs):
@@ -74,18 +132,12 @@ def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common
     Npars = len(ks)
     if name is None:
         name = ks[0]
-
     P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Nrows': int(np.ceil(Npars / 3)), 'w': 8, 'h': 7}, **kwargs)
-    # P = Plot(name=ks[0], **kwargs)
     pars, sim_labels, exp_labels, labs, lims = reg.getPar(ks, to_return=['d', 's', 's', 'l', 'lim'])
-
-    # P.build(**kws0)
-
     group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
     if common_ids is None:
         common_ids = aux.unique_list([l.split('_')[-1] for l in group_ids])
-
     Ncommon = len(common_ids)
     if pair_ids is None:
         pair_ids = aux.unique_list([l.split('_')[0] for l in group_ids])

@@ -469,9 +469,6 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     ax_histx.set_ylim([0.0, np.max(xmax_ps) + 0.05])
     ax_histy.set_xlim([0.0, np.max(ymax_ps) + 0.05])
     dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0, 1.6) if cumy else None, fontsize=10)
-
-    # plt.show()
-    # raise
     return fig
 
 
@@ -513,16 +510,12 @@ def sharexy(mode=None, sharex=False, sharey=False):
 
 def NcolNrows0(N=None, wh=None, w=8, h=8, Ncols=None, Nrows=None, figsize=None):
     Nrows, Ncols = getNcolsNrows(N=N, Ncols=Ncols, Nrows=Nrows)
-    # Nplots=Ncols*Nrows
-
     if figsize is None:
         figsize = get_figsize(Ncols, Nrows, wh=wh, w=w, h=h)
     kws = {
         'ncols': Ncols,
         'nrows': Nrows,
         'figsize': figsize,
-        # **kws2, **kwargs
-        # 'Ncols' : Ncols,
     }
     return kws
 
@@ -532,13 +525,50 @@ def NcolNrows(N=None, wh=None, w=8, h=8, mode=None, sharex=False, sharey=False, 
     if Nrows is not None:
         Nrows*=Nrows_coef
     kws1 = NcolNrows0(N=N, Ncols=Ncols, Nrows=Nrows, wh=wh, w=w, h=h, figsize=figsize)
-
     kws2 = sharexy(mode=mode, sharex=sharex, sharey=sharey)
-
     kws = {
         **kws1,
         **kws2, **kwargs
-        # 'Ncols' : Ncols,
     }
     return kws
-    # Ncols = Ncols, Nrows = Nrows, figsize = (8 * Ncols, 8 * Nrows)
+
+
+def define_ks(ks=None, mode='basic'):
+    l_par = 'l'
+    if ks is None:
+        dic = {
+            'basic': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
+                      'str_tr', 'pau_tr', 'Ltur_tr', 'Rtur_tr',
+                      'tor20_mu', 'dsp_0_40_fin', 'b_mu', 'bv_mu'],
+            'minimal': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
+                        'cum_t', 'str_tr', 'pau_tr', 'tor5_std',
+                        'tor5_mu', 'tor20_mu', 'dsp_0_40_max', 'dsp_0_40_fin',
+                        'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'tiny': ['fsv', 'sv_mu', 'str_tr', 'pau_tr',
+                     'b_mu', 'bv_mu', 'Ltur_tr', 'Rtur_tr'],
+            'stride_def': [l_par, 'fsv', 'str_sd_mu', 'str_sd_std'],
+            'reorientation': ['str_fo_mu', 'str_fo_std', 'tur_fou_mu', 'tur_fou_std'],
+            'tortuosity': ['tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu'],
+            'result': ['sv_mu', 'str_tr', 'pau_tr', 'pau_t_mu'],
+            'limited': [l_par, 'fsv', 'sv_mu', 'str_sd_mu',
+                        'cum_t', 'str_tr', 'pau_tr', 'pau_t_mu',
+                        'tor5_mu', 'tor5_std', 'tor20_mu', 'tor20_std',
+                        'tor', 'sdsp_mu', 'sdsp_0_40_max', 'sdsp_0_40_fin',
+                        'b_mu', 'b_std', 'bv_mu', 'bv_std',
+                        'Ltur_tr', 'Rtur_tr', 'Ltur_fou_mu', 'Rtur_fou_mu'],
+
+            'deb': [
+                'deb_f_mu', 'hunger', 'reserve_density', 'puppation_buffer',
+                'cum_d', 'cum_sd', 'str_N', 'fee_N',
+                'str_tr', 'pau_tr', 'fee_tr', 'f_am',
+                l_par, 'm'
+                # 'tor2_mu', 'tor5_mu', 'tor10_mu', 'tor20_mu',
+                # 'v_mu', 'sv_mu',
+
+            ]
+        }
+        if mode in dic.keys():
+            ks = dic[mode]
+        else:
+            raise ValueError('Provide parameter shortcuts or define a mode')
+    return ks
