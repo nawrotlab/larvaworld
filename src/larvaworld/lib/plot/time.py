@@ -229,88 +229,6 @@ def timeplots(ks,subfolder='timeplots',name=None, unit='sec',
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-@reg.funcs.graph('C odor (real)')
-def plot_odor_concentration(**kwargs):
-    return timeplots(['c_odor1'], **kwargs)
-
-@reg.funcs.graph('C odor (perceived)')
-def plot_sensed_odor_concentration(**kwargs):
-    return timeplots(['dc_odor1'], **kwargs)
-
-@reg.funcs.graph('Y pos')
-def plot_Y_pos(**kwargs):
-    return timeplots(['y'], **kwargs)
-
-# @reg.funcs.graph('dispersal2')
-# def plot_dispersion2(range=(0, 40), scaled=False, subfolder='dispersion', ymax=None,
-#                     **kwargs):
-#     t0, t1 = range
-#     p0 = f'dispersion_{int(t0)}_{int(t1)}'
-#
-#     if not scaled :
-#         par=p0
-#         ylab = r'dispersal $(mm)$'
-#     else :
-#         par=aux.nam.scal(p0)
-#         ylab = 'scaled dispersal'
-#
-#     P = plot.AutoPlot(name=par, subfolder=subfolder, **kwargs)
-#     for lab, d, c in P.data_palette:
-#         try :
-#             dic=aux.load_dict(reg.datapath('dsp', d.config.dir))
-#             df=dic[par]
-#             reg.vprint(f'Dispersal {par} for dataset {d.id} loaded from stored dictionary')
-#         except :
-#             dt = 1 / d.config.fr
-#             s0, s1 = int(t0 / dt), int(t1 / dt)
-#             if hasattr(d, 'step_data') and par in d.step_data.columns:
-#                 dsp=d.step_data[par]
-#                 df = get_disp_df(dsp, s0, Nt=s1-s0)
-#                 reg.vprint(f'Dispersal {par} for dataset {d.id} found in step data')
-#             else :
-#                 try :
-#                     dsp=d.read(key='step')[par]
-#                     df = get_disp_df(dsp, s0, Nt=s1 - s0)
-#                     reg.vprint(f'Dispersal {par} for dataset {d.id} found in step h5 file')
-#                 except :
-#                     try :
-#                         dsp = d.read(key='dspNtor')[par]
-#                         if dsp.dropna().values.shape[0]==0 :
-#                             raise
-#                         df = get_disp_df(dsp, s0, Nt=s1 - s0)
-#                         reg.vprint(f'Dispersal {par} for dataset {d.id} found in dspNtor h5 file')
-#                     except :
-#                         d.load()
-#                         comp_dispersion(d.step_data, d.endpoint_data, d.config, dsp_starts=[t0], dsp_stops=[t1], store=True)
-#                         dic = aux.load_dict(reg.datapath('dsp', d.config.dir))
-#                         df = dic[par]
-#                         reg.vprint(f'Dispersal {par} for dataset {d.id} computed and then loaded from stored dictionary')
-#         mean=df['median'].values
-#         ub=df['upper'].values
-#         lb=df['lower'].values
-#         trange=df.index.values*d.config.dt
-#
-#         P.axs[0].fill_between(trange, ub, lb, color=c, alpha=.2)
-#         P.axs[0].plot(trange, mean, c, label=lab, linewidth=3 if lab != 'experiment' else 8, alpha=1.0)
-#     P.conf_ax(xlab='time, $sec$', ylab=ylab, xlim=range, ylim=[0, ymax], xMaxN=4, yMaxN=4, leg_loc='upper left', legfontsize=15)
-#     return P.get()
-
-# @reg.funcs.graph('dispersal')
-# def plot_dispersal(range=(0, 40), scaled=False, subfolder='dispersion', **kwargs):
-#     t0, t1 = range
-#     # lab = 'dispersal'
-#     k = f'dsp_{int(t0)}_{int(t1)}'
-#     if scaled:
-#         k=f's{k}'
-#         coeff = 1
-#         # ylab = f'scaled {lab}'
-#     else:
-#         coeff = 1000
-#         # ylab = f'{lab} $(mm)$'
-#
-#     P = plot.AutoPlot(name=k, subfolder=subfolder, **kwargs)
-#     P.plot_quantiles(k=k, coeff=coeff, xlim=range, legfontsize=15)
-#     return P.get()
 
 @reg.funcs.graph('navigation index')
 def plot_navigation_index(subfolder='source', **kwargs):
@@ -326,11 +244,17 @@ def plot_navigation_index(subfolder='source', **kwargs):
         vys = []
         for id in d.agent_ids:
             s0 = s.xs(id, level='AgentID').values
-            v0 = aux.eudist(s0)/dt
-            vx = aux.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
-            vy = aux.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
-            vx = np.divide(vx, v0, out=np.zeros_like(v0), where=v0 != 0)
-            vy = np.divide(vy, v0, out=np.zeros_like(v0), where=v0 != 0)
+            dxy = np.diff(s0, axis=0)
+            rads = np.arctan2(dxy[:, 1], dxy[:, 0])
+            rads = np.insert(rads, 0, 0)
+            vx = np.cos(rads)
+            vy = -np.sin(rads)
+
+            # v0 = aux.eudist(s0)/dt
+            # vx = aux.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
+            # vy = aux.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
+            # vx = np.divide(vx, v0, out=np.zeros_like(v0), where=v0 != 0)
+            # vy = np.divide(vy, v0, out=np.zeros_like(v0), where=v0 != 0)
             vxs.append(vx)
             vys.append(vy)
         vx0 = np.nanmean(np.array(vxs), axis=0)

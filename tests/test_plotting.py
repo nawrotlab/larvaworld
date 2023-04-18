@@ -13,7 +13,7 @@ def test_plots() :
 
     for k in ['boxplot (simple)', 'epochs', 'fft multi', 'dispersal summary',
               'kinematic analysis', 'angular pars', 'crawl pars', 'stride cycle',
-              'stride cycle multi', 'ethogram', 'Y pos', 'dispersal', 'pathlength',
+              'stride cycle multi', 'ethogram', 'dispersal', 'pathlength',
               'trajectories'] :
         figs[k] = reg.graphs.run(k, save_as=k,**kws)
         assert isinstance(figs[k], plt.Figure)

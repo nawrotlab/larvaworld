@@ -141,48 +141,6 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
                adjust_kws={'BT': (0.1, 0.9), 'LR': (0.2, 0.9), 'H': 0.01})
     return P.get()
 
-def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16, short='fov', idx=0, Nbins=64,
-                            color_solo='grey', color='red',
-                            absolute=False, save_to=None, pooled=False,
-                            ylim=None, axs=None, fig=None, show=False):
-    from larvaworld.lib.process.annotation import detect_strides
-    p, sv, fv = reg.getPar([short, 'sv', 'fv'])
-    if ss is None:
-        id = c.agent_ids[idx]
-        ee = e.loc[id]
-        ss = s.xs(id, level='AgentID')
-        fr = ee[fv]
-        dt = c.dt
-    ssp = ss[p].abs().values if absolute else ss[p].values
-    strides = detect_strides(ss[sv], dt, fr=fr, return_runs=False, return_extrema=False)
-    strides = strides.tolist()
-    pi2 = 2 * np.pi
-    x = np.linspace(0, pi2, Nbins)
-
-    if axs is None and fig is None:
-        fig, axs = plt.subplots(1, 1, figsize=(15, 6))
-
-    aa = np.zeros([len(strides), Nbins])
-    for ii, (s0, s1) in enumerate(strides):
-        aa[ii, :] = np.interp(x, np.linspace(0, pi2, s1 - s0), ssp[s0:s1])
-        if not pooled:
-            axs.plot(x, aa[ii, :], color_solo, linewidth=1, alpha=0.5, zorder=2)
-
-    if pooled:
-        plot.plot_quantiles(df=aa, axis=axs, color_shading=color, x=x)
-    else:
-        aa_mu = np.nanquantile(aa, q=0.5, axis=0)
-        axs.plot(x, aa_mu, color, linewidth=5, alpha=1.0, zorder=10)
-    axs.set_xlabel('$\phi_{stride}$')
-    axs.yaxis.set_major_locator(ticker.MaxNLocator(5))
-    axs.set_xlim([0, pi2])
-    axs.set_ylim(ylim)
-    axs.set_xticks(np.linspace(0, pi2, 5))
-    axs.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-    if save_to is not None:
-        fig.savefig(f'{save_to}/stride_cycle_individual.pdf', dpi=300)
-    if show:
-        plt.show()
 
 @reg.funcs.graph('stride cycle multi')
 def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
@@ -218,7 +176,6 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
             plot.plot_quantiles(df=aa_norm, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
         else :
             ylab1 = None
-            # P.axs[1].set_ylabel(lab)
 
 
         points0 = nam.midline(c.Npoints, type='point')
@@ -259,14 +216,13 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
             if axx is None:
                 axx = P.axs[1].inset_axes([0.7, 0.7, 0.3, 0.25])
             axx.violinplot(aa.T, widths=0.9)
+            axx.axhline(0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
             P.conf_ax(ax=axx, ylab=r'$\Delta\phi$', xlab='# point',
                       xticks=np.arange(c.Npoints + 1),yticks=[-np.pi / 2, 0, np.pi / 2, np.pi],
                       xticklabels=[None] + np.arange(1, c.Npoints + 1, 1).tolist(),
-                      yticklabels=[r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'])
+                      yticklabels=[r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'],
+                      minor_ticklabelsize = 12, major_ticklabelsize = 12)
 
-            axx.tick_params(axis='both', which='minor', labelsize=12)
-            axx.tick_params(axis='both', which='major', labelsize=12)
-            axx.axhline(0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
         except:
             pass
     P.adjust((0.15, 0.9), (0.2, 0.9), 0.1, 0.15)
