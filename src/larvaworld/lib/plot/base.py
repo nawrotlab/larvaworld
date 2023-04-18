@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
+from scipy.stats import ttest_ind
 from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
 
@@ -25,26 +25,32 @@ plt.rcParams.update(plt_conf)
 class BasePlot:
     def __init__(self, name, save_to=None, save_as=None, return_fig=False, show=False, suf='pdf', pref=None,
                  subplot_kw={}, build_kws={}, **kwargs):
-        if pref is not None:
-            name = f'{pref}_{name}'
-        self.filename = f'{name}.{suf}' if save_as is None else f'{save_as}.{suf}'
+        if save_as is None :
+            if pref is not None:
+                name = f'{pref}_{name}'
+            save_as=name
+        self.filename = f'{save_as}.{suf}'
+        self.fit_filename = f'{save_as}_fits.csv'
+        self.fit_ind = None
+        self.fit_df = None
+
         self.return_fig = return_fig
         self.show = show
-        self.fit_df = None
+
         self.save_to = save_to
         self.cur_idx = 0
         self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
         self.letter_dict = {}
         self.x0s, self.y0s = [], []
-        self.fig_kws={}
-        self.build_kws=self.set_build_kws(subplot_kw=subplot_kw, build_kws=build_kws)
+        self.fig_kws=self.set_fig_kws(subplot_kw=subplot_kw, build_kws=build_kws)
 
-    def set_build_kws(self,subplot_kw, build_kws):
+
+    def set_fig_kws(self,subplot_kw={}, build_kws={}):
         for k,v in build_kws.items():
             if v=='Ndatasets':
                 build_kws[k]=self.Ndatasets
         build_kws['subplot_kw']=subplot_kw
-        return build_kws
+        return plot.NcolNrows(**build_kws)
 
 
     def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15):
@@ -70,9 +76,8 @@ class BasePlot:
                 ax = Axes3D(self.fig, azim=azim, elev=elev)
                 self.axs = [ax]
             else:
-                self.fig_kws = plot.NcolNrows(**self.build_kws)
                 self.fig, axs = plt.subplots(**self.fig_kws)
-                self.axs = axs.ravel() if self.Ncols*self.Nrows > 1 else [axs]
+                self.axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
 
     @ property
     def Naxs(self):
@@ -221,8 +226,9 @@ class BasePlot:
         self.fig = fig
 
     def get(self):
-        if self.fit_df is not None:
-            self.fit_df.to_csv(self.fit_filename, index=True, header=True)
+        if self.fit_df is not None and self.save_to is not None:
+            ff = os.path.join(self.save_to, self.fit_filename)
+            self.fit_df.to_csv(ff, index=True, header=True)
         return plot.process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
 
     def add_letter(self, ax, letter=True, x0=False, y0=False):
@@ -246,15 +252,7 @@ class BasePlot:
             Y = text_y0 if ax in self.y0s else ax.get_position().y1 + dy
             self.fig.text(X, Y, text, size=30, weight='bold')
 
-    def conf_fig(self, idx=0, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
-                xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
-                yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
-                ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
-                xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
-                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None,
-                xMaxFix=False, leg_loc=None,
-                leg_handles=None, xvis=None, yvis=None, zvis=None,adjust_kws=None,align=None,
-                title=None, title_kws={}):
+    def conf_fig(self, adjust_kws=None,align=None,title=None, title_kws={}):
         if title is not None:
             pairs={
                 # 't':'t',
@@ -282,13 +280,12 @@ class AutoBasePlot(BasePlot):
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
 class Plot(BasePlot):
-    def __init__(self, name, datasets, labels=None, subfolder=None, save_fits_as=None, save_to=None, add_samples=False,
+    def __init__(self, name, datasets, labels=None, subfolder=None, save_to=None, add_samples=False,
                  **kwargs):
         for d in datasets:
             assert isinstance(d, larvaworld.LarvaDataset)
         if add_samples:
             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
-
             targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedConf('Ref')]
             datasets += targets
             if labels is not None:
@@ -298,37 +295,28 @@ class Plot(BasePlot):
         self.datasets = datasets
         super().__init__(name, save_to=save_to, **kwargs)
 
-        ff = f'{name}_fits.csv' if save_fits_as is None else save_fits_as
-        self.fit_filename = os.path.join(self.save_to, ff) if ff is not None and self.save_to is not None else None
-        self.fit_ind = None
 
-    def init_fits(self, pars, names=('dataset1', 'dataset2'), multiindex=True):
+
+    def init_fits(self, pars, names=('dataset1', 'dataset2')):
         if self.Ndatasets > 1:
-            if multiindex:
-                fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
-                self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
-                self.fit_df = pd.DataFrame(index=self.fit_ind,
-                                           columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
-            else:
-                self.fit_df = pd.DataFrame(index=self.labels,
-                                           columns=pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars])
+            columns = pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars]
+            fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
+            self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
+            self.fit_df = pd.DataFrame(index=self.fit_ind, columns=columns)
 
     def comp_pvalues(self, values, p):
         if self.fit_ind is not None:
-            for ind, (v1, v2) in zip(self.fit_ind, itertools.combinations(values, 2)):
-                self.comp_pvalue(ind, list(v1), list(v2), p)
+            for ind, (vv1, vv2) in zip(self.fit_ind, itertools.combinations(values, 2)):
+                v1, v2=list(vv1),list(vv2)
+                st, pv = ttest_ind(v1, v2, equal_var=False)
+                if not pv <= 0.01:
+                    t = 0
+                elif np.nanmean(v1) < np.nanmean(v2):
+                    t = 1
+                else:
+                    t = -1
+                self.fit_df.loc[ind, [p, f'S_{p}', f'P_{p}']] = [t, st, np.round(pv, 11)]
 
-    def comp_pvalue(self, ind, v1, v2, p):
-        from scipy.stats import ttest_ind
-
-        st, pv = ttest_ind(v1, v2, equal_var=False)
-        if not pv <= 0.01:
-            t = 0
-        elif np.nanmean(v1) < np.nanmean(v2):
-            t = 1
-        else :
-            t=-1
-        self.fit_df.loc[ind, [p,f'S_{p}',f'P_{p}']]=[t,st,np.round(pv, 11)]
 
     def plot_half_circles(self, p, i):
         if self.fit_df is not None:
@@ -390,7 +378,6 @@ class Plot(BasePlot):
 
     @property
     def data_dict(self):
-        # N_list = [d.config.N for d in self.datasets]
         return dict(zip(self.labels,self.datasets))
 
     @property
@@ -435,70 +422,17 @@ class Plot(BasePlot):
         x = np.linspace(t0 / T, t1 / T, self.Nticks)
         return x
 
-    def angrange(self, r, absolute=False, nbins=200):
-        lim = (r0, r1) = (0, r) if absolute else (-r, r)
-        x = np.linspace(r0, r1, nbins)
-        return x, lim
-
-
-    # def plot_par(self, k=None, par=None, vs=None, i=0, labels=None,
-    #              absolute=False, rad2deg=False,key='step',
-    #              pvalues=False, half_circles=False,  **kwargs):
-    #
-    #     if par is None and k is not None :
-    #         par = reg.getPar(k)
-    #     if labels is None:
-    #         labels = self.labels
-    #     if vs is None:
-    #         vs=plot.get_vs(self.datasets, par, key=key,absolute=absolute, rad2deg=rad2deg)
-    #
-    #
-    #     plot.prob_hist(vs,self.colors, labels,ax=self.axs[i],  **kwargs)
-    #
-    #     # if bins == 'broad' and nbins is not None:
-    #     #     bins = np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
-    #     # for v, c, l in zip(vs, self.colors, labels):
-    #     #     if type == 'sns.hist':
-    #     #         sns.histplot(v, color=c, bins=bins, ax=self.axs[i], label=l, **sns_kws, **kwargs)
-    #     #     elif type == 'plt.hist':
-    #     #         y, x, patches = self.axs[i].hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), label=l, color=c, **kwargs)
-    #     #         if plot_fit:
-    #     #             x = x[:-1] + (x[1] - x[0]) / 2
-    #     #             y_smooth = np.polyfit(x, y, 5)
-    #     #             poly_y = np.poly1d(y_smooth)(x)
-    #     #             self.axs[i].plot(x, poly_y, color=c, label=l, linewidth=3)
-    #     if pvalues:
-    #         self.comp_pvalues(vs, par)
-    #     if half_circles:
-    #         self.plot_half_circles(par, i)
-    #     return vs
-
-
 
 class AutoPlot(Plot):
     def __init__(self, fig=None, axs=None, **kwargs):
         super().__init__(**kwargs)
-
         self.build(fig=fig, axs=axs)
 
-
-# def load_ks(ks, ds,ls,cols, d0):
-#     dic = {}
-#     for k in ks:
-#         dic[k] = {}
-#         for d,l,col in zip(ds,ls,cols):
-#             dic[k][l] = aux.AttrDict({'df':d0.get(k=k, d=d, compute=True), 'col':col})
-#     return aux.AttrDict(dic)
-#
-# def load_ks(ks, ds,ls,cols, d0):
-#     return aux.AttrDict({k : {l: {'df': d0.get(k=k, d=d, compute=True), 'col': col} for d, l, col in zip(ds, ls, cols)} for k in ks})
 
 
 class AutoLoadPlot(AutoPlot) :
     def __init__(self, ks,key='step',ranges=None,absolute=False, rad2deg=False, **kwargs):
         super().__init__(**kwargs)
-
-
         self.ranges = ranges
         self.absolute = absolute
         self.vdict = aux.AttrDict()
@@ -512,13 +446,8 @@ class AutoLoadPlot(AutoPlot) :
                 p = reg.par.kdict[k]
                 par=p.d
                 vs = plot.get_vs(self.datasets, par, key=key, absolute=absolute, rad2deg=rad2deg)
-                # print(k, len(vs))
-                # print(vs)
                 assert len(vs)==self.Ndatasets
                 self.kdict[k] = aux.AttrDict({l: {'df': vs[i], 'col': col} for i, (l, d, col) in enumerate(self.data_palette)})
-                # self.kdict[k] = aux.AttrDict({l: {'df': reg.par.get(k=k, d=d, compute=True), 'col': col} for l, d, col in self.data_palette})
-
-
                 self.kpdict[k] = [self.kdict[k], p]
                 self.vdict[k] = vs
                 self.pdict[k] = p
@@ -540,7 +469,9 @@ class AutoLoadPlot(AutoPlot) :
             par=p.d
             vs = self.vdict[k]
             if self.ranges :
-                bins, xlim = self.angrange(self.ranges[i], self.absolute, nbins)
+                r=self.ranges[i]
+                xlim = (r0, r1) = (0, r) if self.absolute else (-r, r)
+                bins = np.linspace(r0, r1, nbins)
             else :
                 bins= np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
                 xlim=p.lim

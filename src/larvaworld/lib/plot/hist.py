@@ -24,7 +24,7 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     var_mdict = reg.model.variable_mdict(mkey, mode=mode)
     N = len(list(var_mdict.keys()))
 
-    P = plot.AutoBasePlot(name=f'{mkey}_endpoint_hists',build_kws={'Ncols':N,'Nrows':1, 'w':7, 'h':6,  'mode':'hist'}, **kwargs)
+    P = plot.AutoBasePlot(name=f'{mkey}_endpoint_hists',build_kws={'Ncols':N,'w':7, 'h':6, 'sharey': True}, **kwargs)
 
     for i, (k,p) in enumerate(var_mdict.items()):
         # p=d00.args[k]
@@ -59,7 +59,7 @@ def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circ
         rs += [200, 2000]
 
     Nps = len(ks)
-    P = plot.AutoLoadPlot(ks=ks,ranges=rs, absolute=absolute, name=name, subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':8, 'mode':'hist'}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks,ranges=rs, absolute=absolute, name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':8, 'sharey': True}, **kwargs)
     P.plot_hist(type=type, kde=kde, pvalues=False, half_circles=half_circles, alpha=0.8, histtype='step', linewidth=3,nbins=Nbins)
     P.adjust((0.3 / P.Ncols, 0.99), (0.15, 0.95), 0.01)
     return P.get()
@@ -72,8 +72,12 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
     if name is None:
         name = f'distros_{mode}_{Nps}'
     legloc = 'upper left' if half_circles else 'upper right'
-
-    P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':8, 'mode':mode}, **kwargs)
+    build_kws = {'N': Nps, 'wh': 8}
+    if mode == 'box':
+        build_kws['sharex']=True
+    elif mode == 'hist':
+        build_kws['sharey']=True
+    P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, build_kws=build_kws, **kwargs)
     P.init_fits(P.pars)
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
@@ -161,7 +165,7 @@ def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint',name='c
                     par_legend=False, pvalues=False,type='sns.hist',
                     half_circles=False, kde=True,  **kwargs):
     Nps = len(ks)
-    P = plot.AutoLoadPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'N':Nps,'Nrows':1, 'wh':5, 'mode':'hist'}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':5, 'sharey': True}, **kwargs)
     P.plot_hist(type=type,kde=kde, pvalues=pvalues, half_circles=half_circles,par_legend=par_legend)
     P.adjust((0.25 / Nps, 0.99), (0.15, 0.95), 0.1)
     return P.get()
@@ -225,27 +229,17 @@ def plot_turn_amp(name=None,par_short='tur_t', ref_angle=None, subfolder='turn',
 def plot_bout_ang_pars(name='bout_ang_pars',absolute=True, include_rear=True, subfolder='turn', **kwargs):
     ks = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     Nps=len(ks)
-    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N':Nps,'Nrows':2, 'wh':7, 'mode':'hist'}, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N':Nps,'Nrows':2, 'wh':7, 'sharey': True}, **kwargs)
     ranges = [250, 250, 50, 2000, 2000, 500] if include_rear else [200, 200, 2000, 2000]
     chunks = ['run', 'pause']
     chunk_cols = ['green', 'purple']
-    # p_labs = [[sl] * P.Ndatasets for sl in sim_ls]
-
-    # P.init_fits(pars, multiindex=False)
-
     for i, k in enumerate(ks):
         p=reg.par.kdict[k]
         r=ranges[i]
-    # for i, (p, r, p_lab, xlab, disp) in enumerate(zip(pars, ranges, p_labs, xlabels, disps)):
-        bins, xlim = P.angrange(r, absolute, 200)
+        xlim = (r0, r1) = (0, r) if absolute else (-r, r)
+        bins = np.linspace(r0, r1, 200)
+
         P.conf_ax(i, xlab=p.disp, xlim=xlim, yMaxN=3)
-        # ax = P.axs[i]
-        # for c, col in zip(chunks, chunk_cols):
-        #     vs = [d.get_chunk_par(chunk=c,par=p) for d in P.datasets]
-        #     if absolute:
-        #         vs = [np.abs(v) for v in vs]
-        #     P.plot_par(vs=vs,bins=bins, i=i, alpha=1.0, histtype='step', linewidth=2)
-        # vs = []
         for d, l in zip(P.datasets, P.labels):
             vs = [d.get_chunk_par(chunk=c, par=p.d) for c in chunks]
             if absolute:
@@ -317,10 +311,9 @@ def plot_endpoint_params(name=None,mode='basic', ks=None, subfolder='endpoint',
                          plot_fit=True, nbins=20,  use_title=False, **kwargs):
     ks=plot.define_ks(ks, mode)
     Nks = len(ks)
-    Ncols = int(np.ceil(Nks / 3))
     if name is None:
         name = f'endpoint_params_{mode}'
-    P = plot.AutoLoadPlot(ks=ks,key='end', name=name, subfolder=subfolder, build_kws={'N':Nks, 'Ncols':Ncols, 'w':7, 'h':5, 'mode': 'hist'}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks,key='end', name=name, subfolder=subfolder, build_kws={'N':Nks, 'Ncols':int(np.ceil(Nks / 3)), 'w':7, 'h':5, 'sharey': True}, **kwargs)
     P.plot_hist(pvalues=True, half_circles=True,use_title=use_title, plot_fit=plot_fit, nbins=nbins,alpha=0.5)
     P.adjust((0.1, 0.97), (0.1, 1 - (0.1 / 2)), 0.1, 0.2 * 2)
     return P.get()

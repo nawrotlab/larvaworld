@@ -21,7 +21,7 @@ def plot_turn_Dbearing(name=None, min_angle=30.0, max_angle=180.0, ref_angle=Non
         p = nam.unwrap(nam.orient('front'))
 
     P = plot.AutoPlot(name=name, subfolder=subfolder,subplot_kw=dict(projection='polar'),
-                 build_kws={'Nrows':'Ndatasets','Ncols':Nplots, 'wh':5, 'mode':'hist'}, **kwargs)
+                 build_kws={'Nrows':'Ndatasets','Ncols':Nplots, 'wh':5, 'sharey':True}, **kwargs)
 
 
 
@@ -90,12 +90,12 @@ def plot_chunk_Dorient2source(source_ID, datasets,name=None,subfolder='bouts', c
 
     Ncols = int(np.ceil(np.sqrt(N)))
 
-    Nrows = Ncols - 1 if N < Ncols ** 2 - Ncols else Ncols
+    # Nrows = Ncols - 1 if N < Ncols ** 2 - Ncols else Ncols
     if name is None:
         name = f'{chunk}_Dorient_to_{source_ID}'
 
     P = plot.AutoPlot(name=name, subfolder=subfolder, datasets=datasets, subplot_kw=dict(projection='polar'),
-                 build_kws={'Nrows':Nrows,'Ncols':Ncols, 'wh':8, 'mode':'hist'}, **kwargs)
+                 build_kws={'N':N, 'wh':8, 'sharey':True}, **kwargs)
 
     if plot_merged:
         P.Ndatasets += 1

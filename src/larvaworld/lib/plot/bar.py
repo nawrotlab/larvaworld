@@ -23,7 +23,7 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
         ax.legend(h, l, loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=15)
 
     Nplots = len(error_dict)
-    P = plot.AutoBasePlot(name=name,build_kws = {'Nrows': Nplots, 'Ncols': 1, 'w': 20, 'h': 6}, **kwargs)
+    P = plot.AutoBasePlot(name=name,build_kws = {'Nrows': Nplots, 'w': 20, 'h': 6}, **kwargs)
 
 
     P.adjust((0.07, 0.7), (0.05, 0.95), 0.05, 0.2)
@@ -37,9 +37,6 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
             'legend' : False,
             'width' : 0.6,
         }
-        # lab = labels[k] if labels is not None else k
-        # df = error_dict[k]
-        # color = aux.flatten_list(eval_df['par_colors'].values.tolist())
         df = error_dict[k][aux.flatten_list(eval_df['symbols'].values.tolist())]
         df.plot(**kws)
         build_legend(P.axs[ii], eval_df)

@@ -36,7 +36,7 @@ def traj_grouped(unit='mm', name=None, subfolder='trajectories',
         name = f'comparative_trajectories_{mode}'
 
     P = plot.AutoPlot(name=name, subfolder=subfolder,  # subplot_kw=dict(projection='polar'),
-                 build_kws={'Nrows': 1, 'Ncols': 'Ndatasets', 'wh': 5, 'mode': 'both'}, **kwargs)
+                 build_kws={'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True}, **kwargs)
     for ii, (l, d) in enumerate(P.data_dict.items()):
         xy = d.load_traj(mode)
         # xy = get_traj(d, mode)
@@ -186,7 +186,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
     temp = f'track_{slice[0]}-{slice[1]}' if slice is not None else f'track'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
     P = plot.AutoPlot(name=name, subfolder=subfolder,
-                 build_kws={'Nrows': 'Ndatasets', 'Ncols': 1, 'w': 20, 'h': 5, 'mode': 'both'}, ** kwargs)
+                 build_kws={'Nrows': 'Ndatasets', 'w': 20, 'h': 5, 'sharex': True, 'sharey': True}, ** kwargs)
 
     trange = np.arange(0, a.shape[0] * dt, dt)
 
@@ -286,7 +286,7 @@ def track_annotated_data(name=None, subfolder='tracks',
     Nidx = len(agent_idx)
 
     P = plot.AutoPlot(name=name, subfolder=subfolder,
-                 build_kws={'Nrows': 'Ndatasets', 'Nrows_coef': Nidx, 'Ncols': 1, 'w': 15, 'h': 3, 'mode': 'both'},
+                 build_kws={'Nrows': 'Ndatasets', 'Nrows_coef': Nidx, 'Ncols': 1, 'w': 15, 'h': 3, 'sharex': True, 'sharey': True},
                  **kwargs)
     epoch_kdic = {
         'stride': 'sv',
@@ -411,7 +411,7 @@ def plot_sample_tracks(mode=['strides', 'turns'], agent_idx=0, agent_id=None, sl
     figx = 15 * 6 * 3 if slice is None else int((t1 - t0) / 3)
     temp = f'sample_marked_{suf}_{t0}-{t1}'
     name = f'{temp}_{agent_id}' if agent_id is not None else f'{temp}_{agent_idx}'
-    P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Ncols':'Ndatasets','Nrows':Nrows, 'w':figx, 'h':5,  'mode':'hist'},  **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Ncols':'Ndatasets','Nrows':Nrows, 'w':figx, 'h':5, 'sharey': True},  **kwargs)
 
     for ii, (l, d) in enumerate(P.data_dict.items()):
         for jj, key in enumerate(mode):

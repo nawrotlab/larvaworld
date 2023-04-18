@@ -95,7 +95,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
         else:
             name = f'stride_cycle_curves'
     Nsh = len(shorts)
-    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N': Nsh, 'Ncols': 1, 'w': 8, 'h': 5, 'mode': 'box'},
+    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'N': Nsh, 'w': 8, 'h': 5, 'sharex': True},
                  **kwargs)
 
     x = np.linspace(0, 2 * np.pi, Nbins)
@@ -189,7 +189,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
 def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
                             axx=None, **kwargs):
 
-    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 15, 'h': 6, 'mode': 'box'},
+    P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'w': 15, 'h': 6, 'sharex': True},
                  **kwargs)
 
 

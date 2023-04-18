@@ -178,7 +178,7 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
     ylabels = [ylabels0[i] for i in idx]
     Npars = len(labels)
 
-    P = plot.AutoBasePlot(name=name,save_to=save_to, build_kws={'Nrows': Npars, 'Ncols': 1,'sharex': True,'sharey': sharey, 'w': 20, 'h': 6}, **kwargs)
+    P = plot.AutoBasePlot(name=name,save_to=save_to, build_kws={'Nrows': Npars, 'sharex': True,'sharey': sharey, 'w': 20, 'h': 6}, **kwargs)
 
     # fig, axs = plt.subplots(Npars, figsize=(20, 6 * Npars), sharex=True, sharey=sharey)
     # axs = axs.ravel() if Npars > 1 else [axs]

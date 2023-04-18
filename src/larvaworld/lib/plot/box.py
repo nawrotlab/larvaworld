@@ -10,71 +10,15 @@ from scipy.stats import ttest_ind
 from larvaworld.lib import reg, aux, plot
 
 
-# @reg.funcs.graph('boxplot (simple)')
-# class BoxPlots(plot.AutoPlot) :
-#     def __init__(self, ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=False, grouped=False,
-#              ylims=None,in_mm=[], target_only=None, **kwargs):
-#         Npars = len(ks)
-#         if name is None:
-#             name = f'boxplot_{Npars}_{key}_pars'
-#         super().__init__(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
-#         pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
-#         group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
-#         Ngroups = len(group_ids)
-#         data = aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
-#         if not grouped:
-#             x = "DatasetID"
-#             hue = None
-#             palette = dict(zip(self.labels, self.colors))
-#             data = data[pars + [x]]
-#         else:
-#             x = "DatasetID"
-#             hue = 'GroupID'
-#             palette = dict(zip(group_ids, aux.N_colors(Ngroups)))
-#             data = data[pars + [x, hue]]
-#         for sh in in_mm:
-#             data[reg.getPar(sh)] *= 1000
-#
-#         for ii in range(Npars):
-#             kws = {
-#                 'x': x,
-#                 'y': pars[ii],
-#                 'palette': palette,
-#                 'hue': hue,
-#                 'data': data,
-#                 'ax': self.axs[ii],
-#                 'width': 0.8,
-#                 'fliersize': 3,
-#                 'whis': 1.5,
-#                 'linewidth': None
-#             }
-#             g1 = sns.boxplot(**kws)  # RUN PLOT
-#             try:
-#                 g1.get_legend().remove()
-#             except:
-#                 pass
-#             if annotation:
-#                 try:
-#                     plot.annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
-#                 except:
-#                     pass
-#
-#             self.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
-#                       xvis=False if ii < (self.Nrows - 1) * Ncols else True)
-#         self.conf_fig(align=True, adjust_kws={'LR': (0.1, 0.95), 'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
-#         return P.get()
-
-
-
 
 
 @reg.funcs.graph('boxplot (simple)')
-def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, show_ns=False, grouped=False,
+def boxplots(ks=['l', 'v_mu'], key='end', name=None, annotation=True, show_ns=False, grouped=False,
              ylims=None,in_mm=[], target_only=None, **kwargs):
     Npars = len(ks)
     if name is None:
         name = f'boxplot_{Npars}_{key}_pars'
-    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': Ncols, 'wh': 8, 'mode': 'box'}, **kwargs)
+    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': 4, 'wh': 8, 'sharex':True}, **kwargs)
     pars, labs, units, symbols = reg.getPar(ks, to_return=['d', 'lab', 'unit', 'symbol'])
     group_ids = aux.unique_list([d.config['group_id'] for d in P.datasets])
     Ngroups = len(group_ids)
@@ -117,14 +61,10 @@ def boxplots(ks=['l', 'v_mu'], key='end', Ncols=4, name=None, annotation=True, s
                 pass
 
         P.conf_ax(ii, xticklabelrotation=30, ylab=labs[ii], yMaxN=4, ylim=ylims[ii] if ylims is not None else None,
-                  xvis=False if ii < (P.Nrows - 1) * Ncols else True)
+                  xvis=False if ii < (P.Nrows - 1) * P.Ncols else True)
     P.conf_fig(align=True, adjust_kws={'LR': (0.1, 0.95), 'BT': (0.15, 0.9), 'W': 0.5, 'H': 0.15})
     return P.get()
 
-
-# def distro_boxplot(ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],**kwargs):
-#
-#     return boxplots(shorts=ks,key='step',**kwargs)
 
 @reg.funcs.graph('boxplot (grouped)')
 def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None,
@@ -283,9 +223,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     Cmods = dict(zip(mIDs, ['dark', 'light']))
     subIDs = aux.unique_list([l.split('_')[0] for l in P.labels])
     Csubs = dict(zip(subIDs, ['green', 'orange', 'magenta']))
-    # gIDs = dNl.unique_list([d.config['group_id'] for d in P.datasets])
 
-    # ks =
     # ks = ['tur_tr', 'tur_N_mu', 'pau_tr', 'f_am', 'cum_d', 'on_food_tr']
 
     DataDic = aux.AttrDict({
@@ -296,8 +234,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
         } for subID in subIDs
     })
 
-    # print(gIDs,mIDs,subIDs)
-    # raise
+
 
     # Nmods = len(mIDs)
     # ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
@@ -312,7 +249,6 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
             pair_dfs.append(pd.DataFrame(aux.boolean_indexing(pair_vs).T, columns=mIDs).assign(Substrate=subID))
         cdf = pd.concat(pair_dfs)  # CONCATENATE
         mdf = pd.melt(cdf, id_vars=['Substrate'], var_name=['Model'])  # MELT
-        # print(mdf)
         return mdf
 
     def get_df_onVSoff(par, scale):
@@ -328,9 +264,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
         return mdf
 
     def plot_p(data, ax, hue, agar=False):
-
         with sns.plotting_context('notebook', font_scale=1.4):
-
             kws = {
                 'x': "Substrate",
                 'y': "value",
@@ -341,8 +275,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
             }
             g1 = sns.boxplot(**kws)
             g1.get_legend().remove()
-            # print(data)
-            # print(data.shape)
+
             try:
                 plot.annotate_plot(show_ns=show_ns, **kws)
             except:
@@ -380,7 +313,6 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
                 patch.set_facecolor(cols[j])
 
     for ii, k in enumerate(ks):
-        # print(ii,k)
         ax = P.axs[ii]
         p = reg.par.kdict[k]
         par = p.d
@@ -405,33 +337,11 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     P.fig.align_ylabels(P.axs[:])
     P.adjust((0.1, 0.95), (0.15, 0.9), 0.3, 0.3)
     return P.get()
-#
-# @reg.funcs.graph('ggboxplot')
-# def ggboxplot(ks=['l', 'v_mu'], key='end', figsize=(12, 6), subfolder=None, **kwargs):
-#     pars, syms, labs, lims = reg.getPar(ks, to_return=['d', 's', 'lab', 'lim'])
-#     from plotnine import ggplot, aes, geom_boxplot, scale_color_manual, theme
-#     Npars = len(pars)
-#     if Npars == 1:
-#         name = pars[0]
-#     else:
-#         name = f'ggboxplot_{len(pars)}_end_pars'
-#     P = Plot(name=name, subfolder=subfolder, **kwargs)
-#     e = data_aux.concat_datasets(dict(zip(P.labels, P.datasets)), key=key)
-#     Cdict = dict(zip(P.labels, P.colors))
-#     ggs = [ggplot(e, aes(x='DatasetID', y=p, color='DatasetID')) for p in pars]
-#     if Npars == 1:
-#         P.fig = (ggs[0] + geom_boxplot() + scale_color_manual(Cdict) + theme(
-#             figure_size=figsize)).draw()
-#     else:
-#
-#         P.fig = (ggs[0] + geom_boxplot() + scale_color_manual(
-#             Cdict) + theme(
-#             figure_size=figsize)).draw()
-#     return P.get()
+
 
 @reg.funcs.graph('foraging')
 def plot_foraging(**kwargs):
-    P = plot.AutoPlot(name='foraging', build_kws={'Nrows': 1, 'Ncols': 2, 'w': 8, 'h': 10, 'mode': 'box'}, **kwargs)
+    P = plot.AutoPlot(name='foraging', build_kws={'Ncols': 2, 'w': 8, 'h': 10, 'sharex':True}, **kwargs)
     for j, action in enumerate(['on_food_tr', 'sf_am']):
         dfs = []
         for i, d in enumerate(P.datasets):
@@ -467,10 +377,7 @@ def lineplot(markers, ks=['f_am'], name=None, coupled_labels=None, xlabel=None, 
     if name is None:
         name = ks[0]
 
-    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'Ncols': 1, 'w': 8, 'h': 7 / Npars}, **kwargs)
-
-    # Npars = len(ks)
-    # P = AutoPlot(name=ks[0], Nrows=Npars, figsize=(8, 7), **kwargs)
+    P = plot.AutoPlot(name=name, build_kws={'N': Npars, 'w': 8, 'h': 7 / Npars}, **kwargs)
     Nds = P.Ndatasets
 
     if coupled_labels is not None:

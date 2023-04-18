@@ -88,8 +88,8 @@ def plot_nengo_network(group=None, probes=None, same_plot=False, subfolder='neng
     else:
         Nrows = N * P.Ndatasets
         yMaxN = 3
-    P.build_kws['Nrows']=Nrows
-    P.build_kws['Ncols']=Nids
+    P.fig_kws['nrows']=Nrows
+    P.fig_kws['ncols']=Nids
     P.build()
     for i, d in enumerate(P.datasets):
         dics = d.load_dicts('nengo')
@@ -193,7 +193,7 @@ def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True
     Nks=len(ks)
     if name is None :
         name=f'timeplot_x{Nks}'
-    P = plot.AutoLoadPlot(ks=ks,name=name, subfolder=subfolder,build_kws={'figsize':(15,5*Nks),'Ncols':1,'Nrows':Nks,'sharex':True}, **kwargs)
+    P = plot.AutoLoadPlot(ks=ks,name=name, subfolder=subfolder,build_kws={'Nrows':Nks,'sharex':True, 'w' : 15, 'h' : 5}, **kwargs)
     x=P.trange(unit)
     # for i, (k, (dic, p)) in enumerate(P.kpdict.items()):
     for i,k in enumerate(P.ks) :
@@ -290,7 +290,7 @@ def plot_dispersion(range=(0, 40), scaled=False, subfolder='dispersion', ymax=No
 
 @reg.funcs.graph('navigation index')
 def plot_navigation_index(subfolder='source', **kwargs):
-    P = plot.AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'Ncols': 1, 'w': 20, 'h': 10,'mode':'both'}, **kwargs)
+    P = plot.AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'w': 20, 'h': 10,'sharex':True, 'sharey':True}, **kwargs)
 
     for d, c, g in zip(P.datasets, P.colors, P.labels):
         dt = 1 / d.fr
