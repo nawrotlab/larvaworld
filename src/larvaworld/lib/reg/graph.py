@@ -193,7 +193,7 @@ class GraphRegistry:
         ],
         'chemo': [
             # autotime(['sv', 'fov', 'b', 'a']),
-            self.entry('autoplot', ks=['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T']),
+            self.entry('timeplots','chemosensation', ks=['c_odor1', 'dc_odor1', 'A_olf', 'A_T', 'I_T'], individuals=True),
             self.entry('trajectories'),
             # self.entry('turn amplitude'),
             # self.entry('angular pars', Npars=5),
@@ -213,23 +213,26 @@ class GraphRegistry:
             *[self.entry('nengo', name=p, group=p, same_plot=True if p == 'anemotaxis' else False)for p in
               ['anemotaxis', 'frequency', 'interference', 'velocity', 'crawler', 'turner', 'wind_effect_on_V',
                'wind_effect_on_Fr']],
-            *[self.entry('timeplot', ks=[p]) for p in ['A_wind', 'anemotaxis']],
+            # *[self.entry('timeplot', ks=[p]) for p in ['A_wind', 'anemotaxis']],
+            self.entry('timeplots', 'anemotaxis', ks=['A_wind', 'anemotaxis']),
             # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
             self.entry('endpoint pars (hist)', name='final anemotaxis', ks=['anemotaxis'])
 
         ],
         'thermo': [
             self.entry('trajectories'),
-            self.entry('autoplot', ks=['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C', 'A_therm'], show_first=True, individuals=False)
+            self.entry('timeplots', 'thermosensation', ks=['temp_W', 'dtemp_W', 'temp_C', 'dtemp_C', 'A_therm'], show_first=True)
         ],
         'puff': [
 
             # self.entry('trajectories'),
             # self.entry('ethogram', add_samples=False),
             self.entry('pathlength', scaled=False),
-            *[self.entry('timeplot', ks=[p], absolute=True) for p in ['fov', 'foa']],
+            # *[self.entry('timeplot', ks=[p], absolute=True) for p in ['fov', 'foa']],
+            self.entry('timeplots', 'angular moments', ks=['fov', 'foa'], absolute=True),
             # *[time(p, abs=True) for p in ['fov', 'foa','b', 'bv', 'ba']],
-            *[self.entry('timeplot', ks=[p]) for p in ['sv', 'sa']],
+            # *[self.entry('timeplot', ks=[p]) for p in ['sv', 'sa']],
+            self.entry('timeplots', 'translational moments', ks=['sv', 'sa']),
             # *[time(p) for p in ['sv', 'sa', 'v', 'a']],
         ],
         'RL': [
@@ -239,7 +242,7 @@ class GraphRegistry:
             self.entry('timeplot', 'best_gains_table',ks=['g_odor1'], table='best_gains'),
             self.entry('timeplot', 'best_gains_table_x2',ks=['g_odor1', 'g_odor2'],  table='best_gains'),
         ],
-        'patch': [self.entry('timeplot', 'Y position', ks=['y'], legend_loc='lower left'),
+        'patch': [self.entry('timeplots', 'Y position', ks=['y'], legend_loc='lower left'),
                   self.entry('navigation index'),
                   self.entry('turn amplitude'),
                   self.entry('turn duration'),

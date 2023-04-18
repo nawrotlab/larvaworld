@@ -98,7 +98,6 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
                 if pv <= 0.05:
                     ax.text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
             P.data_leg(ii,labels=leg_ids, colors=leg_cols, loc='upper left', handlelength=1, handleheight=1)
-            # dataset_legend(leg_ids, leg_cols, ax=ax, loc='upper left', handlelength=1, handleheight=1)
 
         P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,
                   ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), xticks=xticks, xticklabels=xticklabels)

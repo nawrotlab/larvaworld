@@ -23,8 +23,7 @@ def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
                              **kwargs)
     if save_as is None:
         save_as = k
-    P = plot.BasePlot('mtable', save_as=save_as, save_to=save_to, show=show)
-    P.set(fig)
+    P = plot.AutoBasePlot('mtable', save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax)
     return P.get()
 
 def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
@@ -40,8 +39,7 @@ def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
 
     if save_as is None:
         save_as = mID
-    P = plot.BasePlot('conf_table', save_as=save_as, save_to=save_to, show=show)
-    P.set(fig)
+    P = plot.AutoBasePlot('conf_table', save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax)
     return P.get()
 
 
@@ -165,10 +163,7 @@ def mdiff_table(mIDs, dIDs,show=False, save_to=None, save_as=None, **kwargs):
     mpl._cells[(0, 0)].set_facecolor(mpl_kws['header0_color'])
 
 
-    if save_as is None:
-        save_as = 'mdiff_table'
-    P = plot.BasePlot('mdiff_table', save_as=save_as, save_to=save_to, show=show)
-    P.set(fig)
+    P = plot.AutoBasePlot('mdiff_table', save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax)
     return P.get()
 
 @reg.funcs.graph('error table')

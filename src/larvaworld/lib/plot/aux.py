@@ -2,6 +2,7 @@ import itertools
 import os
 import numpy as np
 import matplotlib
+import pandas as pd
 # matplotlib.use('Agg')
 from matplotlib import pyplot as plt, patches, transforms, ticker
 from scipy.stats import mannwhitneyu
@@ -15,17 +16,19 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 suf = 'pdf'
 
 
-def plot_quantiles(df, from_np=False, x=None, **kwargs):
-    if from_np:
+def plot_quantiles(df, x=None, **kwargs):
+    if isinstance(df, np.ndarray):
         df_m = np.nanquantile(df, q=0.5, axis=0)
         df_u = np.nanquantile(df, q=0.75, axis=0)
         df_b = np.nanquantile(df, q=0.25, axis=0)
         if x is None:
             x = np.arange(len(df_m))
-    else:
+    elif isinstance(df, pd.DataFrame) or isinstance(df, pd.Series):
         df_m = df.groupby(level='Step').quantile(q=0.5)
         df_u = df.groupby(level='Step').quantile(q=0.75)
         df_b = df.groupby(level='Step').quantile(q=0.25)
+    else :
+        raise
     plot_mean_and_range(x=x, mean=df_m, lb=df_b, ub=df_u, **kwargs)
 
 
@@ -39,10 +42,7 @@ def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, l
     # plot the shaded range of e.g. the confidence intervals
     axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2, zorder=0)
     # plot the mean on top
-    if label is not None:
-        axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10)
-    else:
-        axis.plot(xx, mean, color_mean, linewidth=linewidth, alpha=1.0, zorder=10)
+    axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10)
 
     # pass
 
@@ -296,39 +296,25 @@ def save_plot(fig, filepath, filename):
     reg.vprint(f'Plot {filename} saved as {filepath}', 1)
 
 
-def plot_config(datasets, labels, save_to, subfolder=None):
-    if labels is None:
-        labels = [d.id for d in datasets]
+
+def get_colors(datasets):
     Ndatasets = len(datasets)
-    if Ndatasets != len(labels):
-        raise ValueError(f'Number of labels {len(labels)} does not much number of datasets {Ndatasets}')
-
-    def get_colors(datasets):
-        try:
-            cs = [d.config['color'] for d in datasets]
-            u_cs = aux.unique_list(cs)
-            if len(u_cs) == len(cs) and None not in u_cs:
-                colors = cs
-            elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
-                cs[-1] = 'black'
-                colors = cs
-            else:
-                colors = aux.N_colors(Ndatasets)
-        except:
+    try:
+        cs = [d.config['color'] for d in datasets]
+        u_cs = aux.unique_list(cs)
+        if len(u_cs) == len(cs) and None not in u_cs:
+            colors = cs
+        elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
+            cs[-1] = 'black'
+            colors = cs
+        else:
             colors = aux.N_colors(Ndatasets)
-        return colors
-
-    cols = get_colors(datasets)
-    if save_to is not None:
-        if subfolder is not None:
-            save_to = f'{save_to}/{subfolder}'
-        os.makedirs(save_to, exist_ok=True)
-    return Ndatasets, cols, save_to, labels
-
+    except:
+        colors = aux.N_colors(Ndatasets)
+    return colors
 
 def process_plot(fig, save_to, filename, return_fig=False, show=False):
     if show:
-        # raise
         plt.show()
     if hasattr(fig, 'patch'):
         fig.patch.set_visible(False)

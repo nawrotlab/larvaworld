@@ -172,19 +172,19 @@ def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint',name='c
 
 @reg.funcs.graph('turn amplitude VS Y pos')
 def plot_turn_amp_VS_Ypos(**kwargs):
-    return plot_turn_amp(par_short='tur_y0', mode='scatter', **kwargs)
+    return plot_turn_amp(k='tur_y0', **kwargs)
 
 @reg.funcs.graph('turn duration')
 def plot_turn_duration(absolute=True, **kwargs):
-    return plot_turn_amp(par_short='tur_t', mode='scatter', absolute=absolute, **kwargs)
+    return plot_turn_amp(k='tur_t', absolute=absolute, **kwargs)
 
-def plot_turn_amp(name=None,par_short='tur_t', ref_angle=None, subfolder='turn', mode='hist', cumy=True, absolute=True, **kwargs):
+def plot_turn_amp(name=None,k='tur_t', ref_angle=None, subfolder='turn', absolute=True, **kwargs):
     if name is None:
         nn = 'turn_amp' if ref_angle is None else 'rel_turn_angle'
-        name = f'{nn}_VS_{par_short}_{mode}'
+        name = f'{nn}_VS_{k}_scatter'
 
 
-    P = plot.Plot(name=name, subfolder=subfolder, **kwargs)
+    P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     ypar, ylab, ylim = reg.getPar('tur_fou', to_return=['d', 'l', 'lim'])
 
     if ref_angle is not None:
@@ -208,21 +208,16 @@ def plot_turn_amp(name=None,par_short='tur_t', ref_angle=None, subfolder='turn',
         ys = [d.get_par(ypar).dropna().values.flatten() for d in P.datasets]
         if absolute:
             ys = [np.abs(y) for y in ys]
-    xpar, xlab = reg.getPar(par_short, to_return=['d', 'l'])
+    xpar, xlab = reg.getPar(k, to_return=['d', 'l'])
     xs = [d.get_par(xpar).dropna().values.flatten() for d in P.datasets]
 
-    if mode == 'scatter':
-        P.build(1, 1)
-        ax = P.axs[0]
-        for x, y, l, c in zip(xs, ys, P.labels, P.colors):
-            ax.scatter(x=x, y=y, marker='o', s=5.0, color=c, alpha=0.5)
-            m, k = np.polyfit(x, y, 1)
-            ax.plot(x, m * x + k, linewidth=4, color=c, label=l)
-            P.conf_ax(xlab=xlab, ylab=ylab, ylim=ylim, yMaxN=4, leg_loc='upper left')
-            P.adjust((0.15, 0.95), (0.1, 0.95), 0.01)
-    elif mode == 'hist':
-        P.fig = plot.scatter_hist(xs, ys, P.labels, P.colors, xlabel=xlab, ylabel=ylab, ylim=ylim, cumylabel=cumylab,
-                             cumy=cumy)
+    ax = P.axs[0]
+    for x, y, l, c in zip(xs, ys, P.labels, P.colors):
+        ax.scatter(x=x, y=y, marker='o', s=5.0, color=c, alpha=0.5)
+        m, k = np.polyfit(x, y, 1)
+        ax.plot(x, m * x + k, linewidth=4, color=c, label=l)
+        P.conf_ax(xlab=xlab, ylab=ylab, ylim=ylim, yMaxN=4, leg_loc='upper left')
+        P.adjust((0.15, 0.95), (0.1, 0.95), 0.01)
     return P.get()
 
 @reg.funcs.graph('angular/epoch')

@@ -98,7 +98,10 @@ class LarvaworldParNew2(param.Parameterized):
 
     @property
     def ulabel(self):
-        return '(' + self.unit + ')'
+        if self.u == reg.units.dimensionless:
+            return ''
+        else :
+            return '(' + self.unit + ')'
 
     @property
     def unit(self):

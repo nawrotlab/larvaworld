@@ -1685,7 +1685,7 @@ class ParamClass:
 
         self.add(**{'p': p, 'k': k, 'u': u, 'sym': subsup(s0, f'{r0}', f'{r1}'),
                     'func': self.func_dict.dsp(range), 'required_ks': ['x', 'y'],
-                    'lab': f"dispersal in {dur}''"})
+                    'disp': f'dispersal in {dur}"'})
         self.add_scaled(k0=k)
         self.add_operators(k0=k)
         self.add_operators(k0=f's{k}')

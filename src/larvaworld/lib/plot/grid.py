@@ -291,10 +291,8 @@ def chemo_summary(datasets, mdiff_df, title, **kwargs):
         }
         axs = P.add(w=w, x0=True, N=Nks, share_w=True, dh=0, h=Nks * (h1k - 1), h0=h0)
         axs[0].set_title(exp, size=30, weight='bold', horizontalalignment='center', pad=15)
-        P.plot(func='autoplot', kws={
+        P.plot(func='timeplots', kws={
             'ks': time_ks,
-            'show_first': False,
-            'individuals': False,
             'unit': 'min',
             **kws1
         }, axs=axs)

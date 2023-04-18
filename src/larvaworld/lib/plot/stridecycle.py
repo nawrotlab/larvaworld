@@ -69,7 +69,7 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         for serie, vel, col, c, l in zip(vel_timeseries[i], vels[i], cs[i], cs[i], labels[i]):
             array = [np.interp(x=np.linspace(0, 2 * np.pi, Npoints), xp=np.linspace(0, 2 * np.pi, dur), fp=ts, left=0,
                                right=0) for dur, ts in zip(durations, serie)]
-            plot.plot_quantiles(df=array, from_np=True, axis=ax, color_mean=c, color_shading=col, label=l)
+            plot.plot_quantiles(df=array, axis=ax, color_mean=c, color_shading=col, label=l)
 
         Nticks = 5
         ticks = np.linspace(0, Npoints - 1, Nticks)
@@ -100,7 +100,6 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
 
     x = np.linspace(0, 2 * np.pi, Nbins)
     for ii, sh in enumerate(shorts):
-        # par, lab,lab2, sym, symunit = preg.getPar(sh, to_return=['d', 'label','l', 'symbol', 'symunit'])
         if modes is None:
             mode = 'abs' if sh == 'sv' else 'norm'
         else:
@@ -121,7 +120,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
                 if cycle_curves not in [None, {}]:
                     df = cycle_curves[sh][mode]
                     if pooled:
-                        plot.plot_quantiles(df=df, from_np=True, axis=P.axs[ii], color_shading=col, x=x, label=d.id)
+                        plot.plot_quantiles(df=df, axis=P.axs[ii], color_shading=col, x=x, label=d.id)
                     else:
                         for j in range(df.shape[0]):
                             P.axs[ii].plot(x, df[j, :], color=col)
@@ -170,7 +169,7 @@ def stride_cycle_individual(s=None, e=None, c=None, ss=None, fr=None, dt=1 / 16,
             axs.plot(x, aa[ii, :], color_solo, linewidth=1, alpha=0.5, zorder=2)
 
     if pooled:
-        plot.plot_quantiles(df=aa, from_np=True, axis=axs, color_shading=color, x=x)
+        plot.plot_quantiles(df=aa, axis=axs, color_shading=color, x=x)
     else:
         aa_mu = np.nanquantile(aa, q=0.5, axis=0)
         axs.plot(x, aa_mu, color, linewidth=5, alpha=1.0, zorder=10)
@@ -192,9 +191,6 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
     P = plot.AutoPlot(name=name, subfolder=subfolder, build_kws={'Nrows': 2, 'w': 15, 'h': 6, 'sharex': True},
                  **kwargs)
 
-
-
-
     pi2 = 2 * np.pi
     x = np.linspace(0, pi2, Nbins)
 
@@ -213,15 +209,13 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
 
         if short is not None:
             par, ylab1 = reg.getPar(short, to_return=['d', 'lab'])
-            # a_fov = ss[fov].values
             da = np.array([np.trapz(ss[fov].values[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
-            # aa_norm=mean_stride_curve(a=ss[par].values, strides=strides,da=da, Nbins=Nbins)['norm']
             aa = stride_interp(ss[par].values, strides, Nbins)
             aa_minus = aa[da < 0]
             aa_plus = aa[da > 0]
             aa_norm = np.vstack([aa_plus, -aa_minus])
 
-            plot.plot_quantiles(df=aa_norm, from_np=True, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
+            plot.plot_quantiles(df=aa_norm, axis=P.axs[1], color_shading='blue', x=x, label='experiment')
         else :
             ylab1 = None
             # P.axs[1].set_ylabel(lab)
@@ -248,23 +242,13 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
             aa_mu = np.nanquantile(aa, q=0.5, axis=0)
             aa_max = np.max(aa_mu)
             phi_max = x[np.argmax(aa_mu)]
-            plot.plot_quantiles(df=aa, from_np=True, axis=P.axs[0], color_shading=col, x=x, label=p)
+            plot.plot_quantiles(df=aa, axis=P.axs[0], color_shading=col, x=x, label=p)
             P.axs[0].axvline(phi_max, ymax=aa_max / y0max, color=col, alpha=1, linestyle='dashed', linewidth=2, zorder=20)
             P.axs[0].scatter(phi_max, aa_max + 0.02 * y0max, color=col, marker='v', linewidth=2, zorder=20)
         for i, ymax,ylab in zip([0,1],[y0max,None], [r'scaled velocity $(s^{-1})$',ylab1]):
             P.conf_ax(i, ylim=(0, ymax), xlim=(0, pi2), ylab=ylab, xlab='$\phi_{stride}$',
                   legfontsize=15, leg_loc='upper left', yMaxN=5,
                   xticks=np.linspace(0, pi2, 5),xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-
-    # P.axs[0].set_ylabel(r'scaled velocity $(s^{-1})$')
-    # P.axs[0].set_ylim([0, ymax])
-    # for ax in P.axs:
-    #     ax.set_xlabel('$\phi_{stride}$')
-    #     ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-    #     ax.set_xlim([0, pi2])
-    #     ax.set_xticks(np.linspace(0, pi2, 5))
-    #     ax.set_xticklabels([r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'])
-    #     ax.legend(loc='upper left', fontsize=15)
 
         try:
             att = 'attenuation'
@@ -280,12 +264,6 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
                       xticklabels=[None] + np.arange(1, c.Npoints + 1, 1).tolist(),
                       yticklabels=[r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'])
 
-            # axx.set_ylabel(r'$\Delta\phi$')
-            # axx.set_xlabel('# point')
-            # axx.set_xticks(np.arange(c.Npoints + 1))
-            # axx.set_xticklabels([None] + np.arange(1, c.Npoints + 1, 1).tolist())
-            # axx.set_yticks([-np.pi / 2, 0, np.pi / 2, np.pi])
-            # axx.set_yticklabels([r'$-\frac{\pi}{2}$', r'$0$', r'$\frac{\pi}{2}$', r'$\pi$'])
             axx.tick_params(axis='both', which='minor', labelsize=12)
             axx.tick_params(axis='both', which='major', labelsize=12)
             axx.axhline(0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
@@ -363,7 +341,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
             if mode in ['bend', 'orientation']:
                 df = np.abs(df)
             Npoints = df.shape[1] - 1
-            plot.plot_quantiles(df=df, from_np=True, axis=P.axs[i], color_shading=c, label=l)
+            plot.plot_quantiles(df=df, axis=P.axs[i], color_shading=c, label=l)
         P.conf_ax(i, ylab=ylab, ylim=ylim if i != 0 else [0.0, 0.6], yMaxN=4, leg_loc='upper right',
                   xlab='$\phi_{stride}$', xlim=[0, Npoints], xticks=np.linspace(0, Npoints, 5),
                   xticklabels=[r'$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],

@@ -25,8 +25,8 @@ def plot_fft(s, c, name=f'fft_powerspectrum',palette=None, axx=None, **kwargs):
         ss = s.xs(id, level='AgentID')
         fvs[j], v_ys[j, :] = aux.fft_max(ss[v], c.dt, fr_range=(1.0, 2.5), return_amps=True)
         ffovs[j], fov_ys[j, :] = aux.fft_max(ss[fov], c.dt, fr_range=(0.1, 0.8), return_amps=True)
-    plot.plot_quantiles(v_ys, from_np=True, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
-    plot.plot_quantiles(fov_ys, from_np=True, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
+    plot.plot_quantiles(v_ys, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
+    plot.plot_quantiles(fov_ys, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
     P.conf_ax(0, ylim=(0, 4), xlim=(0, 3.5), ylab='Amplitude (a.u.)', xlab='Frequency (Hz)',
               title='Fourier analysis',titlefontsize=25, leg_loc='lower left', yMaxN=5)
 

@@ -23,7 +23,9 @@ plt.rcParams.update(plt_conf)
 
 
 class BasePlot:
-    def __init__(self, name, save_to=None, save_as=None, return_fig=False, show=False, suf='pdf', pref=None,
+    def __init__(self, name, save_as=None,pref=None,suf='pdf',
+                 save_to=None, subfolder=None,
+                 return_fig=False, show=False,
                  subplot_kw={}, build_kws={}, **kwargs):
         if save_as is None :
             if pref is not None:
@@ -34,10 +36,18 @@ class BasePlot:
         self.fit_ind = None
         self.fit_df = None
 
+        if save_to is not None:
+            if subfolder is not None:
+                save_to = f'{save_to}/{subfolder}'
+            os.makedirs(save_to, exist_ok=True)
+        self.save_to = save_to
+
+
+
         self.return_fig = return_fig
         self.show = show
 
-        self.save_to = save_to
+
         self.cur_idx = 0
         self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
         self.letter_dict = {}
@@ -67,7 +77,7 @@ class BasePlot:
         '''
         if fig is not None and axs is not None:
             self.fig = fig
-            self.axs = axs if type(axs) == list else [axs]
+            self.axs = axs if type(axs) in [list, np.ndarray] else [axs]
 
         else:
             if dim3:
@@ -279,21 +289,25 @@ class AutoBasePlot(BasePlot):
 
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
-class Plot(BasePlot):
-    def __init__(self, name, datasets, labels=None, subfolder=None, save_to=None, add_samples=False,
-                 **kwargs):
+class AutoPlot(AutoBasePlot):
+    def __init__(self, datasets, labels=None, add_samples=False, **kwargs):
         for d in datasets:
             assert isinstance(d, larvaworld.LarvaDataset)
+        if labels is None:
+            labels = [d.id for d in datasets]
+
         if add_samples:
             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
             targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedConf('Ref')]
             datasets += targets
             if labels is not None:
                 labels += targetIDs
-        self.Ndatasets, self.colors, save_to, self.labels = plot.plot_config(datasets, labels, save_to,
-                                                                        subfolder=subfolder)
         self.datasets = datasets
-        super().__init__(name, save_to=save_to, **kwargs)
+        self.labels = labels
+        self.Ndatasets = len(datasets)
+        self.colors = plot.get_colors(datasets)
+        assert self.Ndatasets == len(self.labels)
+        super().__init__(**kwargs)
 
 
 
@@ -422,11 +436,54 @@ class Plot(BasePlot):
         x = np.linspace(t0 / T, t1 / T, self.Nticks)
         return x
 
+    def plot_quantiles(self, k=None, par=None, idx=0, ax=None,xlim=None, ylim=None, ylab=None,
+                       unit='sec', leg_loc='upper left',coeff=1,space_unit='mm',
+                       absolute=False, individuals=False,show_first=False, **kwargs):
+        x=self.trange(unit)
+        if ax is None :
+            ax = self.axs[idx]
 
-class AutoPlot(Plot):
-    def __init__(self, fig=None, axs=None, **kwargs):
-        super().__init__(**kwargs)
-        self.build(fig=fig, axs=axs)
+        try :
+            if k is None :
+                k = reg.getPar(d=par, to_return='k')
+            p=reg.par.kdict[k]
+            if p.u==reg.units.m and space_unit=='mm' :
+                p.u=reg.units.millimeter
+                coeff*=1000
+            if ylab is None:
+                ylab = p.l
+            if ylim is None:
+                ylim = p.lim
+        except :
+            pass
+        if xlim is None:
+            xlim = [x[0], x[-1]]
+        for l, d, c in self.data_palette:
+            df=d.get_par(k=k, par=par, key='step')*coeff
+            if absolute:
+                df = df.abs()
+            if individuals:
+                # plot each timeseries individually
+                for id in df.index.get_level_values('AgentID'):
+                    df_single = df.xs(id, level='AgentID')
+                    ax.plot(x, df_single, color=c, linewidth=1)
+            else :
+                # plot the shaded range between first and third quantile
+                df_u = df.groupby(level='Step').quantile(q=0.75)
+                df_b = df.groupby(level='Step').quantile(q=0.25)
+                ax.fill_between(x, df_u, df_b, color=c, alpha=.2, zorder=0)
+
+                if show_first:
+                    df_single = df.xs(df.index.get_level_values('AgentID')[0], level='AgentID')
+                    ax.plot(x, df_single, color=c, linestyle='dashed', linewidth=1)
+
+            # plot the mean on top
+            df_m = df.groupby(level='Step').quantile(q=0.5)
+            ax.plot(x, df_m, c, label=l, linewidth=2, alpha=1.0, zorder=10)
+        self.conf_ax(ax=ax, xlab=f'time, ${unit}$', ylab=ylab,
+                  xlim=xlim, ylim=ylim, xMaxN=5, yMaxN=5, leg_loc=leg_loc, **kwargs)
+
+
 
 
 
