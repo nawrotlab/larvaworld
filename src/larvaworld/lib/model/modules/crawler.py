@@ -58,7 +58,7 @@ class PhaseOscillator(StrideOscillator):
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        self.initial_amp = self.max_vel_phase
+        self.initial_amp = self.max_scaled_vel
         self.amp = self.initial_amp
 
 

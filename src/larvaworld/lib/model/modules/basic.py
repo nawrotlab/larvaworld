@@ -9,6 +9,7 @@ class Effector(param.Parameterized):
         self.active = False
         self.ticks = 0
         self.total_ticks = 0
+        self.complete_iteration = False
 
     def count_time(self):
         self.ticks += 1
@@ -45,14 +46,14 @@ class Effector(param.Parameterized):
 
 class Oscillator(Effector):
     initial_freq = param.Number(label='oscillation frequency', doc='The initial frequency of the oscillator.')
-    freq_range = param.Range(label='oscillation frequency range', doc='The frequency range of the oscillator.')
+    freq_range = param.List(label='oscillation frequency range', doc='The frequency range of the oscillator.')
     random_phi = param.Boolean(default=True, label='random oscillation phase', doc='Whether to randomize the initial phase of the oscillator.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # self.initial_freq = float(np.random.normal(loc=initial_freq, scale=initial_freq_std, size=1))
         self.freq = self.initial_freq
-        self.complete_iteration = False
+
         self.iteration_counter = 0
         # self.d_phi = 2 * np.pi * self.dt * self.freq
         # self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
@@ -98,8 +99,8 @@ class Oscillator(Effector):
         return phi_range[0] < self.phi < phi_range[1]
 
 class StepEffector(Effector):
-    initial_amp = param.Number(label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
-    amp_range = param.Range(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
+    initial_amp = param.Number(default=0.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
+    amp_range = param.List(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
     input_noise = param.Number(default=0.0, label='input noise', doc='The noise applied at the input of the module.')
     output_noise = param.Number(default=0.0, label='output noise', doc='The noise applied at the output of the module.')
 

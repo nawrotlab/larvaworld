@@ -74,8 +74,7 @@ def nengo_brain(module_shorts, EEB, OD=None):
     else:
         f_fr0, f_fr_r = 0.0, (0.0, 0.0)
     return brain(module_shorts,
-                 turner=reg.get_null('turner', initial_freq=0.3, initial_amp=30.0, noise=0.1, activation_noise=0.8,
-                                      freq_range=(0.2, 0.4)),
+                 turner=reg.get_null('turner', initial_amp=30.0, output_noise=0.1, input_noise=0.8),
                  crawler=reg.get_null('crawler', initial_freq=1.5, initial_amp=0.6, freq_range=(1.2, 1.8),
                                        mode='realistic', stride_dst_mean=0.25, stride_dst_std=0.01),
                  feeder=reg.get_null('feeder', initial_freq=f_fr0, freq_range=f_fr_r),

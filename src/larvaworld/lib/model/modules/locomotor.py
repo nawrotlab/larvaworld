@@ -95,7 +95,7 @@ class DefaultLocomotor(Locomotor):
             elif pre_state != 'feed' and cur_state == 'feed':
                 self.on_new_feed()
         if self.interference:
-            A_in, cT = self.interference.step(A_in, self.crawler, self.feeder)
+            A_in, cT = self.interference.step(A_in=A_in, crawler=self.crawler, feeder=self.feeder)
         else :
             cT = 1
         self.cur_ang_suppression=cT

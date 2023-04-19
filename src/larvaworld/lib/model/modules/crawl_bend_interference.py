@@ -42,8 +42,8 @@ class DefaultCoupling(param.Parameterized):
 
 
 class SquareCoupling(DefaultCoupling):
-    crawler_phi_range = param.Range(default=(0.0, 0.0), label='crawler suppression relief phase interval', doc='CRAWLER phase range for TURNER suppression lift.')
-    feeder_phi_range = param.Range(default=(0.0, 0.0), label='feeder suppression relief phase interval', doc='FEEDER phase range for TURNER suppression lift.')
+    crawler_phi_range = param.List(default=[0.0, 0.0], label='crawler suppression relief phase interval', doc='CRAWLER phase range for TURNER suppression lift.')
+    feeder_phi_range = param.List(default=[0.0, 0.0], label='feeder suppression relief phase interval', doc='FEEDER phase range for TURNER suppression lift.')
 
 
 

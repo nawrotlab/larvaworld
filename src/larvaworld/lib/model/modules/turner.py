@@ -8,8 +8,8 @@ from larvaworld.lib.model.modules.basic import StepEffector
 
 
 class NeuralOscillator(StepEffector):
-    base_activation = param.Number(default=20.0, label='baseline activation', doc='The baseline activation of the oscillator.')
-    activation_range = param.Range(default=(10.0, 40.0), label='activation range', doc='The activation range of the oscillator.')
+    base_activation = param.Number(default=20.0,bounds=(0.0, 100.0), label='baseline activation', doc='The baseline activation of the oscillator.')
+    activation_range = param.List(default=[10.0, 40.0],bounds=(0.0, 100.0), label='activation range', doc='The activation range of the oscillator.')
     tau = param.Number(default=0.1, label='time constant', doc='The time constant of the oscillator.')
     w_ee = param.Number(default=3.0, label='E->E weigths', doc='The E->E synapse connection weights.')
     w_ce = param.Number(default=0.1, label='C->E weigths', doc='The C->E synapse connection weights.')
