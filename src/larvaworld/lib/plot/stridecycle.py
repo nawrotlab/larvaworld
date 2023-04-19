@@ -258,7 +258,7 @@ def plot_stride_Dbend(name='stride_bend_change',show_text=False, subfolder='stri
 
 @reg.funcs.graph('stride Dor')
 def plot_stride_Dorient(name='stride_orient_change',absolute=True, subfolder='stride',Nbins=200, **kwargs):
-    P = plot.AutoLoadPlot(ks=['str_fo', 'str_ro'],ranges=[80,80],absolute=absolute, name=name, subfolder=subfolder,build_kws={'Ncols': 'Nks'}, **kwargs)
+    P = plot.AutoPlot(ks=['str_fo', 'str_ro'],ranges=[80,80],absolute=absolute, name=name, subfolder=subfolder,build_kws={'Ncols': 'Nks'}, **kwargs)
     P.plot_hist(alpha=0.5,nbins=Nbins)
     P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()

@@ -270,6 +270,14 @@ class GraphRegistry:
             self.entry('endpoint box', ks=['l', 'fv', 'v_mu', 'run_tr']),
             self.entry('crawl pars')
         ],
+
+        'submission': [
+                self.entry('endpoint box', mode='tiny', Ncols=4),
+                self.entry('crawl pars'),
+                self.entry('epochs', stridechain_duration=True),
+                self.entry('dispersal', range=(0, 60)),
+            ],
+
         'distro': [
             self.entry('distros', mode='box'),
             self.entry('distros', mode='hist'),

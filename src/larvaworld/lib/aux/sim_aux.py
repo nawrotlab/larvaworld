@@ -458,3 +458,20 @@ def get_step_slice(s,e,dt, pars, t0=0, t1=40, track_t0_min=0, track_t1_min=0):
     tmax = t1 - track_t1_min
     valid_ids = e[(e['t0'] <= tmin) & (e['t1'] >= tmax)].index
     return s.loc[(trange, valid_ids), pars]
+
+def index_unique(df, level='Step', ascending=True, as_array=False):
+    """
+    Get the unique values of a level of a pandas Multiindex
+
+    Args:
+    - df: pd.DataFrame - The dataframe.
+    - level: str - The level to index.
+    - ascending: bool - Whether to sort the data in ascending order or not.
+    - as_array: bool - Whether to return the result as an array or not.
+    """
+
+    a = df.index.get_level_values(level).sort_values(ascending=ascending).drop_duplicates()
+    if as_array:
+        return a.values
+    else:
+        return a

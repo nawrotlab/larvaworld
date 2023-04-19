@@ -40,8 +40,6 @@ def interpolate_nan_values(s, c, pars=None, **kwargs):
 
 @reg.funcs.preproc("rescale_by")
 def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
-    # print(rescale_by)
-    # raise
     if rescale_by in ['', None, np.nan]:
         return
     if 'rescaled_by' in c and not recompute:

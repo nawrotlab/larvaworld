@@ -321,7 +321,7 @@ def plot_dispersal(range=(0, 40), scaled=False, **kwargs):
     k = f'dsp_{int(t0)}_{int(t1)}'
     if scaled:
         k=f's{k}'
-    return timeplots(ks=[k],xlim=range, **kwargs)
+    return timeplots(name=reg.getPar(k),ks=[k],xlim=range, **kwargs)
 
 
 

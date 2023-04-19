@@ -67,7 +67,7 @@ def plot_fft_multi(name=f'fft_powerspectrum',axx=None, dataset_colors=False, **k
 def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums', **kwargs):
     if name is None :
         name=f'fft_powerspectrum_x{len(ks)}'
-    P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, build_kws={'w': 10, 'h': 8}, **kwargs)
+    P = plot.AutoPlot(ks=ks, name=name, subfolder=subfolder, build_kws={'w': 10, 'h': 8}, **kwargs)
     P.conf_ax(xlab='Frequency in Hertz [Hz]', ylab='Frequency Domain (Spectrum) Magnitude', xlim=(0, 3.5),ylim=(0, 5))
     from scipy.fft import fft, fftfreq
     def proc(df, ids,ax, d_col, label) :

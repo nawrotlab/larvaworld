@@ -82,15 +82,20 @@ class NamingRegistry(aux.AttrDict):
         temp = name(s, chunk, 'pref')
         return name('s', temp, 'suf', c='')
 
-    def xy(self,points, flat=False):
+    def xy(self,points, flat=False, xsNys=False):
         if type(points) == str:
             if points == '':
-                return ['x', 'y']
+                t= ['x', 'y']
             else:
-                return [f'{points}_x', f'{points}_y']
+                t= [f'{points}_x', f'{points}_y']
+
         elif type(points) == list:
-            t = [[f'{p}_x', f'{p}_y'] if p != '' else ['x', 'y'] for p in points]
-            return [item for sublist in t for item in sublist] if flat else t
+            t = [self.xy(p) for p in points]
+            if xsNys:
+                t=[np.array(t)[:,i].tolist() for i in [0,1]]
+            if flat :
+                t=[item for sublist in t for item in sublist]
+        return t
 
     def chunk_track(self, chunk_name, params):
         return self[chunk_name](params, loc='pref')

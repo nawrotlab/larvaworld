@@ -122,7 +122,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
                 e[aux.nam.mean(pp)] = temp.mean()
                 e[aux.nam.std(pp)] = temp.std()
                 e[aux.nam.initial(pp)] = temp.first()
-                s[[aux.nam.min(pp), aux.nam.max(pp)]] = comp_extrema_solo(sss, dt=dt, **kwargs).reshape(-1, 2)
+                # s[[aux.nam.min(pp), aux.nam.max(pp)]] = comp_extrema_solo(sss, dt=dt, **kwargs).reshape(-1, 2)
 
     reg.vprint('All angular parameters computed')
 
@@ -226,7 +226,7 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=T
             'Orientation and bend are already computed. If you want to recompute them, set recompute to True', 1)
     ps = or_pars + bend_pars
     comp_angular(s, e, dt,Np, pars=ps)
-    comp_extrema_multi(s, dt=dt)
+    # comp_extrema_multi(s, dt=dt)
     if store :
         pars = ps + aux.nam.vel(ps) + aux.nam.acc(ps)
         aux.store_distros(s, pars, parent_dir=c.dir)

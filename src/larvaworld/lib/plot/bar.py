@@ -52,7 +52,7 @@ def intake_barplot(**kwargs):
 def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
-    P = plot.AutoLoadPlot(ks=ks, name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
+    P = plot.AutoPlot(ks=ks, name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15
@@ -111,7 +111,7 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
 def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
-    P = plot.AutoLoadPlot(ks=ks, name=ks[0], build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
+    P = plot.AutoPlot(ks=ks, name=ks[0], build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
     Nds = P.Ndatasets
 
     w = 0.15

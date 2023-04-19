@@ -58,7 +58,7 @@ def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circ
         ks += ['rov', 'roa']
         rs += [200, 2000]
 
-    P = plot.AutoLoadPlot(ks=ks,ranges=rs, absolute=absolute, name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':8, 'sharey': True}, **kwargs)
+    P = plot.AutoPlot(ks=ks,ranges=rs, absolute=absolute, name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':8, 'sharey': True}, **kwargs)
     P.plot_hist(type=type, kde=kde, half_circles=half_circles, alpha=0.8, linewidth=3,nbins=Nbins)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.01)
     return P.get()
@@ -76,7 +76,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         build_kws['sharex']=True
     elif mode == 'hist':
         build_kws['sharey']=True
-    P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, build_kws=build_kws, **kwargs)
+    P = plot.AutoPlot(ks=ks, name=name, subfolder=subfolder, build_kws=build_kws, **kwargs)
     # P.init_fits(P.pars)
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
@@ -162,7 +162,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
 @reg.funcs.graph('crawl pars')
 def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint',name='crawl_pars',
                     type='sns.hist',kde=True,  **kwargs):
-    P = plot.AutoLoadPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':5, 'sharey': True}, **kwargs)
+    P = plot.AutoPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':5, 'sharey': True}, **kwargs)
     P.plot_hist(type=type,kde=kde)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.1)
     return P.get()
@@ -292,8 +292,8 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 
 @reg.funcs.graph('turn amplitude')
 def plot_turns(name='turn_amplitude',absolute=False, subfolder='turn', **kwargs):
-    P = plot.AutoLoadPlot(ks=['tur_fou'],ranges=[100],absolute=absolute, rad2deg=True, name=name, subfolder=subfolder, **kwargs)
-    P.plot_hist(par_legend=True, nbins=30,xlab='Turn amplitude ($deg$)', alpha=1.0, histtype='step')
+    P = plot.AutoPlot(ks=['tur_fou'],ranges=[100],absolute=absolute, rad2deg=True, name=name, subfolder=subfolder, **kwargs)
+    P.plot_hist(par_legend=True, nbins=30, alpha=1.0, histtype='step')
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
@@ -305,19 +305,19 @@ def plot_endpoint_hist(**kwargs):
 def plot_endpoint_box(**kwargs):
     return plot_endpoint_params(type='box',**kwargs)
 
-def plot_endpoint_params(type, name=None,mode='basic', ks=None, subfolder='endpoint',
+def plot_endpoint_params(type, name=None,mode='basic', ks=None,Ncols=None, subfolder='endpoint',
                          **kwargs):
     ks=plot.define_end_ks(ks, mode)
     if name is None:
-        name = f'endpoint_params_{type}_{mode}'
+        name = f'endpoint_{type}_{mode}'
     if type=='hist' :
         sharex,sharey=False,True
         W,H=0.1, 0.3
     elif type=='box' :
         sharex,sharey=True,False
         W, H = 0.5, 0.15
-    P = plot.AutoLoadPlot(ks=ks,key='end', name=name, subfolder=subfolder,
-                          build_kws={'N':'Nks', 'wh':7, 'sharex': sharex, 'sharey': sharey}, **kwargs)
+    P = plot.AutoPlot(ks=ks,key='end', name=name, subfolder=subfolder,
+                          build_kws={'N':'Nks','Ncols':Ncols, 'wh':7, 'sharex': sharex, 'sharey': sharey}, **kwargs)
     if type == 'hist':
         P.plot_hist(nbins=20)
     elif type == 'box':

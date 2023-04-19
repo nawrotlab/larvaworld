@@ -22,7 +22,8 @@ def Tracker_dict():
 
     },
         'Jovanic': {
-        'resolution.fr': 11.27,
+        'resolution.fr': 1/0.07,
+        # 'resolution.fr': 11.27,
         'resolution.Npoints': 11,
         'resolution.Ncontour': 0,
         'filesystem.file.suf': 'larvaid.txt',
@@ -96,7 +97,7 @@ def Group_dict():
             'spatial.point_idx'], 'preprocessing': ['filter_f', 'rescale_by', 'drop_collisions', 'transposition']}
         dkws = {
             'Schleyer': [['from_vectors', (2, 6), (7, 11), 9], [2.0, 0.001, True, None]],
-            'Jovanic': [['from_vectors', (2, 6), (6, 10), 8], [2.0, 0.001, False, 'arena']],
+            'Jovanic': [['from_vectors', (2, 6), (6, 10), 9], [2.0, 0.001, False, 'arena']],
             # 'Paisios': ['from_vectors',(2, 4), (7, 11),6],
             'Arguello': [['from_vectors', (1, 3), (3, 5), -1], [0.1, None, False, 'arena']],
             # 'Singlepoint': [None,None, None,0],

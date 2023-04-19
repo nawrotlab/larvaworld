@@ -135,7 +135,7 @@ def comp_spatial(s, e, c, mode='minimal'):
 
     pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
-    reg.vprint('All spatial parameters computed',1)
+    reg.vprint('All spatial parameters computed')
 
 @reg.funcs.proc("length")
 def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
@@ -251,18 +251,20 @@ def store_spatial(s, e, c, d=None,store=True, also_in_mm=False):
 
 # @decorators.timeit
 @reg.funcs.proc("spatial")
-def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=True, **kwargs):
+def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=True,traj2origin=True, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
     # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c,d=d, store=store)
-    try:
-        align_trajectories(s, c,d=d,  store=store, replace=False, transposition='origin')
-    except :
-        pass
+    # print(traj2origin,'ddd')
+    if traj2origin :
+        try:
+            align_trajectories(s, c,d=d,  store=store, replace=False, transposition='origin')
+        except :
+            pass
 
-    reg.vprint(f'Completed {mode} spatial processing.')
+    reg.vprint(f'Completed {mode} spatial processing.',1)
 
 
 @reg.funcs.proc("dispersion")
@@ -290,13 +292,15 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwarg
         e[mup] = s[p].groupby('AgentID').mean()
         e[fp] = s[p].dropna().groupby('AgentID').last()
         scale_to_length(s, e, c, pars=[p, fp, mp, mup])
-
-        for par in [p, nam.scal(p)]:
-            dsps[par] = get_disp_df(s[par], s0, Nt)
+        if store:
+            for par in [p, nam.scal(p)]:
+                dsps[par] = get_disp_df(s[par], s0, Nt)
 
 
     if store:
         aux.save_dict(dsps, reg.datapath('dsp', c.dir))
+
+    reg.vprint(f'Completed dispersal processing.',1)
 
 
 def get_disp_df(dsp, s0, Nt):
@@ -380,30 +384,89 @@ def rolling_window_xy(xy, w):
     return xys
 
 
-def tortuosity(xy):
-    # Compute tortuosity over a 2D xy array
-    if xy.ndim != 2:
-        raise ValueError("Input array must be 2-dimensional")
-    xy = xy[~np.isnan(xy).any(axis=1)]
-    if xy.shape[0] < 2:
-        return np.nan
-    D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
-    if D == 0:
-        return np.nan
-    else:
-        L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
-        return 1 - L / D
+# def tortuosity(xy):
+#     # Compute tortuosity over a 2D xy array
+#     if xy.ndim != 2:
+#         raise ValueError("Input array must be 2-dimensional")
+#     xy = xy[~np.isnan(xy).any(axis=1)]
+#     if xy.shape[0] < 2:
+#         return np.nan
+#     D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
+#     if D == 0:
+#         return np.nan
+#     else:
+#         L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
+#         return 1 - L / D
+def straightness_index(ss, rolling_ticks):
+    ps=['x', 'y', 'dst']
+    assert set(ps).issubset(ss.columns)
+    sss=ss[ps].values
+    temp=sss[rolling_ticks]
+    Ds = np.nansum(temp[:, :, 2], axis=1)
+    xys = temp[:, :, :2]
+
+    k0, k1 = len(ss), rolling_ticks.shape[0]
+    dk = int((k0 - k1) / 2)
+    SI0 = np.zeros(k0) * np.nan
+    for i in range(k1) :
+        D=Ds[i]
+        if D!= 0:
+            xy = xys[i][~np.isnan(xys[i]).any(axis=1)]
+            if xy.shape[0] >= 2:
+                L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
+                SI0[dk+i] = 1 - L / D
+    return SI0
 
 
-def straightness_index(xy, w, match_shape=True):
-    try:
-        xy=xy.values
-    except :
-        pass
+def straightness_index2(ss, w, match_shape=True):
+    xy0 = ss[['x', 'y']].values
     # Compute tortuosity over intervals of duration w
-    xys = rolling_window_xy(xy, w)
-    k0, k1 = xy.shape[0], xys.shape[0]
+    xys = rolling_window_xy(xy0, w)
+
+
+    k0, k1 = xy0.shape[0], xys.shape[0]
+    l_xys = np.array([xys[i, :][~np.isnan(xys[i, :]).any(axis=1)] for i in range(k1)])
+    valid=np.where([l_xys[i].shape[0]>= 2 for i in range(k1)])[0]
+
+    if 'dst' in ss.columns:
+        dst = ss['dst'].values
+        Ds = np.nansum(rolling_window(dst, w), axis=1)[valid]
+
+    else:
+        Ds = np.array([np.nansum(np.sqrt(np.nansum(np.diff(l_xys[i], axis=0) ** 2, axis=1))) for i in valid])
+
+    valid2=np.where(Ds!=0)[0]
+    Ds=Ds[valid2]
+
+    valid_fin=valid[valid2]
+
+    dxys=np.array([l_xys[i][-1, :] -l_xys[i][0, :] for i in valid_fin])
+    Ls = np.sqrt(np.nansum(dxys ** 2, axis=1))
+    A=1 - Ls / Ds
+
+    # for i in range(k1):
+    #     xy = xys[i, :]
+    #     xy = xy[~np.isnan(xy).any(axis=1)]
+    #     D = Ds[i]
+    #     if xy.shape[0] >= 2:
+    #         if D is None:
+    #             D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
+    #         if D != 0:
+    #             L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
+    #             SI[i] = 1 - L / D
+
     if match_shape:
+        dk = int((k0 - k1) / 2)
+        SI0 = np.zeros(k0) * np.nan
+        SI0[dk+valid_fin] = A
+        return SI0
+    else:
+        SI = np.zeros(k1) * np.nan
+        SI[valid_fin] = A
+
+        return SI
+    '''
+        if match_shape:
         dk = int((k0 - k1) / 2)
         SI = np.zeros(k0) * np.nan
         for i in range(k1):
@@ -413,6 +476,8 @@ def straightness_index(xy, w, match_shape=True):
         for i in range(k1):
             SI[i] = tortuosity(xys[i, :])
     return SI
+    '''
+
 
 @reg.funcs.proc("tortuosity")
 def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], store=True, **kwargs):
@@ -420,14 +485,22 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        ss = aux.read(key='step', path=reg.datapath('step',c.dir))[['x', 'y']]
-        s = ss
-    else:
-        ss = s[['x', 'y']]
+        s = aux.read(key='step', path=reg.datapath('step',c.dir))
+
+    ticks=np.arange(c.Nticks)
+    # ticks = aux.index_unique(s, level='Step', as_array=True)
+    ps = ['x', 'y', 'dst']
+    assert set(ps).issubset(s.columns)
+    # ps=['x', 'y']
+    # if 'dst' in s.columns :
+    #     ps.append('dst')
+
+    ss = s[ps]
     pars = [reg.getPar(f'tor{dur}') for dur in tor_durs]
     for dur, p in zip(tor_durs, pars):
-        r = int(dur / dt / 2)
-        s[p] = aux.apply_per_level(ss, straightness_index, w=r).flatten()
+        w = int(dur / dt / 2)
+        rolling_ticks=rolling_window(ticks, w)
+        s[p] = aux.apply_per_level(ss, straightness_index, rolling_ticks=rolling_ticks).flatten()
         if e is not None:
             e[nam.mean(p)] = s[p].groupby('AgentID').mean()
             e[nam.std(p)] = s[p].groupby('AgentID').std()
@@ -438,6 +511,8 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
         # dic = aux.get_distros(s, pars=pars)
         # aux.storeH5(dic, path=reg.datapath('distro', c.dir))
+
+    reg.vprint(f'Completed tortuosity processing.',1)
 
 @reg.funcs.proc("source")
 def comp_source_metrics(s, e, c, **kwargs):

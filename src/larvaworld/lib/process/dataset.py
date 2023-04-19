@@ -106,8 +106,10 @@ class LarvaDataset:
 
     def read(self, key, file='data'):
         path=f'{self.config.dir}/data/{file}.h5'
-        df = pd.read_hdf(path, key)
-        return df
+        try :
+            return pd.read_hdf(path, key)
+        except:
+            return None
 
     def store(self, key, df, file='data'):
         path = f'{self.config.dir}/data/{file}.h5'
@@ -173,8 +175,14 @@ class LarvaDataset:
         warnings.filterwarnings('ignore')
         for k, v in pre_kws.items():
             if v:
-                reg.funcs.preprocessing[k](k=v, **cc)
+                ccc=cc
+                ccc[k]=v
+                reg.funcs.preprocessing[k](**ccc)
         for k in proc_keys:
+            # if k in proc_args.keys():
+            #     ccc={**cc,**proc_args[k]}
+            # else :
+            #     ccc=cc
             reg.funcs.processing[k](**cc)
         for k in anot_keys:
             reg.funcs.annotating[k](**cc)
@@ -184,12 +192,17 @@ class LarvaDataset:
         return self
 
 
-    def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={}, **kwargs):
+    def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},
+               **kwargs):
         proc_keys=[k for k, v in processing.items() if v]
         anot_keys=[k for k, v in annotation.items() if v]
         if metric_definition is not None :
             self.config.metric_definition.update(metric_definition)
-        return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,anot_keys=anot_keys, **kwargs)
+            for k in proc_keys :
+                if k in metric_definition.keys():
+                    kwargs.update(metric_definition[k])
+        return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,
+                            anot_keys=anot_keys,**kwargs)
 
 
 
@@ -304,6 +317,10 @@ class LarvaDataset:
     @property
     def points(self):
         return aux.nam.midline(self.config.Npoints, type='point')
+
+    @property
+    def contour(self):
+        return aux.nam.contour(self.config.Ncontour)
 
 
 

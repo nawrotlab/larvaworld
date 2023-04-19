@@ -270,11 +270,14 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True, store=True, **kwargs):
+def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True,castsNweathervanes=True, store=True, **kwargs):
+    # print(strides_enabled,castsNweathervanes)
     aux.fft_freqs(s, e, c)
     turn_dict = turn_annotation(s, e, c, store=store)
     crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
     chunk_dicts = aux.AttrDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
+    if castsNweathervanes :
+        turn_mode_annotation(e, chunk_dicts)
     return chunk_dicts
 
 @reg.funcs.annotation("bout_distribution")
@@ -286,13 +289,15 @@ def bout_distribution(s, e, c, d, **kwargs) :
     register_bout_distros(c, e)
     # d.store(key='grouped_epochs', df=pd.DataFrame(d.grouped_epochs))
     d.store(key='pooled_epochs', df=pd.DataFrame(d.pooled_epochs))
+    reg.vprint(f'Completed bout distribution analysis.',1)
 
 # @decorators.timeit
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, store=True, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
     d.store(key='chunk_dicts', df=pd.DataFrame(d.chunk_dicts))
-    turn_mode_annotation(e, d.chunk_dicts)
+    reg.vprint(f'Completed bout detection.',1)
+
 
 
 def stride_interp(a, strides, Nbins=64):

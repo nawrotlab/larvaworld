@@ -1535,6 +1535,9 @@ class ParamClass:
             'sym': sub(Delta(b.sym), kc),
             **kws
         }
+        if kws01['k']=='tur_fou':
+            kws01['disp']='turn amplitude'
+
         self.add(**kws0)
         self.add(**kws1)
         self.add(**kws01)

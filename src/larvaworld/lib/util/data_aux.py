@@ -147,7 +147,7 @@ class LarvaworldParNew2(param.Parameterized):
 
     @property
     def lab(self):
-        return self.param.v.label
+        return self.l
 
     @property
     def tooltip(self):

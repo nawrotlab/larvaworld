@@ -394,8 +394,8 @@ class AutoBasePlot(BasePlot):
 #         return res
 
 class AutoPlot(AutoBasePlot):
-    def __init__(self, ks=[],key='step',datasets=[], labels=None, add_samples=False,
-                 ranges=None,absolute=False, rad2deg=False,**kwargs):
+    def __init__(self, ks=[],key='step',klabels={},datasets=[], labels=None, add_samples=False,
+                 ranges=None,absolute=False, rad2deg=False,space_unit='mm',**kwargs):
         '''
         Extension of the basic plotting class that receives datasets of type larvaworld.LarvaDataset
         Args:
@@ -434,12 +434,20 @@ class AutoPlot(AutoBasePlot):
         for k in ks :
             try :
                 p = reg.par.kdict[k]
+                if p.u == reg.units.m and space_unit == 'mm':
+                    p.u = reg.units.millimeter
+                    coeff = 1000
+                    # print(k)
+                else:
+                    coeff=1
+                if k in klabels.keys():
+                    p.disp=klabels[k]
                 # par = p.d
                 dfs = aux.AttrDict()
                 dics = aux.AttrDict()
                 vs=[]
                 for l, d, col in self.data_palette :
-                    df = d.get_par(k=k, key=key)
+                    df = d.get_par(k=k, key=key)*coeff
                     assert df is not None
                     v = df.dropna().values
                     if absolute:
@@ -599,7 +607,7 @@ class AutoPlot(AutoBasePlot):
         return x
 
     def plot_quantiles(self, k=None, par=None, idx=0, ax=None,xlim=None, ylim=None, ylab=None,
-                       unit='sec', leg_loc='upper left',coeff=1,space_unit='mm',
+                       unit='sec', leg_loc='upper left',coeff=1,
                        absolute=False, individuals=False,show_first=False, **kwargs):
         x=self.trange(unit)
         if ax is None :
@@ -609,9 +617,7 @@ class AutoPlot(AutoBasePlot):
             if k is None :
                 k = reg.getPar(d=par, to_return='k')
             p=reg.par.kdict[k]
-            if p.u==reg.units.m and space_unit=='mm' :
-                p.u=reg.units.millimeter
-                coeff*=1000
+
             if ylab is None:
                 ylab = p.l
             if ylim is None:
@@ -647,21 +653,23 @@ class AutoPlot(AutoBasePlot):
 
 
     def plot_hist(self,half_circles=True, use_title=False,par_legend=False,
-                  nbins=40,alpha=0.5,ylim=[0, 0.25],xlab=None,  **kwargs):
+                  nbins=40,alpha=0.5,ylim=[0, 0.25], **kwargs):
         loc = 'upper left' if half_circles else 'upper right'
         for i, k in enumerate(self.ks):
             p = self.pdict[k]
             vs = self.vdict[k]
             if self.ranges :
                 r=self.ranges[i]
-                xlim = (r0, r1) = (0, r) if self.absolute else (-r, r)
-                bins = np.linspace(r0, r1, nbins)
+                r0, r1 = r,r
             else :
-                bins= np.linspace(np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs]), nbins)
-                xlim=p.lim
+                r0,r1=np.min([np.min(v) for v in vs]), np.max([np.max(v) for v in vs])
+            if self.absolute :
+                r0=0
+            bins = np.linspace(r0, r1, nbins)
+            xlim = (r0, r1)
             plot.prob_hist(vs=vs, colors=self.colors, labels=self.labels, ax=self.axs[i], bins=bins, alpha=alpha, **kwargs)
             self.conf_ax(i, ylab='probability', yvis=True if i % self.Ncols == 0 else False,
-                         xlab=p.label if  xlab is None else xlab, xlim=xlim,ylim=ylim,
+                         xlab=p.l, xlim=xlim,ylim=ylim,
                       xMaxN=4, yMaxN=4, xMath=True, title=p.disp if use_title else None,
                          leg_loc=loc if par_legend else None)
 
@@ -671,8 +679,7 @@ class AutoPlot(AutoBasePlot):
         self.data_leg(0, loc=loc)
 
     def boxplots(self,grouped=False,annotation=True, show_ns=False,target_only=None,
-                 stripplot=True, ylims=None, **kwargs):
-
+                 stripplot=False, ylims=None, **kwargs):
 
         if not grouped:
             hue = None
@@ -686,12 +693,6 @@ class AutoPlot(AutoBasePlot):
             'hue': hue,
             'data': aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=self.key),
         }
-        # box_kws = {
-        #     'width': 0.8,
-        #     'fliersize': 3,
-        #     'whis': 1.5,
-        #     'linewidth': None
-        # }
 
         for ii, k in enumerate(self.ks):
             p = self.pdict[k]
@@ -701,64 +702,10 @@ class AutoPlot(AutoBasePlot):
                 **kws0
             }
             plot.single_boxplot(stripplot=stripplot,annotation=annotation, show_ns=show_ns, target_only=target_only,**kws)
-            # with sns.plotting_context('notebook', font_scale=1.4):
-            #
-            #     g1 = sns.boxplot(**kws,**box_kws)  # RUN PLOT
-            #     g1.set(xlabel=None)
-            #     try:
-            #         g1.get_legend().remove()
-            #     except:
-            #         pass
-            #     if annotation:
-            #         try:
-            #             plot.annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
-            #         except:
-            #             pass
-            #
-            #     if stripplot:
-            #         g2 = sns.stripplot(**kws)
-            #         try:
-            #             g2.get_legend().remove()
-            #         except:
-            #             pass
-            #         g2.set(xlabel=None)
-
-            self.conf_ax(ii, xticklabelrotation=30, ylab=p.lab, yMaxN=4,
+            self.conf_ax(ii, xticklabelrotation=30, ylab=p.l, yMaxN=4,
                           ylim=ylims[ii] if ylims is not None else None,
                           xvis=False if ii < (self.Nrows - 1) * self.Ncols else True)
 
-
-
-class AutoLoadPlot(AutoPlot) :
-    def __init__(self, **kwargs):
-
-
-        super().__init__(**kwargs)
-        # self.ranges = ranges
-        # self.absolute = absolute
-        # self.vdict = aux.AttrDict()
-        # self.kdict = aux.AttrDict()
-        # self.pdict = aux.AttrDict()
-        # self.kpdict = aux.AttrDict()
-        # self.ks=[]
-        # self.pars=[]
-        # for k in ks :
-        #     try :
-        #         p = reg.par.kdict[k]
-        #         par=p.d
-        #         vs = plot.get_vs(self.datasets, par, key=key, absolute=absolute, rad2deg=rad2deg)
-        #         assert len(vs)==self.Ndatasets
-        #         self.kdict[k] = aux.AttrDict({l: {'df': vs[i], 'col': col} for i, (l, d, col) in enumerate(self.data_palette)})
-        #         self.kpdict[k] = [self.kdict[k], p]
-        #         self.vdict[k] = vs
-        #         self.pdict[k] = p
-        #         self.ks.append(k)
-        #         self.pars.append(par)
-        #
-        #     except :
-        #         reg.vprint(f'Failed to retrieve key {k}', 1)
-        #         pass
-        # self.Nks=len(self.ks)
 
 
 

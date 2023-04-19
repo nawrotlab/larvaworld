@@ -337,8 +337,9 @@ def load_config(dir) :
 def save_config(c,refID=None):
     if refID is not None:
         c.refID = refID
-        reg.Ref_paths(id=refID, dir=c.dir)
-
+    if c.refID is not None:
+        reg.Ref_paths(id=c.refID, dir=c.dir)
+        reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
     for k, v in c.items():
         if isinstance(v, np.ndarray):
             c[k] = v.tolist()
