@@ -279,7 +279,7 @@ class RvsS_Essay(Essay):
                           'coupled_labels': self.durs,
                           'xlabel': r'Time spent on food $(min)$'}
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = reg.graphs.dict['barplot'](par_shorts=[s],
+                    self.figs[f'{exp} {p}'] = reg.graphs.dict['barplot'](ks=[s],
                                                                      save_as=f'2_AD_LIBITUM_{p}.pdf', **kwargs)
 
             elif exp == 'POST-STARVATION INTAKE':
@@ -301,7 +301,7 @@ class RvsS_Essay(Essay):
                           'xlabel': 'Food quality (%)'
                           }
                 for s, p in zip(shorts, pars):
-                    self.figs[f'{exp} {p}'] = reg.graphs.dict['barplot'](par_shorts=[s], save_as=f'4_REARING_{p}.pdf',
+                    self.figs[f'{exp} {p}'] = reg.graphs.dict['barplot'](ks=[s], save_as=f'4_REARING_{p}.pdf',
                                                                      **kwargs)
 
             elif exp == 'REFEEDING AFTER 3h STARVED':

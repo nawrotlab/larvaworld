@@ -66,7 +66,7 @@ def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circ
 # ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
 @reg.funcs.graph('distros')
 def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],mode='hist',
-                 pvalues=True, half_circles=True,annotation=False,target_only=None, show_ns=False, subfolder='distro', Nbins=100, **kwargs):
+                 half_circles=True,annotation=False,target_only=None, show_ns=False, subfolder='distro', Nbins=100, **kwargs):
     Nps = len(ks)
     if name is None:
         name = f'distros_{mode}_{Nps}'
@@ -77,10 +77,8 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
     elif mode == 'hist':
         build_kws['sharey']=True
     P = plot.AutoPlot(ks=ks, name=name, subfolder=subfolder, build_kws=build_kws, **kwargs)
-    # P.init_fits(P.pars)
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
-    # ps = reg.getPar(ks)
     lims={}
     parlabs={}
     for sh, par in zip(ks, P.pars):
@@ -90,8 +88,6 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
             x=d.get_par(par, key='distro').dropna().values
             Ddata[par][l] = x
             vs.append(x)
-        # if pvalues:
-        #     P.comp_pvalues(vs, par)
         vvs = np.hstack(vs)
         vmin, vmax = np.quantile(vvs, 0.005), np.quantile(vvs, 0.995)
         lims[par]=(vmin, vmax)
@@ -132,24 +128,14 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
                       # xvis=False if i < (Nrows - 1) * Ncols else True
                       )
 
-
         else:
             vmin, vmax = lims[par]
             bins = np.linspace(vmin, vmax, Nbins)
             dic = {}
             for l, x in dic.items():
                 ws = np.ones_like(x) / float(len(x))
-            # print(l,k,x.shape)
                 dic[l] = {'weights': ws, 'color': palette[l], 'label': l, 'x': x, 'alpha': 0.6}
                 P.axs[i].hist(bins=bins,**dic[l])
-            # if pvalues:
-            #     P.comp_pvalues(vs, par)
-            # if half_circles:
-            #     P.plot_half_circles(par, i)
-
-            # bins, xlim = P.angrange(r, absolute, Nbins)
-            # P.plot_par(vs=vs, nbins=Nbins, i=i, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
-            #            pvalues=False, half_circles=half_circles)
             P.conf_ax(i, ylab='probability',yvis=True if i%P.Ncols == 0 else False,  xlab=parlabs[par], yMaxN=3,xMaxN=5, leg_loc=legloc)
 
     if mode == 'box':

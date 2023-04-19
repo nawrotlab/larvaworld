@@ -49,7 +49,7 @@ def intake_barplot(**kwargs):
     return barplot(ks=['f_am'], **kwargs)
 
 @reg.funcs.graph('barplot')
-def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+def barplot(ks, coupled_labels=None, xlabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
     P = plot.AutoPlot(ks=ks, name=ks[0], build_kws={'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
@@ -79,10 +79,11 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
 
     for ii, k in enumerate(P.ks):
         ax = P.axs[ii]
-        p, u = reg.getPar(k, to_return=['d', 'l'])
-        vs = [d.get_par(key='end', par=p) for d in P.datasets]
-        means = [v.mean() for v in vs]
-        stds = [v.std() for v in vs]
+        p = P.pdict[k]
+        vs = P.vdict[k]
+        means = [np.mean(v) for v in vs]
+        stds = [np.std(v) for v in vs]
+
         ax.p1 = ax.bar(ind, means, **bar_kwargs)
         ax.errs = ax.errorbar(ind, means, yerr=stds, **err_kwargs)
 
@@ -94,12 +95,12 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
         else:
             for k in range(Npairs):
                 i, j = k * N, k * N + 1
-                st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
+                st, pv = ttest_ind(list(vs[i]), list(vs[j]), equal_var=False)
                 if pv <= 0.05:
                     ax.text(ind[i], means[i] + stds[i], '*', ha='center', fontsize=20)
             P.data_leg(ii,labels=leg_ids, colors=leg_cols, loc='upper left', handlelength=1, handleheight=1)
 
-        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=u if ylabel is None else ylabel,
+        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=p.l,
                   ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), xticks=xticks, xticklabels=xticklabels)
     P.adjust((0.15, 0.95), (0.15, 0.95), H=0.05)
     P.fig.align_ylabels(P.axs[:])
@@ -108,7 +109,7 @@ def barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **
 
 
 @reg.funcs.graph('auto_barplot')
-def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None, **kwargs):
+def auto_barplot(ks, coupled_labels=None, xlabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
     P = plot.AutoPlot(ks=ks, name=ks[0], build_kws = {'N': Nks, 'Ncols': int(np.ceil(Nks / 3)), 'w': 8, 'h': 6}, **kwargs)
@@ -152,17 +153,15 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
 
     for ii,k in enumerate(P.ks) :
         ax = P.axs[ii]
-        dic=P.kdict[k]
-        p=P.pdict[k]
-
-        vs=[ddic.df for l,ddic in dic.items()]
-        means = [v.mean() for v in vs]
-        stds = [v.std() for v in vs]
+        p = P.pdict[k]
+        vs = P.vdict[k]
+        means = [np.mean(v) for v in vs]
+        stds = [np.std(v) for v in vs]
         ax.p1 = ax.bar(ind, means, **bar_kwargs)
         ax.errs = ax.errorbar(ind, means, yerr=stds, **err_kwargs)
 
         for i, j in ij_pairs:
-            st, pv = ttest_ind(vs[i], vs[j], equal_var=False)
+            st, pv = ttest_ind(list(vs[i]), list(vs[j]), equal_var=False)
             pv = np.round(pv, 4)
             if coupled_labels is not None:
                 if pv <= 0.05:
@@ -172,7 +171,7 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
                 plot.label_diff(i, j, f'p={pv}', ind, means, ax)
 
 
-        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=p.label if ylabel is None else ylabel,
+        P.conf_ax(ii, xlab=xlabel if xlabel is not None else None, ylab=p.l,
                   ylim=[0, None], yMaxN=4, ytickMath=(-3, 3), **ax_kws)
     P.adjust((0.15, 0.95), (0.15, 0.95), W=0.1,H=0.1)
     P.fig.align_ylabels(P.axs[:])

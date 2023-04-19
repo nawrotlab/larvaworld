@@ -437,12 +437,10 @@ class AutoPlot(AutoBasePlot):
                 if p.u == reg.units.m and space_unit == 'mm':
                     p.u = reg.units.millimeter
                     coeff = 1000
-                    # print(k)
                 else:
                     coeff=1
                 if k in klabels.keys():
                     p.disp=klabels[k]
-                # par = p.d
                 dfs = aux.AttrDict()
                 dics = aux.AttrDict()
                 vs=[]
@@ -457,7 +455,6 @@ class AutoPlot(AutoBasePlot):
                     dfs[l]=df
                     dics[l]={'df': v, 'col': col}
                     vs.append(v)
-                    # v = [d.get_par(k=k, key=key)  for d in datasets]
                 self.kkdict[k]=dfs
                 self.kdict[k] = dics
                 self.vdict[k] = vs
