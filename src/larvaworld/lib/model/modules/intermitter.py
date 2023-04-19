@@ -150,7 +150,7 @@ class Intermitter(Effector):
 
     def register(self, bout):
         dur = self.t
-        self.t=0
+        self.ticks = 0
         if bout=='exec' :
             if self.stridechain_dist is None and self.run_dist is not None:
                 bout='run'
@@ -210,7 +210,7 @@ class Intermitter(Effector):
         elif self.run_dist is not None:
             self.expected_run_duration = self.run_dist.sample()
         self.cur_state = 'exec'
-        self.t = 0
+        self.ticks = 0
 
 
     def generate_pause(self):
