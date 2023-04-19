@@ -94,7 +94,8 @@ def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums'
         raise
     for k, cmapID in zip(P.ks, ['Greens','Reds']) :
         cmap=cm.get_cmap(cmapID)
-        dic, p = P.kpdict[k]
+        dic = P.kdict[k]
+        p = P.pdict[k]
         cols=[cmap(i) for i in np.linspace(0.6, 0.9, P.Ndatasets)]
         for l, d, c in zip(P.labels, P.datasets, cols):
             proc(df=dic[l].df, ids=d.config.agent_ids, ax=P.axs[0], d_col=c, label=p.disp)

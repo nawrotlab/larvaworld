@@ -152,8 +152,9 @@ def auto_barplot(ks, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=Non
 
     for ii,k in enumerate(P.ks) :
         ax = P.axs[ii]
-        dic,p=P.kpdict[k]
-        # vs = P.vdict[k]
+        dic=P.kdict[k]
+        p=P.pdict[k]
+
         vs=[ddic.df for l,ddic in dic.items()]
         means = [v.mean() for v in vs]
         stds = [v.std() for v in vs]

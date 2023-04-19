@@ -432,13 +432,13 @@ def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cum
     dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0, 1.6) if cumy else None, fontsize=10)
     return fig
 
-def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},plot_fit=False, **kwargs) :
+def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},plot_fit=True, **kwargs) :
     for v, c, l in zip(vs, colors, labels):
         ax_kws={'label':l, 'color':c}
         if type == 'sns.hist':
             sns_kws0 = {'kde': kde, 'stat': "probability", 'element': "step", 'fill': True, 'multiple': "layer",'shrink': 1}
             sns_kws0.update(sns_kws)
-            sns.histplot(v,  bins=bins, ax=ax, **ax_kws, **sns_kws0, **kwargs)
+            sns.histplot(v,  bins=bins, ax=ax, **ax_kws, **sns_kws0)
         elif type == 'plt.hist':
             y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), **ax_kws, **kwargs)
             if plot_fit:
@@ -448,6 +448,48 @@ def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},pl
                 ax.plot(x, poly_y, **ax_kws, linewidth=3)
 
 
+def single_boxplot(x,y,ax,data, hue=None, palette=None, color=None,
+                   annotation=True, show_ns=False,target_only=None,stripplot=True, **kwargs) :
+    kws = {
+        'x': x,
+        'y': y,
+        'ax': ax,
+        'palette': palette,
+        'color': color,
+        'hue': hue,
+        'data': data,
+    }
+
+    box_kws = {
+        'width': 0.8,
+        'fliersize': 3,
+        'whis': 1.5,
+        'linewidth': None
+    }
+    box_kws.update(kwargs)
+    with sns.plotting_context('notebook', font_scale=1.4):
+        g1 = sns.boxplot(**kws, **box_kws)  # RUN PLOT
+        g1.set(xlabel=None)
+        try:
+            g1.get_legend().remove()
+        except:
+            pass
+
+        if annotation:
+            try:
+                annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+            except:
+                pass
+
+        if stripplot:
+            g2 = sns.stripplot(**kws)
+            try:
+                g2.get_legend().remove()
+            except:
+                pass
+            g2.set(xlabel=None)
+
+
 def getNcolsNrows(N=None, Ncols=None, Nrows=None):
     if N is not None:
         if Nrows is None and Ncols is not None:
@@ -455,7 +497,7 @@ def getNcolsNrows(N=None, Ncols=None, Nrows=None):
         elif Ncols is None and Nrows is not None:
             Ncols = int(np.ceil(N / Nrows))
         elif Ncols is None and Nrows is None:
-            Ncols = int(np.sqrt(N))
+            Ncols = int(np.ceil(np.sqrt(N)))
             Nrows = int(np.ceil(N / Ncols))
     if Nrows is None:
         Nrows = 1
@@ -488,7 +530,7 @@ def NcolNrows(N=None, wh=None, w=8, h=8, sharex=False, sharey=False, Ncols=None,
     return kws
 
 
-def define_ks(ks=None, mode='basic'):
+def define_end_ks(ks=None, mode='basic'):
     l_par = 'l'
     if ks is None:
         dic = {

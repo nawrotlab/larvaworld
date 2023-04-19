@@ -43,8 +43,8 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     return P.get()
 
 @reg.funcs.graph('angular pars')
-def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circles=False,kde=True, subfolder='turn',
-                  Npars=5, Nbins=100,type='plt.hist', **kwargs):
+def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circles=True,kde=True, subfolder='turn',
+                  Npars=5, Nbins=100,type='sns.hist', **kwargs):
     if Npars == 5:
         ks = ['b', 'bv', 'ba', 'fov', 'foa']
         rs = [100, 200, 2000, 200, 2000]
@@ -58,10 +58,9 @@ def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circ
         ks += ['rov', 'roa']
         rs += [200, 2000]
 
-    Nps = len(ks)
-    P = plot.AutoLoadPlot(ks=ks,ranges=rs, absolute=absolute, name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':8, 'sharey': True}, **kwargs)
-    P.plot_hist(type=type, kde=kde, pvalues=False, half_circles=half_circles, alpha=0.8, histtype='step', linewidth=3,nbins=Nbins)
-    P.adjust((0.3 / P.Ncols, 0.99), (0.15, 0.95), 0.01)
+    P = plot.AutoLoadPlot(ks=ks,ranges=rs, absolute=absolute, name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':8, 'sharey': True}, **kwargs)
+    P.plot_hist(type=type, kde=kde, half_circles=half_circles, alpha=0.8, linewidth=3,nbins=Nbins)
+    P.adjust((0.1, 0.95), (0.15, 0.95), 0.01)
     return P.get()
 
 # ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
@@ -72,13 +71,13 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
     if name is None:
         name = f'distros_{mode}_{Nps}'
     legloc = 'upper left' if half_circles else 'upper right'
-    build_kws = {'N': Nps, 'wh': 8}
+    build_kws = {'N': 'Nks', 'wh': 8}
     if mode == 'box':
         build_kws['sharex']=True
     elif mode == 'hist':
         build_kws['sharey']=True
     P = plot.AutoLoadPlot(ks=ks, name=name, subfolder=subfolder, build_kws=build_kws, **kwargs)
-    P.init_fits(P.pars)
+    # P.init_fits(P.pars)
     palette = dict(zip(P.labels, P.colors))
     Ddata = {}
     # ps = reg.getPar(ks)
@@ -91,8 +90,8 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
             x=d.get_par(par, key='distro').dropna().values
             Ddata[par][l] = x
             vs.append(x)
-        if pvalues:
-            P.comp_pvalues(vs, par)
+        # if pvalues:
+        #     P.comp_pvalues(vs, par)
         vvs = np.hstack(vs)
         vmin, vmax = np.quantile(vvs, 0.005), np.quantile(vvs, 0.995)
         lims[par]=(vmin, vmax)
@@ -145,8 +144,8 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
                 P.axs[i].hist(bins=bins,**dic[l])
             # if pvalues:
             #     P.comp_pvalues(vs, par)
-            if half_circles:
-                P.plot_half_circles(par, i)
+            # if half_circles:
+            #     P.plot_half_circles(par, i)
 
             # bins, xlim = P.angrange(r, absolute, Nbins)
             # P.plot_par(vs=vs, nbins=Nbins, i=i, labels=p.disp, alpha=0.8, histtype='step', linewidth=3,
@@ -162,12 +161,10 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
 
 @reg.funcs.graph('crawl pars')
 def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint',name='crawl_pars',
-                    par_legend=False, pvalues=False,type='sns.hist',
-                    half_circles=False, kde=True,  **kwargs):
-    Nps = len(ks)
-    P = plot.AutoLoadPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'N':Nps, 'wh':5, 'sharey': True}, **kwargs)
-    P.plot_hist(type=type,kde=kde, pvalues=pvalues, half_circles=half_circles,par_legend=par_legend)
-    P.adjust((0.25 / Nps, 0.99), (0.15, 0.95), 0.1)
+                    type='sns.hist',kde=True,  **kwargs):
+    P = plot.AutoLoadPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':5, 'sharey': True}, **kwargs)
+    P.plot_hist(type=type,kde=kde)
+    P.adjust((0.1, 0.95), (0.15, 0.95), 0.1)
     return P.get()
 
 @reg.funcs.graph('turn amplitude VS Y pos')
@@ -294,23 +291,38 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
     return P.get()
 
 @reg.funcs.graph('turn amplitude')
-def plot_turns(name='turn_amplitude',absolute=True, subfolder='turn', **kwargs):
-    ks = ['tur_fou']
-    P = plot.AutoLoadPlot(ks=ks,ranges=[100],absolute=absolute, rad2deg=True, name=name, subfolder=subfolder, **kwargs)
+def plot_turns(name='turn_amplitude',absolute=False, subfolder='turn', **kwargs):
+    P = plot.AutoLoadPlot(ks=['tur_fou'],ranges=[100],absolute=absolute, rad2deg=True, name=name, subfolder=subfolder, **kwargs)
     P.plot_hist(par_legend=True, nbins=30,xlab='Turn amplitude ($deg$)', alpha=1.0, histtype='step')
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
-@reg.funcs.graph('endpoint pars (hist)')
-def plot_endpoint_params(name=None,mode='basic', ks=None, subfolder='endpoint',
-                         plot_fit=True, nbins=20,  use_title=False, **kwargs):
-    ks=plot.define_ks(ks, mode)
-    Nks = len(ks)
+@reg.funcs.graph('endpoint hist')
+def plot_endpoint_hist(**kwargs):
+    return plot_endpoint_params(type='hist',**kwargs)
+
+@reg.funcs.graph('endpoint box')
+def plot_endpoint_box(**kwargs):
+    return plot_endpoint_params(type='box',**kwargs)
+
+def plot_endpoint_params(type, name=None,mode='basic', ks=None, subfolder='endpoint',
+                         **kwargs):
+    ks=plot.define_end_ks(ks, mode)
     if name is None:
-        name = f'endpoint_params_{mode}'
-    P = plot.AutoLoadPlot(ks=ks,key='end', name=name, subfolder=subfolder, build_kws={'N':Nks, 'Ncols':int(np.ceil(Nks / 3)), 'w':7, 'h':5, 'sharey': True}, **kwargs)
-    P.plot_hist(pvalues=True, half_circles=True,use_title=use_title, plot_fit=plot_fit, nbins=nbins,alpha=0.5)
-    P.adjust((0.1, 0.97), (0.1, 1 - (0.1 / 2)), 0.1, 0.2 * 2)
+        name = f'endpoint_params_{type}_{mode}'
+    if type=='hist' :
+        sharex,sharey=False,True
+        W,H=0.1, 0.3
+    elif type=='box' :
+        sharex,sharey=True,False
+        W, H = 0.5, 0.15
+    P = plot.AutoLoadPlot(ks=ks,key='end', name=name, subfolder=subfolder,
+                          build_kws={'N':'Nks', 'wh':7, 'sharex': sharex, 'sharey': sharey}, **kwargs)
+    if type == 'hist':
+        P.plot_hist(nbins=20)
+    elif type == 'box':
+        P.boxplots()
+    P.conf_fig(align=True, adjust_kws={'LR': (0.1, 0.95), 'BT': (0.15, 0.9), 'W': W, 'H': H})
     return P.get()
 
 

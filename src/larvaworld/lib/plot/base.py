@@ -23,7 +23,7 @@ plt.rcParams.update(plt_conf)
 
 
 class BasePlot:
-    def __init__(self, name, save_as=None,pref=None,suf='pdf',
+    def __init__(self, name='larvaworld_plot', save_as=None,pref=None,suf='pdf',
                  save_to=None, subfolder=None,
                  return_fig=False, show=False,
                  subplot_kw={}, build_kws={}, **kwargs):
@@ -42,23 +42,24 @@ class BasePlot:
             os.makedirs(save_to, exist_ok=True)
         self.save_to = save_to
 
-
-
         self.return_fig = return_fig
         self.show = show
 
-
-        self.cur_idx = 0
-        self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-        self.letter_dict = {}
-        self.x0s, self.y0s = [], []
         self.fig_kws=self.set_fig_kws(subplot_kw=subplot_kw, build_kws=build_kws)
 
 
     def set_fig_kws(self,subplot_kw={}, build_kws={}):
         for k,v in build_kws.items():
-            if v=='Ndatasets':
-                build_kws[k]=self.Ndatasets
+            if v=='Ndatasets' :
+                if hasattr(self, 'Ndatasets'):
+                    build_kws[k]=self.Ndatasets
+                else :
+                    build_kws[k] = None
+            if v=='Nks' :
+                if hasattr(self, 'Nks'):
+                    build_kws[k]=self.Nks
+                else :
+                    build_kws[k] = None
         build_kws['subplot_kw']=subplot_kw
         return plot.NcolNrows(**build_kws)
 
@@ -95,17 +96,12 @@ class BasePlot:
 
     @property
     def Ncols(self):
-        if 'ncols' in self.fig_kws.keys() :
-            return self.fig_kws['ncols']
-        else :
-            return 1
+        return self.axs[0].get_gridspec().ncols
+
 
     @property
     def Nrows(self):
-        if 'nrows' in self.fig_kws.keys():
-            return self.fig_kws['nrows']
-        else:
-            return 1
+        return self.axs[0].get_gridspec().nrows
 
 
     def conf_ax(self, idx=0,ax=None, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
@@ -117,6 +113,10 @@ class BasePlot:
                 xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
                 leg_handles=None, leg_labels=None,legfontsize=None,xvis=None, yvis=None, zvis=None,
                 title=None, title_y=None, titlefontsize=None):
+        '''
+        Helper method that configures an axis of the figure
+
+        '''
         if ax is None :
             ax = self.axs[idx]
         if equal_aspect is not None:
@@ -174,7 +174,6 @@ class BasePlot:
         if xMaxFix:
             ticks_loc = ax.get_xticks().tolist()
             ax.xaxis.set_major_locator(ticker.FixedLocator(ticks_loc))
-            # ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if xMaxN is not None:
             ax.xaxis.set_major_locator(ticker.MaxNLocator(xMaxN))
         if yMaxN is not None:
@@ -241,26 +240,6 @@ class BasePlot:
             self.fit_df.to_csv(ff, index=True, header=True)
         return plot.process_plot(self.fig, self.save_to, self.filename, self.return_fig, self.show)
 
-    def add_letter(self, ax, letter=True, x0=False, y0=False):
-        if letter:
-            self.letter_dict[ax] = self.letters[self.cur_idx]
-            self.cur_idx += 1
-            if x0:
-                self.x0s.append(ax)
-            if y0:
-                self.y0s.append(ax)
-
-    def annotate(self, dx=-0.05, dy=0.005, full_dict=False):
-        text_x0, text_y0 = 0.05, 0.98
-
-        if full_dict:
-
-            for i, ax in enumerate(self.axs):
-                self.letter_dict[ax] = self.letters[i]
-        for i, (ax, text) in enumerate(self.letter_dict.items()):
-            X = text_x0 if ax in self.x0s else ax.get_position().x0 + dx
-            Y = text_y0 if ax in self.y0s else ax.get_position().y1 + dy
-            self.fig.text(X, Y, text, size=30, weight='bold')
 
     def conf_fig(self, adjust_kws=None,align=None,title=None, title_kws={}):
         if title is not None:
@@ -283,14 +262,148 @@ class BasePlot:
             self.fig.align_ylabels(ax_list)
 
 
+
+
 class AutoBasePlot(BasePlot):
     def __init__(self, fig=None, axs=None, dim3=False, azim=115, elev=15, **kwargs):
         super().__init__(**kwargs)
 
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
+# class DatasetGroup :
+#     def __init__(self, datasets=[], labels=None, add_samples=False):
+#         for d in datasets:
+#             assert isinstance(d, larvaworld.LarvaDataset)
+#         if labels is None:
+#             labels = [d.id for d in datasets]
+#
+#         if add_samples:
+#             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
+#             targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedConf('Ref')]
+#             datasets += targets
+#             if labels is not None:
+#                 labels += targetIDs
+#         self.datasets = datasets
+#         self.labels = labels
+#         self.Ndatasets = len(datasets)
+#         self.colors = plot.get_colors(datasets)
+#         assert self.Ndatasets == len(self.labels)
+#
+#         self.fit_ind = None
+#         self.fit_df = None
+#
+#     @property
+#     def data_dict(self):
+#         return dict(zip(self.labels, self.datasets))
+#
+#     @property
+#     def data_palette(self):
+#         return zip(self.labels, self.datasets, self.colors)
+#
+#     @property
+#     def Nticks(self):
+#         Nticks_list = [d.config.Nticks for d in self.datasets]
+#         return np.max(aux.unique_list(Nticks_list))
+#
+#     @property
+#     def N(self):
+#         N_list = [d.config.N for d in self.datasets]
+#         return np.max(aux.unique_list(N_list))
+#
+#     @property
+#     def fr(self):
+#         fr_list = [d.fr for d in self.datasets]
+#         return np.max(aux.unique_list(fr_list))
+#
+#     @property
+#     def dt(self):
+#         dt_list = aux.unique_list([d.dt for d in self.datasets])
+#         return np.max(dt_list)
+#
+#     @property
+#     def duration(self):
+#         return int(self.Nticks * self.dt)
+#
+#     @property
+#     def tlim(self):
+#         return (0, self.duration)
+#
+#     def trange(self, unit='min'):
+#         if unit == 'min':
+#             T = 60
+#         elif unit == 'sec':
+#             T = 1
+#         t0, t1 = self.tlim
+#         x = np.linspace(t0 / T, t1 / T, self.Nticks)
+#         return x
+#
+#     def init_fits(self, pars, names=('dataset1', 'dataset2')):
+#         if self.Ndatasets > 1:
+#             columns = pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars]
+#             fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
+#             self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
+#             self.fit_df = pd.DataFrame(index=self.fit_ind, columns=columns)
+#
+#     def comp_pvalues(self, values, p):
+#         if self.fit_ind is not None:
+#             for ind, (vv1, vv2) in zip(self.fit_ind, itertools.combinations(values, 2)):
+#                 v1, v2=list(vv1),list(vv2)
+#                 st, pv = ttest_ind(v1, v2, equal_var=False)
+#                 if not pv <= 0.01:
+#                     t = 0
+#                 elif np.nanmean(v1) < np.nanmean(v2):
+#                     t = 1
+#                 else:
+#                     t = -1
+#                 self.fit_df.loc[ind, [p, f'S_{p}', f'P_{p}']] = [t, st, np.round(pv, 11)]
+#
+#     def plot_half_circles(self, p, ax):
+#         if self.fit_df is not None:
+#             ii = 0
+#             for z, (l1, l2) in enumerate(self.fit_df.index.values):
+#                 col1, col2 = self.colors[self.labels.index(l1)], self.colors[self.labels.index(l2)]
+#                 res = self.plot_half_circle(p, ax, col1, col2, v=self.fit_df[p].iloc[z], ind=(l1, l2), coef=z - ii)
+#                 if not res:
+#                     ii += 1
+#                     continue
+#
+#     def plot_half_circle(self, p, ax, col1, col2, v, ind, coef=0):
+#         res = True
+#         if v == 1:
+#             c1, c2 = col1, col2
+#         elif v == -1:
+#             c1, c2 = col2, col1
+#         else:
+#             res = False
+#
+#         if res:
+#             rad = 0.04
+#             yy = 0.95 - coef * 0.08
+#             xx = 0.75
+#             plot.dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
+#             pv = self.fit_df[f'P_{p}'].loc[ind]
+#             if pv == 0:
+#                 pvi = -9
+#             else:
+#                 for pvi in np.arange(-1, -10, -1):
+#                     if np.log10(pv) > pvi:
+#                         pvi += 1
+#                         break
+#             ax.text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k',
+#                     fontsize=15, transform=ax.transAxes)
+#         return res
+
 class AutoPlot(AutoBasePlot):
-    def __init__(self, datasets, labels=None, add_samples=False, **kwargs):
+    def __init__(self, ks=[],key='step',datasets=[], labels=None, add_samples=False,
+                 ranges=None,absolute=False, rad2deg=False,**kwargs):
+        '''
+        Extension of the basic plotting class that receives datasets of type larvaworld.LarvaDataset
+        Args:
+            datasets: The datasets to access for plotting
+            labels: The labels by which the datasets will be indicated in the plots. If not specified the IDs of the datasets will be used
+            add_samples: Whether to also plot the reference datasets of any simulated datasets
+            **kwargs:
+        '''
         for d in datasets:
             assert isinstance(d, larvaworld.LarvaDataset)
         if labels is None:
@@ -307,21 +420,64 @@ class AutoPlot(AutoBasePlot):
         self.Ndatasets = len(datasets)
         self.colors = plot.get_colors(datasets)
         assert self.Ndatasets == len(self.labels)
+
+        self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
+        self.Ngroups = len(self.group_ids)
+
+        self.key = key
+        self.ks = []
+        self.kkdict = aux.AttrDict()
+        self.kdict = aux.AttrDict()
+        self.pdict = aux.AttrDict()
+        self.vdict = aux.AttrDict()
+
+        for k in ks :
+            try :
+                p = reg.par.kdict[k]
+                # par = p.d
+                dfs = aux.AttrDict()
+                dics = aux.AttrDict()
+                vs=[]
+                for l, d, col in self.data_palette :
+                    df = d.get_par(k=k, key=key)
+                    assert df is not None
+                    v = df.dropna().values
+                    if absolute:
+                        v = np.abs(v)
+                    if rad2deg:
+                        v = np.rad2deg(v)
+                    dfs[l]=df
+                    dics[l]={'df': v, 'col': col}
+                    vs.append(v)
+                    # v = [d.get_par(k=k, key=key)  for d in datasets]
+                self.kkdict[k]=dfs
+                self.kdict[k] = dics
+                self.vdict[k] = vs
+                self.pdict[k] = p
+                self.ks.append(k)
+            except :
+                reg.vprint(f'Failed to retrieve key {k}', 1)
+                pass
+        self.pars = reg.getPar(self.ks)
+        self.Nks=len(self.ks)
+        self.ranges = ranges
+        self.absolute = absolute
+        self.rad2deg = rad2deg
         super().__init__(**kwargs)
 
+    def concat_data(self, key):
+        return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
+    def comp_all_pvalues(self):
+        if self.Ndatasets < 2:
+            return
+        columns = pd.MultiIndex.from_product([self.ks, ['significance', 'stat', 'pvalue']])
+        fit_ind = pd.MultiIndex.from_tuples(list(itertools.combinations(self.labels, 2)))
+        self.fit_df = pd.DataFrame(index=fit_ind, columns=columns)
 
-    def init_fits(self, pars, names=('dataset1', 'dataset2')):
-        if self.Ndatasets > 1:
-            columns = pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars]
-            fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
-            self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
-            self.fit_df = pd.DataFrame(index=self.fit_ind, columns=columns)
-
-    def comp_pvalues(self, values, p):
-        if self.fit_ind is not None:
-            for ind, (vv1, vv2) in zip(self.fit_ind, itertools.combinations(values, 2)):
-                v1, v2=list(vv1),list(vv2)
+        for k in self.ks:
+            for ind, (vv1, vv2) in zip(fit_ind, itertools.combinations(self.vdict[k], 2)):
+                v1, v2 = list(vv1), list(vv2)
                 st, pv = ttest_ind(v1, v2, equal_var=False)
                 if not pv <= 0.01:
                     t = 0
@@ -329,21 +485,29 @@ class AutoPlot(AutoBasePlot):
                     t = 1
                 else:
                     t = -1
-                self.fit_df.loc[ind, [p, f'S_{p}', f'P_{p}']] = [t, st, np.round(pv, 11)]
+                # print([t, st, np.round(pv, 11)])
+                self.fit_df.loc[ind, k] = [t, st, np.round(pv, 11)]
 
+        # print(self.fit_df)
 
-    def plot_half_circles(self, p, i):
-        if self.fit_df is not None:
-            ax = self.axs[i]
+    def plot_all_half_circles(self):
+        if self.fit_df is None:
+            return
+        for i,k in enumerate(self.ks):
+            ax=self.axs[i]
+            df=self.fit_df[k]
             ii = 0
-            for z, (l1, l2) in enumerate(self.fit_df.index.values):
+            for z, (l1, l2) in enumerate(df.index.values):
                 col1, col2 = self.colors[self.labels.index(l1)], self.colors[self.labels.index(l2)]
-                res = self.plot_half_circle(p, ax, col1, col2, v=self.fit_df[p].iloc[z], ind=(l1, l2), coef=z - ii)
+                pv = df['pvalue'].loc[(l1, l2)]
+                v = df['significance'].loc[(l1, l2)]
+                res = self.plot_half_circle(ax, col1, col2, v=v, pv=pv, coef=z - ii)
                 if not res:
                     ii += 1
                     continue
 
-    def plot_half_circle(self, p, ax, col1, col2, v, ind, coef=0):
+
+    def plot_half_circle(self, ax, col1, col2, v, pv, coef=0):
         res = True
         if v == 1:
             c1, c2 = col1, col2
@@ -357,7 +521,6 @@ class AutoPlot(AutoBasePlot):
             yy = 0.95 - coef * 0.08
             xx = 0.75
             plot.dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
-            pv = self.fit_df[f'P_{p}'].loc[ind]
             if pv == 0:
                 pvi = -9
             else:
@@ -396,7 +559,6 @@ class AutoPlot(AutoBasePlot):
 
     @property
     def data_palette(self):
-        # N_list = [d.config.N for d in self.datasets]
         return zip(self.labels, self.datasets, self.colors)
 
     @property
@@ -484,46 +646,11 @@ class AutoPlot(AutoBasePlot):
                   xlim=xlim, ylim=ylim, xMaxN=5, yMaxN=5, leg_loc=leg_loc, **kwargs)
 
 
-
-
-
-class AutoLoadPlot(AutoPlot) :
-    def __init__(self, ks,key='step',ranges=None,absolute=False, rad2deg=False, **kwargs):
-        super().__init__(**kwargs)
-        self.ranges = ranges
-        self.absolute = absolute
-        self.vdict = aux.AttrDict()
-        self.kdict = aux.AttrDict()
-        self.pdict = aux.AttrDict()
-        self.kpdict = aux.AttrDict()
-        self.ks=[]
-        self.pars=[]
-        for k in ks :
-            try :
-                p = reg.par.kdict[k]
-                par=p.d
-                vs = plot.get_vs(self.datasets, par, key=key, absolute=absolute, rad2deg=rad2deg)
-                assert len(vs)==self.Ndatasets
-                self.kdict[k] = aux.AttrDict({l: {'df': vs[i], 'col': col} for i, (l, d, col) in enumerate(self.data_palette)})
-                self.kpdict[k] = [self.kdict[k], p]
-                self.vdict[k] = vs
-                self.pdict[k] = p
-                self.ks.append(k)
-                self.pars.append(par)
-
-            except :
-                reg.vprint(f'Failed to retrieve key {k}', 1)
-                pass
-        self.Nks=len(self.ks)
-
-
-    def plot_hist(self,pvalues=False, half_circles=False, use_title=False,par_legend=False,
+    def plot_hist(self,half_circles=True, use_title=False,par_legend=False,
                   nbins=40,alpha=0.5,ylim=[0, 0.25],xlab=None,  **kwargs):
         loc = 'upper left' if half_circles else 'upper right'
-        self.init_fits(self.pars)
         for i, k in enumerate(self.ks):
             p = self.pdict[k]
-            par=p.d
             vs = self.vdict[k]
             if self.ranges :
                 r=self.ranges[i]
@@ -537,11 +664,104 @@ class AutoLoadPlot(AutoPlot) :
                          xlab=p.label if  xlab is None else xlab, xlim=xlim,ylim=ylim,
                       xMaxN=4, yMaxN=4, xMath=True, title=p.disp if use_title else None,
                          leg_loc=loc if par_legend else None)
-            if pvalues:
-                self.comp_pvalues(vs, par)
-            if half_circles:
-                self.plot_half_circles(par, i)
+
+        self.comp_all_pvalues()
+        if half_circles:
+            self.plot_all_half_circles()
         self.data_leg(0, loc=loc)
+
+    def boxplots(self,grouped=False,annotation=True, show_ns=False,target_only=None,
+                 stripplot=True, ylims=None, **kwargs):
+
+
+        if not grouped:
+            hue = None
+            palette = dict(zip(self.labels, self.colors))
+        else:
+            hue = 'GroupID'
+            palette = dict(zip(self.group_ids, aux.N_colors(self.Ngroups)))
+        kws0 = {
+            'x': "DatasetID",
+            'palette': palette,
+            'hue': hue,
+            'data': aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=self.key),
+        }
+        # box_kws = {
+        #     'width': 0.8,
+        #     'fliersize': 3,
+        #     'whis': 1.5,
+        #     'linewidth': None
+        # }
+
+        for ii, k in enumerate(self.ks):
+            p = self.pdict[k]
+            kws = {
+                'y': p.d,
+                'ax': self.axs[ii],
+                **kws0
+            }
+            plot.single_boxplot(stripplot=stripplot,annotation=annotation, show_ns=show_ns, target_only=target_only,**kws)
+            # with sns.plotting_context('notebook', font_scale=1.4):
+            #
+            #     g1 = sns.boxplot(**kws,**box_kws)  # RUN PLOT
+            #     g1.set(xlabel=None)
+            #     try:
+            #         g1.get_legend().remove()
+            #     except:
+            #         pass
+            #     if annotation:
+            #         try:
+            #             plot.annotate_plot(show_ns=show_ns, target_only=target_only, **kws)
+            #         except:
+            #             pass
+            #
+            #     if stripplot:
+            #         g2 = sns.stripplot(**kws)
+            #         try:
+            #             g2.get_legend().remove()
+            #         except:
+            #             pass
+            #         g2.set(xlabel=None)
+
+            self.conf_ax(ii, xticklabelrotation=30, ylab=p.lab, yMaxN=4,
+                          ylim=ylims[ii] if ylims is not None else None,
+                          xvis=False if ii < (self.Nrows - 1) * self.Ncols else True)
+
+
+
+class AutoLoadPlot(AutoPlot) :
+    def __init__(self, **kwargs):
+
+
+        super().__init__(**kwargs)
+        # self.ranges = ranges
+        # self.absolute = absolute
+        # self.vdict = aux.AttrDict()
+        # self.kdict = aux.AttrDict()
+        # self.pdict = aux.AttrDict()
+        # self.kpdict = aux.AttrDict()
+        # self.ks=[]
+        # self.pars=[]
+        # for k in ks :
+        #     try :
+        #         p = reg.par.kdict[k]
+        #         par=p.d
+        #         vs = plot.get_vs(self.datasets, par, key=key, absolute=absolute, rad2deg=rad2deg)
+        #         assert len(vs)==self.Ndatasets
+        #         self.kdict[k] = aux.AttrDict({l: {'df': vs[i], 'col': col} for i, (l, d, col) in enumerate(self.data_palette)})
+        #         self.kpdict[k] = [self.kdict[k], p]
+        #         self.vdict[k] = vs
+        #         self.pdict[k] = p
+        #         self.ks.append(k)
+        #         self.pars.append(par)
+        #
+        #     except :
+        #         reg.vprint(f'Failed to retrieve key {k}', 1)
+        #         pass
+        # self.Nks=len(self.ks)
+
+
+
 
 class GridPlot(BasePlot):
     def __init__(self, name, width, height, scale=(1, 1), **kwargs):
@@ -556,6 +776,11 @@ class GridPlot(BasePlot):
         self.fig = plt.figure(constrained_layout=False, figsize=figsize)
         self.grid = GridSpec(height, width, figure=self.fig)
         self.cur_w, self.cur_h = 0, 0
+
+        self.cur_idx = 0
+        self.letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        self.letter_dict = {}
+        self.x0s, self.y0s = [], []
 
 
     def add(self, N=1, w=None, h=None, w0=None, h0=None, dw=0, dh=0, share_w=False, share_h=False, letter=True,
@@ -612,6 +837,27 @@ class GridPlot(BasePlot):
                 self.add_letter(axs[0], letter, x0=x0, y0=y0)
             # ax_letter = axs[0]
         return axs
+
+    def add_letter(self, ax, letter=True, x0=False, y0=False):
+        if letter:
+            self.letter_dict[ax] = self.letters[self.cur_idx]
+            self.cur_idx += 1
+            if x0:
+                self.x0s.append(ax)
+            if y0:
+                self.y0s.append(ax)
+
+    def annotate(self, dx=-0.05, dy=0.005, full_dict=False):
+        text_x0, text_y0 = 0.05, 0.98
+
+        if full_dict:
+
+            for i, ax in enumerate(self.axs):
+                self.letter_dict[ax] = self.letters[i]
+        for i, (ax, text) in enumerate(self.letter_dict.items()):
+            X = text_x0 if ax in self.x0s else ax.get_position().x0 + dx
+            Y = text_y0 if ax in self.y0s else ax.get_position().y1 + dy
+            self.fig.text(X, Y, text, size=30, weight='bold')
 
     def plot(self, func, kws, axs=None, **kwargs):
         if axs is None:

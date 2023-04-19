@@ -11,7 +11,7 @@ def test_plots() :
          'subfolder': None}
 
 
-    for k in ['boxplot (simple)', 'epochs', 'fft multi', 'dispersal summary',
+    for k in ['endpoint box', 'epochs', 'fft multi', 'dispersal summary',
               'kinematic analysis', 'angular pars', 'crawl pars', 'stride cycle',
               'stride cycle multi', 'ethogram', 'dispersal', 'pathlength',
               'trajectories'] :

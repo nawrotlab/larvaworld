@@ -39,7 +39,6 @@ def traj_grouped(unit='mm', name=None, subfolder='trajectories',
                  build_kws={'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True}, **kwargs)
     for ii, (l, d) in enumerate(P.data_dict.items()):
         xy = d.load_traj(mode)
-        # xy = get_traj(d, mode)
         c = d.config
         if range is not None:
             t0, t1 = range
@@ -87,7 +86,6 @@ def epoch_func(**kwargs):
             def func(ax):
                 pass
         pauses = detect_pauses(a, dt, runs=runs)
-        # epochs1, epochs2, epochs0 = runs, pauses, strides
         epochs = [runs, pauses]
         epochs0 = strides
         return epochs, epochs0, func
@@ -156,7 +154,6 @@ def epoch_func(**kwargs):
                     for s0, s1 in epoch:
                         ax.axvspan(trange[s0], trange[s1], color=color, alpha=1.0)
 
-            # return ax0_f
 
             def ax_conf0(P, **kwargs):
                 ax_conf = ax_conf_kws(kws=kws, trange=trange, Ndatasets=P.Ndatasets,Nrows=P.Nrows, **kwargs)
@@ -166,12 +163,6 @@ def epoch_func(**kwargs):
                 ax0_f(ax=P.axs[i], **kwargs)
                 ax_conf = ax_conf0(P=P, i=i, **kwargs)
                 P.conf_ax(i, title=title, **ax_conf)
-                # for i,ax in enumerate(P.axs) :
-
-
-
-
-
             return P0_f
 
         return ss_f
@@ -200,10 +191,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
         else:
             strides, runs, run_counts = detect_strides(a=a, dt=dt, return_extrema=False)
         pauses = detect_pauses(a, dt, runs=runs)
-        # epochs1, epochs2, epochs0 = runs, pauses, strides
-        epochs = [runs, pauses]
-        epochs0 = strides
-        return epochs, epochs0
+        return [runs, pauses], strides
 
     def turn_epochs(a, dt, ax):
         ax.axhline(0, color='black', alpha=1, linestyle='dashed', linewidth=1)
@@ -213,10 +201,7 @@ def track_annotated(epoch='stride', a=None, dt=0.1, a2plot=None, ylab=None, ylim
             Rdurs, Ramps, Rmaxs = process_epochs(a, Rturns, dt, return_idx=False)
             Lturns = Lturns[np.abs(Lamps) > min_amp]
             Rturns = Rturns[np.abs(Ramps) > min_amp]
-
-        epochs = [Lturns, Rturns]
-        epochs0 = Lturns.tolist() + Rturns.tolist()
-        return epochs, epochs0
+        return [Lturns, Rturns], Lturns.tolist() + Rturns.tolist()
 
     epoch_dict = aux.AttrDict({
         'stride': {
@@ -338,12 +323,6 @@ def track_annotated_data(name=None, subfolder='tracks',
             ii = Nidx * jj + i
             id = c.agent_ids[idx]
             ss = s.xs(id, level='AgentID', drop_level=True).loc[:Nticks]
-            # ee = e.loc[id]
-
-            # length = np.round(ee['length'] * 1000, 2)
-            # cum_sd = np.round(ee[preg.getPar('cum_sd')], 2)
-            # run_tr = int(ee[preg.getPar('run_tr')] * 100)
-            # title = f'{l}  # {idx} track, l : {length} mm, pathlength {cum_sd}xl , {run_tr}% time crawling'
             title=get_title(idx,c,e,l)
             kws1 = aux.AttrDict({
                 'agent_idx': idx,

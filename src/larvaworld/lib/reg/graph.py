@@ -183,7 +183,7 @@ class GraphRegistry:
     def build_graphgroups(self) :
         d= aux.AttrDict({
         'tactile': [
-            self.entry('endpoint pars (hist)','time ratio on food (final)',ks=['on_food_tr']),
+            self.entry('endpoint hist','time ratio on food (final)',ks=['on_food_tr']),
             self.entry('timeplot', 'time ratio on food',ks=['on_food_tr'],  unit='min'),
             self.entry('timeplot', 'time on food',ks=['cum_f_det'],  unit='min'),
             self.entry('timeplot', 'turner input',ks=['A_tur'],  unit='min', show_first=True),
@@ -216,7 +216,7 @@ class GraphRegistry:
             # *[self.entry('timeplot', ks=[p]) for p in ['A_wind', 'anemotaxis']],
             self.entry('timeplots', 'anemotaxis', ks=['A_wind', 'anemotaxis']),
             # *[scat(p) for p in [['o_wind', 'A_wind'], ['anemotaxis', 'o_wind']]],
-            self.entry('endpoint pars (hist)', name='final anemotaxis', ks=['anemotaxis'])
+            self.entry('endpoint hist', name='final anemotaxis', ks=['anemotaxis'])
 
         ],
         'thermo': [
@@ -265,9 +265,9 @@ class GraphRegistry:
         ],
         'endpoint': [
 
-            self.entry('boxplot (simple)', ks=['l', 'str_N', 'dsp_0_40_max', 'run_tr', 'fv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
+            self.entry('endpoint box', ks=['l', 'str_N', 'dsp_0_40_max', 'run_tr', 'fv', 'ffov', 'v_mu', 'sv_mu', 'tor5_mu', 'tor5_std',
                     'tor20_mu', 'tor20_std']),
-            self.entry('boxplot (simple)', ks=['l', 'fv', 'v_mu', 'run_tr']),
+            self.entry('endpoint box', ks=['l', 'fv', 'v_mu', 'run_tr']),
             self.entry('crawl pars')
         ],
         'distro': [
