@@ -1,29 +1,30 @@
 import random
 
 import numpy as np
+import param
 
 from larvaworld.lib.model.modules.basic import StepEffector
 
 
 
 class NeuralOscillator(StepEffector):
-    def __init__(self, base_activation=20, activation_range=(10.0, 40.0), tau=0.1, w_ee=3.0, w_ce=0.1, w_ec=4.0,
-                 w_cc=4.0, m=100.0, n=2.0, warm_up=True, **kwargs):
-        # print(kwargs)
-        # raise
-        super().__init__(**kwargs)
-        self.start_effector()
-        self.tau = tau
-        self.w_ee = w_ee
-        self.w_ce = w_ce
-        self.w_ec = w_ec
-        self.w_cc = w_cc
-        self.m = m
-        self.n = n
+    base_activation = param.Number(default=20.0, label='baseline activation', doc='The baseline activation of the oscillator.')
+    activation_range = param.Range(default=(10.0, 40.0), label='activation range', doc='The activation range of the oscillator.')
+    tau = param.Number(default=0.1, label='time constant', doc='The time constant of the oscillator.')
+    w_ee = param.Number(default=3.0, label='E->E weigths', doc='The E->E synapse connection weights.')
+    w_ce = param.Number(default=0.1, label='C->E weigths', doc='The C->E synapse connection weights.')
+    w_ec = param.Number(default=4.0, label='E->C weigths', doc='The E->C synapse connection weights.')
+    w_cc = param.Number(default=4.0, label='C->C weigths', doc='The C->C synapse connection weights.')
+    m = param.Number(default=100.0, label='maximum spike-rate', doc='The maximum allowed spike rate.')
+    n = param.Number(default=2.0, label='spike response steepness', doc='The neuron spike-rate response steepness coefficient.')
 
-        self.base_activation = base_activation
-        self.r1 = activation_range[1] - base_activation
-        self.r0 = base_activation - activation_range[0]
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.start_effector()
+
+        self.r1 = self.activation_range[1] - self.base_activation
+        self.r0 = self.base_activation - self.activation_range[0]
         # self.output = self.base_activation
 
         # Neural populations
@@ -40,11 +41,13 @@ class NeuralOscillator(StepEffector):
         self.H_C_l = 0  # 10
 
         self.scaled_tau = self.dt / self.tau
+        self.warm_up()
 
-        if warm_up:
-            for i in range(100):
-                if random.uniform(0, 1) < 0.5:
-                    self.step()
+
+    def warm_up(self):
+        for i in range(100):
+            if random.uniform(0, 1) < 0.5:
+                self.step()
 
     def update_input(self,A_in=0):
 

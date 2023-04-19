@@ -45,7 +45,7 @@ class Effector(param.Parameterized):
 
 class Oscillator(Effector):
     initial_freq = param.Number(label='oscillation frequency', doc='The initial frequency of the oscillator.')
-    freq_range = param.NumericTuple(label='oscillation frequency range', doc='The frequency range of the oscillator.')
+    freq_range = param.Range(label='oscillation frequency range', doc='The frequency range of the oscillator.')
     random_phi = param.Boolean(default=True, label='random oscillation phase', doc='Whether to randomize the initial phase of the oscillator.')
 
     def __init__(self, **kwargs):
@@ -99,12 +99,13 @@ class Oscillator(Effector):
 
 class StepEffector(Effector):
     initial_amp = param.Number(label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
-    amp_range = param.NumericTuple(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
+    amp_range = param.Range(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
     input_noise = param.Number(default=0.0, label='input noise', doc='The noise applied at the input of the module.')
     output_noise = param.Number(default=0.0, label='output noise', doc='The noise applied at the output of the module.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.amp = self.initial_amp
         self.input = 0
         self.output = 0
 

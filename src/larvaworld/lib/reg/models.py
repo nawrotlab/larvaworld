@@ -109,7 +109,7 @@ def init_brain_modules():
         GAUargs = {
             'std': {'v0': 0.6, 'lim': (0.0, 1.0), 'dv': 0.1,
                     'k': 'r_C',
-                    'disp': 'gaussian window std', 'sym': sub('r', 'C'),
+                    'disp': 'gaussian stride cycle std', 'sym': sub('r', 'C'),
                     'h': 'The std of the gaussian window.'},
 
             **Cfr, **Camp
