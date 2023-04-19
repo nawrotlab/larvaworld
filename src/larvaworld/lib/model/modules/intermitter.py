@@ -194,7 +194,7 @@ class Intermitter(Effector):
 
 
     def step(self, **kwargs):
-        super().count_time()
+        self.count_time()
         return self.update_state(**kwargs)
 
     def generate_stridechain(self):

@@ -107,10 +107,10 @@ class BasePlot:
     def conf_ax(self, idx=0,ax=None, xlab=None, ylab=None, zlab=None, xlim=None, ylim=None, zlim=None, xticks=None,
                 xticklabels=None, yticks=None, xticklabelrotation=None, yticklabelrotation=None,
                 yticklabels=None, zticks=None, zticklabels=None, xtickpos=None, xtickpad=None, ytickpad=None,
-                ztickpad=None, xlabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
+                ztickpad=None, xlabelfontsize=None,ylabelfontsize=None, xticklabelsize=None, yticklabelsize=None, zticklabelsize=None,
                 major_ticklabelsize=None,minor_ticklabelsize=None,
                 xlabelpad=None, ylabelpad=None, zlabelpad=None, equal_aspect=None,
-                xMaxN=None, yMaxN=None, zMaxN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
+                xMaxN=None, yMaxN=None, zMaxN=None,yStrN=None, xMath=None, yMath=None, tickMath=None, ytickMath=None, xMaxFix=False,leg_loc=None,
                 leg_handles=None, leg_labels=None,legfontsize=None,xvis=None, yvis=None, zvis=None,
                 title=None, title_y=None, titlefontsize=None):
         '''
@@ -128,7 +128,10 @@ class BasePlot:
         if zvis is not None:
             ax.zaxis.set_visible(zvis)
         if ylab is not None:
-            ax.set_ylabel(ylab, labelpad=ylabelpad)
+            if ylabelfontsize is not None:
+                ax.set_ylabel(ylab, labelpad=ylabelpad, fontsize=ylabelfontsize)
+            else :
+                ax.set_ylabel(ylab, labelpad=ylabelpad)
         if xlab is not None:
             if xlabelfontsize is not None:
                 ax.set_xlabel(xlab, labelpad=xlabelpad, fontsize=xlabelfontsize)
@@ -180,6 +183,9 @@ class BasePlot:
             ax.yaxis.set_major_locator(ticker.MaxNLocator(yMaxN))
         if zMaxN is not None:
             ax.zaxis.set_major_locator(ticker.MaxNLocator(zMaxN))
+        if yStrN is not None:
+            ax.yaxis.set_major_formatter(ticker.FormatStrFormatter(f'%.{yStrN}f'))
+
         if xMath is not None:
             ax.xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=True, useMathText=True))
         if yMath is not None:

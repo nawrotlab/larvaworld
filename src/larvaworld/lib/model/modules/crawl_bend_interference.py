@@ -11,8 +11,8 @@ class DefaultCoupling:
 
     def active_effectors(self, crawler=None, feeder=None):
         c, f = crawler, feeder
-        c_on = True if c is not None and c.effector else False
-        f_on = True if f is not None and f.effector else False
+        c_on = True if c is not None and c.active else False
+        f_on = True if f is not None and f.active else False
         return c_on, f_on
 
     def step(self, A_in=0.0, **kwargs):

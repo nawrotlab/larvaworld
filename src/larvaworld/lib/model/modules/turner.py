@@ -12,6 +12,7 @@ class NeuralOscillator(StepEffector):
         # print(kwargs)
         # raise
         super().__init__(**kwargs)
+        self.start_effector()
         self.tau = tau
         self.w_ee = w_ee
         self.w_ce = w_ce

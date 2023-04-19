@@ -185,9 +185,6 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
 
     P = plot.AutoBasePlot(name=name,save_to=save_to, build_kws={'Nrows': Npars, 'sharex': True,'sharey': sharey, 'w': 20, 'h': 6}, **kwargs)
 
-    # fig, axs = plt.subplots(Npars, figsize=(20, 6 * Npars), sharex=True, sharey=sharey)
-    # axs = axs.ravel() if Npars > 1 else [axs]
-
     t0s, t1s, t2s, t3s, max_ages = [], [], [], [], []
     for jj, (d, id, c) in enumerate(zip(deb_dicts, ids, cols)):
         t0_sim, t0, t1, t2, t3, age = d['sim_start'], d['birth'], d['pupation'], d['death'], d['hours_as_larva'] + d[
@@ -242,9 +239,9 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
                 ppp = d[l]
             ax = P.axs[j]
             ax.plot(age, ppp, color=c, label=id, linewidth=2, alpha=1.0)
-            ax.axvline(t0, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
-            ax.axvline(t1, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
-            ax.axvline(t2, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+            for tt in [t0,t1,t2]:
+                ax.axvline(tt, color=c, alpha=0.6, linestyle='dashdot', linewidth=3)
+
             ax.axvspan(t00, t0, color='darkgrey', alpha=0.5)
             ax.axvspan(t0, t0_sim, color='lightgrey', alpha=0.5)
 
@@ -256,21 +253,16 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
                 q_col = aux.col_range(qq, low=(255, 0, 0), high=(255, 255, 255)) if color_epoch_quality else c
                 ax.axvspan(st0, st1, color=q_col, alpha=0.2)
 
-            ax.set_ylabel(yl, labelpad=15, fontsize=10)
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(3))
-            ax.tick_params(axis='y', labelsize=10)
-            ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
-
-            # P.conf_ax(j, xlab=r'angular velocity, $\dot{\theta}_{i}$', ylab='regression score',
-            #           xticks=x, yMaxN=4, leg_loc='lower left')
-
             if l in ['pupation_buffer', 'EEB', 'R_faeces', 'R_absorbed', 'R_not_digested',
                      'gut_occupancy']:
-                ax.set_ylim([0, 1])
+                ylim=(0, 1)
+            else :
+                ylim = (None, None)
             if force_ymin is not None:
-                ax.set_ylim(ymin=force_ymin)
-            if not sim_only:
-                ax.set_xlim(xmin=0)
+                ylim = (force_ymin, ylim[1])
+            P.conf_ax(j, ylab=yl, ylabelpad=15, ylabelfontsize=10, yMaxN=3, yStrN=2, yticklabelsize=10,
+                      ylim=ylim)
+
             if l == 'f' or mode == 'fs':
                 ax.axhline(np.nanmean(ppp), color=c, alpha=0.6, linestyle='dashed', linewidth=2)
             if mode == 'assimilation':
@@ -315,7 +307,6 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
                                     )
                 except:
                     pass
-
         for t in [0, t0, t1, t2]:
             if not np.isnan(t):
                 try:
@@ -328,7 +319,7 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
                 except:
                     pass
 
-    ax.set_xlabel(f'time $({time_unit})$')
+
     T0 = np.nanmean(t0s)
     T1 = np.nanmean(t1s)
     T2 = np.nanmean(t2s)
@@ -346,17 +337,14 @@ def plot_debs(deb_dicts=None, name=None, save_to=None, mode='full', roversVSsitt
                         horizontalalignment='center', verticalalignment='top')
         except:
             pass
+    P.conf_ax(j, xlab=f'time $({time_unit})$', xMaxN=5, xlim=(0, np.max(max_ages) if sim_only else None))
 
-    if sim_only:
-        ax.set_xlim([0, np.max(max_ages)])
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(5))
-    else:
+    if not sim_only:
         for ax in P.axs:
             ax.set_xticks(ticks=np.arange(0, np.max(max_ages), tickstep))
 
     plot.dataset_legend(leg_ids, leg_cols, ax=P.axs[0], loc='upper left', fontsize=20, prop={'size': 15})
 
-    # P.data_leg(0, colors=[ii[0] for ii in cols], loc='upper left', fontsize=15)
     P.adjust((0.15, 0.93), (0.15, 0.95), H=0.15)
     return P.get()
 

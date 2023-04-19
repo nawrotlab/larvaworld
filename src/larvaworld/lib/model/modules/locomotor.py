@@ -24,8 +24,8 @@ class Locomotor:
     @property
     def active_effectors(self):
         c, f = self.crawler, self.feeder
-        c_on = True if c is not None and c.effector else False
-        f_on = True if f is not None and f.effector else False
+        c_on = True if c is not None and c.active else False
+        f_on = True if f is not None and f.active else False
         return c_on, f_on
 
     def output(self, length=None):

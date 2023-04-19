@@ -9,6 +9,7 @@ class StrideOscillator(StepOscillator) :
         super().__init__(**kwargs)
         self.stride_dst_mean, self.stride_dst_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
         self.step_to_length = self.new_stride
+        self.start_effector()
 
     @property
     def new_stride(self):
