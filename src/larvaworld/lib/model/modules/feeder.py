@@ -11,5 +11,7 @@ class Feeder(Oscillator):
         super().__init__(initial_freq=initial_freq, freq_range=freq_range,**kwargs)
 
     def step(self):
-        self.update()
+        self.complete_iteration=False
+        if self.active :
+            self.oscillate()
         return self.complete_iteration

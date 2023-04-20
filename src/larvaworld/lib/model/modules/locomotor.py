@@ -7,7 +7,7 @@ class Locomotor:
         self.cur_state = 'exec'
         self.cur_run_dur = 0
         self.cur_pause_dur = None
-        self.cur_ang_suppression = 1
+
 
         self.ang_activity = 0.0
         self.lin_activity = 0.0
@@ -21,12 +21,12 @@ class Locomotor:
 
 
 
-    @property
-    def active_effectors(self):
-        c, f = self.crawler, self.feeder
-        c_on = True if c is not None and c.active else False
-        f_on = True if f is not None and f.active else False
-        return c_on, f_on
+    # @property
+    # def active_effectors(self):
+    #     c, f = self.crawler, self.feeder
+    #     c_on = True if c is not None and c.active else False
+    #     f_on = True if f is not None and f.active else False
+    #     return c_on, f_on
 
     def output(self, length=None):
         return self.lin_activity, self.ang_activity, self.feed_motion
@@ -77,8 +77,10 @@ class DefaultLocomotor(Locomotor):
 
     def step(self, A_in=0, length=1, on_food=False):
 
-
-        self.feed_motion = self.feeder.step() if self.feeder else False
+        if self.feeder :
+            self.feed_motion = self.feeder.step()
+        else  :
+            self.feed_motion = False
         if self.crawler :
             self.lin_activity = self.crawler.step() * length
             stride_completed=self.crawler.complete_iteration
@@ -94,10 +96,14 @@ class DefaultLocomotor(Locomotor):
                 self.on_new_run()
             elif pre_state != 'feed' and cur_state == 'feed':
                 self.on_new_feed()
-        if self.interference:
-            A_in, cT = self.interference.step(A_in=A_in, crawler=self.crawler, feeder=self.feeder)
-        else :
-            cT = 1
-        self.cur_ang_suppression=cT
-        self.ang_activity = self.turner.step(A_in=A_in) if self.turner else 0
+
+        if self.turner :
+            if self.interference:
+                cur_att_in, cur_att_out = self.interference.step(crawler=self.crawler, feeder=self.feeder)
+            else:
+                cur_att_in, cur_att_out = 1, 1
+            self.ang_activity = self.turner.step(A_in=A_in * cur_att_in) * cur_att_out
+        else:
+            self.ang_activity = 0
+
         return self.lin_activity, self.ang_activity, self.feed_motion

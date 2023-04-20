@@ -8,15 +8,19 @@ class DefaultCoupling(param.Parameterized):
     suppression_mode = param.Selector(default='amplitude',objects=['amplitude', 'oscillation', 'both'], label='crawl-induced suppression mode', doc='The suppression mode for the crawl-interference to the angular motion.')
 
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.cur_attenuation=1
+
     def active_effectors(self, crawler=None, feeder=None):
         c, f = crawler, feeder
         c_on = True if c is not None and c.active else False
         f_on = True if f is not None and f.active else False
         return c_on, f_on
 
-    def step(self, A_in=0.0, **kwargs):
-        cT0=self.compute_attenuation(**kwargs)
-        return self.apply_attenuation(A_in, cT0)
+    def step(self, **kwargs):
+        self.cur_attenuation=self.compute_attenuation(**kwargs)
+        return self.apply_attenuation(self.cur_attenuation)
 
     def compute_attenuation(self, crawler=None, feeder=None):
         c_on, f_on = self.active_effectors(crawler, feeder)
@@ -25,18 +29,16 @@ class DefaultCoupling(param.Parameterized):
         else :
             return 1
 
-    def apply_attenuation(self,A_in, cT0):
+    def apply_attenuation(self,cur_att):
         if self.suppression_mode == 'oscillation':
-            A_in -= (1 - cT0)
-            cT = 1
+            return cur_att,1
         elif self.suppression_mode == 'amplitude':
-            cT = cT0
+            return 1,cur_att
         elif self.suppression_mode == 'both':
-            A_in -= (1 - cT0)
-            cT = cT0
+            return cur_att,cur_att
         else :
             raise
-        return A_in,cT
+
 
 
 

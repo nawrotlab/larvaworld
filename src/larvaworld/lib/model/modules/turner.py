@@ -63,12 +63,9 @@ class NeuralOscillator(Effector, Timer):
     # @property
     # def Act_coef(self):
     #     return 1
-    def update(self):
-        if self.active:
-            self.oscillate()
-            self.output = self.E_r - self.E_l
-        else :
-            self.output = 0
+    def act(self):
+        self.oscillate()
+        self.output = self.E_r - self.E_l
 
     def oscillate(self):
         A = self.input

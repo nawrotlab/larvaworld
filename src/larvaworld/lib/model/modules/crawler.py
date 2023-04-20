@@ -22,9 +22,14 @@ class StrideOscillator(StepOscillator) :
 
     @property
     def Act(self):
-        if self.complete_iteration:
-            self.step_to_length = self.new_stride
         return self.freq * self.step_to_length * (1 + self.Act_coef*self.Act_Phi)
+
+    def act(self):
+        self.oscillate()
+        if self.complete_iteration :
+            self.step_to_length = self.new_stride
+        self.output =self.Act
+
 
 
 
@@ -56,16 +61,13 @@ class PhaseOscillator(StrideOscillator):
     max_scaled_vel = param.Number(default=0.51, bounds=(0.0, 1.5), label='maximum scaled velocity',
                                  doc='The maximum scaled forward velocity.')
 
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        self.initial_amp = self.max_scaled_vel
-        self.amp = self.initial_amp
-
 
     @property
     def Act_Phi(self):
         return np.cos(self.phi - self.max_vel_phase)
 
-
+    @property
+    def Act_coef(self):
+        return self.max_scaled_vel
 
 

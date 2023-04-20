@@ -25,11 +25,8 @@ class Sensor(Effector):
         pass
 
     def update_output(self,output):
-        if output > self.A1:
-            output = self.A1
-        elif output < self.A0:
-            output = self.A0
-        return output * (1 + np.random.normal(scale=self.output_noise))
+        return self.apply_noise(output, self.output_noise, range=(self.A0,self.A1))
+
 
 
     def update(self,brain=None):

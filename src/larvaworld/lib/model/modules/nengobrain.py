@@ -4,6 +4,7 @@ from nengo.networks import EnsembleArray
 
 
 from larvaworld.lib import aux
+from larvaworld.lib.model import StepOscillator
 from larvaworld.lib.model.modules.brain import Brain
 from larvaworld.lib.model.modules.crawl_bend_interference import SquareCoupling
 from larvaworld.lib.model.modules.intermitter import NengoIntermitter
@@ -293,8 +294,8 @@ class NengoBrain(Network, Brain):
         self.sim.run_steps(self.Nsteps, progress_bar=False)
         d = self.sim.data
         self.olfactory_activation = 100 * self.mean_odor_change(d)
-        ang = self.mean_ang_s(d) + np.random.normal(scale=self.locomotor.turner.noise)
-        lin = self.mean_lin_s(d) + np.random.normal(scale=self.locomotor.crawler.noise)
+        ang = self.mean_ang_s(d) + np.random.normal(scale=self.locomotor.turner.output_noise)
+        lin = self.mean_lin_s(d) + np.random.normal(scale=self.locomotor.crawler.output_noise)
 
 
         lin*=length
@@ -310,42 +311,42 @@ class NengoBrain(Network, Brain):
         if self.dict is not None:
             aux.save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt')
 
-class NengoEffector:
-    def __init__(self, initial_freq=None, freq_range=None, initial_amp=None, amp_range=None,
-                 noise=0.0, **kwargs):
-        self.initial_freq = initial_freq
-        self.freq = initial_freq
-        self.freq_range = freq_range
-        self.initial_amp = initial_amp
-        self.amp = initial_amp
-        self.amp_range = amp_range
-        self.noise = noise
-
-        #     Todo get rid of this
-        self.complete_iteration = False
-        self.__dict__.update(kwargs)
-
-    def get_freq(self, t):
-        return self.freq
-
-    def set_freq(self, v):
-        self.freq = v
-
-    def get_amp(self, t):
-        return self.amp
-
-    def set_amp(self, v):
-        self.amp = v
-
-    def set_initial_freq(self, value):
-        value = np.clip(value, self.freq_range[0], self.freq_range[1])
-        self.initial_freq = value
-
-    def active(self):
-        if self.freq != 0:
-            return True
-        else:
-            return False
+class NengoEffector(StepOscillator):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    #     self.initial_freq = initial_freq
+    #     self.freq = initial_freq
+    #     self.freq_range = freq_range
+    #     self.initial_amp = initial_amp
+    #     self.amp = initial_amp
+    #     self.amp_range = amp_range
+    #     self.noise = noise
+    #
+    #     #     Todo get rid of this
+    #     self.complete_iteration = False
+    #     self.__dict__.update(kwargs)
+    #
+    # def get_freq(self, t):
+    #     return self.freq
+    #
+    # def set_freq(self, v):
+    #     self.freq = v
+    #
+    # def get_amp(self, t):
+    #     return self.amp
+    #
+    # def set_amp(self, v):
+    #     self.amp = v
+    #
+    # def set_initial_freq(self, value):
+    #     value = np.clip(value, self.freq_range[0], self.freq_range[1])
+    #     self.initial_freq = value
+    #
+    # def active(self):
+    #     if self.freq != 0:
+    #         return True
+    #     else:
+    #         return False
 
 class NengoLocomotor(Locomotor):
     def __init__(self, conf, **kwargs):

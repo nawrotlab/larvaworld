@@ -30,8 +30,7 @@ class LarvaOffline(LarvaSim):
         self.cum_dur += dt
 
         lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
-        self.lin_vel, self.ang_vel = self.prepare_motion(lin, ang, self.ang_vel, self.body_bend,
-                                                              ang_suppression=self.brain.locomotor.cur_ang_suppression)
+        self.lin_vel, self.ang_vel = self.prepare_motion(lin, ang)
 
         ang_vel_min, ang_vel_max=(-np.pi + self.body_bend) / self.model.dt, (np.pi + self.body_bend) / self.model.dt
         if self.ang_vel<ang_vel_min:
