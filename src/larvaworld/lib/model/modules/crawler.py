@@ -42,8 +42,7 @@ class GaussOscillator(StrideOscillator):
 
     @property
     def Act_Phi(self):
-        idx = [int(np.rad2deg(self.phi))]
-        return self.gauss_w[idx]
+        return self.gauss_w[int(np.rad2deg(self.phi))]
 
 
 class SquareOscillator(StrideOscillator):
@@ -53,7 +52,7 @@ class SquareOscillator(StrideOscillator):
 
     @ property
     def Act_Phi(self):
-        return signal.square(self.phi, duty=self.duty)
+        return float(signal.square(self.phi, duty=self.duty))
 
 class PhaseOscillator(StrideOscillator):
     max_vel_phase = param.Number(default=3.49, bounds=(0.0, 2 * np.pi), label='max velocity phase',

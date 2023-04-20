@@ -266,54 +266,41 @@ class NengoBrain(Network, Brain):
             #     print(np.mean(kk, axis=1))
             #     raise
 
-    def mean_odor_change(self, data):
-        if self.olfactor is not None :
-            return np.mean(data[self.p_change][-self.Nsteps:], axis=0)[0]
-        else :
-            return 0
 
-    def mean_lin_s(self, data):
-        return np.mean(data[self.p_linV][-self.Nsteps:], axis=0)[0]
-
-    def mean_ang_s(self, data):
-        return np.mean(data[self.p_angV][-self.Nsteps:], axis=0)[0]
-
-    def feed_event(self, data):
-        if self.locomotor.feeder is not None:
-            return np.any(data[self.p_feeV][-self.Nsteps:] >= 1)
-        else :
-            return False
 
     def step(self, pos,length, on_food=False):
+        L=self.locomotor
+        N=self.Nsteps
+        o=self.olfactor
 
-        if self.olfactor:
-            self.olfactor.X = self.sense_odors(pos)
+
+        if o:
+            o.X = self.sense_odors(pos)
         if self.windsensor:
-            self.wind_activation = self.windsensor.step(self.sense_wind())
+            self.A_wind = self.windsensor.step(self.sense_wind())
 
-        self.sim.run_steps(self.Nsteps, progress_bar=False)
+        self.sim.run_steps(N, progress_bar=False)
         d = self.sim.data
-        self.olfactory_activation = 100 * self.mean_odor_change(d)
-        ang = self.mean_ang_s(d) + np.random.normal(scale=self.locomotor.turner.output_noise)
-        lin = self.mean_lin_s(d) + np.random.normal(scale=self.locomotor.crawler.output_noise)
+        self.A_olf = 100 * np.mean(d[self.p_change][-N:], axis=0)[0] if o else 0
 
 
-        lin*=length
-        self.locomotor.feed_motion = self.feed_event(d)
-        self.locomotor.step(on_food=on_food)
+        ang = np.mean(d[self.p_angV][-N:], axis=0)[0] * (1 + np.random.normal(scale=L.turner.output_noise))
+        lin = np.mean(d[self.p_linV][-N:], axis=0)[0] * (1 + np.random.normal(scale=L.crawler.output_noise))*length
+        L.feed_motion = np.any(d[self.p_feeV][-N:] >= 1) if L.feeder else False
+        L.step(on_food=on_food)
 
         if self.dict is not None :
             self.update_dict(d)
         self.sim.clear_probes()
-        return lin, ang, self.locomotor.feed_motion
+        return lin, ang, L.feed_motion
 
     def save_dicts(self, path):
         if self.dict is not None:
             aux.save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt')
 
 class NengoEffector(StepOscillator):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    # def __init__(self, **kwargs):
+    #     super().__init__(**kwargs)
     #     self.initial_freq = initial_freq
     #     self.freq = initial_freq
     #     self.freq_range = freq_range
@@ -347,6 +334,14 @@ class NengoEffector(StepOscillator):
     #         return True
     #     else:
     #         return False
+    def start_effector(self):
+        self.active = True
+        self.set_freq(self.initial_freq)
+
+    def stop_effector(self):
+        self.active = False
+        self.ticks = 0
+        self.set_freq(0)
 
 class NengoLocomotor(Locomotor):
     def __init__(self, conf, **kwargs):
@@ -360,38 +355,10 @@ class NengoLocomotor(Locomotor):
             self.interference = SquareCoupling(**c['interference_params'])
         if m['intermitter']:
             self.intermitter = NengoIntermitter(dt=self.dt, **c['intermitter_params'])
-            # self.intermitter.disinhibit_locomotion(self)
-            # self.intermitter.start_effector()
         else:
             self.intermitter = None
 
-    def on_new_pause(self):
-        if self.crawler:
-            self.crawler.set_freq(0)
-        if self.feeder:
-            self.feeder.set_freq(0)
 
-    def on_new_run(self):
-        if self.crawler:
-            self.crawler.set_freq(self.crawler.initial_freq)
-        if self.feeder:
-            self.feeder.set_freq(0)
-
-    def on_new_feed(self):
-        if self.crawler:
-            self.crawler.set_freq(0)
-        if self.feeder:
-            self.feeder.set_freq(self.feeder.initial_freq)
 
     def step(self,on_food=False):
-
-
-        if self.intermitter:
-            pre_state = self.intermitter.cur_state
-            self.intermitter.step(stride_completed=False, feed_motion=self.feed_motion, on_food=on_food)
-            if pre_state != 'pause' and self.intermitter.cur_state == 'pause':
-                self.on_new_pause()
-            elif pre_state != 'exec' and self.intermitter.cur_state == 'exec':
-                self.on_new_run()
-            elif pre_state != 'feed' and self.intermitter.cur_state == 'feed':
-                self.on_new_feed()
+        self.step_intermitter(stride_completed=False, feed_motion=self.feed_motion, on_food=on_food)

@@ -31,6 +31,34 @@ class Locomotor:
     def output(self, length=None):
         return self.lin_activity, self.ang_activity, self.feed_motion
 
+    def on_new_pause(self):
+        if self.crawler:
+            self.crawler.stop_effector()
+        if self.feeder:
+            self.feeder.stop_effector()
+
+    def on_new_run(self):
+        if self.crawler:
+            self.crawler.start_effector()
+        if self.feeder:
+            self.feeder.stop_effector()
+
+    def on_new_feed(self):
+        if self.crawler:
+            self.crawler.stop_effector()
+        if self.feeder:
+            self.feeder.start_effector()
+
+    def step_intermitter(self, **kwargs):
+        if self.intermitter:
+            pre_state = self.intermitter.cur_state
+            cur_state =self.intermitter.step(**kwargs)
+            if pre_state != 'pause' and cur_state == 'pause':
+                self.on_new_pause()
+            elif pre_state != 'exec' and cur_state == 'exec':
+                self.on_new_run()
+            elif pre_state != 'feed' and cur_state == 'feed':
+                self.on_new_feed()
 
 
 class DefaultLocomotor(Locomotor):
@@ -57,23 +85,7 @@ class DefaultLocomotor(Locomotor):
                 M = None
             setattr(self, k, M)
 
-    def on_new_pause(self):
-        if self.crawler:
-            self.crawler.stop_effector()
-        if self.feeder:
-            self.feeder.stop_effector()
 
-    def on_new_run(self):
-        if self.crawler:
-            self.crawler.start_effector()
-        if self.feeder:
-            self.feeder.stop_effector()
-
-    def on_new_feed(self):
-        if self.crawler:
-            self.crawler.stop_effector()
-        if self.feeder:
-            self.feeder.start_effector()
 
     def step(self, A_in=0, length=1, on_food=False):
 
@@ -87,15 +99,7 @@ class DefaultLocomotor(Locomotor):
         else:
             self.lin_activity =  0
             stride_completed = False
-        if self.intermitter:
-            pre_state = self.intermitter.cur_state
-            cur_state =self.intermitter.step(stride_completed=stride_completed,feed_motion=self.feed_motion, on_food=on_food)
-            if pre_state != 'pause' and cur_state == 'pause':
-                self.on_new_pause()
-            elif pre_state != 'exec' and cur_state == 'exec':
-                self.on_new_run()
-            elif pre_state != 'feed' and cur_state == 'feed':
-                self.on_new_feed()
+        self.step_intermitter(stride_completed=stride_completed,feed_motion=self.feed_motion, on_food=on_food)
 
         if self.turner :
             if self.interference:

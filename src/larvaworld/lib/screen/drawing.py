@@ -24,7 +24,7 @@ class BaseScreenManager :
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
 
-        self.sim_clock = screen.SimulationClock(self.model.dt, color=self.scale_clock_color)
+
 
         self.mode =mode
         self.show_display =show_display
@@ -170,13 +170,6 @@ class GA_ScreenManager(BaseScreenManager):
             self.side_panel.update_ga_population(len(self.model.agents), self.model.Nagents)
             self.side_panel.update_ga_time(0, 0, 0)
             print('Screen opened')
-        # self.display_configuration(v)
-        # self.render_aux()
-        # self.set_background(*v.display_dims)
-        #
-        # self.draw_arena(v)
-
-
         return v
 
 
@@ -199,15 +192,13 @@ class ScreenManager(BaseScreenManager):
 
 
     def build(self,background_motion=None, traj_color=None,allow_clicks=True, **kwargs):
-        self.screen_kws = self.define_screen_kws()
+        self.screen_kws = self.define_screen_kws(vis=self.vis_kwargs)
 
 
-        self.__dict__.update(self.vis_kwargs.draw)
-        self.__dict__.update(self.vis_kwargs.color)
-        self.__dict__.update(self.vis_kwargs.aux)
+
         self.dynamic_graphs = []
         self.focus_mode = False
-        self.intro_text = self.vis_kwargs.render.intro_text
+
         self.selected_type = ''
 
 
@@ -239,20 +230,32 @@ class ScreenManager(BaseScreenManager):
         # self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
         #     self.black_background)
         #
-        # self.sim_clock = screen.SimulationClock(self.model.dt, color=self.scale_clock_color)
-        self.sim_scale = screen.SimulationScale(self.model.space.dims[0], color=self.scale_clock_color)
-        self.sim_state = screen.SimulationState(model=self.model, color=self.scale_clock_color)
-
-        self.screen_texts = self.create_screen_texts(color=self.scale_clock_color)
-        self.add_screen_texts(list(self.model.odor_layers.keys()), color=self.scale_clock_color)
         self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
-                                  center=True, w=120 * 4, h=32 * 4, font=pygame.font.SysFont("comicsansms", 32 * 2))
+                                         center=True, w=120 * 4, h=32 * 4,
+                                         font=pygame.font.SysFont("comicsansms", 32 * 2))
+        self.build_aux()
 
 
-    def define_screen_kws(self):
+    def build_aux(self):
+        m=self.model
+        kws={'color' : self.scale_clock_color}
+        self.sim_clock = screen.SimulationClock(m.dt, **kws)
+        self.sim_scale = screen.SimulationScale(m.space.dims[0], **kws)
+        self.sim_state = screen.SimulationState(model=m, **kws)
+        self.screen_texts = self.create_screen_texts(**kws)
+        self.add_screen_texts(list(m.odor_layers.keys()), **kws)
+
+
+
+    def define_screen_kws(self, vis):
         m = self.model
-        media_name = self.vis_kwargs.render.media_name
-        video_speed = self.vis_kwargs.render.video_speed
+        self.__dict__.update(vis.draw)
+        self.__dict__.update(vis.color)
+        self.__dict__.update(vis.aux)
+        self.intro_text = vis.render.intro_text
+
+        media_name = vis.render.media_name
+        video_speed = vis.render.video_speed
         if media_name is None:
             media_name = str(m.id)
 
