@@ -343,9 +343,8 @@ class Viewer(object):
 class ScreenItem:
     def __init__(self, color=None):
         if color is None:
-            self.color = (0, 0, 0)
-        else:
-            self.color = color
+            color = (0, 0, 0)
+        self.color = color
 
     def set_color(self, color):
         self.color = color
@@ -486,7 +485,7 @@ class SimulationClock(ScreenItem):
                     self.hour += 1
                     self.minute -= 60
 
-    def render_clock(self, width, height):
+    def render(self, width, height):
         # Scale to screen
         x_pos = int(width * 0.94)
         y_pos = int(height * 0.04)
@@ -517,7 +516,7 @@ class SimulationClock(ScreenItem):
         self.msecond_font_r = self.dmsecond_font.get_rect()
         self.msecond_font_r.center = (x_pos * 1.04, y_pos * 1.1)
 
-    def draw_clock(self, viewer):
+    def draw(self, v):
         self.hour_font = self.font_large.render("{0:02}".format(self.hour), 1, self.color)  # zero-pad hours to 2 digits
         self.minute_font = self.font_large.render(":{0:02}".format(self.minute), 1,
                                                   self.color)  # zero-pad minutes to 2 digits
@@ -526,10 +525,10 @@ class SimulationClock(ScreenItem):
         self.dmsecond_font = self.font_small.render("{0:02}".format(self.dmsecond), 1,
                                                     self.color)  # zero-pad miliseconds to 2 digits
 
-        viewer.draw_text_box(self.hour_font, self.hour_font_r)
-        viewer.draw_text_box(self.minute_font, self.minute_font_r)
-        viewer.draw_text_box(self.second_font, self.second_font_r)
-        viewer.draw_text_box(self.dmsecond_font, self.msecond_font_r)
+        v.draw_text_box(self.hour_font, self.hour_font_r)
+        v.draw_text_box(self.minute_font, self.minute_font_r)
+        v.draw_text_box(self.second_font, self.second_font_r)
+        v.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
 
 class SimulationScale(ScreenItem):
@@ -554,7 +553,7 @@ class SimulationScale(ScreenItem):
     def closest(self, lst, k):
         return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
 
-    def render_scale(self, width, height):
+    def render(self, width, height):
         # Scale to screen
         scale_to_screen = self.scale_to_draw * width
         x_pos = int(width * 0.1)
@@ -567,11 +566,11 @@ class SimulationScale(ScreenItem):
         self.scale_font_r = self.scale_font.get_rect()
         self.scale_font_r.center = (x_pos, y_pos * 1.5)
 
-    def draw_scale(self, viewer):
+    def draw(self, v):
         for line in self.lines:
-            pygame.draw.line(viewer._window, self.color, line[0], line[1], 1)
+            pygame.draw.line(v._window, self.color, line[0], line[1], 1)
         self.scale_font = self.font.render(f'{self.scale_in_mm} mm', 1, self.color)
-        viewer.draw_text_box(self.scale_font, self.scale_font_r)
+        v.draw_text_box(self.scale_font, self.scale_font_r)
 
 
 class SimulationState(ScreenItem):
@@ -583,7 +582,7 @@ class SimulationState(ScreenItem):
         self.text = ''
         # self.text = f'# larvae : {self.Nagents}'
 
-    def render_state(self, width, height):
+    def render(self, width, height):
         x_pos = int(width * 0.85)
         y_pos = int(height * 0.94)
         font_size = int(1 / 40 * width)
@@ -593,9 +592,9 @@ class SimulationState(ScreenItem):
         self.state_font_r = self.state_font.get_rect()
         self.state_font_r.center = (x_pos, y_pos)
 
-    def draw_state(self, viewer):
+    def draw(self, v):
         self.state_font = self.font.render(self.text, 1, self.color)
-        viewer.draw_text_box(self.state_font, self.state_font_r)
+        v.draw_text_box(self.state_font, self.state_font_r)
 
     def set_text(self, text):
         self.text = text

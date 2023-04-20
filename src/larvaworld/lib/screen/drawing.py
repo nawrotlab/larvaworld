@@ -36,14 +36,15 @@ class BaseScreenManager :
             self.active=True
             # self.screen_kws = self.define_screen_kws()
 
-        self.build(**kwargs)
-
-
         self.v = None
-
-
-    def build(self,**kwargs):
-        pass
+    #     self.build(**kwargs)
+    #
+    #
+    #
+    #
+    #
+    # def build(self,**kwargs):
+    #     pass
 
 
     def space2screen_pos(self, pos):
@@ -76,10 +77,8 @@ class BaseScreenManager :
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
 class GA_ScreenManager(BaseScreenManager):
-    def __init__(self, **kwargs):
+    def __init__(self, panel_width=600,fps=10,scene='no_boxes',**kwargs):
         super().__init__(mode=None, black_background=True,**kwargs)
-
-    def build(self,panel_width=600,fps=10,scene='no_boxes', **kwargs):
         self.screen_kws = {
             'file_path': f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt',
             'show_display': self.show_display,
@@ -90,6 +89,19 @@ class GA_ScreenManager(BaseScreenManager):
             'dt': self.model.dt,
             'fps': fps,
         }
+
+
+    # def build(self,panel_width=600,fps=10,scene='no_boxes', **kwargs):
+    #     self.screen_kws = {
+    #         'file_path': f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt',
+    #         'show_display': self.show_display,
+    #         'panel_width': panel_width,
+    #         'caption': f'GA {self.model.experiment} : {self.model.id}',
+    #         'window_dims': self.window_dims,
+    #         'space_bounds': self.space_bounds,
+    #         'dt': self.model.dt,
+    #         'fps': fps,
+    #     }
 
     def render(self, tick=None):
         if self.v is None:
@@ -158,24 +170,28 @@ class GA_ScreenManager(BaseScreenManager):
 
 
 class ScreenManager(BaseScreenManager):
-    def __init__(self, model, vis_kwargs=None,video=None, **kwargs):
+    def __init__(self, model, vis_kwargs=None,video=None,
+                 background_motion=None, traj_color=None,allow_clicks=True,**kwargs):
         if vis_kwargs is None:
-            if video :
-                vis_kwargs = reg.get_null('visualization', mode='video')
-            else :
-                vis_kwargs = reg.get_null('visualization', mode=None)
-        self.vis_kwargs = aux.AttrDict(vis_kwargs)
-        self.image_mode = self.vis_kwargs.render.image_mode
-        super().__init__(model, mode= self.vis_kwargs.render.mode,
-                         show_display= self.vis_kwargs.render.show_display,
-                         black_background= self.vis_kwargs.color.black_background, **kwargs)
+            mode='video' if video else None
+            vis_kwargs = reg.get_null('visualization', mode=mode)
+        vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
+
+
+        self.image_mode = vis.render.image_mode
+        super().__init__(model, mode= vis.render.mode,
+                         show_display= vis.render.show_display,
+                         black_background= vis.color.black_background, **kwargs)
+        self.allow_clicks = allow_clicks
+        self.background_motion = background_motion
+        self.traj_color = traj_color
+        self.screen_kws = self.define_screen_kws(vis)
+        self.build()
 
 
 
+    def build(self):
 
-
-    def build(self,background_motion=None, traj_color=None,allow_clicks=True, **kwargs):
-        self.screen_kws = self.define_screen_kws(vis=self.vis_kwargs)
 
 
 
@@ -187,17 +203,13 @@ class ScreenManager(BaseScreenManager):
 
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
-
+        self.snapshot_interval = int(60 / self.model.dt)
         self.selected_agents = []
 
-        self.allow_clicks = allow_clicks
 
-        self.snapshot_interval = int(60 / self.model.dt)
-
-        self.traj_color = traj_color
         if self.trajectory_dt is None:
             self.trajectory_dt = 0.0
-        self.background_motion = background_motion
+
 
         self.selection_color = np.array([255, 0, 0])
 
@@ -410,11 +422,11 @@ class ScreenManager(BaseScreenManager):
     def draw_aux(self, v):
         v.draw_arena(self.model.space.vertices, self.tank_color, self.screen_color)
         if self.visible_clock:
-            self.sim_clock.draw_clock(v)
+            self.sim_clock.draw(v)
         if self.visible_scale:
-            self.sim_scale.draw_scale(v)
+            self.sim_scale.draw(v)
         if self.visible_state:
-            self.sim_state.draw_state(v)
+            self.sim_state.draw(v)
         self.draw_screen_texts(v)
 
     def draw_screen_texts(self, v):
@@ -447,9 +459,9 @@ class ScreenManager(BaseScreenManager):
             b.draw(v)
 
     def render_aux(self):
-        self.sim_clock.render_clock(*self.window_dims)
-        self.sim_scale.render_scale(*self.window_dims)
-        self.sim_state.render_state(*self.window_dims)
+        self.sim_clock.render(*self.window_dims)
+        self.sim_scale.render(*self.window_dims)
+        self.sim_state.render(*self.window_dims)
         for t in self.screen_texts.values():
             t.render(*self.window_dims)
 
@@ -531,7 +543,7 @@ class ScreenManager(BaseScreenManager):
     def apply_screen_zoom(self, d_zoom):
         self.v.zoom_screen(d_zoom)
         self.sim_scale = SimulationScale(self.model.space.dims[0] * self.v.zoom, color=self.sim_scale.color)
-        self.sim_scale.render_scale(*self.window_dims)
+        self.sim_scale.render(*self.window_dims)
 
 
 
@@ -539,11 +551,6 @@ class ScreenManager(BaseScreenManager):
     def snapshot_tick(self):
         return (self.model.Nticks - 1) % self.snapshot_interval == 0
 
-
-    def add_screen_texts(self, names, color):
-        for name in names:
-            text = screen.InputBox(text=name, color_active=color, color_inactive=color)
-            self.screen_texts[name] = text
 
     def generate_larva_color(self):
         return aux.random_colors(1)[0] if self.random_colors else self.default_larva_color
