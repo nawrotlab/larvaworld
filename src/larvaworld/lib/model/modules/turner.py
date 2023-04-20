@@ -3,10 +3,10 @@ import random
 import numpy as np
 import param
 
-from larvaworld.lib.model.modules.basic import StepEffector, Timer, Effector
+from larvaworld.lib.model.modules.basic import Effector
 
 
-class NeuralOscillator(Effector, Timer):
+class NeuralOscillator(Effector):
     base_activation = param.Number(default=20.0,bounds=(0.0, 100.0), label='baseline activation', doc='The baseline activation of the oscillator.')
     activation_range = param.List(default=[10.0, 40.0],bounds=(0.0, 100.0), label='activation range', doc='The activation range of the oscillator.')
     tau = param.Number(default=0.1, label='time constant', doc='The time constant of the oscillator.')
@@ -66,6 +66,9 @@ class NeuralOscillator(Effector, Timer):
     def act(self):
         self.oscillate()
         self.output = self.E_r - self.E_l
+
+    def inact(self):
+        self.output =0
 
     def oscillate(self):
         A = self.input

@@ -273,7 +273,7 @@ class OfflineIntermitter(Intermitter):
         self.feed_ticks = np.round(1 / (feed_freq * self.dt)).astype(int)
 
     def step(self, stride_completed=None, feed_motion=None,on_food=False):
-        super().count_time()
+        self.count_time()
         t = int(self.t/self.dt)
         if feed_motion is None:
 
