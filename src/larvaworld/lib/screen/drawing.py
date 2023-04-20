@@ -8,6 +8,7 @@ import numpy as np
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+from pygame import display
 
 from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
@@ -116,32 +117,19 @@ class GA_ScreenManager(BaseScreenManager):
                 # elif e.type == KEYDOWN and e.key == K_e:
                 #     self.engine.evaluation_mode = 'preparing'
 
-            if self.side_panel.generation_num < self.model.generation_num:
-                self.side_panel.update_ga_data(self.model.generation_num, self.model.best_genome)
 
-            # update statistics time
-            cur_t = aux.TimeUtil.current_time_millis()
-            cum_t = math.floor((cur_t - self.model.start_total_time) / 1000)
-            gen_t = math.floor((cur_t - self.model.start_generation_time) / 1000)
-            self.side_panel.update_ga_time(cum_t, gen_t, self.model.generation_sim_time)
-            self.side_panel.update_ga_population(len(self.model.agents), self.model.Nagents)
+
+
             self.v._window.fill(aux.Color.BLACK)
 
             self.draw_agents(self.v)
 
             # draw a black background for the side panel
             self.v.draw_panel_rect()
-            self.side_panel.display_ga_info()
 
+            self.side_panel.display_ga_info()
             display.flip()
             self.v._t.tick(self.v._fps)
-        #
-        #
-        # if self.v.show_display:
-        #     self.evaluate_input()
-        #
-        # self.draw_aux(self.v)
-        # self.v.render()
 
     def draw_agents(self, v):
         for o in self.model.sources:
@@ -162,13 +150,8 @@ class GA_ScreenManager(BaseScreenManager):
 
         v = screen.Viewer.load_from_file(**self.screen_kws)
         if v.show_display:
-            from larvaworld.lib.screen.side_panel import SidePanel
-            from pygame import display
-            # self.get_larvaworld_food()
-            self.side_panel = SidePanel(v, self.model.space_dict)
-            self.side_panel.update_ga_data(self.model.generation_num, None)
-            self.side_panel.update_ga_population(len(self.model.agents), self.model.Nagents)
-            self.side_panel.update_ga_time(0, 0, 0)
+
+            self.side_panel = screen.SidePanel(v, model=self.model)
             print('Screen opened')
         return v
 
