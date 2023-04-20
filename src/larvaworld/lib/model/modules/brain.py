@@ -32,8 +32,8 @@ class Brain:
 
         cons = {}
         for id, layer in self.agent.model.odor_layers.items():
-            v = layer.get_value(pos)
-            cons[id] = v + np.random.normal(scale=v * self.olfactor.noise)
+            cons[id] = layer.get_value(pos)
+
         return cons
 
     def sense_food_multi(self,**kwargs):

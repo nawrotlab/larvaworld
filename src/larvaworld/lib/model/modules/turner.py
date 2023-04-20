@@ -3,11 +3,10 @@ import random
 import numpy as np
 import param
 
-from larvaworld.lib.model.modules.basic import StepEffector
+from larvaworld.lib.model.modules.basic import StepEffector, Timer, Effector
 
 
-
-class NeuralOscillator(StepEffector):
+class NeuralOscillator(Effector, Timer):
     base_activation = param.Number(default=20.0,bounds=(0.0, 100.0), label='baseline activation', doc='The baseline activation of the oscillator.')
     activation_range = param.List(default=[10.0, 40.0],bounds=(0.0, 100.0), label='activation range', doc='The activation range of the oscillator.')
     tau = param.Number(default=0.1, label='time constant', doc='The time constant of the oscillator.')
@@ -21,7 +20,7 @@ class NeuralOscillator(StepEffector):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.start_effector()
+        # self.start_effector()
 
         self.r1 = self.activation_range[1] - self.base_activation
         self.r0 = self.base_activation - self.activation_range[0]
@@ -50,7 +49,7 @@ class NeuralOscillator(StepEffector):
                 self.step()
 
     def update_input(self,A_in=0):
-
+        A_in=self.apply_noise(A_in, self.input_noise)
         if A_in == 0:
             a = 0
         elif A_in < 0:
@@ -61,13 +60,18 @@ class NeuralOscillator(StepEffector):
         # print(upA_in)
         return upA_in
 
-    @property
-    def Act_coef(self):
-        return 1
+    # @property
+    # def Act_coef(self):
+    #     return 1
+    def update(self):
+        if self.active:
+            self.oscillate()
+            self.output = self.E_r - self.E_l
+        else :
+            self.output = 0
 
-    @property
-    def Act_Phi(self):
-        A=self.input
+    def oscillate(self):
+        A = self.input
         # print(A)
         # print()
         t = self.scaled_tau
@@ -88,9 +92,11 @@ class NeuralOscillator(StepEffector):
                 -self.C_r + self.compute_R(A + self.w_ce * self.E_r - self.w_cc * self.C_l, 64 + g * self.H_C_r))
         self.H_C_l += t_h * (-self.H_C_l + self.E_l)
         self.H_C_r += t_h * (-self.H_C_r + self.E_r)
-        a = self.E_r - self.E_l
-        # print(a)
-        return a
+
+    # @property
+    # def Act_Phi(self):
+    #
+    #     return self.E_r - self.E_l
 
     def compute_R(self, x, h):
         if x > 0:

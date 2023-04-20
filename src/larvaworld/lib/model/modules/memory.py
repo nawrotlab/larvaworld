@@ -9,10 +9,10 @@ from larvaworld.lib.ipc.ipc import Client
 
 
 
-from larvaworld.lib.model.modules.basic import Effector
+from larvaworld.lib.model.modules.basic import Timer
 
 
-class Memory(Effector):
+class Memory(Timer):
     def __init__(self, brain, gain, update_dt=2, train_dur=30, **kwargs):
         super().__init__(**kwargs)
         self.brain = brain
@@ -25,9 +25,11 @@ class Memory(Effector):
         self.iterator = self.Niters
         self.table = False
         self.rewardSum = 0
+        self.active = True
 
-    def step(self, dx, reward):
-        self.count_time()
+    def step(self, dx={}, reward=False, **kwargs):
+        if self.active :
+            self.count_time()
         return self.gain
 
 
@@ -66,7 +68,7 @@ class RLmemory(Memory):
         state = np.where((self.state_space == stateV).all(axis=1))[0][0]
         return state
 
-    def step(self, dx, reward):
+    def step(self, dx={}, reward=False, **kwargs):
         if self.table == False:
             temp = self.brain.agent.model.table_collector
             if temp is not None:
@@ -164,8 +166,8 @@ class RLTouchMemory(RLmemory):
 
 class RemoteBrianModelMemory(Memory):
 
-    def __init__(self, dt, brain, gain,G=0.001, server_host='localhost', server_port=5795, **kwargs):
-        super().__init__(brain, gain, dt=dt, **kwargs)
+    def __init__(self, brain, gain,G=0.001, server_host='localhost', server_port=5795, **kwargs):
+        super().__init__(brain, gain, **kwargs)
         self.server_host = server_host
         self.server_port = server_port
         self.sim_id =self.brain.agent.model.id

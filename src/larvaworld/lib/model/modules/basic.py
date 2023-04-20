@@ -2,13 +2,16 @@ import numpy as np
 import param
 
 
-class Effector(param.Parameterized):
+class Timer(param.Parameterized) :
     dt = param.Number(default=0.1, label='timestep', doc='The timestep of the simulation in seconds.')
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.active = False
         self.ticks = 0
         self.total_ticks = 0
+
+        self.active = True
+        # self.ticks = 0
+        # self.total_ticks = 0
         self.complete_iteration = False
 
     def count_time(self):
@@ -23,6 +26,9 @@ class Effector(param.Parameterized):
     def total_t(self):
         return self.total_ticks * self.dt
 
+    def reset(self):
+        self.ticks = 0
+        self.total_ticks = 0
 
     def start_effector(self):
         self.active = True
@@ -33,18 +39,55 @@ class Effector(param.Parameterized):
 
 
 
-    def reset(self):
-        self.ticks = 0
-        self.total_ticks = 0
 
-    # def update(self):
-    #     if self.active :
-    #         self.count_time()
+class Effector(Timer):
+    input_noise = param.Number(default=0.0, label='input noise', doc='The noise applied at the input of the module.')
+    output_noise = param.Number(default=0.0, label='output noise', doc='The noise applied at the output of the module.')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.input = 0
+        self.output = 0
 
 
 
 
-class Oscillator(Effector):
+
+
+
+    def update_output(self, output):
+        return self.apply_noise(output, self.output_noise)
+
+
+    def update_input(self,input):
+        return self.apply_noise(input, self.input_noise)
+
+    def apply_noise(self, value,noise=0):
+        if value is None :
+            pass
+        elif type(value) in [int,float]:
+            value *= (1 + np.random.normal(scale=noise))
+        elif isinstance(value, dict) :
+            for k,v in value.items() :
+                value[k]=v * (1 + np.random.normal(scale=noise))
+        else :
+            pass
+        return value
+
+    def get_output(self, t):
+        return self.output
+
+    def update(self,**kwargs):
+        pass
+
+    def step(self,input=0, **kwargs):
+        self.input = self.update_input(input)
+        self.update(**kwargs)
+        self.output = self.update_output(self.output)
+        return self.output
+
+
+class Oscillator(Timer):
     initial_freq = param.Number(label='oscillation frequency', doc='The initial frequency of the oscillator.')
     freq_range = param.List(label='oscillation frequency range', doc='The frequency range of the oscillator.')
     random_phi = param.Boolean(default=True, label='random oscillation phase', doc='Whether to randomize the initial phase of the oscillator.')
@@ -58,6 +101,7 @@ class Oscillator(Effector):
         # self.d_phi = 2 * np.pi * self.dt * self.freq
         # self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
         self.phi = np.random.rand() * 2 * np.pi if self.random_phi else 0
+
 
     def set_freq(self, v):
         self.freq = v
@@ -78,19 +122,19 @@ class Oscillator(Effector):
         self.initial_freq = value
 
     def oscillate(self):
-        self.count_time()
+        # self.count_time()
         self.phi += 2 * np.pi * self.dt * self.freq
         if self.phi >= 2 * np.pi:
             self.phi %= 2 * np.pi
-            self.ticks = 0
+            # self.ticks = 0
             self.complete_iteration = True
             self.iteration_counter += 1
         else:
             self.complete_iteration = False
 
     def reset(self):
-        self.ticks = 0
-        self.total_ticks = 0
+        # self.ticks = 0
+        # self.total_ticks = 0
         self.phi = 0
         self.complete_iteration = False
         self.iteration_counter = 0
@@ -98,17 +142,21 @@ class Oscillator(Effector):
     def phi_in_range(self, phi_range):
         return phi_range[0] < self.phi < phi_range[1]
 
+    def update(self):
+        self.complete_iteration = False
+        if self.active:
+            self.oscillate()
+
+
+
 class StepEffector(Effector):
-    initial_amp = param.Number(default=0.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
+    initial_amp = param.Number(default=1.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
     amp_range = param.List(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
-    input_noise = param.Number(default=0.0, label='input noise', doc='The noise applied at the input of the module.')
-    output_noise = param.Number(default=0.0, label='output noise', doc='The noise applied at the output of the module.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.amp = self.initial_amp
-        self.input = 0
-        self.output = 0
+
 
     @property
     def Act_coef(self):
@@ -116,7 +164,6 @@ class StepEffector(Effector):
 
     @property
     def Act_Phi(self):
-
         return 1
 
     @property
@@ -124,22 +171,6 @@ class StepEffector(Effector):
         c = self.Act_coef
         Aphi = self.Act_Phi
         return c*Aphi
-
-    def update_input(self,A_in=0):
-        return A_in
-
-    def update_output(self):
-        if self.active :
-            a= self.Act
-        else :
-            a=0
-        return a*(1 + np.random.normal(scale=self.output_noise))
-
-    def step(self,A_in=0, **kwargs):
-        self.input = self.update_input(A_in)* (1 + np.random.normal(scale=self.input_noise))
-        self.update()
-        self.output = self.update_output()
-        return self.output
 
 
     def set_amp(self, v):
@@ -150,27 +181,28 @@ class StepEffector(Effector):
 
     def update(self):
         if self.active:
-            self.count_time()
-# class StepEffector(Effector, StepModule):
-#
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
+            self.output= self.Act
+        else :
+            self.output=  0
+
 
 
 
 
 class StepOscillator(Oscillator, StepEffector):
 
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
-    #     self.start_effector()
-
-    @property
-    def Act_Phi(self):
-        return np.sin(self.phi)
-
     def update(self):
         self.complete_iteration = False
         if self.active:
             self.oscillate()
+            self.output= self.Act
+        else :
+            self.output=0
 
+
+
+class SinOscillator(StepOscillator):
+
+    @property
+    def Act_Phi(self):
+        return np.sin(self.phi)

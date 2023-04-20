@@ -70,7 +70,7 @@ def init_brain_modules():
                    }
 
         d = {'neural': {'args': NEUargs, 'class_func': modules.NeuralOscillator, 'variable': ['base_activation', 'tau', 'n']},
-             'sinusoidal': {'args': SINargs, 'class_func': modules.StepOscillator, 'variable': ['initial_amp', 'initial_freq']},
+             'sinusoidal': {'args': SINargs, 'class_func': modules.SinOscillator, 'variable': ['initial_amp', 'initial_freq']},
              'constant': {'args': Tamp, 'class_func': modules.StepEffector, 'variable': ['initial_amp']}
              }
         return aux.AttrDict(d)

@@ -5,17 +5,15 @@ from larvaworld.lib.model.modules.basic import Effector
 
 
 class Sensor(Effector):
-    def __init__(self, perception='linear', gain_dict={}, decay_coef=1, input_noise=0,
+    def __init__(self, perception='linear', gain_dict={}, decay_coef=1,
                  brute_force=False, **kwargs):
         super().__init__(**kwargs)
         # self.brain = brain
         self.interruption_counter = 0
         self.perception = perception
         self.decay_coef = decay_coef
-        self.noise = input_noise
         self.brute_force = brute_force
         self.A0, self.A1 = [-1.0, 1.0]
-        self.output = 0
         self.exp_decay_coef = np.exp(- self.dt * self.decay_coef)
 
         self.init_gain(gain_dict)
@@ -26,22 +24,27 @@ class Sensor(Effector):
     def update_gain(self, brain=None):
         pass
 
-    def step(self, input, brain=None):
+    def update_output(self,output):
+        if output > self.A1:
+            output = self.A1
+        elif output < self.A0:
+            output = self.A0
+        return output * (1 + np.random.normal(scale=self.output_noise))
+
+
+    def update(self,brain=None):
         self.update_gain(brain)
-        if len(input) == 0:
+        if len(self.input) == 0:
+            self.output = 0
+        elif self.brute_force:
+            self.affect_locomotion(brain)
             self.output = 0
         else:
-            self.compute_dX(input)
+            self.compute_dX(self.input)
             self.output *= self.exp_decay_coef
             self.output += self.dt * np.sum([self.gain[id] * self.dX[id] for id in self.gain_ids])
-            if self.output > self.A1:
-                self.output = self.A1
-            elif self.output < self.A0:
-                self.output = self.A0
-            if self.brute_force:
-                self.affect_locomotion(brain)
-                return 0
-        return self.output
+
+
 
     def affect_locomotion(self, brain=None):
         pass
@@ -73,8 +76,7 @@ class Sensor(Effector):
     def get_gain(self):
         return self.gain
 
-    def get_output(self, t):
-        return self.output
+
 
     def set_gain(self, value, gain_id):
         self.gain[gain_id] = value

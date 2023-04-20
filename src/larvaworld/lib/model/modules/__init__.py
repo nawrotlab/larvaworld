@@ -1,4 +1,4 @@
-from .basic import Effector, StepEffector, StepOscillator
+from .basic import Effector, StepEffector, StepOscillator, SinOscillator
 from .locomotor import Locomotor, DefaultLocomotor
 from .intermitter import Intermitter, BranchIntermitter, NengoIntermitter
 from .crawl_bend_interference import SquareCoupling, DefaultCoupling, PhasicCoupling

@@ -4,7 +4,7 @@ import pandas as pd
 
 
 
-from larvaworld.lib.model.modules.basic import Effector
+from larvaworld.lib.model.modules.basic import Timer
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import nam
 
@@ -32,7 +32,7 @@ default_bout_distros=aux.AttrDict({'turn_dur': {'range': [0.25, 3.25], 'name': '
   'mu': 1.39115,
   'sigma': 1.14667}})
 
-class Intermitter(Effector):
+class Intermitter(Timer):
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist=None, run_mode='stridechain',
                  feeder_reoccurence_rate=None, EEB=0.5,feed_bouts=False,EEB_decay=1, **kwargs):
         super().__init__(**kwargs)
