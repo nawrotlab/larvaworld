@@ -25,6 +25,7 @@ dependencies = [
     'pygame',
     'argparse',
     'pint',
+    'pint_pandas',
     'matplotlib',
     'seaborn',
     'scikit-learn',

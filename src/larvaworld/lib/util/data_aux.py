@@ -111,6 +111,16 @@ class LarvaworldParNew2(param.Parameterized):
             return fr'${self.u}$'
 
     @property
+    def upint(self):
+        try:
+            from pint_pandas import PintType
+            ustring = f'pint[{self.u}]'
+            return PintType(ustring)
+        except :
+            return self.u
+
+
+    @property
     def short(self):
         return self.k
 

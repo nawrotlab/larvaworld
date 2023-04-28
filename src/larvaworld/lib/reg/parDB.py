@@ -2024,4 +2024,20 @@ class ParamRegistry:
             self.dict = ParamClass(func_dict=reg.funcs.param_computing).kdict
         return self.dict
 
+    @property
+    def pkeys(self):
+        return [p.d for k, p in self.kdict.items()]
+
+    def valid_pkeys(self, ps):
+        valid=self.pkeys
+        return [p for p in ps if p in valid]
+
+
+
+    def df_to_pint(self, df):
+        valid_pars=self.valid_pkeys(df.columns)
+        pint_dtypes = {par: self.getPar(d=par, to_return='upint') for par in valid_pars}
+        df_pint = df.astype(dtype=pint_dtypes)
+        return df_pint
+
 par = ParamRegistry()

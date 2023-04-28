@@ -64,6 +64,8 @@ def getPar(k=None, p=None, d=None, to_return='d'):
 def get_null(name, **kwargs):
     return par.get_null(name=name, **kwargs)
 
+
+
 resetConfs(init=True)
 
 vprint(f"Registry configured!", 2)
