@@ -250,7 +250,7 @@ class Intermitter(Timer):
         for c in ['feedchain', 'stridechain', 'pause']:
             t = nam.dur(c)
             d[t] = getattr(self, f'{t}s')
-            d[nam.num(c)] = int(getattr(self, f'{c}_counter'))
+            d[nam.num(c)] = int(getattr(self, f'N{c}s'))
             cum_chunk_t = nam.cum(t)
             d[cum_chunk_t] = getattr(self, cum_chunk_t)
             d[nam.dur_ratio(c)] = d[cum_chunk_t] / d[cum_t]
