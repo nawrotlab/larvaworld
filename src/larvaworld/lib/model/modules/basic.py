@@ -64,7 +64,7 @@ class Effector(Timer):
     def apply_noise(self, value,noise=0, range=None):
         if type(value) in [int,float]:
             value *= (1 + np.random.normal(scale=noise))
-            if range is not None:
+            if range is not None and len(range)==2:
                 A0, A1 = range
                 if value > A1:
                     value = A1
@@ -89,8 +89,8 @@ class Effector(Timer):
     def inact(self,**kwargs):
         pass
 
-    def step(self,input=0, **kwargs):
-        self.input = self.update_input(input)
+    def step(self,A_in=0, **kwargs):
+        self.input = self.update_input(A_in)
         self.update()
         if self.active :
             self.act(**kwargs)

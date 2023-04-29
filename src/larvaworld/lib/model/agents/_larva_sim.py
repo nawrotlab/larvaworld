@@ -28,7 +28,6 @@ class LarvaSim(LarvaBody, BaseController):
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
-        ang_vel *= self.brain.locomotor.cur_ang_suppression
         self.position_body(lin_vel, ang_vel)
         self.complete_step()
 
