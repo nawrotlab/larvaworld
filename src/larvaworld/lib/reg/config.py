@@ -86,10 +86,6 @@ class BaseType:
             self.mdict = None
             self.ks = None
 
-        # try :
-        #     self.dict=aux.load_dict(reg.Path[self.k])
-        # except :
-        #     self.dict=aux.AttrDict()
 
     def gConf_kws(self, dic):
         kws0 = {}
