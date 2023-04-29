@@ -22,7 +22,6 @@ def comp_chunk_bearing(s, c, chunk, **kwargs):
         s.loc[s[c1] == True, b1_par] = b1
         s[db_par] = np.nan
         s.loc[s[c1] == True, db_par] = np.abs(b0) - np.abs(b1)
-        # aux.store_distros(s, pars=[b0_par, b1_par, db_par], parent_dir=c.dir)
         reg.vprint(f'Bearing to source {n} during {chunk} computed')
 
 

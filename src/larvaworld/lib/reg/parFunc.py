@@ -16,19 +16,19 @@ def track_par_func(chunk, par):
     return func
 
 @funcs.param("chunk")
-def chunk_func(kc, store=False):
+def chunk_func(kc):
     if kc in ['str', 'pau', 'exec', 'str_c', 'run']:
         def func(d):
             from larvaworld.lib.process.annotation import crawl_annotation
             s, e, c = d.data
-            crawl_annotation(s, e, c, strides_enabled=True, store=store)
+            crawl_annotation(s, e, c, strides_enabled=True)
 
         required_ks = ['a', 'sa', 'ba', 'foa', 'fv']
     elif kc in ['tur', 'Ltur', 'Rtur']:
         def func(d):
             from larvaworld.lib.process.annotation import turn_annotation
             s, e, c = d.data
-            turn_annotation(s, e, c, store=store)
+            turn_annotation(s, e, c)
 
         required_ks = ['fov']
     else:
@@ -43,7 +43,7 @@ def dsp_func(range):
     def func(d):
         from larvaworld.lib.process.spatial import comp_dispersion
         s, e, c = d.data
-        comp_dispersion(s, e, c, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=False)
+        comp_dispersion(s, e, c,d=d, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=False)
 
     return func
 

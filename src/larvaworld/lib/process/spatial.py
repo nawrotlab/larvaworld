@@ -159,7 +159,7 @@ def comp_centroid(s, c, recompute=False):
     reg.vprint('Centroid coordinates computed.')
 
 
-def store_spatial(s, e, c, d=None,store=True):
+def store_spatial(s, e, c, d=None):
     point = c.point
     dst = nam.dst('')
     sdst = nam.scal(dst)
@@ -197,22 +197,20 @@ def store_spatial(s, e, c, d=None,store=True):
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
         e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
-    # if store:
-        # aux.store_distros(s, pars=reg.getPar(['v', 'a', 'sv', 'sa']), parent_dir=c.dir)
     if d is not None :
         s[aux.existing_cols([dst, cdst, sdst, csdst],s)].to_hdf(d.data_path, 'pathlength')
         s[['x', 'y']].to_hdf(d.data_path, 'traj.default')
 
 
 @reg.funcs.proc("spatial")
-def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=True,traj2origin=True, **kwargs):
+def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, traj2origin=True, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
-    store_spatial(s, e, c,d=d, store=store)
+    store_spatial(s, e, c,d=d)
     if traj2origin :
         try:
-            align_trajectories(s, c,d=d,  store=store, replace=False, transposition='origin')
+            align_trajectories(s, c,d=d,  replace=False, transposition='origin')
         except :
             pass
 
@@ -220,7 +218,7 @@ def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=Tr
 
 
 @reg.funcs.proc("dispersion")
-def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwargs):
+def comp_dispersion(s, e, c,d=None, dsp_starts=[0], dsp_stops=[40], **kwargs):
     if dsp_starts is None or dsp_stops is None:
         return
 
@@ -239,13 +237,11 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwarg
         e[mup] = s[p].groupby('AgentID').mean()
         e[fp] = s[p].dropna().groupby('AgentID').last()
         scale_to_length(s, e, c, pars=[p, fp, mp, mup])
-        if store:
-            for par in [p, nam.scal(p)]:
-                dsps[par] = get_disp_df(s[par], s0, Nt)
+        for par in [p, nam.scal(p)]:
+            dsps[par] = get_disp_df(s[par], s0, Nt)
 
 
-    if store:
-        aux.save_dict(dsps, f'{c.dir}/data/dsp.txt')
+    aux.save_dict(dsps, f'{c.dir}/data/dsp.txt')
 
     reg.vprint(f'Completed dispersal processing.',1)
 
@@ -402,7 +398,7 @@ def straightness_index2(ss, w, match_shape=True):
 
 
 @reg.funcs.proc("tortuosity")
-def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], store=True, **kwargs):
+def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], **kwargs):
     if dt is None:
         dt = c.dt
 
@@ -422,10 +418,6 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         if e is not None:
             e[nam.mean(p)] = s[p].groupby('AgentID').mean()
             e[nam.std(p)] = s[p].groupby('AgentID').std()
-
-
-    # if store:
-    #     aux.store_distros(s, pars=pars, parent_dir=c.dir)
 
     reg.vprint(f'Completed tortuosity processing.',1)
 
@@ -507,7 +499,7 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
 
 
 @reg.funcs.preproc("transposition")
-def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transposition='origin', store=True,replace=True, **kwargs):
+def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transposition='origin', replace=True, **kwargs):
     if transposition in ['', None, np.nan]:
         return
     mode=transposition
@@ -560,11 +552,9 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
             ss[x] = ss[x].values-xs
             ss[y] = ss[y].values-ys
 
-        if store:
-            if d is not None :
-                # d.store(key=f'traj.{mode}', df=ss)
-                ss.to_hdf(d.data_path, f'traj.{mode}')
-                reg.vprint(f'traj_aligned2{mode} stored')
+        if d is not None :
+            ss.to_hdf(d.data_path, f'traj.{mode}')
+            reg.vprint(f'traj_aligned2{mode} stored')
         return ss
 
 

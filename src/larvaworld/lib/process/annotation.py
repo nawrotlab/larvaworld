@@ -270,11 +270,10 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True,castsNweathervanes=True, store=True, **kwargs):
-    # print(strides_enabled,castsNweathervanes)
+def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True,castsNweathervanes=True, **kwargs):
     aux.fft_freqs(s, e, c)
-    turn_dict = turn_annotation(s, e, c, store=store)
-    crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr, store=store)
+    turn_dict = turn_annotation(s, e, c)
+    crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr)
     chunk_dicts = aux.AttrDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
     if castsNweathervanes :
         turn_mode_annotation(e, chunk_dicts)
@@ -292,8 +291,8 @@ def bout_distribution(s, e, c, d, **kwargs) :
 
 # @decorators.timeit
 @reg.funcs.annotation("bout_detection")
-def bout_detection(s, e, c, d, store=True, **kwargs):
-    d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
+def bout_detection(s, e, c, d, **kwargs):
+    d.chunk_dicts = comp_chunk_dicts(s, e, c, **kwargs)
     pd.DataFrame(d.chunk_dicts).to_hdf(d.data_path, 'chunk_dicts')
     reg.vprint(f'Completed bout detection.',1)
 
@@ -420,7 +419,7 @@ def turn_mode_annotation(e, chunk_dicts):
     e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
 
 @reg.funcs.annotation("turn")
-def turn_annotation(s, e, c, store=True):
+def turn_annotation(s, e, c):
     ids = s.index.unique('AgentID').values
     N = s.index.unique('Step').size
 
@@ -462,13 +461,12 @@ def turn_annotation(s, e, c, store=True):
         eTur_vs[jj, :] = [Lturns_N,Rturns_N, turns_N, tur_H]
     s[turn_ps] = turn_vs.reshape([N * len(ids), len(turn_ps)])
     e[eTur_ps] = eTur_vs
-    # if store:
-    #     aux.store_distros(s, pars=reg.getPar(['tur_fou', 'tur_t', 'tur_fov_max']), parent_dir=c.dir)
+
     return turn_dict
 
 
 @reg.funcs.annotation("crawl")
-def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=True):
+def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3):
     l, v, sv, dst, acc, fov, foa, b, bv, ba, fv = \
         reg.getPar(['l', 'v', 'sv', 'd', 'a', 'fov', 'foa', 'b', 'bv', 'ba', 'fv'])
 
@@ -576,9 +574,7 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=True):
         e[str_ps] = str_vs
         e[str_sd_mu] = e[str_d_mu] / e[l]
         e[str_sd_std] = e[str_d_std] / e[l]
-    # if store:
-    #     run_ps = reg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_d', 'str_sd'])
-    #     aux.store_distros(s, pars=run_ps, parent_dir=c.dir)
+
     return crawl_dict
 
 

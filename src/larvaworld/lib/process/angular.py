@@ -106,7 +106,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
 
 
 @reg.funcs.proc("angular")
-def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=True, **kwargs):
+def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwargs):
     Np=c.Npoints
     dt = c.dt
 
@@ -183,10 +183,6 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=T
             'Orientation and bend are already computed. If you want to recompute them, set recompute to True', 1)
     ps = or_pars + bend_pars
     comp_angular(s, e, dt,Np, pars=ps)
-    # comp_extrema_multi(s, dt=dt)
-    # if store :
-    #     pars = ps + aux.nam.vel(ps) + aux.nam.acc(ps)
-    #     aux.store_distros(s, pars, parent_dir=c.dir)
 
 
     reg.vprint(f'Completed {mode} angular processing.')
