@@ -4,12 +4,17 @@ import numpy as np
 import param
 
 import larvaworld
-from larvaworld.lib import reg, aux, util, decorators
+from larvaworld.lib import reg, aux, util
 
+CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
+                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
 
+GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
+
+Path = {k : f'{reg.CONF_DIR}/{k}.txt' for k in CONFTYPES}
 
 def build_ConfTypeSubkeys():
-    d0 = {k: {} for k in reg.CONFTYPES}
+    d0 = {k: {} for k in CONFTYPES}
     d1 = {
         'Batch': {'exp': 'Exp'},
         'Ga': {'env_params': 'Env'},
@@ -25,7 +30,7 @@ CONFTYPE_SUBKEYS = build_ConfTypeSubkeys()
 
 
 def build_GroupTypeSubkeys():
-    d0 = {k: {} for k in reg.GROUPTYPES}
+    d0 = {k: {} for k in GROUPTYPES}
     d1 = {
         'LarvaGroup': {'Model'},
         # 'Ga': {'env_params': 'Env'},
@@ -40,10 +45,10 @@ def build_GroupTypeSubkeys():
 GROUPTYPE_SUBKEYS = build_GroupTypeSubkeys()
 
 
-CONFTREE = aux.AttrDict({k : aux.load_dict(f'{reg.CONF_DIR}/{k}.txt') for k in reg.CONFTYPES})
+CONFTREE = aux.AttrDict({k : aux.load_dict(Path[k]) for k in CONFTYPES})
 
 def build_conf_tree_expanded():
-    c0 = aux.AttrDict({k : aux.load_dict(f'{reg.CONF_DIR}/{k}.txt') for k in reg.CONFTYPES})
+    c0 = aux.AttrDict({k : aux.load_dict(Path[k]) for k in CONFTYPES})
     sk = CONFTYPE_SUBKEYS
     for confType0 in c0.keys():
         if confType0 in sk.keys():
@@ -243,8 +248,8 @@ def next_idx(id, conftype='Exp'):
 
 class StoredConfRegistry :
     def __init__(self):
-        self.group=aux.AttrDict({k: BaseType(k=k) for k in reg.GROUPTYPES})
-        self.conf=aux.AttrDict({k: BaseType(k=k) for k in reg.CONFTYPES})
+        self.group=aux.AttrDict({k: BaseType(k=k) for k in GROUPTYPES})
+        self.conf=aux.AttrDict({k: BaseType(k=k) for k in CONFTYPES})
 
     def ConfPath(self, conftype):
         return reg.Path[conftype]

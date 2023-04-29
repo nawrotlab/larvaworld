@@ -16,12 +16,7 @@ SIM_DIR = f'{DATA_DIR}/SimGroup'
 BATCH_DIR = f'{SIM_DIR}/batch_runs'
 CONF_DIR = f'{ROOT_DIR}/lib/reg/confDicts'
 
-CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
-                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
 
-GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
-
-Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
 os.makedirs(CONF_DIR, exist_ok=True)
 
 
@@ -36,7 +31,7 @@ vprint("Initializing parameter registry")
 from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
-from .config import stored, CONFTREE, CONFTREE_EXPANDED,GTRvsS, lgs, lg, next_idx
+from .config import Path, stored, CONFTREE, CONFTREE_EXPANDED,GTRvsS, lgs, lg, next_idx
 from .controls import controls
 
 vprint("Initializing model registry")

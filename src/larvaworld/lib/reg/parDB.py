@@ -109,9 +109,7 @@ def get_default(d,key='v') :
 
 
 
-def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_choice=True):
-    def loadConfDic(k):
-        return aux.load_dict(reg.Path[k])
+def ConfID_entry(conftype, default=None, k=None, symbol=None, single_choice=True):
 
     def selector_func(objects, default=None, single_choice=True, **kwargs):
         kws = {
@@ -131,8 +129,7 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
             f = func(**kwargs)
         return f
 
-    if ids is None:
-        ids = list(loadConfDic(conftype).keys())
+    ids = reg.stored.confIDs(conftype)
 
     def ConfSelector(**kwargs):
         def func():
