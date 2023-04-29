@@ -257,17 +257,28 @@ class LarvaDataset:
 
 
 
-    def get_chunk_par(self, chunk, short=None, par=None, min_dur=0, mode='distro'):
+    def get_chunk_par(self, chunk, k=None, par=None, min_dur=0, mode='distro'):
+        chunk_idx = f'{chunk}_idx'
+        chunk_dur = f'{chunk}_dur'
         if par is None:
-            par = reg.getPar(short)
+            par = reg.getPar(k)
             
         dic0 = aux.AttrDict(self.read('chunk_dicts'))
+        # for id in self.agent_ids:
+        #     ss=self.step_data[par].xs(id, level='AgentID')
+        #     dic=dic0[id]
+        #     epochs = dic[chunk]
+        #     if min_dur != 0:
+        #         epochs = epochs[dic[chunk_dur] >= min_dur]
+        #     Nepochs = epochs.shape[0]
+
+
+
         dics = [dic0[id] for id in self.agent_ids]
         sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
 
         if mode == 'distro':
-            chunk_idx = f'{chunk}_idx'
-            chunk_dur = f'{chunk}_dur'
+
             vs = []
             for ss, dic in zip(sss, dics):
                 if min_dur == 0:
@@ -290,7 +301,6 @@ class LarvaDataset:
             for ss, dic in zip(sss, dics):
                 epochs = dic[chunk]
                 if min_dur != 0:
-                    chunk_dur = f'{chunk}_dur'
                     epochs = epochs[dic[chunk_dur] >= min_dur]
                 Nepochs = epochs.shape[0]
                 if Nepochs > 0:
@@ -303,19 +313,6 @@ class LarvaDataset:
             cc01s = cc1s - cc0s
             return cc0s, cc1s, cc01s
 
-    def existing(self, key='end', return_shorts=False):
-        if key == 'end':
-            e = self.endpoint_data if hasattr(self, 'endpoint_data') else self.read(key='end')
-            pars = e.columns.values.tolist()
-        elif key == 'step':
-            s = self.step_data if hasattr(self, 'step_data') else self.read(key='step')
-            pars = s.columns.values.tolist()
-
-        if not return_shorts:
-            return sorted(pars)
-        else:
-            shorts = reg.getPar(d=pars, to_return='k')
-            return sorted(shorts)
 
     @ property
     def Nangles(self):
