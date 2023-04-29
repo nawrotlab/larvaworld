@@ -287,6 +287,8 @@ def bout_distribution(s, e, c, d, **kwargs) :
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
     d.store(d.pooled_epochs, 'pooled_epochs')
+    # print(d.pooled_epochs)
+    # raise
     reg.vprint(f'Completed bout distribution analysis.',1)
 
 @reg.funcs.annotation("bout_detection")

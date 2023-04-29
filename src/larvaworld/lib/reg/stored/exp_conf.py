@@ -38,7 +38,7 @@ def grouped_exp_dic():
     def chem_exp(id,  c=['olfactor'], dur=5.0, **kwargs):
         return exp(id,  sim={'duration': dur}, c=c,
                    enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                       anot=['bout_detection', 'source_attraction']), **kwargs)
+                                       anot=['bout_detection','bout_distribution', 'source_attraction']), **kwargs)
 
 
     def food_exp(id,  c=['feeder'], dur=10.0,enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],

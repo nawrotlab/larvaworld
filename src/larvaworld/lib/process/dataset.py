@@ -233,13 +233,6 @@ class LarvaDataset:
         if par is None and k is not None:
             par=reg.getPar(k)
 
-        # if key=='distro':
-        #     try:
-        #         return pd.read_hdf(f'{self.data_dir}/distro.h5', key=par)
-        #     except:
-        #         return self.get_par(par, key='step')
-
-
         if key == 'end':
             if not hasattr(self, 'endpoint_data'):
                 self.load(step=False)
@@ -277,15 +270,6 @@ class LarvaDataset:
             par = reg.getPar(k)
             
         dic0 = aux.AttrDict(self.read('chunk_dicts'))
-        # for id in self.agent_ids:
-        #     ss=self.step_data[par].xs(id, level='AgentID')
-        #     dic=dic0[id]
-        #     epochs = dic[chunk]
-        #     if min_dur != 0:
-        #         epochs = epochs[dic[chunk_dur] >= min_dur]
-        #     Nepochs = epochs.shape[0]
-
-
 
         dics = [dic0[id] for id in self.agent_ids]
         sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]

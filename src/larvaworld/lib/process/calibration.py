@@ -145,8 +145,7 @@ def comp_segmentation(s, e, c):
     hov = aux.nam.vel(aux.nam.orient('front'))
 
     if not aux.cols_exist(avels,s):
-        func=reg.funcs.processing['angular']
-        func(s=s,e=e,c=c,  mode='full', recompute=True)
+        reg.funcs.processing['angular'](s=s,e=e,c=c,  mode='full', recompute=True)
 
     if not aux.cols_exist(avels,s):
         raise ValueError('Spineangle angular velocities do not exist in step')

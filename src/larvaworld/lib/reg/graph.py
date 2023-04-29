@@ -39,8 +39,10 @@ class GraphRegistry:
         if isinstance(graphgroups, list) :
             ds = aux.AttrDict()
             for gg in graphgroups:
+                # print(gg, type(gg))
                 if isinstance(gg, str) and gg in self.graphgroups.keys():
-                    gg = self.graphgroups[gg]
+                    gg = {gg:self.graphgroups[gg]}
+
                 assert isinstance(gg, dict)
                 assert len(gg) == 1
                 gID = list(gg)[0]
