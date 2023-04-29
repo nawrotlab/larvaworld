@@ -5,7 +5,7 @@ from larvaworld.lib.sim.model_evaluation import EvalRun
 datagroup_id = 'Jovanic lab'
 parent_dir = '18h'
 idx = 5
-g = reg.loadGroup(datagroup_id)
+g = reg.stored.getGroup(datagroup_id)
 group_dir = f'{reg.DATA_DIR}/{g.path}'
 group_plotdir = f'{group_dir}/plots'
 save_to = f'{group_plotdir}/{parent_dir}/trial{idx}'

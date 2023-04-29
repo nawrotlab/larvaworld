@@ -50,7 +50,7 @@ def Env_dict() :
         if o is not None:
             kws['odor'] = o
 
-        return reg.group.SourceGroup.entry(id=id, **kws)
+        return reg.stored.group.SourceGroup.entry(id=id, **kws)
 
 
     def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):

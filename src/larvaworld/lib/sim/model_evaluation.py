@@ -85,7 +85,7 @@ class EvalRun(BaseRun):
         else:
             from larvaworld.lib.sim.single_run import ExpRun
             print(f'Simulating {Nm} models : {dIDs} with {N} larvae each')
-            conf = reg.expandExp(self.experiment)
+            conf = reg.stored.expandExp(self.experiment)
             conf.larva_groups=lgs
             if self.enrichment is None:
                 conf.enrichment = None
@@ -230,8 +230,7 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
     if id is None:
         id = f'{len(mIDs)}mIDs'
     if save_to is None:
-        save_to = f'{reg.loadRef(refID).dir}/model/evaluation'
-        # save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
+        save_to = f'{reg.stored.getRefDir(refID)}/model/evaluation'
 
     parameters = reg.get_null('Eval',**{
         'refID': refID,
@@ -249,7 +248,7 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
 
 def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     if e is None or c is None:
-        d = reg.loadRef(refID)
+        d = reg.stored.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
@@ -268,15 +267,15 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     kwargs = {k: 'sample' for k in sample_ks}
     entries = {}
     for mID0, mID in zip(mID0s, mIDs):
-        m0 = reg.loadModel(mID0).get_copy()
+        m0 = reg.stored.getModel(mID0).get_copy()
         m = m0.update_existingnestdict(kwargs)
-        reg.saveModel(conf=m, id=mID)
+        reg.stored.setModel(conf=m, id=mID)
         entries[mID] = m
     return entries
 
 def adapt_6mIDs(refID, e=None, c=None):
     if e is None or c is None:
-        d = reg.loadRef(refID)
+        d = reg.stored.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
@@ -306,7 +305,7 @@ def adapt_6mIDs(refID, e=None, c=None):
 
 def adapt_3modules(refID, e=None, c=None):
     if e is None or c is None:
-        d = reg.loadRef(refID)
+        d = reg.stored.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 

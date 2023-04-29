@@ -158,7 +158,7 @@ def update_exp_conf(type, N=None, mIDs=None):
     Returns:
         The experiment's configuration
     '''
-    conf = reg.expandExp(type)
+    conf = reg.stored.expandExp(type)
     conf.experiment = type
 
     if mIDs is not None:
@@ -171,7 +171,7 @@ def update_exp_conf(type, N=None, mIDs=None):
         conf.larva_groups = aux.AttrDict({mID: {} for mID in mIDs})
         for mID, gConf in zip(mIDs, gConfs):
             conf.larva_groups[mID] = gConf
-            conf.larva_groups[mID].model = reg.loadModel(mID)
+            conf.larva_groups[mID].model = reg.stored.getModel(mID)
 
     if N is not None:
         for gID, gConf in conf.larva_groups.items():
@@ -198,7 +198,7 @@ def run_template(sim_mode, args, kw_dicts):
     elif sim_mode == 'Batch':
         kws.mode='batch'
         kws.run_externally=False
-        kws.conf = reg.loadConf(conftype='Batch', id=args.experiment)
+        kws.conf = reg.stored.get(conftype='Batch', id=args.experiment)
         kws.conf.batch_type = args.experiment
         kws.conf.exp = update_exp_conf(kws.conf.exp, N=args.Nagents, mIDs=args.models)
         if kws.duration is not None:
@@ -217,7 +217,7 @@ def run_template(sim_mode, args, kw_dicts):
             run.analyze(show=args.show)
 
     elif sim_mode == 'Ga':
-        conf = reg.expandConf(id=args.experiment, conftype='Ga')
+        conf = reg.stored.expand(id=args.experiment, conftype='Ga')
         kws.experiment = args.experiment
         if kws.duration is None:
             kws.duration = conf.sim_params.duration
@@ -268,7 +268,7 @@ def get_parser(sim_mode, parser=None):
     # p.add_argument('-no_store', '--store_data', action="store_false", help='Whether to store the simulation data or not')
     for k in ks:
         if k == 'e':
-            p.add_argument('experiment', choices=reg.storedConf(sim_mode), help='The experiment mode')
+            p.add_argument('experiment', choices=reg.stored.confIDs(sim_mode), help='The experiment mode')
         # elif k == 't':
         #     p.add_argument('-t', '--duration', type=float, help='The duration of the simulation in minutes')
         # elif k == 'Box2D':

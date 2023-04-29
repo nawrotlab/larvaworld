@@ -351,7 +351,7 @@ class DoublePatch_Essay(Essay):
         self.mIDs=[f'{mID0}{suf}' for mID0 in self.mID0s]
 
 
-        self.ms=[reg.loadModel(mID) for mID in self.mIDs]
+        self.ms=[reg.stored.getModel(mID) for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
 
         self.mdiff_df, row_colors = reg.model.diff_df(mIDs=self.mID0s,ms=self.ms)
@@ -363,17 +363,17 @@ class DoublePatch_Essay(Essay):
         kws0 = {
             'kwdic': {
                 'distribution': {'N': self.N, 'scale': (0.005, 0.005)},
-                'life_history': {'age': age, 'epochs': reg.group.epoch.entry(0, start=0.0, stop=age)},
+                'life_history': {'age': age, 'epochs': reg.stored.group.epoch.entry(0, start=0.0, stop=age)},
                 'odor': {}
             },
             'sample': 'None.150controls',
         }
 
         return aux.AttrDict({
-            mID0: reg.group.LarvaGroup.gConf(default_color=mcol,
-                                                            model=reg.loadModel(mID),
-                                                            # model=self.CT.dict.Model.loadConf(mID),
-                                                            **kws0)
+            mID0: reg.stored.group.LarvaGroup.gConf(default_color=mcol,
+                                                    model=reg.stored.getModel(mID),
+                                                    # model=self.CT.dict.Model.loadConf(mID),
+                                                    **kws0)
 
             for mID0,mID, mcol in zip(['rover', 'sitter'],self.mIDs, ['blue', 'red'])
         })
@@ -387,8 +387,8 @@ class DoublePatch_Essay(Essay):
                 }
 
         return aux.AttrDict({
-            'Left_patch': reg.conf.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
-            'Right_patch': reg.conf.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
+            'Left_patch': reg.stored.conf.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
+            'Right_patch': reg.stored.conf.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
 
         })
 
@@ -409,7 +409,7 @@ class DoublePatch_Essay(Essay):
 
         }
 
-        return reg.conf.Env.gConf(**kws)
+        return reg.stored.conf.Env.gConf(**kws)
 
     def time_ratio_exp(self):
 
@@ -434,7 +434,7 @@ class DoublePatch_Essay(Essay):
 
             }
 
-            confs[n]=[aux.AttrDict(reg.conf.Exp.gConf(**kws))]
+            confs[n]=[aux.AttrDict(reg.stored.conf.Exp.gConf(**kws))]
         return aux.AttrDict(confs)
 
 

@@ -72,7 +72,7 @@ def plot_correlated_pars(pars, labels, refID=None,dataset=None, save_to=None, sa
         raise ValueError('Currently implemented only for 3 parameters')
     if dataset is None :
         if refID is not None :
-            dataset = reg.loadRef(refID)
+            dataset = reg.stored.loadRef(refID)
             dataset.load(step=False)
         else :
             raise ValueError('No dataset defined')

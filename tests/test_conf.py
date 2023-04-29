@@ -8,15 +8,15 @@ def test_conf() :
     conftype = 'Exp'
     id = 'dish'
     id_new = 'dish_test'
-    ids=reg.storedConf(conftype)
-    conf=reg.loadConf(conftype,id)
-    conf_exp=reg.expandConf(conftype,id)
+    ids=reg.stored.confIDs(conftype)
+    conf=reg.stored.get(conftype,id)
+    conf_exp=reg.stored.expand(conftype,id)
 
 
-    reg.saveConf(conftype,id_new, conf.get_copy())
-    assert aux.checkEqual(ids + [id_new], reg.storedConf(conftype))
-    reg.deleteConf(conftype,id_new)
-    assert aux.checkEqual(ids, reg.storedConf(conftype))
+    reg.stored.set(conftype,id_new, conf.get_copy())
+    assert aux.checkEqual(ids + [id_new], reg.stored.confIDs(conftype))
+    reg.stored.delete(conftype,id_new)
+    assert aux.checkEqual(ids, reg.stored.confIDs(conftype))
 
 def test_reset() :
     reg.resetConfs()

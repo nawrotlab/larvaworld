@@ -192,7 +192,7 @@ def plot_stridesNpauses(name=None, stridechain_duration=False, time_unit='sec',
     num_distros = len(distro_ls)
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, P.colors, P.labels, frs)):
-        ref = reg.loadRef(label)
+        ref = reg.stored.loadRef(label)
         for i, (x0, discr, xmin, xmax) in enumerate(
                 zip([chn_dur, pau_dur], [chn_discr, pau_discr], [chn0, pau0], [chn1, pau1])):
             bout = 'stride' if i == 0 else 'pause'

@@ -459,7 +459,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
         group_id = parent_dir
 
 
-    g = reg.loadGroup(datagroup_id)
+    g = reg.stored.getGroup(datagroup_id)
     group_dir = g.path
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
@@ -505,7 +505,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
     warnings.filterwarnings('ignore')
 
     shutil.rmtree(target_dir, ignore_errors=True)
-    g = reg.loadGroup(datagroup_id)
+    g = reg.stored.getGroup(datagroup_id)
 
     conf = {
         'load_data': False,

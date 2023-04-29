@@ -30,9 +30,9 @@ def grouped_exp_dic():
         kw.update(kwargs)
 
         if not as_entry:
-            return reg.conf.Exp.gConf(**kw)
+            return reg.stored.conf.Exp.gConf(**kw)
         else:
-            return reg.conf.Exp.entry(id=id, **kw)
+            return reg.stored.conf.Exp.entry(id=id, **kw)
 
 
     def chem_exp(id,  c=['olfactor'], dur=5.0, **kwargs):

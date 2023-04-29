@@ -295,7 +295,7 @@ class AutoPlot(AutoBasePlot):
 
         if add_samples:
             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
-            targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedRefs()]
+            targets = [reg.stored.loadRef(id) for id in targetIDs if id in reg.stored.RefIDs]
             datasets += targets
             if labels is not None:
                 labels += targetIDs

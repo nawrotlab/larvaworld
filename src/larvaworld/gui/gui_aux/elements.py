@@ -360,7 +360,7 @@ class SelectionList(GuiElement):
         id = v[self.k]
         k0 = self.conftype
         if e == self.k:
-            conf = reg.loadConf(id=id, conftype=k0)
+            conf = reg.stored.get(id=id, conftype=k0)
             for kk, vv in self.sublists.items():
                 if type(conf[kk]) == str:
                     vv.update(w, conf[kk])
@@ -428,7 +428,7 @@ class SelectionList(GuiElement):
         return gui_aux.delete_conf_window(id, conftype=k0, disp=self.disp)
 
     def load(self, w, c, id):
-        conf = reg.loadConf(id=id, conftype=self.conftype)
+        conf = reg.stored.get(id=id, conftype=self.conftype)
         self.tab.update(w, c, conf, id)
         if self.progressbar is not None:
             self.progressbar.reset(w)
@@ -452,7 +452,7 @@ class SelectionList(GuiElement):
             for kk, vv in self.sublists.items():
                 if isinstance(vv, SelectionList):
                     if not vv.with_dict:
-                        conf[kk] = reg.expandConf(id=v[vv.k], conftype=vv.conftype)
+                        conf[kk] = reg.stored.expand(id=v[vv.k], conftype=vv.conftype)
                     else:
                         conf[kk] = vv.collapsible.get_dict(v, w)
                 else:
@@ -460,7 +460,7 @@ class SelectionList(GuiElement):
                     if kk == 'larva_groups':
                         for n, gr in conf[kk].items():
                             if type(gr['model']) == str:
-                                gr['model'] = reg.loadModel(gr['model'])
+                                gr['model'] = reg.stored.getModel(gr['model'])
         return conf
 
     def get_next(self, k0):
@@ -476,7 +476,7 @@ class SelectionList(GuiElement):
 
     @property
     def confs(self):
-        return reg.storedConf(self.conftype)
+        return reg.stored.confIDs(self.conftype)
         # return kConfDict(self.conftype)
 
     @property
@@ -1698,11 +1698,11 @@ class GuiTreeData(sg.TreeData):
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def get_df(self):
-        if not self.build_tree and self.root_key in reg.storedConf('Tree'):
-            df = pd.DataFrame.from_dict(reg.loadConf(id=self.root_key, conftype='Tree'))
+        if not self.build_tree and self.root_key in reg.stored.confIDs('Tree'):
+            df = pd.DataFrame.from_dict(reg.stored.get(id=self.root_key, conftype='Tree'))
         else:
             df = gui_aux.pars_to_tree(self.root_key)
-            reg.saveConf(conf=df.to_dict(), conftype='Tree', id=self.root_key)
+            reg.stored.set(conf=df.to_dict(), conftype='Tree', id=self.root_key)
         return df
 
     def get_entries(self):
@@ -1750,7 +1750,7 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
     if path in ['', None]:
         return dic
     if raw:
-        conf = reg.loadGroup(datagroup_id).tracker.filesystem
+        conf = reg.stored.getGroup(datagroup_id).tracker.filesystem
         dF, df = conf.folder, conf.file
         dFp, dFs = dF.pref, dF.suf
         dfp, dfs, df_ = df.pref, df.suf, df.sep

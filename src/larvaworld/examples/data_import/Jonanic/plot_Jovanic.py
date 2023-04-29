@@ -2,7 +2,7 @@ from larvaworld.lib import reg
 
 
 parent_dir='AttP240'
-ds = [reg.loadRef(f'{parent_dir}.{k}', load=True,step=True,end=True) for k in ['Fed','Starved']]
+ds = [reg.stored.loadRef(f'{parent_dir}.{k}', load=True,step=True,end=True) for k in ['Fed','Starved']]
 
 
 kws = {

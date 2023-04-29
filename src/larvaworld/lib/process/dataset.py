@@ -25,7 +25,7 @@ class LarvaDataset:
         '''
 
         if config is None :
-            config = reg.load_config(dir)
+            config = reg.stored.getRef(dir=dir)
             if config is None:
                 config = generate_dataset_config(dir=dir, **kwargs)
 
@@ -128,7 +128,7 @@ class LarvaDataset:
         if refID is not None:
             c.refID = refID
         if c.refID is not None:
-            reg.Ref_paths(id=c.refID, dir=c.dir)
+            reg.stored.setRefID(id=c.refID, dir=c.dir)
             reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
         for k, v in c.items():
             if isinstance(v, np.ndarray):

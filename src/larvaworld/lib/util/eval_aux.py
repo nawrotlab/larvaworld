@@ -219,7 +219,7 @@ def RSS_dic(dd, d):
 
 
 def GA_optimization(fitness_target_refID, fitness_target_kws):
-    d = reg.loadRef(fitness_target_refID)
+    d = reg.stored.loadRef(fitness_target_refID)
     fit_dic0 = build_fitness(fitness_target_kws, d)
 
     func_dict = fit_dic0['func_global_dict']

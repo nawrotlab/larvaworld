@@ -144,71 +144,9 @@ class BaseType:
 
 
 
-def loadConf(conftype, id):
-    path = reg.Path[conftype]
-    d = aux.load_dict(path)
-    if id in d.keys():
-        return aux.AttrDict(d[id])
-    else:
-        reg.vprint(f'{conftype} Configuration {id} does not exist',1)
-        raise ValueError()
-
-def saveConf(conftype, id, conf, mode='overwrite'):
-    path=reg.Path[conftype]
-    d = aux.load_dict(path)
-
-    if id in d.keys() and mode == 'update':
-        d[id] = d[id].update_nestdict(conf.flatten())
-    else:
-        d[id] = aux.AttrDict(conf)
-    aux.save_dict(d, path)
-    reg.vprint(f'{conftype} Configuration saved under the id : {id}', 1)
 
 
-def deleteConf(conftype, id=None):
-    if id is not None:
-        path = reg.Path[conftype]
-        d = aux.load_dict(path)
-        if id in d.keys():
-            d.pop(id, None)
-            aux.save_dict(d, path)
-            reg.vprint(f'Deleted {conftype} configuration under the id : {id}', 1)
 
-
-def expandConf(conftype, id=None,conf=None):
-    if conf is None:
-        if id in storedConf(conftype):
-
-            conf = loadConf(conftype, id)
-        else :
-            return None
-    subks=CONFTYPE_SUBKEYS[conftype]
-    if len(subks) > 0:
-        for subID, subk in subks.items():
-            ids=storedConf(subk)
-            if subID == 'larva_groups' and subk == 'Model':
-                for k, v in conf['larva_groups'].items():
-                    if v.model in ids:
-                        v.model = loadConf(subk,id=v.model)
-            else:
-                if conf[subID] in ids:
-                    conf[subID] = loadConf(subk,id=conf[subID])
-
-    return conf
-
-def expandExp(id=None,conf=None):
-    return expandConf(conftype='Exp', id=id, conf=conf)
-
-def storedConf(conftype):
-    path = reg.Path[conftype]
-    d = aux.load_dict(path)
-    return list(d.keys())
-
-def storedRefs() :
-    return storedConf('Ref')
-
-def storedModels() :
-    return storedConf('Model')
 
 def resetDict(conftype, init=False):
     dd = reg.funcs.stored_confs[conftype]()
@@ -255,7 +193,7 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
        s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
     if id is None :
         id=mID
-    m=mID if not expand else reg.loadModel(mID)
+    m=mID if not expand else stored.getModel(mID)
     if type(s) == float:
         s = (s, s)
     kws = {'kwdic': {
@@ -266,7 +204,7 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
     if o is not None:
         kws['odor'] = o
 
-    return group.LarvaGroup.entry(id=id, **kws)
+    return stored.group.LarvaGroup.entry(id=id, **kws)
 
 def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard',pref='',
                 navigator=False, expand=False, **kwargs):
@@ -284,7 +222,7 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
             }
         epochs={}
         for id,kws in eps.items():
-            epochs.update(group.epoch.entry(id=id,**kws))
+            epochs.update(stored.group.epoch.entry(id=id, **kws))
 
     kws0 = {
         'kwdic': {
@@ -308,7 +246,7 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
         if navigator :
             mID0=f'navigator_{mID0}'
         if expand:
-            mID0=reg.loadModel(mID0)
+            mID0=stored.getModel(mID0)
 
 
 
@@ -318,62 +256,21 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
             **kws0
         }
 
-        lgs.update(group.LarvaGroup.entry(id, **kws))
+        lgs.update(stored.group.LarvaGroup.entry(id, **kws))
     return aux.AttrDict(lgs)
 
-def Ref_paths(id, dir=None):
-    path = reg.Path['Ref']
-    d = aux.load_dict(path)
-    if dir is not None :
-        d[id] = dir
-        aux.save_dict(d, path)
-    elif id in d.keys():
-        return d[id]
-    else:
-        reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
-        return None
-
-def load_config(dir) :
-    if dir is not None:
-        path=f'{dir}/data/conf.txt'
-        # path=reg.datapath('conf',dir)
-        if os.path.isfile(path) :
-            c=aux.load_dict(path)
-            if 'id' in c.keys():
-                reg.vprint(f'Loaded existing conf {c.id}', 1)
-                return c
-    return None
 
 
 
-def loadRef(id, load=False, **kwargs):
-    c=load_config(Ref_paths(id))
-    if c is not None:
-        d = larvaworld.LarvaDataset(config=c, load_data=False)
-        if not load:
-            reg.vprint(f'Loaded stored reference configuration : {id}')
-            return d
-        else:
-            d.load(**kwargs)
-            reg.vprint(f'Loaded stored reference dataset : {id}')
-            return d
 
-    else:
-        return None
 
-def loadModel(id):
-    return loadConf(conftype='Model', id=id)
 
-def saveModel(id,conf):
-    return saveConf(conftype='Model', id=id,conf=conf)
 
-def loadGroup(id):
-    return loadConf(conftype='Group', id=id)
 
 def retrieve_dataset(dataset=None,refID=None,dir=None) :
     if dataset is None :
         if refID is not None:
-            dataset = reg.loadRef(refID)
+            dataset = reg.stored.loadRef(refID)
         elif dir is not None :
             dataset = larvaworld.LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False)
         else :
@@ -396,9 +293,9 @@ def next_idx(id, conftype='Exp'):
     return d[conftype][id]
 
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
-    sample_conf = reg.loadRef(sample)
+    sample_conf = reg.stored.getRef(sample)
 
-    base_larva = reg.expandConf(id=model, conftype='Model')
+    base_larva = reg.stored.expand(id=model, conftype='Model')
     if imitation:
         exp = 'imitation'
         larva_groups = {
@@ -424,6 +321,133 @@ def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitat
     return exp_conf
 
 
-conf =aux.AttrDict({k: BaseType(k=k) for k in reg.CONFTYPES})
+class StoredConfRegistry :
+    def __init__(self):
+        self.group=aux.AttrDict({k: BaseType(k=k) for k in reg.GROUPTYPES})
+        self.conf=aux.AttrDict({k: BaseType(k=k) for k in reg.CONFTYPES})
 
-group =aux.AttrDict({k: BaseType(k=k) for k in reg.GROUPTYPES})
+    def ConfPath(self, conftype):
+        return reg.Path[conftype]
+
+    def get_dict(self, conftype):
+        path=self.ConfPath(conftype)
+        return aux.load_dict(path)
+
+    def set_dict(self, conftype, d):
+        path = self.ConfPath(conftype)
+        aux.save_dict(d, path)
+
+    def confIDs(self, conftype):
+        d=self.get_dict(conftype)
+        return list(d.keys())
+
+    @ property
+    def RefIDs(self):
+        return self.confIDs('Ref')
+
+    @property
+    def ModelIDs(self):
+        return self.confIDs('Model')
+
+    def get(self, conftype, id):
+        d=self.get_dict(conftype)
+        if id in d.keys():
+            return aux.AttrDict(d[id])
+        else:
+            reg.vprint(f'{conftype} Configuration {id} does not exist', 1)
+            raise ValueError()
+
+    def set(self, conftype, id, conf, mode='overwrite'):
+        d=self.get_dict(conftype)
+        if id in d.keys() and mode == 'update':
+            d[id] = d[id].update_nestdict(conf.flatten())
+        else:
+            d[id] = aux.AttrDict(conf)
+        self.set_dict(conftype, d)
+        reg.vprint(f'{conftype} Configuration saved under the id : {id}', 1)
+
+    def delete(self, conftype, id=None):
+        if id is not None:
+            d=self.get_dict(conftype)
+            if id in d.keys():
+                d.pop(id, None)
+                self.set_dict(conftype, d)
+                reg.vprint(f'Deleted {conftype} configuration under the id : {id}', 1)
+
+    def expand(self, conftype, id=None, conf=None):
+        if conf is None:
+            if id in self.confIDs(conftype):
+
+                conf = self.get(conftype, id)
+            else:
+                return None
+        subks = CONFTYPE_SUBKEYS[conftype]
+        if len(subks) > 0:
+            for subID, subk in subks.items():
+                ids = self.confIDs(subk)
+                if subID == 'larva_groups' and subk == 'Model':
+                    for k, v in conf['larva_groups'].items():
+                        if v.model in ids:
+                            v.model = self.get(subk, id=v.model)
+                else:
+                    if conf[subID] in ids:
+                        conf[subID] = self.get(subk, id=conf[subID])
+
+        return conf
+
+    def expandExp(self,id=None, conf=None):
+        return self.expand(conftype='Exp', id=id, conf=conf)
+
+    def getModel(self, id):
+        return self.get(conftype='Model', id=id)
+
+    def setModel(self, id, conf):
+        return self.set(conftype='Model', id=id, conf=conf)
+
+    def getGroup(self, id):
+        return self.get(conftype='Group', id=id)
+
+    def getRefDir(self, id):
+        d = self.get_dict('Ref')
+        if id in d.keys():
+            return d[id]
+        else:
+            reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
+            return None
+
+    def getRef(self, id=None, dir=None):
+        if dir is None:
+            dir=self.getRefDir(id)
+        if dir is not None:
+            path = f'{dir}/data/conf.txt'
+            if os.path.isfile(path):
+                c = aux.load_dict(path)
+                if 'id' in c.keys():
+                    reg.vprint(f'Loaded existing conf {c.id}', 1)
+                    return c
+        return None
+
+    def loadRef(self, id, load=False, **kwargs):
+        c=self.getRef(id)
+        if c is not None:
+            d = larvaworld.LarvaDataset(config=c, load_data=False)
+            if not load:
+                reg.vprint(f'Loaded stored reference configuration : {id}')
+                return d
+            else:
+                d.load(**kwargs)
+                reg.vprint(f'Loaded stored reference dataset : {id}')
+                return d
+
+        else:
+            return None
+
+
+    def setRefID(self, id, dir=None):
+        if dir is not None:
+            d = self.get_dict('Ref')
+            d[id] = dir
+            self.set_dict('Ref', d)
+
+
+stored=StoredConfRegistry()

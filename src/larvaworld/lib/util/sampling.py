@@ -90,13 +90,13 @@ def get_sample_ks(m, sample_ks=None):
 def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nids=1, parameter_dict={}):
     sample_dict = {}
     if m is None:
-        m = reg.loadModel(mID)
+        m = reg.stored.getModel(mID)
     ks = get_sample_ks(m, sample_ks=sample_ks)
 
     if len(ks) > 0:
         if refDataset is None:
             if refID is not None:
-                refDataset = reg.loadRef(refID, load=True, step=False)
+                refDataset = reg.stored.loadRef(refID, load=True, step=False)
         if refDataset is not None:
             m = get_sample_bout_distros(m, refDataset.config)
             e = refDataset.endpoint_data if hasattr(refDataset, 'endpoint_data') else refDataset.read('end')
@@ -119,7 +119,7 @@ def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nid
 def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nids=1, parameter_dict={}):
     if refDataset is None:
         if refID is not None:
-            refDataset = reg.loadRef(refID, load=True, step=False)
+            refDataset = reg.stored.loadRef(refID, load=True, step=False)
         else:
             raise
     else:
@@ -145,7 +145,7 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nid
     sample_dict.update(parameter_dict)
 
     if m is None:
-        m = reg.loadModel(mID)
+        m = reg.stored.getModel(mID)
     m = get_sample_bout_distros(m, refDataset.config)
     ms = generate_larvae(Nids, sample_dict, m)
     ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]

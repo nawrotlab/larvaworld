@@ -37,7 +37,7 @@ class BatchTab(gui_aux.GuiTab):
         try:
             enrichment = self.current_conf(v)['exp_kws']['enrichment']
         except:
-            enrichment = reg.loadConf(id=v[self.selectionlists['Exp'].k],conftype= 'Exp')['enrichment']
+            enrichment = reg.stored.get(id=v[self.selectionlists['Exp'].k],conftype= 'Exp')['enrichment']
         conf = reg.get_null('Batch',
                          exp_kws={'enrichment': enrichment, 'experiment': self.current_conf(v)['exp_kws']['experiment']},
                          optimization=c['optimization'].get_dict(v, w),

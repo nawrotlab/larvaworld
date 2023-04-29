@@ -197,7 +197,7 @@ def save_conf_window(conf, conftype, disp=None):
     if disp is None:
         disp = conftype
     temp = NamedList('save_conf', key=f'{disp}_ID',
-                     choices=reg.storedConf(conftype),
+                     choices=reg.stored.confIDs(conftype),
                      readonly=False, enable_events=False, header_kws={'text': f'Store new {disp}'})
     l = [
         temp.get_layout(),
@@ -205,7 +205,7 @@ def save_conf_window(conf, conftype, disp=None):
     e, v = sg.Window(f'{disp} configuration', l).read(close=True)
     if e == 'Ok':
         id = v[f'{disp}_ID']
-        reg.saveConf(conf=conf, conftype=conftype, id=id)
+        reg.stored.set(conf=conf, conftype=conftype, id=id)
         return id
     elif e == 'Cancel':
         return None
@@ -218,7 +218,7 @@ def delete_conf_window(id, conftype, disp=None) :
          [sg.Ok(), sg.Cancel()]], justification='center', vertical_alignment='center', element_justification='center',pad=(20,20))]]
     e, v = sg.Window(f'Delete configuration', l, size=(500,250)).read(close=True)
     if e == 'Ok':
-        reg.deleteConf(id=id, conftype=conftype)
+        reg.stored.delete(id=id, conftype=conftype)
         return True
     elif e == 'Cancel':
         return False
@@ -228,7 +228,7 @@ def delete_conf_window(id, conftype, disp=None) :
 def add_ref_window():
     from larvaworld.gui.gui_aux.elements import NamedList
     k = 'ID'
-    temp = NamedList('Reference ID : ', key=k, choices=reg.storedRefs(), size=(30, 10),
+    temp = NamedList('Reference ID : ', key=k, choices=reg.stored.RefIDs, size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
                      readonly=True, enable_events=False, header_kws={'text': 'Select reference datasets'})
     l = [
@@ -236,8 +236,7 @@ def add_ref_window():
         [sg.Ok(), sg.Cancel()]]
     e, v = sg.Window('Load reference datasets', l).read(close=True)
     if e == 'Ok':
-        return {id: reg.loadRef(id=id) for id in v[k]}
-        # return {id: LarvaDataset(dir=reg.loadConf(id=id, conftype='Ref')['dir'], load_data=False) for id in v[k]}
+        return {id: reg.stored.loadRef(id=id) for id in v[k]}
     elif e == 'Cancel':
         return None
 
@@ -254,7 +253,7 @@ def save_ref_window(d):
 def import_window(datagroup_id, raw_dic):
     from larvaworld.gui.tabs.larvaworld_gui import check_togglesNcollapsibles
     from larvaworld.gui.gui_aux.elements import PadDict
-    g = reg.loadGroup(datagroup_id)
+    g = reg.stored.getGroup(datagroup_id)
     group_dir = f'{reg.DATA_DIR}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'

@@ -60,7 +60,7 @@ class BatchRun(ap.Experiment):
         self.save_to = self.dir
         self.store_data = store_data
 
-        self.exp_conf = reg.expandExp(exp) if isinstance(exp, str) else exp
+        self.exp_conf = reg.stored.expandExp(exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
         if optimization is not None:
             optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
@@ -192,7 +192,7 @@ def space_search_sample(space_dict,n=1, **kwargs):
 
 if __name__ == "__main__":
     batch_type = 'chemorbit'
-    batch_conf = reg.loadConf('Batch', batch_type)
+    batch_conf = reg.stored.get('Batch', batch_type)
 
     m = BatchRun(batch_type=batch_type, **batch_conf)
     m.simulate(n_jobs=1)

@@ -23,7 +23,7 @@ class ExpRun(BaseRun):
         '''
         if parameters is None :
             if experiment is not None :
-                parameters = reg.expandExp(experiment)
+                parameters = reg.stored.expandExp(experiment)
                 kws=parameters.sim_params
                 kws.update(kwargs)
                 kwargs=kws
@@ -212,7 +212,7 @@ class ExpRun(BaseRun):
 
         if 'disp' in exp:
             samples = aux.unique_list([d.config.sample for d in ds])
-            ds += [reg.loadRef(sd) for sd in samples if sd is not None]
+            ds += [reg.stored.loadRef(sd) for sd in samples if sd is not None]
         graphgroups = reg.graphs.get_analysis_graphgroups(exp, self.source_xy)
         self.figs = reg.graphs.eval_graphgroups(graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs)
 
