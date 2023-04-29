@@ -2,6 +2,8 @@ import numpy as np
 import param
 
 
+
+
 class DefaultCoupling(param.Parameterized):
     attenuation = param.Magnitude(default=0.0, label='crawl-induced angular attenuation', doc='The attenuation coefficient for the crawl-interference to the angular motion.')
     attenuation_max = param.Magnitude(default=1.0, label='crawl-induced maximum angular attenuation', doc='The suppression relief coefficient for the crawl-interference to the angular motion.')
@@ -52,15 +54,16 @@ class SquareCoupling(DefaultCoupling):
     def compute_attenuation(self, crawler=None, feeder=None):
         c_on, f_on = self.active_effectors(crawler, feeder)
         if c_on:
-            m=crawler.mode
+            # m=crawler.mode
             A = self.attenuation
             if hasattr(crawler, 'phi'):
-                if m in ['realistic', 'gaussian'] and crawler.phi_in_range(self.crawler_phi_range):
+                from larvaworld.lib.model import GaussOscillator, PhaseOscillator, SquareOscillator
+                if (isinstance(crawler, GaussOscillator) or isinstance(crawler, PhaseOscillator)) and crawler.phi_in_range(self.crawler_phi_range):
                     A += self.attenuation_max
-                elif m == 'square' and crawler.phi <= 2 * np.pi * crawler.duty:
+                elif isinstance(crawler, SquareOscillator) and crawler.phi <= 2 * np.pi * crawler.duty:
                     A += self.attenuation_max
-                elif m == 'constant':
-                    pass
+                # elif m == 'constant':
+                #     pass
             return A
         elif f_on:
             A = self.attenuation

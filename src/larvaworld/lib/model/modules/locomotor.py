@@ -79,8 +79,8 @@ class DefaultLocomotor(Locomotor):
                 M = func(**m, **kws)
                 # if k == 'intermitter':
                 #     M.run_initiation(self)
-                if k == 'crawler':
-                    M.mode = m.mode
+                # if k == 'crawler':
+                #     M.mode = m.mode
             else:
                 M = None
             setattr(self, k, M)
