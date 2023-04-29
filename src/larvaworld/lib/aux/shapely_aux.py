@@ -55,12 +55,5 @@ def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
     return min_dst, nearest_obstacle
 
 
-def line_through_point(pos, angle, length, pos_as_start=False) :
-    if not pos_as_start :
-        length=-length
-    p0 = geometry.Point(pos)
-    p1 = geometry.Point(p0.x + length * math.cos(angle),
-                p0.y + length * math.sin(angle))
-    return geometry.LineString([p0, p1])
 
 

@@ -253,15 +253,11 @@ class GAlauncher(BaseRun, GAengine):
         else:
             self.progress_bar = None
         self.p.collections = ['pose']
-        self.odor_ids = aux.get_all_odors({}, self.p.env_params.food_params)
+        self.odor_ids = self.get_all_odors()
         self.build_env(self.p.env_params)
         self.screen_manager = GA_ScreenManager(model=self, show_display=self.show_display,
                                                panel_width=600, caption=f'GA {self.p.experiment} : {self.id}',
                                                space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
-        # self.dataset_kws=aux.AttrDict({'dir' : None,
-        #                  'env_params':self.p.env_params,
-        #                  'source_xy':self.source_xy,
-        #                  'fr':1 / self.dt})
         self.build_generation()
 
 

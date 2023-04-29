@@ -425,7 +425,7 @@ class BranchIntermitter(Intermitter):
 
 class FittedIntermitter(OfflineIntermitter):
     def __init__(self, refID, **kwargs):
-        cRef = reg.retrieveRef(refID)
+        cRef = reg.load_config(reg.Ref_paths(refID))
         stored_conf = {
             'crawl_freq': cRef['crawl_freq'],
             'feed_freq': cRef['feed_freq'],
@@ -453,7 +453,7 @@ def get_EEB_poly1d(**kws):
 
 def get_EEB_time_fractions(refID=None, dt=None, **kwargs):
     if refID is not None:
-        kws = reg.retrieveRef(refID)['intermitter']
+        kws = reg.load_config(reg.Ref_paths(refID))['intermitter']
     else:
         kws = kwargs
     if dt is not None:

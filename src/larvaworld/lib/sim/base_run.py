@@ -110,15 +110,15 @@ class BaseRun(agentpy.Model):
     def Nticks(self):
         return self.t
 
-    # def build_box(self, x, y, size, color):
-    #     box = envs.Box(x, y, size, color=color)
-    #     self.obstacles.append(box)
-    #     return box
-    #
-    # def build_wall(self, point1, point2, color):
-    #     wall = envs.Wall(point1, point2, color=color)
-    #     self.obstacles.append(wall)
-    #     return wall
+
+    def get_all_odors(self, larva_groups={}):
+        fp=self.p.env_params.food_params
+
+        lg = [conf.odor.odor_id for conf in larva_groups.values()]
+        su = [conf.odor.odor_id for conf in fp.source_units.values()]
+        sg = [conf.odor.odor_id for conf in fp.source_groups.values()]
+        ids = aux.unique_list([id for id in lg + su + sg if id is not None])
+        return ids
 
     def build_env(self, p):
         reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
@@ -153,16 +153,27 @@ class BaseRun(agentpy.Model):
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.space.add_sources(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
-        self.foodtypes = aux.get_all_foodtypes(p)
-        self.source_xy = aux.get_source_xy(p)
+        self.foodtypes = self.get_all_foodtypes(p)
+        self.source_xy = self.get_source_xy(p)
 
-    # def get_flies(self, ids=None, group=None):
-    #     ls = self.agents
-    #     if ids is not None:
-    #         ls = [l for l in ls if l.unique_id in ids]
-    #     if group is not None:
-    #         ls = [l for l in ls if l.group == group]
-    #     return ls
+    def get_source_xy(self, p):
+        sources_u = {k: v['pos'] for k, v in p['source_units'].items()}
+        sources_g = {k: v['distribution']['loc'] for k, v in p['source_groups'].items()}
+        return {**sources_u, **sources_g}
+
+    def get_all_foodtypes(self, p):
+        sg = {k: v.default_color for k, v in p.source_groups.items()}
+        su = {conf.group: conf.default_color for conf in p.source_units.values()}
+        gr = {
+            p.food_grid.unique_id: p.food_grid.default_color} if p.food_grid is not None else {}
+        ids = {**gr, **su, **sg}
+        ks = aux.unique_list(list(ids.keys()))
+        try:
+            ids = {k: list(np.array(ids[k]) / 255) for k in ks}
+        except:
+            ids = {k: ids[k] for k in ks}
+        return ids
+  
 
     def get_all_objects(self):
         return self.sources + self.agents + self.borders

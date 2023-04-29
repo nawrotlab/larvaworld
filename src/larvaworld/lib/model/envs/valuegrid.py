@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
@@ -297,8 +299,11 @@ class WindScape:
             return np.abs(aux.angle_dif(o, self.wind_direction)) / 180 * self.wind_speed
 
     def obstructed(self, pos):
+        p0 = geometry.Point(pos)
+        p1 = geometry.Point(p0.x - self.max_dim * math.cos(self.wind_direction),
+                            p0.y - self.max_dim * math.sin(self.wind_direction))
+        ll = geometry.LineString([p0, p1])
 
-        ll = aux.line_through_point(pos, self.wind_direction, self.max_dim)
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, viewer):

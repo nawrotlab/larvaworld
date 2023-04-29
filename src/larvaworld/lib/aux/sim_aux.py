@@ -182,30 +182,6 @@ def get_freq(d, par, fr_range=(0.0, +np.inf)):
 
 
 
-def get_all_odors(larva_groups, food_params):
-    lg = [conf.odor.odor_id for conf in larva_groups.values()]
-    su = [conf.odor.odor_id for conf in food_params.source_units.values()]
-    sg = [conf.odor.odor_id for conf in food_params.source_groups.values()]
-    ids = aux.unique_list([id for id in lg + su + sg if id is not None])
-    return ids
-
-def get_source_xy(food_params):
-    sources_u = {k: v['pos'] for k, v in food_params['source_units'].items()}
-    sources_g = {k: v['distribution']['loc'] for k, v in food_params['source_groups'].items()}
-    return {**sources_u, **sources_g}
-
-def get_all_foodtypes(food_params):
-    sg = {k: v.default_color for k, v in food_params.source_groups.items()}
-    su = {conf.group: conf.default_color for conf in food_params.source_units.values()}
-    gr = {
-        food_params.food_grid.unique_id: food_params.food_grid.default_color} if food_params.food_grid is not None else {}
-    ids = {**gr, **su, **sg}
-    ks = aux.unique_list(list(ids.keys()))
-    try:
-        ids = {k: list(np.array(ids[k]) / 255) for k in ks}
-    except:
-        ids = {k: ids[k] for k in ks}
-    return ids
 
 
 def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
@@ -395,20 +371,6 @@ def sense_food(pos, sources=None, grid=None, radius=None):
             return random.choice(valid)
     return None
 
-# def convert_output_to_dataset(df, step_keys, end_keys,agents=None, **kwargs):
-#     # from larvaworld.lib.process.dataset import LarvaDataset
-#
-#     df.index.set_names(['AgentID', 'Step'], inplace=True)
-#     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-#     df.sort_index(level=['Step', 'AgentID'], inplace=True)
-#
-#     end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-#     d = larvaworld.LarvaDataset(**kwargs)
-#     d.set_data(step=df[step_keys], end=end)
-#     if agents :
-#         ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
-#         d.larva_dicts = get_larva_dicts(ls)
-#     return d
 
 def get_larva_dicts(ls):
     deb_dicts = {}

@@ -362,7 +362,7 @@ def plot_EEB_vs_food_quality(refIDs=None, dt=None,name=None, species_list=['rove
     P = plot.AutoBasePlot(name=name, build_kws={'Nrows': 3, 'Ncols': len(refIDs), 'w': 10, 'h': 7}, **kwargs)
 
     for i, refID in enumerate(refIDs):
-        kws=reg.retrieveRef(refID)['intermitter']
+        kws= reg.load_config(reg.Ref_paths(refID))['intermitter']
         z = get_EEB_poly1d(dt=dt, **kws)
         for col, species in zip(aux.N_colors(len(species_list)), species_list):
             ss = []

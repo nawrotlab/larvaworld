@@ -337,26 +337,11 @@ def load_config(dir) :
                 return c
     return None
 
-def save_config(c,refID=None):
-    if refID is not None:
-        c.refID = refID
-    if c.refID is not None:
-        reg.Ref_paths(id=c.refID, dir=c.dir)
-        reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
-    for k, v in c.items():
-        if isinstance(v, np.ndarray):
-            c[k] = v.tolist()
-    path = reg.datapath('conf', c.dir)
-    aux.save_dict(c,path)
 
-def retrieveRef(id):
-    dir = Ref_paths(id)
-    return load_config(dir)
 
 def loadRef(id, load=False, **kwargs):
-    c=retrieveRef(id)
+    c=load_config(Ref_paths(id))
     if c is not None:
-        # from larvaworld.lib.process.dataset import LarvaDataset
         d = larvaworld.LarvaDataset(config=c, load_data=False)
         if not load:
             reg.vprint(f'Loaded stored reference configuration : {id}')
@@ -369,13 +354,6 @@ def loadRef(id, load=False, **kwargs):
     else:
         return None
 
-def loadRefD(id, **kwargs):
-    return loadRef(id, load=True, **kwargs)
-
-
-def loadRefDs(ids, **kwargs):
-    ds = [loadRefD(id, **kwargs) for id in ids]
-    return ds
 
 def retrieve_dataset(dataset=None,refID=None,dir=None) :
     if dataset is None :

@@ -116,7 +116,19 @@ class LarvaDataset:
         df.to_hdf(path, key)
 
     def save_config(self, refID=None):
-        reg.save_config(self.config, refID=refID)
+        c = self.config
+        if refID is not None:
+            c.refID = refID
+
+        if c.refID is not None:
+            reg.Ref_paths(id=c.refID, dir=c.dir)
+            reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
+        for k, v in c.items():
+            if isinstance(v, np.ndarray):
+                c[k] = v.tolist()
+        path = reg.datapath('conf', c.dir)
+        aux.save_dict(c, path)
+
 
 
 

@@ -2,29 +2,10 @@ import numpy as np
 import pandas as pd
 import scipy
 
-from larvaworld.lib import reg, aux, decorators
-
-
-def comp_angles(s, Npoints):
-    if Npoints<=2 :
-        return
-    xy_pars = aux.nam.midline_xy(Npoints, flat=True)
-    Axy=s[xy_pars].values
-    Adx=np.diff(Axy[:,::2])
-    Ady=np.diff(Axy[:,1::2])
-    Aa=np.arctan2(Ady, Adx)
-    Ada=np.diff(Aa)%(2*np.pi)
-    Ada[Ada > np.pi] -= 2 * np.pi
-    Ada = np.degrees(Ada)
-    angles=[f'angle{i}' for i in range(Npoints - 2)]
-    s[angles]=Ada
-    reg.vprint('All angles computed')
-
-
+from larvaworld.lib import reg, aux
 
 
 def comp_orientations(s, e, c, mode='minimal'):
-    N = s.values.shape[0]
     Np = c.Npoints
     if Np == 1:
         comp_orientation_1point(s, e)
@@ -39,7 +20,7 @@ def comp_orientations(s, e, c, mode='minimal'):
         f1, f2 = temp.front_vector
         r1, r2 = temp.rear_vector
 
-    # xy = aux.nam.midline_xy(Np)
+
     xy_pars = aux.nam.midline_xy(Np, flat=True)
     Axy=s[xy_pars].values
 
@@ -50,7 +31,6 @@ def comp_orientations(s, e, c, mode='minimal'):
         'head' : (1,0),
         'tail' : (-1,-2),
     }
-
 
     if mode == 'full':
         reg.vprint(f'Computing additional orients for {Np - 1} spinesegments')
@@ -64,10 +44,7 @@ def comp_orientations(s, e, c, mode='minimal'):
         aa[aa < 0] += 2 * np.pi
         s[par] = aa
         e[aux.nam.initial(par)] = s[par].dropna().groupby('AgentID').first()
-
-
     reg.vprint('All orientations computed')
-    return
 
 
 
@@ -147,19 +124,7 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=T
         or_pars = [fo, ro]
         bend_pars=['bend']
 
-
-
-
-
-
-
-
-
     if not set(or_pars+bend_pars).issubset(s.columns.values) or recompute:
-
-
-
-
         if Np == 1:
             def func(ss):
                 x, y = ss[:, 0].values, ss[:, 1].values
@@ -179,13 +144,6 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=T
             if Np == 2 :
                 s[fo] = Aa[:, 0]
             else :
-
-                # s[ho] = Aa[:, 0]
-                # s[to] = Aa[:, -1]
-
-
-
-
                 bend_mode,front_body_ratio, (f1,f2), (r1,r2)= ang_conf()
                 fx, fy = Ax[:, f1] - Ax[:, f2], Ay[:, f1] - Ay[:, f2]
                 rx, ry = Ax[:, r1] - Ax[:, r2], Ay[:, r1] - Ay[:, r2]

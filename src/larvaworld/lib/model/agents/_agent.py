@@ -111,9 +111,7 @@ class LarvaworldAgent(agentpy.Agent):
 
     def contained(self, point):
         return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
-        # return aux.eudis5(self.get_position(), point) <= self.radius
 
-    # @abc.abstractmethod
     def step(self):
         pass
 
