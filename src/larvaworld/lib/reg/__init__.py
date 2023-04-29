@@ -25,19 +25,15 @@ Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
 os.makedirs(CONF_DIR, exist_ok=True)
 
 
-vprint("Initializing output registry")
-# from .data_structure import datapath
-from .output import output_dict,set_output, get_reporters
-from .units import units
-
 vprint("Initializing function registry")
+from .units import units
 from .facade import funcs
 from .parFunc import *
 from .stored import *
 from .distro import distro_database,get_dist
 
 vprint("Initializing parameter registry")
-from .parDB import par
+from .parDB import output_dict, par
 
 vprint("Initializing configuration registry")
 from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,storedRefs,load_config,Ref_paths, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, retrieve_dataset, next_idx

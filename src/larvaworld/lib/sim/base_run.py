@@ -194,7 +194,7 @@ class BaseRun(agentpy.Model):
             self.delete_agent(a)
 
     def set_collectors(self, collections):
-        self.collectors = reg.get_reporters(collections=collections, agents=self.agents)
+        self.collectors = reg.par.get_reporters(collections=collections, agents=self.agents)
         self.step_output_keys = list(self.collectors['step'].keys())
         self.end_output_keys = list(self.collectors['end'].keys())
 

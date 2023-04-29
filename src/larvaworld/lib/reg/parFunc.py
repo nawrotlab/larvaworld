@@ -20,14 +20,14 @@ def chunk_func(kc, store=False):
     if kc in ['str', 'pau', 'exec', 'str_c', 'run']:
         def func(d):
             from larvaworld.lib.process.annotation import crawl_annotation
-            s, e, c = d.step_data, d.endpoint_data, d.config
+            s, e, c = d.data
             crawl_annotation(s, e, c, strides_enabled=True, store=store)
 
         required_ks = ['a', 'sa', 'ba', 'foa', 'fv']
     elif kc in ['tur', 'Ltur', 'Rtur']:
         def func(d):
             from larvaworld.lib.process.annotation import turn_annotation
-            s, e, c = d.step_data, d.endpoint_data, d.config
+            s, e, c = d.data
             turn_annotation(s, e, c, store=store)
 
         required_ks = ['fov']
@@ -42,7 +42,7 @@ def dsp_func(range):
 
     def func(d):
         from larvaworld.lib.process.spatial import comp_dispersion
-        s, e, c = d.step_data, d.endpoint_data, d.config
+        s, e, c = d.data
         comp_dispersion(s, e, c, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=False)
 
     return func
@@ -51,7 +51,7 @@ def dsp_func(range):
 def tor_func(dur):
     def func(d):
         from larvaworld.lib.process.spatial import comp_straightness_index
-        s, e, c = d.step_data, d.endpoint_data, d.config
+        s, e, c = d.data
         comp_straightness_index(s, e=e, c=c, dt=c.dt, tor_durs=[dur], store=False)
 
     return func
@@ -145,7 +145,7 @@ def dst_func(point=''):
 @funcs.param("vel")
 def func_v_spatial(p_d, p_v):
     def func(d):
-        s, e, c = d.step_data, d.endpoint_data, d.config
+        s, e, c = d.data
         s[p_v] = s[p_d] / c.dt
 
     return func
