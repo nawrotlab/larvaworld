@@ -178,40 +178,6 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
     P.adjust((0.15, 0.95), (0.15, 0.95))
     return P.get()
 
-# @reg.funcs.graph('autoplot')
-# def auto_timeplot(ks,subfolder='timeplots',name=None, unit='sec',show_first=True,individuals=True,**kwargs):
-#     Nks=len(ks)
-#     if name is None :
-#         name=f'timeplot_x{Nks}'
-#     P = plot.AutoLoadPlot(ks=ks,name=name, subfolder=subfolder,build_kws={'Nrows':Nks,'sharex':True, 'w' : 15, 'h' : 5}, **kwargs)
-#
-#
-#     x=P.trange(unit)
-#     for i,k in enumerate(P.ks) :
-#         dic,p=P.kpdict[k]
-#         ax=P.axs[i]
-#         P.conf_ax(i, xlab=f'time, ${unit}$', ylab=p.label, ylim=p.lim, yMaxN=4,xvis=False if i!=Nks-1 else True)
-#         for l, ddic in dic.items() :
-#             df=ddic.df
-#             c=ddic.col
-#             if individuals:
-#                 df_m = df.groupby(level='Step').quantile(q=0.5)
-#                 for id in df.index.get_level_values('AgentID').unique():
-#                     dc_single = df.xs(id, level='AgentID')
-#                     ax.plot(x, dc_single, color=c, linewidth=1)
-#                 ax.plot(x, df_m, color=c, linewidth=2)
-#             else:
-#                 plot.plot_quantiles(df=df, x=x, axis=ax, color_shading=c, linewidth=2)
-#                 if show_first:
-#                     cc = 'red' if P.Ndatasets == 1 else c
-#                     dc0 = df.xs(df.index.get_level_values('AgentID')[0], level='AgentID')
-#                     ax.plot(x, dc0, color=cc, linestyle='dashed', linewidth=1)
-#     P.data_leg(0, loc='lower left')
-#
-#     P.adjust((0.1, 0.95), (0.15, 0.95))
-#     P.fig.align_ylabels(P.axs[:])
-#     return P.get()
-#
 
 @reg.funcs.graph('timeplots')
 def timeplots(ks,subfolder='timeplots',name=None, unit='sec',

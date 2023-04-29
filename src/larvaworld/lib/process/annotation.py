@@ -337,7 +337,6 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
     dic={}
     for id in ids:
         ss = s.xs(id, level="AgentID")
-        # ss = s.xs(id, level="AgentID").dropna()
         dic[id]=cycle_curve_dict(ss, dt=dt, shs=shs)
     return aux.AttrDict(dic)
 

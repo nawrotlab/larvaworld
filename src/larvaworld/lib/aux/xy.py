@@ -344,15 +344,6 @@ def moving_average(a, n=3):
     return np.convolve(a, np.ones((n,)) / n, mode='same')
 
 
-def mdict2df(mdict, columns=['symbol', 'value', 'description']):
-    data = []
-    for k, p in mdict.items():
-        entry = [getattr(p, col) for col in columns]
-        data.append(entry)
-    df = pd.DataFrame(data, columns=columns)
-    df.set_index(columns[0], inplace=True)
-    return df
-
 
 def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
     xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
@@ -417,6 +408,7 @@ def apply_per_level(s, func, level='AgentID', **kwargs):
     return A
 
 def unwrap_deg(a) :
+
     if isinstance(a, pd.Series) :
         a=a.values
     b = np.copy(a)

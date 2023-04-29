@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from larvaworld.lib import reg, aux, plot, util
 
@@ -14,7 +15,12 @@ def modelConfTable(mID, **kwargs):
 def mtable(k, columns=['symbol', 'value', 'description'], figsize=(14, 11),
            show=False, save_to=None, save_as=None, **kwargs):
     mdict = util.init2mdict(reg.par.PI[k])
-    df = aux.mdict2df(mdict, columns=columns)
+    data = [[getattr(p, col) for col in columns] for p in mdict.values()]
+
+    df = pd.DataFrame(data, columns=columns)
+    df.set_index(columns[0], inplace=True)
+
+
 
     ax, fig, mpl = mpl_table(df, header0=columns[0],
                              cellLoc='center', rowLoc='center',

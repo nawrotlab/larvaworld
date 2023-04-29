@@ -83,7 +83,6 @@ def comp_stride_variation(s, e, c):
     df = pd.DataFrame(index=my_index, columns=reg.getPar(shorts))
 
     for ii in range(c.N):
-        # print(ii)
         id = c.agent_ids[ii]
         ss, ee = s.xs(id, level='AgentID'), e.loc[id]
         for i, vv in enumerate(svels):

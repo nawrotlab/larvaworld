@@ -158,7 +158,7 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
 
 
     for d in P.datasets:
-        s,e,c = d.step_data, d.endpoint_data, d.config
+        s,e,c = d.data
         id = c.agent_ids[idx]
         ee = e.loc[id]
         ss = s.xs(id, level='AgentID')

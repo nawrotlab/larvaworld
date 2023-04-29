@@ -81,6 +81,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
         avel = aux.nam.acc(p)
         ss=s[p]
         if p.endswith('orientation'):
+
             p_unw=aux.nam.unwrap(p)
             s[p_unw] = aux.apply_per_level(s[p], aux.unwrap_deg).flatten()
             ss=s[p_unw]

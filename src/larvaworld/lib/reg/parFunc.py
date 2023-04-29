@@ -132,8 +132,7 @@ def unwrap_func(par, in_deg):
 
     def func(d):
         s = copy.deepcopy(d.step_data[par])
-        d.step_data[nam.unwrap(par)]=aux.unwrap_rad(s, in_deg)
-
+        d.step_data[nam.unwrap(par)] = aux.apply_per_level(s, aux.unwrap_deg).flatten()
     return func
 
 @funcs.param("dst")

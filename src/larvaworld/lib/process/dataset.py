@@ -160,7 +160,6 @@ class LarvaDataset:
             ds = [ds0[type][id] for id in ids]
         else:
             ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.data_dir}/individuals/{type}.txt')
-            # ds= aux.loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
         return ds
 
     def visualize(self,parameters={}, **kwargs):
