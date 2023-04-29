@@ -2,7 +2,6 @@ import numpy as np
 from matplotlib import collections as mc
 
 from larvaworld.lib import reg, aux, plot
-from larvaworld.lib.process.spatial import get_disp_df, comp_dispersion
 
 
 @reg.funcs.graph('ethogram')

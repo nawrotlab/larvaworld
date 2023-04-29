@@ -33,7 +33,7 @@ from .stored import *
 from .distro import distro_database,get_dist
 
 vprint("Initializing parameter registry")
-from .parDB import output_dict, par
+from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
 from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,storedRefs,load_config,Ref_paths, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, retrieve_dataset, next_idx

@@ -61,39 +61,39 @@ def comp_linear(s, e, c, mode='minimal'):
     scale_to_length(s, e, c, pars=pars)
     reg.vprint('All linear parameters computed')
 
-def comp_spatial2(s, e, c, mode='minimal'):
-    points = nam.midline(c.Npoints, type='point')
-    if mode == 'full':
-        reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points')
-        points += ['centroid']
-    elif mode == 'minimal':
-        reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint')
-        points = [c.point]
-    points += ['']
-    points = np.unique(points).tolist()
-
-
-    for p in points :
-        xy=nam.xy(p)
-        if set(xy).issubset(s.columns.values) :
-            dst=nam.dst(p)
-            vel=nam.vel(p)
-            s[dst] = aux.apply_per_level(s[xy], aux.eudist).flatten()
-            s[nam.cum(dst)] = aux.apply_per_level(s[dst], np.nancumsum).flatten()
-            s[vel] = s[dst]/c.dt
-            s[nam.acc(p)] = aux.apply_per_level(s[vel], aux.rate, dt=c.dt).flatten()
-            e[nam.cum(dst)] = s[nam.cum(dst)].values[-1, :]
-
-
-
-    dsts = nam.dst(points)
-    cum_dsts = nam.cum(dsts)
-    vels = nam.vel(points)
-    accs = nam.acc(points)
-
-    pars = aux.raw_or_filtered_xy(s, points) + dsts + cum_dsts + vels + accs
-    scale_to_length(s, e, c, pars=pars)
-    reg.vprint('All spatial parameters computed')
+# def comp_spatial2(s, e, c, mode='minimal'):
+#     points = nam.midline(c.Npoints, type='point')
+#     if mode == 'full':
+#         reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points')
+#         points += ['centroid']
+#     elif mode == 'minimal':
+#         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint')
+#         points = [c.point]
+#     points += ['']
+#     points = np.unique(points).tolist()
+#
+#
+#     for p in points :
+#         xy=nam.xy(p)
+#         if set(xy).issubset(s.columns.values) :
+#             dst=nam.dst(p)
+#             vel=nam.vel(p)
+#             s[dst] = aux.apply_per_level(s[xy], aux.eudist).flatten()
+#             s[nam.cum(dst)] = aux.apply_per_level(s[dst], np.nancumsum).flatten()
+#             s[vel] = s[dst]/c.dt
+#             s[nam.acc(p)] = aux.apply_per_level(s[vel], aux.rate, dt=c.dt).flatten()
+#             e[nam.cum(dst)] = s[nam.cum(dst)].values[-1, :]
+#
+#
+#
+#     dsts = nam.dst(points)
+#     cum_dsts = nam.cum(dsts)
+#     vels = nam.vel(points)
+#     accs = nam.acc(points)
+#
+#     pars = aux.raw_or_filtered_xy(s, points) + dsts + cum_dsts + vels + accs
+#     scale_to_length(s, e, c, pars=pars)
+#     reg.vprint('All spatial parameters computed')
 
 def comp_spatial(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -130,7 +130,6 @@ def comp_spatial(s, e, c, mode='minimal'):
         s[cum_dst] = Dcum.flatten()
         s[vel] = V.flatten()
         s[acc] = A.flatten()
-        # e[nam.cum(dst)] = Dcum[-1, :]
         e[nam.cum(dst)] = s[cum_dst].dropna().groupby('AgentID').last()
 
     pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
@@ -193,7 +192,7 @@ def comp_centroid(s, c, recompute=False):
     reg.vprint('Centroid coordinates computed.')
 
 
-def store_spatial(s, e, c, d=None,store=True, also_in_mm=False):
+def store_spatial(s, e, c, d=None,store=True):
     point = c.point
     dst = nam.dst('')
     sdst = nam.scal(dst)
@@ -231,33 +230,18 @@ def store_spatial(s, e, c, d=None,store=True, also_in_mm=False):
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
         e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
-    shorts = ['v', 'a', 'sv', 'sa']
-
-    if also_in_mm:
-        d_in_mm, v_in_mm, a_in_mm = reg.getPar(['d_in_mm', 'v_in_mm', 'a_in_mm'])
-        s[d_in_mm] = s[dst] * 1000
-        s[v_in_mm] = s[v] * 1000
-        s[a_in_mm] = s[a] * 1000
-        e[nam.cum(d_in_mm)] = e[cdst] * 1000
-        e[nam.mean(v_in_mm)] = e[nam.mean(v)] * 1000
-        shorts += ['v_in_mm', 'a_in_mm']
-
     if store:
-        aux.store_distros(s, pars=reg.getPar(shorts), parent_dir=c.dir)
+        aux.store_distros(s, pars=reg.getPar(['v', 'a', 'sv', 'sa']), parent_dir=c.dir)
         if d is not None :
-            ps = [p for p in [dst, cdst, sdst, csdst] if p in s.columns]
-            d.store(key='pathlength', df=s[ps])
+            d.store(key='pathlength', df=s[aux.existing_cols([dst, cdst, sdst, csdst],s)])
             d.store(key='traj.default', df=s[['x', 'y']])
 
-# @decorators.timeit
 @reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=True,traj2origin=True, **kwargs):
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
-    # comp_linear(s, e, c, mode=mode)
     store_spatial(s, e, c,d=d, store=store)
-    # print(traj2origin,'ddd')
     if traj2origin :
         try:
             align_trajectories(s, c,d=d,  store=store, replace=False, transposition='origin')
@@ -485,15 +469,11 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        s = aux.read(key='step', path=f'{c.dir}/data/data.h5')
+        s = pd.read_hdf(f'{c.dir}/data/data.h5', key='step')
 
     ticks=np.arange(c.Nticks)
-    # ticks = aux.index_unique(s, level='Step', as_array=True)
     ps = ['x', 'y', 'dst']
     assert set(ps).issubset(s.columns)
-    # ps=['x', 'y']
-    # if 'dst' in s.columns :
-    #     ps.append('dst')
 
     ss = s[ps]
     pars = [reg.getPar(f'tor{dur}') for dur in tor_durs]
@@ -671,7 +651,7 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
                 fix_segment = points[point + fix_segment]
             point = points[point]
 
-    pars = [p for p in all_xy_pars if p in s.columns.values]
+    pars = aux.existing_cols(all_xy_pars,s)
     xy_ps = nam.xy(point)
     if not set(xy_ps).issubset(s.columns):
         raise ValueError(f" The requested {point} is not part of the dataset")
@@ -732,7 +712,8 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
                 fix_segment = points[point + fix_segment]
             point = points[point]
 
-    pars = [p for p in all_xy_pars if p in s.columns.values]
+    pars = aux.existing_cols(all_xy_pars,s)
+    # pars = [p for p in all_xy_pars if p in s.columns.values]
     xy_ps = nam.xy(point)
     if not set(xy_ps).issubset(s.columns):
         raise ValueError(f" The requested {point} is not part of the dataset")
@@ -813,12 +794,13 @@ def scale_to_length(s, e, c=None, pars=None, keys=None):
             pars = reg.getPar(keys)
         else:
             raise ValueError('No parameter names or keys provided.')
-    s_pars = [p for p in pars if p in s.columns]
+    s_pars = aux.existing_cols(pars,s)
 
     if len(s_pars) > 0:
         ids = s.index.get_level_values('AgentID').values
         ls = l.loc[ids].values
         s[nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
-    e_pars = [p for p in pars if p in e.columns]
+    e_pars = aux.existing_cols(pars,e)
+    # e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
         e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T

@@ -76,7 +76,8 @@ def comp_stride_variation(s, e, c):
         from larvaworld.lib.process.spatial import scale_to_length
         scale_to_length(s, e, c, pars=all_vels0)
 
-    svels = [p for p in all_vels if p in s.columns]
+    svels = aux.existing_cols(all_vels,s)
+    # svels = [p for p in all_vels if p in s.columns]
 
     shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'str_sd_mu', 'str_sd_std', 'str_t_var', 'str_sd_var']
 

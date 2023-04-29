@@ -7,14 +7,14 @@ from larvaworld.lib import aux
 
 
 def store_distros(s, pars, parent_dir):
-    # path = get_path(filepath_key='distro', parent_dir=parent_dir)
     path = f'{parent_dir}/data/distro.h5'
     store = pd.HDFStore(path)
-    for p in pars:
-        if p in s.columns :
-            df = s[p].dropna().reset_index(level=0, drop=True)
-            df.sort_index(inplace=True)
-            store[p] = df
+    for p in aux.existing_cols(pars,s):
+    # for p in pars:
+    #     if p in s.columns :
+        df = s[p].dropna().reset_index(level=0, drop=True)
+        df.sort_index(inplace=True)
+        store[p] = df
     store.close()
 
 
@@ -109,7 +109,10 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
 def retrieve_results(batch_type, id):
     from larvaworld.lib import reg
     f=f'{reg.SIM_DIR}/batch_runs/{batch_type}/{id}/results.h5'
-    df = read(path=f, key='results')
+    try:
+        df =  pd.read_hdf(f, key='results')
+    except:
+        df =  None
     figs={}
     return df,figs
 

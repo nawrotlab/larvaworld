@@ -79,8 +79,7 @@ class SimTab(gui_aux.GuiTab):
 
     def update(self, w, c, conf, id):
 
-        output_keys=list(reg.output_dict.keys())
-        c['output'].update(w, dict(zip(output_keys, [True if k in conf['collections'] else False for k in output_keys])))
+        c['output'].update(w, dict(zip(reg.output_keys, [True if k in conf['collections'] else False for k in reg.output_keys])))
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
@@ -92,8 +91,7 @@ class SimTab(gui_aux.GuiTab):
         conf = {
 
             'sim_params': c['sim_params'].get_dict(v, w),
-            'collections': [k for k in list(reg.output_dict.keys()) if c['output'].get_dict(v, w)[k]],
-            # 'collections': [k for k in output_keys if c['output'].get_dict(v, w)[k]],
+            'collections': [k for k in reg.output_keys if c['output'].get_dict(v, w)[k]],
             'enrichment': self.current_conf(v)['enrichment'],
             'trials': c['trials'].get_dict(v, w),
         }

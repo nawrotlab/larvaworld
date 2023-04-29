@@ -29,9 +29,13 @@ class LarvaDataset:
             if config is None:
                 config = generate_dataset_config(dir=dir, **kwargs)
 
-        self.config = config
-        self.h5_kdic = aux.h5_kdic(self.config.point, self.config.Npoints, self.config.Ncontour)
-        self.__dict__.update(self.config)
+        c=self.config = config
+        if c.dir is not None:
+            os.makedirs(c.dir, exist_ok=True)
+            os.makedirs(self.data_dir, exist_ok=True)
+
+        self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
+        self.__dict__.update(c)
         self.larva_dicts = {}
         if load_data:
             try:
@@ -43,6 +47,7 @@ class LarvaDataset:
     def set_data(self, step=None, end=None):
         c=self.config
         if step is not None:
+            assert step.index.names == ['Step', 'AgentID']
             s = step.sort_index(level=['Step', 'AgentID'])
             self.Nticks = s.index.unique('Step').size
             c.t0 = int(s.index.unique('Step')[0])
@@ -88,7 +93,7 @@ class LarvaDataset:
         s = s.loc[:, ~s.columns.duplicated()]
         stored_ps = []
         for h5_k,ps in self.h5_kdic.items():
-            pps = aux.unique_list([p for p in ps if p in s.columns])
+            pps = aux.unique_list(aux.existing_cols(ps,s))
             if len(pps) > 0:
                 self.store(key=h5_k, df=s[pps])
                 stored_ps += pps
@@ -105,14 +110,14 @@ class LarvaDataset:
 
 
     def read(self, key, file='data'):
-        path=f'{self.config.dir}/data/{file}.h5'
+        path=f'{self.data_dir}/{file}.h5'
         try :
             return pd.read_hdf(path, key)
         except:
             return None
 
     def store(self, key, df, file='data'):
-        path = f'{self.config.dir}/data/{file}.h5'
+        path = f'{self.data_dir}/{file}.h5'
         df.to_hdf(path, key)
 
     def save_config(self, refID=None):
@@ -125,11 +130,7 @@ class LarvaDataset:
         for k, v in c.items():
             if isinstance(v, np.ndarray):
                 c[k] = v.tolist()
-        path = f'{c.dir}/data/conf.txt'
-        # path = reg.datapath('conf', c.dir)
-        aux.save_dict(c, path)
-
-
+        aux.save_dict(c, f'{self.data_dir}/conf.txt')
 
 
     def load_traj(self, mode='default'):
@@ -158,7 +159,7 @@ class LarvaDataset:
         if type in ds0 and all([id in ds0[type].keys() for id in ids]):
             ds = [ds0[type][id] for id in ids]
         else:
-            ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.dir}/data/individuals/{type}.txt')
+            ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.data_dir}/individuals/{type}.txt')
             # ds= aux.loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
         return ds
 
@@ -173,9 +174,12 @@ class LarvaDataset:
 
     @ property
     def plot_dir(self):
-        return f'{self.dir}/plots'
+        return f'{self.config.dir}/plots'
         # return reg.datapath('plots', self.dir)
 
+    @property
+    def data_dir(self):
+        return f'{self.config.dir}/data'
 
     def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
         cc = {
@@ -224,7 +228,7 @@ class LarvaDataset:
 
         if key=='distro':
             try:
-                return aux.read(key=par,path=f'{self.dir}/data/distro.h5')
+                return pd.read_hdf(f'{self.data_dir}/distro.h5', key=par)
             except:
                 return self.get_par(par, key='step')
 
@@ -247,7 +251,7 @@ class LarvaDataset:
             return reg.par.get(k=k, d=self, compute=True)
 
     def delete(self):
-        shutil.rmtree(self.dir)
+        shutil.rmtree(self.config.dir)
         reg.vprint(f'Dataset {self.id} deleted',2)
 
     def set_id(self, id, save=True):
@@ -372,10 +376,7 @@ def generate_dataset_config(**kwargs):
         c0.sample = gConf['sample']
         c0.model = gConf['model']
         c0.life_history = gConf['life_history']
-    if c0.dir is not None :
-        os.makedirs(c0.dir, exist_ok=True)
-        os.makedirs(f'{c0.dir}/data', exist_ok=True)
-    # c0.data_path = f'{c0.dir}/data/data.h5'
+
     reg.vprint(f'Generated new conf {c0.id}', 1)
     return c0
 

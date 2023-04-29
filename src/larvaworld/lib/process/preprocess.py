@@ -18,8 +18,7 @@ def filter(s, c, filter_f=2, recompute=False, **kwargs):
     c['filtered_at'] = filter_f
 
     points = nam.midline(c.Npoints, type='point') + ['centroid', '']
-    pars = nam.xy(points, flat=True)
-    pars = [p for p in pars if p in s.columns]
+    pars = aux.existing_cols(nam.xy(points, flat=True),s)
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
     f_array = aux.apply_filter_to_array_with_nans_multidim(data, freq=filter_f, fr=1 / c.dt)
     for j, p in enumerate(pars):
@@ -32,8 +31,7 @@ def interpolate_nan_values(s, c, pars=None, **kwargs):
         points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(
             c.Ncontour)  # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
         pars = nam.xy(points, flat=True)
-    pars = [p for p in pars if p in s.columns]
-    for p in pars:
+    for p in aux.existing_cols(pars,s):
         for id in s.index.unique('AgentID').values:
             s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     reg.vprint('All parameters interpolated', 1)
@@ -51,8 +49,7 @@ def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
     contour_pars = nam.xy(nam.contour(c.Ncontour), flat=True)
     pars = nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + [
         'spinelength'] + contour_pars
-    lin_pars = [p for p in pars if p in s.columns]
-    for p in lin_pars:
+    for p in aux.existing_cols(pars,s):
         s[p] = s[p].apply(lambda x: x * rescale_by)
     if 'length' in e.columns:
         e['length'] = e['length'].apply(lambda x: x * rescale_by)

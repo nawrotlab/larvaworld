@@ -421,4 +421,7 @@ def index_unique(df, level='Step', ascending=True, as_array=False):
     else:
         return a
 
+def existing_cols(cols,df) :
+    return [col for col in cols if col in df.columns]
+
 

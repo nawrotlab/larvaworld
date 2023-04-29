@@ -361,9 +361,7 @@ def retrieve_dataset(dataset=None,refID=None,dir=None) :
         if refID is not None:
             dataset = reg.loadRef(refID)
         elif dir is not None :
-            # from larvaworld.lib.process.dataset import LarvaDataset
-            path=f'{reg.DATA_DIR}/{dir}'
-            dataset = larvaworld.LarvaDataset(path, load_data=False)
+            dataset = larvaworld.LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False)
         else :
             raise ValueError ('Unable to load dataset. Either refID or storage path must be provided. ')
     return dataset

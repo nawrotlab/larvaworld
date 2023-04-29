@@ -1,4 +1,3 @@
-from types import FunctionType
 import warnings
 import numpy as np
 from typing import List, Tuple
@@ -30,7 +29,6 @@ output_dict = {
 
     'toucher': {
         'step': ['on_food_tr', 'on_food'],
-        # 'step': ['A_touch', 'A_tur', 'Act_tur', 'cum_f_det', 'on_food_tr', 'on_food'],
         'endpoint': ['on_food_tr']},
 
     'wind': {
@@ -39,9 +37,7 @@ output_dict = {
 
     'feeder': {
         'step': ['l', 'f_am', 'EEB', 'on_food', 'fee_reocc', 'beh'],
-        # 'step': ['l', 'm', 'f_am', 'sf_am', 'EEB'],
         'endpoint': ['l', 'f_am', 'on_food_tr', 'pau_N', 'str_N', 'run_N', 'fee_N','str_c_N', 'fee_c_N', 'fee_N_success',  'fee_N_fail']
-        # 'endpoint': ['l', 'm', 'f_am', 'sf_am', 'on_food_tr']
     },
 
     'gut': {'step': ['sf_am_Vg', 'sf_am_V',  'f_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M', 'f_faeces_M',
@@ -56,9 +52,9 @@ output_dict = {
                                          'best_olfactor_decay']}},
     'midline': None,
     'contour': None,
-    # 'source_vincinity': {'step': [], 'endpoint': ['d_cent_fin']},
-    # 'source_approach': {'step': [], 'endpoint': ['d_chem_fin']},
 }
+
+output_keys=list(output_dict.keys())
 
 def set_output(collections=None, Npoints=3, Ncontour=0):
     if collections is None:
@@ -164,7 +160,6 @@ def ConfID_entry(conftype, ids=None, default=None, k=None, symbol=None, single_c
          'disp': f'{conftype} {IDstr}'}
     return aux.AttrDict(d)
 
-# @decorators.timeit
 def buildInitDict():
     bF, bT = {'dtype': bool, 'v': False}, {'dtype': bool, 'v': True}
 
@@ -433,21 +428,16 @@ def buildInitDict():
 
         d = aux.AttrDict({
             'Essay': {
-                # 'essay_ID': pID('essay'),
-                # 'path': pPath('essay'),
                 'N': {'dtype': int, 'lim': (1, 100), 'disp': '# larvae',
                       'h': 'The number of larvae per larva-group.'}
             },
             'sim_params': {
-                # 'sim_ID': pID('simulation', k='id'),
-                # 'path': pPath('simulation', k='path'),
                 'duration': {'v': 5.0,'lim': (0.0, 100000.0), 'h': 'The duration of the simulation in minutes.',
                              'k': 't'},
                 'dt': {'v': 0.1, 'lim': (0.0, 0.4), 'dv': 0.05,
                              'h': 'The timestep of the simulation in seconds.',
                              'k': 'dt'},
                 'Box2D': {**bF, 'h': 'Whether to use the Box2D physics engine or not.', 'k': 'Box2D'},
-                # 'show_display': {**bT, 'h': 'Whether to render the screen visualization', 'k': 'hide'},
                 'store_data': {**bT, 'h': 'Whether to store the simulation data', 'k': 'no_store'},
                 'offline': {**bF, 'h': 'Whether to exec a full LarvaworldSim environment', 'k': 'offline'},
 
@@ -471,14 +461,11 @@ def buildInitDict():
                               'disp': 'Storage mode'
                               },
             },
-            'output': {n: bF for n in list(output_dict.keys())}
+            'output': {n: bF for n in output_keys}
         })
         return d
 
     def enrConfs():
-        # to_drop_keys = ['midline', 'contour', 'stride', 'non_stride', 'stridechain', 'pause', 'Lturn', 'Rturn',
-        #                 'turn',
-        #                 'unused']
         d = aux.AttrDict()
 
         d['ang_definition'] = {
@@ -519,7 +506,6 @@ def buildInitDict():
                 'vel_threshold': {'v': 0.3, 'lim': (0.0, 2.0), 'disp': 'vel_thr',
                                   'h': 'The velocity threshold to be reached in every stride cycle.'},
             },
-            # 'pause': {
 
             'turn': {
                 'min_ang': {'v': 30.0, 'lim': (0.0, 180.0), 'dv': 1.0,
@@ -543,15 +529,12 @@ def buildInitDict():
         }
         d['processing'] = {t: {**bT, 'h': f'Whether to apply {t} processing'} for t in proc_type_keys}
         d['annotation'] = {
-            # **{b: {**bF, 'h': f'Whether to annotate {b} epochs'} for b in ['stride', 'pause', 'turn']},
             'bout_detection': {**bT, 'h': f'Whether to detect epochs'},
             'bout_distribution': {**bT, 'h': f'Whether to fit distributions to epoch durations'},
             'interference': {**bT, 'h': f'Whether to compute interference'},
             'source_attraction': {**bF, 'h': f'Whether to compute bearing to sources'},
             'patch_residency': {**bF, 'h': f'Whether to compute patch residency'},
-            # 'fits': {**bT, 'h': f'Whether to fit epochs'}
         }
-        # d['to_drop'] = {kk: {**bF, 'h': f'Whether to drop {kk} parameters'} for kk in to_drop_keys}
         d['enrichment'] = {**{k: d[k] for k in
                               ['metric_definition', 'preprocessing', 'processing', 'annotation']},
                            'recompute': {**bF, 'h': f'Whether to recompute'},
@@ -2111,11 +2094,11 @@ class ParamRegistry:
         for k in ks:
             if k in D.keys():
                 d, p = D[k].d, D[k].codename
-            try:
-                temp = [aux.rgetattr(l, p) for l in agents]
-                dic.update({d: p})
-            except:
-                pass
+                try:
+                    temp = [aux.rgetattr(l, p) for l in agents]
+                    dic.update({d: p})
+                except:
+                    pass
         return dic
 
     def get_reporters(self,agents, **kwargs):
