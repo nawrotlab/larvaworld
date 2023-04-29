@@ -298,7 +298,7 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwarg
 
 
     if store:
-        aux.save_dict(dsps, reg.datapath('dsp', c.dir))
+        aux.save_dict(dsps, f'{c.dir}/data/dsp.txt')
 
     reg.vprint(f'Completed dispersal processing.',1)
 
@@ -485,7 +485,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
         dt = c.dt
 
     if s is None:
-        s = aux.read(key='step', path=reg.datapath('step',c.dir))
+        s = aux.read(key='step', path=f'{c.dir}/data/data.h5')
 
     ticks=np.arange(c.Nticks)
     # ticks = aux.index_unique(s, level='Step', as_array=True)

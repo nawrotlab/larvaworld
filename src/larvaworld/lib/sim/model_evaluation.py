@@ -230,7 +230,8 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
     if id is None:
         id = f'{len(mIDs)}mIDs'
     if save_to is None:
-        save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
+        save_to = f'{reg.loadConf("Ref",refID).dir}/model/evaluation'
+        # save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
 
     parameters = reg.get_null('Eval',**{
         'refID': refID,

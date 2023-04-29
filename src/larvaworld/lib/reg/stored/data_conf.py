@@ -73,7 +73,8 @@ def Ref_dict(DATA=None):
     dds.append(f'{DATA}/SchleyerGroup/processed/no_odor/150controls')
     entries = {}
     for dr in dds:
-        f = reg.datapath('conf', dr)
+        f = f'{dr}/data/conf.txt'
+        # f = reg.datapath('conf', dr)
         if os.path.isfile(f):
             try:
                 with open(f) as tfp:

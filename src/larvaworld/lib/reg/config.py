@@ -329,7 +329,8 @@ def Ref_paths(id, dir=None):
 
 def load_config(dir) :
     if dir is not None:
-        path=reg.datapath('conf',dir)
+        path=f'{dir}/data/conf.txt'
+        # path=reg.datapath('conf',dir)
         if os.path.isfile(path) :
             c=aux.load_dict(path)
             if 'id' in c.keys():

@@ -162,7 +162,7 @@ def plot_stridesNpauses(name=None, stridechain_duration=False, time_unit='sec',
 
     if test_detection:
         for l, d, col in zip(P.labels, P.datasets, P.colors):
-            dic0 = d.load_dicts('bout_dicts')
+            dic0 = d.load_dicts('bouts')
             dic = {}
             for iid, ddd in dic0.items():
                 df = pd.DataFrame.from_dict(ddd)

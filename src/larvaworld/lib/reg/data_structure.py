@@ -5,7 +5,7 @@ def build_datapath_structure():
     folders = {
         'parent': ['data', 'plots', 'visuals', 'model'],
         'data': ['individuals'],
-        'individuals': ['bouts', 'deb', 'nengo'],
+        'individuals': ['bouts','foraging', 'deb', 'nengo'],
         'plots': ['model_tables', 'model_summaries'],
         'model': ['GAoptimization', 'evaluation'],
 

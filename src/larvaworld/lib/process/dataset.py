@@ -125,7 +125,8 @@ class LarvaDataset:
         for k, v in c.items():
             if isinstance(v, np.ndarray):
                 c[k] = v.tolist()
-        path = reg.datapath('conf', c.dir)
+        path = f'{c.dir}/data/conf.txt'
+        # path = reg.datapath('conf', c.dir)
         aux.save_dict(c, path)
 
 
@@ -157,7 +158,8 @@ class LarvaDataset:
         if type in ds0 and all([id in ds0[type].keys() for id in ids]):
             ds = [ds0[type][id] for id in ids]
         else:
-            ds= aux.loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
+            ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.dir}/data/individuals/{type}.txt')
+            # ds= aux.loadSoloDics(agent_ids=ids, path=reg.datapath(type, self.dir))
         return ds
 
     def visualize(self,parameters={}, **kwargs):
@@ -171,7 +173,8 @@ class LarvaDataset:
 
     @ property
     def plot_dir(self):
-        return reg.datapath('plots', self.dir)
+        return f'{self.dir}/plots'
+        # return reg.datapath('plots', self.dir)
 
 
     def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
@@ -221,7 +224,7 @@ class LarvaDataset:
 
         if key=='distro':
             try:
-                return aux.read(key=par,path=reg.datapath("distro", self.dir))
+                return aux.read(key=par,path=f'{self.dir}/data/distro.h5')
             except:
                 return self.get_par(par, key='step')
 

@@ -119,8 +119,8 @@ class GraphRegistry:
         return ds
 
     def store_model_graphs(self, mIDs, dir):
-        f1 = reg.datapath('model_tables', dir)
-        f2 = reg.datapath('model_summaries', dir)
+        f1 = f'{dir}/plots/model_tables'
+        f2 = f'{dir}/plots/model_summaries'
         os.makedirs(f1, exist_ok=True)
         os.makedirs(f2, exist_ok=True)
 

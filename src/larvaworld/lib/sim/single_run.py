@@ -222,7 +222,7 @@ class ExpRun(BaseRun):
         for d in self.datasets:
             d.save()
             for type, vs in d.larva_dicts.items():
-                aux.storeSoloDics(vs, path=reg.datapath(type, d.dir))
+                aux.storeSoloDics(vs, path=f'{d.dir}/data/individuals/{type}.txt')
 
     def load_agentpy_output(self):
         df=agentpy.DataDict.load(**self.agentpy_output_kws)

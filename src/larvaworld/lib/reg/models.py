@@ -1076,7 +1076,8 @@ class ModelRegistry:
             d.load(step=False)
             e, c = d.endpoint_data, d.config
         if save_to is None:
-            save_to = reg.datapath('GAoptimization', c.dir)
+            save_to = f'{c.dir}/model/GAoptimization'
+            # save_to = reg.datapath('GAoptimization', c.dir)
         m0 = reg.loadConf('Model', mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
