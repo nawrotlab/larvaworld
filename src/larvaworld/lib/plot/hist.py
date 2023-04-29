@@ -85,7 +85,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         Ddata[par] = {}
         vs = []
         for d, l in zip(P.datasets, P.labels):
-            x=d.get_par(par, key='distro').dropna().values
+            x=d.get_par(par).dropna().values
             Ddata[par][l] = x
             vs.append(x)
         vvs = np.hstack(vs)

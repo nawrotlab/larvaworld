@@ -56,7 +56,7 @@ def plot_fft_multi(name=f'fft_powerspectrum',axx=None, dataset_colors=False, **k
         try:
             s = d.step_data
         except:
-            s = d.read(key='step')
+            s = d.read('step')
         c = d.config
         _ = plot_fft(s, c, axx=axx, axs=P.axs[0], fig=P.fig, palette=palette, return_fig=True)
     return P.get()

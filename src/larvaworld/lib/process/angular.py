@@ -184,9 +184,9 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=T
     ps = or_pars + bend_pars
     comp_angular(s, e, dt,Np, pars=ps)
     # comp_extrema_multi(s, dt=dt)
-    if store :
-        pars = ps + aux.nam.vel(ps) + aux.nam.acc(ps)
-        aux.store_distros(s, pars, parent_dir=c.dir)
+    # if store :
+    #     pars = ps + aux.nam.vel(ps) + aux.nam.acc(ps)
+    #     aux.store_distros(s, pars, parent_dir=c.dir)
 
 
     reg.vprint(f'Completed {mode} angular processing.')

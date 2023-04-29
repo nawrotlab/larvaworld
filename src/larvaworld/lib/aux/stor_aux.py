@@ -6,14 +6,14 @@ from larvaworld.lib import aux
 
 
 
-def store_distros(s, pars, parent_dir):
-    path = f'{parent_dir}/data/distro.h5'
-    store = pd.HDFStore(path)
-    for p in aux.existing_cols(pars,s):
-        df = s[p].dropna().reset_index(level=0, drop=True)
-        df.sort_index(inplace=True)
-        store[p] = df
-    store.close()
+# def store_distros(s, pars, parent_dir):
+#     path = f'{parent_dir}/data/distro.h5'
+#     store = pd.HDFStore(path)
+#     for p in aux.existing_cols(pars,s):
+#         df = s[p].dropna().reset_index(level=0, drop=True)
+#         df.sort_index(inplace=True)
+#         store[p] = df
+#     store.close()
 
 
 

@@ -13,8 +13,8 @@ def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
         ax1, ax2 = P.axs[ii * 2], P.axs[ii * 2 + 1]
         N = d.Nangles
         try:
-            df_reg = d.read(key='bend2or_regression', file='vel_definition')
-            df_corr = d.read(key='bend2or_correlation', file='vel_definition')
+            df_reg = d.read('bend2or_regression', file='vel_definition')
+            df_corr = d.read('bend2or_correlation', file='vel_definition')
         except :
             from larvaworld.lib.process.calibration import vel_definition
             dic = vel_definition(d)
@@ -50,7 +50,7 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
                       build_kws={'Ncols': 'Ndatasets', 'wh': 5, 'sharex': True, 'sharey': True},  **kwargs)
     for ii, d in enumerate(P.datasets):
         try :
-            stvar = d.read(key='stride_variability', file='vel_definition')
+            stvar = d.read('stride_variability', file='vel_definition')
 
         except :
             from larvaworld.lib.process.calibration import vel_definition

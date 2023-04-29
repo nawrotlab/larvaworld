@@ -140,12 +140,14 @@ def arrange_evaluation(d, evaluation_metrics=None):
         ps = reg.getPar(shs)
         for sh, p in zip(shs, ps):
             try:
-                data = d.read(key='end')[p]
+                data = d.get_par(par=p,key='end')
+                # data = d.read(key='end')[p]
                 if data is not None:
                     Edata[p] = data
                     Eshorts.append(sh)
             except:
-                data = d.read(key=p, file='distro')
+                data = d.get_par(par=p,key='step')
+                # data = d.read(key=p, file='distro')
                 if data is not None:
                     Ddata[p] = data.dropna()
                     Dshorts.append(sh)

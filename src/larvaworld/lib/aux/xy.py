@@ -318,12 +318,12 @@ def concat_datasets(ddic, key='end', unit='sec'):
             try:
                 df = d.endpoint_data
             except:
-                df = d.read(key='end')
+                df = d.read('end')
         elif key == 'step':
             try:
                 df = d.step_data
             except:
-                df = d.read(key='step')
+                df = d.read('step')
         else :
             raise
         df['DatasetID'] = l

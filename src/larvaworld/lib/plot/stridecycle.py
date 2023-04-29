@@ -287,7 +287,7 @@ def plot_interference(mode='orientation', agent_idx=None, subfolder='interferenc
 
     for i, (p, ylab) in enumerate(zip(pars, ylabs)):
         for l, d, c in P.data_palette:
-            df = d.read(key=f'stride.{p}', file='aux')
+            df = d.read(f'stride.{p}')
             if agent_idx is not None:
                 df = df.loc[d.agent_ids[agent_idx]].values
             else:

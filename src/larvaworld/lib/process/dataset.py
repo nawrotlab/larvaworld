@@ -77,7 +77,7 @@ class LarvaDataset:
         for h5_k in h5_ks:
             ss = self.read(h5_k)
             if ss is not None :
-                ps = aux.existing_cols(ss.columns.values,s)
+                ps = aux.nonexisting_cols(ss.columns.values,s)
                 if len(ps) > 0:
                     s = s.join(ss[ps])
         return s
@@ -95,18 +95,19 @@ class LarvaDataset:
         for h5_k,ps in self.h5_kdic.items():
             pps = aux.unique_list(aux.existing_cols(ps,s))
             if len(pps) > 0:
-                self.store(key=h5_k, df=s[pps])
+                s[pps].to_hdf(self.data_path, h5_k)
                 stored_ps += pps
-        self.store(key='step', df=s.drop(stored_ps, axis=1, errors='ignore'))
 
+        s.drop(stored_ps, axis=1, errors='ignore').to_hdf(self.data_path, 'step')
 
     def save(self, refID=None):
         if hasattr(self, 'step_data'):
             self._save_step(s=self.step_data)
         if hasattr(self, 'endpoint_data'):
-            self.store(key='end', df=self.endpoint_data)
+            self.endpoint_data.to_hdf(self.data_path, 'end')
         self.save_config(refID=refID)
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
+
 
 
     def read(self, key, file='data'):
@@ -115,10 +116,6 @@ class LarvaDataset:
             return pd.read_hdf(path, key)
         except:
             return None
-
-    def store(self, key, df, file='data'):
-        path = f'{self.data_dir}/{file}.h5'
-        df.to_hdf(path, key)
 
     def save_config(self, refID=None):
         c = self.config
@@ -147,7 +144,7 @@ class LarvaDataset:
                 df=ss[['x', 'y']]
             else :
                 raise ValueError('Not implemented')
-            self.store(key=key, df=df)
+            df.to_hdf(self.data_path, key)
         return df
 
 
@@ -178,6 +175,12 @@ class LarvaDataset:
     @property
     def data_dir(self):
         return f'{self.config.dir}/data'
+
+    @property
+    def data_path(self):
+        return f'{self.data_dir}/data.h5'
+
+
 
     def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
         cc = {
@@ -224,11 +227,11 @@ class LarvaDataset:
         if par is None and k is not None:
             par=reg.getPar(k)
 
-        if key=='distro':
-            try:
-                return pd.read_hdf(f'{self.data_dir}/distro.h5', key=par)
-            except:
-                return self.get_par(par, key='step')
+        # if key=='distro':
+        #     try:
+        #         return pd.read_hdf(f'{self.data_dir}/distro.h5', key=par)
+        #     except:
+        #         return self.get_par(par, key='step')
 
 
         if key == 'end':

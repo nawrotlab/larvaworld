@@ -287,15 +287,14 @@ def bout_distribution(s, e, c, d, **kwargs) :
     d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
-    # d.store(key='grouped_epochs', df=pd.DataFrame(d.grouped_epochs))
-    d.store(key='pooled_epochs', df=pd.DataFrame(d.pooled_epochs))
+    pd.DataFrame(d.pooled_epochs).to_hdf(d.data_path, 'pooled_epochs')
     reg.vprint(f'Completed bout distribution analysis.',1)
 
 # @decorators.timeit
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, store=True, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, store=store, **kwargs)
-    d.store(key='chunk_dicts', df=pd.DataFrame(d.chunk_dicts))
+    pd.DataFrame(d.chunk_dicts).to_hdf(d.data_path, 'chunk_dicts')
     reg.vprint(f'Completed bout detection.',1)
 
 
@@ -343,7 +342,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
 @reg.funcs.annotation("interference")
 def compute_interference_data(s, e, c, d, Nbins=64, **kwargs) :
     d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, Nbins=Nbins)
-    d.store(key='cycle_curves', df=pd.DataFrame(d.cycle_curves))
+    pd.DataFrame(d.cycle_curves).to_hdf(d.data_path, 'cycle_curves')
 
 @reg.funcs.annotation("interference2")
 def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
@@ -408,8 +407,7 @@ def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
     except:
         pass
     if d is not None :
-        d.store(key='pooled_cycle_curves', df=pd.DataFrame(pooled_curves))
-    # c.pooled_cycle_curves = pooled_curves
+        pd.DataFrame(pooled_curves).to_hdf(d.data_path, 'pooled_cycle_curves')
     return cycle_curves
 
 @reg.funcs.annotation("turn_mode")
@@ -464,8 +462,8 @@ def turn_annotation(s, e, c, store=True):
         eTur_vs[jj, :] = [Lturns_N,Rturns_N, turns_N, tur_H]
     s[turn_ps] = turn_vs.reshape([N * len(ids), len(turn_ps)])
     e[eTur_ps] = eTur_vs
-    if store:
-        aux.store_distros(s, pars=reg.getPar(['tur_fou', 'tur_t', 'tur_fov_max']), parent_dir=c.dir)
+    # if store:
+    #     aux.store_distros(s, pars=reg.getPar(['tur_fou', 'tur_t', 'tur_fov_max']), parent_dir=c.dir)
     return turn_dict
 
 
@@ -578,9 +576,9 @@ def crawl_annotation(s, e, c, strides_enabled=True, vel_thr=0.3, store=True):
         e[str_ps] = str_vs
         e[str_sd_mu] = e[str_d_mu] / e[l]
         e[str_sd_std] = e[str_d_std] / e[l]
-    if store:
-        run_ps = reg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_d', 'str_sd'])
-        aux.store_distros(s, pars=run_ps, parent_dir=c.dir)
+    # if store:
+    #     run_ps = reg.getPar(['pau_t', 'run_t', 'run_d', 'str_c_l', 'str_d', 'str_sd'])
+    #     aux.store_distros(s, pars=run_ps, parent_dir=c.dir)
     return crawl_dict
 
 

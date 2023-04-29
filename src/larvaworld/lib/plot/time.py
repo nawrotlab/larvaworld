@@ -143,10 +143,7 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
             if P.Ndatasets > 1:
                 c = d_col
             try:
-                if table is not None:
-                    dc=d.read(key=p, file='tables_h5')
-                else:
-                    dc = d.get_par(p, key='step')
+                dc = d.get_par(p)
                 if absolute:
                     dc = dc.abs()
                 dc_m = dc.groupby(level='Step').quantile(q=0.5)

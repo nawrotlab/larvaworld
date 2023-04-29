@@ -197,11 +197,12 @@ def store_spatial(s, e, c, d=None,store=True):
         e[csdst] = s[sdst].dropna().groupby('AgentID').sum()
         e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
-    if store:
-        aux.store_distros(s, pars=reg.getPar(['v', 'a', 'sv', 'sa']), parent_dir=c.dir)
-        if d is not None :
-            d.store(key='pathlength', df=s[aux.existing_cols([dst, cdst, sdst, csdst],s)])
-            d.store(key='traj.default', df=s[['x', 'y']])
+    # if store:
+        # aux.store_distros(s, pars=reg.getPar(['v', 'a', 'sv', 'sa']), parent_dir=c.dir)
+    if d is not None :
+        s[aux.existing_cols([dst, cdst, sdst, csdst],s)].to_hdf(d.data_path, 'pathlength')
+        s[['x', 'y']].to_hdf(d.data_path, 'traj.default')
+
 
 @reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, store=True,traj2origin=True, **kwargs):
@@ -423,8 +424,8 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
             e[nam.std(p)] = s[p].groupby('AgentID').std()
 
 
-    if store:
-        aux.store_distros(s, pars=pars, parent_dir=c.dir)
+    # if store:
+    #     aux.store_distros(s, pars=pars, parent_dir=c.dir)
 
     reg.vprint(f'Completed tortuosity processing.',1)
 
@@ -561,8 +562,8 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
 
         if store:
             if d is not None :
-                d.store(key=f'traj.{mode}', df=ss)
-
+                # d.store(key=f'traj.{mode}', df=ss)
+                ss.to_hdf(d.data_path, f'traj.{mode}')
                 reg.vprint(f'traj_aligned2{mode} stored')
         return ss
 

@@ -424,6 +424,9 @@ def index_unique(df, level='Step', ascending=True, as_array=False):
 def existing_cols(cols,df) :
     return [col for col in cols if col in df.columns.values]
 
+def nonexisting_cols(cols,df) :
+    return [col for col in cols if col not in df.columns.values]
+
 def cols_exist(cols,df) :
     return set(cols).issubset(df.columns.values)
 

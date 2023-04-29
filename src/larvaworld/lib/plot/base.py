@@ -276,128 +276,6 @@ class AutoBasePlot(BasePlot):
 
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
-# class DatasetGroup :
-#     def __init__(self, datasets=[], labels=None, add_samples=False):
-#         for d in datasets:
-#             assert isinstance(d, larvaworld.LarvaDataset)
-#         if labels is None:
-#             labels = [d.id for d in datasets]
-#
-#         if add_samples:
-#             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
-#             targets = [reg.loadRef(id) for id in targetIDs if id in reg.storedConf('Ref')]
-#             datasets += targets
-#             if labels is not None:
-#                 labels += targetIDs
-#         self.datasets = datasets
-#         self.labels = labels
-#         self.Ndatasets = len(datasets)
-#         self.colors = plot.get_colors(datasets)
-#         assert self.Ndatasets == len(self.labels)
-#
-#         self.fit_ind = None
-#         self.fit_df = None
-#
-#     @property
-#     def data_dict(self):
-#         return dict(zip(self.labels, self.datasets))
-#
-#     @property
-#     def data_palette(self):
-#         return zip(self.labels, self.datasets, self.colors)
-#
-#     @property
-#     def Nticks(self):
-#         Nticks_list = [d.config.Nticks for d in self.datasets]
-#         return np.max(aux.unique_list(Nticks_list))
-#
-#     @property
-#     def N(self):
-#         N_list = [d.config.N for d in self.datasets]
-#         return np.max(aux.unique_list(N_list))
-#
-#     @property
-#     def fr(self):
-#         fr_list = [d.fr for d in self.datasets]
-#         return np.max(aux.unique_list(fr_list))
-#
-#     @property
-#     def dt(self):
-#         dt_list = aux.unique_list([d.dt for d in self.datasets])
-#         return np.max(dt_list)
-#
-#     @property
-#     def duration(self):
-#         return int(self.Nticks * self.dt)
-#
-#     @property
-#     def tlim(self):
-#         return (0, self.duration)
-#
-#     def trange(self, unit='min'):
-#         if unit == 'min':
-#             T = 60
-#         elif unit == 'sec':
-#             T = 1
-#         t0, t1 = self.tlim
-#         x = np.linspace(t0 / T, t1 / T, self.Nticks)
-#         return x
-#
-#     def init_fits(self, pars, names=('dataset1', 'dataset2')):
-#         if self.Ndatasets > 1:
-#             columns = pars + [f'S_{p}' for p in pars] + [f'P_{p}' for p in pars]
-#             fit_ind = np.array([np.array([l1, l2]) for l1, l2 in itertools.combinations(self.labels, 2)])
-#             self.fit_ind = pd.MultiIndex.from_arrays([fit_ind[:, 0], fit_ind[:, 1]], names=names)
-#             self.fit_df = pd.DataFrame(index=self.fit_ind, columns=columns)
-#
-#     def comp_pvalues(self, values, p):
-#         if self.fit_ind is not None:
-#             for ind, (vv1, vv2) in zip(self.fit_ind, itertools.combinations(values, 2)):
-#                 v1, v2=list(vv1),list(vv2)
-#                 st, pv = ttest_ind(v1, v2, equal_var=False)
-#                 if not pv <= 0.01:
-#                     t = 0
-#                 elif np.nanmean(v1) < np.nanmean(v2):
-#                     t = 1
-#                 else:
-#                     t = -1
-#                 self.fit_df.loc[ind, [p, f'S_{p}', f'P_{p}']] = [t, st, np.round(pv, 11)]
-#
-#     def plot_half_circles(self, p, ax):
-#         if self.fit_df is not None:
-#             ii = 0
-#             for z, (l1, l2) in enumerate(self.fit_df.index.values):
-#                 col1, col2 = self.colors[self.labels.index(l1)], self.colors[self.labels.index(l2)]
-#                 res = self.plot_half_circle(p, ax, col1, col2, v=self.fit_df[p].iloc[z], ind=(l1, l2), coef=z - ii)
-#                 if not res:
-#                     ii += 1
-#                     continue
-#
-#     def plot_half_circle(self, p, ax, col1, col2, v, ind, coef=0):
-#         res = True
-#         if v == 1:
-#             c1, c2 = col1, col2
-#         elif v == -1:
-#             c1, c2 = col2, col1
-#         else:
-#             res = False
-#
-#         if res:
-#             rad = 0.04
-#             yy = 0.95 - coef * 0.08
-#             xx = 0.75
-#             plot.dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
-#             pv = self.fit_df[f'P_{p}'].loc[ind]
-#             if pv == 0:
-#                 pvi = -9
-#             else:
-#                 for pvi in np.arange(-1, -10, -1):
-#                     if np.log10(pv) > pvi:
-#                         pvi += 1
-#                         break
-#             ax.text(xx + 0.05, yy + rad / 1.5, f'p<10$^{{{pvi}}}$', ha='left', va='top', color='k',
-#                     fontsize=15, transform=ax.transAxes)
-#         return res
 
 class AutoPlot(AutoBasePlot):
     def __init__(self, ks=[],key='step',klabels={},datasets=[], labels=None, add_samples=False,
@@ -630,7 +508,7 @@ class AutoPlot(AutoBasePlot):
         if xlim is None:
             xlim = [x[0], x[-1]]
         for l, d, c in self.data_palette:
-            df=d.get_par(k=k, par=par, key='step')*coeff
+            df=d.get_par(k=k, par=par)*coeff
             if absolute:
                 df = df.abs()
             if individuals:
