@@ -44,7 +44,7 @@ def test_replay() :
 
 def test_exp_run() :
     for exp in ['chemotaxis'] :
-        conf=reg.expandConf('Exp', exp)
+        conf=reg.expandExp(exp)
         conf.sim_params.duration=1
         exp_run = sim.ExpRun(parameters=conf)
         exp_run.simulate()

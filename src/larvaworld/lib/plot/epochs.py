@@ -74,7 +74,6 @@ def plot_bouts(name=None, plot_fits='',print_fits=False, turns=False, stridechai
             'label': id,
             'color': d.color,
             'legend_outside': legend_outside,
-            # 'axs': P.axs,
             'x0': None
         }
 
@@ -100,8 +99,6 @@ def plot_bouts(name=None, plot_fits='',print_fits=False, turns=False, stridechai
     P.axs[1].yaxis.set_visible(False)
     if P.Ndatasets > 1:
         P.data_leg(0, labels=valid_labs.keys(), colors=valid_labs.values(), loc='lower left', fontsize=15)
-        # dataset_legend(valid_labs.keys(), valid_labs.values(), ax=P.axs[0], loc='lower left', fontsize=15)
-        # dataset_legend(valid_labs.keys(), valid_labs.values(), ax=P.axs[0], loc='lower left', fontsize=15)
     P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
@@ -195,10 +192,7 @@ def plot_stridesNpauses(name=None, stridechain_duration=False, time_unit='sec',
     num_distros = len(distro_ls)
 
     for j, (pau_dur, chn_dur, c, label, fr) in enumerate(zip(pau_durs, chn_durs, P.colors, P.labels, frs)):
-        try:
-            ref = reg.loadConf(id=label, conftype='Ref')
-        except:
-            ref = None
+        ref = reg.loadRef(label)
         for i, (x0, discr, xmin, xmax) in enumerate(
                 zip([chn_dur, pau_dur], [chn_discr, pau_discr], [chn0, pau0], [chn1, pau1])):
             bout = 'stride' if i == 0 else 'pause'

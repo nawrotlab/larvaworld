@@ -85,7 +85,7 @@ class EvalRun(BaseRun):
         else:
             from larvaworld.lib.sim.single_run import ExpRun
             print(f'Simulating {Nm} models : {dIDs} with {N} larvae each')
-            conf = reg.expandConf(id=self.experiment, conftype='Exp')
+            conf = reg.expandExp(self.experiment)
             conf.larva_groups=lgs
             if self.enrichment is None:
                 conf.enrichment = None
@@ -230,7 +230,7 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
     if id is None:
         id = f'{len(mIDs)}mIDs'
     if save_to is None:
-        save_to = f'{reg.loadConf("Ref",refID).dir}/model/evaluation'
+        save_to = f'{reg.loadRef(refID).dir}/model/evaluation'
         # save_to = reg.datapath('evaluation', reg.loadConf('Ref',refID).dir)
 
     parameters = reg.get_null('Eval',**{
@@ -268,9 +268,9 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     kwargs = {k: 'sample' for k in sample_ks}
     entries = {}
     for mID0, mID in zip(mID0s, mIDs):
-        m0 = reg.loadConf(id=mID0, conftype='Model').get_copy()
+        m0 = reg.loadModel(mID0).get_copy()
         m = m0.update_existingnestdict(kwargs)
-        reg.saveConf(conf=m, id=mID, conftype='Model')
+        reg.saveModel(conf=m, id=mID)
         entries[mID] = m
     return entries
 

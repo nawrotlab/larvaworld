@@ -36,7 +36,7 @@ vprint("Initializing parameter registry")
 from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
-from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,storedRefs,load_config,Ref_paths, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, retrieve_dataset, next_idx
+from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,storedRefs,storedModels,load_config,Ref_paths, expandConf,expandExp,resetConfs,GTRvsS, lgs, lg, loadRef,loadModel,saveModel,loadGroup, retrieve_dataset, next_idx
 from .controls import controls
 
 vprint("Initializing model registry")

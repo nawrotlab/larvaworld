@@ -459,7 +459,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
         group_id = parent_dir
 
 
-    g = reg.loadConf(id=datagroup_id, conftype='Group')
+    g = reg.loadGroup(datagroup_id)
     group_dir = g.path
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
@@ -482,7 +482,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
             print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
             if enrich_conf is None:
                 enrich_conf = g.enrichment
-            d = d.enrich(**enrich_conf, store=True, is_last=False)
+            d = d.enrich(**enrich_conf, is_last=False)
         d.save(refID=refID)
         if refID is not None :
             print(f'***** Dataset stored under the reference ID : {refID} -----')
@@ -505,7 +505,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
     warnings.filterwarnings('ignore')
 
     shutil.rmtree(target_dir, ignore_errors=True)
-    g = reg.loadConf(id=datagroup_id, conftype='Group')
+    g = reg.loadGroup(datagroup_id)
 
     conf = {
         'load_data': False,

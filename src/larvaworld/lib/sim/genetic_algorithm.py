@@ -30,7 +30,7 @@ class GAspace(param.Parameterized):
 
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
                                label='mode of initial generation',doc='Mode of initial generation')
-    base_model = param.Selector(default='explorer', objects=reg.storedConf('Model'),
+    base_model = param.Selector(default='explorer', objects=reg.storedModels(),
                                 label='agent model to optimize',doc='ID of the model to optimize')
     bestConfID = param.String(default=None,label='model ID for optimized model', doc='ID for the optimized model')
     space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,
@@ -46,7 +46,7 @@ class GAspace(param.Parameterized):
                              str(self.selection_ratio) + ')')
 
 
-        self.mConf0 = reg.loadConf(id=self.base_model, conftype='Model')
+        self.mConf0 = reg.loadModel(self.base_model)
         self.space_dict = reg.model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
         self.space_columns = [p.name for k, p in self.space_dict.items()]
         self.gConf0 = reg.model.conf(self.space_dict)
@@ -153,7 +153,7 @@ class GAevaluation(param.Parameterized):
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
     fitness_func_name = param.Selector(default=None,objects=list(fitness_funcs.keys()),
                                        label='name of fitness function',doc='The function that evaluates fitness', allow_None=True)
-    fitness_target_refID = param.Selector(default=None, objects=reg.storedConf('Ref'), allow_None=True,
+    fitness_target_refID = param.Selector(default=None, objects=reg.storedRefs(), allow_None=True,
                                           label='ID of reference dataset',doc='ID of the reference dataset')
     fitness_target_kws = param.Parameter(default=None, label='fitness metrics to evaluate',
                                          doc='The target metrics to optimize against')
@@ -320,7 +320,7 @@ class GAlauncher(BaseRun, GAengine):
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
-                reg.saveConf(conf=self.best_genome.mConf, conftype='Model', id=self.bestConfID)
+                reg.saveModel(conf=self.best_genome.mConf, id=self.bestConfID)
         reg.vprint(f'Generation {Ngen} best_fitness : {self.best_fitness}', 1)
         self.all_genomes_dic += [
             {'generation': Ngen, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},

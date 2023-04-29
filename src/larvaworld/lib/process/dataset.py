@@ -142,12 +142,10 @@ class LarvaDataset:
             df = self.read(key)
         except :
             if mode=='default':
-                s=self._load_step(h5_ks=[])
-                df = s[['x', 'y']]
+                df = self._load_step(h5_ks=[])[['x', 'y']]
             elif mode in ['origin', 'center']:
                 s = self._load_step(h5_ks=['contour', 'midline'])
-                ss = reg.funcs.preprocessing["transposition"](s, c=self.config, store=False, replace=False, transposition=mode)
-                df=ss[['x', 'y']]
+                df=reg.funcs.preprocessing["transposition"](s, c=self.config, replace=False, transposition=mode)[['x', 'y']]
             else :
                 raise ValueError('Not implemented')
             self.store(df,key)
@@ -354,10 +352,10 @@ def generate_dataset_config(**kwargs):
     if c0.metric_definition is None:
         c0.metric_definition = reg.get_null('metric_definition')
 
-    c0.points =aux.nam.midline(c0.Npoints, type='point')
+    points =aux.nam.midline(c0.Npoints, type='point')
 
     try:
-        c0.point = c0.points[c0.metric_definition.spatial.point_idx - 1]
+        c0.point = points[c0.metric_definition.spatial.point_idx - 1]
     except:
         c0.point = 'centroid'
 

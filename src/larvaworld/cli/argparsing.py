@@ -158,7 +158,7 @@ def update_exp_conf(type, N=None, mIDs=None):
     Returns:
         The experiment's configuration
     '''
-    conf = reg.expandConf(id=type, conftype='Exp')
+    conf = reg.expandExp(type)
     conf.experiment = type
 
     if mIDs is not None:
@@ -171,7 +171,7 @@ def update_exp_conf(type, N=None, mIDs=None):
         conf.larva_groups = aux.AttrDict({mID: {} for mID in mIDs})
         for mID, gConf in zip(mIDs, gConfs):
             conf.larva_groups[mID] = gConf
-            conf.larva_groups[mID].model = reg.loadConf('Model', mID)
+            conf.larva_groups[mID].model = reg.loadModel(mID)
 
     if N is not None:
         for gID, gConf in conf.larva_groups.items():

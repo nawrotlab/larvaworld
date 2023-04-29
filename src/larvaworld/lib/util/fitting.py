@@ -399,7 +399,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     Nrun = aux_dic['run_dur'].shape[0]
 
     from larvaworld.lib.util.sampling import get_sample_bout_distros
-    m=reg.loadConf(id=mID, conftype='Model')
+    m=reg.loadModel(mID)
     m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params
     dic = {}

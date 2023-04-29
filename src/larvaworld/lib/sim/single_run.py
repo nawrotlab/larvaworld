@@ -23,7 +23,7 @@ class ExpRun(BaseRun):
         '''
         if parameters is None :
             if experiment is not None :
-                parameters = reg.expandConf('Exp', experiment)
+                parameters = reg.expandExp(experiment)
                 kws=parameters.sim_params
                 kws.update(kwargs)
                 kwargs=kws
@@ -121,7 +121,7 @@ class ExpRun(BaseRun):
         if self.p.enrichment:
             for d in self.datasets:
                 reg.vprint(f'--- Enriching dataset {d.id} ---', 1)
-                d.enrich(**self.p.enrichment, is_last=False, store=self.store_data)
+                d.enrich(**self.p.enrichment, is_last=False)
                 reg.vprint(f'--- Dataset {d.id} enriched ---', 1)
                 reg.vprint(f'--------------------------------', 1)
         if self.store_data:

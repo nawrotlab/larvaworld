@@ -60,7 +60,7 @@ class BatchRun(ap.Experiment):
         self.save_to = self.dir
         self.store_data = store_data
 
-        self.exp_conf = reg.expandConf('Exp', exp) if isinstance(exp, str) else exp
+        self.exp_conf = reg.expandExp(exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
         if optimization is not None:
             optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])

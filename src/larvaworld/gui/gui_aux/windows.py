@@ -228,7 +228,7 @@ def delete_conf_window(id, conftype, disp=None) :
 def add_ref_window():
     from larvaworld.gui.gui_aux.elements import NamedList
     k = 'ID'
-    temp = NamedList('Reference ID : ', key=k, choices=reg.storedConf('Ref'), size=(30, 10),
+    temp = NamedList('Reference ID : ', key=k, choices=reg.storedRefs(), size=(30, 10),
                      select_mode=sg.LISTBOX_SELECT_MODE_EXTENDED, drop_down=False,
                      readonly=True, enable_events=False, header_kws={'text': 'Select reference datasets'})
     l = [
@@ -254,7 +254,7 @@ def save_ref_window(d):
 def import_window(datagroup_id, raw_dic):
     from larvaworld.gui.tabs.larvaworld_gui import check_togglesNcollapsibles
     from larvaworld.gui.gui_aux.elements import PadDict
-    g = reg.loadConf(id=datagroup_id, conftype='Group')
+    g = reg.loadGroup(datagroup_id)
     group_dir = f'{reg.DATA_DIR}/{g["path"]}'
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'

@@ -351,7 +351,7 @@ class DoublePatch_Essay(Essay):
         self.mIDs=[f'{mID0}{suf}' for mID0 in self.mID0s]
 
 
-        self.ms=[reg.loadConf(id=mID, conftype='Model') for mID in self.mIDs]
+        self.ms=[reg.loadModel(mID) for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
 
         self.mdiff_df, row_colors = reg.model.diff_df(mIDs=self.mID0s,ms=self.ms)
@@ -371,7 +371,7 @@ class DoublePatch_Essay(Essay):
 
         return aux.AttrDict({
             mID0: reg.group.LarvaGroup.gConf(default_color=mcol,
-                                                            model=reg.loadConf('Model', mID),
+                                                            model=reg.loadModel(mID),
                                                             # model=self.CT.dict.Model.loadConf(mID),
                                                             **kws0)
 

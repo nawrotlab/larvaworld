@@ -187,7 +187,7 @@ def store_model_graphs(mIDs=None):
     f1 = f'{reg.ROOT_DIR}/media/model_tables'
     f2 = f'{reg.ROOT_DIR}/media/model_summaries'
     if mIDs is None:
-        mIDs = reg.storedConf('Model')
+        mIDs = reg.storedModels()
     for mID in mIDs:
         try:
             _ = modelConfTable(mID, save_to=f1)

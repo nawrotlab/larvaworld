@@ -90,7 +90,7 @@ def get_sample_ks(m, sample_ks=None):
 def sampleRef(mID=None, m=None, refID=None, refDataset=None, sample_ks=None, Nids=1, parameter_dict={}):
     sample_dict = {}
     if m is None:
-        m = reg.loadConf(id=mID, conftype="Model")
+        m = reg.loadModel(mID)
     ks = get_sample_ks(m, sample_ks=sample_ks)
 
     if len(ks) > 0:
@@ -145,7 +145,7 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nid
     sample_dict.update(parameter_dict)
 
     if m is None:
-        m = reg.loadConf(id=mID, conftype="Model")
+        m = reg.loadModel(mID)
     m = get_sample_bout_distros(m, refDataset.config)
     ms = generate_larvae(Nids, sample_dict, m)
     ps = [tuple(e[['initial_x', 'initial_y']].loc[id].values) for id in ids]
@@ -294,7 +294,6 @@ lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id
     if enrichment:
         d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'],
                       anot_keys=['bout_detection', 'bout_distribution', 'interference'],
-                      store=d.dir is not None,
                       dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
 
     return d

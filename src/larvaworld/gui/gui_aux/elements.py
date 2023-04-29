@@ -460,7 +460,7 @@ class SelectionList(GuiElement):
                     if kk == 'larva_groups':
                         for n, gr in conf[kk].items():
                             if type(gr['model']) == str:
-                                gr['model'] = reg.loadConf(id=gr['model'], conftype= 'Model')
+                                gr['model'] = reg.loadModel(gr['model'])
         return conf
 
     def get_next(self, k0):
@@ -1750,7 +1750,7 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
     if path in ['', None]:
         return dic
     if raw:
-        conf = reg.loadConf(id=datagroup_id, conftype='Group').tracker.filesystem
+        conf = reg.loadGroup(datagroup_id).tracker.filesystem
         dF, df = conf.folder, conf.file
         dFp, dFs = dF.pref, dF.suf
         dfp, dfs, df_ = df.pref, df.suf, df.sep

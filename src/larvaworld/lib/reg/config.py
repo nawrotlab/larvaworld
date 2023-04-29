@@ -196,6 +196,9 @@ def expandConf(conftype, id=None,conf=None):
 
     return conf
 
+def expandExp(id=None,conf=None):
+    return expandConf(conftype='Exp', id=id, conf=conf)
+
 def storedConf(conftype):
     path = reg.Path[conftype]
     d = aux.load_dict(path)
@@ -203,6 +206,9 @@ def storedConf(conftype):
 
 def storedRefs() :
     return storedConf('Ref')
+
+def storedModels() :
+    return storedConf('Model')
 
 def resetDict(conftype, init=False):
     dd = reg.funcs.stored_confs[conftype]()
@@ -249,7 +255,7 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
        s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
     if id is None :
         id=mID
-    m=mID if not expand else reg.loadConf(conftype="Model", id=mID)
+    m=mID if not expand else reg.loadModel(mID)
     if type(s) == float:
         s = (s, s)
     kws = {'kwdic': {
@@ -302,7 +308,7 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
         if navigator :
             mID0=f'navigator_{mID0}'
         if expand:
-            mID0=loadConf(conftype="Model", id=mID0)
+            mID0=reg.loadModel(mID0)
 
 
 
@@ -355,6 +361,14 @@ def loadRef(id, load=False, **kwargs):
     else:
         return None
 
+def loadModel(id):
+    return loadConf(conftype='Model', id=id)
+
+def saveModel(id,conf):
+    return saveConf(conftype='Model', id=id,conf=conf)
+
+def loadGroup(id):
+    return loadConf(conftype='Group', id=id)
 
 def retrieve_dataset(dataset=None,refID=None,dir=None) :
     if dataset is None :
@@ -382,7 +396,7 @@ def next_idx(id, conftype='Exp'):
     return d[conftype][id]
 
 def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
-    sample_conf = reg.loadConf(id=sample, conftype='Ref')
+    sample_conf = reg.loadRef(sample)
 
     base_larva = reg.expandConf(id=model, conftype='Model')
     if imitation:
