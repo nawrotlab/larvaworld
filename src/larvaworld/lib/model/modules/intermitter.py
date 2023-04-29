@@ -121,10 +121,9 @@ class Intermitter(Timer):
     def alternate_crawlNpause(self,stride_completed=False):
         if stride_completed :
             self.cur_Nstrides += 1
-        if self.cur_state is None :
-            self.run_initiation()
 
-        elif self.stridechain_completed :
+
+        if self.stridechain_completed :
             self.register('stridechain')
             self.exp_Tpause = self.generate_pause()
             self.cur_state = 'pause'
@@ -211,6 +210,8 @@ class Intermitter(Timer):
 
 
     def step(self, **kwargs):
+        if self.cur_state is None :
+            self.run_initiation()
         self.count_time()
         return self.update_state(**kwargs)
 

@@ -104,7 +104,6 @@ class DefaultBrain(Brain):
         super().__init__(agent=agent, dt=dt)
         self.locomotor = DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
 
-    # def init_brain(self, conf, B):
         D = reg.model.dict.model.m
         for k in ['olfactor', 'toucher', 'windsensor', 'thermosensor']:
             if conf.modules[k]:
@@ -125,35 +124,15 @@ class DefaultBrain(Brain):
         self.memory = None
         if conf.modules['memory']:
             mm = conf['memory_params']
-            # modality = mm['modality']
             mode = mm['mode']
             kws = {"brain" : self, "dt" : self.dt}
-            # kws = {kw: getattr(self, kw) for kw in D['memory'].kwargs.keys()}
             if self.olfactor:
-            # if modality == 'olfaction' and self.olfactor:
                 mm.gain = self.olfactor.gain
                 self.memory = D['memory'].mode[mode].class_func(**mm, **kws)
             if self.toucher:
                 mm.gain = self.toucher.gain
                 self.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
-        # return B
 
-
-        # if m.memory and c.memory_params.modality == 'olfaction':
-        #     mode = c.memory_params.mode if 'mode' in c.memory_params.keys() else 'RL'
-        #     if mode == 'RL':
-        #         self.memory = RLOlfMemory(brain=self, dt=self.dt, gain=self.olfactor.gain, **c['memory_params'])
-        #         # raise
-        #     elif mode == 'MB':
-        #         # raise
-        #         self.memory = RemoteBrianModelMemory(sim_id=self.agent.model.id, brain=self, dt=self.dt, gain=self.olfactor.gain,**c['memory_params'])
-        #
-        # if m['toucher']:
-        #     t = self.toucher = Toucher(brain=self, dt=self.dt, **c['toucher_params'])
-        # if m.memory and c.memory_params.modality == 'touch':
-        #     self.touch_memory = RLTouchMemory(brain=self, dt=self.dt, gain=t.gain, **c['memory_params'])
-
-    # @profile
     def step(self, pos, length, on_food=False, **kwargs):
         self.sense(pos=pos, reward=on_food)
         return self.locomotor.step(A_in=self.A_in, length=length, on_food=on_food)

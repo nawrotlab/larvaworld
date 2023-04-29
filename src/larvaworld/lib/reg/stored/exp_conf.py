@@ -42,7 +42,7 @@ def grouped_exp_dic():
 
 
     def food_exp(id,  c=['feeder'], dur=10.0,enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                               anot=['bout_detection', 'source_attraction']), **kwargs):
+                                               anot=['bout_detection','bout_distribution', 'source_attraction']), **kwargs):
         return exp(id,  sim={'duration': dur}, c=c,enrichment=enrichment,
                 **kwargs)
 
