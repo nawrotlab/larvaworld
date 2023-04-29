@@ -24,7 +24,7 @@ def comp_linear(s, e, c, mode='minimal'):
             points = [c.point]
             orientations = ['rear_orientation']
 
-    if not set(orientations).issubset(s.columns):
+    if not aux.cols_exist(orientations,s):
         reg.vprint('Required orients not found. Component linear metrics not computed.')
         return
 
@@ -61,39 +61,6 @@ def comp_linear(s, e, c, mode='minimal'):
     scale_to_length(s, e, c, pars=pars)
     reg.vprint('All linear parameters computed')
 
-# def comp_spatial2(s, e, c, mode='minimal'):
-#     points = nam.midline(c.Npoints, type='point')
-#     if mode == 'full':
-#         reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points')
-#         points += ['centroid']
-#     elif mode == 'minimal':
-#         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint')
-#         points = [c.point]
-#     points += ['']
-#     points = np.unique(points).tolist()
-#
-#
-#     for p in points :
-#         xy=nam.xy(p)
-#         if set(xy).issubset(s.columns.values) :
-#             dst=nam.dst(p)
-#             vel=nam.vel(p)
-#             s[dst] = aux.apply_per_level(s[xy], aux.eudist).flatten()
-#             s[nam.cum(dst)] = aux.apply_per_level(s[dst], np.nancumsum).flatten()
-#             s[vel] = s[dst]/c.dt
-#             s[nam.acc(p)] = aux.apply_per_level(s[vel], aux.rate, dt=c.dt).flatten()
-#             e[nam.cum(dst)] = s[nam.cum(dst)].values[-1, :]
-#
-#
-#
-#     dsts = nam.dst(points)
-#     cum_dsts = nam.cum(dsts)
-#     vels = nam.vel(points)
-#     accs = nam.acc(points)
-#
-#     pars = aux.raw_or_filtered_xy(s, points) + dsts + cum_dsts + vels + accs
-#     scale_to_length(s, e, c, pars=pars)
-#     reg.vprint('All spatial parameters computed')
 
 def comp_spatial(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -106,7 +73,6 @@ def comp_spatial(s, e, c, mode='minimal'):
     points += ['']
     points = np.unique(points).tolist()
     points = [p for p in points if aux.cols_exist(nam.xy(p),s)]
-    # points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
 
     xy_params = aux.raw_or_filtered_xy(s, points)
     xy_params = aux.group_list_by_n(xy_params, 2)
@@ -176,7 +142,6 @@ def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
 @reg.funcs.proc("centroid")
 def comp_centroid(s, c, recompute=False):
     if aux.cols_exist(nam.xy('centroid'),s) and not recompute:
-    # if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
         reg.vprint('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
     Nc=c.Ncontour
     con_pars = nam.xy(nam.contour(Nc), flat=True)
@@ -265,11 +230,6 @@ def comp_dispersion(s, e, c, dsp_starts=[0], dsp_stops=[40], store=True, **kwarg
         s[p],Nt=aux.compute_dispersal_multi(xy0, t0, t1, c.dt)
 
         s0 = int(t0 / c.dt)
-        # AA0 = np.zeros([c.Nticks, c.N]) * np.nan
-        # AA0[s0:s0 + Nt, :] = AA
-
-
-        # s[p] = AA0.flatten()
 
         fp = nam.final(p)
         mp = nam.max(p)
@@ -369,20 +329,6 @@ def rolling_window_xy(xy, w):
     xys = np.dstack([xs, ys])
     return xys
 
-
-# def tortuosity(xy):
-#     # Compute tortuosity over a 2D xy array
-#     if xy.ndim != 2:
-#         raise ValueError("Input array must be 2-dimensional")
-#     xy = xy[~np.isnan(xy).any(axis=1)]
-#     if xy.shape[0] < 2:
-#         return np.nan
-#     D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
-#     if D == 0:
-#         return np.nan
-#     else:
-#         L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
-#         return 1 - L / D
 def straightness_index(ss, rolling_ticks):
     ps=['x', 'y', 'dst']
     assert aux.cols_exist(ps,ss)
@@ -429,17 +375,6 @@ def straightness_index2(ss, w, match_shape=True):
     dxys=np.array([l_xys[i][-1, :] -l_xys[i][0, :] for i in valid_fin])
     Ls = np.sqrt(np.nansum(dxys ** 2, axis=1))
     A=1 - Ls / Ds
-
-    # for i in range(k1):
-    #     xy = xys[i, :]
-    #     xy = xy[~np.isnan(xy).any(axis=1)]
-    #     D = Ds[i]
-    #     if xy.shape[0] >= 2:
-    #         if D is None:
-    #             D = np.nansum(np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1)))
-    #         if D != 0:
-    #             L = np.sqrt(np.nansum(np.array(xy[-1, :] - xy[0, :]) ** 2))
-    #             SI[i] = 1 - L / D
 
     if match_shape:
         dk = int((k0 - k1) / 2)
@@ -490,9 +425,6 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
     if store:
         aux.store_distros(s, pars=pars, parent_dir=c.dir)
-
-        # dic = aux.get_distros(s, pars=pars)
-        # aux.storeH5(dic, path=reg.datapath('distro', c.dir))
 
     reg.vprint(f'Completed tortuosity processing.',1)
 
@@ -571,7 +503,6 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
         angs = np.arctan2(dy, dx)
         a = np.array([aux.angle_dif(ang, woo) for ang in angs])
         e['anemotaxis'] = d * np.cos(a)
-        # reg.vprint(e['anemotaxis'])
 
 
 @reg.funcs.preproc("transposition")
@@ -716,7 +647,6 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
             point = points[point]
 
     pars = aux.existing_cols(all_xy_pars,s)
-    # pars = [p for p in all_xy_pars if p in s.columns.values]
     xy_ps = nam.xy(point)
     if not aux.cols_exist(xy_ps,s):
         raise ValueError(f" The requested {point} is not part of the dataset")
@@ -743,7 +673,6 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
 
         s[pars] = [
             aux.flatten_list(aux.rotate_points_around_point(points=np.reshape(s[pars].values[i,:], (-1, 2)),
-            # aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(s[pars].values[i].tolist(), 2)),
                                                             radians=bg_a[i])) for i in range(N)]
     else:
         bg_a = np.zeros(N)
@@ -755,7 +684,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     return s, bg
 
 
-def comp_PI2(arena_xdim, xys, x=0.04):
+def comp_PI2(xys, x=0.04):
     Nticks = xys.index.unique('Step').size
     ids = xys.index.unique('AgentID').values
     N = len(ids)
@@ -770,19 +699,16 @@ def comp_PI2(arena_xdim, xys, x=0.04):
     return mu_dLR_mu
 
 
-def comp_PI(arena_xdim, xs, return_num=False, return_all=False):
+def comp_PI(arena_xdim, xs, return_num=False):
     N = len(xs)
     r = 0.2 * arena_xdim
     xs = np.array(xs)
     N_l = len(xs[xs <= -r / 2])
     N_r = len(xs[xs >= +r / 2])
-    N_m = len(xs[(xs <= +r / 2) & (xs >= -r / 2)])
+    # N_m = len(xs[(xs <= +r / 2) & (xs >= -r / 2)])
     pI = np.round((N_l - N_r) / N, 3)
     if return_num:
-        if return_all:
-            return pI, N, N_l, N_r
-        else:
-            return pI, N
+        return pI, N
     else:
         return pI
 

@@ -106,11 +106,10 @@ def comp_dataPI(s,e,c, **kwargs):
         xs = s[px].dropna().groupby('AgentID').last().values
     else:
         raise ValueError('No x coordinate found')
-    PI, N, N_l, N_r = comp_PI(xs=xs, arena_xdim=c.env_params.arena.dims[0], return_num=True,
-                              return_all=True)
-    c.PI = {'PI': PI, 'N': N, 'N_l': N_l, 'N_r': N_r}
+    PI, N = comp_PI(xs=xs, arena_xdim=c.env_params.arena.dims[0], return_num=True)
+    c.PI = {'PI': PI, 'N': N}
     try:
-        c.PI2 = comp_PI2(xys=s[nam.xy('')], arena_xdim=c.env_params.arena.dims[0])
+        c.PI2 = comp_PI2(xys=s[nam.xy('')])
     except:
         pass
 
