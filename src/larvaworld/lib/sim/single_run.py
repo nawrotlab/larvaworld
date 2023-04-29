@@ -23,7 +23,7 @@ class ExpRun(BaseRun):
         '''
         if parameters is None :
             if experiment is not None :
-                parameters = reg.stored.expandExp(experiment)
+                parameters = reg.stored.getExp(experiment)
                 kws=parameters.sim_params
                 kws.update(kwargs)
                 kwargs=kws

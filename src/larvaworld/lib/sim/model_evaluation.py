@@ -85,7 +85,7 @@ class EvalRun(BaseRun):
         else:
             from larvaworld.lib.sim.single_run import ExpRun
             print(f'Simulating {Nm} models : {dIDs} with {N} larvae each')
-            conf = reg.stored.expandExp(self.experiment)
+            conf = reg.stored.getExp(self.experiment)
             conf.larva_groups=lgs
             if self.enrichment is None:
                 conf.enrichment = None

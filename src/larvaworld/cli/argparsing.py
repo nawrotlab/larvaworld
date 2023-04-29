@@ -158,7 +158,7 @@ def update_exp_conf(type, N=None, mIDs=None):
     Returns:
         The experiment's configuration
     '''
-    conf = reg.stored.expandExp(type)
+    conf = reg.stored.getExp(type)
     conf.experiment = type
 
     if mIDs is not None:

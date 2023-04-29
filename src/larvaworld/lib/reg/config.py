@@ -287,7 +287,7 @@ class StoredConfRegistry :
 
     def confIDs(self, conftype):
         d=self.get_dict(conftype)
-        return list(d.keys())
+        return sorted(list(d.keys()))
 
     @ property
     def RefIDs(self):
@@ -343,8 +343,12 @@ class StoredConfRegistry :
 
         return conf
 
-    def expandExp(self,id=None, conf=None):
-        return self.expand(conftype='Exp', id=id, conf=conf)
+
+    def getExp(self, id, expand=True):
+        if expand :
+            return self.expand(conftype='Exp', id=id)
+        else :
+            return self.get(conftype='Exp', id=id)
 
     def getModel(self, id):
         return self.get(conftype='Model', id=id)
@@ -413,7 +417,7 @@ class StoredConfRegistry :
         return dataset
 
     def imitation_exp(self, refID, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
-        ref_conf = self.getRef(refID)
+        c = self.getRef(refID)
 
         kws = {
             'sample': refID,
@@ -432,13 +436,11 @@ class StoredConfRegistry :
         else:
             exp = 'evaluation'
             larva_groups = {refID: lg}
-        id = ref_conf.id
 
         if duration is None:
-            duration = ref_conf.duration / 60
-        sim_params = reg.get_null('sim_params', dt=1 / ref_conf['fr'], duration=duration)
-        env_params = ref_conf.env_params
-        exp_conf = reg.get_null('Exp', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
+            duration = c.duration / 60
+        exp_conf = reg.get_null('Exp', sim_params=reg.get_null('sim_params', dt=1 / c.fr, duration=duration),
+                                env_params=c.env_params, larva_groups=larva_groups,
                                 trials={}, enrichment=reg.par.base_enrich())
         exp_conf['experiment'] = exp
         exp_conf.update(**kwargs)
