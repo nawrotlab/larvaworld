@@ -198,8 +198,9 @@ def store_spatial(s, e, c, d=None):
         e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
     if d is not None :
-        s[aux.existing_cols([dst, cdst, sdst, csdst],s)].to_hdf(d.data_path, 'pathlength')
-        s[['x', 'y']].to_hdf(d.data_path, 'traj.default')
+        d.store(s[aux.existing_cols([dst, cdst, sdst, csdst],s)], 'pathlength')
+        d.store(s[['x', 'y']], 'traj.default')
+
 
 
 @reg.funcs.proc("spatial")
@@ -553,7 +554,7 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
             ss[y] = ss[y].values-ys
 
         if d is not None :
-            ss.to_hdf(d.data_path, f'traj.{mode}')
+            d.store(ss, f'traj.{mode}')
             reg.vprint(f'traj_aligned2{mode} stored')
         return ss
 

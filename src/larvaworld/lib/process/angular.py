@@ -74,7 +74,7 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
         else :
             pars = [ho]
 
-    pars = [p for p in aux.unique_list(pars) if p in s.columns]
+    pars = aux.existing_cols(aux.unique_list(pars),s)
 
     for p in pars:
         pvel = aux.nam.vel(p)

@@ -286,14 +286,13 @@ def bout_distribution(s, e, c, d, **kwargs) :
     d.pooled_epochs = util.fit_epochs(d.grouped_epochs)
     c.bout_distros = util.get_bout_distros(d.pooled_epochs)
     register_bout_distros(c, e)
-    pd.DataFrame(d.pooled_epochs).to_hdf(d.data_path, 'pooled_epochs')
+    d.store(d.pooled_epochs, 'pooled_epochs')
     reg.vprint(f'Completed bout distribution analysis.',1)
 
-# @decorators.timeit
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, **kwargs):
     d.chunk_dicts = comp_chunk_dicts(s, e, c, **kwargs)
-    pd.DataFrame(d.chunk_dicts).to_hdf(d.data_path, 'chunk_dicts')
+    d.store(d.chunk_dicts, 'chunk_dicts')
     reg.vprint(f'Completed bout detection.',1)
 
 
@@ -341,7 +340,7 @@ def cycle_curve_dict_multi(s, dt, shs=['sv', 'fov', 'rov', 'foa', 'b']):
 @reg.funcs.annotation("interference")
 def compute_interference_data(s, e, c, d, Nbins=64, **kwargs) :
     d.cycle_curves = compute_interference(s=s, e=e, c=c, chunk_dicts=d.chunk_dicts, Nbins=Nbins)
-    pd.DataFrame(d.cycle_curves).to_hdf(d.data_path, 'cycle_curves')
+    d.store(d.cycle_curves, 'cycle_curves')
 
 @reg.funcs.annotation("interference2")
 def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
@@ -406,7 +405,7 @@ def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
     except:
         pass
     if d is not None :
-        pd.DataFrame(pooled_curves).to_hdf(d.data_path, 'pooled_cycle_curves')
+        d.store(pooled_curves, 'pooled_cycle_curves')
     return cycle_curves
 
 @reg.funcs.annotation("turn_mode")

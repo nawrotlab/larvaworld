@@ -59,23 +59,22 @@ def comp_stride_variation(s, e, c):
 
 
 
-    if any([vv not in s.columns for vv in vels + [cvel]]):
+    if not aux.cols_exist(vels + [cvel],s):
         from larvaworld.lib.process.spatial import comp_spatial
         comp_centroid(s, c, recompute=False)
         comp_spatial(s, e, c, mode='full')
 
-    if any([vv not in s.columns for vv in lvels]):
+    if not aux.cols_exist(lvels,s):
         from larvaworld.lib.process.spatial import comp_linear
         from larvaworld.lib.process.angular import comp_orientations
         comp_orientations(s, e, c, mode='full')
         comp_linear(s, e, c, mode='full')
 
-    if any([vv not in s.columns for vv in all_vels]):
+    if not aux.cols_exist(all_vels,s):
         from larvaworld.lib.process.spatial import scale_to_length
         scale_to_length(s, e, c, pars=all_vels0)
 
     svels = aux.existing_cols(all_vels,s)
-    # svels = [p for p in all_vels if p in s.columns]
 
     shorts = ['fsv', 'str_N', 'str_tr', 'str_t_mu', 'str_t_std', 'str_sd_mu', 'str_sd_std', 'str_t_var', 'str_sd_var']
 

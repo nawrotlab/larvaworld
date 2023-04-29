@@ -95,20 +95,25 @@ class LarvaDataset:
         for h5_k,ps in self.h5_kdic.items():
             pps = aux.unique_list(aux.existing_cols(ps,s))
             if len(pps) > 0:
-                s[pps].to_hdf(self.data_path, h5_k)
+                self.store(s[pps], h5_k)
                 stored_ps += pps
 
-        s.drop(stored_ps, axis=1, errors='ignore').to_hdf(self.data_path, 'step')
+        self.store(s.drop(stored_ps, axis=1, errors='ignore'), 'step')
 
     def save(self, refID=None):
         if hasattr(self, 'step_data'):
             self._save_step(s=self.step_data)
         if hasattr(self, 'endpoint_data'):
-            self.endpoint_data.to_hdf(self.data_path, 'end')
+            self.store(self.endpoint_data, 'end')
         self.save_config(refID=refID)
         reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
 
-
+    def store(self, df, key, file='data'):
+        path=f'{self.data_dir}/{file}.h5'
+        if not isinstance(df, pd.DataFrame):
+            pd.DataFrame(df).to_hdf(path, key)
+        else :
+            df.to_hdf(path, key)
 
 
     def read(self, key, file='data'):
@@ -145,7 +150,7 @@ class LarvaDataset:
                 df=ss[['x', 'y']]
             else :
                 raise ValueError('Not implemented')
-            df.to_hdf(self.data_path, key)
+            self.store(df,key)
         return df
 
 
