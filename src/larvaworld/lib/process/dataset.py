@@ -200,8 +200,7 @@ class LarvaDataset:
         return self
 
 
-    def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},
-               **kwargs):
+    def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},**kwargs):
         proc_keys=[k for k, v in processing.items() if v]
         anot_keys=[k for k, v in annotation.items() if v]
         if metric_definition is not None :

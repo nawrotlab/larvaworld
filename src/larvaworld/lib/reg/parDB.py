@@ -1884,7 +1884,7 @@ class ParamClass:
         for k, p, d, disp in zip(ks, ps, ds, disps):
             self.add(**{'p': p, 'k': k, 'd': d, 'disp': disp})
 
-    # @decorators.timeit
+
     def finalize_dict(self, entries):
         dic = aux.AttrDict()
         for prepar in entries:
@@ -1892,7 +1892,7 @@ class ParamClass:
             dic[p.k] = p
         return dic
 
-# @decorators.timeit
+
 class ParamRegistry:
     def __init__(self):
         self.PI = buildInitDict()
