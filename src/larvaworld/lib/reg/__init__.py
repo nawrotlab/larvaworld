@@ -25,7 +25,7 @@ GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
 os.makedirs(CONF_DIR, exist_ok=True)
 
-from .data_structure import datapath, datafunc
+from .data_structure import datapath
 vprint("Initializing output registry", 0)
 
 

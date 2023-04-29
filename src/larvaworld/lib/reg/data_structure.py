@@ -1,7 +1,6 @@
-from larvaworld.lib import aux, decorators
+from larvaworld.lib import aux
 
 
-# @decorators.timeit
 def build_datapath_structure():
     kd = aux.AttrDict()
     kd.solo_dicts = ['bouts', 'foraging', 'deb', 'nengo']
@@ -28,8 +27,7 @@ def build_datapath_structure():
     kd.dic = dics1 + dics2 + confs
 
     datapath_dict = build_datapath_dict(kd)
-    datafunc_dict = build_datafunc_dict(kd)
-    return datapath_dict, datafunc_dict
+    return datapath_dict
 
 
 
@@ -46,24 +44,7 @@ def build_datapath_dict(kd):
         d[k] = f'{d.data}/{k}.txt'
     return d
 
-
-def build_datafunc_dict(kd):
-
-    func_dic0 = {'h5':
-                     {'load': aux.read, 'save': aux.storeH5},
-                 'dic': {'load': aux.load_dict, 'save': aux.save_dict},
-
-                 'solo_dicts': {'load': aux.loadSoloDics, 'save': aux.storeSoloDics}
-                 }
-    dic = {}
-    for k, funcs in func_dic0.items():
-        ddic = {kk: funcs for kk in kd[k]}
-        dic.update(ddic)
-
-    return aux.AttrDict(dic)
-
-
-DATAPATH_DIC, DATAFUNC_DIC = build_datapath_structure()
+DATAPATH_DIC = build_datapath_structure()
 
 
 def datapath(filepath_key, dir=None):
@@ -73,8 +54,3 @@ def datapath(filepath_key, dir=None):
         return None
 
 
-def datafunc(filepath_key, mode='load'):
-    if filepath_key in DATAFUNC_DIC.keys():
-        return DATAFUNC_DIC[filepath_key][mode]
-    else:
-        return None
