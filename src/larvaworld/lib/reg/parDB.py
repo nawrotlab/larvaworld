@@ -1864,10 +1864,10 @@ class ParamClass:
         self.add(**{'p': 'brain.locomotor.intermitter.cur_state', 'k': 'beh',
                     'd': 'behavioral_state', 'vs': ['exec','pause', 'feed'],
                     'disp': 'behavioral_state', 'sym': 'beh'})
-        self.add(**{'p': 'brain.locomotor.intermitter.feed_success_counter', 'k': 'fee_N_success',
+        self.add(**{'p': 'brain.locomotor.intermitter.Nfeeds_success', 'k': 'fee_N_success',
                     'd': 'successful_feeds', 'dtype': int,
                     'disp': '# successful feeds', 'sym': 'fee_N_success'})
-        self.add(**{'p': 'brain.locomotor.intermitter.feed_fail_counter', 'k': 'fee_N_fail',
+        self.add(**{'p': 'brain.locomotor.intermitter.Nfeeds_fail', 'k': 'fee_N_fail',
                     'd': 'failed_feeds', 'dtype': int,
                     'disp': '# failed feeds', 'sym': 'fee_N_fail'})
 

@@ -76,7 +76,10 @@ class DefaultLocomotor(Locomotor):
                     mode = m.mode
                 kws = {kw: getattr(self, kw) for kw in D[k].kwargs.keys()}
                 func = D[k].mode[mode].class_func
-                M = func(**m, **kws)
+                # if 'mode' in m.keys():
+                #     m.pop('mode', None)
+                mm={k:m[k] for k in m.keys() if k!='mode'}
+                M = func(**mm, **kws)
                 # if k == 'intermitter':
                 #     M.run_initiation(self)
                 # if k == 'crawler':

@@ -8,6 +8,7 @@ class Timer(param.Parameterized) :
         super().__init__(**kwargs)
         self.ticks = 0
         self.total_ticks = 0
+        # self.mode = mode
 
         self.active = True
         # self.ticks = 0
@@ -50,6 +51,7 @@ class Effector(Timer):
         super().__init__(**kwargs)
         self.input = 0
         self.output = 0
+
 
 
     def update_output(self, output):

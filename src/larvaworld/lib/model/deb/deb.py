@@ -701,7 +701,7 @@ def deb_sim(refID, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fals
     feed_dict = []
     while (deb.stage != 'pupa' and deb.alive):
         inter.step()
-        if inter.feed_counter > cum_feeds:
+        if inter.Nfeeds > cum_feeds:
             feeds += 1
             cum_feeds += 1
         if int(inter.total_t/inter.dt) % Nticks == 0:
@@ -724,7 +724,7 @@ def deb_sim(refID, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fals
         'EEB': np.round(EEB, 2),
         **{f'{q} ratio': np.round(d_inter[nam.dur_ratio(p)], 2) for p, q in
            zip(['stridechain', 'pause', 'feedchain'], ['crawl', 'pause', 'feed'])},
-        f"{nam.freq('feed')}_exp": np.round(inter.get_mean_feed_freq(), 2),
+        f"{nam.freq('feed')}_exp": np.round(inter.mean_feed_freq, 2),
         f"{nam.freq('feed')}_est": np.round(deb.fr_feed, 2)
     }
     d_sim.update(mini_dic)
