@@ -629,13 +629,15 @@ class ModelRegistry:
         return self.dict.model.keys
 
     def get_mdict(self, mkey, mode='default'):
-        if mkey is None or mkey not in self.dict.model.keys:
+
+        if mkey is None or mkey not in self.mkeys:
             raise ValueError('Module key must be one of larva-model configuration keys')
         else:
-            if mkey in self.dict.brain.keys + ['energetics']:
-                return self.dict.model.m[mkey].mode[mode].args
-            elif mkey in self.dict.aux.keys:
-                return self.dict.model.m[mkey].args
+            D = self.dict
+            if mkey in D.brain.keys + ['energetics']:
+                return D.model.m[mkey].mode[mode].args
+            elif mkey in D.aux.keys:
+                return D.model.m[mkey].args
 
     def generate_configuration(self, mdict, **kwargs):
         conf = aux.AttrDict()
@@ -668,6 +670,7 @@ class ModelRegistry:
 
 
     def mIDtable_data(self, m, columns):
+        D = self.dict
         def gen_rows2(var_mdict, parent, columns, data):
             for k, p in var_mdict.items():
                 if isinstance(p, param.Parameterized):
@@ -678,9 +681,9 @@ class ModelRegistry:
 
         mF = m.flatten()
         data = []
-        for mkey in self.dict.brain.keys:
+        for mkey in D.brain.keys:
             if m.brain.modules[mkey]:
-                d0 = self.dict.model.init[mkey]
+                d0 = D.model.init[mkey]
                 if f'{d0.pref}mode' in mF.keys():
                     mod_v = mF[f'{d0.pref}mode']
                 else:
@@ -704,22 +707,22 @@ class ModelRegistry:
                     var_mdict = self.variable_mdict(mkey, mode=mod_v)
                     var_mdict = self.update_mdict(var_mdict, m.brain[f'{mkey}_params'])
                     gen_rows2(var_mdict, mkey, columns, data)
-        for aux_key in self.dict.aux.keys:
+        for aux_key in D.aux.keys:
             if aux_key not in ['energetics', 'sensorimotor']:
-                var_ks = self.dict.aux.init[aux_key].variable
-                var_mdict = aux.AttrDict({k: self.dict.aux.m[aux_key].args[k] for k in var_ks})
+                var_ks = D.aux.init[aux_key].variable
+                var_mdict = aux.AttrDict({k: D.aux.m[aux_key].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m[aux_key])
                 gen_rows2(var_mdict, aux_key, columns, data)
         if m['energetics']:
-            for mod, dic in self.dict.aux.init['energetics'].mode.items():
+            for mod, dic in D.aux.init['energetics'].mode.items():
                 var_ks = dic.variable
-                var_mdict = aux.AttrDict({k: self.dict.aux.m['energetics'].mode[mod].args[k] for k in var_ks})
+                var_mdict = aux.AttrDict({k: D.aux.m['energetics'].mode[mod].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m['energetics'].mod)
                 gen_rows2(var_mdict, f'energetics.{mod}', columns, data)
         if 'sensorimotor' in m.keys():
-            for mod, dic in self.dict.aux.init['sensorimotor'].mode.items():
+            for mod, dic in D.aux.init['sensorimotor'].mode.items():
                 var_ks = dic.variable
-                var_mdict = aux.AttrDict({k: self.dict.aux.m['sensorimotor'].mode[mod].args[k] for k in var_ks})
+                var_mdict = aux.AttrDict({k: D.aux.m['sensorimotor'].mode[mod].args[k] for k in var_ks})
                 var_mdict = self.update_mdict(var_mdict, m['sensorimotor'])
                 gen_rows2(var_mdict, 'sensorimotor', columns, data)
         df = pd.DataFrame(data, columns=['field'] + columns)
@@ -955,7 +958,6 @@ class ModelRegistry:
                 if isinstance(p, param.Parameterized):
                     full_dic[kk] = p
                 else:
-                    # print(kk)
                     register(p, kk, full_dic)
 
         full_dic = aux.AttrDict()
