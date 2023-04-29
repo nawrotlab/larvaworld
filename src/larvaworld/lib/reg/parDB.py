@@ -1854,20 +1854,16 @@ class ParamClass:
             self.add(**{'p': f'brain.locomotor.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output', 'sym': sub('A', ii)})
             self.add(**{'p': f'brain.locomotor.{jj}.input', 'k': f'I_{ii}', 'd': f'{jj} input', 'sym': sub('I', ii)})
 
-        self.add(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
-                    'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'lim': (0.0, 1.0)})
-
-        self.add(**{'p': 'brain.locomotor.intermitter.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance', 'lim': (0.0, 1.0),
-                    'disp': 'exploitVSexplore_balance', 'sym': 'EEB'})
-        self.add(**{'p': 'brain.locomotor.intermitter.feeder_reoccurence_rate', 'k': 'fee_reocc', 'd': 'feeder_reoccurence_rate', 'lim': (0.0, 1.0),
-                    'disp': 'feeder_reoccurence_rate', 'sym': 'fee_reocc'})
-        self.add(**{'p': 'brain.locomotor.intermitter.cur_state', 'k': 'beh',
-                    'd': 'behavioral_state', 'vs': ['exec','pause', 'feed'],
-                    'disp': 'behavioral_state', 'sym': 'beh'})
-        self.add(**{'p': 'brain.locomotor.intermitter.Nfeeds_success', 'k': 'fee_N_success',
+        # self.add(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
+        #             'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'lim': (0.0, 1.0)})
+        Im='brain.locomotor.intermitter'
+        self.add(**{'p': f'{Im}.EEB', 'k': 'EEB', 'd': 'exploitVSexplore_balance', 'lim': (0.0, 1.0),'sym': 'EEB'})
+        self.add(**{'p': f'{Im}.feeder_reoccurence_rate', 'k': 'fee_reocc', 'd': 'feeder_reoccurence_rate', 'lim': (0.0, 1.0),'sym': 'fee_reocc'})
+        self.add(**{'p': f'{Im}.cur_state', 'k': 'beh','d': 'behavioral_state', 'vs': ['exec','pause', 'feed'],'sym': 'beh'})
+        self.add(**{'p': f'{Im}.Nfeeds_success', 'k': 'fee_N_success',
                     'd': 'successful_feeds', 'dtype': int,
                     'disp': '# successful feeds', 'sym': 'fee_N_success'})
-        self.add(**{'p': 'brain.locomotor.intermitter.Nfeeds_fail', 'k': 'fee_N_fail',
+        self.add(**{'p': f'{Im}.Nfeeds_fail', 'k': 'fee_N_fail',
                     'd': 'failed_feeds', 'dtype': int,
                     'disp': '# failed feeds', 'sym': 'fee_N_fail'})
 
@@ -1892,10 +1888,7 @@ class ParamClass:
                         'disp': f'{jj} sensor perception', 'sym': sub(Delta('Temp'), ii)})
 
         for ii, jj in zip(['olf', 'tou', 'wind', 'therm'], ['olfactor', 'toucher', 'windsensor', 'thermosensor']):
-            self.add(
-                **{'p': f'brain.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output',
-                   'disp': f'{jj} output', 'lim': (0.0, 1.0),
-                   'sym': sub('A', ii)})
+            self.add(**{'p': f'brain.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output', 'lim': (0.0, 1.0),'sym': sub('A', ii)})
 
         self.add_rate(k_num='Ltur_N', k_den='tur_N', k='tur_H', p='handedness_score',
                       disp=f'handedness score ({sub("N", "Lturns")} / {sub("N", "turns")})',
