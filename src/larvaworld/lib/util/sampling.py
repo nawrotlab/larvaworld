@@ -310,7 +310,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         p0=(0.0,0.0)
     x0,y0=p0
     if df_columns is None:
-        df_columns = reg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T', 'c_CT'])
+        df_columns = reg.getPar(['b', 'fo', 'ro', 'fov', 'I_T', 'x', 'y', 'd', 'v', 'A_T'])
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
     controller = BaseController(**m.physics)
@@ -325,7 +325,6 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         lin, ang, feed = DL.step(A_in=0, length=l)
         v = lin * controller.lin_vel_coef
         fov += (-controller.ang_damping * fov - controller.body_spring_k * b + ang * controller.torque_coef) * dt
-        fov *= DL.cur_ang_suppression
 
         d_or = fov * dt
         if np.abs(d_or) > np.pi:
@@ -338,7 +337,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         x += dst * np.cos(fo)
         y += dst * np.sin(fo)
 
-        AA[i, :] = [b, fo, ro, fov, DL.turner.input, x, y, dst, v, DL.turner.output, DL.cur_ang_suppression]
+        AA[i, :] = [b, fo, ro, fov, DL.turner.input, x, y, dst, v, DL.turner.output]
 
     AA[:, :4] = np.rad2deg(AA[:, :4])
     return AA

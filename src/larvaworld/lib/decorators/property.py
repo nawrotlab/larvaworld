@@ -34,7 +34,6 @@ def dic_saver(self, attr, value):
     if isinstance(value, dict):
         setattr(self, attr, value)
         path = self.datapath(attr)
-        # path=getattr(self,'path_dict')[attr]
         dNl.save_dict(value, path)
 
 
