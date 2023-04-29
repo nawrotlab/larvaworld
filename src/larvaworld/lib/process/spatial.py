@@ -255,62 +255,62 @@ def get_disp_df(dsp, s0, Nt):
     dsp_ar[:, 2] = dsp.groupby(level='Step').quantile(q=0.25).values[s0:s0 + Nt]
     return pd.DataFrame(dsp_ar, index=trange, columns=['median', 'upper', 'lower'])
 
-def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
-    '''
-    Trajectory tortuosity metrics
-    In the simplest case a single value is computed as T=1-D/L where D is the dispersal and L the actual pathlength.
-    This metric has been used in :
-    [1] J. Loveless and B. Webb, “A Neuromechanical Model of Larval Chemotaxis,” Integr. Comp. Biol., vol. 58, no. 5, pp. 906–914, 2018.
-    Additionally tortuosity can be computed over a given time interval in which case the result is a vector called straightness index in [2].
-    The mean and std are then computed.
-
-    TODO Check also for binomial distribution over the straightness index vector. If there is a switch between global exploration and local search there should be evidence over a certain time interval.
-    Data from here is relevant :
-    [2] D. W. Sims, N. E. Humphries, N. Hu, V. Medan, and J. Berni, “Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion,” Elife, vol. 8, pp. 1–31, 2019.
-    '''
-    if tor_durs is None:
-        return
-    try:
-        dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
-        e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
-    except:
-        pass
-    durs = [int(1 / dt * d) for d in tor_durs]
-    Ndurs = len(durs)
-    if Ndurs > 0:
-        ids = s.index.unique('AgentID').values
-        Nids = len(ids)
-        ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
-        ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
-        for j, r in enumerate(durs):
-            par = f'tortuosity_{tor_durs[j]}'
-            par_m, par_s = nam.mean(par), nam.std(par)
-            T_m = np.ones(Nids) * np.nan
-            T_s = np.ones(Nids) * np.nan
-            for z, id in enumerate(ids):
-                si = ds[z]
-                u = len(si) % r
-                if u > 1:
-                    si0 = si[:-u + 1]
-                else:
-                    si0 = si[:-r + 1]
-                k = int(len(si0) / r)
-                T = []
-                for i in range(k):
-                    t = si0[i * r:i * r + r + 1, :]
-                    if np.isnan(t).any():
-                        continue
-                    else:
-                        t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))
-                        t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))
-                        t_T = 1 - t_L / t_D
-                        T.append(t_T)
-                T_m[z] = np.mean(T)
-                T_s[z] = np.std(T)
-            e[par_m] = T_m
-            e[par_s] = T_s
-
-    reg.vprint('Tortuosities computed')
+# def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):
+#     '''
+#     Trajectory tortuosity metrics
+#     In the simplest case a single value is computed as T=1-D/L where D is the dispersal and L the actual pathlength.
+#     This metric has been used in :
+#     [1] J. Loveless and B. Webb, “A Neuromechanical Model of Larval Chemotaxis,” Integr. Comp. Biol., vol. 58, no. 5, pp. 906–914, 2018.
+#     Additionally tortuosity can be computed over a given time interval in which case the result is a vector called straightness index in [2].
+#     The mean and std are then computed.
+#
+#     TODO Check also for binomial distribution over the straightness index vector. If there is a switch between global exploration and local search there should be evidence over a certain time interval.
+#     Data from here is relevant :
+#     [2] D. W. Sims, N. E. Humphries, N. Hu, V. Medan, and J. Berni, “Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion,” Elife, vol. 8, pp. 1–31, 2019.
+#     '''
+#     if tor_durs is None:
+#         return
+#     try:
+#         dsp_par = nam.final('dispersion') if nam.final('dispersion') in e.columns else 'dispersion'
+#         e['tortuosity'] = 1 - e[dsp_par] / e[nam.cum(nam.dst(''))]
+#     except:
+#         pass
+#     durs = [int(1 / dt * d) for d in tor_durs]
+#     Ndurs = len(durs)
+#     if Ndurs > 0:
+#         ids = s.index.unique('AgentID').values
+#         Nids = len(ids)
+#         ds = [s[['x', 'y']].xs(id, level='AgentID') for id in ids]
+#         ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]
+#         for j, r in enumerate(durs):
+#             par = f'tortuosity_{tor_durs[j]}'
+#             par_m, par_s = nam.mean(par), nam.std(par)
+#             T_m = np.ones(Nids) * np.nan
+#             T_s = np.ones(Nids) * np.nan
+#             for z, id in enumerate(ids):
+#                 si = ds[z]
+#                 u = len(si) % r
+#                 if u > 1:
+#                     si0 = si[:-u + 1]
+#                 else:
+#                     si0 = si[:-r + 1]
+#                 k = int(len(si0) / r)
+#                 T = []
+#                 for i in range(k):
+#                     t = si0[i * r:i * r + r + 1, :]
+#                     if np.isnan(t).any():
+#                         continue
+#                     else:
+#                         t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))
+#                         t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))
+#                         t_T = 1 - t_L / t_D
+#                         T.append(t_T)
+#                 T_m[z] = np.mean(T)
+#                 T_s[z] = np.std(T)
+#             e[par_m] = T_m
+#             e[par_s] = T_s
+#
+#     reg.vprint('Tortuosities computed')
 
 
 def rolling_window(a, w):
@@ -399,7 +399,7 @@ def straightness_index2(ss, w, match_shape=True):
 
 
 @reg.funcs.proc("tortuosity")
-def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 10, 20], **kwargs):
+def comp_straightness_index(s=None, e=None, c=None,d=None, dt=None, tor_durs=[1, 2, 5, 10, 20], **kwargs):
     if dt is None:
         dt = c.dt
 
@@ -531,7 +531,6 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
         if track_point is None:
             track_point = c.point
         XY = nam.xy(track_point) if aux.cols_exist(nam.xy(track_point),s) else ['x', 'y']
-        # XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
         if not aux.cols_exist(XY,s):
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
         ids = s.index.unique(level='AgentID').values
@@ -604,9 +603,9 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
         bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(Nids)])
 
         for id, angle in zip(ids, bg_a):
-            d = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
+            dd = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
             s.loc[(slice(None), id), pars] = [
-                aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(d[i].tolist(), 2)),
+                aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(dd[i].tolist(), 2)),
                                                                         radians=a)) for i, a in enumerate(angle)]
     else:
         bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(Nids)])
@@ -722,6 +721,5 @@ def scale_to_length(s, e, c=None, pars=None, keys=None):
         ls = l.loc[ids].values
         s[nam.scal(s_pars)] = (s[s_pars].values.T / ls).T
     e_pars = aux.existing_cols(pars,e)
-    # e_pars = [p for p in pars if p in e.columns]
     if len(e_pars) > 0:
         e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T

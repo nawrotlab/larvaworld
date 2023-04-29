@@ -9,7 +9,7 @@ from larvaworld.lib import reg, aux
 
 
 @reg.funcs.preproc("filter_f")
-def filter(s, c, filter_f=2, recompute=False, **kwargs):
+def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
     if filter_f in ['', None, np.nan]:
         return
     if 'filtered_at' in c and not recompute:
@@ -72,14 +72,13 @@ def exclude_rows(s, e, c, flag='collision_flag',  accepted=[0], rejected=None, *
 def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
     N = len(s.index.unique('Step'))
     if sp_vel is None:
-        sp_vel = 'scaled_velocity'
+        sp_vel = reg.getPar('sv')
     if ang_vel is None:
-        ang_vel = 'front_orientation_velocity'
-    pars = [sp_vel, ang_vel]
-    edge_colors = [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]]
-    labels = ['lin_color', 'ang_color']
-    lims = [0.8, 300]
-    for p, c, l, lim in zip(pars, edge_colors, labels, lims):
+        ang_vel = reg.getPar('fov')
+    for p, c, l, lim in zip([sp_vel, ang_vel],
+                            [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]],
+                            ['lin_color', 'ang_color'],
+                            [0.8, 300]):
         if p in s.columns:
             (r1, b1, g1), (r2, b2, g2) = c
             r, b, g = r2 - r1, b2 - b1, g2 - g1
@@ -87,7 +86,6 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
             s[l] = [(r1 + r * t, b1 + b * t, g1 + g * t) for t in temp]
         else:
             s[l] = [(np.nan, np.nan, np.nan)] * N
-    # return s
 
 @reg.funcs.proc("PI")
 def comp_dataPI(s,e,c, **kwargs):

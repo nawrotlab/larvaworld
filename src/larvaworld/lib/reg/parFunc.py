@@ -43,7 +43,7 @@ def dsp_func(range):
     def func(d):
         from larvaworld.lib.process.spatial import comp_dispersion
         s, e, c = d.data
-        comp_dispersion(s, e, c,d=d, recompute=True, dsp_starts=[r0], dsp_stops=[r1], store=False)
+        comp_dispersion(s, e, c,d=d, recompute=True, dsp_starts=[r0], dsp_stops=[r1])
 
     return func
 
@@ -52,7 +52,7 @@ def tor_func(dur):
     def func(d):
         from larvaworld.lib.process.spatial import comp_straightness_index
         s, e, c = d.data
-        comp_straightness_index(s, e=e, c=c, dt=c.dt, tor_durs=[dur], store=False)
+        comp_straightness_index(s, e=e, c=c,d=d, dt=c.dt, tor_durs=[dur])
 
     return func
 
