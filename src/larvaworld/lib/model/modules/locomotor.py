@@ -4,32 +4,23 @@ class Locomotor:
     def __init__(self, dt=0.1):
         self.crawler, self.turner, self.feeder, self.intermitter, self.interference = [None] * 5
         self.dt = dt
-        self.cur_state = 'exec'
-        self.cur_run_dur = 0
-        self.cur_pause_dur = None
+        # self.cur_state = 'exec'
+        # self.cur_run_dur = 0
+        # self.cur_pause_dur = None
 
 
-        self.ang_activity = 0.0
-        self.lin_activity = 0.0
-        self.feed_motion = False
+        # self.ang_activity = 0.0
+        # self.lin_activity = 0.0
+        # self.feed_motion = False
 
-    def update(self):
-        if self.cur_state == 'exec':
-            self.cur_run_dur += self.dt
-        elif self.cur_state == 'pause':
-            self.cur_pause_dur += self.dt
+    # def update(self):
+    #     if self.cur_state == 'exec':
+    #         self.cur_run_dur += self.dt
+    #     elif self.cur_state == 'pause':
+    #         self.cur_pause_dur += self.dt
 
 
 
-    # @property
-    # def active_effectors(self):
-    #     c, f = self.crawler, self.feeder
-    #     c_on = True if c is not None and c.active else False
-    #     f_on = True if f is not None and f.active else False
-    #     return c_on, f_on
-
-    def output(self, length=None):
-        return self.lin_activity, self.ang_activity, self.feed_motion
 
     def on_new_pause(self):
         if self.crawler:
@@ -76,14 +67,8 @@ class DefaultLocomotor(Locomotor):
                     mode = m.mode
                 kws = {kw: getattr(self, kw) for kw in D[k].kwargs.keys()}
                 func = D[k].mode[mode].class_func
-                # if 'mode' in m.keys():
-                #     m.pop('mode', None)
                 mm={k:m[k] for k in m.keys() if k!='mode'}
                 M = func(**mm, **kws)
-                # if k == 'intermitter':
-                #     M.run_initiation(self)
-                # if k == 'crawler':
-                #     M.mode = m.mode
             else:
                 M = None
             setattr(self, k, M)
@@ -91,26 +76,25 @@ class DefaultLocomotor(Locomotor):
 
 
     def step(self, A_in=0, length=1, on_food=False):
+        C,F,T,If=self.crawler,self.feeder,self.turner,self.interference
 
-        if self.feeder :
-            self.feed_motion = self.feeder.step()
-        else  :
-            self.feed_motion = False
-        if self.crawler :
-            self.lin_activity = self.crawler.step() * length
-            stride_completed=self.crawler.complete_iteration
+
+        feed_motion = F.step() if F else False
+        if C :
+            lin = C.step() * length
+            stride_completed=C.complete_iteration
         else:
-            self.lin_activity =  0
+            lin =  0
             stride_completed = False
-        self.step_intermitter(stride_completed=stride_completed,feed_motion=self.feed_motion, on_food=on_food)
+        self.step_intermitter(stride_completed=stride_completed,feed_motion=feed_motion, on_food=on_food)
 
-        if self.turner :
-            if self.interference:
-                cur_att_in, cur_att_out = self.interference.step(crawler=self.crawler, feeder=self.feeder)
+        if T :
+            if If:
+                cur_att_in, cur_att_out = If.step(crawler=C, feeder=F)
             else:
                 cur_att_in, cur_att_out = 1, 1
-            self.ang_activity = self.turner.step(A_in=A_in * cur_att_in) * cur_att_out
+            ang = T.step(A_in=A_in * cur_att_in) * cur_att_out
         else:
-            self.ang_activity = 0
+            ang = 0
 
-        return self.lin_activity, self.ang_activity, self.feed_motion
+        return lin, ang, feed_motion

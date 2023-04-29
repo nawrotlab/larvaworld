@@ -108,9 +108,9 @@ def grouped_exp_dic():
         'dish': {
             'l' : reg.lg(mID='loco_default', N=25, s=0.02)},
         'dispersion': {'env': 'arena_200mm',
-                       'l' : reg.lg(mID='explorer', N=25)},
+                       'l' : reg.lg(mID='loco_default', N=25)},
         'dispersion_x4':{'env': 'arena_200mm', 'dur':3.0,
-                         'l' : reg.lgs(mIDs=['explorer', 'Levy', 'nengo_explorer'],ids=['CoupledOsc', 'Levy', 'nengo'], N=5)}
+                         'l' : reg.lgs(mIDs=['loco_default', 'Levy', 'nengo_explorer'],ids=['CoupledOsc', 'Levy', 'nengo'], N=5)}
     }
     d00={id:simple_exp(id=id, **kws) for id, kws in d0.items()}
 

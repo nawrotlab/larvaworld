@@ -286,13 +286,13 @@ class NengoBrain(Network, Brain):
 
         ang = np.mean(d[self.p_angV][-N:], axis=0)[0] * (1 + np.random.normal(scale=L.turner.output_noise))
         lin = np.mean(d[self.p_linV][-N:], axis=0)[0] * (1 + np.random.normal(scale=L.crawler.output_noise))*length
-        L.feed_motion = np.any(d[self.p_feeV][-N:] >= 1) if L.feeder else False
-        L.step(on_food=on_food)
+        feed_motion = np.any(d[self.p_feeV][-N:] >= 1) if L.feeder else False
+        L.step_intermitter(stride_completed=False, feed_motion =feed_motion, on_food=on_food)
 
         if self.dict is not None :
             self.update_dict(d)
         self.sim.clear_probes()
-        return lin, ang, L.feed_motion
+        return lin, ang, feed_motion
 
     def save_dicts(self, path):
         if self.dict is not None:
@@ -357,8 +357,3 @@ class NengoLocomotor(Locomotor):
             self.intermitter = NengoIntermitter(dt=self.dt, **c['intermitter_params'])
         else:
             self.intermitter = None
-
-
-
-    def step(self,on_food=False):
-        self.step_intermitter(stride_completed=False, feed_motion=self.feed_motion, on_food=on_food)
