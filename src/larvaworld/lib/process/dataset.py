@@ -77,7 +77,7 @@ class LarvaDataset:
         for h5_k in h5_ks:
             ss = self.read(h5_k)
             if ss is not None :
-                ps = [p for p in ss.columns.values if p not in s.columns.values]
+                ps = aux.existing_cols(ss.columns.values,s)
                 if len(ps) > 0:
                     s = s.join(ss[ps])
         return s
@@ -175,7 +175,6 @@ class LarvaDataset:
     @ property
     def plot_dir(self):
         return f'{self.config.dir}/plots'
-        # return reg.datapath('plots', self.dir)
 
     @property
     def data_dir(self):

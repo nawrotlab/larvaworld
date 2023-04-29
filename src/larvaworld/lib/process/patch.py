@@ -1,8 +1,6 @@
-import pandas as pd
 import numpy as np
 
-from larvaworld.lib import reg, aux, decorators
-
+from larvaworld.lib import reg, aux
 
 def comp_chunk_bearing(s, c, chunk, **kwargs):
 
@@ -70,11 +68,10 @@ def comp_patch_metrics(s, e, **kwargs):
 
     e[f'{v_mu}_{on}'] = e[cdst_on] / e[on_cumt]
     e[f'{v_mu}_{off}'] = e[cdst_off] / e[off_cumt]
-    # e['handedness_score'] = e[aux.nam.num('Lturn')] / e[aux.nam.num('turn')]
     e[f'handedness_score_{on}'] = e[f"{aux.nam.num('Lturn')}_{on}"] / e[f"{aux.nam.num('turn')}_{on}"]
     e[f'handedness_score_{off}'] = e[f"{aux.nam.num('Lturn')}_{off}"] / e[f"{aux.nam.num('turn')}_{off}"]
 
-# @decorators.timeit
+
 @reg.funcs.annotation("source_attraction")
 def comp_bearing_to_source(s, e, c, **kwargs):
     for b in ['stride', 'pause', 'turn']:

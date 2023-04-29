@@ -124,7 +124,8 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', store=T
         or_pars = [fo, ro]
         bend_pars=['bend']
 
-    if not set(or_pars+bend_pars).issubset(s.columns.values) or recompute:
+    if not aux.cols_exist(or_pars+bend_pars,s) or recompute:
+    # if not set(or_pars+bend_pars).issubset(s.columns.values) or recompute:
         if Np == 1:
             def func(ss):
                 x, y = ss[:, 0].values, ss[:, 1].values
@@ -245,14 +246,12 @@ def comp_ang_from_xy(s, e, dt):
 def comp_extrema_multi(s, pars=None, **kwargs):
 
     if pars is None:
-        fo = aux.nam.orient('front')
-        ps1 = ['bend', fo]
+        ps1 = ['bend', aux.nam.orient('front')]
         pars = ps1 + aux.nam.vel(ps1)
 
 
-    for p in pars:
-        if p in s.columns :
-            s[[aux.nam.min(p), aux.nam.max(p)]]=comp_extrema_solo(s[p],**kwargs).reshape(-1,2)
+    for p in aux.existing_cols(pars,s):
+        s[[aux.nam.min(p), aux.nam.max(p)]]=comp_extrema_solo(s[p],**kwargs).reshape(-1,2)
 
 
 

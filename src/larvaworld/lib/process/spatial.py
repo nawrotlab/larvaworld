@@ -105,7 +105,8 @@ def comp_spatial(s, e, c, mode='minimal'):
         points = [c.point]
     points += ['']
     points = np.unique(points).tolist()
-    points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
+    points = [p for p in points if aux.cols_exist(nam.xy(p),s)]
+    # points = [p for p in points if set(nam.xy(p)).issubset(s.columns.values)]
 
     xy_params = aux.raw_or_filtered_xy(s, points)
     xy_params = aux.group_list_by_n(xy_params, 2)
@@ -145,7 +146,7 @@ def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
         N = c.Npoints
     points = nam.midline(N, type='point')
     xy_pars = nam.xy(points, flat=True)
-    if not set(xy_pars).issubset(s.columns):
+    if not aux.cols_exist(xy_pars,s):
         reg.vprint(f'XY coordinates not found for the {N} midline points. Body length can not be computed.',1)
         return
     xy = s[xy_pars].values
@@ -174,11 +175,12 @@ def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
 
 @reg.funcs.proc("centroid")
 def comp_centroid(s, c, recompute=False):
-    if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
+    if aux.cols_exist(nam.xy('centroid'),s) and not recompute:
+    # if set(nam.xy('centroid')).issubset(s.columns.values) and not recompute:
         reg.vprint('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
     Nc=c.Ncontour
     con_pars = nam.xy(nam.contour(Nc), flat=True)
-    if not set(con_pars).issubset(s.columns) or Nc == 0:
+    if not aux.cols_exist(con_pars,s) or Nc == 0:
         reg.vprint(f'No contour found. Not computing centroid')
     else:
         reg.vprint(f'Computing centroid from {Nc} contourpoints')
@@ -383,7 +385,7 @@ def rolling_window_xy(xy, w):
 #         return 1 - L / D
 def straightness_index(ss, rolling_ticks):
     ps=['x', 'y', 'dst']
-    assert set(ps).issubset(ss.columns)
+    assert aux.cols_exist(ps,ss)
     sss=ss[ps].values
     temp=sss[rolling_ticks]
     Ds = np.nansum(temp[:, :, 2], axis=1)
@@ -473,7 +475,7 @@ def comp_straightness_index(s=None, e=None, c=None, dt=None, tor_durs=[1, 2, 5, 
 
     ticks=np.arange(c.Nticks)
     ps = ['x', 'y', 'dst']
-    assert set(ps).issubset(s.columns)
+    assert aux.cols_exist(ps,s)
 
     ss = s[ps]
     pars = [reg.getPar(f'tor{dur}') for dur in tor_durs]
@@ -579,7 +581,7 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
     mode=transposition
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
-    xy_pairs = [xy for xy in xy_pairs if set(xy).issubset(s.columns)]
+    xy_pairs = [xy for xy in xy_pairs if aux.cols_exist(xy,s)]
     xy_flat=np.unique(aux.flatten_list(xy_pairs))
     xy_pairs = aux.group_list_by_n(xy_flat, 2)
 
@@ -603,8 +605,9 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
     else:
         if track_point is None:
             track_point = c.point
-        XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
-        if not set(XY).issubset(s.columns):
+        XY = nam.xy(track_point) if aux.cols_exist(nam.xy(track_point),s) else ['x', 'y']
+        # XY = nam.xy(track_point) if set(nam.xy(track_point)).issubset(s.columns) else ['x', 'y']
+        if not aux.cols_exist(XY,s):
             raise ValueError('Defined point xy coordinates do not exist. Can not align trajectories! ')
         ids = s.index.unique(level='AgentID').values
         Nticks = len(s.index.unique('Step'))
@@ -653,7 +656,7 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
 
     pars = aux.existing_cols(all_xy_pars,s)
     xy_ps = nam.xy(point)
-    if not set(xy_ps).issubset(s.columns):
+    if not aux.cols_exist(xy_ps,s):
         raise ValueError(f" The requested {point} is not part of the dataset")
     reg.vprint(f'Fixing {point} to arena center')
     if arena_dims is None :
@@ -670,7 +673,7 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
 
     if fix_segment is not None:
         xy_ps2 = nam.xy(fix_segment)
-        if not set(xy_ps2).issubset(s.columns):
+        if not aux.cols_exist(xy_ps2,s):
             raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
 
         reg.vprint(f'Fixing {fix_segment} as secondary point on vertical axis')
@@ -715,7 +718,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     pars = aux.existing_cols(all_xy_pars,s)
     # pars = [p for p in all_xy_pars if p in s.columns.values]
     xy_ps = nam.xy(point)
-    if not set(xy_ps).issubset(s.columns):
+    if not aux.cols_exist(xy_ps,s):
         raise ValueError(f" The requested {point} is not part of the dataset")
     reg.vprint(f'Fixing {point} to arena center')
     if arena_dims is None:
@@ -731,7 +734,7 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
 
     if fix_segment is not None:
         xy_ps2 = nam.xy(fix_segment)
-        if not set(xy_ps2).issubset(s.columns):
+        if not aux.cols_exist(xy_ps2,s):
             raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
 
         reg.vprint(f'Fixing {fix_segment} as secondary point on vertical axis')

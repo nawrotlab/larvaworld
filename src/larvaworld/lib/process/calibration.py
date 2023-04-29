@@ -22,10 +22,8 @@ def vel_definition(d) :
     dic = {**res_v, **res_fov}
     d.vel_definition=dic
     d.save_config()
-    # d.storeH5(df=dic, filepath_key='vel_definition')
-    aux.storeH5(dic, key=None, path=f'{c.dir}/data/vel_definition.h5')
-    # aux.storeH5(dic, key=None, path=reg.datapath('vel_definition', c.dir))
-    print(f'Velocity definition dataset stored.')
+    aux.storeH5(dic, key=None, path=f'{d.data_dir}/vel_definition.h5')
+    reg.vprint(f'Velocity definition dataset stored.')
     return dic
 
 def comp_stride_variation(s, e, c):
@@ -113,7 +111,7 @@ def comp_stride_variation(s, e, c):
     dic = {'stride_data': df, 'stride_variability': str_var}
 
 
-    print('Stride variability analysis complete!')
+    reg.vprint('Stride variability analysis complete!')
     return dic
 
 def fit_metric_definition(str_var, df_corr, c) :
@@ -148,17 +146,17 @@ def comp_segmentation(s, e, c):
     avels = aux.nam.vel(angles)
     hov = aux.nam.vel(aux.nam.orient('front'))
 
-    if not set(avels).issubset(s.columns.values):
+    if not aux.cols_exist(avels,s):
         func=reg.funcs.processing['angular']
         func(s=s,e=e,c=c,  mode='full', recompute=True)
 
-    if not set(avels).issubset(s.columns.values):
+    if not aux.cols_exist(avels,s):
         raise ValueError('Spineangle angular velocities do not exist in step')
 
     ss = s.loc[s[hov].dropna().index.values]
     y = ss[hov].values
 
-    print('Computing linear regression of angular velocity based on segmental bending velocities')
+    reg.vprint('Computing linear regression of angular velocity based on segmental bending velocities')
     df_reg = []
     for i in range(N):
         p0 = avels[i]
@@ -179,7 +177,7 @@ def comp_segmentation(s, e, c):
     df_reg = pd.DataFrame(df_reg)
     df_reg.set_index('idx', inplace=True)
 
-    print('Computing correlation of angular velocity with combinations of segmental bending velocities')
+    reg.vprint('Computing correlation of angular velocity with combinations of segmental bending velocities')
     df_corr = []
     for i in range(int(N * 4 / 7)):
         for idx in itertools.combinations(np.arange(N), i + 1):
@@ -201,7 +199,7 @@ def comp_segmentation(s, e, c):
     df_corr.set_index('idx', inplace=True)
     df_corr.sort_values('corr', ascending=False, inplace=True)
     dic = {'bend2or_regression': df_reg, 'bend2or_correlation': df_corr}
-    print('Angular velocity definition analysis complete!')
+    reg.vprint('Angular velocity definition analysis complete!')
     return dic
 
 
