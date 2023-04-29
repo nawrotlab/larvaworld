@@ -87,10 +87,10 @@ class Intermitter(Timer):
         self.exp_Tpause = None
         self.cur_Nfeeds = None
 
-        self.cum_feedchain_dur = 0
-        self.cum_stridechain_dur = 0
-        self.cum_run_dur = 0
-        self.cum_pause_dur = 0
+        # self.cum_feedchain_dur = 0
+        # self.cum_stridechain_dur = 0
+        # self.cum_run_dur = 0
+        # self.cum_pause_dur = 0
 
         self.stridechain_lengths = []
         self.stridechain_durs = []
@@ -173,14 +173,12 @@ class Intermitter(Timer):
 
         if bout == 'feedchain':
             self.Nfeedchains += 1
-            self.cum_feedchain_dur += dur
             self.feedchain_lengths.append(self.cur_Nfeeds)
             self.feedchain_durs.append(dur)
             self.cur_Nfeeds = None
 
         elif bout == 'stridechain':
             self.Nstridechains += 1
-            self.cum_stridechain_dur += dur
             self.stridechain_lengths.append(self.cur_Nstrides)
             self.stridechain_durs.append(dur)
             self.exp_Nstrides = None
@@ -188,20 +186,15 @@ class Intermitter(Timer):
 
         elif bout == 'run':
             self.Nruns += 1
-            self.cum_run_dur += dur
             self.run_durs.append(dur)
             self.exp_Trun = None
 
         elif bout == 'pause':
             self.Npauses += 1
-            self.cum_pause_dur += dur
             self.pause_durs.append(dur)
             self.exp_Tpause = None
 
     def update_state(self, stride_completed=False, feed_motion=False,on_food=False):
-
-
-
         if self.feed_bouts :
             self.alternate_exploreNexploit(feed_motion, on_food)
         self.alternate_crawlNpause(stride_completed)
@@ -251,9 +244,9 @@ class Intermitter(Timer):
         for c in ['feedchain', 'stridechain', 'pause']:
             t = nam.dur(c)
             d[t] = getattr(self, f'{t}s')
-            d[nam.num(c)] = int(getattr(self, f'N{c}s'))
+            d[nam.num(c)] = len(d[t])
             cum_chunk_t = nam.cum(t)
-            d[cum_chunk_t] = getattr(self, cum_chunk_t)
+            d[cum_chunk_t] = np.sum(d[t])
             d[nam.dur_ratio(c)] = d[cum_chunk_t] / d[cum_t]
         return d
 
