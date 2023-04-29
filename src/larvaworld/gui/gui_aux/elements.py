@@ -1618,7 +1618,7 @@ class DynamicGraph:
 
     def update_pars(self):
         from matplotlib import ticker
-        self.pars, syms, us, lims, pcs = reg.getPar(d=self.pars, to_return=['d', 's', 'l', 'lim', 'p'])
+        self.pars, syms, us, lims, pcs = reg.getPar(d=self.pars, to_return=['d', 'disp', 'l', 'lim', 'p'])
         self.Npars = len(self.pars)
         self.yranges = {}
         self.fig, axs = plt.subplots(self.Npars, 1, figsize=self.figsize, dpi=self.my_dpi, sharex=True)

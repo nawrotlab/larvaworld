@@ -113,12 +113,11 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
         if len(ks) == 0:
             raise ValueError('Either parameter names or shortcuts must be provided')
         else:
-            pars, symbols, ylabs, ylims, ylabs0 = reg.getPar(ks, to_return=['d', 's', 'l', 'lim', 'lab'])
+            pars, symbols, ylabs, ylims = reg.getPar(ks, to_return=['d', 'disp', 'l', 'lim'])
 
     else:
         symbols = pars
         ylabs = pars
-        ylabs0 = pars
         ylims = [None] * len(pars)
     N = len(pars)
     cols = ['grey'] if N == 1 else aux.N_colors(N)
@@ -135,9 +134,8 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
 
     ax = P.axs[0]
     counter = 0
-    for p, symbol, ylab0, ylab, ylim, c in zip(pars, symbols, ylabs0, ylabs, ylims, cols):
-        if ylab0 is not None:
-            ylab = ylab0
+    for p, symbol, ylab, ylim, c in zip(pars, symbols, ylabs, ylims, cols):
+
         P.conf_ax(xlab=f'time, ${unit}$' if table is None else 'timesteps', ylab=ylab, ylim=ylim, yMaxN=4)
         for d, d_col, d_lab in zip(P.datasets, P.colors, P.labels):
             if P.Ndatasets > 1:

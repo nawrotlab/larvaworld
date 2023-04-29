@@ -1260,7 +1260,6 @@ def buildInitDict():
 
         d['Replay'] = {
             'env_params': ConfID_entry('Env'),
-            # 'env_params': confID_entry('Env'),
             'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'],
                               'symbol': sub('mod', 'trans'), 'k': 'trans',
                               'h': 'Whether to transpose the dataset spatial coordinates.'},

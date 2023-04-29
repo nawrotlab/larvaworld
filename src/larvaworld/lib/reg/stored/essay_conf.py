@@ -430,7 +430,6 @@ class DoublePatch_Essay(Essay):
                 'trials': {},
                 'collections': self.collections,
                 'enrichment': self.enrichment
-                # 'collections': ['pose', 'olfactor', 'feeder', 'gut', 'toucher']
 
             }
 

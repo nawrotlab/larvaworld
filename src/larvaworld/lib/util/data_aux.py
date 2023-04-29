@@ -151,9 +151,9 @@ class LarvaworldParam(param.Parameterized):
     def parameter(self):
         return self.disp
 
-    @property
-    def lab(self):
-        return self.l
+    # @property
+    # def lab(self):
+    #     return self.l
 
     @property
     def tooltip(self):

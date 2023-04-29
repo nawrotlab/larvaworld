@@ -354,7 +354,7 @@ def plot_foraging(**kwargs):
             df['Group'] = d.id
             dfs.append(df)
         df0 = pd.concat(dfs)
-        par = reg.getPar(k, to_return='lab')
+        par = reg.getPar(k, to_return='l')
         mdf = pd.melt(df0, id_vars=['Group'], var_name='foodtype', value_name=par)
         kws = {
             'x': "Group",

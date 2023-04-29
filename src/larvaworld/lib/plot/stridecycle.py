@@ -166,7 +166,7 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
 
 
         if short is not None:
-            par, ylab1 = reg.getPar(short, to_return=['d', 'lab'])
+            par, ylab1 = reg.getPar(short, to_return=['d', 'l'])
             da = np.array([np.trapz(ss[fov].values[s0:s1]) for ii, (s0, s1) in enumerate(strides)])
             aa = stride_interp(ss[par].values, strides, Nbins)
             aa_minus = aa[da < 0]
