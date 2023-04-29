@@ -26,7 +26,7 @@ os.makedirs(CONF_DIR, exist_ok=True)
 
 
 vprint("Initializing output registry")
-from .data_structure import datapath
+# from .data_structure import datapath
 from .output import output_dict,set_output, get_reporters
 from .units import units
 

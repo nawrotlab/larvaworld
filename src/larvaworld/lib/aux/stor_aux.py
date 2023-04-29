@@ -7,8 +7,8 @@ from larvaworld.lib import aux
 
 
 def store_distros(s, pars, parent_dir):
-    path = get_path(filepath_key='distro', parent_dir=parent_dir)
     # path = get_path(filepath_key='distro', parent_dir=parent_dir)
+    path = f'{parent_dir}/data/distro.h5'
     store = pd.HDFStore(path)
     for p in pars:
         if p in s.columns :
@@ -20,59 +20,59 @@ def store_distros(s, pars, parent_dir):
 
 
 
-def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_dir=None):
-    if path is not None:
-        return path
-    if filepath_key is None:
-        if key is not None:
-            filepath_key = key
-        else:
-            print('None of file or key are provided.Returning None')
-            return None
+# def get_path(path=None, key=None, filepath_key=None, filepath_dic=None, parent_dir=None):
+#     if path is not None:
+#         return path
+#     if filepath_key is None:
+#         if key is not None:
+#             filepath_key = key
+#         else:
+#             print('None of file or key are provided.Returning None')
+#             return None
+#
+#     if filepath_key == 'data_h5':
+#         filepath_key = 'step'
+#         print('Change this')
+#     if filepath_key == 'endpoint_h5':
+#         filepath_key = 'end'
+#         print('Change this')
+#
+#     if filepath_dic is not None:
+#         path = filepath_dic[filepath_key]
+#     else:
+#         if parent_dir is not None:
+#             from larvaworld.lib import reg
+#             path = reg.datapath(filepath_key, parent_dir)
+#         else:
+#             print('Filepath not provided.Returning None')
+#             return None
+#     return path
 
-    if filepath_key == 'data_h5':
-        filepath_key = 'step'
-        print('Change this')
-    if filepath_key == 'endpoint_h5':
-        filepath_key = 'end'
-        print('Change this')
 
-    if filepath_dic is not None:
-        path = filepath_dic[filepath_key]
-    else:
-        if parent_dir is not None:
-            from larvaworld.lib import reg
-            path = reg.datapath(filepath_key, parent_dir)
-        else:
-            print('Filepath not provided.Returning None')
-            return None
-    return path
-
-
-def read(path=None, key=None, mode='r',**kwargs):
-    path = get_path(path=path, key=key, **kwargs)
-    if path is None :
-        return None
-    elif not os.path.isfile(path):
-        return None
-    if key is not None:
-        try :
-            return pd.read_hdf(path, key=key, mode=mode)
-        except :
-            return None
-    else:
-        store = pd.HDFStore(path)
-        ks = list(store.keys())
-        if len(ks) == 1:
-            df = store[ks[0]]
-            store.close()
-            return df
-        else :
-            dd=aux.AttrDict()
-            for k in ks :
-                dd[k]=store[k]
-            store.close()
-            return dd
+# def read(path=None, key=None, mode='r',**kwargs):
+#     path = get_path(path=path, key=key, **kwargs)
+#     if path is None :
+#         return None
+#     elif not os.path.isfile(path):
+#         return None
+#     if key is not None:
+#         try :
+#             return pd.read_hdf(path, key=key, mode=mode)
+#         except :
+#             return None
+#     else:
+#         store = pd.HDFStore(path)
+#         ks = list(store.keys())
+#         if len(ks) == 1:
+#             df = store[ks[0]]
+#             store.close()
+#             return df
+#         else :
+#             dd=aux.AttrDict()
+#             for k in ks :
+#                 dd[k]=store[k]
+#             store.close()
+#             return dd
 
 
 
