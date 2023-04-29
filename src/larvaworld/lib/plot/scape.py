@@ -76,9 +76,8 @@ def odorscape_with_sample_tracks(datasets, unit='mm', fig=None, axs=None, show=F
         fig, axs = plt.subplots(1, 1, figsize=(20, 20))
     odorscape_from_config(datasets[0].config, mode='2D', fig=fig, axs=axs, show=False, **kwargs)
     for d in datasets:
-        s, c = d.step_data, d.config
-        xy = s[['x', 'y']].xs(c.agent_ids[0], level="AgentID").values * scale
-        axs.plot(xy[:, 0], xy[:, 1], label=c.id, color=c.color)
+        xy = d.step_data[['x', 'y']].xs(d.agent_ids[0], level="AgentID").values * scale
+        axs.plot(xy[:, 0], xy[:, 1], label=d.id, color=d.color)
     axs.legend(loc='upper left', fontsize=15)
     if show:
         plt.show()
@@ -206,27 +205,3 @@ def plot_2d(df, labels, **kwargs):
     P.conf_ax(xlab=par, ylab=res)
     return P.get()
 
-
-def plot_2pars(shorts, subfolder='step', larva_legend=True, **kwargs):
-    ypar, ylab, ylim = reg.getPar(shorts[1], to_return=['d', 'l', 'lim'])
-    xpar, xlab, xlim = reg.getPar(shorts[0], to_return=['d', 'l', 'lim'])
-    P = plot.AutoPlot(name=f'{ypar}_VS_{xpar}', subfolder=subfolder, **kwargs)
-    ax = P.axs[0]
-    if P.Ndatasets == 1 and larva_legend:
-        d = P.datasets[0]
-        Nids = len(d.agent_ids)
-        cs = aux.N_colors(Nids)
-        s = d.read('step')
-        for j, id in enumerate(d.agent_ids):
-            ss = s.xs(id, level='AgentID', drop_level=True)
-            ax.scatter(ss[xpar], ss[ypar], color=cs[j], marker='.', label=id)
-            ax.legend()
-    else:
-        for d, c in zip(P.datasets, P.colors):
-            s = d.read('step')
-            ax.scatter(s[xpar], s[ypar], color=c, marker='.')
-        P.data_leg(0, loc='upper left')
-        # dataset_legend(P.labels, P.colors, ax=ax, loc='upper left')
-    P.conf_ax(xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim, xMaxN=4, yMaxN=4)
-    P.adjust((0.15, 0.95), (0.15, 0.92), 0.05, 0.005)
-    return P.get()

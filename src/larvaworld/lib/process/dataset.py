@@ -119,7 +119,6 @@ class LarvaDataset:
         c = self.config
         if refID is not None:
             c.refID = refID
-
         if c.refID is not None:
             reg.Ref_paths(id=c.refID, dir=c.dir)
             reg.vprint(f'Saved reference dataset under : {c.refID}', 1)

@@ -1,5 +1,4 @@
 import copy
-import agentpy
 import numpy as np
 
 from larvaworld.lib import reg, aux, util
@@ -7,8 +6,6 @@ from larvaworld.lib.aux import nam
 
 
 from larvaworld.lib.model import agents, envs
-
-
 from larvaworld.lib.screen import ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
@@ -121,8 +118,6 @@ class ReplayRun(BaseRun):
             s0 = s0.loc[(slice(a, b), slice(None)), :]
 
         if p.transposition is not None:
-            # s_tr = d.load_traj(mode=p.transposition)
-            # s0.update(s_tr)
             try:
                 s_tr = d.load_traj(mode=p.transposition)
                 s0.update(s_tr)

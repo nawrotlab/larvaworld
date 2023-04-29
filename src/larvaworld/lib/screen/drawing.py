@@ -1,14 +1,8 @@
-import math
 import os
 import sys
-
 import numpy as np
-
-
-
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
-from pygame import display
 
 from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
@@ -37,14 +31,6 @@ class BaseScreenManager :
             # self.screen_kws = self.define_screen_kws()
 
         self.v = None
-    #     self.build(**kwargs)
-    #
-    #
-    #
-    #
-    #
-    # def build(self,**kwargs):
-    #     pass
 
 
     def space2screen_pos(self, pos):
@@ -60,8 +46,6 @@ class BaseScreenManager :
             pp = ((p[0] + 1) * X0 / 2, (-p[1] + 1) * Y0)
             return pp
 
-    # def define_screen_kws(self):
-    #     pass
 
     def set_default_colors(self, black_background):
         if black_background:
@@ -75,6 +59,8 @@ class BaseScreenManager :
             scale_clock_color = (0, 0, 0)
             default_larva_color = np.array([0, 0, 0])
         return tank_color, screen_color, scale_clock_color, default_larva_color
+
+
 
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,fps=10,scene='no_boxes',**kwargs):
@@ -91,18 +77,6 @@ class GA_ScreenManager(BaseScreenManager):
         }
 
 
-    # def build(self,panel_width=600,fps=10,scene='no_boxes', **kwargs):
-    #     self.screen_kws = {
-    #         'file_path': f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt',
-    #         'show_display': self.show_display,
-    #         'panel_width': panel_width,
-    #         'caption': f'GA {self.model.experiment} : {self.model.id}',
-    #         'window_dims': self.window_dims,
-    #         'space_bounds': self.space_bounds,
-    #         'dt': self.model.dt,
-    #         'fps': fps,
-    #     }
-
     def render(self, tick=None):
         if self.v is None:
             self.v = self.initialize()
@@ -113,24 +87,13 @@ class GA_ScreenManager(BaseScreenManager):
             return
 
         if self.v.show_display:
-            from pygame import KEYDOWN, K_ESCAPE, K_r, K_MINUS, K_PLUS, K_s, QUIT, event, display
-            for e in event.get():
-                if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT or (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
                     sys.exit()
-                # elif e.type == KEYDOWN and e.key == K_r:
-                #     self.model.run()
-                elif e.type == KEYDOWN and (e.key == K_PLUS or e.key == 93 or e.key == 270):
+                elif e.type == pygame.KEYDOWN and (e.key == pygame.K_PLUS or e.key == 93 or e.key == 270):
                     self.v.increase_fps()
-                elif e.type == KEYDOWN and (e.key == K_MINUS or e.key == 47 or e.key == 269):
+                elif e.type == pygame.KEYDOWN and (e.key == pygame.K_MINUS or e.key == 47 or e.key == 269):
                     self.v.decrease_fps()
-                elif e.type == KEYDOWN and e.key == K_s:
-                    pass
-                    # self.engine.save_genomes()
-                # elif e.type == KEYDOWN and e.key == K_e:
-                #     self.engine.evaluation_mode = 'preparing'
-
-
-
 
             self.v._window.fill(aux.Color.BLACK)
 
@@ -140,7 +103,7 @@ class GA_ScreenManager(BaseScreenManager):
             self.v.draw_panel_rect()
 
             self.side_panel.display_ga_info()
-            display.flip()
+            pygame.display.flip()
             self.v._t.tick(self.v._fps)
 
     def draw_agents(self, v):
@@ -151,18 +114,12 @@ class GA_ScreenManager(BaseScreenManager):
 
         for g in self.model.agents:
             if g.visible:
-
                 g.draw(v)
                 g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
-
-
-
     def initialize(self):
-
         v = screen.Viewer.load_from_file(**self.screen_kws)
         if v.show_display:
-
             self.side_panel = screen.SidePanel(v, model=self.model)
             print('Screen opened')
         return v
@@ -191,10 +148,6 @@ class ScreenManager(BaseScreenManager):
 
 
     def build(self):
-
-
-
-
         self.dynamic_graphs = []
         self.focus_mode = False
 
@@ -219,12 +172,7 @@ class ScreenManager(BaseScreenManager):
 
 
         self.bg = self.background_motion
-
         self.pygame_keys = None
-
-        # self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
-        #     self.black_background)
-        #
         self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                          center=True, w=120 * 4, h=32 * 4,
                                          font=pygame.font.SysFont("comicsansms", 32 * 2))

@@ -37,15 +37,7 @@ class Box(Obstacle):
         edges = [[vert1, vert2], [vert2, vert3], [vert3, vert4], [vert4, vert1]]
         super().__init__(vertices, edges, **kwargs)
 
-    # def get_saved_scene_repr(self):
-    #     return self.__class__.__name__ + ' ' + str(self.x) + ' ' + str(self.y) + ' ' + str(self.size)
 
-    # def draw_label(self, screen):
-    #     if pygame.font and self.unique_id is not None:
-    #         font = pygame.font.Font(None, 24)
-    #         text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
-    #         text_pos = pygame.Rect(self.x, self.y, 50, 50)
-    #         screen.blit(text, text_pos)
 
 
 class Wall(Obstacle):
@@ -58,19 +50,6 @@ class Wall(Obstacle):
         edges = [[point1, point2]]
         super().__init__(vertices, edges, **kwargs)
 
-    # def get_saved_scene_repr(self):
-    #     return self.__class__.__name__ + ' ' + str(self.point1.x) + ' ' + str(self.point1.y) \
-    #            + ' ' + str(self.point2.x) + ' ' + str(self.point2.y)
-
-    # def draw_label(self, screen):
-    #     if pygame.font and self.unique_id is not None:
-    #         font = pygame.font.Font(None, 24)
-    #         text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
-    #         rect_x = (self.point1.x + self.point2.x) / 2
-    #         rect_y = (self.point1.y + self.point2.y) / 2
-    #
-    #         text_pos = pygame.Rect(rect_x, rect_y, 50, 50)
-    #         screen.blit(text, text_pos)
 
 
 class Border(Obstacle):
@@ -102,8 +81,6 @@ class Border(Obstacle):
     def draw(self, screen):
         for b in self.border_xy:
             screen.draw_polyline(b, color=self.color, width=self.width, closed=False)
-            # if self.selected:
-            #     screen.draw_polyline(b, color=self.model.selection_color, width=self.width * 0.5, closed=False)
 
     def contained(self, p):
         return any([l.distance(geometry.Point(p)) < self.width for l in self.border_lines])
