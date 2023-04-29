@@ -110,6 +110,8 @@ def get_default(d,key='v') :
 
 
 def ConfID_entry(conftype, default=None, k=None, symbol=None, single_choice=True):
+    def loadConfDic(k):
+        return aux.load_dict(f'{reg.CONF_DIR}/{k}.txt')
 
     def selector_func(objects, default=None, single_choice=True, **kwargs):
         kws = {
@@ -129,7 +131,7 @@ def ConfID_entry(conftype, default=None, k=None, symbol=None, single_choice=True
             f = func(**kwargs)
         return f
 
-    ids = reg.stored.confIDs(conftype)
+    ids = list(loadConfDic(conftype).keys())
 
     def ConfSelector(**kwargs):
         def func():
@@ -170,8 +172,8 @@ def buildInitDict():
         return {'dtype': str, 'h': h, 'k': k,
                 'vfunc': param.Foldername, **kwargs}
 
-    def pSaveTo(h='The directory to save data, plots and media', k='save_to', **kwargs):
-        return pPath(h=h, k=k, **kwargs)
+    # def pSaveTo(h='The directory to save data, plots and media', k='save_to', **kwargs):
+    #     return pPath(h=h, k=k, **kwargs)
 
     def pID(conftype, h=None, k=None, **kwargs):
         if h is None:

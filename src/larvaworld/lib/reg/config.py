@@ -73,39 +73,6 @@ def build_conf_tree_expanded():
 
 CONFTREE_EXPANDED = build_conf_tree_expanded()
 
-def update_mdict(mdict, mmdic):
-    if mmdic is None or mdict is None:
-        return None
-    elif not isinstance(mmdic, dict) or not isinstance(mdict, dict):
-        return mdict
-    else:
-        for d, p in mdict.items():
-            new_v = mmdic[d] if d in mmdic.keys() else None
-            if isinstance(p, param.Parameterized):
-                if type(new_v) == list:
-                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
-                        new_v = tuple(new_v)
-                p.v = new_v
-            else:
-                mdict[d] = update_mdict(mdict=p, mmdic=new_v)
-        return mdict
-
-
-def update_existing_mdict(mdict, mmdic):
-    if mmdic is None:
-        return mdict
-    else:
-        for d, v in mmdic.items():
-            p = mdict[d]
-            if isinstance(p, param.Parameterized):
-                if type(v) == list:
-                    if p.parclass in [param.Range, param.NumericTuple, param.Tuple]:
-                        v = tuple(v)
-
-                p.v = v
-            elif isinstance(p, dict) and isinstance(v, dict):
-                mdict[d] = update_existing_mdict(mdict=p, mmdic=v)
-        return mdict
 
 class BaseType:
     def __init__(self, k):
@@ -285,7 +252,7 @@ class StoredConfRegistry :
 
     def resetConfs(self, conftypes=None, **kwargs):
         if conftypes is None:
-            conftypes = reg.CONFTYPES
+            conftypes = CONFTYPES
 
         for conftype in conftypes:
             self.resetDict(conftype, **kwargs)
