@@ -72,9 +72,6 @@ def comp_orientations(s, e, c, mode='minimal'):
 
 
 def comp_orientation_1point(s, e):
-    # fo = aux.nam.orient('front')
-    # N = len(s.index.unique('Step'))
-
     def func(ss) :
         x,y=ss[:, 0].values, ss[:, 1].values
         dx,dy=np.diff(x, prepend=np.nan), np.diff(y, prepend=np.nan)
@@ -311,6 +308,4 @@ def comp_extrema_solo(ss,dt=0.1, interval_in_sec=0.3,  threshold_in_std=None, ab
         std = threshold_in_std * ss.std()
         mu = ss.mean()
         kws['threshold'] = (mu - std, mu + std)
-
-
     return aux.apply_per_level(ss, aux.comp_extrema, **kws).reshape(-1, 2)

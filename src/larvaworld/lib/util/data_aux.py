@@ -23,14 +23,10 @@ def init2mdict(d0):
                 vv0 = {kkk: vvv for kkk, vvv in vv.items() if kkk not in mdict.keys()}
                 if 'v0' not in vv0.keys():
                     vv0['v0'] = gConf(mdict)
-                prepar = preparePar(p=kk, mdict=mdict, **vv0)
-                p = v_descriptor(**prepar)
-                D[kk] = p
+                D[kk] = build_LarvaworldParam(p=kk, mdict=mdict, **vv0)
 
             elif any([a in vv.keys() for a in ['symbol', 'h', 'label', 'disp', 'k']]):
-                prepar = preparePar(p=kk, **vv)
-                p = v_descriptor(**prepar)
-                D[kk] = p
+                D[kk] = build_LarvaworldParam(p=kk, **vv)
 
             else:
                 D[kk] = check(vv)
@@ -71,7 +67,7 @@ def get_ks(d0, k0=None, ks=[]):
             ks = get_ks(p, k0=k, ks=ks)
     return ks
 
-class LarvaworldParNew2(param.Parameterized):
+class LarvaworldParam(param.Parameterized):
     p = param.String(default='', doc='Name of the parameter')
     d = param.String(default='', doc='Dataset name of the parameter')
     disp = param.String(default='', doc='Displayed name of the parameter')
@@ -313,24 +309,22 @@ class LarvaworldParNew2(param.Parameterized):
                 vv1 = np.round(np.clip(vv1, a_min=vv0, a_max=vmax), self.Ndec)
                 self.v = (vv0, vv1)
 
-def v_descriptor(vparfunc, v0=None, dv=None, u_name=None, **kws):
-    class LarvaworldParNew(LarvaworldParNew2):
+def get_LarvaworldParam(vparfunc, v0=None, dv=None, u_name=None, **kws):
+    class _LarvaworldParam(LarvaworldParam):
         v = vparfunc
         u = param.Parameter(default=reg.units.dimensionless, doc='Unit of the parameter values', label=u_name)
 
-    par = LarvaworldParNew(**kws)
+    par = _LarvaworldParam(**kws)
     return par
 
 
-
-
-
-
-
-def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None, codename=None, lab=None, h=None,
-               u_name=None,mdict=None,
-               required_ks=[], u=reg.units.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
-               vfunc=None, vparfunc=None, func=None, **kwargs):
+def prepare_LarvaworldParam(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None, codename=None, lab=None, h=None,
+                            u_name=None, mdict=None,
+                            required_ks=[], u=reg.units.dimensionless, v0=None, v=None, lim=None, dv=None, vs=None,
+                            vfunc=None, vparfunc=None, func=None, **kwargs):
+    '''
+    Method that formats the dictionary of attributes for a parameter in order to create a LarvaworldParam instance
+    '''
     codename = p if codename is None else codename
     d = p if d is None else d
     disp = d if disp is None else disp
@@ -405,7 +399,7 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
     else:
         vparfunc = vparfunc()
 
-    kws = {
+    return aux.AttrDict({
         'name': p,
         'p': p,
         'd': d,
@@ -423,11 +417,13 @@ def preparePar(p, k=None, dtype=float, d=None, disp=None, sym=None, symbol=None,
         'dv': dv,
         'v0': v0,
 
-    }
-    return aux.AttrDict(kws)
+    })
 
 
 
+def build_LarvaworldParam(p, **kwargs) :
+    pre_p = prepare_LarvaworldParam(p=p, **kwargs)
+    return get_LarvaworldParam(**pre_p)
 
 
 

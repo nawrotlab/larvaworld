@@ -27,9 +27,6 @@ class NamingRegistry(aux.AttrDict):
 
         self.ks=['mean', 'std', 'var', 'min', 'max', 'final', 'initial', 'cum', 'freq', 'lin', 'scal', 'abs', 'non',
                   'chain','dur', 'unwrap', 'dst', 'dst_to', 'bearing_to', 'vel', 'acc', 'orient', 'scal']
-        # for k in  :
-        #     self[k]=self.get_func(k)
-
 
     def get_kws(self, k):
         loc_pref = ['final', 'initial', 'cum', 'lin', 'scal', 'abs','dst_to', 'bearing_to', 'non']
@@ -65,17 +62,10 @@ class NamingRegistry(aux.AttrDict):
         return func
 
     def __getattr__(self, item):
-
-        # raise ValueError(item, 'attr')
         return self[item]
 
     def __getitem__(self, k):
         return self.get_func(k)
-        # # raise ValueError(k, 'item')
-        # if not k in self.keys() :
-        #     print(f'{k} does not exist')
-        #     self[k]=self.get_func(k)
-        # return self.get_func(k)
 
     def num(self,chunk):
         s = 'num'

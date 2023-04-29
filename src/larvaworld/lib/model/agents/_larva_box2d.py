@@ -1,5 +1,6 @@
 import Box2D
 import numpy as np
+from shapely import geometry
 
 from larvaworld.lib import aux, reg
 from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController
@@ -216,7 +217,8 @@ class LarvaBox2D(LarvaBody,BaseController):
         self.pos = self.global_midspine_of_body
         self.trajectory.append(self.pos)
 
-        self.dst = aux.eudis5(self.pos, self.trajectory[-1])
+        self.dst = geometry.Point(self.pos).distance(geometry.Point(self.trajectory[-1]))
+        # self.dst = aux.eudis5(self.pos, self.trajectory[-1])
         self.cum_dst += self.dst
         self.compute_body_bend()
 

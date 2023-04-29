@@ -201,6 +201,9 @@ def storedConf(conftype):
     d = aux.load_dict(path)
     return list(d.keys())
 
+def storedRefs() :
+    return storedConf('Ref')
+
 def resetDict(conftype, init=False):
     dd = reg.funcs.stored_confs[conftype]()
     path = reg.Path[conftype]

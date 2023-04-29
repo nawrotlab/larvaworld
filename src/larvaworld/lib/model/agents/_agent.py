@@ -110,7 +110,8 @@ class LarvaworldAgent(agentpy.Agent):
         self.color = color
 
     def contained(self, point):
-        return aux.eudis5(self.get_position(), point) <= self.radius
+        return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
+        # return aux.eudis5(self.get_position(), point) <= self.radius
 
     # @abc.abstractmethod
     def step(self):

@@ -410,8 +410,9 @@ def init_brain_modules():
 
 
 def init_aux_modules():
-    def Phy0():
-        args = {
+    return aux.AttrDict({
+        'physics' : {
+            'args': {
             'torque_coef': {'v0': 0.5, 'lim': (0.1, 1.0), 'dv': 0.01, 'disp': 'torque coefficient',
                             'sym': sub('c', 'T'), 'u_name': sup('sec', -2), 'u': reg.units.s ** -2,
                             'h': 'Conversion coefficient from TURNER output to torque-per-inertia-unit.'},
@@ -431,14 +432,11 @@ def init_aux_modules():
                                      'h': 'Correction coefficient of bending angle during forward motion.'},
             'ang_mode': {'dtype': str, 'v0': 'torque', 'vs': ['torque', 'velocity'], 'disp': 'angular mode',
                          'h': 'Whether the Turner module output is equivalent to torque or angular velocity.'},
-        }
-        return {'args': args,
+        },
              'variable': ['torque_coef', 'ang_damping', 'body_spring_k', 'bend_correction_coef']
-             }
-        # return aux.AttrDict(d)
-
-    def Bod0():
-        args = {
+             },
+        'body' : {
+            'args': {
             'initial_length': {'v0': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001,
                                'disp': 'length', 'sym': '$l$', 'u': reg.units.m, 'k': 'l0',
                                'h': 'The initial body length.'},
@@ -452,12 +450,13 @@ def init_aux_modules():
 
             'shape': {'dtype': str, 'v0': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
                       'k': 'body_shape', 'h': 'The body shape.'},
-        }
-        return {'args': args, 'variable': ['initial_length', 'Nsegs']}
-        # return aux.AttrDict(d)
-
-    def DEB0():
-        gut_args = {
+        },
+            'variable': ['initial_length', 'Nsegs']
+        },
+        'energetics' : {
+            'mode': {
+                'gut': {
+                    'args': {
             'M_gm': {'v0': 10 ** -2, 'lim': (0.0, 10.0), 'disp': 'gut scaled capacity',
                      'sym': 'M_gm',
                      'k': 'M_gm',
@@ -492,9 +491,11 @@ def init_aux_modules():
             'f_abs': {'v0': 1.0, 'lim': (0.0, 1.0), 'disp': 'absorption response',
                       'sym': 'f_abs', 'k': 'f_abs',
                       'h': 'Scaled functional response for absorption : M_P/(M_P+M_K_P)'},
-        }
-
-        DEB_args = {
+        },
+                    'variable': ['k_abs', 'k_g']
+                },
+             'DEB': {
+                 'args': {
             'species': {'dtype': str, 'v0': 'default', 'vs': ['default', 'rover', 'sitter'], 'disp': 'phenotype',
                         'k': 'species',
                         'h': 'The phenotype/species-specific fitted DEB model to use.'},
@@ -519,17 +520,15 @@ def init_aux_modules():
                        'k': 'DEB_dt',
                        'h': 'The timestep of the DEB energetics module in seconds.'},
             # 'gut_params':d['gut_params']
-            }
-
-        # args = {'gut' : gut_args, 'DEB' : DEB_args}
-        return {'gut': {'args': gut_args, 'variable': ['k_abs', 'k_g']},
-             'DEB': {'args': DEB_args, 'variable': ['DEB_dt', 'hunger_gain']},
-             # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
+            },
+                 'variable': ['DEB_dt', 'hunger_gain']
              }
-        # return aux.AttrDict(d)
-
-    def SM0():
-        args = {
+             }
+        },
+        'sensorimotor' : {
+            'mode': {
+                'default': {
+                'args': {
             'sensor_delta_direction': {'v0': 0.4, 'dv': 0.01, 'lim': (0.2, 1.2), 'k': 'sens_Dor',
                                        'h': 'Sensor delta_direction'},
             'sensor_saturation_value': {'dtype': int, 'v0': 40, 'lim': (0, 200), 'k': 'sens_c_sat',
@@ -541,78 +540,58 @@ def init_aux_modules():
             'motor_ctrl_coefficient': {'dtype': int, 'v0': 8770, 'lim': (0, 10000), 'k': 'c_mot',
                                        'h': 'Motor ctrl_coefficient'},
             'motor_ctrl_min_actuator_value': {'dtype': int, 'v0': 35, 'lim': (0, 50), 'k': 'mot_vmin',
-                                              'h': 'Motor ctrl_min_actuator_value'},
-        }
-        return {'default': {'args': args, 'class_func': None,
-                         'variable': ['sensor_delta_direction', 'sensor_saturation_value', 'obstacle_sensor_error',
+                                              'h': 'Motor ctrl_min_actuator_value'}
+        },
+                'class_func': None,
+                'variable': ['sensor_delta_direction', 'sensor_saturation_value', 'obstacle_sensor_error',
                                       'sensor_max_distance', 'motor_ctrl_coefficient',
-                                      'motor_ctrl_min_actuator_value']},
-             # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
-             # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
-             }
-        # return aux.AttrDict(d)
-
-
-    d0 = {}
-    d0['physics'] = Phy0()
-    d0['body'] = Bod0()
-    d0['energetics'] = {'mode': DEB0()}
-    d0['sensorimotor'] = {'mode': SM0(), 'pref': 'sensorimotor.'}
-    return aux.AttrDict(d0)
+                                      'motor_ctrl_min_actuator_value']
+            }
+             },
+            'pref': 'sensorimotor.'
+        }
+    })
 
 
 def build_aux_module_dict(d0):
-    d00 = d0.get_copy()
-    # d00 = aux.copyDict(d0)
-    pre_d00 = d0.get_copy()
-    # pre_d00 = aux.copyDict(d0)
-    for mkey in d0.keys():
-        if mkey in ['energetics', 'sensorimotor']:
+    d = d0.get_copy()
+    for k in d0.keys():
+        if k in ['energetics', 'sensorimotor']:
             continue
 
-        for arg, vs in d0[mkey].args.items():
-            pre_p = util.preparePar(p=arg, **vs)
-            p = util.v_descriptor(**pre_p)
-            pre_d00[mkey].args[arg] = pre_p
-            d00[mkey].args[arg] = p
-    for mkey in ['energetics', 'sensorimotor']:
-        for m, mdic in d0[mkey].mode.items():
-            for arg, vs in mdic.args.items():
-                pre_p = util.preparePar(p=arg, **vs)
-                p = util.v_descriptor(**pre_p)
-                pre_d00[mkey].mode[m].args[arg] = pre_p
-                d00[mkey].mode[m].args[arg] = p
-    return pre_d00, d00
+        for p, vs in d0[k].args.items():
+            d[k].args[p] = util.build_LarvaworldParam(p=p, **vs)
+    for k in ['energetics', 'sensorimotor']:
+        for m, mdic in d0[k].mode.items():
+            for p, vs in mdic.args.items():
+                d[k].mode[m].args[p] = util.build_LarvaworldParam(p=p, **vs)
+    return d
 
 
 def build_brain_module_dict(d0):
 
-    d00 = d0.get_copy()
-    pre_d00 = d0.get_copy()
-    for mkey in d0.keys():
-        for m, mdic in d0[mkey].mode.items():
-            for arg, vs in mdic.args.items():
-                pre_p = util.preparePar(p=arg, **vs)
-                p = util.v_descriptor(**pre_p)
-                pre_d00[mkey].mode[m].args[arg] = pre_p
-                d00[mkey].mode[m].args[arg] = p
-    return pre_d00, d00
+    d = d0.get_copy()
+    for k in d0.keys():
+        for m, mdic in d0[k].mode.items():
+            for p, vs in mdic.args.items():
+                d[k].mode[m].args[p] = util.build_LarvaworldParam(p=p, **vs)
+    return d
 
 
 
 
 def build_confdicts():
     b0 = init_brain_modules()
-    bpre, bm = build_brain_module_dict(b0)
-    bd = aux.AttrDict({'init': b0, 'pre': bpre, 'm': bm, 'keys': list(b0.keys())})
+    bm = build_brain_module_dict(b0)
+    bd = aux.AttrDict({'init': b0, 'm': bm, 'keys': list(b0.keys())})
 
     a0 = init_aux_modules()
-    apre, am = build_aux_module_dict(a0)
-    ad = aux.AttrDict({'init': a0, 'pre': apre, 'm': am, 'keys': list(a0.keys())})
+    am = build_aux_module_dict(a0)
+    ad = aux.AttrDict({'init': a0, 'm': am, 'keys': list(a0.keys())})
 
     d0 = aux.AttrDict({**b0, **a0})
 
-    d = aux.AttrDict({'init': d0, 'pre': aux.AttrDict({**bpre, **apre}), 'm': aux.AttrDict({**bm, **am}), 'keys': list(d0.keys())})
+    d = aux.AttrDict({'init': d0, 'm': aux.AttrDict({**bm, **am}), 'keys': list(d0.keys())})
     return aux.AttrDict({'brain': bd, 'aux': ad, 'model': d})
 
 

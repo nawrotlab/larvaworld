@@ -128,15 +128,6 @@ class ExpRun(BaseRun):
         return self.datasets
 
     def retrieve(self, log):
-        kws0={
-            'step_keys' : self.step_output_keys,
-            'end_keys' : self.end_output_keys,
-            'load_data' : False,
-            'env_params' : self.p.env_params,
-            'source_xy' : self.source_xy,
-            'fr' : 1 / self.dt,
-            'agents' : self.agents
-        }
         dkws=[]
         for gID, df in log.items():
             kws1={'larva_groups': {gID: self.p.larva_groups[gID]}}
@@ -149,7 +140,7 @@ class ExpRun(BaseRun):
 
             else :
                 dkws += [{'df': df, 'id': gID, **kws1}]
-        ds = [aux.convert_output_to_dataset(**kws, **kws0, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
+        ds = [self.convert_output_to_dataset(**kws, agents=self.agents, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
         return ds
 
 

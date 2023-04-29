@@ -208,15 +208,6 @@ def get_all_foodtypes(food_params):
     return ids
 
 
-def test_rotation(ho0, ang_vel, hr0, l0, dt, to_return='front'):
-    ho1 = ho0 + ang_vel * dt
-    kk = np.array([math.cos(ho1), math.sin(ho1)])
-    if to_return == 'front':
-        return hr0 + kk * l0
-    elif to_return == 'mid':
-
-        return hr0 + kk * l0 / 2
-
 def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
     hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
     def get_hf0(ang_vel):
@@ -375,15 +366,7 @@ def generate_segs_offline(N, pos, orientation, length, shape='drosophila_larva',
         return generate_segs(N, seg_positions, orientation, base_seg_vertices, seg_colors, seg_ratio, length)
 
 
-def get_centroid_position(segs):
-    seg_x_positions = []
-    seg_y_positions = []
-    for i, seg in enumerate(segs):
-        x, y = seg.get_position().tolist()
-        seg_x_positions.append(x)
-        seg_y_positions.append(y)
-    centroid = (sum(seg_x_positions) / len(segs), sum(seg_y_positions) / len(segs))
-    return np.asarray(centroid)
+
 
 def set_contour(segs, Ncontour=22):
     vertices = [np.array(seg.vertices) for seg in segs]
@@ -412,20 +395,20 @@ def sense_food(pos, sources=None, grid=None, radius=None):
             return random.choice(valid)
     return None
 
-def convert_output_to_dataset(df, step_keys, end_keys,agents=None, **kwargs):
-    # from larvaworld.lib.process.dataset import LarvaDataset
-
-    df.index.set_names(['AgentID', 'Step'], inplace=True)
-    df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-    df.sort_index(level=['Step', 'AgentID'], inplace=True)
-
-    end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-    d = larvaworld.LarvaDataset(**kwargs)
-    d.set_data(step=df[step_keys], end=end)
-    if agents :
-        ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
-        d.larva_dicts = aux.get_larva_dicts(ls)
-    return d
+# def convert_output_to_dataset(df, step_keys, end_keys,agents=None, **kwargs):
+#     # from larvaworld.lib.process.dataset import LarvaDataset
+#
+#     df.index.set_names(['AgentID', 'Step'], inplace=True)
+#     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+#     df.sort_index(level=['Step', 'AgentID'], inplace=True)
+#
+#     end = df[end_keys].xs(df.index.get_level_values('Step').max(), level='Step')
+#     d = larvaworld.LarvaDataset(**kwargs)
+#     d.set_data(step=df[step_keys], end=end)
+#     if agents :
+#         ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
+#         d.larva_dicts = get_larva_dicts(ls)
+#     return d
 
 def get_larva_dicts(ls):
     deb_dicts = {}

@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from larvaworld.lib import aux
 
@@ -97,8 +99,10 @@ def draw_selected_body(viewer, pos, xy_bounds, radius, color):
 
 
 def draw_body_orientation(viewer, pos, orientation, radius, color):
-    viewer.draw_line(pos, aux.xy_projection(pos, orientation, radius * 3),
-                     color=color, width=radius / 10)
+    dst=radius * 3
+    pos2=[pos[0] + math.cos(orientation) * dst,pos[1] + math.sin(orientation) * dst]
+
+    viewer.draw_line(pos, pos2,color=color, width=radius / 10)
     # viewer.draw_line(self.midline[-1], xy_aux.xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),
     #                  color=self.color, width=self.radius / 10)
 

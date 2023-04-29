@@ -14,7 +14,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from larvaworld.lib.aux import nam
 from larvaworld.lib.aux.par_aux import tilde, circle, bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
-from larvaworld.lib import reg, aux, util, decorators
+from larvaworld.lib import reg, aux, util
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 anot_type_keys = ['bout_detection', 'bout_distribution', 'interference', 'source_attraction', 'patch_residency']
@@ -1320,8 +1320,6 @@ class ParamClass:
         self.dict_entries = self.build(in_rad=in_rad, in_m=in_m)
 
         self.kdict = self.finalize_dict(self.dict_entries)
-        # self.ddict = aux.AttrDict({p.d: p for k, p in self.kdict.items()})
-        # self.pdict = aux.AttrDict({p.p: p for k, p in self.kdict.items()})
 
 
     # @decorators.timeit
@@ -1348,7 +1346,7 @@ class ParamClass:
             **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
 
     def add(self, **kwargs):
-        prepar = util.preparePar(**kwargs)
+        prepar = util.prepare_LarvaworldParam(**kwargs)
         self.dict[prepar.k] = prepar
         self.dict_entries.append(prepar)
 
@@ -1890,7 +1888,7 @@ class ParamClass:
     def finalize_dict(self, entries):
         dic = aux.AttrDict()
         for prepar in entries:
-            p = util.v_descriptor(**prepar)
+            p = util.get_LarvaworldParam(**prepar)
             dic[p.k] = p
         return dic
 
@@ -2035,6 +2033,11 @@ class ParamRegistry:
 
 
     def df_to_pint(self, df):
+        '''
+        Method to convert a pandas dataframe to a pint-pandas dataframe by assigning a pint unit to every column (parameter).
+        The pint-pandas readable pint unit is a string formatted by the unit registered in the parameter class (check "upint" property of the LarvaworldParam class in lib.util.data_aux)
+
+        '''
         valid_pars=self.valid_pkeys(df.columns)
         pint_dtypes = {par: self.getPar(d=par, to_return='upint') for par in valid_pars}
         df_pint = df.astype(dtype=pint_dtypes)

@@ -258,23 +258,18 @@ class GAlauncher(BaseRun, GAengine):
         self.screen_manager = GA_ScreenManager(model=self, show_display=self.show_display,
                                                panel_width=600, caption=f'GA {self.p.experiment} : {self.id}',
                                                space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
-        self.dataset_kws=aux.AttrDict({'dir' : None,
-                         'load_data':False, 'env_params':self.p.env_params,
-                         'source_xy':self.source_xy,
-                         'fr':1 / self.dt})
+        # self.dataset_kws=aux.AttrDict({'dir' : None,
+        #                  'env_params':self.p.env_params,
+        #                  'source_xy':self.source_xy,
+        #                  'fr':1 / self.dt})
         self.build_generation()
 
 
 
     def simulate(self):
-
-        # self.running = True
-        # self.setup(**self._setup_kwargs)
         self.sim_setup()
         while self.running:
-
             self.sim_step()
-
         return self.best_genome
 
     def build_generation(self, sorted_genomes=None):
@@ -303,12 +298,7 @@ class GAlauncher(BaseRun, GAengine):
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
         for gID, df in data.items():
-            d = aux.convert_output_to_dataset(df=df.copy(),
-                                               id=f'{gID}_generation:{Ngen}',
-                                               step_keys=self.step_output_keys,
-                                               end_keys=self.end_output_keys,
-                                               **self.dataset_kws
-                                               )
+            d = self.convert_output_to_dataset(df=df.copy(),id=f'{gID}_generation:{Ngen}')
             d._enrich(proc_keys=['angular', 'spatial'])
             fit_dicts = func(s=d.step_data)
             valid_gs = {}

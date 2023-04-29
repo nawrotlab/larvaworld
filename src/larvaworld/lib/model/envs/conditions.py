@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from shapely import geometry
 
 from larvaworld.lib import aux
 from larvaworld.lib.process.spatial import comp_PI
@@ -119,7 +120,8 @@ class CatchMeCondition:
                 f.brain.olfactor.gain = {id: -v for id, v in f.brain.olfactor.gain.items()}
         targets_pos = [f.get_position() for f in env.targets]
         for f in env.followers:
-            if any([aux.eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
+            if any([geometry.Point(f.get_position()).distance(geometry.Point(p))<f.radius for p in targets_pos]):
+            # if any([aux.eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
             # if any([aux.eudis5(f.get_position(),p)<f.radius for p in targets_pos]):
                 set_target_group(f.group)
                 break

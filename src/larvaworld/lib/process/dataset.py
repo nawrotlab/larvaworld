@@ -179,10 +179,6 @@ class LarvaDataset:
                 ccc[k]=v
                 reg.funcs.preprocessing[k](**ccc)
         for k in proc_keys:
-            # if k in proc_args.keys():
-            #     ccc={**cc,**proc_args[k]}
-            # else :
-            #     ccc=cc
             reg.funcs.processing[k](**cc)
         for k in anot_keys:
             reg.funcs.annotating[k](**cc)
@@ -322,10 +318,12 @@ class LarvaDataset:
     def contour(self):
         return aux.nam.contour(self.config.Ncontour)
 
+    @property
+    def data(self):
+        s=self.step_data if hasattr(self, 'step_data') else None
+        e=self.endpoint_data if hasattr(self, 'endpoint_data') else None
+        return s, e, self.config
 
-
-
-# LarvaDataset = type('LarvaDataset', (_LarvaDataset,), decorators.dic_manager_kwargs)
 
 
 def generate_dataset_config(**kwargs):

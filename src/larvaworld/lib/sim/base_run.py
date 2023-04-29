@@ -186,3 +186,26 @@ class BaseRun(agentpy.Model):
         self.collectors = reg.get_reporters(collections=collections, agents=self.agents)
         self.step_output_keys = list(self.collectors['step'].keys())
         self.end_output_keys = list(self.collectors['end'].keys())
+
+    def convert_output_to_dataset(self, df, agents=None, **kwargs):
+        kws = {
+            'load_data' : False,
+            'env_params': self.p.env_params,
+            'source_xy': self.source_xy,
+            'fr': 1 / self.dt,
+            **kwargs
+        }
+
+        from larvaworld.lib.process.dataset import LarvaDataset
+
+        df.index.set_names(['AgentID', 'Step'], inplace=True)
+        df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+        df.sort_index(level=['Step', 'AgentID'], inplace=True)
+
+        end = df[self.end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
+        d = LarvaDataset(**kws)
+        d.set_data(step=df[self.step_output_keys], end=end)
+        if agents:
+            ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
+            d.larva_dicts = aux.get_larva_dicts(ls)
+        return d

@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from shapely import geometry
 
@@ -36,10 +38,16 @@ class LarvaSim(LarvaBody, BaseController):
         if len(self.model.borders) == 0:
             return False
         else:
+            x,y=self.pos
             p0 = geometry.Point(self.pos)
             d0 = self.sim_length / 4
             oM = self.head.get_orientation()
-            sensor_ray = aux.radar_tuple(p0=p0, angle=oM, distance=d0)
+            p1 = geometry.Point(
+                x + math.cos(oM) * d0,
+                y + math.sin(oM) * d0)
+
+            sensor_ray = p0, p1
+
             min_dst, nearest_obstacle = aux.detect_nearest_obstacle(self.model.borders, sensor_ray, p0)
 
             if min_dst is None:

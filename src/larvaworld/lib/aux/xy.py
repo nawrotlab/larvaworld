@@ -107,9 +107,6 @@ def eudi5x(a, b):
     return np.sqrt(np.sum((a - np.array(b)) ** 2, axis=1))
 
 
-def xy_projection(point, angle: float, distance: float):
-    return [point[0] + math.cos(angle) * distance,
-        point[1] + math.sin(angle) * distance]
 
 
 
@@ -300,17 +297,14 @@ def space2screen_pos(pos, screen_dims, space_dims):
     return pp
 
 
-def circle_to_polygon(sides, radius, rotation=0, translation=None):
-    one_segment = np.pi * 2 / sides
+def circle_to_polygon(N, r):
+    one_segment = np.pi * 2 / N
 
     points = [
-        (np.sin(one_segment * i + rotation) * radius,
-         np.cos(one_segment * i + rotation) * radius)
-        for i in range(sides)]
+        (np.sin(one_segment * i) * r,
+         np.cos(one_segment * i) * r)
+        for i in range(N)]
 
-    if translation:
-        points = [[sum(pair) for pair in zip(point, translation)]
-                  for point in points]
 
     return np.array(points)
 
