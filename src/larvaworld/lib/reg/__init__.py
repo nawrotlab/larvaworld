@@ -1,6 +1,5 @@
-# import time
-# start_time = time.perf_counter()
 import os
+from os.path import dirname, abspath
 
 VERBOSE =2
 def vprint(text='', verbose=0):
@@ -10,7 +9,7 @@ vprint("Initializing larvaworld registry", 2)
 
 
 vprint("Initializing path registry", 0)
-from os.path import dirname, abspath
+
 ROOT_DIR = dirname(dirname(dirname(abspath(__file__))))
 DATA_DIR = f'{ROOT_DIR}/data'
 SIM_DIR = f'{DATA_DIR}/SimGroup'
@@ -25,35 +24,31 @@ GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 Path = {k : f'{CONF_DIR}/{k}.txt' for k in CONFTYPES}
 os.makedirs(CONF_DIR, exist_ok=True)
 
+
+vprint("Initializing output registry")
 from .data_structure import datapath
-vprint("Initializing output registry", 0)
-
-
 from .output import output_dict,set_output, get_reporters
 from .units import units
 
-vprint("Initializing function registry", 0)
+vprint("Initializing function registry")
 from .facade import funcs
 from .parFunc import *
 from .stored import *
 from .distro import distro_database,get_dist
 
-vprint("Initializing parameter registry", 0)
+vprint("Initializing parameter registry")
 from .parDB import par
 
-vprint("Initializing configuration registry", 0)
+vprint("Initializing configuration registry")
 from .config import conf, group, CONFTREE, CONFTREE_EXPANDED, loadConf, saveConf, deleteConf, storedConf,storedRefs,load_config,Ref_paths, expandConf,resetConfs,GTRvsS, lgs, lg, loadRef, retrieve_dataset, next_idx
 from .controls import controls
 
-vprint("Initializing model registry", 0)
+vprint("Initializing model registry")
 from .models import model
 
-vprint("Initializing graph registry", 0)
+vprint("Initializing graph registry")
 from .graph import graphs
 
-# end_time = time.perf_counter()
-# total_time = end_time - start_time
-# vprint(f"Registry configured in {total_time:.0f} ms!", 2)
 
 
 
