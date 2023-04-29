@@ -25,7 +25,7 @@ class EvalRun(BaseRun):
         '''
 
         # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
-        d = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        d = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
         d.id = 'experiment'
         d.config.id = 'experiment'
         d.color = 'grey'

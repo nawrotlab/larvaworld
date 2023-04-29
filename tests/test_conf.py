@@ -19,4 +19,4 @@ def test_conf() :
     assert aux.checkEqual(ids, reg.stored.confIDs(conftype))
 
 def test_reset() :
-    reg.resetConfs()
+    reg.stored.resetConfs()

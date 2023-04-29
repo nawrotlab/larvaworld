@@ -36,7 +36,7 @@ vprint("Initializing parameter registry")
 from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
-from .config import stored, CONFTREE, CONFTREE_EXPANDED, resetConfs,GTRvsS, lgs, lg, retrieve_dataset, next_idx
+from .config import stored, CONFTREE, CONFTREE_EXPANDED,GTRvsS, lgs, lg, next_idx
 from .controls import controls
 
 vprint("Initializing model registry")
@@ -55,8 +55,11 @@ def getPar(k=None, p=None, d=None, to_return='d'):
 def get_null(name, **kwargs):
     return par.get_null(name=name, **kwargs)
 
+def loadRef(id, **kwargs) :
+    return stored.loadRef(id=id, **kwargs)
 
 
-resetConfs(init=True)
+
+stored.resetConfs(init=True)
 
 vprint(f"Registry configured!", 2)

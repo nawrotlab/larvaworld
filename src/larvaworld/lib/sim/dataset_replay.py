@@ -23,7 +23,7 @@ class ReplayRun(BaseRun):
         '''
 
         # Specify and load the stored dataset to replay
-        self.dataset = reg.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        self.dataset = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
 
         # Configure the dataset to replay
         self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, self.dataset)

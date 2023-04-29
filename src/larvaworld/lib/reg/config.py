@@ -143,42 +143,6 @@ class BaseType:
 
 
 
-
-
-
-
-
-def resetDict(conftype, init=False):
-    dd = reg.funcs.stored_confs[conftype]()
-    path = reg.Path[conftype]
-
-    if os.path.isfile(path):
-        if init:
-            return
-        else :
-            d = aux.load_dict(path)
-    else :
-        d={}
-
-    N0, N1 = len(d), len(dd)
-
-    d.update(dd)
-
-    Ncur = len(d)
-    Nnew = Ncur - N0
-    Nup = N1 - Nnew
-    aux.save_dict(d, path)
-
-    reg.vprint(f'{conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing',1)
-
-# @decorators.timeit
-def resetConfs(conftypes=None, **kwargs):
-    if conftypes is None:
-        conftypes = reg.CONFTYPES
-
-    for conftype in conftypes:
-        resetDict(conftype, **kwargs)
-
 def lgs(mIDs, ids=None, cs=None,**kwargs):
 
     if ids is None:
@@ -260,23 +224,6 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', subst
     return aux.AttrDict(lgs)
 
 
-
-
-
-
-
-
-
-def retrieve_dataset(dataset=None,refID=None,dir=None) :
-    if dataset is None :
-        if refID is not None:
-            dataset = reg.stored.loadRef(refID)
-        elif dir is not None :
-            dataset = larvaworld.LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False)
-        else :
-            raise ValueError ('Unable to load dataset. Either refID or storage path must be provided. ')
-    return dataset
-
 def next_idx(id, conftype='Exp'):
     f = f'{reg.CONF_DIR}/SimIdx.txt'
     if not os.path.isfile(f):
@@ -292,33 +239,6 @@ def next_idx(id, conftype='Exp'):
     aux.save_dict(d, f)
     return d[conftype][id]
 
-def imitation_exp(sample, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
-    sample_conf = reg.stored.getRef(sample)
-
-    base_larva = reg.stored.expand(id=model, conftype='Model')
-    if imitation:
-        exp = 'imitation'
-        larva_groups = {
-            'ImitationGroup': reg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
-                                        imitation=True,
-                                        distribution={'N': N})}
-    else:
-        exp = 'evaluation'
-        larva_groups = {
-            sample: reg.get_null('LarvaGroup', sample=sample, model=base_larva, default_color='blue',
-                              imitation=False,
-                              distribution={'N': N})}
-    id = sample_conf.id
-
-    if duration is None:
-        duration = sample_conf.duration / 60
-    sim_params = reg.get_null('sim_params', dt=1 / sample_conf['fr'], duration=duration)
-    env_params = sample_conf.env_params
-    exp_conf = reg.get_null('Exp', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
-                         trials={}, enrichment=reg.par.base_enrich())
-    exp_conf['experiment'] = exp
-    exp_conf.update(**kwargs)
-    return exp_conf
 
 
 class StoredConfRegistry :
@@ -336,6 +256,34 @@ class StoredConfRegistry :
     def set_dict(self, conftype, d):
         path = self.ConfPath(conftype)
         aux.save_dict(d, path)
+
+    def resetDict(self,conftype, init=False):
+        dd = reg.funcs.stored_confs[conftype]()
+
+        if os.path.isfile(self.ConfPath(conftype)):
+            if init:
+                return
+            else:
+                d = self.get_dict(conftype)
+        else:
+            d = {}
+
+        N0, N1 = len(d), len(dd)
+
+        d.update(dd)
+
+        Ncur = len(d)
+        Nnew = Ncur - N0
+        Nup = N1 - Nnew
+        self.set_dict(conftype, d)
+        reg.vprint(f'{conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing', 1)
+
+    def resetConfs(self, conftypes=None, **kwargs):
+        if conftypes is None:
+            conftypes = reg.CONFTYPES
+
+        for conftype in conftypes:
+            self.resetDict(conftype, **kwargs)
 
     def confIDs(self, conftype):
         d=self.get_dict(conftype)
@@ -401,6 +349,9 @@ class StoredConfRegistry :
     def getModel(self, id):
         return self.get(conftype='Model', id=id)
 
+    def getEnv(self, id):
+        return self.get(conftype='Env', id=id)
+
     def setModel(self, id, conf):
         return self.set(conftype='Model', id=id, conf=conf)
 
@@ -448,6 +399,50 @@ class StoredConfRegistry :
             d = self.get_dict('Ref')
             d[id] = dir
             self.set_dict('Ref', d)
+
+
+
+    def retrieve_dataset(self,dataset=None, refID=None, dir=None):
+        if dataset is None:
+            if refID is not None:
+                dataset = self.loadRef(refID)
+            elif dir is not None:
+                dataset = larvaworld.LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False)
+            else:
+                raise ValueError('Unable to load dataset. Either refID or storage path must be provided. ')
+        return dataset
+
+    def imitation_exp(self, refID, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
+        ref_conf = self.getRef(refID)
+
+        kws = {
+            'sample': refID,
+            'model': self.getModel(model),
+            'default_color': 'blue',
+            'distribution': {'N': N},
+            'imitation': imitation,
+
+        }
+        lg = reg.get_null('LarvaGroup', **kws)
+
+        if imitation:
+            exp = 'imitation'
+            larva_groups = {
+                'ImitationGroup': lg}
+        else:
+            exp = 'evaluation'
+            larva_groups = {refID: lg}
+        id = ref_conf.id
+
+        if duration is None:
+            duration = ref_conf.duration / 60
+        sim_params = reg.get_null('sim_params', dt=1 / ref_conf['fr'], duration=duration)
+        env_params = ref_conf.env_params
+        exp_conf = reg.get_null('Exp', sim_params=sim_params, env_params=env_params, larva_groups=larva_groups,
+                                trials={}, enrichment=reg.par.base_enrich())
+        exp_conf['experiment'] = exp
+        exp_conf.update(**kwargs)
+        return exp_conf
 
 
 stored=StoredConfRegistry()

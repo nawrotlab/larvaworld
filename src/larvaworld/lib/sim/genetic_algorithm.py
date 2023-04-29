@@ -461,7 +461,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     }
 
     conf = reg.get_null('Ga', **kws)
-    conf.env_params = reg.stored.expand(id=conf.env_params, conftype='Env')
+    conf.env_params = reg.stored.getEnv(conf.env_params)
 
     # conf.ga_build_kws.
 
