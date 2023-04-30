@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import param
 from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
@@ -14,20 +15,23 @@ from larvaworld.lib.screen.rendering import InputBox
 
 
 class ValueGrid(Entity):
-    def __init__(self, model, grid_dims=[51, 51], distribution='uniform',  initial_value=0.0,sources=[],
-                 default_color='white', max_value=None, min_value=0.0, fixed_max=False, **kwargs):
+    initial_value = param.Number(0.0, bounds=(0.0,None),doc='initial value over the grid')
+
+    fixed_max = param.Boolean(False,doc='whether the max is kept constant')
+    grid_dims = param.Range(default=(51, 51), doc='The spatial resolution of the food grid.')
+
+
+    def __init__(self, model, sources=[],
+                 default_color='white', max_value=None, min_value=0.0, **kwargs):
         super().__init__(visible=False,default_color=default_color,**kwargs)
         self.model = model
         self.sources = sources
-        self.initial_value = initial_value
 
         self.min_value = min_value
-        self.fixed_max = fixed_max
         # if type(default_color) == str:
         #     default_color = aux.colorname2tuple(default_color)
         # self.default_color = default_color
-        self.grid_dims = grid_dims
-        self.X, self.Y = grid_dims
+        self.X, self.Y = self.grid_dims
         x_range = tuple(self.model.space.range[0:2])
         y_range = tuple(self.model.space.range[2:])
         x0, x1 = x_range[0], x_range[1]
@@ -39,8 +43,7 @@ class ValueGrid(Entity):
         self.xy = np.array([self.x, self.y])
         self.XY_half = np.array([self.X / 2, self.Y / 2])
         self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
-        if distribution == 'uniform':
-            self.grid = np.ones(self.grid_dims) * self.initial_value
+        self.grid = np.ones(self.grid_dims) * self.initial_value
         self.grid_vertices = self.generate_grid_vertices()
         self.grid_edges = [[-xr / 2, -yr / 2],
                            [xr / 2, -yr / 2],

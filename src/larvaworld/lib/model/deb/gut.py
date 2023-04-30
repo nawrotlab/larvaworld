@@ -15,7 +15,7 @@ class Gut(param.Parameterized):
     k_g = param.Number(1.0, doc='decay rate of enzyme')
     M_c_per_cm2 = param.Number(5 * 10 ** -8, doc='area specific amount of carriers in the gut per unit of gut surface')
     J_g_per_cm2 = param.Number(10 ** -2 / (24 * 60 * 60), doc='secretion rate of enzyme per unit of gut surface per day')
-    constant_M_c = param.Boolean(True, doc='Whether M_c is kept constant')
+    constant_M_c = param.Boolean(True,label='constant carrier density', doc='Whether to assume a constant amount of carrier enzymes on the gut surface.')
 
 
 

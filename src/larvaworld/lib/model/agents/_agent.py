@@ -38,7 +38,6 @@ class LarvaworldAgent(Entity, agentpy.Agent):
     """LarvaworldAgent class that inherits from agentpy.Agent."""
 
     group = param.String(None, doc='The unique ID of the agent group')
-    # default_color = param.Color('black', doc='The default color of the agent')
     radius = param.Number(0.003, bounds=(0, None), softbounds=(0, 0.1), step=0.001,
                     doc='The spatial radius of the source in meters')
     pos = param.NumericTuple(default=(0.0, 0.0), doc='The xy spatial position coordinates')
