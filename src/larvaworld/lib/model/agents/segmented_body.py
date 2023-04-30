@@ -330,43 +330,43 @@ class LarvaBody(LarvaMotile):
             ps=[affinity.scale(p, xfact=scale, yfact=scale) for p in ps]
         return ops.cascaded_union(ps).boundary.coords
 
-    @property
-    def velocity(self):
-        return self.head.get_linearvelocity()
+    # @property
+    # def velocity(self):
+    #     return self.head.get_linearvelocity()
 
 
     @property
     def front_orientation(self):
-        return np.rad2deg(self.head.get_orientation())%360
+        return self.head.get_orientation()%(2*np.pi)
 
-    @property
-    def front_orientation_unwrapped(self):
-        return np.rad2deg(self.head.get_orientation())
+    # @property
+    # def front_orientation_unwrapped(self):
+    #     return self.head.get_orientation()
 
-    @property
-    def rear_orientation_unwrapped(self):
-        return np.rad2deg(self.tail.get_orientation())
+    # @property
+    # def rear_orientation_unwrapped(self):
+    #     return self.tail.get_orientation()
 
     @property
     def rear_orientation(self):
-        return np.rad2deg(self.tail.get_orientation())%360
+        return self.tail.get_orientation()%(2*np.pi)
 
-    @property
-    def bend(self):
-        # return self.body_bend
-        return np.rad2deg(self.body_bend)
+    # @property
+    # def bend(self):
+    #     # return self.body_bend
+    #     return np.rad2deg(self.body_bend)
+    #
+    # @property
+    # def bend_vel(self):
+    #     return np.rad2deg(self.body_bend_vel)
+    #
+    # @property
+    # def bend_acc(self):
+    #     return np.rad2deg(self.body_bend_acc)
 
-    @property
-    def bend_vel(self):
-        return np.rad2deg(self.body_bend_vel)
-
-    @property
-    def bend_acc(self):
-        return np.rad2deg(self.body_bend_acc)
-
-    @property
-    def front_orientation_vel(self):
-        return np.rad2deg(self.head.get_angularvelocity())
+    # @property
+    # def front_orientation_vel(self):
+    #     return self.head.get_angularvelocity()
 
 
 class BaseController(param.Parameterized):

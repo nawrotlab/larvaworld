@@ -20,7 +20,11 @@ anot_type_keys = ['bout_detection', 'bout_distribution', 'interference', 'source
 
 output_dict = {
     'olfactor': {
-        'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf', 'A_T', 'I_T', 'A_C'],
+        'step': ['c_odor1', 'dc_odor1', 'c_odor2', 'dc_odor2', 'A_olf'],
+        'endpoint': []},
+
+    'loco': {
+        'step': ['A_CT', 'A_T', 'I_T', 'phi_T', 'A_C', 'I_C', 'phi_C'],
         'endpoint': []},
 
     'thermo': {
@@ -36,7 +40,7 @@ output_dict = {
         'endpoint': []},
 
     'feeder': {
-        'step': ['l', 'f_am', 'EEB', 'on_food', 'fee_reocc', 'beh'],
+        'step': ['l', 'f_am', 'EEB', 'on_food', 'fee_reocc', 'beh', 'phi_F'],
         'endpoint': ['l', 'f_am', 'on_food_tr', 'pau_N', 'str_N', 'run_N', 'fee_N','str_c_N', 'fee_c_N', 'fee_N_success',  'fee_N_fail']
     },
 
@@ -44,7 +48,7 @@ output_dict = {
                      'f_am'],
             'endpoint': ['sf_am_Vg', 'sf_am_V', 'sf_am_A', 'sf_am_M', 'sf_abs_M', 'f_abs_M', 'sf_faeces_M',
                          'f_faeces_M', 'f_am']},
-    'pose': {'step': ['x', 'y', 'b', 'fo', 'ro', 'v'],
+    'pose': {'step': ['x', 'y', 'b', 'fo', 'ro'],
              'endpoint': ['l', 'cum_t', 'x']},
     'memory': {'step': [],
                'endpoint': [],
@@ -1514,7 +1518,7 @@ class ParamClass:
              'func': self.func_dict.tr(pc)},
             {
                 'p': pN,
-                'codename': f'brain.locomotor.intermitter.{pc}_counter',
+                'codename': f'brain.locomotor.intermitter.N{pc}s',
                 'k': kN,
                 'sym': sub('N', f'{pc}s'),
                 'disp': f'# {pc}s',
@@ -1752,7 +1756,7 @@ class ParamClass:
             amax = 180
         kws = {'dv': np.round(amax / 180, 2), 'u': u, 'v0': 0.0}
         self.add(
-            **{'p': 'bend', 'k': 'b', 'sym': th('b'), 'disp': 'bending angle', 'lim': (-amax, amax), **kws})
+            **{'p': 'bend','codename': 'body_bend', 'k': 'b', 'sym': th('b'), 'disp': 'bending angle', 'lim': (-amax, amax), **kws})
         self.add_velNacc(k0='b', sym_v=omega('b'), sym_a=dot(omega('b')), disp_v='bending angular velocity',
                          disp_a='bending angular acceleration')
 
@@ -1850,10 +1854,12 @@ class ParamClass:
             self.add(**{'p': f'handedness_score_{kc}', 'k': f'tur_H_{kc}'})
 
     def build_sim_pars(self):
-        for ii, jj in zip(['C', 'T'], ['crawler', 'turner']):
+        for ii, jj in zip(['C', 'T', 'F'], ['crawler', 'turner', 'feeder']):
             self.add(**{'p': f'brain.locomotor.{jj}.output', 'k': f'A_{ii}', 'd': f'{jj} output', 'sym': sub('A', ii)})
             self.add(**{'p': f'brain.locomotor.{jj}.input', 'k': f'I_{ii}', 'd': f'{jj} input', 'sym': sub('I', ii)})
-
+            self.add(**{'p': f'brain.locomotor.{jj}.phi', 'k': f'phi_{ii}', 'd': f'{jj} phase', 'sym': sub('Phi', ii)})
+        self.add(**{'p': f'brain.locomotor.interference.cur_attenuation', 'k': f'A_CT', 'd': f'C->T suppression', 'sym': sub('A', 'CT'),
+                    'disp' : 'CRAWLER:TURNER interference suppression.'})
         # self.add(**{'p': 'brain.locomotor.cur_ang_suppression', 'k': 'c_CT', 'd': 'ang_suppression',
         #             'disp': 'angular suppression output', 'sym': sub('c', 'CT'), 'lim': (0.0, 1.0)})
         Im='brain.locomotor.intermitter'

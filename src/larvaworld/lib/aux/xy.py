@@ -415,6 +415,14 @@ def unwrap_deg(a) :
     b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)] * np.pi / 180) * 180 / np.pi
     return b
 
+def unwrap_rad(a) :
+
+    if isinstance(a, pd.Series) :
+        a=a.values
+    b = np.copy(a)
+    b[~np.isnan(b)] = np.unwrap(b[~np.isnan(b)])
+    return b
+
 def rate(a, dt) :
     if isinstance(a, pd.Series) :
         a=a.values
