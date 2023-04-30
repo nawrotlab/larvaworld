@@ -46,10 +46,7 @@ class DrawEnvTab(gui_aux.DrawTab):
         return o, o0, oM, oS
 
     def group_ks(self, i):
-        # if i == self.S:
-        #     D = 'spatial_distro'
-        # elif i==self.L :
-        #     D ='larva_distro'
+
 
         s = f'{i}_single'
         g = f'{i}_group'

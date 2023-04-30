@@ -57,14 +57,11 @@ class Source(LarvaworldAgent):
 
 
 
-class Food(Source):
+class Food(Source, Substrate):
     amount = param.Number(0.0, bounds=(0, None), softbounds=(0, 10), step=0.01, doc='The food amount in the source')
-    substrate = param.ClassSelector(class_=Substrate, default=Substrate(), doc='The substrate of the source')
 
-    def __init__(self, quality=1.0, default_color='green', type='standard', **kwargs):
-
-
-        super().__init__(default_color=default_color,substrate = Substrate(type=type, quality=quality), **kwargs)
+    def __init__(self, default_color='green', **kwargs):
+        super().__init__(default_color=default_color, **kwargs)
         self.initial_amount = self.amount
         # self.amount = self.initial_amount
         # self.substrate = Substrate(type=type, quality=quality)

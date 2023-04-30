@@ -557,10 +557,6 @@ class Chemotaxis_Essay(Essay):
         return aux.AttrDict(models)
 
     def chemo_exps(self, models):
-        lg_kws = {
-            'odor': reg.get_null('odor'),
-            'sample': 'None.150controls'
-        }
         kws = {
             'arena': reg.get_null('arena', shape='rectangular', dims=(0.1, 0.06)),
             'odorscape': {'odorscape': 'Gaussian'},
@@ -585,10 +581,10 @@ class Chemotaxis_Essay(Essay):
                                               }
                                               }, **kws),
             'lgs': {
-                mID: reg.get_null('LarvaGroup',
-                                   distribution=reg.get_null('larva_distro', N=self.N, mode='uniform'),
-                                   default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
+                mID: reg.full_lg(distribution={'N' : self.N,'mode' : 'uniform'},
+                                  default_color=dic['color'], model=dic['model'], sample= 'exploration.150controls', as_entry=False) for mID, dic in
                 models.items()},
+
             'id': f'{exp1}_exp',
             'dur': self.dur,
             'exp': exp1
@@ -609,12 +605,13 @@ class Chemotaxis_Essay(Essay):
                                               }
                                               }, **kws),
             'lgs': {
-                mID: reg.get_null('LarvaGroup',
-                                   distribution=reg.get_null('larva_distro', N=self.N, mode='uniform',
-                                                              loc=(-0.04, 0.0),
-                                                              orientation_range=(-30.0, 30.0), scale=(0.005, 0.02)),
-                                   default_color=dic['color'], model=dic['model'], **lg_kws) for mID, dic in
+
+                mID: reg.full_lg(distribution={'N': self.N, 'mode': 'uniform', 'loc' : (-0.04, 0.0),
+                                               'orientation_range' : (-30.0, 30.0), 'scale' : (0.005, 0.02)},
+                                 default_color=dic['color'], model=dic['model'], sample='exploration.150controls',
+                                 as_entry=False) for mID, dic in
                 models.items()},
+
             'id': f'{exp2}_exp',
             'dur': self.dur,
             'exp': exp2

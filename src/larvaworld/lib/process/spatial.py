@@ -704,6 +704,32 @@ def comp_PI(arena_xdim, xs, return_num=False):
         return pI
 
 
+@reg.funcs.proc("PI")
+def comp_dataPI(s,e,c, **kwargs):
+    if 'x' in e.keys():
+        px = 'x'
+        xs = e[px].values
+    elif nam.final('x') in e.keys():
+        px = nam.final('x')
+        xs = e[px].values
+    elif 'x' in s.keys():
+        px = 'x'
+        xs = s[px].dropna().groupby('AgentID').last().values
+    elif 'centroid_x' in s.keys():
+        px = 'centroid_x'
+        xs = s[px].dropna().groupby('AgentID').last().values
+    else:
+        raise ValueError('No x coordinate found')
+    PI, N = comp_PI(xs=xs, arena_xdim=c.env_params.arena.dims[0], return_num=True)
+    c.PI = {'PI': PI, 'N': N}
+    try:
+        c.PI2 = comp_PI2(xys=s[nam.xy('')])
+    except:
+        pass
+
+
+
+
 def scale_to_length(s, e, c=None, pars=None, keys=None):
     l_par = 'length'
     if l_par not in e.keys():

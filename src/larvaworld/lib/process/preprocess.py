@@ -5,7 +5,16 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux
 
 
-
+@reg.funcs.preproc("interpolate_nans")
+def interpolate_nan_values(s, c, pars=None, **kwargs):
+    if pars is None:
+        points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(
+            c.Ncontour)  # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
+        pars = nam.xy(points, flat=True)
+    for p in aux.existing_cols(pars, s):
+        for id in s.index.unique('AgentID').values:
+            s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
+    reg.vprint('All parameters interpolated', 1)
 
 
 @reg.funcs.preproc("filter_f")
@@ -13,28 +22,20 @@ def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
     if filter_f in ['', None, np.nan]:
         return
     if 'filtered_at' in c and not recompute:
-        reg.vprint(f'Dataset already filtered at {c["filtered_at"]}. If you want to apply additional filter set recompute to True', 1)
+        reg.vprint(
+            f'Dataset already filtered at {c["filtered_at"]}. If you want to apply additional filter set recompute to True',
+            1)
         return
     c['filtered_at'] = filter_f
 
     points = nam.midline(c.Npoints, type='point') + ['centroid', '']
-    pars = aux.existing_cols(nam.xy(points, flat=True),s)
+    pars = aux.existing_cols(nam.xy(points, flat=True), s)
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
     f_array = aux.apply_filter_to_array_with_nans_multidim(data, freq=filter_f, fr=1 / c.dt)
     for j, p in enumerate(pars):
         s[p] = f_array[:, j, :].flatten()
     reg.vprint(f'All spatial parameters filtered at {filter_f} Hz', 1)
 
-@reg.funcs.preproc("interpolate_nans")
-def interpolate_nan_values(s, c, pars=None, **kwargs):
-    if pars is None:
-        points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(
-            c.Ncontour)  # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
-        pars = nam.xy(points, flat=True)
-    for p in aux.existing_cols(pars,s):
-        for id in s.index.unique('AgentID').values:
-            s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
-    reg.vprint('All parameters interpolated', 1)
 
 @reg.funcs.preproc("rescale_by")
 def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
@@ -86,29 +87,3 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
             s[l] = [(r1 + r * t, b1 + b * t, g1 + g * t) for t in temp]
         else:
             s[l] = [(np.nan, np.nan, np.nan)] * N
-
-@reg.funcs.proc("PI")
-def comp_dataPI(s,e,c, **kwargs):
-    from larvaworld.lib.process.spatial import comp_PI, comp_PI2
-    if 'x' in e.keys():
-        px = 'x'
-        xs = e[px].values
-    elif nam.final('x') in e.keys():
-        px = nam.final('x')
-        xs = e[px].values
-    elif 'x' in s.keys():
-        px = 'x'
-        xs = s[px].dropna().groupby('AgentID').last().values
-    elif 'centroid_x' in s.keys():
-        px = 'centroid_x'
-        xs = s[px].dropna().groupby('AgentID').last().values
-    else:
-        raise ValueError('No x coordinate found')
-    PI, N = comp_PI(xs=xs, arena_xdim=c.env_params.arena.dims[0], return_num=True)
-    c.PI = {'PI': PI, 'N': N}
-    try:
-        c.PI2 = comp_PI2(xys=s[nam.xy('')])
-    except:
-        pass
-
-

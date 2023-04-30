@@ -5,22 +5,27 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
 from larvaworld.lib import reg, aux
+from larvaworld.lib.model import Entity
 from larvaworld.lib.model.deb.substrate import Substrate
 from larvaworld.lib.screen.rendering import InputBox
 
-class ValueGrid:
-    def __init__(self, model, unique_id, grid_dims=[51, 51], distribution='uniform', visible=False,
-                 initial_value=0.0, default_color=(255, 255, 255), max_value=None, min_value=0.0, fixed_max=False):
+
+
+
+
+class ValueGrid(Entity):
+    def __init__(self, model, grid_dims=[51, 51], distribution='uniform',  initial_value=0.0,sources=[],
+                 default_color='white', max_value=None, min_value=0.0, fixed_max=False, **kwargs):
+        super().__init__(visible=False,default_color=default_color,**kwargs)
         self.model = model
-        self.visible = visible
-        self.unique_id = unique_id
+        self.sources = sources
         self.initial_value = initial_value
 
         self.min_value = min_value
         self.fixed_max = fixed_max
-        if type(default_color) == str:
-            default_color = aux.colorname2tuple(default_color)
-        self.default_color = default_color
+        # if type(default_color) == str:
+        #     default_color = aux.colorname2tuple(default_color)
+        # self.default_color = default_color
         self.grid_dims = grid_dims
         self.X, self.Y = grid_dims
         x_range = tuple(self.model.space.range[0:2])
@@ -44,6 +49,9 @@ class ValueGrid:
         if max_value is None:
             max_value = np.max(self.grid)
         self.max_value = max_value
+
+    def update_values(self):
+        pass
 
     def add_value(self, p, value):
         return self.add_cell_value(self.get_grid_cell(p), value)
@@ -161,10 +169,9 @@ class ValueGrid:
         return self.grid
 
 
-class FoodGrid(ValueGrid):
-    def __init__(self, default_color=(0, 255, 0), quality=1, type='standard', **kwargs):
+class FoodGrid(ValueGrid, Substrate):
+    def __init__(self, default_color='green', **kwargs):
         super().__init__(default_color=default_color, fixed_max=True, **kwargs)
-        self.substrate = Substrate(type=type, quality=quality)
 
     def get_color(self, v):
         v0, v1 = self.min_value, self.max_value
@@ -180,18 +187,12 @@ class FoodGrid(ValueGrid):
                     viewer.draw_polygon(self.grid_vertices[i, j], self.get_color(v), filled=True)
 
 
-class ValueLayer(ValueGrid):
-    def __init__(self, sources=[], **kwargs):
-        super().__init__(min_value=0, **kwargs)
-        self.sources = sources
 
-
-class GaussianValueLayer(ValueLayer):
+class GaussianValueLayer(ValueGrid):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def update_values(self):
-        pass
+
 
     def get_value(self, pos):
 
@@ -227,7 +228,7 @@ class GaussianValueLayer(ValueLayer):
                 text_box.draw(viewer)
 
 
-class DiffusionValueLayer(ValueLayer):
+class DiffusionValueLayer(ValueGrid):
 
     def __init__(self, evap_const, gaussian_sigma, **kwargs):
         super().__init__(**kwargs)
@@ -274,15 +275,14 @@ class DiffusionValueLayer(ValueLayer):
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
 
 
-class WindScape:
-    def __init__(self, model, wind_direction, wind_speed, puffs={}, default_color='red', visible=False):
+class WindScape(Entity):
+    def __init__(self, model, wind_direction, wind_speed, puffs={}, default_color='red', **kwargs):
 
+        super().__init__(default_color=default_color,visible=False,**kwargs)
         self.model = model
         self.wind_direction = wind_direction
         self.wind_speed = wind_speed
         self.max_dim = np.max(self.model.space.dims)
-        self.default_color = default_color
-        self.visible = visible
 
         self.N = 40
         self.draw_phi = 0
@@ -350,24 +350,22 @@ class WindScape:
 
 
 class ThermoScape(ValueGrid):
-    def __init__(self, plate_temp=22, spread=0.1, thermo_sources=[[0.5, 0.05], [0.05, 0.5], [0.5, 0.95], [0.95, 0.5]],
-                 thermo_source_dTemps=[8, -8, 8, -8], default_color='green', visible=False):
+    def __init__(self, plate_temp=22, spread=0.1,
+                 thermo_sources=[[0.5, 0.05], [0.05, 0.5], [0.5, 0.95], [0.95, 0.5]],
+                 thermo_source_dTemps=[8, -8, 8, -8], **kwargs):
+        super().__init__(**kwargs)
         self.plate_temp = plate_temp
         self.thermo_sources = {str(i): o for i, o in enumerate(thermo_sources)}
         self.thermo_source_dTemps = {str(i): o for i, o in enumerate(thermo_source_dTemps)}
 
         if len(thermo_sources) != len(thermo_source_dTemps):
             raise ValueError  # need to raise a more informative error.
-        self.default_color = default_color
-        self.visible = visible
 
         if spread is None:
             spread = 0.1  # just making it so spread is my default of 0.1, if None is given.
         self.thermo_spread = spread
         self.generate_thermoscape()
 
-    def update_values(self):
-        pass
 
     def generate_thermoscape(self):
         '''

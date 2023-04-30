@@ -1051,7 +1051,7 @@ def buildInitDict():
             'hunger_gain': {'v': 0.0, 'lim': (0.0, 1.0), 'symbol': sub('G', 'H'),
                             'k': 'G_H', 'label': 'hunger sensitivity to reserve reduction',
                             'h': 'The sensitivy of the hunger drive in deviations of the DEB reserve density.'},
-            'assimilation_mode': {'dtype': str, 'v': 'gut', 'vs': ['sim', 'gut', 'deb'],
+            'assimilation_mode': {'dtype': str, 'v': 'gut', 'vs': ['gut','sim', 'deb'],
                                   'symbol': sub('m', 'ass'), 'k': 'ass_mod',
                                   'h': 'The method used to calculate the DEB assimilation energy flow.'},
             'DEB_dt': {'lim': (0.0, 1000.0), 'disp': 'DEB timestep (sec)',

@@ -4,6 +4,7 @@ DEB pipeline from literature
 import json
 import os
 import numpy as np
+import param
 
 from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
@@ -22,36 +23,42 @@ Larvae were reared from egg-hatch to mid- third-instar (96±2h post-hatch) in 25
 '''
 
 
-class DEB:
-    def __init__(self, id='DEB model', species='default', steps_per_day=24 * 60, cv=0, T=298.15, eb=1.0, substrate=None,
-                 aging=False, print_output=False, starvation_strategy=False, assimilation_mode='deb', save_dict=True,
-                 save_to=None,V_bite=0.0005, base_hunger=0.5, hunger_gain=0, hunger_as_EEB=False, hours_as_larva=0,
-                 simulation=True, use_gut=True,
-                 intermitter=None, gut_params=None, **kwargs):
-        # raise
+class DEB(param.Parameterized):
+    species = param.Selector(objects=['default', 'rover', 'sitter'],label='phenotype',
+                             doc='The phenotype/species-specific fitted DEB model to use.') # Drosophila model by default
+    assimilation_mode = param.Selector(objects=['gut','sim', 'deb'], label='assimilation mode',
+                             doc='The method used to calculate the DEB assimilation energy flow.')
+    starvation_strategy = param.Boolean(False, doc='Whether starvation strategy is active')
+    aging = param.Boolean(False, doc='Whether aging is active')
+    hunger_as_EEB = param.Boolean(False, doc='Whether the DEB-generated hunger drive informs the exploration-exploitation balance.')
+    use_gut = param.Boolean(True, doc='Whether to use the gut module.')
+    hunger_gain = param.Magnitude(0.0,label='hunger sensitivity to reserve reduction',
+                                  doc='The sensitivy of the hunger drive in deviations of the DEB reserve density.')
+    hours_as_larva = param.Number(0.0, doc='The age since eclosion')
+    steps_per_day = param.Integer(24 * 60, doc='How many iterations of the model per day')
+    substrate = param.ClassSelector(class_=deb.Substrate, default=deb.Substrate(), doc='The substrate where the agent feeds')
+
+
+    def __init__(self, id='DEB model', cv=0, T=298.15, eb=1.0,
+                 print_output=False, save_dict=True,
+                 save_to=None, V_bite=0.0005, base_hunger=0.5,
+                 simulation=True, intermitter=None, gut_params=None, **kwargs):
+        super().__init__(**kwargs)
 
         # Drosophila model by default
-        self.species = species
 
         # with open(reg.Path["DEB_MODS"][species]) as tfp:
-        with open(f'{reg.ROOT_DIR}/lib/model/deb/models/deb_{species}.csv') as tfp:
+        with open(f'{reg.ROOT_DIR}/lib/model/deb/models/deb_{self.species}.csv') as tfp:
             self.species_dict = json.load(tfp)
         self.__dict__.update(self.species_dict)
 
-        # DEB methods enabled
-        self.starvation_strategy = starvation_strategy
-        self.aging = aging
 
-        # Hunger drive parameters
-        self.hunger_gain = hunger_gain
-        self.hunger_as_EEB = hunger_as_EEB
 
         self.set_intermitter(intermitter, base_hunger)
 
         self.T = T
         self.L0 = 10 ** -10
-        self.hours_as_larva = hours_as_larva
-        self.sim_start = hours_as_larva
+        self.sim_start = self.hours_as_larva
         self.id = id
         self.cv = cv
         self.eb = eb
@@ -59,7 +66,6 @@ class DEB:
         self.save_to = save_to
         self.print_output = print_output
         self.simulation = simulation
-        self.assimilation_mode = assimilation_mode
         self.epochs = []
         self.epoch_fs = []
         self.epoch_qs = []
@@ -83,27 +89,19 @@ class DEB:
         self.V = self.L0 ** 3
         self.deb_p_A = 0
         self.sim_p_A = 0
-        # self.gut_p_A = 0
-        # print(substrate)
-        if substrate is None:
-            substrate = reg.get_null('substrate')
-        # print(substrate)
-        if isinstance(substrate, dict):
-            self.substrate = deb.Substrate(type=substrate['type'], quality=substrate['quality'])
-        else:
-            self.substrate = substrate
+
+
         self.base_f = self.substrate.get_f(K=self.K)
         self.f = self.base_f
         self.V_bite = V_bite
 
-        self.steps_per_day = steps_per_day
-        self.dt = 1 / steps_per_day
+        self.dt = 1 / self.steps_per_day
         if gut_params is None:
             gut_params = reg.get_null('gut')
             # gut_params=null_dict('gut_params')
 
-        self.gut = deb.Gut(deb=self, save_dict=save_dict, **gut_params) if use_gut else None
-        self.set_steps_per_day(steps_per_day)
+        self.gut = deb.Gut(deb=self, save_dict=save_dict, **gut_params) if self.use_gut else None
+        self.set_steps_per_day(self.steps_per_day)
         self.run_embryo_stage()
         self.predict_larva_stage(f=self.base_f)
 

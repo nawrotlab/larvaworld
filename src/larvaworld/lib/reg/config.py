@@ -145,57 +145,105 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
 
     return stored.group.LarvaGroup.entry(id=id, **kws)
 
-def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard',pref='',
-                navigator=False, expand=False, **kwargs):
-    if age==0.0 :
-        epochs={}
-    else :
-        if h_starved==0:
-            eps={
-                0 : {'start': 0.0, 'stop' : age, 'substate':{'type': substrate_type, 'quality': q}}
-            }
-        else :
+# def GTRvsS2(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard',pref='',
+#                 navigator=False, expand=False, **kwargs):
+#     if age==0.0 :
+#         epochs={}
+#     else :
+#         if h_starved==0:
+#             eps={
+#                 0 : {'start': 0.0, 'stop' : age, 'substate':{'type': substrate_type, 'quality': q}}
+#             }
+#         else :
+#             eps = {
+#                 0: {'start': 0.0, 'stop': age-h_starved, 'substate': {'type': substrate_type, 'quality': q}},
+#                 1: {'start': age-h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
+#             }
+#         epochs={}
+#         for id,kws in eps.items():
+#             epochs.update(stored.group.epoch.entry(id=id, **kws))
+#
+#
+#
+#
+#     kws0 = {
+#         'kwdic': {
+#             'distribution': {'N': N, 'scale': (0.005, 0.005)},
+#             'life_history': {'age': age,
+#                              'epochs': epochs,
+#                              },
+#         'odor':{}
+#         },
+#         'sample': sample,
+#     }
+#
+#     mcols = ['blue', 'red']
+#     mID0s = ['rover', 'sitter']
+#     lgs = {}
+#     for mID0, mcol in zip(mID0s, mcols):
+#         id=f'{pref}{mID0.capitalize()}'
+#
+#
+#
+#         if navigator :
+#             mID0=f'navigator_{mID0}'
+#         if expand:
+#             mID0=stored.getModel(mID0)
+#
+#
+#
+#         kws = {
+#             'default_color': mcol,
+#             'model': mID0,
+#             **kws0
+#         }
+#
+#         lgs.update(stored.group.LarvaGroup.entry(id, **kws))
+#     return aux.AttrDict(lgs)
+
+
+def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard', pref='',
+           navigator=False, expand=False, **kwargs):
+    if age == 0.0:
+        epochs = {}
+    else:
+        if h_starved == 0:
             eps = {
-                0: {'start': 0.0, 'stop': age-h_starved, 'substate': {'type': substrate_type, 'quality': q}},
-                1: {'start': age-h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
+                0: {'start': 0.0, 'stop': age, 'substate': {'type': substrate_type, 'quality': q}}
             }
-        epochs={}
-        for id,kws in eps.items():
+        else:
+            eps = {
+                0: {'start': 0.0, 'stop': age - h_starved, 'substate': {'type': substrate_type, 'quality': q}},
+                1: {'start': age - h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
+            }
+        epochs = {}
+        for id, kws in eps.items():
             epochs.update(stored.group.epoch.entry(id=id, **kws))
 
     kws0 = {
-        'kwdic': {
-            'distribution': {'N': N, 'scale': (0.005, 0.005)},
-            'life_history': {'age': age,
-                             'epochs': epochs,
-                             },
-        'odor':{}
-        },
+        'distribution': {'N': N, 'scale': (0.005, 0.005)},
+        'life_history': {'age': age, 'epochs': epochs},
         'sample': sample,
+        'expand': expand,
     }
 
     mcols = ['blue', 'red']
     mID0s = ['rover', 'sitter']
     lgs = {}
     for mID0, mcol in zip(mID0s, mcols):
-        id=f'{pref}{mID0.capitalize()}'
+        id = f'{pref}{mID0.capitalize()}'
 
-
-
-        if navigator :
-            mID0=f'navigator_{mID0}'
-        if expand:
-            mID0=stored.getModel(mID0)
-
-
+        if navigator:
+            mID0 = f'navigator_{mID0}'
 
         kws = {
+            'id': id,
             'default_color': mcol,
             'model': mID0,
             **kws0
         }
 
-        lgs.update(stored.group.LarvaGroup.entry(id, **kws))
+        lgs.update(full_lg(**kws))
     return aux.AttrDict(lgs)
 
 
@@ -391,33 +439,24 @@ class StoredConfRegistry :
                 raise ValueError('Unable to load dataset. Either refID or storage path must be provided. ')
         return dataset
 
-    def imitation_exp(self, refID, model='explorer', idx=0, N=None, duration=None, imitation=True, **kwargs):
+    def imitation_exp(self, refID, model='explorer', **kwargs):
         c = self.getRef(refID)
 
         kws = {
+            'id': 'ImitationGroup',
+            'expand': True,
             'sample': refID,
-            'model': self.getModel(model),
+            'model': model,
             'default_color': 'blue',
-            'distribution': {'N': N},
-            'imitation': imitation,
+            'distribution': {'N': c.N},
+            'imitation': True,
 
         }
-        lg = reg.get_null('LarvaGroup', **kws)
 
-        if imitation:
-            exp = 'imitation'
-            larva_groups = {
-                'ImitationGroup': lg}
-        else:
-            exp = 'evaluation'
-            larva_groups = {refID: lg}
 
-        if duration is None:
-            duration = c.duration / 60
-        exp_conf = reg.get_null('Exp', sim_params=reg.get_null('sim_params', dt=1 / c.fr, duration=duration),
-                                env_params=c.env_params, larva_groups=larva_groups,
+        exp_conf = reg.get_null('Exp', sim_params=reg.get_null('sim_params', dt=c.dt, duration=c.duration),
+                                env_params=c.env_params, larva_groups=full_lg(**kws),experiment='imitation',
                                 trials={}, enrichment=reg.par.base_enrich())
-        exp_conf['experiment'] = exp
         exp_conf.update(**kwargs)
         return exp_conf
 
@@ -490,11 +529,14 @@ class LarvaGroup(param.Parameterized):
         self.id=id
 
 
-    def entry(self, expand=False):
+    def entry(self, expand=False, as_entry=True):
         conf = nestedConf(p=self)
         if expand and conf.model is not None:
             conf.model = stored.getModel(conf.model)
-        return aux.AttrDict({self.id: conf})
+        if as_entry :
+            return aux.AttrDict({self.id: conf})
+        else:
+            return conf
 
     def __call__(self, parameter_dict={}):
         Nids=self.distribution.N
@@ -542,10 +584,10 @@ def nestedConf(p):
             d[k]=nestedConf(d[k])
     return d
 
-def full_lg(id=None, expand=False,**conf):
+def full_lg(id=None, expand=False,as_entry=True,**conf):
     try :
         lg=LarvaGroup(id=id,**conf)
-        return lg.entry(expand=expand)
+        return lg.entry(expand=expand, as_entry=as_entry)
     except :
         raise
 

@@ -1,37 +1,36 @@
 import numpy as np
+import param
 
 
-class Gut:
-    def __init__(self, deb, M_gm=10 ** -2, y_P_X=0.9, constant_M_c=True,
-                 k_abs=1, f_abs=1, k_dig=1, f_dig=1, M_c_per_cm2=5*10 ** -8, J_g_per_cm2=10 ** -2/(24*60*60), k_c=1, k_g=1,
-                 save_dict=True, **kwargs):
+class Gut(param.Parameterized):
+    M_gm = param.Number(10 ** -2, doc='gut capacity in C-moles for unit of gut volume')
+    r_w2l = param.Magnitude(0.2, doc='body width to length ratio')
+    r_gut_w = param.Magnitude(0.7, doc='gut width relative to body width')
+    y_P_X = param.Magnitude(0.9, doc='yield of product by food')
+    k_abs = param.Number(1.0, doc='rate constant for absorption : k_P * y_Pc')
+    f_abs = param.Magnitude(1.0, doc='scaled functional response for absorption : M_P/(M_P+M_K_P)')
+    k_dig = param.Number(1.0, doc='rate constant for digestion : k_X * y_Xg')
+    f_dig = param.Magnitude(1.0, doc='scaled functional response for digestion : M_X/(M_X+M_K_X)')
+    k_c = param.Number(1.0, doc='release rate of carriers')
+    k_g = param.Number(1.0, doc='decay rate of enzyme')
+    M_c_per_cm2 = param.Number(5 * 10 ** -8, doc='area specific amount of carriers in the gut per unit of gut surface')
+    J_g_per_cm2 = param.Number(10 ** -2 / (24 * 60 * 60), doc='secretion rate of enzyme per unit of gut surface per day')
+    constant_M_c = param.Boolean(True, doc='Whether M_c is kept constant')
 
+
+
+    def __init__(self, deb, save_dict=True,**kwargs):
+
+        super().__init__(**kwargs)
         self.deb = deb
         # Arbitrary parameters
-        self.M_gm = M_gm  # gut capacity in C-moles for unit of gut volume
-        r_w2l = 0.2  # body width to length ratio
-        r_gut_w = 0.7  # gut width relative to body width
-        r_gut_w2L=0.5*r_w2l * r_gut_w # gut radius relative to body length
+        r_gut_w2L=0.5*self.r_w2l * self.r_gut_w # gut radius relative to body length
         self.r_gut_V = np.pi * r_gut_w2L  # gut volume per unit of body volume
         self.r_gut_A = 2* np.pi * r_gut_w2L  # gut surface area per unit of body surface area
         self.A_g = self.r_gut_A * self.deb.L ** 2  # Gut surface area
         self.V_gm = self.r_gut_V * self.deb.V
 
-        # Constants
-        if f_dig is None :
-            f_dig=self.deb.base_f
-        if k_dig is None:
-            k_dig = self.deb.kap_X
-        self.k_dig = k_dig  # rate constant for digestion : k_X * y_Xg
-        self.f_dig = f_dig  # scaled functional response for digestion : M_X/(M_X+M_K_X)
-        self.k_abs = k_abs  # rate constant for absorption : k_P * y_Pc
-        self.f_abs = f_abs  # scaled functional response for absorption : M_P/(M_P+M_K_P)
-        self.M_c_per_cm2 = M_c_per_cm2  # area specific amount of carriers in the gut per unit of gut surface
-        self.J_g_per_cm2 = J_g_per_cm2  # secretion rate of enzyme per unit of gut surface per day
-        self.k_c = k_c  # release rate of carriers
-        self.k_g = k_g  # decay rate of enzyme
-        self.y_P_X = y_P_X  # yield of product by food
-        self.constant_M_c = constant_M_c  # yield of product by food
+
         self.M_c_max = self.M_c_per_cm2 * self.A_g  # amount of carriers in the gut surface
         self.J_g = self.J_g_per_cm2 * self.A_g  # total secretion rate of enzyme in the gut surface
 
@@ -64,7 +63,6 @@ class Gut:
         self.V_gm = self.r_gut_V * self.deb.V
         self.M_c_max = self.M_c_per_cm2 * self.A_g  # amount of carriers in the gut surface
         self.J_g = self.J_g_per_cm2 * self.A_g # total secretion rate of enzyme in the gut surface
-        # self.M_c = self.M_c_max
 
         if V_X > 0:
             self.Nfeeds += 1
@@ -186,58 +184,6 @@ class Gut:
     def Cmax(self):  # in mol
         return self.M_gm * self.V_gm
 
-    # def init_dict(self):
-    #     self.dict_keys = [
-    #         'M_gut',
-    #         'M_ingested',
-    #         'M_absorbed',
-    #         'M_faeces',
-    #         'M_not_digested',
-    #         'M_not_absorbed',
-    #         'R_faeces',
-    #         'R_absorbed',
-    #         'R_not_digested',
-    #         'gut_occupancy',
-    #         'gut_p_A',
-    #         'gut_f',
-    #         'gut_p_A_deviation',
-    #         'M_X',
-    #         'M_P',
-    #         'M_Pu',
-    #         'M_g',
-    #         'M_c',
-    #         'R_M_c',
-    #         'R_M_g',
-    #         'R_M_X_M_P',
-    #     ]
-    #     return {k: [] for k in self.dict_keys}
-    #
-    # def update_dict(self):
-    #     gut_dict_values = [
-    #         self.M,
-    #         self.ingested_mass('mg'),
-    #         self.absorbed_mass('mg'),
-    #         self.M_faeces,
-    #         self.M_not_digested,
-    #         self.M_not_absorbed,
-    #         self.R_faeces,
-    #         self.R_absorbed,
-    #         self.R_not_digested,
-    #         self.occupancy,
-    #         self.p_A / self.deb.V,
-    #         self.f,
-    #         self.p_A / self.deb.deb_p_A,
-    #         self.M_X,
-    #         self.M_P,
-    #         self.M_Pu,
-    #         self.M_g,
-    #         self.M_c,
-    #         self.R_M_c,
-    #         self.R_M_g,
-    #         self.R_M_X_M_P,
-    #     ]
-    #     for k, v in zip(self.dict_keys, gut_dict_values):
-    #         self.dict[k].append(v)
     def init_dict(self):
         self.dict_keys = [
             'R_absorbed',
@@ -276,27 +222,6 @@ class Gut:
         ]
         for k, v in zip(self.dict_keys, gut_dict_values):
             self.dict[k].append(v)
-
-    # @property
-    # def X(self):
-    #     X = self.gut_X / self.V if self.V > 0 else 0
-    #     return X
-
-    # @property
-    # def f(self):
-    #     return self.X / (self.deb.K + self.X)
-
-    # def intake_as_body_volume_ratio(self, V, percent=True):
-    #     r = self.ingested_volume() / V
-    #     if percent :
-    #         r*=100
-    #     return r
-
-    # def intake_as_gut_volume_ratio(self, V, percent=True):
-    #     r =  self.ingested_volume() / (self.V_gm*V)
-    #     if percent :
-    #         r*=100
-    #     return r
 
     def ingested_mass(self, unit='g'):
         m = self.mol_ingested * self.deb.w_X
