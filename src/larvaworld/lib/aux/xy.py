@@ -91,8 +91,9 @@ def generate_xy_distro(mode, shape, N, loc=(0.0, 0.0), scale=(0.0, 0.0), area=No
 def generate_xyNor_distro(d):
     N = d.N
     a1, a2 = np.deg2rad(d.orientation_range)
-    ors = np.random.uniform(low=a1, high=a2, size=N).tolist()
-    ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
+    ors = (np.random.uniform(low=a1, high=a2, size=N)%(2*np.pi)).tolist()
+    ps = generate_xy_distro(N=N, mode=d.mode,shape=d.shape, loc=d.loc, scale=d.scale)
+    # ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
     return ps, ors
 
 

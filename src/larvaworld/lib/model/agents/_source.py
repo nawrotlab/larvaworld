@@ -8,11 +8,13 @@ from larvaworld.lib.model.deb.substrate import Substrate
 
 
 class Source(LarvaworldAgent):
-    def __init__(self, shape_vertices=None, can_be_carried=False, can_be_displaced=False, shape='circle', **kwargs):
+    can_be_carried = param.Boolean(False,label='carriable', doc='Whether the source can be carried around.')
+    can_be_displaced = param.Boolean(False,label='displaceable', doc='Whether the source can be displaced by wind/water.')
+
+
+    def __init__(self, shape_vertices=None, shape='circle', **kwargs):
         super().__init__(**kwargs)
         self.shape_vertices = shape_vertices
-        self.can_be_carried = can_be_carried
-        self.can_be_displaced = can_be_displaced
         self.is_carried_by = None
 
         # # put all agents into same group (negative so that no collisions are detected)

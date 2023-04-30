@@ -102,9 +102,9 @@ def grouped_exp_dic():
 
     d0={
         'tethered': {'env': 'focus', 'dur':30.0,
-                     'l' : reg.lg(mID='immobile', N=1, ors=[90.0, 90.0])},
+                     'l' : reg.lg(mID='immobile', N=1, ors=(90.0, 90.0))},
         'focus': {
-            'l' : reg.lg(mID='Levy', N=1, ors=[90.0, 90.0])},
+            'l' : reg.lg(mID='Levy', N=1, ors=(90.0, 90.0))},
         'dish': {
             'l' : reg.lg(mID='loco_default', N=25, s=0.02)},
         'dispersion': {'env': 'arena_200mm',
@@ -147,7 +147,7 @@ def grouped_exp_dic():
             'anemotaxis': anemo_exp('anemotaxis',env= 'windy_arena', dur=0.5, l=reg.lg(mID='nengo_explorer', N=4)),
             'anemotaxis_bordered': anemo_exp('anemotaxis_bordered',env= 'windy_arena_bordered', dur=0.5, l=reg.lg(mID='nengo_explorer', N=4)),
             'puff_anemotaxis_bordered': anemo_exp('puff_anemotaxis_bordered',env= 'puff_arena_bordered', dur=0.5, l=reg.lg(mID='nengo_explorer', N=4)),
-            'single_puff': chemanemo_exp('single_puff',env= 'single_puff', dur=2.5, l=reg.lg(mID='nengo_explorer', N=20, sample='Puff.Starved')),
+            'single_puff': chemanemo_exp('single_puff',env= 'single_puff', dur=2.5, l=reg.lg(mID='nengo_explorer', N=20, sample='Coaster.Starved')),
         },
         'thermotaxis': {
             'thermotaxis': thermo_exp('thermotaxis', env='thermo_arena', l=reg.lg(mID='thermo_navigator', N=10)),

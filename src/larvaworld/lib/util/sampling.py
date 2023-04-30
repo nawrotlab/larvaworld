@@ -160,8 +160,7 @@ def generate_agentGroup(gID, Nids,imitation=False, distribution=None, **kwargs):
     if not imitation:
 
         if distribution is not None :
-            from larvaworld.lib.aux import xy
-            ps, ors = xy.generate_xyNor_distro(distribution)
+            ps, ors = aux.generate_xyNor_distro(distribution)
         else :
             ps = [(0.0, 0.0) for j in range(Nids)]
             ors = [0.0 for j in range(Nids)]
@@ -170,6 +169,8 @@ def generate_agentGroup(gID, Nids,imitation=False, distribution=None, **kwargs):
     else:
         ids, ps, ors, all_pars = imitateRef(Nids=Nids, **kwargs)
     return ids, ps, ors, all_pars
+
+
 
 
 def generate_agentConfs(larva_groups, parameter_dict={}):

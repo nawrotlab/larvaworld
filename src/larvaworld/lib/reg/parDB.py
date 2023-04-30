@@ -324,7 +324,7 @@ def buildInitDict():
             },
         })
         d['spatial_distro'] = {
-            'mode': {'dtype': str, 'v': 'normal', 'vs': ['normal', 'periphery', 'uniform', 'grid'],
+            'mode': {'dtype': str, 'v': 'normal', 'vs': ['uniform','normal', 'periphery',  'grid'],
                      'disp': 'placing',
                      'h': 'The wa to place agents in the distribution shape.'},
             'shape': {'dtype': str, 'v': 'circle', 'vs': ['circle', 'rect', 'oval'],

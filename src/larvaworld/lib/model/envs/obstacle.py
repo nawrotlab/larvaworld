@@ -5,19 +5,19 @@ from shapely.affinity import affine_transform
 from shapely import geometry
 
 from larvaworld.lib import aux
+from larvaworld.lib.model import Entity
 
 
-class Obstacle(param.Parameterized):
-    color = param.Color('black', doc='The default color of the object')
+
+
+class Obstacle(Entity):
     width = param.Number(0.001, bounds=(0, None), softbounds=(0, 10), doc='The width of the Obstacle')
 
-    def __init__(self, vertices, edges, unique_id=None, **kwargs):
+    def __init__(self, vertices, edges, **kwargs):
         super().__init__(**kwargs)
         self.vertices = vertices
         self.edges = edges
-        self.unique_id = unique_id
 
-        self.selected = False
     def draw(self, viewer):
         viewer.draw_polyline(vertices=self.vertices,color=self.color,width=self.width,closed=True)
 
@@ -55,8 +55,7 @@ class Wall(Obstacle):
 
 
 class Border(Obstacle):
-    def __init__(self, points=None, unique_id='Border', width=0.001, default_color='black'):
-        self.width = width
+    def __init__(self, points=None, **kwargs):
         self.points = points
         self.border_xy, self.border_lines = self.define_lines(points)
         edges = []
@@ -68,8 +67,7 @@ class Border(Obstacle):
             edges.append([point1, point2])
 
 
-        self.selected = False
-        super().__init__(vertices, edges, color=default_color, unique_id =unique_id)
+        super().__init__(vertices, edges, **kwargs)
 
     def define_lines(self, points, s=1):
         lines = [geometry.LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
@@ -87,7 +85,6 @@ class Border(Obstacle):
     def contained(self, p):
         return any([l.distance(geometry.Point(p)) < self.width for l in self.border_lines])
 
-    def set_id(self, id):
-        self.unique_id = id
+
 
 

@@ -123,9 +123,16 @@ def lgs(mIDs, ids=None, cs=None,**kwargs):
 
 def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors=(0.0, 360.0),
        s=(0.0, 0.0), mID='explorer',age=0.0, epochs={},  o=None,sample = None, expand=False, **kwargs):
-    if id is None :
-        id=mID
-    m=mID if not expand else stored.getModel(mID)
+
+    if mID is not None :
+        m = mID if not expand else stored.getModel(mID)
+        if id is None:
+            id=mID
+    else :
+        m=None
+    if id is None:
+        id='LarvaGroup'
+
     if type(s) == float:
         s = (s, s)
     kws = {'kwdic': {
@@ -138,7 +145,7 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
 
     return stored.group.LarvaGroup.entry(id=id, **kws)
 
-def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='None.150controls', substrate_type='standard',pref='',
+def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard',pref='',
                 navigator=False, expand=False, **kwargs):
     if age==0.0 :
         epochs={}
@@ -422,11 +429,11 @@ stored=StoredConfRegistry()
 
 class Spatial_Distro(param.Parameterized):
     shape = param.Selector(objects=['circle', 'rect', 'oval'], doc='The shape of the spatial distribution')
-    mode = param.Selector(objects=['normal', 'periphery', 'uniform', 'grid'],
+    mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],
                     doc='The way to place agents in the distribution shape')
-    N = param.Integer(30, bounds=(0, None), softbounds=(0, 100), doc='The number of agents in the group')
-    loc = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1), doc='The xy coordinates of the distribution center')
-    scale = param.Range(default=(0.0, 0.0), doc='The spread in x,y')
+    N = param.Integer(default=30, bounds=(0, None), softbounds=(0, 100), doc='The number of agents in the group')
+    loc = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The xy coordinates of the distribution center')
+    scale = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The spread in x,y')
 
     def __call__(self):
         return aux.generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
@@ -445,21 +452,100 @@ class Spatial_Distro(param.Parameterized):
         # return ps
 
 
+
 class Larva_Distro(Spatial_Distro):
-    orientation_range = param.Range(default=(0.0, 360.0), bounds=(0.0, 360.0), step=1,
+    orientation_range = param.Range(default=(0.0, 360.0), bounds=(-360.0, 360.0), step=1,
                               doc='The range of larva body orientations to sample from, in degrees')
 
     def __call__(self):
         return aux.generate_xyNor_distro(self)
 
 
+from larvaworld.lib.model import Odor, Life
+
 class LarvaGroup(param.Parameterized):
-    from larvaworld.lib.model import Odor, Life
+    model = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.ModelIDs, doc='The model configuration ID')
     default_color = param.Color('black', doc='The default color of the group')
+    odor = param.ClassSelector(class_=Odor, default=Odor(), doc='The odor of the agent')
+    distribution = param.ClassSelector(class_=Larva_Distro, default=Larva_Distro(),
+                                       doc='The spatial distribution of the group agents')
+    life_history = param.ClassSelector(class_=Life, default=Life(), doc='The life history of the group agents')
+    sample = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.RefIDs, doc='The ID of a reference dataset to sample from')
     imitation = param.Boolean(default=False, doc='Whether to imitate the reference dataset.')
 
-    model = param.Selector(default='explorer', objects=stored.ModelIDs, doc='The model configuration ID')
-    sample = param.Selector(default=None, objects=stored.RefIDs, doc='The ID of a reference dataset to sample from')
-    odor = param.ClassSelector(class_=Odor, default=Odor(), doc='The odor of the agent')
-    distribution = param.ClassSelector(class_=Larva_Distro, default=Larva_Distro(), doc='The spatial distribution of the group agents')
-    life_history = param.ClassSelector(class_=Life, default=Life(), doc='The life history of the group agents')
+
+
+    def __init__(self,id=None,**kwargs):
+        d = self.param.objects()
+        for k, p in d.items():
+            if type(p) == param.ClassSelector:
+                if k in kwargs.keys() and not isinstance(kwargs[k], p.class_):
+                    kwargs[k] = p.class_(**kwargs[k])
+        super().__init__(**kwargs)
+        if id is None:
+            if self.model is not None :
+                id = self.model
+            else :
+                id = 'LarvaGroup'
+        self.id=id
+
+
+    def entry(self, expand=False):
+        conf = nestedConf(p=self)
+        if expand and conf.model is not None:
+            conf.model = stored.getModel(conf.model)
+        return aux.AttrDict({self.id: conf})
+
+    def __call__(self, parameter_dict={}):
+        Nids=self.distribution.N
+        if self.model is not None:
+            m=stored.getModel(self.model)
+        else :
+            m=None
+        kws={
+            'm' : m,
+            'refID' : self.sample,
+            'parameter_dict' : parameter_dict,
+            'Nids' : Nids,
+        }
+
+        if not self.imitation:
+            ps, ors = aux.generate_xyNor_distro(self.distribution)
+            ids = [f'{self.id}_{i}' for i in range(Nids)]
+            all_pars, refID = util.sampleRef(**kws)
+        else:
+            ids, ps, ors, all_pars = util.imitateRef(**kws)
+        confs = []
+        for id, p, o, pars in zip(ids, ps, ors, all_pars):
+            conf = {
+                'pos': p,
+                'orientation': o,
+                'default_color': self.default_color,
+                'unique_id': id,
+                'group': self.id,
+                'odor': self.odor,
+                'life_history': self.life_history,
+                **pars
+            }
+            confs.append(conf)
+        return confs
+
+
+
+
+
+def nestedConf(p):
+    d=aux.AttrDict(p.param.values())
+    d.pop('name')
+    for k, p in p.param.objects().items():
+        if type(p) == param.ClassSelector:
+            d[k]=nestedConf(d[k])
+    return d
+
+def full_lg(id=None, expand=False,**conf):
+    try :
+        lg=LarvaGroup(id=id,**conf)
+        return lg.entry(expand=expand)
+    except :
+        raise
+
