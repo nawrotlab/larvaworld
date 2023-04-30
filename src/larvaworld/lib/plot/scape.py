@@ -30,7 +30,7 @@ def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims
     env = c.env_params
     source = list(env.food_params.source_units.values())[0]
     a0, b0 = source.pos
-    oP, oS = source.odor.odor_intensity, source.odor.odor_spread
+    oP, oS = source.odor.intensity, source.odor.spread
     oD = multivariate_normal([0, 0], [[oS, 0], [0, oS]])
     oM = oP / oD.pdf([0, 0])
     if col_max is None:

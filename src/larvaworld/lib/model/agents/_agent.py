@@ -1,20 +1,28 @@
 import agentpy
 import numpy as np
+import param
 from scipy.stats import multivariate_normal
 from shapely import geometry
 
-
+from larvaworld.lib.model import Odor
 from larvaworld.lib.screen.rendering import InputBox
 from larvaworld.lib import aux
 
 
 
 
-class LarvaworldAgent(agentpy.Agent):
+class LarvaworldAgent(param.Parameterized, agentpy.Agent):
     """LarvaworldAgent class that inherits from agentpy.Agent."""
 
-    def __init__(self, unique_id: str, model=None, pos=None, default_color='black', radius=None, visible=True,
-                 odor=None, regeneration=False, regeneration_pos=None, group='larvaworld_agent', *args, **kwargs):
+    group = param.String(None, doc='The unique ID of the agent group')
+    default_color = param.Color('black', doc='The default color of the agent')
+    radius = param.Number(0.003, bounds=(0, None), softbounds=(0, 0.1), step=0.001,
+                    doc='The spatial radius of the source in meters')
+    pos = param.NumericTuple(default=(0.0, 0.0), doc='The xy spatial position coordinates')
+    odor = param.ClassSelector(class_=Odor, default=Odor(), doc='The odor of the agent')
+
+
+    def __init__(self, unique_id: str, odor={},model=None, visible=True, regeneration=False, regeneration_pos=None, **kwargs):
         """
             Initialize a LarvaworldAgent instance.
 
@@ -31,26 +39,27 @@ class LarvaworldAgent(agentpy.Agent):
             - group: optional str representing the group of the agent.
             - *args, **kwargs: optional arguments to be passed to the super().__init__() method.
         """
-        super().__init__(model, *args, **kwargs)
+
+
+        param.Parameterized.__init__(self,odor=Odor(**odor), **kwargs)
+        agentpy.Agent.__init__(self, model=model)
+        # super().__init__(model, **kwargs)
         self.visible = visible
         self.selected = False
         self.unique_id = unique_id
-        self.group = group
-        self.base_odor_id = f'{group}_base_odor'
+        # self.group = group
+        self.base_odor_id = f'{self.group}_base_odor'
         self.gain_for_base_odor = 100
 
-        self.pos = pos
-        if type(default_color) == str:
-            default_color = aux.colorname2tuple(default_color)
-        self.default_color = default_color
+        # self.pos = pos
+        # if type(default_color) == str:
+        #     default_color = aux.colorname2tuple(default_color)
+        # self.default_color = default_color
         self.color = self.default_color
-        self.radius = radius
-        if odor is None:
-            odor = {'odor_id': None, 'odor_intensity': None, 'odor_spread': None}
-        self.odor=odor
 
-        self.odor_id = odor['odor_id']
-        self.set_odor_dist(odor['odor_intensity'], odor['odor_spread'])
+
+        self.odor_id = self.odor.id
+        self.set_odor_dist(self.odor.intensity, self.odor.spread)
 
         self.regeneration = regeneration
         self.regeneration_pos = regeneration_pos

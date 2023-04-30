@@ -1,4 +1,5 @@
 import numpy as np
+import param
 #import pygame
 from shapely.affinity import affine_transform
 from shapely import geometry
@@ -6,13 +7,14 @@ from shapely import geometry
 from larvaworld.lib import aux
 
 
-class Obstacle:
+class Obstacle(param.Parameterized):
+    color = param.Color('black', doc='The default color of the object')
+    width = param.Number(0.001, bounds=(0, None), softbounds=(0, 10), doc='The width of the Obstacle')
 
-    def __init__(self, vertices, edges, width=0.001, color='black', unique_id=None):
+    def __init__(self, vertices, edges, unique_id=None, **kwargs):
+        super().__init__(**kwargs)
         self.vertices = vertices
         self.edges = edges
-        self.width = width
-        self.color = color
         self.unique_id = unique_id
 
         self.selected = False

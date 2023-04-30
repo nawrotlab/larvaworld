@@ -382,7 +382,7 @@ class DoublePatch_Essay(Essay):
 
         kws0 = {'radius': self.patch_radius, 'default_color': 'green', 'amount': 0.1,
                 'type': type, 'quality': q, 'group': 'Patch',
-                'odor': {'odor_id': 'Odor', 'odor_intensity': Cpeak, 'odor_spread': Cscale}
+                'odor': {'id': 'Odor', 'intensity': Cpeak, 'spread': Cscale}
 
                 }
 
@@ -578,9 +578,9 @@ class Chemotaxis_Essay(Essay):
                                                   'Source': reg.get_null('source', pos=(0.0, 0.0),
                                                                           group='Source',
                                                                           odor=reg.get_null('odor',
-                                                                                             odor_id='Odor',
-                                                                                             odor_intensity=2.0,
-                                                                                             odor_spread=0.0002)
+                                                                                             id='Odor',
+                                                                                             intensity=2.0,
+                                                                                             spread=0.0002)
                                                                           ),
                                               }
                                               }, **kws),
@@ -603,9 +603,9 @@ class Chemotaxis_Essay(Essay):
                                                   'Source': reg.get_null('source', pos=(0.04, 0.0),
                                                                           group='Source',
                                                                           odor=reg.get_null('odor',
-                                                                                             odor_id='Odor',
-                                                                                             odor_intensity=8.0,
-                                                                                             odor_spread=0.0004)),
+                                                                                             id='Odor',
+                                                                                             intensity=8.0,
+                                                                                             spread=0.0004)),
                                               }
                                               }, **kws),
             'lgs': {

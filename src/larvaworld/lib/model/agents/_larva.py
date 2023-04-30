@@ -1,19 +1,17 @@
 import random
 from copy import deepcopy
 import numpy as np
+import param
 
-from larvaworld.lib import aux
+from larvaworld.lib import reg, aux
 from larvaworld.lib.model.agents import LarvaworldAgent
 
 
 class Larva(LarvaworldAgent):
-    def __init__(self, model,unique_id=None, pos=None,orientation=None, **kwargs):
-
-        if pos is None:
-            pos = (0.0, 0.0)
+    def __init__(self, model,unique_id=None, orientation=None, **kwargs):
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
-        super().__init__(unique_id=unique_id, model=model,pos=pos,**kwargs)
+        super().__init__(unique_id=unique_id, model=model,**kwargs)
         self.initial_pos = self.pos
         self.trajectory = [self.initial_pos]
         if orientation is None:
@@ -245,7 +243,6 @@ class LarvaMotile(Larva):
 
     def complete_step(self):
         pass
-
 
 
 

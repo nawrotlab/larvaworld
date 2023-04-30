@@ -13,12 +13,12 @@ def get_conf(odor_mode, puff_mode, wind_mode):
     if odor_mode == 'diffusion_odorscape':
         odorscape = reg.get_null('odorscape', odorscape='Diffusion', grid_dims=(41, 41), gaussian_sigma=(0.95, 0.95),
                                   evap_const=0.9)
-        oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=300.0, odor_spread=0.1)
-        oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=300.0, odor_spread=0.1)
+        oR = reg.get_null('odor', id='Odor_R', intensity=300.0, spread=0.1)
+        oL = reg.get_null('odor', id='Odor_L', intensity=300.0, spread=0.1)
     elif odor_mode == 'gaussian_odorscape':
         odorscape = reg.get_null('odorscape', odorscape='Gaussian')
-        oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=2.0, odor_spread=0.0002)
-        oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=2.0, odor_spread=0.0002)
+        oR = reg.get_null('odor', id='Odor_R', intensity=2.0, spread=0.0002)
+        oL = reg.get_null('odor', id='Odor_L', intensity=2.0, spread=0.0002)
     else:
         raise ValueError('Not implemented')
     sus = {

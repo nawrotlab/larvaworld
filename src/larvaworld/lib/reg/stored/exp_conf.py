@@ -7,11 +7,11 @@ def grouped_exp_dic():
 
 
     def oG(c=1, id='Odor'):
-        return reg.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+        return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
 
 
     def oD(c=1, id='Odor'):
-        return reg.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
+        return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
 
 
 

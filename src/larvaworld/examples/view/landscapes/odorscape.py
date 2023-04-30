@@ -7,11 +7,11 @@ exp='Odorscape visualization'
 
 
 def oG(c=1, id='Odor'):
-    return reg.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+    return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
 
 
 def oD(c=1, id='Odor'):
-    return reg.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
+    return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
 
 
 def get_conf(media_name):
@@ -19,14 +19,10 @@ def get_conf(media_name):
         odorscape = reg.get_null('odorscape', odorscape='Diffusion', gaussian_sigma=(0.95, 0.5),evap_const=0.9)
         oR = oD(id='Odor_R')
         oL = oD(id='Odor_L')
-        # oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=300.0, odor_spread=0.1)
-        # oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=300.0, odor_spread=0.1)
     elif media_name == 'gaussian_odorscape':
         odorscape = reg.get_null('odorscape', odorscape='Gaussian')
         oR = oG(id='Odor_R')
         oL = oG(id='Odor_L')
-        # oR = reg.get_null('odor', odor_id='Odor_R', odor_intensity=2.0, odor_spread=0.0002)
-        # oL = reg.get_null('odor', odor_id='Odor_L', odor_intensity=2.0, odor_spread=0.0002)
     else :
         raise ValueError ('Not implemented')
     sus = {

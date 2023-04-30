@@ -39,7 +39,7 @@ class BaseScreenManager :
         try:
             return self.v._transform(pos)
         except:
-            X, Y = self.model.space.dims * self.s
+            X, Y = np.array(self.model.space.dims) * self.s
             X0, Y0 = self.window_dims
 
             p = pos[0] * 2 / X, pos[1] * 2 / Y

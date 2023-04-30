@@ -1,18 +1,27 @@
 import agentpy
 import numpy as np
-from shapely import geometry
+import param
+from shapely.geometry import Point,Polygon
 
 from larvaworld.lib import reg, aux
 
 
-class Arena(agentpy.Space):
-    def __init__(self, model, dims, shape= 'rectangular',vertices=None, torus=False):
-        X, Y = self.dims = np.array(dims)
+
+class Arena(param.Parameterized, agentpy.Space):
+    dims = param.Range(default=(0.1, 0.1), bounds=(0, None), softbounds=(0, 1), step=0.01, doc='The arena dimensions in meters')
+    geometry = param.Selector(default='rectangular', objects=['circular', 'rectangular'], doc='The arena shape')
+    torus = param.Boolean(default=False, doc='Whether to allow a toroidal space')
+
+
+    def __init__(self, model, vertices=None,**kwargs):
+        param.Parameterized.__init__(self, **kwargs)
+
+        X, Y = self.dims
         if vertices is None:
-            if shape == 'circular':
+            if self.geometry == 'circular':
                 # This is a circle_to_polygon shape from the function
                 vertices = aux.circle_to_polygon(60, X / 2)
-            elif shape == 'rectangular':
+            elif self.geometry == 'rectangular':
                 # This is a rectangular shape
                 vertices = np.array([(-X / 2, -Y / 2),
                                    (-X / 2, Y / 2),
@@ -23,9 +32,9 @@ class Arena(agentpy.Space):
         self.vertices =vertices
         self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         k = 0.96
-        self.polygon = geometry.Polygon(self.vertices * k)
-        self.edges = [[geometry.Point(x1,y1), geometry.Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
-        super().__init__(model=model, torus=torus, shape=dims)
+        self.polygon = Polygon(self.vertices * k)
+        self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
+        agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
 
         self.stable_source_positions=[]
         self.displacable_source_positions=[]
@@ -33,25 +42,6 @@ class Arena(agentpy.Space):
         self.stable_sources=[]
         self.accessible_sources =None
         self.accessible_sources_sorted = None
-    # @staticmethod
-    # def _border_behavior(position, shape, torus):
-    #     # Border behavior
-    #
-    #     # Connected - Jump to other side
-    #     if torus:
-    #         for i in range(len(position)):
-    #             while position[i] > shape[i]/2:
-    #                 position[i] -= shape[i]
-    #             while position[i] < -shape[i]/2:
-    #                 position[i] += shape[i]
-    #
-    #     # Not connected - Stop at border
-    #     else:
-    #         for i in range(len(position)):
-    #             if position[i] > shape[i]/2:
-    #                 position[i] = shape[i]/2
-    #             elif position[i] < -shape[i]/2:
-    #                 position[i] = -shape[i]/2
 
     def place_agent(self, agent, pos):
         pos = pos if isinstance(pos, np.ndarray) else np.array(pos)
@@ -88,7 +78,6 @@ class Arena(agentpy.Space):
         return self.sources[np.where(aux.eudi5x(self.source_positions, pos) <= radius)].tolist()
 
     def accessible_sources_multi(self, agents, positive_amount=True, return_closest=True):
-        # if self.accessible_sources_sorted is None and self.accessible_sources is None:
         self.source_positions_in_array()
         if positive_amount :
             idx=np.array([s.amount > 0 for s in self.sources])
@@ -99,18 +88,27 @@ class Arena(agentpy.Space):
         self.accessible_sources_sorted={a: {'sources' : self.sources[np.argsort(ds[i])], 'dsts': np.sort(ds[i])} for i,a in enumerate(agents)}
         if not return_closest:
             dic={a: dic['sources'][dic['dsts']<=a.radius].tolist() for a, dic in self.accessible_sources_sorted.items()}
-            # dic={a: self.sources[np.where(ds[i] <= a.radius)].tolist() for i,a in enumerate(agents)}
         else:
             dic={a: dic['sources'][0] if dic['dsts'][0]<=a.radius else None for a, dic in self.accessible_sources_sorted.items()}
-            # dic = {a: self.sources[np.argmin(ds[i])] if np.min(ds[i])<=a.radius else None for i, a in enumerate(agents)}
         self.accessible_sources = dic
-        # else :
-        #     if return_closest:
-        #         for a, dic in self.accessible_sources_sorted.items() :
-        #             for i in range(dic['sources'].shape[0]):
-        #                 dic['dsts'][i]=aux.eudis5(a.pos, dic['sources'][i].pos)
-        #                 if dic['dsts'][i] <= a.radius:
-        #                     self.accessible_sources[a]=dic['sources'][i]
-        #                     break
-        #             self.accessible_sources[a]=None
+
+    def draw(self):
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        x, y = np.array(self.dims) * 1000
+        if self.geometry == 'circular':
+            if x != y:
+                raise
+            arena = plt.Circle((0, 0), x / 2, edgecolor='black', facecolor='lightgrey', lw=3)
+        elif self.geometry == 'rectangular':
+            arena = plt.Rectangle((-x / 2, -y / 2), x, y, edgecolor='black', facecolor='lightgrey', lw=3)
+        else :
+            raise ValueError('Not implemented')
+        ax.add_patch(arena)
+        ax.set_xlim(-x, x)
+        ax.set_ylim(-y, y)
+        ax.set_xlabel('X (mm)')
+        ax.set_ylabel('Y (mm)')
+        plt.axis('equal')
+        plt.show()
 

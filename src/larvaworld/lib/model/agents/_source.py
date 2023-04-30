@@ -1,4 +1,5 @@
 import numpy as np
+import param
 from shapely import affinity, geometry, measurement
 
 from larvaworld.lib import aux
@@ -53,12 +54,18 @@ class Source(LarvaworldAgent):
                             self.model.delete_agent(self)
 
 
+
 class Food(Source):
-    def __init__(self, amount=1.0, quality=1.0, default_color='green', type='standard', **kwargs):
-        super().__init__(default_color=default_color, **kwargs)
-        self.initial_amount = amount
-        self.amount = self.initial_amount
-        self.substrate = Substrate(type=type, quality=quality)
+    amount = param.Number(0.0, bounds=(0, None), softbounds=(0, 10), step=0.01, doc='The food amount in the source')
+    substrate = param.ClassSelector(class_=Substrate, default=Substrate(), doc='The substrate of the source')
+
+    def __init__(self, quality=1.0, default_color='green', type='standard', **kwargs):
+
+
+        super().__init__(default_color=default_color,substrate = Substrate(type=type, quality=quality), **kwargs)
+        self.initial_amount = self.amount
+        # self.amount = self.initial_amount
+        # self.substrate = Substrate(type=type, quality=quality)
 
     def get_amount(self):
         return self.amount

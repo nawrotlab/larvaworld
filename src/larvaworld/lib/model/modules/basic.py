@@ -44,8 +44,8 @@ class Timer(param.Parameterized) :
 class Effector(Timer):
     input_noise = param.Number(default=0.0, label='input noise', doc='The noise applied at the input of the module.')
     output_noise = param.Number(default=0.0, label='output noise', doc='The noise applied at the output of the module.')
-    input_range = param.List(label='input range',doc='The input range of the module.')
-    output_range = param.List(label='output range',doc='The output range of the module.')
+    input_range = param.Range(label='input range',doc='The input range of the module.')
+    output_range = param.Range(label='output range',doc='The output range of the module.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

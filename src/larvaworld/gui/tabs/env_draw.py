@@ -39,9 +39,9 @@ class DrawEnvTab(gui_aux.DrawTab):
 
     def odor_ks(self, i):
         o = f'{i}_odor'
-        o0 = f'{o}_odor_id'
-        oM = f'{o}_odor_intensity'
-        oS = f'{o}_odor_spread'
+        o0 = f'{o}_id'
+        oM = f'{o}_intensity'
+        oS = f'{o}_spread'
         # To=f'TOGGLE_{o}'
         return o, o0, oM, oS
 
@@ -344,7 +344,7 @@ class DrawEnvTab(gui_aux.DrawTab):
                     units['figs'][prior_rect] = id
                     units['items'].update(current)
                     w[Uid].update(value=f'{S}_{len(units["items"].keys())}')
-                    w[f'{od}_odor_id'].update(value='')
+                    w[f'{od}_id'].update(value='')
                     c[self.Su].update(w, units['items'])
                 elif v[G] and sample_pars != {}:
                     id = v[Gid]
@@ -356,7 +356,7 @@ class DrawEnvTab(gui_aux.DrawTab):
                         w['out'].update(value=f'{o} group {id} placed at {P1}')
                         groups['items'].update(current)
                         w[Gid].update(value=f'{G}_{len(groups["items"].keys())}')
-                        w[f'{od}_odor_id'].update(value='')
+                        w[f'{od}_id'].update(value='')
                         figs = self.inspect_distro(**groups['items'][id], item=o)
                         for f in figs:
                             groups['figs'][f] = id
@@ -377,7 +377,7 @@ class DrawEnvTab(gui_aux.DrawTab):
                     w['out'].update(value=f"{o} group {id} placed at {P1}")
                     groups['items'].update(current)
                     w[Gid].update(value=f"{G}_{len(groups['items'].keys())}")
-                    w[f'{od}_odor_id'].update(value='')
+                    w[f'{od}_id'].update(value='')
                     figs = self.inspect_distro(**groups['items'][id], item=o)
                     for f in figs:
                         groups['figs'][f] = id

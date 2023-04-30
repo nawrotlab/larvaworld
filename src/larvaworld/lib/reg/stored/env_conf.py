@@ -10,12 +10,11 @@ def Env_dict() :
 
 
     def oG(c=1, id='Odor'):
-        return reg.get_null('odor', odor_id=id, odor_intensity=2.0 * c, odor_spread=0.0002 * np.sqrt(c))
+        return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
 
 
     def oD(c=1, id='Odor'):
-        return reg.get_null('odor', odor_id=id, odor_intensity=300.0 * c, odor_spread=0.1 * np.sqrt(c))
-        # return self.odor(i=300.0 * c, s=0.1 * np.sqrt(c), id=id)
+        return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
 
     def border(ps, c='black', w=0.01, id=None):
         b = reg.get_null('Border', points=ps, default_color=c, width=w)
@@ -89,9 +88,9 @@ def Env_dict() :
 
     def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None, torus=False):
         if type(arenaXY) == float:
-            arena = reg.get_null('arena', shape='circular', dims=(arenaXY, arenaXY), torus=torus)
+            arena = reg.get_null('arena', geometry='circular', dims=(arenaXY, arenaXY), torus=torus)
         elif type(arenaXY) == tuple:
-            arena = reg.get_null('arena', shape='rectangular', dims=arenaXY, torus=torus)
+            arena = reg.get_null('arena', geometry='rectangular', dims=arenaXY, torus=torus)
         else:
             raise
         if o == 'D':

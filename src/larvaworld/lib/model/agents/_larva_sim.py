@@ -116,7 +116,7 @@ class LarvaSim(LarvaBody, BaseController):
                 p1 = self.segs[i].global_rear_end - k * seg.seg_length / 2
                 seg.update_poseNvertices(p1, o1)
 
-        self.pos = self.global_midspine_of_body
+        self.pos = tuple(self.global_midspine_of_body)
         self.trajectory.append(self.pos)
         self.model.space.move_to(self, np.array(self.pos))
         self.cum_dst += self.dst

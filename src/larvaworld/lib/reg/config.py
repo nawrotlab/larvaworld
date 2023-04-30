@@ -215,7 +215,7 @@ class StoredConfRegistry :
         self.conf=aux.AttrDict({k: BaseType(k=k) for k in CONFTYPES})
 
     def ConfPath(self, conftype):
-        return reg.Path[conftype]
+        return Path[conftype]
 
     def get_dict(self, conftype):
         path=self.ConfPath(conftype)
@@ -416,3 +416,50 @@ class StoredConfRegistry :
 
 
 stored=StoredConfRegistry()
+
+
+
+
+class Spatial_Distro(param.Parameterized):
+    shape = param.Selector(objects=['circle', 'rect', 'oval'], doc='The shape of the spatial distribution')
+    mode = param.Selector(objects=['normal', 'periphery', 'uniform', 'grid'],
+                    doc='The way to place agents in the distribution shape')
+    N = param.Integer(30, bounds=(0, None), softbounds=(0, 100), doc='The number of agents in the group')
+    loc = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1), doc='The xy coordinates of the distribution center')
+    scale = param.Range(default=(0.0, 0.0), doc='The spread in x,y')
+
+    def __call__(self):
+        return aux.generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
+                                      scale=self.scale)
+
+    def draw(self):
+        import matplotlib.pyplot as plt
+        ps = aux.generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
+                                    scale=self.scale)
+        ps = np.array(ps)
+        plt.scatter(ps[:, 0], ps[:, 1])
+        # plt.axis('equal')
+        plt.xlim(-0.2, 0.2)
+        plt.ylim(-0.2, 0.2)
+        plt.show()
+        # return ps
+
+
+class Larva_Distro(Spatial_Distro):
+    orientation_range = param.Range(default=(0.0, 360.0), bounds=(0.0, 360.0), step=1,
+                              doc='The range of larva body orientations to sample from, in degrees')
+
+    def __call__(self):
+        return aux.generate_xyNor_distro(self)
+
+
+class LarvaGroup(param.Parameterized):
+    from larvaworld.lib.model import Odor, Life
+    default_color = param.Color('black', doc='The default color of the group')
+    imitation = param.Boolean(default=False, doc='Whether to imitate the reference dataset.')
+
+    model = param.Selector(default='explorer', objects=stored.ModelIDs, doc='The model configuration ID')
+    sample = param.Selector(default=None, objects=stored.RefIDs, doc='The ID of a reference dataset to sample from')
+    odor = param.ClassSelector(class_=Odor, default=Odor(), doc='The odor of the agent')
+    distribution = param.ClassSelector(class_=Larva_Distro, default=Larva_Distro(), doc='The spatial distribution of the group agents')
+    life_history = param.ClassSelector(class_=Life, default=Life(), doc='The life history of the group agents')

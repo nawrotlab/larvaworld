@@ -21,10 +21,10 @@ class EnvTab(gui_aux.GuiTab):
 
     def build(self):
         s2 = gui_aux.PadTable(self.Sg, dict_name='SourceGroup', index='Group ID', col_widths=[10, 3, 8, 7, 6],
-                              heading_dict={'N': 'distribution.N', 'color': 'default_color', 'odor': 'odor.odor_id',
+                              heading_dict={'N': 'distribution.N', 'color': 'default_color', 'odor': 'odor.id',
                                     'amount': 'amount'})
         s3 = gui_aux.PadTable(self.Su, dict_name='source', index='ID', col_widths=[10, 8, 8, 8],
-                              heading_dict={'color': 'default_color', 'odor': 'odor.odor_id', 'amount': 'amount'})
+                              heading_dict={'color': 'default_color', 'odor': 'odor.id', 'amount': 'amount'})
         s4 = gui_aux.PadTable(self.Bg, dict_name='border_list', index='ID', col_widths=[10, 8, 19],
                               heading_dict={'color': 'default_color', 'points': 'points'})
         s5 = gui_aux.PadDict('arena', header_width=23, after_header=[gui_aux.GraphButton('Button_Burn', 'RESET_ARENA',

@@ -208,10 +208,10 @@ def buildInitDict():
 
     def food(d):
         d['odor'] = {
-            'odor_id': pID('odorant', disp='ID'),
-            'odor_intensity': {'lim': (0.0, 10.0), 'disp': 'C peak',
+            'id': pID('odorant', disp='ID'),
+            'intensity': {'lim': (0.0, 10.0), 'disp': 'C peak',
                                'h': 'The peak concentration of the odorant in micromoles.'},
-            'odor_spread': {'lim': (0.0, 10.0), 'disp': 'spread',
+            'spread': {'lim': (0.0, 10.0), 'disp': 'spread',
                             'h': 'The spread of the concentration gradient around the peak.'}
         }
         # })
@@ -408,9 +408,9 @@ def buildInitDict():
                                'disp': 'X,Y (m)',
                                'vfunc': param.NumericTuple,
                                'h': 'The arena dimensions in meters.'},
-                'shape': {'dtype': str, 'v': 'circular', 'vs': ['circular', 'rectangular'],
-                                'disp': 'shape',
-                                'h': 'The arena shape.'},
+                'geometry': {'dtype': str, 'v': 'circular', 'vs': ['circular', 'rectangular'],
+                                'disp': 'geometrical shape',
+                                'h': 'The arena geometrical shape.'},
                 'torus':{**bF, 'h': 'Whether to allow a toroidal space.'}
             },
 
@@ -1360,7 +1360,6 @@ def buildDefaultDict(d0):
     return aux.AttrDict(dic)
 
 
-# @decorators.timeit
 class ParamClass:
     def __init__(self,func_dict,in_rad=True, in_m=True):
         self.func_dict = func_dict
@@ -1369,7 +1368,6 @@ class ParamClass:
         self.kdict = self.finalize_dict(self.dict_entries)
 
 
-    # @decorators.timeit
     def build(self, in_rad=True, in_m=True):
         self.dict = aux.AttrDict()
         self.dict_entries = []
@@ -1611,7 +1609,7 @@ class ParamClass:
 
         if func_v is None:
             def func_v(d):
-                s, e, c = d.step_data, d.endpoint_data, d.config
+                s, e, c = d.data
                 s[d_v]=aux.apply_per_level(s[b.d], aux.rate, dt=c.dt).flatten()
                 # s[d_v]=aux.comp_rate(s[b.d], c.dt)
 
@@ -1620,9 +1618,8 @@ class ParamClass:
                'func': func_v})
 
         def func_a(d):
-            s, e, c = d.step_data, d.endpoint_data, d.config
+            s, e, c = d.data
             s[d_a] = aux.apply_per_level(s[d_v], aux.rate, dt=c.dt).flatten()
-            # s[d_a]=aux.comp_rate(s[d_v], c.dt)
 
         self.add(
             **{'p': p_a, 'k': k_a, 'd': d_a, 'u': b.u / b_dt.u ** 2, 'sym': sym_a, 'disp': disp_a, 'required_ks': [k_v],
@@ -1634,7 +1631,7 @@ class ParamClass:
 
         def func(d):
             from larvaworld.lib.process.spatial import scale_to_length
-            s, e, c = d.step_data, d.endpoint_data, d.config
+            s, e, c = d.data
             scale_to_length(s, e, c, pars=[b.d], keys=None)
 
         kws = {

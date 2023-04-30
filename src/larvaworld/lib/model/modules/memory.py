@@ -177,7 +177,6 @@ class RemoteBrianModelMemory(Memory):
 
 
     def runRemoteModel(self, model_instance_id, odor_id, t_sim=100, t_warmup=0, concentration=1, **kwargs):
-        # odor_id: 0,1,2
         # T: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
         msg = LarvaMessage(self.sim_id, model_instance_id, odor_id=odor_id, odor_concentration=concentration,

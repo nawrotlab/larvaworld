@@ -1,3 +1,4 @@
+import param
 
 # Compound densities (g/cm**3)
 substrate_dict = {
@@ -67,12 +68,18 @@ substrate_dict = {
 
 }
 
-class Substrate:
-    def __init__(self, type='standard', quality=1.0):
+class Substrate(param.Parameterized):
+    type = param.Selector(default='standard', objects=['standard', 'agar', 'cornmeal', 'sucrose', 'PED_tracker'],
+                          doc='The type of substrate')
+    quality = param.Magnitude(1.0,
+                              doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.d_water = 1
         self.d_yeast_drop = 0.125 #g/cm**3 https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwi3iaeqipLxAhVPyYUKHTmpCqMQFjAAegQIAxAD&url=https%3A%2F%2Fwww.mdpi.com%2F2077-0375%2F11%2F3%2F182%2Fpdf&usg=AOvVaw1qDlMHxBPu73W8B1vZWn76
         self.V_drop = 0.05 # cm**3
-        self.quality = quality # cm**3
+        # self.quality = quality # cm**3
         # Molecular weights (g/mol)
         self.w_dict={
             'glucose' : 180.18,
@@ -102,7 +109,7 @@ class Substrate:
             'cornmeal': {'C' : 27, 'H' : 48, 'O' : 20, 'N' : 0},  # C27H48O20
             'water': {'C' : 0, 'H' : 2, 'O' : 1, 'N' : 0},
         }
-        self.d_dict= substrate_dict[type]
+        self.d_dict= substrate_dict[self.type]
         self.d = self.d_water + sum(list(self.d_dict.values()))
         self.C=self.get_C()
         self.X=self.get_X()
@@ -152,3 +159,19 @@ class Substrate:
         C=self.get_C(quality = quality)
         return X/C
 
+
+class Odor(param.Parameterized):
+    id = param.String(None, doc='The unique ID of the odorant')
+    intensity = param.Number(None, bounds=(0, None), softbounds=(0, 10),
+                       doc='The peak concentration of the odorant in micromoles')
+    spread = param.Number(None, bounds=(0, None), softbounds=(0, 10),
+                    doc='The spread of the concentration gradient around the peak')
+
+
+class Epoch(param.Parameterized):
+    time_range = param.Range(None, bounds=(0.0, 250.0), softbounds=(0.0, 100.0), doc='The beginning and end of the epoch in hours post-hatch.')
+    substrate = param.ClassSelector(class_=Substrate, default=Substrate(), doc='The substrate of the epoch')
+
+class Life(param.Parameterized):
+    age = param.Number(0.0, bounds=(0.0, 250.0), softbounds=(0.0, 100.0), doc='The larva age in hours post-hatch.')
+    epochs = param.Parameter({}, doc='The feeding epochs comprising life history.')

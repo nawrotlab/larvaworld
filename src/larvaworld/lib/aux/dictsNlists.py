@@ -106,13 +106,16 @@ class AttrDict(dict):
 
 def load_dict(file):
     try:
-        with open(file) as tfp:
-            d = json.load(tfp)
+        with open(file, 'rb') as tfp:
+            d = pickle.load(tfp)
+            # print('pickle load')
     except:
         try:
-            with open(file, 'rb') as tfp:
-                d = pickle.load(tfp)
+            with open(file) as tfp:
+                d = json.load(tfp)
+                # print('json load')
         except:
+
             d= {}
     return AttrDict(d)
 
@@ -120,14 +123,16 @@ def load_dict(file):
 def save_dict(d, file):
     if file is not None :
         try:
-            with open(file, "w") as fp:
-                json.dump(d, fp)
+            with open(file, 'wb') as fp:
+                pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+                # print('pickle save')
         except:
             try:
-                with open(file, 'wb') as fp:
-                    pickle.dump(d, fp, protocol=pickle.HIGHEST_PROTOCOL)
+                with open(file, "w") as fp:
+                    json.dump(d, fp)
+                    # print('json save')
+            except:
 
-            except :
                 raise
         return True
     else :

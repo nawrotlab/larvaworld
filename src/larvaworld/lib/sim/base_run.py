@@ -114,9 +114,9 @@ class BaseRun(agentpy.Model):
     def get_all_odors(self, larva_groups={}):
         fp=self.p.env_params.food_params
 
-        lg = [conf.odor.odor_id for conf in larva_groups.values()]
-        su = [conf.odor.odor_id for conf in fp.source_units.values()]
-        sg = [conf.odor.odor_id for conf in fp.source_groups.values()]
+        lg = [conf.odor.id for conf in larva_groups.values()]
+        su = [conf.odor.id for conf in fp.source_units.values()]
+        sg = [conf.odor.id for conf in fp.source_groups.values()]
         ids = aux.unique_list([id for id in lg + su + sg if id is not None])
         return ids
 
