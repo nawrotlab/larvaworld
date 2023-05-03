@@ -5,12 +5,13 @@ import numpy as np
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 
-class BaseRun(agentpy.Model):
 
-    def __init__(self, runtype, parameters=None, store_data=True, save_to=None,
-                 id=None,experiment=None,offline=False,show_display=True,
-                 Box2D=False, larva_collisions=True,
-                 dt=0.1,duration=None,Nsteps=None,
+
+
+class BaseRun(aux.SimConf, agentpy.Model):
+
+    def __init__(self, runtype, parameters=None, save_to=None,
+                 id=None,experiment=None,show_display=True,Nsteps=None,
                  **kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
@@ -34,7 +35,7 @@ class BaseRun(agentpy.Model):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
-
+        aux.SimConf.__init__(self, **kwargs)
         # if parameters is None :
         #     if experiment is not None :
         #         parameters = reg.expandConf('Exp', experiment)
@@ -44,21 +45,16 @@ class BaseRun(agentpy.Model):
         self.experiment = experiment if experiment is not None else parameters.experiment
 
         # Define N timesteps
-        self.dt = dt
-        if Nsteps is None and duration is not None :
-            Nsteps = int(duration * 60 / dt)
-        if duration is None and Nsteps is not None :
-            duration = Nsteps* dt/60
+        if Nsteps is None and self.duration is not None :
+            Nsteps = int(self.duration * 60 / self.dt)
+        if self.duration is None and Nsteps is not None :
+            self.duration = Nsteps* self.dt/60
         self.Nsteps = Nsteps
-        self.duration = duration
         parameters.steps = self.Nsteps
-        super().__init__(parameters=parameters, **kwargs)
+        agentpy.Model.__init__(self, parameters=parameters)
 
         # Define constant parameters
-        self.offline = offline
-        self.show_display = show_display and not offline
-        self.larva_collisions = larva_collisions
-        self.Box2D = Box2D
+        self.show_display = show_display and not self.offline
         self.scaling_factor = 1000.0 if self.Box2D else 1.0
 
         # Define ID
@@ -76,7 +72,6 @@ class BaseRun(agentpy.Model):
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
         self.save_to = self.dir
-        self.store_data = store_data
         if self.store_data :
             os.makedirs(self.data_dir, exist_ok=True)
             os.makedirs(self.plot_dir, exist_ok=True)

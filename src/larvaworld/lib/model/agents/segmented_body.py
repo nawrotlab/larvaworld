@@ -99,21 +99,20 @@ def generate_segs(N, ps, orient, bvs, cs, ratio, l):
 
 
 class LarvaBody(LarvaMotile):
+    Nsegs = aux.PositiveInteger(2, softmax=20, doc='The number of segments comprising the segmented larva body.')
+    symmetry = param.Selector(objects=['bilateral', 'radial'], doc='The body symmetry.')
+    initial_length = aux.PositiveNumber(0.005, softmax=0.1, step=0.001, doc='The initial length of the body in meters')
+    density = aux.PositiveNumber(300.0, softmax=10000.0, step=1.0, doc='The density of the larva body in kg/m**2')
 
-
-
-    def __init__(self, brain, energetics=None, life_history={}, initial_length=0.005,
-                 length_std=0, Nsegs=2, seg_ratio=None, shape='drosophila_larva', density=300.0, **kwargs):
+    def __init__(self, brain, energetics=None, life_history={}, seg_ratio=None, shape='drosophila_larva',  **kwargs):
 
         super().__init__(brain, energetics, life_history, **kwargs)
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
-        self.density = density
         if seg_ratio is None:
-            seg_ratio = [1 / Nsegs] * Nsegs
+            seg_ratio = [1 / self.Nsegs] * self.Nsegs
         self.seg_ratio = np.array(seg_ratio)
         self.contour_points = body_shapes[shape]
-        self.base_seg_vertices = aux.generate_seg_shapes(Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
-        self.Nsegs = Nsegs
+        self.base_seg_vertices = aux.generate_seg_shapes(self.Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
         self.rear_orientation_change = 0
         self.body_bend = 0
         self.cum_dst = 0.0
@@ -127,7 +126,7 @@ class LarvaBody(LarvaMotile):
 
 
         self.seg_colors = self.generate_seg_colors(self.Nsegs, color=self.default_color)
-        self.initialize(initial_length, length_std)
+        self.initialize(self.initial_length)
         self.radius=self.sim_length/2
 
 
@@ -146,9 +145,9 @@ class LarvaBody(LarvaMotile):
     def generate_seg_colors(self, N, color):
         return [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
 
-    def initialize(self, initial_length, length_std):
+    def initialize(self, l):
         if not hasattr(self, 'real_length') or self.real_length is None:
-            self.real_length = float(np.random.normal(loc=initial_length, scale=length_std, size=1))
+            self.real_length = l
 
         if not hasattr(self, 'real_mass') or self.real_mass is None:
             self.compute_mass_from_length()
@@ -370,14 +369,14 @@ class LarvaBody(LarvaMotile):
 
 
 class BaseController(param.Parameterized):
-    lin_vel_coef = param.Number(default=1.0, doc='Coefficient for translational velocity')
-    ang_vel_coef = param.Number(default=1.0, doc='Coefficient for angular velocity')
-    lin_force_coef = param.Number(default=1.0, doc='Coefficient for force')
-    torque_coef = param.Number(default=0.5, doc='Coefficient for torque')
-    body_spring_k = param.Number(default=1.0, doc='Torsional spring constant for body bending')
-    bend_correction_coef = param.Number(default=1.0, doc='Bend correction coefficient')
-    lin_damping = param.Number(default=1.0, doc='Translational damping coefficient')
-    ang_damping = param.Number(default=1.0, doc='Angular damping coefficient')
-    lin_mode = param.Selector(default='velocity', objects=['velocity', 'force', 'impulse'], doc='Mode of translational motion generation')
-    ang_mode = param.Selector(default='torque', objects=['velocity', 'torque'], doc='Mode of angular motion generation')
+    lin_vel_coef = aux.PositiveNumber(1.0, doc='Coefficient for translational velocity')
+    ang_vel_coef = aux.PositiveNumber(1.0, doc='Coefficient for angular velocity')
+    lin_force_coef = aux.PositiveNumber(1.0, doc='Coefficient for force')
+    torque_coef = aux.PositiveNumber(0.5, doc='Coefficient for torque')
+    body_spring_k = aux.PositiveNumber(1.0, doc='Torsional spring constant for body bending')
+    bend_correction_coef = aux.PositiveNumber(1.0, doc='Bend correction coefficient')
+    lin_damping = aux.PositiveNumber(1.0, doc='Translational damping coefficient')
+    ang_damping = aux.PositiveNumber(1.0, doc='Angular damping coefficient')
+    lin_mode = param.Selector(objects=['velocity', 'force', 'impulse'], doc='Mode of translational motion generation')
+    ang_mode = param.Selector(objects=['torque','velocity'], doc='Mode of angular motion generation')
 

@@ -11,7 +11,7 @@ from larvaworld.lib.model import Entity
 
 
 class Obstacle(Entity):
-    width = param.Number(0.001, bounds=(0, None), softbounds=(0, 10), doc='The width of the Obstacle')
+    width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
 
     def __init__(self, vertices, edges, **kwargs):
         super().__init__(**kwargs)

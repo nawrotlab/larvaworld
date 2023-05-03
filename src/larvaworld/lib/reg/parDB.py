@@ -472,7 +472,7 @@ def buildInitDict():
         d = aux.AttrDict()
 
         d['ang_definition'] = {
-            'bend': {'dtype': str, 'v': 'from_vectors', 'vs': ['from_angles', 'from_vectors'],
+            'bend': {'dtype': str, 'v': 'from_vectors', 'vs': ['from_vectors','from_angles'],
                      'h': 'Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.'},
             'front_vector': {'dtype': Tuple[int], 'v': (1, 2), 'lim': (-12, 12), 'vfunc': param.Tuple,
                              'h': 'The initial & final segment of the front body vector.'},

@@ -2,12 +2,13 @@ import numpy as np
 import param
 from scipy import signal
 
+from larvaworld.lib import aux
 from larvaworld.lib.model.modules.basic import StepOscillator
 
 
 class StrideOscillator(StepOscillator) :
-    stride_dst_mean = param.Magnitude(default=0.23, label='stride distance mean', doc='The mean displacement achieved in a single peristaltic stride as a fraction of the body length.')
-    stride_dst_std = param.Magnitude(default=0.04, label='stride distance std', doc='The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.')
+    stride_dst_mean = aux.PositiveNumber(0.23,softmax=1.0, step=0.01, label='stride distance mean', doc='The mean displacement achieved in a single peristaltic stride as a fraction of the body length.')
+    stride_dst_std = aux.PositiveNumber(0.04,softmax=1.0, step=0.01, label='stride distance std', doc='The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.')
 
 
     def __init__(self, **kwargs):
@@ -34,7 +35,7 @@ class StrideOscillator(StepOscillator) :
 
 
 class GaussOscillator(StrideOscillator):
-    std = param.Number(default=0.6, softbounds=(0.0, 1.0), label='gaussian stride cycle std', doc='The std of the gaussian window for the velocity oscillation during a stride cycle.')
+    std = aux.PositiveNumber(0.6, softmax=1.0, step=0.01, label='gaussian stride cycle std', doc='The std of the gaussian window for the velocity oscillation during a stride cycle.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -46,8 +47,7 @@ class GaussOscillator(StrideOscillator):
 
 
 class SquareOscillator(StrideOscillator):
-    duty = param.Magnitude(default=0.6, label='square signal duty',
-                       doc='The duty parameter(%time at the upper end) of the square signal.')
+    duty = param.Magnitude(0.6, label='square signal duty',doc='The duty parameter(%time at the upper end) of the square signal.')
 
 
     @ property
@@ -55,10 +55,8 @@ class SquareOscillator(StrideOscillator):
         return float(signal.square(self.phi, duty=self.duty))
 
 class PhaseOscillator(StrideOscillator):
-    max_vel_phase = param.Number(default=3.49, bounds=(0.0, 2 * np.pi), label='max velocity phase',
-                        doc='The phase of the crawling oscillation cycle where forward velocity is maximum.')
-    max_scaled_vel = param.Number(default=0.51, bounds=(0.0, 1.5), label='maximum scaled velocity',
-                                 doc='The maximum scaled forward velocity.')
+    max_vel_phase = aux.Phase(3.49, label='max velocity phase',doc='The phase of the crawling oscillation cycle where forward velocity is maximum.')
+    max_scaled_vel = aux.PositiveNumber(0.51, softmax=1.5, step=0.01, label='maximum scaled velocity',doc='The maximum scaled forward velocity.')
 
 
     @property

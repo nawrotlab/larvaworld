@@ -11,7 +11,8 @@ from larvaworld.lib import reg, aux, plot, util
 from larvaworld.lib.sim.base_run import BaseRun
 
 class EvalRun(BaseRun):
-    def __init__(self,parameters, dataset=None,dur=None,experiment='dispersion',  **kwargs):
+    def __init__(self,parameters, dataset=None,dur=None,experiment='dispersion',
+                 norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,enrichment=True,show=False,  **kwargs):
         '''
         Simulation mode 'Eval' compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.
 
@@ -35,22 +36,24 @@ class EvalRun(BaseRun):
         self.target = d
         super().__init__(runtype='Eval', experiment=experiment, parameters=parameters,
                          dt =d.config.dt, duration = dur, **kwargs)
-
-    def setup(self,norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,
-              enrichment=True,show=False):
-        self.refID = self.p.refID
-        if self.p.dataset_ids is None:
-            self.p.dataset_ids = self.p.modelIDs
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.show = show
+        self.enrichment = enrichment
+        self.eval_metrics = eval_metrics
+
+    def setup(self):
+        self.refID = self.p.refID
+        if self.p.dataset_ids is None:
+            self.p.dataset_ids = self.p.modelIDs
+
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
 
         self.error_dicts = {}
         self.error_plot_dir = f'{self.plot_dir}/errors'
-        self.enrichment = enrichment
-        self.evaluation, self.target_data = util.arrange_evaluation(self.target, eval_metrics)
+
+        self.evaluation, self.target_data = util.arrange_evaluation(self.target, self.eval_metrics)
         self.define_eval_args(self.evaluation)
 
     def define_eval_args(self, ev):

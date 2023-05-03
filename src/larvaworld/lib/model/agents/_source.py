@@ -58,7 +58,7 @@ class Source(LarvaworldAgent):
 
 
 class Food(Source, Substrate):
-    amount = param.Number(0.0, bounds=(0, None), softbounds=(0, 10), step=0.01, doc='The food amount in the source')
+    amount = aux.PositiveNumber(softmax=10.0, step=0.01, doc='The food amount in the source')
 
     def __init__(self, default_color='green', **kwargs):
         super().__init__(default_color=default_color, **kwargs)

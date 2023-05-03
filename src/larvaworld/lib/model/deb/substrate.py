@@ -1,4 +1,5 @@
 import param
+from larvaworld.lib import aux
 
 # Compound densities (g/cm**3)
 substrate_dict = {
@@ -68,11 +69,10 @@ substrate_dict = {
 
 }
 
+
 class Substrate(param.Parameterized):
-    type = param.Selector(default='standard', objects=['standard', 'agar', 'cornmeal', 'sucrose', 'PED_tracker'],
-                          doc='The type of substrate')
-    quality = param.Magnitude(1.0,
-                              doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
+    type = param.Selector(objects=['standard', 'agar', 'cornmeal', 'sucrose', 'PED_tracker'],doc='The type of substrate')
+    quality = param.Magnitude(1.0,doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -160,18 +160,12 @@ class Substrate(param.Parameterized):
         return X/C
 
 
-class Odor(param.Parameterized):
-    id = param.String(None, doc='The unique ID of the odorant')
-    intensity = param.Number(None, bounds=(0, None), softbounds=(0, 10),
-                       doc='The peak concentration of the odorant in micromoles')
-    spread = param.Number(None, bounds=(0, None), softbounds=(0, 10),
-                    doc='The spread of the concentration gradient around the peak')
 
+class Epoch(aux.NestedConf):
+    age_range = aux.OptionalPositiveRange(softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')
+    substrate = aux.ClassAttr(Substrate, doc='The substrate of the epoch')
 
-class Epoch(param.Parameterized):
-    time_range = param.Range(None, bounds=(0.0, 250.0), softbounds=(0.0, 100.0), doc='The beginning and end of the epoch in hours post-hatch.')
-    substrate = param.ClassSelector(class_=Substrate, default=Substrate(), doc='The substrate of the epoch')
-
-class Life(param.Parameterized):
-    age = param.Number(0.0, bounds=(0.0, 250.0), softbounds=(0.0, 100.0), doc='The larva age in hours post-hatch.')
-    epochs = param.Parameter({}, doc='The feeding epochs comprising life history.')
+class Life(aux.NestedConf):
+    age = aux.PositiveNumber(softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch.')
+    # epochs = param.Parameter(default={}, doc='The feeding epochs comprising life history.')
+    epochs = aux.ClassDict(item_type=Epoch, doc='The feeding epochs comprising life history.')

@@ -1,9 +1,10 @@
 import numpy as np
 import param
 
+from larvaworld.lib import aux
 
 class Timer(param.Parameterized) :
-    dt = param.Number(default=0.1, label='timestep', doc='The timestep of the simulation in seconds.')
+    dt = aux.PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep', doc='The timestep of the simulation in seconds.')
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ticks = 0
@@ -42,8 +43,8 @@ class Timer(param.Parameterized) :
 
 
 class Effector(Timer):
-    input_noise = param.Number(default=0.0, label='input noise', doc='The noise applied at the input of the module.')
-    output_noise = param.Number(default=0.0, label='output noise', doc='The noise applied at the output of the module.')
+    input_noise = param.Magnitude(0.0, label='input noise', doc='The noise applied at the input of the module.')
+    output_noise = param.Magnitude(0.0, label='output noise', doc='The noise applied at the output of the module.')
     input_range = param.Range(label='input range',doc='The input range of the module.')
     output_range = param.Range(label='output range',doc='The output range of the module.')
 
@@ -103,8 +104,8 @@ class Effector(Timer):
 
 
 class Oscillator(Timer):
-    initial_freq = param.Number(label='oscillation frequency', doc='The initial frequency of the oscillator.')
-    freq_range = param.List(label='oscillation frequency range', doc='The frequency range of the oscillator.')
+    initial_freq = aux.PositiveNumber(label='oscillation frequency', doc='The initial frequency of the oscillator.')
+    freq_range = param.Range(label='oscillation frequency range', doc='The frequency range of the oscillator.')
     random_phi = param.Boolean(default=True, label='random oscillation phase', doc='Whether to randomize the initial phase of the oscillator.')
 
     def __init__(self, **kwargs):
@@ -165,8 +166,8 @@ class Oscillator(Timer):
 
 
 class StepEffector(Effector):
-    initial_amp = param.Number(default=1.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
-    amp_range = param.List(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
+    initial_amp = aux.PositiveNumber(1.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
+    amp_range = param.Range(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -11,7 +11,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ReplayRun(BaseRun):
-    def __init__(self,parameters,  dataset=None, experiment='replay',**kwargs):
+    def __init__(self,parameters,  dataset=None, experiment='replay', screen_kws={},**kwargs):
         '''
         Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
 
@@ -31,7 +31,7 @@ class ReplayRun(BaseRun):
         super().__init__(runtype='Replay', experiment=experiment, parameters=parameters,
                          dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
 
-    def setup(self, screen_kws={}):
+    def setup(self):
         s,e,c=self.step_data,self.endpoint_data,self.config
         fp,fs,dc=self.p.fix_point,self.p.fix_segment,self.p.dynamic_color
 

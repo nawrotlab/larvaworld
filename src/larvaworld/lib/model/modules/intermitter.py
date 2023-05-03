@@ -1,8 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-
-
+import param
 
 from larvaworld.lib.model.modules.basic import Timer
 from larvaworld.lib import reg, aux, util
@@ -33,25 +32,29 @@ default_bout_distros=aux.AttrDict({'turn_dur': {'range': [0.25, 3.25], 'name': '
   'sigma': 1.14667}})
 
 class Intermitter(Timer):
-    def __init__(self, pause_dist=None, stridechain_dist=None, run_dist=None, run_mode='stridechain',
-                 feeder_reoccurence_rate=None, EEB=0.5,feed_bouts=False,EEB_decay=1,crawl_freq=10 / 7, feed_freq=2.0, **kwargs):
+    EEB = param.Magnitude(1.0, label='exploitation-exploration balance', doc='The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.')
+    EEB_decay = aux.PositiveNumber(1.0, softmax=2.0, doc='The exponential decay coefficient of the exploitation-exploration balance when no food is detected.')
+    run_mode = param.Selector(objects=['stridechain','exec'], doc='The generation mode of the crawling epochs.')
+    feeder_reoccurence_rate = aux.OptionalPositiveNumber(softmax=1.0, label='feed reoccurence', doc='The default reoccurence rate of the feeding motion.')
+    feed_bouts = param.Boolean(False, doc='Whether feeding epochs are generated.')
+
+    def __init__(self, pause_dist=None, stridechain_dist=None, run_dist=None, crawl_freq=10 / 7, feed_freq=2.0, **kwargs):
         super().__init__(**kwargs)
         self.crawl_freq = crawl_freq
         self.feed_freq = feed_freq
         self.reset()
 
         self.cur_state = None
-        self.feed_bouts = feed_bouts
-        self.run_mode = run_mode
 
-        if run_mode=='stridechain' :
+
+        if self.run_mode=='stridechain' :
             if stridechain_dist is None or stridechain_dist.range is None:
                 stridechain_dist = default_bout_distros.run_count
             self.stridechain_min, self.stridechain_max = stridechain_dist.range
             self.stridechain_dist = util.BoutGenerator(**stridechain_dist, dt=1)
             self.run_dist = None
 
-        elif run_mode=='exec' :
+        elif self.run_mode=='exec' :
             if run_dist is not None or run_dist.range is None:
                 run_dist = default_bout_distros.run_dur
             self.stridechain_min, self.stridechain_max = run_dist.range
@@ -74,10 +77,7 @@ class Intermitter(Timer):
         self.Nfeedchains = 0
         self.Nfeeds_success = 0
         self.Nfeeds_fail = 0
-        self.EEB = EEB
-        self.base_EEB = EEB
-        self.EEB_decay = EEB_decay
-        # self.cur_state = None
+        self.base_EEB = self.EEB
 
 
         self.exp_Nstrides = None
@@ -101,7 +101,8 @@ class Intermitter(Timer):
         self.feed_durs = []
         self.stride_durs = []
 
-        self.feeder_reoccurence_rate = feeder_reoccurence_rate if feeder_reoccurence_rate is not None else self.EEB
+
+
 
     @ property
     def pause_completed(self):
@@ -137,6 +138,10 @@ class Intermitter(Timer):
             self.exp_Tpause = self.generate_pause()
             self.cur_state = 'pause'
 
+    @ property
+    def feed_repeated(self):
+        r = self.feeder_reoccurence_rate if self.feeder_reoccurence_rate is not None else self.EEB
+        return np.random.uniform(0, 1, 1) < r
 
 
     def alternate_exploreNexploit(self,feed_motion=False,on_food=False):
@@ -151,11 +156,11 @@ class Intermitter(Timer):
                     self.run_initiation()
                 else:
                     self.Nfeeds_success += 1
-                    if np.random.uniform(0, 1, 1) >= self.feeder_reoccurence_rate:
+                    if self.feed_repeated :
+                        self.cur_Nfeeds += 1
+                    else:
                         self.register('feedchain')
                         self.run_initiation()
-                    else:
-                        self.cur_Nfeeds += 1
         elif on_food and self.cur_Nfeeds is None and np.random.uniform(0, 1, 1) <= self.EEB:
             self.cur_Nfeeds = 1
             self.register(self.cur_state)

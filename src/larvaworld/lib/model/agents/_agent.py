@@ -4,7 +4,6 @@ import param
 from scipy.stats import multivariate_normal
 from shapely import geometry
 
-from larvaworld.lib.model import Odor
 from larvaworld.lib.screen.rendering import InputBox
 from larvaworld.lib import aux
 
@@ -38,10 +37,9 @@ class LarvaworldAgent(Entity, agentpy.Agent):
     """LarvaworldAgent class that inherits from agentpy.Agent."""
 
     group = param.String(None, doc='The unique ID of the agent group')
-    radius = param.Number(0.003, bounds=(0, None), softbounds=(0, 0.1), step=0.001,
-                    doc='The spatial radius of the source in meters')
-    pos = param.NumericTuple(default=(0.0, 0.0), doc='The xy spatial position coordinates')
-    odor = param.ClassSelector(class_=Odor, default=Odor(), doc='The odor of the agent')
+    radius = aux.PositiveNumber(0.003, softmax=0.1, step=0.001,doc='The spatial radius of the source in meters')
+    pos = param.NumericTuple((0.0, 0.0), doc='The xy spatial position coordinates')
+    odor = aux.ClassAttr(aux.Odor, doc='The odor of the agent')
 
 
     def __init__(self, model=None,odor={},  regeneration=False, regeneration_pos=None, **kwargs):
@@ -63,7 +61,7 @@ class LarvaworldAgent(Entity, agentpy.Agent):
         """
 
 
-        Entity.__init__(self, odor=Odor(**odor),**kwargs)
+        Entity.__init__(self, odor=aux.Odor(**odor),**kwargs)
         agentpy.Agent.__init__(self, model=model)
         self.base_odor_id = f'{self.group}_base_odor'
         self.gain_for_base_odor = 100

@@ -5,8 +5,7 @@ from larvaworld.lib.model.modules.basic import Effector
 
 
 class Sensor(Effector):
-    def __init__(self, perception='linear', gain_dict={}, decay_coef=1,
-                 brute_force=False, **kwargs):
+    def __init__(self, perception='linear', gain_dict={}, decay_coef=1,brute_force=False, **kwargs):
         super().__init__(**kwargs)
         # self.brain = brain
         self.interruption_counter = 0

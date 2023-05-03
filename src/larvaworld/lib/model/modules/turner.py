@@ -3,19 +3,20 @@ import random
 import numpy as np
 import param
 
+from larvaworld.lib import aux
 from larvaworld.lib.model.modules.basic import Effector
 
 
 class NeuralOscillator(Effector):
-    base_activation = param.Number(default=20.0,bounds=(0.0, 100.0), label='baseline activation', doc='The baseline activation of the oscillator.')
-    activation_range = param.Range(default=(10.0, 40.0),bounds=(0.0, 100.0), label='activation range', doc='The activation range of the oscillator.')
-    tau = param.Number(default=0.1, label='time constant', doc='The time constant of the oscillator.')
-    w_ee = param.Number(default=3.0, label='E->E weigths', doc='The E->E synapse connection weights.')
-    w_ce = param.Number(default=0.1, label='C->E weigths', doc='The C->E synapse connection weights.')
-    w_ec = param.Number(default=4.0, label='E->C weigths', doc='The E->C synapse connection weights.')
-    w_cc = param.Number(default=4.0, label='C->C weigths', doc='The C->C synapse connection weights.')
-    m = param.Number(default=100.0, label='maximum spike-rate', doc='The maximum allowed spike rate.')
-    n = param.Number(default=2.0, label='spike response steepness', doc='The neuron spike-rate response steepness coefficient.')
+    base_activation = aux.PositiveNumber(20.0,softmax=100.0,step=1.0, label='baseline activation', doc='The baseline activation of the oscillator.')
+    activation_range = param.Range((10.0, 40.0),bounds=(0.0, 100.0), label='activation range', doc='The activation range of the oscillator.')
+    tau = param.Number(0.1, label='time constant', doc='The time constant of the oscillator.')
+    w_ee = param.Number(3.0, label='E->E weigths', doc='The E->E synapse connection weights.')
+    w_ce = param.Number(0.1, label='C->E weigths', doc='The C->E synapse connection weights.')
+    w_ec = param.Number(4.0, label='E->C weigths', doc='The E->C synapse connection weights.')
+    w_cc = param.Number(4.0, label='C->C weigths', doc='The C->C synapse connection weights.')
+    m = aux.PositiveInteger(100,softmax=1000, label='maximum spike-rate', doc='The maximum allowed spike rate.')
+    n = aux.PositiveNumber(2.0,softmax=10.0,step=0.1, label='spike response steepness', doc='The neuron spike-rate response steepness coefficient.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

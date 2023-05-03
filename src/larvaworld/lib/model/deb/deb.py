@@ -34,9 +34,9 @@ class DEB(param.Parameterized):
     use_gut = param.Boolean(True, doc='Whether to use the gut module.')
     hunger_gain = param.Magnitude(0.0,label='hunger sensitivity to reserve reduction',
                                   doc='The sensitivy of the hunger drive in deviations of the DEB reserve density.')
-    hours_as_larva = param.Number(0.0, doc='The age since eclosion')
-    steps_per_day = param.Integer(24 * 60, doc='How many iterations of the model per day')
-    substrate = param.ClassSelector(class_=deb.Substrate, default=deb.Substrate(), doc='The substrate where the agent feeds')
+    hours_as_larva = aux.PositiveNumber(0.0, doc='The age since eclosion')
+    steps_per_day = aux.PositiveInteger(24 * 60, doc='How many iterations of the model per day')
+    substrate = aux.ClassAttr(deb.Substrate, doc='The substrate where the agent feeds')
 
 
     def __init__(self, id='DEB model', cv=0, T=298.15, eb=1.0,

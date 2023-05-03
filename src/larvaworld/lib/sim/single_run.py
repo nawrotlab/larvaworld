@@ -13,7 +13,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ExpRun(BaseRun):
-    def __init__(self,experiment=None,parameters=None, **kwargs):
+    def __init__(self,experiment=None,parameters=None, screen_kws={},video=None, parameter_dict={}, **kwargs):
         '''
         Simulation mode 'Exp' launches a single simulation of a specified experiment type.
 
@@ -32,9 +32,12 @@ class ExpRun(BaseRun):
 
         super().__init__(runtype = 'Exp',experiment=experiment,parameters=parameters, **kwargs)
 
+        self.screen_kws = screen_kws
+        self.video = video
+        self.parameter_dict = parameter_dict
 
 
-    def setup(self, screen_kws={},video=None, parameter_dict={}):
+    def setup(self):
 
         self.sim_epochs = self.p.trials
         for idx, ep in self.sim_epochs.items():
@@ -47,14 +50,14 @@ class ExpRun(BaseRun):
         # self.odor_ids = aux.get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
 
-        self.build_agents(self.p.larva_groups, parameter_dict)
+        self.build_agents(self.p.larva_groups, self.parameter_dict)
         self.set_collectors(self.p.collections)
         # self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
         # self.step_output_keys = list(self.collectors['step'].keys())
         # self.end_output_keys = list(self.collectors['end'].keys())
         self.accessible_sources = None
 
-        self.screen_manager = ScreenManager(model=self, **screen_kws, video=video)
+        self.screen_manager = ScreenManager(model=self, **self.screen_kws, video=self.video)
 
 
         if not self.larva_collisions:

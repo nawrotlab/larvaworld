@@ -1,4 +1,39 @@
 import numpy as np
+import param
+
+
+class Spatial_Distro(param.Parameterized):
+    shape = param.Selector(objects=['circle', 'rect', 'oval'], doc='The shape of the spatial distribution')
+    mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],
+                    doc='The way to place agents in the distribution shape')
+    N = param.Integer(default=30, bounds=(0, None), softbounds=(0, 100), doc='The number of agents in the group')
+    loc = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The xy coordinates of the distribution center')
+    scale = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The spread in x,y')
+
+    def __call__(self):
+        return generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
+                                      scale=self.scale)
+
+    def draw(self):
+        import matplotlib.pyplot as plt
+        ps = generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
+                                    scale=self.scale)
+        ps = np.array(ps)
+        plt.scatter(ps[:, 0], ps[:, 1])
+        # plt.axis('equal')
+        plt.xlim(-0.2, 0.2)
+        plt.ylim(-0.2, 0.2)
+        plt.show()
+        # return ps
+
+
+
+class Larva_Distro(Spatial_Distro):
+    orientation_range = param.Range(default=(0.0, 360.0), bounds=(-360.0, 360.0), step=1,
+                              doc='The range of larva body orientations to sample from, in degrees')
+
+    def __call__(self):
+        return generate_xyNor_distro(self)
 
 
 def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):
@@ -90,6 +125,8 @@ def generate_xyNor_distro(d):
     ps = generate_xy_distro(N=N, mode=d.mode,shape=d.shape, loc=d.loc, scale=d.scale)
     # ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
     return ps, ors
+
+
 
 
 

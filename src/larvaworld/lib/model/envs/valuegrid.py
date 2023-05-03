@@ -15,10 +15,10 @@ from larvaworld.lib.screen.rendering import InputBox
 
 
 class ValueGrid(Entity):
-    initial_value = param.Number(0.0, bounds=(0.0,None),doc='initial value over the grid')
+    initial_value = param.Number(0.0, doc='initial value over the grid')
 
     fixed_max = param.Boolean(False,doc='whether the max is kept constant')
-    grid_dims = param.Range(default=(51, 51), doc='The spatial resolution of the food grid.')
+    grid_dims = aux.PositiveIntegerRange((51, 51),softmax=500, doc='The spatial resolution of the food grid.')
 
 
     def __init__(self, model, sources=[],
@@ -192,16 +192,11 @@ class FoodGrid(ValueGrid, Substrate):
 
 
 class GaussianValueLayer(ValueGrid):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
 
     def get_value(self, pos):
 
         value = 0
         for s in self.sources:
-            # print(s.unique_id, s.odor_peak_value)
             p = s.get_position()
             rel_pos = [pos[0] - p[0], pos[1] - p[1]]
             value += s.get_gaussian_odor_value(rel_pos)
@@ -232,21 +227,21 @@ class GaussianValueLayer(ValueGrid):
 
 
 class DiffusionValueLayer(ValueGrid):
+    evap_const = param.Magnitude(0.9, doc='The evaporation constant of the diffusion algorithm.')
+    gaussian_sigma = param.NumericTuple((0.95, 0.95), doc='The sigma of the gaussian difusion algorithm.')
 
-    def __init__(self, evap_const, gaussian_sigma, **kwargs):
-        super().__init__(**kwargs)
-        '''
-            A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/sigma           
 
-            Yes, it does that automatically based on the sigma and truncate parameters.
-            Indeed, the function gaussian_filter is implemented by applying multiples 1D gaussian filters (you can see that here). 
-            This function uses gaussian_filter1d which generate itself the kernel using _gaussian_kernel1d with a radius of 
-            int(truncate * sigma + 0.5).
+    '''
+        A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/sigma           
 
-            Doing the math, sigma ends up reeeeally small
-        '''
-        self.evap_const = evap_const
-        self.sigma = gaussian_sigma
+        Yes, it does that automatically based on the sigma and truncate parameters.
+        Indeed, the function gaussian_filter is implemented by applying multiples 1D gaussian filters (you can see that here). 
+        This function uses gaussian_filter1d which generate itself the kernel using _gaussian_kernel1d with a radius of 
+        int(truncate * sigma + 0.5).
+
+        Doing the math, sigma ends up reeeeally small
+    '''
+
 
     def update_values(self):
         k = 1000
@@ -279,19 +274,22 @@ class DiffusionValueLayer(ValueGrid):
 
 
 class WindScape(Entity):
-    def __init__(self, model, wind_direction, wind_speed, puffs={}, default_color='red', **kwargs):
+    wind_direction = aux.Phase(np.pi,doc='The absolute polar direction of the wind/air puff.')
+    wind_speed = aux.PositiveNumber(softmax=100.0, doc='The speed of the wind/air puff.')
+    puffs = param.Parameter({},label='air-puffs', doc='Repetitive or single air-puff stimuli.')
+
+    def __init__(self, model, default_color='red', **kwargs):
 
         super().__init__(default_color=default_color,visible=False,**kwargs)
         self.model = model
-        self.wind_direction = wind_direction
-        self.wind_speed = wind_speed
+
         self.max_dim = np.max(self.model.space.dims)
 
         self.N = 40
         self.draw_phi = 0
         self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
         self.events = {}
-        for idx, puff in puffs.items():
+        for idx, puff in self.puffs.items():
             self.add_puff(**puff)
 
     def get_value(self, agent):

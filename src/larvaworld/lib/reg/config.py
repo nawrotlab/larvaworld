@@ -11,7 +11,7 @@ CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'B
 
 GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 
-Path = {k : f'{reg.CONF_DIR}/{k}.txt' for k in CONFTYPES}
+Path = aux.AttrDict({k : f'{reg.CONF_DIR}/{k}.txt' for k in CONFTYPES})
 
 def build_ConfTypeSubkeys():
     d0 = {k: {} for k in CONFTYPES}
@@ -202,49 +202,7 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
 #     return aux.AttrDict(lgs)
 
 
-def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard', pref='',
-           navigator=False, expand=False, **kwargs):
-    if age == 0.0:
-        epochs = {}
-    else:
-        if h_starved == 0:
-            eps = {
-                0: {'start': 0.0, 'stop': age, 'substate': {'type': substrate_type, 'quality': q}}
-            }
-        else:
-            eps = {
-                0: {'start': 0.0, 'stop': age - h_starved, 'substate': {'type': substrate_type, 'quality': q}},
-                1: {'start': age - h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
-            }
-        epochs = {}
-        for id, kws in eps.items():
-            epochs.update(stored.group.epoch.entry(id=id, **kws))
 
-    kws0 = {
-        'distribution': {'N': N, 'scale': (0.005, 0.005)},
-        'life_history': {'age': age, 'epochs': epochs},
-        'sample': sample,
-        'expand': expand,
-    }
-
-    mcols = ['blue', 'red']
-    mID0s = ['rover', 'sitter']
-    lgs = {}
-    for mID0, mcol in zip(mID0s, mcols):
-        id = f'{pref}{mID0.capitalize()}'
-
-        if navigator:
-            mID0 = f'navigator_{mID0}'
-
-        kws = {
-            'id': id,
-            'default_color': mcol,
-            'model': mID0,
-            **kws0
-        }
-
-        lgs.update(full_lg(**kws))
-    return aux.AttrDict(lgs)
 
 
 def next_idx(id, conftype='Exp'):
@@ -465,61 +423,38 @@ stored=StoredConfRegistry()
 
 
 
-
-class Spatial_Distro(param.Parameterized):
-    shape = param.Selector(objects=['circle', 'rect', 'oval'], doc='The shape of the spatial distribution')
-    mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],
-                    doc='The way to place agents in the distribution shape')
-    N = param.Integer(default=30, bounds=(0, None), softbounds=(0, 100), doc='The number of agents in the group')
-    loc = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The xy coordinates of the distribution center')
-    scale = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The spread in x,y')
-
-    def __call__(self):
-        return aux.generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
-                                      scale=self.scale)
-
-    def draw(self):
-        import matplotlib.pyplot as plt
-        ps = aux.generate_xy_distro(mode=self.mode, shape=self.shape, N=self.N, loc=self.loc,
-                                    scale=self.scale)
-        ps = np.array(ps)
-        plt.scatter(ps[:, 0], ps[:, 1])
-        # plt.axis('equal')
-        plt.xlim(-0.2, 0.2)
-        plt.ylim(-0.2, 0.2)
-        plt.show()
-        # return ps
+class ConfSelector(param.Selector):
+    """Select among stored configurations of a given conftype by ID"""
+    def __init__(self, conftype,default=None,  **kwargs):
+        kws={
+            'default' : default,
+            'objects' : stored.confIDs(conftype),
+            'doc' : f'The {conftype} configuration ID',
+            **kwargs
+        }
+        if default is None :
+            kws['empty_default']=True
+            kws['allow_None']=True
+        super().__init__(**kws)
 
 
 
-class Larva_Distro(Spatial_Distro):
-    orientation_range = param.Range(default=(0.0, 360.0), bounds=(-360.0, 360.0), step=1,
-                              doc='The range of larva body orientations to sample from, in degrees')
+from larvaworld.lib.model import Life
 
-    def __call__(self):
-        return aux.generate_xyNor_distro(self)
-
-
-from larvaworld.lib.model import Odor, Life
-
-class LarvaGroup(param.Parameterized):
-    model = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.ModelIDs, doc='The model configuration ID')
+class LarvaGroup(aux.NestedConf):
+    model = ConfSelector('Model')
+    # model = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.ModelIDs, doc='The model configuration ID')
     default_color = param.Color('black', doc='The default color of the group')
-    odor = param.ClassSelector(class_=Odor, default=Odor(), doc='The odor of the agent')
-    distribution = param.ClassSelector(class_=Larva_Distro, default=Larva_Distro(),
-                                       doc='The spatial distribution of the group agents')
-    life_history = param.ClassSelector(class_=Life, default=Life(), doc='The life history of the group agents')
-    sample = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.RefIDs, doc='The ID of a reference dataset to sample from')
+    odor = aux.ClassAttr(aux.Odor, doc='The odor of the agent')
+    distribution = aux.ClassAttr(aux.Larva_Distro,doc='The spatial distribution of the group agents')
+    life_history = aux.ClassAttr(Life, doc='The life history of the group agents')
+    sample = ConfSelector('Ref')
+    # sample = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.RefIDs, doc='The ID of a reference dataset to sample from')
     imitation = param.Boolean(default=False, doc='Whether to imitate the reference dataset.')
 
 
 
     def __init__(self,id=None,**kwargs):
-        d = self.param.objects()
-        for k, p in d.items():
-            if type(p) == param.ClassSelector:
-                if k in kwargs.keys() and not isinstance(kwargs[k], p.class_):
-                    kwargs[k] = p.class_(**kwargs[k])
         super().__init__(**kwargs)
         if id is None:
             if self.model is not None :
@@ -574,6 +509,26 @@ class LarvaGroup(param.Parameterized):
 
 
 
+class ExpConf(aux.NestedConf):
+    env_params = ConfSelector('Env')
+    # env_params = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Env'), doc='The environment configuration ID')
+    trials = ConfSelector('Trial',default='default')
+    # trials = param.Selector(default='default', objects=stored.confIDs('Trial'), doc='The trial configuration ID')
+    collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
+    larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
+    sim_params = aux.ClassAttr(aux.SimConf,doc='The simulation configuration')
+    enrichment = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
+    experiment = ConfSelector('Exp')
+    # experiment = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
+
+
+
+    def __init__(self,id=None,**kwargs):
+        super().__init__(**kwargs)
+
+
+
+
 
 
 def nestedConf(p):
@@ -591,3 +546,87 @@ def full_lg(id=None, expand=False,as_entry=True,**conf):
     except :
         raise
 
+def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard', pref='',
+           navigator=False, expand=False, **kwargs):
+    if age == 0.0:
+        epochs = {}
+    else:
+        if h_starved == 0:
+            epochs = {
+                0: {'age_range': (0.0, age), 'substrate': {'type': substrate_type, 'quality': q}}
+            }
+        else:
+            epochs = {
+                0: {'age_range': (0.0, age - h_starved), 'substrate': {'type': substrate_type, 'quality': q}},
+                1: {'age_range': (age - h_starved, age), 'substrate': {'type': substrate_type, 'quality': 0}},
+            }
+    kws0 = {
+        'distribution': {'N': N, 'scale': (0.005, 0.005)},
+        'life_history': {'age': age, 'epochs': epochs},
+        'sample': sample,
+        'expand': expand,
+    }
+
+    mcols = ['blue', 'red']
+    mID0s = ['rover', 'sitter']
+    lgs = {}
+    for mID0, mcol in zip(mID0s, mcols):
+        id = f'{pref}{mID0.capitalize()}'
+
+        if navigator:
+            mID0 = f'navigator_{mID0}'
+
+        kws = {
+            'id': id,
+            'default_color': mcol,
+            'model': mID0,
+            **kws0
+        }
+
+        lgs.update(full_lg(**kws))
+    return aux.AttrDict(lgs)
+
+
+# def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard', pref='',
+#            navigator=False, expand=False, **kwargs):
+#     if age == 0.0:
+#         epochs = {}
+#     else:
+#         if h_starved == 0:
+#             eps = {
+#                 0: {'start': 0.0, 'stop': age, 'substate': {'type': substrate_type, 'quality': q}}
+#             }
+#         else:
+#             eps = {
+#                 0: {'start': 0.0, 'stop': age - h_starved, 'substate': {'type': substrate_type, 'quality': q}},
+#                 1: {'start': age - h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
+#             }
+#         epochs = {}
+#         for id, kws in eps.items():
+#             epochs.update(stored.group.epoch.entry(id=id, **kws))
+#
+#     kws0 = {
+#         'distribution': {'N': N, 'scale': (0.005, 0.005)},
+#         'life_history': {'age': age, 'epochs': epochs},
+#         'sample': sample,
+#         'expand': expand,
+#     }
+#
+#     mcols = ['blue', 'red']
+#     mID0s = ['rover', 'sitter']
+#     lgs = {}
+#     for mID0, mcol in zip(mID0s, mcols):
+#         id = f'{pref}{mID0.capitalize()}'
+#
+#         if navigator:
+#             mID0 = f'navigator_{mID0}'
+#
+#         kws = {
+#             'id': id,
+#             'default_color': mcol,
+#             'model': mID0,
+#             **kws0
+#         }
+#
+#         lgs.update(full_lg(**kws))
+#     return aux.AttrDict(lgs)

@@ -102,6 +102,11 @@ class AttrDict(dict):
     def save(self, file):
         save_dict(self,file)
 
+    @classmethod
+    def load(cls, file):
+        return load_dict(file)
+
+
 
 
 def load_dict(file):

@@ -1,13 +1,13 @@
 import numpy as np
 import param
-
+from larvaworld.lib import aux
 
 
 
 class DefaultCoupling(param.Parameterized):
-    attenuation = param.Magnitude(default=0.0, label='crawl-induced angular attenuation', doc='The attenuation coefficient for the crawl-interference to the angular motion.')
-    attenuation_max = param.Magnitude(default=1.0, label='crawl-induced maximum angular attenuation', doc='The suppression relief coefficient for the crawl-interference to the angular motion.')
-    suppression_mode = param.Selector(default='amplitude',objects=['amplitude', 'oscillation', 'both'], label='crawl-induced suppression mode', doc='The suppression mode for the crawl-interference to the angular motion.')
+    attenuation = param.Magnitude(0.0, label='crawl-induced angular attenuation', doc='The attenuation coefficient for the crawl-interference to the angular motion.')
+    attenuation_max = param.Magnitude(1.0, label='crawl-induced maximum angular attenuation', doc='The suppression relief coefficient for the crawl-interference to the angular motion.')
+    suppression_mode = param.Selector(objects=['amplitude', 'oscillation', 'both'], label='crawl-induced suppression mode', doc='The suppression mode for the crawl-interference to the angular motion.')
 
 
     def __init__(self, **kwargs):
@@ -46,8 +46,8 @@ class DefaultCoupling(param.Parameterized):
 
 
 class SquareCoupling(DefaultCoupling):
-    crawler_phi_range = param.List(default=[0.0, 0.0], label='crawler suppression relief phase interval', doc='CRAWLER phase range for TURNER suppression lift.')
-    feeder_phi_range = param.List(default=[0.0, 0.0], label='feeder suppression relief phase interval', doc='FEEDER phase range for TURNER suppression lift.')
+    crawler_phi_range = aux.PhaseRange(label='crawler suppression relief phase interval', doc='CRAWLER phase range for TURNER suppression lift.')
+    feeder_phi_range = aux.PhaseRange(label='feeder suppression relief phase interval', doc='FEEDER phase range for TURNER suppression lift.')
 
 
 
@@ -78,8 +78,7 @@ class SquareCoupling(DefaultCoupling):
 
 
 class PhasicCoupling(DefaultCoupling):
-    max_attenuation_phase = param.Number(default=3.4, bounds=(0.0, 2 * np.pi), label='max relief phase',
-                                 doc='CRAWLER phase of minimum TURNER suppression.')
+    max_attenuation_phase = aux.Phase(3.4, label='max relief phase',doc='CRAWLER phase of minimum TURNER suppression.')
 
     def compute_attenuation(self, crawler=None, feeder=None):
         c_on, f_on = self.active_effectors(crawler, feeder)

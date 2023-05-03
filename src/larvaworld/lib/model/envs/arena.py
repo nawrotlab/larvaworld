@@ -8,9 +8,9 @@ from larvaworld.lib import reg, aux
 
 
 class Arena(param.Parameterized, agentpy.Space):
-    dims = param.Range(default=(0.1, 0.1), bounds=(0, None), softbounds=(0, 1), step=0.01, doc='The arena dimensions in meters')
-    geometry = param.Selector(default='rectangular', objects=['circular', 'rectangular'], doc='The arena shape')
-    torus = param.Boolean(default=False, doc='Whether to allow a toroidal space')
+    dims = aux.PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
+    geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
+    torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
 
     def __init__(self, model, vertices=None,**kwargs):
