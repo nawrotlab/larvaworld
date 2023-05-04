@@ -8,19 +8,27 @@ from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
 
 class BaseScreenManager :
-    def __init__(self, model,  mode=None, show_display = True,black_background=False, **kwargs):
+    def __init__(self, model,  mode=None,image_mode=None, show_display = True,black_background=False,
+                 color_behavior=False, trails=False,traj_color=None,trajectory_dt=0.0, **kwargs):
 
         self.model = model
         self.s = self.model.scaling_factor
         self.space_bounds = aux.get_arena_bounds(self.model.space.dims, self.s)
         self.window_dims = aux.get_window_dims(self.model.space.dims)
 
+        if trajectory_dt is None:
+            trajectory_dt = 0.0
+        self.trajectory_dt = trajectory_dt
+        self.traj_color = traj_color
+        self.color_behavior = color_behavior
+        self.trails = trails
         self.black_background = black_background
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
 
 
 
+        self.image_mode = image_mode
         self.mode =mode
         self.show_display =show_display
         if self.mode is None and not self.show_display:
@@ -60,7 +68,111 @@ class BaseScreenManager :
             default_larva_color = np.array([0, 0, 0])
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
+    def draw_trajectories(self):
+        X = self.model.space.dims * self.s[0]
+        agents = self.model.agents
+        Nfade = int(self.trajectory_dt / self.model.dt)
 
+        for fly in agents :
+            traj = fly.trajectory[-Nfade:]
+            if self.traj_color is not None:
+                traj_col = self.traj_color.xs(fly.unique_id, level='AgentID')[-Nfade:]
+            else:
+                traj_col = np.array([(0, 0, 0) for t in traj])
+
+        # trajs = [fly.trajectory for fly in agents]
+        # if self.traj_color is not None:
+        #     traj_cols = [self.traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
+        # else:
+        #     traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
+        #
+        # trajs = [t[-Nfade:] for t in trajs]
+        # traj_cols = [t[-Nfade:] for t in traj_cols]
+        #
+        # for fly, traj, traj_col in zip(agents, trajs, traj_cols):
+            # This is the case for simulated larvae where no values are np.nan
+            if not np.isnan(traj).any():
+                parsed_traj = [traj]
+                parsed_traj_col = [traj_col]
+            elif np.isnan(traj).all():
+                continue
+            # This is the case for larva trajectories derived from experiments where some values are np.nan
+            else:
+                traj_x = np.array([x for x, y in traj])
+                ds, de = aux.parse_array_at_nans(traj_x)
+                parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
+                parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
+
+            for t, c in zip(parsed_traj, parsed_traj_col):
+                # If trajectory has one point, skip
+
+                if len(t) < 2:
+                    pass
+                else:
+                    if self.traj_color is None:
+                        self.v.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * X)
+                    else:
+                        c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
+                        c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
+                        self.v.draw_polyline(t, color=c, closed=False, width=0.01 * X, dynamic_color=True)
+
+    def draw_agents(self, v):
+        self.model.sources._draw(v)
+        self.model.agents._draw(v)
+
+        # for o in self.model.sources:
+        #     if o.visible:
+        #         o.draw(v, filled=True if o.amount > 0 else False)
+        #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
+        #
+        # for g in self.model.agents:
+        #     if g.visible:
+        #         if self.color_behavior:
+        #             g.update_behavior_dict()
+        #         g.draw(v, self)
+        #         g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
+
+        if self.trails:
+
+            self.draw_trajectories()
+
+    def check(self,**kwargs):
+        if self.v is None:
+            self.v = self.initialize(**kwargs)
+        elif self.v.close_requested():
+            self.v.close()
+            self.v = None
+            self.model.running = False
+            return
+
+    def render(self,**kwargs):
+        self.check(**kwargs)
+        if self.active:
+            if self.image_mode != 'overlap':
+                self.draw_arena(self.v, **kwargs)
+
+            self.draw_agents(self.v)
+            if self.v.show_display:
+                self.evaluate_input()
+                self.evaluate_graphs()
+            if self.image_mode != 'overlap':
+                self.draw_aux(self.v)
+                self.v.render()
+
+    def initialize(self, **kwargs):
+        return None
+
+    def evaluate_input(self):
+        pass
+
+    def evaluate_graphs(self):
+        pass
+
+    def draw_arena(self, v,**kwargs):
+        pass
+
+    def draw_aux(self, v,**kwargs):
+        pass
 
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,fps=10,scene='no_boxes',**kwargs):
@@ -76,49 +188,17 @@ class GA_ScreenManager(BaseScreenManager):
             'fps': fps,
         }
 
+    def evaluate_input(self):
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT or (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
+                sys.exit()
+            elif e.type == pygame.KEYDOWN and (e.key == pygame.K_PLUS or e.key == 93 or e.key == 270):
+                self.v.increase_fps()
+            elif e.type == pygame.KEYDOWN and (e.key == pygame.K_MINUS or e.key == 47 or e.key == 269):
+                self.v.decrease_fps()
 
-    def render(self, tick=None):
-        if self.v is None:
-            self.v = self.initialize()
-        elif self.v.close_requested():
-            self.v.close()
-            self.v = None
-            self.model.running = False
-            return
 
-        if self.v.show_display:
-            for e in pygame.event.get():
-                if e.type == pygame.QUIT or (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
-                    sys.exit()
-                elif e.type == pygame.KEYDOWN and (e.key == pygame.K_PLUS or e.key == 93 or e.key == 270):
-                    self.v.increase_fps()
-                elif e.type == pygame.KEYDOWN and (e.key == pygame.K_MINUS or e.key == 47 or e.key == 269):
-                    self.v.decrease_fps()
 
-            self.v._window.fill(aux.Color.BLACK)
-
-            self.draw_agents(self.v)
-
-            # draw a black background for the side panel
-            self.v.draw_panel_rect()
-
-            self.side_panel.display_ga_info()
-            pygame.display.flip()
-            self.v._t.tick(self.v._fps)
-
-    def draw_agents(self, v):
-        self.model.sources._draw(v)
-        self.model.agents._draw(v)
-
-        # for o in self.model.sources:
-        #     if o.visible:
-        #         o.draw(v, filled=True if o.amount > 0 else False)
-        #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
-        #
-        # for g in self.model.agents:
-        #     if g.visible:
-        #         g.draw(v)
-        #         g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
     def initialize(self):
         v = screen.Viewer.load_from_file(**self.screen_kws)
@@ -127,28 +207,43 @@ class GA_ScreenManager(BaseScreenManager):
             print('Screen opened')
         return v
 
+    def draw_arena(self, v,**kwargs):
+        v._window.fill(aux.Color.BLACK)
 
+    def draw_aux(self, v,**kwargs):
+        # draw a black background for the side panel
+        v.draw_panel_rect()
+
+        self.side_panel.display_ga_info()
+        # pygame.display.flip()
+        # v._t.tick(v._fps)
 
 class ScreenManager(BaseScreenManager):
     def __init__(self, model, vis_kwargs=None,video=None,
-                 background_motion=None, traj_color=None,allow_clicks=True,**kwargs):
+                 background_motion=None, allow_clicks=True,**kwargs):
         if vis_kwargs is None:
             mode='video' if video else None
             vis_kwargs = reg.get_null('visualization', mode=mode)
         vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
 
 
-        self.image_mode = vis.render.image_mode
-        super().__init__(model, mode= vis.render.mode,
-                         show_display= vis.render.show_display,
+
+        super().__init__(model, mode= vis.render.mode,image_mode = vis.render.image_mode,
+                         show_display= vis.render.show_display,color_behavior=vis.color.color_behavior,
+                         trajectory_dt=vis.draw.trajectory_dt, trails=vis.draw.trails,
                          black_background= vis.color.black_background, **kwargs)
         self.allow_clicks = allow_clicks
         self.background_motion = background_motion
-        self.traj_color = traj_color
+
         self.screen_kws = self.define_screen_kws(vis)
         self.build()
 
-
+    def render(self, tick=None):
+        if self.bg is not None and tick is not None:
+            bg = self.bg[:, tick - 1]
+        else:
+            bg = [0, 0, 0]
+        super().render(bg=bg)
 
     def build(self):
         self.dynamic_graphs = []
@@ -163,8 +258,7 @@ class ScreenManager(BaseScreenManager):
         self.selected_agents = []
 
 
-        if self.trajectory_dt is None:
-            self.trajectory_dt = 0.0
+
 
 
         self.selection_color = np.array([255, 0, 0])
@@ -299,50 +393,9 @@ class ScreenManager(BaseScreenManager):
             self.bgimage = None
             self.bgimagerect = None
 
-    def draw_agents(self, v):
-        self.model.sources._draw(v)
-        self.model.agents._draw(v)
 
-        # for o in self.model.sources:
-        #     if o.visible:
-        #         o.draw(v, filled=True if o.amount > 0 else False)
-        #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
-        #
-        # for g in self.model.agents:
-        #     if g.visible:
-        #         if self.color_behavior:
-        #             g.update_behavior_dict()
-        #         g.draw(v, self)
-        #         g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
-        if self.trails:
 
-            self.draw_trajectories()
-
-    def render(self, tick=None):
-        if self.bg is not None and tick is not None:
-            bg = self.bg[:, tick - 1]
-        else:
-            bg = [0, 0, 0]
-        if self.v is None:
-            self.v = self.initialize(bg=bg)
-        elif self.v.close_requested():
-            self.v.close()
-            self.v = None
-            self.model.running = False
-            return
-        if self.image_mode != 'overlap':
-            self.draw_arena(self.v, bg)
-
-        self.draw_agents(self.v)
-
-        if self.v.show_display:
-            self.evaluate_input()
-            self.evaluate_graphs()
-        if self.image_mode != 'overlap':
-
-            self.draw_aux(self.v)
-            self.v.render()
 
     def initialize(self, bg):
 
@@ -391,7 +444,7 @@ class ScreenManager(BaseScreenManager):
             else:
                 text.visible = False
 
-    def draw_arena(self, v, bg):
+    def draw_arena(self, v, bg=None):
         arena_drawn = False
         for id, layer in self.model.odor_layers.items():
             if layer.visible:
@@ -645,52 +698,6 @@ class ScreenManager(BaseScreenManager):
         return res
 
 
-    def draw_trajectories(self):
-        X = self.model.space.dims * self.s[0]
-        agents = self.model.agents
-        Nfade = int(self.trajectory_dt / self.model.dt)
 
-        for fly in agents :
-            traj = fly.trajectory[-Nfade:]
-            if self.traj_color is not None:
-                traj_col = self.traj_color.xs(fly.unique_id, level='AgentID')[-Nfade:]
-            else:
-                traj_col = np.array([(0, 0, 0) for t in traj])
-
-        # trajs = [fly.trajectory for fly in agents]
-        # if self.traj_color is not None:
-        #     traj_cols = [self.traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
-        # else:
-        #     traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
-        #
-        # trajs = [t[-Nfade:] for t in trajs]
-        # traj_cols = [t[-Nfade:] for t in traj_cols]
-        #
-        # for fly, traj, traj_col in zip(agents, trajs, traj_cols):
-            # This is the case for simulated larvae where no values are np.nan
-            if not np.isnan(traj).any():
-                parsed_traj = [traj]
-                parsed_traj_col = [traj_col]
-            elif np.isnan(traj).all():
-                continue
-            # This is the case for larva trajectories derived from experiments where some values are np.nan
-            else:
-                traj_x = np.array([x for x, y in traj])
-                ds, de = aux.parse_array_at_nans(traj_x)
-                parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
-                parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
-
-            for t, c in zip(parsed_traj, parsed_traj_col):
-                # If trajectory has one point, skip
-
-                if len(t) < 2:
-                    pass
-                else:
-                    if self.traj_color is None:
-                        self.v.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * X)
-                    else:
-                        c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
-                        c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
-                        self.v.draw_polyline(t, color=c, closed=False, width=0.01 * X, dynamic_color=True)
 
 
