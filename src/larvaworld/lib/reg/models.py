@@ -344,7 +344,7 @@ def init_brain_modules():
             'feed_radius': {'v0': 0.1, 'lim': (0.1, 10.0), 'sym': sub('rad', 'F'),
                             'disp': 'feeding radius', 'k': 'rad_F',
                             'h': 'The radius around the mouth in which food is consumable as a fraction of the body length.'},
-            'V_bite': {'v0': 0.0005, 'lim': (0.0001, 0.01), 'dv': 0.0001,
+            'V_bite': {'v0': 0.001, 'lim': (0.0001, 0.01), 'dv': 0.0001,
                        'sym': sub('V', 'F'), 'disp': 'feeding volume ratio', 'k': 'V_F',
                        'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
         }
@@ -440,8 +440,7 @@ def init_aux_modules():
             'initial_length': {'v0': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001,
                                'disp': 'length', 'sym': '$l$', 'u': reg.units.m, 'k': 'l0',
                                'h': 'The initial body length.'},
-            'length_std': {'v0': 0.0, 'lim': (0.0, 0.001), 'dv': 0.0001, 'u': reg.units.m, 'k': 'l_std',
-                           'h': 'The standard deviation of the initial body length.'},
+
             'Nsegs': {'dtype': int, 'v0': 2, 'lim': (1, 12), 'disp': 'number of body segments', 'sym': sub('N', 'segs'),
                       'u_name': '# $segments$', 'k': 'Nsegs',
                       'h': 'The number of segments comprising the larva body.'},

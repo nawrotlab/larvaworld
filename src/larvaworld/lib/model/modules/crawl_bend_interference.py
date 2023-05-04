@@ -86,18 +86,20 @@ class PhasicCoupling(DefaultCoupling):
         def gaussian(x, mu, sig):
             return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
 
-        if c_on:
-            if hasattr(crawler, 'phi') :
-                x=crawler.phi
-            else :
-                x=0
-            A = gaussian(x, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
-            if A >= 1:
-                A = 1
-            elif A <= 0:
-                A = 0
-            return A
-        else :
+        if not c_on and not f_on :
             return 1
+
+        if c_on:
+            x=crawler.phi if hasattr(crawler, 'phi') else 0
+        elif f_on :
+            x=feeder.phi
+
+        A = gaussian(x, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
+        if A >= 1:
+            A = 1
+        elif A <= 0:
+            A = 0
+        return A
+
 
 

@@ -1,20 +1,59 @@
 import math
 
+import agentpy
 import numpy as np
 import param
 from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model import ModelEntity
+from larvaworld.lib.model import ModelEntity, Entity
 from larvaworld.lib.model.deb.substrate import Substrate
 from larvaworld.lib.screen.rendering import InputBox
 
 
+class GridOverSpace(Entity, agentpy.Grid):
+    # initial_value = param.Number(0.0, doc='initial value over the grid')
+    # fixed_max = param.Boolean(False, doc='whether the max is kept constant')
+    grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
+
+    def __init__(self,model,default_color='white',unique_id='GridOverArena', **kwargs):
+        Entity.__init__(self,visible=False,default_color=default_color,unique_id=unique_id, **kwargs)
+        agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
+        self._torus = self.space._torus
+        self.X, self.Y = self.XY = np.array(self.grid_dims)
+        self.xy = np.array(self.space.dims)
+        x0, x1, y0, y1 = self.space.range
+
+        self.cell_radius = np.sum((self.xy / self.XY / 2) ** 2) ** 0.5
+        self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
+        self.grid_vertices = self.generate_grid_vertices()
+
+    @ property
+    def space(self):
+        return self.model.space
+
+    def get_grid_cell(self, p):
+        return tuple(np.floor(self.XY*(p / self.xy + 0.5)).astype(int))
+
+    def generate_grid_vertices(self):
+        vertices = np.zeros([self.X, self.Y, 4, 2])
+        for i in range(self.X):
+            for j in range(self.Y):
+                vertices[i, j] = self.cell_vertices(i, j)
+        return vertices
+
+    def cell_vertices(self, i, j):
+        x, y = self.xy / self.XY
+        X, Y = self.X / 2, self.Y / 2
+        return np.array([(x * (i - X), y * (j - Y)),
+                      (x * (i + 1 - X), y * (j - Y)),
+                      (x * (i + 1 - X), y * (j + 1 - Y)),
+                      (x * (i - X), y * (j + 1 - Y))])
 
 class SpatialEntity(ModelEntity) :
     def __init__(self, default_color='white', **kwargs):
-        super().__init__(visible=False,default_color=default_color,**kwargs)
+        super().__init__(visible=True,default_color=default_color,**kwargs)
 
 class ValueGrid(SpatialEntity):
     initial_value = param.Number(0.0, doc='initial value over the grid')
@@ -29,27 +68,16 @@ class ValueGrid(SpatialEntity):
         self.sources = sources
 
         self.min_value = min_value
-        # if type(default_color) == str:
-        #     default_color = aux.colorname2tuple(default_color)
-        # self.default_color = default_color
-        self.X, self.Y = self.grid_dims
-        x_range = tuple(self.model.space.range[0:2])
-        y_range = tuple(self.model.space.range[2:])
-        x0, x1 = x_range[0], x_range[1]
-        y0, y1 = y_range[0], y_range[1]
-        xr, yr = x1 - x0, y1 - y0
-        self.x = xr / self.X
-        self.y = yr / self.Y
-        self.cell_radius = np.sqrt(np.sum((self.x / 2) ** 2 + (self.y / 2) ** 2))
-        self.xy = np.array([self.x, self.y])
-        self.XY_half = np.array([self.X / 2, self.Y / 2])
+
+        self.X, self.Y =self.XY0=np.array(self.grid_dims)
+        self.xy0=np.array(self.model.space.dims)
+        self.x, self.y=self.xy0/self.XY0
+        x0, x1, y0, y1 =self.model.space.range
+
+        self.cell_radius = np.sum((self.xy0/self.XY0/2)**2)**0.5
         self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
         self.grid = np.ones(self.grid_dims) * self.initial_value
         self.grid_vertices = self.generate_grid_vertices()
-        self.grid_edges = [[-xr / 2, -yr / 2],
-                           [xr / 2, -yr / 2],
-                           [xr / 2, yr / 2],
-                           [-xr / 2, yr / 2]]
         if max_value is None:
             max_value = np.max(self.grid)
         self.max_value = max_value
@@ -60,28 +88,27 @@ class ValueGrid(SpatialEntity):
     def add_value(self, p, value):
         return self.add_cell_value(self.get_grid_cell(p), value)
 
-    def set_value(self, p, value):
-        self.set_cell_value(self.get_grid_cell(p), value)
+
 
     def get_value(self, p):
-        return self.get_cell_value(self.get_grid_cell(p))
+        return self.grid[self.get_grid_cell(p)]
+        # return self.get_cell_value(self.get_grid_cell(p))
+
 
     def get_grid_cell(self, p):
-        return tuple(np.floor(p / self.xy + self.XY_half).astype(int))
+        return tuple(np.floor(self.XY0*(p / self.xy0 + 0.5)).astype(int))
 
-    def get_cell_value(self, cell):
-        return self.grid[cell]
 
-    def set_cell_value(self, cell, value):
-        self.grid[cell] = value
+
 
     def add_cell_value(self, cell, value):
-        v0 = self.get_cell_value(cell)
+        v0 = self.grid[cell]
         v1 = v0 + value
         if not self.fixed_max:
             self.max_value = np.max([self.max_value, v1])
         v2 = np.clip(v1, a_min=self.min_value, a_max=self.max_value)
-        self.set_cell_value(cell, v2)
+        self.grid[cell] = v2
+        # print(v2/self.initial_value,self.initial_value)
         if v1 < v2:
             return self.min_value - v0
         elif v1 > v2:
@@ -138,7 +165,7 @@ class ValueGrid(SpatialEntity):
     def draw_isocontours(self, viewer):
         N = 8
         k = 4
-        g = self.get_grid()
+        g = self.grid
         # c='white'
         c = self.default_color
         vmax = np.max(g)
@@ -160,7 +187,7 @@ class ValueGrid(SpatialEntity):
                     pass
 
     def get_color_grid(self):
-        g = self.get_grid().flatten()
+        g = self.grid.flatten()
         v0, v1 = self.min_value, self.max_value
         gg = (g - v0) / (v1 - v0)
         k = 10 ** 2
@@ -169,11 +196,11 @@ class ValueGrid(SpatialEntity):
         q = np.clip(q, a_min=0, a_max=1)
         return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
-    def get_grid(self):
-        return self.grid
 
 
-class FoodGrid(ValueGrid, Substrate):
+class FoodGrid(ValueGrid):
+    substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
+
     def __init__(self, default_color='green', **kwargs):
         super().__init__(default_color=default_color, fixed_max=True, **kwargs)
 
@@ -183,7 +210,7 @@ class FoodGrid(ValueGrid, Substrate):
         return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
     def draw(self, viewer):
-        viewer.draw_polygon(self.grid_edges, self.get_color(v=self.initial_value), filled=True)
+        viewer.draw_polygon(self.model.space.vertices, self.get_color(v=self.initial_value), filled=True)
         for i in range(self.X):
             for j in range(self.Y):
                 v = self.grid[i, j]

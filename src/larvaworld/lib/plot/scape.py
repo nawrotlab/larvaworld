@@ -21,7 +21,7 @@ def plot_odorscape(odor_layers, scale=1.0, idx=0, **kwargs):
         X, Y = layer.meshgrid
         x = X * 1000 / scale
         y = Y * 1000 / scale
-        plot_surface(x=x, y=y, z=layer.get_grid(), vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
+        plot_surface(x=x, y=y, z=layer.grid, vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
                      title=f'{id} odorscape', save_as=f'{id}_odorscape_{idx}', **kwargs)
 
 

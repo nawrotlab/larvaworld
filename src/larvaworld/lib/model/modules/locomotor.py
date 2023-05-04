@@ -50,7 +50,7 @@ class Locomotor:
                 self.on_new_run()
             elif pre_state != 'feed' and cur_state == 'feed':
                 self.on_new_feed()
-
+            # print(cur_state)
 
 class DefaultLocomotor(Locomotor):
     def __init__(self, conf, **kwargs):

@@ -4,6 +4,7 @@ import param
 from shapely.geometry import Point,Polygon
 
 from larvaworld.lib import reg, aux
+from larvaworld.lib.model.envs import Obstacle
 
 
 class ArenaConf(aux.NestedConf):
@@ -11,11 +12,9 @@ class ArenaConf(aux.NestedConf):
     geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
     torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
-
-class Arena(ArenaConf, agentpy.Space):
-    def __init__(self, model=None, vertices=None,**kwargs):
+class Arena(ArenaConf,Obstacle, agentpy.Space):
+    def __init__(self, model,vertices=None,default_color='black',unique_id='Arena',visible=True,**kwargs):
         ArenaConf.__init__(self, **kwargs)
-
         X, Y = self.dims
         if vertices is None:
             if self.geometry == 'circular':
@@ -29,12 +28,12 @@ class Arena(ArenaConf, agentpy.Space):
                                    (X / 2, -Y / 2)])
             else:
                 raise
-        self.vertices =vertices
+        edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
         self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         k = 0.96
-        self.polygon = Polygon(self.vertices * k)
-        self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
-        agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
+        self.polygon = Polygon(vertices * k)
+        Obstacle.__init__(self, model=model,visible=visible, unique_id=unique_id,default_color=default_color,edges=edges, vertices=vertices)
+        agentpy.Space.__init__(self, model=self.model, torus=self.torus, shape=self.dims)
 
         self.stable_source_positions=[]
         self.displacable_source_positions=[]
@@ -92,7 +91,7 @@ class Arena(ArenaConf, agentpy.Space):
             dic={a: dic['sources'][0] if dic['dsts'][0]<=a.radius else None for a, dic in self.accessible_sources_sorted.items()}
         self.accessible_sources = dic
 
-    def draw(self):
+    def draw(self, v=None):
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         x, y = np.array(self.dims) * 1000

@@ -3,7 +3,7 @@
 from ._agent import Entity,ModelEntity,LarvaworldAgent
 
 
-from ._source import Food
+from ._source import Source, Food
 # from .controller import BaseController
 from ._larva import Larva, LarvaMotile
 from .segmented_body import LarvaBody, BaseController

@@ -44,6 +44,7 @@ from .graph import graphs
 
 
 
+
 def getPar(k=None, p=None, d=None, to_return='d'):
     return par.getPar(k=k, d=d, p=p, to_return=to_return)
 

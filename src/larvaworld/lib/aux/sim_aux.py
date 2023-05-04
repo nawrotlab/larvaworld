@@ -233,7 +233,7 @@ def sense_food(pos, sources=None, grid=None, radius=None):
 
     if grid:
         cell = grid.get_grid_cell(pos)
-        if grid.get_cell_value(cell) > 0:
+        if grid.grid[cell] > 0:
             return cell
     elif sources and radius is not None:
         valid = sources.select(aux.eudi5x(np.array(sources.pos), pos) <= radius)

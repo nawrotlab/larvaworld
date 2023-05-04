@@ -8,7 +8,7 @@ from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
 
 class BaseScreenManager :
-    def __init__(self, model,  mode=None,show_display = None,traj_color=None,fps=None,
+    def __init__(self, model, show_display = None,traj_color=None,fps=None,
                  background_motion=None, allow_clicks=True,black_background=None,
                  vis_kwargs=None,video=None, **kwargs):
 
@@ -21,6 +21,7 @@ class BaseScreenManager :
             mode='video' if video else None
             vis_kwargs = reg.get_null('visualization', mode=mode)
         vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
+        self.mode = vis.render.mode
         self.__dict__.update(vis.draw)
         self.__dict__.update(vis.color)
         self.__dict__.update(vis.aux)
@@ -33,11 +34,11 @@ class BaseScreenManager :
         self.trails = vis.draw.trails
         self.black_background = vis.color.black_background if black_background is None else black_background
         self.image_mode = vis.render.image_mode,
-        self.mode = mode
+
         self.show_display = vis.render.show_display if show_display is None else show_display
         self.media_name = vis.render.media_name
         if self.media_name is None:
-            self.media_name = str(sm.id)
+            self.media_name = str(m.id)
 
 
         self.traj_color = traj_color
@@ -112,7 +113,7 @@ class BaseScreenManager :
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def draw_trajectories(self):
-        X = self.model.space.dims * self.s[0]
+        X = self.model.space.dims[0] * self.s
         agents = self.model.agents
         Nfade = int(self.trajectory_dt / self.model.dt)
 
@@ -421,13 +422,18 @@ class ScreenManager(BaseScreenManager):
                 layer._draw(v)
                 arena_drawn = True
                 break
+
+
         if not arena_drawn and self.model.food_grid is not None:
             self.model.food_grid._draw(v=v)
+            # print(self.model.food_grid.visible)
             arena_drawn = True
 
         if not arena_drawn:
             v.draw_polygon(self.model.space.vertices, color=self.tank_color)
             self.draw_background(v, bg)
+
+
 
         if self.model.windscape is not None and self.model.windscape.visible:
             self.model.windscape._draw(v=v)

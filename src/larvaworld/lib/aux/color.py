@@ -60,6 +60,10 @@ def colorname2tuple(name):
 
 
 def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
+    if isinstance(low,str) :
+        low=colorname2tuple(low)
+    if isinstance(high,str) :
+        high=colorname2tuple(high)
     rr0, gg0, bb0 = q_col1 = np.array(low) / 255
     rr1, gg1, bb1 = q_col2 = np.array(high) / 255
     qrange = np.array([rr1 - rr0, gg1 - gg0, bb1 - bb0])

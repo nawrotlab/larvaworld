@@ -221,12 +221,12 @@ def buildInitDict():
             'grid_dims': {'dtype': Tuple[int], 'v': (50, 50), 'lim': (10, 200), 'disp': 'XY dims',
                           'vfunc': param.Tuple,
                           'h': 'The spatial resolution of the food grid.'},
-            'initial_value': {'v': 0.1, 'lim': (0.0, 10.0), 'dv': 0.01, 'disp': 'Initial amount',
+            'initial_value': {'v': 0.00001, 'lim': (0.0, 1.0), 'dv': 0.000001, 'disp': 'Initial amount',
                               'h': 'The initial amount of food in each cell of the grid.'},
-            'distribution': {'dtype': str, 'v': 'uniform', 'vs': ['uniform'],
-                             'h': 'The distribution of food in the grid.'},
+            # 'distribution': {'dtype': str, 'v': 'uniform', 'vs': ['uniform'],
+            #                  'h': 'The distribution of food in the grid.'},
             'default_color': pCol('green', 'food grid'),
-            **d['substrate']
+            'substrate' : d['substrate']
         }
 
         d['agent'] = {
@@ -257,14 +257,14 @@ def buildInitDict():
             'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
             'radius': {'v': 0.003, 'lim': (0.0, 0.1), 'dv': 0.001,
                        'h': 'The spatial radius of the source in meters.'},
-            **d['substrate']
+            'substrate' : d['substrate']
         }
 
         d['Source'] = {
 
             'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
             **d['source'],
-            **d['substrate']
+            'substrate' : d['substrate']
         }
 
         d['SourceGroup'] = {

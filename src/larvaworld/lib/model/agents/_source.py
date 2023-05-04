@@ -57,11 +57,12 @@ class Source(LarvaworldAgent):
 
 
 
-class Food(Source, Substrate):
+class Food(Source):
     amount = aux.PositiveNumber(softmax=10.0, step=0.01, doc='The food amount in the source')
+    substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
     def __init__(self, default_color='green', **kwargs):
-        super().__init__(default_color=default_color, **kwargs)
+        Source.__init__(self, default_color=default_color, **kwargs)
         self.initial_amount = self.amount
         # self.amount = self.initial_amount
         # self.substrate = Substrate(type=type, quality=quality)

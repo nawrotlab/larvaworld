@@ -145,6 +145,7 @@ class Intermitter(Timer):
 
 
     def alternate_exploreNexploit(self,feed_motion=False,on_food=False):
+
         if feed_motion :
             if self.cur_Nfeeds is None:
                 raise
@@ -203,7 +204,7 @@ class Intermitter(Timer):
         if self.feed_bouts :
             self.alternate_exploreNexploit(feed_motion, on_food)
         self.alternate_crawlNpause(stride_completed)
-
+        # print(self.EEB, self.feeder_reoccurence_rate, self.base_EEB)
         return self.cur_state
 
 

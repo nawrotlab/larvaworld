@@ -4,7 +4,7 @@ import numpy as np
 import param
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model.agents import LarvaworldAgent
+from larvaworld.lib.model.agents import LarvaworldAgent,Source
 
 
 class Larva(LarvaworldAgent):
@@ -75,7 +75,7 @@ class LarvaMotile(Larva):
     def feed(self, source, motion):
 
         def get_max_V_bite():
-            return self.brain.locomotor.feeder.V_bite * self.V  # ** (2 / 3)
+            return self.brain.locomotor.feeder.V_bite * self.V*1000  # ** (2 / 3)
 
         if motion:
             a_max = get_max_V_bite()
@@ -163,7 +163,7 @@ class LarvaMotile(Larva):
         return self.amount_eaten / self.real_mass
 
     def resolve_carrying(self, food):
-        if food is None:
+        if food is None or not isinstance(food, Source):
             return
         if food.can_be_carried and food not in self.carried_objects:
             if food.is_carried_by is not None:

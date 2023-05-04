@@ -8,8 +8,8 @@ from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController
 
 
 class LarvaSim(LarvaBody, BaseController):
-    def __init__(self, physics, Box2D_params, **kwargs):
-        LarvaBody.__init__(self, **kwargs)
+    def __init__(self, body, physics, Box2D_params, **kwargs):
+        LarvaBody.__init__(self,**body, **kwargs)
         BaseController.__init__(self, **physics)
         self.body_bend_errors = 0
         self.negative_speed_errors = 0
