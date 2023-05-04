@@ -8,29 +8,46 @@ from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
 
 class BaseScreenManager :
-    def __init__(self, model,  mode=None,image_mode=None, show_display = True,black_background=False,
-                 color_behavior=False, trails=False,traj_color=None,trajectory_dt=0.0, **kwargs):
+    def __init__(self, model,  mode=None,show_display = None,traj_color=None,fps=None,
+                 background_motion=None, allow_clicks=True,black_background=None,
+                 vis_kwargs=None,video=None, **kwargs):
 
-        self.model = model
-        self.s = self.model.scaling_factor
-        self.space_bounds = aux.get_arena_bounds(self.model.space.dims, self.s)
-        self.window_dims = aux.get_window_dims(self.model.space.dims)
+        m=self.model = model
+        self.s = m.scaling_factor
+        self.space_bounds = aux.get_arena_bounds(m.space.dims, self.s)
+        self.window_dims = aux.get_window_dims(m.space.dims)
 
+        if vis_kwargs is None:
+            mode='video' if video else None
+            vis_kwargs = reg.get_null('visualization', mode=mode)
+        vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
+        self.__dict__.update(vis.draw)
+        self.__dict__.update(vis.color)
+        self.__dict__.update(vis.aux)
+        self.intro_text = vis.render.intro_text
+        self.color_behavior = vis.color.color_behavior
+        trajectory_dt = vis.draw.trajectory_dt
         if trajectory_dt is None:
             trajectory_dt = 0.0
         self.trajectory_dt = trajectory_dt
+        self.trails = vis.draw.trails
+        self.black_background = vis.color.black_background if black_background is None else black_background
+        self.image_mode = vis.render.image_mode,
+        self.mode = mode
+        self.show_display = vis.render.show_display if show_display is None else show_display
+        self.media_name = vis.render.media_name
+        if self.media_name is None:
+            self.media_name = str(sm.id)
+
+
         self.traj_color = traj_color
-        self.color_behavior = color_behavior
-        self.trails = trails
-        self.black_background = black_background
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
+        self.allow_clicks = allow_clicks
+        self.bg = background_motion
 
 
 
-        self.image_mode = image_mode
-        self.mode =mode
-        self.show_display =show_display
         if self.mode is None and not self.show_display:
             reg.vprint('Storage of media or visualization not requested.')
             self.active=False
@@ -40,6 +57,32 @@ class BaseScreenManager :
 
         self.v = None
 
+        self.selected_type = ''
+        self.selected_agents = []
+        self.selection_color = np.array([255, 0, 0])
+
+        self.dynamic_graphs = []
+        self.focus_mode = False
+
+        self.mousebuttondown_pos = None
+        self.mousebuttonup_pos = None
+        self.snapshot_interval = int(60 / m.dt)
+
+        self.snapshot_counter = 0
+        self.odorscape_counter = 0
+
+
+        self.pygame_keys = None
+
+        self.screen_kws = {
+            'window_dims': self.window_dims,
+            'space_bounds': self.space_bounds,
+            # 'caption': self.media_name,
+            'dt': m.dt,
+            'fps': int(vis.render.video_speed/m.dt) if fps is None else fps,
+            'show_display': self.show_display,
+            # 'record_video_to':show_display,
+        }
 
     def space2screen_pos(self, pos):
         if pos is None or any(np.isnan(pos)):
@@ -117,15 +160,17 @@ class BaseScreenManager :
                         self.v.draw_polyline(t, color=c, closed=False, width=0.01 * X, dynamic_color=True)
 
     def draw_agents(self, v):
-        self.model.sources._draw(v)
-        self.model.agents._draw(v)
+        # self.model.sources._draw(v)
+        # self.model.agents._draw(v)
 
-        # for o in self.model.sources:
+        for o in self.model.sources:
+            o._draw(v=v)
         #     if o.visible:
         #         o.draw(v, filled=True if o.amount > 0 else False)
         #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
         #
-        # for g in self.model.agents:
+        for g in self.model.agents:
+            g._draw(v=v)
         #     if g.visible:
         #         if self.color_behavior:
         #             g.update_behavior_dict()
@@ -176,17 +221,11 @@ class BaseScreenManager :
 
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,fps=10,scene='no_boxes',**kwargs):
-        super().__init__(mode=None, black_background=True,**kwargs)
-        self.screen_kws = {
-            'file_path': f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt',
-            'show_display': self.show_display,
-            'panel_width': panel_width,
-            'caption': f'GA {self.model.experiment} : {self.model.id}',
-            'window_dims': self.window_dims,
-            'space_bounds': self.space_bounds,
-            'dt': self.model.dt,
-            'fps': fps,
-        }
+        super().__init__(black_background=True,fps=fps,**kwargs)
+        self.screen_kws['caption'] = f'GA {self.model.experiment} : {self.model.id}'
+        self.screen_kws['file_path'] = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt'
+        self.screen_kws['panel_width'] = panel_width
+
 
     def evaluate_input(self):
         for e in pygame.event.get():
@@ -202,9 +241,8 @@ class GA_ScreenManager(BaseScreenManager):
 
     def initialize(self):
         v = screen.Viewer.load_from_file(**self.screen_kws)
-        if v.show_display:
-            self.side_panel = screen.SidePanel(v, model=self.model)
-            print('Screen opened')
+        self.side_panel = screen.SidePanel(v, model=self.model)
+        print('Screen opened')
         return v
 
     def draw_arena(self, v,**kwargs):
@@ -219,24 +257,31 @@ class GA_ScreenManager(BaseScreenManager):
         # v._t.tick(v._fps)
 
 class ScreenManager(BaseScreenManager):
-    def __init__(self, model, vis_kwargs=None,video=None,
-                 background_motion=None, allow_clicks=True,**kwargs):
-        if vis_kwargs is None:
-            mode='video' if video else None
-            vis_kwargs = reg.get_null('visualization', mode=mode)
-        vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
+    def __init__(self, **kwargs):
+
+        super().__init__(**kwargs)
+        f = self.model.save_to
+        os.makedirs(f, exist_ok=True)
+        self.screen_kws['caption'] = self.media_name
+        if self.mode == 'video':
+            self.screen_kws['record_video_to'] = f'{f}/{self.media_name}.mp4'
+        if self.mode == 'image':
+            self.screen_kws['record_image_to'] = f'{f}/{self.media_name}_{self.image_mode}.png'
+        self.build_aux()
 
 
+    def initialize(self, bg):
 
-        super().__init__(model, mode= vis.render.mode,image_mode = vis.render.image_mode,
-                         show_display= vis.render.show_display,color_behavior=vis.color.color_behavior,
-                         trajectory_dt=vis.draw.trajectory_dt, trails=vis.draw.trails,
-                         black_background= vis.color.black_background, **kwargs)
-        self.allow_clicks = allow_clicks
-        self.background_motion = background_motion
+        v = screen.Viewer(**self.screen_kws)
 
-        self.screen_kws = self.define_screen_kws(vis)
-        self.build()
+        self.display_configuration(v)
+        self.render_aux()
+        self.set_background(*v.display_dims)
+
+        self.draw_arena(v, bg)
+
+        print('Screen opened')
+        return v
 
     def render(self, tick=None):
         if self.bg is not None and tick is not None:
@@ -245,83 +290,46 @@ class ScreenManager(BaseScreenManager):
             bg = [0, 0, 0]
         super().render(bg=bg)
 
-    def build(self):
-        self.dynamic_graphs = []
-        self.focus_mode = False
-
-        self.selected_type = ''
-
-
-        self.mousebuttondown_pos = None
-        self.mousebuttonup_pos = None
-        self.snapshot_interval = int(60 / self.model.dt)
-        self.selected_agents = []
-
-
-
-
-
-        self.selection_color = np.array([255, 0, 0])
-
-        self.snapshot_counter = 0
-        self.odorscape_counter = 0
-
-
-
-        self.bg = self.background_motion
-        self.pygame_keys = None
-        self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
-                                         center=True, w=120 * 4, h=32 * 4,
-                                         font=pygame.font.SysFont("comicsansms", 32 * 2))
-        self.build_aux()
 
 
     def build_aux(self):
         m=self.model
-        kws={'color' : self.scale_clock_color}
-        self.sim_clock = screen.SimulationClock(m.dt, **kws)
-        self.sim_scale = screen.SimulationScale(m.space.dims[0], **kws)
-        self.sim_state = screen.SimulationState(model=m, **kws)
-        self.screen_texts = self.create_screen_texts(**kws)
-        self.add_screen_texts(list(m.odor_layers.keys()), **kws)
+        c=self.scale_clock_color
+        self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
+                                         center=True, w=120 * 4, h=32 * 4,
+                                         font=pygame.font.SysFont("comicsansms", 32 * 2))
+
+        self.sim_clock = screen.SimulationClock(m.dt, color=c)
+        self.sim_scale = screen.SimulationScale(m.space.dims[0], color=c)
+        self.sim_state = screen.SimulationState(model=m, color=c)
+        self.screen_texts = {name: screen.InputBox(text=name, color_active=c, color_inactive=c) for name in [
+            'trajectory_dt',
+            'trails',
+            'focus_mode',
+            'draw_centroid',
+            'draw_head',
+            'draw_midline',
+            'draw_contour',
+            'draw_sensors',
+            'visible_clock',
+            'visible_ids',
+            'visible_state',
+            'visible_scale',
+            'odor_aura',
+            'color_behavior',
+            'random_colors',
+            'black_background',
+            'larva_collisions',
+            'zoom',
+            'snapshot #',
+            'odorscape #',
+            'windscape',
+            'is_paused',
+        ]}
+        for name in list(m.odor_layers.keys()):
+            self.screen_texts[name] = screen.InputBox(text=name, color_active=c, color_inactive=c)
 
 
-
-    def define_screen_kws(self, vis):
-        m = self.model
-        self.__dict__.update(vis.draw)
-        self.__dict__.update(vis.color)
-        self.__dict__.update(vis.aux)
-        self.intro_text = vis.render.intro_text
-
-        media_name = vis.render.media_name
-        video_speed = vis.render.video_speed
-        if media_name is None:
-            media_name = str(m.id)
-
-
-
-        screen_kws = {
-            'window_dims': self.window_dims,
-            'space_bounds': self.space_bounds,
-            'caption': media_name,
-            'dt': m.dt,
-            'fps': int(video_speed / m.dt),
-            'show_display': self.show_display,
-            # 'record_video_to':show_display,
-        }
-        os.makedirs(m.save_to, exist_ok=True)
-        if self.mode == 'video':
-            screen_kws['record_video_to'] = f'{m.save_to}/{media_name}.mp4'
-        if self.mode == 'image':
-            screen_kws['record_image_to'] = f'{m.save_to}/{media_name}_{self.image_mode}.png'
-        return screen_kws
-
-
-    def add_screen_texts(self, names, color):
-        for name in names:
-            text = screen.InputBox(text=name, color_active=color, color_inactive=color)
-            self.screen_texts[name] = text
 
     def step(self, tick=None):
         if self.active :
@@ -349,33 +357,6 @@ class ScreenManager(BaseScreenManager):
         self.model.toggle('snapshot #')
         self.v.render()
 
-    def create_screen_texts(self, color):
-        names = [
-            'trajectory_dt',
-            'trails',
-            'focus_mode',
-            'draw_centroid',
-            'draw_head',
-            'draw_midline',
-            'draw_contour',
-            'draw_sensors',
-            'visible_clock',
-            'visible_ids',
-            'visible_state',
-            'visible_scale',
-            'odor_aura',
-            'color_behavior',
-            'random_colors',
-            'black_background',
-            'larva_collisions',
-            'zoom',
-            'snapshot #',
-            'odorscape #',
-            'windscape',
-            'is_paused',
-        ]
-        return {name: screen.InputBox(text=name, color_active=color, color_inactive=color) for name in names}
-
 
 
     def set_background(self, width, height):
@@ -397,18 +378,7 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def initialize(self, bg):
 
-        v = screen.Viewer(**self.screen_kws)
-
-        self.display_configuration(v)
-        self.render_aux()
-        self.set_background(*v.display_dims)
-
-        self.draw_arena(v, bg)
-
-        print('Screen opened')
-        return v
 
     def display_configuration(self, v):
         if self.intro_text:
@@ -426,7 +396,7 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def draw_aux(self, v):
+    def draw_aux(self, v, **kwargs):
         v.draw_arena(self.model.space.vertices, self.tank_color, self.screen_color)
         if self.visible_clock:
             self.sim_clock.draw(v)
@@ -452,7 +422,7 @@ class ScreenManager(BaseScreenManager):
                 arena_drawn = True
                 break
         if not arena_drawn and self.model.food_grid is not None:
-            self.model.food_grid._draw(v)
+            self.model.food_grid._draw(v=v)
             arena_drawn = True
 
         if not arena_drawn:
@@ -460,11 +430,11 @@ class ScreenManager(BaseScreenManager):
             self.draw_background(v, bg)
 
         if self.model.windscape is not None and self.model.windscape.visible:
-            self.model.windscape._draw(v)
+            self.model.windscape._draw(v=v)
 
-        # for i, b in enumerate(self.model.borders):
-        #     b.draw(v)
-        self.model.borders._draw(v)
+        for b in self.model.borders:
+            b._draw(v=v)
+        # self.model.borders._draw(v=v)
 
     def render_aux(self):
         self.sim_clock.render(*self.window_dims)
