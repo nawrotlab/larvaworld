@@ -5,12 +5,12 @@ from shapely.affinity import affine_transform
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.model import Entity
+from larvaworld.lib.model import ModelEntity
 
 
 
 
-class Obstacle(Entity):
+class Obstacle(ModelEntity):
     width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
 
     def __init__(self, vertices, edges, **kwargs):
@@ -78,9 +78,9 @@ class Border(Obstacle):
         xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
         return xy, ls
 
-    def draw(self, screen):
-        for b in self.border_xy:
-            screen.draw_polyline(b, color=self.color, width=self.width, closed=False)
+    def draw(self, viewer):
+        for b in self.vertices:
+            viewer.draw_polyline(b, color=self.color, width=self.width, closed=False)
 
     def contained(self, p):
         return any([l.distance(geometry.Point(p)) < self.width for l in self.border_lines])

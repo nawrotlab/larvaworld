@@ -6,15 +6,15 @@ from shapely.geometry import Point,Polygon
 from larvaworld.lib import reg, aux
 
 
-
-class Arena(param.Parameterized, agentpy.Space):
+class ArenaConf(aux.NestedConf):
     dims = aux.PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
     geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
     torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
 
-    def __init__(self, model, vertices=None,**kwargs):
-        param.Parameterized.__init__(self, **kwargs)
+class Arena(ArenaConf, agentpy.Space):
+    def __init__(self, model=None, vertices=None,**kwargs):
+        ArenaConf.__init__(self, **kwargs)
 
         X, Y = self.dims
         if vertices is None:

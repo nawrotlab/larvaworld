@@ -1,6 +1,7 @@
 import agentpy
 import numpy as np
 import param
+from agentpy.objects import Object
 from scipy.stats import multivariate_normal
 from shapely import geometry
 
@@ -8,7 +9,10 @@ from larvaworld.lib.screen.rendering import InputBox
 from larvaworld.lib import aux
 
 
-class Entity(param.Parameterized):
+
+
+
+class Entity(aux.NestedConf):
     default_color = param.Color('black', doc='The default color of the entity')
     unique_id = param.String(None, doc='The unique ID of the entity')
     visible = param.Boolean(True, doc='Whether the entity is visible or not')
@@ -32,6 +36,27 @@ class Entity(param.Parameterized):
     def set_id(self, id):
         self.unique_id = id
         self.id_box.text = self.unique_id
+
+    def _draw(self,v,**kwargs):
+        if self.visible :
+            self.draw(v,**kwargs)
+            try:
+                screen_pos = self.model.screen_manager.space2screen_pos(self.get_position())
+
+            except :
+                screen_pos = None
+            try:
+                if self.model.screen_manager.color_behavior:
+                    self.update_behavior_dict()
+            except :
+                pass
+            self.id_box.draw(v, screen_pos=screen_pos)
+
+class ModelEntity(Entity, Object):
+    def __init__(self,model, **kwargs):
+        Entity.__init__(self, **kwargs)
+        Object.__init__(self,model=model)
+
 
 class LarvaworldAgent(Entity, agentpy.Agent):
     """LarvaworldAgent class that inherits from agentpy.Agent."""
@@ -66,8 +91,8 @@ class LarvaworldAgent(Entity, agentpy.Agent):
         self.base_odor_id = f'{self.group}_base_odor'
         self.gain_for_base_odor = 100
 
-        self.odor_id = self.odor.id
-        self.set_odor_dist(self.odor.intensity, self.odor.spread)
+        # self.odor_id = self.odor.id
+        # self.set_odor_dist(self.odor.intensity, self.odor.spread)
 
         self.regeneration = regeneration
         self.regeneration_pos = regeneration_pos
@@ -129,19 +154,22 @@ class LarvaworldAgent(Entity, agentpy.Agent):
 
 
 
-    def set_odor_dist(self, intensity=None, spread=None):
-        if intensity is not None and spread is not None:
-            self.odor_dist = multivariate_normal([0, 0], [[spread, 0], [0, spread]])
-            self.odor_peak_value = intensity / self.odor_dist.pdf([0, 0])
-        else :
-            self.odor_dist = None
-            self.odor_peak_value = 0.0
+    # def set_odor_dist(self, intensity=None, spread=None):
+    #     if intensity is not None and spread is not None:
+    #         self.odor_dist = multivariate_normal([0, 0], [[spread, 0], [0, spread]])
+    #         self.odor_peak_value = intensity / self.odor_dist.pdf([0, 0])
+    #     else :
+    #         self.odor_dist = None
+    #         self.odor_peak_value = 0.0
 
-    def get_gaussian_odor_value(self, pos):
-        if self.odor_dist :
-            return self.odor_dist.pdf(pos) * self.odor_peak_value
-        else :
-            return None
+    # def get_gaussian_odor_value(self, pos):
+    #     if self.odor_dist :
+    #         return self.odor_dist.pdf(pos) * self.odor_peak_value
+    #     else :
+    #         return None
+
+
+
 
     def draw(self, viewer, filled=True):
         p, c, r = self.get_position(), self.color, self.radius
@@ -149,7 +177,7 @@ class LarvaworldAgent(Entity, agentpy.Agent):
             return
         viewer.draw_circle(p, r, c, filled, r / 5)
 
-        if self.odor_peak_value > 0:
+        if self.odor.peak_value > 0:
             if self.model.screen_manager.odor_aura:
                 viewer.draw_circle(p, r * 1.5, c, False, r / 10)
                 viewer.draw_circle(p, r * 2.0, c, False, r / 15)

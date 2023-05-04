@@ -23,7 +23,7 @@ Larvae were reared from egg-hatch to mid- third-instar (96±2h post-hatch) in 25
 '''
 
 
-class DEB(param.Parameterized):
+class DEB(aux.NestedConf):
     species = param.Selector(objects=['default', 'rover', 'sitter'],label='phenotype',
                              doc='The phenotype/species-specific fitted DEB model to use.') # Drosophila model by default
     assimilation_mode = param.Selector(objects=['gut','sim', 'deb'], label='assimilation mode',
@@ -484,18 +484,19 @@ class DEB(param.Parameterized):
             q = ep['substrate']['quality']
             f = deb.Substrate(**ep['substrate']).get_f(K=self.K)
             c = {'assimilation_mode': 'sim', 'f': f}
-            if ep['stop'] is None:
+            t0,t1=ep['age_range']
+            if t1 is None:
                 while self.stage == 'larva':
                     self.run(**c)
             else:
-                N = int(self.steps_per_day / 24 * (ep['stop'] - ep['start']))
+                N = int(self.steps_per_day / 24 * (t1 - t0))
                 for i in range(N):
                     if self.stage == 'larva':
                         self.run(**c)
             self.epoch_fs.append(f)
             self.epoch_qs.append(q)
             self.epochs.append(
-                [ep['start'] + tb, ep['stop'] + tb if ep['stop'] is not None else self.pupation_time_in_hours])
+                [t0 + tb, t1 + tb if t1 is not None else self.pupation_time_in_hours])
         self.hours_as_larva = self.age * 24 - tb
         if self.gut is not None:
             self.gut.update()
@@ -651,14 +652,20 @@ class DEB(param.Parameterized):
 
 
 def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
+    from larvaworld.lib.model import Epoch
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     N = len(epochs)
+
     if N == 0:
-        epochs = {0: reg.get_null('epoch', start=0.0, stop=None)}
-    elif str(N - 1) in epochs.keys() and epochs[str(N - 1)]['stop'] is not None:
-        epochs.update({N: reg.get_null('epoch', start=epochs[str(N - 1)]['stop'], stop=None)})
-    elif N - 1 in epochs.keys() and epochs[N - 1]['stop'] is not None:
-        epochs.update({N: reg.get_null('epoch', start=epochs[N - 1]['stop'], stop=None)})
+        epochs = {0: Epoch().nestedConf}
+    elif str(N - 1) in epochs.keys() :
+        t1=epochs[str(N - 1)].age_range[1]
+        if t1 is not None:
+            epochs.update({N: Epoch(age_range=(t1, None)).nestedConf})
+    elif N - 1 in epochs.keys() :
+        t1 = epochs[N - 1].age_range[1]
+        if t1 is not None:
+            epochs.update({N: Epoch(age_range=(t1, None)).nestedConf})
     deb.grow_larva(epochs=epochs, age=age)
     deb.finalize_dict()
     d = deb.return_dict()

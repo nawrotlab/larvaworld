@@ -439,7 +439,11 @@ class ConfSelector(param.Selector):
 
 
 
-from larvaworld.lib.model import Life
+from larvaworld.lib.model import Life, Food, FoodGrid, ThermoScape, WindScape, DiffusionValueLayer, Border, ArenaConf
+
+
+
+
 
 class LarvaGroup(aux.NestedConf):
     model = ConfSelector('Model')
@@ -465,7 +469,7 @@ class LarvaGroup(aux.NestedConf):
 
 
     def entry(self, expand=False, as_entry=True):
-        conf = nestedConf(p=self)
+        conf = self.nestedConf
         if expand and conf.model is not None:
             conf.model = stored.getModel(conf.model)
         if as_entry :
@@ -531,13 +535,7 @@ class ExpConf(aux.NestedConf):
 
 
 
-def nestedConf(p):
-    d=aux.AttrDict(p.param.values())
-    d.pop('name')
-    for k, p in p.param.objects().items():
-        if type(p) == param.ClassSelector:
-            d[k]=nestedConf(d[k])
-    return d
+
 
 def full_lg(id=None, expand=False,as_entry=True,**conf):
     try :
@@ -630,3 +628,37 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls'
 #
 #         lgs.update(full_lg(**kws))
 #     return aux.AttrDict(lgs)
+
+
+
+class SourceGroup(aux.NestedConf):
+    default_color = param.Color('black', doc='The default color of the group')
+    odor = aux.ClassAttr(aux.Odor, doc='The odor of the source')
+    distribution = aux.ClassAttr(aux.Spatial_Distro,doc='The spatial distribution of the group sources')
+
+
+
+    def __init__(self,id=None,**kwargs):
+        super().__init__(**kwargs)
+        if id is None:
+            if self.model is not None :
+                id = self.model
+            else :
+                id = 'SourceGroup'
+        self.id=id
+
+
+
+class FoodConf(aux.NestedConf):
+    source_groups = aux.ClassDict(item_type=SourceGroup,  doc='The groups of odor or food sources available in the arena')
+    source_units = aux.ClassDict(item_type=Food,  doc='The individual sources  of odor or food in the arena')
+    food_grid = aux.ClassAttr(FoodGrid, default=None, doc='The food grid in the arena')
+
+class EnvConf(aux.NestedConf):
+    arena = aux.ClassAttr(ArenaConf, doc='The arena configuration')
+    food_params = aux.ClassAttr(FoodConf, doc='The food sources in the arena')
+    border_list = aux.ClassDict(item_type=Border, doc='The obstacles in the arena')
+    odorscape = aux.ClassAttr(DiffusionValueLayer, default=None, doc='The obstacles in the arena')
+    windscape = aux.ClassAttr(WindScape, default=None, doc='The obstacles in the arena')
+    thermoscape = aux.ClassAttr(ThermoScape, default=None, doc='The obstacles in the arena')
+

@@ -21,16 +21,16 @@ class PrefTrainCondition:
         self.peak_intensity=2.0
         env.CS_counter = 0
         env.UCS_counter = 0
-        env.CS_sources = [f for f in env.sources if f.odor_id=='CS']
-        env.UCS_sources = [f for f in env.sources if f.odor_id=='UCS']
+        env.CS_sources = [f for f in env.sources if f.odor.id=='CS']
+        env.UCS_sources = [f for f in env.sources if f.odor.id=='UCS']
 
 
     def toggle_odors(self, env, CS_intensity=2.0, UCS_intensity=0.0):
         for f in env.CS_sources :
-            f.set_odor_dist(intensity=CS_intensity)
+            f.odor.intensity=CS_intensity
             f.visible=True if CS_intensity>0 else False
         for f in env.UCS_sources :
-            f.set_odor_dist(intensity=UCS_intensity)
+            f.odor.intensity=UCS_intensity
             f.visible = True if UCS_intensity > 0 else False
 
     def init_test(self,env):

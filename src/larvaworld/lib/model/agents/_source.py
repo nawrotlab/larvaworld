@@ -79,3 +79,7 @@ class Food(Source, Substrate):
             r = self.amount / self.initial_amount
             self.color = (1 - r) * np.array((255, 255, 255)) + r * np.array(self.default_color)
         return np.min([amount, prev_amount])
+
+    def draw(self, viewer, filled=None):
+        filled = True if self.amount > 0 else False
+        super().draw(viewer=viewer, filled=filled)

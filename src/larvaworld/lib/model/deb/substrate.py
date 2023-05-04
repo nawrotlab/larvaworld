@@ -70,7 +70,7 @@ substrate_dict = {
 }
 
 
-class Substrate(param.Parameterized):
+class Substrate(aux.NestedConf):
     type = param.Selector(objects=['standard', 'agar', 'cornmeal', 'sucrose', 'PED_tracker'],doc='The type of substrate')
     quality = param.Magnitude(1.0,doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
 
@@ -162,10 +162,13 @@ class Substrate(param.Parameterized):
 
 
 class Epoch(aux.NestedConf):
-    age_range = aux.OptionalPositiveRange(softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')
+    age_range = aux.OptionalPositiveRange((0.0, None),softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')
     substrate = aux.ClassAttr(Substrate, doc='The substrate of the epoch')
 
+
+
+
 class Life(aux.NestedConf):
-    age = aux.PositiveNumber(softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch.')
-    # epochs = param.Parameter(default={}, doc='The feeding epochs comprising life history.')
+    age = aux.PositiveNumber(softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.')
     epochs = aux.ClassDict(item_type=Epoch, doc='The feeding epochs comprising life history.')
+

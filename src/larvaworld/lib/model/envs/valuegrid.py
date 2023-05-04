@@ -6,25 +6,26 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model import Entity
+from larvaworld.lib.model import ModelEntity
 from larvaworld.lib.model.deb.substrate import Substrate
 from larvaworld.lib.screen.rendering import InputBox
 
 
 
+class SpatialEntity(ModelEntity) :
+    def __init__(self, default_color='white', **kwargs):
+        super().__init__(visible=False,default_color=default_color,**kwargs)
 
-
-class ValueGrid(Entity):
+class ValueGrid(SpatialEntity):
     initial_value = param.Number(0.0, doc='initial value over the grid')
 
     fixed_max = param.Boolean(False,doc='whether the max is kept constant')
     grid_dims = aux.PositiveIntegerRange((51, 51),softmax=500, doc='The spatial resolution of the food grid.')
 
 
-    def __init__(self, model, sources=[],
-                 default_color='white', max_value=None, min_value=0.0, **kwargs):
-        super().__init__(visible=False,default_color=default_color,**kwargs)
-        self.model = model
+    def __init__(self, sources=[], max_value=None, min_value=0.0, **kwargs):
+        super().__init__(**kwargs)
+
         self.sources = sources
 
         self.min_value = min_value
@@ -199,7 +200,7 @@ class GaussianValueLayer(ValueGrid):
         for s in self.sources:
             p = s.get_position()
             rel_pos = [pos[0] - p[0], pos[1] - p[1]]
-            value += s.get_gaussian_odor_value(rel_pos)
+            value += s.odor.gaussian_value(rel_pos)
         return value
 
     def get_grid(self):
@@ -219,7 +220,7 @@ class GaussianValueLayer(ValueGrid):
             p = s.get_position()
             for r in np.arange(0, 0.050, 0.01):
                 pX = (p[0] + r, p[1])
-                v = s.get_gaussian_odor_value(pX)
+                v = s.odor.gaussian_value(pX)
                 viewer.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
                 text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True,
                                     screen_pos=viewer._transform(pX))
@@ -273,15 +274,13 @@ class DiffusionValueLayer(ValueGrid):
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
 
 
-class WindScape(Entity):
+class WindScape(SpatialEntity):
     wind_direction = aux.Phase(np.pi,doc='The absolute polar direction of the wind/air puff.')
     wind_speed = aux.PositiveNumber(softmax=100.0, doc='The speed of the wind/air puff.')
     puffs = param.Parameter({},label='air-puffs', doc='Repetitive or single air-puff stimuli.')
 
-    def __init__(self, model, default_color='red', **kwargs):
-
+    def __init__(self, default_color='red', **kwargs):
         super().__init__(default_color=default_color,visible=False,**kwargs)
-        self.model = model
 
         self.max_dim = np.max(self.model.space.dims)
 
@@ -329,14 +328,16 @@ class WindScape(Entity):
         self.scapelines = self.generate_scapelines(self.max_dim, self.N, self.wind_direction)
 
     def add_puff(self, duration, speed, direction=None, start_time=None, N=1, interval=10.0):
-        Nticks = int(duration / self.model.dt)
+        m=self.model
+
+        Nticks = int(duration / m.dt)
         if start_time is None:
-            start = self.model.Nticks
+            start = m.Nticks
         else:
-            start = int(start_time / self.model.dt)
-        interval_ticks = int(interval / self.model.dt)
+            start = int(start_time / m.dt)
+        interval_ticks = int(interval / m.dt)
         if N is None:
-            N = int(self.model.Nsteps / interval_ticks)
+            N = int(m.Nsteps / interval_ticks)
         for i in range(N):
             t0 = start + i * interval_ticks
             self.events[t0] = {'wind_speed': speed, 'wind_direction': direction}
@@ -435,9 +436,9 @@ class ThermoScape(ValueGrid):
 
 def create_odor_layers(model, sources, pars=None):
     odor_layers = {}
-    ids = aux.unique_list([s.odor_id for s in sources if s.odor_id is not None])
+    ids = aux.unique_list([s.odor.id for s in sources if s.odor.id is not None])
     for id in ids:
-        od_sources = [f for f in sources if f.odor_id == id]
+        od_sources = [f for f in sources if f.odor.id == id]
         temp = aux.unique_list([s.default_color for s in od_sources])
         if len(temp) == 1:
             c0 = temp[0]

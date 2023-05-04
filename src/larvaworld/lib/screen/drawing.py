@@ -107,15 +107,18 @@ class GA_ScreenManager(BaseScreenManager):
             self.v._t.tick(self.v._fps)
 
     def draw_agents(self, v):
-        for o in self.model.sources:
-            if o.visible:
-                o.draw(v, filled=True if o.amount > 0 else False)
-                o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
+        self.model.sources._draw(v)
+        self.model.agents._draw(v)
 
-        for g in self.model.agents:
-            if g.visible:
-                g.draw(v)
-                g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
+        # for o in self.model.sources:
+        #     if o.visible:
+        #         o.draw(v, filled=True if o.amount > 0 else False)
+        #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
+        #
+        # for g in self.model.agents:
+        #     if g.visible:
+        #         g.draw(v)
+        #         g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
     def initialize(self):
         v = screen.Viewer.load_from_file(**self.screen_kws)
@@ -297,17 +300,20 @@ class ScreenManager(BaseScreenManager):
             self.bgimagerect = None
 
     def draw_agents(self, v):
-        for o in self.model.sources:
-            if o.visible:
-                o.draw(v, filled=True if o.amount > 0 else False)
-                o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
+        self.model.sources._draw(v)
+        self.model.agents._draw(v)
 
-        for g in self.model.agents:
-            if g.visible:
-                if self.color_behavior:
-                    g.update_behavior_dict()
-                g.draw(v, self)
-                g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
+        # for o in self.model.sources:
+        #     if o.visible:
+        #         o.draw(v, filled=True if o.amount > 0 else False)
+        #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
+        #
+        # for g in self.model.agents:
+        #     if g.visible:
+        #         if self.color_behavior:
+        #             g.update_behavior_dict()
+        #         g.draw(v, self)
+        #         g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
         if self.trails:
 
@@ -389,11 +395,11 @@ class ScreenManager(BaseScreenManager):
         arena_drawn = False
         for id, layer in self.model.odor_layers.items():
             if layer.visible:
-                layer.draw(v)
+                layer._draw(v)
                 arena_drawn = True
                 break
         if not arena_drawn and self.model.food_grid is not None:
-            self.model.food_grid.draw(v)
+            self.model.food_grid._draw(v)
             arena_drawn = True
 
         if not arena_drawn:
@@ -401,10 +407,11 @@ class ScreenManager(BaseScreenManager):
             self.draw_background(v, bg)
 
         if self.model.windscape is not None and self.model.windscape.visible:
-            self.model.windscape.draw(v)
+            self.model.windscape._draw(v)
 
-        for i, b in enumerate(self.model.borders):
-            b.draw(v)
+        # for i, b in enumerate(self.model.borders):
+        #     b.draw(v)
+        self.model.borders._draw(v)
 
     def render_aux(self):
         self.sim_clock.render(*self.window_dims)

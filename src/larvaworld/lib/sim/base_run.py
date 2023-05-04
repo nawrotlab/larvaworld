@@ -36,26 +36,14 @@ class BaseRun(aux.SimConf, agentpy.Model):
             **kwargs: Arguments passed to the setup method
         '''
         aux.SimConf.__init__(self, **kwargs)
-        # if parameters is None :
-        #     if experiment is not None :
-        #         parameters = reg.expandConf('Exp', experiment)
-        #     else :
-        #         raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
-
         self.experiment = experiment if experiment is not None else parameters.experiment
 
-        # Define N timesteps
-        if Nsteps is None and self.duration is not None :
-            Nsteps = int(self.duration * 60 / self.dt)
-        if self.duration is None and Nsteps is not None :
-            self.duration = Nsteps* self.dt/60
-        self.Nsteps = Nsteps
         parameters.steps = self.Nsteps
         agentpy.Model.__init__(self, parameters=parameters)
 
-        # Define constant parameters
-        self.show_display = show_display and not self.offline
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+        # # Define constant parameters
+        # self.show_display = show_display and not self.offline
+
 
         # Define ID
         if id is None:
@@ -136,11 +124,14 @@ class BaseRun(aux.SimConf, agentpy.Model):
 
 
     def place_obstacles(self, barriers={}):
-        self.borders, self.border_lines = [], []
-        for id, pars in barriers.items():
-            b = envs.Border(unique_id=id, **pars)
-            self.borders.append(b)
-            self.border_lines += b.border_lines
+        # self.borders, self.border_lines = [], []
+        border_list = [envs.Border(model=self, unique_id=id, **pars) for id, pars in barriers.items()]
+        self.borders = agentpy.AgentList(model=self, objs=border_list)
+        self.border_lines=self.borders.border_lines
+        # for id, pars in barriers.items():
+        #     b = envs.Border(unique_id=id, **pars)
+        #     self.borders.append(b)
+        #     self.border_lines += b.border_lines
 
     def place_food(self, p):
         self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None

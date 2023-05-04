@@ -1,12 +1,14 @@
 import numpy as np
 import param
 
+from larvaworld.lib import aux
 
-class Spatial_Distro(param.Parameterized):
+
+class Spatial_Distro(aux.NestedConf):
     shape = param.Selector(objects=['circle', 'rect', 'oval'], doc='The shape of the spatial distribution')
     mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],
                     doc='The way to place agents in the distribution shape')
-    N = param.Integer(default=30, bounds=(0, None), softbounds=(0, 100), doc='The number of agents in the group')
+    N = aux.PositiveInteger(30, softmax=100, doc='The number of agents in the group')
     loc = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The xy coordinates of the distribution center')
     scale = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The spread in x,y')
 
