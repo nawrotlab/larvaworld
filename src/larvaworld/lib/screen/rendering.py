@@ -20,7 +20,7 @@ class Viewer(object):
         # self.speed = speed
 
         self.model = model
-        self.space_bounds = self.model.space.scaled_edges
+        self.space_bounds = self.model.space.scaled_range
         self.zoom = zoom
         self.caption = caption
         self.width,self.height = window_dims

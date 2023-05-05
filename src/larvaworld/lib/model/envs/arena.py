@@ -30,7 +30,7 @@ class Arena(ArenaConf,Obstacle, agentpy.Space):
                 raise
         edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
         self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-        self.scaled_range=self.range*self.model.scaling_factor
+        self.scaled_range=self.range*model.scaling_factor
         k = 0.96
         self.polygon = Polygon(vertices * k)
         Obstacle.__init__(self, model=model,visible=visible, unique_id=unique_id,default_color=default_color,edges=edges, vertices=vertices)
