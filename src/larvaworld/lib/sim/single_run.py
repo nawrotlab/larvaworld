@@ -152,24 +152,24 @@ class ExpRun(BaseRun):
         import movingpandas as mpd
         from datetime import datetime, timedelta, time
         from pint_pandas import PintType
+        from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
         trajcollections = []
         for gID, df in self.output.variables.items():
             e = df[self.end_output_keys].xs(df.index.get_level_values('t').max(), level='t')
+            # e.index.name = 'AgentID'
             s = df[self.step_output_keys]
-            s = reg.par.df_to_pint(s)
-            e = reg.par.df_to_pint(e)
-            s['xy'] = gpd.points_from_xy(s['x'], s['y'])
 
-            s = s.reset_index()
-            s = s.rename(columns={"obj_id": "AgentID"})
-            s['t'] = s['t'] * timedelta(seconds=self.dt) + datetime.now()
+            tpd = LarvaTrajectoryCollection.from_df(s=s,dt=self.dt,endDF=e, groupID=gID)
 
-            gdf = gpd.GeoDataFrame(s)
-            gdf = gdf.set_geometry('xy')
-            tpd = mpd.TrajectoryCollection(gdf, traj_id_col='AgentID', t='t')
-            setattr(tpd, 'dt', self.dt * PintType.ureg.s)
-            setattr(tpd, 'groupID', gID)
-            setattr(tpd, 'endDF', e)
+            # s['xy'] = gpd.points_from_xy(s['x'], s['y'])
+            #
+            # s = s.reset_index()
+            # s = s.rename(columns={"obj_id": "AgentID"})
+            # s['t'] = s['t'] * timedelta(seconds=self.dt) + datetime.now()
+            #
+            # gdf = gpd.GeoDataFrame(s)
+            # gdf = gdf.set_geometry('xy')
+            # tpd = LarvaTrajectoryCollection(gdf, endDF=e, groupID=gID)
             trajcollections.append(tpd)
             return trajcollections
 
