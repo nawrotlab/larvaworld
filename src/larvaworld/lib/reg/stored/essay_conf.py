@@ -30,7 +30,7 @@ class Essay:
         self.results = {}
 
     def conf(self, exp, id, dur, lgs, env, **kwargs):
-        sim = reg.get_null('sim_params', sim_ID=id, path=self.path, duration=dur)
+        sim = reg.get_null('sim_params', duration=dur)
         return reg.get_null('Exp', sim_params=sim, env_params=env, trials={},
                              larva_groups=lgs, experiment=exp, enrichment=self.enrichment,
                              collections=self.collections, **kwargs)

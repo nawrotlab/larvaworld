@@ -532,6 +532,22 @@ class ExpConf(aux.NestedConf):
 
 
 
+# class ReplayConf(aux.NestedConf):
+#     refID = ConfSelector('Env')
+#     dir = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Env'), doc='The environment configuration ID')
+#     overlap_mode = ConfSelector('Trial',default='default')
+#     close_view = param.Selector(default='default', objects=stored.confIDs('Trial'), doc='The trial configuration ID')
+#     fix_segment = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
+#     fix_point = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
+#     draw_Nsegs = aux.ClassAttr(aux.SimConf,doc='The simulation configuration')
+#     track_point = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
+#     time_range = ConfSelector('Exp')
+#     dynamic_color = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
+#     agent_ids = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
+#     transposition = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
+#     env_params = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
+
+
 
 
 

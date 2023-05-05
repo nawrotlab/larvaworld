@@ -181,10 +181,8 @@ class GAevaluation(param.Parameterized):
                 return arrange_fitness(fitness_func, **kwargs)
 
 class GAengine(GAspace, GAevaluation):
-    agent_class_name = param.Selector(default=None, objects=['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'],
-                                      label='name of agent class',doc='The agent class', allow_None=True)
+
     multicore = param.Boolean(default=True, label='parallel processing',doc='Whether to use parallel processing')
-    offline = param.Boolean(default=False, label='offline mode', doc='Whether to simulate offline')
 
 
     def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
@@ -193,7 +191,7 @@ class GAengine(GAspace, GAevaluation):
 
 
 
-        self.agent_class = get_agent_class(self.agent_class_name, self.offline)
+
         self.best_genome = None
         self.best_fitness = None
         self.all_genomes_dic = []
@@ -204,24 +202,7 @@ class GAengine(GAspace, GAevaluation):
 
 
 
-def get_agent_class(robot_class=None, offline=False):
-    if offline:
-        robot_class = 'LarvaOffline'
-    if robot_class is None:
-        robot_class = 'LarvaRobot'
 
-    if type(robot_class) == str:
-        if robot_class == 'LarvaRobot':
-            class_name = f'larvaworld.lib.model.agents.larva_robot.LarvaRobot'
-        elif robot_class == 'ObstacleLarvaRobot':
-            class_name = f'larvaworld.lib.model.agents.larva_robot.ObstacleLarvaRobot'
-        elif robot_class == 'LarvaOffline':
-            class_name = f'larvaworld.lib.model.agents.larva_offline.LarvaOffline'
-        else:
-            raise
-        return aux.get_class_by_name(class_name)
-    elif type(robot_class) == type:
-        return robot_class
 
 
 def arrange_fitness(fitness_func, **kwargs):
@@ -232,6 +213,7 @@ def arrange_fitness(fitness_func, **kwargs):
 
 
 class GAlauncher(BaseRun, GAengine):
+
     def __init__(self, **kwargs):
         '''
         Simulation mode 'Ga' launches a genetic algorith optimization simulation of a specified agent model.
@@ -242,7 +224,7 @@ class GAlauncher(BaseRun, GAengine):
         '''
 
         BaseRun.__init__(self,runtype='Ga', **kwargs)
-        GAengine.__init__(self, **self.p.ga_build_kws, offline=self.offline)
+        GAengine.__init__(self, **self.p.ga_build_kws)
     def setup(self):
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
@@ -271,7 +253,7 @@ class GAlauncher(BaseRun, GAengine):
     def build_generation(self, sorted_genomes=None):
         self.create_generation(sorted_genomes)
         confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
-        self.place_agents(confs, self.agent_class)
+        self.place_agents(confs)
         self.set_collectors(self.p.collections)
         if self.multicore:
             self.threads = self.build_threads(self.agents)
@@ -447,10 +429,6 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     ga_eval_kws.fit_dict = fit_dict
 
     kws = {
-        # 'sim_params': reg.get_null('sim_params', duration=dur,dt=dt),
-        # 'show_display': show_display,
-        # 'offline': offline,
-        # 'store_data': store_data,
         'experiment': experiment,
         'env_params': 'arena_200mm',
         'ga_build_kws': reg.get_null('ga_build_kws',

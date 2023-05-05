@@ -269,6 +269,7 @@ class Viewer(object):
         if self._image_writer:
             self._image_writer.close()
         del self
+
         print('Screen closed')
 
     def move_center(self, dx=0, dy=0, pos=None):

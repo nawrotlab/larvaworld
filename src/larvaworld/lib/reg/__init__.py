@@ -56,6 +56,8 @@ def loadRef(id, **kwargs) :
 
 
 
+
+
 stored.resetConfs(init=True)
 
 vprint(f"Registry configured!", 2)

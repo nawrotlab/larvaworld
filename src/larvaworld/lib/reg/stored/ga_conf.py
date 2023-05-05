@@ -10,7 +10,7 @@ from larvaworld.lib import reg, aux
 
 
 def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws={}, dt=0.1, dur=3, N=30, Nel=3, m0='phasic_explorer',
-            m1=None, fitID=None, init='random', excludeID=None, agent_class_name='LarvaRobot'):
+            m1=None, fitID=None, init='random', excludeID=None):
 
     build_kws = {
         'ga_eval_kws': reg.get_null('ga_eval_kws', fitness_target_refID=refID,
@@ -23,13 +23,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
                                              space_mkeys=space_mkeys
                                              ),
         'ga_select_kws': reg.get_null('ga_select_kws', Nagents=N, Nelits=Nel),
-        # 'exclude_func': excludeID,
-        # 'base_model': m0,
-        # 'bestConfID': m1,
-        # 'init_mode': init,
-        'agent_class_name': agent_class_name,
-        # 'space_mkeys': space_mkeys,
-        # 'space_dict': space_dict,
+
     }
     kws = {'sim_params': reg.get_null('sim_params', duration=dur, dt=dt),
            'scene': scene,
@@ -74,7 +68,7 @@ def Ga_dict() :
               space_mkeys=['olfactor'], fitID='dst2source', fit_kws={'source_xy': None},
               Nel=5, N=50, env_params='mid_odor_gaussian_square'),
     **ga_conf('obstacle_avoidance', dur=0.5, m0='obstacle_avoider', m1='obstacle_avoider2',
-              space_mkeys=['sensorimotor'], fitID='cum_dst', agent_class_name='ObstacleLarvaRobot',
+              space_mkeys=['sensorimotor'], fitID='cum_dst',
               Nel=2, N=15, env_params='dish_40mm',
               scene='obstacle_avoidance_700')
     })

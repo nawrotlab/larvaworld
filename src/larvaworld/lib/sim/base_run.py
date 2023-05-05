@@ -10,8 +10,7 @@ from larvaworld.lib.model import envs, agents
 
 class BaseRun(aux.SimConf, agentpy.Model):
 
-    def __init__(self, runtype, parameters=None, save_to=None,
-                 id=None,experiment=None,show_display=True,Nsteps=None,
+    def __init__(self, runtype, parameters=None, save_to=None, id=None,experiment=None,
                  **kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
@@ -37,12 +36,10 @@ class BaseRun(aux.SimConf, agentpy.Model):
         '''
         aux.SimConf.__init__(self, **kwargs)
         self.experiment = experiment if experiment is not None else parameters.experiment
-
+        self.runtype = runtype
+        self.agent_class=self.define_agent_class()
         parameters.steps = self.Nsteps
         agentpy.Model.__init__(self, parameters=parameters)
-
-        # # Define constant parameters
-        # self.show_display = show_display and not self.offline
 
 
         # Define ID
@@ -124,50 +121,42 @@ class BaseRun(aux.SimConf, agentpy.Model):
 
 
     def place_obstacles(self, barriers={}):
-        # self.borders, self.border_lines = [], []
         border_list = [envs.Border(model=self, unique_id=id, **pars) for id, pars in barriers.items()]
         self.borders = agentpy.AgentList(model=self, objs=border_list)
         self.border_lines=self.borders.border_lines
-        # for id, pars in barriers.items():
-        #     b = envs.Border(unique_id=id, **pars)
-        #     self.borders.append(b)
-        #     self.border_lines += b.border_lines
 
     def place_food(self, p):
         self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
         sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
+        self.source_xy = aux.AttrDict({a.id: a.pos for a in source_list})
         self.space.add_sources(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
-        self.foodtypes = self.get_all_foodtypes(p)
-        self.source_xy = self.get_source_xy(p)
-
-    def get_source_xy(self, p):
-        sources_u = {k: v['pos'] for k, v in p['source_units'].items()}
-        sources_g = {k: v['distribution']['loc'] for k, v in p['source_groups'].items()}
-        return {**sources_u, **sources_g}
-
-    def get_all_foodtypes(self, p):
-        sg = {k: v.default_color for k, v in p.source_groups.items()}
-        su = {conf.group: conf.default_color for conf in p.source_units.values()}
-        gr = {
-            p.food_grid.unique_id: p.food_grid.default_color} if p.food_grid is not None else {}
-        ids = {**gr, **su, **sg}
-        ks = aux.unique_list(list(ids.keys()))
-        try:
-            ids = {k: list(np.array(ids[k]) / 255) for k in ks}
-        except:
-            ids = {k: ids[k] for k in ks}
-        return ids
   
 
     def get_all_objects(self):
         return self.sources + self.agents + self.borders
 
-    def place_agents(self, confs, agent_class):
-        agent_list = [agent_class(model=self, **conf) for conf in confs]
+    def place_agents(self, confs):
+        agent_list = [self.agent_class(model=self, **conf) for conf in confs]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
+
+    def define_agent_class(self):
+        if self.runtype=='Replay' :
+            return agents.LarvaReplay
+        elif self.Box2D :
+            return agents.LarvaBox2D
+        elif self.offline :
+            return agents.LarvaOffline
+        elif self.runtype=='Ga' :
+            if self.experiment=='obstacle_avoidance':
+                return agents.ObstacleLarvaRobot
+            else:
+                return agents.LarvaRobot
+        else:
+            return agents.LarvaSim
+
 
     def delete_agent(self, a):
         self.agents.remove(a)
@@ -188,7 +177,7 @@ class BaseRun(aux.SimConf, agentpy.Model):
         kws = {
             'load_data' : False,
             'env_params': self.p.env_params,
-            'source_xy': self.source_xy,
+            'source_xy': aux.AttrDict({s.unique_id : s.pos for s in self.sources}),
             'fr': 1 / self.dt,
             **kwargs
         }

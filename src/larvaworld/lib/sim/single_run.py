@@ -160,30 +160,14 @@ class ExpRun(BaseRun):
             s = df[self.step_output_keys]
 
             tpd = LarvaTrajectoryCollection.from_df(s=s,dt=self.dt,endDF=e, groupID=gID)
-
-            # s['xy'] = gpd.points_from_xy(s['x'], s['y'])
-            #
-            # s = s.reset_index()
-            # s = s.rename(columns={"obj_id": "AgentID"})
-            # s['t'] = s['t'] * timedelta(seconds=self.dt) + datetime.now()
-            #
-            # gdf = gpd.GeoDataFrame(s)
-            # gdf = gdf.set_geometry('xy')
-            # tpd = LarvaTrajectoryCollection(gdf, endDF=e, groupID=gID)
             trajcollections.append(tpd)
             return trajcollections
 
     def build_agents(self, larva_groups, parameter_dict={}):
         reg.vprint(f'--- Simulation {self.id} : Generating agent groups!--- ', 1)
         confs = util.generate_agentConfs(larva_groups=larva_groups, parameter_dict=parameter_dict)
-        if not self.Box2D :
-            if not self.offline :
-                agent_class=agents.LarvaSim
-            else :
-                agent_class = agents.LarvaOffline
-        else :
-            agent_class = agents.LarvaBox2D
-        self.place_agents(confs, agent_class)
+
+        self.place_agents(confs)
 
 
     def eliminate_overlap(self):

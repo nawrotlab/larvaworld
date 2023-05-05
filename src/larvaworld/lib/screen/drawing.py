@@ -186,10 +186,16 @@ class BaseScreenManager :
         if self.v is None:
             self.v = self.initialize(**kwargs)
         elif self.v.close_requested():
-            self.v.close()
-            self.v = None
-            self.model.running = False
-            return
+            self.close()
+
+
+    def close(self):
+        self.v.close()
+        self.v = None
+        self.model.running = False
+        reg.vprint('Terminated by the user', 3)
+        return
+
 
     def render(self,**kwargs):
         self.check(**kwargs)
@@ -553,7 +559,8 @@ class ScreenManager(BaseScreenManager):
         ev = pygame.event.get()
         for e in ev:
             if e.type == pygame.QUIT:
-                self.v.close()
+                self.close()
+
             if e.type == pygame.KEYDOWN:
                 for k, v in self.pygame_keys.items():
                     if e.key == getattr(pygame, v):
@@ -565,9 +572,10 @@ class ScreenManager(BaseScreenManager):
                 elif e.type == pygame.MOUSEBUTTONUP:
                     p = self.v.mouse_position
                     if e.button == 1:
-                        if not self.eval_selection(p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
-                            self.model.add_agent(agent_class=self.selected_type, p0=tuple(p),
-                                        p1=tuple(self.mousebuttondown_pos))
+                        # if not self.eval_selection(p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
+                        #     self.model.add_agent(agent_class=self.selected_type, p0=tuple(p),
+                        #                 p1=tuple(self.mousebuttondown_pos))
+                        pass
 
                     elif e.button == 3:
                         from larvaworld.gui.gui_aux.windows import set_agent_kwargs, object_menu

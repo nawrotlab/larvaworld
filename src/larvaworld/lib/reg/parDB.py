@@ -1126,7 +1126,6 @@ def buildInitDict():
             'ga_eval_kws': d['ga_eval_kws'],
             'ga_space_kws': d['ga_space_kws'],
             'ga_select_kws': d['ga_select_kws'],
-            'agent_class_name': {'v':'LarvaRobot', 'dtype': str,'vs': ['LarvaRobot', 'LarvaOffline', 'ObstacleLarvaRobot'], 'h': 'The agent class to use in the simulations'},
             'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'}
         }
         return d

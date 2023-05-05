@@ -287,12 +287,6 @@ def get_parser(sim_mode, parser=None):
         elif k == 'a':
             p.add_argument('-a', '--analysis', action="store_true", help='Whether to exec analysis')
             p.add_argument('-show', '--show', action="store_true", help='Whether to show the analysis plots')
-        # elif k == 'offline':
-        #     p.add_argument('-offline', '--offline', action="store_true",
-        #                    help='Whether to exec a full LarvaworldSim environment')
-        # elif k == 'hide':
-        #     p.add_argument('-hide', '--show_display', action="store_false",
-        #                    help='Whether to render the screen visualization')
 
     return MP
 

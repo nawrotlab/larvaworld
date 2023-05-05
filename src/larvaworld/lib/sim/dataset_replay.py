@@ -11,7 +11,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ReplayRun(BaseRun):
-    def __init__(self,parameters,  dataset=None, experiment='replay', screen_kws={},**kwargs):
+    def __init__(self,parameters=None,  dataset=None, experiment='replay', screen_kws={},**kwargs):
         '''
         Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
 
@@ -57,7 +57,7 @@ class ReplayRun(BaseRun):
         except:
             ls = np.ones(c.N) * 5
         confs=[{'unique_id':id, 'length':ls[i], 'data':s.xs(id, level='AgentID', drop_level=True)} for i, id in enumerate(c.agent_ids)]
-        self.place_agents(confs, agents.LarvaReplay)
+        self.place_agents(confs)
 
 
 
@@ -84,7 +84,7 @@ class ReplayRun(BaseRun):
 
     def define_config(self, p, c):
         if type(p.track_point) == int:
-            c.point = 'centroid' if p.track_point == -1 else nam.midline(c.Npoints, type='point')[p]
+            c.point = 'centroid' if p.track_point == -1 else nam.midline(c.Npoints, type='point')[p.track_point]
         if p.agent_ids is not None:
             if type(p.agent_ids) == list and all([type(i) == int for i in p.agent_ids]):
                 p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
