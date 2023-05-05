@@ -119,8 +119,6 @@ class LarvaReplay(Larva):
                 segs[1].update_poseNvertices(pos2, b_or)
                 self.midline = np.array([p_head, self.pos, p_tail])
 
-    def set_color(self, color):
-        self.color = color
 
     def draw(self, viewer, filled=True):
 

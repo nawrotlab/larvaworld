@@ -558,7 +558,6 @@ def buildInitDict():
             'media_name': {'dtype': str,
                            'h': 'Filename for the saved video/image. File extension mp4/png sutomatically added.',
                            'k': 'media'},
-            'show_display': {'dtype': bool, 'v': True, 'h': 'Hide display', 'k': 'hide'},
             'intro_text': {'dtype': bool, 'v': False, 'h': 'Display an introductory screen before launching the simulation'},
         }
         d['draw'] = {

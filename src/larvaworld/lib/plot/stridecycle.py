@@ -80,7 +80,7 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         ax.set_xlabel('$\phi_{stride}$')
         l = ax.legend(loc='upper right')
         for j, text in enumerate(l.get_texts()):
-            text.set_color(cs[i][j])
+            text.color=cs[i][j]
         plt.subplots_adjust(bottom=0.2, top=0.95, left=0.1, right=0.95, wspace=0.01)
         fig.savefig(filepaths[i], dpi=300)
         print(f'Plot saved as {filepaths[i]}')

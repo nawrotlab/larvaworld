@@ -16,15 +16,14 @@ class SidePanel:
     DEFAULT_MARGIN = 35
     LEFT_MARGIN = 30
 
-    def __init__(self, viewer, model):
+    def __init__(self, viewer):
         self.viewer = viewer
         self.line_num = None
         self.line_spacing = None
-        self.model = model
 
 
     def display_ga_info(self):
-        m = self.model
+        m = self.viewer.model
         v = self.viewer
         best_gen=m.best_genome
 

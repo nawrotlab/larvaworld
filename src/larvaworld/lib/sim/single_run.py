@@ -102,7 +102,7 @@ class ExpRun(BaseRun):
             self.space.Step(self.dt, 6, 2)
             self.agents.updated_by_Box2D()
 
-        self.screen_manager.step(self.t)
+        self.screen_manager.step()
 
     def update(self):
         """ Record a dynamic variable. """

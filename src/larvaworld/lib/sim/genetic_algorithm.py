@@ -237,9 +237,8 @@ class GAlauncher(BaseRun, GAengine):
         self.p.collections = ['pose']
         self.odor_ids = self.get_all_odors()
         self.build_env(self.p.env_params)
-        self.screen_manager = GA_ScreenManager(model=self, show_display=self.show_display,
-                                               panel_width=600, caption=f'GA {self.p.experiment} : {self.id}',
-                                               space_bounds=aux.get_arena_bounds(self.space.dims, self.scaling_factor))
+        self.screen_manager = GA_ScreenManager(model=self,
+                                               panel_width=600, caption=f'GA {self.p.experiment} : {self.id}')
         self.build_generation()
 
 
@@ -345,7 +344,7 @@ class GAlauncher(BaseRun, GAengine):
                 if self.exclude_func(robot):
                     robot.genome.fitness = -np.inf
                     self.delete_agent(robot)
-        self.screen_manager.render(self.t)
+        self.screen_manager.render()
 
     def update(self):
 

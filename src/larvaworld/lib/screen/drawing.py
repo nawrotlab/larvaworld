@@ -8,13 +8,11 @@ from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
 
 class BaseScreenManager :
-    def __init__(self, model, show_display = None,traj_color=None,fps=None,
+    def __init__(self, model, traj_color=None,fps=None,
                  background_motion=None, allow_clicks=True,black_background=None,
-                 vis_kwargs=None,video=None, **kwargs):
+                 vis_kwargs=None,video=None):
 
         m=self.model = model
-        self.s = m.scaling_factor
-        self.space_bounds = aux.get_arena_bounds(m.space.dims, self.s)
         self.window_dims = aux.get_window_dims(m.space.dims)
 
         if vis_kwargs is None:
@@ -25,20 +23,15 @@ class BaseScreenManager :
         self.__dict__.update(vis.draw)
         self.__dict__.update(vis.color)
         self.__dict__.update(vis.aux)
-        self.intro_text = vis.render.intro_text
         self.color_behavior = vis.color.color_behavior
         trajectory_dt = vis.draw.trajectory_dt
         if trajectory_dt is None:
             trajectory_dt = 0.0
         self.trajectory_dt = trajectory_dt
-        self.trails = vis.draw.trails
         self.black_background = vis.color.black_background if black_background is None else black_background
         self.image_mode = vis.render.image_mode,
 
-        self.show_display = vis.render.show_display if show_display is None else show_display
-        self.media_name = vis.render.media_name
-        if self.media_name is None:
-            self.media_name = str(m.id)
+
 
 
         self.traj_color = traj_color
@@ -47,15 +40,7 @@ class BaseScreenManager :
         self.allow_clicks = allow_clicks
         self.bg = background_motion
 
-
-
-        if self.mode is None and not self.show_display:
-            reg.vprint('Storage of media or visualization not requested.')
-            self.active=False
-        else :
-            self.active=True
-            # self.screen_kws = self.define_screen_kws()
-
+        self.active = self.mode is not None and self.model.show_display
         self.v = None
 
         self.selected_type = ''
@@ -76,13 +61,12 @@ class BaseScreenManager :
         self.pygame_keys = None
 
         self.screen_kws = {
+            'model': self.model,
             'window_dims': self.window_dims,
-            'space_bounds': self.space_bounds,
             # 'caption': self.media_name,
             'dt': m.dt,
             'fps': int(vis.render.video_speed/m.dt) if fps is None else fps,
-            'show_display': self.show_display,
-            # 'record_video_to':show_display,
+
         }
 
     def space2screen_pos(self, pos):
@@ -91,7 +75,7 @@ class BaseScreenManager :
         try:
             return self.v._transform(pos)
         except:
-            X, Y = np.array(self.model.space.dims) * self.s
+            X, Y = np.array(self.model.space.dims) * self.model.scaling_factor
             X0, Y0 = self.window_dims
 
             p = pos[0] * 2 / X, pos[1] * 2 / Y
@@ -113,7 +97,7 @@ class BaseScreenManager :
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def draw_trajectories(self):
-        X = self.model.space.dims[0] * self.s
+        X = self.model.space.dims[0] * self.model.scaling_factor
         agents = self.model.agents
         Nfade = int(self.trajectory_dt / self.model.dt)
 
@@ -124,17 +108,7 @@ class BaseScreenManager :
             else:
                 traj_col = np.array([(0, 0, 0) for t in traj])
 
-        # trajs = [fly.trajectory for fly in agents]
-        # if self.traj_color is not None:
-        #     traj_cols = [self.traj_color.xs(fly.unique_id, level='AgentID') for fly in agents]
-        # else:
-        #     traj_cols = [np.array([(0, 0, 0) for t in traj]) for traj, fly in zip(trajs, agents)]
-        #
-        # trajs = [t[-Nfade:] for t in trajs]
-        # traj_cols = [t[-Nfade:] for t in traj_cols]
-        #
-        # for fly, traj, traj_col in zip(agents, trajs, traj_cols):
-            # This is the case for simulated larvae where no values are np.nan
+
             if not np.isnan(traj).any():
                 parsed_traj = [traj]
                 parsed_traj_col = [traj_col]
@@ -166,20 +140,12 @@ class BaseScreenManager :
 
         for o in self.model.sources:
             o._draw(v=v)
-        #     if o.visible:
-        #         o.draw(v, filled=True if o.amount > 0 else False)
-        #         o.id_box.draw(v, screen_pos=self.space2screen_pos(o.get_position()))
+        #
         #
         for g in self.model.agents:
             g._draw(v=v)
-        #     if g.visible:
-        #         if self.color_behavior:
-        #             g.update_behavior_dict()
-        #         g.draw(v, self)
-        #         g.id_box.draw(v, screen_pos=self.space2screen_pos(g.get_position()))
 
-        if self.trails:
-
+        if self.vis_kwargs.draw.trails:
             self.draw_trajectories()
 
     def check(self,**kwargs):
@@ -201,10 +167,10 @@ class BaseScreenManager :
         self.check(**kwargs)
         if self.active:
             if self.image_mode != 'overlap':
-                self.draw_arena(self.v, **kwargs)
+                self.draw_arena(self.v)
 
             self.draw_agents(self.v)
-            if self.v.show_display:
+            if self.model.show_display:
                 self.evaluate_input()
                 self.evaluate_graphs()
             if self.image_mode != 'overlap':
@@ -220,7 +186,7 @@ class BaseScreenManager :
     def evaluate_graphs(self):
         pass
 
-    def draw_arena(self, v,**kwargs):
+    def draw_arena(self, v):
         pass
 
     def draw_aux(self, v,**kwargs):
@@ -237,6 +203,7 @@ class GA_ScreenManager(BaseScreenManager):
     def evaluate_input(self):
         for e in pygame.event.get():
             if e.type == pygame.QUIT or (e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE):
+                self.close()
                 sys.exit()
             elif e.type == pygame.KEYDOWN and (e.key == pygame.K_PLUS or e.key == 93 or e.key == 270):
                 self.v.increase_fps()
@@ -248,11 +215,11 @@ class GA_ScreenManager(BaseScreenManager):
 
     def initialize(self):
         v = screen.Viewer.load_from_file(**self.screen_kws)
-        self.side_panel = screen.SidePanel(v, model=self.model)
+        self.side_panel = screen.SidePanel(v)
         print('Screen opened')
         return v
 
-    def draw_arena(self, v,**kwargs):
+    def draw_arena(self, v):
         v._window.fill(aux.Color.BLACK)
 
     def draw_aux(self, v,**kwargs):
@@ -268,16 +235,18 @@ class ScreenManager(BaseScreenManager):
 
         super().__init__(**kwargs)
         f = self.model.save_to
-        os.makedirs(f, exist_ok=True)
-        self.screen_kws['caption'] = self.media_name
+        media_name = self.vis_kwargs.render.media_name
+        if media_name is None:
+            media_name = str(self.model.id)
+        self.screen_kws['caption'] = media_name
         if self.mode == 'video':
-            self.screen_kws['record_video_to'] = f'{f}/{self.media_name}.mp4'
+            self.screen_kws['record_video_to'] = f'{f}/{media_name}.mp4'
         if self.mode == 'image':
-            self.screen_kws['record_image_to'] = f'{f}/{self.media_name}_{self.image_mode}.png'
+            self.screen_kws['record_image_to'] = f'{f}/{media_name}_{self.image_mode}.png'
         self.build_aux()
 
 
-    def initialize(self, bg):
+    def initialize(self):
 
         v = screen.Viewer(**self.screen_kws)
 
@@ -285,17 +254,12 @@ class ScreenManager(BaseScreenManager):
         self.render_aux()
         self.set_background(*v.display_dims)
 
-        self.draw_arena(v, bg)
+        self.draw_arena(v)
 
         print('Screen opened')
         return v
 
-    def render(self, tick=None):
-        if self.bg is not None and tick is not None:
-            bg = self.bg[:, tick - 1]
-        else:
-            bg = [0, 0, 0]
-        super().render(bg=bg)
+
 
 
 
@@ -338,29 +302,29 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def step(self, tick=None):
+    def step(self):
         if self.active :
             self.sim_clock.tick_clock()
             if self.mode == 'video':
                 if self.image_mode != 'snapshots' or self.snapshot_tick:
-                    self.render(tick)
+                    self.render()
             elif self.mode == 'image':
                 if self.image_mode == 'overlap':
-                    self.render(tick)
+                    self.render()
                 elif self.image_mode == 'snapshots' and self.snapshot_tick:
-                    self.capture_snapshot(tick)
+                    self.capture_snapshot()
 
     def finalize(self, tick=None):
         if self.active:
             if self.image_mode == 'overlap':
                 self.v.render()
             elif self.image_mode == 'final':
-                self.capture_snapshot(tick)
+                self.capture_snapshot()
             if self.v:
                 self.v.close()
 
-    def capture_snapshot(self, tick):
-        self.render(tick)
+    def capture_snapshot(self):
+        self.render()
         self.model.toggle('snapshot #')
         self.v.render()
 
@@ -388,7 +352,7 @@ class ScreenManager(BaseScreenManager):
 
 
     def display_configuration(self, v):
-        if self.intro_text:
+        if self.vis_kwargs.render.intro_text:
             box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                            text=self.model.configuration_text,
                            color_active=pygame.Color('white'),
@@ -404,7 +368,7 @@ class ScreenManager(BaseScreenManager):
 
 
     def draw_aux(self, v, **kwargs):
-        v.draw_arena(self.model.space.vertices, self.tank_color, self.screen_color)
+        v.draw_arena(self.tank_color, self.screen_color)
         if self.visible_clock:
             self.sim_clock.draw(v)
         if self.visible_scale:
@@ -421,7 +385,7 @@ class ScreenManager(BaseScreenManager):
             else:
                 text.visible = False
 
-    def draw_arena(self, v, bg=None):
+    def draw_arena(self, v):
         arena_drawn = False
         for id, layer in self.model.odor_layers.items():
             if layer.visible:
@@ -437,7 +401,7 @@ class ScreenManager(BaseScreenManager):
 
         if not arena_drawn:
             v.draw_polygon(self.model.space.vertices, color=self.tank_color)
-            self.draw_background(v, bg)
+            self.draw_background(v)
 
 
 
@@ -455,8 +419,12 @@ class ScreenManager(BaseScreenManager):
         for t in self.screen_texts.values():
             t.render(*self.window_dims)
 
-    def draw_background(self, v, bg):
+    def draw_background(self, v):
         if self.bgimage is not None and self.bgimagerect is not None:
+            if self.bg is not None:
+                bg = self.bg[:, self.model.t - 1]
+            else:
+                bg = [0, 0, 0]
             x, y, a = bg
             try:
                 min_x = int(np.floor(x))
@@ -503,14 +471,14 @@ class ScreenManager(BaseScreenManager):
         if name == 'visible_ids':
             for a in self.model.agents + self.model.sources:
                 a.id_box.visible = not a.id_box.visible
-        elif name == 'color_behavior':
-            if not self.color_behavior:
-                for f in self.model.agents:
-                    f.set_color(f.default_color)
+        # elif name == 'color_behavior':
+            # if not self.color_behavior:
+            #     for f in self.model.agents:
+            #         f.set_color(f.default_color)
         elif name == 'random_colors':
             for f in self.model.agents:
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
-                f.set_color(color)
+                f.color=color
         elif name == 'black_background':
             self.update_default_colors()
         elif name == 'larva_collisions':
@@ -527,7 +495,7 @@ class ScreenManager(BaseScreenManager):
             self.screen_color = (200, 200, 200)
             self.scale_clock_color = (0, 0, 0)
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
-            i.set_color(self.scale_clock_color)
+            i.color=self.scale_clock_color
 
 
     def apply_screen_zoom(self, d_zoom):
@@ -560,7 +528,7 @@ class ScreenManager(BaseScreenManager):
         for e in ev:
             if e.type == pygame.QUIT:
                 self.close()
-
+                sys.exit()
             if e.type == pygame.KEYDOWN:
                 for k, v in self.pygame_keys.items():
                     if e.key == getattr(pygame, v):
@@ -638,7 +606,7 @@ class ScreenManager(BaseScreenManager):
             if delete_objects_window(self.selected_agents):
                 for f in self.selected_agents:
                     self.selected_agents.remove(f)
-                    self.delete_agent(f)
+                    self.model.delete_agent(f)
         elif k == 'dynamic graph':
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]

@@ -12,21 +12,21 @@ from larvaworld.lib import aux
 
 
 class Viewer(object):
-    def __init__(self, window_dims, caption="", fps=10, dt=0.1, show_display=True, record_video_to=None,
-                 record_image_to=None, zoom=1, space_bounds=None, panel_width=0):
+    def __init__(self, model, window_dims, caption="", fps=10, dt=0.1, record_video_to=None,
+                 record_image_to=None, zoom=1, panel_width=0):
         pygame.init()
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
         self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
         # self.speed = speed
 
+        self.model = model
+        self.space_bounds = self.model.space.scaled_edges
         self.zoom = zoom
         self.caption = caption
         self.width,self.height = window_dims
         self.window_dims = window_dims
-        self.space_bounds = space_bounds
         self.panel_width = panel_width
         self.panel_rect = pygame.Rect(self.width, 0, self.panel_width, self.height)
-        self.show_display = show_display
         self._t = pygame.time.Clock()
         self._fps = fps
         self.dt = dt
@@ -51,8 +51,7 @@ class Viewer(object):
 
         self._scale = np.array([[1., .0], [.0, -1.]])
         self._translation = np.zeros(2)
-        if self.space_bounds is not None:
-            self.set_bounds(*self.space_bounds)
+        self.set_bounds(*self.space_bounds)
 
     def increase_fps(self):
         if self._fps < 60:
@@ -110,17 +109,17 @@ class Viewer(object):
     def display_dims(self):
         return self._window.get_width(), self._window.get_height()
 
-    def draw_arena(self, vertices, tank_color, screen_color):
+    def draw_arena(self, tank_color, screen_color):
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
         surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-        vs = [self._transform(v) for v in vertices]
+        vs = [self._transform(v) for v in self.model.space.vertices]
         pygame.draw.polygon(surf1, tank_color, vs, 0)
         pygame.draw.rect(surf2, screen_color, surf2.get_rect())
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
         self._window.blit(surf2, (0, 0))
 
     def init_screen(self):
-        if self.show_display:
+        if self.model.show_display:
             flags = pygame.HWSURFACE | pygame.DOUBLEBUF
             window = pygame.display.set_mode((self.width + self.panel_width, self.height), flags)
             pygame.display.set_caption(self.caption)
@@ -142,8 +141,7 @@ class Viewer(object):
             self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
-        if self.space_bounds is not None:
-            self.set_bounds(*self.space_bounds)
+        self.set_bounds(*self.space_bounds)
 
 
     def set_bounds(self, left, right, bottom, top):
@@ -240,7 +238,7 @@ class Viewer(object):
         return np.linalg.inv(self._scale).dot(p)
 
     def render(self):
-        if self.show_display:
+        if self.model.show_display:
             pygame.display.flip()
             image = pygame.surfarray.pixels3d(self._window)
             self._t.tick(self._fps)
@@ -276,8 +274,7 @@ class Viewer(object):
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
-        if self.space_bounds is not None:
-            self.set_bounds(*self.space_bounds)
+        self.set_bounds(*self.space_bounds)
 
     @staticmethod
     def load_from_file(file_path,  **kwargs):
@@ -347,8 +344,6 @@ class ScreenItem:
             color = (0, 0, 0)
         self.color = color
 
-    def set_color(self, color):
-        self.color = color
 
 
 class InputBox(ScreenItem):

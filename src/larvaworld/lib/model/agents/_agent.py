@@ -31,7 +31,7 @@ class Entity(aux.NestedConf):
 
     def set_default_color(self, color):
         self.default_color = color
-        self.set_color(color)
+        self.color=color
 
     def set_id(self, id):
         self.unique_id = id
@@ -48,6 +48,8 @@ class Entity(aux.NestedConf):
             try:
                 if self.model.screen_manager.color_behavior:
                     self.update_behavior_dict()
+                else:
+                    self.color=self.default_color
             except :
                 pass
             self.id_box.draw(v, screen_pos=screen_pos)

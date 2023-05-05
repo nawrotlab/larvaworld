@@ -261,11 +261,12 @@ class SimConf(SimTimeConf):
     offline = Boolean(False,doc='Whether to launch a full Larvaworld environment')
     show_display = Boolean(True,doc='Whether to launch the pygame-visualization.')
 
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,offline=False, show_display=True, **kwargs):
+        if offline:
+            show_display=False
+        super().__init__(show_display=show_display,offline=offline,**kwargs)
         # Define constant parameters
         self.scaling_factor = 1000.0 if self.Box2D else 1.0
-        self.show_display = self.show_display and not self.offline
 
 class PreprocessConf(NestedConf):
     rescale_by = OptionalPositiveNumber(softmax=1000.0, step=0.001, doc='Whether to rescale spatial coordinates by a scalar in meters.')
