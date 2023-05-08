@@ -7,8 +7,8 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model import ModelEntity, Entity
 from larvaworld.lib.model.deb.substrate import Substrate
+from larvaworld.lib.model.object import Entity, ModelEntity, SpatialEntity
 from larvaworld.lib.screen.rendering import InputBox
 
 
@@ -50,10 +50,6 @@ class GridOverSpace(Entity, agentpy.Grid):
                       (x * (i + 1 - X), y * (j - Y)),
                       (x * (i + 1 - X), y * (j + 1 - Y)),
                       (x * (i - X), y * (j + 1 - Y))])
-
-class SpatialEntity(ModelEntity) :
-    def __init__(self, default_color='white', **kwargs):
-        super().__init__(visible=True,default_color=default_color,**kwargs)
 
 class ValueGrid(SpatialEntity):
     initial_value = param.Number(0.0, doc='initial value over the grid')

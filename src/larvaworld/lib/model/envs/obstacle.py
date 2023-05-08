@@ -5,7 +5,7 @@ from shapely.affinity import affine_transform
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.model import ModelEntity
+from larvaworld.lib.model.object import ModelEntity
 
 
 

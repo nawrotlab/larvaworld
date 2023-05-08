@@ -378,11 +378,14 @@ class InputBox(ScreenItem):
         else:
             self.shape = None
 
-    def draw(self, viewer, screen_pos=None):
+    def draw(self, viewer):
         if self.visible:
             if self.agent is not None:
-                if screen_pos is None :
-                    screen_pos= aux.space2screen_pos(self.agent.get_position())
+                pos=self.agent.get_position()
+                try :
+                    screen_pos = self.agent.model.screen_manager.space2screen_pos(pos)
+                except:
+                    screen_pos= aux.space2screen_pos(pos)
                 self.set_shape(screen_pos)
                 self.color = self.agent.default_color
             if self.shape is not None:

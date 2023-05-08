@@ -296,22 +296,22 @@ def save_plot(fig, filepath, filename):
     reg.vprint(f'Plot {filename} saved as {filepath}', 1)
 
 
-
-def get_colors(datasets):
-    Ndatasets = len(datasets)
-    try:
-        cs = [d.config['color'] for d in datasets]
-        u_cs = aux.unique_list(cs)
-        if len(u_cs) == len(cs) and None not in u_cs:
-            colors = cs
-        elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
-            cs[-1] = 'black'
-            colors = cs
-        else:
-            colors = aux.N_colors(Ndatasets)
-    except:
-        colors = aux.N_colors(Ndatasets)
-    return colors
+#
+# def get_colors(datasets):
+#     Ndatasets = len(datasets)
+#     try:
+#         cs = [d.config['color'] for d in datasets]
+#         u_cs = aux.unique_list(cs)
+#         if len(u_cs) == len(cs) and None not in u_cs:
+#             colors = cs
+#         elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
+#             cs[-1] = 'black'
+#             colors = cs
+#         else:
+#             colors = aux.N_colors(Ndatasets)
+#     except:
+#         colors = aux.N_colors(Ndatasets)
+#     return colors
 
 def process_plot(fig, save_to, filename, return_fig=False, show=False):
     if show:

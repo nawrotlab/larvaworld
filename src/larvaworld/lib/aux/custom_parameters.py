@@ -268,6 +268,8 @@ class SimConf(SimTimeConf):
         # Define constant parameters
         self.scaling_factor = 1000.0 if self.Box2D else 1.0
 
+
+
 class PreprocessConf(NestedConf):
     rescale_by = OptionalPositiveNumber(softmax=1000.0, step=0.001, doc='Whether to rescale spatial coordinates by a scalar in meters.')
     filter_f = OptionalPositiveNumber(softmax=5.0, step=0.01, doc='Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.')

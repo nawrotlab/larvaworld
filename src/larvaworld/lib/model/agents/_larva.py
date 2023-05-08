@@ -237,6 +237,14 @@ class LarvaMotile(Larva):
 
         self.prepare_motion(lin=lin, ang=ang)
 
+        try:
+            if self.model.screen_manager.color_behavior:
+                self.update_behavior_dict()
+            else:
+                self.color = self.default_color
+        except:
+            pass
+
     def prepare_motion(self, lin, ang):
         pass
         # Overriden by subclasses

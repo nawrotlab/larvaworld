@@ -190,7 +190,75 @@ def buildInitDict():
         return {'dtype': List[Tuple[float]], 'lim': lim, 'h': h, **kwargs}
 
     def substrate():
-        from larvaworld.lib.model.deb.substrate import substrate_dict
+
+        # Compound densities (g/cm**3)
+        substrate_dict = {
+            'agar': {
+                'glucose': 0,
+                'dextrose': 0,
+                'saccharose': 0,
+                'yeast': 0,
+                'agar': 16 / 1000,
+                'cornmeal': 0
+            },
+            'standard': {  # w_X = 20.45 g/mol
+                'glucose': 100 / 1000,
+                'dextrose': 0,
+                'saccharose': 0,
+                'yeast': 50 / 1000,
+                'agar': 16 / 1000,
+                'cornmeal': 0
+                # 'KPO4': 0.1/1000,
+                # 'Na_K_tartrate': 8/1000,
+                # 'NaCl': 0.5/1000,
+                # 'MgCl2': 0.5/1000,
+                # 'Fe2(SO4)3': 0.5/1000,
+            },
+            'cornmeal': {
+                'glucose': 517 / 17000,
+                'dextrose': 1033 / 17000,
+                'saccharose': 0,
+                'yeast': 0,
+                'agar': 93 / 17000,
+                'cornmeal': 1716 / 17000
+            },
+            'PED_tracker': {
+                'glucose': 0,
+                'dextrose': 0,
+                'saccharose': 2 / 200,
+                'yeast': 3 * 0.05 * 0.125 / 0.1,
+                'agar': 500 * 2 / 200,
+                'cornmeal': 0
+            },
+            #     [1] M. E. Wosniack, N. Hu, J. Gjorgjieva, and J. Berni, “Adaptation of Drosophila larva foraging in response to changes in food distribution,” bioRxiv, p. 2021.06.21.449222, 2021.
+            'cornmeal2': {
+                'glucose': 0,
+                'dextrose': 450 / 6400,
+                'saccharose': 0,
+                'yeast': 90 / 6400,
+                'agar': 42 / 6400,
+                'cornmeal': 420 / 6400
+            },
+            'sucrose': {
+                'glucose': 3.42 / 200,
+                'dextrose': 0,
+                'saccharose': 0,
+                'yeast': 0,
+                'agar': 0.8 / 200,
+                'cornmeal': 0
+            }
+            # 'apple_juice': {
+            #         'glucose': 0.342/200,
+            #         'dextrose': 0,
+            #         'saccharose': 0,
+            #         'yeast': 0,
+            #         'agar': 0.8 / 200,
+            #         'cornmeal': 0,
+            #         'apple_juice': 1.05*5/200,
+            #     },
+
+        }
+
         d = aux.AttrDict()
         d['substrate_composition'] = {
             n: {'v': 0.0, 'lim': (0.0, 10.0), 'h': f'{n} density in g/cm**3.'} for

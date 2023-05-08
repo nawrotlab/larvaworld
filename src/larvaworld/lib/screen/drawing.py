@@ -214,6 +214,8 @@ class GA_ScreenManager(BaseScreenManager):
 
 
     def initialize(self):
+        # v = screen.Viewer(**self.screen_kws)
+
         v = screen.Viewer.load_from_file(**self.screen_kws)
         self.side_panel = screen.SidePanel(v)
         print('Screen opened')
@@ -449,7 +451,7 @@ class ScreenManager(BaseScreenManager):
             value = self.snapshot_counter
             self.snapshot_counter += 1
         elif name == 'odorscape #':
-            reg.graphs.dict['odorscape'](odor_layers = self.model.odor_layers,save_to=self.model.plot_dir, show=show, scale=self.s, idx=self.odorscape_counter)
+            reg.graphs.dict['odorscape'](odor_layers = self.model.odor_layers,save_to=self.model.plot_dir, show=show, scale=self.model.scaling_factor, idx=self.odorscape_counter)
             value = self.odorscape_counter
             self.odorscape_counter += 1
         elif name == 'trajectory_dt':

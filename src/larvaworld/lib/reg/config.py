@@ -367,15 +367,12 @@ class StoredConfRegistry :
         c=self.getRef(id)
         if c is not None:
             d = larvaworld.LarvaDataset(config=c, load_data=False)
-            if not load:
-                reg.vprint(f'Loaded stored reference configuration : {id}')
-                return d
-            else:
+            if load:
                 d.load(**kwargs)
-                reg.vprint(f'Loaded stored reference dataset : {id}')
-                return d
-
+            reg.vprint(f'Loaded stored reference dataset : {id}', 1)
+            return d
         else:
+            reg.vprint(f'Failed to load reference dataset : {id}', 1)
             return None
 
 
@@ -529,6 +526,13 @@ class ExpConf(aux.NestedConf):
 
     def __init__(self,id=None,**kwargs):
         super().__init__(**kwargs)
+
+
+
+# class DatasetSubsetConf():
+#     time_range = aux.OptionalPositiveRange(softmax=1000.0, doc='Whether to only replay a defined temporal slice of the dataset.')
+#     agent_ids = param.List(default=None,empty_default=True,allow_None=True, doc='Whether to only display some larvae of the dataset, defined by their indexes.')
+
 
 
 

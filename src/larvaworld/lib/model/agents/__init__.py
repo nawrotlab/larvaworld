@@ -1,6 +1,4 @@
-
-
-from ._agent import Entity,ModelEntity,LarvaworldAgent
+from ._agent import LarvaworldAgent
 
 
 from ._source import Source, Food

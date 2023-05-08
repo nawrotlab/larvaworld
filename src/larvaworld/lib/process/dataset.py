@@ -138,9 +138,8 @@ class LarvaDataset:
 
     def load_traj(self, mode='default'):
         key=f'traj.{mode}'
-        try :
-            df = self.read(key)
-        except :
+        df = self.read(key)
+        if df is None :
             if mode=='default':
                 df = self._load_step(h5_ks=[])[['x', 'y']]
             elif mode in ['origin', 'center']:
@@ -329,6 +328,119 @@ class LarvaDataset:
 
 
 
+class LarvaDatasetCollection :
+    def __init__(self,labels=None, add_samples=False,**kwargs):
+        datasets = self.get_datasets(**kwargs)
+
+        for d in datasets:
+            assert isinstance(d, LarvaDataset)
+        if labels is None:
+            labels = [d.id for d in datasets]
+
+        if add_samples:
+            targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
+            targets = [reg.stored.loadRef(id) for id in targetIDs if id in reg.stored.RefIDs]
+            datasets += targets
+            if labels is not None:
+                labels += targetIDs
+        self.datasets = datasets
+        self.labels = labels
+        self.Ndatasets = len(datasets)
+        self.colors = self.get_colors(datasets)
+        assert self.Ndatasets == len(self.labels)
+
+        self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
+        self.Ngroups = len(self.group_ids)
+
+    def get_datasets(self, datasets=None, refIDs=None, dirs=None):
+        if datasets :
+            pass
+        elif refIDs:
+            datasets= [reg.loadRef(refID) for refID in refIDs]
+        elif dirs :
+            datasets= [LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False) for dir in dirs]
+
+        return datasets
+
+    def get_colors(self,datasets):
+        Ndatasets = len(datasets)
+        try:
+            cs = [d.config['color'] for d in datasets]
+            u_cs = aux.unique_list(cs)
+            if len(u_cs) == len(cs) and None not in u_cs:
+                colors = cs
+            elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
+                cs[-1] = 'black'
+                colors = cs
+            else:
+                colors = aux.N_colors(Ndatasets)
+        except:
+            colors = aux.N_colors(Ndatasets)
+        return colors
+
+    @property
+    def data_dict(self):
+        return dict(zip(self.labels, self.datasets))
+
+    @property
+    def data_palette(self):
+        return zip(self.labels, self.datasets, self.colors)
+
+    @property
+    def color_palette(self):
+        return dict(zip(self.labels, self.colors))
+
+    @property
+    def Nticks(self):
+        Nticks_list = [d.config.Nticks for d in self.datasets]
+        return int(np.max(aux.unique_list(Nticks_list)))
+
+    @property
+    def N(self):
+        N_list = [d.config.N for d in self.datasets]
+        return int(np.max(aux.unique_list(N_list)))
+
+    @property
+    def fr(self):
+        fr_list = [d.fr for d in self.datasets]
+        return np.max(aux.unique_list(fr_list))
+
+    @property
+    def dt(self):
+        dt_list = aux.unique_list([d.dt for d in self.datasets])
+        return np.max(dt_list)
+
+    @property
+    def duration(self):
+        return int(self.Nticks * self.dt)
+
+    @property
+    def tlim(self):
+        return (0, self.duration)
+
+    def trange(self, unit='min'):
+        if unit == 'min':
+            T = 60
+        elif unit == 'sec':
+            T = 1
+        t0, t1 = self.tlim
+        x = np.linspace(t0 / T, t1 / T, self.Nticks)
+        return x
+
+    @property
+    def arena_dims(self):
+        dims=np.array([d.env_params.arena.dims for d in self.datasets])
+        if self.Ndatasets>1:
+            dims=np.max(dims, axis=1)
+        else :
+            dims=dims[0]
+        return tuple(dims)
+
+    def concat_data(self, key):
+        return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
+
+
+
 def generate_dataset_config(**kwargs):
 
     c0=aux.AttrDict({'id': 'unnamed',
@@ -370,8 +482,23 @@ def generate_dataset_config(**kwargs):
     return c0
 
 
+# def retrieve_dataset(dataset=None, refID=None, dir=None):
+#     if dataset is None:
+#         if refID is not None:
+#             dataset = reg.loadRef(refID)
+#         elif dir is not None:
+#             dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False)
+#         else:
+#             raise ValueError('Unable to load dataset. Either refID or storage path must be provided. ')
+#     return dataset
 
-
+# class DatasetDetection():
+#     time_range = aux.OptionalPositiveRange(softmax=1000.0, doc='Whether to only replay a defined temporal slice of the dataset.')
+#     agent_ids = param.List(default=None,empty_default=True,allow_None=True, doc='Whether to only display some larvae of the dataset, defined by their indexes.')
+#
+#
+#     def __init__(self, dir=None, load_data=True,config = None, **kwargs):
+#         super().__init__(**kwargs)
 
 
 

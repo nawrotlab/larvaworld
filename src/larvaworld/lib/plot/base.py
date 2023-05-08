@@ -11,6 +11,7 @@ from matplotlib.gridspec import GridSpec
 
 import larvaworld
 from larvaworld.lib import reg, aux, plot
+from larvaworld.lib.process.dataset import LarvaDatasetCollection
 
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
@@ -277,7 +278,7 @@ class AutoBasePlot(BasePlot):
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
 
-class AutoPlot(AutoBasePlot):
+class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
     def __init__(self, ks=[],key='step',klabels={},datasets=[], labels=None, add_samples=False,
                  ranges=None,absolute=False, rad2deg=False,space_unit='mm',**kwargs):
         '''
@@ -288,25 +289,27 @@ class AutoPlot(AutoBasePlot):
             add_samples: Whether to also plot the reference datasets of any simulated datasets
             **kwargs:
         '''
-        for d in datasets:
-            assert isinstance(d, larvaworld.LarvaDataset)
-        if labels is None:
-            labels = [d.id for d in datasets]
+        LarvaDatasetCollection.__init__(self, datasets=datasets, labels=labels, add_samples=add_samples)
 
-        if add_samples:
-            targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
-            targets = [reg.stored.loadRef(id) for id in targetIDs if id in reg.stored.RefIDs]
-            datasets += targets
-            if labels is not None:
-                labels += targetIDs
-        self.datasets = datasets
-        self.labels = labels
-        self.Ndatasets = len(datasets)
-        self.colors = plot.get_colors(datasets)
-        assert self.Ndatasets == len(self.labels)
-
-        self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
-        self.Ngroups = len(self.group_ids)
+        # for d in datasets:
+        #     assert isinstance(d, larvaworld.LarvaDataset)
+        # if labels is None:
+        #     labels = [d.id for d in datasets]
+        #
+        # if add_samples:
+        #     targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
+        #     targets = [reg.stored.loadRef(id) for id in targetIDs if id in reg.stored.RefIDs]
+        #     datasets += targets
+        #     if labels is not None:
+        #         labels += targetIDs
+        # self.datasets = datasets
+        # self.labels = labels
+        # self.Ndatasets = len(datasets)
+        # self.colors = plot.get_colors(datasets)
+        # assert self.Ndatasets == len(self.labels)
+        #
+        # self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
+        # self.Ngroups = len(self.group_ids)
 
         self.key = key
         self.ks = []
@@ -352,10 +355,10 @@ class AutoPlot(AutoBasePlot):
         self.ranges = ranges
         self.absolute = absolute
         self.rad2deg = rad2deg
-        super().__init__(**kwargs)
+        AutoBasePlot.__init__(self,**kwargs)
 
-    def concat_data(self, key):
-        return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
+    # def concat_data(self, key):
+    #     return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
     def comp_all_pvalues(self):
         if self.Ndatasets < 2:
@@ -442,50 +445,50 @@ class AutoPlot(AutoBasePlot):
             ax.add_artist(leg)
         return leg
 
-    @property
-    def data_dict(self):
-        return dict(zip(self.labels,self.datasets))
-
-    @property
-    def data_palette(self):
-        return zip(self.labels, self.datasets, self.colors)
-
-    @property
-    def Nticks(self):
-        Nticks_list = [d.config.Nticks for d in self.datasets]
-        return np.max(aux.unique_list(Nticks_list))
-
-    @property
-    def N(self):
-        N_list = [d.config.N for d in self.datasets]
-        return np.max(aux.unique_list(N_list))
-
-    @property
-    def fr(self):
-        fr_list = [d.fr for d in self.datasets]
-        return np.max(aux.unique_list(fr_list))
-
-    @property
-    def dt(self):
-        dt_list = aux.unique_list([d.dt for d in self.datasets])
-        return np.max(dt_list)
-
-    @property
-    def duration(self):
-        return int(self.Nticks * self.dt)
-
-    @property
-    def tlim(self):
-        return (0, self.duration)
-
-    def trange(self, unit='min'):
-        if unit == 'min':
-            T = 60
-        elif unit == 'sec':
-            T = 1
-        t0, t1 = self.tlim
-        x = np.linspace(t0 / T, t1 / T, self.Nticks)
-        return x
+    # @property
+    # def data_dict(self):
+    #     return dict(zip(self.labels,self.datasets))
+    #
+    # @property
+    # def data_palette(self):
+    #     return zip(self.labels, self.datasets, self.colors)
+    #
+    # @property
+    # def Nticks(self):
+    #     Nticks_list = [d.config.Nticks for d in self.datasets]
+    #     return np.max(aux.unique_list(Nticks_list))
+    #
+    # @property
+    # def N(self):
+    #     N_list = [d.config.N for d in self.datasets]
+    #     return np.max(aux.unique_list(N_list))
+    #
+    # @property
+    # def fr(self):
+    #     fr_list = [d.fr for d in self.datasets]
+    #     return np.max(aux.unique_list(fr_list))
+    #
+    # @property
+    # def dt(self):
+    #     dt_list = aux.unique_list([d.dt for d in self.datasets])
+    #     return np.max(dt_list)
+    #
+    # @property
+    # def duration(self):
+    #     return int(self.Nticks * self.dt)
+    #
+    # @property
+    # def tlim(self):
+    #     return (0, self.duration)
+    #
+    # def trange(self, unit='min'):
+    #     if unit == 'min':
+    #         T = 60
+    #     elif unit == 'sec':
+    #         T = 1
+    #     t0, t1 = self.tlim
+    #     x = np.linspace(t0 / T, t1 / T, self.Nticks)
+    #     return x
 
     def plot_quantiles(self, k=None, par=None, idx=0, ax=None,xlim=None, ylim=None, ylab=None,
                        unit='sec', leg_loc='upper left',coeff=1,
