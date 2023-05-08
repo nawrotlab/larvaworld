@@ -431,7 +431,7 @@ class LarvaDatasetCollection :
     def arena_dims(self):
         dims=np.array([d.env_params.arena.dims for d in self.datasets])
         if self.Ndatasets>1:
-            dims=np.max(dims, axis=1)
+            dims=np.max(dims, axis=0)
         else :
             dims=dims[0]
         return tuple(dims)

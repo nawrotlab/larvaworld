@@ -1,16 +1,14 @@
-import dvc.cli.parser
 import pandas as pd
 import panel as pn
 import numpy as np
 import holoviews as hv
 
-from larvaworld.lib.process.dataset import LarvaDatasetCollection
+
 
 pn.extension()
 
-import larvaworld
 from larvaworld.lib import reg, aux
-
+from larvaworld.lib.process.dataset import LarvaDatasetCollection
 
 class TrackViewer(LarvaDatasetCollection):
 
@@ -29,64 +27,23 @@ class TrackViewer(LarvaDatasetCollection):
             'height': self.size,
             'xlabel': 'X (m)',
             'ylabel': 'Y (m)',
-            # 'legend': 'True',
         }
 
-        slider_kws = {
-            'width': self.size,
-            'start': 0,
-            'end': self.Nticks - 1,
-            'interval': 1,
-            'value': 0,
-            # 'show_value': True,
-            'loop_policy': 'loop',
 
-        }
 
-        # self.track_kws={
-        #     'color' : d.color
-        # }
 
-        self.time_slider = pn.widgets.Player(name='Tick', **slider_kws)
-        self.visible_ops = pn.widgets.CheckBoxGroup(name='Visibility', value=['Positions'],
-                                                    options=['Positions', 'IDs', 'Tracks'])
-        self.cb_rnd_colors = pn.widgets.Checkbox(name='Random colors', value=False, disabled=True)
-        self.cb_dispersal = pn.widgets.Checkbox(name='Align tracks to origin', value=True)
-        self.valid_gIDs = pn.widgets.CheckBoxGroup(name='Datasets', value=self.labels, options=self.labels)
+
+
+
+
+
+
 
 
         self.app=self.get_app()
 
 
-    # @property
-    # def xydata_palette(self):
-    #
-    #     @pn.depends(dispersal_on=self.cb_dispersal)
-    #     def mode(dispersal_on):
-    #         return 'origin' if dispersal_on else 'default'
-    #
-    #     d=self.xy_data[mode(self.cb_dispersal.value)]
-    #
-    #     return zip(self.labels, d, self.colors)
-    # @property
-    # # @pn.depends(dispersal_on=self.cb_dispersal)
-    # def mode(self):
-    #     return 'origin' if self.cb_dispersal.value else 'default'
-    #
-    # @property
-    # def xydata_valid(self):
-    #     d = dict(zip(self.labels, self.xy_data[self.mode]))
-    #     valid_gIDs=self.valid_gIDs.value
-    #     i=self.time_slider.value
-    #     return {gID : d[gID].loc[:i].groupby('AgentID') for gID in valid_gIDs}
-    # @property
-    # def xydata_dict(self):
-    #     @pn.depends(dispersal_on=self.cb_dispersal)
-    #     def mode(dispersal_on):
-    #         return 'origin' if dispersal_on else 'default'
-    #
-    #     d = self.xy_data[mode(self.cb_dispersal.value)]
-    #     return dict(zip(self.labels, d))
+
 
 
     def get_xydata_valid(self, valid_gIDs, i, dispersal_on):
@@ -94,21 +51,7 @@ class TrackViewer(LarvaDatasetCollection):
         d = dict(zip(self.labels,self.xy_data[mode]))
         return {gID : d[gID].loc[:i].groupby('AgentID') for gID in valid_gIDs}
 
-    # @property
-    # def xydata_valid(self):
-    #
-    #     @pn.depends(dispersal_on=self.cb_dispersal)
-    #     def mode(dispersal_on):
-    #         return 'origin' if dispersal_on else 'default'
-    #
-    #     d = dict(zip(self.labels, self.xy_data[mode]))
-    #
-    #
-    #
-    #
-    #     return self.get_xydata_valid(valid_gIDs, i, dispersal_on)
 
-    #
 
 
 
@@ -131,23 +74,28 @@ class TrackViewer(LarvaDatasetCollection):
 
     def get_app(self):
 
+        cb_IDs = pn.widgets.CheckBoxGroup(value=self.labels, options=self.labels)
+        cb_vis = pn.widgets.CheckBoxGroup(value=['Positions'],options=['Positions', 'IDs', 'Tracks'])
+        cb_rnd_col = pn.widgets.Checkbox(name='Random colors', value=False, disabled=True)
+        cb_dispersal = pn.widgets.Checkbox(name='Align tracks to origin', value=True)
+
+        slider_kws = {
+            'width': self.size,
+            'start': 0,
+            'end': self.Nticks - 1,
+            'interval': int(1000*self.dt),
+            'value': 0,
+            'loop_policy': 'loop',
+
+        }
+        time_slider = pn.widgets.Player(**slider_kws)
 
 
-        # @pn.depends(dispersal_on=self.cb_dispersal)
-        # def mode(dispersal_on):
-        #     return 'origin' if dispersal_on else 'default'
-        #
-        # @pn.depends(i=self.time_slider, valid_gIDs=self.valid_gIDs)
-        # def xydata_valid(i,valid_gIDs):
-        #     d = dict(zip(self.labels, self.xy_data[mode]))
-        #     return {gID : d[gID].loc[:i].groupby('AgentID') for gID in valid_gIDs}
-
-
-        @pn.depends(i=self.time_slider, valid_gIDs=self.valid_gIDs,dispersal_on=self.cb_dispersal,visible_ops=self.visible_ops, rnd_cols=self.cb_rnd_colors)
-        def get_image(valid_gIDs, i, dispersal_on,visible_ops, rnd_cols):
-            pos_on='Positions' in visible_ops
-            ids_on='IDs' in visible_ops
-            paths_on='Tracks' in visible_ops
+        @pn.depends(i=time_slider, valid_gIDs=cb_IDs,dispersal_on=cb_dispersal,vis_ops=cb_vis, rnd_cols=cb_rnd_col)
+        def get_image(valid_gIDs, i, dispersal_on,vis_ops, rnd_cols):
+            pos_on='Positions' in vis_ops
+            ids_on='IDs' in vis_ops
+            paths_on='Tracks' in vis_ops
             dic=self.get_xydata_valid(valid_gIDs, i, dispersal_on)
             # for gID, data in dic.items()
 
@@ -156,7 +104,6 @@ class TrackViewer(LarvaDatasetCollection):
             for gID, data in dic.items():
                 track_kws = {
                     'color': None if rnd_cols else self.color_palette[gID],
-                    # 'color_by' :
                 }
                 _points = data.last()
                 points = hv.Points(_points).opts(**track_kws)
@@ -178,33 +125,11 @@ class TrackViewer(LarvaDatasetCollection):
         img_dmap = hv.DynamicMap(get_image)
         app = pn.Column(img_dmap,
                              pn.Row(
-                                 pn.Column(self.valid_gIDs),
-                                 pn.Column(self.visible_ops),
-                                    pn.Column(self.cb_rnd_colors, self.cb_dispersal),
+                                 pn.Column('Datasets',cb_IDs, sizing_mode='stretch_width'),
+                                 pn.Column('Visibility',cb_vis, sizing_mode='stretch_width'),
+                                    pn.Column('Settings', cb_rnd_col, cb_dispersal, sizing_mode='stretch_width'),
                                     width=self.size),
-                             self.time_slider
+                             pn.Row(pn.Column('Tick', time_slider))
                              )
         return app
-
-
-    # def image_per_dataset(self, gID, i):
-    #     gdata=self.xydata_dict[gID]
-    #     data = gdata.loc[:i].groupby('AgentID')
-    #     track_kws = {
-    #         'color': self.color_palette[gID]
-    #     }
-    #     _points = data.last()
-    #     _paths = [xyi for id, xyi in data]
-    #     points = hv.Points(_points).opts(**track_kws)
-    #     labels = hv.Labels(_points.reset_index(), ['x', 'y'])
-    #
-    #     if paths_on:
-    #         _paths = [xyi for id, xyi in data]
-    #         paths = hv.Path(_paths).opts(**track_kws)
-    #         overlay = (paths * points * labels)
-    #     else:
-    #         overlay = (points * labels)
-    #     return overlay
-
-
 
