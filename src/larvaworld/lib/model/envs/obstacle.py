@@ -5,21 +5,20 @@ from shapely.affinity import affine_transform
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.object import ModelEntity
+from larvaworld.lib.model.drawable import ViewableLine
+from larvaworld.lib.model.object import GroupedObject
 
 
+class Obstacle(GroupedObject, ViewableLine):
+    # width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
 
-
-class Obstacle(ModelEntity):
-    width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
-
-    def __init__(self, vertices, edges, **kwargs):
-        super().__init__(**kwargs)
-        self.vertices = vertices
+    def __init__(self, edges,closed=True, **kwargs):
+        super().__init__(closed=closed,**kwargs)
+        # self.vertices = vertices
         self.edges = edges
 
-    def draw(self, viewer):
-        viewer.draw_polyline(vertices=self.vertices,color=self.color,width=self.width,closed=True)
+    # def draw(self, viewer):
+    #     viewer.draw_polyline(vertices=self.vertices,color=self.color,width=self.width,closed=True)
 
 
 
@@ -37,7 +36,7 @@ class Box(Obstacle):
 
         vertices = [(vert1.x, vert1.y), (vert2.x, vert2.y), (vert3.x, vert3.y), (vert4.x, vert4.y)]
         edges = [[vert1, vert2], [vert2, vert3], [vert3, vert4], [vert4, vert1]]
-        super().__init__(vertices, edges, **kwargs)
+        super().__init__(vertices=vertices, edges = edges, **kwargs)
 
 
 
@@ -50,7 +49,7 @@ class Wall(Obstacle):
 
         vertices = [(point1.x, point1.y), (point2.x, point2.y)]
         edges = [[point1, point2]]
-        super().__init__(vertices, edges, **kwargs)
+        super().__init__(vertices =vertices, edges =edges,closed=False, **kwargs)
 
 
 
@@ -67,7 +66,7 @@ class Border(Obstacle):
             edges.append([point1, point2])
 
 
-        super().__init__(vertices, edges, **kwargs)
+        super().__init__(vertices =vertices, edges =edges,closed=False, **kwargs)
 
     def define_lines(self, points, s=1):
         lines = [geometry.LineString([tuple(p1), tuple(p2)]) for p1, p2 in aux.group_list_by_n(points, 2)]
@@ -78,9 +77,7 @@ class Border(Obstacle):
         xy = [np.array([[x, y] for x, y in zip(xs, ys)]) for xs, ys in ps]
         return xy, ls
 
-    def draw(self, viewer):
-        for b in self.vertices:
-            viewer.draw_polyline(b, color=self.color, width=self.width, closed=False)
+
 
     def contained(self, p):
         return any([l.distance(geometry.Point(p)) < self.width for l in self.border_lines])

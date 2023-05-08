@@ -8,17 +8,18 @@ from shapely import geometry
 
 from larvaworld.lib import reg, aux
 from larvaworld.lib.model.deb.substrate import Substrate
-from larvaworld.lib.model.object import Entity, ModelEntity, SpatialEntity
+from larvaworld.lib.model.drawable import ViewableNamed
+from larvaworld.lib.model.spatial import SpatialEntity
 from larvaworld.lib.screen.rendering import InputBox
 
 
-class GridOverSpace(Entity, agentpy.Grid):
+class GridOverSpace(ViewableNamed, agentpy.Grid):
     # initial_value = param.Number(0.0, doc='initial value over the grid')
     # fixed_max = param.Boolean(False, doc='whether the max is kept constant')
     grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
     def __init__(self,model,default_color='white',unique_id='GridOverArena', **kwargs):
-        Entity.__init__(self,visible=False,default_color=default_color,unique_id=unique_id, **kwargs)
+        ViewableNamed.__init__(self,visible=False,default_color=default_color,unique_id=unique_id, **kwargs)
         agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
         self._torus = self.space._torus
         self.X, self.Y = self.XY = np.array(self.grid_dims)

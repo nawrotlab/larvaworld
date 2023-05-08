@@ -28,23 +28,7 @@ class TrackViewer(LarvaDatasetCollection):
             'xlabel': 'X (m)',
             'ylabel': 'Y (m)',
         }
-
-
-
-
-
-
-
-
-
-
-
-
         self.app=self.get_app()
-
-
-
-
 
     def get_xydata_valid(self, valid_gIDs, i, dispersal_on):
         mode= 'origin' if dispersal_on else 'default'
@@ -60,15 +44,10 @@ class TrackViewer(LarvaDatasetCollection):
         for d in self.datasets :
             xy = d.load_traj()
             xy_grouped = xy.groupby('AgentID')
-            # ids = xy.index.get_level_values('AgentID').unique()
-            # Nids = len(ids)
             xy0s = xy_grouped.first()
             xy_origin = pd.concat([g - xy0s.loc[id] for id, g in xy_grouped]).sort_index()
-            # Ncolors = dict(zip(ids, aux.N_colors(Nids)))
             xy_data.default.append(xy)
             xy_data.origin.append(xy_origin)
-            # xy_data.default[d.id]=xy
-            # xy_data.origin[d.id]=xy_origin
         return xy_data
 
 

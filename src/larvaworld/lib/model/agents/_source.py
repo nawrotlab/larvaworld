@@ -3,51 +3,33 @@ import param
 from shapely import affinity, geometry, measurement
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.agents import LarvaworldAgent
+from larvaworld.lib.model import PointAgent
 from larvaworld.lib.model.deb.substrate import Substrate
 
 
-class Source(LarvaworldAgent):
+class Source(PointAgent):
     can_be_carried = param.Boolean(False,label='carriable', doc='Whether the source can be carried around.')
     can_be_displaced = param.Boolean(False,label='displaceable', doc='Whether the source can be displaced by wind/water.')
+    regeneration = param.Boolean(False, doc='Whether the agent can be regenerated')
+    regeneration_pos = param.Parameter(None, doc='Where the agent appears if regenerated')
 
 
-    def __init__(self, shape_vertices=None, shape='circle', **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.shape_vertices = shape_vertices
         self.is_carried_by = None
 
         # # put all agents into same group (negative so that no collisions are detected)
         # self._fixtures[0].filterData.groupIndex = -1
 
-    def get_vertices(self):
-        v0 = self.shape_vertices
-        x0, y0 = self.get_position()
-        if v0 is not None and not np.isnan((x0, y0)).all():
-            return [(x + x0, y + y0) for x, y in v0]
-        else:
-            return None
-
-    def get_shape(self, scale=1):
-        p = self.get_position()
-        if np.isnan(p).all():
-            return None
-        elif self.get_vertices() is None:
-            return geometry.Point(p).buffer(self.radius * scale)
-        else:
-            p0 = geometry.Polygon(self.get_vertices())
-            p = affinity.scale(p0, xfact=scale, yfact=scale)
-            return p
 
     def step(self):
         if self.can_be_displaced:
             w = self.model.windscape
-            dt = self.model.dt
-            r = self.radius * 10000
             if w is not None:
                 ws, wo = w.wind_speed, w.wind_direction
                 if ws != 0.0:
-                    self.pos = (self.pos[0] + np.cos(wo) * ws * dt / r, self.pos[1] + np.sin(wo) * ws * dt / r)
+                    coef=ws * self.model.dt / self.radius * 10000
+                    self.pos = (self.x + np.cos(wo) * coef, self.y + np.sin(wo) * coef)
                     in_tank = aux.inside_polygon(points=[self.pos], tank_polygon=self.model.space.polygon)
                     if not in_tank:
                         if self.regeneration:
@@ -62,13 +44,8 @@ class Food(Source):
     substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
     def __init__(self, default_color='green', **kwargs):
-        Source.__init__(self, default_color=default_color, **kwargs)
+        super().__init__(default_color=default_color, **kwargs)
         self.initial_amount = self.amount
-        # self.amount = self.initial_amount
-        # self.substrate = Substrate(type=type, quality=quality)
-
-    def get_amount(self):
-        return self.amount
 
     def subtract_amount(self, amount):
         prev_amount = self.amount

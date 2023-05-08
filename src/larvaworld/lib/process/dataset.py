@@ -346,11 +346,12 @@ class LarvaDatasetCollection :
         self.datasets = datasets
         self.labels = labels
         self.Ndatasets = len(datasets)
-        self.colors = self.get_colors(datasets)
+        self.colors = self.get_colors()
         assert self.Ndatasets == len(self.labels)
 
         self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
         self.Ngroups = len(self.group_ids)
+
 
     def get_datasets(self, datasets=None, refIDs=None, dirs=None):
         if datasets :
@@ -359,23 +360,15 @@ class LarvaDatasetCollection :
             datasets= [reg.loadRef(refID) for refID in refIDs]
         elif dirs :
             datasets= [LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False) for dir in dirs]
-
         return datasets
 
-    def get_colors(self,datasets):
-        Ndatasets = len(datasets)
-        try:
-            cs = [d.config['color'] for d in datasets]
-            u_cs = aux.unique_list(cs)
-            if len(u_cs) == len(cs) and None not in u_cs:
-                colors = cs
-            elif len(u_cs) == len(cs) - 1 and cs[-1] in cs[:-1] and 'black' not in cs:
-                cs[-1] = 'black'
-                colors = cs
-            else:
-                colors = aux.N_colors(Ndatasets)
-        except:
-            colors = aux.N_colors(Ndatasets)
+    def get_colors(self):
+        colors=[]
+        for d in self.datasets :
+            color=d.config['color']
+            while color is None or color in colors :
+                color=aux.random_colors(1)[0]
+            colors.append(color)
         return colors
 
     @property
@@ -416,7 +409,7 @@ class LarvaDatasetCollection :
 
     @property
     def tlim(self):
-        return (0, self.duration)
+        return 0, self.duration
 
     def trange(self, unit='min'):
         if unit == 'min':

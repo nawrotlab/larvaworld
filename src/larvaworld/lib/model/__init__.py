@@ -1,6 +1,7 @@
 
-from .object import Entity, ModelEntity, SpatialEntity
+# from .object import Entity, ModelEntity, SpatialEntity
 from .composition import Compound, Substrate, Odor
+# from .spatial import SpatialEntity
 
 from .deb import *
 from .modules import *

@@ -4,58 +4,26 @@ import numpy as np
 import param
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model.agents import LarvaworldAgent,Source
+from larvaworld.lib.model.agents import OrientedAgent,Source
 
 
-class Larva(LarvaworldAgent):
-    def __init__(self, model,unique_id=None, orientation=None, **kwargs):
+class Larva(OrientedAgent):
+    def __init__(self, model,unique_id=None, **kwargs):
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
         super().__init__(unique_id=unique_id, model=model,**kwargs)
-        self.initial_pos = self.pos
         self.trajectory = [self.initial_pos]
-        if orientation is None:
-            orientation = random.uniform(0, 2 * np.pi)
-        self.initial_orientation = orientation
-        self.orientation = self.initial_orientation
-        self.behavior_pars = ['stride_stop', 'stride_id', 'pause_id', 'feed_id', 'Lturn_id', 'Rturn_id']
-        self.null_behavior_dict = dict(zip(self.behavior_pars, [False] * len(self.behavior_pars)))
-        self.carried_objects = []
+
         self.cum_dur = 0
 
-    def update_color(self, default_color,dic, mode='lin'):
 
-        color = deepcopy(default_color)
-        if mode == 'lin':
-            if dic.stride_id or dic.run_id:
-                color = np.array([0, 150, 0])
-            elif dic.pause_id:
-                color = np.array([255, 0, 0])
-            elif dic.feed_id:
-                color = np.array([0, 0, 255])
-        elif mode == 'ang':
-            if dic.Lturn_id:
-                color[2] = 150
-            elif dic.Rturn_id:
-                color[2] = 50
-        return color
 
-    @property
-    def dt(self):
-        return self.model.dt
-
-    @property
-    def x(self):
-        return self.pos[0] / self.model.scaling_factor
-
-    @property
-    def y(self):
-        return self.pos[1] / self.model.scaling_factor
 
 
 class LarvaMotile(Larva):
     def __init__(self, brain, energetics, life_history, **kwargs):
         super().__init__(**kwargs)
+        self.carried_objects = []
         self.brain = self.build_brain(brain)
         self.build_energetics(energetics, life_history=life_history)
         self.food_detected, self.feeder_motion = None, False
@@ -163,6 +131,7 @@ class LarvaMotile(Larva):
         return self.amount_eaten / self.real_mass
 
     def resolve_carrying(self, food):
+        gain_for_base_odor=100.0
         if food is None or not isinstance(food, Source):
             return
         if food.can_be_carried and food not in self.carried_objects:
@@ -175,7 +144,7 @@ class LarvaMotile(Larva):
             food.is_carried_by = self
             self.carried_objects.append(food)
             if self.model.experiment == 'capture_the_flag':
-                self.brain.olfactor.set_gain(self.gain_for_base_odor, self.base_odor_id)
+                self.brain.olfactor.set_gain(gain_for_base_odor, f'{self.group}_base_odor')
             elif self.model.experiment == 'keep_the_flag':
                 carrier_group = self.group
                 carrier_group_odor_id = self.odor.id
@@ -183,29 +152,36 @@ class LarvaMotile(Larva):
                 opponent_group_odor_id = f'{opponent_group}_odor'
                 for f in self.model.agents:
                     if f.group == carrier_group:
-                        f.brain.olfactor.set_gain(f.gain_for_base_odor, opponent_group_odor_id)
+                        f.brain.olfactor.set_gain(gain_for_base_odor, opponent_group_odor_id)
                     else:
                         f.brain.olfactor.set_gain(0.0, carrier_group_odor_id)
-                self.brain.olfactor.set_gain(-self.gain_for_base_odor, opponent_group_odor_id)
+                self.brain.olfactor.set_gain(-gain_for_base_odor, opponent_group_odor_id)
 
-    def update_behavior_dict(self):
-        d = aux.AttrDict(self.null_behavior_dict.copy())
+    def update_behavior_dict(self, mode='lin'):
         inter = self.brain.locomotor.intermitter
-        if inter is not None:
+        if mode == 'lin' and inter is not None:
             s, f, p, r = inter.active_bouts
-            d.stride_id = s is not None
-            d.feed_id = f is not None
-            d.pause_id = p is not None
-            d.run_id = r is not None
-            d.stride_stop = inter.stride_stop
+            if s or r:
+                color = np.array([0, 150, 0])
+            elif p:
+                color = np.array([255, 0, 0])
+            elif f:
+                color = np.array([0, 0, 255])
+            else :
+                raise
+        elif mode == 'ang':
+            color = deepcopy(self.default_color)
+            orvel = self.front_orientation_vel
+            if orvel > 0:
+                color[2] = 150
+            elif orvel < 0:
+                color[2] = 50
+        else :
+            raise
+        self.set_color(color)
 
-        orvel = self.front_orientation_vel
-        if orvel > 0:
-            d.Lturn_id = True
-        elif orvel < 0:
-            d.Rturn_id = True
-        color = self.update_color(self.default_color, d)
-        self.set_color([color] * self.Nsegs)
+
+
 
     def sense(self):
         pass
@@ -218,8 +194,7 @@ class LarvaMotile(Larva):
 
         if self.model.space.accessible_sources :
             self.food_detected = self.model.space.accessible_sources[self]
-            # if self.food_detected is not None :
-            #     print(self.unique_id, self.food_detected.unique_id)
+
         elif self.brain.locomotor.feeder  or self.brain.toucher:
             self.food_detected = aux.sense_food(pos, sources=self.model.sources, grid=self.model.food_grid,
                                         radius=self.radius)
@@ -249,8 +224,6 @@ class LarvaMotile(Larva):
         pass
         # Overriden by subclasses
 
-    def complete_step(self):
-        pass
 
 
 

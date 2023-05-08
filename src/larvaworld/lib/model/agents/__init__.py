@@ -1,4 +1,4 @@
-from ._agent import LarvaworldAgent
+from ._agent import PointAgent, OrientedAgent
 
 
 from ._source import Source, Food

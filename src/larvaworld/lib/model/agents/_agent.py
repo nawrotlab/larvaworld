@@ -5,67 +5,43 @@ from shapely import geometry
 
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.object import ModelEntity
+from larvaworld.lib.model.drawable import LabelledGroupedObject
 from larvaworld.lib.model.composition import Odor
+from larvaworld.lib.model.spatial import RadiallyExtended, OrientedPoint
 
 
+class NonSpatialAgent(LabelledGroupedObject):
+    """
+                LarvaworldAgent base class for all agent types
 
-class LarvaworldAgent(ModelEntity):
-    """LarvaworldAgent class that inherits from agentpy.Agent."""
-    radius = aux.PositiveNumber(0.003, softmax=0.1, step=0.001,doc='The spatial radius of the source in meters')
-    pos = param.NumericTuple((0.0, 0.0), doc='The xy spatial position coordinates')
+                Note that the setup() method is called right after initialization as in the agentpy.Agent class
+                This is contrary to the parent class
+
+                Args:
+                - odor: optional dictionary containing odor information of the agent.
+
+
+            """
+
+
     odor = aux.ClassAttr(Odor, doc='The odor of the agent')
 
-
-    def __init__(self, model=None,odor={},  regeneration=False, regeneration_pos=None, **kwargs):
-        """
-            Initialize a LarvaworldAgent instance.
-
-            Args:
-            - unique_id: str representing the unique ID of the agent.
-            - model: optional model instance.
-            - pos: optional tuple representing the position of the agent.
-            - default_color: optional str or tuple representing the default color of the agent.
-            - radius: optional float representing the radius of the agent.
-            - visible: optional boolean indicating whether the agent is visible or not.
-            - odor: optional dictionary containing odor information of the agent.
-            - regeneration: optional boolean indicating whether the agent is regenerating or not.
-            - regeneration_pos: optional tuple representing the position of the regeneration.
-            - group: optional str representing the group of the agent.
-            - *args, **kwargs: optional arguments to be passed to the super().__init__() method.
-        """
-
-
-        super().__init__(model=model,odor=Odor(**odor),**kwargs)
-        self.base_odor_id = f'{self.group}_base_odor'
-        self.gain_for_base_odor = 100
-
-        # self.odor_id = self.odor.id
-        # self.set_odor_dist(self.odor.intensity, self.odor.spread)
-
-        self.regeneration = regeneration
-        self.regeneration_pos = regeneration_pos
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.setup(**kwargs)
 
-
-    def get_position(self):
-        return tuple(self.pos)
-
-
-
-    def get_shape(self, scale=1):
-        p = self.get_position()
-        return geometry.Point(p).buffer(self.radius * scale) if not np.isnan(p).all() else None
-
-
-
-    def contained(self, point):
-        return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
+    @property
+    def dt(self):
+        return self.model.dt
 
     def step(self):
         pass
 
 
+
+class PointAgent(NonSpatialAgent,RadiallyExtended):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def draw(self, viewer, filled=True):
         p, c, r = self.get_position(), self.color, self.radius
@@ -82,4 +58,6 @@ class LarvaworldAgent(ModelEntity):
             viewer.draw_circle(p, r * 1.1, self.model.screen_manager.selection_color, False, r / 5)
 
 
-
+class OrientedAgent(NonSpatialAgent,OrientedPoint):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)

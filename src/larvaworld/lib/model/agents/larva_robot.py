@@ -5,47 +5,31 @@ from larvaworld.lib.model.modules.sensor2 import ProximitySensor
 
 class LarvaRobot(LarvaSim):
 
-    def __init__(self, larva_pars,genome=None, **kwargs):
-        super().__init__(**larva_pars,default_color=aux.Color.random_color(), **kwargs)
+    def __init__(self, larva_pars,genome=None,**kwargs):
+        if 'default_color' not in kwargs.keys():
+            kwargs['default_color']=aux.Color.random_color()
+        super().__init__(**larva_pars, **kwargs)
 
         self.genome = genome
-        self.Nticks = 0
-        self.finalized = False
-        self.collision_with_object = False
 
 
 
 
 
-    def draw(self, viewer):
-        self.xx, self.yy = viewer._transform(self.pos)
+
+    def draw(self, viewer, filled=True):
         for seg in self.segs:
-            viewer.draw_polygon(seg.vertices, filled=True, color=seg.color)
-
-    @property
-    def direction(self):
-        return self.head.get_orientation()
-
-    def complete_step(self):
-        # self.xx, self.yy = self.model.viewer._transform(self.pos)
-        self.Nticks += 1
-
-    @ property
-    def collect(self):
-        return [self.body_bend,self.head.get_angularvelocity(),
-                self.rear_orientation_change/self.model.dt,
-                self.head.get_linearvelocity(), self.pos[0],self.pos[1]]
+            viewer.draw_polygon(seg.vertices, filled=filled, color=seg.color)
 
 
 
 
-    def draw_label(self, screen):
-        import pygame
-        if pygame.font and self.unique_id is not None:
-            font = pygame.font.Font(None, 24)
-            text = font.render(str(self.unique_id), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
-            text_pos = pygame.Rect(self.xx + (self.real_length / 2), self.yy + (self.real_length / 2), 50, 50)
-            screen.blit(text, text_pos)
+
+
+
+
+
+
 
 
 

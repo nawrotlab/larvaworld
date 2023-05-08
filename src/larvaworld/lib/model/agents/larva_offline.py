@@ -12,25 +12,22 @@ class LarvaOffline(LarvaSim):
         super().__init__(**larva_pars, **kwargs)
 
         self.genome = genome
-        self.Nticks = 0
-        self.collision_with_object = False
+
 
         self.fo = self.orientation
         self.ro = self.orientation
 
-        self.xx, self.yy = self.model.viewer._transform(self.pos)
 
         self.lin_vel = 0
         self.ang_vel = 0
-        self.body_bend = 0
-        self.torque = 0
 
     def step(self):
         dt = self.model.dt
         self.cum_dur += dt
 
         lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
-        self.lin_vel, self.ang_vel = self.prepare_motion(lin, ang)
+        self.lin_vel = lin * self.lin_vel_coef
+        self.ang_vel = self.compute_ang_vel(torque=ang * self.torque_coef, v=self.ang_vel)
 
         ang_vel_min, ang_vel_max=(-np.pi + self.body_bend) / self.model.dt, (np.pi + self.body_bend) / self.model.dt
         if self.ang_vel<ang_vel_min:
@@ -52,16 +49,9 @@ class LarvaOffline(LarvaSim):
         self.pos += k1 * self.dst
 
         self.trajectory.append(tuple(self.pos))
-        self.complete_step()
 
-    def complete_step(self):
 
-        self.Nticks += 1
-        self.xx, self.yy = self.model.viewer._transform(self.pos)
 
-    @property
-    def collect(self):
-        return [self.body_bend,self.ang_vel, self.rear_orientation_change/self.model.dt,
-                                                                   self.lin_vel, self.pos[0],self.pos[1]]
+
 
 

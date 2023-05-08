@@ -459,6 +459,11 @@ class InputBox(ScreenItem):
         self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
 
 
+class IDBox(InputBox):
+    def __init__(self, agent,**kwargs):
+        super().__init__(agent=agent, text=agent.unique_id, color_inactive=agent.default_color,color_active=agent.default_color,**kwargs)
+
+
 class SimulationClock(ScreenItem):
 
     def __init__(self, sim_step_in_sec, color=None):

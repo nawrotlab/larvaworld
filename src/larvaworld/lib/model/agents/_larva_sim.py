@@ -16,6 +16,7 @@ class LarvaSim(LarvaBody, BaseController):
         self.border_go_errors = 0
         self.border_turn_errors = 0
 
+        self.collision_with_object = False
 
 
     def compute_ang_vel(self, torque, v):
@@ -29,7 +30,6 @@ class LarvaSim(LarvaBody, BaseController):
             ang_vel = ang * self.ang_vel_coef
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
         self.position_body(lin_vel, ang_vel)
-        self.complete_step()
 
 
     @property
@@ -121,7 +121,6 @@ class LarvaSim(LarvaBody, BaseController):
         self.model.space.move_to(self, np.array(self.pos))
         self.cum_dst += self.dst
         self.compute_body_bend()
-        self.complete_step()
 
     def valid_Dbend_range(self, idx=0, ho0=None):
         if ho0 is None:

@@ -73,16 +73,11 @@ class LarvaReplay(Larva):
 
         self.color = deepcopy(self.default_color)
 
-        self.beh_ar = np.zeros([N, len(self.behavior_pars)], dtype=bool)
-        for i, p in enumerate(self.behavior_pars):
-            if p in cols:
-                self.beh_ar[:, i] = np.array([not v for v in np.isnan(data[p].values).tolist()])
+
         self.data = data
 
 
-    def update_behavior_dict(self):
-        d = aux.AttrDict(dict(zip(self.behavior_pars, self.beh_ar[self.model.t, :].tolist())))
-        self.color = self.update_color(self.default_color, d)
+
 
     def step(self):
         m = self.model

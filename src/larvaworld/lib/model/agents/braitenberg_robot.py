@@ -97,9 +97,4 @@ class SensorDrivenRobot(DifferentialDriveRobot):
         # call super method to draw the robot
         super().draw(scene)
 
-    def draw_label(self, screen):
-        if pygame.font and self.label is not None:
-            font = pygame.font.Font(None, 24)
-            text = font.render(str(self.label), 1, aux.Color.YELLOW, aux.Color.DARK_GRAY)
-            text_pos = pygame.Rect(self.x + (self.length / 2), self.y + (self.length / 2), 50, 50)
-            screen.blit(text, text_pos)
+

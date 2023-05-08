@@ -199,8 +199,9 @@ class LarvaBody(LarvaMotile):
     def tail(self):
         return self.segs[-1]
 
-
-
+    @property
+    def direction(self):
+        return self.head.get_orientation()
 
 
     @property
@@ -338,34 +339,10 @@ class LarvaBody(LarvaMotile):
     def front_orientation(self):
         return self.head.get_orientation()%(2*np.pi)
 
-    # @property
-    # def front_orientation_unwrapped(self):
-    #     return self.head.get_orientation()
-
-    # @property
-    # def rear_orientation_unwrapped(self):
-    #     return self.tail.get_orientation()
 
     @property
     def rear_orientation(self):
         return self.tail.get_orientation()%(2*np.pi)
-
-    # @property
-    # def bend(self):
-    #     # return self.body_bend
-    #     return np.rad2deg(self.body_bend)
-    #
-    # @property
-    # def bend_vel(self):
-    #     return np.rad2deg(self.body_bend_vel)
-    #
-    # @property
-    # def bend_acc(self):
-    #     return np.rad2deg(self.body_bend_acc)
-
-    # @property
-    # def front_orientation_vel(self):
-    #     return self.head.get_angularvelocity()
 
 
 class BaseController(param.Parameterized):
