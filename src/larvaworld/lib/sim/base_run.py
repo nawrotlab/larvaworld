@@ -103,7 +103,7 @@ class BaseRun(aux.SimConf, agentpy.Model):
     def build_env(self, p):
         reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
         # Define environment
-        self.space = envs.Arena(self, **p.arena)
+        self.space = envs.Arena(model=self, **p.arena)
 
         self.place_obstacles(p.border_list)
         self.place_food(p=p.food_params)

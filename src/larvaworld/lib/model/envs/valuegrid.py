@@ -8,8 +8,7 @@ from shapely import geometry
 
 from larvaworld.lib import reg, aux
 from larvaworld.lib.model.deb.substrate import Substrate
-from larvaworld.lib.model.drawable import ViewableNamed
-from larvaworld.lib.model.spatial import SpatialEntity
+from larvaworld.lib.model.drawable import ViewableNamed, SpatialEntity
 from larvaworld.lib.screen.rendering import InputBox
 
 
@@ -150,7 +149,7 @@ class ValueGrid(SpatialEntity):
                             screen_pos=viewer._transform(p_text))
         text_box.draw(viewer)
 
-    def draw(self, viewer):
+    def draw(self, viewer, **kwargs):
         Cgrid = self.get_color_grid().reshape([self.X, self.Y, 3])
         for i in range(self.X):
             for j in range(self.Y):
@@ -206,7 +205,7 @@ class FoodGrid(ValueGrid):
         q = (v - v0) / (v1 - v0)
         return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
-    def draw(self, viewer):
+    def draw(self, viewer, **kwargs):
         viewer.draw_polygon(self.model.space.vertices, self.get_color(v=self.initial_value), filled=True)
         for i in range(self.X):
             for j in range(self.Y):
@@ -330,7 +329,7 @@ class WindScape(SpatialEntity):
 
         return any([l.intersects(ll) for l in self.model.border_lines])
 
-    def draw(self, viewer):
+    def draw(self, viewer, **kwargs):
         if self.wind_speed > 0:
             for p0, p1 in self.scapelines:
                 l = geometry.LineString([p0, p1])

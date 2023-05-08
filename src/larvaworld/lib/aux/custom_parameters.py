@@ -25,8 +25,7 @@ class PositiveInteger(Integer):
 class Phase(Number):
     """Phase number within (0,2pi)"""
     def __init__(self,default=0.0, softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
-        if default is None:
-            default = random.uniform(0, 2 * np.pi)
+
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
 
 class RangeInf(Range):
@@ -130,11 +129,11 @@ class PositiveIntegerRange(IntegerRange):
 class ListXYcoordinates(List):
     """List of XY point coordinates"""
     def __init__(self, default=[],minlen=0, maxlen=None, **kwargs):
-        super().__init__(default=default, item_type=Tuple[float],bounds=(minlen,maxlen), **kwargs)
+        super().__init__(default=default, item_type=tuple,bounds=(minlen,maxlen), **kwargs)
 
 class XYLine(ListXYcoordinates):
     """List of XY point coordinates"""
-    def __init__(self, minlen=2, **kwargs):
+    def __init__(self, minlen=0, **kwargs):
         super().__init__(minlen=minlen,**kwargs)
 
 

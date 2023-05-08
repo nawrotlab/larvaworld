@@ -177,7 +177,7 @@ def circle_to_polygon(N, r):
         for i in range(N)]
 
 
-    return np.array(points)
+    return points
 
 
 def boolean_indexing(v, fillval=np.nan):

@@ -84,3 +84,20 @@ class ViewableCircle(Viewable,RadiallyExtended):
             color = self.color
         v.draw_circle(position=self.get_position(), radius=self.radius*radius_coeff, color=color, filled=filled, width=self.radius/width_as_radius_fraction)
 
+
+
+class SpatialEntity(ViewableSingleObject):
+    def __init__(self, visible=False,default_color='white', **kwargs):
+        super().__init__(visible=visible,default_color=default_color,**kwargs)
+
+    def record_positions(self, label='p'):
+        """ Records the positions of each agent.
+
+        Arguments:
+            label (string, optional):
+                Name under which to record each position (default p).
+                A number will be added for each coordinate (e.g. p1, p2, ...).
+        """
+        for agent, pos in self.positions.items():
+            for i, p in enumerate(pos):
+                agent.record(label+str(i), p)

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import param
 
-from larvaworld.lib.model.modules.basic import Timer
+from larvaworld.lib.model.modules.oscillator import Timer
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import nam
 

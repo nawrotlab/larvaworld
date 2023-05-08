@@ -330,7 +330,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
         if np.abs(d_or) > np.pi:
             bend_errors += 1
         dst = v * dt
-        d_ro = aux.rear_orientation_change(b, dst, l, correction_coef=controller.bend_correction_coef)
+        d_ro = controller.compute_delta_rear_angle(b, dst, l)
         b = aux.wrap_angle_to_0(b + d_or - d_ro)
         fo = (fo + d_or) % (2 * np.pi)
         ro = (ro + d_ro) % (2 * np.pi)

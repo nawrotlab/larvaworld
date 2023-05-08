@@ -113,7 +113,6 @@ class LarvaBody(LarvaMotile):
         self.seg_ratio = np.array(seg_ratio)
         self.contour_points = body_shapes[shape]
         self.base_seg_vertices = aux.generate_seg_shapes(self.Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
-        self.rear_orientation_change = 0
         self.body_bend = 0
         self.cum_dst = 0.0
         self.dst = 0.0
@@ -356,4 +355,18 @@ class BaseController(param.Parameterized):
     ang_damping = aux.PositiveNumber(1.0, doc='Angular damping coefficient')
     lin_mode = param.Selector(objects=['velocity', 'force', 'impulse'], doc='Mode of translational motion generation')
     ang_mode = param.Selector(objects=['torque','velocity'], doc='Mode of angular motion generation')
+
+
+    def compute_ang_vel(self, amp, ang_vel, dt, bend):
+        torque = amp * self.torque_coef
+        return ang_vel + (-self.ang_damping * ang_vel - self.body_spring_k * bend + torque) * dt
+
+    def compute_delta_rear_angle(self, bend, dst, length):
+        k0 = 2 * dst * self.bend_correction_coef / length
+        if 0 <= k0 < 1:
+            return bend * k0
+        elif 1 <= k0:
+            return bend
+        elif k0 < 0:
+            return 0
 

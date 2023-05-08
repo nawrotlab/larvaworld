@@ -1,6 +1,6 @@
 import param
 
-from larvaworld.lib.model.modules.basic import Oscillator
+from larvaworld.lib.model.modules.oscillator import Oscillator
 
 
 class Feeder(Oscillator):
@@ -16,3 +16,6 @@ class Feeder(Oscillator):
         if self.active :
             self.oscillate()
         return self.complete_iteration
+
+    def suppresion_relief(self, phi_range):
+        return self.phi_in_range(phi_range)

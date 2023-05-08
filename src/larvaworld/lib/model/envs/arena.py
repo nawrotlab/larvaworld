@@ -22,17 +22,17 @@ class Arena(ArenaConf,Obstacle, agentpy.Space):
                 vertices = aux.circle_to_polygon(60, X / 2)
             elif self.geometry == 'rectangular':
                 # This is a rectangular shape
-                vertices = np.array([(-X / 2, -Y / 2),
+                vertices = [(-X / 2, -Y / 2),
                                    (-X / 2, Y / 2),
                                    (X / 2, Y / 2),
-                                   (X / 2, -Y / 2)])
+                                   (X / 2, -Y / 2)]
             else:
                 raise
         edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
         self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         self.scaled_range=self.range*model.scaling_factor
         k = 0.96
-        self.polygon = Polygon(vertices * k)
+        self.polygon = Polygon(np.array(vertices) * k)
         Obstacle.__init__(self, model=model,visible=visible, unique_id=unique_id,default_color=default_color,edges=edges, vertices=vertices)
         agentpy.Space.__init__(self, model=self.model, torus=self.torus, shape=self.dims)
 

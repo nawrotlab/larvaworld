@@ -27,7 +27,7 @@ class LarvaOffline(LarvaSim):
 
         lin, ang, feed = self.brain.locomotor.step(A_in=0, length=self.real_length)
         self.lin_vel = lin * self.lin_vel_coef
-        self.ang_vel = self.compute_ang_vel(torque=ang * self.torque_coef, v=self.ang_vel)
+        self.ang_vel = self.compute_ang_vel(ang, ang_vel=self.ang_vel, dt=self.model.dt,bend=self.body_bend)
 
         ang_vel_min, ang_vel_max=(-np.pi + self.body_bend) / self.model.dt, (np.pi + self.body_bend) / self.model.dt
         if self.ang_vel<ang_vel_min:
@@ -37,12 +37,11 @@ class LarvaOffline(LarvaSim):
             self.ang_vel = ang_vel_max
             self.body_bend_errors += 1
 
-        d_or = self.ang_vel * dt
-        self.fo = (self.fo + d_or) % (2 * np.pi)
+        self.fo = (self.fo + self.ang_vel * dt) % (2 * np.pi)
         self.dst = self.lin_vel * dt
-        self.rear_orientation_change = aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
-                                       correction_coef=self.bend_correction_coef)
-        self.ro = (self.ro + self.rear_orientation_change) % (2 * np.pi)
+        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.real_length)
+
+        self.ro = (self.ro + delta_ro) % (2 * np.pi)
         self.body_bend = aux.wrap_angle_to_0(self.fo - self.ro)
         self.cum_dst += self.dst
         k1 = np.array([np.cos(self.fo), np.sin(self.fo)])

@@ -9,7 +9,7 @@ from larvaworld.lib.ipc.ipc import Client
 
 
 
-from larvaworld.lib.model.modules.basic import Timer
+from larvaworld.lib.model.modules.oscillator import Timer
 
 
 class Memory(Timer):

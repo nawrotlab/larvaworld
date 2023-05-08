@@ -2,44 +2,7 @@ import numpy as np
 import param
 
 from larvaworld.lib import aux
-
-class Timer(param.Parameterized) :
-    dt = aux.PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep', doc='The timestep of the simulation in seconds.')
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.ticks = 0
-        self.total_ticks = 0
-        # self.mode = mode
-
-        self.active = True
-        # self.ticks = 0
-        # self.total_ticks = 0
-        self.complete_iteration = False
-
-    def count_time(self):
-        self.ticks += 1
-        self.total_ticks += 1
-
-    @ property
-    def t(self):
-        return self.ticks * self.dt
-
-    @property
-    def total_t(self):
-        return self.total_ticks * self.dt
-
-    def reset(self):
-        self.ticks = 0
-        self.total_ticks = 0
-
-    def start_effector(self):
-        self.active = True
-
-    def stop_effector(self):
-        self.active = False
-        self.ticks = 0
-
-
+from larvaworld.lib.model.modules.oscillator import Timer, Oscillator
 
 
 class Effector(Timer):
@@ -103,67 +66,6 @@ class Effector(Timer):
         return self.output
 
 
-class Oscillator(Timer):
-    initial_freq = aux.PositiveNumber(label='oscillation frequency', doc='The initial frequency of the oscillator.')
-    freq_range = param.Range(label='oscillation frequency range', doc='The frequency range of the oscillator.')
-    random_phi = param.Boolean(default=True, label='random oscillation phase', doc='Whether to randomize the initial phase of the oscillator.')
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # self.initial_freq = float(np.random.normal(loc=initial_freq, scale=initial_freq_std, size=1))
-        self.freq = self.initial_freq
-
-        self.iteration_counter = 0
-        # self.d_phi = 2 * np.pi * self.dt * self.freq
-        # self.timesteps_per_iteration = int(round((1 / self.freq) / self.dt))
-        self.phi = np.random.rand() * 2 * np.pi if self.random_phi else 0
-
-
-    def set_freq(self, v):
-        self.freq = v
-
-    def get_freq(self, t):
-        return self.freq
-
-    @property
-    def timesteps_per_iteration(self):
-        if self.freq != 0:
-            return int(round((1 / self.freq) / self.dt))
-        else :
-            return None
-
-    def set_initial_freq(self, value):
-        if self.freq_range:
-            value = np.clip(value, self.freq_range[0], self.freq_range[1])
-        self.initial_freq = value
-
-    def oscillate(self):
-        self.complete_iteration = False
-        self.phi += 2 * np.pi * self.dt * self.freq
-        if self.phi >= 2 * np.pi:
-            self.phi %= 2 * np.pi
-            # self.ticks = 0
-            self.complete_iteration = True
-            self.iteration_counter += 1
-
-
-    def reset(self):
-        # self.ticks = 0
-        # self.total_ticks = 0
-        self.phi = 0
-        self.complete_iteration = False
-        self.iteration_counter = 0
-
-    def phi_in_range(self, phi_range):
-        return phi_range[0] < self.phi < phi_range[1]
-
-    def update(self):
-        self.complete_iteration = False
-
-    # def act(self):
-    #     self.oscillate()
-
-
 
 class StepEffector(Effector):
     initial_amp = aux.PositiveNumber(1.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
@@ -209,9 +111,6 @@ class StepEffector(Effector):
 
 class StepOscillator(Oscillator, StepEffector):
 
-    # def update(self):
-    #     self.complete_iteration = False
-
 
     def act(self):
         self.oscillate()
@@ -220,6 +119,7 @@ class StepOscillator(Oscillator, StepEffector):
 
 
 class SinOscillator(StepOscillator):
+
 
     @property
     def Act_Phi(self):

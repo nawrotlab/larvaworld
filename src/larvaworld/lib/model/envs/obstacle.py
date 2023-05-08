@@ -12,8 +12,10 @@ from larvaworld.lib.model.object import GroupedObject
 class Obstacle(GroupedObject, ViewableLine):
     # width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
 
-    def __init__(self, edges,closed=True, **kwargs):
-        super().__init__(closed=closed,**kwargs)
+    def __init__(self,model,unique_id=None,group=None, edges=None,closed=True, **kwargs):
+        GroupedObject.__init__(self,model=model, unique_id=unique_id,group=group)
+        ViewableLine.__init__(self,closed=closed, **kwargs)
+
         # self.vertices = vertices
         self.edges = edges
 

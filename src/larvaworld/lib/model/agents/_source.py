@@ -3,7 +3,7 @@ import param
 from shapely import affinity, geometry, measurement
 
 from larvaworld.lib import aux
-from larvaworld.lib.model import PointAgent
+from larvaworld.lib.model.agents import PointAgent
 from larvaworld.lib.model.deb.substrate import Substrate
 
 

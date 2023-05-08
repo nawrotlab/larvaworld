@@ -26,16 +26,6 @@ def wrap_angle_to_0(angle: float, in_deg: bool = False) -> float:
     return angle
 
 
-def rear_orientation_change(bend, d, l, correction_coef=1.0):
-
-    k0 = 2*d*correction_coef/ l
-    if 0 <= k0 < 1:
-        return bend * k0
-    elif 1 <= k0:
-        return bend
-    elif k0 < 0:
-        return 0
-
 
 def angles_between_vectors(xy_front: np.ndarray, xy_mid: np.ndarray = None, xy_rear: np.ndarray = None,
                            in_deg: bool = True, wrap_to_0: bool = True) -> np.ndarray:

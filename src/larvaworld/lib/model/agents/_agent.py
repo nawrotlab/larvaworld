@@ -28,7 +28,7 @@ class NonSpatialAgent(LabelledGroupedObject):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup(**kwargs)
+        #self.setup(**kwargs)
 
     @property
     def dt(self):
@@ -39,7 +39,7 @@ class NonSpatialAgent(LabelledGroupedObject):
 
 
 
-class PointAgent(NonSpatialAgent,RadiallyExtended):
+class PointAgent(RadiallyExtended,NonSpatialAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -58,6 +58,6 @@ class PointAgent(NonSpatialAgent,RadiallyExtended):
             viewer.draw_circle(p, r * 1.1, self.model.screen_manager.selection_color, False, r / 5)
 
 
-class OrientedAgent(NonSpatialAgent,OrientedPoint):
+class OrientedAgent(OrientedPoint,NonSpatialAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

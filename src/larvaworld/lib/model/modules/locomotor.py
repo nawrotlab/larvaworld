@@ -4,22 +4,6 @@ class Locomotor:
     def __init__(self, dt=0.1):
         self.crawler, self.turner, self.feeder, self.intermitter, self.interference = [None] * 5
         self.dt = dt
-        # self.cur_state = 'exec'
-        # self.cur_run_dur = 0
-        # self.cur_pause_dur = None
-
-
-        # self.ang_activity = 0.0
-        # self.lin_activity = 0.0
-        # self.feed_motion = False
-
-    # def update(self):
-    #     if self.cur_state == 'exec':
-    #         self.cur_run_dur += self.dt
-    #     elif self.cur_state == 'pause':
-    #         self.cur_pause_dur += self.dt
-
-
 
 
     def on_new_pause(self):
@@ -77,12 +61,19 @@ class DefaultLocomotor(Locomotor):
 
     def step(self, A_in=0, length=1, on_food=False):
         C,F,T,If=self.crawler,self.feeder,self.turner,self.interference
-
-
-        feed_motion = F.step() if F else False
+        if If:
+            If.cur_attenuation=1
+        if F :
+            feed_motion = F.step()
+            if F.active and If:
+                If.check_feeder(F)
+        else :
+            feed_motion = False
         if C :
             lin = C.step() * length
             stride_completed=C.complete_iteration
+            if C.active and If:
+                If.check_crawler(C)
         else:
             lin =  0
             stride_completed = False
@@ -90,7 +81,8 @@ class DefaultLocomotor(Locomotor):
 
         if T :
             if If:
-                cur_att_in, cur_att_out = If.step(crawler=C, feeder=F)
+                cur_att_in, cur_att_out = If.apply_attenuation(If.cur_attenuation)
+                # cur_att_in, cur_att_out = If.step(crawler=C, feeder=F)
             else:
                 cur_att_in, cur_att_out = 1, 1
             ang = T.step(A_in=A_in * cur_att_in) * cur_att_out

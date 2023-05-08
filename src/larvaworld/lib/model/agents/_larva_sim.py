@@ -19,13 +19,13 @@ class LarvaSim(LarvaBody, BaseController):
         self.collision_with_object = False
 
 
-    def compute_ang_vel(self, torque, v):
-        return v + (-self.ang_damping * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
+    # def compute_ang_vel(self, torque, v):
+    #     return v + (-self.ang_damping * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
 
     def prepare_motion(self, lin, ang):
         lin_vel = lin * self.lin_vel_coef
         if self.ang_mode == 'torque':
-            ang_vel = self.compute_ang_vel(torque=ang * self.torque_coef,v=self.head.get_angularvelocity())
+            ang_vel = self.compute_ang_vel(ang,ang_vel=self.head.get_angularvelocity(), dt=self.model.dt, bend=self.body_bend)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
@@ -104,12 +104,11 @@ class LarvaSim(LarvaBody, BaseController):
             hp1 = hr0 + k * (d * sf + l0 / 2)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         self.dst = d
-        self.rear_orientation_change = aux.rear_orientation_change(self.body_bend, self.dst, self.real_length,
-                                                                       correction_coef=self.bend_correction_coef)
+        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.real_length)
 
 
         if self.Nsegs > 1:
-            d_or = self.rear_orientation_change / (self.Nsegs - 1)
+            d_or = delta_ro / (self.Nsegs - 1)
             for i, seg in enumerate(self.segs[1:]):
                 o1 = seg.get_orientation() + d_or
                 k = np.array([np.cos(o1), np.sin(o1)])

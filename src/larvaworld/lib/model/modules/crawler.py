@@ -13,9 +13,7 @@ class StrideOscillator(StepOscillator) :
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-    #     self.stride_dst_mean, self.stride_dst_std = [np.max([0.0, ii]) for ii in [stride_dst_mean, stride_dst_std]]
         self.step_to_length = self.new_stride
-        # self.start_effector()
 
     @property
     def new_stride(self):
@@ -25,13 +23,13 @@ class StrideOscillator(StepOscillator) :
     def Act(self):
         return self.freq * self.step_to_length * (1 + self.Act_coef*self.Act_Phi)
 
-    def act(self):
-        self.oscillate()
-        if self.complete_iteration :
-            self.step_to_length = self.new_stride
-        self.output =self.Act
+
+    def act_on_complete_iteration(self):
+        self.step_to_length = self.new_stride
 
 
+    def suppresion_relief(self, phi_range):
+        return self.phi_in_range(phi_range)
 
 
 class GaussOscillator(StrideOscillator):
@@ -46,6 +44,9 @@ class GaussOscillator(StrideOscillator):
         return self.gauss_w[int(np.rad2deg(self.phi))]
 
 
+
+
+
 class SquareOscillator(StrideOscillator):
     duty = param.Magnitude(0.6, label='square signal duty',doc='The duty parameter(%time at the upper end) of the square signal.')
 
@@ -53,6 +54,9 @@ class SquareOscillator(StrideOscillator):
     @ property
     def Act_Phi(self):
         return float(signal.square(self.phi, duty=self.duty))
+
+    def suppresion_relief(self, phi_range):
+        return self.phi <= 2 * np.pi * self.duty
 
 class PhaseOscillator(StrideOscillator):
     max_vel_phase = aux.Phase(3.49, label='max velocity phase',doc='The phase of the crawling oscillation cycle where forward velocity is maximum.')
@@ -66,5 +70,7 @@ class PhaseOscillator(StrideOscillator):
     @property
     def Act_coef(self):
         return self.max_scaled_vel
+
+
 
 
