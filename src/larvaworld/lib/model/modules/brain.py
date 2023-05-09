@@ -1,9 +1,7 @@
 import numpy as np
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model import Olfactor, Toucher, WindSensor, Thermosensor, RLOlfMemory, RemoteBrianModelMemory, \
-    RLTouchMemory
-from larvaworld.lib.model.modules.locomotor import DefaultLocomotor
+from larvaworld.lib.model import modules
 
 
 class Brain:
@@ -89,7 +87,7 @@ class Brain:
 class DefaultBrain(Brain):
     def __init__(self, conf, agent=None, dt=None, **kwargs):
         super().__init__(agent=agent, dt=dt)
-        self.locomotor = DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
+        self.locomotor = modules.DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
 
         kws = {"brain": self, "dt": self.dt}
         self.olfactor, self.toucher, self.windsensor, self.thermosensor = [None] * 4
@@ -98,9 +96,9 @@ class DefaultBrain(Brain):
 
         mods = conf.modules
         memory_modes = {
-            'RL': RLOlfMemory,
-            'MB': RemoteBrianModelMemory,
-            'touchRL': RLTouchMemory,
+            'RL': modules.RLOlfMemory,
+            'MB': modules.RemoteBrianModelMemory,
+            'touchRL': modules.RLTouchMemory,
         }
         if mods['memory']:
             mm = conf['memory_params']
@@ -110,20 +108,20 @@ class DefaultBrain(Brain):
 
 
         if mods.olfactor:
-            self.olfactor=Olfactor(**kws,**conf['olfactor_params'])
+            self.olfactor=modules.Olfactor(**kws,**conf['olfactor_params'])
             if mods['memory']:
                 mm.gain = self.olfactor.gain
                 self.memory = class_func(**mm, **kws)
         if mods.toucher:
-            self.toucher=Toucher(**kws,**conf['toucher_params'])
+            self.toucher=modules.Toucher(**kws,**conf['toucher_params'])
             self.toucher.init_sensors()
             if mods['memory']:
                 mm.gain = self.toucher.gain
                 self.touch_memory = class_func(**mm, **kws)
         if mods.windsensor:
-            self.windsensor=WindSensor(**kws,**conf['windsensor_params'])
+            self.windsensor=modules.WindSensor(**kws,**conf['windsensor_params'])
         if mods.thermosensor:
-            self.thermosensor=Thermosensor(**kws,**conf['thermosensor_params'])
+            self.thermosensor=modules.Thermosensor(**kws,**conf['thermosensor_params'])
 
 
 

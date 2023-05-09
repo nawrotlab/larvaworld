@@ -1,8 +1,7 @@
 import param
 
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.model import Food, Border, DiffusionValueLayer, WindScape, ThermoScape, spatial, \
-    FoodGrid, Life, Odor, PointAgent, OrientedAgent
+
 
 
 class SimTime(aux.NestedConf):
@@ -43,6 +42,9 @@ class SimOptions(SimTime):
         if self.offline :
             self.show_display=False
 
+from larvaworld.lib import model
+from larvaworld.lib.model import Food, Border, DiffusionValueLayer, WindScape, ThermoScape, spatial, \
+    FoodGrid, Life, Odor, PointAgent, OrientedAgent, Substrate
 
 
 def class_generator(agent_class, mode='Unit') :
@@ -147,6 +149,7 @@ gen=aux.AttrDict({
     'Arena':class_generator(spatial.Area,mode='Unit'),
     'Border':class_generator(Border, mode='Unit'),
     'Odor':class_generator(Odor, mode='Unit'),
+    'Substrate':class_generator(Substrate, mode='Unit'),
 })
 
 
@@ -386,7 +389,7 @@ class ExpConf(aux.NestedConf):
     # trials = param.Selector(default='default', objects=stored.confIDs('Trial'), doc='The trial configuration ID')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
     larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
-    sim_params = aux.ClassAttr(aux.SimConf,doc='The simulation configuration')
+    sim_params = aux.ClassAttr(SimOptions,doc='The simulation configuration')
     enrichment = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
     experiment = ConfSelector('Exp')
     # experiment = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
