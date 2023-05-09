@@ -4,37 +4,24 @@ import param
 from shapely.geometry import Point,Polygon
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model.envs import Obstacle
+from larvaworld.lib.model.drawable import ViewableNamedBoundedArea
 
 
-class ArenaConf(aux.NestedConf):
-    dims = aux.PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
-    geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
-    torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
-class Arena(ArenaConf,Obstacle, agentpy.Space):
-    def __init__(self, model,vertices=None,default_color='black',unique_id='Arena',visible=True,**kwargs):
-        ArenaConf.__init__(self, **kwargs)
+class Arena(ViewableNamedBoundedArea, agentpy.Space):
+
+
+
+    def __init__(self, model,**kwargs):
+        ViewableNamedBoundedArea.__init__(self, **kwargs)
         X, Y = self.dims
-        if vertices is None:
-            if self.geometry == 'circular':
-                # This is a circle_to_polygon shape from the function
-                vertices = aux.circle_to_polygon(60, X / 2)
-            elif self.geometry == 'rectangular':
-                # This is a rectangular shape
-                vertices = [(-X / 2, -Y / 2),
-                                   (-X / 2, Y / 2),
-                                   (X / 2, Y / 2),
-                                   (X / 2, -Y / 2)]
-            else:
-                raise
-        edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(vertices, 2)]
+
+        self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(self.vertices, 2)]
         self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         self.scaled_range=self.range*model.scaling_factor
         k = 0.96
-        self.polygon = Polygon(np.array(vertices) * k)
-        Obstacle.__init__(self, model=model,visible=visible, unique_id=unique_id,default_color=default_color,edges=edges, vertices=vertices)
-        agentpy.Space.__init__(self, model=self.model, torus=self.torus, shape=self.dims)
+        self.polygon = Polygon(np.array(self.vertices) * k)
+        agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
 
         self.stable_source_positions=[]
         self.displacable_source_positions=[]

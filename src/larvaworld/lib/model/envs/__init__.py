@@ -1,4 +1,4 @@
 
 from .obstacle import *
-from .arena import ArenaConf,Arena
+from .arena import Arena
 from .valuegrid import *

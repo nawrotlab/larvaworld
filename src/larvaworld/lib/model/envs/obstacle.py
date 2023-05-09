@@ -6,14 +6,14 @@ from shapely import geometry
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.drawable import ViewableLine
-from larvaworld.lib.model.object import GroupedObject
+from larvaworld.lib.model.object import NamedObject
 
 
-class Obstacle(GroupedObject, ViewableLine):
+class Obstacle(NamedObject, ViewableLine):
     # width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
 
     def __init__(self,model,unique_id=None,group=None, edges=None,closed=True, **kwargs):
-        GroupedObject.__init__(self,model=model, unique_id=unique_id,group=group)
+        NamedObject.__init__(self,model=model, unique_id=unique_id,group=group)
         ViewableLine.__init__(self,closed=closed, **kwargs)
 
         # self.vertices = vertices

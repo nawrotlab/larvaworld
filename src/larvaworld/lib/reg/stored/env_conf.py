@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import colors
 
 from larvaworld.lib import reg, aux
 
@@ -34,22 +35,29 @@ def Env_dict() :
         return border(ps, **kwargs)
 
 
-    def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=reg.get_null('odor'), **kwargs):
-        return {id: reg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
+    # def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=reg.get_null('odor'), **kwargs):
+    #     return {id: reg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
+
+    def su2(id='Source',**kwargs):
+        return reg.config.FoodUnit(**kwargs).entry(id)
+
+    # def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
+    #        m='uniform', **kwargs):
+    #     if type(s) == float:
+    #         s = (s, s)
+    #
+    #     kws = {
+    #         'kwdic': {'distribution': {'N': N, 'scale': s,  'loc': loc, 'shape': sh, 'mode': m}},
+    #         'default_color': c, 'radius': r,'amount': a, **kwargs}
+    #     if o is not None:
+    #         kws['odor'] = o
+    #
+    #     return reg.stored.group.SourceGroup.entry(id=id, **kws)
 
 
-    def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
-           m='uniform', **kwargs):
-        if type(s) == float:
-            s = (s, s)
+    def sg2(id='Source', **kwargs):
 
-        kws = {
-            'kwdic': {'distribution': {'N': N, 'scale': s,  'loc': loc, 'shape': sh, 'mode': m}},
-            'default_color': c, 'radius': r,'amount': a, **kwargs}
-        if o is not None:
-            kws['odor'] = o
-
-        return reg.stored.group.SourceGroup.entry(id=id, **kws)
+        return reg.config.FoodGroup(**kwargs).entry(id)
 
 
     def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):
@@ -66,7 +74,7 @@ def Env_dict() :
             cs = [tuple(aux.col_range(q, low=(255, 0, 0), high=(0, 128, 0))) for q in qs]
         if os is None:
             os = [oG(id=f'Odor{i}') for i in range(Ngs)]
-        l = [sg(id=ids[i], c=cs[i], r=rs[i], a=ams[i], o=os[i], quality=qs[i], **kwargs) for i in range(Ngs)]
+        l = [sg2(id=ids[i], c=colors.rgb2hex(cs[i]), r=rs[i], a=ams[i], odor=os[i], sub=[qs[i], 'standard'], **kwargs) for i in range(Ngs)]
         result = {}
         for d in l:
             result.update(d)
@@ -80,7 +88,7 @@ def Env_dict() :
 
 
     def foodNodor_4corners(d=0.05):
-        l = [su(f'Source_{i}', pos=p, a=0.01, o=oD(id=f'Odor_{i}'), c=c, r=0.01) for i, (c, p) in
+        l = [su2(f'Source_{i}', pos=p, a=0.01, odor=oD(id=f'Odor_{i}'), c=c, r=0.01) for i, (c, p) in
              enumerate(zip(['blue', 'red', 'green', 'magenta'], [(-d, -d), (-d, d), (d, -d), (d, d)]))]
         dic = {**l[0], **l[1], **l[2], **l[3]}
         return dic
@@ -120,25 +128,20 @@ def Env_dict() :
 
     def CS_UCS(N=2, x=0.04):
         if N == 1:
-            return {**su('CS', pos=(-x, 0.0), o=oG(id='CS'), c='red'),
-                    **su('UCS', pos=(x, 0.0), o=oG(id='UCS'), c='blue')}
+            return {**su2('CS', pos=(-x, 0.0), odor=oG(id='CS'), c='red'),
+                    **su2('UCS', pos=(x, 0.0), odor=oG(id='UCS'), c='blue')}
         elif N == 2:
             return {
-                **su('CS_l', pos=(-x, 0.0), o=oG(id='CS'), c='red'),
-                **su('CS_r', pos=(x, 0.0), o=oG(id='CS'), c='red'),
-                **su('UCS_l', pos=(-x, 0.0), o=oG(id='UCS'), c='blue'),
-                **su('UCS_r', pos=(x, 0.0), o=oG(id='UCS'), c='blue')
+                **su2('CS_l', pos=(-x, 0.0), odor=oG(id='CS'), c='red'),
+                **su2('CS_r', pos=(x, 0.0), odor=oG(id='CS'), c='red'),
+                **su2('UCS_l', pos=(-x, 0.0), odor=oG(id='UCS'), c='blue'),
+                **su2('UCS_r', pos=(x, 0.0), odor=oG(id='UCS'), c='blue')
             }
 
 
     def double_patches(type='standard'):
-        return {
-                'Left_patch': reg.get_null('source', pos=(-0.06, 0.0), default_color='green', group='Source', radius=0.025,
-                                            amount=0.1, odor=oG(id='Odor'), type=type),
-                'Right_patch': reg.get_null('source', pos=(0.06, 0.0), default_color='green', group='Source', radius=0.025,
-                                             amount=0.1, odor=oG(id='Odor'), type=type)
-                }
-
+        return {**su2('Left_patch', pos=(-0.06, 0.0),c='green',group='Source',r=0.025,a=0.1,odor=oG(id='Odor'), sub=[1.0,type]),
+                **su2('Right_patch', pos=(0.06, 0.0), c='green',group='Source',r=0.025,a=0.1, odor=oG(id='Odor'),sub=[1.0,type])}
 
 
     def maze_conf(n, h):
@@ -160,7 +163,7 @@ def Env_dict() :
         return env((h, h),
                    f={'source_groups': {},
                       'food_grid': None,
-                      'source_units': su('Target', o=oG(), c='blue')},
+                      'source_units': su2('Target', odor=oG(), c='blue')},
                    # f=f_pars(su=su('Target', o=preg.oG(), c='blue')),
                    o='G',
                    bl={'Maze': {
@@ -173,9 +176,9 @@ def Env_dict() :
         x = np.round(x * dim, 3)
         y = np.round(y * dim, 3)
 
-        sus = {**su('Flag', c='green', can_be_carried=True, a=0.01, o=oG(2, id='Flag_odor')),
-               **su('Left_base', pos=(-x, y), c='blue', o=oG(id='Left_base_odor')),
-               **su('Right_base', pos=(+x, y), c='red', o=oG(id='Right_base_odor'))}
+        sus = {**su2('Flag', c='green', can_be_carried=True, a=0.01, odor=oG(2, id='Flag_odor')),
+               **su2('Left_base', pos=(-x, y), c='blue', odor=oG(id='Left_base_odor')),
+               **su2('Right_base', pos=(+x, y), c='red', odor=oG(id='Right_base_odor'))}
 
         return env((dim, dim),
                    f={'source_groups': {},
@@ -194,19 +197,19 @@ def Env_dict() :
     'arena_200mm': env((0.2, 0.2)),
     'arena_500mm': env((0.5, 0.5)),
     'arena_1000mm': env((1.0, 1.0)),
-    'odor_gradient': env((0.1, 0.06), f_pars(su=su(pos=(0.04, 0.0), o=oG(2))), 'G'),
-    'mid_odor_gaussian': env((0.1, 0.06), f_pars(su=su(o=oG())), 'G'),
-    'mid_odor_gaussian_square': env((0.2, 0.2), f_pars(su=su(o=oG())), 'G'),
-    'mid_odor_diffusion': env((0.3, 0.3), f_pars(su=su(r=0.03, o=oD())), 'D'),
+    'odor_gradient': env((0.1, 0.06), f_pars(su=su2(pos=(0.04, 0.0), odor=oG(2))), 'G'),
+    'mid_odor_gaussian': env((0.1, 0.06), f_pars(su=su2(odor=oG())), 'G'),
+    'mid_odor_gaussian_square': env((0.2, 0.2), f_pars(su=su2(odor=oG())), 'G'),
+    'mid_odor_diffusion': env((0.3, 0.3), f_pars(su=su2(r=0.03, odor=oD())), 'D'),
     '4corners': env((0.2, 0.2), f_pars(su=foodNodor_4corners()), 'D'),
     'food_at_bottom': env((0.2, 0.2),
-                          f_pars(sg=sg('FoodLine', o=oG(), a=0.002, r=0.001, N=20, sh='oval', s=(0.01, 0.0),
-                                       m='periphery')), 'G'),
+                          f_pars(sg=sg2('FoodLine', odor=oG(), a=0.002, r=0.001, N=20, shape='oval', scale=(0.01, 0.0),
+                                       mode='periphery')), 'G'),
     'thermo_arena': env((0.3, 0.3), th={}),
     'windy_arena': env((0.3, 0.3), w={'wind_speed': 10.0}),
     'windy_blob_arena': env((0.128, 0.014),
-                            f_pars(sg=sgs(1, qs=np.ones(4), cs=aux.N_colors(4), N=1, s=(0.0, 0.0), loc=(0.005, 0.0),
-                                          m='uniform', shape='rectangular', can_be_displaced=True,
+                            f_pars(sg=sgs(1, qs=np.ones(4), cs=aux.N_colors(4), N=1, scale=(0.0, 0.0), loc=(0.005, 0.0),
+                                          mode='uniform', shape='rectangular', can_be_displaced=True,
                                           regeneration=True,
                                           regeneration_pos={'loc': (0.005, 0.0), 'scale': (0.0, 0.0)})),
                             w={'wind_speed': 1.0}),
@@ -221,15 +224,15 @@ def Env_dict() :
     'CS_UCS_on_food_x2': env(0.1, f_pars(grid=reg.get_null('food_grid'), su=CS_UCS(2)), 'G'),
     'CS_UCS_off_food': env(0.1, f_pars(su=CS_UCS(1)), 'G'),
 
-    'patchy_food': env((0.2, 0.2), f_pars(sg=sg(N=8, s=0.07, m='periphery', a=0.001, o=oG(2))), 'G'),
-    'random_food': env((0.1, 0.1), f_pars(sg=sgs(4, N=1, s=0.04, m='uniform', shape='rectangular')), 'G'),
-    'uniform_food': env(0.05, f_pars(sg=sg(N=2000, s=0.025, a=0.01, r=0.0001))),
-    'patch_grid': env((0.2, 0.2), f_pars(sg=sg(N=5*5, s=0.2, a=0.01, r=0.007, m='grid', shape='rectangular', o=oG(0.2))), 'G', torus=False),
+    'patchy_food': env((0.2, 0.2), f_pars(sg=sg2(N=8, scale=(0.07,0.07), mode='periphery', a=0.001, odor=oG(2))), 'G'),
+    'random_food': env((0.1, 0.1), f_pars(sg=sgs(4, N=1, scale=(0.04,0.04), mode='uniform', shape='rectangular')), 'G'),
+    'uniform_food': env(0.05, f_pars(sg=sg2(N=2000, scale=(0.025,0.025), a=0.01, r=0.0001))),
+    'patch_grid': env((0.2, 0.2), f_pars(sg=sg2(N=5*5, scale=(0.2,0.2), a=0.01, r=0.007, mode='grid', shape='rectangular', odor=oG(0.2))), 'G', torus=False),
 
     'food_grid': env((0.02, 0.02), f_pars(grid=reg.get_null('food_grid'))),
-    'single_odor_patch': env((0.1, 0.1), f_pars(su=su('Patch', a=0.1, r=0.01, o=oG())), 'G'),
-    'single_patch': env((0.05, 0.05), f_pars(su=su('Patch', a=0.1, r=0.01))),
-    'multi_patch': env((0.02, 0.02), f_pars(sg=sg(N=8, s=0.007, m='periphery', a=0.1, r=0.0015))),
+    'single_odor_patch': env((0.1, 0.1), f_pars(su=su2('Patch', a=0.1, r=0.01, odor=oG())), 'G'),
+    'single_patch': env((0.05, 0.05), f_pars(su=su2('Patch', a=0.1, r=0.01))),
+    'multi_patch': env((0.02, 0.02), f_pars(sg=sg2(N=8, scale=(0.007,0.007), mode='periphery', a=0.1, r=0.0015))),
     'double_patch': env((0.24, 0.24),
                         f_pars(su=double_patches()),
                         'G'),

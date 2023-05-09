@@ -436,17 +436,15 @@ class ConfSelector(param.Selector):
 
 
 
-from larvaworld.lib.model import Life, Food, FoodGrid, ThermoScape, WindScape, DiffusionValueLayer, Border, ArenaConf
-
-
-
+from larvaworld.lib.model import Life, Food, FoodGrid, ThermoScape, WindScape, DiffusionValueLayer, Border, \
+    Odor, AgentConf
 
 
 class LarvaGroup(aux.NestedConf):
     model = ConfSelector('Model')
     # model = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.ModelIDs, doc='The model configuration ID')
     default_color = param.Color('black', doc='The default color of the group')
-    odor = aux.ClassAttr(aux.Odor, doc='The odor of the agent')
+    odor = aux.ClassAttr(Odor, doc='The odor of the agent')
     distribution = aux.ClassAttr(aux.Larva_Distro,doc='The spatial distribution of the group agents')
     life_history = aux.ClassAttr(Life, doc='The life history of the group agents')
     sample = ConfSelector('Ref')
@@ -604,78 +602,17 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls'
         lgs.update(full_lg(**kws))
     return aux.AttrDict(lgs)
 
-
-# def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard', pref='',
-#            navigator=False, expand=False, **kwargs):
-#     if age == 0.0:
-#         epochs = {}
-#     else:
-#         if h_starved == 0:
-#             eps = {
-#                 0: {'start': 0.0, 'stop': age, 'substate': {'type': substrate_type, 'quality': q}}
-#             }
-#         else:
-#             eps = {
-#                 0: {'start': 0.0, 'stop': age - h_starved, 'substate': {'type': substrate_type, 'quality': q}},
-#                 1: {'start': age - h_starved, 'stop': age, 'substate': {'type': substrate_type, 'quality': 0}},
-#             }
-#         epochs = {}
-#         for id, kws in eps.items():
-#             epochs.update(stored.group.epoch.entry(id=id, **kws))
-#
-#     kws0 = {
-#         'distribution': {'N': N, 'scale': (0.005, 0.005)},
-#         'life_history': {'age': age, 'epochs': epochs},
-#         'sample': sample,
-#         'expand': expand,
-#     }
-#
-#     mcols = ['blue', 'red']
-#     mID0s = ['rover', 'sitter']
-#     lgs = {}
-#     for mID0, mcol in zip(mID0s, mcols):
-#         id = f'{pref}{mID0.capitalize()}'
-#
-#         if navigator:
-#             mID0 = f'navigator_{mID0}'
-#
-#         kws = {
-#             'id': id,
-#             'default_color': mcol,
-#             'model': mID0,
-#             **kws0
-#         }
-#
-#         lgs.update(full_lg(**kws))
-#     return aux.AttrDict(lgs)
-
-
-
-class SourceGroup(aux.NestedConf):
-    default_color = param.Color('black', doc='The default color of the group')
-    odor = aux.ClassAttr(aux.Odor, doc='The odor of the source')
-    distribution = aux.ClassAttr(aux.Spatial_Distro,doc='The spatial distribution of the group sources')
-
-
-
-    def __init__(self,id=None,**kwargs):
-        super().__init__(**kwargs)
-        if id is None:
-            if self.model is not None :
-                id = self.model
-            else :
-                id = 'SourceGroup'
-        self.id=id
-
+FoodGroup=AgentConf(Food, mode='Group')
+FoodUnit=AgentConf(Food, mode='Unit')
 
 
 class FoodConf(aux.NestedConf):
-    source_groups = aux.ClassDict(item_type=SourceGroup,  doc='The groups of odor or food sources available in the arena')
-    source_units = aux.ClassDict(item_type=Food,  doc='The individual sources  of odor or food in the arena')
+    source_groups = aux.ClassDict(item_type=FoodGroup,  doc='The groups of odor or food sources available in the arena')
+    source_units = aux.ClassDict(item_type=FoodUnit,  doc='The individual sources  of odor or food in the arena')
     food_grid = aux.ClassAttr(FoodGrid, default=None, doc='The food grid in the arena')
 
 class EnvConf(aux.NestedConf):
-    arena = aux.ClassAttr(ArenaConf, doc='The arena configuration')
+    # arena = aux.ClassAttr(ArenaConf, doc='The arena configuration')
     food_params = aux.ClassAttr(FoodConf, doc='The food sources in the arena')
     border_list = aux.ClassDict(item_type=Border, doc='The obstacles in the arena')
     odorscape = aux.ClassAttr(DiffusionValueLayer, default=None, doc='The obstacles in the arena')

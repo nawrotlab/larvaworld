@@ -144,13 +144,6 @@ class ClassDict(ClassSelector):
 
     def __init__(self, default=aux.AttrDict(),item_type=None,  **params):
         self.item_type = item_type
-        # print(default, self.item_type)
-        # for k, p in default.items():
-        #     if not isinstance(p, self.item_type):
-        #         try :
-        #             default[k] = item_type(**p)
-        #         except :
-        #             pass
         ClassSelector.__init__(self,aux.AttrDict, default=default, **params)
 
 
@@ -204,6 +197,18 @@ class NestedConf(param.Parameterized):
             elif type(p) == ClassDict:
                 d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
         return d
+
+    #@ property
+    def entry(self, id):
+        d=self.nestedConf
+        if 'distribution' in d.keys():
+            assert 'group' in d.keys()
+            d.group=id
+        else:
+            assert 'unique_id' in d.keys()
+            d.unique_id = id
+            d.pop('unique_id')
+        return {id:d}
     #
     # @classmethod
     # def attr_classes(cls):
@@ -231,29 +236,29 @@ class NestedConf(param.Parameterized):
 
 
 
-class Odor(NestedConf):
-    id = param.String(None, doc='The unique ID of the odorant')
-    intensity = OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
-    spread = OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')
-
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        self._update_distro()
-
-    @param.depends('intensity','spread', watch=True)
-    def _update_distro(self):
-        if self.intensity is not None and self.spread is not None:
-            self.dist = multivariate_normal([0, 0], [[self.spread, 0], [0, self.spread]])
-            self.peak_value = self.intensity / self.dist.pdf([0, 0])
-        else:
-            self.dist = None
-            self.peak_value = 0.0
-
-    def gaussian_value(self, pos):
-        if self.dist :
-            return self.dist.pdf(pos) * self.peak_value
-        else :
-            return None
+# class Odor(NestedConf):
+#     id = param.String(None, doc='The unique ID of the odorant')
+#     intensity = OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
+#     spread = OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')
+#
+#     def __init__(self,**kwargs):
+#         super().__init__(**kwargs)
+#         self._update_distro()
+#
+#     @param.depends('intensity','spread', watch=True)
+#     def _update_distro(self):
+#         if self.intensity is not None and self.spread is not None:
+#             self.dist = multivariate_normal([0, 0], [[self.spread, 0], [0, self.spread]])
+#             self.peak_value = self.intensity / self.dist.pdf([0, 0])
+#         else:
+#             self.dist = None
+#             self.peak_value = 0.0
+#
+#     def gaussian_value(self, pos):
+#         if self.dist :
+#             return self.dist.pdf(pos) * self.peak_value
+#         else :
+#             return None
 
 class SimTimeConf(NestedConf):
     dt = PositiveNumber(0.1, softmax=1.0, step=0.01, doc='The timestep of the simulation in seconds.')

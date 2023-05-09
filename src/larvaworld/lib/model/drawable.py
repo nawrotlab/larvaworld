@@ -3,7 +3,7 @@ from agentpy import objects
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.object import Named, NamedObject, GroupedObject
-from larvaworld.lib.model.spatial import LineExtended, RadiallyExtended
+from larvaworld.lib.model.spatial import LineExtended, RadiallyExtended, BoundedArea
 from larvaworld.lib.screen import IDBox
 
 
@@ -76,6 +76,14 @@ class ViewableLine(Viewable,LineExtended):
         except :
             for ver in self.vertices:
                 v.draw_polyline(ver, color=self.color, width=self.width, closed=self.closed)
+
+class ViewableBoundedArea(Viewable,BoundedArea): pass
+
+
+
+class ViewableNamedLine(ViewableLine,Named): pass
+
+class ViewableNamedBoundedArea(ViewableBoundedArea,Named): pass
 
 class ViewableCircle(Viewable,RadiallyExtended):
 

@@ -57,3 +57,33 @@ class LineExtended(aux.NestedConf):
             edges.append([vs[N], vs[0]])
         return edges
 
+
+class LineClosed(LineExtended):
+    def __init__(self, **kwargs):
+        super().__init__(closed=True,**kwargs)
+
+class Area(aux.NestedConf):
+    dims = aux.PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
+    geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
+    torus = param.Boolean(False, doc='Whether to allow a toroidal space')
+
+
+class BoundedArea(Area, LineClosed):
+
+    def __init__(self,vertices=None, **kwargs):
+        Area.__init__(self, **kwargs)
+        X, Y = self.dims
+        if vertices is None:
+            if self.geometry == 'circular':
+                # This is a circle_to_polygon shape from the function
+                vertices = aux.circle_to_polygon(60, X / 2)
+            elif self.geometry == 'rectangular':
+                # This is a rectangular shape
+                vertices = [(-X / 2, -Y / 2),
+                            (-X / 2, Y / 2),
+                            (X / 2, Y / 2),
+                            (X / 2, -Y / 2)]
+        LineClosed.__init__(self,vertices=vertices,**kwargs)
+
+class Grid(aux.NestedConf):
+    grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')

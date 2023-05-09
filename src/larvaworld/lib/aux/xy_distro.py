@@ -5,7 +5,7 @@ from larvaworld.lib import aux
 
 
 class Spatial_Distro(aux.NestedConf):
-    shape = param.Selector(objects=['circle', 'rect', 'oval'], doc='The shape of the spatial distribution')
+    shape = param.Selector(objects=['circle', 'rect', 'oval', 'rectangular'], doc='The shape of the spatial distribution')
     mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],
                     doc='The way to place agents in the distribution shape')
     N = aux.PositiveInteger(30, softmax=100, doc='The number of agents in the group')
