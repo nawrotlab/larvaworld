@@ -1,6 +1,8 @@
 import numpy as np
 
 from larvaworld.lib import reg, aux
+from larvaworld.lib.model import Olfactor, Toucher, WindSensor, Thermosensor, RLOlfMemory, RemoteBrianModelMemory, \
+    RLTouchMemory
 from larvaworld.lib.model.modules.locomotor import DefaultLocomotor
 
 
@@ -74,22 +76,7 @@ class Brain:
             return {'cool': 0, 'warm': 0}
         return cons
 
-    def sense(self, pos=None, reward=False):
 
-        if self.olfactor :
-            if self.memory:
-                dx = self.olfactor.get_dX()
-                self.olfactor.gain = self.memory.step(dx, reward)
-            self.A_olf = self.olfactor.step(self.sense_odors(pos), brain=self)
-        if self.toucher :
-            if self.touch_memory:
-                dx = self.toucher.get_dX()
-                self.toucher.gain = self.touch_memory.step(dx, reward)
-            self.A_touch = self.toucher.step(self.sense_food_multi(), brain=self)
-        if self.thermosensor :
-            self.A_thermo = self.thermosensor.step(self.sense_thermo(pos), brain=self)
-        if self.windsensor :
-            self.A_wind = self.windsensor.step(self.sense_wind(), brain=self)
 
 
 
@@ -104,34 +91,60 @@ class DefaultBrain(Brain):
         super().__init__(agent=agent, dt=dt)
         self.locomotor = DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
 
-        D = reg.model.dict.model.m
-        for k in ['olfactor', 'toucher', 'windsensor', 'thermosensor']:
-            if conf.modules[k]:
-                m = conf[f'{k}_params']
-                if k == 'windsensor':
-                    m.gain_dict = {'windsensor': 1.0}
-                mode = 'default'
-                kws = {kw: getattr(self, kw) for kw in D[k].kwargs.keys()}
-                M = D[k].mode[mode].class_func(**m, **kws)
-                if k == 'toucher':
-                    M.init_sensors(brain=self)
-
-
-            else:
-                M = None
-            setattr(self, k, M)
+        kws = {"brain": self, "dt": self.dt}
+        self.olfactor, self.toucher, self.windsensor, self.thermosensor = [None] * 4
         self.touch_memory = None
         self.memory = None
-        if conf.modules['memory']:
+
+        mods = conf.modules
+        memory_modes = {
+            'RL': RLOlfMemory,
+            'MB': RemoteBrianModelMemory,
+            'touchRL': RLTouchMemory,
+        }
+        if mods['memory']:
             mm = conf['memory_params']
-            mode = mm['mode']
-            kws = {"brain" : self, "dt" : self.dt}
-            if self.olfactor:
+            class_func=memory_modes[mm['mode']]
+
+
+
+
+        if mods.olfactor:
+            self.olfactor=Olfactor(**kws,**conf['olfactor_params'])
+            if mods['memory']:
                 mm.gain = self.olfactor.gain
-                self.memory = D['memory'].mode[mode].class_func(**mm, **kws)
-            if self.toucher:
+                self.memory = class_func(**mm, **kws)
+        if mods.toucher:
+            self.toucher=Toucher(**kws,**conf['toucher_params'])
+            self.toucher.init_sensors()
+            if mods['memory']:
                 mm.gain = self.toucher.gain
-                self.touch_memory = D['memory'].mode[mode].class_func(**mm, **kws)
+                self.touch_memory = class_func(**mm, **kws)
+        if mods.windsensor:
+            self.windsensor=WindSensor(**kws,**conf['windsensor_params'])
+        if mods.thermosensor:
+            self.thermosensor=Thermosensor(**kws,**conf['thermosensor_params'])
+
+
+
+
+
+    def sense(self, pos=None, reward=False):
+
+        if self.olfactor :
+            if self.memory:
+                dx = self.olfactor.get_dX()
+                self.olfactor.gain = self.memory.step(dx, reward)
+            self.A_olf = self.olfactor.step(self.sense_odors(pos))
+        if self.toucher :
+            if self.touch_memory:
+                dx = self.toucher.get_dX()
+                self.toucher.gain = self.touch_memory.step(dx, reward)
+            self.A_touch = self.toucher.step(self.sense_food_multi())
+        if self.thermosensor :
+            self.A_thermo = self.thermosensor.step(self.sense_thermo(pos))
+        if self.windsensor :
+            self.A_wind = self.windsensor.step(self.sense_wind())
 
     def step(self, pos, length, on_food=False, **kwargs):
         self.sense(pos=pos, reward=on_food)

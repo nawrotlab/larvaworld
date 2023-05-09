@@ -1,18 +1,20 @@
 import numpy as np
+import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.modules.basic import Effector
 
 
 class Sensor(Effector):
-    def __init__(self, perception='linear', gain_dict={}, decay_coef=1,brute_force=False, **kwargs):
-        super().__init__(**kwargs)
-        # self.brain = brain
+    perception = param.Selector(objects=['linear', 'log', 'null'], label='sensory transduction mode', doc='The method used to calculate the perceived sensory activation from the current and previous sensory input.')
+    decay_coef = aux.PositiveNumber(1.0,softmax=2.0, step=0.01, label='sensory decay coef', doc='The linear decay coefficient of the olfactory sensory activation.')
+    brute_force = param.Boolean(False, doc='Whether to apply direct rule-based modulation on locomotion or not.')
+
+    def __init__(self, gain_dict={},output_range=(-1.0,1.0),brain=None, **kwargs):
+        super().__init__(output_range=output_range, **kwargs)
+        self.brain = brain
         self.interruption_counter = 0
-        self.perception = perception
-        self.decay_coef = decay_coef
-        self.brute_force = brute_force
-        self.A0, self.A1 = [-1.0, 1.0]
+
         self.exp_decay_coef = np.exp(- self.dt * self.decay_coef)
 
         self.init_gain(gain_dict)
@@ -20,20 +22,20 @@ class Sensor(Effector):
     def compute_dif(self, input):
         pass
 
-    def update_gain(self, brain=None):
+    def update_gain(self):
         pass
 
-    def update_output(self,output):
-        return self.apply_noise(output, self.output_noise, range=(self.A0,self.A1))
+    # def update_output(self,output):
+    #     return self.apply_noise(output, self.output_noise, range=(self.A0,self.A1))
 
 
 
-    def update(self,brain=None):
-        self.update_gain(brain)
+    def update(self):
+        self.update_gain()
         if len(self.input) == 0:
             self.output = 0
         elif self.brute_force:
-            self.affect_locomotion(brain)
+            self.affect_locomotion()
             self.output = 0
         else:
             self.compute_dX(self.input)
@@ -42,7 +44,7 @@ class Sensor(Effector):
 
 
 
-    def affect_locomotion(self, brain=None):
+    def affect_locomotion(self):
         pass
 
     def init_gain(self, gain_dict):
@@ -110,18 +112,18 @@ class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
 
-    def update_gain(self, brain=None):
-        if brain is not None:
-            if brain.agent is not None:
-                for id in brain.agent.model.odor_ids:
+    def update_gain(self):
+        if self.brain is not None:
+            if self.brain.agent is not None:
+                for id in self.brain.agent.model.odor_ids:
                     if id not in self.gain_ids:
                         self.add_novel_gain(id)
                     # print(self.brain.agent.unique_id, id, 'new')
 
-    def affect_locomotion(self, brain=None):
-        if brain is None :
+    def affect_locomotion(self):
+        if self.brain is None :
             return
-        L = brain.locomotor
+        L = self.brain.locomotor
         if self.output < 0 and L.crawler.complete_iteration:
             if np.random.uniform(0, 1, 1) <= np.abs(self.output):
                 L.intermitter.inhibit_locomotion(L=L)
@@ -157,18 +159,19 @@ class Toucher(Sensor):
 
         super().__init__(gain_dict=gain_dict, **kwargs)
         self.touch_sensors = touch_sensors
+        self.init_sensors()
 
-    def init_sensors(self, brain=None):
-        if brain is not None:
-            if brain.agent is not None:
-                brain.agent.touch_sensors = self.touch_sensors
+    def init_sensors(self):
+        if self.brain is not None:
+            if self.brain.agent is not None:
+                self.brain.agent.touch_sensors = self.touch_sensors
                 if self.touch_sensors is not None:
-                    brain.agent.add_touch_sensors(self.touch_sensors)
+                    self.brain.agent.add_touch_sensors(self.touch_sensors)
 
-    def affect_locomotion(self, brain=None):
-        if brain is None :
+    def affect_locomotion(self):
+        if self.brain is None :
             return
-        L = brain.locomotor
+        L = self.brain.locomotor
         for id in self.gain_ids:
             if self.dX[id] == 1:
                 L.intermitter.trigger_locomotion(L=L)
@@ -181,7 +184,7 @@ class Toucher(Sensor):
 
 class WindSensor(Sensor):
     def __init__(self, weights, perception='null', **kwargs):
-        super().__init__(perception=perception, **kwargs)
+        super().__init__(perception=perception,gain_dict={'windsensor': 1.0}, **kwargs)
         self.weights = weights
 
 
@@ -191,11 +194,7 @@ class Thermosensor(Sensor):
         thermo_dict = aux.AttrDict({'warm': warm_gain, 'cool': cool_gain})
         super().__init__(gain_dict=thermo_dict, **kwargs)
 
-    # def affect_locomotion(self):
-    #     if self.activation<0:
-    #         self.brain.intermitter.inhibit_locomotion()
-    #     elif self.activation>0:
-    #         self.brain.intermitter.trigger_locomotion()
+
 
     @property
     def warm_sensor_input(self):

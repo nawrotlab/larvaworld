@@ -299,41 +299,7 @@ class NengoBrain(Network, Brain):
             aux.save_dict(self.dict, f'{path}/{self.agent.unique_id}.txt')
 
 class NengoEffector(StepOscillator):
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
-    #     self.initial_freq = initial_freq
-    #     self.freq = initial_freq
-    #     self.freq_range = freq_range
-    #     self.initial_amp = initial_amp
-    #     self.amp = initial_amp
-    #     self.amp_range = amp_range
-    #     self.noise = noise
-    #
-    #     #     Todo get rid of this
-    #     self.complete_iteration = False
-    #     self.__dict__.update(kwargs)
-    #
-    # def get_freq(self, t):
-    #     return self.freq
-    #
-    # def set_freq(self, v):
-    #     self.freq = v
-    #
-    # def get_amp(self, t):
-    #     return self.amp
-    #
-    # def set_amp(self, v):
-    #     self.amp = v
-    #
-    # def set_initial_freq(self, value):
-    #     value = np.clip(value, self.freq_range[0], self.freq_range[1])
-    #     self.initial_freq = value
-    #
-    # def active(self):
-    #     if self.freq != 0:
-    #         return True
-    #     else:
-    #         return False
+
     def start_effector(self):
         self.active = True
         self.set_freq(self.initial_freq)
