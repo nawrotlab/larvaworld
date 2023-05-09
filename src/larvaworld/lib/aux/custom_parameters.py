@@ -209,83 +209,33 @@ class NestedConf(param.Parameterized):
             d.unique_id = id
             d.pop('unique_id')
         return {id:d}
-    #
-    # @classmethod
-    # def attr_classes(cls):
-    #     d=copy.deepcopy(cls.param.objects())
-    #     d.pop('name')
-    #     return aux.AttrDict(d)
-    #
-    # @classmethod
-    # def attr_ks(cls):
-    #     return list(cls.attr_classes().keys())
-    #
-    # @classmethod
-    # def attr_class_dict(cls):
-    #     d=cls.attr_classes().copy()
-    #     for k,v in d.items() :
-    #         if isinstance(v, ClassAttr):
-    #             d[k]=v.class_.attr_classes()
-    #     return aux.AttrDict(d)
-    #
-    #
-    # def class_type(self,k):
-    #     p = self.param.objects()[k]
-    #     return type(p)
 
-
-
-
-# class Odor(NestedConf):
-#     id = param.String(None, doc='The unique ID of the odorant')
-#     intensity = OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
-#     spread = OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')
+# class SimTimeConf(NestedConf):
+#     dt = PositiveNumber(0.1, softmax=1.0, step=0.01, doc='The timestep of the simulation in seconds.')
+#     duration = OptionalPositiveNumber(5.0, softmax=1000.0, step=0.1, doc='The duration of the simulation in minutes.')
+#     Nsteps = OptionalPositiveInteger(label='# simulation timesteps',doc='The number of simulation timesteps.')
 #
 #     def __init__(self,**kwargs):
 #         super().__init__(**kwargs)
-#         self._update_distro()
+#         # Define N timesteps
+#         if self.Nsteps is None and self.duration is not None:
+#             self.Nsteps = int(self.duration * 60 / self.dt)
+#         if self.duration is None and self.Nsteps is not None:
+#             self.duration = self.Nsteps * self.dt / 60
 #
-#     @param.depends('intensity','spread', watch=True)
-#     def _update_distro(self):
-#         if self.intensity is not None and self.spread is not None:
-#             self.dist = multivariate_normal([0, 0], [[self.spread, 0], [0, self.spread]])
-#             self.peak_value = self.intensity / self.dist.pdf([0, 0])
-#         else:
-#             self.dist = None
-#             self.peak_value = 0.0
+# class SimConf(SimTimeConf):
+#     Box2D = Boolean(False,doc='Whether to use the Box2D physics engine or not.')
+#     store_data = Boolean(True, doc='Whether to store the simulation data')
+#     larva_collisions = Boolean(True, doc='Whether to allow overlap between larva bodies.')
+#     offline = Boolean(False,doc='Whether to launch a full Larvaworld environment')
+#     show_display = Boolean(True,doc='Whether to launch the pygame-visualization.')
 #
-#     def gaussian_value(self, pos):
-#         if self.dist :
-#             return self.dist.pdf(pos) * self.peak_value
-#         else :
-#             return None
-
-class SimTimeConf(NestedConf):
-    dt = PositiveNumber(0.1, softmax=1.0, step=0.01, doc='The timestep of the simulation in seconds.')
-    duration = OptionalPositiveNumber(5.0, softmax=1000.0, step=0.1, doc='The duration of the simulation in minutes.')
-    Nsteps = OptionalPositiveInteger(label='# simulation timesteps',doc='The number of simulation timesteps.')
-
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        # Define N timesteps
-        if self.Nsteps is None and self.duration is not None:
-            self.Nsteps = int(self.duration * 60 / self.dt)
-        if self.duration is None and self.Nsteps is not None:
-            self.duration = self.Nsteps * self.dt / 60
-
-class SimConf(SimTimeConf):
-    Box2D = Boolean(False,doc='Whether to use the Box2D physics engine or not.')
-    store_data = Boolean(True, doc='Whether to store the simulation data')
-    larva_collisions = Boolean(True, doc='Whether to allow overlap between larva bodies.')
-    offline = Boolean(False,doc='Whether to launch a full Larvaworld environment')
-    show_display = Boolean(True,doc='Whether to launch the pygame-visualization.')
-
-    def __init__(self,offline=False, show_display=True, **kwargs):
-        if offline:
-            show_display=False
-        super().__init__(show_display=show_display,offline=offline,**kwargs)
-        # Define constant parameters
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+#     def __init__(self,offline=False, show_display=True, **kwargs):
+#         if offline:
+#             show_display=False
+#         super().__init__(show_display=show_display,offline=offline,**kwargs)
+#         # Define constant parameters
+#         self.scaling_factor = 1000.0 if self.Box2D else 1.0
 
 
 

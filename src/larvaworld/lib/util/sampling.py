@@ -206,6 +206,7 @@ def generate_sourceConfs(groups={}, units={}) :
     confs = []
     for gID, gConf in groups.items():
         ps = aux.generate_xy_distro(**gConf.distribution)
+        gConf.pop('distribution')
         for i, p in enumerate(ps):
             conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
             confs.append(conf)

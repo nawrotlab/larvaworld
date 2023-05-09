@@ -235,7 +235,7 @@ class GAlauncher(BaseRun, GAengine):
         else:
             self.progress_bar = None
         self.p.collections = ['pose']
-        self.odor_ids = self.get_all_odors()
+        # self.odor_ids = self.get_all_odors()
         self.build_env(self.p.env_params)
         self.screen_manager = GA_ScreenManager(model=self,
                                                panel_width=600, caption=f'GA {self.p.experiment} : {self.id}')

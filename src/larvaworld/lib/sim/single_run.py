@@ -46,7 +46,7 @@ class ExpRun(BaseRun):
 
 
 
-        self.odor_ids = self.get_all_odors(self.p.larva_groups)
+        # self.odor_ids = self.get_all_odors(self.p.larva_groups)
         # self.odor_ids = aux.get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
 

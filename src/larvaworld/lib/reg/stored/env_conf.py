@@ -11,11 +11,13 @@ def Env_dict() :
 
 
     def oG(c=1, id='Odor'):
-        return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
+        return reg.gen.Odor(id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c)).nestedConf
+        # return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
 
 
     def oD(c=1, id='Odor'):
-        return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
+        return reg.gen.Odor(id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c)).nestedConf
+        # return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
 
     def border(ps, c='black', w=0.01, id=None):
         b = reg.get_null('Border', points=ps, default_color=c, width=w)
@@ -39,7 +41,7 @@ def Env_dict() :
     #     return {id: reg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
 
     def su2(id='Source',**kwargs):
-        return reg.config.FoodUnit(**kwargs).entry(id)
+        return reg.gen.FoodUnit(**kwargs).entry(id)
 
     # def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
     #        m='uniform', **kwargs):
@@ -57,7 +59,7 @@ def Env_dict() :
 
     def sg2(id='Source', **kwargs):
 
-        return reg.config.FoodGroup(**kwargs).entry(id)
+        return reg.gen.FoodGroup(**kwargs).entry(id)
 
 
     def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):

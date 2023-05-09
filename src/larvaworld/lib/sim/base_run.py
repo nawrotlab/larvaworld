@@ -1,6 +1,7 @@
 import os
 import agentpy
 import numpy as np
+import param
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
@@ -8,7 +9,8 @@ from larvaworld.lib.model import envs, agents
 
 
 
-class BaseRun(aux.SimConf, agentpy.Model):
+
+class BaseRun(reg.SimOptions, agentpy.Model):
 
     def __init__(self, runtype, parameters=None, save_to=None, id=None,experiment=None,
                  **kwargs):
@@ -34,7 +36,7 @@ class BaseRun(aux.SimConf, agentpy.Model):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
-        aux.SimConf.__init__(self, **kwargs)
+        reg.SimOptions.__init__(self, **kwargs)
         self.experiment = experiment if experiment is not None else parameters.experiment
         self.runtype = runtype
         self.agent_class=self.define_agent_class()
@@ -72,6 +74,7 @@ class BaseRun(aux.SimConf, agentpy.Model):
         self.results = None
         self.figs = {}
         self.obstacles = []
+        self._odor_ids=None
 
 
     @property
@@ -91,14 +94,14 @@ class BaseRun(aux.SimConf, agentpy.Model):
         return self.t
 
 
-    def get_all_odors(self, larva_groups={}):
-        fp=self.p.env_params.food_params
-
-        lg = [conf.odor.id for conf in larva_groups.values()]
-        su = [conf.odor.id for conf in fp.source_units.values()]
-        sg = [conf.odor.id for conf in fp.source_groups.values()]
-        ids = aux.unique_list([id for id in lg + su + sg if id is not None])
-        return ids
+    # def get_all_odors(self, larva_groups={}):
+    #     fp=self.p.env_params.food_params
+    #
+    #     lg = [conf.odor.id for conf in larva_groups.values()]
+    #     su = [conf.odor.id for conf in fp.source_units.values()]
+    #     sg = [conf.odor.id for conf in fp.source_groups.values()]
+    #     ids = aux.unique_list([id for id in lg + su + sg if id is not None])
+    #     return ids
 
     def build_env(self, p):
         reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
@@ -119,6 +122,17 @@ class BaseRun(aux.SimConf, agentpy.Model):
         self.windscape = envs.WindScape(model=self, **p.windscape) if p.windscape else None
         self.thermoscape = envs.ThermoScape(**p.thermoscape) if p.thermoscape else None
 
+    @ property
+    def odor_ids(self):
+        if self._odor_ids is None :
+            ids=[]
+            if hasattr(self,'agents'):
+                ids += self.agents.odor.id
+            if hasattr(self,'sources'):
+                ids += self.sources.odor.id
+            ids=aux.unique_list(ids)
+            self._odor_ids=[id for id in ids if id is not None]
+        return self._odor_ids
 
     def place_obstacles(self, barriers={}):
         border_list = [envs.Border(model=self, unique_id=id, **pars) for id, pars in barriers.items()]
@@ -127,7 +141,10 @@ class BaseRun(aux.SimConf, agentpy.Model):
 
     def place_food(self, p):
         self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
-        sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
+        c1 = reg.gen.FoodGroup.from_entries(p.source_groups)
+        c2 = reg.gen.FoodUnit.from_entries(p.source_units)
+        sourceConfs=c1+c2
+        # sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.source_xy = aux.AttrDict({a.id: a.pos for a in source_list})
         self.space.add_sources(source_list, positions=[a.pos for a in source_list])

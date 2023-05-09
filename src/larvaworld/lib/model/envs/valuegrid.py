@@ -198,6 +198,7 @@ class FoodGrid(ValueGrid):
     substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
     def __init__(self, default_color='green', **kwargs):
+        # self.default_color.param.default='green'
         super().__init__(default_color=default_color, fixed_max=True, **kwargs)
 
     def get_color(self, v):

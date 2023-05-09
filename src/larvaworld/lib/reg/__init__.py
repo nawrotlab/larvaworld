@@ -31,7 +31,8 @@ vprint("Initializing parameter registry")
 from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
-from .config import Path, stored, CONFTREE, CONFTREE_EXPANDED,GTRvsS, lgs, lg, next_idx, full_lg
+from .config import Path, stored, CONFTREE, CONFTREE_EXPANDED, lgs, lg, next_idx
+from .generators import gen,GTRvsS,full_lg, class_generator, SimOptions
 from .controls import controls
 
 vprint("Initializing model registry")

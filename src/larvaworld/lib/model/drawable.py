@@ -20,7 +20,7 @@ class Viewable(aux.NestedConf) :
     '''
 
 
-    default_color = param.Color('black', doc='The default color of the entity')
+    default_color = param.Color('black', doc='The default color of the entity',instantiate=True)
     visible = param.Boolean(True, doc='Whether the entity is visible or not')
 
     def __init__(self,**kwargs):
