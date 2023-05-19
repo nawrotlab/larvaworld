@@ -8,7 +8,7 @@ from larvaworld.lib import reg, aux
 
 
 class BaseLarvaDataset:
-    def __init__(self, dir=None, config=None, **kwargs):
+    def __init__(self, dir=None, config=None, refID=None,load_data=True, **kwargs):
         '''
         Dataset class that stores a single experiment, real or simulated.
         Metadata and configuration parameters are stored in the 'config' dictionary.
@@ -25,15 +25,20 @@ class BaseLarvaDataset:
         '''
 
         if config is None:
-            config = reg.stored.getRef(dir=dir)
+            config = reg.stored.getRef(dir=dir, id=refID)
             if config is None:
-                config = self.generate_config(dir=dir, **kwargs)
+                config = self.generate_config(dir=dir, refID=refID, **kwargs)
 
         c = self.config = config
         if c.dir is not None:
             os.makedirs(c.dir, exist_ok=True)
             os.makedirs(self.data_dir, exist_ok=True)
         self.__dict__.update(c)
+        self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
+        self.larva_dicts = {}
+        self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
+        if load_data:
+            self.load()
 
 
     def generate_config(self, **kwargs):
@@ -42,9 +47,13 @@ class BaseLarvaDataset:
                            'group_id': None,
                            'refID': None,
                            'dir': None,
-                           'fr': 16,
+                           'fr': None,
+                           'dt': 0.1,
                            'Npoints': 3,
                            'Ncontour': 0,
+                           'u' : 'm',
+                           'x': 'x',
+                           'y': 'y',
                            'sample': None,
                            'color': None,
                            'metric_definition': None,
@@ -55,7 +64,10 @@ class BaseLarvaDataset:
                            })
 
         c0.update(kwargs)
-        c0.dt = 1 / c0.fr
+        if c0.dt is not None :
+            c0.fr=1/c0.dt
+        if c0.fr is not None :
+            c0.dt=1/c0.fr
         if c0.metric_definition is None:
             c0.metric_definition = reg.get_null('metric_definition')
 
@@ -118,18 +130,23 @@ class BaseLarvaDataset:
         if save:
             self.save_config()
 
+    def set_endpoint_data(self,end):
+        self.endpoint_data = end.sort_index()
+        self.agent_ids = self.endpoint_data.index.values
+        self.config.agent_ids = self.agent_ids
+        self.config.N = len(self.agent_ids)
+
+    def load(self, **kwargs):
+        pass
+
 class LarvaDataset(BaseLarvaDataset):
-    def __init__(self, load_data=True, **kwargs):
+    def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-        c = self.config
-        self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
-        self.larva_dicts = {}
-        if load_data:
-            try:
-                self.load()
-            except:
-                print('Data not found. Load them manually.')
+
+
+
+
 
 
     def set_data(self, step=None, end=None):
@@ -153,10 +170,8 @@ class LarvaDataset(BaseLarvaDataset):
             self.step_data = s
 
         if end is not None:
-            self.endpoint_data = end.sort_index()
-            self.agent_ids = self.endpoint_data.index.values
-            c.agent_ids = self.agent_ids
-            c.N = len(self.agent_ids)
+            self.set_endpoint_data(end)
+
 
     def _load_step(self, h5_ks=None):
         s = self.read('step')
