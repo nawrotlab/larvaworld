@@ -3,6 +3,8 @@ import numpy as np
 from typing import List, Tuple
 import sys
 
+import pint_pandas
+
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
 else:
@@ -1448,6 +1450,9 @@ class ParamClass:
     def build_initial(self):
         kws = {'u': reg.units.s}
         self.add(
+            **{'p': 't', 'k': 't', 'd': 't', 'sym': '$t$', 'lim':(0.0, None), 'dv': 0.01, 'v0': 0.0,
+               **kws})
+        self.add(
             **{'p': 'model.dt', 'k': 'dt', 'd': 'dt', 'sym': '$dt$', 'lim': (0.01, 0.5), 'dv': 0.01, 'v0': 0.1,
                **kws})
         self.add(
@@ -1455,6 +1460,7 @@ class ParamClass:
                **kws})
         self.add(
             **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
+        self.add_operators(k0='t')
 
     def add(self, **kwargs):
         prepar = util.prepare_LarvaworldParam(**kwargs)
@@ -2144,6 +2150,7 @@ class ParamRegistry:
 
         '''
         valid_pars=self.valid_pkeys(df.columns)
+        valid_pars= [col for col in valid_pars if not isinstance(df.dtypes[col], pint_pandas.pint_array.PintType)]
         pint_dtypes = {par: self.getPar(d=par, to_return='upint') for par in valid_pars}
         df_pint = df.astype(dtype=pint_dtypes)
         return df_pint
