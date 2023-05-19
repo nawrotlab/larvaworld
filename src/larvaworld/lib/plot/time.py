@@ -207,16 +207,8 @@ def plot_navigation_index(subfolder='source', **kwargs):
             dxy = np.diff(s0, axis=0)
             rads = np.arctan2(dxy[:, 1], dxy[:, 0])
             rads = np.insert(rads, 0, 0)
-            vx = np.cos(rads)
-            vy = -np.sin(rads)
-
-            # v0 = aux.eudist(s0)/dt
-            # vx = aux.compute_component_velocity(s0, angles=np.zeros(Nticks), dt=dt)
-            # vy = aux.compute_component_velocity(s0, angles=np.ones(Nticks) * -np.pi / 2, dt=dt)
-            # vx = np.divide(vx, v0, out=np.zeros_like(v0), where=v0 != 0)
-            # vy = np.divide(vy, v0, out=np.zeros_like(v0), where=v0 != 0)
-            vxs.append(vx)
-            vys.append(vy)
+            vxs.append(np.cos(rads))
+            vys.append(-np.sin(rads))
         vx0 = np.nanmean(np.array(vxs), axis=0)
         vy0 = np.nanmean(np.array(vys), axis=0)
         P.axs[0].plot(np.linspace(0, Nsec, Nticks), vx0, color=c, label=l)
@@ -229,49 +221,9 @@ def plot_navigation_index(subfolder='source', **kwargs):
     return P.get()
 
 
-
-# @reg.funcs.graph('pathlength')
-# def plot_pathlength(scaled=False, **kwargs):
-#     lab = 'pathlength'
-#     if scaled:
-#         k='cum_sd'
-#         coeff = 1
-#         # name = f'scaled_{lab}'
-#     else:
-#         k='cum_d'
-#         coeff = 1000
-#         # name = f'{lab}'
-#
-#     P = plot.AutoPlot(name=lab, **kwargs)
-#     '''
-#         if xlabel is None:
-#         xlabel = 'time, $min$'
-#
-#
-#     p=reg.par.kdict['cum_d']
-#
-#     for d, lab, c in zip(P.datasets, P.labels, P.colors):
-#         df = d.get_par(p.d, key='step')
-#         if not scaled and unit == 'cm':
-#             from larvaworld.lib.reg import units as ureg
-#             if p.u == ureg.m:
-#                 df *= 100
-#         plot.plot_quantiles(df=df, x=P.trange(), axis=P.axs[0], color_shading=c, label=lab)
-#
-#     P.conf_ax(xlab=xlabel, ylab=ylab, xlim=P.tlim, ylim=[0, None], xMaxN=5, leg_loc='upper left')
-#     '''
-#
-#
-#     P.plot_quantiles(k=k, coeff=coeff)
-#     P.adjust((0.2, 0.95), (0.15, 0.95), 0.05, 0.005)
-#     return P.get()
-
 @reg.funcs.graph('pathlength')
 def plot_pathlength(scaled=False, **kwargs):
-    if scaled:
-        k='cum_sd'
-    else:
-        k='cum_d'
+    k = 'cum_sd' if scaled else 'cum_d'
     return timeplots(ks=[k], **kwargs)
 
 

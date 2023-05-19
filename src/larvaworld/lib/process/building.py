@@ -12,90 +12,82 @@ import larvaworld
 from larvaworld.lib import reg, aux
 
 from larvaworld.lib.aux import nam
+from larvaworld.lib.process.build_aux import df_from_csvs, match_larva_ids
 
 
-def match_larva_ids(s, e, pars=None, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, verbose=1, **kwargs):
-    pairs = {}
+def interpolate_step_data(df, e, dt):
+    t = 't'
+    step='Step'
+    aID = 'AgentID'
 
-    def common_member(a, b):
-        a_set = set(a)
-        b_set = set(b)
-        return a_set & b_set
 
-    def eval(t0, xy0, l0, t1, xy1, l1):
-        tt = t1 - t0
-        if tt <= 0:
-            return max_error * 2
-        ll = np.abs(l1 - l0)
-        dd = np.sqrt(np.sum((xy1 - xy0) ** 2))
-        # print(tt,ll,dd)
-        return wt * tt + wl * ll + ws * dd
-
-    def get_extrema(ss, pars):
-        ids = ss.index.unique().tolist()
-
-        mins = ss['Step'].groupby('AgentID').min()
-        maxs = ss['Step'].groupby('AgentID').max()
-        durs = ss['Step'].groupby('AgentID').count()
-        first_xy, last_xy = {}, {}
-        for id in ids:
-            first_xy[id] = ss[pars].xs(id).dropna().values[0, :]
-            last_xy[id] = ss[pars].xs(id).dropna().values[-1, :]
-        return ids, mins, maxs, first_xy, last_xy, durs
-
-    def update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy):
-        mins[id1], first_xy[id1] = mins[id0], first_xy[id0]
-        del mins[id0]
-        del maxs[id0]
-        del first_xy[id0]
-        del last_xy[id0]
-        ids.remove(id0)
-        return ids, mins, maxs, first_xy, last_xy
-
-    ls = e['length']
-    if pars is None:
-        pars = s.columns.values.tolist()
-    s.reset_index(level='Step', drop=False, inplace=True)
-    s['Step'] = s['Step'].values.astype(int)
-    ids, mins, maxs, first_xy, last_xy, durs = get_extrema(s, pars)
-    Nids0 = len(ids)
-    while Nidx <= len(ids):
-        cur_er, id0, id1 = max_error, None, None
-        t0s = maxs.nsmallest(Nidx)
-        t1s = mins.loc[mins > t0s.min()].nsmallest(Nidx)
-        if len(t1s) > 0:
-            for i in range(Nidx):
-                cur_id0, t0 = t0s.index[i], t0s.values[i]
-                xy0, l0 = last_xy[cur_id0], ls[cur_id0]
-                ee = [eval(t0, xy0, l0, mins[id], first_xy[id], ls[id]) for id in t1s.index]
-                temp_err = np.min(ee)
-                if temp_err < cur_er:
-                    cur_er, id0, id1 = temp_err, cur_id0, t1s.index[np.argmin(ee)]
-        if id0 is not None:
-            pairs[id0] = id1
-            ls[id1] = (ls[id0] * durs[id0] + ls[id1] * durs[id1]) / (durs[id0] + durs[id1])
-            durs[id1] += durs[id0]
-            del durs[id0]
-            ls.drop([id0], inplace=True)
-            ids, mins, maxs, first_xy, last_xy = update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy)
-            if verbose >= 2:
-                print(len(ids), int(cur_er))
-        else:
-            Nidx += 1
-    Nids1 = len(ids)
-    if verbose >= 2:
-        print('Finalizing dataset')
-    while len(common_member(list(pairs.keys()), list(pairs.values()))) > 0:
-        for id0, id1 in pairs.items():
-            if id1 in pairs.keys():
-                pairs[id0] = pairs[id1]
-                break
-    s.rename(index=pairs, inplace=True)
+    s = copy.deepcopy(df)
+    s[step] = s[t]/dt
     s.reset_index(drop=False, inplace=True)
-    s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True)
-    if verbose >= 1:
-        print(f'**--- Track IDs reduced from {Nids0} to {Nids1} by the matchIDs algorithm -----')
-    return s
+    s.set_index(keys=[step, aID], inplace=True, drop=True, verify_integrity=False)
+    s.sort_index(level=[step, aID], inplace=True)
+    ids = aux.index_unique(s, level=aID)
+
+    tmax = int(np.ceil(e['t1'].max()))
+    Nticks = int(np.ceil(tmax / dt))
+    ticks = np.arange(0, Nticks, 1).astype(int)
+
+    my_index = pd.MultiIndex.from_product([ticks, ids], names=[step, aID])
+    ps = s.columns
+    A = np.zeros([Nticks, ids.shape[0], len(ps)]) * np.nan
+
+    for j, id in enumerate(ids):
+        dff = s.xs(id, level=aID, drop_level=True)
+        ticks = np.arange(int(e['tick0'].loc[id]), int(e['tick1'].loc[id]), 1)
+        for i, p in enumerate(ps):
+            f = interpolate.interp1d(x=dff.index.values, y=dff[p].values, fill_value='extrapolate',
+                                     assume_sorted=True)
+            A[ticks, j, i] = f(ticks)
+    A = A.reshape([-1, len(ps)])
+    df_new = pd.DataFrame(A, index=my_index, columns=ps)
+    df_new.sort_index(level=[step, aID], inplace=True)
+    return df_new
+
+def build_Jovanic(dataset,  source_id,source_dir,build_conf=None, source_files=None,
+                  max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
+                  match_ids=True,**kwargs):
+    d = dataset
+
+    def init_endpoint_data(df, dt):
+        g = df['t'].groupby(level='AgentID')
+        e = pd.concat(dict(zip(['t0', 't1', 'Nts'], [g.first(), g.last(), g.count()])), axis=1)
+        e['cum_dur'] = e['t1'] - e['t0']
+        e['dt'] = e['cum_dur'] / (e['Nts'] - 1)
+        e['tick1'] = np.ceil(e['t1'] / dt).astype(int)
+        e['tick0'] = np.floor(e['t0'] / dt).astype(int)
+        e['Nticks'] = e['tick1'] - e['tick0']
+        e.sort_index(inplace=True)
+        return e
+
+    def comp_length(df, e):
+        xys = nam.xy(d.points, flat=True)
+        xy2 = df[xys].values.reshape(-1, d.Npoints, 2)
+        xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
+        df['length'] = np.sum(np.sqrt(xy3), axis=1)
+        e['length'] = df['length'].groupby('AgentID').quantile(q=0.5)
+        print(f'----- Body lengths computed for group "{d.id}" of experiment "{d.group_id}".')
+
+    print(f'*---- Buiding dataset {d.id} of group {d.group_id}!-----')
+
+    df = df_from_csvs(pref=f'{source_dir}/{source_id}',Npoints =d.config.Npoints, Ncontour =d.config.Ncontour,
+                      max_Nagents=max_Nagents, min_duration_in_sec=min_duration_in_sec,time_slice=time_slice)
+
+    e = init_endpoint_data(df=df, dt=d.dt)
+
+    if match_ids :
+        comp_length(df, e)
+        df = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'])
+
+    s = interpolate_step_data(df=df, e=e, dt=d.dt)
+    print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated in full mode ')
+
+    return s, e
+
 
 def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode='semifull',
                    max_Nagents=None, min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0, **kwargs):
@@ -218,128 +210,6 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
     return step, end
 
 
-def build_Jovanic(dataset, build_conf, source_id,source_dir, source_files=None, max_Nagents=None, min_duration_in_sec=10.0,time_slice=None,
-                  match_ids=True,**kwargs):
-    d = dataset
-
-    def df_from_csvs(d, pref, max_Nagents=None, time_slice=(0, 60), min_duration_in_sec=10.0):
-        kws = {'header': None, 'sep': '\t'}
-        par_list = [pd.read_csv(f'{pref}_{suf}.txt', **kws) for suf in ['larvaid', 't', 'x_spine', 'y_spine']]
-        columns = ['AgentID', 'Step'] + aux.nam.xy(d.points, xsNys=True, flat=True)
-        try:
-            states = pd.read_csv(f'{pref}_state.txt', **kws)
-            par_list.append(states)
-            columns.append('state')
-        except:
-            pass
-
-        if d.Ncontour > 0:
-            try:
-                # xcps, ycps = aux.nam.xy(d.contour, xsNys=True, flat=True)
-
-                xcs = pd.read_csv(f'{pref}_x_contour.txt', **kws)
-                ycs = pd.read_csv(f'{pref}_y_contour.txt', **kws)
-                xcs, ycs = aux.convex_hull(xs=xcs.values, ys=ycs.values, N=d.Ncontour)
-                xcs = pd.DataFrame(xcs, index=None)
-                ycs = pd.DataFrame(ycs, index=None)
-                par_list += [xcs, ycs]
-                columns+=aux.nam.xy(d.contour, xsNys=True, flat=True)
-            except:
-                pass
-
-        df = pd.concat(par_list, axis=1, sort=False)
-        df.columns=columns
-        df.set_index(keys=['AgentID'], inplace=True, drop=True)
-
-        if time_slice is not None:
-            tmin, tmax = time_slice
-            df = df[df['Step'] < tmax]
-            df = df[df['Step'] >= tmin]
-        df = df.loc[df['Step'].groupby('AgentID').last() - df['Step'].groupby('AgentID').first() > min_duration_in_sec]
-        if max_Nagents is not None:
-            df = df.loc[df['head_x'].dropna().groupby('AgentID').count().nlargest(max_Nagents).index]
-        df.sort_index(inplace=True)
-        return df
-
-
-
-    def interpolate_step_data(df, e, dt):
-        s = copy.deepcopy(df)
-        s['Step'] /= dt
-        s.reset_index(drop=False, inplace=True)
-        s.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True, verify_integrity=False)
-        s.sort_index(level=['Step', 'AgentID'], inplace=True)
-        ids = aux.index_unique(s, level='AgentID')
-
-        tmax = int(np.ceil(e['t1'].max()))
-        Nticks = int(np.ceil(tmax / dt))
-        ticks = np.arange(0, Nticks, 1).astype(int)
-
-        my_index = pd.MultiIndex.from_product([ticks, ids], names=['Step', 'AgentID'])
-        ps = s.columns
-        A = np.zeros([Nticks, ids.shape[0], len(ps)]) * np.nan
-
-        for j, id in enumerate(ids):
-            dff = s.xs(id, level='AgentID', drop_level=True)
-            ticks = np.arange(int(e['tick0'].loc[id]), int(e['tick1'].loc[id]), 1)
-            for i, p in enumerate(ps):
-                f = interpolate.interp1d(x=dff.index.values, y=dff[p].values, fill_value='extrapolate',
-                                         assume_sorted=True)
-                A[ticks, j, i] = f(ticks)
-        A = A.reshape([-1, len(ps)])
-        df_new = pd.DataFrame(A, index=my_index, columns=ps)
-        df_new.sort_index(level=['Step', 'AgentID'], inplace=True)
-        print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated in full mode ')
-        return df_new
-
-    def init_endpoint_data(df, dt):
-        g = df['Step'].groupby(level='AgentID')
-        e = pd.concat(dict(zip(['t0', 't1', 'Nts'], [g.first(), g.last(), g.count()])), axis=1)
-        e['cum_dur'] = e['t1'] - e['t0']
-        e['dt'] = e['cum_dur'] / (e['Nts'] - 1)
-        e['tick1'] = np.ceil(e['t1'] / dt).astype(int)
-        e['tick0'] = np.floor(e['t0'] / dt).astype(int)
-        e['Nticks'] = e['tick1'] - e['tick0']
-        e.sort_index(inplace=True)
-
-        return e
-
-    def comp_length(df, e):
-        xys = nam.xy(d.points, flat=True)
-        xy2 = df[xys].values.reshape(-1, d.Npoints, 2)
-        xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
-        df['length'] = np.sum(np.sqrt(xy3), axis=1)
-        e['length'] = df['length'].groupby('AgentID').quantile(q=0.5)
-        print(f'----- Body lengths computed for group "{d.id}" of experiment "{d.group_id}".')
-
-    print(f'*---- Buiding dataset {d.id} of group {d.group_id}!-----')
-    df = df_from_csvs(d, pref=f'{source_dir}/{source_id}',
-                      max_Nagents=max_Nagents, min_duration_in_sec=min_duration_in_sec,time_slice=time_slice,**kwargs)
-    # df.sort_index(inplace=True)
-
-    e = init_endpoint_data(df=df, dt=d.dt)
-
-    if match_ids :
-        comp_length(df, e)
-        df = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'])
-
-    s = interpolate_step_data(df=df, e=e, dt=d.dt)
-
-    # e = pd.DataFrame({}, index=df.index.unique('AgentID').values)
-    # reg.funcs.processing['length'](df, e, N=11)
-
-
-    # df = temp_build(df, fr=d.fr)
-
-
-    #     df = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'], **kwargs)
-    # step = reset_MultiIndex(df)
-    # end = pd.DataFrame({}, index=step.index.unique('AgentID').values)
-    # reg.funcs.processing['length'](df, end, N=11)
-    #
-    # end['num_ticks'] = step['head_x'].dropna().groupby('AgentID').count()
-    # end['cum_dur'] = end['num_ticks'] * d.dt
-    return s, e
 
 def build_Berni(dataset, build_conf, source_files, source_dir=None, max_Nagents=None, min_duration_in_sec=0.0,
                   match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):

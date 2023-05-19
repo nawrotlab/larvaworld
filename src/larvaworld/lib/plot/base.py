@@ -290,27 +290,6 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
             **kwargs:
         '''
         LarvaDatasetCollection.__init__(self, datasets=datasets, labels=labels, add_samples=add_samples)
-
-        # for d in datasets:
-        #     assert isinstance(d, larvaworld.LarvaDataset)
-        # if labels is None:
-        #     labels = [d.id for d in datasets]
-        #
-        # if add_samples:
-        #     targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
-        #     targets = [reg.stored.loadRef(id) for id in targetIDs if id in reg.stored.RefIDs]
-        #     datasets += targets
-        #     if labels is not None:
-        #         labels += targetIDs
-        # self.datasets = datasets
-        # self.labels = labels
-        # self.Ndatasets = len(datasets)
-        # self.colors = plot.get_colors(datasets)
-        # assert self.Ndatasets == len(self.labels)
-        #
-        # self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
-        # self.Ngroups = len(self.group_ids)
-
         self.key = key
         self.ks = []
         self.kkdict = aux.AttrDict()
@@ -356,9 +335,6 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
         self.absolute = absolute
         self.rad2deg = rad2deg
         AutoBasePlot.__init__(self,**kwargs)
-
-    # def concat_data(self, key):
-    #     return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
     def comp_all_pvalues(self):
         if self.Ndatasets < 2:
@@ -424,9 +400,13 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
                     fontsize=15, transform=ax.transAxes)
         return res
 
-    def data_leg(self,idx=None, labels=None, colors=None, anchor=None, handlelength=0.5, handleheight=0.5, **kwargs):
+    def data_leg(self,idx=None, labels=None, colors=None, anchor=None,
+                 handlelength=0.5, handleheight=0.5,Nagents_in_label=True, **kwargs):
         if labels is None :
-            labels=self.labels
+            if not Nagents_in_label:
+                labels=self.labels
+            else:
+                labels=self.labels_with_N
         if colors is None :
             colors=self.colors
         kws = {
@@ -445,54 +425,11 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
             ax.add_artist(leg)
         return leg
 
-    # @property
-    # def data_dict(self):
-    #     return dict(zip(self.labels,self.datasets))
-    #
-    # @property
-    # def data_palette(self):
-    #     return zip(self.labels, self.datasets, self.colors)
-    #
-    # @property
-    # def Nticks(self):
-    #     Nticks_list = [d.config.Nticks for d in self.datasets]
-    #     return np.max(aux.unique_list(Nticks_list))
-    #
-    # @property
-    # def N(self):
-    #     N_list = [d.config.N for d in self.datasets]
-    #     return np.max(aux.unique_list(N_list))
-    #
-    # @property
-    # def fr(self):
-    #     fr_list = [d.fr for d in self.datasets]
-    #     return np.max(aux.unique_list(fr_list))
-    #
-    # @property
-    # def dt(self):
-    #     dt_list = aux.unique_list([d.dt for d in self.datasets])
-    #     return np.max(dt_list)
-    #
-    # @property
-    # def duration(self):
-    #     return int(self.Nticks * self.dt)
-    #
-    # @property
-    # def tlim(self):
-    #     return (0, self.duration)
-    #
-    # def trange(self, unit='min'):
-    #     if unit == 'min':
-    #         T = 60
-    #     elif unit == 'sec':
-    #         T = 1
-    #     t0, t1 = self.tlim
-    #     x = np.linspace(t0 / T, t1 / T, self.Nticks)
-    #     return x
 
     def plot_quantiles(self, k=None, par=None, idx=0, ax=None,xlim=None, ylim=None, ylab=None,
                        unit='sec', leg_loc='upper left',coeff=1,
-                       absolute=False, individuals=False,show_first=False, **kwargs):
+                       absolute=False, individuals=False,show_first=False,
+                       Nagents_in_label=True, **kwargs):
         x=self.trange(unit)
         if ax is None :
             ax = self.axs[idx]
@@ -510,7 +447,13 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
             pass
         if xlim is None:
             xlim = [x[0], x[-1]]
-        for l, d, c in self.data_palette:
+
+        if not Nagents_in_label :
+            data=self.data_palette
+        else:
+            data = self.data_palette_with_N
+
+        for l, d, c in data:
             df=d.get_par(k=k, par=par)*coeff
             if absolute:
                 df = df.abs()
@@ -537,7 +480,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
 
 
     def plot_hist(self,half_circles=True, use_title=False,par_legend=False,
-                  nbins=40,alpha=0.5,ylim=[0, 0.25], **kwargs):
+                  nbins=40,alpha=0.5,ylim=[0, 0.25],Nagents_in_label=True, **kwargs):
         loc = 'upper left' if half_circles else 'upper right'
         for i, k in enumerate(self.ks):
             p = self.pdict[k]
@@ -560,7 +503,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
         self.comp_all_pvalues()
         if half_circles:
             self.plot_all_half_circles()
-        self.data_leg(0, loc=loc)
+        self.data_leg(0, loc=loc,Nagents_in_label=Nagents_in_label)
 
     def boxplots(self,grouped=False,annotation=True, show_ns=False,target_only=None,
                  stripplot=False, ylims=None, **kwargs):

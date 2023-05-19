@@ -380,6 +380,10 @@ class LarvaDatasetCollection :
         return zip(self.labels, self.datasets, self.colors)
 
     @property
+    def data_palette_with_N(self):
+        return zip(self.labels_with_N, self.datasets, self.colors)
+
+    @property
     def color_palette(self):
         return dict(zip(self.labels, self.colors))
 
@@ -392,6 +396,10 @@ class LarvaDatasetCollection :
     def N(self):
         N_list = [d.config.N for d in self.datasets]
         return int(np.max(aux.unique_list(N_list)))
+
+    @property
+    def labels_with_N(self):
+        return [f'{l} (N={d.config.N})' for l,d in self.data_dict.items()]
 
     @property
     def fr(self):
