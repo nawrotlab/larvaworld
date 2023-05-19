@@ -159,7 +159,7 @@ class ExpRun(BaseRun):
             # e.index.name = 'AgentID'
             s = df[self.step_output_keys]
 
-            tpd = LarvaTrajectoryCollection.from_df(s=s,dt=self.dt,endDF=e, groupID=gID)
+            tpd = LarvaTrajectoryCollection.from_df(s=s,dt=self.dt,endpoint_data=e, groupID=gID)
             trajcollections.append(tpd)
             return trajcollections
 

@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import numpy as np
@@ -7,8 +6,9 @@ import warnings
 
 from larvaworld.lib import reg, aux
 
-class LarvaDataset:
-    def __init__(self, dir=None, load_data=True,config = None, **kwargs):
+
+class BaseLarvaDataset:
+    def __init__(self, dir=None, config=None, **kwargs):
         '''
         Dataset class that stores a single experiment, real or simulated.
         Metadata and configuration parameters are stored in the 'config' dictionary.
@@ -24,18 +24,106 @@ class LarvaDataset:
             **kwargs: Any arguments to store in a novel configuration dictionary
         '''
 
-        if config is None :
+        if config is None:
             config = reg.stored.getRef(dir=dir)
             if config is None:
-                config = generate_dataset_config(dir=dir, **kwargs)
+                config = self.generate_config(dir=dir, **kwargs)
 
-        c=self.config = config
+        c = self.config = config
         if c.dir is not None:
             os.makedirs(c.dir, exist_ok=True)
             os.makedirs(self.data_dir, exist_ok=True)
-
-        self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
         self.__dict__.update(c)
+
+
+    def generate_config(self, **kwargs):
+
+        c0 = aux.AttrDict({'id': 'unnamed',
+                           'group_id': None,
+                           'refID': None,
+                           'dir': None,
+                           'fr': 16,
+                           'Npoints': 3,
+                           'Ncontour': 0,
+                           'sample': None,
+                           'color': None,
+                           'metric_definition': None,
+                           'env_params': {},
+                           'larva_groups': {},
+                           'source_xy': {},
+                           'life_history': None,
+                           })
+
+        c0.update(kwargs)
+        c0.dt = 1 / c0.fr
+        if c0.metric_definition is None:
+            c0.metric_definition = reg.get_null('metric_definition')
+
+        points = aux.nam.midline(c0.Npoints, type='point')
+
+        try:
+            c0.point = points[c0.metric_definition.spatial.point_idx - 1]
+        except:
+            c0.point = 'centroid'
+
+        if len(c0.larva_groups) == 1:
+            c0.group_id, gConf = list(c0.larva_groups.items())[0]
+            c0.color = gConf['default_color']
+            c0.sample = gConf['sample']
+            c0.model = gConf['model']
+            c0.life_history = gConf['life_history']
+
+        reg.vprint(f'Generated new conf {c0.id}', 1)
+        return c0
+
+    @property
+    def data_dir(self):
+        return f'{self.config.dir}/data'
+
+    @property
+    def plot_dir(self):
+        return f'{self.config.dir}/plots'
+
+    def save_config(self, refID=None):
+        c = self.config
+        if refID is not None:
+            c.refID = refID
+        if c.refID is not None:
+            reg.stored.setRefID(id=c.refID, dir=c.dir)
+            reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
+        for k, v in c.items():
+            if isinstance(v, np.ndarray):
+                c[k] = v.tolist()
+        aux.save_dict(c, f'{self.data_dir}/conf.txt')
+
+    @property
+    def Nangles(self):
+        return np.clip(self.config.Npoints - 2, a_min=0, a_max=None)
+
+    @property
+    def points(self):
+        return aux.nam.midline(self.config.Npoints, type='point')
+
+    @property
+    def contour(self):
+        return aux.nam.contour(self.config.Ncontour)
+
+    def delete(self):
+        shutil.rmtree(self.config.dir)
+        reg.vprint(f'Dataset {self.id} deleted',2)
+
+    def set_id(self, id, save=True):
+        self.id = id
+        self.config.id = id
+        if save:
+            self.save_config()
+
+class LarvaDataset(BaseLarvaDataset):
+    def __init__(self, load_data=True, **kwargs):
+
+        super().__init__(**kwargs)
+        c = self.config
+        self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
         self.larva_dicts = {}
         if load_data:
             try:
@@ -123,17 +211,7 @@ class LarvaDataset:
         except:
             return None
 
-    def save_config(self, refID=None):
-        c = self.config
-        if refID is not None:
-            c.refID = refID
-        if c.refID is not None:
-            reg.stored.setRefID(id=c.refID, dir=c.dir)
-            reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
-        for k, v in c.items():
-            if isinstance(v, np.ndarray):
-                c[k] = v.tolist()
-        aux.save_dict(c, f'{self.data_dir}/conf.txt')
+
 
 
     def load_traj(self, mode='default'):
@@ -171,13 +249,9 @@ class LarvaDataset:
 
 
 
-    @ property
-    def plot_dir(self):
-        return f'{self.config.dir}/plots'
 
-    @property
-    def data_dir(self):
-        return f'{self.config.dir}/data'
+
+
 
     @property
     def data_path(self):
@@ -247,15 +321,7 @@ class LarvaDataset:
         else :
             return reg.par.get(k=k, d=self, compute=True)
 
-    def delete(self):
-        shutil.rmtree(self.config.dir)
-        reg.vprint(f'Dataset {self.id} deleted',2)
 
-    def set_id(self, id, save=True):
-        self.id = id
-        self.config.id = id
-        if save:
-            self.save_config()
 
 
 
@@ -308,23 +374,15 @@ class LarvaDataset:
             return cc0s, cc1s, cc01s
 
 
-    @ property
-    def Nangles(self):
-        return np.clip(self.config.Npoints - 2, a_min=0, a_max=None)
 
-    @property
-    def points(self):
-        return aux.nam.midline(self.config.Npoints, type='point')
-
-    @property
-    def contour(self):
-        return aux.nam.contour(self.config.Ncontour)
 
     @property
     def data(self):
         s=self.step_data if hasattr(self, 'step_data') else None
         e=self.endpoint_data if hasattr(self, 'endpoint_data') else None
         return s, e, self.config
+
+
 
 
 
@@ -442,45 +500,7 @@ class LarvaDatasetCollection :
 
 
 
-def generate_dataset_config(**kwargs):
 
-    c0=aux.AttrDict({'id': 'unnamed',
-                  'group_id': None,
-                  'refID': None,
-                  'dir': None,
-                  'fr': 16,
-                  'Npoints': 3,
-                  'Ncontour': 0,
-                  'sample': None,
-                  'color': None,
-                  'metric_definition': None,
-                  'env_params': {},
-                  'larva_groups': {},
-                  'source_xy': {},
-                  'life_history': None,
-                  })
-
-    c0.update(kwargs)
-    c0.dt=1/c0.fr
-    if c0.metric_definition is None:
-        c0.metric_definition = reg.get_null('metric_definition')
-
-    points =aux.nam.midline(c0.Npoints, type='point')
-
-    try:
-        c0.point = points[c0.metric_definition.spatial.point_idx - 1]
-    except:
-        c0.point = 'centroid'
-
-    if len(c0.larva_groups) == 1:
-        c0.group_id, gConf = list(c0.larva_groups.items())[0]
-        c0.color = gConf['default_color']
-        c0.sample = gConf['sample']
-        c0.model = gConf['model']
-        c0.life_history = gConf['life_history']
-
-    reg.vprint(f'Generated new conf {c0.id}', 1)
-    return c0
 
 
 # def retrieve_dataset(dataset=None, refID=None, dir=None):
