@@ -15,8 +15,7 @@ class TrackViewer(LarvaDatasetCollection):
         super().__init__(**kwargs)
         self.size = size
 
-        self.xy_data = self.get_xy()
-        self.dsp_mean = self.get_mean_dispersal()
+        self.xy_data = self.build_data()
 
         x, y = self.arena_dims
         self.image_kws = {
@@ -30,37 +29,15 @@ class TrackViewer(LarvaDatasetCollection):
         }
         self.app = self.get_app()
 
-    def get_xydata_valid(self, valid_gIDs, i, dispersal_on):
-        mode = 'origin' if dispersal_on else 'default'
-        d = dict(zip(self.labels, self.xy_data[mode]))
-        return {gID: d[gID].loc[:i].groupby('AgentID') for gID in valid_gIDs}
 
-    def get_mean_dispersal(self):
-        # d = dict(zip(self.labels,tv.xy_data['origin']))
-        # {gID : d[gID].loc[:i].groupby('AgentID') for gID in valid_gIDs}
-        ddic = {}
-        for id, gd in zip(self.labels, self.xy_data['origin']):
-
-            tt = gd.groupby('Step')
-            dii = {}
-            for i, ttt in tt:
-                temp = ttt ** 2
-                temp2 = temp.sum(axis=1) ** 0.5
-                dii[i] = temp2.mean()
-            ddic[id] = dii
-
-        return ddic
-
-    def get_xy(self):
-        xy_data = aux.AttrDict({'default': [], 'origin': []})
-        for d in self.datasets:
+    def build_data(self):
+        data = aux.AttrDict()
+        for l, d in self.data_dict.items():
             xy = d.load_traj()
-            xy_grouped = xy.groupby('AgentID')
-            xy0s = xy_grouped.first()
-            xy_origin = pd.concat([g - xy0s.loc[id] for id, g in xy_grouped]).sort_index()
-            xy_data.default.append(xy)
-            xy_data.origin.append(xy_origin)
-        return xy_data
+            xy_origin = pd.concat([g - g.dropna().iloc[0] for id, g in xy.groupby('AgentID')]).sort_index()
+            dsp_mu={i: ((ttt.dropna() ** 2).sum(axis=1) ** 0.5).mean() for i, ttt in xy_origin.groupby('Step')}
+            data[l] = aux.AttrDict({'default': xy, 'origin': xy_origin, 'dispersal': dsp_mu})
+        return data
 
     def get_app(self):
 
@@ -76,6 +53,7 @@ class TrackViewer(LarvaDatasetCollection):
             'end': self.Nticks - 1,
             'interval': int(1000 * self.dt),
             'value': 0,
+            'step': 5,
             'loop_policy': 'loop',
 
         }
@@ -87,45 +65,42 @@ class TrackViewer(LarvaDatasetCollection):
             ids_on = 'IDs' in vis_ops
             paths_on = 'Tracks' in vis_ops
             circle_on = 'Disperal circle' in vis_ops
-            dic = self.get_xydata_valid(valid_gIDs, i, dispersal_on)
-            # for gID, data in dic.items()
+            mode = 'origin' if dispersal_on else 'default'
 
             goverlay = None
-            for gID, data in dic.items():
+            for gID in valid_gIDs:
+                gdata=self.xy_data[gID]
+                grouped_xy=gdata[mode].loc[:i].groupby('AgentID')
+
                 track_kws = {
                     'color': None if rnd_cols else self.color_palette[gID],
                 }
-                _points = data.last()
+                _points = grouped_xy.last()
 
-                points = hv.Points(_points, label=gID).opts(line_width=4, **track_kws)
+                points = hv.Points(_points, label=gID).opts(size=2, **track_kws)
                 overlay = points
-                r = ((_points ** 2).sum(axis=1) ** 0.5).mean()
-                circle2 = hv.Ellipse(0, 0, r).opts(line_width=6, **track_kws)
-                overlay *= circle2
+
                 if ids_on:
                     labels = hv.Labels(_points.reset_index(), ['x', 'y']).opts(text_font_size='8pt', xoffset=0.015,
                                                                                visible=ids_on)
                     overlay *= labels
                 if paths_on:
-                    _paths = [xyi for id, xyi in data]
+                    _paths = [xyi for id, xyi in grouped_xy]
                     paths = hv.Path(_paths).opts(**track_kws)
                     overlay *= paths
+                if circle_on and mode == 'origin':
+                    r = gdata['dispersal'][i]
+                    circle = hv.Ellipse(0, 0, r).opts(line_width=5,  **track_kws)
+                    overlay *= circle
+                    # r = ((_points.dropna() ** 2).sum(axis=1) ** 0.5).mean()
+                    # circle2 = hv.Ellipse(0, 0, r).opts(line_width=4,line_dash='dotted', **track_kws)
+                    # overlay *= circle2
                 goverlay = overlay if goverlay is None else goverlay * overlay
 
             goverlay.opts(
                 hv.opts.Points(size=5, visible=pos_on),
                 # hv.opts.Labels(text_font_size='8pt', xoffset=0.015,visible=ids_on),
             )
-
-            if circle_on:
-                for gID, data in self.dsp_mean.items():
-                    r = data[i]
-
-                    track_kws = {
-                        'color': None if rnd_cols else self.color_palette[gID],
-                    }
-                    circle = hv.Ellipse(0, 0, r).opts(line_width=4, **track_kws)
-                    goverlay *= circle
 
             goverlay.opts(responsive=False, **self.image_kws)
 

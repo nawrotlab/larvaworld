@@ -20,16 +20,17 @@ def interpolate_step_data(df, e, dt):
     step='Step'
     aID = 'AgentID'
 
+    t0, t1 = reg.getPar(['t0', 't_fin'])
+    tick0, tick1 = reg.getPar(['tick0', 'tick_fin'])
 
     s = copy.deepcopy(df)
     s[step] = s[t]/dt
+    Nticks = int(np.ceil(s[step].max()))
     s.reset_index(drop=False, inplace=True)
     s.set_index(keys=[step, aID], inplace=True, drop=True, verify_integrity=False)
     s.sort_index(level=[step, aID], inplace=True)
     ids = aux.index_unique(s, level=aID)
 
-    tmax = int(np.ceil(e['t1'].max()))
-    Nticks = int(np.ceil(tmax / dt))
     ticks = np.arange(0, Nticks, 1).astype(int)
 
     my_index = pd.MultiIndex.from_product([ticks, ids], names=[step, aID])
@@ -38,11 +39,12 @@ def interpolate_step_data(df, e, dt):
 
     for j, id in enumerate(ids):
         dff = s.xs(id, level=aID, drop_level=True)
-        ticks = np.arange(int(e['tick0'].loc[id]), int(e['tick1'].loc[id]), 1)
+        float_ticks_j = dff.index
+        ticks_j = np.arange(int(np.floor(float_ticks_j.min())), int(np.ceil(float_ticks_j.max())), 1)
         for i, p in enumerate(ps):
-            f = interpolate.interp1d(x=dff.index.values, y=dff[p].values, fill_value='extrapolate',
+            f = interpolate.interp1d(x=float_ticks_j.values, y=dff[p].loc[float_ticks_j].values, fill_value='extrapolate',
                                      assume_sorted=True)
-            A[ticks, j, i] = f(ticks)
+            A[ticks_j, j, i] = f(ticks_j)
     A = A.reshape([-1, len(ps)])
     df_new = pd.DataFrame(A, index=my_index, columns=ps)
     df_new.sort_index(level=[step, aID], inplace=True)
@@ -55,12 +57,14 @@ def build_Jovanic(dataset,  source_id,source_dir,build_conf=None, source_files=N
 
     def init_endpoint_data(df, dt):
         g = df['t'].groupby(level='AgentID')
-        e = pd.concat(dict(zip(['t0', 't1', 'Nts'], [g.first(), g.last(), g.count()])), axis=1)
-        e['cum_dur'] = e['t1'] - e['t0']
-        e['dt'] = e['cum_dur'] / (e['Nts'] - 1)
-        e['tick1'] = np.ceil(e['t1'] / dt).astype(int)
-        e['tick0'] = np.floor(e['t0'] / dt).astype(int)
-        e['Nticks'] = e['tick1'] - e['tick0']
+        t0, t1,Nts, cum_t = reg.getPar(['t0', 't_fin','N_ts', 'cum_t'])
+        tick0, tick1, Nticks = reg.getPar(['tick0', 'tick_fin', 'N_ticks'])
+        e = pd.concat(dict(zip([t0, t1, Nts], [g.first(), g.last(), g.count()])), axis=1)
+        e[cum_t] = e[t1] - e[t0]
+        e['dt'] = e[cum_t] / (e[Nts] - 1)
+        e[tick1] = np.ceil(e[t1] / dt).astype(int)
+        e[tick0] = np.floor(e[t0] / dt).astype(int)
+        e[Nticks] = e[tick1] - e[tick0]
         e.sort_index(inplace=True)
         return e
 

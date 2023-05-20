@@ -7,30 +7,6 @@ from larvaworld.lib.aux import nam
 
 
 
-def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
-    Nrows, Ncols = xs.shape
-    xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
-    ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
-    ps = [np.vstack((xs[i], ys[i])).T for i in range(Nrows)]
-    xxs = np.zeros((Nrows, N))
-    xxs[:] = np.nan
-    yys = np.zeros((Nrows, N))
-    yys[:] = np.nan
-
-    for i, p in enumerate(ps):
-        if len(p) > 0:
-            try:
-                b = p[sp.spatial.ConvexHull(p).vertices]
-                s = np.min([b.shape[0], N])
-                xxs[i, :s] = b[:s, 0]
-                yys[i, :s] = b[:s, 1]
-                if interp_nans:
-                    xxs[i] = interpolate_nans(xxs[i])
-                    yys[i] = interpolate_nans(yys[i])
-            except:
-                pass
-    return xxs, yys
-
 
 def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     x0, y0 = loc
@@ -43,14 +19,14 @@ def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
 
 def compute_dispersal_solo(xy):
     if isinstance(xy, pd.DataFrame):
-        xy_valid =xy.dropna().values
         xy = xy.values
-    else :
-        xy_valid=xy[~np.isnan(xy)]
-    if xy_valid.shape[0]>1 :
-        return eudi5x(xy, xy_valid[0])
+    N = xy.shape[0]
+    valid_idx=np.where(~np.isnan(xy))[0]
+    if valid_idx.shape[0]<N*0.2 or valid_idx[0]>N*0.1 or valid_idx[-1]<N*0.9 :
+        return np.zeros(N) * np.nan
     else:
-        return np.zeros(xy.shape[0]) * np.nan
+        return eudi5x(xy, xy[valid_idx[0]])
+
 
 def compute_dispersal_multi(xy0, t0,t1,dt):
     s0 = int(t0 / dt)

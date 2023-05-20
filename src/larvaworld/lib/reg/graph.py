@@ -277,7 +277,12 @@ class GraphRegistry:
                 self.entry('endpoint box', mode='tiny', Ncols=4),
                 self.entry('crawl pars'),
                 self.entry('epochs', stridechain_duration=True),
-                self.entry('dispersal', range=(0, 60)),
+                self.entry('dispersal', range=(20, 100)),
+                self.entry('dispersal', range=(10, 70)),
+                self.entry('dispersal', range=(20, 80)),
+                self.entry('dispersal', range=(20, 100), scaled=True),
+                self.entry('dispersal', range=(10, 70), scaled=True),
+                self.entry('dispersal', range=(20, 80), scaled=True),
             ],
 
         'distro': [

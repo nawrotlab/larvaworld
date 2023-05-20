@@ -13,9 +13,32 @@ class BaseLarvaDataset:
         Dataset class that stores a single experiment, real or simulated.
         Metadata and configuration parameters are stored in the 'config' dictionary.
         This can be provided as an argument, retrieved from a stored experiment or generated for a new experiment.
-        Timeseries data are loaded as a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
-        Endpoint measurements are loaded as a pd.Dataframe 'endpoint_data' with 'AgentID' indexing
-        Data is stored as HDF5 files or nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
+
+        The default pipeline goes as follows :
+        The dataset needs the config file to be initialized. If it is not provided as an argument there are two ways to retrieve it.
+        First if "dir" is an existing directory of a stored dataset the config file will be loaded from the default location
+        within the dataset's file structure, specifically from a "conf.txt" in the "data" directory under the root "dir".
+        As it is not handy to provide an absolute directory as an argument, the root "dir" locations of a number of stored "reference" datasets
+        are stored in a file and loaded as a dictionary where the keys are unique "refID" strings holding the root "dir" value.
+
+        Accessing the reference path dictionary is extremely easy through the "reg.stored" registry class with the following methods :
+        -   getRefDir(id) returns the "root" directory stored in the "larvaworld/lib/reg/confDicts/Ref.txt" under the unique id
+        -   getRef(id=None, dir=None) returns the config dictionary stored at the "root" directory. Accepts either the "dir" path or the "refID" id
+        -   loadRef(id) first retrieves the config dictionary and then initializes the dataset.
+            By setting load_data=True there is an attempt to load the data from the disc if found at the provided root directory.
+            This last method can be accessed directly via "reg.loadRef(id)"
+
+        In the case that none of the above attempts yielded a config dictionary, a novel one is generated using any additional keyword arguments are provided.
+        This is the default way that a new dataset is initialized. The data content is set after initialization via the "set_data(step, end)"
+        method with which we provide the both the step-wise timeseries and the endpoint single-per-agent measurements
+
+        Endpoint measurements are loaded always as a pd.Dataframe 'endpoint_data' with 'AgentID' indexing
+
+        The timeseries data though can be initialized and processed in two ways :
+        -   in the default mode  a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
+            Data is stored as a single HDF5 file or as nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
+        -   in the trajectory mode a "movingpandas.TrajectoryCollection" is adjusted to the needs of the larva-tracking data format via the
+            "lib.process.LarvaTrajectoryCollection" class
 
         Args:
             dir: Path to stored data. Ignored if 'config' is provided. Defaults to None for no storage to disc
@@ -42,13 +65,12 @@ class BaseLarvaDataset:
 
 
     def generate_config(self, **kwargs):
-
         c0 = aux.AttrDict({'id': 'unnamed',
                            'group_id': None,
                            'refID': None,
                            'dir': None,
                            'fr': None,
-                           'dt': 0.1,
+                           'dt': None,
                            'Npoints': 3,
                            'Ncontour': 0,
                            'u' : 'm',
@@ -141,7 +163,20 @@ class BaseLarvaDataset:
 
 class LarvaDataset(BaseLarvaDataset):
     def __init__(self, **kwargs):
+        '''
+        This is the default dataset class. Timeseries are stored as a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
+        Data is stored as a single HDF5 file or as nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
+        To lesser the burdain of loading and saving all timeseries parameters as columns in a single pd.Dataframe, the most common parameters have been split in a set of groupings,
+         available via keys that access specific entries of the "data.h5". The keys of "self.h5_kdic" dictionary store the parameters that every "h5key" keeps :
+        -   'contour': The contour xy coordinates,
+        -   'midline': The midline xy coordinates,
+        -   'epochs': The behavioral epoch detection and annotation,
+        -   'base_spatial': The most basic spatial parameters,
+        -   'angular': The angular parameters,
+        -   'dspNtor':  Dispersal and tortuosity,
 
+        All parameters not included in any of these groups stays with the original "step" key that is always saved and loaded
+        '''
         super().__init__(**kwargs)
 
 
@@ -406,7 +441,7 @@ class LarvaDatasetCollection :
         datasets = self.get_datasets(**kwargs)
 
         for d in datasets:
-            assert isinstance(d, LarvaDataset)
+            assert isinstance(d, BaseLarvaDataset)
         if labels is None:
             labels = [d.id for d in datasets]
 
@@ -510,31 +545,17 @@ class LarvaDatasetCollection :
             dims=dims[0]
         return tuple(dims)
 
+    @property
+    def arena_geometry(self):
+        geos = aux.unique_list([d.env_params.arena.geometry for d in self.datasets])
+        if len(geos) ==1:
+            return geos[0]
+        else:
+            return None
+
     def concat_data(self, key):
         return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
-
-
-
-
-
-# def retrieve_dataset(dataset=None, refID=None, dir=None):
-#     if dataset is None:
-#         if refID is not None:
-#             dataset = reg.loadRef(refID)
-#         elif dir is not None:
-#             dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False)
-#         else:
-#             raise ValueError('Unable to load dataset. Either refID or storage path must be provided. ')
-#     return dataset
-
-# class DatasetDetection():
-#     time_range = aux.OptionalPositiveRange(softmax=1000.0, doc='Whether to only replay a defined temporal slice of the dataset.')
-#     agent_ids = param.List(default=None,empty_default=True,allow_None=True, doc='Whether to only display some larvae of the dataset, defined by their indexes.')
-#
-#
-#     def __init__(self, dir=None, load_data=True,config = None, **kwargs):
-#         super().__init__(**kwargs)
 
 
 

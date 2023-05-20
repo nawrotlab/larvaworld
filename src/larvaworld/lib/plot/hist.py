@@ -146,9 +146,9 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
     return P.get()
 
 @reg.funcs.graph('crawl pars')
-def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_d'],subfolder='endpoint',name='crawl_pars',
+def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_sd'],subfolder='endpoint',name='crawl_pars',
                     type='sns.hist',kde=True,  **kwargs):
-    P = plot.AutoPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':5, 'sharey': True}, **kwargs)
+    P = plot.AutoPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':7, 'sharey': True}, **kwargs)
     P.plot_hist(type=type,kde=kde)
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.1)
     return P.get()

@@ -175,7 +175,7 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
 
 
 @reg.funcs.graph('timeplots')
-def timeplots(ks,subfolder='timeplots',name=None, unit='sec',
+def timeplots(ks,subfolder='timeplots',name=None, unit='sec',xlim=None,
               individuals=False,absolute=False,show_first=False,**kwargs):
     Nks=len(ks)
     if name is None :
@@ -183,7 +183,7 @@ def timeplots(ks,subfolder='timeplots',name=None, unit='sec',
     P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Nrows':Nks,'sharex':True, 'w' : 15, 'h' : 5}, **kwargs)
 
     for i, k in enumerate(ks):
-        P.plot_quantiles(k=k, idx=i, unit=unit,xvis=True if i==Nks-1 else False,
+        P.plot_quantiles(k=k, idx=i, unit=unit,xvis=True if i==Nks-1 else False,xlim=xlim,
                          individuals=individuals,absolute=absolute, show_first=show_first)
     P.adjust((0.1, 0.95), (0.15, 0.95), H=0.05)
     P.fig.align_ylabels(P.axs[:])

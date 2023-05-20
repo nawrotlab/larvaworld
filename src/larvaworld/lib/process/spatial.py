@@ -223,10 +223,11 @@ def comp_dispersion(s, e, c,d=None, dsp_starts=[0], dsp_stops=[40], **kwargs):
     if dsp_starts is None or dsp_stops is None:
         return
 
-    xy0 = pd.read_hdf(f'{c.dir}/data/data.h5','traj.default') if s is None else s[['x', 'y']]
+    xy0 = d.load_traj(mode='default') if s is None else s[['x', 'y']]
+
     dsps = {}
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
-        p = f'dispersion_{int(t0)}_{int(t1)}'
+        p = reg.getPar(f'dsp_{int(t0)}_{int(t1)}')
         s[p],Nt=aux.compute_dispersal_multi(xy0, t0, t1, c.dt)
 
         s0 = int(t0 / c.dt)

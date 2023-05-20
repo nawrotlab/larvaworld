@@ -466,6 +466,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
                 # plot the shaded range between first and third quantile
                 df_u = df.groupby(level='Step').quantile(q=0.75)
                 df_b = df.groupby(level='Step').quantile(q=0.25)
+                # print(df_u.shape,df_b.shape,x.shape,self.Nticks,d.Nticks)
                 ax.fill_between(x, df_u, df_b, color=c, alpha=.2, zorder=0)
 
                 if show_first:
@@ -480,7 +481,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
 
 
     def plot_hist(self,half_circles=True, use_title=False,par_legend=False,
-                  nbins=40,alpha=0.5,ylim=[0, 0.25],Nagents_in_label=True, **kwargs):
+                  nbins=30,alpha=0.5,ylim=[0, 0.2],Nagents_in_label=True, **kwargs):
         loc = 'upper left' if half_circles else 'upper right'
         for i, k in enumerate(self.ks):
             p = self.pdict[k]

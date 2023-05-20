@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 from scipy.signal import sosfiltfilt, butter
 
 
@@ -89,3 +90,27 @@ def apply_filter_to_array_with_nans_multidim(a, freq, fr, N=1):
         raise ValueError('Method implement for up to 3-dimensional array')
 
 
+
+def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
+    Nrows, Ncols = xs.shape
+    xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
+    ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]
+    ps = [np.vstack((xs[i], ys[i])).T for i in range(Nrows)]
+    xxs = np.zeros((Nrows, N))
+    xxs[:] = np.nan
+    yys = np.zeros((Nrows, N))
+    yys[:] = np.nan
+
+    for i, p in enumerate(ps):
+        if len(p) > 0:
+            try:
+                b = p[sp.spatial.ConvexHull(p).vertices]
+                s = np.min([b.shape[0], N])
+                xxs[i, :s] = b[:s, 0]
+                yys[i, :s] = b[:s, 1]
+                if interp_nans:
+                    xxs[i] = interpolate_nans(xxs[i])
+                    yys[i] = interpolate_nans(yys[i])
+            except:
+                pass
+    return xxs, yys

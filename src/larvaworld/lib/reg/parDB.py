@@ -1452,15 +1452,24 @@ class ParamClass:
         self.add(
             **{'p': 't', 'k': 't', 'd': 't', 'sym': '$t$', 'lim':(0.0, None), 'dv': 0.01, 'v0': 0.0,
                **kws})
+        self.add_operators(k0='t')
+        self.add(
+            **{'p': 'num_ts', 'k': 'N_ts', 'sym': sub('N', 'ts'), 'dtype': int, 'lim': (0, None), 'dv': 1})
+        self.add(
+            **{'p': 'tick', 'k': 'tick', 'd': 'tick', 'sym': '$tick$', 'lim': (0, None), 'v0': 0,'dtype': int,
+               **kws})
+        self.add_operators(k0='tick')
+        self.add(
+            **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
+
         self.add(
             **{'p': 'model.dt', 'k': 'dt', 'd': 'dt', 'sym': '$dt$', 'lim': (0.01, 0.5), 'dv': 0.01, 'v0': 0.1,
                **kws})
         self.add(
             **{'p': 'cum_dur', 'k': nam.cum('t'), 'sym': sub('t', 'cum'), 'lim': (0.0, None), 'dv': 0.1, 'v0': 0.0,
                **kws})
-        self.add(
-            **{'p': 'num_ticks', 'k': 'N_ticks', 'sym': sub('N', 'ticks'), 'dtype': int, 'lim': (0, None), 'dv': 1})
-        self.add_operators(k0='t')
+
+
 
     def add(self, **kwargs):
         prepar = util.prepare_LarvaworldParam(**kwargs)
@@ -1855,7 +1864,7 @@ class ParamClass:
 
     def build_spatial(self, in_m=True):
         tor_durs = [1, 2, 5, 10, 20, 60, 120, 240, 300, 600]
-        dsp_ranges = [(0, 40), (0, 60), (20, 80), (0, 120), (0, 240), (0, 300), (0, 600), (60, 120), (60, 300)]
+        dsp_ranges = [(0, 40), (0, 60),(0, 70),(0, 80),(10, 60),(10, 70),(10, 80),(20, 60),(20, 70),(20, 80), (10, 100),(20, 100), (0, 120), (0, 240), (0, 300), (0, 600), (60, 120), (60, 300)]
         if in_m:
             u = reg.units.m
             s = 1
