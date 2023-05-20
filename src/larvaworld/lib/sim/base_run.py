@@ -190,59 +190,22 @@ class BaseRun(reg.SimOptions, agentpy.Model):
         self.step_output_keys = list(self.collectors['step'].keys())
         self.end_output_keys = list(self.collectors['end'].keys())
 
-    def convert_output_to_dataset(self, df, agents=None, **kwargs):
+    def convert_output_to_dataset(self, df, agents=None,to_Geo=False, **kwargs):
         kws = {
             'load_data' : False,
             'env_params': self.p.env_params,
             'source_xy': aux.AttrDict({s.unique_id : s.pos for s in self.sources}),
             'fr': 1 / self.dt,
+            'dt': self.dt,
             **kwargs
         }
-
-        from larvaworld.lib.process.dataset import LarvaDataset
-        d = LarvaDataset(**kws)
-
-        d=self.agentpy_output_to_dataset(df,d)
-
-
-        if agents:
-            ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
-            d.larva_dicts = aux.get_larva_dicts(ls)
-        return d
-
-
-    def convert_output_to_Geo(self,**kwargs):
-        import geopandas as gpd
-        import movingpandas as mpd
-        from datetime import datetime, timedelta, time
-        from pint_pandas import PintType
-        from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
-        trajcollections = []
-        for gID, df in self.output.variables.items():
-
-
-
-            kws = {
-                'larva_groups': {gID: self.p.larva_groups[gID]},
-                'dt': self.dt,
-                #'group_id': gID,
-                'id': gID,
-                'dir': f'{self.data_dir}/{gID}',
-                 'load_data': False,
-                'env_params': self.p.env_params,
-                'source_xy': aux.AttrDict({s.unique_id: s.pos for s in self.sources}),
-                'fr': 1 / self.dt,
-                **kwargs
-            }
-
-
+        if not to_Geo :
+            from larvaworld.lib.process.dataset import LarvaDataset
+            d = LarvaDataset(**kws)
+        else:
+            from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
             d = LarvaTrajectoryCollection(**kws)
 
-            d = self.agentpy_output_to_dataset(df, d)
-            trajcollections.append(d)
-            return trajcollections
-
-    def agentpy_output_to_dataset(self, df, d):
         df.index.set_names(['AgentID', 'Step'], inplace=True)
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)
@@ -250,5 +213,14 @@ class BaseRun(reg.SimOptions, agentpy.Model):
         end = df[self.end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
         step = df[self.step_output_keys]
         d.set_data(step=step, end=end)
+        if agents and not to_Geo:
+            ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
+            d.larva_dicts = aux.get_larva_dicts(ls)
+
         return d
+
+
+
+
+
 

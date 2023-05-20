@@ -118,7 +118,7 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
-        self.datasets = self.retrieve(self.output.variables)
+        self.datasets = self.retrieve()
         end = time.time()
         dur = np.round(end - start).astype(int)
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
@@ -132,20 +132,22 @@ class ExpRun(BaseRun):
             self.store()
         return self.datasets
 
-    def retrieve(self, log):
-        dkws=[]
-        for gID, df in log.items():
-            kws1={'larva_groups': {gID: self.p.larva_groups[gID]}}
-            if 'sample_id' in df.index.names :
-                sIDs=df.index.get_level_values('sample_id').unique()
-                if len(sIDs)>1 :
-                    dkws+=[{'df':df.xs(sID, level='sample_id'), 'id':f'{gID}_{sID}', **kws1} for sID in sIDs]
-                else :
-                    dkws += [{'df': df.xs(sIDs[0], level='sample_id'), 'id': gID, **kws1}]
 
-            else :
-                dkws += [{'df': df, 'id': gID, **kws1}]
-        ds = [self.convert_output_to_dataset(**kws, agents=self.agents, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
+    def retrieve(self):
+        ds = []
+        for gID, df in self.output.variables.items():
+            assert 'sample_id' not in df.index.names
+            kws = {
+                'larva_groups': {gID: self.p.larva_groups[gID]},
+                'df': df,
+                'id': gID,
+                'dir': f'{self.data_dir}/{gID}'
+            }
+            d = self.convert_output_to_dataset(**kws)
+
+            ds.append(d)
+
+
         return ds
 
 
