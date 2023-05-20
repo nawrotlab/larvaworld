@@ -15,13 +15,12 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib.process.build_aux import df_from_csvs, match_larva_ids
 
 
-def interpolate_step_data(df, e, dt):
+def interpolate_step_data(df, dt):
     t = 't'
     step='Step'
     aID = 'AgentID'
 
-    t0, t1 = reg.getPar(['t0', 't_fin'])
-    tick0, tick1 = reg.getPar(['tick0', 'tick_fin'])
+
 
     s = copy.deepcopy(df)
     s[step] = s[t]/dt
@@ -50,7 +49,7 @@ def interpolate_step_data(df, e, dt):
     df_new.sort_index(level=[step, aID], inplace=True)
     return df_new
 
-def build_Jovanic(dataset,  source_id,source_dir,build_conf=None, source_files=None,
+def build_Jovanic(dataset,  source_id,source_dir,
                   max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
                   match_ids=True,**kwargs):
     d = dataset
@@ -87,13 +86,13 @@ def build_Jovanic(dataset,  source_id,source_dir,build_conf=None, source_files=N
         comp_length(df, e)
         df = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'])
 
-    s = interpolate_step_data(df=df, e=e, dt=d.dt)
+    s = interpolate_step_data(df=df, dt=d.dt)
     print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated in full mode ')
 
     return s, e
 
 
-def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode='semifull',
+def build_Schleyer(dataset, source_dir,save_mode='semifull',
                    max_Nagents=None, min_end_time_in_sec=0, min_duration_in_sec=0, start_time_in_sec=0, **kwargs):
 
     def read_Schleyer_metadata(dir):
@@ -138,6 +137,10 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
                 return [-x, y]
         except:
             return [-0.8, 0]
+
+    datagroup_id = 'Schleyer lab'
+    g = reg.stored.getGroup(datagroup_id)
+    build_conf = g.Tracker.filesystem
 
     d = dataset
     dt=d.dt
@@ -215,16 +218,18 @@ def build_Schleyer(dataset, build_conf,  source_dir,source_files=None, save_mode
 
 
 
-def build_Berni(dataset, build_conf, source_files, source_dir=None, max_Nagents=None, min_duration_in_sec=0.0,
-                  match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):
+def build_Berni(dataset, source_files,  max_Nagents=None, min_duration_in_sec=0.0,min_end_time_in_sec=0, **kwargs):
+    datagroup_id = 'Berni lab'
+    g = reg.stored.getGroup(datagroup_id)
+    cols0 = g.Tracker.filesystem['read_sequence']
+    cols1 = cols0[1:]
+
     d = dataset
     dt = d.dt
     end = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
     Nvalid = 0
     dfs = []
     ids = []
-    cols0 = build_conf['read_sequence']
-    cols1=cols0[1:]
     fs = source_files
     # fs = [os.path.join(source_dir, n) for n in os.listdir(source_dir) if n.startswith(dataset.id)]
     for f in fs:
@@ -257,16 +262,19 @@ def build_Berni(dataset, build_conf, source_files, source_dir=None, max_Nagents=
     return step, end
 
 
-def build_Arguello(dataset, build_conf, source_files, source_dir=None, max_Nagents=None, min_duration_in_sec=0.0,
-                  match_ids=True,min_end_time_in_sec=0, start_time_in_sec=0,**kwargs):
+def build_Arguello(dataset, source_files, max_Nagents=None, min_duration_in_sec=0.0,
+                  min_end_time_in_sec=0, **kwargs):
+    datagroup_id='Arguello lab'
+    g = reg.stored.getGroup(datagroup_id)
+    cols0 = g.Tracker.filesystem['read_sequence']
+    cols1 = cols0[1:]
     d = dataset
     dt = d.dt
     end = pd.DataFrame(columns=['AgentID', 'num_ticks', 'cum_dur'])
     Nvalid = 0
     dfs = []
     ids = []
-    cols0 = build_conf['read_sequence']
-    cols1=cols0[1:]
+
     fs = source_files
     # fs = [os.path.join(source_dir, n) for n in os.listdir(source_dir) if n.startswith(dataset.id)]
     for f in fs:
@@ -386,14 +394,13 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'dir': target_dir,
         'id': id,
         'metric_definition': g.enrichment.metric_definition,
-        'larva_groups': reg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs={},age=0.0),
+        'larva_groups': reg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs=epochs,age=age),
         'env_params': reg.get_null('Env', arena=g.Tracker.arena),
         **g.Tracker.resolution
     }
     d = larvaworld.LarvaDataset(**conf)
     kws0 = {
         'dataset': d,
-        'build_conf': g.Tracker.filesystem,
         **kwargs
     }
 

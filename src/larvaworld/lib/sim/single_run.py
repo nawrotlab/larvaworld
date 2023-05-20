@@ -1,9 +1,10 @@
+import copy
 import os
 import time
 import agentpy
 import numpy as np
 import pandas as pd
-
+from pandas import to_datetime
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.screen.drawing import ScreenManager
@@ -147,21 +148,7 @@ class ExpRun(BaseRun):
         ds = [self.convert_output_to_dataset(**kws, agents=self.agents, dir=f'{self.data_dir}/{kws["id"]}') for kws in dkws]
         return ds
 
-    def convert_output_to_Geo(self):
-        import geopandas as gpd
-        import movingpandas as mpd
-        from datetime import datetime, timedelta, time
-        from pint_pandas import PintType
-        from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
-        trajcollections = []
-        for gID, df in self.output.variables.items():
-            e = df[self.end_output_keys].xs(df.index.get_level_values('t').max(), level='t')
-            # e.index.name = 'AgentID'
-            s = df[self.step_output_keys]
 
-            tpd = LarvaTrajectoryCollection.from_df(s=s,dt=self.dt,endpoint_data=e, groupID=gID)
-            trajcollections.append(tpd)
-            return trajcollections
 
     def build_agents(self, larva_groups, parameter_dict={}):
         reg.vprint(f'--- Simulation {self.id} : Generating agent groups!--- ', 1)
