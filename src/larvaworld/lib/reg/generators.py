@@ -209,68 +209,107 @@ class EnvConf(aux.NestedConf):
 #     def __init__(self, **kwargs):
 #         super().__init__(objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
 
-class ConfType(param.Selector) :
-    """Select among available configuration types"""
-    # conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
+# class ConfType(param.Selector) :
+#     """Select among available configuration types"""
+#     # conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
+#
+#     def __init__(self,conftype, **kwargs):
+#         super().__init__(default=conftype,objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
+#
+#     @ property
+#     def path(self):
+#         return f'{reg.CONF_DIR}/{self.default}.txt'
+#
+#     @property
+#     def dict(self):
+#         return aux.load_dict(self.path)
+#
+#     @property
+#     def ids(self):
+#         return sorted(list(self.dict.keys()))
+#
+#     def get(self, id):
+#         if id in self.dict.keys():
+#             d=self.dict[id]
+#             try :
+#                 return aux.AttrDict(d)
+#             except:
+#                 return d
+#         else:
+#             reg.vprint(f'{self.default} Configuration {id} does not exist', 1)
+#             raise ValueError()
 
-    def __init__(self,conftype, **kwargs):
-        super().__init__(default=conftype,objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
 
-    @ property
-    def path(self):
-        return f'{reg.CONF_DIR}/{self.default}.txt'
-
-    @property
-    def dict(self):
-        return aux.load_dict(self.path)
-
-    @property
-    def ids(self):
-        return sorted(list(self.dict.keys()))
-
-    def get(self, id):
-        if id in self.dict.keys():
-            d=self.dict[id]
-            try :
-                return aux.AttrDict(d)
-            except:
-                return d
-        else:
-            reg.vprint(f'{self.default} Configuration {id} does not exist', 1)
-            raise ValueError()
-
-
-class ConfTypex(param.Parameterized) :
+class ConfType(param.Parameterized) :
     """Select among available configuration types"""
     conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
+    path = param.Filename(label='path to configuration dictionary',
+                           doc='The path to configuration dictionary')
+    item_type =param.ClassSelector(default=None, class_=object,is_instance=False, allow_None=True)
+    dict= aux.ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
+    # ids = param.List([], item_type=str, doc='The configuration IDs.')
+    id = OptionalSelector(objects=[], doc='The configuration ID')
+    entry = aux.ClassAttr(default=None, class_=None, doc='The configuration')
 
-    # def __init__(self,conftype, **kwargs):
-    #     super().__init__(default=conftype,objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.update_conftype()
 
-    @ property
-    def path(self):
-        return f'{reg.CONF_DIR}/{self.conftype}.txt'
+    @param.depends('conftype', watch=True)
+    def update_conftype(self):
+        self.path = f'{reg.CONF_DIR}/{self.conftype}.txt'
+        self.update_class(self.conf_class)
+        self.dict=self.load()
 
-    @property
-    def dict(self):
-        return aux.load_dict(self.path)
+    # @param.depends('item_type', watch=True)
+    def update_class(self,c):
+        self.item_type = c
+        # self.param.params('item_type').class_ = c
+        self.param.params('dict').item_type = c
+        self.param.params('conf').class_ = c
 
-    @property
-    def ids(self):
-        return sorted(list(self.dict.keys()))
+    @param.depends('dict', watch=True)
+    def update_ids(self):
+        self.param.params('id').objects=self.ids
 
-    def get(self, id):
+    @param.depends('id', watch=True)
+    def update_entry(self):
+        self.entry = self.dict[self.id]
+
+
+    def get_entry(self,id):
         if id in self.dict.keys():
-            d=self.dict[id]
-            try :
-                return aux.AttrDict(d)
-            except:
-                return d
+            return self.item_type(self.dict[id])
         else:
             reg.vprint(f'{self.conftype} Configuration {id} does not exist', 1)
             raise ValueError()
 
-# class ConfID(ConfTypex):
+    def get_conf(self, id):
+        return self.get_entry(id)
+
+    # @property
+    def load(self):
+        return aux.load_dict(self.path)
+
+    def save(self):
+        return aux.save_dict(self.dict, self.path)
+
+    @property
+    def ids(self):
+        return sorted(list(self.dict.keys()))
+
+    @property
+    def conf_class(self):
+        c=self.conftype
+        if c is None :
+            return None
+        elif c=='Ref':
+            return str
+        else :
+            return aux.AttrDict
+
+
+
 
 
 
@@ -279,9 +318,9 @@ class ConfSelector(OptionalSelector):
 
     """Select among stored configurations of a given conftype by ID"""
     def __init__(self, conftype, **kwargs):
-        conftype0=ConfType(conftype=conftype)
+
         kws={
-            'objects' : conftype0.ids,
+            'objects' : reg.stored.confIDs(conftype),
             'doc' : f'The {conftype} configuration ID',
             **kwargs
         }
@@ -289,22 +328,13 @@ class ConfSelector(OptionalSelector):
 
 # class
 
-class RefType(ConfTypex):
+class RefType(ConfType):
     """Select a reference dataset by ID"""
     def __init__(self, **kwargs):
         super().__init__(conftype='Ref',**kwargs)
 
-
-    def getRefDir(self, id):
-        if id in self.dict.keys():
-            return self.dict[id]
-        else:
-            reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
-            return None
-
-    def getRef(self, id=None, dir=None):
-        if dir is None:
-            dir=self.getRefDir(id)
+    def get_conf(self, id):
+        dir=self.get_entry(id)
         if dir is not None:
             path = f'{dir}/data/conf.txt'
             if os.path.isfile(path):
@@ -313,6 +343,25 @@ class RefType(ConfTypex):
                     reg.vprint(f'Loaded existing conf {c.id}', 1)
                     return c
         return None
+
+    # def getRefDir(self, id):
+    #     if id in self.dict.keys():
+    #         return self.dict[id]
+    #     else:
+    #         reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
+    #         return None
+    #
+    # def getRef(self, id=None, dir=None):
+    #     if dir is None:
+    #         dir=self.getRefDir(id)
+    #     if dir is not None:
+    #         path = f'{dir}/data/conf.txt'
+    #         if os.path.isfile(path):
+    #             c = aux.load_dict(path)
+    #             if 'id' in c.keys():
+    #                 reg.vprint(f'Loaded existing conf {c.id}', 1)
+    #                 return c
+    #     return None
 
 
 
