@@ -39,7 +39,7 @@ def adapt_models(mIDs=mIDs,refIDs=refIDs,mID0 = 'RE_NEU_PHI_DEF_nav',space_mkeys
         entry = reg.model.adapt_mID(refID=refID, mID0=mID0, mID=mID, space_mkeys=space_mkeys,
                             init=init,
                             save_to=f'{save_to}/GA/{mID}', Nagents=50, Nelits=5, Ngenerations=10, dur=0.4,
-                            fit_dict=util.GA_optimization(fitness_target_refID=refID, **kws))
+                            fit_dict=util.GA_optimization(refID=refID, **kws))
         entries.update(entry)
     return entries
 

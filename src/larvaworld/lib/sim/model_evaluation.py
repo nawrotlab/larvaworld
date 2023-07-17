@@ -1,5 +1,7 @@
 import os
 import warnings
+
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
@@ -9,8 +11,10 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from larvaworld.lib import reg, aux, plot, util
 from larvaworld.lib.sim.base_run import BaseRun
+from larvaworld.lib.process.dataset import RefDataset
 
-class EvalRun(BaseRun):
+
+class EvalRun(BaseRun,RefDataset):
     def __init__(self,parameters, dataset=None,experiment='dispersion',
                  norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,enrichment=True,show=False,  **kwargs):
         '''
@@ -24,9 +28,10 @@ class EvalRun(BaseRun):
             experiment: The type of experiment. Defaults to 'dispersion'
             **kwargs: Arguments passed to parent class
         '''
-
+        RefDataset.__init__(self, dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        d=self.retrieve_dataset()
         # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
-        d = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        # d = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
         d.id = 'experiment'
         d.config.id = 'experiment'
         d.color = 'grey'
@@ -42,7 +47,7 @@ class EvalRun(BaseRun):
         self.eval_metrics = eval_metrics
 
     def setup(self):
-        self.refID = self.p.refID
+        # self.refID = self.p.refID
 
 
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},

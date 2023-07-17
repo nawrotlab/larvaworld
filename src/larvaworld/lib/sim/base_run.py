@@ -5,7 +5,7 @@ import param
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
-
+from larvaworld.lib.process.dataset import RefDataset
 
 
 
@@ -229,5 +229,5 @@ class BaseRun(reg.SimOptions, agentpy.Model):
 
 
 
-
+# class RefRun(BaseRun,RefDataset):
 

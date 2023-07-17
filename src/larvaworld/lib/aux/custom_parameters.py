@@ -97,8 +97,17 @@ class OptionalPhaseRange(Range):
 
 class OptionalSelector(Selector):
     """Select among objects. Default is None even if None not in objects"""
-    def __init__(self, objects,  **kwargs):
-        super().__init__(default=None,empty_default=True,allow_None=True,objects=objects, **kwargs)
+    def __init__(self, objects,default=None,  **kwargs):
+        kws = {
+            'default' : default,
+            'objects': objects,
+            # 'doc': f'The {conftype0.default} configuration ID',
+            **kwargs
+        }
+        if default is None :
+            kws['empty_default']=True
+            kws['allow_None']=True
+        super().__init__(**kws)
 
 class IntegerTuple(NumericTuple):
     """Tuple of integers"""
@@ -169,6 +178,11 @@ class ClassAttr(param.ClassSelector):
         if 'default' not in kwargs.keys() :
             kwargs['default'] = class_()
         super().__init__(class_=class_, **kwargs)
+
+
+
+
+
 
 
 class NestedConf(param.Parameterized):

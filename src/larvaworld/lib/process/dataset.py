@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import warnings
 
+import param
+
 from larvaworld.lib import reg, aux
 
 
@@ -560,6 +562,26 @@ class LarvaDatasetCollection :
 
 
 
+class RefDataset(param.Parameterized):
+    refID = param.Selector(default=None, objects=reg.stored.RefIDs, allow_None=True,
+                                          label='ID of reference dataset',doc='ID of the reference dataset')
+    dir = param.Foldername(default=None,
+                          label='directory of reference dataset', doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
 
+    dataset = param.ClassSelector(default=None,class_=BaseLarvaDataset,
+                          label='reference dataset', doc='The stored reference dataset')
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+    def retrieve_dataset(self):
+        if self.dataset is None:
+            if self.refID is not None:
+                self.dataset = reg.stored.loadRef(self.refID)
+            elif self.dir is not None:
+                self.dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dir}', load_data=False)
+            else:
+                raise ValueError('Unable to load dataset. Either refID or storage path must be provided. ')
+        return self.dataset
 
 

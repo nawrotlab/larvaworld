@@ -1,7 +1,9 @@
+import os
+
 import param
 
 from larvaworld.lib import reg, aux, util
-
+from larvaworld.lib.aux import OptionalSelector
 
 
 class SimTime(aux.NestedConf):
@@ -202,25 +204,115 @@ class EnvConf(aux.NestedConf):
 
 
 
+# class ConfTypeSelector(OptionalSelector):
+#     """Select among available configuration types"""
+#     def __init__(self, **kwargs):
+#         super().__init__(objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
+
+class ConfType(param.Selector) :
+    """Select among available configuration types"""
+    # conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
+
+    def __init__(self,conftype, **kwargs):
+        super().__init__(default=conftype,objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
+
+    @ property
+    def path(self):
+        return f'{reg.CONF_DIR}/{self.default}.txt'
+
+    @property
+    def dict(self):
+        return aux.load_dict(self.path)
+
+    @property
+    def ids(self):
+        return sorted(list(self.dict.keys()))
+
+    def get(self, id):
+        if id in self.dict.keys():
+            d=self.dict[id]
+            try :
+                return aux.AttrDict(d)
+            except:
+                return d
+        else:
+            reg.vprint(f'{self.default} Configuration {id} does not exist', 1)
+            raise ValueError()
+
+
+class ConfTypex(param.Parameterized) :
+    """Select among available configuration types"""
+    conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
+
+    # def __init__(self,conftype, **kwargs):
+    #     super().__init__(default=conftype,objects=reg.CONFTYPES, doc= 'The configuration type',**kwargs)
+
+    @ property
+    def path(self):
+        return f'{reg.CONF_DIR}/{self.conftype}.txt'
+
+    @property
+    def dict(self):
+        return aux.load_dict(self.path)
+
+    @property
+    def ids(self):
+        return sorted(list(self.dict.keys()))
+
+    def get(self, id):
+        if id in self.dict.keys():
+            d=self.dict[id]
+            try :
+                return aux.AttrDict(d)
+            except:
+                return d
+        else:
+            reg.vprint(f'{self.conftype} Configuration {id} does not exist', 1)
+            raise ValueError()
+
+# class ConfID(ConfTypex):
 
 
 
+class ConfSelector(OptionalSelector):
+    # conftype = ConfType(default=conftype)
 
-
-
-class ConfSelector(param.Selector):
     """Select among stored configurations of a given conftype by ID"""
-    def __init__(self, conftype,default=None,  **kwargs):
+    def __init__(self, conftype, **kwargs):
+        conftype0=ConfType(conftype=conftype)
         kws={
-            'default' : default,
-            'objects' : reg.stored.confIDs(conftype),
+            'objects' : conftype0.ids,
             'doc' : f'The {conftype} configuration ID',
             **kwargs
         }
-        if default is None :
-            kws['empty_default']=True
-            kws['allow_None']=True
         super().__init__(**kws)
+
+# class
+
+class RefType(ConfTypex):
+    """Select a reference dataset by ID"""
+    def __init__(self, **kwargs):
+        super().__init__(conftype='Ref',**kwargs)
+
+
+    def getRefDir(self, id):
+        if id in self.dict.keys():
+            return self.dict[id]
+        else:
+            reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
+            return None
+
+    def getRef(self, id=None, dir=None):
+        if dir is None:
+            dir=self.getRefDir(id)
+        if dir is not None:
+            path = f'{dir}/data/conf.txt'
+            if os.path.isfile(path):
+                c = aux.load_dict(path)
+                if 'id' in c.keys():
+                    reg.vprint(f'Loaded existing conf {c.id}', 1)
+                    return c
+        return None
 
 
 

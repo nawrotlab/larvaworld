@@ -85,18 +85,19 @@ class Sensor(Effector):
     def reset_all_gains(self):
         self.gain = self.base_gain
 
+    def compute_single_dx(self,cur, prev):
+        if self.perception == 'log':
+            return cur / prev - 1 if prev != 0 else 0
+        elif self.perception == 'linear':
+            return cur - prev if prev != 0 else 0
+        elif self.perception == 'null':
+            return cur
+
+
     def compute_dX(self, input):
         for id, cur in input.items():
-            if id not in self.gain_ids:
-                self.add_novel_gain(id, con=cur, gain=0.0)
-            else:
-                prev = self.X[id]
-                if self.perception == 'log':
-                    self.dX[id] = cur / prev - 1 if prev != 0 else 0
-                elif self.perception == 'linear':
-                    self.dX[id] = cur - prev if prev != 0 else 0
-                elif self.perception == 'null':
-                    self.dX[id] = cur
+            prev = self.X[id]
+            self.dX[id] = self.compute_single_dx(cur, prev)
         self.X = input
 
     def add_novel_gain(self, id, con=0.0, gain=0.0):
@@ -112,13 +113,23 @@ class Olfactor(Sensor):
     def __init__(self, odor_dict={}, **kwargs):
         super().__init__(gain_dict=odor_dict, **kwargs)
 
-    def update_gain(self):
+    @ property
+    def novel_odors(self):
+        ids=[]
         if self.brain is not None:
             if self.brain.agent is not None:
-                for id in self.brain.agent.model.odor_ids:
-                    if id not in self.gain_ids:
-                        self.add_novel_gain(id)
-                    # print(self.brain.agent.unique_id, id, 'new')
+                ids=self.brain.agent.model.odor_ids
+                ids=[id for id in ids if id not in self.gain_ids]
+        return ids
+
+    def update_gain(self):
+        for id in self.novel_odors:
+            if isinstance(self.input, dict) and id in self.input.keys():
+                con = self.input[id]
+            else:
+                con = 0
+            self.add_novel_gain(id, con=con)
+
 
     def affect_locomotion(self):
         if self.brain is None :

@@ -1183,12 +1183,12 @@ def buildInitDict():
         }
         d['ga_eval_kws'] = {
             'exclusion_mode': {**bF, 'h': 'Whether to use exclusion_mode', 'k': 'exclusion_mode'},
-            'fitness_target_refID': ConfID_entry('Ref'),
             'fitness_target_kws': {'dtype': dict, 'v': {},
                                    'h': 'The target data to derive from the reference dataset for evaluation'},
             'fitness_func_name': {'dtype': str, 'h': 'The method for fitness evaluation'},
             'exclude_func_name': {'dtype': str,
                              'h': 'The method for real-time excluding agents'},
+            **d['reference_dataset']
         }
 
         d['ga_build_kws'] = {
@@ -1330,6 +1330,13 @@ def buildInitDict():
 
         }
 
+        d['reference_dataset'] = {
+            'refID': ConfID_entry('Ref', default='exploration.150controls'),
+            'dir': {'dtype': str, 'symbol': 'dir',
+                    'k': 'dir',
+                    'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
+        }
+
         d['Replay'] = {
             'env_params': ConfID_entry('Env'),
             'transposition': {'dtype': str, 'vs': [None, 'origin', 'arena', 'center'],
@@ -1355,25 +1362,16 @@ def buildInitDict():
                            'h': 'Whether to visualize a small arena.'},
             'overlap_mode': {**bF, 'symbol': sub('mod', 'overlap'), 'k': 'overlap',
                              'h': 'Whether to draw overlapped image of the track.'},
-            'refID': ConfID_entry('Ref'),
-            'dir': {'dtype': str, 'symbol': 'dir',
-                              'k': 'dir',
-                              'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
+            **d['reference_dataset']
         }
 
         d['Eval'] = {
-            'refID': ConfID_entry('Ref', default='None.150controls'),
             'modelIDs': ConfID_entry('Model', single_choice=False, k='mIDs'),
             'dataset_ids': {'dtype': List[str], 'h': 'The ids for the generated datasets', 'k': 'dIDs'},
-            # 'sim_params': d['sim_params'],
             'N': {'dtype': int, 'v': 5, 'lim': (2, 1000),
                   'h': 'Number of agents per model ID',
                   'k': 'N'},
-
-            'dir': {'dtype': str, 'symbol': 'dir',
-                'k': 'dir',
-                'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
-
+            **d['reference_dataset']
         }
 
         d['ModelGroup'] = {

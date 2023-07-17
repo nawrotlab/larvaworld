@@ -225,8 +225,8 @@ class SimModeParser :
                 p.ga_build_kws.ga_space_kws.base_model = sp.ga_space_kws.base_model
             if sp.ga_space_kws.bestConfID is not None:
                 p.ga_build_kws.ga_space_kws.bestConfID = sp.ga_space_kws.bestConfID
-            if sp.ga_eval_kws.fitness_target_refID is not None:
-                p.ga_build_kws.ga_eval_kws.fitness_target_refID = sp.ga_eval_kws.fitness_target_refID
+            if sp.ga_eval_kws.refID is not None:
+                p.ga_build_kws.ga_eval_kws.refID = sp.ga_eval_kws.refID
 
 
             if kw.duration is None:

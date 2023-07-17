@@ -60,14 +60,14 @@ class BaseScreenManager :
 
         self.pygame_keys = None
 
-        self.screen_kws = {
+        self.screen_kws = aux.AttrDict({
             'model': self.model,
             'window_dims': self.window_dims,
             # 'caption': self.media_name,
             'dt': m.dt,
             'fps': int(vis.render.video_speed/m.dt) if fps is None else fps,
 
-        }
+        })
 
     def space2screen_pos(self, pos):
         if pos is None or any(np.isnan(pos)):
@@ -195,9 +195,9 @@ class BaseScreenManager :
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,fps=10,scene='no_boxes',**kwargs):
         super().__init__(black_background=True,fps=fps,**kwargs)
-        self.screen_kws['caption'] = f'GA {self.model.experiment} : {self.model.id}'
-        self.screen_kws['file_path'] = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt'
-        self.screen_kws['panel_width'] = panel_width
+        self.screen_kws.caption = f'GA {self.model.experiment} : {self.model.id}'
+        self.screen_kws.file_path = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt'
+        self.screen_kws.panel_width = panel_width
 
 
     def evaluate_input(self):
@@ -240,11 +240,11 @@ class ScreenManager(BaseScreenManager):
         media_name = self.vis_kwargs.render.media_name
         if media_name is None:
             media_name = str(self.model.id)
-        self.screen_kws['caption'] = media_name
+        self.screen_kws.caption = media_name
         if self.mode == 'video':
-            self.screen_kws['record_video_to'] = f'{f}/{media_name}.mp4'
+            self.screen_kws.record_video_to = f'{f}/{media_name}.mp4'
         if self.mode == 'image':
-            self.screen_kws['record_image_to'] = f'{f}/{media_name}_{self.image_mode}.png'
+            self.screen_kws.record_image_to = f'{f}/{media_name}_{self.image_mode}.png'
         self.build_aux()
 
 
@@ -316,7 +316,7 @@ class ScreenManager(BaseScreenManager):
                 elif self.image_mode == 'snapshots' and self.snapshot_tick:
                     self.capture_snapshot()
 
-    def finalize(self, tick=None):
+    def finalize(self):
         if self.active:
             if self.image_mode == 'overlap':
                 self.v.render()

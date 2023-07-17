@@ -219,8 +219,9 @@ def RSS_dic(dd, d):
     return stat
 
 
-def GA_optimization(fitness_target_refID, fitness_target_kws):
-    d = reg.stored.loadRef(fitness_target_refID)
+def GA_optimization(refID=None, fitness_target_kws=None,d=None):
+    if d is None :
+        d = reg.stored.loadRef(refID)
     fit_dic0 = build_fitness(fitness_target_kws, d)
 
     func_dict = fit_dic0['func_global_dict']

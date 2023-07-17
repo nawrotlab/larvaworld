@@ -13,6 +13,10 @@ GROUPTYPES = ['LarvaGroup', 'SourceGroup', 'epoch']
 
 Path = aux.AttrDict({k : f'{reg.CONF_DIR}/{k}.txt' for k in CONFTYPES})
 
+
+
+
+
 def build_ConfTypeSubkeys():
     d0 = {k: {} for k in CONFTYPES}
     d1 = {
@@ -221,6 +225,8 @@ def next_idx(id, conftype='Exp'):
     return d[conftype][id]
 
 
+# refID = param.Selector(default=None, objects=reg.stored.RefIDs, allow_None=True,
+#                                           label='ID of reference dataset',doc='ID of the reference dataset')
 
 class StoredConfRegistry :
     def __init__(self):

@@ -9,9 +9,10 @@ import progressbar
 import numpy as np
 
 from larvaworld.lib import reg, aux, util
+
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
-
+from larvaworld.lib.process.dataset import RefDataset
 
 
 class GAspace(param.Parameterized):
@@ -147,37 +148,45 @@ exclusion_funcs = aux.AttrDict({
     'bend_errors': bend_error_exclusion
 })
 
-class GAevaluation(param.Parameterized):
+
+
+
+
+
+
+
+
+class GAevaluation(RefDataset):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
     fitness_func_name = param.Selector(default=None,objects=list(fitness_funcs.keys()),
                                        label='name of fitness function',doc='The function that evaluates fitness', allow_None=True)
-    fitness_target_refID = param.Selector(default=None, objects=reg.stored.RefIDs, allow_None=True,
-                                          label='ID of reference dataset',doc='ID of the reference dataset')
+
     fitness_target_kws = param.Parameter(default=None, label='fitness metrics to evaluate',
                                          doc='The target metrics to optimize against')
     fit_dict = param.Dict(default=None,
                           label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
 
-    def __init__(self,fit_kws={}, **kwargs):
+    def __init__(self,fit_kws={},**kwargs):
         super().__init__(**kwargs)
+        self.retrieve_dataset()
         if type(self.exclude_func_name)==str:
             self.exclude_func = exclusion_funcs[self.exclude_func_name]
         else:
             self.exclude_func = None
-        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, self.fitness_target_refID, self.fitness_target_kws, self.fitness_func_name, **fit_kws)
+        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, **fit_kws)
 
-    def define_fitness_evaluation(self,d, refID, target_kws, func_name, **kwargs):
+    def define_fitness_evaluation(self,d, **kwargs):
         if self.exclusion_mode:
             return None
         elif d is not None:
             return d
-        elif refID is not None and target_kws is not None:
-            return util.GA_optimization(refID, target_kws)
-        elif func_name is not None:
-            if type(func_name) == str:
-                fitness_func = fitness_funcs[func_name]
+        elif self.dataset is not None and self.fitness_target_kws is not None:
+            return util.GA_optimization(d=self.dataset, fitness_target_kws=self.fitness_target_kws)
+        elif self.fitness_func_name is not None:
+            if type(self.fitness_func_name) == str:
+                fitness_func = fitness_funcs[self.fitness_func_name]
                 return arrange_fitness(fitness_func, **kwargs)
 
 class GAengine(GAspace, GAevaluation):
@@ -425,7 +434,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
 
     ga_select_kws= reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1)
     ga_space_kws= reg.get_null('ga_space_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,bestConfID=mID1)
-    ga_eval_kws= reg.get_null('ga_eval_kws', exclusion_mode=exclusion_mode,fitness_target_refID=refID)
+    ga_eval_kws= reg.get_null('ga_eval_kws', exclusion_mode=exclusion_mode,refID=refID)
     ga_eval_kws.fit_dict = fit_dict
 
     kws = {

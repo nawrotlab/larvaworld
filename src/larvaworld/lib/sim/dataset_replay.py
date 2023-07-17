@@ -1,16 +1,17 @@
 import copy
 import numpy as np
 
+
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import nam
 
-
 from larvaworld.lib.model import agents, envs
+from larvaworld.lib.process.dataset import RefDataset
 from larvaworld.lib.screen import ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
 
-class ReplayRun(BaseRun):
+class ReplayRun(BaseRun,RefDataset):
     def __init__(self,parameters=None,  dataset=None, experiment='replay', screen_kws={},**kwargs):
         '''
         Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
@@ -21,14 +22,13 @@ class ReplayRun(BaseRun):
             experiment: The type of experiment. Defaults to 'replay'
             **kwargs: Arguments passed to parent class
         '''
-
-        # Specify and load the stored dataset to replay
-        self.dataset = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        RefDataset.__init__(self, dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        d=self.retrieve_dataset()
 
         # Configure the dataset to replay
-        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, self.dataset)
+        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, d)
 
-        super().__init__(runtype='Replay', experiment=experiment, parameters=parameters,
+        BaseRun.__init__(self,runtype='Replay', experiment=experiment, parameters=parameters,
                          dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
 
     def setup(self):
@@ -79,7 +79,7 @@ class ReplayRun(BaseRun):
         self.screen_manager.step()
 
     def end(self):
-        self.screen_manager.finalize(self.t)
+        self.screen_manager.finalize()
 
 
     def define_config(self, p, c):

@@ -112,7 +112,7 @@ class ExpRun(BaseRun):
 
     def end(self):
         """ Repord an evaluation measure. """
-        self.screen_manager.finalize(self.t)
+        self.screen_manager.finalize()
         self.agents.nest_record(self.collectors['end'])
 
     def simulate(self, **kwargs):
