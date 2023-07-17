@@ -43,8 +43,7 @@ class EvalRun(BaseRun):
 
     def setup(self):
         self.refID = self.p.refID
-        if self.p.dataset_ids is None:
-            self.p.dataset_ids = self.p.modelIDs
+
 
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
@@ -64,6 +63,8 @@ class EvalRun(BaseRun):
             {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
     def simulate(self, video=False):
+        if self.p.dataset_ids is None:
+            self.p.dataset_ids = self.p.modelIDs
         dIDs, mIDs = self.p.dataset_ids, self.p.modelIDs
         N, Nm=self.p.N, len(self.p.modelIDs)
         lgs = reg.lgs(sample=self.p.refID, mIDs=mIDs, ids=dIDs,
@@ -75,11 +76,11 @@ class EvalRun(BaseRun):
         self.setup(**self._setup_kwargs)
         c = self.target.config
 
-        tor_durs, dsp_starts, dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
+        self.tor_durs, self.dsp_starts, self.dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
         if self.offline is None:
             print(f'Simulating offline {Nm} models : {dIDs} with {N} larvae each')
-            self.datasets = util.sim_models(mIDs=mIDs, tor_durs=tor_durs,
-                                        dsp_starts=dsp_starts, dsp_stops=dsp_stops,
+            self.datasets = util.sim_models(mIDs=mIDs, tor_durs=self.tor_durs,
+                                        dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
                                         dataset_ids=dIDs,lgs=lgs,
                                         enrichment=self.enrichment,
                                         Nids=N, env_params=c.env_params,
@@ -92,8 +93,8 @@ class EvalRun(BaseRun):
             if self.enrichment is None:
                 conf.enrichment = None
             else:
-                conf.enrichment.metric_definition.dispersion.update({'dsp_starts': dsp_starts, 'dsp_stops': dsp_stops})
-                conf.enrichment.metric_definition.tortuosity.tor_durs = tor_durs
+                conf.enrichment.metric_definition.dispersion.update({'dsp_starts': self.dsp_starts, 'dsp_stops': self.dsp_stops})
+                conf.enrichment.metric_definition.tortuosity.tor_durs = self.tor_durs
             kws0 = aux.AttrDict({
                 'video': video,
                 'save_to': self.save_to,

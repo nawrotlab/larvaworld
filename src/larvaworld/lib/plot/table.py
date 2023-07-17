@@ -45,7 +45,7 @@ def conf_table(df, row_colors, mID, show=False, save_to=None, save_as=None,
 
     if save_as is None:
         save_as = mID
-    P = plot.AutoBasePlot('conf_table', save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax)
+    P = plot.AutoBasePlot(name='conf_table', save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax)
     return P.get()
 
 

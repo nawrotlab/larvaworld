@@ -198,8 +198,11 @@ def store_spatial(s, e, c, d=None):
         e[nam.mean(nam.scal(v))] = e[csdst] / e[nam.cum('dur')]
 
     if d is not None :
-        d.store(s[aux.existing_cols([dst, cdst, sdst, csdst],s)], 'pathlength')
-        d.store(s[['x', 'y']], 'traj.default')
+        try :
+            d.store(s[aux.existing_cols([dst, cdst, sdst, csdst],s)], 'pathlength')
+            d.store(s[['x', 'y']], 'traj.default')
+        except:
+            pass
 
 
 
@@ -224,7 +227,7 @@ def comp_dispersion(s, e, c,d=None, dsp_starts=[0], dsp_stops=[40], **kwargs):
         return
 
     xy0 = d.load_traj(mode='default') if s is None else s[['x', 'y']]
-
+    # print(s)
     dsps = {}
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
         p = reg.getPar(f'dsp_{int(t0)}_{int(t1)}')

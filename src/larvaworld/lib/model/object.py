@@ -12,38 +12,46 @@ class Object(objects.Object):
 
     '''
 
-    def nest_record(self, reporter_dic):
-        # Connect log to the model's dict of logs
-        if self.type not in self.model._logs:
-            self.model._logs[self.type] = {}
-        self.model._logs[self.type][self.id] = self.log
-        self.log['t'] = [self.model.t]  # Initiate time dimension
-
-        # Perform initial recording
-        for var_key, codename in reporter_dic.items():
-            v = aux.rgetattr(self, codename)
-            self.log[var_key] = [v]
-
-        # Set default recording function from now on
-        self.record = self._record  # noqa
-
-    def _nest_record(self, reporter_dic):
-
-        for var_key, codename in reporter_dic.items():
-
-            # Create empty lists
-            if var_key not in self.log:
-                self.log[var_key] = [None] * len(self.log['t'])
-
-            if self.model.t != self.log['t'][-1]:
-
-                # Create empty slot for new documented time step
-                for v in self.log.values():
+    @property
+    def _log(self):
+        l = self.log
+        t = self.model.t
+        if 't' not in l :
+            l['t'] = [t]  # Initiate time dimension
+        # Extend time dimension
+        if t != l['t'][-1]:
+            l['t'].append(t)
+            for v in l.values():
+                while len(v) < len(l['t']):
                     v.append(None)
+        return l
 
-                # Store time step
-                self.log['t'][-1] = self.model.t
-            self.log[var_key][-1] = aux.rgetattr(self, codename)
+    def extend_log(self,l, k,N, v):
+        if k not in l:
+            l[k] = [None]
+        while len(l[k]) < N:
+            l[k].append(None)
+        l[k][-1] = v
+        return l
+
+    def connect_log(self,ls):
+        t=self.type
+        # Connect log to the model's dict of logs
+        if t not in ls:
+            ls[t] = {}
+        if self.id not in ls[t]:
+            ls[t][self.id] = self.log
+
+    def nest_record(self, reporter_dic):
+        self.connect_log(self.model._logs)
+
+        l = self._log
+        N = len(l['t'])
+        for k, codename in reporter_dic.items():
+            l=self.extend_log(l,k, N, v= aux.rgetattr(self, codename))
+
+        self.log = l
+
 
 
 class Named(aux.NestedConf) :

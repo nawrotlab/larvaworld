@@ -23,8 +23,10 @@ class Viewable(aux.NestedConf) :
     default_color = param.Color('black', doc='The default color of the entity',instantiate=True)
     visible = param.Boolean(True, doc='Whether the entity is visible or not')
 
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,default_color ='black',**kwargs):
+        if isinstance(default_color,tuple):
+            default_color=aux.colortuple2str(default_color)
+        super().__init__(default_color =default_color,**kwargs)
         self.color = self.default_color
 
     def set_color(self, color):

@@ -5,12 +5,13 @@ from larvaworld.lib import aux
 
 class RotSurface:
 
-    def __init__(self, x, y, direction, surf):
+    def __init__(self, x, y, direction, surf, model=None):
         self.x = x
         self.y = y
         self.direction = direction
         self.surf = surf
         self.speed = 0
+        self.model = model
 
     def step(self):
         dx = self.speed * math.cos(self.direction)
@@ -56,7 +57,7 @@ class RotTriangle(RotSurface):
 
 class LightSource(RotSurface):
 
-    def __init__(self, x, y, emitting_power, color_fg, color_bg):
+    def __init__(self, x, y, emitting_power, color_fg, color_bg, **kwargs):
         self.emitting_power = emitting_power
         self.color_fg = color_fg
         self.color_bg = color_bg
@@ -70,7 +71,7 @@ class LightSource(RotSurface):
         pygame.draw.circle(self.surf, color_fg, [int(round(self.size / 2)), int(round(self.size / 2))],
                            int(round(self.size / 2)))
 
-        super().__init__(x, y, 0, self.surf)
+        super().__init__(x, y, 0, self.surf, **kwargs)
 
     def get_saved_scene_repr(self):
         return self.__class__.__name__ + ' ' + str(self.x) + ' ' + str(self.y) + ' ' + str(self.emitting_power)

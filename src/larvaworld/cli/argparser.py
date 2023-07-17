@@ -138,7 +138,7 @@ class SimModeParser :
         return sp
 
     def init_mode_subparser(self, sp, m):
-
+        sp.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
         if m in ['Exp', 'Batch', 'Ga']:
             sp.add_argument('experiment', choices=list(reg.CONFTREE[m].keys()), help='The experiment mode')
             # p.add_argument('experiment', choices=reg.stored.confIDs(sim_mode), help='The experiment mode')
@@ -170,7 +170,7 @@ class SimModeParser :
 
     def build_cli_parser(self):
         p = ArgumentParser()
-        p.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
+
 
         subparsers = p.add_subparsers(dest='sim_mode', help='The simulation mode to launch')
         for m in self.sim_modes:

@@ -124,7 +124,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
         evaluation_metrics = {
             'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
             'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                     'dsp_0_40_max', 'dsp_0_60_max', 'str_N', 'tor5', 'tor20'],
+                                     'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
             'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
             'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
             'epochs': ['run_t', 'pau_t'],
@@ -139,6 +139,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
         Eshorts, Dshorts = [], []
         ps = reg.getPar(shs)
         for sh, p in zip(shs, ps):
+            # print(p)
             try:
                 data = d.get_par(par=p,key='end')
                 # data = d.read(key='end')[p]

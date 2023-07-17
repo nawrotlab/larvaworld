@@ -19,6 +19,7 @@ class LarvaReplay(Larva):
         if not set(pos_pars).issubset(cols):
             pos_pars = ['x', 'y']
         self.pos_ar = data[pos_pars].values
+        self.pos_ar = list(zip(self.pos_ar[:,0], self.pos_ar[:,1]))
 
         cen_pars = nam.xy('centroid')
         if set(cen_pars).issubset(cols) :
@@ -38,9 +39,9 @@ class LarvaReplay(Larva):
 
 
         self.front_or_ar = np.deg2rad(
-            data['front_orientation'].values) if 'front_orientation' in cols else np.ones(N) * np.nan
+            data['front_orientation'].values) if 'front_orientation' in cols else [None]*N
         self.rear_or_ar = np.deg2rad(
-            data['rear_orientation'].values) if 'rear_orientation' in cols else np.ones(N) * np.nan
+            data['rear_orientation'].values) if 'rear_orientation' in cols else [None]*N
 
         self.chunk_ids = None
         self.real_length = length
@@ -88,12 +89,12 @@ class LarvaReplay(Larva):
         self.front_or = self.front_or_ar[m.t]
         self.rear_or = self.rear_or_ar[m.t]
         self.bend0 = self.bend_ar[m.t]
-        self.trajectory = self.pos_ar[:m.t, :].tolist()
+        self.trajectory = self.pos_ar[:m.t]
         for p in ['front_orientation_vel0']:
             setattr(self, p, self.data[p].values[m.t] if p in self.data.columns else np.nan)
 
         if not np.isnan(self.pos).any():
-            m.space.move_to(self, self.pos)
+            m.space.move_to(self, np.array(self.pos))
         if m.draw_Nsegs is not None:
             segs = self.segs
             if len(mid) == len(segs) + 1:

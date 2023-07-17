@@ -108,6 +108,7 @@ class ExpRun(BaseRun):
     def update(self):
         """ Record a dynamic variable. """
         self.agents.nest_record(self.collectors['step'])
+        # print(self.t)
 
     def end(self):
         """ Repord an evaluation measure. """
@@ -124,6 +125,8 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
         if self.p.enrichment:
             for d in self.datasets:
+                # print(d.step_data)
+                # raise
                 reg.vprint(f'--- Enriching dataset {d.id} ---', 1)
                 d.enrich(**self.p.enrichment, is_last=False)
                 reg.vprint(f'--- Dataset {d.id} enriched ---', 1)
@@ -135,7 +138,10 @@ class ExpRun(BaseRun):
 
     def retrieve(self):
         ds = []
+
         for gID, df in self.output.variables.items():
+            # print(df)
+            # raise
             assert 'sample_id' not in df.index.names
             kws = {
                 'larva_groups': {gID: self.p.larva_groups[gID]},

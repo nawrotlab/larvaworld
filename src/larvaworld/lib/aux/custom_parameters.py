@@ -80,6 +80,9 @@ class OptionalPositiveInteger(Integer):
 class OptionalPhase(Number):
     """Phase number within (0,2pi)"""
     def __init__(self,default=None, softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
+        # print(default)
+        # if default==np.nan :
+        #     default = None
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
 
 class OptionalPositiveRange(RangeInf):

@@ -76,7 +76,7 @@ class ReplayRun(BaseRun):
     def step(self):
         """ Defines the models' events per simulation step. """
         self.agents.step()
-        self.screen_manager.step(self.t)
+        self.screen_manager.step()
 
     def end(self):
         self.screen_manager.finalize(self.t)

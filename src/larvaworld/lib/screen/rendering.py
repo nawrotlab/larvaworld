@@ -277,7 +277,7 @@ class Viewer(object):
         self.set_bounds(*self.space_bounds)
 
     @staticmethod
-    def load_from_file(file_path,  **kwargs):
+    def load_from_file(file_path, model, **kwargs):
         from larvaworld.lib.model.envs.obstacle import Wall, Box
         with open(file_path) as f:
             line_number = 1
@@ -299,7 +299,7 @@ class Viewer(object):
                     # pass
                     # width = int(words[1])
                     # height = int(words[2])
-                    viewer = Viewer(**kwargs)
+                    viewer = Viewer(model=model,**kwargs)
                 # elif words[0] == 'SensorDrivenRobot':
                 #     x = float(words[1])
                 #     y = float(words[2])
@@ -310,7 +310,7 @@ class Viewer(object):
                     x = int(words[1])
                     y = int(words[2])
                     size = int(words[3])
-                    box = Box(x, y, size, color=aux.Color.random_bright())
+                    box = Box(x, y, size,model=model, color=aux.Color.random_bright())
                     box.label = line_number
                     viewer.put(box)
                 elif words[0] == 'Wall':
@@ -321,7 +321,7 @@ class Viewer(object):
 
                     point1 = geometry.Point(x1, y1)
                     point2 = geometry.Point(x2, y2)
-                    wall = Wall(point1, point2, color=aux.Color.random_bright())
+                    wall = Wall(point1, point2,model=model, color=aux.Color.random_bright())
                     wall.label = line_number
                     viewer.put(wall)
                 elif words[0] == 'Light':
@@ -329,7 +329,7 @@ class Viewer(object):
                     x = int(words[1])
                     y = int(words[2])
                     emitting_power = int(words[3])
-                    light = LightSource(x, y, emitting_power, aux.Color.YELLOW, aux.Color.BLACK)
+                    light = LightSource(x, y, emitting_power, aux.Color.YELLOW, aux.Color.BLACK,model=model)
                     light.label = line_number
                     viewer.put(light)
 

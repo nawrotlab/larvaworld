@@ -237,8 +237,7 @@ class GAlauncher(BaseRun, GAengine):
         self.p.collections = ['pose']
         # self.odor_ids = self.get_all_odors()
         self.build_env(self.p.env_params)
-        self.screen_manager = GA_ScreenManager(model=self,
-                                               panel_width=600, caption=f'GA {self.p.experiment} : {self.id}')
+        self.screen_manager = GA_ScreenManager(model=self)
         self.build_generation()
 
 
@@ -251,7 +250,7 @@ class GAlauncher(BaseRun, GAengine):
 
     def build_generation(self, sorted_genomes=None):
         self.create_generation(sorted_genomes)
-        confs = [{'larva_pars': g.mConf, 'unique_id': id, 'genome': g} for id, g in self.genome_dict.items()]
+        confs = [{'larva_pars': g.mConf, 'unique_id': str(id), 'genome': g} for id, g in self.genome_dict.items()]
         self.place_agents(confs)
         self.set_collectors(self.p.collections)
         if self.multicore:
@@ -268,19 +267,21 @@ class GAlauncher(BaseRun, GAengine):
 
 
 
-    def eval_robots(self, log, Ngen, genome_dict):
+    def eval_robots(self, logs, Ngen, genome_dict):
         reg.vprint(f'Evaluating generation {Ngen}', 1)
-        data = df_from_log(log)
+
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
-        for gID, df in data.items():
+        for gID, gLog in logs.items():
+        # for gID, df in data.items():
+            df = df_from_log(gLog)
             d = self.convert_output_to_dataset(df=df.copy(),id=f'{gID}_generation:{Ngen}')
-            d._enrich(proc_keys=['angular', 'spatial'])
+            d._enrich(proc_keys=['angular', 'spatial'], is_last=False)
             fit_dicts = func(s=d.step_data)
             valid_gs = {}
             for i, g in genome_dict.items():
-                g.fitness_dict = aux.AttrDict({k: dic[i] for k, dic in fit_dicts.items()})
+                g.fitness_dict = aux.AttrDict({k: dic[str(i)] for k, dic in fit_dicts.items()})
                 mus = aux.AttrDict({k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()})
                 if len(mus) == 1:
                     g.fitness = list(mus.values())[0]
@@ -324,7 +325,7 @@ class GAlauncher(BaseRun, GAengine):
         self.generation_step_num += 1
         if self.generation_completed:
             self.agents.nest_record(self.collectors['end'])
-            sorted_genomes = self.eval_robots(log=self._logs, Ngen=self.generation_num, genome_dict=self.genome_dict)
+            sorted_genomes = self.eval_robots(logs=self._logs, Ngen=self.generation_num, genome_dict=self.genome_dict)
             self.delete_agents()
             self._logs = {}
             self.t = 0
@@ -447,30 +448,28 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     entry = {mID1: best_genome.mConf}
     return entry
 
-def df_from_log(log_dict):
-    ddf={}
-    obj_types = {}
-    for obj_type, log_subdict in log_dict.items():
+def df_from_log(gLog):
+    g= {}
+    Ng=0
+    for id, log in gLog.items():
+        N=len(log['t'])
+        Ng+=N
+        # Add object id/key to object log
+        log['obj_id'] = [id] * N
 
-        if obj_type not in obj_types.keys():
-            obj_types[obj_type] = {}
-
-        for obj_id, log in log_subdict.items():
-
-            # Add object id/key to object log
-            log['obj_id'] = [obj_id] * len(log['t'])
-
-            # Add object log to aggregate log
-            for k, v in log.items():
-                if k not in obj_types[obj_type]:
-                    obj_types[obj_type][k] = []
-                obj_types[obj_type][k].extend(v)
-
-    # Transform logs into dataframes
-    for obj_type, log in obj_types.items():
-        index_keys = ['obj_id', 't']
-        df = pd.DataFrame(log)
-        df = df.set_index(index_keys)
-        ddf[obj_type] = df
-        return ddf
+        # Add object log to aggregate log
+        for k, v in log.items():
+            Nv=len(v)
+            if k not in g:
+                g[k] = []
+            # while len(g[k]) < (Ng-Nv):
+            #     g[k].append(None)
+            # g[k][-len(v):] = v
+            g[k].extend(v)
+            # print(id, k, len(g[k]), len(v))
+    # for k, v in g.items():
+    #     print(k,len(v))
+    df = pd.DataFrame(g)
+    return df.set_index(['obj_id', 't'])
+        # return ddf
 

@@ -56,7 +56,10 @@ def colorname2tuple(name):
     c1 = tuple([i * 255 for i in c0])
     return c1
 
-
+def colortuple2str(t):
+    if any([tt>1 for tt in t]):
+        t=tuple([tt/255 for tt in t])
+    return colors.rgb2hex(t, keep_alpha=False)
 
 
 def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):

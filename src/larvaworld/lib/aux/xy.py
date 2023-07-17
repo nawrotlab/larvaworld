@@ -224,6 +224,7 @@ def apply_per_level(s, func, level='AgentID', **kwargs):
     Apply a function to each subdataframe of a dataframe after grouping by level
 
     Args:
+        level:
         s: MultiIndex Dataframe with levels : ['Step', 'AgentID']
         func:function to apply on each subdataframe
 
@@ -250,14 +251,17 @@ def apply_per_level(s, func, level='AgentID', **kwargs):
     A=None
 
     for i, (v, ss) in enumerate(s.groupby(level=level)):
+
         ss = ss.droplevel(level)
         Ai=func(ss, **kwargs)
         if A is None :
             A=init_A(len(Ai.shape))
+            # print(i,'ff')
         if level=='AgentID' :
             A[:, i] = Ai
         elif level=='Step' :
             A[i, :] = Ai
+    # print(s)
     return A
 
 def unwrap_deg(a) :

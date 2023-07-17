@@ -466,8 +466,10 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
                 # plot the shaded range between first and third quantile
                 df_u = df.groupby(level='Step').quantile(q=0.75)
                 df_b = df.groupby(level='Step').quantile(q=0.25)
-                # print(df_u.shape,df_b.shape,x.shape,self.Nticks,d.Nticks)
-                ax.fill_between(x, df_u, df_b, color=c, alpha=.2, zorder=0)
+                # print(df_u.shape,df_b.shape,x.shape,x[:df_u.shape[0]].shape,self.Nticks,d.Nticks)
+                # if x.shape[0]!=df_u.shape[0]
+                # x=x[:df_u.shape[0]]
+                ax.fill_between(x[:df_u.shape[0]], df_u, df_b, color=c, alpha=.2, zorder=0)
 
                 if show_first:
                     df_single = df.xs(df.index.get_level_values('AgentID')[0], level='AgentID')
@@ -475,7 +477,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
 
             # plot the mean on top
             df_m = df.groupby(level='Step').quantile(q=0.5)
-            ax.plot(x, df_m, c, label=l, linewidth=2, alpha=1.0, zorder=10)
+            ax.plot(x[:df_m.shape[0]], df_m, c, label=l, linewidth=2, alpha=1.0, zorder=10)
         self.conf_ax(ax=ax, xlab=f'time, ${unit}$', ylab=ylab,
                   xlim=xlim, ylim=ylim, xMaxN=5, yMaxN=5, leg_loc=leg_loc, **kwargs)
 

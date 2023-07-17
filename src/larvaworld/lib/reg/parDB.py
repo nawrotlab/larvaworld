@@ -2065,6 +2065,8 @@ class ParamRegistry:
                              **kwargs)
 
     def get(self, k, d, compute=True):
+        if k not in self.kdict.keys() :
+            raise ValueError(f'parameter key "{k}" not in database')
         p = self.kdict[k]
         res = p.exists(d)
 
