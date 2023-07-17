@@ -2,6 +2,7 @@ import os
 
 import param
 
+
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import OptionalSelector
 
@@ -15,6 +16,7 @@ class SimTime(aux.NestedConf):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.update_Nsteps()
+        # raise
 
     @param.depends('duration', 'dt', watch=True)
     def update_Nsteps(self):
@@ -38,6 +40,7 @@ class SimOptions(SimTime):
         super().__init__(show_display=show_display,offline=offline,**kwargs)
         # Define constant parameters
         self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
 
     @param.depends('offline','show_display', watch=True)
     def disable_display(self):
@@ -248,8 +251,8 @@ class ConfType(param.Parameterized) :
     item_type =param.ClassSelector(default=None, class_=object,is_instance=False, allow_None=True)
     dict= aux.ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
     # ids = param.List([], item_type=str, doc='The configuration IDs.')
-    id = OptionalSelector(objects=[], doc='The configuration ID')
-    entry = aux.ClassAttr(default=None, class_=None, doc='The configuration')
+    confID = OptionalSelector(objects=[], doc='The configuration ID')
+    dict_entry = aux.ClassAttr(default=None, class_=object, doc='The configuration')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -261,31 +264,32 @@ class ConfType(param.Parameterized) :
         self.update_class(self.conf_class)
         self.dict=self.load()
 
+
     # @param.depends('item_type', watch=True)
     def update_class(self,c):
         self.item_type = c
         # self.param.params('item_type').class_ = c
         self.param.params('dict').item_type = c
-        self.param.params('conf').class_ = c
+        self.param.params('dict_entry').class_ = c
 
     @param.depends('dict', watch=True)
     def update_ids(self):
-        self.param.params('id').objects=self.ids
+        self.param.params('confID').objects=self.confIDs
 
-    @param.depends('id', watch=True)
+    @param.depends('confID', watch=True)
     def update_entry(self):
-        self.entry = self.dict[self.id]
+        self.dict_entry = self.dict[self.confID]
 
 
-    def get_entry(self,id):
-        if id in self.dict.keys():
-            return self.item_type(self.dict[id])
+    def get_entry(self,confID):
+        if confID in self.dict.keys():
+            return self.item_type(self.dict[confID])
         else:
-            reg.vprint(f'{self.conftype} Configuration {id} does not exist', 1)
+            reg.vprint(f'{self.conftype} Configuration {confID} does not exist', 1)
             raise ValueError()
 
-    def get_conf(self, id):
-        return self.get_entry(id)
+    def get_conf(self, confID):
+        return self.get_entry(confID)
 
     # @property
     def load(self):
@@ -295,7 +299,7 @@ class ConfType(param.Parameterized) :
         return aux.save_dict(self.dict, self.path)
 
     @property
-    def ids(self):
+    def confIDs(self):
         return sorted(list(self.dict.keys()))
 
     @property
@@ -328,44 +332,48 @@ class ConfSelector(OptionalSelector):
 
 # class
 
-class RefType(ConfType):
-    """Select a reference dataset by ID"""
-    def __init__(self, **kwargs):
-        super().__init__(conftype='Ref',**kwargs)
-
-    def get_conf(self, id):
-        dir=self.get_entry(id)
-        if dir is not None:
-            path = f'{dir}/data/conf.txt'
-            if os.path.isfile(path):
-                c = aux.load_dict(path)
-                if 'id' in c.keys():
-                    reg.vprint(f'Loaded existing conf {c.id}', 1)
-                    return c
-        return None
-
-    # def getRefDir(self, id):
-    #     if id in self.dict.keys():
-    #         return self.dict[id]
-    #     else:
-    #         reg.vprint(f'Reference dataset with ID {id} does not exist. Returning None', 1)
-    #         return None
-    #
-    # def getRef(self, id=None, dir=None):
-    #     if dir is None:
-    #         dir=self.getRefDir(id)
-    #     if dir is not None:
-    #         path = f'{dir}/data/conf.txt'
-    #         if os.path.isfile(path):
-    #             c = aux.load_dict(path)
-    #             if 'id' in c.keys():
-    #                 reg.vprint(f'Loaded existing conf {c.id}', 1)
-    #                 return c
-    #     return None
-
-
-
-
+# class RefType(ConfType):
+#     from larvaworld import BaseLarvaDataset
+#
+#     dir = param.Foldername(default=None,
+#                            label='directory of reference dataset',
+#                            doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
+#     conf=param.ClassSelector(default=None, class_=aux.AttrDict,
+#                                   label='reference dataset config', doc='The stored reference dataset config')
+#     dataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
+#                                   label='reference dataset', doc='The stored reference dataset')
+#
+#
+#     """Select a reference dataset by ID"""
+#     def __init__(self,refID =None,dir =None, **kwargs):
+#         super().__init__(conftype='Ref',id=refID,entry=dir,**kwargs)
+#         self.refID=self.id
+#         self.update_dir()
+#
+#
+#     @param.depends('entry', watch=True)
+#     def update_dir(self):
+#         self.dir = self.entry
+#         self.update_conf()
+#
+#     @param.depends('dir', watch=True)
+#     def update_conf(self, **kwargs):
+#         if self.dir is not None:
+#             path = f'{self.dir}/data/conf.txt'
+#             if os.path.isfile(path):
+#                 c = aux.load_dict(path)
+#                 if 'id' in c.keys():
+#                     reg.vprint(f'Loaded existing conf {c.id}', 1)
+#                     self.conf = c
+#         self.update_dataset(**kwargs)
+#
+#     #@param.depends('conf', watch=True)
+#     def update_dataset(self, **kwargs):
+#         from larvaworld import LarvaDataset
+#         if self.conf is not None:
+#             self.dataset = LarvaDataset(config=self.conf, **kwargs)
+#         elif self.dir is not None:
+#             self.dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dir}', **kwargs)
 
 
 

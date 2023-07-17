@@ -170,7 +170,7 @@ class GAevaluation(RefDataset):
 
     def __init__(self,fit_kws={},**kwargs):
         super().__init__(**kwargs)
-        self.retrieve_dataset()
+        # self.retrieve_dataset()
         if type(self.exclude_func_name)==str:
             self.exclude_func = exclusion_funcs[self.exclude_func_name]
         else:

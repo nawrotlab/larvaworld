@@ -32,7 +32,7 @@ from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
 from .config import CONFTYPES,Path, stored, CONFTREE, CONFTREE_EXPANDED, lgs, lg, next_idx
-from .generators import gen,GTRvsS,full_lg, class_generator, SimOptions,ConfType, ConfSelector, RefType
+from .generators import gen,GTRvsS,full_lg, class_generator, SimOptions,ConfType, ConfSelector
 from .controls import controls
 
 vprint("Initializing model registry")

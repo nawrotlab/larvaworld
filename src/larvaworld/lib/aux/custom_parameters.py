@@ -194,11 +194,14 @@ class NestedConf(param.Parameterized):
 
         param_classes = self.param.objects()
         for k, p in param_classes.items():
-            if  k in kwargs.keys():
-                if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
-                    kwargs[k] = p.class_(**kwargs[k])
-                elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk,vv in kwargs[k].items()):
-                    kwargs[k] = p.class_({kk: p.item_type(**vv) for kk, vv in kwargs[k].items()})
+            try:
+                if  k in kwargs.keys():
+                    if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
+                        kwargs[k] = p.class_(**kwargs[k])
+                    elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk,vv in kwargs[k].items()):
+                        kwargs[k] = p.class_({kk: p.item_type(**vv) for kk, vv in kwargs[k].items()})
+            except :
+                pass
         super().__init__(**kwargs)
 
 

@@ -36,7 +36,10 @@ class BaseRun(reg.SimOptions, agentpy.Model):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
+        # print(kwargs)
+        # raise
         reg.SimOptions.__init__(self, **kwargs)
+        # raise
         self.experiment = experiment if experiment is not None else parameters.experiment
         self.runtype = runtype
         self.agent_class=self.define_agent_class()

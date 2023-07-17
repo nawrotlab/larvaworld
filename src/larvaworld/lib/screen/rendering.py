@@ -310,7 +310,7 @@ class Viewer(object):
                     x = int(words[1])
                     y = int(words[2])
                     size = int(words[3])
-                    box = Box(x, y, size,model=model, color=aux.Color.random_bright())
+                    box = Box(x, y, size,model=model, default_color='lightgreen')
                     box.label = line_number
                     viewer.put(box)
                 elif words[0] == 'Wall':
@@ -321,7 +321,7 @@ class Viewer(object):
 
                     point1 = geometry.Point(x1, y1)
                     point2 = geometry.Point(x2, y2)
-                    wall = Wall(point1, point2,model=model, color=aux.Color.random_bright())
+                    wall = Wall(point1, point2,model=model, default_color='lightgreen')
                     wall.label = line_number
                     viewer.put(wall)
                 elif words[0] == 'Light':

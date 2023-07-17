@@ -38,13 +38,13 @@ class RadiallyExtended(PointPositioned):
         return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
 
 class OrientedPoint(RadiallyExtended):
-    orientation = aux.OptionalPhase(label='orientation',doc='The absolute orientation in space.')
+    orientation = aux.Phase(label='orientation',doc='The absolute orientation in space.')
 
-    def __init__(self,**kwargs):
+    def __init__(self,orientation=None,**kwargs):
         # orientation = float(orientation)
-        # if orientation in [None, np.nan] :
-        #     orientation=0.0
-        super().__init__(**kwargs)
+        if orientation in [None, np.nan] :
+            orientation=np.random.uniform(0, 2 * np.pi)
+        super().__init__(orientation=orientation,**kwargs)
         self.initial_orientation = self.orientation
 
 

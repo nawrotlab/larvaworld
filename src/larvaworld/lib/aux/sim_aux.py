@@ -195,6 +195,7 @@ def generate_seg_positions(Nsegs, pos, orientation, length,seg_ratio=None) :
     x,y=pos
     if seg_ratio is None:
         seg_ratio = np.array([1 / Nsegs] * Nsegs)
+    # c,s=np.cos(orientation),np.sin(orientation)
     ls_x = np.cos(orientation) * length * seg_ratio
     ls_y = np.sin(orientation) * length / Nsegs
     return [[x + (-i + (Nsegs - 1) / 2) * ls_x[i],

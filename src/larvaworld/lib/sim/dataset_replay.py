@@ -23,7 +23,8 @@ class ReplayRun(BaseRun,RefDataset):
             **kwargs: Arguments passed to parent class
         '''
         RefDataset.__init__(self, dataset=dataset, refID=parameters.refID, dir=parameters.dir)
-        d=self.retrieve_dataset()
+        self.dataset.load()
+        d=self.dataset
 
         # Configure the dataset to replay
         self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, d)

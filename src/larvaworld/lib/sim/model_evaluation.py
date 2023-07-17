@@ -29,7 +29,7 @@ class EvalRun(BaseRun,RefDataset):
             **kwargs: Arguments passed to parent class
         '''
         RefDataset.__init__(self, dataset=dataset, refID=parameters.refID, dir=parameters.dir)
-        d=self.retrieve_dataset()
+        d=self.dataset
         # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
         # d = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
         d.id = 'experiment'
