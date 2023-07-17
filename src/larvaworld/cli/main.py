@@ -1,28 +1,14 @@
-from argparse import ArgumentParser
 
 
 from larvaworld.lib import aux
-from larvaworld.cli.argparsing import run_template, subparser_dict
+from larvaworld.cli.argparser import SimModeParser
 
 
 def main():
-    p=ArgumentParser()
-    # subps = p.add_subparsers(dest='sim_mode', help='The simulation mode to launch')
-    p,MPs=subparser_dict(p)
-    # MPs=dict()
-    # ps=dict()
-    # for mode in ['Exp','Batch', 'Ga', 'Eval', 'Replay'] :
-    #     subp = subps.add_parser(mode)
-    #     MPs[mode] = get_parser(mode,subp)
-    args = aux.AttrDict(vars(p.parse_args()))
-    # print(args)
-    # raise
-    sim_mode = args.sim_mode
-    kw_dicts = MPs[sim_mode].get(args)
-    args.pop('sim_mode')
-    # kw_dicts['sim_params']=MPs['sim_params'].get(args)
-    kws = aux.AttrDict({'id': args.id, **kw_dicts['sim_params']})
-    run_template(sim_mode, args, kw_dicts, kws)
+    MP=SimModeParser()
+    # args = aux.AttrDict(vars(MP.p.parse_args()))
+    MP.configure(show_args=False)
+    MP.launch()
 
 
 if __name__ == '__main__':

@@ -101,12 +101,13 @@ def class_generator(agent_class, mode='Unit') :
                     ids = [f'{gid}_{i}' for i in range(A.distribution.N)]
 
                     gconf.pop('distribution')
-                    if A.agent_class=='Food':
-                        ps = A.distribution()
-                        confs = [{'unique_id': id, 'pos': p, **gconf} for id, p in zip(ids, ps)]
-                    else :
+
+                    try :
                         ps,ors=A.distribution()
                         confs = [{'unique_id': id, 'pos': p, 'orientation': ori, **gconf} for id, p,ori in zip(ids, ps, ors)]
+                    except:
+                        ps = A.distribution()
+                        confs = [{'unique_id': id, 'pos': p, **gconf} for id, p in zip(ids, ps)]
                     all_confs += confs
                 else:
                     gconf.unique_id=gid

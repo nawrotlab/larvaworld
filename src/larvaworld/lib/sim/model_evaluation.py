@@ -11,7 +11,7 @@ from larvaworld.lib import reg, aux, plot, util
 from larvaworld.lib.sim.base_run import BaseRun
 
 class EvalRun(BaseRun):
-    def __init__(self,parameters, dataset=None,dur=None,experiment='dispersion',
+    def __init__(self,parameters, dataset=None,experiment='dispersion',
                  norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,enrichment=True,show=False,  **kwargs):
         '''
         Simulation mode 'Eval' compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.
@@ -31,11 +31,10 @@ class EvalRun(BaseRun):
         d.config.id = 'experiment'
         d.color = 'grey'
         d.config.color = 'grey'
-        if dur is None:
-            dur = d.config.Nticks * d.config.dt / 60
+        kwargs['dt'] = d.config.dt
+        kwargs['duration'] = d.config.Nticks * kwargs['dt'] / 60
         self.target = d
-        super().__init__(runtype='Eval', experiment=experiment, parameters=parameters,
-                         dt =d.config.dt, duration = dur, **kwargs)
+        super().__init__(runtype='Eval', experiment=experiment, parameters=parameters, **kwargs)
         self.eval_modes = eval_modes
         self.norm_modes = norm_modes
         self.show = show

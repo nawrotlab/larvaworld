@@ -79,14 +79,19 @@ class BaseRun(reg.SimOptions, agentpy.Model):
 
     @property
     def configuration_text(self):
+        pref0 = '     '
         text = f"Simulation configuration : \n" \
-               "\n" \
-               f"Experiment : {self.experiment}\n" \
-               f"Simulation ID : {self.id}\n" \
-               f"Duration (min) : {self.duration}\n" \
-               f"Timestep (sec) : {self.dt}\n" \
-               f"Plot path : {self.plot_dir}\n" \
-               f"Parent path : {self.dir}"
+               f"{pref0}Simulation mode : {self.runtype}\n" \
+               f"{pref0}Experiment : {self.experiment}\n" \
+               f"{pref0}Simulation ID : {self.id}\n" \
+               f"{pref0}Duration (min) : {self.duration}\n" \
+               f"{pref0}Timestep (sec) : {self.dt}\n" \
+               f"{pref0}Ticks (#) : {self.Nsteps}\n" \
+               f"{pref0}Box2D active : {self.Box2D}\n" \
+               f"{pref0}Display active : {self.show_display}\n" \
+               f"{pref0}Offline mode : {self.offline}\n" \
+               f"{pref0}Data storage : {self.store_data}\n" \
+               f"{pref0}Parent path : {self.dir}"
         return text
 
     @property

@@ -106,6 +106,22 @@ class AttrDict(dict):
     def load(cls, file):
         return load_dict(file)
 
+    def print(self, flat=False):
+        if flat :
+            for k, v in self.flatten().items():
+                print(f'      {k} : {v}')
+        else:
+            pref0='     '
+            def print_nested_level(d, pref=pref0):
+                for k, v in d.items():
+                    if not isinstance(v, dict):
+                        print(f'{pref}{k} : {v}')
+                    else:
+                        print(f'{pref}{k} : ')
+                        print_nested_level(v, pref=f'{pref}{pref0}')
+
+            print_nested_level(self, pref=pref0)
+
 
 
 
