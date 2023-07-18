@@ -7,7 +7,47 @@ from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import OptionalSelector
 
 
-class SimTime(aux.NestedConf):
+
+class SimModeOps(aux.NestedConf):
+    runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
+
+    def __init__(self,runtype,**kwargs):
+        super().__init__(runtype=runtype,**kwargs)
+        self.param.add_parameter('experiment', self.exp_selector_param)
+        if 'experiment' in kwargs :
+            self.experiment=kwargs['experiment']
+        self.param.add_parameter('id', param.String(None, constant=True,doc='Unique ID of the simulation. If not specified it is automatically set according to the simulation mode and experiment type.'))
+        if 'id' in kwargs and kwargs['id'] is not None:
+            self.id = kwargs['id']
+        else :
+            self.id=self.generate_id(self.runtype, self.experiment)
+
+
+    def generate_id(self, runtype,exp):
+        idx = reg.next_idx(exp, conftype=runtype)
+        return f'{exp}_{idx}'
+
+    @ property
+    def exp_selector_param(self):
+        runtype = self.runtype
+        defaults = {
+            'Exp': 'dish',
+            'Batch': 'PItest_off',
+            'Ga': 'exploration',
+            'Eval': 'dispersal',
+            'Replay': 'replay'
+        }
+        kws = {
+            'default': defaults[runtype],
+            'doc': 'The experiment simulated'
+        }
+        if runtype in ['Exp', 'Batch', 'Ga']:
+            ids = reg.stored.confIDs(runtype)
+            return param.Selector(objects=ids, **kws)
+        else:
+            return param.String(**kws)
+
+class SimTimeOps(aux.NestedConf):
     dt = aux.PositiveNumber(0.1, softmax=1.0, step=0.01, doc='The timestep of the simulation in seconds.')
     duration = aux.OptionalPositiveNumber(5.0, softmax=100.0, step=0.1,
                                           doc='The duration of the simulation in minutes.')
@@ -27,7 +67,7 @@ class SimTime(aux.NestedConf):
         self.duration = self.Nsteps * self.dt / 60
 
 
-class SimOptions(SimTime):
+class SimGeneralOps(aux.NestedConf):
     Box2D = param.Boolean(False,doc='Whether to use the Box2D physics engine or not.')
     store_data = param.Boolean(True, doc='Whether to store the simulation data')
     larva_collisions = param.Boolean(True, doc='Whether to allow overlap between larva bodies.')
@@ -46,6 +86,102 @@ class SimOptions(SimTime):
     def disable_display(self):
         if self.offline :
             self.show_display=False
+
+class SimOps(SimModeOps,SimTimeOps,SimGeneralOps):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+class ConfType(param.Parameterized) :
+    """Select among available configuration types"""
+    conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
+    path = param.Filename(label='path to configuration dictionary',
+                           doc='The path to configuration dictionary')
+    item_type =param.ClassSelector(default=None, class_=object,is_instance=False, allow_None=True)
+    dict= aux.ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
+    # ids = param.List([], item_type=str, doc='The configuration IDs.')
+    confID = OptionalSelector(objects=[], doc='The configuration ID')
+    dict_entry = aux.ClassAttr(default=None, class_=object, doc='The configuration')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.update_conftype()
+
+    @param.depends('conftype', watch=True)
+    def update_conftype(self):
+        self.path = f'{reg.CONF_DIR}/{self.conftype}.txt'
+        self.update_class(self.conf_class)
+        self.dict=self.load()
+
+
+    # @param.depends('item_type', watch=True)
+    def update_class(self,c):
+        self.item_type = c
+        # self.param.params('item_type').class_ = c
+        self.param.params('dict').item_type = c
+        self.param.params('dict_entry').class_ = c
+
+    @param.depends('dict', watch=True)
+    def update_ids(self):
+        self.param.params('confID').objects=self.confIDs
+
+    @param.depends('confID', watch=True)
+    def update_entry(self):
+        self.dict_entry = self.dict[self.confID]
+
+
+    def get_entry(self,confID):
+        if confID in self.dict.keys():
+            return self.item_type(self.dict[confID])
+        else:
+            reg.vprint(f'{self.conftype} Configuration {confID} does not exist', 1)
+            raise ValueError()
+
+    def get_conf(self, confID):
+        return self.get_entry(confID)
+
+    # @property
+    def load(self):
+        return aux.load_dict(self.path)
+
+    def save(self):
+        return aux.save_dict(self.dict, self.path)
+
+    @property
+    def confIDs(self):
+        return sorted(list(self.dict.keys()))
+
+    @property
+    def conf_class(self):
+        c=self.conftype
+        if c is None :
+            return None
+        elif c=='Ref':
+            return str
+        else :
+            return aux.AttrDict
+
+
+
+
+
+
+class ConfSelector(OptionalSelector):
+    # conftype = ConfType(default=conftype)
+
+    """Select among stored configurations of a given conftype by ID"""
+    def __init__(self, conftype, **kwargs):
+
+        kws={
+            'objects' : reg.stored.confIDs(conftype),
+            'doc' : f'The {conftype} configuration ID',
+            **kwargs
+        }
+        super().__init__(**kws)
+
+
+
+
+
 
 from larvaworld.lib import model
 from larvaworld.lib.model import Food, Border, DiffusionValueLayer, WindScape, ThermoScape, spatial, \
@@ -243,139 +379,6 @@ class EnvConf(aux.NestedConf):
 #             raise ValueError()
 
 
-class ConfType(param.Parameterized) :
-    """Select among available configuration types"""
-    conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
-    path = param.Filename(label='path to configuration dictionary',
-                           doc='The path to configuration dictionary')
-    item_type =param.ClassSelector(default=None, class_=object,is_instance=False, allow_None=True)
-    dict= aux.ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
-    # ids = param.List([], item_type=str, doc='The configuration IDs.')
-    confID = OptionalSelector(objects=[], doc='The configuration ID')
-    dict_entry = aux.ClassAttr(default=None, class_=object, doc='The configuration')
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.update_conftype()
-
-    @param.depends('conftype', watch=True)
-    def update_conftype(self):
-        self.path = f'{reg.CONF_DIR}/{self.conftype}.txt'
-        self.update_class(self.conf_class)
-        self.dict=self.load()
-
-
-    # @param.depends('item_type', watch=True)
-    def update_class(self,c):
-        self.item_type = c
-        # self.param.params('item_type').class_ = c
-        self.param.params('dict').item_type = c
-        self.param.params('dict_entry').class_ = c
-
-    @param.depends('dict', watch=True)
-    def update_ids(self):
-        self.param.params('confID').objects=self.confIDs
-
-    @param.depends('confID', watch=True)
-    def update_entry(self):
-        self.dict_entry = self.dict[self.confID]
-
-
-    def get_entry(self,confID):
-        if confID in self.dict.keys():
-            return self.item_type(self.dict[confID])
-        else:
-            reg.vprint(f'{self.conftype} Configuration {confID} does not exist', 1)
-            raise ValueError()
-
-    def get_conf(self, confID):
-        return self.get_entry(confID)
-
-    # @property
-    def load(self):
-        return aux.load_dict(self.path)
-
-    def save(self):
-        return aux.save_dict(self.dict, self.path)
-
-    @property
-    def confIDs(self):
-        return sorted(list(self.dict.keys()))
-
-    @property
-    def conf_class(self):
-        c=self.conftype
-        if c is None :
-            return None
-        elif c=='Ref':
-            return str
-        else :
-            return aux.AttrDict
-
-
-
-
-
-
-class ConfSelector(OptionalSelector):
-    # conftype = ConfType(default=conftype)
-
-    """Select among stored configurations of a given conftype by ID"""
-    def __init__(self, conftype, **kwargs):
-
-        kws={
-            'objects' : reg.stored.confIDs(conftype),
-            'doc' : f'The {conftype} configuration ID',
-            **kwargs
-        }
-        super().__init__(**kws)
-
-# class
-
-# class RefType(ConfType):
-#     from larvaworld import BaseLarvaDataset
-#
-#     dir = param.Foldername(default=None,
-#                            label='directory of reference dataset',
-#                            doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
-#     conf=param.ClassSelector(default=None, class_=aux.AttrDict,
-#                                   label='reference dataset config', doc='The stored reference dataset config')
-#     dataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
-#                                   label='reference dataset', doc='The stored reference dataset')
-#
-#
-#     """Select a reference dataset by ID"""
-#     def __init__(self,refID =None,dir =None, **kwargs):
-#         super().__init__(conftype='Ref',id=refID,entry=dir,**kwargs)
-#         self.refID=self.id
-#         self.update_dir()
-#
-#
-#     @param.depends('entry', watch=True)
-#     def update_dir(self):
-#         self.dir = self.entry
-#         self.update_conf()
-#
-#     @param.depends('dir', watch=True)
-#     def update_conf(self, **kwargs):
-#         if self.dir is not None:
-#             path = f'{self.dir}/data/conf.txt'
-#             if os.path.isfile(path):
-#                 c = aux.load_dict(path)
-#                 if 'id' in c.keys():
-#                     reg.vprint(f'Loaded existing conf {c.id}', 1)
-#                     self.conf = c
-#         self.update_dataset(**kwargs)
-#
-#     #@param.depends('conf', watch=True)
-#     def update_dataset(self, **kwargs):
-#         from larvaworld import LarvaDataset
-#         if self.conf is not None:
-#             self.dataset = LarvaDataset(config=self.conf, **kwargs)
-#         elif self.dir is not None:
-#             self.dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dir}', **kwargs)
-
-
 
 class LarvaGroup(aux.NestedConf):
     model = ConfSelector('Model')
@@ -539,7 +542,7 @@ class ExpConf(aux.NestedConf):
     # trials = param.Selector(default='default', objects=stored.confIDs('Trial'), doc='The trial configuration ID')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
     larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
-    sim_params = aux.ClassAttr(SimOptions,doc='The simulation configuration')
+    # sim_params = aux.ClassAttr(SimOps,doc='The simulation configuration')
     enrichment = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
     experiment = ConfSelector('Exp')
     # experiment = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')

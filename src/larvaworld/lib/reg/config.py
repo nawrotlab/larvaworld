@@ -6,6 +6,8 @@ import param
 import larvaworld
 from larvaworld.lib import reg, aux, util
 
+SIMTYPES=['Exp', 'Batch', 'Ga', 'Eval','Replay']
+
 CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
                           'Group', 'Trial', 'Life', 'Body', 'Tree', 'Source']
 

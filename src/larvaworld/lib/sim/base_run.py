@@ -10,10 +10,9 @@ from larvaworld.lib.process.dataset import RefDataset
 
 
 
-class BaseRun(reg.SimOptions, agentpy.Model):
+class BaseRun(reg.SimOps, agentpy.Model):
 
-    def __init__(self, runtype, parameters=None, save_to=None, id=None,experiment=None,
-                 **kwargs):
+    def __init__(self, runtype,parameters=None, save_to=None,**kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.
@@ -36,29 +35,31 @@ class BaseRun(reg.SimOptions, agentpy.Model):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
-        # print(kwargs)
-        # raise
-        reg.SimOptions.__init__(self, **kwargs)
-        # raise
-        self.experiment = experiment if experiment is not None else parameters.experiment
-        self.runtype = runtype
-        self.agent_class=self.define_agent_class()
-        parameters.steps = self.Nsteps
         agentpy.Model.__init__(self, parameters=parameters)
+        reg.SimOps.__init__(self, runtype=runtype,**kwargs)
+        self.agent_class = self.define_agent_class()
+        # print(self.id)
+        # raise
+        # self.experiment = experiment if experiment is not None else parameters.experiment
+        # self.runtype = runtype
 
+        self.p.steps = self.Nsteps
+
+        # print(self.id)
+        # raise
 
         # Define ID
-        if id is None:
-            idx = reg.next_idx(self.experiment, conftype=runtype)
-            id = f'{self.experiment}_{idx}'
-        self.id = id
+        # if id is None:
+        #     idx = reg.next_idx(self.experiment, conftype=runtype)
+        #     id = f'{self.experiment}_{idx}'
+        # self.id = id
 
 
 
         # Define directories
         if save_to is None:
             save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        self.dir = f'{save_to}/{self.experiment}/{id}'
+        self.dir = f'{save_to}/{self.experiment}/{self.id}'
         self.plot_dir = f'{self.dir}/plots'
         self.data_dir = f'{self.dir}/data'
         self.save_to = self.dir

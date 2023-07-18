@@ -112,7 +112,6 @@ class SimModeParser :
         'Ga': ['ga_select_kws', 'ga_space_kws', 'ga_eval_kws'],
         'Replay': ['Replay']
     })
-        self.sim_modes= list(self.dict.keys())
         self.parser_keys=aux.unique_list(aux.flatten_list(list(self.dict.values())))
         self.parsers =self.init_parsers()
         self.cli_parser = self.build_cli_parser()
@@ -173,7 +172,7 @@ class SimModeParser :
 
 
         subparsers = p.add_subparsers(dest='sim_mode', help='The simulation mode to launch')
-        for m in self.sim_modes:
+        for m in reg.SIMTYPES:
             sp = subparsers.add_parser(m)
             sp = self.init_mode_subparser(sp, m)
             sp = self.populate_mode_subparser(sp, m)
