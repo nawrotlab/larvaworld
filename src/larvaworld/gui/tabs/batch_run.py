@@ -70,7 +70,7 @@ class BatchTab(gui_aux.GuiTab):
     def run(self, v, w, c, d, g, conf, id):
         batch_id = v[self.batch_id_key]
         conf['id'] = batch_id
-        conf['batch_type'] = id
+        conf['experiment'] = id
         exec = sim.Exec(mode='batch', conf=conf, run_externally=self.gui.run_externally['batch'])
         self.DL0.add(w, {batch_id: exec})
         exec.run()
@@ -116,8 +116,8 @@ class BatchTab(gui_aux.GuiTab):
         self.graph_list.update(w, fig_dict)
 
 
-def stored_trajs(batch_type):
-    path = f'{reg.BATCH_DIR}/{batch_type}/{batch_type}.hdf5'
+def stored_trajs(experiment):
+    path = f'{reg.BATCH_DIR}/{experiment}/{experiment}.hdf5'
     try:
         store = pd.HDFStore(path, mode='r')
         dic = {k:store for k in store.keys()}

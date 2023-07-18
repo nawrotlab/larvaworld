@@ -104,9 +104,9 @@ def storeH5(df, path=None, key=None, mode=None, **kwargs):
 
 
 
-def retrieve_results(batch_type, id):
+def retrieve_results(experiment, id):
     from larvaworld.lib import reg
-    f=f'{reg.SIM_DIR}/batch_runs/{batch_type}/{id}/results.h5'
+    f=f'{reg.SIM_DIR}/batch_runs/{experiment}/{id}/results.h5'
     try:
         df =  pd.read_hdf(f, key='results')
     except:
@@ -115,9 +115,9 @@ def retrieve_results(batch_type, id):
     return df,figs
 
 
-def delete_traj(batch_type, key):
+def delete_traj(experiment, key):
     from larvaworld.lib import reg
-    path = f'{reg.SIM_DIR}/batch_runs/{batch_type}/{batch_type}.hdf5'
+    path = f'{reg.SIM_DIR}/batch_runs/{experiment}/{experiment}.hdf5'
     store = pd.HDFStore(path, mode='a')
     del store[key]
     store.close()

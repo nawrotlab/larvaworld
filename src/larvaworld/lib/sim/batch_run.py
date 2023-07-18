@@ -16,15 +16,15 @@ from larvaworld.lib.sim import ExpRun
 
 
 
-class BatchRun(ap.Experiment):
-    def __init__(self, batch_type, space_search,save_to=None, id=None,space_kws={},optimization=None,
+class BatchRun(reg.SimDataOps,ap.Experiment):
+    def __init__(self, experiment, space_search,save_to=None, id=None,space_kws={},optimization=None,
                  exp=None, exp_kws={}, store_data=False, **kwargs):
         '''
         Simulation mode 'Batch' launches a batch-run of a specified experiment type that performs a parameter-space search.
         Extends the agentpy.Experiment class.
         Controls the execution of multiple single simulations ('Exp' mode, see ExpRun class) with slightly different parameter-sets to cover a predefined parameter-space.
         Args:
-            batch_type: The preconfigured type of batch-run to launch
+            experiment: The preconfigured type of batch-run to launch
             save_to: Path to store data. If not specified, it is automatically set to the runtype-specific subdirectory under the platform's ROOT/DATA directory
             id: Unique ID of the batch-run simulation. If not specified it is automatically set according to the batch-run type
             space_search: Dictionary that configures the parameter-space to be covered. Each entry is a parameter name and the respective arguments
@@ -35,37 +35,31 @@ class BatchRun(ap.Experiment):
             store_data: Whether to store batch-run results
             **kwargs: Arguments passed to parent class
         '''
+        reg.SimDataOps.__init__(self, runtype='Batch',experiment=experiment, id=id,
+                                store_data=store_data,save_to=save_to)
 
-        runtype = 'Batch'
-
-        self.batch_type=batch_type
-
-        if id is None:
-            idx = reg.next_idx(self.batch_type, conftype=runtype)
-            id = f'{self.batch_type}_{idx}'
-        self.id = id
         # Define directories
-        path=f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        if save_to is None:
-            save_to = path
-        self.h5_path=f'{path}/{self.batch_type}/{self.batch_type}.h5'
+        # path=f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
+        # if save_to is None:
+        #     save_to = path
+        # self.h5_path=f'{path}/{self.experiment}/{self.experiment}.h5'
 
-        self.dir = f'{save_to}/{self.batch_type}/{self.id}'
+        # self.dir = f'{save_to}/{self.experiment}/{self.id}'
         self.df_path = f'{self.dir}/results.h5'
-        self.plot_dir = f'{self.dir}/plots'
-        self.data_dir = f'{self.dir}/data'
-        os.makedirs(self.plot_dir, exist_ok=True)
-        os.makedirs(self.data_dir, exist_ok=True)
+        # self.plot_dir = f'{self.dir}/plots'
+        # self.data_dir = f'{self.dir}/data'
+        # os.makedirs(self.plot_dir, exist_ok=True)
+        # os.makedirs(self.data_dir, exist_ok=True)
 
-        self.save_to = self.dir
-        self.store_data = store_data
+        # self.save_to = self.dir
+        # self.store_data = store_data
 
         self.exp_conf = reg.stored.getExp(exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
         if optimization is not None:
             optimization['ranges'] = np.array([space_search[k]['range'] for k in space_search.keys() if 'range' in space_search[k].keys()])
         self.optimization = optimization
-        super().__init__(model_class=ExpRun, sample = space_search_sample(space_search, **space_kws),
+        ap.Experiment.__init__(self, model_class=ExpRun, sample = space_search_sample(space_search, **space_kws),
                          store_data=False, **kwargs)
 
         self.datasets = {}
@@ -191,9 +185,9 @@ def space_search_sample(space_dict,n=1, **kwargs):
 
 
 if __name__ == "__main__":
-    batch_type = 'chemorbit'
-    batch_conf = reg.stored.get('Batch', batch_type)
+    e = 'chemorbit'
+    batch_conf = reg.stored.get('Batch', e)
 
-    m = BatchRun(batch_type=batch_type, **batch_conf)
+    m = BatchRun(batch_type=e, **batch_conf)
     m.simulate(n_jobs=1)
     # m.PI_heatmap(show=True)

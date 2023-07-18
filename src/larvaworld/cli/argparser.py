@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from larvaworld.lib import reg, aux, sim
 
 
-
 class ParsArg:
     """
     Create a single parser argument
@@ -118,9 +117,15 @@ class SimModeParser :
         self.mode=None
         self.run=None
         self.args = aux.AttrDict()
-        self.default_args = aux.AttrDict()
+        # self.default_args = aux.AttrDict()
         self.parser_args = aux.AttrDict()
         self.run_kws = aux.AttrDict()
+
+
+
+    def parse_args(self):
+
+        self.args = aux.AttrDict(vars(self.cli_parser.parse_args()))
 
     def init_parsers(self):
         parsers = aux.AttrDict()
@@ -190,8 +195,9 @@ class SimModeParser :
         return parser_args
 
     def configure(self, show_args=False):
-        self.args = a=aux.AttrDict(vars(self.cli_parser.parse_args()))
-        self.default_args =aux.AttrDict(vars(self.cli_parser.parse_args([])))
+        a=self.args
+
+        # self.default_args =aux.AttrDict(vars(self.cli_parser.parse_args([])))
         self.mode= m =a.sim_mode
         self.parser_args=sp=self.eval_parsers()
         kw = aux.AttrDict({'id': a.id})
@@ -202,7 +208,7 @@ class SimModeParser :
             kw.mode='batch'
             kw.run_externally=False
             kw.conf = reg.stored.get(conftype='Batch', id=a.experiment)
-            kw.conf.batch_type = a.experiment
+            kw.conf.experiment = a.experiment
             kw.conf.exp = update_exp_conf(kw.conf.exp, N=a.Nagents, mIDs=a.models)
             if kw.duration is None:
                 kw.duration = kw.conf.exp.sim_params.duration
@@ -254,9 +260,9 @@ class SimModeParser :
         if input:
             print(f'Input args : ')
             self.args.print(flat=True)
-        if default:
-            print(f'Default args : ')
-            self.default_args.print(flat=True)
+        # if default:
+        #     print(f'Default args : ')
+        #     self.default_args.print(flat=True)
         if run_args:
             if hasattr(self.run, 'configuration_text'):
                 print(self.run.configuration_text)

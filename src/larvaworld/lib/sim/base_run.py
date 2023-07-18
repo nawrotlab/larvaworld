@@ -12,7 +12,7 @@ from larvaworld.lib.process.dataset import RefDataset
 
 class BaseRun(reg.SimOps, agentpy.Model):
 
-    def __init__(self, runtype,parameters=None, save_to=None,**kwargs):
+    def __init__(self, runtype,parameters=None, **kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.
@@ -36,6 +36,7 @@ class BaseRun(reg.SimOps, agentpy.Model):
             **kwargs: Arguments passed to the setup method
         '''
         agentpy.Model.__init__(self, parameters=parameters)
+
         reg.SimOps.__init__(self, runtype=runtype,**kwargs)
         self.agent_class = self.define_agent_class()
         # print(self.id)
@@ -56,16 +57,16 @@ class BaseRun(reg.SimOps, agentpy.Model):
 
 
 
-        # Define directories
-        if save_to is None:
-            save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        self.dir = f'{save_to}/{self.experiment}/{self.id}'
-        self.plot_dir = f'{self.dir}/plots'
-        self.data_dir = f'{self.dir}/data'
-        self.save_to = self.dir
-        if self.store_data :
-            os.makedirs(self.data_dir, exist_ok=True)
-            os.makedirs(self.plot_dir, exist_ok=True)
+        # # Define directories
+        # if save_to is None:
+        #     save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
+        # self.dir = f'{save_to}/{self.experiment}/{self.id}'
+        # self.plot_dir = f'{self.dir}/plots'
+        # self.data_dir = f'{self.dir}/data'
+        # self.save_to = self.dir
+        # if self.store_data :
+        #     os.makedirs(self.data_dir, exist_ok=True)
+        #     os.makedirs(self.plot_dir, exist_ok=True)
         self.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                    'path': f'{self.data_dir}/agentpy_output'}
 

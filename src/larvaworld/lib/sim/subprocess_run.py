@@ -12,7 +12,7 @@ class Exec:
         self.conf = conf
         self.progressbar = progressbar
         self.w_progressbar = w_progressbar
-        self.type = self.conf['batch_type'] if mode == 'batch' else self.conf['experiment']
+        self.type = self.conf['experiment'] if mode == 'batch' else self.conf['experiment']
         self.done = False
 
 
@@ -45,14 +45,14 @@ class Exec:
     def retrieve(self, res=None):
         if self.mode == 'batch':
             if res is None and self.run_externally:
-                args = {'batch_type': self.type, 'id': self.conf['id']}
+                args = {'experiment': self.type, 'id': self.conf['id']}
                 res = aux.retrieve_results(**args)
             return res
         elif self.mode == 'sim':
             id = self.conf['id']
             if res is None and self.run_externally:
                 dir0 = f"{reg.SIM_DIR}/single_runs/{self.conf['sim_params']['path']}/{id}"
-                res = [larvaworld.LarvaDataset(f'{dir0}/{id}.{gID}') for gID in self.conf['larva_groups'].keys()]
+                res = [larvaworld.LarvaDataset(dir=f'{dir0}/{id}.{gID}') for gID in self.conf['larva_groups'].keys()]
 
             if res is not None:
                 # TODO sim analysis independent from SingleRun class. Currently exec does not run analysis for "sim" mode

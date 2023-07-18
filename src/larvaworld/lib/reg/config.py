@@ -227,8 +227,6 @@ def next_idx(id, conftype='Exp'):
     return d[conftype][id]
 
 
-# refID = param.Selector(default=None, objects=reg.stored.RefIDs, allow_None=True,
-#                                           label='ID of reference dataset',doc='ID of the reference dataset')
 
 class StoredConfRegistry :
     def __init__(self):
