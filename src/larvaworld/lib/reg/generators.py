@@ -2,9 +2,9 @@ import os
 
 import param
 
-
+import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.aux import OptionalSelector
+from larvaworld.lib.aux import OptionalSelector, spatial
 
 
 class ConfType(param.Parameterized) :
@@ -202,12 +202,11 @@ def resetConfs(conftypes=None, **kwargs):
         conf[conftype].reset(**kwargs)
 
 
-from larvaworld.lib.model import Food, Border, WindScape, ThermoScape, spatial, \
-    FoodGrid, Life, Odor, PointAgent, OrientedAgent, Substrate, Odorscape, DiffusionValueLayer, GaussianValueLayer
+from larvaworld.lib.model import Food, Border, WindScape, ThermoScape, FoodGrid, Life, Odor, PointAgent, OrientedAgent, Substrate, Odorscape, DiffusionValueLayer, GaussianValueLayer
 
 
 def class_generator(agent_class, mode='Unit') :
-    class A(aux.NestedConf):
+    class A(larvaworld.lib.aux.custom_parameters.NestedConf):
 
         def __init__(self, **kwargs):
             if hasattr(A,'distribution'):
@@ -306,7 +305,7 @@ def class_generator(agent_class, mode='Unit') :
 gen=aux.AttrDict({
     'FoodGroup':class_generator(Food, mode='Group'),
     'Food':class_generator(Food, mode='Unit'),
-    'Arena':class_generator(spatial.Area,mode='Unit'),
+    'Arena':class_generator(spatial.Area, mode='Unit'),
     'Border':class_generator(Border, mode='Unit'),
     'Odor':class_generator(Odor, mode='Unit'),
     'Substrate':class_generator(Substrate, mode='Unit'),
@@ -315,7 +314,7 @@ gen=aux.AttrDict({
     'GaussianValueLayer':class_generator(GaussianValueLayer, mode='Unit'),
 })
 
-class SimDataOps(aux.NestedConf):
+class SimDataOps(larvaworld.lib.aux.custom_parameters.NestedConf):
     runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
     id=param.String(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
     dir = param.String(default=None, label='storage folder', doc='The directory to store data')
@@ -382,13 +381,13 @@ class SimOps(SimDataOps,aux.SimTimeOps,aux.SimMetricOps,aux.SimGeneralOps):
         super().__init__(**kwargs)
 
 
-class FoodConf(aux.NestedConf):
+class FoodConf(larvaworld.lib.aux.custom_parameters.NestedConf):
     source_groups = aux.ClassDict(item_type=gen.FoodGroup,  doc='The groups of odor or food sources available in the arena')
     source_units = aux.ClassDict(item_type=gen.Food,  doc='The individual sources  of odor or food in the arena')
     food_grid = aux.ClassAttr(FoodGrid, default=None, doc='The food grid in the arena')
 
 
-class EnvConf(aux.NestedConf):
+class EnvConf(larvaworld.lib.aux.custom_parameters.NestedConf):
     arena = aux.ClassAttr(gen.Arena, doc='The arena configuration')
     food_params = aux.ClassAttr(FoodConf, doc='The food sources in the arena')
     border_list = aux.ClassDict(item_type=gen.Border, doc='The obstacles in the arena')
@@ -396,7 +395,7 @@ class EnvConf(aux.NestedConf):
     windscape = aux.ClassAttr(WindScape, default=None, doc='The wind landscape in the arena')
     thermoscape = aux.ClassAttr(ThermoScape, default=None, doc='The thermal landscape in the arena')
 
-class LarvaGroup(aux.NestedConf):
+class LarvaGroup(larvaworld.lib.aux.custom_parameters.NestedConf):
     model = conf.Model.confID_selector()
     default_color = param.Color('black', doc='The default color of the group')
     odor = aux.ClassAttr(Odor, doc='The odor of the agent')
@@ -461,7 +460,7 @@ class LarvaGroup(aux.NestedConf):
             confs.append(conf)
         return confs
 
-class ExpConf(aux.NestedConf):
+class ExpConf(larvaworld.lib.aux.custom_parameters.NestedConf):
     env_params = conf.Env.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
@@ -475,7 +474,7 @@ class ExpConf(aux.NestedConf):
     def __init__(self,id=None,**kwargs):
         super().__init__(**kwargs)
 
-class DatasetConf(aux.NestedConf):
+class DatasetConf(larvaworld.lib.aux.custom_parameters.NestedConf):
     environment = aux.ClassAttr(EnvConf, doc='The environment configuration')
     sim_options = aux.ClassAttr(SimOps, doc='The spatiotemporal resolution')
     larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')

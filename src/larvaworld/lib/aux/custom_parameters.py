@@ -200,5 +200,49 @@ class ClassAttr(ClassSelector):
         super().__init__(class_=class_, **kwargs)
 
 
+class NestedConf(param.Parameterized):
+
+    def __init__(self,**kwargs):
+        # for k in kwargs.keys():
+        #     p=self.class_type(k)
 
 
+        param_classes = self.param.objects()
+        for k, p in param_classes.items():
+            try:
+                if  k in kwargs.keys():
+                    if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
+                        kwargs[k] = p.class_(**kwargs[k])
+                    elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk,vv in kwargs[k].items()):
+                        kwargs[k] = p.class_({kk: p.item_type(**vv) for kk, vv in kwargs[k].items()})
+            except :
+                pass
+        super().__init__(**kwargs)
+
+
+
+
+    @ property
+    def nestedConf(self):
+        d = aux.AttrDict(self.param.values())
+        d.pop('name')
+        for k, p in self.param.objects().items():
+            if k in d and d[k] is not None :
+
+                if type(p) == ClassAttr:
+                    d[k] = d[k].nestedConf
+                elif type(p) == ClassDict:
+                    d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
+        return d
+
+    #@ property
+    def entry(self, id):
+        d=self.nestedConf
+        if 'distribution' in d.keys():
+            assert 'group' in d.keys()
+            d.group=id
+        else:
+            assert 'unique_id' in d.keys()
+            d.unique_id = id
+            d.pop('unique_id')
+        return {id:d}

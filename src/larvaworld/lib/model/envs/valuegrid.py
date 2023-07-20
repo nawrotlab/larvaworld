@@ -6,13 +6,12 @@ import param
 from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
-from larvaworld.lib import reg, aux
+from larvaworld.lib import aux
 from larvaworld.lib.model.deb.substrate import Substrate
-from larvaworld.lib.model.drawable import ViewableNamed, SpatialEntity
 from larvaworld.lib.screen.rendering import InputBox
 
 
-class GridOverSpace(ViewableNamed, agentpy.Grid):
+class GridOverSpace(aux.ViewableNamed, agentpy.Grid):
     unique_id = param.String('GridOverArena')
     default_color = param.Color(default='white')
     visible = param.Boolean(default=False)
@@ -21,7 +20,7 @@ class GridOverSpace(ViewableNamed, agentpy.Grid):
     grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
     def __init__(self,model,**kwargs):
-        ViewableNamed.__init__(self,**kwargs)
+        aux.ViewableNamed.__init__(self,**kwargs)
         agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
         self._torus = self.space._torus
         self.X, self.Y = self.XY = np.array(self.grid_dims)
@@ -54,7 +53,7 @@ class GridOverSpace(ViewableNamed, agentpy.Grid):
                       (x * (i + 1 - X), y * (j + 1 - Y)),
                       (x * (i - X), y * (j + 1 - Y))])
 
-class ValueGrid(SpatialEntity):
+class ValueGrid(aux.SpatialEntity):
     initial_value = param.Number(0.0, doc='initial value over the grid')
 
     fixed_max = param.Boolean(False,doc='whether the max is kept constant')
@@ -141,49 +140,45 @@ class ValueGrid(SpatialEntity):
     def empty_grid(self):
         self.grid = np.zeros(self.grid_dims)
 
-    def draw_peak(self, viewer):
+    def draw_peak(self, v):
         idx = np.unravel_index(self.grid.argmax(), self.grid.shape)
         p = self.cel_pos(*idx)
-        # vs = self.cell_vertices(*idx)
 
-        viewer.draw_circle(p, self.cell_radius / 2, self.default_color, filled=True, width=0.0005)
-        # viewer.draw_polygon(vs, self.default_color, filled=True, width=0.0005)
-
+        v.draw_circle(p, self.cell_radius / 2, self.default_color, filled=True, width=0.0005)
         p_text = (p[0] + self.x, p[1] - self.y)
-        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), color_active=self.default_color, visible=True,
-                            screen_pos=viewer._transform(p_text))
-        text_box.draw(viewer)
+        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), default_color=self.default_color, visible=True,
+                            screen_pos=v._transform(p_text))
+        text_box.draw(v)
 
-    def draw(self, viewer, **kwargs):
+    def draw(self, v, **kwargs):
         Cgrid = self.get_color_grid().reshape([self.X, self.Y, 3])
         for i in range(self.X):
             for j in range(self.Y):
-                viewer.draw_polygon(self.grid_vertices[i, j], Cgrid[i, j], filled=True)
-        self.draw_peak(viewer)
+                v.draw_polygon(self.grid_vertices[i, j], Cgrid[i, j], filled=True)
+        self.draw_peak(v)
         if self.model.screen_manager.odor_aura:
-            self.draw_isocontours(viewer)
+            self.draw_isocontours(v)
 
-    def draw_isocontours(self, viewer):
+    def draw_isocontours(self, v):
         N = 8
         k = 4
         g = self.grid
-        # c='white'
         c = self.default_color
         vmax = np.max(g)
         for i in range(N):
-            v = vmax * k ** -i
-            if v <= 0:
+            vv = vmax * k ** -i
+            if vv <= 0:
                 continue
-            inds = np.argwhere((v <= g) & (g < v * k)).tolist()
+            inds = np.argwhere((vv <= g) & (g < vv * k)).tolist()
             points = [self.cel_pos(i, j) for (i, j) in inds]
             if len(points) > 2:
                 try:
                     ps = np.array(points)
                     pxy = ps[np.argmax(ps[:, 0]), :] + np.array([self.x, -self.y])
-                    viewer.draw_convex(points, color=c, filled=False, width=0.0005)
-                    text_box = InputBox(text=str(np.round(v, 2)), color_active=c, visible=True,
-                                        screen_pos=viewer._transform(pxy))
-                    text_box.draw(viewer)
+                    v.draw_convex(points, color=c, filled=False, width=0.0005)
+                    text_box = InputBox(text=str(np.round(vv, 2)), default_color=c, visible=True,
+                                        screen_pos=v._transform(pxy))
+                    text_box.draw(v)
                 except:
                     pass
 
@@ -214,13 +209,13 @@ class FoodGrid(ValueGrid):
         q = (v - v0) / (v1 - v0)
         return aux.col_range(q, low=(255, 255, 255), high=self.default_color, mul255=True)
 
-    def draw(self, viewer, **kwargs):
-        viewer.draw_polygon(self.model.space.vertices, self.get_color(v=self.initial_value), filled=True)
+    def draw(self, v, **kwargs):
+        v.draw_polygon(self.model.space.vertices, self.get_color(v=self.initial_value), filled=True)
         for i in range(self.X):
             for j in range(self.Y):
-                v = self.grid[i, j]
-                if v != self.initial_value:
-                    viewer.draw_polygon(self.grid_vertices[i, j], self.get_color(v), filled=True)
+                vv = self.grid[i, j]
+                if vv != self.initial_value:
+                    v.draw_polygon(self.grid_vertices[i, j], self.get_color(vv), filled=True)
 
 
 class Odorscape(ValueGrid):
@@ -272,16 +267,16 @@ class GaussianValueLayer(Odorscape):
         self.max_value = np.max(V.flatten())
         return V
 
-    def draw_isocontours(self, viewer):
+    def draw_isocontours(self, v):
         for s in self.sources:
             p = s.get_position()
             for r in np.arange(0, 0.050, 0.01):
                 pX = (p[0] + r, p[1])
-                v = s.odor.gaussian_value(pX)
-                viewer.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
-                text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True,
-                                    screen_pos=viewer._transform(pX))
-                text_box.draw(viewer)
+                vv = s.odor.gaussian_value(pX)
+                v.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
+                text_box = InputBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True,
+                                    screen_pos=v._transform(pX))
+                text_box.draw(v)
 
 
 class DiffusionValueLayer(Odorscape):
@@ -338,7 +333,7 @@ class DiffusionValueLayer(Odorscape):
 
 
 
-class WindScape(SpatialEntity):
+class WindScape(aux.SpatialEntity):
     unique_id = param.String('WindScape')
     default_color = param.Color(default='red')
     wind_direction = aux.Phase(np.pi,doc='The absolute polar direction of the wind/air puff.')
@@ -372,14 +367,14 @@ class WindScape(SpatialEntity):
 
         return any([l.intersects(ll) for l in self.model.border_lines])
 
-    def draw(self, viewer, **kwargs):
+    def draw(self, v, **kwargs):
         if self.wind_speed > 0:
             for p0, p1 in self.scapelines:
                 l = geometry.LineString([p0, p1])
                 ps = [l.intersection(b) for b in self.model.border_lines if l.intersects(b)]
                 if len(ps) != 0:
                     p1 = ps[np.argmin([geometry.Point(p0).distance(p2) for p2 in ps])].coords[0]
-                viewer.draw_arrow_line(p0, p1, self.default_color, width=0.001,
+                v.draw_arrow_line(p0, p1, self.default_color, width=0.001,
                                        phi=(self.draw_phi % 1000) / 1000)
         self.draw_phi += self.wind_speed
 
@@ -462,17 +457,18 @@ class ThermoScape(ValueGrid):
         size, size2 = [1, 1]
         pos_ad = [size * pos[0], size2 * pos[1]]
         pos_temp = {}
-        nSources = len(self.thermo_source_dTemps)
+        N = len(self.thermo_source_dTemps)
         thermo_gain = {'cool': 0, 'warm': 0}
 
         for k in self.thermoscape_layers:
             v = self.thermoscape_layers[k]
             pos_temp[k] = v.pdf(pos_ad) / v.pdf(self.thermo_sources[k]) * (
-                    self.thermo_source_dTemps[k] * nSources)  # @todo need to check if this works
+                    self.thermo_source_dTemps[k] * N)  # @todo need to check if this works
+            dgain=abs(pos_temp[k] / N)
             if pos_temp[k] < 0:
-                thermo_gain['cool'] += abs(pos_temp[k] / nSources)
+                thermo_gain['cool'] += dgain
             elif pos_temp[k] > 0:
-                thermo_gain['warm'] += abs(pos_temp[k] / nSources)
+                thermo_gain['warm'] += dgain
         return thermo_gain
 
     def get_grid(self):
@@ -487,19 +483,19 @@ class ThermoScape(ValueGrid):
         self.max_value = np.max(V.flatten())
         return V
 
-    def draw_isocontours(self, viewer):  # @todo need to make a draw function for thermogrid.
+    def draw_isocontours(self, v):  # @todo need to make a draw function for thermogrid.
         for k in self.thermo_sources:
             p = self.thermo_sources.k
             for r in np.arange(0, 0.050, 0.01):
                 pX = (p[0] + r, p[1])
-                v = self.thermo_source_dTemps[k]
-                if v < 0:
+                vv = self.thermo_source_dTemps[k]
+                if vv < 0:
                     color2use = 'blue'
                 else:
                     color2use = 'red'
-                viewer.draw_circle(p, r, color2use, filled=False, width=0.0005)
-                text_box = InputBox(text=str(np.round(v, 2)), color_active=self.default_color, visible=True)
-                text_box.draw(viewer)
+                v.draw_circle(p, r, color2use, filled=False, width=0.0005)
+                text_box = InputBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True)
+                text_box.draw(v)
 
 
 def create_odor_layers(model, sources, pars=None):

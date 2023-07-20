@@ -43,11 +43,11 @@ class Timer(param.Parameterized) :
 
 class Oscillator(Timer):
     freq = aux.PositiveNumber(label='oscillation frequency', doc='The initial frequency of the oscillator.')
-    phi = aux.Phase(label='orientation', doc='The absolute orientation in space.')
+    phi = aux.RandomizedPhase(label='orientation', doc='The absolute orientation in space.')
 
     def __init__(self, random_phi=True, freq_range=None,initial_freq=None, **kwargs):
-        if 'phi' not in kwargs.keys():
-            kwargs['phi'] = random.uniform(0, 2 * np.pi) if random_phi else 0.0
+        if 'phi' not in kwargs.keys() and not random_phi:
+            kwargs['phi'] = 0.0
         self.param.freq.bounds = freq_range
         super().__init__(freq=initial_freq,**kwargs)
         self.initial_freq = self.freq

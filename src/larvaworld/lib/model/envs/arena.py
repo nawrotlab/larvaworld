@@ -1,10 +1,9 @@
 import agentpy
 import numpy as np
-import param
 from shapely.geometry import Point,Polygon
 
-from larvaworld.lib import reg, aux
-from larvaworld.lib.model.drawable import ViewableNamedBoundedArea
+from larvaworld.lib import aux
+from larvaworld.lib.aux.drawable import ViewableNamedBoundedArea
 
 
 

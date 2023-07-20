@@ -5,16 +5,15 @@ from shapely.affinity import affine_transform
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.drawable import ViewableLine
-from larvaworld.lib.model.object import NamedObject
+from larvaworld.lib.aux.drawable import ViewableLine
 
 
-class Obstacle(NamedObject, ViewableLine):
-    # width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
+class Obstacle(aux.NamedObject, ViewableLine):
+    closed = param.Boolean(True)
 
-    def __init__(self,model,unique_id=None, edges=None,closed=True, **kwargs):
-        NamedObject.__init__(self,model=model, unique_id=unique_id)
-        ViewableLine.__init__(self,closed=closed, **kwargs)
+    def __init__(self,model,edges=None,**kwargs):
+        aux.NamedObject.__init__(self,model=model)
+        ViewableLine.__init__(self,**kwargs)
 
         # self.vertices = vertices
         self.edges = edges

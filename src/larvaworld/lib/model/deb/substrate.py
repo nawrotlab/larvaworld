@@ -1,5 +1,7 @@
 import pandas as pd
 import param
+
+import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import aux
 
 # Compound densities (g/cm**3)
@@ -69,7 +71,7 @@ substrate_dict = {
     #     },
 
 }
-class Substrate(aux.NestedConf):
+class Substrate(larvaworld.lib.aux.custom_parameters.NestedConf):
     type = param.Selector(objects=['standard', 'agar', 'cornmeal', 'sucrose', 'PED_tracker'],doc='The type of substrate')
     quality = param.Magnitude(1.0,doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
 
@@ -168,12 +170,12 @@ class SubstrateEntry(Substrate):
 # class SubstrateEpochDataFrame(param.DataFrame):
 
 
-class Epoch(aux.NestedConf):
+class Epoch(larvaworld.lib.aux.custom_parameters.NestedConf):
     age_range = aux.OptionalPositiveRange((0.0, None),softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')
     substrate = aux.ClassAttr(Substrate, doc='The substrate of the epoch')
 
 
-class Life2(aux.NestedConf):
+class Life2(larvaworld.lib.aux.custom_parameters.NestedConf):
     age = aux.OptionalPositiveNumber(0.0, softmax=100.0, hardmax=250.0,
                                      doc='The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.')
     # epochs = aux.ClassDict(item_type=Epoch, doc='The feeding epochs comprising life history.')
@@ -218,11 +220,11 @@ class Life2(aux.NestedConf):
             self.age = max(self.age_ticks)
 
 
-class Life(aux.NestedConf):
+class Life(larvaworld.lib.aux.custom_parameters.NestedConf):
     age = aux.OptionalPositiveNumber(0.0,softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.')
     epochs = aux.ClassDict(item_type=Epoch, doc='The feeding epochs comprising life history.')
 
-class Life3(aux.NestedConf):
+class Life3(larvaworld.lib.aux.custom_parameters.NestedConf):
     age = aux.OptionalPositiveNumber(0.0,softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.')
     age_ticks=param.List([0.0], item_type=float, doc='The larva age in hours post-hatch at the end of the rearing periods.The last-one is always equal to the final age (or None). The first is 0.0.')
     subs=param.List([], item_type=Substrate, doc='The substrates of the rearing periods.')

@@ -1,5 +1,7 @@
 import param
 from scipy.stats import multivariate_normal
+
+import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import aux
 
 class Compound(param.Parameterized):
@@ -10,8 +12,8 @@ class Compound(param.Parameterized):
     nO=aux.PositiveInteger(doc=f'number of oxygen atoms')
     nN=aux.PositiveInteger(doc=f'number of nitrogen atoms')
 
-    def __init__(self,d=0,**kwargs):
-        super().__init__(d=d,**kwargs)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         self.ww=self.nC+self.nH/12*1+self.nO/12*16+self.nN/12*14
 
 
@@ -38,9 +40,9 @@ class Substrate(param.Parameterized):
     composition=param.Dict({k : 0.0 for k in all_compounds},doc='The substrate composition')
     quality = param.Magnitude(1.0,doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
 
-    def __init__(self,quality =1.0, **kwargs):
+    def __init__(self,**kwargs):
         composition={k : kwargs[k] if k in kwargs.keys() else 0.0 for k in all_compounds}
-        super().__init__(composition=composition,quality =quality)
+        super().__init__(composition=composition)
         self.d_water = 1
         self.d_yeast_drop = 0.125  # g/cm**3 https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwi3iaeqipLxAhVPyYUKHTmpCqMQFjAAegQIAxAD&url=https%3A%2F%2Fwww.mdpi.com%2F2077-0375%2F11%2F3%2F182%2Fpdf&usg=AOvVaw1qDlMHxBPu73W8B1vZWn76
         self.V_drop = 0.05  # cm**3
@@ -100,7 +102,7 @@ substrate_dict = aux.AttrDict(
 
 
 
-class Odor(aux.NestedConf):
+class Odor(larvaworld.lib.aux.custom_parameters.NestedConf):
     id = param.String(None, doc='The unique ID of the odorant')
     intensity = aux.OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
     spread = aux.OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')

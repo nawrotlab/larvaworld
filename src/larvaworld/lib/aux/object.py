@@ -1,8 +1,6 @@
 import param
-from agentpy import objects
 
 from larvaworld.lib import aux
-from larvaworld.lib.screen import IDBox
 
 
 class Object:

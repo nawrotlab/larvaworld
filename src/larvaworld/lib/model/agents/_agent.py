@@ -1,13 +1,8 @@
-import agentpy
 import numpy as np
-import param
-from shapely import geometry
-
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.drawable import LabelledGroupedObject
 from larvaworld.lib.model.composition import Odor
-from larvaworld.lib.model.spatial import RadiallyExtended, OrientedPoint
+from larvaworld.lib.screen import LabelledGroupedObject
 
 
 class NonSpatialAgent(LabelledGroupedObject):
@@ -22,13 +17,8 @@ class NonSpatialAgent(LabelledGroupedObject):
 
 
             """
-
-
     odor = aux.ClassAttr(Odor, doc='The odor of the agent')
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        #self.setup(**kwargs)
 
     @property
     def dt(self):
@@ -39,9 +29,8 @@ class NonSpatialAgent(LabelledGroupedObject):
 
 
 
-class PointAgent(RadiallyExtended,NonSpatialAgent):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class PointAgent(aux.RadiallyExtended,NonSpatialAgent):
+
 
     def draw(self, viewer, filled=True):
         p, c, r = self.get_position(), self.color, self.radius
@@ -58,7 +47,7 @@ class PointAgent(RadiallyExtended,NonSpatialAgent):
             viewer.draw_circle(p, r * 1.1, self.model.screen_manager.selection_color, False, r / 5)
 
 
-class OrientedAgent(OrientedPoint,NonSpatialAgent):
+class OrientedAgent(aux.OrientedPoint,NonSpatialAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

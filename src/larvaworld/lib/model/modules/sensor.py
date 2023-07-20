@@ -6,12 +6,13 @@ from larvaworld.lib.model.modules.basic import Effector
 
 
 class Sensor(Effector):
+    output_range = aux.RangeRobust((-1.0,1.0))
     perception = param.Selector(objects=['linear', 'log', 'null'], label='sensory transduction mode', doc='The method used to calculate the perceived sensory activation from the current and previous sensory input.')
     decay_coef = aux.PositiveNumber(1.0,softmax=2.0, step=0.01, label='sensory decay coef', doc='The linear decay coefficient of the olfactory sensory activation.')
     brute_force = param.Boolean(False, doc='Whether to apply direct rule-based modulation on locomotion or not.')
 
-    def __init__(self, gain_dict={},output_range=(-1.0,1.0),brain=None, **kwargs):
-        super().__init__(output_range=output_range, **kwargs)
+    def __init__(self, gain_dict={},brain=None, **kwargs):
+        super().__init__(**kwargs)
         self.brain = brain
         self.interruption_counter = 0
 

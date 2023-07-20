@@ -236,7 +236,7 @@ class ScreenManager(BaseScreenManager):
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-        f = self.model.save_to
+        f = self.model.dir
         media_name = self.vis_kwargs.render.media_name
         if media_name is None:
             media_name = str(self.model.id)
@@ -272,10 +272,10 @@ class ScreenManager(BaseScreenManager):
                                          center=True, w=120 * 4, h=32 * 4,
                                          font=pygame.font.SysFont("comicsansms", 32 * 2))
 
-        self.sim_clock = screen.SimulationClock(m.dt, color=c)
-        self.sim_scale = screen.SimulationScale(m.space.dims[0], color=c)
-        self.sim_state = screen.SimulationState(model=m, color=c)
-        self.screen_texts = {name: screen.InputBox(text=name, color_active=c, color_inactive=c) for name in [
+        self.sim_clock = screen.SimulationClock(m.dt,self.window_dims, default_color=c)
+        self.sim_scale = screen.SimulationScale(m.space.dims[0],self.window_dims, default_color=c)
+        self.sim_state = screen.SimulationState(model=m,self.window_dims, default_color=c)
+        self.screen_texts = {name: screen.InputBox(text=name, default_color=c) for name in [
             'trajectory_dt',
             'trails',
             'focus_mode',
@@ -300,7 +300,7 @@ class ScreenManager(BaseScreenManager):
             'is_paused',
         ]}
         for name in list(m.odor_layers.keys()):
-            self.screen_texts[name] = screen.InputBox(text=name, color_active=c, color_inactive=c)
+            self.screen_texts[name] = screen.InputBox(text=name, default_color=c)
 
 
 
@@ -357,7 +357,7 @@ class ScreenManager(BaseScreenManager):
         if self.vis_kwargs.render.intro_text:
             box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                            text=self.model.configuration_text,
-                           color_active=pygame.Color('white'),
+                           default_color=pygame.Color('white'),
                            visible=True,
                            center=True, w=220 * 4, h=200 * 4,
                            font=pygame.font.SysFont("comicsansms", 25))
@@ -415,9 +415,9 @@ class ScreenManager(BaseScreenManager):
         # self.model.borders._draw(v=v)
 
     def render_aux(self):
-        self.sim_clock.render(*self.window_dims)
-        self.sim_scale.render(*self.window_dims)
-        self.sim_state.render(*self.window_dims)
+        # self.sim_clock.render(*self.window_dims)
+        # self.sim_scale.render(*self.window_dims)
+        # self.sim_state.render(*self.window_dims)
         for t in self.screen_texts.values():
             t.render(*self.window_dims)
 
@@ -451,7 +451,8 @@ class ScreenManager(BaseScreenManager):
             value = self.snapshot_counter
             self.snapshot_counter += 1
         elif name == 'odorscape #':
-            reg.graphs.dict['odorscape'](odor_layers = self.model.odor_layers,save_to=self.model.plot_dir, show=show, scale=self.model.scaling_factor, idx=self.odorscape_counter)
+            reg.graphs.dict['odorscape'](odor_layers = self.model.odor_layers,save_to=self.model.plot_dir,
+                                         show=show, scale=self.model.scaling_factor, idx=self.odorscape_counter)
             value = self.odorscape_counter
             self.odorscape_counter += 1
         elif name == 'trajectory_dt':
@@ -502,8 +503,7 @@ class ScreenManager(BaseScreenManager):
 
     def apply_screen_zoom(self, d_zoom):
         self.v.zoom_screen(d_zoom)
-        self.sim_scale = SimulationScale(self.model.space.dims[0] * self.v.zoom, color=self.sim_scale.color)
-        self.sim_scale.render(*self.window_dims)
+        self.sim_scale.real_width=self.model.space.dims[0] * self.v.zoom
 
 
 

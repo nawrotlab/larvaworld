@@ -1,8 +1,10 @@
 import numpy as np
 import param
+
+import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import aux
 
-class Gut(aux.NestedConf):
+class Gut(larvaworld.lib.aux.custom_parameters.NestedConf):
     M_gm = aux.PositiveNumber(10 ** -2, doc='gut capacity in C-moles for unit of gut volume')
     r_w2l = param.Magnitude(0.2, doc='body width to length ratio')
     r_gut_w = param.Magnitude(0.7, doc='gut width relative to body width')

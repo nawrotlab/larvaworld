@@ -6,6 +6,7 @@ import os
 import numpy as np
 import param
 
+import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
 
@@ -23,7 +24,7 @@ Larvae were reared from egg-hatch to mid- third-instar (96±2h post-hatch) in 25
 '''
 
 
-class DEB(aux.NestedConf):
+class DEB(larvaworld.lib.aux.custom_parameters.NestedConf):
     species = param.Selector(objects=['default', 'rover', 'sitter'],label='phenotype',
                              doc='The phenotype/species-specific fitted DEB model to use.') # Drosophila model by default
     assimilation_mode = param.Selector(objects=['gut','sim', 'deb'], label='assimilation mode',

@@ -105,7 +105,6 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
 
 def get_display_dims():
     import pygame
-
     pygame.init()
     W, H = pygame.display.Info().current_w, pygame.display.Info().current_h
     return int(W * 2 / 3 / 16) * 16, int(H * 2 / 3 / 16) * 16

@@ -14,7 +14,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ExpRun(BaseRun):
-    def __init__(self,experiment=None,parameters=None, screen_kws={},video=None, parameter_dict={}, **kwargs):
+    def __init__(self,experiment=None,parameters=None, screen_kws={},parameter_dict={}, **kwargs):
         '''
         Simulation mode 'Exp' launches a single simulation of a specified experiment type.
 
@@ -34,7 +34,7 @@ class ExpRun(BaseRun):
         super().__init__(runtype = 'Exp',experiment=experiment,parameters=parameters, **kwargs)
 
         self.screen_kws = screen_kws
-        self.video = video
+        # self.video = video
         self.parameter_dict = parameter_dict
 
 
@@ -58,7 +58,7 @@ class ExpRun(BaseRun):
         # self.end_output_keys = list(self.collectors['end'].keys())
         self.accessible_sources = None
 
-        self.screen_manager = ScreenManager(model=self, **self.screen_kws, video=self.video)
+        self.screen_manager = ScreenManager(model=self, **self.screen_kws)
 
 
         if not self.larva_collisions:

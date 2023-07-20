@@ -8,6 +8,7 @@ import pandas as pd
 import progressbar
 import numpy as np
 
+import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import reg, aux, util
 
 from larvaworld.lib.screen import GA_ScreenManager
@@ -155,7 +156,7 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-class GAevaluation(aux.NestedConf):
+class GAevaluation(larvaworld.lib.aux.custom_parameters.NestedConf):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)

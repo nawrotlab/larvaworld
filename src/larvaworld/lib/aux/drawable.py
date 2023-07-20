@@ -1,10 +1,6 @@
 import param
-from agentpy import objects
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.object import Named, NamedObject, GroupedObject
-from larvaworld.lib.model.spatial import LineExtended, RadiallyExtended, BoundedArea
-from larvaworld.lib.screen import IDBox
 
 
 
@@ -44,32 +40,24 @@ class Viewable(aux.NestedConf) :
         pass
 
 
-class ViewableNamed(Viewable,Named):
+class ViewableNamed(Viewable,aux.Named):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class ViewableSingleObject(Viewable,NamedObject):
+class ViewableSingleObject(Viewable,aux.NamedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-class ViewableGroupedObject(Viewable,GroupedObject):
+class ViewableGroupedObject(Viewable,aux.GroupedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class LabelledGroupedObject(ViewableGroupedObject):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.id_box = IDBox(agent=self)
-
-    def _draw(self,v,**kwargs):
-        if self.visible :
-            self.draw(v,**kwargs)
-            self.id_box.draw(v)
 
 
-class ViewableLine(Viewable,LineExtended):
+
+class ViewableLine(Viewable,aux.LineExtended):
 
 
     def draw(self, v, **kwargs):
@@ -79,15 +67,15 @@ class ViewableLine(Viewable,LineExtended):
             for ver in self.vertices:
                 v.draw_polyline(ver, color=self.color, width=self.width, closed=self.closed)
 
-class ViewableBoundedArea(Viewable,BoundedArea): pass
+class ViewableBoundedArea(Viewable,aux.BoundedArea): pass
 
 
 
-class ViewableNamedLine(ViewableLine,Named): pass
+class ViewableNamedLine(ViewableLine,aux.Named): pass
 
-class ViewableNamedBoundedArea(ViewableBoundedArea,Named): pass
+class ViewableNamedBoundedArea(ViewableBoundedArea,aux.Named): pass
 
-class ViewableCircle(Viewable,RadiallyExtended):
+class ViewableCircle(Viewable,aux.RadiallyExtended):
 
     def draw(self, v, filled=True, radius_coeff=1, color=None, width_as_radius_fraction=5):
         if color is None :
