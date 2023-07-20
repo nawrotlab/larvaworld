@@ -138,18 +138,17 @@ class ExpRun(BaseRun):
 
     def retrieve(self):
         ds = []
-
         for gID, df in self.output.variables.items():
             # print(df)
             # raise
             assert 'sample_id' not in df.index.names
             kws = {
                 'larva_groups': {gID: self.p.larva_groups[gID]},
-                'df': df,
+                # 'df': df,
                 'id': gID,
                 'dir': f'{self.data_dir}/{gID}'
             }
-            d = self.convert_output_to_dataset(**kws)
+            d = self.convert_output_to_dataset(df, **kws)
 
             ds.append(d)
 

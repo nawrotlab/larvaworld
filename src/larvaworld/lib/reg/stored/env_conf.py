@@ -94,9 +94,9 @@ def Env_dict() :
                  }
         elif o == 'G':
             o = {'odorscape': 'Gaussian',
-                 'grid_dims': None,
-                 'evap_const': None,
-                 'gaussian_sigma': None
+                 # 'grid_dims': None,
+                 # 'evap_const': None,
+                 # 'gaussian_sigma': None
                  }
         if w is not None:
             if 'puffs' in w.keys():

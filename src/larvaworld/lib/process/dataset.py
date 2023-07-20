@@ -10,7 +10,23 @@ from larvaworld.lib import reg, aux
 
 
 class BaseLarvaDataset:
-    def __init__(self, dir=None, config=None, refID=None,load_data=True, **kwargs):
+
+    @staticmethod
+    def initGeo(to_Geo=False,**kwargs):
+        if to_Geo:
+            try:
+                from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
+                return LarvaTrajectoryCollection(**kwargs)
+            except :
+                pass
+            # from larvaworld.lib.process.dataset import LarvaDataset
+        return LarvaDataset(**kwargs)
+
+
+
+
+
+    def __init__(self, dir=None, config=None, refID=None,load_data=True,step=None, end=None,agents=None, **kwargs):
         '''
         Dataset class that stores a single experiment, real or simulated.
         Metadata and configuration parameters are stored in the 'config' dictionary.
@@ -64,7 +80,13 @@ class BaseLarvaDataset:
         self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
         if load_data:
             self.load()
+        elif step is not None or end is not None:
+            self.set_data(step=step, end=end, agents=agents)
 
+
+
+    def set_data(self, step=None, end=None,**kwargs):
+        pass
 
     def generate_config(self, **kwargs):
         c0 = aux.AttrDict({'id': 'unnamed',
@@ -186,7 +208,7 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 
-    def set_data(self, step=None, end=None):
+    def set_data(self, step=None, end=None, agents=None):
         c=self.config
         if step is not None:
             assert step.index.names == ['Step', 'AgentID']
@@ -208,6 +230,9 @@ class LarvaDataset(BaseLarvaDataset):
 
         if end is not None:
             self.set_endpoint_data(end)
+
+        if agents is not None :
+            self.larva_dicts = aux.get_larva_dicts(agents, validIDs=self.agent_ids)
 
 
     def _load_step(self, h5_ks=None):
@@ -559,49 +584,62 @@ class LarvaDatasetCollection :
         return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
 
-class RefDataset(aux.NestedConf):
-    refID = reg.conf.Ref.confID_selector()
-    # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')
-    dataset_dir = param.Foldername(default=None,
-                           label='directory of reference dataset',
-                           doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
+# class RefDataset(aux.NestedConf):
+#     refID = reg.conf.Ref.confID_selector()
+#     # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')
+#     dataset_dir = param.Foldername(default=None,
+#                            label='directory of reference dataset',
+#                            doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
+#
+#     conf = param.ClassSelector(default=None, class_=aux.AttrDict,
+#                                label='reference dataset config', doc='The stored reference dataset config')
+#     refDataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
+#                                   label='reference dataset', doc='The stored reference dataset')
+#
+#     """Select a reference dataset by ID"""
+#
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.update_dir()
+#         self.update_conf()
+#
+#
+#
+#     @param.depends('refID', watch=True)
+#     def update_dir(self):
+#         self.dataset_dir = reg.conf.Ref.getRefDir(self.refID)
+#
+#
+#
+#     @param.depends('dataset_dir', watch=True)
+#     def update_conf(self, **kwargs):
+#         if self.dataset_dir is not None:
+#
+#             path = f'{self.dataset_dir}/data/conf.txt'
+#             if os.path.isfile(path):
+#                 c = aux.load_dict(path)
+#                 if 'id' in c.keys():
+#                     reg.vprint(f'Loaded existing conf {c.id}', 1)
+#                     self.conf = c
+#         self.update_dataset(**kwargs)
+#
+#     def update_dataset(self, **kwargs):
+#         if self.conf is not None:
+#             self.refDataset = LarvaDataset(config=self.conf, **kwargs)
+#         elif self.dataset_dir is not None:
+#             self.refDataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dataset_dir}', **kwargs)
 
-    conf = param.ClassSelector(default=None, class_=aux.AttrDict,
-                               label='reference dataset config', doc='The stored reference dataset config')
-    refDataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
-                                  label='reference dataset', doc='The stored reference dataset')
-
-    """Select a reference dataset by ID"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.update_dir()
-        self.update_conf()
-
-
-
-    @param.depends('refID', watch=True)
-    def update_dir(self):
-        self.dataset_dir = reg.conf.Ref.getRefDir(self.refID)
-
-
-
-    @param.depends('dataset_dir', watch=True)
-    def update_conf(self, **kwargs):
-        if self.dataset_dir is not None:
-
-            path = f'{self.dataset_dir}/data/conf.txt'
-            if os.path.isfile(path):
-                c = aux.load_dict(path)
-                if 'id' in c.keys():
-                    reg.vprint(f'Loaded existing conf {c.id}', 1)
-                    self.conf = c
-        self.update_dataset(**kwargs)
-
-    def update_dataset(self, **kwargs):
-        if self.conf is not None:
-            self.refDataset = LarvaDataset(config=self.conf, **kwargs)
-        elif self.dataset_dir is not None:
-            self.refDataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dataset_dir}', **kwargs)
-
+# def prepare_dataset(config,step,end,to_Geo=False,agents=None):
+#     if not to_Geo :
+#         # from larvaworld.lib.process.dataset import LarvaDataset
+#         d = LarvaDataset(config=config)
+#     else:
+#         from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
+#         d = LarvaTrajectoryCollection(config=config)
+#     d.set_data(step=step, end=end)
+#     if agents and not to_Geo:
+#         d.larva_dicts = aux.get_larva_dicts(agents, validIDs=d.agent_ids)
+#
+#
+#     return d
 

@@ -13,12 +13,15 @@ from larvaworld.lib.screen.rendering import InputBox
 
 
 class GridOverSpace(ViewableNamed, agentpy.Grid):
+    unique_id = param.String('GridOverArena')
+    default_color = param.Color(default='white')
+    visible = param.Boolean(default=False)
     # initial_value = param.Number(0.0, doc='initial value over the grid')
     # fixed_max = param.Boolean(False, doc='whether the max is kept constant')
     grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
-    def __init__(self,model,default_color='white',unique_id='GridOverArena', **kwargs):
-        ViewableNamed.__init__(self,visible=False,default_color=default_color,unique_id=unique_id, **kwargs)
+    def __init__(self,model,**kwargs):
+        ViewableNamed.__init__(self,**kwargs)
         agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
         self._torus = self.space._torus
         self.X, self.Y = self.XY = np.array(self.grid_dims)
@@ -197,11 +200,14 @@ class ValueGrid(SpatialEntity):
 
 
 class FoodGrid(ValueGrid):
+    unique_id = param.String('FoodGrid')
+    default_color = param.Color(default='green')
+    fixed_max = param.Boolean(default=True)
+    initial_value = param.Number(10**-5)
     substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
-    def __init__(self, default_color='green', **kwargs):
-        # self.default_color.param.default='green'
-        super().__init__(default_color=default_color, fixed_max=True, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def get_color(self, v):
         v0, v1 = self.min_value, self.max_value
@@ -218,6 +224,7 @@ class FoodGrid(ValueGrid):
 
 
 class Odorscape(ValueGrid):
+    unique_id = param.String('Odorscape')
     odorscape = param.Selector(objects=['Gaussian', 'Diffusion'], doc='The odorscape algorithm')
 
     def __init__(self, subclass_initialized=False, **kwargs):
@@ -239,8 +246,10 @@ class Odorscape(ValueGrid):
 
 
 class GaussianValueLayer(Odorscape):
+    odorscape = param.Selector(default='Gaussian')
+
     def __init__(self, **kwargs):
-        super().__init__(odorscape='Gaussian',subclass_initialized=True,**kwargs)
+        super().__init__(subclass_initialized=True,**kwargs)
 
     def get_value(self, pos):
 
@@ -276,6 +285,7 @@ class GaussianValueLayer(Odorscape):
 
 
 class DiffusionValueLayer(Odorscape):
+    odorscape = param.Selector(default='Diffusion')
     evap_const = param.Magnitude(0.9, doc='The evaporation constant of the diffusion algorithm.')
     gaussian_sigma = param.NumericTuple((0.95, 0.95), doc='The sigma of the gaussian difusion algorithm.')
 
@@ -292,7 +302,7 @@ class DiffusionValueLayer(Odorscape):
     '''
 
     def __init__(self, **kwargs):
-        super().__init__(odorscape='Diffusion',subclass_initialized=True,**kwargs)
+        super().__init__(subclass_initialized=True,**kwargs)
 
 
     def update_values(self):
@@ -329,12 +339,14 @@ class DiffusionValueLayer(Odorscape):
 
 
 class WindScape(SpatialEntity):
+    unique_id = param.String('WindScape')
+    default_color = param.Color(default='red')
     wind_direction = aux.Phase(np.pi,doc='The absolute polar direction of the wind/air puff.')
     wind_speed = aux.PositiveNumber(softmax=100.0, doc='The speed of the wind/air puff.')
     puffs = param.Parameter({},label='air-puffs', doc='Repetitive or single air-puff stimuli.')
 
-    def __init__(self, default_color='red', **kwargs):
-        super().__init__(default_color=default_color,visible=False,**kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.max_dim = np.max(self.model.space.dims)
 
@@ -406,6 +418,8 @@ class WindScape(SpatialEntity):
 
 
 class ThermoScape(ValueGrid):
+    unique_id = param.String('ThermoScape')
+
     def __init__(self, plate_temp=22, spread=0.1,
                  thermo_sources=[[0.5, 0.05], [0.05, 0.5], [0.5, 0.95], [0.95, 0.5]],
                  thermo_source_dTemps=[8, -8, 8, -8], **kwargs):

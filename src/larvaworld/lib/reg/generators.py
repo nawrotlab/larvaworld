@@ -21,6 +21,10 @@ class ConfType(param.Parameterized) :
     def path_to_dict(self):
         return f'{reg.CONF_DIR}/{self.conftype}.txt'
 
+
+
+
+
     @param.depends('conftype', watch=True)
     def update_dict(self):
         self.param.params('dict').item_type = self.dict_entry_type
@@ -139,22 +143,11 @@ class ConfType(param.Parameterized) :
 
 
 class RefType(ConfType):
-    # refID = reg.conf.Ref.confID_selector()
-    # # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')
-    # dataset_dir = param.Foldername(default=None,
-    #                                label='directory of reference dataset',
-    #                                doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
-    #
-    # conf = param.ClassSelector(default=None, class_=aux.AttrDict,
-    #                            label='reference dataset config', doc='The stored reference dataset config')
-    # refDataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
-    #                                  label='reference dataset', doc='The stored reference dataset')
 
     """Select a reference dataset by ID"""
 
 
     def __init__(self, **kwargs):
-        # self.param.params('dict').item_type = str
         super().__init__(conftype='Ref', **kwargs)
 
 
@@ -192,12 +185,6 @@ class RefType(ConfType):
 
     @property
     def dict_entry_type(self):
-    #     c = self.conftype
-    #     if c is None:
-    #         return None
-    #     elif c == 'Ref':
-    #         return str
-    #     else:
         return str
 
 
@@ -215,27 +202,8 @@ def resetConfs(conftypes=None, **kwargs):
         conf[conftype].reset(**kwargs)
 
 
-# class ConfSelector(OptionalSelector):
-#     # conftype = ConfType(default=conftype)
-#
-#     """Select among stored configurations of a given conftype by ID"""
-#     def __init__(self, conftype, **kwargs):
-#
-#         kws={
-#             'objects' : reg.stored.confIDs(conftype),
-#             'doc' : f'The {conftype} configuration ID',
-#             **kwargs
-#         }
-#         super().__init__(**kws)
-
-
-
-
-
-
-from larvaworld.lib import model
-from larvaworld.lib.model import Food, Border, DiffusionValueLayer, WindScape, ThermoScape, spatial, \
-    FoodGrid, Life, Odor, PointAgent, OrientedAgent, Substrate, Odorscape
+from larvaworld.lib.model import Food, Border, WindScape, ThermoScape, spatial, \
+    FoodGrid, Life, Odor, PointAgent, OrientedAgent, Substrate, Odorscape, DiffusionValueLayer, GaussianValueLayer
 
 
 def class_generator(agent_class, mode='Unit') :
@@ -342,9 +310,76 @@ gen=aux.AttrDict({
     'Border':class_generator(Border, mode='Unit'),
     'Odor':class_generator(Odor, mode='Unit'),
     'Substrate':class_generator(Substrate, mode='Unit'),
+    'FoodGrid':class_generator(FoodGrid, mode='Unit'),
+    'DiffusionValueLayer':class_generator(DiffusionValueLayer, mode='Unit'),
+    'GaussianValueLayer':class_generator(GaussianValueLayer, mode='Unit'),
 })
 
+class SimDataOps(aux.NestedConf):
+    runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
+    id=param.String(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
+    dir = param.String(default=None, label='storage folder', doc='The directory to store data')
+    # dir = param.Foldername(default=None, label='storage folder', doc='The directory to store data')
 
+    store_data = param.Boolean(True, doc='Whether to store the simulation data')
+    def __init__(self,runtype='Exp',save_to = None,**kwargs):
+        self.param.add_parameter('experiment', self.exp_selector_param(runtype))
+        super().__init__(runtype=runtype,**kwargs)
+        if self.id is None :
+            self.id=self.generate_id(self.runtype, self.experiment)
+        if save_to is None:
+            save_to = f'{self.path_to_runtype_data}/{self.experiment}'
+        self.dir=f'{save_to}/{self.id}'
+
+    def generate_id(self, runtype,exp):
+        idx = reg.next_idx(exp, conftype=runtype)
+        return f'{exp}_{idx}'
+
+    @property
+    def path_to_runtype_data(self):
+        return f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
+
+    # @property
+    # def dir(self):
+    #     return f'{self.save_to}/{self.id}'
+
+    @property
+    def data_dir(self):
+        f = f'{self.dir}/data'
+        os.makedirs(f, exist_ok=True)
+        return f
+
+    @property
+    def plot_dir(self):
+        f= f'{self.dir}/plots'
+        os.makedirs(f, exist_ok=True)
+        return f
+
+    #@ staticmethod
+    def exp_selector_param(self,runtype):
+        # runtype = self.runtype
+        defaults = {
+            'Exp': 'dish',
+            'Batch': 'PItest_off',
+            'Ga': 'exploration',
+            'Eval': 'dispersal',
+            'Replay': 'replay'
+        }
+        kws = {
+            'default': defaults[runtype],
+            'doc': 'The experiment simulated'
+        }
+        if runtype in ['Exp', 'Batch', 'Ga']:
+            ids = conf[runtype].confIDs
+            return param.Selector(objects=ids, **kws)
+        else:
+            return param.String(**kws)
+
+
+
+class SimOps(SimDataOps,aux.SimTimeOps,aux.SimMetricOps,aux.SimGeneralOps):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
 
 
 class FoodConf(aux.NestedConf):
@@ -440,15 +475,12 @@ class ExpConf(aux.NestedConf):
     def __init__(self,id=None,**kwargs):
         super().__init__(**kwargs)
 
-class Tracker(aux.NestedConf):
-    dt = aux.PositiveNumber(0.1, softmax=1.0, step=0.01, label='tracker timestep',doc='The tracking timestep (inverse of tracking framerate) in seconds.')
-    constant_framerate = param.Boolean(True, doc='Whether the tracking framerate is constant.')
-    XY_unit = param.Selector(default='m', objects=['m', 'mm'], doc='The spatial unit of the XY coordinate data')
-    Npoints = aux.PositiveInteger(1, softmax=20, label='# midline 2D points',doc='The number of points tracked along the larva midline.')
-    Ncontour = aux.PositiveInteger(1, softmax=100, label='# contour 2D points',doc='The number of points tracked around the larva contour.')
+class DatasetConf(aux.NestedConf):
+    environment = aux.ClassAttr(EnvConf, doc='The environment configuration')
+    sim_options = aux.ClassAttr(SimOps, doc='The spatiotemporal resolution')
+    larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
 
 
-gen.Tracker=Tracker
 gen.Env=EnvConf
 gen.LarvaGroup=LarvaGroup
 gen.Exp=ExpConf

@@ -97,8 +97,10 @@ class ViewableCircle(Viewable,RadiallyExtended):
 
 
 class SpatialEntity(ViewableSingleObject):
-    def __init__(self, visible=False,default_color='white', **kwargs):
-        super().__init__(visible=visible,default_color=default_color,**kwargs)
+    default_color = param.Color(default='white')
+    visible = param.Boolean(default=False)
+    # def __init__(self, visible=False,default_color='white', **kwargs):
+    #     super().__init__(visible=visible,default_color=default_color,**kwargs)
 
     def record_positions(self, label='p'):
         """ Records the positions of each agent.

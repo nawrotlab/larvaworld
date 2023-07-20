@@ -1,7 +1,11 @@
 from typing import List
 from argparse import ArgumentParser
 
+import param
+
 from larvaworld.lib import reg, aux, sim
+
+
 
 
 class ParsArg:
@@ -22,6 +26,80 @@ class ParsArg:
     def get(self, input):
         return getattr(input, self.key)
 
+    @ classmethod
+    def from_dict(cls, name, **kwargs):
+        entry = build_ParsArg(name, **kwargs)
+        return cls(**entry)
+
+    @classmethod
+    def from_param(cls, k, p):
+        entry = build_ParamArg(k, p)
+        return cls(**entry)
+
+
+def build_ParamArg(k, p):
+    c = p.__class__
+    # dtype=aux.param_dtype(c)
+    v = p.default
+    d = aux.AttrDict({
+        'key': k,
+        'short': k,
+        'help': p.doc,
+    })
+    if v is not None:
+        d.default = v
+    if c == param.Boolean:
+        d.action = 'store_true' if not v else 'store_false'
+    elif c == param.String:
+        d.type = str
+    elif c in param.Integer.__subclasses__():
+        d.type = int
+    elif c in param.Number.__subclasses__():
+        d.type = float
+    elif c in param.Tuple.__subclasses__():
+        d.type = tuple
+
+    if hasattr(p, 'objects'):
+        d.choices = p.objects
+        if c in param.List.__subclasses__():
+            d.nargs = '+'
+        if hasattr(p, 'item_type'):
+            d.type = p.item_type
+    return d
+
+
+
+def parser_Paramdict(d0):
+    d = aux.AttrDict()
+    for k, p in d0.param.objects().items():
+
+        if p.__class__ not in param.Parameterized.__subclasses__():
+            d[k] = ParsArg.from_param(k, p)
+        else:
+            d[k] = parser_Paramdict(p)
+    return d.flatten()
+
+
+
+
+
+
+class ParsDict:
+    def __init__(self, parsargs):
+        self.parsargs = parsargs
+
+    @classmethod
+    def from_param(cls, d0):
+        parsargs = parser_Paramdict(d0)
+        return cls(parsargs)
+
+    @classmethod
+    def from_dict(cls, d0):
+        parsargs = parser_dict(d0)
+        return cls(parsargs)
+
+
+
 class Parser:
     """
     Create an argument parser for a group of arguments (normally from a dict).
@@ -29,7 +107,8 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        self.parsargs = self.parser_dict(reg.par.PI[name])
+        self.parsargs = parser_dict(reg.par.PI[name])
+
 
     def add(self, parser=None):
         if parser is None:
@@ -42,45 +121,47 @@ class Parser:
         dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
         return dic.unflatten()
 
-    def parser_dict(self, d0):
-        p = aux.AttrDict()
-        for n, v in d0.items():
-            if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
-                entry = self.build_ParsArg(n, **v)
-                p[n] = ParsArg(**entry)
-            else:
-                p[n] = self.parser_dict(v)
+def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
+    if k is None:
+        k = name
+    d = {
+        'key': name,
+        'short': k,
+        'help': h,
+    }
+    if dtype == bool:
+        d['action'] = 'store_true' if not v else 'store_false'
+    elif dtype == List[str]:
+        d['type'] = str
+        d['nargs'] = '+'
+        if vs is not None:
+            d['choices'] = vs
+    elif dtype == List[int]:
+        d['type'] = int
+        d['nargs'] = '+'
+        if vs is not None:
+            d['choices'] = vs
+    else:
+        d['type'] = dtype
+        if vs is not None:
+            d['choices'] = vs
+        if v is not None:
+            d['default'] = v
+            d['nargs'] = '?'
+    return d
 
-        return p.flatten()
-
-    def build_ParsArg(self, name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
-        if k is None:
-            k = name
-        d = {
-            'key': name,
-            'short': k,
-            'help': h,
-        }
-        if dtype == bool:
-            d['action'] = 'store_true' if not v else 'store_false'
-        elif dtype == List[str]:
-            d['type'] = str
-            d['nargs'] = '+'
-            if vs is not None:
-                d['choices'] = vs
-        elif dtype == List[int]:
-            d['type'] = int
-            d['nargs'] = '+'
-            if vs is not None:
-                d['choices'] = vs
+def parser_dict(d0):
+    p = aux.AttrDict()
+    for n, v in d0.items():
+        if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+            p[n] = ParsArg.from_dict(n, **v)
         else:
-            d['type'] = dtype
-            if vs is not None:
-                d['choices'] = vs
-            if v is not None:
-                d['default'] = v
-                d['nargs'] = '?'
-        return d
+            p[n] = parser_dict(v)
+    return p.flatten()
+
+
+
+
 
 class MultiParser:
     """

@@ -43,8 +43,8 @@ from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
 from .config import CONFTYPE_SUBKEYS, Path,stored, CONFTREE, lgs, lg, next_idx, imitation_exp
-from .sim_config import SimModeOps,SimDataOps,SimTimeOps, SimGeneralOps,SimOps
-from .generators import gen,GTRvsS,full_lg, class_generator,ConfType, conf, resetConfs
+
+from .generators import gen,GTRvsS,full_lg, class_generator,ConfType, conf, resetConfs,SimDataOps,SimOps
 from .controls import controls
 
 vprint("Initializing model registry")

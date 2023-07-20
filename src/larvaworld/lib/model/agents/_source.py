@@ -40,11 +40,12 @@ class Source(PointAgent):
 
 
 class Food(Source):
+    default_color = param.Color(default='green')
     amount = aux.PositiveNumber(softmax=10.0, step=0.01, doc='The food amount in the source')
     substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
-    def __init__(self, default_color='green', **kwargs):
-        super().__init__(default_color=default_color, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.initial_amount = self.amount
 
     def subtract_amount(self, amount):

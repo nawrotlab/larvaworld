@@ -12,7 +12,6 @@ from larvaworld.lib import reg, aux, util
 
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
-from larvaworld.lib.process.dataset import RefDataset
 
 
 class GAspace(param.Parameterized):
@@ -286,8 +285,8 @@ class GAlauncher(BaseRun, GAengine):
         func=self.fit_dict.func
         for gID, gLog in logs.items():
         # for gID, df in data.items():
-            df = df_from_log(gLog)
-            d = self.convert_output_to_dataset(df=df.copy(),id=f'{gID}_generation:{Ngen}')
+            df = df_from_log(gLog).copy()
+            d = self.convert_output_to_dataset(df=df,id=f'{gID}_generation:{Ngen}')
             d._enrich(proc_keys=['angular', 'spatial'], is_last=False)
             fit_dicts = func(s=d.step_data)
             valid_gs = {}

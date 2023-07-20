@@ -249,11 +249,13 @@ def sense_food(pos, sources=None, grid=None, radius=None):
     return None
 
 
-def get_larva_dicts(ls):
+def get_larva_dicts(ls, validIDs=None):
     deb_dicts = {}
     nengo_dicts = {}
     bout_dicts = {}
     for id, l in ls.items():
+        if validIDs and id not in validIDs :
+            continue
         if hasattr(l, 'deb') and l.deb is not None:
             deb_dicts[id] = l.deb.finalize_dict()
         try :

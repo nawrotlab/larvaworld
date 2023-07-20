@@ -5,12 +5,10 @@ from shapely import geometry
 from larvaworld.lib import aux
 
 class PointPositioned(aux.NestedConf):
-    pos = param.XYCoordinates(doc='The xy spatial position coordinates')
+    pos = aux.XYCoordRobust(doc='The xy spatial position coordinates')
 
-    def __init__(self, pos = (0.0,0.0), **kwargs):
-        if not isinstance(pos,tuple) :
-            pos=tuple(pos)
-        super().__init__(pos =pos, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.initial_pos = self.pos
 
 
@@ -38,13 +36,11 @@ class RadiallyExtended(PointPositioned):
         return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
 
 class OrientedPoint(RadiallyExtended):
-    orientation = aux.Phase(label='orientation',doc='The absolute orientation in space.')
+    orientation = aux.RandomizedPhase(label='orientation',doc='The absolute orientation in space.')
 
-    def __init__(self,orientation=None,**kwargs):
-        # orientation = float(orientation)
-        if orientation in [None, np.nan] :
-            orientation=np.random.uniform(0, 2 * np.pi)
-        super().__init__(orientation=orientation,**kwargs)
+    def __init__(self,**kwargs):
+
+        super().__init__(**kwargs)
         self.initial_orientation = self.orientation
 
 
@@ -75,10 +71,9 @@ class Area(aux.NestedConf):
 
 class BoundedArea(Area, LineClosed):
 
-    def __init__(self,vertices=None,dims=(0.1, 0.1), **kwargs):
-        if isinstance(dims,list) :
-            dims=tuple(dims)
-        Area.__init__(self,dims=dims,  **kwargs)
+    def __init__(self,vertices=None,**kwargs):
+
+        Area.__init__(self, **kwargs)
         X, Y = self.dims
         if vertices is None:
             if self.geometry == 'circular':

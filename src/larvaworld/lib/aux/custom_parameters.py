@@ -1,6 +1,8 @@
+
+
 import numpy as np
 import param
-from param import Parameterized, Number,NumericTuple,Integer,Selector,String, ListSelector, Range, Magnitude, Boolean,ClassSelector,Parameter, List, Dict
+from param import Parameterized, Number,NumericTuple,Integer,Selector,Range, Magnitude, Boolean,ClassSelector,Parameter, List, Dict
 
 from larvaworld.lib import aux
 
@@ -23,7 +25,15 @@ class Phase(Number):
 
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
 
-class RangeInf(Range):
+class RangeRobust(Range):
+    """Range can be passed as list"""
+
+    def __init__(self, default=(0.0, 0.0), **kwargs):
+        if not isinstance(default,tuple) :
+            default=tuple(default)
+        super().__init__(default=default, **kwargs)
+
+class RangeInf(RangeRobust):
     """Allow None inside tuple"""
 
     def _validate_value(self, val, allow_None):
@@ -51,12 +61,12 @@ class RangeInf(Range):
                                  % (self.name, bound, self.rangestr()))
 
 
-class PositiveRange(Range):
+class PositiveRange(RangeRobust):
     """Tuple range of positive numbers"""
     def __init__(self,default=(0.0, 0.0), softmin=0.0, softmax=None, hardmin=0.0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
 
-class PhaseRange(Range):
+class PhaseRange(RangeRobust):
     """Phase range within (0,2pi)"""
     def __init__(self,default=(0.0, 0.0), softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
@@ -72,12 +82,15 @@ class OptionalPositiveInteger(Integer):
     def __init__(self,default=None, softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
 
-class OptionalPhase(Number):
+class RandomizedPhase(Number):
     """Phase number within (0,2pi)"""
     def __init__(self,default=None, softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
         # print(default)
         # if default==np.nan :
         #     default = None
+        # orientation = float(orientation)
+        if default in [None, np.nan]:
+            default = np.random.uniform(0, 2 * np.pi)
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
 
 class OptionalPositiveRange(RangeInf):
@@ -85,7 +98,7 @@ class OptionalPositiveRange(RangeInf):
     def __init__(self,default=None, softmin=0.0, softmax=None, hardmin=0.0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
 
-class OptionalPhaseRange(Range):
+class OptionalPhaseRange(RangeRobust):
     """Phase range within (0,2pi)"""
     def __init__(self,default=None, softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
@@ -115,7 +128,7 @@ class IntegerTuple(NumericTuple):
             raise ValueError("IntegerTuple parameter %r only takes integer "
                              "values, not type %r." % (self.name, type(n)))
 
-class IntegerRange(Range):
+class IntegerRange(RangeRobust):
     """Tuple range of integers"""
 
     def _validate_value(self, val, allow_None):
@@ -132,6 +145,14 @@ class PositiveIntegerRange(IntegerRange):
     def __init__(self,default=(0, 0), softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
 
+
+class XYCoordRobust(param.XYCoordinates):
+    """XY point coordinates can be passed as list"""
+
+    def __init__(self, default=(0.0, 0.0), **kwargs):
+        if not isinstance(default,tuple) :
+            default=tuple(default)
+        super().__init__(default=default, **kwargs)
 
 class ListXYcoordinates(List):
     """List of XY point coordinates"""
@@ -181,81 +202,3 @@ class ClassAttr(ClassSelector):
 
 
 
-
-
-
-class NestedConf(param.Parameterized):
-
-    def __init__(self,**kwargs):
-        # for k in kwargs.keys():
-        #     p=self.class_type(k)
-
-
-        param_classes = self.param.objects()
-        for k, p in param_classes.items():
-            try:
-                if  k in kwargs.keys():
-                    if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
-                        kwargs[k] = p.class_(**kwargs[k])
-                    elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk,vv in kwargs[k].items()):
-                        kwargs[k] = p.class_({kk: p.item_type(**vv) for kk, vv in kwargs[k].items()})
-            except :
-                pass
-        super().__init__(**kwargs)
-
-
-
-
-    @ property
-    def nestedConf(self):
-        d = aux.AttrDict(self.param.values())
-        d.pop('name')
-        for k, p in self.param.objects().items():
-            if k in d and d[k] is not None :
-
-                if type(p) == ClassAttr:
-                    d[k] = d[k].nestedConf
-                elif type(p) == ClassDict:
-                    d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
-        return d
-
-    #@ property
-    def entry(self, id):
-        d=self.nestedConf
-        if 'distribution' in d.keys():
-            assert 'group' in d.keys()
-            d.group=id
-        else:
-            assert 'unique_id' in d.keys()
-            d.unique_id = id
-            d.pop('unique_id')
-        return {id:d}
-
-
-
-class PreprocessConf(NestedConf):
-    rescale_by = OptionalPositiveNumber(softmax=1000.0, step=0.001, doc='Whether to rescale spatial coordinates by a scalar in meters.')
-    filter_f = OptionalPositiveNumber(softmax=5.0, step=0.01, doc='Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.')
-    transposition = OptionalSelector(['origin', 'arena', 'center'],doc='Whether to transpose spatial coordinates.')
-    interpolate_nans = Boolean(False, doc='Whether to interpolate missing values.')
-    drop_collisions = Boolean(False,doc='Whether to drop timepoints where larva collisions are detected.')
-
-
-
-
-class Metric_Definition(NestedConf):
-    bend = Selector(objects=['from_vectors', 'from_angles'],doc='Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.')
-    front_vector = IntegerRange((1, 2), softbounds=(-12, 12),doc='The initial & final segment of the front body vector.')
-    rear_vector = IntegerRange((-2, -1), softbounds=(-12, 12),doc='The initial & final segment of the rear body vector.')
-    front_body_ratio = Magnitude(0.5, doc='The fraction of the body considered front, relevant for bend computation from angles.')
-    point_idx = OptionalPositiveInteger(softmax=20, doc='Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.')
-    use_component_vel = Boolean(False, doc='Whether to use the component velocity ralative to the axis of forward motion.')
-
-
-class EnrichConf(NestedConf):
-    metric_definition = ClassAttr(Metric_Definition,doc='The metric_definition')
-    pre_kws = ClassAttr(PreprocessConf,doc='The preprocessing pipelines')
-    proc_keys = ListSelector(default=['angular', 'spatial', 'dispersion', 'tortuosity'],objects=['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind'], doc='The processing pipelines')
-    anot_keys = ListSelector(default=['bout_detection', 'bout_distribution', 'interference'], objects=['bout_detection', 'bout_distribution', 'interference', 'source_attraction', 'patch_residency'], doc='The annotation pipelines')
-    recompute = Boolean(False,doc='Whether to recompute')
-    mode = Selector(objects=['minimal', 'full'],doc='The processing mode')

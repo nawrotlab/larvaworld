@@ -7,7 +7,9 @@ from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 
 
-
+# class BaseRunConf(reg.SimOps):
+#     def __init__(self, runtype, **kwargs):
+#         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
 
 class BaseRun(reg.SimOps, agentpy.Model):
 
@@ -34,19 +36,24 @@ class BaseRun(reg.SimOps, agentpy.Model):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
+        reg.SimOps.__init__(self, runtype=runtype, **kwargs)
+        c=reg.SimOps(runtype=runtype,**kwargs)
+        self.agent_class = self.define_agent_class(c)
+        self.agentpy_output_kws = {'exp_name': c.experiment, 'exp_id': c.id,
+                                   'path': f'{c.data_dir}/agentpy_output'}
+        parameters.conf=c
         agentpy.Model.__init__(self, parameters=parameters)
         # print(self.id)
         # raise
-        reg.SimOps.__init__(self, runtype=runtype,**kwargs)
-        self.agent_class = self.define_agent_class()
+        # reg.SimOps.__init__(self, runtype=runtype,**kwargs)
+
         # print(self.id)
         # raise
         # self.experiment = experiment if experiment is not None else parameters.experiment
         # self.runtype = runtype
 
-        self.p.steps = self.Nsteps
-        self.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
-                                   'path': f'{self.data_dir}/agentpy_output'}
+        self.p.steps = self.p.conf.Nsteps
+
 
 
         self.report(['agentpy_output_kws', 'id', 'dir', 'Box2D', 'offline', 'show_display',
@@ -62,26 +69,29 @@ class BaseRun(reg.SimOps, agentpy.Model):
 
     @property
     def configuration_text(self):
+        c=self.p.conf
         pref0 = '     '
         text = f"Simulation configuration : \n" \
-               f"{pref0}Simulation mode : {self.runtype}\n" \
-               f"{pref0}Experiment : {self.experiment}\n" \
-               f"{pref0}Simulation ID : {self.id}\n" \
-               f"{pref0}Duration (min) : {self.duration}\n" \
-               f"{pref0}Timestep (sec) : {self.dt}\n" \
-               f"{pref0}Ticks (#) : {self.Nsteps}\n" \
-               f"{pref0}Box2D active : {self.Box2D}\n" \
-               f"{pref0}Display active : {self.show_display}\n" \
-               f"{pref0}Offline mode : {self.offline}\n" \
-               f"{pref0}Data storage : {self.store_data}\n" \
-               f"{pref0}Parent path : {self.dir}"
+               f"{pref0}Simulation mode : {c.runtype}\n" \
+               f"{pref0}Experiment : {c.experiment}\n" \
+               f"{pref0}Simulation ID : {c.id}\n" \
+               f"{pref0}Duration (min) : {c.duration}\n" \
+               f"{pref0}Timestep (sec) : {c.dt}\n" \
+               f"{pref0}Ticks (#) : {c.Nsteps}\n" \
+               f"{pref0}Box2D active : {c.Box2D}\n" \
+               f"{pref0}Display active : {c.show_display}\n" \
+               f"{pref0}Offline mode : {c.offline}\n" \
+               f"{pref0}Data storage : {c.store_data}\n" \
+               f"{pref0}Parent path : {c.dir}"
         return text
 
     @property
     def Nticks(self):
         return self.t
 
-
+    # @property
+    # def dt(self):
+    #     return self.p.conf.dt
     # def get_all_odors(self, larva_groups={}):
     #     fp=self.p.env_params.food_params
     #
@@ -92,7 +102,7 @@ class BaseRun(reg.SimOps, agentpy.Model):
     #     return ids
 
     def build_env(self, p):
-        reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
+        # reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
         # Define environment
         self.space = envs.Arena(model=self, **p.arena)
 
@@ -147,15 +157,15 @@ class BaseRun(reg.SimOps, agentpy.Model):
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
-    def define_agent_class(self):
-        if self.runtype=='Replay' :
+    def define_agent_class(self, c):
+        if c.runtype=='Replay' :
             return agents.LarvaReplay
-        elif self.Box2D :
+        elif c.Box2D :
             return agents.LarvaBox2D
-        elif self.offline :
+        elif c.offline :
             return agents.LarvaOffline
-        elif self.runtype=='Ga' :
-            if self.experiment=='obstacle_avoidance':
+        elif c.runtype=='Ga' :
+            if c.experiment=='obstacle_avoidance':
                 return agents.ObstacleLarvaRobot
             else:
                 return agents.LarvaRobot
@@ -180,32 +190,37 @@ class BaseRun(reg.SimOps, agentpy.Model):
         # print(self.step_output_keys)
         # raise
 
-    def convert_output_to_dataset(self, df, agents=None,to_Geo=False, **kwargs):
-        kws = {
-            'load_data' : False,
-            'env_params': self.p.env_params,
-            'source_xy': aux.AttrDict({s.unique_id : s.pos for s in self.sources}),
-            'fr': 1 / self.dt,
-            'dt': self.dt,
-            **kwargs
-        }
-        if not to_Geo :
-            from larvaworld.lib.process.dataset import LarvaDataset
-            d = LarvaDataset(**kws)
-        else:
-            from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
-            d = LarvaTrajectoryCollection(**kws)
+    def create_config(self, **kwargs):
+        # source_xy = aux.AttrDict({s.unique_id: s.pos for s in self.sources})
+        p = self.p
+        config = aux.AttrDict({
+            'env_params': p.env_params,
+            'larva_groups': p.larva_groups,
+            'source_xy': self.source_xy,
+            **p.conf.nestedConf
+        })
+        config.update(**kwargs)
+        return config
+
+    def convert_group_output_to_dataset(self,df, collectors):
+        step_output_keys = list(collectors['step'].keys())
+        end_output_keys = list(collectors['end'].keys())
 
         df.index.set_names(['AgentID', 'Step'], inplace=True)
         df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
         df.sort_index(level=['Step', 'AgentID'], inplace=True)
 
-        end = df[self.end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-        step = df[self.step_output_keys]
-        d.set_data(step=step, end=end)
-        if agents and not to_Geo:
-            ls = aux.AttrDict({l.unique_id: l for l in agents if l.unique_id in d.agent_ids})
-            d.larva_dicts = aux.get_larva_dicts(ls)
+        end = df[end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
+        step = df[step_output_keys]
+
+        return step, end
+
+    def convert_output_to_dataset(self, df,agents=None,to_Geo=False, **kwargs):
+        config=self.create_config(**kwargs)
+        step, end = self.convert_group_output_to_dataset(df, self.collectors)
+
+        from larvaworld.lib.process.dataset import BaseLarvaDataset
+        d=BaseLarvaDataset.initGeo(to_Geo=to_Geo,config=config,load_data=False,step=step,end=end,agents=agents)
 
         return d
 
