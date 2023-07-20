@@ -64,11 +64,3 @@ class Food(Source):
 
 
 
-
-# class FoodGroup(aux.NestedConf):
-#     distribution = aux.ClassAttr(aux.Spatial_Distro, doc='The spatial distribution of the group sources')
-#
-#
-# for k, p in Food.param.params().items():
-#     if k not in ['name', 'unique_id', 'pos']:
-#         FoodGroup.param._add_parameter(k, p)

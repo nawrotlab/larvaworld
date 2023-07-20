@@ -19,6 +19,17 @@ CONF_DIR = f'{ROOT_DIR}/lib/reg/confDicts'
 
 os.makedirs(CONF_DIR, exist_ok=True)
 
+SIMTYPES=['Exp', 'Batch', 'Ga', 'Eval','Replay']
+
+CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
+                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Food']
+
+GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
+
+
+
+
+
 
 vprint("Initializing function registry")
 from .units import units
@@ -31,9 +42,9 @@ vprint("Initializing parameter registry")
 from .parDB import output_keys, par
 
 vprint("Initializing configuration registry")
-from .config import SIMTYPES,CONFTYPES,Path, stored, CONFTREE, CONFTREE_EXPANDED, lgs, lg, next_idx
+from .config import CONFTYPE_SUBKEYS, Path,stored, CONFTREE, lgs, lg, next_idx, imitation_exp
 from .sim_config import SimModeOps,SimDataOps,SimTimeOps, SimGeneralOps,SimOps
-from .generators import gen,GTRvsS,full_lg, class_generator,ConfType, ConfSelector
+from .generators import gen,GTRvsS,full_lg, class_generator,ConfType, conf, resetConfs
 from .controls import controls
 
 vprint("Initializing model registry")
@@ -54,12 +65,13 @@ def get_null(name, **kwargs):
     return par.get_null(name=name, **kwargs)
 
 def loadRef(id, **kwargs) :
-    return stored.loadRef(id=id, **kwargs)
+    return conf.Ref.loadRef(id=id, **kwargs)
 
+def getRef(id, **kwargs) :
+    return conf.Ref.getRef(id=id, **kwargs)
 
+resetConfs(init=True)
 
-
-
-stored.resetConfs(init=True)
+# stored.resetConfs(init=True)
 
 vprint(f"Registry configured!", 2)

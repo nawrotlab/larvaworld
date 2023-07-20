@@ -36,25 +36,8 @@ def Env_dict() :
         ps = [(x, y) for y in ys]
         return border(ps, **kwargs)
 
-
-    # def su(id='Source', group='Source', c='green', r=0.003, a=0.0, o=reg.get_null('odor'), **kwargs):
-    #     return {id: reg.get_null('source', default_color=c, group=group, radius=r, amount=a, odor=o, **kwargs)}
-
     def su2(id='Source',**kwargs):
-        return reg.gen.FoodUnit(**kwargs).entry(id)
-
-    # def sg(id='Source', c='green', r=0.003, a=0.0, o=None, N=1, s=(0.0, 0.0), loc=(0.0, 0.0), sh='circle',
-    #        m='uniform', **kwargs):
-    #     if type(s) == float:
-    #         s = (s, s)
-    #
-    #     kws = {
-    #         'kwdic': {'distribution': {'N': N, 'scale': s,  'loc': loc, 'shape': sh, 'mode': m}},
-    #         'default_color': c, 'radius': r,'amount': a, **kwargs}
-    #     if o is not None:
-    #         kws['odor'] = o
-    #
-    #     return reg.stored.group.SourceGroup.entry(id=id, **kws)
+        return reg.gen.Food(**kwargs).entry(id)
 
 
     def sg2(id='Source', **kwargs):

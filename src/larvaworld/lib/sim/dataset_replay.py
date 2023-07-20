@@ -22,10 +22,11 @@ class ReplayRun(BaseRun,RefDataset):
             experiment: The type of experiment. Defaults to 'replay'
             **kwargs: Arguments passed to parent class
         '''
-        RefDataset.__init__(self, dataset=dataset, refID=parameters.refID, dir=parameters.dir)
-        self.dataset.load()
-        d=self.dataset
-
+        # RefDataset.__init__(self, refDataset=dataset, refID=parameters.refID, dataset_dir=parameters.dataset_dir)
+        # self.refDataset.load()
+        # d=self.refDataset
+        d = self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=parameters.refID,
+                                                            dir=parameters.dataset_dir)
         # Configure the dataset to replay
         self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, d)
 

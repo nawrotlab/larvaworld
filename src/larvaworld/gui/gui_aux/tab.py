@@ -54,7 +54,7 @@ class GuiTab(GuiElement):
 
     def current_conf(self, v):
         id=self.current_ID(v)
-        return reg.stored.get(id=id, conftype=self.conftype) if id is not None else None
+        return reg.conf[self.conftype].getID(id) if id is not None else None
 
     def build(self):
         return None, {}, {}, {}

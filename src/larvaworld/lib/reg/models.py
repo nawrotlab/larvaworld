@@ -732,7 +732,8 @@ class ModelRegistry:
                  colWidths=[0.35, 0.1, 0.25, 0.15],**kwargs):
         from larvaworld.lib.plot.table import conf_table
         if m is None :
-            m = reg.stored.getModel(mID)
+            m = reg.conf.Model.getID(mID)
+            # m = reg.stored.getModel(mID)
         df = self.mIDtable_data(m, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
         df.index = arrange_index_labels(df.index)
@@ -810,11 +811,11 @@ class ModelRegistry:
 
     def newConf(self, m0=None, mID0=None, mID=None, kwargs={}):
         if m0 is None:
-            m0 = reg.stored.getModel(mID0)
+            m0 = reg.conf.Model.getID(mID0)
         T0 = m0.get_copy()
         conf = T0.update_nestdict(kwargs)
         if mID is not None:
-            reg.stored.setModel(conf=conf, id=mID)
+            reg.conf.Model.setID(mID,conf)
         return conf
 
     def autogenerate_confs(self):
@@ -853,8 +854,8 @@ class ModelRegistry:
                 mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
                 mID0dic[mID0] = E[mID0]
                 for mm in [f'{mID0}_avg', f'{mID0}_var', f'{mID0}_var2']:
-                    if mm in reg.stored.ModelIDs:
-                        mID0dic[mm] = reg.stored.getModel(mm)
+                    if mm in reg.conf.Model.confIDs:
+                        mID0dic[mm] = reg.conf.Model.getID(mm)
 
         olf_pars0 = self.generate_configuration(self.dict.brain.m['olfactor'].mode['default'].args,
                                                 odor_dict={'Odor': {'mean': 0.0, 'std': 0.0}})
@@ -984,7 +985,7 @@ class ModelRegistry:
         if dIDs is None:
             dIDs = mIDs
         if ms is None:
-            ms = [reg.stored.getModel(mID) for mID in mIDs]
+            ms = [reg.conf.Model.getID(mID) for mID in mIDs]
         ms = [m.flatten() for m in ms]
         ks = aux.unique_list(aux.flatten_list([list(m.keys()) for m in ms]))
 
@@ -1018,7 +1019,7 @@ class ModelRegistry:
 
     def adapt_crawler(self, refID=None, e=None, mode='realistic', average=True):
         if e is None:
-            d = reg.stored.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e = d.endpoint_data
 
@@ -1037,7 +1038,7 @@ class ModelRegistry:
 
     def adapt_intermitter(self, refID=None, e=None, c=None, mode='default', conf=None):
         if e is None or c is None:
-            d = reg.stored.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
 
@@ -1073,12 +1074,12 @@ class ModelRegistry:
             mID = f'{mID0}_fitted'
         print(f'Adapting {mID0} on {refID} as {mID} fitting {space_mkeys} modules')
         if e is None or c is None:
-            d = reg.stored.loadRef(refID)
+            d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
         if save_to is None:
             save_to = f'{c.dir}/model/GAoptimization'
-        m0 = reg.stored.getModel(mID0)
+        m0 = reg.conf.Model.getID(mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
         if 'intermitter' not in space_mkeys:
@@ -1086,7 +1087,7 @@ class ModelRegistry:
                                                                  conf=m0.brain.intermitter_params)
         m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
 
-        reg.stored.setModel(conf=m0, id=mID)
+        reg.conf.Model.setID(mID, m0)
         from larvaworld.lib.sim.genetic_algorithm import optimize_mID
         entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys, dt=c.dt, refID=refID,
                              id=mID, save_to=save_to, **kwargs)

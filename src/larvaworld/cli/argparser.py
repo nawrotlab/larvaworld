@@ -29,7 +29,6 @@ class Parser:
 
     def __init__(self, name):
         self.name = name
-        # d0=reg.par.PI[name]
         self.parsargs = self.parser_dict(reg.par.PI[name])
 
     def add(self, parser=None):
@@ -108,7 +107,7 @@ class SimModeParser :
         'Batch': [],
         'Eval': ['Eval'],
         'Exp': ['visualization'],
-        'Ga': ['ga_select_kws', 'ga_space_kws', 'ga_eval_kws'],
+        'Ga': ['ga_select_kws', 'ga_space_kws', 'ga_eval_kws', 'reference_dataset'],
         'Replay': ['Replay']
     })
         self.parser_keys=aux.unique_list(aux.flatten_list(list(self.dict.values())))
@@ -204,34 +203,34 @@ class SimModeParser :
 
         if m not in ['Replay', 'Eval']:
             kw.update(**sp.sim_params)
+            kw.experiment = a.experiment
         if m == 'Batch':
             kw.mode='batch'
             kw.run_externally=False
-            kw.conf = reg.stored.get(conftype='Batch', id=a.experiment)
-            kw.conf.experiment = a.experiment
+            kw.conf = reg.conf.Batch.getID(a.experiment)
             kw.conf.exp = update_exp_conf(kw.conf.exp, N=a.Nagents, mIDs=a.models)
             if kw.duration is None:
                 kw.duration = kw.conf.exp.sim_params.duration
             self.run = sim.Exec(**kw)
         elif m == 'Exp':
-            kw.parameters = update_exp_conf(a.experiment, N=a.Nagents, mIDs=a.models)
+            kw.parameters = update_exp_conf(kw.experiment, N=a.Nagents, mIDs=a.models)
             if kw.duration is None:
                 kw.duration = kw.parameters.sim_params.duration
 
             kw.screen_kws = {'vis_kwargs': sp.visualization}
             self.run = sim.ExpRun(**kw)
         elif m == 'Ga':
-            kw.experiment = a.experiment
 
-            p = reg.stored.expand(id=kw.experiment, conftype='Ga')
+
+            p = reg.conf.Ga.expand(kw.experiment)
             p.ga_build_kws.ga_select_kws = sp.ga_select_kws
             p.ga_build_kws.ga_space_kws.init_mode = sp.ga_space_kws.init_mode
             if sp.ga_space_kws.base_model is not None:
                 p.ga_build_kws.ga_space_kws.base_model = sp.ga_space_kws.base_model
             if sp.ga_space_kws.bestConfID is not None:
                 p.ga_build_kws.ga_space_kws.bestConfID = sp.ga_space_kws.bestConfID
-            if sp.ga_eval_kws.refID is not None:
-                p.ga_build_kws.ga_eval_kws.refID = sp.ga_eval_kws.refID
+            if sp.reference_dataset.refID is not None:
+                p.refID = sp.reference_dataset.refID
 
 
             if kw.duration is None:
@@ -300,7 +299,7 @@ def update_exp_conf(type, N=None, mIDs=None):
     Returns:
         The experiment's configuration
     '''
-    conf = reg.stored.getExp(type)
+    conf = reg.conf.Exp.expand(type)
     conf.experiment = type
 
     if mIDs is not None:
@@ -313,7 +312,7 @@ def update_exp_conf(type, N=None, mIDs=None):
         conf.larva_groups = aux.AttrDict({mID: {} for mID in mIDs})
         for mID, gConf in zip(mIDs, gConfs):
             conf.larva_groups[mID] = gConf
-            conf.larva_groups[mID].model = reg.stored.getModel(mID)
+            conf.larva_groups[mID].model = reg.conf.Model.getID(mID)
 
     if N is not None:
         for gID, gConf in conf.larva_groups.items():

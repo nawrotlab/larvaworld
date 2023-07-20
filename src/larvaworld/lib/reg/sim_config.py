@@ -9,27 +9,22 @@ from larvaworld.lib import reg, aux
 
 class SimModeOps(aux.NestedConf):
     runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
+    id=param.String(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
 
-
-    def __init__(self,runtype,**kwargs):
+    def __init__(self,runtype='Exp',**kwargs):
+        self.param.add_parameter('experiment', self.exp_selector_param(runtype))
         super().__init__(runtype=runtype,**kwargs)
-        self.param.add_parameter('experiment', self.exp_selector_param)
-        if 'experiment' in kwargs :
-            self.experiment=kwargs['experiment']
-        self.param.add_parameter('id', param.String(None, doc='Unique ID of the simulation. If not specified it is automatically set according to the simulation mode and experiment type.'))
-        if 'id' in kwargs and kwargs['id'] is not None:
-            self.id = kwargs['id']
-        else :
+        if self.id is None :
             self.id=self.generate_id(self.runtype, self.experiment)
-        self.param.params('id').constant=True
+        #self.param.params('id').constant=True
 
     def generate_id(self, runtype,exp):
         idx = reg.next_idx(exp, conftype=runtype)
         return f'{exp}_{idx}'
 
-    @ property
-    def exp_selector_param(self):
-        runtype = self.runtype
+    #@ staticmethod
+    def exp_selector_param(self,runtype):
+        # runtype = self.runtype
         defaults = {
             'Exp': 'dish',
             'Batch': 'PItest_off',
@@ -42,7 +37,7 @@ class SimModeOps(aux.NestedConf):
             'doc': 'The experiment simulated'
         }
         if runtype in ['Exp', 'Batch', 'Ga']:
-            ids = reg.stored.confIDs(runtype)
+            ids = reg.conf[runtype].confIDs
             return param.Selector(objects=ids, **kws)
         else:
             return param.String(**kws)
@@ -108,5 +103,23 @@ class SimGeneralOps(aux.NestedConf):
             self.show_display=False
 
 class SimOps(SimDataOps,SimTimeOps,SimGeneralOps):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+class RefDataOps(aux.NestedConf):
+    refID = reg.conf.Ref.confID_selector()
+    # # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')
+    dataset_dir = param.Foldername(default=None,
+                                   label='directory of reference dataset',
+                                   doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
+    #
+    conf = param.ClassSelector(default=None, class_=aux.AttrDict,
+                               label='reference dataset config', doc='The stored reference dataset config')
+    refDataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
+                                     label='reference dataset', doc='The stored reference dataset')
+
+    """Select a reference dataset by ID"""
+
+
     def __init__(self,**kwargs):
         super().__init__(**kwargs)

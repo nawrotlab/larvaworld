@@ -13,7 +13,7 @@ from larvaworld.gui import gui_aux
 class DrawEnvTab(gui_aux.DrawTab):
     def __init__(self,canvas_size = (800, 800), **kwargs):
         super().__init__(canvas_size = canvas_size,**kwargs)
-        self.S, self.L, self.B = 'Source', 'Larva', 'Border'
+        self.S, self.L, self.B = 'Food', 'Larva', 'Border'
         self.S0, self.L0, self.B0=self.S.lower(),self.L.lower(), self.B.lower()
         self.Su, self.Sg, self.SD = f'{self.S0}_units', f'{self.S0}_groups', f'{self.S0}_distro'
         self.Lu, self.Lg, self.LD = f'{self.L0}_units', f'{self.L0}_groups', f'{self.L0}_distro'
@@ -275,7 +275,7 @@ class DrawEnvTab(gui_aux.DrawTab):
                                     'distribution': c[D].get_dict(v, w),
                                     **dic['sample_pars']
                                 }
-                                dic['current'] = {v[Gid]: reg.get_null('SourceGroup', **temp_dic)}
+                                dic['current'] = {v[Gid]: reg.get_null('FoodGroup', **temp_dic)}
                                 dic['prior_rect'] = self.draw_shape(shape=v[f'{D}_shape'], p1=p1,
                                                                     p2=p2, line_color=color)
                         elif v[L0] and not self.check_abort(L0, w, v, db[self.Lu]['items'], db[self.Lg]['items']):

@@ -360,7 +360,7 @@ class SelectionList(GuiElement):
         id = v[self.k]
         k0 = self.conftype
         if e == self.k:
-            conf = reg.stored.get(id=id, conftype=k0)
+            conf = reg.conf[k0].getID(id)
             for kk, vv in self.sublists.items():
                 if type(conf[kk]) == str:
                     vv.update(w, conf[kk])
@@ -428,7 +428,7 @@ class SelectionList(GuiElement):
         return gui_aux.delete_conf_window(id, conftype=k0, disp=self.disp)
 
     def load(self, w, c, id):
-        conf = reg.stored.get(id=id, conftype=self.conftype)
+        conf = reg.conf[self.conftype].getID(id)
         self.tab.update(w, c, conf, id)
         if self.progressbar is not None:
             self.progressbar.reset(w)
@@ -452,7 +452,7 @@ class SelectionList(GuiElement):
             for kk, vv in self.sublists.items():
                 if isinstance(vv, SelectionList):
                     if not vv.with_dict:
-                        conf[kk] = reg.stored.expand(id=v[vv.k], conftype=vv.conftype)
+                        conf[kk] = reg.conf[vv.conftype].expand(vv.id)
                     else:
                         conf[kk] = vv.collapsible.get_dict(v, w)
                 else:
@@ -460,7 +460,7 @@ class SelectionList(GuiElement):
                     if kk == 'larva_groups':
                         for n, gr in conf[kk].items():
                             if type(gr['model']) == str:
-                                gr['model'] = reg.stored.getModel(gr['model'])
+                                gr['model'] = reg.conf.Model.getID(gr['model'])
         return conf
 
     def get_next(self, k0):
@@ -476,7 +476,7 @@ class SelectionList(GuiElement):
 
     @property
     def confs(self):
-        return reg.stored.confIDs(self.conftype)
+        return reg.conf[self.conftype].confIDs
         # return kConfDict(self.conftype)
 
     @property
@@ -622,7 +622,7 @@ class DataList(NamedList):
             if len(v0) > 0:
                 if d0[kks[0]].config['refID'] is None:
                     gui_aux.save_ref_window(d0[kks[0]])
-                exp_conf = reg.stored.imitation_exp(d0[kks[0]].config['refID'])
+                exp_conf = reg.imitation_exp(d0[kks[0]].config['refID'])
                 exp_conf.screen_kws['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':
@@ -1697,11 +1697,11 @@ class GuiTreeData(sg.TreeData):
             [' ' * 4 * level + self._NodeStr(child, level + 1, k, v) for child in node.children])
 
     def get_df(self):
-        if not self.build_tree and self.root_key in reg.stored.confIDs('Tree'):
-            df = pd.DataFrame.from_dict(reg.stored.get(id=self.root_key, conftype='Tree'))
+        if not self.build_tree and self.root_key in reg.conf.Tree.confIDs:
+            df = pd.DataFrame.from_dict(reg.conf.Tree.getID(self.root_key))
         else:
             df = gui_aux.pars_to_tree(self.root_key)
-            reg.stored.set(conf=df.to_dict(), conftype='Tree', id=self.root_key)
+            reg.conf['Tree'].setID(conf=df.to_dict(), id=self.root_key)
         return df
 
     def get_entries(self):
@@ -1749,7 +1749,7 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
     if path in ['', None]:
         return dic
     if raw:
-        conf = reg.stored.getGroup(datagroup_id).tracker.filesystem
+        conf = reg.conf.Group.getID(datagroup_id).tracker.filesystem
         dF, df = conf.folder, conf.file
         dFp, dFs = dF.pref, dF.suf
         dfp, dfs, df_ = df.pref, df.suf, df.sep

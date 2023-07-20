@@ -5,12 +5,47 @@ from larvaworld.lib import aux
 from larvaworld.lib.screen import IDBox
 
 
-class Object(objects.Object):
+class Object:
     '''
         Basic Class for all Larvaworld model objects
         Extends the agentpy Object class by allowing recording of nested attributes
 
     '''
+    """ Base class for all objects of an agent-based models. """
+
+    def __init__(self, model=None):
+        self._var_ignore = []
+
+        self.id = 'Nada'  # Assign id to new object
+        # self.id = model._new_id()  # Assign id to new object
+        self.type = type(self).__name__
+        self.log = {}
+
+        self.model = model
+        if model is not None :
+            self.p = model.p
+
+    def __repr__(self):
+        return f"{self.type} (Obj {self.id})"
+
+    def __getattr__(self, key):
+        raise AttributeError(f"{self} has no attribute '{key}'.")
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
+    def _set_var_ignore(self):
+        """Store current attributes to separate them from custom variables"""
+        self._var_ignore = [k for k in self.__dict__.keys() if k[0] != '_']
+
+    @property
+    def vars(self):
+        return [k for k in self.__dict__.keys()
+                if k[0] != '_'
+                and k not in self._var_ignore]
 
     @property
     def _log(self):
@@ -51,6 +86,29 @@ class Object(objects.Object):
             l=self.extend_log(l,k, N, v= aux.rgetattr(self, codename))
 
         self.log = l
+
+    def setup(self, **kwargs):
+        """This empty method is called automatically at the objects' creation.
+        Can be overwritten in custom sub-classes
+        to define initial attributes and actions.
+
+        Arguments:
+            **kwargs: Keyword arguments that have been passed to
+                :class:`Agent` or :func:`Model.add_agents`.
+                If the original setup method is used,
+                they will be set as attributes of the object.
+
+        Examples:
+            The following setup initializes an object with three variables::
+
+                def setup(self, y):
+                    self.x = 0  # Value defined locally
+                    self.y = y  # Value defined in kwargs
+                    self.z = self.p.z  # Value defined in parameters
+        """
+
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 

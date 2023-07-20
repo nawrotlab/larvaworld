@@ -31,7 +31,7 @@ class GAspace(param.Parameterized):
 
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
                                label='mode of initial generation',doc='Mode of initial generation')
-    base_model = param.Selector(default='explorer', objects=reg.stored.ModelIDs,
+    base_model = param.Selector(default='explorer', objects=reg.conf.Model.confIDs,
                                 label='agent model to optimize',doc='ID of the model to optimize')
     bestConfID = param.String(default=None,label='model ID for optimized model', doc='ID for the optimized model')
     space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,
@@ -47,7 +47,7 @@ class GAspace(param.Parameterized):
                              str(self.selection_ratio) + ')')
 
 
-        self.mConf0 = reg.stored.getModel(self.base_model)
+        self.mConf0 = reg.conf.Model.getID(self.base_model)
         self.space_dict = reg.model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
         self.space_columns = [p.name for k, p in self.space_dict.items()]
         self.gConf0 = reg.model.conf(self.space_dict)
@@ -156,7 +156,7 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-class GAevaluation(RefDataset):
+class GAevaluation(aux.NestedConf):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
@@ -170,6 +170,7 @@ class GAevaluation(RefDataset):
 
     def __init__(self,fit_kws={},**kwargs):
         super().__init__(**kwargs)
+
         # self.retrieve_dataset()
         if type(self.exclude_func_name)==str:
             self.exclude_func = exclusion_funcs[self.exclude_func_name]
@@ -182,8 +183,8 @@ class GAevaluation(RefDataset):
             return None
         elif d is not None:
             return d
-        elif self.dataset is not None and self.fitness_target_kws is not None:
-            return util.GA_optimization(d=self.dataset, fitness_target_kws=self.fitness_target_kws)
+        elif self.refDataset is not None and self.fitness_target_kws is not None:
+            return util.GA_optimization(d=self.refDataset, fitness_target_kws=self.fitness_target_kws)
         elif self.fitness_func_name is not None:
             if type(self.fitness_func_name) == str:
                 fitness_func = fitness_funcs[self.fitness_func_name]
@@ -223,7 +224,7 @@ def arrange_fitness(fitness_func, **kwargs):
 
 class GAlauncher(BaseRun, GAengine):
 
-    def __init__(self, **kwargs):
+    def __init__(self,parameters, dataset=None, **kwargs):
         '''
         Simulation mode 'Ga' launches a genetic algorith optimization simulation of a specified agent model.
 
@@ -231,8 +232,9 @@ class GAlauncher(BaseRun, GAengine):
             **kwargs: Arguments passed to the setup method
 
         '''
-
-        BaseRun.__init__(self,runtype='Ga', **kwargs)
+        self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=parameters.refID,
+                                                            dir=parameters.dataset_dir)
+        BaseRun.__init__(self,runtype='Ga',parameters=parameters, **kwargs)
         GAengine.__init__(self, **self.p.ga_build_kws)
     def setup(self):
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
@@ -311,7 +313,7 @@ class GAlauncher(BaseRun, GAengine):
             self.best_fitness = self.best_genome.fitness
 
             if self.bestConfID is not None:
-                reg.stored.setModel(conf=self.best_genome.mConf, id=self.bestConfID)
+                reg.conf.Model.setID(self.bestConfID, self.best_genome.mConf)
         reg.vprint(f'Generation {Ngen} best_fitness : {self.best_fitness}', 1)
         self.all_genomes_dic += [
             {'generation': Ngen, **{p.name: g.gConf[k] for k, p in self.space_dict.items()},
@@ -448,7 +450,7 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     }
 
     conf = reg.get_null('Ga', **kws)
-    conf.env_params = reg.stored.getEnv(conf.env_params)
+    conf.env_params = reg.conf.Env.getID(conf.env_params)
 
     # conf.ga_build_kws.
 

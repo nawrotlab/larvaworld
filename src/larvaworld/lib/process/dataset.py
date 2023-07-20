@@ -50,7 +50,7 @@ class BaseLarvaDataset:
         '''
 
         if config is None:
-            config = reg.stored.getRef(dir=dir, id=refID)
+            config = reg.getRef(dir=dir, id=refID)
             if config is None:
                 config = self.generate_config(dir=dir, refID=refID, **kwargs)
 
@@ -125,7 +125,7 @@ class BaseLarvaDataset:
         if refID is not None:
             c.refID = refID
         if c.refID is not None:
-            reg.stored.setRefID(id=c.refID, dir=c.dir)
+            reg.conf.Ref.setID(c.refID, c.dir)
             reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
         for k, v in c.items():
             if isinstance(v, np.ndarray):
@@ -449,7 +449,7 @@ class LarvaDatasetCollection :
 
         if add_samples:
             targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
-            targets = [reg.stored.loadRef(id) for id in targetIDs if id in reg.stored.RefIDs]
+            targets = [reg.loadRef(id) for id in targetIDs if id in reg.conf.Ref.confIDs]
             datasets += targets
             if labels is not None:
                 labels += targetIDs
@@ -559,35 +559,31 @@ class LarvaDatasetCollection :
         return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
 
-class RefDataset(reg.ConfType):
-    # from larvaworld import BaseLarvaDataset
-
+class RefDataset(aux.NestedConf):
+    refID = reg.conf.Ref.confID_selector()
+    # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')
     dataset_dir = param.Foldername(default=None,
                            label='directory of reference dataset',
                            doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
+
     conf = param.ClassSelector(default=None, class_=aux.AttrDict,
                                label='reference dataset config', doc='The stored reference dataset config')
-    dataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
+    refDataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
                                   label='reference dataset', doc='The stored reference dataset')
 
     """Select a reference dataset by ID"""
 
-    def __init__(self, refID=None, dir=None, **kwargs):
-        self.refID =refID
-        super().__init__(conftype='Ref', dataset_dir=dir, **kwargs)
-        self.update_conftype()
-        self.confID=self.refID
-        # print(self.entry, self.id)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.update_dir()
+        self.update_conf()
 
-    @param.depends('dict_entry', watch=True)
+
+
+    @param.depends('refID', watch=True)
     def update_dir(self):
-        # print(self.entry, self.id)
-        # if self.entry is None :
-        #     self.update_entry()
-        self.dataset_dir = self.dict_entry
-        # print(self.entry, self.id, self.dir)
-        # self.update_conf()
+        self.dataset_dir = reg.conf.Ref.getRefDir(self.refID)
+
 
 
     @param.depends('dataset_dir', watch=True)
@@ -600,42 +596,12 @@ class RefDataset(reg.ConfType):
                 if 'id' in c.keys():
                     reg.vprint(f'Loaded existing conf {c.id}', 1)
                     self.conf = c
-                    # print(self.conf)
-                    # raise
         self.update_dataset(**kwargs)
 
-    # @param.depends('conf', watch=True)
     def update_dataset(self, **kwargs):
-        # from larvaworld import LarvaDataset
         if self.conf is not None:
-
-            self.dataset = LarvaDataset(config=self.conf, **kwargs)
-            # print(self.dataset)
-            # raise
+            self.refDataset = LarvaDataset(config=self.conf, **kwargs)
         elif self.dataset_dir is not None:
-            self.dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dataset_dir}', **kwargs)
-
-
-# class RefDataset(param.Parameterized):
-#     refID = param.Selector(default=None, objects=reg.stored.RefIDs, allow_None=True,
-#                                           label='ID of reference dataset',doc='ID of the reference dataset')
-#     dir = param.Foldername(default=None,
-#                           label='directory of reference dataset', doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
-#
-#     dataset = param.ClassSelector(default=None,class_=BaseLarvaDataset,
-#                           label='reference dataset', doc='The stored reference dataset')
-#
-#     def __init__(self,**kwargs):
-#         super().__init__(**kwargs)
-#
-#     def retrieve_dataset(self):
-#         if self.dataset is None:
-#             if self.refID is not None:
-#                 self.dataset = reg.stored.loadRef(self.refID)
-#             elif self.dir is not None:
-#                 self.dataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dir}', load_data=False)
-#             else:
-#                 raise ValueError('Unable to load dataset. Either refID or storage path must be provided. ')
-#         return self.dataset
+            self.refDataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dataset_dir}', **kwargs)
 
 

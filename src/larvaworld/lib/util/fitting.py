@@ -379,7 +379,7 @@ class BoutGenerator:
 
 def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     if refDataset is None :
-        refDataset=reg.stored.loadRef(refID, load=True)
+        refDataset=reg.loadRef(refID, load=True)
     c=refDataset.config
 
     chunk_dicts = refDataset.chunk_dicts
@@ -399,7 +399,7 @@ def test_boutGens(mID,refID=None,refDataset=None, **kwargs):
     Nrun = aux_dic['run_dur'].shape[0]
 
     from larvaworld.lib.util.sampling import get_sample_bout_distros
-    m=reg.stored.getModel(mID)
+    m=reg.conf.Model.getID(mID)
     m=get_sample_bout_distros(m, c)
     dicM=m.brain.intermitter_params
     dic = {}

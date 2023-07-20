@@ -62,21 +62,23 @@ class ValueGrid(SpatialEntity):
         super().__init__(**kwargs)
 
         self.sources = sources
-
-        self.min_value = min_value
-
         self.X, self.Y =self.XY0=np.array(self.grid_dims)
-        self.xy0=np.array(self.model.space.dims)
-        self.x, self.y=self.xy0/self.XY0
-        x0, x1, y0, y1 =self.model.space.range
-
-        self.cell_radius = np.sum((self.xy0/self.XY0/2)**2)**0.5
-        self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
         self.grid = np.ones(self.grid_dims) * self.initial_value
-        self.grid_vertices = self.generate_grid_vertices()
+
         if max_value is None:
             max_value = np.max(self.grid)
         self.max_value = max_value
+        self.min_value = min_value
+        if self.model is not None :
+            self.match_space(self.model.space)
+
+    def match_space(self, space):
+        self.xy0=np.array(space.dims)
+        self.x, self.y=self.xy0/self.XY0
+        x0, x1, y0, y1 =space.range
+        self.cell_radius = np.sum((self.xy0/self.XY0/2)**2)**0.5
+        self.meshgrid = np.meshgrid(np.linspace(x0, x1, self.X), np.linspace(y0, y1, self.Y))
+        self.grid_vertices = self.generate_grid_vertices()
 
     def update_values(self):
         pass
@@ -215,8 +217,30 @@ class FoodGrid(ValueGrid):
                     viewer.draw_polygon(self.grid_vertices[i, j], self.get_color(v), filled=True)
 
 
+class Odorscape(ValueGrid):
+    odorscape = param.Selector(objects=['Gaussian', 'Diffusion'], doc='The odorscape algorithm')
 
-class GaussianValueLayer(ValueGrid):
+    def __init__(self, subclass_initialized=False, **kwargs):
+
+        if subclass_initialized :
+            super().__init__(**kwargs)
+        else :
+            if 'odorscape' not in kwargs:
+                raise
+            else:
+                subclasses = {
+                    'Gaussian': GaussianValueLayer,
+                    'Diffusion': DiffusionValueLayer,
+                }
+                odorscape=kwargs['odorscape']
+                kwargs.pop('odorscape')
+                subclasses[odorscape](**kwargs)
+
+
+
+class GaussianValueLayer(Odorscape):
+    def __init__(self, **kwargs):
+        super().__init__(odorscape='Gaussian',subclass_initialized=True,**kwargs)
 
     def get_value(self, pos):
 
@@ -251,7 +275,7 @@ class GaussianValueLayer(ValueGrid):
                 text_box.draw(viewer)
 
 
-class DiffusionValueLayer(ValueGrid):
+class DiffusionValueLayer(Odorscape):
     evap_const = param.Magnitude(0.9, doc='The evaporation constant of the diffusion algorithm.')
     gaussian_sigma = param.NumericTuple((0.95, 0.95), doc='The sigma of the gaussian difusion algorithm.')
 
@@ -266,6 +290,9 @@ class DiffusionValueLayer(ValueGrid):
 
         Doing the math, sigma ends up reeeeally small
     '''
+
+    def __init__(self, **kwargs):
+        super().__init__(odorscape='Diffusion',subclass_initialized=True,**kwargs)
 
 
     def update_values(self):
@@ -296,6 +323,9 @@ class DiffusionValueLayer(ValueGrid):
             self.add_value(source_pos, intensity)
 
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
+
+
+
 
 
 class WindScape(SpatialEntity):

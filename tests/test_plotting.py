@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 def test_plots() :
     refIDs=['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved']
     figs={}
-    ds=[reg.stored.loadRef(id, load=True, h5_ks=['angular', 'midline', 'epochs']) for id in refIDs]
+    ds=[reg.loadRef(id, load=True, h5_ks=['angular', 'midline', 'epochs']) for id in refIDs]
     kws={'datasets':ds, 'show':False, 'save_to': f'{reg.ROOT_DIR}/tests/plots',
          'subfolder': None}
 

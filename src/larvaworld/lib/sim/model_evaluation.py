@@ -11,10 +11,10 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from larvaworld.lib import reg, aux, plot, util
 from larvaworld.lib.sim.base_run import BaseRun
-from larvaworld.lib.process.dataset import RefDataset
+# from larvaworld.lib.process.dataset import RefDataset
 
 
-class EvalRun(BaseRun,RefDataset):
+class EvalRun(BaseRun):
     def __init__(self,parameters, dataset=None,experiment='dispersion',
                  norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,enrichment=True,show=False,  **kwargs):
         '''
@@ -28,10 +28,10 @@ class EvalRun(BaseRun,RefDataset):
             experiment: The type of experiment. Defaults to 'dispersion'
             **kwargs: Arguments passed to parent class
         '''
-        RefDataset.__init__(self, dataset=dataset, refID=parameters.refID, dir=parameters.dir)
-        d=self.dataset
+        # RefDataset.__init__(self, refDataset=dataset, refID=parameters.refID, dataset_dir=parameters.dir)
+        # d=self.refDataset
         # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
-        # d = reg.stored.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dir)
+        d=self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dataset_dir)
         d.id = 'experiment'
         d.config.id = 'experiment'
         d.color = 'grey'
@@ -93,7 +93,7 @@ class EvalRun(BaseRun,RefDataset):
         else:
             from larvaworld.lib.sim.single_run import ExpRun
             print(f'Simulating {Nm} models : {dIDs} with {N} larvae each')
-            conf = reg.stored.getExp(self.experiment)
+            conf = reg.conf.Exp.expand(self.experiment)
             conf.larva_groups=lgs
             if self.enrichment is None:
                 conf.enrichment = None
@@ -238,7 +238,7 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
     if id is None:
         id = f'{len(mIDs)}mIDs'
     if save_to is None:
-        save_to = f'{reg.stored.getRefDir(refID)}/model/evaluation'
+        save_to = f'{reg.conf.Ref.getID(refID)}/model/evaluation'
 
     parameters = reg.get_null('Eval',**{
         'refID': refID,
@@ -256,7 +256,7 @@ def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
 
 def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     if e is None or c is None:
-        d = reg.stored.loadRef(refID)
+        d = reg.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
@@ -275,15 +275,16 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     kwargs = {k: 'sample' for k in sample_ks}
     entries = {}
     for mID0, mID in zip(mID0s, mIDs):
-        m0 = reg.stored.getModel(mID0).get_copy()
+        m0 = reg.conf.Model.getID(mID0).get_copy()
+        # m0 = reg.stored.getModel(mID0).get_copy()
         m = m0.update_existingnestdict(kwargs)
-        reg.stored.setModel(conf=m, id=mID)
+        reg.conf.Model.setID(mID, m)
         entries[mID] = m
     return entries
 
 def adapt_6mIDs(refID, e=None, c=None):
     if e is None or c is None:
-        d = reg.stored.loadRef(refID)
+        d = reg.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
@@ -313,7 +314,7 @@ def adapt_6mIDs(refID, e=None, c=None):
 
 def adapt_3modules(refID, e=None, c=None):
     if e is None or c is None:
-        d = reg.stored.loadRef(refID)
+        d = reg.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 

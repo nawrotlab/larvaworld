@@ -139,7 +139,7 @@ def build_Schleyer(dataset, source_dir,save_mode='semifull',
             return [-0.8, 0]
 
     datagroup_id = 'Schleyer lab'
-    g = reg.stored.getGroup(datagroup_id)
+    g = reg.conf.Group.getID(datagroup_id)
     build_conf = g.Tracker.filesystem
 
     d = dataset
@@ -220,7 +220,7 @@ def build_Schleyer(dataset, source_dir,save_mode='semifull',
 
 def build_Berni(dataset, source_files,  max_Nagents=None, min_duration_in_sec=0.0,min_end_time_in_sec=0, **kwargs):
     datagroup_id = 'Berni lab'
-    g = reg.stored.getGroup(datagroup_id)
+    g = reg.conf.Group.getID(datagroup_id)
     cols0 = g.Tracker.filesystem['read_sequence']
     cols1 = cols0[1:]
 
@@ -265,7 +265,7 @@ def build_Berni(dataset, source_files,  max_Nagents=None, min_duration_in_sec=0.
 def build_Arguello(dataset, source_files, max_Nagents=None, min_duration_in_sec=0.0,
                   min_end_time_in_sec=0, **kwargs):
     datagroup_id='Arguello lab'
-    g = reg.stored.getGroup(datagroup_id)
+    g = reg.conf.Group.getID(datagroup_id)
     cols0 = g.Tracker.filesystem['read_sequence']
     cols1 = cols0[1:]
     d = dataset
@@ -341,7 +341,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
         group_id = parent_dir
 
 
-    g = reg.stored.getGroup(datagroup_id)
+    g = reg.conf.Group.getID(datagroup_id)
     group_dir = g.path
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
@@ -387,7 +387,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
     warnings.filterwarnings('ignore')
 
     shutil.rmtree(target_dir, ignore_errors=True)
-    g = reg.stored.getGroup(datagroup_id)
+    g = reg.conf.Group.getID(datagroup_id)
 
     conf = {
         'load_data': False,

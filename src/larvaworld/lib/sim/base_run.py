@@ -5,7 +5,6 @@ import param
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
-from larvaworld.lib.process.dataset import RefDataset
 
 
 
@@ -36,7 +35,8 @@ class BaseRun(reg.SimOps, agentpy.Model):
             **kwargs: Arguments passed to the setup method
         '''
         agentpy.Model.__init__(self, parameters=parameters)
-
+        # print(self.id)
+        # raise
         reg.SimOps.__init__(self, runtype=runtype,**kwargs)
         self.agent_class = self.define_agent_class()
         # print(self.id)
@@ -45,28 +45,6 @@ class BaseRun(reg.SimOps, agentpy.Model):
         # self.runtype = runtype
 
         self.p.steps = self.Nsteps
-
-        # print(self.id)
-        # raise
-
-        # Define ID
-        # if id is None:
-        #     idx = reg.next_idx(self.experiment, conftype=runtype)
-        #     id = f'{self.experiment}_{idx}'
-        # self.id = id
-
-
-
-        # # Define directories
-        # if save_to is None:
-        #     save_to = f'{reg.SIM_DIR}/{runtype.lower()}_runs'
-        # self.dir = f'{save_to}/{self.experiment}/{self.id}'
-        # self.plot_dir = f'{self.dir}/plots'
-        # self.data_dir = f'{self.dir}/data'
-        # self.save_to = self.dir
-        # if self.store_data :
-        #     os.makedirs(self.data_dir, exist_ok=True)
-        #     os.makedirs(self.plot_dir, exist_ok=True)
         self.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                    'path': f'{self.data_dir}/agentpy_output'}
 
@@ -152,7 +130,7 @@ class BaseRun(reg.SimOps, agentpy.Model):
     def place_food(self, p):
         self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
         c1 = reg.gen.FoodGroup.from_entries(p.source_groups)
-        c2 = reg.gen.FoodUnit.from_entries(p.source_units)
+        c2 = reg.gen.Food.from_entries(p.source_units)
         sourceConfs=c1+c2
         # sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]

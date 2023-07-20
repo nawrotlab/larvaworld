@@ -1,11 +1,6 @@
-import copy
-import random
-from typing import Tuple
-
 import numpy as np
 import param
 from param import Parameterized, Number,NumericTuple,Integer,Selector,String, ListSelector, Range, Magnitude, Boolean,ClassSelector,Parameter, List, Dict
-from scipy.stats import multivariate_normal
 
 from larvaworld.lib import aux
 
@@ -172,11 +167,15 @@ class ClassDict(ClassSelector):
             raise TypeError("ClassDict parameter %r items must be instances "
                             "of type %r, not %r." % (self.name, item_type, val))
 
-class ClassAttr(param.ClassSelector):
+class ClassAttr(ClassSelector):
     """An attribute og a given class"""
     def __init__(self, class_,**kwargs):
         if 'default' not in kwargs.keys() :
             kwargs['default'] = class_()
+        elif kwargs['default'] is None :
+            kwargs['default'] = None
+        elif not isinstance(kwargs['default'], class_):
+            kwargs['default'] = class_(**kwargs['default'])
         super().__init__(class_=class_, **kwargs)
 
 
@@ -212,10 +211,12 @@ class NestedConf(param.Parameterized):
         d = aux.AttrDict(self.param.values())
         d.pop('name')
         for k, p in self.param.objects().items():
-            if type(p) == ClassAttr:
-                d[k] = d[k].nestedConf
-            elif type(p) == ClassDict:
-                d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
+            if k in d and d[k] is not None :
+
+                if type(p) == ClassAttr:
+                    d[k] = d[k].nestedConf
+                elif type(p) == ClassDict:
+                    d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
         return d
 
     #@ property
@@ -230,33 +231,6 @@ class NestedConf(param.Parameterized):
             d.pop('unique_id')
         return {id:d}
 
-# class SimTimeConf(NestedConf):
-#     dt = PositiveNumber(0.1, softmax=1.0, step=0.01, doc='The timestep of the simulation in seconds.')
-#     duration = OptionalPositiveNumber(5.0, softmax=1000.0, step=0.1, doc='The duration of the simulation in minutes.')
-#     Nsteps = OptionalPositiveInteger(label='# simulation timesteps',doc='The number of simulation timesteps.')
-#
-#     def __init__(self,**kwargs):
-#         super().__init__(**kwargs)
-#         # Define N timesteps
-#         if self.Nsteps is None and self.duration is not None:
-#             self.Nsteps = int(self.duration * 60 / self.dt)
-#         if self.duration is None and self.Nsteps is not None:
-#             self.duration = self.Nsteps * self.dt / 60
-#
-# class SimConf(SimTimeConf):
-#     Box2D = Boolean(False,doc='Whether to use the Box2D physics engine or not.')
-#     store_data = Boolean(True, doc='Whether to store the simulation data')
-#     larva_collisions = Boolean(True, doc='Whether to allow overlap between larva bodies.')
-#     offline = Boolean(False,doc='Whether to launch a full Larvaworld environment')
-#     show_display = Boolean(True,doc='Whether to launch the pygame-visualization.')
-#
-#     def __init__(self,offline=False, show_display=True, **kwargs):
-#         if offline:
-#             show_display=False
-#         super().__init__(show_display=show_display,offline=offline,**kwargs)
-#         # Define constant parameters
-#         self.scaling_factor = 1000.0 if self.Box2D else 1.0
-
 
 
 class PreprocessConf(NestedConf):
@@ -267,12 +241,6 @@ class PreprocessConf(NestedConf):
     drop_collisions = Boolean(False,doc='Whether to drop timepoints where larva collisions are detected.')
 
 
-class TrackerFormat(NestedConf):
-    dt = PositiveNumber(0.1, softmax=1.0, step=0.01, label='tracker timestep',doc='The tracking timestep (inverse of tracking framerate) in seconds.')
-    constant_framerate = Boolean(True, doc='Whether the tracking framerate is constant.')
-    XY_unit = Selector(default='m', objects=['m', 'mm'], doc='The spatial unit of the XY coordinate data')
-    Npoints = PositiveInteger(1, softmax=20, label='# midline 2D points',doc='The number of points tracked along the larva midline.')
-    Ncontour = PositiveInteger(1, softmax=100, label='# contour 2D points',doc='The number of points tracked around the larva contour.')
 
 
 class Metric_Definition(NestedConf):

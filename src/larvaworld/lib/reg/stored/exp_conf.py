@@ -246,5 +246,5 @@ def Exp_dict() :
 
 @reg.funcs.stored_conf("ExpGroup")
 def ExpGroup_dict() :
-    exp_group_dict = {k: {'simulations': list(v.keys())} for k, v in grouped_exp_dic().items()}
+    exp_group_dict = aux.AttrDict({k: {'simulations': list(v.keys())} for k, v in grouped_exp_dic().items()})
     return exp_group_dict

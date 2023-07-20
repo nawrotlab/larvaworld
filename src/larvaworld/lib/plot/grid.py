@@ -57,7 +57,7 @@ def calibration_plot(save_to=None, files=None):
 @reg.funcs.graph('model summary')
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
     if refDataset is None:
-        d = reg.stored.loadRef(refID)
+        d = reg.loadRef(refID)
         d.load(step=False)
         refDataset = d
     refDataset.color = 'red'

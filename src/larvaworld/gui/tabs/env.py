@@ -3,7 +3,7 @@ from larvaworld.gui import gui_aux
 class EnvTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.S, self.L, self.B = 'Source', 'Larva', 'Border'
+        self.S, self.L, self.B = 'Food', 'Larva', 'Border'
         self.Su, self.Sg = f'{self.S.lower()}_units', f'{self.S.lower()}_groups'
         self.Bg = f'{self.B.lower()}_list'
 
@@ -20,7 +20,7 @@ class EnvTab(gui_aux.GuiTab):
         }
 
     def build(self):
-        s2 = gui_aux.PadTable(self.Sg, dict_name='SourceGroup', index='Group ID', col_widths=[10, 3, 8, 7, 6],
+        s2 = gui_aux.PadTable(self.Sg, dict_name='FoodGroup', index='Group ID', col_widths=[10, 3, 8, 7, 6],
                               heading_dict={'N': 'distribution.N', 'color': 'default_color', 'odor': 'odor.id',
                                     'amount': 'amount'})
         s3 = gui_aux.PadTable(self.Su, dict_name='source', index='ID', col_widths=[10, 8, 8, 8],

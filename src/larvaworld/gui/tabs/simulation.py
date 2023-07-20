@@ -83,8 +83,8 @@ class SimTab(gui_aux.GuiTab):
         sim = copy.deepcopy(conf['sim_params'])
         sim.update({'sim_ID': f'{id}_{reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
-        c['trials'].update(w, reg.stored.get(id=conf['trials'], conftype='Trial'))
-        self.draw_tab.set_env_db(env=reg.stored.getEnv(conf['env_params']), lg=conf['larva_groups'])
+        c['trials'].update(w, reg.conf.Trial.getID(conf['trials']))
+        self.draw_tab.set_env_db(env=reg.conf.Env.getID(conf.env_params), lg=conf['larva_groups'])
         w.write_event_value('RESET_ARENA', 'Draw the initial arena')
 
     def get(self, w, v, c, as_entry=True):

@@ -330,23 +330,23 @@ def buildInitDict():
             'substrate' : d['substrate']
         }
 
-        d['Source'] = {
+        d['Food'] = {
 
             'amount': {'v': 0.0, 'lim': (0.0, 10.0), 'h': 'The food amount in the source.'},
             **d['source'],
             'substrate' : d['substrate']
         }
 
-        d['SourceGroup'] = {
+        d['FoodGroup'] = {
             'distribution': d['spatial_distro'],
-            **{k:v for k,v in d['Source'].items() if k not in ['pos', 'group']}
+            **{k:v for k,v in d['Food'].items() if k not in ['pos', 'group']}
 
         }
 
         d['Source_distro'] = d['spatial_distro']
 
         d['food_params'] = {'source_groups': {'dtype': dict, 'v': {}, 'disp': 'source groups', 'k': 'gSources',
-                                              'symbol': sub('source', 'G'), 'entry': 'SourceGroup',
+                                              'symbol': sub('source', 'G'), 'entry': 'FoodGroup',
                                               'h': 'The groups of odor or food sources available in the arena',
                                               },
                             'food_grid': {'dtype': dict, 'v': None, 'disp': 'food grid', 'k': 'gFood',
@@ -1188,7 +1188,7 @@ def buildInitDict():
             'fitness_func_name': {'dtype': str, 'h': 'The method for fitness evaluation'},
             'exclude_func_name': {'dtype': str,
                              'h': 'The method for real-time excluding agents'},
-            **d['reference_dataset']
+
         }
 
         d['ga_build_kws'] = {
@@ -1205,7 +1205,8 @@ def buildInitDict():
             'env_params': ConfID_entry('Env',default='arena_200mm'),
             'sim_params': d['sim_params'],
             'experiment': ConfID_entry('Ga',default='exploration'),
-            'ga_build_kws': d['ga_build_kws']
+            'ga_build_kws': d['ga_build_kws'],
+            **d['reference_dataset']
         }
 
         return d
@@ -1332,8 +1333,8 @@ def buildInitDict():
 
         d['reference_dataset'] = {
             'refID': ConfID_entry('Ref', default='exploration.150controls'),
-            'dir': {'dtype': str, 'symbol': 'dir',
-                    'k': 'dir',
+            'dataset_dir': {'dtype': str, 'symbol': 'dataset_dir',
+                    'k': 'dataset_dir',
                     'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
         }
 

@@ -25,7 +25,7 @@ class EssayTab(gui_aux.GuiTab):
         return l, s1.get_subdicts(), {g1.name: g1, g2.name: g2}, {self.name: {'fig_dict': {}}}
 
     def run(self, v, w, c, d, g, conf, id):
-        conf = reg.stored.get(id=id, conftype=self.conftype)
+        conf = reg.conf[self.conftype].getID(id)
         for essay_exp in list(conf['experiments'].keys()):
             d, g = self.run_essay_exp(v, w, c, d, g, essay_exp)
         return d, g

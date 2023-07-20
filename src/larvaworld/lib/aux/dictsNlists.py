@@ -13,9 +13,13 @@ class AttrDict(dict):
 
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-        for k, data in self.__dict__.items():
-            self.__dict__[k] = self.from_nested_dicts(data)
+        self.__dict__ = self.autonest(d=self)
+
+
+    def autonest(self, d):
+        for k, data in d.items():
+            d[k] = self.from_nested_dicts(data)
+        return d
 
     @classmethod
     def from_nested_dicts(cls, data):
@@ -121,6 +125,30 @@ class AttrDict(dict):
                         print_nested_level(v, pref=f'{pref}{pref0}')
 
             print_nested_level(self, pref=pref0)
+
+# class StoreDict(AttrDict):
+#
+#
+#     def __new__(cls,path=None):
+#         cls.path = path
+#         if path is not None :
+#             return cls.retrieve(path)
+#         else :
+#             return super().__new__(cls)
+#
+#
+#
+#
+#     # def __init__(self,*args, **kwargs):
+#     #     super().__init__(*args, **kwargs)
+#
+#     def store(self):
+#         super().save(self.path)
+#
+#     @classmethod
+#     def retrieve(cls,path):
+#         d=super().load(path)
+#         return super().__new__(cls,**d)
 
 
 

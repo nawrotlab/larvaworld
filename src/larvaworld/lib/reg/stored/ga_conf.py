@@ -13,7 +13,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
             m1=None, fitID=None, init='random', excludeID=None):
 
     build_kws = {
-        'ga_eval_kws': reg.get_null('ga_eval_kws', refID=refID,
+        'ga_eval_kws': reg.get_null('ga_eval_kws',
                                             fitness_target_kws=fit_kws,
                                             fitness_func_name=fitID,
                                             exclude_func_name=excludeID,
@@ -30,6 +30,7 @@ def ga_conf(name, env_params,space_mkeys, scene='no_boxes', refID=None, fit_kws=
            'experiment': name,
            'env_params': env_params,
            'ga_build_kws': reg.get_null('ga_build_kws', **build_kws),
+           'refID' : refID,
            }
     conf = reg.get_null('Ga', **kws)
     return {name: conf}

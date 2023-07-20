@@ -351,7 +351,7 @@ class DoublePatch_Essay(Essay):
         self.mIDs=[f'{mID0}{suf}' for mID0 in self.mID0s]
 
 
-        self.ms=[reg.stored.getModel(mID) for mID in self.mIDs]
+        self.ms=[reg.conf.Model.getID(mID) for mID in self.mIDs]
         self.exp_dict = self.time_ratio_exp()
 
         self.mdiff_df, row_colors = reg.model.diff_df(mIDs=self.mID0s,ms=self.ms)
@@ -371,7 +371,7 @@ class DoublePatch_Essay(Essay):
 
         return aux.AttrDict({
             mID0: reg.stored.group.LarvaGroup.gConf(default_color=mcol,
-                                                    model=reg.stored.getModel(mID),
+                                                    model=reg.conf.Model.getID(mID),
                                                     # model=self.CT.dict.Model.loadConf(mID),
                                                     **kws0)
 
@@ -387,8 +387,8 @@ class DoublePatch_Essay(Essay):
                 }
 
         return aux.AttrDict({
-            'Left_patch': reg.stored.conf.Source.gConf(pos=(-self.patch_x, 0.0), **kws0),
-            'Right_patch': reg.stored.conf.Source.gConf(pos=(self.patch_x, 0.0), **kws0),
+            'Left_patch': reg.stored.conf.Food.gConf(pos=(-self.patch_x, 0.0), **kws0),
+            'Right_patch': reg.stored.conf.Food.gConf(pos=(self.patch_x, 0.0), **kws0),
 
         })
 

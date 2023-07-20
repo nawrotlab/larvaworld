@@ -44,7 +44,7 @@ def test_replay() :
 
 def test_exp_run() :
     for exp in ['chemotaxis'] :
-        conf=reg.stored.getExp(exp)
+        conf=reg.conf.Exp.expand(exp)
         conf.sim_params.duration=1
         exp_run = sim.ExpRun(parameters=conf)
         exp_run.simulate()
@@ -53,7 +53,7 @@ def test_exp_run() :
 
 
 def test_GA() :
-    conf=reg.stored.expand('Ga', 'realism')
+    conf=reg.conf.Ga.expand('realism')
     conf.ga_select_kws.Ngenerations = 5
 
     ga_run = sim.GAlauncher(parameters=conf)
@@ -94,8 +94,7 @@ def test_evaluation() :
 
 def xtest_batch_run() :
     for exp in ['PItest_off'] :
-        conf=reg.stored.expand('Batch', exp)
-        # conf.sim_params.duration=1
+        conf=reg.conf.Batch.expand(exp)
         batch_run = sim.BatchRun(id=f'test_{exp}',batch_type=exp,**conf)
         batch_run.simulate()
 
