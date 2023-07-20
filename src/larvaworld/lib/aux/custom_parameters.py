@@ -2,11 +2,18 @@
 
 import numpy as np
 import param
-from param import Parameterized, Number,NumericTuple,Integer,Selector,Range, Magnitude, Boolean,ClassSelector,Parameter, List, Dict
+from param import Parameterized, Number, NumericTuple, Integer, Selector, Range, Magnitude, Boolean, ClassSelector, \
+    Parameter, List, Dict, String
 
 from larvaworld.lib import aux
 
+class StringRobust(String):
+    """Any input turned to string"""
 
+    def __init__(self, default='', **kwargs):
+        if default is not None and not isinstance(default,str) :
+            default=str(default)
+        super().__init__(default=default, **kwargs)
 
 
 class PositiveNumber(Number):
@@ -191,12 +198,16 @@ class ClassDict(ClassSelector):
 class ClassAttr(ClassSelector):
     """An attribute og a given class"""
     def __init__(self, class_,**kwargs):
+        if not isinstance(class_, tuple):
+            cc=class_
+        else:
+            cc = class_[0]
         if 'default' not in kwargs.keys() :
-            kwargs['default'] = class_()
+            kwargs['default'] = cc()
         elif kwargs['default'] is None :
             kwargs['default'] = None
         elif not isinstance(kwargs['default'], class_):
-            kwargs['default'] = class_(**kwargs['default'])
+            kwargs['default'] = cc(**kwargs['default'])
         super().__init__(class_=class_, **kwargs)
 
 

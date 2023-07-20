@@ -85,9 +85,9 @@ class Brain:
 
 
 class DefaultBrain(Brain):
-    def __init__(self, conf, **kwargs):
-        super().__init__()
-        self.locomotor = modules.DefaultLocomotor(dt=self.dt, conf=conf, **kwargs)
+    def __init__(self, conf,agent=None, **kwargs):
+        super().__init__(agent=agent)
+        self.locomotor = modules.DefaultLocomotor(conf=conf, **kwargs)
 
         kws = {"brain": self, "dt": self.dt}
         self.olfactor, self.toucher, self.windsensor, self.thermosensor = [None] * 4

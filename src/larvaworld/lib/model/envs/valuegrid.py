@@ -198,7 +198,7 @@ class FoodGrid(ValueGrid):
     unique_id = param.String('FoodGrid')
     default_color = param.Color(default='green')
     fixed_max = param.Boolean(default=True)
-    initial_value = param.Number(10**-5)
+    initial_value = param.Number(10**-6)
     substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
     def __init__(self, **kwargs):
@@ -218,7 +218,7 @@ class FoodGrid(ValueGrid):
                     v.draw_polygon(self.grid_vertices[i, j], self.get_color(vv), filled=True)
 
 
-class Odorscape(ValueGrid):
+class OdorScape(ValueGrid):
     unique_id = param.String('Odorscape')
     odorscape = param.Selector(objects=['Gaussian', 'Diffusion'], doc='The odorscape algorithm')
 
@@ -240,7 +240,7 @@ class Odorscape(ValueGrid):
 
 
 
-class GaussianValueLayer(Odorscape):
+class GaussianValueLayer(OdorScape):
     odorscape = param.Selector(default='Gaussian')
 
     def __init__(self, **kwargs):
@@ -279,7 +279,7 @@ class GaussianValueLayer(Odorscape):
                 text_box.draw(v)
 
 
-class DiffusionValueLayer(Odorscape):
+class DiffusionValueLayer(OdorScape):
     odorscape = param.Selector(default='Diffusion')
     evap_const = param.Magnitude(0.9, doc='The evaporation constant of the diffusion algorithm.')
     gaussian_sigma = param.NumericTuple((0.95, 0.95), doc='The sigma of the gaussian difusion algorithm.')

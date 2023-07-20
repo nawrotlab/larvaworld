@@ -86,7 +86,7 @@ class ViewableCircle(Viewable,aux.RadiallyExtended):
 
 class SpatialEntity(ViewableSingleObject):
     default_color = param.Color(default='white')
-    visible = param.Boolean(default=False)
+    # visible = param.Boolean(default=False)
     # def __init__(self, visible=False,default_color='white', **kwargs):
     #     super().__init__(visible=visible,default_color=default_color,**kwargs)
 

@@ -11,7 +11,7 @@ from larvaworld.lib.model import envs, agents
 #     def __init__(self, runtype, **kwargs):
 #         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
 
-class BaseRun(reg.SimOps, agentpy.Model):
+class BaseRun(agentpy.Model,reg.SimOps):
 
     def __init__(self, runtype,parameters=None, **kwargs):
         '''
@@ -36,13 +36,17 @@ class BaseRun(reg.SimOps, agentpy.Model):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
+        agentpy.Model.__init__(self, parameters=parameters)
         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
         c=reg.SimOps(runtype=runtype,**kwargs)
         self.agent_class = self.define_agent_class(c)
         self.agentpy_output_kws = {'exp_name': c.experiment, 'exp_id': c.id,
                                    'path': f'{c.data_dir}/agentpy_output'}
-        parameters.conf=c
-        agentpy.Model.__init__(self, parameters=parameters)
+        self.p.conf=c
+
+
+
+
         # print(self.id)
         # raise
         # reg.SimOps.__init__(self, runtype=runtype,**kwargs)
@@ -57,7 +61,7 @@ class BaseRun(reg.SimOps, agentpy.Model):
 
 
         self.report(['agentpy_output_kws', 'id', 'dir', 'Box2D', 'offline', 'show_display',
-                     'experiment', 'save_to', 'dt', 'duration', 'Nsteps'])
+                     'experiment', 'dt', 'duration', 'Nsteps'])
 
         self.is_paused = False
         self.datasets = None

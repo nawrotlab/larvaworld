@@ -102,8 +102,8 @@ substrate_dict = aux.AttrDict(
 
 
 
-class Odor(larvaworld.lib.aux.custom_parameters.NestedConf):
-    id = param.String(None, doc='The unique ID of the odorant')
+class Odor(aux.NestedConf):
+    id = aux.StringRobust(None, doc='The unique ID of the odorant')
     intensity = aux.OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
     spread = aux.OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')
 

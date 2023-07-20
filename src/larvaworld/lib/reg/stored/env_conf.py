@@ -4,23 +4,21 @@ from matplotlib import colors
 from larvaworld.lib import reg, aux
 
 
+
 @reg.funcs.stored_conf("Env")
 def Env_dict() :
-
-
-
+    from larvaworld.lib.reg import gen
 
     def oG(c=1, id='Odor'):
-        return reg.gen.Odor(id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c)).nestedConf
+        return gen.Odor(id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c)).nestedConf
         # return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
 
 
     def oD(c=1, id='Odor'):
-        return reg.gen.Odor(id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c)).nestedConf
-        # return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
+        return gen.Odor(id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c)).nestedConf
 
     def border(ps, c='black', w=0.01, id=None):
-        b = reg.get_null('Border', points=ps, default_color=c, width=w)
+        b = gen.Border(vertices=ps, default_color=c, width=w)
         if id is not None:
             return {id: b}
         else:
@@ -37,12 +35,12 @@ def Env_dict() :
         return border(ps, **kwargs)
 
     def su2(id='Source',**kwargs):
-        return reg.gen.Food(**kwargs).entry(id)
+        return gen.Food(**kwargs).entry(id)
 
 
     def sg2(id='Source', **kwargs):
 
-        return reg.gen.FoodGroup(**kwargs).entry(id)
+        return gen.FoodGroup(**kwargs).entry(id)
 
 
     def sgs(Ngs, ids=None, cs=None, rs=None, ams=None, os=None, qs=None, **kwargs):
@@ -67,9 +65,8 @@ def Env_dict() :
 
 
     def f_pars(sg={}, su={}, grid=None):
-        return {'source_groups': sg,
-                'food_grid': grid,
-                'source_units': su}
+        return gen.FoodConf(source_units =su, source_groups =sg,food_grid=grid)
+
 
 
     def foodNodor_4corners(d=0.05):
@@ -81,34 +78,27 @@ def Env_dict() :
 
     def env(arenaXY, f=f_pars(), o=None, bl={}, w=None, th=None, torus=False):
         if type(arenaXY) == float:
-            arena = reg.get_null('arena', geometry='circular', dims=(arenaXY, arenaXY), torus=torus)
+            arena = gen.Arena(geometry='circular', dims=(arenaXY, arenaXY), torus=torus)
+            # arena = reg.get_null('arena', geometry='circular', dims=(arenaXY, arenaXY), torus=torus)
         elif type(arenaXY) == tuple:
-            arena = reg.get_null('arena', geometry='rectangular', dims=arenaXY, torus=torus)
+            arena = gen.Arena(geometry='rectangular', dims=arenaXY, torus=torus)
+            # arena = reg.get_null('arena', geometry='rectangular', dims=arenaXY, torus=torus)
         else:
             raise
         if o == 'D':
-            o = {'odorscape': 'Diffusion',
-                 'grid_dims': [51, 51],
-                 'evap_const': 0.9,
-                 'gaussian_sigma': (7, 7)
-                 }
+            o = gen.DiffusionValueLayer()
         elif o == 'G':
-            o = {'odorscape': 'Gaussian',
-                 # 'grid_dims': None,
-                 # 'evap_const': None,
-                 # 'gaussian_sigma': None
-                 }
+            o = gen.GaussianValueLayer()
         if w is not None:
             if 'puffs' in w.keys():
                 for id, args in w['puffs'].items():
                     w['puffs'][id] = reg.get_null('air_puff', **args)
             else:
                 w['puffs'] = {}
-            w = reg.get_null('windscape', **w)
+            w = gen.WindScape(**w)
         if th is not None:
-            th = reg.get_null('thermoscape', **th)
-        return reg.get_null('Env', arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,
-                             thermoscape=th)
+            th = gen.ThermoScape(**th)
+        return gen.Env(arena=arena, food_params=f, odorscape=o, border_list=bl, windscape=w,thermoscape=th).nestedConf
 
 
     def CS_UCS(N=2, x=0.04):
@@ -145,16 +135,9 @@ def Env_dict() :
             else:
                 return lines
 
-        return env((h, h),
-                   f={'source_groups': {},
-                      'food_grid': None,
-                      'source_units': su2('Target', odor=oG(), c='blue')},
-                   # f=f_pars(su=su('Target', o=preg.oG(), c='blue')),
+        return env((h, h),f=f_pars(su =su2('Target', odor=oG(), c='blue')),
                    o='G',
-                   bl={'Maze': {
-                       'points': maze(nx=n, ny=n, h=h, return_points=True),
-                       'default_color': 'black',
-                       'width': 0.001}})
+                   bl=border(maze(nx=n, ny=n, h=h, return_points=True), c='black', w=0.001, id='Maze'))
 
 
     def game_env(dim=0.1, x=0.4, y=0.0):
@@ -165,11 +148,7 @@ def Env_dict() :
                **su2('Left_base', pos=(-x, y), c='blue', odor=oG(id='Left_base_odor')),
                **su2('Right_base', pos=(+x, y), c='red', odor=oG(id='Right_base_odor'))}
 
-        return env((dim, dim),
-                   f={'source_groups': {},
-                      'food_grid': None,
-                      'source_units': sus},
-                   o='G')
+        return env((dim, dim),f=f_pars(su =sus),o='G')
 
 
 
@@ -205,8 +184,8 @@ def Env_dict() :
     'single_puff': env((0.3, 0.3),
                        w={'puffs': {'Puff': {'N': 1, 'duration': 30.0, 'start_time': 55, 'speed': 100}}}),
 
-    'CS_UCS_on_food': env(0.1, f_pars(grid=reg.get_null('food_grid'), su=CS_UCS(1)), 'G'),
-    'CS_UCS_on_food_x2': env(0.1, f_pars(grid=reg.get_null('food_grid'), su=CS_UCS(2)), 'G'),
+    'CS_UCS_on_food': env(0.1, f_pars(grid=gen.FoodGrid(), su=CS_UCS(1)), 'G'),
+    'CS_UCS_on_food_x2': env(0.1, f_pars(grid=gen.FoodGrid(), su=CS_UCS(2)), 'G'),
     'CS_UCS_off_food': env(0.1, f_pars(su=CS_UCS(1)), 'G'),
 
     'patchy_food': env((0.2, 0.2), f_pars(sg=sg2(N=8, scale=(0.07,0.07), mode='periphery', a=0.001, odor=oG(2))), 'G'),
@@ -214,7 +193,7 @@ def Env_dict() :
     'uniform_food': env(0.05, f_pars(sg=sg2(N=2000, scale=(0.025,0.025), a=0.01, r=0.0001))),
     'patch_grid': env((0.2, 0.2), f_pars(sg=sg2(N=5*5, scale=(0.2,0.2), a=0.01, r=0.007, mode='grid', shape='rectangular', odor=oG(0.2))), 'G', torus=False),
 
-    'food_grid': env((0.02, 0.02), f_pars(grid=reg.get_null('food_grid'))),
+    'food_grid': env((0.02, 0.02), f_pars(grid=gen.FoodGrid())),
     'single_odor_patch': env((0.1, 0.1), f_pars(su=su2('Patch', a=0.1, r=0.01, odor=oG())), 'G'),
     'single_patch': env((0.05, 0.05), f_pars(su=su2('Patch', a=0.1, r=0.01))),
     'multi_patch': env((0.02, 0.02), f_pars(sg=sg2(N=8, scale=(0.007,0.007), mode='periphery', a=0.1, r=0.0015))),

@@ -4,14 +4,17 @@ import numpy as np
 from larvaworld.lib import reg, aux
 
 def grouped_exp_dic():
-
+    from larvaworld.lib.reg import gen
 
     def oG(c=1, id='Odor'):
-        return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
+        return gen.Odor(id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c)).nestedConf
+        # return reg.get_null('odor', id=id, intensity=2.0 * c, spread=0.0002 * np.sqrt(c))
 
 
     def oD(c=1, id='Odor'):
-        return reg.get_null('odor', id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
+        return gen.Odor(id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c)).nestedConf
+
+
 
 
 

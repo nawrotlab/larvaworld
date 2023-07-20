@@ -24,6 +24,7 @@ class BaseScreenManager :
         self.__dict__.update(vis.color)
         self.__dict__.update(vis.aux)
         self.color_behavior = vis.color.color_behavior
+        self.trails = vis.draw.trails
         trajectory_dt = vis.draw.trajectory_dt
         if trajectory_dt is None:
             trajectory_dt = 0.0
@@ -145,7 +146,7 @@ class BaseScreenManager :
         for g in self.model.agents:
             g._draw(v=v)
 
-        if self.vis_kwargs.draw.trails:
+        if self.trails:
             self.draw_trajectories()
 
     def check(self,**kwargs):
@@ -242,8 +243,10 @@ class ScreenManager(BaseScreenManager):
             media_name = str(self.model.id)
         self.screen_kws.caption = media_name
         if self.mode == 'video':
+            os.makedirs(f, exist_ok=True)
             self.screen_kws.record_video_to = f'{f}/{media_name}.mp4'
         if self.mode == 'image':
+            os.makedirs(f, exist_ok=True)
             self.screen_kws.record_image_to = f'{f}/{media_name}_{self.image_mode}.png'
         self.build_aux()
 
@@ -272,9 +275,9 @@ class ScreenManager(BaseScreenManager):
                                          center=True, w=120 * 4, h=32 * 4,
                                          font=pygame.font.SysFont("comicsansms", 32 * 2))
 
-        self.sim_clock = screen.SimulationClock(m.dt,self.window_dims, default_color=c)
-        self.sim_scale = screen.SimulationScale(m.space.dims[0],self.window_dims, default_color=c)
-        self.sim_state = screen.SimulationState(model=m,self.window_dims, default_color=c)
+        self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt,window_dims=self.window_dims, default_color=c)
+        self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],window_dims=self.window_dims, default_color=c)
+        self.sim_state = screen.SimulationState(model=m,window_dims=self.window_dims, default_color=c)
         self.screen_texts = {name: screen.InputBox(text=name, default_color=c) for name in [
             'trajectory_dt',
             'trails',

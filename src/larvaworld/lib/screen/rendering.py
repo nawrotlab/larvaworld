@@ -351,7 +351,7 @@ class InputBox(aux.Viewable):
                  screen_pos=None, linewidth=0.01, show_frame=False,
                  agent=None, end_time=0, start_time=0, font=None, **kwargs):
         super().__init__(**kwargs)
-        self.screen_pos = screen_pos
+        # self.screen_pos = screen_pos
         self.linewidth = linewidth
         self.show_frame = show_frame
 
@@ -372,8 +372,8 @@ class InputBox(aux.Viewable):
         self.center = center
         self.w = w
         self.h = h
-        if self.screen_pos is not None:
-            self.shape = self.set_shape(self.screen_pos)
+        if screen_pos is not None:
+            self.shape = self.set_shape(screen_pos)
         else:
             self.shape = None
 
@@ -381,10 +381,7 @@ class InputBox(aux.Viewable):
         # if self.visible:
         if self.agent is not None:
             pos=self.agent.get_position()
-            try :
-                screen_pos = self.agent.model.screen_manager.space2screen_pos(pos)
-            except:
-                screen_pos= aux.space2screen_pos(pos)
+            screen_pos = self.agent.model.screen_manager.space2screen_pos(pos)
             self.shape = self.set_shape(screen_pos)
             self.color = self.agent.default_color
         if self.shape is not None:
@@ -470,7 +467,8 @@ class LabelledGroupedObject(aux.ViewableGroupedObject):
     def _draw(self,v,**kwargs):
         if self.visible :
             self.draw(v,**kwargs)
-            self.id_box.draw(v)
+            if self.id_box.visible:
+                self.id_box.draw(v)
 
 
 class PointRelPositioned(aux.PointPositioned):
@@ -506,7 +504,7 @@ class TextFont(PointRelPositionedViewable) :
         self.text_centre = None
         self.text_font = None
         self.text_font_r = None
-
+        self.update_font()
         self.render_text()
 
     @param.depends('text','default_color','text_centre_scale', watch=True)
@@ -521,7 +519,7 @@ class TextFont(PointRelPositionedViewable) :
     @param.depends('pos', 'window_dims', 'text_centre_scale', watch=True)
     def update_font(self):
         width, height = self.window_dims
-        font_size=width *self.font_size_scale
+        font_size=int(width *self.font_size_scale)
         self.font = pygame.font.SysFont(self.font_type, font_size)
         dx, dy =self.text_centre_scale
         self.text_centre = (self.x * dx, self.y * dy)
@@ -635,8 +633,9 @@ class SimulationScale(TextFont):
     pos_scale = aux.PositiveRange((0.1, 0.04))
     text_centre_scale = aux.PositiveRange((1, 1.5))
 
-    def __init__(self,window_dims, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.lines = None
         self.update_scale()
         # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
         # w_in_mm = self.real_width * 1000
@@ -645,7 +644,7 @@ class SimulationScale(TextFont):
         #     lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
         # I don't exactly understand why this works...
         # self.scale_to_draw = self.scale_in_mm / w_in_mm
-        self.lines = None
+
 
         # self.window_width, self.window_height = window_dims
         # self.x_pos = int(self.window_width * 0.1)
@@ -693,11 +692,12 @@ class SimulationScale(TextFont):
 
     def draw(self, v,**kwargs):
         for line in self.lines:
-            pygame.draw.line(v._window, self.color, line[0], line[1], 1)
+            pygame.draw.line(v._window, self.default_color, line[0], line[1], 1)
+        super().draw(v,**kwargs)
         # self.scale_font = self.font.render(self.text, 1, self.color)
         # self.scale_font_r = self.scale_font.get_rect()
         # self.scale_font_r.center = self.font_center
-        v.draw_text_box(self.scale_font, self.scale_font_r)
+        # v.draw_text_box(self.scale_font, self.scale_font_r)
 
 
 class SimulationState(TextFont):
