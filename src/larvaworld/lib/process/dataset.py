@@ -364,11 +364,11 @@ class LarvaDataset(BaseLarvaDataset):
     def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},**kwargs):
         proc_keys=[k for k, v in processing.items() if v]
         anot_keys=[k for k, v in annotation.items() if v]
-        if metric_definition is not None :
-            self.config.metric_definition.update(metric_definition)
-            for k in proc_keys :
-                if k in metric_definition.keys():
-                    kwargs.update(metric_definition[k])
+        # if metric_definition is not None :
+        #     self.config.metric_definition.update(metric_definition)
+        #     for k in proc_keys :
+        #         if k in metric_definition.keys():
+        #             kwargs.update(metric_definition[k])
         return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,
                             anot_keys=anot_keys,**kwargs)
 
@@ -464,7 +464,7 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 class LarvaDatasetCollection :
-    def __init__(self,labels=None, add_samples=False,**kwargs):
+    def __init__(self,labels=None, add_samples=False,config=None,**kwargs):
         datasets = self.get_datasets(**kwargs)
 
         for d in datasets:
@@ -478,6 +478,7 @@ class LarvaDatasetCollection :
             datasets += targets
             if labels is not None:
                 labels += targetIDs
+        self.config = config
         self.datasets = datasets
         self.labels = labels
         self.Ndatasets = len(datasets)
@@ -583,7 +584,49 @@ class LarvaDatasetCollection :
     def concat_data(self, key):
         return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
+    @ classmethod
+    def from_agentpy_output(cls, output,agents=None,to_Geo=False):
 
+        p=aux.AttrDict(output.parameters['constants'])
+        ds = []
+        for gID, df in output.variables.items():
+            step, end = convert_group_output_to_dataset(df, p['collectors'])
+            gConf=p.larva_groups[gID]
+            # print(df)
+            # raise
+            assert 'sample_id' not in df.index.names
+            config = p.get_copy()
+            kws = {
+                'larva_groups': {gID: gConf},
+                # 'df': df,
+                'group_id': p.id,
+                'id': gID,
+                'refID': f'{p.id}/{gID}',
+                'dir': f'{p.data_dir}/{gID}',
+                'color': gConf.default_color,
+                # 'sample': gConf.sample,
+                # 'life_history': gConf.life_history,
+                # 'model': gConf.model,
+
+            }
+            config.update(**kws)
+            d=BaseLarvaDataset.initGeo(to_Geo=to_Geo,config=config,load_data=False,step=step,end=end,agents=agents)
+
+            ds.append(d)
+
+        return cls(datasets=ds, config=p)
+
+def convert_group_output_to_dataset(df, collectors):
+
+
+    df.index.set_names(['AgentID', 'Step'], inplace=True)
+    df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+    df.sort_index(level=['Step', 'AgentID'], inplace=True)
+
+    end = df[collectors['end']].xs(df.index.get_level_values('Step').max(), level='Step')
+    step = df[collectors['step']]
+
+    return step, end
 # class RefDataset(aux.NestedConf):
 #     refID = reg.conf.Ref.confID_selector()
 #     # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')

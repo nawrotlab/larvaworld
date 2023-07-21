@@ -5,7 +5,7 @@ import sys
 
 import pint_pandas
 
-from larvaworld.lib.param import XYCoordRobust
+
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
@@ -384,7 +384,7 @@ def buildInitDict():
     def xy_distros():
         d = aux.AttrDict({
             'xy': {'dtype': Tuple[float], 'v': (0.0, 0.0), 'k': 'xy', 'lim': (-1.0, 1.0),
-                   'vfunc': XYCoordRobust,
+                   'vfunc': param.XYCoordinates,
                    'h': 'The xy spatial position coordinates.'},
 
             'logn_dist': {

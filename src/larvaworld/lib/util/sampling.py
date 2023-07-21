@@ -157,10 +157,12 @@ def imitateRef(mID=None, m=None, refID=None, refDataset=None,sample_ks=None, Nid
 
 
 def generate_agentGroup(gID, Nids,imitation=False, distribution=None, **kwargs):
+    from larvaworld.lib.param import generate_xyNor_distro
+
     if not imitation:
 
         if distribution is not None :
-            ps, ors = aux.generate_xyNor_distro(distribution)
+            ps, ors = generate_xyNor_distro(distribution)
         else :
             ps = [(0.0, 0.0) for j in range(Nids)]
             ors = [0.0 for j in range(Nids)]
@@ -203,9 +205,11 @@ def generate_agentConfs(larva_groups, parameter_dict={}):
 
 
 def generate_sourceConfs(groups={}, units={}) :
+    from larvaworld.lib.param import generate_xy_distro
+
     confs = []
     for gID, gConf in groups.items():
-        ps = aux.generate_xy_distro(**gConf.distribution)
+        ps = generate_xy_distro(**gConf.distribution)
         gConf.pop('distribution')
         for i, p in enumerate(ps):
             conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}

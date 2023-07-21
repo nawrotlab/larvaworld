@@ -7,6 +7,7 @@ from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 
 
+
 # class BaseRunConf(reg.SimOps):
 #     def __init__(self, runtype, **kwargs):
 #         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
@@ -36,13 +37,20 @@ class BaseRun(agentpy.Model,reg.SimOps):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
+        # c=reg.SimOps(runtype=runtype, **kwargs).nestedConf
         agentpy.Model.__init__(self, parameters=parameters)
+
         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
-        c=reg.SimOps(runtype=runtype,**kwargs)
-        self.agent_class = self.define_agent_class(c)
-        self.agentpy_output_kws = {'exp_name': c.experiment, 'exp_id': c.id,
-                                   'path': f'{c.data_dir}/agentpy_output'}
-        self.p.conf=c
+
+        # c=reg.SimOps(runtype=runtype,**kwargs)
+        self.p.update(**self.nestedConf)
+        # print(c.dir)
+        # print(self.dir)
+        # print(self.p.dir)
+
+        self.agent_class = self.define_agent_class()
+        self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
+                                   'path': f'{self.data_dir}/agentpy_output'}
 
 
 
@@ -56,12 +64,12 @@ class BaseRun(agentpy.Model,reg.SimOps):
         # self.experiment = experiment if experiment is not None else parameters.experiment
         # self.runtype = runtype
 
-        self.p.steps = self.p.conf.Nsteps
+        self.p.steps = self.p.Nsteps
 
 
 
-        self.report(['agentpy_output_kws', 'id', 'dir', 'Box2D', 'offline', 'show_display',
-                     'experiment', 'dt', 'duration', 'Nsteps'])
+        # self.report(['agentpy_output_kws', 'id', 'dir', 'Box2D', 'offline', 'show_display',
+        #              'experiment', 'dt', 'duration', 'Nsteps'])
 
         self.is_paused = False
         self.datasets = None
@@ -73,7 +81,7 @@ class BaseRun(agentpy.Model,reg.SimOps):
 
     @property
     def configuration_text(self):
-        c=self.p.conf
+        c=self.p
         pref0 = '     '
         text = f"Simulation configuration : \n" \
                f"{pref0}Simulation mode : {c.runtype}\n" \
@@ -148,7 +156,7 @@ class BaseRun(agentpy.Model,reg.SimOps):
         sourceConfs=c1+c2
         # sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
-        self.source_xy = aux.AttrDict({a.id: a.pos for a in source_list})
+        self.p.source_xy = aux.AttrDict({a.id: a.pos for a in source_list})
         self.space.add_sources(source_list, positions=[a.pos for a in source_list])
         self.sources = agentpy.AgentList(model=self, objs=source_list)
   
@@ -161,15 +169,15 @@ class BaseRun(agentpy.Model,reg.SimOps):
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
-    def define_agent_class(self, c):
-        if c.runtype=='Replay' :
+    def define_agent_class(self):
+        if self.runtype=='Replay' :
             return agents.LarvaReplay
-        elif c.Box2D :
+        elif self.Box2D :
             return agents.LarvaBox2D
-        elif c.offline :
+        elif self.offline :
             return agents.LarvaOffline
-        elif c.runtype=='Ga' :
-            if c.experiment=='obstacle_avoidance':
+        elif self.runtype=='Ga' :
+            if self.experiment=='obstacle_avoidance':
                 return agents.ObstacleLarvaRobot
             else:
                 return agents.LarvaRobot
@@ -189,8 +197,12 @@ class BaseRun(agentpy.Model,reg.SimOps):
 
     def set_collectors(self, collections):
         self.collectors = reg.par.get_reporters(collections=collections, agents=self.agents)
-        self.step_output_keys = list(self.collectors['step'].keys())
-        self.end_output_keys = list(self.collectors['end'].keys())
+        # self.step_output_keys = list(self.collectors['step'].keys())
+        # self.end_output_keys = list(self.collectors['end'].keys())
+        collectors=aux.AttrDict()
+        collectors.step=list(self.collectors['step'].keys())
+        collectors.end=list(self.collectors['end'].keys())
+        self.p.collectors=collectors
         # print(self.step_output_keys)
         # raise
 
@@ -200,30 +212,30 @@ class BaseRun(agentpy.Model,reg.SimOps):
         config = aux.AttrDict({
             'env_params': p.env_params,
             'larva_groups': p.larva_groups,
-            'source_xy': self.source_xy,
+            'source_xy': self.p.source_xy,
             **p.conf.nestedConf
         })
         config.update(**kwargs)
         return config
 
-    def convert_group_output_to_dataset(self,df, collectors):
-        step_output_keys = list(collectors['step'].keys())
-        end_output_keys = list(collectors['end'].keys())
-
-        df.index.set_names(['AgentID', 'Step'], inplace=True)
-        df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-        df.sort_index(level=['Step', 'AgentID'], inplace=True)
-
-        end = df[end_output_keys].xs(df.index.get_level_values('Step').max(), level='Step')
-        step = df[step_output_keys]
-
-        return step, end
+    # def convert_group_output_to_dataset(self,df, collectors):
+    #     # step_output_keys = list(collectors['step'].keys())
+    #     # end_output_keys = list(collectors['end'].keys())
+    #
+    #     df.index.set_names(['AgentID', 'Step'], inplace=True)
+    #     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
+    #     df.sort_index(level=['Step', 'AgentID'], inplace=True)
+    #
+    #     end = df[collectors['end']].xs(df.index.get_level_values('Step').max(), level='Step')
+    #     step = df[collectors['step']]
+    #
+    #     return step, end
 
     def convert_output_to_dataset(self, df,agents=None,to_Geo=False, **kwargs):
         config=self.create_config(**kwargs)
-        step, end = self.convert_group_output_to_dataset(df, self.collectors)
+        from larvaworld.lib.process.dataset import convert_group_output_to_dataset,BaseLarvaDataset
+        step, end = convert_group_output_to_dataset(df, self.p.collectors)
 
-        from larvaworld.lib.process.dataset import BaseLarvaDataset
         d=BaseLarvaDataset.initGeo(to_Geo=to_Geo,config=config,load_data=False,step=step,end=end,agents=agents)
 
         return d

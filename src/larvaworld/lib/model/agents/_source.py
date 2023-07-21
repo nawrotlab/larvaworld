@@ -55,7 +55,10 @@ class Food(Source):
             self.model.delete_agent(self)
         else:
             r = self.amount / self.initial_amount
-            self.color = (1 - r) * np.array((255, 255, 255)) + r * np.array(self.default_color)
+            try:
+                self.color = (1 - r) * np.array((255, 255, 255)) + r * np.array(self.default_color)
+            except:
+                pass
         return np.min([amount, prev_amount])
 
     def draw(self, viewer, filled=None):

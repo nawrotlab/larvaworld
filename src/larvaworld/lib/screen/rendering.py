@@ -5,7 +5,8 @@ import imageio
 import param
 from shapely import geometry
 
-from larvaworld.lib.param import Viewable, PointPositioned, ViewableGroupedObject, PositiveRange, PositiveNumber
+from larvaworld.lib.param import Viewable, PointPositioned, ViewableGroupedObject, PositiveRange, PositiveNumber, \
+    PositiveIntegerRange, PointRelPositioned
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -472,21 +473,7 @@ class LabelledGroupedObject(ViewableGroupedObject):
                 self.id_box.draw(v)
 
 
-class PointRelPositioned(PointPositioned):
-    window_dims = PositiveRange((100, 100), doc='The window dimensions')
-    pos_scale = PositiveRange((0.5, 0.5), softmax=1.0, step=0.01,
-                                  doc='The position relative to the window dimensions')
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.update_pos()
 
-    @param.depends('pos_scale', 'window_dims', watch=True)
-    def update_pos(self):
-        width, height = self.window_dims
-        w, h = self.pos_scale
-        x_pos = int(width * w)
-        y_pos = int(height * h)
-        self.pos=(x_pos,y_pos)
 
 class PointRelPositionedViewable(PointRelPositioned, Viewable) :
 

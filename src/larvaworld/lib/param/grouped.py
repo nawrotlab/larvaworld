@@ -1,6 +1,7 @@
 import param
 from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
+
 from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
     OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber
 
@@ -86,6 +87,7 @@ class SimMetricOps(XYops):
                                  doc='The fraction of the body considered front, relevant for bend computation from angles.')
     point_idx = OptionalPositiveInteger(softmax=20,
                                         doc='Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.')
+    point = param.String(doc='Midline point to use as the larva spatial position. Default is centroid.')
     use_component_vel = Boolean(False,
                                 doc='Whether to use the component velocity ralative to the axis of forward motion.')
 
@@ -102,6 +104,16 @@ class SimMetricOps(XYops):
         self.param.params('rear_vector').bounds = (-N,N)
         self.param.params('point_idx').bounds=(hardmin, hardmax) = (0,N)
         self.point_idx=self.param.params('point_idx').crop_to_bounds(self.point_idx)
+        self.point=self.get_track_point()
+
+    def get_track_point(self):
+        from larvaworld.lib import aux
+        points = aux.nam.midline(self.Npoints, type='point')
+
+        try:
+            return points[self.point_idx - 1]
+        except:
+            return 'centroid'
 
 
 

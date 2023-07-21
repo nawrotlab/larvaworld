@@ -3,7 +3,7 @@ import warnings
 
 import param
 
-from larvaworld.lib.param import NestedConf, PositiveInteger
+from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -253,7 +253,7 @@ class EvalConf(NestedConf):
         'tortuosity': ['tor5', 'tor20']}),
         doc='Evaluation metrics to use')
 
-reg.gen.Eval=reg.class_generator(EvalConf, mode='Unit')
+reg.gen.Eval=class_generator(EvalConf, mode='Unit')
 
 
 def eval_model_graphs(refID, mIDs, dIDs=None, id=None, dir=None, N=10,

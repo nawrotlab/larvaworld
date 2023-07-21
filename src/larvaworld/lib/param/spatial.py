@@ -4,8 +4,7 @@ from shapely import geometry
 
 from larvaworld.lib import aux
 
-from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
-    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, XYCoordRobust, RandomizedPhase, XYLine, \
+from larvaworld.lib.param import NestedConf, PositiveNumber, XYCoordRobust, RandomizedPhase, XYLine, \
     PositiveIntegerRange, PositiveRange
 
 
@@ -28,7 +27,21 @@ class PointPositioned(NestedConf):
     def y(self):
         return self.pos[1]
 
+class PointRelPositioned(PointPositioned):
+    window_dims = PositiveIntegerRange((100, 100), doc='The window dimensions')
+    pos_scale = PositiveRange((0.5, 0.5), softmax=1.0, step=0.01,
+                                  doc='The position relative to the window dimensions')
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.update_pos()
 
+    @param.depends('pos_scale', 'window_dims', watch=True)
+    def update_pos(self):
+        width, height = self.window_dims
+        w, h = self.pos_scale
+        x_pos = int(width * w)
+        y_pos = int(height * h)
+        self.pos=(x_pos,y_pos)
 
 class RadiallyExtended(PointPositioned):
     radius = PositiveNumber(0.003, softmax=0.1, step=0.001, doc='The spatial radius of the source in meters')

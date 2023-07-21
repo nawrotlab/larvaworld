@@ -66,7 +66,7 @@ class ExpRun(BaseRun):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(self) if k is not None else None
 
-        self.report(['source_xy'])
+        # self.report(['source_xy'])
 
 
     @property
@@ -118,7 +118,10 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
-        self.datasets = self.retrieve()
+
+
+        self.datasets = self.retrieve2()
+        # self.datasets = self.retrieve()
         end = time.time()
         dur = np.round(end - start).astype(int)
         reg.vprint(f'--- Simulation {self.id} completed in {dur} seconds!--- ', 1)
@@ -134,25 +137,29 @@ class ExpRun(BaseRun):
             self.store()
         return self.datasets
 
-
     def retrieve(self):
-        ds = []
-        for gID, df in self.output.variables.items():
-            # print(df)
-            # raise
-            assert 'sample_id' not in df.index.names
-            kws = {
-                'larva_groups': {gID: self.p.larva_groups[gID]},
-                # 'df': df,
-                'id': gID,
-                'dir': f'{self.data_dir}/{gID}'
-            }
-            d = self.convert_output_to_dataset(df, **kws)
+        from larvaworld.lib.process.dataset import LarvaDatasetCollection
+        self.dataset_collection=LarvaDatasetCollection.from_agentpy_output(self.output)
+        return self.dataset_collection.datasets
 
-            ds.append(d)
-
-
-        return ds
+    # def retrieve(self):
+    #     ds = []
+    #     for gID, df in self.output.variables.items():
+    #         # print(df)
+    #         # raise
+    #         assert 'sample_id' not in df.index.names
+    #         kws = {
+    #             'larva_groups': {gID: self.p.larva_groups[gID]},
+    #             # 'df': df,
+    #             'id': gID,
+    #             'dir': f'{self.data_dir}/{gID}'
+    #         }
+    #         d = self.convert_output_to_dataset(df, **kws)
+    #
+    #         ds.append(d)
+    #
+    #
+    #     return ds
 
 
 
@@ -217,11 +224,11 @@ class ExpRun(BaseRun):
         if 'disp' in exp:
             samples = aux.unique_list([d.config.sample for d in ds])
             ds += [reg.loadRef(sd) for sd in samples if sd is not None]
-        graphgroups = reg.graphs.get_analysis_graphgroups(exp, self.source_xy)
+        graphgroups = reg.graphs.get_analysis_graphgroups(exp, self.p.source_xy)
         self.figs = reg.graphs.eval_graphgroups(graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs)
 
     def store(self):
-        self.output.save(**self.agentpy_output_kws)
+        self.output.save(**self.p.agentpy_output_kws)
         os.makedirs(self.data_dir, exist_ok=True)
         for d in self.datasets:
             d.save()
@@ -229,15 +236,8 @@ class ExpRun(BaseRun):
                 aux.storeSoloDics(vs, path=f'{d.dir}/data/individuals/{type}.txt')
 
     def load_agentpy_output(self):
-        df=agentpy.DataDict.load(**self.agentpy_output_kws)
+        df=agentpy.DataDict.load(**self.p.agentpy_output_kws)
         df1 = pd.concat(df.variables, axis=0).droplevel(1, axis=0)
         df1.index.rename('Model', inplace=True)
         return df1
 
-'''
-class _ExpRun(ExpRun):
-    def __init__(self,parameters, **kwargs):
-        parameters = self.exp_conf.update_existingnestdict_by_suffix(parameters)
-        super().__init__(parameters=parameters, **kwargs)
-
-'''

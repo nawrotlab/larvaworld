@@ -110,8 +110,8 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwarg
     Np=c.Npoints
     dt = c.dt
 
-    def ang_conf(p=c.metric_definition.angular):
-        return p.bend,p.front_body_ratio, np.array(p.front_vector) - 1, np.array(p.rear_vector) - 1
+    def ang_conf():
+        return c.bend,c.front_body_ratio, np.array(c.front_vector) - 1, np.array(c.rear_vector) - 1
 
     ho, to, fo, ro = aux.nam.orient(['head', 'tail', 'front', 'rear'])
 

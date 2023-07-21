@@ -9,7 +9,7 @@ import progressbar
 import numpy as np
 
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.param import NestedConf, SimTimeOps, ClassAttr
+from larvaworld.lib.param import NestedConf, SimTimeOps, ClassAttr, class_generator
 
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
@@ -472,8 +472,8 @@ def df_from_log(gLog):
     return df.set_index(['obj_id', 't'])
         # return ddf
 
-reg.gen.GAselector=reg.class_generator(GAselector, mode='Unit')
-reg.gen.GAevaluation=reg.class_generator(GAevaluation, mode='Unit')
+reg.gen.GAselector=class_generator(GAselector, mode='Unit')
+reg.gen.GAevaluation=class_generator(GAevaluation, mode='Unit')
 
 class GAconf(SimTimeOps):
     env_params = reg.conf.Env.confID_selector()
@@ -483,4 +483,4 @@ class GAconf(SimTimeOps):
     refID = reg.conf.Ref.confID_selector()
     scene = param.String('no_boxes', doc='The name of the scene to load')
 
-reg.gen.Ga=reg.class_generator(GAconf, mode='Unit')
+reg.gen.Ga=class_generator(GAconf, mode='Unit')
