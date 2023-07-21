@@ -7,20 +7,21 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.deb.substrate import Substrate
+from larvaworld.lib.param import Substrate, ViewableNamed, SpatialEntity, PositiveIntegerRange, ClassAttr, \
+    PositiveNumber, Phase
 from larvaworld.lib.screen.rendering import InputBox
 
 
-class GridOverSpace(aux.ViewableNamed, agentpy.Grid):
+class GridOverSpace(ViewableNamed, agentpy.Grid):
     unique_id = param.String('GridOverArena')
     default_color = param.Color(default='white')
     visible = param.Boolean(default=False)
     # initial_value = param.Number(0.0, doc='initial value over the grid')
     # fixed_max = param.Boolean(False, doc='whether the max is kept constant')
-    grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
+    grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
     def __init__(self,model,**kwargs):
-        aux.ViewableNamed.__init__(self,**kwargs)
+        ViewableNamed.__init__(self,**kwargs)
         agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
         self._torus = self.space._torus
         self.X, self.Y = self.XY = np.array(self.grid_dims)
@@ -53,16 +54,18 @@ class GridOverSpace(aux.ViewableNamed, agentpy.Grid):
                       (x * (i + 1 - X), y * (j + 1 - Y)),
                       (x * (i - X), y * (j + 1 - Y))])
 
-class ValueGrid(aux.SpatialEntity):
+class ValueGrid(SpatialEntity):
     initial_value = param.Number(0.0, doc='initial value over the grid')
 
     fixed_max = param.Boolean(False,doc='whether the max is kept constant')
-    grid_dims = aux.PositiveIntegerRange((51, 51),softmax=500, doc='The spatial resolution of the food grid.')
+    grid_dims = PositiveIntegerRange((51, 51),softmax=500, doc='The spatial resolution of the food grid.')
 
 
-    def __init__(self, sources=[], max_value=None, min_value=0.0, **kwargs):
+    def __init__(self, sources=None, max_value=None, min_value=0.0, **kwargs):
         super().__init__(**kwargs)
 
+        if sources is None:
+            sources = []
         self.sources = sources
         self.X, self.Y =self.XY0=np.array(self.grid_dims)
         self.grid = np.ones(self.grid_dims) * self.initial_value
@@ -199,7 +202,7 @@ class FoodGrid(ValueGrid):
     default_color = param.Color(default='green')
     fixed_max = param.Boolean(default=True)
     initial_value = param.Number(10**-6)
-    substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
+    substrate = ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -333,11 +336,11 @@ class DiffusionValueLayer(OdorScape):
 
 
 
-class WindScape(aux.SpatialEntity):
+class WindScape(SpatialEntity):
     unique_id = param.String('WindScape')
     default_color = param.Color(default='red')
-    wind_direction = aux.Phase(np.pi,doc='The absolute polar direction of the wind/air puff.')
-    wind_speed = aux.PositiveNumber(softmax=100.0, doc='The speed of the wind/air puff.')
+    wind_direction = Phase(np.pi,doc='The absolute polar direction of the wind/air puff.')
+    wind_speed = PositiveNumber(softmax=100.0, doc='The speed of the wind/air puff.')
     puffs = param.Parameter({},label='air-puffs', doc='Repetitive or single air-puff stimuli.')
 
     def __init__(self, **kwargs):
@@ -416,9 +419,13 @@ class ThermoScape(ValueGrid):
     unique_id = param.String('ThermoScape')
 
     def __init__(self, plate_temp=22, spread=0.1,
-                 thermo_sources=[[0.5, 0.05], [0.05, 0.5], [0.5, 0.95], [0.95, 0.5]],
-                 thermo_source_dTemps=[8, -8, 8, -8], **kwargs):
+                 thermo_sources=None,
+                 thermo_source_dTemps=None, **kwargs):
         super().__init__(**kwargs)
+        if thermo_source_dTemps is None:
+            thermo_source_dTemps = [8, -8, 8, -8]
+        if thermo_sources is None:
+            thermo_sources = [[0.5, 0.05], [0.05, 0.5], [0.5, 0.95], [0.95, 0.5]]
         self.plate_temp = plate_temp
         self.thermo_sources = {str(i): o for i, o in enumerate(thermo_sources)}
         self.thermo_source_dTemps = {str(i): o for i, o in enumerate(thermo_source_dTemps)}

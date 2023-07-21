@@ -3,7 +3,7 @@ import numpy as np
 from shapely.geometry import Point,Polygon
 
 from larvaworld.lib import aux
-from larvaworld.lib.aux.drawable import ViewableNamedBoundedArea
+from larvaworld.lib.param.drawable import ViewableNamedBoundedArea
 
 
 

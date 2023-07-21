@@ -3,6 +3,8 @@ import warnings
 
 import param
 
+from larvaworld.lib.param import NestedConf, PositiveInteger
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import itertools
@@ -230,10 +232,10 @@ class EvalRun(BaseRun):
 
 
 
-class EvalConf(aux.NestedConf):
+class EvalConf(NestedConf):
     modelIDs = reg.conf.Model.confID_selector(single=False)
     dataset_ids = param.List([],item_type=str, doc='The ids for the generated datasets')
-    N = aux.PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
+    N = PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
     refID = reg.conf.Ref.confID_selector()
     norm_modes = param.ListSelector(default=['raw', 'minmax'], objects=['raw', 'minmax', 'std'],
                                     # label='keys of modules to include in space search',

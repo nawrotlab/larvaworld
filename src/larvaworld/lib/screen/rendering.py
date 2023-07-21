@@ -5,6 +5,7 @@ import imageio
 import param
 from shapely import geometry
 
+from larvaworld.lib.param import Viewable, PointPositioned, ViewableGroupedObject, PositiveRange, PositiveNumber
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -343,7 +344,7 @@ class Viewer(object):
 
 
 
-class InputBox(aux.Viewable):
+class InputBox(Viewable):
     default_color = param.Color('lightblue')
     visible = param.Boolean(False)
 
@@ -459,7 +460,7 @@ class IDBox(InputBox):
     def __init__(self, agent,**kwargs):
         super().__init__(agent=agent, text=agent.unique_id, color_inactive=agent.default_color,default_color=agent.default_color,**kwargs)
 
-class LabelledGroupedObject(aux.ViewableGroupedObject):
+class LabelledGroupedObject(ViewableGroupedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.id_box = IDBox(agent=self)
@@ -471,9 +472,9 @@ class LabelledGroupedObject(aux.ViewableGroupedObject):
                 self.id_box.draw(v)
 
 
-class PointRelPositioned(aux.PointPositioned):
-    window_dims = aux.PositiveRange((100, 100), doc='The window dimensions')
-    pos_scale = aux.PositiveRange((0.5, 0.5), softmax=1.0, step=0.01,
+class PointRelPositioned(PointPositioned):
+    window_dims = PositiveRange((100, 100), doc='The window dimensions')
+    pos_scale = PositiveRange((0.5, 0.5), softmax=1.0, step=0.01,
                                   doc='The position relative to the window dimensions')
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -487,16 +488,16 @@ class PointRelPositioned(aux.PointPositioned):
         y_pos = int(height * h)
         self.pos=(x_pos,y_pos)
 
-class PointRelPositionedViewable(PointRelPositioned, aux.Viewable) :
+class PointRelPositionedViewable(PointRelPositioned, Viewable) :
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 class TextFont(PointRelPositionedViewable) :
     text = param.String('', doc='The text to draw')
-    font_size_scale = aux.PositiveNumber(1/40, doc='The font size relative to the window size')
+    font_size_scale = PositiveNumber(1/40, doc='The font size relative to the window size')
     font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
-    text_centre_scale = aux.PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
+    text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -532,7 +533,7 @@ class TextFont(PointRelPositionedViewable) :
 
 
 class SimulationClock(PointRelPositionedViewable):
-    pos_scale = aux.PositiveRange((0.94, 0.04))
+    pos_scale = PositiveRange((0.94, 0.04))
 
 
     def __init__(self, sim_step_in_sec,**kwargs):
@@ -628,10 +629,10 @@ class SimulationClock(PointRelPositionedViewable):
 
 
 class SimulationScale(TextFont):
-    real_width = aux.PositiveNumber(0.1, softmax=10.0, doc='The width of the Arena possibly zoomed')
-    font_size_scale = aux.PositiveNumber(1 / 40)
-    pos_scale = aux.PositiveRange((0.1, 0.04))
-    text_centre_scale = aux.PositiveRange((1, 1.5))
+    real_width = PositiveNumber(0.1, softmax=10.0, doc='The width of the Arena possibly zoomed')
+    font_size_scale = PositiveNumber(1 / 40)
+    pos_scale = PositiveRange((0.1, 0.04))
+    text_centre_scale = PositiveRange((1, 1.5))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -701,9 +702,9 @@ class SimulationScale(TextFont):
 
 
 class SimulationState(TextFont):
-    font_size_scale = aux.PositiveNumber(1 / 40)
-    pos_scale = aux.PositiveRange((0.85, 0.94))
-    text_centre_scale = aux.PositiveRange((1, 1))
+    font_size_scale = PositiveNumber(1 / 40)
+    pos_scale = PositiveRange((0.85, 0.94))
+    text_centre_scale = PositiveRange((1, 1))
 
     def __init__(self, model, **kwargs):
         super().__init__(**kwargs)

@@ -1,22 +1,22 @@
 import numpy as np
 import param
 
-import larvaworld.lib.aux.custom_parameters
-from larvaworld.lib import aux
+from larvaworld.lib.param import PositiveNumber, NestedConf
 
-class Gut(larvaworld.lib.aux.custom_parameters.NestedConf):
-    M_gm = aux.PositiveNumber(10 ** -2, doc='gut capacity in C-moles for unit of gut volume')
+
+class Gut(NestedConf):
+    M_gm = PositiveNumber(10 ** -2, doc='gut capacity in C-moles for unit of gut volume')
     r_w2l = param.Magnitude(0.2, doc='body width to length ratio')
     r_gut_w = param.Magnitude(0.7, doc='gut width relative to body width')
     y_P_X = param.Magnitude(0.9, doc='yield of product by food')
-    k_abs = aux.PositiveNumber(1.0, doc='rate constant for absorption : k_P * y_Pc')
+    k_abs = PositiveNumber(1.0, doc='rate constant for absorption : k_P * y_Pc')
     f_abs = param.Magnitude(1.0, doc='scaled functional response for absorption : M_P/(M_P+M_K_P)')
-    k_dig = aux.PositiveNumber(1.0, doc='rate constant for digestion : k_X * y_Xg')
+    k_dig = PositiveNumber(1.0, doc='rate constant for digestion : k_X * y_Xg')
     f_dig = param.Magnitude(1.0, doc='scaled functional response for digestion : M_X/(M_X+M_K_X)')
-    k_c = aux.PositiveNumber(1.0, doc='release rate of carriers')
-    k_g = aux.PositiveNumber(1.0, doc='decay rate of enzyme')
-    M_c_per_cm2 = aux.PositiveNumber(5 * 10 ** -8, doc='area specific amount of carriers in the gut per unit of gut surface')
-    J_g_per_cm2 = aux.PositiveNumber(10 ** -2 / (24 * 60 * 60), doc='secretion rate of enzyme per unit of gut surface per day')
+    k_c = PositiveNumber(1.0, doc='release rate of carriers')
+    k_g = PositiveNumber(1.0, doc='decay rate of enzyme')
+    M_c_per_cm2 = PositiveNumber(5 * 10 ** -8, doc='area specific amount of carriers in the gut per unit of gut surface')
+    J_g_per_cm2 = PositiveNumber(10 ** -2 / (24 * 60 * 60), doc='secretion rate of enzyme per unit of gut surface per day')
     constant_M_c = param.Boolean(True,label='constant carrier density', doc='Whether to assume a constant amount of carrier enzymes on the gut surface.')
 
 

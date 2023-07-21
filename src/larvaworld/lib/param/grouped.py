@@ -1,15 +1,14 @@
 import param
 from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
-from larvaworld.lib import aux
-from larvaworld.lib.aux import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
-    OptionalPositiveInteger, ClassAttr, NestedConf
+from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
+    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber
 
 
 class FramerateOps(NestedConf):
-    fr = aux.PositiveNumber(10, softmax=100, step=0.1, label='framerate',
+    fr = PositiveNumber(10, softmax=100, step=0.1, label='framerate',
                             doc='The tracking/simulation framerate (inverse of timestep) in Hz.')
-    dt = aux.PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep',
+    dt = PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep',
                         doc='The tracking/simulation timestep (inverse of tracking framerate) in seconds.')
     constant_framerate = param.Boolean(True, doc='Whether the tracking framerate is constant.')
 
@@ -44,9 +43,9 @@ class Resolution(FramerateOps,XYops):
         super().__init__(**kwargs)
 
 class SimTimeOps(FramerateOps):
-    duration = aux.OptionalPositiveNumber(5.0, softmax=100.0, step=0.1,
+    duration = OptionalPositiveNumber(5.0, softmax=100.0, step=0.1,
                                           doc='The duration of the simulation in minutes.')
-    Nsteps = aux.OptionalPositiveInteger(label='# simulation timesteps', doc='The number of simulation timesteps.')
+    Nsteps = OptionalPositiveInteger(label='# simulation timesteps', doc='The number of simulation timesteps.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -73,8 +72,8 @@ class LabFormatFilesystem(NestedConf):
 
 
 class LabFormat(NestedConf) :
-    resolution = aux.ClassAttr(Resolution, doc='The dataset metadata')
-    filesystem = aux.ClassAttr(LabFormatFilesystem, doc='The import-relevant lab-format filesystem')
+    resolution = ClassAttr(Resolution, doc='The dataset metadata')
+    filesystem = ClassAttr(LabFormatFilesystem, doc='The import-relevant lab-format filesystem')
 
 class SimMetricOps(XYops):
     bend = Selector(objects=['from_vectors', 'from_angles'],

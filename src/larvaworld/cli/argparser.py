@@ -197,7 +197,7 @@ class SimModeParser :
         'Batch': [],
         'Eval': ['Eval'],
         'Exp': ['visualization'],
-        'Ga': ['ga_select_kws', 'ga_space_kws', 'ga_eval_kws', 'reference_dataset'],
+        'Ga': ['ga_select_kws', 'ga_eval_kws', 'reference_dataset'],
         'Replay': ['Replay']
     })
         self.parser_keys=aux.unique_list(aux.flatten_list(list(self.dict.values())))

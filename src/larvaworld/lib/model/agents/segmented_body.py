@@ -5,6 +5,7 @@ import param
 from shapely import geometry, affinity, ops
 
 from larvaworld.lib.model.agents.draw_body import draw_body
+from larvaworld.lib.param import PositiveNumber, PositiveInteger
 from larvaworld.lib.reg.stored.miscellaneous import body_shapes
 from larvaworld.lib import aux
 
@@ -99,10 +100,10 @@ def generate_segs(N, ps, orient, bvs, cs, ratio, l):
 
 
 class LarvaBody(LarvaMotile):
-    Nsegs = aux.PositiveInteger(2, softmax=20, doc='The number of segments comprising the segmented larva body.')
+    Nsegs = PositiveInteger(2, softmax=20, doc='The number of segments comprising the segmented larva body.')
     symmetry = param.Selector(objects=['bilateral', 'radial'], doc='The body symmetry.')
-    initial_length = aux.PositiveNumber(0.005, softmax=0.1, step=0.001, doc='The initial length of the body in meters')
-    density = aux.PositiveNumber(300.0, softmax=10000.0, step=1.0, doc='The density of the larva body in kg/m**2')
+    initial_length = PositiveNumber(0.005, softmax=0.1, step=0.001, doc='The initial length of the body in meters')
+    density = PositiveNumber(300.0, softmax=10000.0, step=1.0, doc='The density of the larva body in kg/m**2')
 
     def __init__(self, brain, energetics=None, life_history={}, seg_ratio=None, shape='drosophila_larva',  **kwargs):
 
@@ -345,14 +346,14 @@ class LarvaBody(LarvaMotile):
 
 
 class BaseController(param.Parameterized):
-    lin_vel_coef = aux.PositiveNumber(1.0, doc='Coefficient for translational velocity')
-    ang_vel_coef = aux.PositiveNumber(1.0, doc='Coefficient for angular velocity')
-    lin_force_coef = aux.PositiveNumber(1.0, doc='Coefficient for force')
-    torque_coef = aux.PositiveNumber(0.5, doc='Coefficient for torque')
-    body_spring_k = aux.PositiveNumber(1.0, doc='Torsional spring constant for body bending')
-    bend_correction_coef = aux.PositiveNumber(1.0, doc='Bend correction coefficient')
-    lin_damping = aux.PositiveNumber(1.0, doc='Translational damping coefficient')
-    ang_damping = aux.PositiveNumber(1.0, doc='Angular damping coefficient')
+    lin_vel_coef = PositiveNumber(1.0, doc='Coefficient for translational velocity')
+    ang_vel_coef = PositiveNumber(1.0, doc='Coefficient for angular velocity')
+    lin_force_coef = PositiveNumber(1.0, doc='Coefficient for force')
+    torque_coef = PositiveNumber(0.5, doc='Coefficient for torque')
+    body_spring_k = PositiveNumber(1.0, doc='Torsional spring constant for body bending')
+    bend_correction_coef = PositiveNumber(1.0, doc='Bend correction coefficient')
+    lin_damping = PositiveNumber(1.0, doc='Translational damping coefficient')
+    ang_damping = PositiveNumber(1.0, doc='Angular damping coefficient')
     lin_mode = param.Selector(objects=['velocity', 'force', 'impulse'], doc='Mode of translational motion generation')
     ang_mode = param.Selector(objects=['torque','velocity'], doc='Mode of angular motion generation')
 

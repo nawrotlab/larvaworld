@@ -4,11 +4,12 @@ from scipy import signal
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.modules.basic import StepOscillator
+from larvaworld.lib.param import PositiveNumber, Phase
 
 
 class StrideOscillator(StepOscillator) :
-    stride_dst_mean = aux.PositiveNumber(0.23,softmax=1.0, step=0.01, label='stride distance mean', doc='The mean displacement achieved in a single peristaltic stride as a fraction of the body length.')
-    stride_dst_std = aux.PositiveNumber(0.04,softmax=1.0, step=0.01, label='stride distance std', doc='The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.')
+    stride_dst_mean = PositiveNumber(0.23,softmax=1.0, step=0.01, label='stride distance mean', doc='The mean displacement achieved in a single peristaltic stride as a fraction of the body length.')
+    stride_dst_std = PositiveNumber(0.04,softmax=1.0, step=0.01, label='stride distance std', doc='The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.')
 
 
     def __init__(self, **kwargs):
@@ -33,7 +34,7 @@ class StrideOscillator(StepOscillator) :
 
 
 class GaussOscillator(StrideOscillator):
-    std = aux.PositiveNumber(0.6, softmax=1.0, step=0.01, label='gaussian stride cycle std', doc='The std of the gaussian window for the velocity oscillation during a stride cycle.')
+    std = PositiveNumber(0.6, softmax=1.0, step=0.01, label='gaussian stride cycle std', doc='The std of the gaussian window for the velocity oscillation during a stride cycle.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -59,8 +60,8 @@ class SquareOscillator(StrideOscillator):
         return self.phi <= 2 * np.pi * self.duty
 
 class PhaseOscillator(StrideOscillator):
-    max_vel_phase = aux.Phase(3.49, label='max velocity phase',doc='The phase of the crawling oscillation cycle where forward velocity is maximum.')
-    max_scaled_vel = aux.PositiveNumber(0.51, softmax=1.5, step=0.01, label='maximum scaled velocity',doc='The maximum scaled forward velocity.')
+    max_vel_phase = Phase(3.49, label='max velocity phase',doc='The phase of the crawling oscillation cycle where forward velocity is maximum.')
+    max_scaled_vel = PositiveNumber(0.51, softmax=1.5, step=0.01, label='maximum scaled velocity',doc='The maximum scaled forward velocity.')
 
 
     @property

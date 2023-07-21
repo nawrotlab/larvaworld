@@ -6,7 +6,7 @@ import param
 from larvaworld.lib.model.modules.oscillator import Timer
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import nam
-
+from larvaworld.lib.param import PositiveNumber, OptionalPositiveNumber
 
 default_bout_distros=aux.AttrDict({'turn_dur': {'range': [0.25, 3.25], 'name': 'exponential', 'beta': 4.70099},
  'turn_amp': {'range': [0.00042, 305.7906],
@@ -33,9 +33,9 @@ default_bout_distros=aux.AttrDict({'turn_dur': {'range': [0.25, 3.25], 'name': '
 
 class Intermitter(Timer):
     EEB = param.Magnitude(1.0, label='exploitation-exploration balance', doc='The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.')
-    EEB_decay = aux.PositiveNumber(1.0, softmax=2.0, doc='The exponential decay coefficient of the exploitation-exploration balance when no food is detected.')
+    EEB_decay = PositiveNumber(1.0, softmax=2.0, doc='The exponential decay coefficient of the exploitation-exploration balance when no food is detected.')
     run_mode = param.Selector(objects=['stridechain','exec'], doc='The generation mode of the crawling epochs.')
-    feeder_reoccurence_rate = aux.OptionalPositiveNumber(softmax=1.0, label='feed reoccurence', doc='The default reoccurence rate of the feeding motion.')
+    feeder_reoccurence_rate = OptionalPositiveNumber(softmax=1.0, label='feed reoccurence', doc='The default reoccurence rate of the feeding motion.')
     feed_bouts = param.Boolean(False, doc='Whether feeding epochs are generated.')
 
     def __init__(self, pause_dist=None, stridechain_dist=None, run_dist=None, crawl_freq=10 / 7, feed_freq=2.0, **kwargs):

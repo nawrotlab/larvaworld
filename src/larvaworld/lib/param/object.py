@@ -1,6 +1,7 @@
 import param
 
 from larvaworld.lib import aux
+from larvaworld.lib.param import NestedConf
 
 
 class Object:
@@ -110,7 +111,7 @@ class Object:
 
 
 
-class Named(aux.NestedConf) :
+class Named(NestedConf) :
     unique_id = param.String(None, doc='The unique ID of the entity')
 
     def set_id(self, id):

@@ -1,10 +1,11 @@
 import param
 
 from larvaworld.lib import aux
+from larvaworld.lib.param import NestedConf, Named, NamedObject, GroupedObject, RadiallyExtended, BoundedArea, \
+    LineExtended
 
 
-
-class Viewable(aux.NestedConf) :
+class Viewable(NestedConf) :
     '''
         Basic Parameterized Class for all visible Objects in simulation
 
@@ -40,16 +41,16 @@ class Viewable(aux.NestedConf) :
         pass
 
 
-class ViewableNamed(Viewable,aux.Named):
+class ViewableNamed(Viewable,Named):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class ViewableSingleObject(Viewable,aux.NamedObject):
+class ViewableSingleObject(Viewable,NamedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-class ViewableGroupedObject(Viewable,aux.GroupedObject):
+class ViewableGroupedObject(Viewable,GroupedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -57,7 +58,7 @@ class ViewableGroupedObject(Viewable,aux.GroupedObject):
 
 
 
-class ViewableLine(Viewable,aux.LineExtended):
+class ViewableLine(Viewable,LineExtended):
 
 
     def draw(self, v, **kwargs):
@@ -67,15 +68,15 @@ class ViewableLine(Viewable,aux.LineExtended):
             for ver in self.vertices:
                 v.draw_polyline(ver, color=self.color, width=self.width, closed=self.closed)
 
-class ViewableBoundedArea(Viewable,aux.BoundedArea): pass
+class ViewableBoundedArea(Viewable,BoundedArea): pass
 
 
 
-class ViewableNamedLine(ViewableLine,aux.Named): pass
+class ViewableNamedLine(ViewableLine,Named): pass
 
-class ViewableNamedBoundedArea(ViewableBoundedArea,aux.Named): pass
+class ViewableNamedBoundedArea(ViewableBoundedArea,Named): pass
 
-class ViewableCircle(Viewable,aux.RadiallyExtended):
+class ViewableCircle(Viewable,RadiallyExtended):
 
     def draw(self, v, filled=True, radius_coeff=1, color=None, width_as_radius_fraction=5):
         if color is None :

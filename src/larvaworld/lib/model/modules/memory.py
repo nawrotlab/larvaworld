@@ -27,7 +27,9 @@ class Memory(Timer):
         self.rewardSum = 0
         self.active = True
 
-    def step(self, dx={}, reward=False, **kwargs):
+    def step(self, dx=None, reward=False, **kwargs):
+        if dx is None:
+            dx = {}
         if self.active :
             self.count_time()
         return self.gain
@@ -68,7 +70,9 @@ class RLmemory(Memory):
         state = np.where((self.state_space == stateV).all(axis=1))[0][0]
         return state
 
-    def step(self, dx={}, reward=False, **kwargs):
+    def step(self, dx=None, reward=False, **kwargs):
+        if dx is None:
+            dx = {}
         if self.table == False:
             temp = self.brain.agent.model.table_collector
             if temp is not None:
@@ -191,8 +195,10 @@ class RemoteBrianModelMemory(Memory):
             return mbon_dif
             # return response.param('preference_index')
 
-    def step(self, dx={}, reward=False, t_warmup=0):
+    def step(self, dx=None, reward=False, t_warmup=0):
         # Default message arguments
+        if dx is None:
+            dx = {}
         msg_kws0={
             'model_instance_id' : self.brain.agent.unique_id,
             't_sim' : self.t_sim,

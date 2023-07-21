@@ -3,6 +3,7 @@ import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.modules.oscillator import Timer, Oscillator
+from larvaworld.lib.param import PositiveNumber
 
 
 class Effector(Timer):
@@ -68,7 +69,7 @@ class Effector(Timer):
 
 
 class StepEffector(Effector):
-    initial_amp = aux.PositiveNumber(1.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
+    initial_amp = PositiveNumber(1.0, allow_None=True, label='oscillation amplitude', doc='The initial amplitude of the oscillation.')
     amp_range = param.Range(label='oscillation amplitude range', doc='The amplitude range of the oscillator.')
 
     def __init__(self, **kwargs):

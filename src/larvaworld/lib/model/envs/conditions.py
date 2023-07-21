@@ -2,7 +2,6 @@ import random
 import numpy as np
 from shapely import geometry
 
-from larvaworld.lib import aux
 from larvaworld.lib.process.spatial import comp_PI
 
 def get_exp_condition(exp):

@@ -1,7 +1,7 @@
 import numpy as np
 import param
 from larvaworld.lib import aux
-
+from larvaworld.lib.param import PhaseRange, Phase
 
 
 class DefaultCoupling(param.Parameterized):
@@ -55,8 +55,8 @@ class DefaultCoupling(param.Parameterized):
 
 
 class SquareCoupling(DefaultCoupling):
-    crawler_phi_range = aux.PhaseRange(label='crawler suppression relief phase interval', doc='CRAWLER phase range for TURNER suppression lift.')
-    feeder_phi_range = aux.PhaseRange(label='feeder suppression relief phase interval', doc='FEEDER phase range for TURNER suppression lift.')
+    crawler_phi_range = PhaseRange(label='crawler suppression relief phase interval', doc='CRAWLER phase range for TURNER suppression lift.')
+    feeder_phi_range = PhaseRange(label='feeder suppression relief phase interval', doc='FEEDER phase range for TURNER suppression lift.')
 
     def check_crawler(self, crawler):
         A = self.attenuation
@@ -77,7 +77,7 @@ class SquareCoupling(DefaultCoupling):
 
 
 class PhasicCoupling(DefaultCoupling):
-    max_attenuation_phase = aux.Phase(3.4, label='max relief phase',doc='CRAWLER phase of minimum TURNER suppression.')
+    max_attenuation_phase = Phase(3.4, label='max relief phase',doc='CRAWLER phase of minimum TURNER suppression.')
 
 
     def get(self,x):

@@ -28,6 +28,8 @@ class LarvaSim(LarvaBody, BaseController):
             ang_vel = self.compute_ang_vel(ang,ang_vel=self.head.get_angularvelocity(), dt=self.model.dt, bend=self.body_bend)
         elif self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
+        else:
+            raise
         lin_vel, ang_vel = self.assess_collisions(lin_vel, ang_vel)
         self.position_body(lin_vel, ang_vel)
 

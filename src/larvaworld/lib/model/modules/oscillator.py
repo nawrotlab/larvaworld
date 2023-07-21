@@ -5,10 +5,11 @@ import param
 from scipy import signal
 
 from larvaworld.lib import aux
+from larvaworld.lib.param import PositiveNumber, RandomizedPhase
 
 
 class Timer(param.Parameterized) :
-    dt = aux.PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep', doc='The timestep of the simulation in seconds.')
+    dt = PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep', doc='The timestep of the simulation in seconds.')
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ticks = 0
@@ -42,8 +43,8 @@ class Timer(param.Parameterized) :
 
 
 class Oscillator(Timer):
-    freq = aux.PositiveNumber(label='oscillation frequency', doc='The initial frequency of the oscillator.')
-    phi = aux.RandomizedPhase(label='orientation', doc='The absolute orientation in space.')
+    freq = PositiveNumber(label='oscillation frequency', doc='The initial frequency of the oscillator.')
+    phi = RandomizedPhase(label='orientation', doc='The absolute orientation in space.')
 
     def __init__(self, random_phi=True, freq_range=None,initial_freq=None, **kwargs):
         if 'phi' not in kwargs.keys() and not random_phi:

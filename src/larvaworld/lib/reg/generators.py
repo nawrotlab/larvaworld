@@ -3,12 +3,15 @@ import os
 import param
 
 from larvaworld.lib import reg, aux, util
+from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, SimGeneralOps, \
+    SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
+    generate_xyNor_distro, Odor, Life
 
 
 class ConfType(param.Parameterized) :
     """Select among available configuration types"""
     conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
-    dict= aux.ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
+    dict= ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
 
 
     def __init__(self, **kwargs):
@@ -121,9 +124,9 @@ class ConfType(param.Parameterized) :
 
         }
         if single :
-            return aux.OptionalSelector(**kws)
+            return OptionalSelector(**kws)
         else :
-            return aux.ListSelector(**kws)
+            return param.ListSelector(**kws)
 
     @property
     def confIDs(self):
@@ -211,12 +214,12 @@ def resetConfs(conftypes=None, **kwargs):
 
 
 from larvaworld.lib.model import Food, Border,\
-    WindScape, ThermoScape, FoodGrid, Life, Odor,\
+    WindScape, ThermoScape, FoodGrid, \
     PointAgent, OrientedAgent, Substrate, OdorScape, DiffusionValueLayer, GaussianValueLayer
 
 
 def class_generator(agent_class, mode='Unit') :
-    class A(aux.NestedConf):
+    class A(NestedConf):
 
         def __init__(self, **kwargs):
             if hasattr(A,'distribution'):
@@ -295,12 +298,12 @@ def class_generator(agent_class, mode='Unit') :
     invalid = ['name', 'closed', 'visible']
     if mode=='Group':
         if issubclass(agent_class, PointAgent):
-            distro=aux.Spatial_Distro
+            distro=Spatial_Distro
         elif issubclass(agent_class, OrientedAgent):
-            distro = aux.Larva_Distro
+            distro = Larva_Distro
         else :
             raise ValueError (f'No Group distribution for class {agent_class.__name__}. Change mode to Unit')
-        A.param._add_parameter('distribution',aux.ClassAttr(distro, doc='The spatial distribution of the group agents'))
+        A.param._add_parameter('distribution',ClassAttr(distro, doc='The spatial distribution of the group agents'))
         invalid+=['unique_id', 'pos', 'orientation']
     elif mode=='Unit':
         pass
@@ -315,7 +318,7 @@ def class_generator(agent_class, mode='Unit') :
 gen=aux.AttrDict({
     'FoodGroup':class_generator(Food, mode='Group'),
     'Food':class_generator(Food, mode='Unit'),
-    'Arena':class_generator(aux.spatial.Area, mode='Unit'),
+    'Arena':class_generator(Area, mode='Unit'),
     'Border':class_generator(Border, mode='Unit'),
     'Odor':class_generator(Odor, mode='Unit'),
     'Substrate':class_generator(Substrate, mode='Unit'),
@@ -327,7 +330,7 @@ gen=aux.AttrDict({
     'GaussianValueLayer':class_generator(GaussianValueLayer, mode='Unit'),
 })
 
-class SimDataOps(aux.NestedConf):
+class SimDataOps(NestedConf):
     runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
     id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
     # id=aux.StringRobust(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
@@ -375,7 +378,7 @@ class SimDataOps(aux.NestedConf):
             'Exp': 'dish',
             'Batch': 'PItest_off',
             'Ga': 'exploration',
-            'Eval': 'dispersal',
+            'Eval': 'dispersion',
             'Replay': 'replay'
         }
         kws = {
@@ -390,35 +393,35 @@ class SimDataOps(aux.NestedConf):
 
 
 
-class SimOps(SimDataOps,aux.SimTimeOps,aux.SimMetricOps,aux.SimGeneralOps):
+class SimOps(SimDataOps,SimTimeOps,SimMetricOps,SimGeneralOps):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
 
 
-class FoodConf(aux.NestedConf):
-    source_groups = aux.ClassDict(item_type=gen.FoodGroup,  doc='The groups of odor or food sources available in the arena')
-    source_units = aux.ClassDict(item_type=gen.Food,  doc='The individual sources  of odor or food in the arena')
-    food_grid = aux.ClassAttr(gen.FoodGrid, default=None, doc='The food grid in the arena')
+class FoodConf(NestedConf):
+    source_groups = ClassDict(item_type=gen.FoodGroup,  doc='The groups of odor or food sources available in the arena')
+    source_units = ClassDict(item_type=gen.Food,  doc='The individual sources  of odor or food in the arena')
+    food_grid = ClassAttr(gen.FoodGrid, default=None, doc='The food grid in the arena')
 
 gen.FoodConf=class_generator(FoodConf, mode='Unit')
-gen.EnrichConf=class_generator(aux.EnrichConf, mode='Unit')
+gen.EnrichConf=class_generator(EnrichConf, mode='Unit')
 # gen.GAspace=class_generator(sim.GAspace, mode='Unit')
 # gen.GAevaluation=class_generator(sim.GAevaluation, mode='Unit')
 
-class EnvConf(aux.NestedConf):
-    arena = aux.ClassAttr(gen.Arena, doc='The arena configuration')
-    food_params = aux.ClassAttr(gen.FoodConf, doc='The food sources in the arena')
-    border_list = aux.ClassDict(item_type=gen.Border, doc='The obstacles in the arena')
-    odorscape = aux.ClassAttr(class_=(gen.GaussianValueLayer, gen.DiffusionValueLayer), default=None, doc='The sensory odor landscape in the arena')
-    windscape = aux.ClassAttr(gen.WindScape, default=None, doc='The wind landscape in the arena')
-    thermoscape = aux.ClassAttr(gen.ThermoScape, default=None, doc='The thermal landscape in the arena')
+class EnvConf(NestedConf):
+    arena = ClassAttr(gen.Arena, doc='The arena configuration')
+    food_params = ClassAttr(gen.FoodConf, doc='The food sources in the arena')
+    border_list = ClassDict(item_type=gen.Border, doc='The obstacles in the arena')
+    odorscape = ClassAttr(class_=(gen.GaussianValueLayer, gen.DiffusionValueLayer), default=None, doc='The sensory odor landscape in the arena')
+    windscape = ClassAttr(gen.WindScape, default=None, doc='The wind landscape in the arena')
+    thermoscape = ClassAttr(gen.ThermoScape, default=None, doc='The thermal landscape in the arena')
 
-class LarvaGroup(aux.NestedConf):
+class LarvaGroup(NestedConf):
     model = conf.Model.confID_selector()
     default_color = param.Color('black', doc='The default color of the group')
-    odor = aux.ClassAttr(Odor, doc='The odor of the agent')
-    distribution = aux.ClassAttr(aux.Larva_Distro,doc='The spatial distribution of the group agents')
-    life_history = aux.ClassAttr(Life, doc='The life history of the group agents')
+    odor = ClassAttr(Odor, doc='The odor of the agent')
+    distribution = ClassAttr(Larva_Distro,doc='The spatial distribution of the group agents')
+    life_history = ClassAttr(Life, doc='The life history of the group agents')
     sample = conf.Ref.confID_selector()
     imitation = param.Boolean(default=False, doc='Whether to imitate the reference dataset.')
 
@@ -458,7 +461,7 @@ class LarvaGroup(aux.NestedConf):
         }
 
         if not self.imitation:
-            ps, ors = aux.generate_xyNor_distro(self.distribution)
+            ps, ors = generate_xyNor_distro(self.distribution)
             ids = [f'{self.id}_{i}' for i in range(Nids)]
             all_pars, refID = util.sampleRef(**kws)
         else:
@@ -478,15 +481,15 @@ class LarvaGroup(aux.NestedConf):
             confs.append(conf)
         return confs
 
-class ExpConf(aux.NestedConf):
+class ExpConf(NestedConf):
     env_params = conf.Env.confID_selector()
     experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
-    larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
+    larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
     parameter_dict = param.Dict(default={},doc='Dictionary of parameters to pass to the agents')
     # sim_params = aux.ClassAttr(SimOps,doc='The simulation configuration')
-    enrichment = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
+    enrichment = ClassAttr(EnrichConf, doc='The post-simulation processing')
 
 
 
@@ -494,25 +497,25 @@ class ExpConf(aux.NestedConf):
     def __init__(self,id=None,**kwargs):
         super().__init__(**kwargs)
 
-class DatasetConf(aux.NestedConf):
-    environment = aux.ClassAttr(EnvConf, doc='The environment configuration')
-    sim_options = aux.ClassAttr(SimOps, doc='The spatiotemporal resolution')
-    larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
+class DatasetConf(NestedConf):
+    environment = ClassAttr(EnvConf, doc='The environment configuration')
+    sim_options = ClassAttr(SimOps, doc='The spatiotemporal resolution')
+    larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
 
 
-class ReplayConf(aux.NestedConf):
+class ReplayConf(NestedConf):
     refID = conf.Ref.confID_selector()
     agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
-    time_range = aux.OptionalPositiveRange(default=None, doc='Whether to only replay a defined temporal slice of the dataset.')
+    time_range = OptionalPositiveRange(default=None, doc='Whether to only replay a defined temporal slice of the dataset.')
     env_params = conf.Env.confID_selector()
-    transposition = aux.OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
+    transposition = OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
     overlap_mode = param.Boolean(False,doc='Whether to draw overlapped image of the track.')
     close_view = param.Boolean(False,doc='Whether to visualize a small arena on close range.')
     fix_segment = param.ListSelector(objects=[-1, 1], doc='Whether to additionally fixate the above or below body segment.')
-    fix_point = aux.OptionalPositiveInteger(softmin=1, softmax=12, doc='Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.')
-    draw_Nsegs = aux.OptionalPositiveInteger(softmin=1, softmax=12,doc='Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.')
-    track_point = aux.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
-    dynamic_color = aux.OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
+    fix_point = OptionalPositiveInteger(softmin=1, softmax=12, doc='Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.')
+    draw_Nsegs = OptionalPositiveInteger(softmin=1, softmax=12,doc='Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.')
+    track_point = param.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
+    dynamic_color = OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
 
 
 

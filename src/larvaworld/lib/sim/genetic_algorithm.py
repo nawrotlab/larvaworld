@@ -9,12 +9,13 @@ import progressbar
 import numpy as np
 
 from larvaworld.lib import reg, aux, util
+from larvaworld.lib.param import NestedConf, SimTimeOps, ClassAttr
 
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
 
-class GAselector(aux.NestedConf):
+class GAselector(NestedConf):
     Ngenerations = param.Integer(default=None, allow_None=True, label='# generations',
                                  doc='Number of generations to run for the genetic algorithm engine')
     Nagents = param.Integer(default=30, label='# agents per generation', doc='Number of agents per generation')
@@ -157,7 +158,7 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-class GAevaluation(aux.NestedConf):
+class GAevaluation(NestedConf):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
@@ -474,11 +475,11 @@ def df_from_log(gLog):
 reg.gen.GAselector=reg.class_generator(GAselector, mode='Unit')
 reg.gen.GAevaluation=reg.class_generator(GAevaluation, mode='Unit')
 
-class GAconf(aux.SimTimeOps):
+class GAconf(SimTimeOps):
     env_params = reg.conf.Env.confID_selector()
     experiment = reg.conf.Ga.confID_selector()
-    ga_eval_kws = aux.ClassAttr(reg.gen.GAevaluation, doc='The GA evaluation configuration')
-    ga_select_kws = aux.ClassAttr(reg.gen.GAselector, doc='The GA selection configuration')
+    ga_eval_kws = ClassAttr(reg.gen.GAevaluation, doc='The GA evaluation configuration')
+    ga_select_kws = ClassAttr(reg.gen.GAselector, doc='The GA selection configuration')
     refID = reg.conf.Ref.confID_selector()
     scene = param.String('no_boxes', doc='The name of the scene to load')
 

@@ -1,10 +1,10 @@
 import numpy as np
 import param
-from shapely import affinity, geometry, measurement
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.agents import PointAgent
-from larvaworld.lib.model.deb.substrate import Substrate
+from larvaworld.lib.param import xy_uniform_circle, PositiveNumber, ClassAttr
+from larvaworld.lib.param.substrate import Substrate
 
 
 class Source(PointAgent):
@@ -33,7 +33,7 @@ class Source(PointAgent):
                     in_tank = aux.inside_polygon(points=[self.pos], tank_polygon=self.model.space.polygon)
                     if not in_tank:
                         if self.regeneration:
-                            self.pos = aux.xy_uniform_circle(1, **self.regeneration_pos)[0]
+                            self.pos = xy_uniform_circle(1, **self.regeneration_pos)[0]
                         else :
                             self.model.delete_agent(self)
 
@@ -41,8 +41,8 @@ class Source(PointAgent):
 
 class Food(Source):
     default_color = param.Color(default='green')
-    amount = aux.PositiveNumber(softmax=10.0, step=0.01, doc='The food amount in the source')
-    substrate = aux.ClassAttr(Substrate, doc='The substrate where the agent feeds')
+    amount = PositiveNumber(softmax=10.0, step=0.01, doc='The food amount in the source')
+    substrate = ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -6,11 +6,12 @@ import os
 import numpy as np
 import param
 
-import larvaworld.lib.aux.custom_parameters
+import larvaworld.lib.param.custom
 from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
 
 from larvaworld.lib.model import deb
+from larvaworld.lib.param import Substrate, NestedConf, PositiveNumber, PositiveInteger, ClassAttr, substrate_dict
 
 '''
 Standard culture medium
@@ -24,7 +25,7 @@ Larvae were reared from egg-hatch to mid- third-instar (96±2h post-hatch) in 25
 '''
 
 
-class DEB(larvaworld.lib.aux.custom_parameters.NestedConf):
+class DEB(NestedConf):
     species = param.Selector(objects=['default', 'rover', 'sitter'],label='phenotype',
                              doc='The phenotype/species-specific fitted DEB model to use.') # Drosophila model by default
     assimilation_mode = param.Selector(objects=['gut','sim', 'deb'], label='assimilation mode',
@@ -35,9 +36,9 @@ class DEB(larvaworld.lib.aux.custom_parameters.NestedConf):
     use_gut = param.Boolean(True, doc='Whether to use the gut module.')
     hunger_gain = param.Magnitude(0.0,label='hunger sensitivity to reserve reduction',
                                   doc='The sensitivy of the hunger drive in deviations of the DEB reserve density.')
-    hours_as_larva = aux.PositiveNumber(0.0, doc='The age since eclosion')
-    steps_per_day = aux.PositiveInteger(24 * 60, doc='How many iterations of the model per day')
-    substrate = aux.ClassAttr(deb.Substrate, doc='The substrate where the agent feeds')
+    hours_as_larva = PositiveNumber(0.0, doc='The age since eclosion')
+    steps_per_day = PositiveInteger(24 * 60, doc='How many iterations of the model per day')
+    substrate = ClassAttr(Substrate, doc='The substrate where the agent feeds')
 
 
     def __init__(self, id='DEB model', cv=0, T=298.15, eb=1.0,
@@ -653,7 +654,7 @@ class DEB(larvaworld.lib.aux.custom_parameters.NestedConf):
 
 
 def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
-    from larvaworld.lib.model import Epoch
+    from larvaworld.lib.param.substrate import Epoch
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     N = len(epochs)
 
@@ -742,7 +743,7 @@ def deb_sim(refID, id='DEB sim', EEB=None, deb_dt=None, dt=None, use_hunger=Fals
 
 
 def test_substrates():
-    for s in deb.substrate_dict.keys():
+    for s in substrate_dict.keys():
         try:
             q = 1
             deb0 = DEB(substrate={'quality': q, 'type': s}, assimilation_mode='sim', steps_per_day=24 * 60)

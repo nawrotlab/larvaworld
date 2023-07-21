@@ -1,16 +1,17 @@
 import param
 from scipy.stats import multivariate_normal
 
-import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import aux
+from larvaworld.lib.param import PositiveNumber, PositiveInteger, NestedConf, StringRobust, OptionalPositiveNumber
+
 
 class Compound(param.Parameterized):
-    d=aux.PositiveNumber(doc=f'density in g/cm**3')
-    w=aux.PositiveNumber(doc=f'molecular weight (g/mol)')
-    nC=aux.PositiveInteger(doc=f'number of carbon atoms')
-    nH=aux.PositiveInteger(doc=f'number of hydrogen atoms')
-    nO=aux.PositiveInteger(doc=f'number of oxygen atoms')
-    nN=aux.PositiveInteger(doc=f'number of nitrogen atoms')
+    d=PositiveNumber(doc=f'density in g/cm**3')
+    w=PositiveNumber(doc=f'molecular weight (g/mol)')
+    nC=PositiveInteger(doc=f'number of carbon atoms')
+    nH=PositiveInteger(doc=f'number of hydrogen atoms')
+    nO=PositiveInteger(doc=f'number of oxygen atoms')
+    nN=PositiveInteger(doc=f'number of nitrogen atoms')
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -102,10 +103,10 @@ substrate_dict = aux.AttrDict(
 
 
 
-class Odor(aux.NestedConf):
-    id = aux.StringRobust(None, doc='The unique ID of the odorant')
-    intensity = aux.OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
-    spread = aux.OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')
+class Odor(NestedConf):
+    id = StringRobust(None, doc='The unique ID of the odorant')
+    intensity = OptionalPositiveNumber(softmax=10.0, doc='The peak concentration of the odorant in micromoles')
+    spread = OptionalPositiveNumber(softmax=10.0, doc='The spread of the concentration gradient around the peak')
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)

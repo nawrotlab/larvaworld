@@ -4,8 +4,13 @@ from shapely import geometry
 
 from larvaworld.lib import aux
 
-class PointPositioned(aux.NestedConf):
-    pos = aux.XYCoordRobust(doc='The xy spatial position coordinates')
+from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
+    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, XYCoordRobust, RandomizedPhase, XYLine, \
+    PositiveIntegerRange, PositiveRange
+
+
+class PointPositioned(NestedConf):
+    pos = XYCoordRobust(doc='The xy spatial position coordinates')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -26,7 +31,7 @@ class PointPositioned(aux.NestedConf):
 
 
 class RadiallyExtended(PointPositioned):
-    radius = aux.PositiveNumber(0.003, softmax=0.1, step=0.001, doc='The spatial radius of the source in meters')
+    radius = PositiveNumber(0.003, softmax=0.1, step=0.001, doc='The spatial radius of the source in meters')
 
     def get_shape(self, scale=1):
         p = self.get_position()
@@ -36,7 +41,7 @@ class RadiallyExtended(PointPositioned):
         return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
 
 class OrientedPoint(RadiallyExtended):
-    orientation = aux.RandomizedPhase(label='orientation',doc='The absolute orientation in space.')
+    orientation = RandomizedPhase(label='orientation',doc='The absolute orientation in space.')
 
     def __init__(self,**kwargs):
 
@@ -44,9 +49,9 @@ class OrientedPoint(RadiallyExtended):
         self.initial_orientation = self.orientation
 
 
-class LineExtended(aux.NestedConf):
-    width = aux.PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
-    vertices = aux.XYLine(doc='The list of 2d points')
+class LineExtended(NestedConf):
+    width = PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
+    vertices = XYLine(doc='The list of 2d points')
     closed = param.Boolean(False, doc='Whether the line is closed')
 
     @property
@@ -63,8 +68,8 @@ class LineClosed(LineExtended):
     def __init__(self, **kwargs):
         super().__init__(closed=True,**kwargs)
 
-class Area(aux.NestedConf):
-    dims = aux.PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
+class Area(NestedConf):
+    dims = PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
     geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
     torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
@@ -87,5 +92,5 @@ class BoundedArea(Area, LineClosed):
                             (X / 2, -Y / 2)]
         LineClosed.__init__(self,vertices=vertices,**kwargs)
 
-class Grid(aux.NestedConf):
-    grid_dims = aux.PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
+class Grid(NestedConf):
+    grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
