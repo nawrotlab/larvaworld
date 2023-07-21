@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import param
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -15,8 +16,10 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class EvalRun(BaseRun):
-    def __init__(self,parameters, dataset=None,
-                 norm_modes=['raw', 'minmax'], eval_modes=['pooled'],eval_metrics=None,enrichment=True,show=False,  **kwargs):
+
+
+
+    def __init__(self,parameters, dataset=None,enrichment=True,show=False,  **kwargs):
         '''
         Simulation mode 'Eval' compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.
 
@@ -40,11 +43,8 @@ class EvalRun(BaseRun):
         kwargs['duration'] = d.config.Nticks * kwargs['dt'] / 60
         self.target = d
         super().__init__(runtype='Eval', parameters=parameters, **kwargs)
-        self.eval_modes = eval_modes
-        self.norm_modes = norm_modes
         self.show = show
         self.enrichment = enrichment
-        self.eval_metrics = eval_metrics
 
     def setup(self):
         # self.refID = self.p.refID
@@ -56,7 +56,7 @@ class EvalRun(BaseRun):
         self.error_dicts = {}
         self.error_plot_dir = f'{self.plot_dir}/errors'
 
-        self.evaluation, self.target_data = util.arrange_evaluation(self.target, self.eval_metrics)
+        self.evaluation, self.target_data = util.arrange_evaluation(self.target, self.p.eval_metrics)
         self.define_eval_args(self.evaluation)
 
     def define_eval_args(self, ev):
@@ -102,7 +102,7 @@ class EvalRun(BaseRun):
                 conf.enrichment.metric_definition.tortuosity.tor_durs = self.tor_durs
             kws0 = aux.AttrDict({
                 'video': video,
-                'save_to': self.save_to,
+                'dir': self.dir,
                 'store_data': self.store_data,
                 'experiment': self.experiment,
                 'id': self.id,
@@ -127,7 +127,7 @@ class EvalRun(BaseRun):
         }
         labels = label_dic[mode]
         dic = aux.AttrDict()
-        for norm in self.norm_modes:
+        for norm in self.p.norm_modes:
             d = self.norm_error_dict(error_dict, mode=norm)
             df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(d.items())})
             kws = {
@@ -158,7 +158,7 @@ class EvalRun(BaseRun):
         print('Evaluating all models')
         os.makedirs(self.plot_dir, exist_ok=True)
         self.error_dicts = aux.AttrDict()
-        for mode in self.eval_modes:
+        for mode in self.p.eval_modes:
             k = f'{mode}_{suf}'
             d = util.eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
                                             min_size=min_size)
@@ -230,24 +230,41 @@ class EvalRun(BaseRun):
 
 
 
+class EvalConf(aux.NestedConf):
+    modelIDs = reg.conf.Model.confID_selector(single=False)
+    dataset_ids = param.List([],item_type=str, doc='The ids for the generated datasets')
+    N = aux.PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
+    refID = reg.conf.Ref.confID_selector()
+    norm_modes = param.ListSelector(default=['raw', 'minmax'], objects=['raw', 'minmax', 'std'],
+                                    # label='keys of modules to include in space search',
+                                    doc='Normalization modes to use')
+    eval_modes = param.ListSelector(default=['pooled'], objects=['pooled', '1:1', '1:pooled'],
+                                    # label='keys of modules to include in space search',
+                                    doc='Evaluation modes to use')
+    eval_metrics = param.Dict(default=aux.AttrDict({
+        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
+        'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                 'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
+        'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
+        'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+        'epochs': ['run_t', 'pau_t'],
+        'tortuosity': ['tor5', 'tor20']}),
+        doc='Evaluation metrics to use')
+
+reg.gen.Eval=reg.class_generator(EvalConf, mode='Unit')
 
 
-
-def eval_model_graphs(refID, mIDs, dIDs=None, id=None, save_to=None, N=10,
+def eval_model_graphs(refID, mIDs, dIDs=None, id=None, dir=None, N=10,
                       **kwargs):
     if id is None:
         id = f'{len(mIDs)}mIDs'
-    if save_to is None:
-        save_to = f'{reg.conf.Ref.getID(refID)}/model/evaluation'
+    if dir is None:
+        dir = f'{reg.conf.Ref.getID(refID)}/model/evaluation'
 
-    parameters = reg.get_null('Eval',**{
-        'refID': refID,
-        'modelIDs': mIDs,
-        'dataset_ids': dIDs,
-        'N': N,
-    })
+    parameters =reg.gen.Eval(refID=refID, modelIDs=mIDs,dataset_ids=dIDs,N=N).nestedConf
+
     evrun = EvalRun(parameters=parameters, id=id,
-                    save_to=save_to, **kwargs)
+                    dir=dir, **kwargs)
     evrun.simulate()
     evrun.plot_models()
     evrun.plot_results()
@@ -356,15 +373,15 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
         c.modelConfs.average = entries_avg
 
         reg.graphs.store_model_graphs(mIDs_avg, d.dir)
-        eval_model_graphs(refID, mIDs=mIDs_avg, norm_modes=['raw', 'minmax'], id='6mIDs_avg', N=10)
+        eval_model_graphs(refID, mIDs=mIDs_avg, id='6mIDs_avg', N=10)
 
         entries_var = add_var_mIDs(refID=c.refID, e=e, c=c,mID0s=mIDs_avg)
         mIDs_var = list(entries_var.keys())
         c.modelConfs.variable = entries_var
-        eval_model_graphs(refID, mIDs=mIDs_var, norm_modes=['raw', 'minmax'], id='6mIDs_var', N=10)
-        eval_model_graphs(refID, mIDs=mIDs_avg[:3] + mIDs_var[:3], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar1',
+        eval_model_graphs(refID, mIDs=mIDs_var,  id='6mIDs_var', N=10)
+        eval_model_graphs(refID, mIDs=mIDs_avg[:3] + mIDs_var[:3], id='3mIDs_avgVSvar1',
                           N=10)
-        eval_model_graphs(refID, mIDs=mIDs_avg[3:] + mIDs_var[3:], norm_modes=['raw', 'minmax'], id='3mIDs_avgVSvar2',
+        eval_model_graphs(refID, mIDs=mIDs_avg[3:] + mIDs_var[3:], id='3mIDs_avgVSvar2',
                           N=10)
     if mods3:
         entries_3m, mIDs_3m = adapt_3modules(refID=c.refID, e=e, c=c)
@@ -376,6 +393,6 @@ def modelConf_analysis(d, avgVSvar=False, mods3=False):
             for Ifmod in ['PHI', 'SQ', 'DEF']:
                 mIDs = [f'{Cmod}_{Tmod}_{Ifmod}_DEF_fit' for Tmod in dIDs]
                 id = f'Tmod_variable_Cmod_{Cmod}_Ifmod_{Ifmod}'
-                eval_model_graphs(mIDs=mIDs, dIDs=dIDs, norm_modes=['raw', 'minmax'], id=id, N=10)
+                eval_model_graphs(mIDs=mIDs, dIDs=dIDs, id=id, N=10)
     d.config = c
     d.save_config()

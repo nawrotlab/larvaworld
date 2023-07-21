@@ -111,6 +111,7 @@ class SimGeneralOps(NestedConf):
     # store_data = param.Boolean(True, doc='Whether to store the simulation data')
     larva_collisions = param.Boolean(True, doc='Whether to allow overlap between larva bodies.')
     offline = param.Boolean(False,doc='Whether to launch a full Larvaworld environment')
+    multicore = param.Boolean(False,doc='Whether to use multiple cores')
     show_display = param.Boolean(True,doc='Whether to launch the pygame-visualization.')
 
     def __init__(self,offline=False, show_display=True, **kwargs):

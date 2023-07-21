@@ -8,7 +8,7 @@ idx = 5
 g = reg.conf.Group.getID(datagroup_id)
 group_dir = f'{reg.DATA_DIR}/{g.path}'
 group_plotdir = f'{group_dir}/plots'
-save_to = f'{group_plotdir}/{parent_dir}/trial{idx}'
+dir = f'{group_plotdir}/{parent_dir}/trial{idx}'
 
 # mID0 = 'RE_NEU_PHI_DEF_nav'
 mIDs = ['Fed_18loco', 'Starved_18loco']
@@ -23,7 +23,7 @@ refIDs = [f'{parent_dir}.{dID}' for dID in dIDs]
 
 
 def adapt_models(mIDs=mIDs,refIDs=refIDs,mID0 = 'RE_NEU_PHI_DEF_nav',space_mkeys=['turner', 'interference'], init='model',
-                 save_to=save_to):
+                 dir=dir):
     kws = {'fitness_target_kws': {'eval_metrics': {
         'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa'],
         'spatial displacement': ['v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
@@ -38,7 +38,7 @@ def adapt_models(mIDs=mIDs,refIDs=refIDs,mID0 = 'RE_NEU_PHI_DEF_nav',space_mkeys
     for mID, refID in zip(mIDs, refIDs):
         entry = reg.model.adapt_mID(refID=refID, mID0=mID0, mID=mID, space_mkeys=space_mkeys,
                             init=init,
-                            save_to=f'{save_to}/GA/{mID}', Nagents=50, Nelits=5, Ngenerations=10, dur=0.4,
+                            dir=f'{dir}/GA/{mID}', Nagents=50, Nelits=5, Ngenerations=10, dur=0.4,
                             fit_dict=util.GA_optimization(refID=refID, **kws))
         entries.update(entry)
     return entries

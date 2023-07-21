@@ -304,12 +304,13 @@ class SimModeParser :
 
 
             p = reg.conf.Ga.expand(kw.experiment)
-            p.ga_build_kws.ga_select_kws = sp.ga_select_kws
-            p.ga_build_kws.ga_space_kws.init_mode = sp.ga_space_kws.init_mode
-            if sp.ga_space_kws.base_model is not None:
-                p.ga_build_kws.ga_space_kws.base_model = sp.ga_space_kws.base_model
-            if sp.ga_space_kws.bestConfID is not None:
-                p.ga_build_kws.ga_space_kws.bestConfID = sp.ga_space_kws.bestConfID
+
+            # p.ga_space_kws.init_mode = sp.ga_space_kws.init_mode
+            for k in ['base_model','bestConfID']:
+                if sp.ga_select_kws[k] is None:
+                    sp.ga_select_kws.pop(k)
+            p.ga_select_kws.update(**sp.ga_select_kws)
+             
             if sp.reference_dataset.refID is not None:
                 p.refID = sp.reference_dataset.refID
 

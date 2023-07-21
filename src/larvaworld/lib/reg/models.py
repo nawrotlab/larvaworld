@@ -1068,7 +1068,7 @@ class ModelRegistry:
         conf.mode = mode
         return conf
 
-    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], save_to=None, e=None, c=None,
+    def adapt_mID(self, refID, mID0, mID=None, space_mkeys=['turner', 'interference'], dir=None, e=None, c=None,
                   **kwargs):
         if mID is None:
             mID = f'{mID0}_fitted'
@@ -1077,8 +1077,8 @@ class ModelRegistry:
             d = reg.loadRef(refID)
             d.load(step=False)
             e, c = d.endpoint_data, d.config
-        if save_to is None:
-            save_to = f'{c.dir}/model/GAoptimization'
+        if dir is None:
+            dir = f'{c.dir}/model/GAoptimization'
         m0 = reg.conf.Model.getID(mID0)
         if 'crawler' not in space_mkeys:
             m0.brain.crawler_params = self.adapt_crawler(e=e, mode=m0.brain.crawler_params.mode)
@@ -1090,7 +1090,7 @@ class ModelRegistry:
         reg.conf.Model.setID(mID, m0)
         from larvaworld.lib.sim.genetic_algorithm import optimize_mID
         entry = optimize_mID(mID0=mID, space_mkeys=space_mkeys, dt=c.dt, refID=refID,
-                             id=mID, save_to=save_to, **kwargs)
+                             id=mID, dir=dir, **kwargs)
         return entry
 
 
@@ -1162,6 +1162,51 @@ def epar(e, k=None, par=None, average=True, Nround=2):
 
 model = ModelRegistry(reg.stored.conf.Model)
 
-
-
-
+#
+# class GAselector(aux.NestedConf):
+#     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
+#                                label='mode of initial generation', doc='Mode of initial generation')
+#     # base_model = param.Selector(default='explorer', objects=reg.conf.Model.confIDs,
+#     #                             label='agent model to optimize',doc='ID of the model to optimize')
+#     base_model = reg.conf.Model.confID_selector('loco_default')
+#
+#     space_mkeys = param.ListSelector(default=[], objects=model.mkeys,
+#                                      label='keys of modules to include in space search',
+#                                      doc='Keys of the modules where the optimization parameters are')
+#
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#
+#
+#
+#         self.mConf0 = reg.conf.Model.getID(self.base_model)
+#         self.space_dict = model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
+#         self.space_columns = [p.name for k, p in self.space_dict.items()]
+#         self.gConf0 = model.conf(self.space_dict)
+#
+#     def create_first_generation(self, N):
+#         mode = self.init_mode
+#
+#         d = self.space_dict
+#         if mode == 'default':
+#             gConf = model.conf(d)
+#             gConfs = [gConf] * N
+#         elif mode == 'model':
+#             gConf = {k: self.mConf0.flatten()[k] for k, p in d.items()}
+#             gConfs = [gConf] * N
+#         elif mode == 'random':
+#             gConfs = []
+#             for i in range(N):
+#                 model.randomize(d)
+#                 gConf = model.conf(d)
+#                 gConfs.append(gConf)
+#         else:
+#             raise ValueError('Not implemented')
+#         return gConfs
+#
+#     def new_genome(self, gConf, mConf0):
+#         mConf = mConf0.update_nestdict(gConf)
+#         return aux.AttrDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
+#
+#
+#

@@ -1170,12 +1170,12 @@ def buildInitDict():
                           'k': 'Pmut'},
             'Cmutation': {'v': 0.1, 'lim': (0.0, 1.0), 'h': 'Mutation coefficient', 'k': 'Cmut'},
             'selection_ratio': {'v': 0.3, 'lim': (0.0, 1.0),
-                                'h': 'Fraction of agents to be selected for the next generation', 'k': 'Rsel'}
-        }
-        d['ga_space_kws'] = {
+                                'h': 'Fraction of agents to be selected for the next generation', 'k': 'Rsel'},
+        # }
+        # d['ga_space_kws'] = {
             'space_mkeys': {'dtype': List[str], 'h': 'The module keys to optimize'},
             'base_model': ConfID_entry('Model', default='RE_NEU_PHI_DEF_nav', k='mID0', symbol=sub('mID', 0)),
-            'bestConfID': {'dtype': str,
+            'bestConfID': {'v': 'best_model', 'dtype': str,
                            'h': 'The model configuration ID to store the best genome',
                            'k': 'mID1'},
             'init_mode': {'dtype': str, 'v': 'random', 'vs': ['default', 'random', 'model'],
@@ -1189,23 +1189,30 @@ def buildInitDict():
             'exclude_func_name': {'dtype': str,
                              'h': 'The method for real-time excluding agents'},
 
+
         }
 
-        d['ga_build_kws'] = {
-            'ga_eval_kws': d['ga_eval_kws'],
-            'ga_space_kws': d['ga_space_kws'],
-            'ga_select_kws': d['ga_select_kws'],
-            'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'}
-        }
+        # d['ga_build_kws'] = {
+        #     'ga_eval_kws': d['ga_eval_kws'],
+        #     'ga_space_kws': d['ga_space_kws'],
+        #     'ga_select_kws': d['ga_select_kws'],
+        #
+        # }
         return d
 
     def Ga1(d):
         d['Ga'] = {
+
             'scene': {'dtype': str, 'v': 'no_boxes', 'h': 'The name of the scene to load'},
+            'multicore': {**bF, 'h': 'Whether to use multiple cores', 'k': 'multicore'},
             'env_params': ConfID_entry('Env',default='arena_200mm'),
             'sim_params': d['sim_params'],
             'experiment': ConfID_entry('Ga',default='exploration'),
-            'ga_build_kws': d['ga_build_kws'],
+            'ga_eval_kws': d['ga_eval_kws'],
+            # 'ga_space_kws': d['ga_space_kws'],
+            'ga_select_kws': d['ga_select_kws'],
+            # 'ga_build_kws': d['ga_build_kws'],
+
             **d['reference_dataset']
         }
 

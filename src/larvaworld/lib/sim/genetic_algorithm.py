@@ -8,14 +8,13 @@ import pandas as pd
 import progressbar
 import numpy as np
 
-import larvaworld.lib.aux.custom_parameters
 from larvaworld.lib import reg, aux, util
 
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
 
-class GAspace(param.Parameterized):
+class GAselector(aux.NestedConf):
     Ngenerations = param.Integer(default=None, allow_None=True, label='# generations',
                                  doc='Number of generations to run for the genetic algorithm engine')
     Nagents = param.Integer(default=30, label='# agents per generation', doc='Number of agents per generation')
@@ -28,12 +27,16 @@ class GAspace(param.Parameterized):
                                 doc='Probability of mutation for each agent in the next generation')
     Cmutation = param.Number(default=0.1, label='mutation coeficient',
                              doc='Fraction of allowed parameter range to mutate within')
+    bestConfID = param.String(default='best_model', label='model ID for optimized model',
+                              doc='ID for the optimized model')
 
+# class GAselector(aux.NestedConf):
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
                                label='mode of initial generation',doc='Mode of initial generation')
-    base_model = param.Selector(default='explorer', objects=reg.conf.Model.confIDs,
-                                label='agent model to optimize',doc='ID of the model to optimize')
-    bestConfID = param.String(default=None,label='model ID for optimized model', doc='ID for the optimized model')
+    # base_model = param.Selector(default='explorer', objects=reg.conf.Model.confIDs,
+    #                             label='agent model to optimize',doc='ID of the model to optimize')
+    base_model = reg.conf.Model.confID_selector('loco_default')
+
     space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,
                                      label='keys of modules to include in space search',doc='Keys of the modules where the optimization parameters are')
 
@@ -131,8 +134,6 @@ def cum_dst(robot, **kwargs):
 def bend_error_exclusion(robot):
     if robot.body_bend_errors >= 20:
         return True
-    # elif robot.negative_speed_errors >= 5:
-    #     return True
     else:
         return False
 
@@ -156,7 +157,7 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-class GAevaluation(larvaworld.lib.aux.custom_parameters.NestedConf):
+class GAevaluation(aux.NestedConf):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
@@ -170,6 +171,8 @@ class GAevaluation(larvaworld.lib.aux.custom_parameters.NestedConf):
 
     def __init__(self,fit_kws={},**kwargs):
         super().__init__(**kwargs)
+
+
 
         # self.retrieve_dataset()
         if type(self.exclude_func_name)==str:
@@ -190,27 +193,6 @@ class GAevaluation(larvaworld.lib.aux.custom_parameters.NestedConf):
                 fitness_func = fitness_funcs[self.fitness_func_name]
                 return arrange_fitness(fitness_func, **kwargs)
 
-class GAengine(GAspace, GAevaluation):
-
-    multicore = param.Boolean(default=True, label='parallel processing',doc='Whether to use parallel processing')
-
-
-    def __init__(self,ga_eval_kws={},ga_space_kws={},ga_select_kws={}, **kwargs):
-        super().__init__(**ga_select_kws,**ga_space_kws,**ga_eval_kws,**kwargs)
-
-
-
-
-
-        self.best_genome = None
-        self.best_fitness = None
-        self.all_genomes_dic = []
-        self.num_cpu = multiprocessing.cpu_count()
-        self.generation_num = 0
-        self.start_total_time = aux.TimeUtil.current_time_millis()
-
-
-
 
 
 
@@ -222,7 +204,8 @@ def arrange_fitness(fitness_func, **kwargs):
     return aux.AttrDict({'func': func, 'func_arg': 'robot'})
 
 
-class GAlauncher(BaseRun, GAengine):
+class GAlauncher(BaseRun, GAevaluation,GAselector):
+
 
     def __init__(self,parameters, dataset=None, **kwargs):
         '''
@@ -232,10 +215,21 @@ class GAlauncher(BaseRun, GAengine):
             **kwargs: Arguments passed to the setup method
 
         '''
-        self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=parameters.refID,
-                                                            dir=parameters.dataset_dir)
+
         BaseRun.__init__(self,runtype='Ga',parameters=parameters, **kwargs)
-        GAengine.__init__(self, **self.p.ga_build_kws)
+        self.best_genome = None
+        self.best_fitness = None
+        self.all_genomes_dic = []
+        self.num_cpu = multiprocessing.cpu_count()
+        self.generation_num = 0
+        self.start_total_time = aux.TimeUtil.current_time_millis()
+
+        self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=self.p.refID,
+                                                        dir=self.p.dataset_dir)
+        GAevaluation.__init__(self,**self.p.ga_eval_kwsv)
+        GAselector.__init__(self, **self.p.ga_select_kws)
+
+
     def setup(self):
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
@@ -371,14 +365,14 @@ class GAlauncher(BaseRun, GAengine):
             self.store_genomes(dic=self.all_genomes_dic, save_to=self.data_dir)
 
     def store_genomes(self, dic, save_to):
-        self.genome_df = pd.DataFrame.from_records(dic)
-        self.genome_df = self.genome_df.round(3)
-        self.genome_df.sort_values(by='fitness', ascending=False, inplace=True)
-        reg.graphs.dict['mpl'](data=self.genome_df, font_size=18, save_to=save_to,
+        df = pd.DataFrame.from_records(dic)
+        df = df.round(3)
+        df.sort_values(by='fitness', ascending=False, inplace=True)
+        reg.graphs.dict['mpl'](data=df, font_size=18, save_to=save_to,
                                name=self.bestConfID)
-        self.genome_df.to_csv(f'{save_to}/{self.bestConfID}.csv')
+        df.to_csv(f'{save_to}/{self.bestConfID}.csv')
 
-        self.corr_df=self.genome_df[['fitness']+self.space_columns].corr()
+        self.corr_df=df[['fitness']+self.space_columns].corr()
         self.diff_df, row_colors=reg.model.diff_df(mIDs=[self.base_model, self.bestConfID], ms=[self.mConf0,self.best_genome.mConf])
 
     def build_threads(self, robots):
@@ -427,34 +421,27 @@ class GA_thread(threading.Thread):
 
 def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
                exclusion_mode=False,experiment='exploration',
-                 id=None, dt=1 / 16, dur=0.5, save_to=None,  Nagents=30, Nelits=6, Ngenerations=20,
+                 id=None, dt=1 / 16, dur=0.5, dir=None,  Nagents=30, Nelits=6, Ngenerations=20,
                  **kwargs):
 
     warnings.filterwarnings('ignore')
     if mID1 is None:
         mID1 = mID0
 
-    ga_select_kws= reg.get_null('ga_select_kws', Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations, selection_ratio=0.1)
-    ga_space_kws= reg.get_null('ga_space_kws', init_mode=init, space_mkeys=space_mkeys, base_model=mID0,bestConfID=mID1)
-    ga_eval_kws= reg.get_null('ga_eval_kws', exclusion_mode=exclusion_mode,refID=refID)
-    ga_eval_kws.fit_dict = fit_dict
+    gaconf = reg.gen.Ga(ga_select_kws=reg.gen.GAselector(Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations,
+                                      selection_ratio=0.1,init_mode=init, space_mkeys=space_mkeys,
+                                      base_model=mID0,bestConfID=mID1),
+                      ga_eval_kws=reg.gen.GAevaluation(exclusion_mode=exclusion_mode,fit_dict = fit_dict),
+                      env_params='arena_200mm',
+                      experiment=experiment,
+                      refID=refID).nestedConf
 
-    kws = {
-        'experiment': experiment,
-        'env_params': 'arena_200mm',
-        'ga_build_kws': reg.get_null('ga_build_kws',
-                                     ga_select_kws=ga_select_kws,
-                                     ga_space_kws=ga_space_kws,
-                                     ga_eval_kws=ga_eval_kws,
-                                       )
-    }
 
-    conf = reg.get_null('Ga', **kws)
-    conf.env_params = reg.conf.Env.getID(conf.env_params)
+    gaconf.env_params = reg.conf.Env.getID(gaconf.env_params)
 
     # conf.ga_build_kws.
 
-    GA = GAlauncher(parameters=conf, save_to=save_to, id=id, duration=dur,dt=dt)
+    GA = GAlauncher(parameters=gaconf, dir=dir, id=id, duration=dur,dt=dt)
     best_genome = GA.simulate()
     entry = {mID1: best_genome.mConf}
     return entry
@@ -484,3 +471,15 @@ def df_from_log(gLog):
     return df.set_index(['obj_id', 't'])
         # return ddf
 
+reg.gen.GAselector=reg.class_generator(GAselector, mode='Unit')
+reg.gen.GAevaluation=reg.class_generator(GAevaluation, mode='Unit')
+
+class GAconf(aux.SimTimeOps):
+    env_params = reg.conf.Env.confID_selector()
+    experiment = reg.conf.Ga.confID_selector()
+    ga_eval_kws = aux.ClassAttr(reg.gen.GAevaluation, doc='The GA evaluation configuration')
+    ga_select_kws = aux.ClassAttr(reg.gen.GAselector, doc='The GA selection configuration')
+    refID = reg.conf.Ref.confID_selector()
+    scene = param.String('no_boxes', doc='The name of the scene to load')
+
+reg.gen.Ga=reg.class_generator(GAconf, mode='Unit')

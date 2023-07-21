@@ -4,3 +4,5 @@ from .lib.process.dataset import BaseLarvaDataset,LarvaDataset
 from .lib.reg import graphs
 
 # from .cli.argparser import SimModeParser
+
+reg.resetConfs(init=True)

@@ -112,8 +112,18 @@ class ConfType(param.Parameterized) :
 
         return conf
 
-    def confID_selector(self, default=None):
-        return aux.OptionalSelector(default=default, objects=self.confIDs, doc='The configuration ID')
+    def confID_selector(self, default=None, single=True):
+        kws={
+            'default':default,
+            'objects':self.confIDs,
+            'label':f'{self.conftype} configuration ID',
+            'doc':f'Selection among stored {self.conftype} configurations by ID'
+
+        }
+        if single :
+            return aux.OptionalSelector(**kws)
+        else :
+            return aux.ListSelector(**kws)
 
     @property
     def confIDs(self):
@@ -392,6 +402,8 @@ class FoodConf(aux.NestedConf):
 
 gen.FoodConf=class_generator(FoodConf, mode='Unit')
 gen.EnrichConf=class_generator(aux.EnrichConf, mode='Unit')
+# gen.GAspace=class_generator(sim.GAspace, mode='Unit')
+# gen.GAevaluation=class_generator(sim.GAevaluation, mode='Unit')
 
 class EnvConf(aux.NestedConf):
     arena = aux.ClassAttr(gen.Arena, doc='The arena configuration')
@@ -468,12 +480,13 @@ class LarvaGroup(aux.NestedConf):
 
 class ExpConf(aux.NestedConf):
     env_params = conf.Env.confID_selector()
+    experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
     larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
     # sim_params = aux.ClassAttr(SimOps,doc='The simulation configuration')
     enrichment = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
-    experiment = conf.Exp.confID_selector()
+
 
 
 

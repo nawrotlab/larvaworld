@@ -70,7 +70,7 @@ def loadRef(id, **kwargs) :
 def getRef(id, **kwargs) :
     return conf.Ref.getRef(id=id, **kwargs)
 
-resetConfs(init=True)
+# resetConfs(init=True)
 
 # stored.resetConfs(init=True)
 

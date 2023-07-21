@@ -251,19 +251,20 @@ class LarvaworldParam(param.Parameterized):
             print(f'Function to compute parameter {self.disp} is not defined')
 
     def randomize(self):
-        if self.parclass == param.Number:
+        p=self.parclass
+        if p == param.Number:
             vmin, vmax = self.param.v.bounds
             self.v = self.param.v.crop_to_bounds(np.round(random.uniform(vmin, vmax), self.Ndec))
-        elif self.parclass == param.Integer:
+        elif p == param.Integer:
             vmin, vmax = self.param.v.bounds
             self.v = random.randint(vmin, vmax)
-        elif self.parclass == param.Magnitude:
+        elif p == param.Magnitude:
             self.v = np.round(random.uniform(0.0, 1.0), self.Ndec)
-        elif self.parclass == param.Selector:
+        elif p == param.Selector:
             self.v = random.choice(self.param.v.objects)
-        elif self.parclass == param.Boolean:
+        elif p == param.Boolean:
             self.v = random.choice([True, False])
-        elif self.parclass == param.Range:
+        elif p == param.Range:
             vmin, vmax = self.param.v.bounds
             vv0 = np.round(random.uniform(vmin, vmax), self.Ndec)
             vv1 = np.round(random.uniform(vv0, vmax), self.Ndec)
