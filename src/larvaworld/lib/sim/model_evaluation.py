@@ -3,7 +3,7 @@ import warnings
 
 import param
 
-from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator
+from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator, SimOps
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -232,7 +232,7 @@ class EvalRun(BaseRun):
 
 
 
-class EvalConf(NestedConf):
+class EvalConf(SimOps):
     modelIDs = reg.conf.Model.confID_selector(single=False)
     dataset_ids = param.List([],item_type=str, doc='The ids for the generated datasets')
     N = PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')

@@ -1,17 +1,52 @@
 import os
 import sys
 import numpy as np
+from param import Boolean, String
+
+from larvaworld.lib.param import NestedConf, PositiveNumber, OptionalSelector, PositiveInteger
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import SimulationScale
 
-class BaseScreenManager :
-    def __init__(self, model, traj_color=None,fps=None,
-                 background_motion=None, allow_clicks=True,black_background=None,
-                 vis_kwargs=None,video=None):
 
+class MediaDrawOps(NestedConf):
+    image_mode = OptionalSelector(objects=['final', 'snapshots', 'overlap'],doc='When to save images.')
+    image_file = String(doc='Filename for the saved image. File extension png sutomatically added.')
+    video_file = String(doc='Filename for the saved video. File extension mp4 sutomatically added.')
+    fps = PositiveInteger(60, softmax=100,doc='Video speed')
+    save_video= Boolean(False, doc='Whether to save a video.')
+    # show_display = Boolean(True, doc='Whether to launch the pygame-visualization.')
+    # color_behavior = Boolean(False, doc='Color the larvae according to their instantaneous behavior')
+
+class AgentDrawOps(NestedConf):
+    trails = Boolean(False,doc='Draw the larva trajectories')
+    trajectory_dt = PositiveNumber(2,step=0.2,doc='Duration of the drawn trajectories')
+    draw_sensors = Boolean(False,doc='Draw the larva sensors')
+    draw_contour = Boolean(False,doc='Draw the larva contour')
+    draw_midline = Boolean(False,doc='Draw the larva midline')
+    draw_centroid = Boolean(False,doc='Draw the larva centroid')
+    draw_head = Boolean(False,doc='Draw the larva head')
+
+
+class ScreenOps(NestedConf):
+    odor_aura = Boolean(False, doc='Draw the aura around odor sources')
+    allow_clicks = Boolean(True, doc='Whether to allow input from display')
+    black_background = Boolean(False, doc='Set the background color to black')
+    random_colors = Boolean(False,doc='Color each larva with a random color')
+    color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
+
+
+class BaseScreenManager(ScreenOps, AgentDrawOps) :
+
+
+
+    def __init__(self, model, traj_color=None, background_motion=None,
+                 vis_kwargs=None, video=None, **kwargs):
+
+        super().__init__(**kwargs)
         m=self.model = model
         self.window_dims = aux.get_window_dims(m.space.dims)
 
@@ -23,14 +58,6 @@ class BaseScreenManager :
         self.__dict__.update(vis.draw)
         self.__dict__.update(vis.color)
         self.__dict__.update(vis.aux)
-        self.color_behavior = vis.color.color_behavior
-        self.trails = vis.draw.trails
-        trajectory_dt = vis.draw.trajectory_dt
-        if trajectory_dt is None:
-            trajectory_dt = 0.0
-        self.trajectory_dt = trajectory_dt
-        self.black_background = vis.color.black_background if black_background is None else black_background
-        self.image_mode = vis.render.image_mode,
 
 
 
@@ -38,7 +65,6 @@ class BaseScreenManager :
         self.traj_color = traj_color
         self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
             self.black_background)
-        self.allow_clicks = allow_clicks
         self.bg = background_motion
 
         self.active = self.mode is not None and self.model.show_display
@@ -66,7 +92,7 @@ class BaseScreenManager :
             'window_dims': self.window_dims,
             # 'caption': self.media_name,
             'dt': m.dt,
-            'fps': int(vis.render.video_speed/m.dt) if fps is None else fps,
+            'fps': int(self.fps/m.dt)
 
         })
 

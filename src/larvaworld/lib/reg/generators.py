@@ -1,11 +1,12 @@
 import os
 
+import agentpy
 import param
 
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, SimGeneralOps, \
+from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
-    generate_xyNor_distro, Odor, Life, class_generator
+    generate_xyNor_distro, Odor, Life, class_generator, SimOps
 
 
 class ConfType(param.Parameterized) :
@@ -81,7 +82,7 @@ class ConfType(param.Parameterized) :
         if id in self.dict.keys() and mode == 'update':
             self.dict[id] = self.dict[id].update_nestdict(conf.flatten())
         else:
-            self.dict[id] = aux.AttrDict(conf)
+            self.dict[id] = conf
         self.save()
         reg.vprint(f'{self.conftype} Configuration saved under the id : {id}', 1)
 
@@ -128,6 +129,9 @@ class ConfType(param.Parameterized) :
         else :
             return param.ListSelector(**kws)
 
+    def confIDorNew(self):
+        return ClassAttr(class_=(self.confID_selector(), self.conf_class()),default=None, doc='Accepts either an existing ID or a new configuration')
+
     @property
     def confIDs(self):
         return sorted(list(self.dict.keys()))
@@ -137,8 +141,8 @@ class ConfType(param.Parameterized) :
         c=self.conftype
         if c is None :
             return None
-        elif c in reg.gen.keys():
-            return reg.gen[c]
+        elif c in gen.keys():
+            return gen[c]
         else :
             return aux.AttrDict
 
@@ -213,15 +217,9 @@ def resetConfs(conftypes=None, **kwargs):
         conf[conftype].reset(**kwargs)
 
 
-from larvaworld.lib.model import Food, Border,\
+from larvaworld.lib.model import Food, Border, \
     WindScape, ThermoScape, FoodGrid, \
-    PointAgent, OrientedAgent, Substrate, OdorScape, DiffusionValueLayer, GaussianValueLayer
-
-
-
-
-
-
+    PointAgent, OrientedAgent, Substrate, OdorScape, DiffusionValueLayer, GaussianValueLayer, agents
 
 gen=aux.AttrDict({
     'FoodGroup':class_generator(Food, mode='Group'),
@@ -238,30 +236,46 @@ gen=aux.AttrDict({
     'GaussianValueLayer':class_generator(GaussianValueLayer, mode='Unit'),
 })
 
-class SimDataOps(NestedConf):
+# How to load existing
+class RetrievalOps(NestedConf):
     runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
-    id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
-    # id=aux.StringRobust(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
-    dir = param.String(default=None, label='storage folder', doc='The directory to store data')
-    # dir = param.Foldername(default=None, label='storage folder', doc='The directory to store data')
 
-    store_data = param.Boolean(True, doc='Whether to store the simulation data')
-    def __init__(self,runtype='Exp',save_to = None,**kwargs):
+    def __init__(self,runtype, **kwargs):
         self.param.add_parameter('experiment', self.exp_selector_param(runtype))
-        super().__init__(runtype=runtype,**kwargs)
-        if self.id is None :
-            self.id=self.generate_id(self.runtype, self.experiment)
-        if save_to is None:
-            save_to = f'{self.path_to_runtype_data}/{self.experiment}'
-        self.dir=f'{save_to}/{self.id}'
+        super().__init__(**kwargs)
 
-    def generate_id(self, runtype,exp):
-        idx = reg.next_idx(exp, conftype=runtype)
-        return f'{exp}_{idx}'
 
-    @property
-    def path_to_runtype_data(self):
-        return f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
+
+# How to load existing
+
+
+# How to launch
+
+class RuntimeGeneralOps(NestedConf):
+    offline = param.Boolean(False, doc='Whether to launch a full Larvaworld environment')
+    multicore = param.Boolean(False, doc='Whether to use multiple cores')
+    show_display = param.Boolean(True, doc='Whether to launch the pygame-visualization.')
+
+    def __init__(self, offline=False, show_display=True, **kwargs):
+        if offline:
+            show_display = False
+        super().__init__(show_display=show_display, offline=offline, **kwargs)
+
+    @param.depends('offline', 'show_display', watch=True)
+    def disable_display(self):
+        if self.offline:
+            self.show_display = False
+
+
+class RuntimeDataOps(NestedConf):
+    id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
+    dir = param.String(default=None, label='storage folder', doc='The directory to store data')
+    store_data = param.Boolean(True, doc='Whether to store the simulation data')
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+
+
 
     # @property
     # def dir(self):
@@ -279,8 +293,44 @@ class SimDataOps(NestedConf):
         os.makedirs(f, exist_ok=True)
         return f
 
-    #@ staticmethod
-    def exp_selector_param(self,runtype):
+
+
+# What minimum to store, of course will be used to launch as well
+
+
+
+
+class RuntimeOps(RuntimeGeneralOps,RuntimeDataOps):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+
+class SimConfiguration(RuntimeOps, SimOps, SimMetricOps):
+    runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
+
+    def __init__(self,runtype,**kwargs):
+        self.param.add_parameter('experiment', self.exp_selector_param(runtype))
+        super().__init__(runtype=runtype,**kwargs)
+        if 'experiment' in kwargs and kwargs['experiment'] is not None :
+            self.experiment='experiment'
+
+
+        if self.id is None:
+            self.id = self.generate_id(self.runtype, self.experiment)
+        if self.dir is None:
+            save_to = f'{self.path_to_runtype_data}/{self.experiment}'
+            self.dir = f'{save_to}/{self.id}'
+
+    @property
+    def path_to_runtype_data(self):
+        return f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
+
+    def generate_id(self, runtype, exp):
+        idx = reg.next_idx(exp, conftype=runtype)
+        return f'{exp}_{idx}'
+
+    # @ staticmethod
+    def exp_selector_param(self, runtype):
         # runtype = self.runtype
         defaults = {
             'Exp': 'dish',
@@ -300,16 +350,13 @@ class SimDataOps(NestedConf):
             return param.String(**kws)
 
 
-
-class SimOps(SimDataOps,SimTimeOps,SimMetricOps,SimGeneralOps):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-
-
 class FoodConf(NestedConf):
     source_groups = ClassDict(item_type=gen.FoodGroup,  doc='The groups of odor or food sources available in the arena')
     source_units = ClassDict(item_type=gen.Food,  doc='The individual sources  of odor or food in the arena')
     food_grid = ClassAttr(gen.FoodGrid, default=None, doc='The food grid in the arena')
+
+
+
 
 gen.FoodConf=class_generator(FoodConf, mode='Unit')
 gen.EnrichConf=class_generator(EnrichConf, mode='Unit')
@@ -389,9 +436,12 @@ class LarvaGroup(NestedConf):
             confs.append(conf)
         return confs
 
-class ExpConf(NestedConf):
-    env_params = conf.Env.confID_selector()
-    experiment = conf.Exp.confID_selector()
+gen.Env=class_generator(EnvConf, mode='Unit')
+
+class ExpConf(SimOps):
+    env_params = conf.Env.confIDorNew()
+    # env_params = conf.Env.confID_selector()
+    # experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
     larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
@@ -431,9 +481,10 @@ class ReplayConf(NestedConf):
 
 
 
-gen.Env=class_generator(EnvConf, mode='Unit')
+
 gen.LarvaGroup=class_generator(LarvaGroup, mode='Unit')
-gen.Exp=class_generator(ExpConf, mode='Unit')
+gen.Exp=ExpConf
+# gen.Exp=class_generator(ExpConf, mode='Unit')
 gen.Replay=class_generator(ReplayConf, mode='Unit')
 
 

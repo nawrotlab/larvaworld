@@ -45,7 +45,7 @@ class Resolution(FramerateOps,XYops):
 
 class SimTimeOps(FramerateOps):
     duration = OptionalPositiveNumber(5.0, softmax=100.0, step=0.1,
-                                          doc='The duration of the simulation in minutes.')
+                               doc='The duration of the simulation in minutes.')
     Nsteps = OptionalPositiveInteger(label='# simulation timesteps', doc='The number of simulation timesteps.')
 
     def __init__(self, **kwargs):
@@ -59,6 +59,22 @@ class SimTimeOps(FramerateOps):
     @param.depends('Nsteps', watch=True)
     def update_duration(self):
         self.duration = self.Nsteps * self.dt / 60
+
+
+class SimSpatialOps(NestedConf):
+    Box2D = param.Boolean(False, doc='Whether to use the Box2D physics engine or not.')
+    # store_data = param.Boolean(True, doc='Whether to store the simulation data')
+    larva_collisions = param.Boolean(True, doc='Whether to allow overlap between larva bodies.')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Define constant parameters
+        self.scaling_factor = 1000.0 if self.Box2D else 1.0
+
+class SimOps(SimTimeOps,SimSpatialOps):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
 
 
 class LabFormatFilesystem(NestedConf):
@@ -117,26 +133,8 @@ class SimMetricOps(XYops):
 
 
 
-class SimGeneralOps(NestedConf):
-    Box2D = param.Boolean(False,doc='Whether to use the Box2D physics engine or not.')
-    # store_data = param.Boolean(True, doc='Whether to store the simulation data')
-    larva_collisions = param.Boolean(True, doc='Whether to allow overlap between larva bodies.')
-    offline = param.Boolean(False,doc='Whether to launch a full Larvaworld environment')
-    multicore = param.Boolean(False,doc='Whether to use multiple cores')
-    show_display = param.Boolean(True,doc='Whether to launch the pygame-visualization.')
-
-    def __init__(self,offline=False, show_display=True, **kwargs):
-        if offline:
-            show_display=False
-        super().__init__(show_display=show_display,offline=offline,**kwargs)
-        # Define constant parameters
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
 
 
-    @param.depends('offline','show_display', watch=True)
-    def disable_display(self):
-        if self.offline :
-            self.show_display=False
 
 
 

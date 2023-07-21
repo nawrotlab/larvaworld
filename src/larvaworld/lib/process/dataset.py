@@ -585,24 +585,22 @@ class LarvaDatasetCollection :
         return aux.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
     @ classmethod
-    def from_agentpy_output(cls, output,agents=None,to_Geo=False):
-
-        p=aux.AttrDict(output.parameters['constants'])
+    def from_agentpy_output(cls, output=None, agents=None,to_Geo=False):
+        config0 = aux.AttrDict(output.parameters['constants'])
         ds = []
         for gID, df in output.variables.items():
-            step, end = convert_group_output_to_dataset(df, p['collectors'])
-            gConf=p.larva_groups[gID]
-            # print(df)
-            # raise
             assert 'sample_id' not in df.index.names
-            config = p.get_copy()
+            step, end = convert_group_output_to_dataset(df, config0['collectors'])
+            config = config0.get_copy()
+            gConf = config0.larva_groups[gID]
             kws = {
                 'larva_groups': {gID: gConf},
                 # 'df': df,
-                'group_id': p.id,
+                'group_id': config0.id,
                 'id': gID,
-                'refID': f'{p.id}/{gID}',
-                'dir': f'{p.data_dir}/{gID}',
+                'refID': None,
+                # 'refID': f'{config0.id}/{gID}',
+                'dir': f'{config0.dir}/data/{gID}',
                 'color': gConf.default_color,
                 # 'sample': gConf.sample,
                 # 'life_history': gConf.life_history,
@@ -614,7 +612,38 @@ class LarvaDatasetCollection :
 
             ds.append(d)
 
-        return cls(datasets=ds, config=p)
+        return cls(datasets=ds, config=config0)
+
+    @classmethod
+    def from_agentpy_logs(cls, logs, Ngen, p):
+        ds = []
+        for gID, gLog in logs.items():
+            df=df_from_log(gLog)
+            assert 'sample_id' not in df.index.names
+            step, end = convert_group_output_to_dataset(df, p['collectors'])
+            config = p.get_copy()
+            # config.id=gID
+
+            kws = {
+                # 'larva_groups': {gID: gConf},
+                # 'df': df,
+                'group_id': p.id,
+                'id': f'{Ngen}_{gID}',
+                'refID': None,
+                # 'refID': f'{config0.id}/{gID}',
+                'dir': f'{p.dir}/{Ngen}/{gID}',
+                'color': None,
+                # 'sample': gConf.sample,
+                # 'life_history': gConf.life_history,
+                # 'model': gConf.model,
+
+            }
+            config.update(**kws)
+            d = BaseLarvaDataset.initGeo(config=config, load_data=False, step=step, end=end)
+
+            ds.append(d)
+
+        return ds
 
 def convert_group_output_to_dataset(df, collectors):
 
@@ -627,6 +656,32 @@ def convert_group_output_to_dataset(df, collectors):
     step = df[collectors['step']]
 
     return step, end
+
+
+def df_from_log(gLog):
+    g= {}
+    Ng=0
+    for id, log in gLog.items():
+        N=len(log['t'])
+        Ng+=N
+        # Add object id/key to object log
+        log['obj_id'] = [id] * N
+
+        # Add object log to aggregate log
+        for k, v in log.items():
+            Nv=len(v)
+            if k not in g:
+                g[k] = []
+            # while len(g[k]) < (Ng-Nv):
+            #     g[k].append(None)
+            # g[k][-len(v):] = v
+            g[k].extend(v)
+            # print(id, k, len(g[k]), len(v))
+    # for k, v in g.items():
+    #     print(k,len(v))
+    df = pd.DataFrame(g)
+    return df.set_index(['obj_id', 't'])
+        # return ddf
 # class RefDataset(aux.NestedConf):
 #     refID = reg.conf.Ref.confID_selector()
 #     # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')

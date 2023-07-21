@@ -9,7 +9,7 @@ import progressbar
 import numpy as np
 
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.param import NestedConf, SimTimeOps, ClassAttr, class_generator
+from larvaworld.lib.param import NestedConf, ClassAttr, class_generator, SimOps
 
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
@@ -273,16 +273,21 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
 
 
 
-    def eval_robots(self, logs, Ngen, genome_dict):
+    def eval_robots(self, Ngen, genome_dict):
         reg.vprint(f'Evaluating generation {Ngen}', 1)
 
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
-        for gID, gLog in logs.items():
+        from larvaworld.lib.process.dataset import LarvaDatasetCollection
+        ds = LarvaDatasetCollection.from_agentpy_logs(logs=self._logs, Ngen=Ngen, p=self.p)
+
+        for d in ds:
         # for gID, df in data.items():
-            df = df_from_log(gLog).copy()
-            d = self.convert_output_to_dataset(df=df,id=f'{gID}_generation:{Ngen}')
+
+
+
+            # d = self.convert_output_to_dataset(df=df,id=f'{gID}_generation:{Ngen}')
             d._enrich(proc_keys=['angular', 'spatial'], is_last=False)
             fit_dicts = func(s=d.step_data)
             valid_gs = {}
@@ -331,7 +336,7 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         self.generation_step_num += 1
         if self.generation_completed:
             self.agents.nest_record(self.collectors['end'])
-            sorted_genomes = self.eval_robots(logs=self._logs, Ngen=self.generation_num, genome_dict=self.genome_dict)
+            sorted_genomes = self.eval_robots(Ngen=self.generation_num, genome_dict=self.genome_dict)
             self.delete_agents()
             self._logs = {}
             self.t = 0
@@ -447,35 +452,11 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     entry = {mID1: best_genome.mConf}
     return entry
 
-def df_from_log(gLog):
-    g= {}
-    Ng=0
-    for id, log in gLog.items():
-        N=len(log['t'])
-        Ng+=N
-        # Add object id/key to object log
-        log['obj_id'] = [id] * N
-
-        # Add object log to aggregate log
-        for k, v in log.items():
-            Nv=len(v)
-            if k not in g:
-                g[k] = []
-            # while len(g[k]) < (Ng-Nv):
-            #     g[k].append(None)
-            # g[k][-len(v):] = v
-            g[k].extend(v)
-            # print(id, k, len(g[k]), len(v))
-    # for k, v in g.items():
-    #     print(k,len(v))
-    df = pd.DataFrame(g)
-    return df.set_index(['obj_id', 't'])
-        # return ddf
 
 reg.gen.GAselector=class_generator(GAselector, mode='Unit')
 reg.gen.GAevaluation=class_generator(GAevaluation, mode='Unit')
 
-class GAconf(SimTimeOps):
+class GAconf(SimOps):
     env_params = reg.conf.Env.confID_selector()
     experiment = reg.conf.Ga.confID_selector()
     ga_eval_kws = ClassAttr(reg.gen.GAevaluation, doc='The GA evaluation configuration')

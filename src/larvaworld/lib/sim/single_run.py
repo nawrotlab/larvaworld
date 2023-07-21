@@ -21,14 +21,6 @@ class ExpRun(BaseRun):
             **kwargs: Arguments passed to the setup method
 
         '''
-        if parameters is None :
-            if experiment is not None :
-                parameters = reg.conf.Exp.expand(experiment)
-                kws=parameters.sim_params
-                kws.update(kwargs)
-                kwargs=kws
-            else :
-                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
 
         super().__init__(runtype = 'Exp',experiment=experiment,parameters=parameters, **kwargs)
 
@@ -118,9 +110,9 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
-
-
-        self.datasets = self.retrieve2()
+        from larvaworld.lib.process.dataset import LarvaDatasetCollection
+        self.data_collection = LarvaDatasetCollection.from_agentpy_output(self.output)
+        self.datasets=self.data_collection.datasets
         # self.datasets = self.retrieve()
         end = time.time()
         dur = np.round(end - start).astype(int)
@@ -137,10 +129,7 @@ class ExpRun(BaseRun):
             self.store()
         return self.datasets
 
-    def retrieve(self):
-        from larvaworld.lib.process.dataset import LarvaDatasetCollection
-        self.dataset_collection=LarvaDatasetCollection.from_agentpy_output(self.output)
-        return self.dataset_collection.datasets
+
 
     # def retrieve(self):
     #     ds = []

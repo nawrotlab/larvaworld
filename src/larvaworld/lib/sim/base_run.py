@@ -5,16 +5,17 @@ import param
 
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
-
+from larvaworld.lib.param import SimOps
+from larvaworld.lib.reg.generators import SimConfiguration
 
 
 # class BaseRunConf(reg.SimOps):
 #     def __init__(self, runtype, **kwargs):
 #         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
 
-class BaseRun(agentpy.Model,reg.SimOps):
+class BaseRun(agentpy.Model,SimConfiguration):
 
-    def __init__(self, runtype,parameters=None, **kwargs):
+    def __init__(self, runtype,experiment=None,parameters=None, **kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.
@@ -37,10 +38,27 @@ class BaseRun(agentpy.Model,reg.SimOps):
             Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.
             **kwargs: Arguments passed to the setup method
         '''
+
+        if parameters is None :
+            if experiment is None or experiment not in reg.conf[runtype].confIDs:
+                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
+            else :
+                parameters = reg.conf[runtype].expand(experiment)
+                for k in set(parameters).intersection(set(SimOps().nestedConf)):
+                    kwargs[k]=parameters[k]
+            #
+            #
+            #     kws=parameters.sim_params
+            #     kws.update(kwargs)
+            #     kwargs=kws
+            # else :
+
+
+
         # c=reg.SimOps(runtype=runtype, **kwargs).nestedConf
         agentpy.Model.__init__(self, parameters=parameters)
 
-        reg.SimOps.__init__(self, runtype=runtype, **kwargs)
+        SimConfiguration.__init__(self, runtype=runtype, **kwargs)
 
         # c=reg.SimOps(runtype=runtype,**kwargs)
         self.p.update(**self.nestedConf)
@@ -197,51 +215,7 @@ class BaseRun(agentpy.Model,reg.SimOps):
 
     def set_collectors(self, collections):
         self.collectors = reg.par.get_reporters(collections=collections, agents=self.agents)
-        # self.step_output_keys = list(self.collectors['step'].keys())
-        # self.end_output_keys = list(self.collectors['end'].keys())
-        collectors=aux.AttrDict()
-        collectors.step=list(self.collectors['step'].keys())
-        collectors.end=list(self.collectors['end'].keys())
-        self.p.collectors=collectors
-        # print(self.step_output_keys)
-        # raise
+        self.p.collectors=aux.AttrDict({'step': list(self.collectors['step'].keys()),
+                                 'end' : list(self.collectors['end'].keys())})
 
-    def create_config(self, **kwargs):
-        # source_xy = aux.AttrDict({s.unique_id: s.pos for s in self.sources})
-        p = self.p
-        config = aux.AttrDict({
-            'env_params': p.env_params,
-            'larva_groups': p.larva_groups,
-            'source_xy': self.p.source_xy,
-            **p.conf.nestedConf
-        })
-        config.update(**kwargs)
-        return config
-
-    # def convert_group_output_to_dataset(self,df, collectors):
-    #     # step_output_keys = list(collectors['step'].keys())
-    #     # end_output_keys = list(collectors['end'].keys())
-    #
-    #     df.index.set_names(['AgentID', 'Step'], inplace=True)
-    #     df = df.reorder_levels(order=['Step', 'AgentID'], axis=0)
-    #     df.sort_index(level=['Step', 'AgentID'], inplace=True)
-    #
-    #     end = df[collectors['end']].xs(df.index.get_level_values('Step').max(), level='Step')
-    #     step = df[collectors['step']]
-    #
-    #     return step, end
-
-    def convert_output_to_dataset(self, df,agents=None,to_Geo=False, **kwargs):
-        config=self.create_config(**kwargs)
-        from larvaworld.lib.process.dataset import convert_group_output_to_dataset,BaseLarvaDataset
-        step, end = convert_group_output_to_dataset(df, self.p.collectors)
-
-        d=BaseLarvaDataset.initGeo(to_Geo=to_Geo,config=config,load_data=False,step=step,end=end,agents=agents)
-
-        return d
-
-
-
-
-# class RefRun(BaseRun,RefDataset):
 
