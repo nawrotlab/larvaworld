@@ -11,7 +11,8 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
 
 from larvaworld.lib.model import deb
-from larvaworld.lib.param import Substrate, NestedConf, PositiveNumber, PositiveInteger, ClassAttr, substrate_dict
+from larvaworld.lib.param import Substrate, NestedConf, PositiveNumber, PositiveInteger, ClassAttr, substrate_dict, \
+    Epoch
 
 '''
 Standard culture medium
@@ -654,7 +655,6 @@ class DEB(NestedConf):
 
 
 def deb_default(id='DEB model', epochs={}, age=None, **kwargs):
-    from larvaworld.lib.param.substrate import Epoch
     deb = DEB(id=id, simulation=False, use_gut=False, **kwargs)
     N = len(epochs)
 

@@ -1,8 +1,10 @@
+import pandas as pd
 import param
 from scipy.stats import multivariate_normal
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import PositiveNumber, PositiveInteger, NestedConf, StringRobust, OptionalPositiveNumber
+from larvaworld.lib.param import PositiveNumber, PositiveInteger, NestedConf, StringRobust, OptionalPositiveNumber, \
+    OptionalPositiveRange, ClassAttr, ClassDict
 
 
 class Compound(param.Parameterized):
@@ -37,7 +39,7 @@ nutritious_compounds = [a for a in list(compound_dict.keys()) if a not in ['wate
 
 
 
-class Substrate(param.Parameterized):
+class Substrate(NestedConf):
     composition=param.Dict({k : 0.0 for k in all_compounds},doc='The substrate composition')
     quality = param.Magnitude(1.0,doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
 
@@ -126,3 +128,57 @@ class Odor(NestedConf):
             return self.dist.pdf(pos) * self.peak_value
         else :
             return None
+
+
+class Epoch(NestedConf):
+    age_range = OptionalPositiveRange((0.0, None),softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')
+    substrate = ClassAttr(Substrate, doc='The substrate of the epoch')
+
+
+
+
+class Life(NestedConf):
+    age = OptionalPositiveNumber(0.0,softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.')
+    epochs = ClassDict(item_type=Epoch, doc='The feeding epochs comprising life history.')
+
+
+class Life3(NestedConf):
+    age = OptionalPositiveNumber(0.0,softmax=100.0, hardmax=250.0, doc='The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.')
+    age_ticks=param.List([0.0], item_type=float, doc='The larva age in hours post-hatch at the end of the rearing periods.The last-one is always equal to the final age (or None). The first is 0.0.')
+    subs=param.List([], item_type=Substrate, doc='The substrates of the rearing periods.')
+    reach_pupation=param.Boolean(False, doc='If True the larva will grow to pupation.')
+
+    @param.depends('grow_to_pupation')
+    def update_age_to_inf(self):
+        if self.reach_pupation :
+            self.age=param.Infinity
+        else:
+            self.age=max(self.age_ticks)
+
+    @param.depends('age')
+    def update_last_tick(self):
+        if self.age not in self.age_ticks:
+            self.age_ticks=sorted([t for t in self.age_ticks if t<self.age])
+            self.age_ticks.append(self.age)
+
+
+    @param.depends('age_ticks', 'epoch_substrates')
+    def update_substrates(self):
+        while self.Nmismatch!=0:
+            if self.Nmismatch>0:
+                self.subs+=Substrate()
+            elif self.Nmismatch<0 :
+                self.subs.pop()
+
+
+    @property
+    def Ncorrect(self):
+        return len(self.age_ticks)-1
+
+    @property
+    def Ncurrent(self):
+        return len(self.epoch_substrates)
+
+    @property
+    def Nmismatch(self):
+        return self.Ncorrect-self.Ncurrent

@@ -14,7 +14,7 @@ class LifeTab(gui_aux.GuiTab):
 
     def build(self):
         from larvaworld.lib.plot.deb import plot_debs
-        from larvaworld.lib.param.substrate import substrate_dict
+        from larvaworld.lib.param import substrate_dict
         sl1_kws = {
             'size': (30, 20),
             'enable_events': True,

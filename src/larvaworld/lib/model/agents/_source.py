@@ -3,8 +3,7 @@ import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.model.agents import PointAgent
-from larvaworld.lib.param import xy_uniform_circle, PositiveNumber, ClassAttr
-from larvaworld.lib.param.substrate import Substrate
+from larvaworld.lib.param import xy_uniform_circle,Substrate, PositiveNumber, ClassAttr
 
 
 class Source(PointAgent):
