@@ -487,15 +487,31 @@ class LarvaDatasetCollection :
 
         self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
         self.Ngroups = len(self.group_ids)
+        self.set_dir()
+
+    def set_dir(self):
+        if self.config and 'dir' in self.config :
+            self.dir=self.config.dir
+        elif self.Ndatasets>1 and self.Ngroups==1:
+            dir0=aux.unique_list([os.path.dirname(os.path.abspath(d.dir)) for d in self.datasets])
+            if len(dir0)==1:
+                self.dir=dir0[0]
+                self.plot_dir=f'{self.dir}/group_plots'
 
 
-    def get_datasets(self, datasets=None, refIDs=None, dirs=None):
+    def plot(self, gID,**kwargs):
+        return reg.graphs.run_group(gID,datasets=self.datasets,save_to=self.plot_dir,**kwargs)
+
+
+    def get_datasets(self, datasets=None, refIDs=None, dirs=None, group_id=None):
         if datasets :
             pass
         elif refIDs:
             datasets= [reg.loadRef(refID) for refID in refIDs]
         elif dirs :
             datasets= [LarvaDataset(dir=f'{reg.DATA_DIR}/{dir}', load_data=False) for dir in dirs]
+        elif group_id :
+            datasets = reg.conf.Ref.loadRefGroup(group_id, to_return='list')
         return datasets
 
     def get_colors(self):

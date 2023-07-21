@@ -68,6 +68,7 @@ class GraphRegistry:
         return aux.AttrDict({e['key']: self.run(ID=e['plotID'], **e['args'], **kwargs) for e in entries})
 
 
+
     def run(self, ID, **kwargs):
         assert self.exists(ID)
         return self.dict[ID](**kwargs)
@@ -76,6 +77,7 @@ class GraphRegistry:
         # except :
         #     reg.vprint(f'Failed to run graph {ID}',2)
         #     return None
+
 
     def run_group(self, gID, **kwargs):
         assert self.group_exists(gID)

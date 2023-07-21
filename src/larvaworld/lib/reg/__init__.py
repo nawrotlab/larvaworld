@@ -70,6 +70,9 @@ def loadRef(id, **kwargs) :
 def getRef(id, **kwargs) :
     return conf.Ref.getRef(id=id, **kwargs)
 
+def loadRefGroup(group_id, **kwargs) :
+    return conf.Ref.loadRefGroup(group_id=group_id, **kwargs)
+
 # resetConfs(init=True)
 
 # stored.resetConfs(init=True)

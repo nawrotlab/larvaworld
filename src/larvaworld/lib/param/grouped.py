@@ -1,3 +1,5 @@
+import os
+
 import param
 from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
@@ -74,6 +76,70 @@ class SimSpatialOps(NestedConf):
 class SimOps(SimTimeOps,SimSpatialOps):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
+
+
+
+
+
+
+# How to load existing
+
+
+# How to launch
+
+class RuntimeGeneralOps(NestedConf):
+    offline = param.Boolean(False, doc='Whether to launch a full Larvaworld environment')
+    multicore = param.Boolean(False, doc='Whether to use multiple cores')
+    show_display = param.Boolean(True, doc='Whether to launch the pygame-visualization.')
+
+    def __init__(self, offline=False, show_display=True, **kwargs):
+        if offline:
+            show_display = False
+        super().__init__(show_display=show_display, offline=offline, **kwargs)
+
+    @param.depends('offline', 'show_display', watch=True)
+    def disable_display(self):
+        if self.offline:
+            self.show_display = False
+
+
+class RuntimeDataOps(NestedConf):
+    id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
+    dir = param.String(default=None, label='storage folder', doc='The directory to store data')
+    store_data = param.Boolean(True, doc='Whether to store the simulation data')
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+
+
+
+    # @property
+    # def dir(self):
+    #     return f'{self.save_to}/{self.id}'
+
+    @property
+    def data_dir(self):
+        f = f'{self.dir}/data'
+        os.makedirs(f, exist_ok=True)
+        return f
+
+    @property
+    def plot_dir(self):
+        f= f'{self.dir}/plots'
+        os.makedirs(f, exist_ok=True)
+        return f
+
+
+
+# What minimum to store, of course will be used to launch as well
+
+
+
+
+class RuntimeOps(RuntimeGeneralOps,RuntimeDataOps):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
 
 
 

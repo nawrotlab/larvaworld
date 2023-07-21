@@ -6,7 +6,7 @@ import param
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
-    generate_xyNor_distro, Odor, Life, class_generator, SimOps
+    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps
 
 
 class ConfType(param.Parameterized) :
@@ -92,6 +92,7 @@ class ConfType(param.Parameterized) :
                 self.dict.pop(id, None)
                 self.save()
                 reg.vprint(f'Deleted {self.conftype} configuration under the id : {id}', 1)
+
 
     def expand(self, id=None, conf=None):
         if conf is None:
@@ -202,6 +203,41 @@ class RefType(ConfType):
     def dict_entry_type(self):
         return str
 
+    def getRefGroups(self):
+        d=self.Refdict
+        gd=aux.AttrDict({c.group_id:c for id,c in d.items()})
+        gIDs=aux.unique_list(list(gd.keys()))
+        gIDgroups = aux.AttrDict({gID: {c.id : c.dir for id,c in d.items() if c.group_id==gID} for gID in gIDs})
+        # for gID,cs in gIDgroups.items():
+        #     print(f'{gID} : {list(cs.keys())}')
+        #     print()
+        return gIDgroups
+
+    @property
+    def RefGroupIDs(self):
+        d=self.Refdict
+        gd=aux.AttrDict({c.group_id:c for id,c in d.items()})
+        return aux.unique_list(list(gd.keys()))
+
+    @property
+    def Refdict(self):
+        return aux.AttrDict({id:self.getRef(id) for id in self.confIDs})
+
+    def getRefGroup(self, group_id):
+        d= self.getRefGroups()[group_id]
+        return aux.AttrDict({id: self.getRef(dir=dir) for id, dir in d.items()})
+
+    def loadRefGroup(self, group_id,to_return='collection', **kwargs):
+        d = self.getRefGroups()[group_id]
+        if to_return=='dict':
+            return aux.AttrDict({id: self.loadRef(dir=dir, **kwargs) for id, dir in d.items()})
+        elif to_return=='list':
+            return [self.loadRef(dir=dir, **kwargs) for id, dir in d.items()]
+        elif to_return=='collection':
+            from larvaworld.lib.process.dataset import LarvaDatasetCollection
+            return LarvaDatasetCollection(datasets=[self.loadRef(dir=dir, **kwargs) for id, dir in d.items()])
+        # grefs = aux.AttrDict({id: self.getRef(dir=dir) for id, dir in d.items()})
+
 
 conf=aux.AttrDict({k: ConfType(conftype=k) for k in reg.CONFTYPES if k!='Ref'})
 
@@ -237,73 +273,6 @@ gen=aux.AttrDict({
 })
 
 # How to load existing
-class RetrievalOps(NestedConf):
-    runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
-
-    def __init__(self,runtype, **kwargs):
-        self.param.add_parameter('experiment', self.exp_selector_param(runtype))
-        super().__init__(**kwargs)
-
-
-
-# How to load existing
-
-
-# How to launch
-
-class RuntimeGeneralOps(NestedConf):
-    offline = param.Boolean(False, doc='Whether to launch a full Larvaworld environment')
-    multicore = param.Boolean(False, doc='Whether to use multiple cores')
-    show_display = param.Boolean(True, doc='Whether to launch the pygame-visualization.')
-
-    def __init__(self, offline=False, show_display=True, **kwargs):
-        if offline:
-            show_display = False
-        super().__init__(show_display=show_display, offline=offline, **kwargs)
-
-    @param.depends('offline', 'show_display', watch=True)
-    def disable_display(self):
-        if self.offline:
-            self.show_display = False
-
-
-class RuntimeDataOps(NestedConf):
-    id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
-    dir = param.String(default=None, label='storage folder', doc='The directory to store data')
-    store_data = param.Boolean(True, doc='Whether to store the simulation data')
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-
-
-
-
-    # @property
-    # def dir(self):
-    #     return f'{self.save_to}/{self.id}'
-
-    @property
-    def data_dir(self):
-        f = f'{self.dir}/data'
-        os.makedirs(f, exist_ok=True)
-        return f
-
-    @property
-    def plot_dir(self):
-        f= f'{self.dir}/plots'
-        os.makedirs(f, exist_ok=True)
-        return f
-
-
-
-# What minimum to store, of course will be used to launch as well
-
-
-
-
-class RuntimeOps(RuntimeGeneralOps,RuntimeDataOps):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-
 
 class SimConfiguration(RuntimeOps, SimOps, SimMetricOps):
     runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
@@ -348,6 +317,7 @@ class SimConfiguration(RuntimeOps, SimOps, SimMetricOps):
             return param.Selector(objects=ids, **kws)
         else:
             return param.String(**kws)
+
 
 
 class FoodConf(NestedConf):

@@ -15,8 +15,9 @@ from larvaworld.lib.screen import SimulationScale
 class MediaDrawOps(NestedConf):
     image_mode = OptionalSelector(objects=['final', 'snapshots', 'overlap'],doc='When to save images.')
     image_file = String(doc='Filename for the saved image. File extension png sutomatically added.')
+    snapshot_interval_in_sec= PositiveInteger(60, softmax=100,doc='Sec between snapshots')
     video_file = String(doc='Filename for the saved video. File extension mp4 sutomatically added.')
-    fps = PositiveInteger(60, softmax=100,doc='Video speed')
+    fps_in_sec = PositiveInteger(60, softmax=100,doc='Video speed')
     save_video= Boolean(False, doc='Whether to save a video.')
     # show_display = Boolean(True, doc='Whether to launch the pygame-visualization.')
     # color_behavior = Boolean(False, doc='Color the larvae according to their instantaneous behavior')
@@ -39,7 +40,7 @@ class ScreenOps(NestedConf):
     color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
 
 
-class BaseScreenManager(ScreenOps, AgentDrawOps) :
+class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
 
 
 
@@ -67,19 +68,19 @@ class BaseScreenManager(ScreenOps, AgentDrawOps) :
             self.black_background)
         self.bg = background_motion
 
-        self.active = self.mode is not None and self.model.show_display
+        self.active = (self.save_video or self.image_mode) and self.model.show_display
         self.v = None
 
         self.selected_type = ''
         self.selected_agents = []
-        self.selection_color = np.array([255, 0, 0])
+        self.selection_color = 'red'
 
         self.dynamic_graphs = []
         self.focus_mode = False
 
         self.mousebuttondown_pos = None
         self.mousebuttonup_pos = None
-        self.snapshot_interval = int(60 / m.dt)
+        self.snapshot_interval = int(self.snapshot_interval_in_sec / m.dt)
 
         self.snapshot_counter = 0
         self.odorscape_counter = 0
@@ -92,7 +93,7 @@ class BaseScreenManager(ScreenOps, AgentDrawOps) :
             'window_dims': self.window_dims,
             # 'caption': self.media_name,
             'dt': m.dt,
-            'fps': int(self.fps/m.dt)
+            'fps': int(self.fps_in_sec/m.dt)
 
         })
 
@@ -220,8 +221,8 @@ class BaseScreenManager(ScreenOps, AgentDrawOps) :
         pass
 
 class GA_ScreenManager(BaseScreenManager):
-    def __init__(self, panel_width=600,fps=10,scene='no_boxes',**kwargs):
-        super().__init__(black_background=True,fps=fps,**kwargs)
+    def __init__(self, panel_width=600,scene='no_boxes',**kwargs):
+        super().__init__(black_background=True,**kwargs)
         self.screen_kws.caption = f'GA {self.model.experiment} : {self.model.id}'
         self.screen_kws.file_path = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt'
         self.screen_kws.panel_width = panel_width
@@ -264,16 +265,18 @@ class ScreenManager(BaseScreenManager):
 
         super().__init__(**kwargs)
         f = self.model.dir
-        media_name = self.vis_kwargs.render.media_name
-        if media_name is None:
-            media_name = str(self.model.id)
-        self.screen_kws.caption = media_name
-        if self.mode == 'video':
+
+        self.screen_kws.caption = self.model.id
+        if self.save_video:
             os.makedirs(f, exist_ok=True)
-            self.screen_kws.record_video_to = f'{f}/{media_name}.mp4'
+            if self.video_file is None:
+                self.video_file = str(self.model.id)
+            self.screen_kws.record_video_to = f'{f}/{self.video_file}.mp4'
         if self.mode == 'image':
             os.makedirs(f, exist_ok=True)
-            self.screen_kws.record_image_to = f'{f}/{media_name}_{self.image_mode}.png'
+            if self.image_file is None:
+                self.image_file = str(self.model.id)
+            self.screen_kws.record_image_to = f'{f}/{self.image_file}_{self.image_mode}.png'
         self.build_aux()
 
 
