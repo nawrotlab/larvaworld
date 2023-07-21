@@ -29,7 +29,8 @@ class ReplayRun(BaseRun):
                                                             dir=parameters.dataset_dir)
         # Configure the dataset to replay
         self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, d)
-
+        kwargs.dt=self.config.dt
+        kwargs.Nsteps = self.config.Nsteps
         BaseRun.__init__(self,runtype='Replay', parameters=parameters,
                          dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
 
@@ -87,7 +88,7 @@ class ReplayRun(BaseRun):
     def define_config(self, p, c):
         if type(p.track_point) == int:
             c.point = 'centroid' if p.track_point == -1 else nam.midline(c.Npoints, type='point')[p.track_point]
-        if p.agent_ids is not None:
+        if p.agent_ids not in [None, []]:
             if type(p.agent_ids) == list and all([type(i) == int for i in p.agent_ids]):
                 p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
             c.agent_ids = p.agent_ids
@@ -96,7 +97,7 @@ class ReplayRun(BaseRun):
             c.env_params = p.env_params
         c.env_params.windscape = None
         if p.close_view:
-            c.env_params.arena = reg.get_null('arena', dims=(0.01, 0.01))
+            c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
         return c
 
     def smaller_dataset(self,p, d):
@@ -126,6 +127,7 @@ class ReplayRun(BaseRun):
             except:
                 s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)
             xy_max=2*np.max(s0[nam.xy(c.point)].dropna().abs().values.flatten())
-            c.env_params.arena = reg.get_null('arena', dims=(xy_max, xy_max))
+            c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max))
         c.Nsteps = len(s0.index.unique('Step').values)
+        c.duration=c.Nsteps * c.dt
         return s0,e0, c

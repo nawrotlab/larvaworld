@@ -484,6 +484,7 @@ class ExpConf(aux.NestedConf):
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
     larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
+    parameter_dict = param.Dict(default={},doc='Dictionary of parameters to pass to the agents')
     # sim_params = aux.ClassAttr(SimOps,doc='The simulation configuration')
     enrichment = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
 
@@ -499,9 +500,30 @@ class DatasetConf(aux.NestedConf):
     larva_groups = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
 
 
-gen.Env=EnvConf
-gen.LarvaGroup=LarvaGroup
-gen.Exp=ExpConf
+class ReplayConf(aux.NestedConf):
+    refID = conf.Ref.confID_selector()
+    agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
+    time_range = aux.OptionalPositiveRange(default=None, doc='Whether to only replay a defined temporal slice of the dataset.')
+    env_params = conf.Env.confID_selector()
+    transposition = aux.OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
+    overlap_mode = param.Boolean(False,doc='Whether to draw overlapped image of the track.')
+    close_view = param.Boolean(False,doc='Whether to visualize a small arena on close range.')
+    fix_segment = param.ListSelector(objects=[-1, 1], doc='Whether to additionally fixate the above or below body segment.')
+    fix_point = aux.OptionalPositiveInteger(softmin=1, softmax=12, doc='Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.')
+    draw_Nsegs = aux.OptionalPositiveInteger(softmin=1, softmax=12,doc='Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.')
+    track_point = aux.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
+    dynamic_color = aux.OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
+
+
+
+
+
+
+
+gen.Env=class_generator(EnvConf, mode='Unit')
+gen.LarvaGroup=class_generator(LarvaGroup, mode='Unit')
+gen.Exp=class_generator(ExpConf, mode='Unit')
+gen.Replay=class_generator(ReplayConf, mode='Unit')
 
 
 
@@ -511,23 +533,6 @@ gen.Exp=ExpConf
 #     time_range = aux.OptionalPositiveRange(softmax=1000.0, doc='Whether to only replay a defined temporal slice of the dataset.')
 #     agent_ids = param.List(default=None,empty_default=True,allow_None=True, doc='Whether to only display some larvae of the dataset, defined by their indexes.')
 
-
-
-
-# class ReplayConf(aux.NestedConf):
-#     refID = ConfSelector('Env')
-#     dir = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Env'), doc='The environment configuration ID')
-#     overlap_mode = ConfSelector('Trial',default='default')
-#     close_view = param.Selector(default='default', objects=stored.confIDs('Trial'), doc='The trial configuration ID')
-#     fix_segment = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
-#     fix_point = aux.ClassDict(item_type=LarvaGroup, doc='The larva groups')
-#     draw_Nsegs = aux.ClassAttr(aux.SimConf,doc='The simulation configuration')
-#     track_point = aux.ClassAttr(aux.EnrichConf, doc='The post-simulation processing')
-#     time_range = ConfSelector('Exp')
-#     dynamic_color = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
-#     agent_ids = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
-#     transposition = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
-#     env_params = param.Selector(default=None,empty_default=True,allow_None=True, objects=stored.confIDs('Exp'), doc='The experiment configuration ID')
 
 
 

@@ -98,7 +98,16 @@ class ParsDict:
         parsargs = parser_dict(d0)
         return cls(parsargs)
 
+    def add(self, parser=None):
+        if parser is None:
+            parser = ArgumentParser()
+        for k, v in self.parsargs.items():
+            parser = v.add(parser)
+        return parser
 
+    def get(self, input):
+        dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
+        return dic.unflatten()
 
 class Parser:
     """
