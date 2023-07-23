@@ -46,48 +46,18 @@ class BaseRun(agentpy.Model,SimConfiguration):
                 parameters = reg.conf[runtype].expand(experiment)
                 for k in set(parameters).intersection(set(SimOps().nestedConf)):
                     kwargs[k]=parameters[k]
-            #
-            #
-            #     kws=parameters.sim_params
-            #     kws.update(kwargs)
-            #     kwargs=kws
-            # else :
 
-
-
-        # c=reg.SimOps(runtype=runtype, **kwargs).nestedConf
         agentpy.Model.__init__(self, parameters=parameters)
 
         SimConfiguration.__init__(self, runtype=runtype, **kwargs)
 
-        # c=reg.SimOps(runtype=runtype,**kwargs)
         self.p.update(**self.nestedConf)
-        # print(c.dir)
-        # print(self.dir)
-        # print(self.p.dir)
 
         self.agent_class = self.define_agent_class()
         self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                    'path': f'{self.data_dir}/agentpy_output'}
 
-
-
-
-        # print(self.id)
-        # raise
-        # reg.SimOps.__init__(self, runtype=runtype,**kwargs)
-
-        # print(self.id)
-        # raise
-        # self.experiment = experiment if experiment is not None else parameters.experiment
-        # self.runtype = runtype
-
         self.p.steps = self.p.Nsteps
-
-
-
-        # self.report(['agentpy_output_kws', 'id', 'dir', 'Box2D', 'offline', 'show_display',
-        #              'experiment', 'dt', 'duration', 'Nsteps'])
 
         self.is_paused = False
         self.datasets = None
@@ -119,17 +89,7 @@ class BaseRun(agentpy.Model,SimConfiguration):
     def Nticks(self):
         return self.t
 
-    # @property
-    # def dt(self):
-    #     return self.p.conf.dt
-    # def get_all_odors(self, larva_groups={}):
-    #     fp=self.p.env_params.food_params
-    #
-    #     lg = [conf.odor.id for conf in larva_groups.values()]
-    #     su = [conf.odor.id for conf in fp.source_units.values()]
-    #     sg = [conf.odor.id for conf in fp.source_groups.values()]
-    #     ids = aux.unique_list([id for id in lg + su + sg if id is not None])
-    #     return ids
+
 
     def build_env(self, p):
         # reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
@@ -172,7 +132,6 @@ class BaseRun(agentpy.Model,SimConfiguration):
         c1 = reg.gen.FoodGroup.from_entries(p.source_groups)
         c2 = reg.gen.Food.from_entries(p.source_units)
         sourceConfs=c1+c2
-        # sourceConfs = util.generate_sourceConfs(p.source_groups, p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.p.source_xy = aux.AttrDict({a.id: a.pos for a in source_list})
         self.space.add_sources(source_list, positions=[a.pos for a in source_list])

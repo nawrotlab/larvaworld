@@ -10,7 +10,7 @@ from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.screen.drawing import ScreenManager
 from larvaworld.lib.model.envs.conditions import get_exp_condition
 from larvaworld.lib.sim.base_run import BaseRun
-
+import larvaworld
 
 class ExpRun(BaseRun):
     def __init__(self,experiment=None,parameters=None, screen_kws={},parameter_dict={}, **kwargs):
@@ -25,7 +25,6 @@ class ExpRun(BaseRun):
         super().__init__(runtype = 'Exp',experiment=experiment,parameters=parameters, **kwargs)
 
         self.screen_kws = screen_kws
-        # self.video = video
         self.parameter_dict = parameter_dict
 
 
@@ -36,17 +35,10 @@ class ExpRun(BaseRun):
             ep['start'] = int(ep['start'] * 60 / self.dt)
             ep['stop'] = int(ep['stop'] * 60 / self.dt)
 
-
-
-        # self.odor_ids = self.get_all_odors(self.p.larva_groups)
-        # self.odor_ids = aux.get_all_odors(self.p.larva_groups, self.p.env_params.food_params)
         self.build_env(self.p.env_params)
 
         self.build_agents(self.p.larva_groups, self.parameter_dict)
         self.set_collectors(self.p.collections)
-        # self.collectors = reg.get_reporters(collections=self.p.collections, agents=self.agents)
-        # self.step_output_keys = list(self.collectors['step'].keys())
-        # self.end_output_keys = list(self.collectors['end'].keys())
         self.accessible_sources = None
 
         self.screen_manager = ScreenManager(model=self, **self.screen_kws)
@@ -110,8 +102,7 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
-        from larvaworld.lib.process.dataset import LarvaDatasetCollection
-        self.data_collection = LarvaDatasetCollection.from_agentpy_output(self.output)
+        self.data_collection = larvaworld.LarvaDatasetCollection.from_agentpy_output(self.output)
         self.datasets=self.data_collection.datasets
         # self.datasets = self.retrieve()
         end = time.time()

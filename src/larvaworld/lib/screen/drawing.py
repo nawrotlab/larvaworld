@@ -9,7 +9,6 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 from larvaworld.lib import reg, aux, screen
-from larvaworld.lib.screen import SimulationScale
 
 
 class MediaDrawOps(NestedConf):
@@ -41,8 +40,6 @@ class ScreenOps(NestedConf):
 
 
 class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
-
-
 
     def __init__(self, model, traj_color=None, background_motion=None,
                  vis_kwargs=None, video=None, **kwargs):
@@ -91,7 +88,6 @@ class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
         self.screen_kws = aux.AttrDict({
             'model': self.model,
             'window_dims': self.window_dims,
-            # 'caption': self.media_name,
             'dt': m.dt,
             'fps': int(self.fps_in_sec/m.dt)
 
@@ -163,13 +159,9 @@ class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
                         self.v.draw_polyline(t, color=c, closed=False, width=0.01 * X, dynamic_color=True)
 
     def draw_agents(self, v):
-        # self.model.sources._draw(v)
-        # self.model.agents._draw(v)
 
         for o in self.model.sources:
             o._draw(v=v)
-        #
-        #
         for g in self.model.agents:
             g._draw(v=v)
 
@@ -242,8 +234,6 @@ class GA_ScreenManager(BaseScreenManager):
 
 
     def initialize(self):
-        # v = screen.Viewer(**self.screen_kws)
-
         v = screen.Viewer.load_from_file(**self.screen_kws)
         self.side_panel = screen.SidePanel(v)
         print('Screen opened')
@@ -255,10 +245,9 @@ class GA_ScreenManager(BaseScreenManager):
     def draw_aux(self, v,**kwargs):
         # draw a black background for the side panel
         v.draw_panel_rect()
-
+        v.draw_line((v.width, 0), (v.width, v.height), color=aux.Color.WHITE)
         self.side_panel.display_ga_info()
-        # pygame.display.flip()
-        # v._t.tick(v._fps)
+
 
 class ScreenManager(BaseScreenManager):
     def __init__(self, **kwargs):

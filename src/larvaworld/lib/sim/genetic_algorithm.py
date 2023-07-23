@@ -265,7 +265,6 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
             self.threads = None
         self.generation_num += 1
         self.generation_step_num = 0
-        self.generation_sim_time = 0
         self.start_generation_time = aux.TimeUtil.current_time_millis()
         reg.vprint(f'Generation {self.generation_num} started', 1)
         if self.progress_bar:
@@ -332,7 +331,6 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         self.t += 1
         self.step()
         self.update()
-        self.generation_sim_time += self.dt
         self.generation_step_num += 1
         if self.generation_completed:
             self.agents.nest_record(self.collectors['end'])

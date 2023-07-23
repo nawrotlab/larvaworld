@@ -487,17 +487,23 @@ class LarvaDatasetCollection :
 
         self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
         self.Ngroups = len(self.group_ids)
-        self.set_dir()
+        self.dir=self.set_dir()
 
-    def set_dir(self):
-        if self.config and 'dir' in self.config :
-            self.dir=self.config.dir
+    def set_dir(self, dir=None):
+        if dir is not None:
+            return dir
+        elif self.config and 'dir' in self.config :
+            return self.config.dir
         elif self.Ndatasets>1 and self.Ngroups==1:
             dir0=aux.unique_list([os.path.dirname(os.path.abspath(d.dir)) for d in self.datasets])
             if len(dir0)==1:
-                self.dir=dir0[0]
-                self.plot_dir=f'{self.dir}/group_plots'
+                return dir0[0]
+            else :
+                raise
 
+    @property
+    def plot_dir(self):
+        return f'{self.dir}/group_plots'
 
     def plot(self, gID,**kwargs):
         return reg.graphs.run_group(gID,datasets=self.datasets,save_to=self.plot_dir,**kwargs)
