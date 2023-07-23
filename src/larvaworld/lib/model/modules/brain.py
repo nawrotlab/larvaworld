@@ -40,11 +40,10 @@ class Brain:
         a = self.agent
         if a is None:
             return {}
-        sensors = a.get_sensors()
         kws={
             'sources' : a.model.sources, 'grid' : a.model.food_grid, 'radius' : a.radius
         }
-        return {s: int(aux.sense_food(pos=a.get_sensor_position(s), **kws) is not None) for s in sensors}
+        return {s: int(aux.sense_food(pos=a.get_sensor_position(s), **kws) is not None) for s in list(a.sensors.keys())}
 
 
 

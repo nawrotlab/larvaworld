@@ -120,7 +120,7 @@ class LarvaReplay(Larva):
 
         pos = self.cen_pos if not np.isnan(self.cen_pos).any() else self.pos
 
-        draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline, contour_xy=self.contour,segs=self.segs,
+        draw_body(v=viewer, model=self.model, pos=pos, midline_xy=self.midline, contour_xy=self.contour,segs=self.segs,
                   radius=self.radius, vertices=None, color=self.color, selected=self.selected,
                   front_or=self.front_or, rear_or=self.rear_or)
 

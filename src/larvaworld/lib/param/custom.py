@@ -152,14 +152,23 @@ class PositiveIntegerRange(IntegerRange):
     def __init__(self,default=(0, 0), softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
 
-
-class XYCoordRobust(param.XYCoordinates):
+class NumericTuple2DRobust(NumericTuple):
     """XY point coordinates can be passed as list"""
 
     def __init__(self, default=(0.0, 0.0), **kwargs):
         if not isinstance(default,tuple) :
             default=tuple(default)
-        super().__init__(default=default, **kwargs)
+        super().__init__(default=default, length=2, **kwargs)
+
+class IntegerTuple2DRobust(IntegerTuple):
+    """XY point coordinates can be passed as list"""
+
+    def __init__(self, default=(0, 0), **kwargs):
+        if not isinstance(default,tuple) :
+            default=tuple(default)
+        super().__init__(default=default, length=2, **kwargs)
+
+
 
 class ListXYcoordinates(List):
     """List of XY point coordinates"""

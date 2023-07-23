@@ -24,6 +24,9 @@ class SidePanel:
             self.font = pygame.font.Font(None, self.FONT_SIZE)
         else :
             self.font = None
+        self.panel_rect = pygame.Rect(self.viewer.width, 0, self.viewer.panel_width, self.viewer.height)
+
+
 
     #@ property
     def render_intro(self):
@@ -83,5 +86,11 @@ class SidePanel:
         x = self.viewer.width + self.DEFAULT_MARGIN + extra_margin
         y = self.line_num * self.line_spacing
         lint_pos = pygame.Rect(x, y, 20, 20)
-        self.viewer._window.blit(line, lint_pos)
+        self.viewer.draw_text_box(line, lint_pos)
         self.line_num += 1
+
+    def draw(self, v, **kwargs):
+        # draw a black background for the side panel
+        pygame.draw.rect(v._window, aux.Color.BLACK, self.panel_rect)
+        v.draw_line((v.width, 0), (v.width, v.height), color=aux.Color.WHITE)
+        self.display_ga_info()

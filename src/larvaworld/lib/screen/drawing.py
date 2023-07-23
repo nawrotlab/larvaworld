@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from param import Boolean, String
 
-from larvaworld.lib.param import NestedConf, PositiveNumber, OptionalSelector, PositiveInteger
+from larvaworld.lib.param import NestedConf, PositiveNumber, OptionalSelector, PositiveInteger, Area2DPixel
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -19,7 +19,6 @@ class MediaDrawOps(NestedConf):
     fps_in_sec = PositiveInteger(60, softmax=100,doc='Video speed')
     save_video= Boolean(False, doc='Whether to save a video.')
     # show_display = Boolean(True, doc='Whether to launch the pygame-visualization.')
-    # color_behavior = Boolean(False, doc='Color the larvae according to their instantaneous behavior')
 
 class AgentDrawOps(NestedConf):
     trails = Boolean(False,doc='Draw the larva trajectories')
@@ -29,9 +28,11 @@ class AgentDrawOps(NestedConf):
     draw_midline = Boolean(False,doc='Draw the larva midline')
     draw_centroid = Boolean(False,doc='Draw the larva centroid')
     draw_head = Boolean(False,doc='Draw the larva head')
+    draw_orientations = Boolean(False,doc='Draw the larva body vector orientations')
 
 
 class ScreenOps(NestedConf):
+    intro_text = Boolean(False, doc='Show the introductory configuration screen')
     odor_aura = Boolean(False, doc='Draw the aura around odor sources')
     allow_clicks = Boolean(True, doc='Whether to allow input from display')
     black_background = Boolean(False, doc='Set the background color to black')
@@ -39,14 +40,14 @@ class ScreenOps(NestedConf):
     color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
 
 
-class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
+class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
 
     def __init__(self, model, traj_color=None, background_motion=None,
                  vis_kwargs=None, video=None, **kwargs):
+        m = self.model = model
+        super().__init__(dims=aux.get_window_dims(m.space.dims), **kwargs)
 
-        super().__init__(**kwargs)
-        m=self.model = model
-        self.window_dims = aux.get_window_dims(m.space.dims)
+        self.window_dims = self.dims
 
         if vis_kwargs is None:
             mode='video' if video else None
@@ -121,7 +122,6 @@ class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def draw_trajectories(self):
-        X = self.model.space.dims[0] * self.model.scaling_factor
         agents = self.model.agents
         Nfade = int(self.trajectory_dt / self.model.dt)
 
@@ -152,11 +152,11 @@ class BaseScreenManager(ScreenOps, AgentDrawOps, MediaDrawOps) :
                     pass
                 else:
                     if self.traj_color is None:
-                        self.v.draw_polyline(t, color=fly.default_color, closed=False, width=0.003 * X)
+                        self.v.draw_polyline(t, color=fly.default_color)
                     else:
                         c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
                         c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
-                        self.v.draw_polyline(t, color=c, closed=False, width=0.01 * X, dynamic_color=True)
+                        self.v.draw_polyline(t, color=c,  dynamic_color=True)
 
     def draw_agents(self, v):
 
@@ -243,10 +243,9 @@ class GA_ScreenManager(BaseScreenManager):
         v._window.fill(aux.Color.BLACK)
 
     def draw_aux(self, v,**kwargs):
-        # draw a black background for the side panel
-        v.draw_panel_rect()
-        v.draw_line((v.width, 0), (v.width, v.height), color=aux.Color.WHITE)
-        self.side_panel.display_ga_info()
+        self.side_panel.draw(v)
+
+
 
 
 class ScreenManager(BaseScreenManager):
@@ -292,10 +291,13 @@ class ScreenManager(BaseScreenManager):
         self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                          center=True, w=120 * 4, h=32 * 4,
                                          font=pygame.font.SysFont("comicsansms", 32 * 2))
-
-        self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt,window_dims=self.window_dims, default_color=c)
-        self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],window_dims=self.window_dims, default_color=c)
-        self.sim_state = screen.SimulationState(model=m,window_dims=self.window_dims, default_color=c)
+        kws={
+            'reference_area':self,
+            'default_color':c,
+        }
+        self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
+        self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],**kws)
+        self.sim_state = screen.SimulationState(model=m,**kws)
         self.screen_texts = {name: screen.InputBox(text=name, default_color=c) for name in [
             'trajectory_dt',
             'trails',
@@ -375,7 +377,7 @@ class ScreenManager(BaseScreenManager):
 
 
     def display_configuration(self, v):
-        if self.vis_kwargs.render.intro_text:
+        if self.intro_text:
             box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                            text=self.model.configuration_text,
                            default_color=pygame.Color('white'),
@@ -570,7 +572,7 @@ class ScreenManager(BaseScreenManager):
 
                     elif e.button == 3:
                         from larvaworld.gui.gui_aux.windows import set_agent_kwargs, object_menu
-                        loc = tuple(np.array(self.v.w_loc) + np.array(pygame.mouse.get_pos()))
+                        loc = tuple(np.array([int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]) + np.array(pygame.mouse.get_pos()))
                         if len(self.selected_agents) > 0:
                             for sel in self.selected_agents:
                                 sel = set_agent_kwargs(sel, location=loc)

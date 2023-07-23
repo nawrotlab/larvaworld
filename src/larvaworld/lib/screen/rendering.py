@@ -5,8 +5,8 @@ import imageio
 import param
 from shapely import geometry
 
-from larvaworld.lib.param import Viewable, PointPositioned, ViewableGroupedObject, PositiveRange, PositiveNumber, \
-    PositiveIntegerRange, PointRelPositioned
+from larvaworld.lib.param import Viewable, ViewableGroupedObject, PositiveRange, PositiveNumber, PositionedArea2DPixel, \
+    ViewableToggleable, NestedConf, PositiveInteger, Pos2DPixel, Area2DPixel, PosPixelRel2Area
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -21,8 +21,6 @@ class Viewer(object):
                  record_image_to=None, panel_width=0):
         pygame.init()
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
-        self.w_loc = [int(x) for x in os.environ['SDL_VIDEO_WINDOW_POS'].split(',')]
-        # self.speed = speed
 
         self.model = model
         self.space_bounds = self.model.space.scaled_range
@@ -31,7 +29,7 @@ class Viewer(object):
         self.width,self.height = window_dims
         self.window_dims = window_dims
         self.panel_width = panel_width
-        self.panel_rect = pygame.Rect(self.width, 0, self.panel_width, self.height)
+
         self._t = pygame.time.Clock()
         self._fps = fps
         self.dt = dt
@@ -107,8 +105,7 @@ class Viewer(object):
     def get_saved_scene_repr(self):
         return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
 
-    def draw_panel_rect(self):
-        pygame.draw.rect(self._window, aux.Color.BLACK, self.panel_rect)
+
 
     @ property
     def display_dims(self):
@@ -209,11 +206,11 @@ class Viewer(object):
         pygame.draw.circle(s, color, (r, r), radius, w)
         self._window.blit(s, self._transform(position) - r)
 
-    def draw_text_box(self, text_font, text_position):
-        self._window.blit(text_font, text_position)
+    def draw_text_box(self, font, rect):
+        self._window.blit(font, rect)
+
 
     def draw_envelope(self, points, **kwargs):
-
         vs = list(geometry.MultiPoint(points).envelope.exterior.coords)
         self.draw_polygon(vs, **kwargs)
 
@@ -343,6 +340,93 @@ class Viewer(object):
 
         return viewer
 
+
+
+
+
+class ScreenBox(Area2DPixel, ViewableToggleable):
+    default_color = param.Color('lightblue')
+    visible = param.Boolean(False)
+    dims = PositiveRange(default=(140,32))
+    linewidth = PositiveNumber(0.01, doc='The linewidth to draw the box')
+    show_frame = param.Boolean(False, doc='Draw the rectangular frame around the text')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.shape = self.set_shape()
+
+    def draw(self, v, **kwargs):
+        if self.show_frame:
+            v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+
+    def switch(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # self.set_shape(event.pos)
+            # If the user clicked on the input_box rect.
+            if self.shape.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.toggle()
+            else:
+                self.active = False
+                # Change the current color of the input box.
+            #self.color = self.color_active if self.active else self.color_inactive
+
+
+
+
+class ScreenTextBox(ScreenBox) :
+    text_color = param.Color(doc='The color of the text')
+    text = param.String('', doc='The text to draw')
+    font_size = PositiveInteger(doc='The font size')
+    font_size_scale = PositiveNumber(1/40, doc='The font size relative to the window size')
+    font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
+    text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.text_color is None:
+            self.text_color = self.default_color
+
+        self.font = None
+        self.text_centre = None
+        self.text_font = None
+        self.text_font_r = None
+        self.update_font()
+        self.render_text()
+
+    @param.depends('text','text_color','text_centre', watch=True)
+    def render_text(self):
+        self.text_font = self.font.render(self.text, 1, self.text_color)  # zero-pad hours to 2 digits
+        self.text_font_r = self.text_font.get_rect()
+        self.text_font_r.center = self.text_centre
+
+
+    @param.depends('fontsize', watch=True)
+    def update_font(self):
+        if self.fontsize is None:
+            self.fontsize = int(self.w * self.fontsize_scale)
+        # width, height = self.window_dims
+        # self.font_size=int(width *self.font_size_scale)
+        self.font = pygame.font.SysFont(self.font_type, self.font_size)
+
+    @param.depends('pos', 'text_centre_scale', watch=True)
+    def update_font_centre_pos(self):
+        dx, dy =self.text_centre_scale
+        self.text_centre = (self.x * dx, self.y * dy)
+
+    def draw(self, v,**kwargs):
+        v.draw_text_box(self.text_font, self.text_font_r)
+        super().draw(v,**kwargs)
+
+    def set_text(self, text):
+        self.text = text
+
+
+class PositionedScreenTextBox(ScreenBox, Pos2DPixel):pass
+
+class PositionedRel2AreaScreenTextBox(ScreenBox, PosPixelRel2Area):pass
+
+class DisplayTextBox(PositionedRel2AreaScreenTextBox):pass
 
 
 class InputBox(Viewable):
@@ -475,51 +559,12 @@ class LabelledGroupedObject(ViewableGroupedObject):
 
 
 
-class PointRelPositionedViewable(PointRelPositioned, Viewable) :
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-class TextFont(PointRelPositionedViewable) :
-    text = param.String('', doc='The text to draw')
-    font_size_scale = PositiveNumber(1/40, doc='The font size relative to the window size')
-    font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
-    text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.font = None
-        self.text_centre = None
-        self.text_font = None
-        self.text_font_r = None
-        self.update_font()
-        self.render_text()
-
-    @param.depends('text','default_color','text_centre_scale', watch=True)
-    def render_text(self):
-        self.text_font = self.font.render(self.text, 1, self.default_color)  # zero-pad hours to 2 digits
-        self.text_font_r = self.text_font.get_rect()
-        self.text_font_r.center = self.text_centre
 
 
 
 
-    @param.depends('pos', 'window_dims', 'text_centre_scale', watch=True)
-    def update_font(self):
-        width, height = self.window_dims
-        font_size=int(width *self.font_size_scale)
-        self.font = pygame.font.SysFont(self.font_type, font_size)
-        dx, dy =self.text_centre_scale
-        self.text_centre = (self.x * dx, self.y * dy)
 
-    def draw(self, v,**kwargs):
-        v.draw_text_box(self.text_font, self.text_font_r)
-
-    def set_text(self, text):
-        self.text = text
-
-
-class SimulationClock(PointRelPositionedViewable):
+class SimulationClock(PosPixelRel2Area, Viewable):
     pos_scale = PositiveRange((0.94, 0.04))
 
 
@@ -560,36 +605,7 @@ class SimulationClock(PointRelPositionedViewable):
                     self.hour += 1
                     self.minute -= 60
 
-    # def render(self, width, height):
-    #     # Scale to screen
-    #     x_pos = int(width * 0.94)
-    #     y_pos = int(height * 0.04)
-    #     large_font_size = int(1 / 40 * width)
-    #     small_font_size = int(1 / 50 * width)
-    #
-    #     # Fonts
-    #     self.font_large = pygame.font.SysFont("Trebuchet MS", large_font_size)
-    #     self.font_small = pygame.font.SysFont("Trebuchet MS", small_font_size)
-    #
-    #     # Hour
-    #     self.hour_font = self.font_large.render("{0:02}".format(self.hour), 1, self.color)  # zero-pad hours to 2 digits
-    #     self.hour_font_r = self.hour_font.get_rect()
-    #     self.hour_font_r.center = (x_pos * 0.91, y_pos)
-    #     # Minute
-    #     self.minute_font = self.font_large.render(":{0:02}".format(self.minute), 1,
-    #                                               self.color)  # zero-pad minutes to 2 digits
-    #     self.minute_font_r = self.minute_font.get_rect()
-    #     self.minute_font_r.center = (x_pos * 0.95, y_pos)
-    #     # Second
-    #     self.second_font = self.font_large.render(":{0:02}:".format(self.second), 1,
-    #                                               self.color)  # zero-pad seconds to 2 digits
-    #     self.second_font_r = self.second_font.get_rect()
-    #     self.second_font_r.center = (x_pos, y_pos)
-    #     # Milisecond
-    #     self.dmsecond_font = self.font_small.render("{0:02}".format(self.dmsecond), 1,
-    #                                                 self.color)  # zero-pad miliseconds to 2 digits
-    #     self.msecond_font_r = self.dmsecond_font.get_rect()
-    #     self.msecond_font_r.center = (x_pos * 1.04, y_pos * 1.1)
+
 
     def draw(self, v,**kwargs):
         c=self.default_color
@@ -615,7 +631,7 @@ class SimulationClock(PointRelPositionedViewable):
         v.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
 
-class SimulationScale(TextFont):
+class SimulationScale(DisplayTextBox):
     real_width = PositiveNumber(0.1, softmax=10.0, doc='The width of the Arena possibly zoomed')
     font_size_scale = PositiveNumber(1 / 40)
     pos_scale = PositiveRange((0.1, 0.04))
@@ -625,26 +641,12 @@ class SimulationScale(TextFont):
         super().__init__(**kwargs)
         self.lines = None
         self.update_scale()
-        # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
-        # w_in_mm = self.real_width * 1000
-        # self.scale_in_mm = self.compute_scale_in_mm(w_in_mm)
-        # self.scale_in_mm = self.closest(
-        #     lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
-        # I don't exactly understand why this works...
-        # self.scale_to_draw = self.scale_in_mm / w_in_mm
 
-
-        # self.window_width, self.window_height = window_dims
-        # self.x_pos = int(self.window_width * 0.1)
-        # self.y_pos = int(self.window_height * 0.04)
-        #
-        # font_size = int(1 / 40 * self.window_width)
-        # self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-        # self.font_center=(self.x_pos, self.y_pos * 1.5)
 
 
     @param.depends('real_width', watch=True)
     def update_scale(self):
+        # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
         w_in_mm = self.real_width * 1000
         self.scale_in_mm = self.closest(
             lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
@@ -652,9 +654,6 @@ class SimulationScale(TextFont):
         self.text=f'{self.scale_in_mm} mm'
         self.lines = self.compute_lines(self.x, self.y, self.scale_to_draw * self.window_dims[0])
 
-        # self.scale_font = self.font.render(self.text, 1, self.color)
-        # self.scale_font_r = self.scale_font.get_rect()
-        # self.scale_font_r.center = self.font_center
 
     def compute_lines(self, x, y, scale):
         return [[(x - scale / 2, y), (x + scale / 2, y)],
@@ -664,31 +663,15 @@ class SimulationScale(TextFont):
     def closest(self, lst, k):
         return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
 
-    # def render(self, width, height):
-    #     # Scale to screen
-    #     scale_to_screen = self.scale_to_draw * width
-    #     x_pos = int(width * 0.1)
-    #     y_pos = int(height * 0.04)
-    #
-    #     self.lines = self.compute_lines(x_pos, y_pos, scale_to_screen)
-    #
-    #     font_size = int(1 / 40 * width)
-    #     self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-    #     self.scale_font = self.font.render(self.text, 1, self.color)
-    #     self.scale_font_r = self.scale_font.get_rect()
-    #     self.scale_font_r.center = (x_pos, y_pos * 1.5)
+
 
     def draw(self, v,**kwargs):
         for line in self.lines:
             pygame.draw.line(v._window, self.default_color, line[0], line[1], 1)
         super().draw(v,**kwargs)
-        # self.scale_font = self.font.render(self.text, 1, self.color)
-        # self.scale_font_r = self.scale_font.get_rect()
-        # self.scale_font_r.center = self.font_center
-        # v.draw_text_box(self.scale_font, self.scale_font_r)
 
 
-class SimulationState(TextFont):
+class SimulationState(DisplayTextBox):
     font_size_scale = PositiveNumber(1 / 40)
     pos_scale = PositiveRange((0.85, 0.94))
     text_centre_scale = PositiveRange((1, 1))
@@ -696,88 +679,4 @@ class SimulationState(TextFont):
     def __init__(self, model, **kwargs):
         super().__init__(**kwargs)
         self.model = model
-        # self.Nagents = 0
-        # self.text = ''
-        # self.text = f'# larvae : {self.Nagents}'
-        # self.window_width, self.window_height = window_dims
-        # self.x_pos = int(self.window_width * 0.85)
-        # self.y_pos = int(self.window_height * 0.94)
-        # font_size = int(1 / 40 * self.window_width)
-        # self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-        # self.font_center = (self.x_pos, self.y_pos)
 
-    # def render(self, width, height):
-    #     x_pos = int(width * 0.85)
-    #     y_pos = int(height * 0.94)
-    #     font_size = int(1 / 40 * width)
-    #
-    #     self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-    #     self.state_font = self.font.render(self.text, 1, self.color)
-    #     self.state_font_r = self.state_font.get_rect()
-    #     self.state_font_r.center = (x_pos, y_pos)
-
-    # def draw(self, v,**kwargs):
-    #     self.state_font = self.font.render(self.text, 1, self.color)
-    #     self.state_font_r = self.state_font.get_rect()
-    #     self.state_font_r.center = self.font_center
-    #     # self.state_font = self.font.render(self.text, 1, self.color)
-    #     v.draw_text_box(self.state_font, self.state_font_r)
-
-    # def set_text(self, text):
-    #     self.text = text
-
-
-# class SimulationState(aux.Viewable):
-#
-#     def __init__(self, model,window_dims, **kwargs):
-#         super().__init__(**kwargs)
-#         self.model = model
-#         # self.Nagents = 0
-#         self.text = ''
-#         # self.text = f'# larvae : {self.Nagents}'
-#         self.window_width, self.window_height = window_dims
-#         self.x_pos = int(self.window_width * 0.85)
-#         self.y_pos = int(self.window_height * 0.94)
-#         font_size = int(1 / 40 * self.window_width)
-#         self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-#         self.font_center = (self.x_pos, self.y_pos)
-#
-#     # def render(self, width, height):
-#     #     x_pos = int(width * 0.85)
-#     #     y_pos = int(height * 0.94)
-#     #     font_size = int(1 / 40 * width)
-#     #
-#     #     self.font = pygame.font.SysFont("Trebuchet MS", font_size)
-#     #     self.state_font = self.font.render(self.text, 1, self.color)
-#     #     self.state_font_r = self.state_font.get_rect()
-#     #     self.state_font_r.center = (x_pos, y_pos)
-#
-#     def draw(self, v,**kwargs):
-#         self.state_font = self.font.render(self.text, 1, self.color)
-#         self.state_font_r = self.state_font.get_rect()
-#         self.state_font_r.center = self.font_center
-#         # self.state_font = self.font.render(self.text, 1, self.color)
-#         v.draw_text_box(self.state_font, self.state_font_r)
-#
-#     def set_text(self, text):
-#         self.text = text
-
-#
-# def blit_text(surface, text, pos, font=None, color=pygame.Color('white')):
-#     if font is None:
-#         font = pygame.font.SysFont('Arial', 20)
-#     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
-#     space = font.size(' ')[0]  # The width of a space.
-#     max_width, max_height = surface.get_size()
-#     x, y = pos
-#     for line in words:
-#         for word in line:
-#             word_surface = font.render(word, 0, color)
-#             word_width, word_height = word_surface.get_size()
-#             if x + word_width >= max_width:
-#                 x = pos[0]  # Reset the x.
-#                 y += word_height  # Start on new row.
-#             surface.blit(word_surface, (x, y))
-#             x += word_width + space
-#         x = pos[0]  # Reset the x.
-#         y += word_height  # Start on new row.

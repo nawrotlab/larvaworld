@@ -136,7 +136,7 @@ class LarvaBody(LarvaMotile):
         if not self.model.Box2D :
             self.segs = generate_segs(N=self.Nsegs, ps=self.seg_positions, orient=self.orientation, bvs=self.base_seg_vertices,
                                       cs=self.seg_colors, ratio=self.seg_ratio, l=self.sim_length)
-        self.sensors = []
+        self.sensors = aux.AttrDict()
         self.define_sensor('olfactor', (1, 0))
 
         # self.compute_body_bend()
@@ -267,26 +267,25 @@ class LarvaBody(LarvaMotile):
         for i, (r, cum_r) in enumerate(zip(self.seg_ratio, np.cumsum(self.seg_ratio))):
             if x >= 1 - cum_r:
                 seg_idx = i
-                base_local_pos = np.array([x - 1 + cum_r - r / 2, y])
+                local_pos = np.array([x - 1 + cum_r - r / 2, y])
                 break
-        sensor_dict = {'sensor': sensor,
-                       'seg_idx': seg_idx,
-                       'base_local_pos': base_local_pos,
-                       # 'local_pos': local_pos * self.sim_length
-                       }
-        self.sensors.append(sensor_dict)
+        self.sensors[sensor] = aux.AttrDict({
+            'seg_idx': seg_idx,
+            'local_pos': local_pos,
+            # 'local_pos': local_pos * self.sim_length
+        })
 
-    def get_sensor(self, sensor):
-        for sensor_dict in self.sensors:
-            if sensor_dict['sensor'] == sensor:
-                return sensor_dict
+    # def get_sensor(self, sensor):
+    #     for sensor_dict in self.sensors:
+    #         if sensor_dict['sensor'] == sensor:
+    #             return sensor_dict
 
-    def get_sensors(self):
-        return [s['sensor'] for s in self.sensors]
+    # def get_sensors(self):
+    #     return [s['sensor'] for s in self.sensors]
 
     def get_sensor_position(self, sensor):
-        d = self.get_sensor(sensor)
-        return self.segs[d['seg_idx']].get_world_point(d['base_local_pos']* self.sim_length)
+        d=self.sensors[sensor]
+        return self.segs[d.seg_idx].get_world_point(d.local_pos* self.sim_length)
 
 
 
@@ -300,19 +299,12 @@ class LarvaBody(LarvaMotile):
             except:
                 pass
 
-    def draw_sensors(self, viewer):
-        for s in self.get_sensors():
-            viewer.draw_circle(radius=self.radius / 10,
-                               position=self.get_sensor_position(s),
-                               filled=True, color=(255, 0, 0), width=.1)
 
     def draw(self, viewer, filled=True):
         pos = tuple(self.pos)
-        if self.model.screen_manager.draw_sensors:
-            self.draw_sensors(viewer)
-        draw_body(viewer=viewer, model=self.model, pos=pos, midline_xy=self.midline_xy, contour_xy=None,
+        draw_body(v=viewer, model=self.model, pos=pos, midline_xy=self.midline_xy, contour_xy=None,
                   radius=self.radius, vertices=None, color=self.default_color,segs=self.segs,
-                  selected=self.selected)
+                  selected=self.selected, sensors=self.sensors, length=self.sim_length)
 
 
     def get_contour(self):

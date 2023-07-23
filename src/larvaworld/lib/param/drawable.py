@@ -40,6 +40,28 @@ class Viewable(NestedConf) :
     def draw(self, v, **kwargs):
         pass
 
+class ViewableToggleable(Viewable):
+    active = param.Boolean(False, doc='Whether entity is active')
+    active_color = param.Color(doc='The color of the entity when active')
+    inactive_color = param.Color(doc='The color of the entity when inactive')
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        if self.active_color is None:
+            self.active_color = self.default_color
+        if self.inactive_color is None:
+            self.inactive_color = self.default_color
+        self.update_color()
+
+    @param.depends('active', watch=True)
+    def update_color(self):
+        self.color= self.active_color if self.active else self.inactive_color
+
+
+    def toggle(self):
+        self.active = not self.active
+        # self.update_color()
+
 
 class ViewableNamed(Viewable,Named):
     def __init__(self, **kwargs):
@@ -53,7 +75,6 @@ class ViewableSingleObject(Viewable,NamedObject):
 class ViewableGroupedObject(Viewable,GroupedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
 
 
 
