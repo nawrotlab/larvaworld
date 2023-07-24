@@ -73,7 +73,7 @@ class LineClosed(LineExtended):
 
 class Area2D(NestedConf):
     dims = PositiveRange(doc='The arena dimensions')
-    centered = param.Boolean(False, doc='Whether entity is active')
+    centered = param.Boolean(True, doc='Whether entity is active')
 
     @property
     def w(self):
@@ -92,6 +92,15 @@ class Area2D(NestedConf):
 class Area2DPixel(Area2D):
     dims = PositiveIntegerRange((100, 100), softmax=10000, step=1, doc='The arena dimensions in pixels')
 
+    def get_rect_at_pos(self, pos=(0,0),**kwargs):
+        import pygame
+        if pos is not None and not any(np.isnan(pos)):
+            if self.centered:
+                return pygame.Rect(pos[0] - self.w / 2, pos[1] - self.h / 2, self.w, self.h)
+            else:
+                return pygame.Rect(pos[0], pos[1], self.w, self.h)
+        else:
+            return None
 
 class Area(Area2D):
     dims = PositiveRange((0.1, 0.1), softmax=1.0, step=0.01, doc='The arena dimensions in meters')
@@ -118,6 +127,11 @@ class ScreenWindowAreaBasic(Area2DPixel):
             p = pos[0] * 2 / X, pos[1] * 2 / Y
             pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
             return pp
+
+    def get_rect_at_pos(self, pos=(0,0), convert2screen_pos=True):
+        if convert2screen_pos:
+            pos=self.space2screen_pos(pos)
+        return super().get_rect_at_pos(pos)
 
     def get_relative_pos(self, pos_scale):
         w, h = pos_scale

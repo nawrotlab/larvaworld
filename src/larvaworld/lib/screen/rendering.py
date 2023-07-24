@@ -290,15 +290,39 @@ class ScreenTextFont(NestedConf) :
         super().__init__(**kwargs)
         self.end_time = end_time
         self.start_time = start_time
+        if not self.font:
+            self.update_font()
 
 
     @param.depends('text','text_color','text_centre', watch=True)
     def render_text(self):
         if not self.font:
             self.update_font()
-        self.text_font = self.font.render(self.text, 1, self.text_color)  # zero-pad hours to 2 digits
-        self.text_font_r = self.text_font.get_rect()
-        self.text_font_r.center = self.text_centre
+        if self.N_text_lines==1:
+
+            self.text_font = self.font.render(self.text, 1, self.text_color)  # zero-pad hours to 2 digits
+            self.text_font_r = self.text_font.get_rect()
+            self.text_font_r.center = self.text_centre
+        else:
+            N=self.N_text_lines
+            ls=self.text_lines
+            self.text_font=[]
+            self.text_font_r=[]
+            x0,y0=self.text_centre
+            for i in range(N):
+                f = self.font.render(ls[i], True, self.color)
+                r = f.get_rect()
+                r.center = x0,y0+(i-int(N/2))*100
+                self.text_font.append(f)
+                self.text_font_r.append(r)
+
+    @property
+    def text_lines(self):
+        return self.text.splitlines()
+
+    @property
+    def N_text_lines(self):
+        return len(self.text_lines)
 
     @param.depends('font_size', watch=True)
     def update_font(self):
@@ -307,7 +331,11 @@ class ScreenTextFont(NestedConf) :
 
 
     def draw(self, v,**kwargs):
-        v.draw_text_box(self.text_font, self.text_font_r)
+        if self.N_text_lines == 1:
+            v.draw_text_box(self.text_font, self.text_font_r)
+        else:
+            for i in range(self.N_text_lines):
+                v.draw_text_box(self.text_font[i], self.text_font_r[i])
 
     def set_text(self, text):
         self.text = text
@@ -338,46 +366,39 @@ class ScreenTextFontRel(ScreenTextFont):
     def update_font_size(self, obj):
         self.font_size = int(obj.reference_area.w * self.font_size_scale)
 
+class ScreenBoxBasic(Area2DPixel):
+    dims = PositiveRange(default=(140, 32))
 
-
-
-
-class ScreenBox(Area2DPixel, ViewableToggleable):
-    visible = param.Boolean(False)
     fullscreen = param.Boolean(False, doc='Whether the box is fullscreen')
-    dims = PositiveRange(default=(140,32))
-    linewidth = PositiveNumber(0.01, doc='The linewidth to draw the box')
-    show_frame = param.Boolean(False, doc='Draw the rectangular frame around the text')
 
     def __init__(self, display_area=None,**kwargs):
         super().__init__(**kwargs)
         if self.fullscreen and display_area:
-
-            self.shape = self.set_shape(display_area.space2screen_pos((0.0, 0.0)))
-            # print(display_area.space2screen_pos((0.0, 0.0)), display_area.dims)
-            # raise
+            # self.dims=display_area.dims
+            self.shape = display_area.get_rect_at_pos()
         else:
             self.shape = None
+
+    def set_shape(self, pos=None,**kwargs):
+        return self.get_rect_at_pos(pos,**kwargs)
+
+
+class ScreenBox(ScreenBoxBasic, ViewableToggleable):
+    visible = param.Boolean(False)
+    linewidth = PositiveNumber(0.001, doc='The linewidth to draw the box')
+    show_frame = param.Boolean(True, doc='Draw the rectangular frame around the text')
+
 
 
     def draw(self, v, **kwargs):
         if self.show_frame:
             if self.shape is not None:
-                v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+                # v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+                # pygame.draw.rect(v._window, color=self.color, rect=self.shape)
+                pygame.draw.rect(v._window, color=self.color, rect=self.shape, width=int(v._scale[0, 0] * self.linewidth))
 
 
 
-    def set_shape(self, pos=None):
-        import pygame
-        if pos is None and hasattr(self, 'pos'):
-            pos=self.pos
-        if pos is not None and not any(np.isnan(pos)):
-            if self.centered:
-                return pygame.Rect(pos[0] - self.w / 2, pos[1] - self.h / 2, self.w, self.h)
-            else:
-                return pygame.Rect(pos[0], pos[1], self.w, self.h)
-        else:
-            return None
 
 
 class ScreenTextBox(ScreenTextFont, ScreenBox):
@@ -385,24 +406,13 @@ class ScreenTextBox(ScreenTextFont, ScreenBox):
         super().__init__(**kwargs)
 
 
-    def switch(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            # If the user clicked on the input_box rect.
-            if self.shape.collidepoint(event.pos):
-                # Toggle the active variable.
-                self.toggle()
-            else:
-                self.active = False
 
     def draw(self, v, **kwargs):
 
         if self.shape is not None:
-            # Render the current text.
-            lines = self.text.splitlines()
-            txt_surfaces = [self.font.render(l, True, self.color) for l in lines]
-            # Blit the text.
-            for i, s in enumerate(txt_surfaces):
-                v.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5 + i * 100))
+            self.text_centre=self.shape.center
+            # self.text_centre=self.shape.x /2, self.shape.y + 5
+            ScreenTextFont.draw(self, v=v, **kwargs)
             ScreenBox.draw(self,v=v, **kwargs)
         else:
             ScreenTextFont.draw(self,v=v, **kwargs)

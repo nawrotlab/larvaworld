@@ -32,7 +32,7 @@ class AgentDrawOps(NestedConf):
 
 
 class ScreenOps(NestedConf):
-    intro_text = Boolean(False, doc='Show the introductory configuration screen')
+    intro_text = Boolean(True, doc='Show the introductory configuration screen')
     odor_aura = Boolean(False, doc='Draw the aura around odor sources')
     allow_clicks = Boolean(True, doc='Whether to allow input from display')
     black_background = Boolean(False, doc='Set the background color to black')
@@ -290,14 +290,14 @@ class ScreenManager(BaseScreenManager):
         if self.intro_text:
             box = screen.ScreenTextBox(
                            text=self.model.configuration_text,
-                           default_color=pygame.Color('white'),
-                           visible=True,fullscreen=True,centered=True,
-                           dims=(120 * 4, 32 * 4),display_area=v,
+                           text_color='black',default_color='white',
+                           visible=True,fullscreen=True,display_area=v,
                            font_type = "comicsansms",font_size = 32 * 2)
 
-            for i in range(10):
-                box.draw(v)
-                v.render()
+            # for i in range(10000):
+            box.draw(v)
+            v.render()
+            pygame.time.wait(5000)
             box.visible = False
 
 
@@ -338,6 +338,7 @@ class ScreenManager(BaseScreenManager):
 
 
     def step(self):
+        self.check()
         if self.active :
             self.sim_clock.tick_clock()
             if self.mode == 'video':
