@@ -344,15 +344,17 @@ class Viewer(object):
 class ScreenTextFont(NestedConf) :
     text_color = param.Color('black', doc='The color of the text')
     text = param.String('', doc='The text to draw')
-    font_size = PositiveInteger(doc='The font size')
+    font_size = PositiveInteger(32, doc='The font size')
     font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
     text_centre = NumericTuple2DRobust(doc='The text center position')
 
-    def __init__(self, **kwargs):
+    def __init__(self,end_time=0, start_time=0, **kwargs):
         self.font = None
         self.text_font = None
         self.text_font_r = None
         super().__init__(**kwargs)
+        self.end_time = end_time
+        self.start_time = start_time
 
 
     @param.depends('text','text_color','text_centre', watch=True)
@@ -370,12 +372,15 @@ class ScreenTextFont(NestedConf) :
 
 
     def draw(self, v,**kwargs):
-
-
         v.draw_text_box(self.text_font, self.text_font_r)
 
     def set_text(self, text):
         self.text = text
+
+    def flash_text(self, text, t=2):
+        self.set_text(text)
+        self.end_time = pygame.time.get_ticks() + t * 1000
+        self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
 
 
 
@@ -403,7 +408,6 @@ class ScreenTextFontRel(ScreenTextFont):
 
 
 class ScreenBox(Area2DPixel, ViewableToggleable):
-    # default_color = param.Color('black')
     visible = param.Boolean(False)
     color_active = param.Color('lightblue')
     color_inactive = param.Color('lightgreen')
@@ -418,19 +422,17 @@ class ScreenBox(Area2DPixel, ViewableToggleable):
 
     def draw(self, v, **kwargs):
         if self.show_frame:
-            v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+            if self.shape is not None:
+                v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
 
     def switch(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # self.set_shape(event.pos)
             # If the user clicked on the input_box rect.
             if self.shape.collidepoint(event.pos):
                 # Toggle the active variable.
                 self.toggle()
             else:
                 self.active = False
-                # Change the current color of the input box.
-            #self.color = self.color_active if self.active else self.color_inactive
 
     def set_shape(self, pos=None):
         import pygame
@@ -445,61 +447,14 @@ class ScreenBox(Area2DPixel, ViewableToggleable):
             return None
 
 
-
-
-class IDBox(ScreenTextFont, ScreenBox):
-    centered = param.Boolean(False)
-    agent = param.ClassSelector(Pos2D, doc='The agent owning the ID')
-    font_size = PositiveInteger(default=32)
-
-    def __init__(self, **kwargs):
+class InputBox(ScreenTextFont, ScreenBox):
+    def __init__(self,  **kwargs):
         super().__init__(**kwargs)
-        self.update_font()
-        self.update_agent()
 
-
-    @param.depends('agent', watch=True)
-    def update_agent(self):
-        self.text_color = self.agent.default_color
-        self.set_text(self.agent.unique_id)
-
-    # @param.depends('agent.pos', watch=True)
-    def update_font_centre_pos(self):
-        pos = self.agent.get_position()
-        x,y = self.agent.model.screen_manager.space2screen_pos(pos)
-        self.shape=self.set_shape((x,y))
-        self.text_centre =x+self.w,y+self.h
 
 
     def draw(self, v, **kwargs):
-        self.update_font_centre_pos()
-        v.draw_text_box(self.text_font, self.text_font_r)
 
-
-
-
-class InputBox(ScreenBox):
-
-    def __init__(self, text='', end_time=0, start_time=0,
-                 screen_pos=None,font=None, **kwargs):
-        super().__init__(**kwargs)
-
-        self.end_time = end_time
-        self.start_time = start_time
-
-        if font is None:
-            pygame.init()
-            font = pygame.font.Font(None, 32)
-        self.font = font
-        self.text = text
-        self.text_font = None
-
-        if screen_pos is not None:
-            self.shape = self.set_shape(screen_pos)
-        else:
-            self.shape = None
-
-    def draw(self, v,**kwargs):
         if self.shape is not None:
             # Render the current text.
             lines = self.text.splitlines()
@@ -507,13 +462,9 @@ class InputBox(ScreenBox):
             # Blit the text.
             for i, s in enumerate(txt_surfaces):
                 v.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5 + i * 100))
-            if self.show_frame:
-                # Blit the input_box rect.
-                v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
-        elif self.text_font is not None:
-            self.text_font = self.font_large.render(self.text, 1, self.color)
-            v.draw_text_box(self.text_font, self.text_font_r)
-
+            ScreenBox.draw(self,v=v, **kwargs)
+        else:
+            ScreenTextFont.draw(self,v=v, **kwargs)
 
     def get_input(self, event):
         if self.visible:
@@ -532,10 +483,99 @@ class InputBox(ScreenBox):
         self.visible = False
 
 
-    def flash_text(self, text, t=2):
-        self.set_text(text)
-        self.end_time = pygame.time.get_ticks() + t * 1000
-        self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
+
+
+
+class IDBox(InputBox):
+    centered = param.Boolean(False)
+    agent = param.ClassSelector(Pos2D, doc='The agent owning the ID')
+
+
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.update_font()
+        self.update_agent()
+
+
+    @param.depends('agent', watch=True)
+    def update_agent(self):
+        self.text_color = self.agent.default_color
+        self.set_text(self.agent.unique_id)
+
+    # @param.depends('agent.pos', watch=True)
+    def update_font_centre_pos(self):
+        pos = self.agent.get_position()
+        x,y = self.agent.model.screen_manager.space2screen_pos(pos)
+        self.text_centre =x+self.w,y+self.h
+
+
+    def draw(self, v, **kwargs):
+        self.update_font_centre_pos()
+        ScreenTextFont.draw(self, v=v, **kwargs)
+        # v.draw_text_box(self.text_font, self.text_font_r)
+
+
+
+
+# class InputBox(ScreenBox):
+#
+#     def __init__(self, text='', end_time=0, start_time=0,
+#                  screen_pos=None,font=None, **kwargs):
+#         super().__init__(**kwargs)
+#
+#         self.end_time = end_time
+#         self.start_time = start_time
+#
+#         if font is None:
+#             pygame.init()
+#             font = pygame.font.Font(None, 32)
+#         self.font = font
+#         self.text = text
+#         self.text_font = None
+#
+#         if screen_pos is not None:
+#             self.shape = self.set_shape(screen_pos)
+#         else:
+#             self.shape = None
+#
+#     def draw(self, v,**kwargs):
+#         if self.shape is not None:
+#             # Render the current text.
+#             lines = self.text.splitlines()
+#             txt_surfaces = [self.font.render(l, True, self.color) for l in lines]
+#             # Blit the text.
+#             for i, s in enumerate(txt_surfaces):
+#                 v.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5 + i * 100))
+#             if self.show_frame:
+#                 # Blit the input_box rect.
+#                 v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
+#         elif self.text_font is not None:
+#             self.text_font = self.font_large.render(self.text, 1, self.color)
+#             v.draw_text_box(self.text_font, self.text_font_r)
+#
+#
+#     def get_input(self, event):
+#         if self.visible:
+#             self.switch(event)
+#             if event.type == pygame.KEYDOWN:
+#                 if self.active:
+#                     if event.key == pygame.K_RETURN:
+#                         self.submit()
+#                     elif event.key == pygame.K_BACKSPACE:
+#                         self.text = self.text[:-1]
+#                     else:
+#                         self.text += event.unicode
+#
+#     def submit(self):
+#         print(self.text)
+#         self.visible = False
+#
+#
+#     def flash_text(self, text, t=2):
+#         self.set_text(text)
+#         self.end_time = pygame.time.get_ticks() + t * 1000
+#         self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
 
 
 
@@ -565,29 +605,47 @@ class ScreenMsgTextFont(ScreenTextFontRel):
     font_size_scale = PositiveNumber(1 / 25, doc='The font size relative to the window size')
     font_type = param.Parameter(default="SansitaOne.tff")
 
-class ScreenMsgText(PosPixelRel2AreaViewable):
-    pos_scale = PositiveRange((0.85, 0.1))
 
-    def __init__(self,end_time=0, start_time=0, **kwargs):
-        super().__init__(**kwargs)
-        kws = {
-            'reference_object': self,
-            'text_color': self.default_color,
-        }
-        self.text_font = ScreenMsgTextFont(**kws)
-        self.end_time = end_time
-        self.start_time = start_time
+class ScreenMsgText(ScreenMsgTextFont, Viewable):
 
-    def set_text(self, text):
-        self.text_font.set_text(text)
+
+    def __init__(self,reference_area, **kwargs):
+        reference_object = PosPixelRel2Area(reference_area=reference_area,
+                                            pos_scale=(0.85, 0.1))
+        super().__init__(reference_object=reference_object,**kwargs)
+        # kws = {
+        #     'reference_object': self,
+        #     'text_color': self.default_color,
+        # }
+        # self.text_font = ScreenMsgTextFont(**kws)
+
+    # def set_text(self, text):
+    #     self.text_font.set_text(text)
 
     def draw(self, v, **kwargs):
-        self.text_font.draw(v, **kwargs)
+        ScreenTextFont.draw(self,v=v, **kwargs)
+        # self.text_font.draw(v, **kwargs)
 
-    def flash_text(self, text, t=2):
-        self.set_text(text)
-        self.end_time = pygame.time.get_ticks() + t * 1000
-        self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
+
+# class ScreenMsgText(PosPixelRel2AreaViewable):
+#     pos_scale = PositiveRange((0.85, 0.1))
+#
+#     def __init__(self,**kwargs):
+#         super().__init__(**kwargs)
+#         kws = {
+#             'reference_object': self,
+#             'text_color': self.default_color,
+#         }
+#         self.text_font = ScreenMsgTextFont(**kws)
+#
+#
+#     def set_text(self, text):
+#         self.text_font.set_text(text)
+#
+#     def draw(self, v, **kwargs):
+#         # ScreenTextFont.draw(v, **kwargs)
+#         self.text_font.draw(v, **kwargs)
+
 
 
 
