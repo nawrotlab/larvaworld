@@ -40,6 +40,8 @@ class ScreenOps(NestedConf):
     color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
     panel_width = PositiveInteger(0, doc='The width of the side panel in pixels')
 
+
+
 class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
 
     def __init__(self, model, traj_color=None, background_motion=None,
@@ -47,7 +49,7 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
         m = self.model = model
         super().__init__(dims=aux.get_window_dims(m.space.dims),show_display=m.show_display, **kwargs)
 
-        self.window_dims = self.dims
+        # self.window_dims = self.dims
         self._fps= int(self.fps / m.dt)
         if vis_kwargs is None:
             mode='video' if video else None
@@ -97,10 +99,10 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
             return self.v._transform(pos)
         except:
             X, Y = np.array(self.model.space.dims) * self.model.scaling_factor
-            X0, Y0 = self.window_dims
+            # X0, Y0 = self.window_dims
 
             p = pos[0] * 2 / X, pos[1] * 2 / Y
-            pp = ((p[0] + 1) * X0 / 2, (-p[1] + 1) * Y0)
+            pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
             return pp
 
 
@@ -662,7 +664,6 @@ class ScreenManager(BaseScreenManager):
                 f.selected = False
                 self.selected_agents.remove(f)
         return res
-
 
 
 

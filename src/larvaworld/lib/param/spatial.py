@@ -5,7 +5,7 @@ from shapely import geometry
 from larvaworld.lib import aux
 
 from larvaworld.lib.param import NestedConf, PositiveNumber, RandomizedPhase, XYLine, \
-    PositiveIntegerRange, PositiveRange, NumericTuple2DRobust, IntegerTuple2DRobust
+    PositiveIntegerRange, PositiveRange, NumericTuple2DRobust, IntegerTuple2DRobust, RangeRobust
 
 
 class Pos2D(NestedConf):
@@ -82,7 +82,10 @@ class Area2D(NestedConf):
     def h(self):
         return self.dims[1]
 
-
+    @property
+    def range(self):
+        X, Y = self.dims
+        return np.array([-X / 2, X / 2, -Y / 2, Y / 2])
 
 
 class Area2DPixel(Area2D):
@@ -94,6 +97,68 @@ class Area(Area2D):
     geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
     torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
+
+class ScreenWindowArea(Area2DPixel):
+    scaling_factor=PositiveNumber(1., doc='Scaling factor')
+    space=param.ClassSelector(Area,default=Area(), doc='Arena')
+    zoom = PositiveNumber(1., doc='Zoom factor')
+    # center=NumericTuple2DRobust((0.0,0.0), doc='Center xy')
+    center=param.Parameter(np.array([0., 0.]), doc='Center xy')
+    center_lim=param.Parameter(np.array([0., 0.]), doc='Center xy lim')
+    # center_lim=RangeRobust((0.0,0.0), doc='Center xy')
+    _scale = param.Parameter(np.array([[1., .0], [.0, -1.]]), doc='Scale of xy')
+    _translation = param.Parameter(np.zeros(2), doc='Translation of xy')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.dims = aux.get_window_dims(self.space.dims)
+        self.set_bounds()
+
+    @ property
+    def zoomed_dims(self):
+        return (np.array(self.dims) / self.zoom).astype(int)
+
+    @param.depends('zoom', 'center', watch=True)
+    def set_bounds(self):
+        left, right, bottom, top=self.space.range * self.scaling_factor
+        assert right > left and top > bottom
+        x = self.zoomed_dims[0] / (right - left)
+        y = self.zoomed_dims[1] / (top - bottom)
+        self._scale = np.array([[x, .0], [.0, -y]])
+        self._translation = np.array([(-left * self.zoom) * x, (-bottom * self.zoom) * y]) + self.center * [-x, y]
+        self.center_lim = (1 - self.zoom) * np.array([left, bottom])
+
+    def _transform(self, position):
+        return np.round(self._scale.dot(position) + self._translation).astype(int)
+
+    def move_center(self, dx=0, dy=0, pos=None):
+        if pos is None:
+            pos = self.center - self.center_lim * [dx, dy]
+        self.center = np.clip(pos, self.center_lim, -self.center_lim)
+        # self.set_bounds()
+
+    def zoom_screen(self, d_zoom, pos=(0,0)):
+
+        if 0.001 <= self.zoom + d_zoom <= 1:
+            self.zoom = np.round(self.zoom + d_zoom, 2)
+            # self.display_size = self.zoomed_window_dims
+            self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
+        if self.zoom == 1.0:
+            self.center = np.array([0.0, 0.0])
+        # self.set_bounds()
+        
+    def space2screen_pos(self, pos):
+        if pos is None or any(np.isnan(pos)):
+            return None
+        try:
+            return self._transform(pos)
+        except:
+            X, Y = np.array(self.space.dims) * self.scaling_factor
+            # X0, Y0 = self.window_dims
+
+            p = pos[0] * 2 / X, pos[1] * 2 / Y
+            pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
+            return pp
 
 class BoundedArea(Area, LineClosed):
 

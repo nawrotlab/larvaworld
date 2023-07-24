@@ -94,14 +94,14 @@ class Viewer(object):
             f.write(line6 + '\n')
             f.write('\n')
 
-            f.write(self.get_saved_scene_repr() + '\n')  # scene size
+            # f.write(self.get_saved_scene_repr() + '\n')  # scene size
 
 
         f.closed
         print('Scene saved:', file_path)
 
-    def get_saved_scene_repr(self):
-        return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
+    # def get_saved_scene_repr(self):
+    #     return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
 
 
 
@@ -131,7 +131,7 @@ class Viewer(object):
 
     @ property
     def zoomed_window_dims(self):
-        return (np.array(self.manager.window_dims) / self.zoom).astype(int)
+        return (np.array(self.manager.dims) / self.zoom).astype(int)
 
 
     def zoom_screen(self, d_zoom, pos=None):
@@ -144,6 +144,17 @@ class Viewer(object):
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
         self.set_bounds()
+
+
+    # def set_bounds(self):
+    #     f=self.manager.model.scaling_factor
+    #     s = self.manager.model.space
+    #     z=self.zoom
+    #     x = z*self.manager.w / s.w/f
+    #     y = z*self.manager.h / s.h/f
+    #     self._scale = np.array([[x, .0], [.0, -y]])
+    #     self._translation = np.array([(s.w*f * z/2) * x, (s.h*f * z/2) * y]) + self.center * [-x, y]
+    #     self.center_lim = -(1 - z) * np.array([s.w, s.h])*f/2
 
     #@property
     def set_bounds(self):
@@ -421,6 +432,8 @@ class ScreenBox(Area2DPixel, ViewableToggleable):
         if self.fullscreen and display_area:
 
             self.shape = self.set_shape(display_area.space2screen_pos((0.0, 0.0)))
+            # print(display_area.space2screen_pos((0.0, 0.0)), display_area.dims)
+            # raise
         else:
             self.shape = None
 
@@ -489,7 +502,6 @@ class ScreenTextBox(ScreenTextFont, ScreenBox):
         self.visible = False
 
 
-# class FullScreenTextBox(ScreenTextBox):
 
 
 
@@ -620,14 +632,7 @@ class ScreenMsgText(ScreenMsgTextFont, Viewable):
         reference_object = PosPixelRel2Area(reference_area=reference_area,
                                             pos_scale=(0.85, 0.1))
         super().__init__(reference_object=reference_object,**kwargs)
-        # kws = {
-        #     'reference_object': self,
-        #     'text_color': self.default_color,
-        # }
-        # self.text_font = ScreenMsgTextFont(**kws)
 
-    # def set_text(self, text):
-    #     self.text_font.set_text(text)
 
     def draw(self, v, **kwargs):
         ScreenTextFont.draw(self,v=v, **kwargs)
