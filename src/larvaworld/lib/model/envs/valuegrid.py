@@ -9,7 +9,7 @@ from shapely import geometry
 from larvaworld.lib import aux
 from larvaworld.lib.param import Substrate, ViewableNamed, SpatialEntity, PositiveIntegerRange, ClassAttr, \
     PositiveNumber, Phase
-from larvaworld.lib.screen.rendering import InputBox
+from larvaworld.lib.screen.rendering import ScreenTextBox
 
 
 class GridOverSpace(ViewableNamed, agentpy.Grid):
@@ -149,7 +149,7 @@ class ValueGrid(SpatialEntity):
 
         v.draw_circle(p, self.cell_radius / 2, self.default_color, filled=True, width=0.0005)
         p_text = (p[0] + self.x, p[1] - self.y)
-        text_box = InputBox(text=str(np.round(self.grid.max(), 2)), default_color=self.default_color, visible=True,
+        text_box = ScreenTextBox(text=str(np.round(self.grid.max(), 2)), default_color=self.default_color, visible=True,
                             screen_pos=v._transform(p_text))
         text_box.draw(v)
 
@@ -179,7 +179,7 @@ class ValueGrid(SpatialEntity):
                     ps = np.array(points)
                     pxy = ps[np.argmax(ps[:, 0]), :] + np.array([self.x, -self.y])
                     v.draw_convex(points, color=c, filled=False, width=0.0005)
-                    text_box = InputBox(text=str(np.round(vv, 2)), default_color=c, visible=True,
+                    text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=c, visible=True,
                                         screen_pos=v._transform(pxy))
                     text_box.draw(v)
                 except:
@@ -277,7 +277,7 @@ class GaussianValueLayer(OdorScape):
                 pX = (p[0] + r, p[1])
                 vv = s.odor.gaussian_value(pX)
                 v.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
-                text_box = InputBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True,
+                text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True,
                                     screen_pos=v._transform(pX))
                 text_box.draw(v)
 
@@ -501,7 +501,7 @@ class ThermoScape(ValueGrid):
                 else:
                     color2use = 'red'
                 v.draw_circle(p, r, color2use, filled=False, width=0.0005)
-                text_box = InputBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True)
+                text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True)
                 text_box.draw(v)
 
 

@@ -409,15 +409,20 @@ class ScreenTextFontRel(ScreenTextFont):
 
 class ScreenBox(Area2DPixel, ViewableToggleable):
     visible = param.Boolean(False)
+    fullscreen = param.Boolean(False, doc='Whether the box is fullscreen')
     color_active = param.Color('lightblue')
     color_inactive = param.Color('lightgreen')
     dims = PositiveRange(default=(140,32))
     linewidth = PositiveNumber(0.01, doc='The linewidth to draw the box')
     show_frame = param.Boolean(False, doc='Draw the rectangular frame around the text')
 
-    def __init__(self, **kwargs):
+    def __init__(self, display_area=None,**kwargs):
         super().__init__(**kwargs)
-        self.shape = None
+        if self.fullscreen and display_area:
+
+            self.shape = self.set_shape(display_area.space2screen_pos((0.0, 0.0)))
+        else:
+            self.shape = None
 
 
     def draw(self, v, **kwargs):
@@ -425,14 +430,7 @@ class ScreenBox(Area2DPixel, ViewableToggleable):
             if self.shape is not None:
                 v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
 
-    def switch(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            # If the user clicked on the input_box rect.
-            if self.shape.collidepoint(event.pos):
-                # Toggle the active variable.
-                self.toggle()
-            else:
-                self.active = False
+
 
     def set_shape(self, pos=None):
         import pygame
@@ -447,11 +445,19 @@ class ScreenBox(Area2DPixel, ViewableToggleable):
             return None
 
 
-class InputBox(ScreenTextFont, ScreenBox):
-    def __init__(self,  **kwargs):
+class ScreenTextBox(ScreenTextFont, ScreenBox):
+    def __init__(self,**kwargs):
         super().__init__(**kwargs)
 
 
+    def switch(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # If the user clicked on the input_box rect.
+            if self.shape.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.toggle()
+            else:
+                self.active = False
 
     def draw(self, v, **kwargs):
 
@@ -483,10 +489,11 @@ class InputBox(ScreenTextFont, ScreenBox):
         self.visible = False
 
 
+# class FullScreenTextBox(ScreenTextBox):
 
 
 
-class IDBox(InputBox):
+class IDBox(ScreenTextBox):
     centered = param.Boolean(False)
     agent = param.ClassSelector(Pos2D, doc='The agent owning the ID')
 

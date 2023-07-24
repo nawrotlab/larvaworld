@@ -281,9 +281,8 @@ class ScreenManager(BaseScreenManager):
 
     def build_aux(self):
         m=self.model
-        self.input_box = screen.InputBox(
-            screen_pos=self.space2screen_pos((0.0, 0.0)),
-                                         centered=True, dims=(120 * 4, 32 * 4),
+        self.input_box = screen.ScreenTextBox(fullscreen=True,centered=True,
+                                              dims=(120 * 4, 32 * 4),display_area=self,
                                          font_type = "comicsansms",font_size = 32 * 2,
         )
         kws={
@@ -373,12 +372,12 @@ class ScreenManager(BaseScreenManager):
 
     def display_configuration(self, v):
         if self.intro_text:
-            box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
+            box = screen.ScreenTextBox(
                            text=self.model.configuration_text,
                            default_color=pygame.Color('white'),
-                           visible=True,
-                           center=True, w=220 * 4, h=200 * 4,
-                           font=pygame.font.SysFont("comicsansms", 25))
+                           visible=True,fullscreen=True,centered=True,
+                           dims=(120 * 4, 32 * 4),display_area=self,
+                           font_type = "comicsansms",font_size = 32 * 2)
 
             for i in range(10):
                 box.draw(v)
