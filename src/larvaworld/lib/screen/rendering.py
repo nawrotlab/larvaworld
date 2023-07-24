@@ -7,7 +7,7 @@ from shapely import geometry
 
 from larvaworld.lib.param import Viewable, ViewableGroupedObject, PositiveRange, PositiveNumber, PositionedArea2DPixel, \
     ViewableToggleable, NestedConf, PositiveInteger, Pos2DPixel, Area2DPixel, PosPixelRel2Area, IntegerTuple2DRobust, \
-    NumericTuple2DRobust, Pos2D
+    NumericTuple2DRobust, Pos2D, ScreenWindowArea
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -15,104 +15,28 @@ import pygame
 from larvaworld.lib import aux
 
 
+class ScreenWindowAreaPygame(ScreenWindowArea):
+    caption = param.String('', doc='The caption of the screen window')
 
-
-class Viewer(object):
-    def __init__(self, manager, caption="", record_video_to=None,
-                 record_image_to=None):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         pygame.init()
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
-
-        self.manager = manager
-        self.zoom = 1
-        self.caption = caption
-
-        # self.panel_width = panel_width
-
-        self._t = pygame.time.Clock()
-        self._fps = self.manager._fps
-        self.center = np.array([0.0, 0.0])
-        self.center_lim = np.array([0.0, 0.0])
-        self.snapshot_requested=None
-        self.display_size = self.zoomed_window_dims
         self._window = self.init_screen()
-        self.objects = []
 
+    @property
+    def mouse_position(self):
+        p = np.array(pygame.mouse.get_pos()) - self._translation
+        return np.linalg.inv(self._scale).dot(p)
 
-        if record_video_to:
-            self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=self._fps)
-        else:
-            self._video_writer = None
-
-        if record_image_to:
-
-            self._image_writer = imageio.get_writer(record_image_to, mode='i')
-        else:
-            self._image_writer = None
-
-        self._scale = np.array([[1., .0], [.0, -1.]])
-        self._translation = np.zeros(2)
-        self.set_bounds()
-
-    def increase_fps(self):
-        if self._fps < 60:
-            self._fps += 1
-        print('viewer.fps:', self._fps)
-
-    def decrease_fps(self):
-        if self._fps > 1:
-            self._fps -= 1
-        print('viewer.fps:', self._fps)
-
-    def put(self, obj):
-        if isinstance(obj, list):
-            self.objects.extend(obj)
-        else:
-            self.objects.append(obj)
-
-    def remove(self, obj):
-        self.objects.remove(obj)
-
-    def save(self, filename_pattern='scene', file_path='saved_scenes/'):
-        date_time = aux.TimeUtil.format_date_time()
-        file_name = filename_pattern + '_' + date_time + ".txt"
-        file_path = file_path + file_name
-
-        with open(file_path, 'w') as f:
-            line1 = '# First uncommented line must starts with "Scene"'
-            line2 = '# This is the syntax for each kind of object:'
-            line3 = '# Scene WIDTH HEIGHT'
-            line4 = '# Wall X1 Y1 X2 Y2'
-            line5 = '# Box X Y SIZE'
-            line6 = '# Light X Y EMITTING_POWER'
-
-            f.write(line1 + '\n')
-            f.write(line2 + '\n')
-            f.write(line3 + '\n')
-            f.write(line4 + '\n')
-            f.write(line5 + '\n')
-            f.write(line6 + '\n')
-            f.write('\n')
-
-            # f.write(self.get_saved_scene_repr() + '\n')  # scene size
-
-
-        f.closed
-        print('Scene saved:', file_path)
-
-    # def get_saved_scene_repr(self):
-    #     return self.__class__.__name__ + ' ' + str(self.width) + ' ' + str(self.height)
-
-
-
-    @ property
+    @property
     def display_dims(self):
         return self._window.get_width(), self._window.get_height()
 
     def draw_arena(self, tank_color, screen_color):
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
         surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-        vs = [self._transform(v) for v in self.manager.model.space.vertices]
+        vs = [self._transform(v) for v in self.space.vertices]
         pygame.draw.polygon(surf1, tank_color, vs, 0)
         pygame.draw.rect(surf2, screen_color, surf2.get_rect())
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
@@ -121,54 +45,12 @@ class Viewer(object):
     def init_screen(self):
         flags = pygame.HWSURFACE | pygame.DOUBLEBUF
         if self.manager.show_display:
-            window = pygame.display.set_mode((self.manager.w + self.manager.panel_width, self.manager.h), flags)
+            window = pygame.display.set_mode((self.w + self.manager.panel_width, self.h), flags)
             pygame.display.set_caption(self.caption)
             pygame.event.set_allowed(pygame.QUIT)
         else:
             window = pygame.Surface(self.display_size, flags)
         return window
-
-
-    @ property
-    def zoomed_window_dims(self):
-        return (np.array(self.manager.dims) / self.zoom).astype(int)
-
-
-    def zoom_screen(self, d_zoom, pos=None):
-        if pos is None:
-            pos = self.mouse_position
-        if 0.001 <= self.zoom + d_zoom <= 1:
-            self.zoom = np.round(self.zoom + d_zoom, 2)
-            self.display_size = self.zoomed_window_dims
-            self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
-        if self.zoom == 1.0:
-            self.center = np.array([0.0, 0.0])
-        self.set_bounds()
-
-
-    # def set_bounds(self):
-    #     f=self.manager.model.scaling_factor
-    #     s = self.manager.model.space
-    #     z=self.zoom
-    #     x = z*self.manager.w / s.w/f
-    #     y = z*self.manager.h / s.h/f
-    #     self._scale = np.array([[x, .0], [.0, -y]])
-    #     self._translation = np.array([(s.w*f * z/2) * x, (s.h*f * z/2) * y]) + self.center * [-x, y]
-    #     self.center_lim = -(1 - z) * np.array([s.w, s.h])*f/2
-
-    #@property
-    def set_bounds(self):
-        left, right, bottom, top=self.manager.model.space.scaled_range
-        assert right > left and top > bottom
-        x = self.display_size[0] / (right - left)
-        y = self.display_size[1] / (top - bottom)
-        self._scale = np.array([[x, .0], [.0, -y]])
-        self._translation = np.array([(-left * self.zoom) * x, (-bottom * self.zoom) * y]) + self.center * [-x, y]
-        self.center_lim = (1 - self.zoom) * np.array([left, bottom])
-
-
-    def _transform(self, position):
-        return np.round(self._scale.dot(position) + self._translation).astype(int)
 
     def draw_circle(self, position=(0, 0), radius=.1, color=(0, 0, 0), filled=True, width=.01):
         p = self._transform(position)
@@ -244,11 +126,59 @@ class Viewer(object):
             pygame.draw.polygon(self._window, color, (p0, p1, p2))
             l += dl
 
+class Viewer(ScreenWindowAreaPygame):
+    def __init__(self, manager,  record_video_to=None, record_image_to=None, **kwargs):
+        self.manager = manager
+        m=manager.model
+        super().__init__(
+            scaling_factor=m.scaling_factor,
+            space=m.space,
+                         **kwargs)
 
-    @property
-    def mouse_position(self):
-        p = np.array(pygame.mouse.get_pos()) - self._translation
-        return np.linalg.inv(self._scale).dot(p)
+
+        self._t = pygame.time.Clock()
+        self._fps = self.manager._fps
+        self.snapshot_requested=None
+        self.objects = []
+
+
+        if record_video_to:
+            self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=self._fps)
+        else:
+            self._video_writer = None
+
+        if record_image_to:
+
+            self._image_writer = imageio.get_writer(record_image_to, mode='i')
+        else:
+            self._image_writer = None
+
+
+    def increase_fps(self):
+        if self._fps < 60:
+            self._fps += 1
+        print('viewer.fps:', self._fps)
+
+    def decrease_fps(self):
+        if self._fps > 1:
+            self._fps -= 1
+        print('viewer.fps:', self._fps)
+
+    def put(self, obj):
+        if isinstance(obj, list):
+            self.objects.extend(obj)
+        else:
+            self.objects.append(obj)
+
+    def remove(self, obj):
+        self.objects.remove(obj)
+
+
+
+
+
+
+
 
     def render(self):
         if self.manager.show_display:
@@ -282,12 +212,6 @@ class Viewer(object):
         del self
 
         print('Screen closed')
-
-    def move_center(self, dx=0, dy=0, pos=None):
-        if pos is None:
-            pos = self.center - self.center_lim * [dx, dy]
-        self.center = np.clip(pos, self.center_lim, -self.center_lim)
-        self.set_bounds()
 
     @staticmethod
     def load_from_file(file_path, **kwargs):

@@ -516,7 +516,7 @@ class ScreenManager(BaseScreenManager):
 
 
     def apply_screen_zoom(self, d_zoom):
-        self.v.zoom_screen(d_zoom)
+        self.v.zoom_screen(d_zoom, pos = self.v.mouse_position)
         self.sim_scale.real_width=self.model.space.dims[0] * self.v.zoom
 
 

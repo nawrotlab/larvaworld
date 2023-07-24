@@ -14,7 +14,7 @@ class Arena(ViewableNamedBoundedArea, agentpy.Space):
     def __init__(self, model,**kwargs):
         ViewableNamedBoundedArea.__init__(self, **kwargs)
         # X, Y = self.dims
-        self.scaled_dims = self.dims * model.scaling_factor
+        # self.scaled_dims = self.dims * model.scaling_factor
         self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(self.vertices, 2)]
         # self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
         self.scaled_range=self.range*model.scaling_factor

@@ -1,5 +1,6 @@
 import numpy as np
 import param
+
 from shapely import geometry
 
 from larvaworld.lib import aux
@@ -115,15 +116,15 @@ class ScreenWindowArea(Area2DPixel):
         self.set_bounds()
 
     @ property
-    def zoomed_dims(self):
+    def display_size(self):
         return (np.array(self.dims) / self.zoom).astype(int)
 
     @param.depends('zoom', 'center', watch=True)
     def set_bounds(self):
         left, right, bottom, top=self.space.range * self.scaling_factor
         assert right > left and top > bottom
-        x = self.zoomed_dims[0] / (right - left)
-        y = self.zoomed_dims[1] / (top - bottom)
+        x = self.display_size[0] / (right - left)
+        y = self.display_size[1] / (top - bottom)
         self._scale = np.array([[x, .0], [.0, -y]])
         self._translation = np.array([(-left * self.zoom) * x, (-bottom * self.zoom) * y]) + self.center * [-x, y]
         self.center_lim = (1 - self.zoom) * np.array([left, bottom])
@@ -137,16 +138,19 @@ class ScreenWindowArea(Area2DPixel):
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
         # self.set_bounds()
 
-    def zoom_screen(self, d_zoom, pos=(0,0)):
-
+    def zoom_screen(self, d_zoom, pos=None):
+        if pos is None:
+            pos = self.mouse_position
         if 0.001 <= self.zoom + d_zoom <= 1:
             self.zoom = np.round(self.zoom + d_zoom, 2)
             # self.display_size = self.zoomed_window_dims
-            self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
+            self.center = np.clip(self.center - np.array(pos) * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
         # self.set_bounds()
-        
+
+
+
     def space2screen_pos(self, pos):
         if pos is None or any(np.isnan(pos)):
             return None
