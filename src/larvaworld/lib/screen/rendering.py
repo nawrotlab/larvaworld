@@ -345,8 +345,6 @@ class ScreenTextFontRel(ScreenTextFont):
 class ScreenBox(Area2DPixel, ViewableToggleable):
     visible = param.Boolean(False)
     fullscreen = param.Boolean(False, doc='Whether the box is fullscreen')
-    color_active = param.Color('lightblue')
-    color_inactive = param.Color('lightgreen')
     dims = PositiveRange(default=(140,32))
     linewidth = PositiveNumber(0.01, doc='The linewidth to draw the box')
     show_frame = param.Boolean(False, doc='Draw the rectangular frame around the text')

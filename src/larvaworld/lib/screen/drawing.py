@@ -262,14 +262,14 @@ class ScreenManager(BaseScreenManager):
             if self.image_file is None:
                 self.image_file = str(self.model.id)
             self.screen_kws.record_image_to = f'{f}/{self.image_file}_{self.image_mode}.png'
-        self.build_aux()
+
 
 
     def initialize(self):
 
         v = screen.Viewer(**self.screen_kws)
-
-        self.display_configuration(v)
+        self.build_aux(v)
+        # self.display_configuration(v)
         self.set_background(*v.display_dims)
 
         self.draw_arena(v)
@@ -281,14 +281,28 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def build_aux(self):
+    def build_aux(self,v):
         m=self.model
         self.input_box = screen.ScreenTextBox(fullscreen=True,centered=True,
-                                              dims=(120 * 4, 32 * 4),display_area=self,
+                                              dims=(120 * 4, 32 * 4),display_area=v,
                                          font_type = "comicsansms",font_size = 32 * 2,
         )
+        if self.intro_text:
+            box = screen.ScreenTextBox(
+                           text=self.model.configuration_text,
+                           default_color=pygame.Color('white'),
+                           visible=True,fullscreen=True,centered=True,
+                           dims=(120 * 4, 32 * 4),display_area=v,
+                           font_type = "comicsansms",font_size = 32 * 2)
+
+            for i in range(10):
+                box.draw(v)
+                v.render()
+            box.visible = False
+
+
         kws={
-            'reference_area':self,
+            'reference_area':v,
             'default_color':self.scale_clock_color,
         }
         self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
@@ -372,19 +386,19 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def display_configuration(self, v):
-        if self.intro_text:
-            box = screen.ScreenTextBox(
-                           text=self.model.configuration_text,
-                           default_color=pygame.Color('white'),
-                           visible=True,fullscreen=True,centered=True,
-                           dims=(120 * 4, 32 * 4),display_area=self,
-                           font_type = "comicsansms",font_size = 32 * 2)
-
-            for i in range(10):
-                box.draw(v)
-                v.render()
-            box.visible = False
+    # def display_configuration(self, v):
+    #     if self.intro_text:
+    #         box = screen.ScreenTextBox(
+    #                        text=self.model.configuration_text,
+    #                        default_color=pygame.Color('white'),
+    #                        visible=True,fullscreen=True,centered=True,
+    #                        dims=(120 * 4, 32 * 4),display_area=self,
+    #                        font_type = "comicsansms",font_size = 32 * 2)
+    #
+    #         for i in range(10):
+    #             box.draw(v)
+    #             v.render()
+    #         box.visible = False
 
 
 
@@ -526,8 +540,8 @@ class ScreenManager(BaseScreenManager):
         return (self.model.Nticks - 1) % self.snapshot_interval == 0
 
 
-    def generate_larva_color(self):
-        return aux.random_colors(1)[0] if self.random_colors else self.default_larva_color
+    # def generate_larva_color(self):
+    #     return aux.random_colors(1)[0] if self.random_colors else self.default_larva_color
 
 
 

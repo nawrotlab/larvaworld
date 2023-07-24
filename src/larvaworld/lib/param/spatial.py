@@ -98,10 +98,41 @@ class Area(Area2D):
     geometry = param.Selector(objects=['circular', 'rectangular'], doc='The arena shape')
     torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
-
-class ScreenWindowArea(Area2DPixel):
+class ScreenWindowAreaBasic(Area2DPixel):
     scaling_factor=PositiveNumber(1., doc='Scaling factor')
     space=param.ClassSelector(Area,default=Area(), doc='Arena')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.dims = aux.get_window_dims(self.space.dims)
+
+    def space2screen_pos(self, pos):
+        if pos is None or any(np.isnan(pos)):
+            return None
+        try:
+            return self._transform(pos)
+        except:
+            X, Y = np.array(self.space.dims) * self.scaling_factor
+            # X0, Y0 = self.window_dims
+
+            p = pos[0] * 2 / X, pos[1] * 2 / Y
+            pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
+            return pp
+
+    def get_relative_pos(self, pos_scale):
+        w, h = pos_scale
+        x_pos = int(self.w * w)
+        y_pos = int(self.h * h)
+        return x_pos, y_pos
+
+    def get_relative_font_size(self, font_size_scale):
+        return int(self.w * font_size_scale)
+
+
+
+class ScreenWindowArea(ScreenWindowAreaBasic):
+    # scaling_factor=PositiveNumber(1., doc='Scaling factor')
+    # space=param.ClassSelector(Area,default=Area(), doc='Arena')
     zoom = PositiveNumber(1., doc='Zoom factor')
     # center=NumericTuple2DRobust((0.0,0.0), doc='Center xy')
     center=param.Parameter(np.array([0., 0.]), doc='Center xy')
@@ -112,7 +143,7 @@ class ScreenWindowArea(Area2DPixel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.dims = aux.get_window_dims(self.space.dims)
+        # self.dims = aux.get_window_dims(self.space.dims)
         self.set_bounds()
 
     @ property
@@ -151,18 +182,7 @@ class ScreenWindowArea(Area2DPixel):
 
 
 
-    def space2screen_pos(self, pos):
-        if pos is None or any(np.isnan(pos)):
-            return None
-        try:
-            return self._transform(pos)
-        except:
-            X, Y = np.array(self.space.dims) * self.scaling_factor
-            # X0, Y0 = self.window_dims
 
-            p = pos[0] * 2 / X, pos[1] * 2 / Y
-            pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
-            return pp
 
 class BoundedArea(Area, LineClosed):
 

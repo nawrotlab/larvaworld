@@ -42,8 +42,8 @@ class Viewable(NestedConf) :
 
 class ViewableToggleable(Viewable):
     active = param.Boolean(False, doc='Whether entity is active')
-    active_color = param.Color(doc='The color of the entity when active')
-    inactive_color = param.Color(doc='The color of the entity when inactive')
+    active_color = param.Color('lightblue',doc='The color of the entity when active')
+    inactive_color = param.Color('lightgreen',doc='The color of the entity when inactive')
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
