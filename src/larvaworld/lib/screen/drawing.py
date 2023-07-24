@@ -242,6 +242,10 @@ class GA_ScreenManager(BaseScreenManager):
     def draw_aux(self, v,**kwargs):
         self.side_panel.draw(v)
 
+    def finalize(self):
+        if self.v:
+            self.v.close()
+
 
 
 

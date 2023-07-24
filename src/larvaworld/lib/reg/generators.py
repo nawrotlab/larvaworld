@@ -195,7 +195,7 @@ class RefType(ConfType):
         if dataset is None :
             dataset=self.loadRef(load=False,**kwargs)
         if load:
-            dataset.load(**kwargs)
+            dataset.load()
         return dataset
 
 
@@ -274,7 +274,7 @@ gen=aux.AttrDict({
 
 # How to load existing
 
-class SimConfiguration(RuntimeOps, SimOps, SimMetricOps):
+class SimConfiguration(RuntimeOps,SimMetricOps, SimOps):
     runtype = param.Selector(objects=reg.SIMTYPES, doc='The simulation mode')
 
     def __init__(self,runtype,**kwargs):

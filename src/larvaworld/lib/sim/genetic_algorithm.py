@@ -8,8 +8,9 @@ import pandas as pd
 import progressbar
 import numpy as np
 
+import larvaworld
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.param import NestedConf, ClassAttr, class_generator, SimOps
+from larvaworld.lib.param import NestedConf, ClassAttr, class_generator, SimOps, OptionalSelector
 
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
@@ -31,17 +32,16 @@ class GAselector(NestedConf):
     bestConfID = param.String(default='best_model', label='model ID for optimized model',
                               doc='ID for the optimized model')
 
-# class GAselector(aux.NestedConf):
     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
                                label='mode of initial generation',doc='Mode of initial generation')
-    # base_model = param.Selector(default='explorer', objects=reg.conf.Model.confIDs,
-    #                             label='agent model to optimize',doc='ID of the model to optimize')
     base_model = reg.conf.Model.confID_selector('loco_default')
 
     space_mkeys = param.ListSelector(default=[], objects=reg.model.mkeys,
                                      label='keys of modules to include in space search',doc='Keys of the modules where the optimization parameters are')
 
     def __init__(self, **kwargs):
+        # print(kwargs)
+        # raise
         super().__init__(**kwargs)
 
         self.Nagents_min = round(self.Nagents * self.selection_ratio)
@@ -160,39 +160,38 @@ exclusion_funcs = aux.AttrDict({
 
 class GAevaluation(NestedConf):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
-    exclude_func_name = param.Selector(default=None,objects=list(exclusion_funcs.keys()),
+    exclude_func_name = OptionalSelector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
-    fitness_func_name = param.Selector(default=None,objects=list(fitness_funcs.keys()),
+    fitness_func_name = OptionalSelector(default=None,objects=list(fitness_funcs.keys()),
                                        label='name of fitness function',doc='The function that evaluates fitness', allow_None=True)
 
     fitness_target_kws = param.Parameter(default=None, label='fitness metrics to evaluate',
                                          doc='The target metrics to optimize against')
-    fit_dict = param.Dict(default=None,
+    fit_dict = param.ClassSelector(aux.AttrDict,
                           label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
 
-    def __init__(self,fit_kws={},**kwargs):
+    def __init__(self,fit_kws={},fit_dict = None,**kwargs):
         super().__init__(**kwargs)
-
-
-
-        # self.retrieve_dataset()
         if type(self.exclude_func_name)==str:
             self.exclude_func = exclusion_funcs[self.exclude_func_name]
         else:
             self.exclude_func = None
-        self.fit_dict=self.define_fitness_evaluation(self.fit_dict, **fit_kws)
 
-    def define_fitness_evaluation(self,d, **kwargs):
+        self.fit_dict=self.define_fitness_dict(fit_dict,**fit_kws)
+        assert isinstance(self.fit_dict, aux.AttrDict)
+
+    def define_fitness_dict(self,fit_dict=None,**kwargs):
         if self.exclusion_mode:
             return None
-        elif d is not None:
-            return d
-        elif self.refDataset is not None and self.fitness_target_kws is not None:
+        elif fit_dict is not None:
+            return fit_dict
+        elif self.fitness_func_name and self.fitness_func_name in fitness_funcs.keys() :
+            fitness_func = fitness_funcs[self.fitness_func_name]
+            return arrange_fitness(fitness_func, **kwargs)
+        elif self.refDataset and self.fitness_target_kws:
             return util.GA_optimization(d=self.refDataset, fitness_target_kws=self.fitness_target_kws)
-        elif self.fitness_func_name is not None:
-            if type(self.fitness_func_name) == str:
-                fitness_func = fitness_funcs[self.fitness_func_name]
-                return arrange_fitness(fitness_func, **kwargs)
+        else:
+            raise
 
 
 
@@ -217,19 +216,18 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
 
         '''
 
+        self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, load=False)
+        GAevaluation.__init__(self, **parameters.ga_eval_kws)
+        GAselector.__init__(self, **parameters.ga_select_kws)
         BaseRun.__init__(self,runtype='Ga',parameters=parameters, **kwargs)
+
         self.best_genome = None
         self.best_fitness = None
+        self.sorted_genomes = None
         self.all_genomes_dic = []
         self.num_cpu = multiprocessing.cpu_count()
         self.generation_num = 0
         self.start_total_time = aux.TimeUtil.current_time_millis()
-
-        self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=self.p.refID,
-                                                        dir=self.p.dataset_dir)
-        GAevaluation.__init__(self,**self.p.ga_eval_kwsv)
-        GAselector.__init__(self, **self.p.ga_select_kws)
-
 
     def setup(self):
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
@@ -278,15 +276,10 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
-        from larvaworld.lib.process.dataset import LarvaDatasetCollection
-        ds = LarvaDatasetCollection.from_agentpy_logs(logs=self._logs, Ngen=Ngen, p=self.p)
-
-        for d in ds:
-        # for gID, df in data.items():
-
-
-
-            # d = self.convert_output_to_dataset(df=df,id=f'{gID}_generation:{Ngen}')
+        # from larvaworld.lib.process.dataset import LarvaDatasetCollection
+        # ds = LarvaDatasetCollection.from_agentpy_logs(logs=self._logs, Ngen=Ngen, p=self.p)
+        self.data_collection = larvaworld.LarvaDatasetCollection.from_agentpy_output(self.output)
+        for d in self.data_collection.datasets:
             d._enrich(proc_keys=['angular', 'spatial'], is_last=False)
             fit_dicts = func(s=d.step_data)
             valid_gs = {}
@@ -333,13 +326,9 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         self.update()
         self.generation_step_num += 1
         if self.generation_completed:
-            self.agents.nest_record(self.collectors['end'])
-            sorted_genomes = self.eval_robots(Ngen=self.generation_num, genome_dict=self.genome_dict)
-            self.delete_agents()
-            self._logs = {}
-            self.t = 0
+            self.end()
             if not self.max_generation_completed:
-                self.build_generation(sorted_genomes)
+                self.build_generation(self.sorted_genomes)
             else:
                 self.finalize()
 
@@ -353,8 +342,17 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
             for robot in self.agents:
                 if self.exclude_func(robot):
                     robot.genome.fitness = -np.inf
-                    self.delete_agent(robot)
+                    # self.delete_agent(robot)
         self.screen_manager.render()
+
+    def end(self):
+        self.agents.nest_record(self.collectors['end'])
+        self.create_output()
+        self.sorted_genomes = self.eval_robots(Ngen=self.generation_num, genome_dict=self.genome_dict)
+        self.delete_agents()
+        self._logs = {}
+        self.t = 0
+
 
     def update(self):
 
@@ -362,6 +360,7 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
 
     def finalize(self):
         self.running = False
+        self.screen_manager.finalize()
         if self.progress_bar:
             self.progress_bar.finish()
         reg.vprint(f'Best fittness: {self.best_genome.fitness}', 1)

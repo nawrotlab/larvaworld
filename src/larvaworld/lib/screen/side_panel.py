@@ -19,18 +19,18 @@ class SidePanel:
     def __init__(self, viewer):
         self.viewer = viewer
         self.line_num = None
-        self.line_spacing = self.LINE_SPACING_MAX if self.viewer.height > self.SCENE_HEIGHT_THRESHOLD else self.LINE_SPACING_MIN
+        self.line_spacing = self.LINE_SPACING_MAX if self.viewer.h > self.SCENE_HEIGHT_THRESHOLD else self.LINE_SPACING_MIN
         if pygame.font:
             self.font = pygame.font.Font(None, self.FONT_SIZE)
         else :
             self.font = None
-        self.panel_rect = pygame.Rect(self.viewer.width, 0, self.viewer.manager.panel_width, self.viewer.height)
+        self.panel_rect = pygame.Rect(self.viewer.w, 0, self.viewer.manager.panel_width, self.viewer.h)
 
 
 
     #@ property
     def render_intro(self):
-        m = self.viewer.model
+        m = self.viewer.manager.model
         cur_t = aux.TimeUtil.current_time_millis()
         cum_t = math.floor((cur_t - m.start_total_time) / 1000)
         lines = [
@@ -57,7 +57,7 @@ class SidePanel:
             self.render_line(line, self.LEFT_MARGIN)
 
     def render_results(self):
-        m = self.viewer.model
+        m = self.viewer.manager.model
         best_gen=m.best_genome
         if best_gen is not None :
             self.render_line('Max fitness: ' + str(round(best_gen.fitness, 2)))
@@ -83,7 +83,7 @@ class SidePanel:
 
     def render_line(self, text, extra_margin=0):
         line = self.font.render(text, 1, aux.Color.WHITE)
-        x = self.viewer.width + self.DEFAULT_MARGIN + extra_margin
+        x = self.viewer.w + self.DEFAULT_MARGIN + extra_margin
         y = self.line_num * self.line_spacing
         lint_pos = pygame.Rect(x, y, 20, 20)
         self.viewer.draw_text_box(line, lint_pos)
@@ -92,5 +92,5 @@ class SidePanel:
     def draw(self, v, **kwargs):
         # draw a black background for the side panel
         pygame.draw.rect(v._window, aux.Color.BLACK, self.panel_rect)
-        v.draw_line((v.width, 0), (v.width, v.height), color=aux.Color.WHITE)
+        v.draw_line((v.w, 0), (v.w, v.h), color=aux.Color.WHITE)
         self.display_ga_info()

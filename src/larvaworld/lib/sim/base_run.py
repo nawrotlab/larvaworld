@@ -48,7 +48,7 @@ class BaseRun(agentpy.Model,SimConfiguration):
                     kwargs[k]=parameters[k]
 
         agentpy.Model.__init__(self, parameters=parameters)
-
+        # print('ssss')
         SimConfiguration.__init__(self, runtype=runtype, **kwargs)
 
         self.p.update(**self.nestedConf)

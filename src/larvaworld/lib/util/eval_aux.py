@@ -231,7 +231,7 @@ def GA_optimization(refID=None, fitness_target_kws=None,d=None):
         for k, kfunc in func_dict.items():
             fit_dicts.update(kfunc(s))
         return fit_dicts
-
+    # raise
     return aux.AttrDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg': 's'})
 
 

@@ -614,21 +614,36 @@ class LarvaDatasetCollection :
             assert 'sample_id' not in df.index.names
             step, end = convert_group_output_to_dataset(df, config0['collectors'])
             config = config0.get_copy()
-            gConf = config0.larva_groups[gID]
             kws = {
-                'larva_groups': {gID: gConf},
+                # 'larva_groups': {gID: gConf},
                 # 'df': df,
                 'group_id': config0.id,
                 'id': gID,
                 'refID': None,
                 # 'refID': f'{config0.id}/{gID}',
-                'dir': f'{config0.dir}/data/{gID}',
-                'color': gConf.default_color,
+                'dir': None,
+                'color': None,
                 # 'sample': gConf.sample,
                 # 'life_history': gConf.life_history,
                 # 'model': gConf.model,
 
             }
+            if 'larva_groups' in config0.keys():
+                gConf = config0.larva_groups[gID]
+                kws.update(**{
+                    'larva_groups': {gID: gConf},
+                    # 'df': df,
+                    # 'group_id': config0.id,
+                    # 'id': gID,
+                    # 'refID': None,
+                    # 'refID': f'{config0.id}/{gID}',
+                    'dir': f'{config0.dir}/data/{gID}',
+                    'color': gConf.default_color,
+                    # 'sample': gConf.sample,
+                    # 'life_history': gConf.life_history,
+                    # 'model': gConf.model,
+
+                })
             config.update(**kws)
             d=BaseLarvaDataset.initGeo(to_Geo=to_Geo,config=config,load_data=False,step=step,end=end,agents=agents)
 
@@ -640,6 +655,9 @@ class LarvaDatasetCollection :
     def from_agentpy_logs(cls, logs, Ngen, p):
         ds = []
         for gID, gLog in logs.items():
+            print(gLog['0'].keys())
+            raise
+
             df=df_from_log(gLog)
             assert 'sample_id' not in df.index.names
             step, end = convert_group_output_to_dataset(df, p['collectors'])
