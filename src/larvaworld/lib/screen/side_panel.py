@@ -24,7 +24,7 @@ class SidePanel:
             self.font = pygame.font.Font(None, self.FONT_SIZE)
         else :
             self.font = None
-        self.panel_rect = pygame.Rect(self.viewer.width, 0, self.viewer.panel_width, self.viewer.height)
+        self.panel_rect = pygame.Rect(self.viewer.width, 0, self.viewer.manager.panel_width, self.viewer.height)
 
 
 

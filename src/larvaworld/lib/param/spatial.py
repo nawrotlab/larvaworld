@@ -145,7 +145,7 @@ class PosPixelRel2Point(Pos2DPixel):
 
 
 class PosPixelRel2Area(Pos2DPixel):
-    reference_area = param.ClassSelector(Area2DPixel, doc='The reference position instance', is_instance=False)
+    reference_area = param.ClassSelector(Area2DPixel, doc='The reference position instance', is_instance=True)
     pos_scale = PositiveRange((0.5, 0.5), softmax=1.0, step=0.01,
                               doc='The position relative to reference position')
 

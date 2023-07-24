@@ -6,7 +6,8 @@ import param
 from shapely import geometry
 
 from larvaworld.lib.param import Viewable, ViewableGroupedObject, PositiveRange, PositiveNumber, PositionedArea2DPixel, \
-    ViewableToggleable, NestedConf, PositiveInteger, Pos2DPixel, Area2DPixel, PosPixelRel2Area
+    ViewableToggleable, NestedConf, PositiveInteger, Pos2DPixel, Area2DPixel, PosPixelRel2Area, IntegerTuple2DRobust, \
+    NumericTuple2DRobust
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
@@ -17,22 +18,19 @@ from larvaworld.lib import aux
 
 
 class Viewer(object):
-    def __init__(self, model, window_dims, caption="", fps=10, dt=0.1, record_video_to=None,
-                 record_image_to=None, panel_width=0):
+    def __init__(self, manager, caption="", record_video_to=None,
+                 record_image_to=None):
         pygame.init()
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (1550, 400)
 
-        self.model = model
-        self.space_bounds = self.model.space.scaled_range
+        self.manager = manager
         self.zoom = 1
         self.caption = caption
-        self.width,self.height = window_dims
-        self.window_dims = window_dims
-        self.panel_width = panel_width
+
+        # self.panel_width = panel_width
 
         self._t = pygame.time.Clock()
-        self._fps = fps
-        self.dt = dt
+        self._fps = self.manager._fps
         self.center = np.array([0.0, 0.0])
         self.center_lim = np.array([0.0, 0.0])
         self.snapshot_requested=None
@@ -54,7 +52,7 @@ class Viewer(object):
 
         self._scale = np.array([[1., .0], [.0, -1.]])
         self._translation = np.zeros(2)
-        self.set_bounds(*self.space_bounds)
+        self.set_bounds()
 
     def increase_fps(self):
         if self._fps < 60:
@@ -114,7 +112,7 @@ class Viewer(object):
     def draw_arena(self, tank_color, screen_color):
         surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
         surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-        vs = [self._transform(v) for v in self.model.space.vertices]
+        vs = [self._transform(v) for v in self.manager.model.space.vertices]
         pygame.draw.polygon(surf1, tank_color, vs, 0)
         pygame.draw.rect(surf2, screen_color, surf2.get_rect())
         surf2.blit(surf1, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
@@ -122,8 +120,8 @@ class Viewer(object):
 
     def init_screen(self):
         flags = pygame.HWSURFACE | pygame.DOUBLEBUF
-        if self.model.show_display:
-            window = pygame.display.set_mode((self.width + self.panel_width, self.height), flags)
+        if self.manager.show_display:
+            window = pygame.display.set_mode((self.manager.w + self.manager.panel_width, self.manager.h), flags)
             pygame.display.set_caption(self.caption)
             pygame.event.set_allowed(pygame.QUIT)
         else:
@@ -133,7 +131,7 @@ class Viewer(object):
 
     @ property
     def zoomed_window_dims(self):
-        return (np.array(self.window_dims) / self.zoom).astype(int)
+        return (np.array(self.manager.window_dims) / self.zoom).astype(int)
 
 
     def zoom_screen(self, d_zoom, pos=None):
@@ -145,10 +143,11 @@ class Viewer(object):
             self.center = np.clip(self.center - pos * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
-        self.set_bounds(*self.space_bounds)
+        self.set_bounds()
 
-
-    def set_bounds(self, left, right, bottom, top):
+    #@property
+    def set_bounds(self):
+        left, right, bottom, top=self.manager.model.space.scaled_range
         assert right > left and top > bottom
         x = self.display_size[0] / (right - left)
         y = self.display_size[1] / (top - bottom)
@@ -241,7 +240,7 @@ class Viewer(object):
         return np.linalg.inv(self._scale).dot(p)
 
     def render(self):
-        if self.model.show_display:
+        if self.manager.show_display:
             pygame.display.flip()
             image = pygame.surfarray.pixels3d(self._window)
             self._t.tick(self._fps)
@@ -277,14 +276,15 @@ class Viewer(object):
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
-        self.set_bounds(*self.space_bounds)
+        self.set_bounds()
 
     @staticmethod
-    def load_from_file(file_path, model, **kwargs):
+    def load_from_file(file_path, **kwargs):
         from larvaworld.lib.model.envs.obstacle import Wall, Box
         with open(file_path) as f:
             line_number = 1
-
+            viewer = Viewer(**kwargs)
+            m=viewer.manager.model
             for line in f:
                 words = line.split()
 
@@ -299,10 +299,10 @@ class Viewer(object):
                     continue
 
                 if words[0] == 'Scene':
-                    # pass
+                    pass
                     # width = int(words[1])
                     # height = int(words[2])
-                    viewer = Viewer(model=model,**kwargs)
+                    # viewer = Viewer(**kwargs)
                 # elif words[0] == 'SensorDrivenRobot':
                 #     x = float(words[1])
                 #     y = float(words[2])
@@ -313,7 +313,7 @@ class Viewer(object):
                     x = int(words[1])
                     y = int(words[2])
                     size = int(words[3])
-                    box = Box(x, y, size,model=model, default_color='lightgreen')
+                    box = Box(x, y, size,model=m, default_color='lightgreen')
                     box.label = line_number
                     viewer.put(box)
                 elif words[0] == 'Wall':
@@ -324,7 +324,7 @@ class Viewer(object):
 
                     point1 = geometry.Point(x1, y1)
                     point2 = geometry.Point(x2, y2)
-                    wall = Wall(point1, point2,model=model, default_color='lightgreen')
+                    wall = Wall(point1, point2,model=m, default_color='lightgreen')
                     wall.label = line_number
                     viewer.put(wall)
                 elif words[0] == 'Light':
@@ -332,7 +332,7 @@ class Viewer(object):
                     x = int(words[1])
                     y = int(words[2])
                     emitting_power = int(words[3])
-                    light = LightSource(x, y, emitting_power, aux.Color.YELLOW, aux.Color.BLACK,model=model)
+                    light = LightSource(x, y, emitting_power, aux.Color.YELLOW, aux.Color.BLACK,model=m)
                     light.label = line_number
                     viewer.put(light)
 
@@ -341,11 +341,71 @@ class Viewer(object):
         return viewer
 
 
+class ScreenTextFont(NestedConf) :
+    text_color = param.Color('black', doc='The color of the text')
+    text = param.String('', doc='The text to draw')
+    font_size = PositiveInteger(doc='The font size')
+    font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
+    text_centre = NumericTuple2DRobust(doc='The text center position')
+    # font = param.Parameter(doc='The font to use')
+    # text_font = param.Parameter(doc='The text font')
+    # text_font_r = param.Parameter(doc='The text font rect')
+
+    def __init__(self, **kwargs):
+        self.font = None
+        # self.text_centre = None
+        self.text_font = None
+        self.text_font_r = None
+        super().__init__(**kwargs)
+
+        # self.update_font()
+        # self.update_font_centre_pos()
+
+
+        # self.render_text()
+
+    @param.depends('text','text_color','text_centre', watch=True)
+    def render_text(self):
+        self.font = pygame.font.SysFont(self.font_type, self.font_size)
+        self.text_font = self.font.render(self.text, 1, self.text_color)  # zero-pad hours to 2 digits
+        self.text_font_r = self.text_font.get_rect()
+        self.text_font_r.center = self.text_centre
 
 
 
-class ScreenBox(Area2DPixel, ViewableToggleable):
-    default_color = param.Color('lightblue')
+
+    def draw(self, v,**kwargs):
+        if not self.font :
+            self.update_font()
+        v.draw_text_box(self.text_font, self.text_font_r)
+
+    def set_text(self, text):
+        self.text = text
+
+
+
+class ScreenTextFontRel(ScreenTextFont):
+    text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
+    font_size_scale = PositiveNumber(1 / 40, doc='The font size relative to the window size')
+    reference_object = param.ClassSelector(PosPixelRel2Area, doc='The object hosting the text')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.update_font_size(self.reference_object)
+        self.update_font_centre_pos(self.reference_object)
+
+    #@param.depends('reference_object', 'text_centre_scale', watch=True)
+    def update_font_centre_pos(self,obj):
+        dx, dy = self.text_centre_scale
+        self.text_centre = (obj.x * dx, obj.y * dy)
+
+    #@param.depends('reference_object', watch=True)
+    def update_font_size(self, obj):
+        self.font_size = int(obj.reference_area.w * self.font_size_scale)
+
+
+class ScreenBox(PosPixelRel2Area, Area2DPixel, ViewableToggleable):
+    # default_color = param.Color('black')
     visible = param.Boolean(False)
     dims = PositiveRange(default=(140,32))
     linewidth = PositiveNumber(0.01, doc='The linewidth to draw the box')
@@ -375,38 +435,46 @@ class ScreenBox(Area2DPixel, ViewableToggleable):
 
 
 class ScreenTextBox(ScreenBox) :
-    text_color = param.Color(doc='The color of the text')
+    text_color = param.Color('black', doc='The color of the text')
     text = param.String('', doc='The text to draw')
     font_size = PositiveInteger(doc='The font size')
     font_size_scale = PositiveNumber(1/40, doc='The font size relative to the window size')
     font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
     text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
+    text_centre = NumericTuple2DRobust(doc='The text center position')
+    # font = param.Parameter(doc='The font to use')
+    # text_font = param.Parameter(doc='The text font')
+    # text_font_r = param.Parameter(doc='The text font rect')
 
     def __init__(self, **kwargs):
+        self.font = None
+        # self.text_centre = None
+        self.text_font = None
+        self.text_font_r = None
         super().__init__(**kwargs)
         if self.text_color is None:
             self.text_color = self.default_color
 
-        self.font = None
-        self.text_centre = None
-        self.text_font = None
-        self.text_font_r = None
+
+
         self.update_font()
+        self.update_font_centre_pos()
+
+
         self.render_text()
 
     @param.depends('text','text_color','text_centre', watch=True)
     def render_text(self):
+        if not self.font :
+            self.update_font()
         self.text_font = self.font.render(self.text, 1, self.text_color)  # zero-pad hours to 2 digits
         self.text_font_r = self.text_font.get_rect()
         self.text_font_r.center = self.text_centre
 
 
-    @param.depends('fontsize', watch=True)
+    @param.depends('font_size', watch=True)
     def update_font(self):
-        if self.fontsize is None:
-            self.fontsize = int(self.w * self.fontsize_scale)
-        # width, height = self.window_dims
-        # self.font_size=int(width *self.font_size_scale)
+        self.font_size = int(self.reference_area.w * self.font_size_scale)
         self.font = pygame.font.SysFont(self.font_type, self.font_size)
 
     @param.depends('pos', 'text_centre_scale', watch=True)
@@ -421,12 +489,27 @@ class ScreenTextBox(ScreenBox) :
     def set_text(self, text):
         self.text = text
 
+    def get_input(self, event):
+        if self.visible:
+            self.switch(event)
+            if event.type == pygame.KEYDOWN:
+                if self.active:
+                    if event.key == pygame.K_RETURN:
+                        self.submit()
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.text = self.text[:-1]
+                    else:
+                        self.text += event.unicode
+
+    def submit(self):
+        print(self.text)
+        self.visible = False
+
 
 class PositionedScreenTextBox(ScreenBox, Pos2DPixel):pass
 
-class PositionedRel2AreaScreenTextBox(ScreenBox, PosPixelRel2Area):pass
+class DisplayTextBox(ScreenTextBox):pass
 
-class DisplayTextBox(PositionedRel2AreaScreenTextBox):pass
 
 
 class InputBox(Viewable):
@@ -563,7 +646,6 @@ class LabelledGroupedObject(ViewableGroupedObject):
 
 
 
-
 class SimulationClock(PosPixelRel2Area, Viewable):
     pos_scale = PositiveRange((0.94, 0.04))
 
@@ -578,18 +660,17 @@ class SimulationClock(PosPixelRel2Area, Viewable):
         self.minute = 0
         self.hour = 0
 
-        width, height=self.window_dims
-        large_font_size = int(1 / 40 * width)
-        small_font_size = int(1 / 50 * width)
+        kws={
+            'reference_object':self,
+            'text_color':self.default_color,
+        }
 
-        # Fonts
-        self.font_large = pygame.font.SysFont("Trebuchet MS", large_font_size)
-        self.font_small = pygame.font.SysFont("Trebuchet MS", small_font_size)
-
-        self.hour_centre=(self.x * 0.91, self.y)
-        self.minute_centre=(self.x * 0.95, self.y)
-        self.second_centre=(self.x * 1, self.y)
-        self.msecond_centre=(self.x * 1.04, self.y * 1.1)
+        self.text_fonts ={
+            'hour': ScreenTextFontRel(font_size_scale=(1 / 40), text_centre_scale=(0.91, 1.0), **kws),
+         'minute': ScreenTextFontRel(font_size_scale=(1 / 40), text_centre_scale=(0.95, 1.0), **kws),
+         'second': ScreenTextFontRel(font_size_scale=(1 / 50), text_centre_scale=(1.0, 1.0), **kws),
+         'dmsecond': ScreenTextFontRel(font_size_scale=(1 / 50), text_centre_scale=(1.04, 1.1), **kws),
+         }
 
 
     def tick_clock(self):
@@ -608,33 +689,22 @@ class SimulationClock(PosPixelRel2Area, Viewable):
 
 
     def draw(self, v,**kwargs):
-        c=self.default_color
-        self.hour_font = self.font_large.render("{0:02}".format(self.hour), 1, c)  # zero-pad hours to 2 digits
-        self.hour_font_r = self.hour_font.get_rect()
-        self.hour_font_r.center = self.hour_centre
+        for k,f in self.text_fonts.items():
+            t=getattr(self, k)
+            if k!='hour':
+                f.set_text(":{0:02}".format(t))
+            else:
+                f.set_text("{0:02}".format(t))
+            f.draw(v,**kwargs)
 
-        self.minute_font = self.font_large.render(":{0:02}".format(self.minute), 1,c)  # zero-pad minutes to 2 digits
-        self.minute_font_r = self.minute_font.get_rect()
-        self.minute_font_r.center = self.minute_centre
 
-        self.second_font = self.font_large.render(":{0:02}:".format(self.second), 1,c)  # zero-pad seconds to 2 digits
-        self.second_font_r = self.second_font.get_rect()
-        self.second_font_r.center = self.second_centre
 
-        self.dmsecond_font = self.font_small.render("{0:02}".format(self.dmsecond), 1,c)  # zero-pad miliseconds to 2 digits
-        self.msecond_font_r = self.dmsecond_font.get_rect()
-        self.msecond_font_r.center = self.msecond_centre
-
-        v.draw_text_box(self.hour_font, self.hour_font_r)
-        v.draw_text_box(self.minute_font, self.minute_font_r)
-        v.draw_text_box(self.second_font, self.second_font_r)
-        v.draw_text_box(self.dmsecond_font, self.msecond_font_r)
 
 
 class SimulationScale(DisplayTextBox):
     real_width = PositiveNumber(0.1, softmax=10.0, doc='The width of the Arena possibly zoomed')
-    font_size_scale = PositiveNumber(1 / 40)
     pos_scale = PositiveRange((0.1, 0.04))
+    font_size_scale = PositiveNumber(1 / 40)
     text_centre_scale = PositiveRange((1, 1.5))
 
     def __init__(self, **kwargs):
@@ -652,7 +722,7 @@ class SimulationScale(DisplayTextBox):
             lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
         self.scale_to_draw = self.scale_in_mm / w_in_mm
         self.text=f'{self.scale_in_mm} mm'
-        self.lines = self.compute_lines(self.x, self.y, self.scale_to_draw * self.window_dims[0])
+        self.lines = self.compute_lines(self.x, self.y, self.scale_to_draw * self.reference_area.w)
 
 
     def compute_lines(self, x, y, scale):
@@ -668,6 +738,7 @@ class SimulationScale(DisplayTextBox):
     def draw(self, v,**kwargs):
         for line in self.lines:
             pygame.draw.line(v._window, self.default_color, line[0], line[1], 1)
+        # v.draw_text_box(self.text_font, self.text_font_r)
         super().draw(v,**kwargs)
 
 

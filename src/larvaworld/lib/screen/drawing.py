@@ -16,7 +16,7 @@ class MediaDrawOps(NestedConf):
     image_file = String(doc='Filename for the saved image. File extension png sutomatically added.')
     snapshot_interval_in_sec= PositiveInteger(60, softmax=100,doc='Sec between snapshots')
     video_file = String(doc='Filename for the saved video. File extension mp4 sutomatically added.')
-    fps_in_sec = PositiveInteger(60, softmax=100,doc='Video speed')
+    fps = PositiveInteger(60, softmax=100,doc='Video speed')
     save_video= Boolean(False, doc='Whether to save a video.')
     # show_display = Boolean(True, doc='Whether to launch the pygame-visualization.')
 
@@ -24,8 +24,8 @@ class AgentDrawOps(NestedConf):
     trails = Boolean(False,doc='Draw the larva trajectories')
     trajectory_dt = PositiveNumber(2,step=0.2,doc='Duration of the drawn trajectories')
     draw_sensors = Boolean(False,doc='Draw the larva sensors')
-    draw_contour = Boolean(False,doc='Draw the larva contour')
-    draw_midline = Boolean(False,doc='Draw the larva midline')
+    draw_contour = Boolean(True,doc='Draw the larva contour')
+    draw_midline = Boolean(True,doc='Draw the larva midline')
     draw_centroid = Boolean(False,doc='Draw the larva centroid')
     draw_head = Boolean(False,doc='Draw the larva head')
     draw_orientations = Boolean(False,doc='Draw the larva body vector orientations')
@@ -38,24 +38,22 @@ class ScreenOps(NestedConf):
     black_background = Boolean(False, doc='Set the background color to black')
     random_colors = Boolean(False,doc='Color each larva with a random color')
     color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
-
+    panel_width = PositiveInteger(0, doc='The width of the side panel in pixels')
 
 class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
 
     def __init__(self, model, traj_color=None, background_motion=None,
                  vis_kwargs=None, video=None, **kwargs):
         m = self.model = model
-        super().__init__(dims=aux.get_window_dims(m.space.dims), **kwargs)
+        super().__init__(dims=aux.get_window_dims(m.space.dims),show_display=m.show_display, **kwargs)
 
         self.window_dims = self.dims
-
+        self._fps= int(self.fps / m.dt)
         if vis_kwargs is None:
             mode='video' if video else None
             vis_kwargs = reg.get_null('visualization', mode=mode)
         vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
         self.mode = vis.render.mode
-        self.__dict__.update(vis.draw)
-        self.__dict__.update(vis.color)
         self.__dict__.update(vis.aux)
 
 
@@ -66,7 +64,7 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
             self.black_background)
         self.bg = background_motion
 
-        self.active = (self.save_video or self.image_mode) and self.model.show_display
+        self.active = self.save_video or self.image_mode or self.show_display
         self.v = None
 
         self.selected_type = ''
@@ -87,10 +85,8 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
         self.pygame_keys = None
 
         self.screen_kws = aux.AttrDict({
-            'model': self.model,
-            'window_dims': self.window_dims,
-            'dt': m.dt,
-            'fps': int(self.fps_in_sec/m.dt)
+            'manager': self,
+
 
         })
 
@@ -214,10 +210,9 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
 
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,scene='no_boxes',**kwargs):
-        super().__init__(black_background=True,**kwargs)
+        super().__init__(black_background=True,panel_width=panel_width,**kwargs)
         self.screen_kws.caption = f'GA {self.model.experiment} : {self.model.id}'
         self.screen_kws.file_path = f'{reg.ROOT_DIR}/lib/sim/ga_scenes/{scene}.txt'
-        self.screen_kws.panel_width = panel_width
 
 
     def evaluate_input(self):
@@ -260,7 +255,7 @@ class ScreenManager(BaseScreenManager):
             if self.video_file is None:
                 self.video_file = str(self.model.id)
             self.screen_kws.record_video_to = f'{f}/{self.video_file}.mp4'
-        if self.mode == 'image':
+        if self.image_mode:
             os.makedirs(f, exist_ok=True)
             if self.image_file is None:
                 self.image_file = str(self.model.id)
@@ -287,18 +282,17 @@ class ScreenManager(BaseScreenManager):
 
     def build_aux(self):
         m=self.model
-        c=self.scale_clock_color
         self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
                                          center=True, w=120 * 4, h=32 * 4,
                                          font=pygame.font.SysFont("comicsansms", 32 * 2))
         kws={
             'reference_area':self,
-            'default_color':c,
+            'default_color':self.scale_clock_color,
         }
         self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
         self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],**kws)
         self.sim_state = screen.SimulationState(model=m,**kws)
-        self.screen_texts = {name: screen.InputBox(text=name, default_color=c) for name in [
+        self.screen_texts = {name: screen.InputBox(text=name, **kws) for name in [
             'trajectory_dt',
             'trails',
             'focus_mode',
@@ -321,9 +315,9 @@ class ScreenManager(BaseScreenManager):
             'odorscape #',
             'windscape',
             'is_paused',
-        ]}
-        for name in list(m.odor_layers.keys()):
-            self.screen_texts[name] = screen.InputBox(text=name, default_color=c)
+        ] + list(m.odor_layers.keys())
+                             }
+
 
 
 
