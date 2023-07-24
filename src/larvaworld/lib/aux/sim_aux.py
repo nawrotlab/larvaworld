@@ -2,6 +2,7 @@
 import math
 import random
 import numpy as np
+import pandas as pd
 from numpy import ndarray
 from shapely import geometry, ops
 from typing import Optional, List
@@ -275,13 +276,31 @@ def get_larva_dicts(ls, validIDs=None):
     dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
     return dic
 
-def get_step_slice(s,e,dt, pars, t0=0, t1=40, track_t0_min=0, track_t1_min=0):
+def get_step_slice(s,e,dt, pars=None, t0=0, t1=40, track_t0_min=0, track_t1_min=0, ids=None):
     s0, s1 = int(t0 / dt), int(t1 / dt)
     trange = np.arange(s0, s1, 1)
-    tmin = track_t0_min + t0
-    tmax = t1 - track_t1_min
-    valid_ids = e[(e['t0'] <= tmin) & (e['t1'] >= tmax)].index
-    return s.loc[(trange, valid_ids), pars]
+
+    if aux.cols_exist(['t0','t1'], e):
+        tmin = track_t0_min + t0
+        tmax = t1 - track_t1_min
+        valid_ids = e[(e['t0'] <= tmin) & (e['t1'] >= tmax)].index
+        if ids :
+            valid_ids=aux.existing_cols(valid_ids, ids)
+        if pars :
+            return s.loc[(trange, valid_ids), pars]
+        else:
+            return s.loc[(trange, valid_ids), :]
+    else:
+        if pars :
+            if ids:
+                return s.loc[(trange, ids), pars]
+            else:
+                return s.loc[(trange, slice(None)), pars]
+        else:
+            if ids:
+                return s.loc[(trange, ids), :]
+            else:
+                return s.loc[(trange, slice(None)), :]
 
 def index_unique(df, level='Step', ascending=True, as_array=False):
     """
@@ -301,12 +320,18 @@ def index_unique(df, level='Step', ascending=True, as_array=False):
         return a
 
 def existing_cols(cols,df) :
-    return [col for col in cols if col in df.columns.values]
+    if isinstance(df, pd.DataFrame):
+        df=df.columns.values
+    return [col for col in cols if col in df]
 
 def nonexisting_cols(cols,df) :
-    return [col for col in cols if col not in df.columns.values]
+    if isinstance(df, pd.DataFrame):
+        df=df.columns.values
+    return [col for col in cols if col not in df]
 
 def cols_exist(cols,df) :
-    return set(cols).issubset(df.columns.values)
+    if isinstance(df, pd.DataFrame):
+        df=df.columns.values
+    return set(cols).issubset(df)
 
 

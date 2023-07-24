@@ -267,3 +267,13 @@ class NestedConf(param.Parameterized):
             d.unique_id = id
             d.pop('unique_id')
         return {id:d}
+
+    @property
+    def param_keys(self):
+        ks= list(self.param.objects().keys())
+        return [k for k in ks if k not in ['name']]
+
+
+    def params_missing(self, d):
+        ks=self.param_keys
+        return [k for k in ks if k not in d.keys()]

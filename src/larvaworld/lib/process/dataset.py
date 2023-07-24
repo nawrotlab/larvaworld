@@ -396,6 +396,8 @@ class LarvaDataset(BaseLarvaDataset):
         if par in df.columns :
             return df[par]
         else :
+            if k is None :
+                k = reg.getPar(p=par, to_return='k')
             return reg.par.get(k=k, d=self, compute=True)
 
 
@@ -651,39 +653,7 @@ class LarvaDatasetCollection :
 
         return cls(datasets=ds, config=config0)
 
-    @classmethod
-    def from_agentpy_logs(cls, logs, Ngen, p):
-        ds = []
-        for gID, gLog in logs.items():
-            print(gLog['0'].keys())
-            raise
 
-            df=df_from_log(gLog)
-            assert 'sample_id' not in df.index.names
-            step, end = convert_group_output_to_dataset(df, p['collectors'])
-            config = p.get_copy()
-            # config.id=gID
-
-            kws = {
-                # 'larva_groups': {gID: gConf},
-                # 'df': df,
-                'group_id': p.id,
-                'id': f'{Ngen}_{gID}',
-                'refID': None,
-                # 'refID': f'{config0.id}/{gID}',
-                'dir': f'{p.dir}/{Ngen}/{gID}',
-                'color': None,
-                # 'sample': gConf.sample,
-                # 'life_history': gConf.life_history,
-                # 'model': gConf.model,
-
-            }
-            config.update(**kws)
-            d = BaseLarvaDataset.initGeo(config=config, load_data=False, step=step, end=end)
-
-            ds.append(d)
-
-        return ds
 
 def convert_group_output_to_dataset(df, collectors):
 
@@ -696,88 +666,4 @@ def convert_group_output_to_dataset(df, collectors):
     step = df[collectors['step']]
 
     return step, end
-
-
-def df_from_log(gLog):
-    g= {}
-    Ng=0
-    for id, log in gLog.items():
-        N=len(log['t'])
-        Ng+=N
-        # Add object id/key to object log
-        log['obj_id'] = [id] * N
-
-        # Add object log to aggregate log
-        for k, v in log.items():
-            Nv=len(v)
-            if k not in g:
-                g[k] = []
-            # while len(g[k]) < (Ng-Nv):
-            #     g[k].append(None)
-            # g[k][-len(v):] = v
-            g[k].extend(v)
-            # print(id, k, len(g[k]), len(v))
-    # for k, v in g.items():
-    #     print(k,len(v))
-    df = pd.DataFrame(g)
-    return df.set_index(['obj_id', 't'])
-        # return ddf
-# class RefDataset(aux.NestedConf):
-#     refID = reg.conf.Ref.confID_selector()
-#     # refID = aux.OptionalSelector(objects=[], doc='The reference dataset ID')
-#     dataset_dir = param.Foldername(default=None,
-#                            label='directory of reference dataset',
-#                            doc='The path to the stored dataset relative to Root/data. Alternative to providing refID')
-#
-#     conf = param.ClassSelector(default=None, class_=aux.AttrDict,
-#                                label='reference dataset config', doc='The stored reference dataset config')
-#     refDataset = param.ClassSelector(default=None, class_=BaseLarvaDataset,
-#                                   label='reference dataset', doc='The stored reference dataset')
-#
-#     """Select a reference dataset by ID"""
-#
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
-#         self.update_dir()
-#         self.update_conf()
-#
-#
-#
-#     @param.depends('refID', watch=True)
-#     def update_dir(self):
-#         self.dataset_dir = reg.conf.Ref.getRefDir(self.refID)
-#
-#
-#
-#     @param.depends('dataset_dir', watch=True)
-#     def update_conf(self, **kwargs):
-#         if self.dataset_dir is not None:
-#
-#             path = f'{self.dataset_dir}/data/conf.txt'
-#             if os.path.isfile(path):
-#                 c = aux.load_dict(path)
-#                 if 'id' in c.keys():
-#                     reg.vprint(f'Loaded existing conf {c.id}', 1)
-#                     self.conf = c
-#         self.update_dataset(**kwargs)
-#
-#     def update_dataset(self, **kwargs):
-#         if self.conf is not None:
-#             self.refDataset = LarvaDataset(config=self.conf, **kwargs)
-#         elif self.dataset_dir is not None:
-#             self.refDataset = LarvaDataset(dir=f'{reg.DATA_DIR}/{self.dataset_dir}', **kwargs)
-
-# def prepare_dataset(config,step,end,to_Geo=False,agents=None):
-#     if not to_Geo :
-#         # from larvaworld.lib.process.dataset import LarvaDataset
-#         d = LarvaDataset(config=config)
-#     else:
-#         from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
-#         d = LarvaTrajectoryCollection(config=config)
-#     d.set_data(step=step, end=end)
-#     if agents and not to_Geo:
-#         d.larva_dicts = aux.get_larva_dicts(agents, validIDs=d.agent_ids)
-#
-#
-#     return d
 

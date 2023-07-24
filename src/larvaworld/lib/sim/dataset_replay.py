@@ -55,9 +55,9 @@ class ReplayRun(BaseRun):
 
 
     def build_agents(self, s,e,c):
-        try:
+        if 'length' in e.columns:
             ls = e['length'].values
-        except:
+        else:
             ls = np.ones(c.N) * 5
         confs=[{'unique_id':id, 'length':ls[i], 'data':s.xs(id, level='AgentID', drop_level=True)} for i, id in enumerate(c.agent_ids)]
         self.place_agents(confs)
@@ -95,9 +95,9 @@ class ReplayRun(BaseRun):
             c.N = len(c.agent_ids)
         if p.env_params is not None:
             c.env_params = p.env_params
-        c.env_params.windscape = None
-        if p.close_view:
+        elif p.close_view:
             c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
+        c.env_params.windscape = None
         return c
 
     def smaller_dataset(self,p, d):

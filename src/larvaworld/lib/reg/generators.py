@@ -172,14 +172,25 @@ class RefType(ConfType):
         return self.getID(id)
 
     def getRef(self, id=None, dir=None):
-        if dir is None:
-            dir=self.getRefDir(id)
-        path = f'{dir}/data/conf.txt'
+        path = self.path_to_Ref(id=id, dir=dir)
         assert os.path.isfile(path)
         c = aux.load_dict(path)
         assert 'id' in c.keys()
         reg.vprint(f'Loaded existing conf {c.id}', 1)
         return c
+
+    def setRef(self, c, id=None, dir=None):
+        path = self.path_to_Ref(id=id, dir=dir)
+        aux.save_dict(c, path)
+        assert 'id' in c.keys()
+        reg.vprint(f'Saved conf under ID {c.id}', 1)
+
+
+    def path_to_Ref(self, id=None, dir=None):
+        if dir is None:
+            dir=self.getRefDir(id)
+        return f'{dir}/data/conf.txt'
+
 
     def loadRef(self, id=None, dir=None, load=False, **kwargs):
         from larvaworld import LarvaDataset

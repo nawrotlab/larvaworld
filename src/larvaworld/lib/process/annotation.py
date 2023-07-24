@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.signal import find_peaks
 
 from larvaworld.lib.aux import nam
-from larvaworld.lib import reg, aux, util, decorators
+from larvaworld.lib import reg, aux, util
 
 
 def register_bout_distros(c,e):
@@ -346,6 +346,9 @@ def compute_interference_data(s, e, c, d, Nbins=64, **kwargs) :
 
 @reg.funcs.annotation("interference2")
 def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
+    p_sv, p_fov, p_rov, p_foa, p_b, pau_fov_mu = reg.getPar(['sv', 'fov', 'rov', 'foa', 'b', 'pau_fov_mu'])
+
+
     x = np.linspace(0, 2 * np.pi, Nbins)
 
     sss = {id: s.xs(id, level="AgentID") for id in c.agent_ids}
@@ -356,8 +359,8 @@ def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
         stride_dic_dfo = {}
         for jj, id in enumerate(c.agent_ids):
             ss = sss[id]
-            stride_dic[id] = detect_strides(ss[reg.getPar('sv')].values, c.dt, return_runs=False, return_extrema=False)
-            a_fov = ss[reg.getPar('fov')].values
+            stride_dic[id] = detect_strides(ss[p_sv].values, c.dt, return_runs=False, return_extrema=False)
+            a_fov = ss[p_fov].values
             stride_dic_dfo[id] = np.array([np.trapz(a_fov[s0:s1]) for ii, (s0, s1) in enumerate(stride_dic[id])])
     else:
         stride_dic = {id: chunk_dicts[id]['stride'] for id in c.agent_ids}
@@ -399,11 +402,11 @@ def compute_interference(s, e, c,d=None, Nbins=64, chunk_dicts=None):
     att0s, att1s = np.min(mean_curves_abs['fov'], axis=1), np.max(mean_curves_abs['fov'], axis=1)
 
     e[aux.nam.max('phi_attenuation')] = x[np.argmax(mean_curves_abs['fov'], axis=1)]
-    e[aux.nam.max(f'phi_{reg.getPar("sv")}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
+    e[aux.nam.max(f'phi_{p_sv}')] = x[np.argmax(mean_curves_abs['sv'], axis=1)]
     e[reg.getPar('str_sv_max')] = np.max(mean_curves_abs['sv'], axis=1)
     try:
-        e['attenuation'] = att0s / e[reg.getPar('pau_fov_mu')]
-        e[aux.nam.max('attenuation')] = (att1s - att0s) / e[reg.getPar('pau_fov_mu')]
+        e['attenuation'] = att0s / e[pau_fov_mu]
+        e[aux.nam.max('attenuation')] = (att1s - att0s) / e[pau_fov_mu]
     except:
         pass
     if d is not None :

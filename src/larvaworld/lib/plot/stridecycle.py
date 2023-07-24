@@ -128,8 +128,12 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
 
             else:
                 if 'pooled_cycle_curves' not in c.keys():
-                    s, e = d.step_data, d.endpoint_data
-                    compute_interference(s, e, c=c)
+                    try:
+                        c.pooled_cycle_curves=aux.AttrDict(d.read( 'pooled_cycle_curves'))
+                    except:
+                        s, e = d.step_data, d.endpoint_data
+                        compute_interference(s, e, c=c, d=d)
+                        c.pooled_cycle_curves = aux.AttrDict(d.read('pooled_cycle_curves'))
                 P.axs[ii].plot(x, np.array(c.pooled_cycle_curves[sh][mode]), label=d.id, color=col)
 
         P.conf_ax(ii, xticks=np.linspace(0, 2 * np.pi, 5), xlim=[0, 2 * np.pi],

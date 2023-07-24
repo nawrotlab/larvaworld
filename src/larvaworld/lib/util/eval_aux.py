@@ -6,6 +6,8 @@ from scipy.stats import ks_2samp
 
 from larvaworld.lib import reg, aux
 
+
+
 def eval_end_fast(ee, e_data, e_sym, mode='pooled'):
     Eend = {}
     for p, sym in e_sym.items():
@@ -126,32 +128,52 @@ def arrange_evaluation(d, evaluation_metrics=None):
             'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
                                      'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
             'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
-            'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-            'epochs': ['run_t', 'pau_t'],
-            'tortuosity': ['tor5', 'tor20']
+            'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std'],
+            #'epochs': ['run_t', 'pau_t'],
+            #'tortuosity': ['tor5', 'tor20']
         }
 
 
+    if not hasattr(d, 'step_data'):
+        d.load(h5_ks=['epochs','base_spatial','angular','dspNtor'])
+    s,e=d.step_data,d.endpoint_data
+    # Edata, Ddata = {}, {}
+    all_ks=aux.unique_list(aux.flatten_list(evaluation_metrics.values()))
+    all_ps = reg.getPar(all_ks)
+    Eps = aux.existing_cols(all_ps, e)
+    Dps = aux.existing_cols(all_ps, s)
+    Dps=aux.nonexisting_cols(Dps,Eps)
+    Eks = reg.getPar(p=Eps, to_return='k')
+    Dks = reg.getPar(p=Dps, to_return='k')
+    target_data = aux.AttrDict({'step': {p:s[p].dropna() for p in Dps}, 'end': {p:e[p] for p in Eps}})
 
-    Edata, Ddata = {}, {}
     dic = aux.AttrDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
-        Eshorts, Dshorts = [], []
-        ps = reg.getPar(shs)
-        for sh, p in zip(shs, ps):
-            # print(p)
-            try:
-                data = d.get_par(par=p,key='end')
-                # data = d.read(key='end')[p]
-                if data is not None:
-                    Edata[p] = data
-                    Eshorts.append(sh)
-            except:
-                data = d.get_par(par=p,key='step')
-                # data = d.read(key=p, file='distro')
-                if data is not None:
-                    Ddata[p] = data.dropna()
-                    Dshorts.append(sh)
+        Eshorts, Dshorts = aux.existing_cols(shs,Eks), aux.existing_cols(shs,Dks)
+        # ps = reg.getPar(shs)
+        # Eps=aux.existing_cols(ps, d.endpoint_data)
+        # Dps=aux.existing_cols(ps-Eps, d.step_data)
+
+
+        # for p in aux.existing_cols(ps, d.endpoint_data):
+
+        # for sh, p in zip(shs, ps):
+        #     # print(p)
+        #     try:
+        #         data = d.get_par(par=p,k=sh,key='end')
+        #         # data = d.read(key='end')[p]
+        #         if data is not None:
+        #             Edata[p] = data
+        #             Eshorts.append(sh)
+        #     except:
+        #         try:
+        #             data = d.get_par(par=p,k=sh,key='step')
+        #             # data = d.read(key=p, file='distro')
+        #             if data is not None:
+        #                 Ddata[p] = data.dropna()
+        #                 Dshorts.append(sh)
+        #         except:
+        #             pass
 
         # Eshorts = [sh for sh, p in zip(shs, ps) if p in e.columns]
         # Dshorts = [sh for sh, p in zip(shs, ps) if p in s.columns]
@@ -162,10 +184,10 @@ def arrange_evaluation(d, evaluation_metrics=None):
         if len(Dshorts) > 0:
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
-    target_data = aux.AttrDict({'step': Ddata, 'end': Edata})
+    # target_data = aux.AttrDict({'step': Ddata, 'end': Edata})
 
 
-    ev = {k: col_df(**v) for k, v in dic.items()}
+    ev = aux.AttrDict({k: col_df(**v) for k, v in dic.items()})
 
     return ev, target_data
 
@@ -222,17 +244,16 @@ def RSS_dic(dd, d):
 def GA_optimization(refID=None, fitness_target_kws=None,d=None):
     if d is None :
         d = reg.loadRef(refID)
-    fit_dic0 = build_fitness(fitness_target_kws, d)
+    D = build_fitness(fitness_target_kws, d)
 
-    func_dict = fit_dic0['func_global_dict']
 
     def func(s):
-        fit_dicts = {}
-        for k, kfunc in func_dict.items():
+        fit_dicts = aux.AttrDict()
+        for kfunc in D.func_global_dict.values():
             fit_dicts.update(kfunc(s))
         return fit_dicts
     # raise
-    return aux.AttrDict({'func': func, 'keys': fit_dic0['keys'], 'func_arg': 's'})
+    return aux.AttrDict({'func': func, 'keys': D.keys, 'func_arg': 's'})
 
 
 def build_fitness(dic, refDataset):
@@ -243,6 +264,11 @@ def build_fitness(dic, refDataset):
     for k, vs in dic.items():
 
         if k == 'cycle_curves':
+            if not 'pooled_cycle_curves' in c:
+                from larvaworld.lib.process.annotation import compute_interference
+                s,e,c=d.data
+                c.pooled_cycle_curves= compute_interference(s, e, c=c,d=d, chunk_dicts=d.read('chunk_dicts'))
+
             cycle_dict = {'sv': 'abs', 'fov': 'norm', 'rov': 'norm', 'foa': 'norm', 'b': 'norm'}
             cycle_ks = vs
             cycle_modes = {sh: cycle_dict[sh] for sh in cycle_ks}
@@ -272,8 +298,8 @@ def build_fitness(dic, refDataset):
         if k == 'eval_metrics':
 
             evaluation, target_data = arrange_evaluation(d, evaluation_metrics=vs)
-            s_shorts = aux.flatten_list(evaluation['step']['shorts'].values.tolist())
-            s_pars = aux.flatten_list(evaluation['step']['pars'].values.tolist())
+            s_shorts = aux.flatten_list(evaluation.step.shorts.values.tolist())
+            s_pars = aux.flatten_list(evaluation.step.pars.values.tolist())
             s_symbols = aux.AttrDict(dict(zip(s_pars, s_shorts)))
             keys += s_shorts
             # for p, sym in s_symbols.items():
