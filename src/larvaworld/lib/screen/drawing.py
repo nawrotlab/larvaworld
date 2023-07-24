@@ -268,7 +268,6 @@ class ScreenManager(BaseScreenManager):
         v = screen.Viewer(**self.screen_kws)
 
         self.display_configuration(v)
-        self.render_aux()
         self.set_background(*v.display_dims)
 
         self.draw_arena(v)
@@ -282,9 +281,11 @@ class ScreenManager(BaseScreenManager):
 
     def build_aux(self):
         m=self.model
-        self.input_box = screen.InputBox(screen_pos=self.space2screen_pos((0.0, 0.0)),
-                                         center=True, w=120 * 4, h=32 * 4,
-                                         font=pygame.font.SysFont("comicsansms", 32 * 2))
+        self.input_box = screen.InputBox(
+            screen_pos=self.space2screen_pos((0.0, 0.0)),
+                                         centered=True, dims=(120 * 4, 32 * 4),
+                                         font_type = "comicsansms",font_size = 32 * 2,
+        )
         kws={
             'reference_area':self,
             'default_color':self.scale_clock_color,
@@ -292,7 +293,7 @@ class ScreenManager(BaseScreenManager):
         self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
         self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],**kws)
         self.sim_state = screen.SimulationState(model=m,**kws)
-        self.screen_texts = {name: screen.InputBox(text=name, **kws) for name in [
+        self.screen_texts = {name: screen.ScreenMsgText(text=name, **kws) for name in [
             'trajectory_dt',
             'trails',
             'focus_mode',
@@ -431,12 +432,7 @@ class ScreenManager(BaseScreenManager):
             b._draw(v=v)
         # self.model.borders._draw(v=v)
 
-    def render_aux(self):
-        # self.sim_clock.render(*self.window_dims)
-        # self.sim_scale.render(*self.window_dims)
-        # self.sim_state.render(*self.window_dims)
-        for t in self.screen_texts.values():
-            t.render(*self.window_dims)
+
 
     def draw_background(self, v):
         if self.bgimage is not None and self.bgimagerect is not None:

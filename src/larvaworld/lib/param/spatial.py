@@ -82,17 +82,7 @@ class Area2D(NestedConf):
     def h(self):
         return self.dims[1]
 
-    def set_shape(self, pos=None):
-        import pygame
-        if pos is None and hasattr(self, 'pos'):
-            pos=self.pos
-        if pos is not None and not any(np.isnan(pos)):
-            if self.centered:
-                return pygame.Rect(pos[0] - self.w / 2, pos[1] - self.h / 2, self.w, self.h)
-            else:
-                return pygame.Rect(pos[0], pos[1], self.w, self.h)
-        else:
-            return None
+
 
 
 class Area2DPixel(Area2D):
