@@ -144,7 +144,7 @@ class ScreenWindowAreaBasic(Area2DPixel):
 
 
 
-class ScreenWindowArea(ScreenWindowAreaBasic):
+class ScreenWindowArea2(ScreenWindowAreaBasic):
     # scaling_factor=PositiveNumber(1., doc='Scaling factor')
     # space=param.ClassSelector(Area,default=Area(), doc='Arena')
     zoom = PositiveNumber(1., doc='Zoom factor')
@@ -163,6 +163,8 @@ class ScreenWindowArea(ScreenWindowAreaBasic):
     @ property
     def display_size(self):
         return (np.array(self.dims) / self.zoom).astype(int)
+
+
 
     @param.depends('zoom', 'center', watch=True)
     def set_bounds(self):
@@ -194,8 +196,11 @@ class ScreenWindowArea(ScreenWindowAreaBasic):
             self.center = np.array([0.0, 0.0])
         # self.set_bounds()
 
-
-
+class ScreenWindowArea(ScreenWindowArea2):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # # self.dims = aux.get_window_dims(self.space.dims)
+        # self.sim_scale=
 
 
 class BoundedArea(Area, LineClosed):

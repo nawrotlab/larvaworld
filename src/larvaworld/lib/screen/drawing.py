@@ -92,18 +92,18 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
 
         })
 
-    def space2screen_pos(self, pos):
-        if pos is None or any(np.isnan(pos)):
-            return None
-        try:
-            return self.v._transform(pos)
-        except:
-            X, Y = np.array(self.model.space.dims) * self.model.scaling_factor
-            # X0, Y0 = self.window_dims
-
-            p = pos[0] * 2 / X, pos[1] * 2 / Y
-            pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
-            return pp
+    # def space2screen_pos(self, pos):
+    #     if pos is None or any(np.isnan(pos)):
+    #         return None
+    #     try:
+    #         return self.v._transform(pos)
+    #     except:
+    #         X, Y = np.array(self.model.space.dims) * self.model.scaling_factor
+    #         # X0, Y0 = self.window_dims
+    #
+    #         p = pos[0] * 2 / X, pos[1] * 2 / Y
+    #         pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
+    #         return pp
 
 
     def set_default_colors(self, black_background):
@@ -270,7 +270,7 @@ class ScreenManager(BaseScreenManager):
         v = screen.Viewer(**self.screen_kws)
         self.build_aux(v)
         # self.display_configuration(v)
-        self.set_background(*v.display_dims)
+        # self.set_background(*v.display_dims)
 
         self.draw_arena(v)
 
@@ -283,16 +283,21 @@ class ScreenManager(BaseScreenManager):
 
     def build_aux(self,v):
         m=self.model
-        self.input_box = screen.ScreenTextBox(fullscreen=True,centered=True,
-                                              dims=(120 * 4, 32 * 4),display_area=v,
-                                         font_type = "comicsansms",font_size = 32 * 2,
+        self.input_box = screen.ScreenTextBoxRect(text_color='lightgreen', default_color='white',
+                                              frame_rect=v.get_rect_at_pos(),
+                                         font_type = "comicsansms",font_size = 40,
         )
         if self.intro_text:
-            box = screen.ScreenTextBox(
-                           text=self.model.configuration_text,
-                           text_color='black',default_color='white',
-                           visible=True,fullscreen=True,display_area=v,
-                           font_type = "comicsansms",font_size = 32 * 2)
+            box = screen.ScreenTextBoxRect(
+                text=self.model.configuration_text,
+                text_color='lightgreen', default_color='white',
+                visible=True, frame_rect=v.get_rect_at_pos(),
+                font_type="comicsansms", font_size=40)
+            # box = screen.ScreenTextBox(
+            #                text=self.model.configuration_text,
+            #                text_color='black',default_color='white',
+            #                visible=True,fullscreen=True,display_area=v,
+            #                font_type = "comicsansms",font_size = 32 * 2)
 
             # for i in range(10000):
             box.draw(v)
@@ -366,20 +371,6 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def set_background(self, width, height):
-        if self.bg is not None:
-            ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-            path = os.path.join(ROOT_DIR, 'background.png')
-            print('Loading background image from', path)
-            self.bgimage = pygame.image.load(path)
-            self.bgimagerect = self.bgimage.get_rect()
-            self.tw = self.bgimage.get_width()
-            self.th = self.bgimage.get_height()
-            self.th_max = int(height / self.th) + 2
-            self.tw_max = int(width / self.tw) + 2
-        else:
-            self.bgimage = None
-            self.bgimagerect = None
 
 
 
@@ -387,19 +378,6 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    # def display_configuration(self, v):
-    #     if self.intro_text:
-    #         box = screen.ScreenTextBox(
-    #                        text=self.model.configuration_text,
-    #                        default_color=pygame.Color('white'),
-    #                        visible=True,fullscreen=True,centered=True,
-    #                        dims=(120 * 4, 32 * 4),display_area=self,
-    #                        font_type = "comicsansms",font_size = 32 * 2)
-    #
-    #         for i in range(10):
-    #             box.draw(v)
-    #             v.render()
-    #         box.visible = False
 
 
 
@@ -437,7 +415,7 @@ class ScreenManager(BaseScreenManager):
 
         if not arena_drawn:
             v.draw_polygon(self.model.space.vertices, color=self.tank_color)
-            self.draw_background(v)
+            v.draw_background()
 
 
 
@@ -450,26 +428,6 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    def draw_background(self, v):
-        if self.bgimage is not None and self.bgimagerect is not None:
-            if self.bg is not None:
-                bg = self.bg[:, self.model.t - 1]
-            else:
-                bg = [0, 0, 0]
-            x, y, a = bg
-            try:
-                min_x = int(np.floor(x))
-                min_y = -int(np.floor(y))
-
-                for py in np.arange(min_y - 1, self.th_max + min_y, 1):
-                    for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
-                        if a != 0.0:
-                            # px,py=aux.rotate_point_around_point((px,py),-a)
-                            pass
-                        p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
-                        v._window.blit(self.bgimage, p)
-            except:
-                pass
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
         if disp is None:

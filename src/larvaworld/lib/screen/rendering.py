@@ -29,13 +29,14 @@ class ScreenWindowAreaPygame(ScreenWindowArea):
         p = np.array(pygame.mouse.get_pos()) - self._translation
         return np.linalg.inv(self._scale).dot(p)
 
+
     @property
-    def display_dims(self):
-        return self._window.get_width(), self._window.get_height()
+    def new_display_surface(self):
+        return pygame.Surface(self.display_size, pygame.SRCALPHA)
 
     def draw_arena(self, tank_color, screen_color):
-        surf1 = pygame.Surface(self.display_size, pygame.SRCALPHA)
-        surf2 = pygame.Surface(self.display_size, pygame.SRCALPHA)
+        surf1 = self.new_display_surface
+        surf2 = self.new_display_surface
         vs = [self._transform(v) for v in self.space.vertices]
         pygame.draw.polygon(surf1, tank_color, vs, 0)
         pygame.draw.rect(surf2, screen_color, surf2.get_rect())
@@ -126,7 +127,53 @@ class ScreenWindowAreaPygame(ScreenWindowArea):
             pygame.draw.polygon(self._window, color, (p0, p1, p2))
             l += dl
 
-class Viewer(ScreenWindowAreaPygame):
+class ScreenWindowAreaBackground(ScreenWindowAreaPygame):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.manager.bg is not None:
+            self.set_background()
+        else:
+            self.bgimage = None
+            self.bgimagerect = None
+
+
+    def set_background(self):
+        # if self.bg is not None:
+        ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(ROOT_DIR, 'background.png')
+        print('Loading background image from', path)
+        self.bgimage = pygame.image.load(path)
+        self.bgimagerect = self.bgimage.get_rect()
+        self.tw = self.bgimage.get_width()
+        self.th = self.bgimage.get_height()
+        self.th_max = int(self._window.get_height() / self.th) + 2
+        self.tw_max = int(self._window.get_width() / self.tw) + 2
+
+
+    def draw_background(self):
+        if self.bgimage is not None and self.bgimagerect is not None:
+            if self.bg is not None:
+                bg = self.bg[:, self.manager.model.t - 1]
+            else:
+                bg = [0, 0, 0]
+            x, y, a = bg
+            try:
+                min_x = int(np.floor(x))
+                min_y = -int(np.floor(y))
+
+                for py in np.arange(min_y - 1, self.th_max + min_y, 1):
+                    for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
+                        if a != 0.0:
+                            # px,py=aux.rotate_point_around_point((px,py),-a)
+                            pass
+                        p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
+                        self._window.blit(self.bgimage, p)
+            except:
+                pass
+
+
+
+class Viewer(ScreenWindowAreaBackground):
     def __init__(self, manager,  record_video_to=None, record_image_to=None, **kwargs):
         self.manager = manager
         m=manager.model
@@ -310,9 +357,9 @@ class ScreenTextFont(NestedConf) :
             self.text_font_r=[]
             x0,y0=self.text_centre
             for i in range(N):
-                f = self.font.render(ls[i], True, self.color)
+                f = self.font.render(ls[i], True, self.text_color)
                 r = f.get_rect()
-                r.center = x0,y0+(i-int(N/2))*100
+                r.center = x0,y0+(i-int(N/2))*80
                 self.text_font.append(f)
                 self.text_font_r.append(r)
 
@@ -345,7 +392,42 @@ class ScreenTextFont(NestedConf) :
         self.end_time = pygame.time.get_ticks() + t * 1000
         self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
 
+class ScreenTextFontRect(ScreenTextFont):
+    frame_rect = param.ClassSelector(pygame.Rect, doc='The frame rectangle')
+    linewidth = PositiveNumber(0.001, doc='The linewidth to draw the box')
+    show_frame = param.Boolean(True, doc='Draw the rectangular frame around the text')
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.text_centre = self.frame_rect.center
+
+    def draw(self, v, **kwargs):
+        if self.show_frame and self.frame_rect is not None:
+            pygame.draw.rect(v._window, color=self.text_color, rect=self.frame_rect, width=int(v._scale[0, 0] * self.linewidth))
+
+        super().draw(v=v, **kwargs)
+
+class ScreenTextBoxRect(ScreenTextFontRect, Viewable):
+    visible = param.Boolean(False)
+
+class ScreenTextBox2(ScreenTextFont, ViewableToggleable):
+    visible = param.Boolean(False)
+
+    def get_input(self, event):
+        if self.visible:
+            self.switch(event)
+            if event.type == pygame.KEYDOWN:
+                if self.active:
+                    if event.key == pygame.K_RETURN:
+                        self.submit()
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.text = self.text[:-1]
+                    else:
+                        self.text += event.unicode
+
+    def submit(self):
+        print(self.text)
+        self.visible = False
 
 class ScreenTextFontRel(ScreenTextFont):
     text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
@@ -369,17 +451,12 @@ class ScreenTextFontRel(ScreenTextFont):
 class ScreenBoxBasic(Area2DPixel):
     dims = PositiveRange(default=(140, 32))
 
-    fullscreen = param.Boolean(False, doc='Whether the box is fullscreen')
 
-    def __init__(self, display_area=None,**kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if self.fullscreen and display_area:
-            # self.dims=display_area.dims
-            self.shape = display_area.get_rect_at_pos()
-        else:
-            self.shape = None
+        self.frame_rect = None
 
-    def set_shape(self, pos=None,**kwargs):
+    def set_frame_rect(self, pos=None,**kwargs):
         return self.get_rect_at_pos(pos,**kwargs)
 
 
@@ -392,10 +469,10 @@ class ScreenBox(ScreenBoxBasic, ViewableToggleable):
 
     def draw(self, v, **kwargs):
         if self.show_frame:
-            if self.shape is not None:
+            if self.frame_rect is not None:
                 # v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
                 # pygame.draw.rect(v._window, color=self.color, rect=self.shape)
-                pygame.draw.rect(v._window, color=self.color, rect=self.shape, width=int(v._scale[0, 0] * self.linewidth))
+                pygame.draw.rect(v._window, color=self.color, rect=self.frame_rect, width=int(v._scale[0, 0] * self.linewidth))
 
 
 
@@ -407,15 +484,15 @@ class ScreenTextBox(ScreenTextFont, ScreenBox):
 
 
 
-    def draw(self, v, **kwargs):
-
-        if self.shape is not None:
-            self.text_centre=self.shape.center
-            # self.text_centre=self.shape.x /2, self.shape.y + 5
-            ScreenTextFont.draw(self, v=v, **kwargs)
-            ScreenBox.draw(self,v=v, **kwargs)
-        else:
-            ScreenTextFont.draw(self,v=v, **kwargs)
+    # def draw(self, v, **kwargs):
+    #
+    #     if self.shape is not None:
+    #         self.text_centre=self.shape.center
+    #         # self.text_centre=self.shape.x /2, self.shape.y + 5
+    #         ScreenTextFont.draw(self, v=v, **kwargs)
+    #         ScreenBox.draw(self,v=v, **kwargs)
+    #     else:
+    #         ScreenTextFont.draw(self,v=v, **kwargs)
 
     def get_input(self, event):
         if self.visible:
@@ -437,11 +514,9 @@ class ScreenTextBox(ScreenTextFont, ScreenBox):
 
 
 
-class IDBox(ScreenTextBox):
-    centered = param.Boolean(False)
+class IDBox(ScreenTextBox2):
+    # centered = param.Boolean(False)
     agent = param.ClassSelector(Pos2D, doc='The agent owning the ID')
-
-
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -455,78 +530,16 @@ class IDBox(ScreenTextBox):
         self.set_text(self.agent.unique_id)
 
     # @param.depends('agent.pos', watch=True)
-    def update_font_centre_pos(self):
+    def update_font_centre_pos(self,v):
         pos = self.agent.get_position()
-        x,y = self.agent.model.screen_manager.space2screen_pos(pos)
-        self.text_centre =x+self.w,y+self.h
+        x,y = v.space2screen_pos(pos)
+        self.text_centre =x+140,y+32
 
 
     def draw(self, v, **kwargs):
-        self.update_font_centre_pos()
+        self.update_font_centre_pos(v)
         ScreenTextFont.draw(self, v=v, **kwargs)
-        # v.draw_text_box(self.text_font, self.text_font_r)
 
-
-
-
-# class InputBox(ScreenBox):
-#
-#     def __init__(self, text='', end_time=0, start_time=0,
-#                  screen_pos=None,font=None, **kwargs):
-#         super().__init__(**kwargs)
-#
-#         self.end_time = end_time
-#         self.start_time = start_time
-#
-#         if font is None:
-#             pygame.init()
-#             font = pygame.font.Font(None, 32)
-#         self.font = font
-#         self.text = text
-#         self.text_font = None
-#
-#         if screen_pos is not None:
-#             self.shape = self.set_shape(screen_pos)
-#         else:
-#             self.shape = None
-#
-#     def draw(self, v,**kwargs):
-#         if self.shape is not None:
-#             # Render the current text.
-#             lines = self.text.splitlines()
-#             txt_surfaces = [self.font.render(l, True, self.color) for l in lines]
-#             # Blit the text.
-#             for i, s in enumerate(txt_surfaces):
-#                 v.draw_text_box(s, (self.shape.x + 5, self.shape.y + 5 + i * 100))
-#             if self.show_frame:
-#                 # Blit the input_box rect.
-#                 v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
-#         elif self.text_font is not None:
-#             self.text_font = self.font_large.render(self.text, 1, self.color)
-#             v.draw_text_box(self.text_font, self.text_font_r)
-#
-#
-#     def get_input(self, event):
-#         if self.visible:
-#             self.switch(event)
-#             if event.type == pygame.KEYDOWN:
-#                 if self.active:
-#                     if event.key == pygame.K_RETURN:
-#                         self.submit()
-#                     elif event.key == pygame.K_BACKSPACE:
-#                         self.text = self.text[:-1]
-#                     else:
-#                         self.text += event.unicode
-#
-#     def submit(self):
-#         print(self.text)
-#         self.visible = False
-#
-#
-#     def flash_text(self, text, t=2):
-#         self.set_text(text)
-#         self.end_time = pygame.time.get_ticks() + t * 1000
-#         self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)
 
 
 
@@ -550,14 +563,12 @@ class PosPixelRel2AreaViewable(PosPixelRel2Area, Viewable):pass
 
 
 
-class ScreenMsgTextFont(ScreenTextFontRel):
+
+class ScreenMsgText(ScreenTextFontRel, Viewable):
     text_centre_scale = PositiveRange((0.91, 1), softmax=10.0, step=0.01,
                                       doc='The text center position relative to the position')
     font_size_scale = PositiveNumber(1 / 25, doc='The font size relative to the window size')
     font_type = param.Parameter(default="SansitaOne.tff")
-
-
-class ScreenMsgText(ScreenMsgTextFont, Viewable):
 
 
     def __init__(self,reference_area, **kwargs):
@@ -673,9 +684,8 @@ class SimulationScale(PosPixelRel2AreaViewable):
         w_in_mm = self.real_width * 1000
         self.scale_in_mm = self.closest(
             lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
-        self.scale_to_draw = self.scale_in_mm / w_in_mm
         self.text_font.set_text(f'{self.scale_in_mm} mm')
-        self.lines = self.compute_lines(self.x, self.y, self.scale_to_draw * self.reference_area.w)
+        self.lines = self.compute_lines(self.x, self.y, self.scale_in_mm / w_in_mm * self.reference_area.w)
 
 
     def compute_lines(self, x, y, scale):
