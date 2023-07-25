@@ -40,6 +40,12 @@ class RangeRobust(Range):
             default=tuple(default)
         super().__init__(default=default, **kwargs)
 
+    def _validate_value(self, val, allow_None):
+        if val is not None and not isinstance(val,tuple) :
+            val=tuple(val)
+        super(RangeRobust, self)._validate_value(val, allow_None)
+
+
 class RangeInf(RangeRobust):
     """Allow None inside tuple"""
 
@@ -89,16 +95,19 @@ class OptionalPositiveInteger(Integer):
     def __init__(self,default=None, softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
 
-class RandomizedPhase(Number):
+class RandomizedPhase(Phase):
     """Phase number within (0,2pi)"""
-    def __init__(self,default=None, softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
-        # print(default)
-        # if default==np.nan :
-        #     default = None
-        # orientation = float(orientation)
+
+    def __init__(self, default=None, **kwargs):
         if default in [None, np.nan]:
             default = np.random.uniform(0, 2 * np.pi)
-        super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
+        super().__init__(default=default, allow_None=True,**kwargs)
+
+
+    def _validate_value(self, val, allow_None):
+        if val in [None, np.nan]:
+            val = np.random.uniform(0, 2 * np.pi)
+        super(RandomizedPhase, self)._validate_value(val, allow_None)
 
 class OptionalPositiveRange(RangeInf):
     """Tuple range of positive numbers"""

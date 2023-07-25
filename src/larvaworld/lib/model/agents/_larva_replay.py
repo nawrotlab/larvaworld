@@ -51,7 +51,7 @@ class LarvaReplay(Larva):
         kws={
             'model':model,
             'pos':self.pos_ar[0],
-            'orientation':self.front_or_ar[0],
+            'orientation':self.front_or_ar[0] if not np.isnan(self.front_or_ar[0]) else 0.0,
             'radius':self.real_length / 2,
             **kwargs
 

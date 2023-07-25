@@ -152,8 +152,8 @@ class ScreenWindowAreaBackground(ScreenWindowAreaPygame):
 
     def draw_background(self):
         if self.bgimage is not None and self.bgimagerect is not None:
-            if self.bg is not None:
-                bg = self.bg[:, self.manager.model.t - 1]
+            if self.manager.bg is not None:
+                bg = self.manager.bg[:, self.manager.model.t - 1]
             else:
                 bg = [0, 0, 0]
             x, y, a = bg

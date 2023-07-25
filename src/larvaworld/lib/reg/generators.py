@@ -444,13 +444,14 @@ class ExpConf(SimOps):
 
 class ReplayConf(NestedConf):
     refID = conf.Ref.confID_selector()
+    refDir = param.String(None)
     agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
     time_range = OptionalPositiveRange(default=None, doc='Whether to only replay a defined temporal slice of the dataset.')
     env_params = conf.Env.confID_selector()
     transposition = OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
     overlap_mode = param.Boolean(False,doc='Whether to draw overlapped image of the track.')
     close_view = param.Boolean(False,doc='Whether to visualize a small arena on close range.')
-    fix_segment = param.ListSelector(objects=[-1, 1], doc='Whether to additionally fixate the above or below body segment.')
+    fix_segment = param.ListSelector(objects=['rear', 'front'], doc='Whether to additionally fixate the above or below body segment.')
     fix_point = OptionalPositiveInteger(softmin=1, softmax=12, doc='Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.')
     draw_Nsegs = OptionalPositiveInteger(softmin=1, softmax=12,doc='Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.')
     track_point = param.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')

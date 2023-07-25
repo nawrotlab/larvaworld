@@ -3,6 +3,7 @@ import os
 import param
 from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
+from larvaworld.lib import aux
 
 from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
     OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, IntegerRangeOrdered, PositiveIntegerRangeOrdered
@@ -39,6 +40,28 @@ class XYops(NestedConf):
                               doc='The number of points tracked along the larva midline.')
     Ncontour = PositiveInteger(0, softmax=100, label='# contour 2D points',
                                doc='The number of points tracked around the larva contour.')
+
+    @property
+    def midline_points(self):
+        return aux.nam.midline(self.Npoints, type='point')
+
+    @property
+    def midline_xy(self, flat=True):
+        return aux.nam.xy(self.midline_points, flat=flat)
+
+    @property
+    def contour_points(self):
+        return aux.nam.contour(self.Ncontour, type='point')
+
+    @property
+    def contour_xy(self, flat=True):
+        return aux.nam.xy(self.contour_points, flat=flat)
+
+    def get_track_point(self,idx):
+        if idx==-1:
+            return 'centroid'
+        else:
+            return self.midline_points[idx - 1]
 
 class Resolution(FramerateOps,XYops):
 
@@ -158,7 +181,26 @@ class LabFormat(NestedConf) :
     resolution = ClassAttr(Resolution, doc='The dataset metadata')
     filesystem = ClassAttr(LabFormatFilesystem, doc='The import-relevant lab-format filesystem')
 
-class SimMetricOps(XYops):
+class TrackedPointIdx(XYops):
+    point_idx = param.Integer(softbounds=(None,20),bounds=(-1,None),
+                                        doc='Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.')
+    point = param.String(doc='Midline point to use as the larva spatial position. Default is centroid.')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.update_tracked_point()
+
+    @param.depends('Npoints','point_idx', watch=True)
+    def update_tracked_point(self):
+        self.param.point_idx.bounds=(hardmin, hardmax) = (-1,self.Npoints)
+        self.point_idx=self.param.point_idx.crop_to_bounds(self.point_idx)
+        self.point=self.get_track_point(self.point_idx)
+
+
+
+
+
+class SimMetricOps(TrackedPointIdx):
     bend = Selector(objects=['from_vectors', 'from_angles'],
                     doc='Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.')
     front_vector = PositiveIntegerRangeOrdered((1, 2), softmax=12,
@@ -167,9 +209,7 @@ class SimMetricOps(XYops):
                                doc='The initial & final segment of the rear body vector.')
     front_body_ratio = Magnitude(0.5,
                                  doc='The fraction of the body considered front, relevant for bend computation from angles.')
-    point_idx = OptionalPositiveInteger(softmax=20,
-                                        doc='Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.')
-    point = param.String(doc='Midline point to use as the larva spatial position. Default is centroid.')
+
     use_component_vel = Boolean(False,
                                 doc='Whether to use the component velocity ralative to the axis of forward motion.')
 
@@ -187,23 +227,6 @@ class SimMetricOps(XYops):
         self.param.params('front_vector')._validate(self.front_vector)
         self.param.params('rear_vector').bounds=(-N, N)
         self.param.params('rear_vector')._validate(self.rear_vector)
-        # self.param.objects()
-        # self.param.params('rear_vector').softbounds = (-N,N)
-        # self.param.rear_vector.bounds = (-N,N)
-        self.param.point_idx.bounds=(hardmin, hardmax) = (0,N)
-        self.point_idx=self.param.point_idx.crop_to_bounds(self.point_idx)
-        self.point=self.get_track_point()
-
-    def get_track_point(self):
-        from larvaworld.lib import aux
-        points = aux.nam.midline(self.Npoints, type='point')
-
-        try:
-            return points[self.point_idx - 1]
-        except:
-            return 'centroid'
-
-
 
 
 

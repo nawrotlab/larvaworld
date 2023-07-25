@@ -22,28 +22,33 @@ class ReplayRun(BaseRun):
             experiment: The type of experiment. Defaults to 'replay'
             **kwargs: Arguments passed to parent class
         '''
-        # RefDataset.__init__(self, refDataset=dataset, refID=parameters.refID, dataset_dir=parameters.dataset_dir)
+        # RefDataset.__init__(self, refDataset=dataset, refID=parameters.refID, dataset_dir=parameters.refDir)
         # self.refDataset.load()
         # d=self.refDataset
-        d = self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=parameters.refID,
-                                                            dir=parameters.dataset_dir)
+        d = self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID,
+                                                            dir=parameters.refDir)
+
         # Configure the dataset to replay
-        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(parameters, d)
-        kwargs.dt=self.config.dt
-        kwargs.Nsteps = self.config.Nsteps
-        BaseRun.__init__(self,runtype='Replay', parameters=parameters,
-                         dt = self.config.dt,Nsteps = self.config.Nsteps, **kwargs)
+        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(p=parameters, d=self.refDataset)
+        parameters.steps = self.config.Nsteps
+        kwargs.update(**{'duration':self.config.duration,
+                       'dt':self.config.dt,
+                       'Nsteps':self.config.Nsteps})
+
+        # kwargs.dt=self.config.dt
+        # kwargs.Nsteps = self.config.Nsteps
+        BaseRun.__init__(self,runtype='Replay', parameters=parameters,**kwargs)
 
     def setup(self):
         s,e,c=self.step_data,self.endpoint_data,self.config
         fp,fs,dc=self.p.fix_point,self.p.fix_segment,self.p.dynamic_color
 
         if fp is not None:
-            s, bg = reg.funcs.preprocessing['fixation'](s, point=fp, fix_segment=fs, c=c)
+            s, bg = reg.funcs.preprocessing['fixation'](s, fixed_point_idx=fp, fix_segment=fs, c=c)
         else:
             bg = None
         self.draw_Nsegs = self.p.draw_Nsegs
-        self.build_env(c.env_params)
+        self.build_env(self.p.env_params)
         self.build_agents(s,e,c)
         screen_kws = {
             'video': not self.p.overlap_mode,
@@ -69,7 +74,6 @@ class ReplayRun(BaseRun):
         """ Proceeds the simulation by one step, incrementing `Model.t` by 1
         and then calling :func:`Model.step` and :func:`Model.update`."""
         if not self.is_paused:
-
             self.step()
             self.update()
             self.t += 1
@@ -95,9 +99,12 @@ class ReplayRun(BaseRun):
             c.N = len(c.agent_ids)
         if p.env_params is not None:
             c.env_params = p.env_params
-        elif p.close_view:
-            c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
-        c.env_params.windscape = None
+            if p.close_view:
+                c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
+        else:
+            p.env_params = c.env_params
+
+        # c.env_params.windscape = None
         return c
 
     def smaller_dataset(self,p, d):
@@ -127,7 +134,8 @@ class ReplayRun(BaseRun):
             except:
                 s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)
             xy_max=2*np.max(s0[nam.xy(c.point)].dropna().abs().values.flatten())
-            c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max))
-        c.Nsteps = len(s0.index.unique('Step').values)
-        c.duration=c.Nsteps * c.dt
+            c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
+            p.env_params.arena=c.env_params.arena
+        c.Nsteps = len(s0.index.unique('Step').values)-1
+        c.duration=c.Nsteps * c.dt/60
         return s0,e0, c

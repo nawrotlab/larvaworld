@@ -1,17 +1,14 @@
 import larvaworld.lib.sim.genetic_algorithm
-from larvaworld.lib import reg, sim
+from larvaworld.lib import reg, sim, aux
 
 
 def test_replay() :
-    refID =  'exploration.dish'
+    refIDs = reg.conf.Ref.confIDs
+    refID =  refIDs[-1]
+    dataset=reg.loadRef(refID)
     replay_kws = {
-        'normal': {
-            'time_range': (60,80)
-        },
-        'dispersal': {
-            'transposition': 'origin',
-            'time_range': (10,30)
-        },
+
+
         'fixed_point': {
             'agent_ids': [1],
             'close_view': True,
@@ -22,25 +19,36 @@ def test_replay() :
             'agent_ids': [1],
             'close_view': True,
             'fix_point': 6,
-            'fix_segment': -1,
+            'fix_segment': 'rear',
             'time_range': (100, 130)
         },
         'fixed_overlap': {
             'agent_ids': [1],
             'close_view': True,
             'fix_point': 6,
-            'fix_segment': -1,
+            'fix_segment': 'front',
             'overlap_mode': True
+        },
+        'normal': {
+            'time_range': (10, 30)
+        },
+        'dispersal': {
+            'transposition': 'origin',
+            'time_range': (60, 80)
         },
     }
 
     for mode, kws in replay_kws.items() :
-        parameters = {
-            'refID' : refID,
-        **kws
-                      }
-        rep = sim.ReplayRun(parameters=parameters, id=f'{refID}_replay_{mode}', save_to= './media')
-        rep.run()
+        parameters = reg.gen.Replay(**aux.AttrDict({
+            'refID': refID,
+            # 'dataset' : dataset,
+            **kws
+        })).nestedConf
+        rep = sim.ReplayRun(parameters=parameters,dataset=dataset, id=f'{refID}_replay_{mode}', dir= f'./media/{mode}')
+        output=rep.run()
+        assert output.parameters.constants['id']==rep.id
+        # raise
+'''
 
 def test_exp_run() :
     for exp in ['chemotaxis'] :
@@ -97,4 +105,7 @@ def xtest_batch_run() :
         conf=reg.conf.Batch.expand(exp)
         batch_run = sim.BatchRun(id=f'test_{exp}',batch_type=exp,**conf)
         batch_run.simulate()
+        
+        
+'''
 

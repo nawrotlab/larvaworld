@@ -6,6 +6,8 @@ import pandas as pd
 
 from larvaworld.lib import reg, aux, decorators
 from larvaworld.lib.aux import nam
+from larvaworld.lib.param import XYops
+
 
 def comp_linear(s, e, c, mode='minimal'):
     points = nam.midline(c.Npoints, type='point')
@@ -620,31 +622,44 @@ def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
 
 
 @reg.funcs.preproc("fixation")
-def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
+def fixate_larva(s, c, fixed_point_idx, arena_dims=None, fix_segment=None):
+    R=XYops(Npoints=c.Npoints,Ncontour=c.Ncontour)
+
     ids = s.index.unique(level='AgentID').values
     Nids = len(ids)
     N=s.index.unique('Step').size
-    points = nam.midline(c.Npoints, type='point') + ['centroid']
-    points_xy = nam.xy(points, flat=True)
-    contour = nam.contour(c.Ncontour)
-    contour_xy = nam.xy(contour, flat=True)
+    #points = nam.midline(c.Npoints, type='point') + ['centroid']
+    # points_xy = nam.xy(points, flat=True)
+    # contour = nam.contour(c.Ncontour)
+    # contour_xy = nam.xy(contour, flat=True)
 
-    all_xy_pars = points_xy + contour_xy
+    all_xy_pars = R.midline_xy + R.contour_xy + nam.xy('centroid')
+    pars = aux.existing_cols(all_xy_pars, s)
+    point = R.get_track_point(fixed_point_idx)
+    xy_ps = nam.xy(point)
+    if not aux.cols_exist(xy_ps, s):
+        raise ValueError(f" The requested {point} is not part of the dataset")
+
+
+    if point!='centroid' or fix_segment is None:
+        second_point = None
+    else:
+        if fix_segment == 'rear':
+            second_point_idx=fixed_point_idx + 1
+        elif fix_segment == 'front':
+            second_point_idx = fixed_point_idx - 1
+        else:
+            raise
+        second_point = R.get_track_point(second_point_idx)
+
+
     if Nids != 1:
         raise ValueError('Fixation only implemented for a single agent.')
     id=ids[0]
-    if type(point) == int:
-        if point == -1:
-            point = 'centroid'
-        else:
-            if fix_segment is not None and type(fix_segment) == int and np.abs(fix_segment) == 1:
-                fix_segment = points[point + fix_segment]
-            point = points[point]
 
-    pars = aux.existing_cols(all_xy_pars,s)
-    xy_ps = nam.xy(point)
-    if not aux.cols_exist(xy_ps,s):
-        raise ValueError(f" The requested {point} is not part of the dataset")
+
+
+
     reg.vprint(f'Fixing {point} to arena center')
     if arena_dims is None:
         arena_dims = c.env_params.arena.dims
@@ -657,12 +672,12 @@ def fixate_larva(s, c, point, arena_dims=None, fix_segment=None):
     for x, y in aux.group_list_by_n(pars, 2):
         s[[x, y]] -= xy
 
-    if fix_segment is not None:
-        xy_ps2 = nam.xy(fix_segment)
+    if second_point is not None:
+        xy_ps2 = nam.xy(second_point)
         if not aux.cols_exist(xy_ps2,s):
-            raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
+            raise ValueError(f" The requested secondary {second_point} is not part of the dataset")
 
-        reg.vprint(f'Fixing {fix_segment} as secondary point on vertical axis')
+        reg.vprint(f'Fixing {second_point} as secondary point on vertical axis')
         xy_sec = s[xy_ps2].values
         bg_a = np.arctan2(xy_sec[:, 1], xy_sec[:, 0]) - np.pi / 2
 

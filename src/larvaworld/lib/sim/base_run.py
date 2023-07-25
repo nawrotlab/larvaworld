@@ -49,10 +49,9 @@ class BaseRun(agentpy.Model,SimConfiguration):
 
         agentpy.Model.__init__(self, parameters=parameters)
         # print('ssss')
+
         SimConfiguration.__init__(self, runtype=runtype, **kwargs)
-
         self.p.update(**self.nestedConf)
-
         self.agent_class = self.define_agent_class()
         self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                    'path': f'{self.data_dir}/agentpy_output'}
