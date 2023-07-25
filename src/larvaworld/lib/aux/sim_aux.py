@@ -7,9 +7,7 @@ from numpy import ndarray
 from shapely import geometry, ops
 from typing import Optional, List
 
-import larvaworld
 from larvaworld.lib import aux
-from larvaworld.lib.aux import nam
 
 
 

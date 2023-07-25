@@ -32,7 +32,7 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
 
 
 
-@reg.funcs.graph('trajectories')
+@reg.funcs.graph('trajectories', required={'traj':[]})
 def traj_grouped(unit='mm', name=None, subfolder='trajectories',
                  range=None, mode='default', single_color=False, **kwargs):
     if name is None:

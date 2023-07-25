@@ -30,6 +30,7 @@ class Pos2D(NestedConf):
 class Pos2DPixel(Pos2D):
     pos = IntegerTuple2DRobust(doc='The xy spatial position coordinates')
 
+# Pos2DPixel=param.parameterized_class('Pos2DPixel', {'pos':IntegerTuple2DRobust(doc='The xy spatial position coordinates')}, bases=Pos2D)
 
 
 
@@ -108,6 +109,7 @@ class Area(Area2D):
     torus = param.Boolean(False, doc='Whether to allow a toroidal space')
 
 class ScreenWindowAreaBasic(Area2DPixel):
+
     scaling_factor=PositiveNumber(1., doc='Scaling factor')
     space=param.ClassSelector(Area,default=Area(), doc='Arena')
 
@@ -144,7 +146,7 @@ class ScreenWindowAreaBasic(Area2DPixel):
 
 
 
-class ScreenWindowArea2(ScreenWindowAreaBasic):
+class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
     # scaling_factor=PositiveNumber(1., doc='Scaling factor')
     # space=param.ClassSelector(Area,default=Area(), doc='Arena')
     zoom = PositiveNumber(1., doc='Zoom factor')
@@ -196,7 +198,7 @@ class ScreenWindowArea2(ScreenWindowAreaBasic):
             self.center = np.array([0.0, 0.0])
         # self.set_bounds()
 
-class ScreenWindowArea(ScreenWindowArea2):
+class ScreenWindowArea(ScreenWindowAreaZoomable):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # # self.dims = aux.get_window_dims(self.space.dims)

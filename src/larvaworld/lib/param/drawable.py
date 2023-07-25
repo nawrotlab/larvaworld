@@ -63,18 +63,15 @@ class ViewableToggleable(Viewable):
         # self.update_color()
 
 
-class ViewableNamed(Viewable,Named):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+# class ViewableNamed(Viewable,Named):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+class ViewableNamed(Viewable,Named): pass
+class ViewableSingleObject(Viewable,NamedObject): pass
+class ViewableGroupedObject(Viewable,GroupedObject): pass
 
 
-class ViewableSingleObject(Viewable,NamedObject):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
-class ViewableGroupedObject(Viewable,GroupedObject):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
 
 
@@ -89,13 +86,11 @@ class ViewableLine(Viewable,LineExtended):
             for ver in self.vertices:
                 v.draw_polyline(ver, color=self.color, width=self.width, closed=self.closed)
 
-class ViewableBoundedArea(Viewable,BoundedArea): pass
 
 
 
-class ViewableNamedLine(ViewableLine,Named): pass
 
-class ViewableNamedBoundedArea(ViewableBoundedArea,Named): pass
+class ViewableNamedBoundedArea(Viewable,BoundedArea,Named): pass
 
 class ViewableCircle(Viewable,RadiallyExtended):
 

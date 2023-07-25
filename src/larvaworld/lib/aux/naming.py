@@ -112,52 +112,13 @@ class NamingRegistry(aux.AttrDict):
         return self[f'{p}_at'](t, loc='pref')
         # return f'{p}_at_{t}'
 
+    def atStartStopChunk(self,p,chunk):
+        return [
+            self.at(p, self.start(chunk)),
+            self.at(p, self.stop(chunk)),
+            self.chunk_track(chunk, p)
+        ]
+
 
 
 nam=NamingRegistry()
-
-def h5_kdic(p, N, Nc):
-    def epochs_ps():
-        cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain', 'run']
-        pars = ['id', 'start', 'stop', 'dur', 'dst', nam.scal('dst'), 'length', nam.max('vel'), 'count']
-        pars = aux.flatten_list([nam.chunk_track(c, pars) for c in cs])
-        return pars
-
-    def dspNtor_ps():
-        tor_ps = [f'tortuosity_{dur}' for dur in [1, 2, 5, 10, 20, 30, 60, 100, 120, 240, 300]]
-        dsp_ps = [f'dispersion_{t0}_{t1}' for (t0, t1) in
-                  itertools.product([0, 5, 10, 20, 30, 60], [30, 40, 60, 90, 120, 240, 300])]
-        pars = tor_ps + dsp_ps + nam.scal(dsp_ps)
-        return pars
-
-    def base_spatial_ps(p=''):
-        d, v, a = ps = [nam.dst(p), nam.vel(p), nam.acc(p)]
-        ld, lv, la = lps = nam.lin(ps)
-        ps0 = nam.xy(p) + ps + lps + nam.cum([d, ld])
-        return ps0 + nam.scal(ps0)
-
-    def ang_pars(angs):
-        avels = nam.vel(angs)
-        aaccs = nam.acc(angs)
-        uangs = nam.unwrap(angs)
-        avels_min, avels_max = nam.min(avels), nam.max(avels)
-        return avels + aaccs + uangs + avels_min + avels_max
-
-    def angular(N):
-        Nangles = np.clip(N - 2, a_min=0, a_max=None)
-        Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-        ors = nam.orient(aux.unique_list(['front', 'rear', 'head', 'tail'] + nam.midline(Nsegs, type='seg')))
-        ang = ors + [f'angle{i}' for i in range(Nangles)] + ['bend']
-        return aux.unique_list(ang + ang_pars(ang))
-
-    dic = aux.AttrDict({
-        'contour': nam.contour_xy(Nc, flat=True),
-        'midline': nam.midline_xy(N, flat=True),
-        'epochs': epochs_ps(),
-        'base_spatial': base_spatial_ps(p),
-        'angular': angular(N),
-        'dspNtor': dspNtor_ps(),
-    })
-    return dic
-
-

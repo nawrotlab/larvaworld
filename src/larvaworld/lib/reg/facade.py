@@ -4,6 +4,7 @@ from larvaworld.lib import aux
 class FunctionDict:
     def __init__(self):
         self.graphs = aux.AttrDict()
+        self.graph_required_data=aux.AttrDict()
         self.stored_confs = aux.AttrDict()
         self.preprocessing = aux.AttrDict()
         self.processing = aux.AttrDict()
@@ -23,7 +24,8 @@ class FunctionDict:
     def annotation(self, name):
         return self.register_func(name, "annotating")
 
-    def graph(self, name):
+    def graph(self, name, required={}):
+        self.graph_required_data[name]=aux.AttrDict(required)
         return self.register_func(name, "graphs")
 
     def stored_conf(self, name):

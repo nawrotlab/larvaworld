@@ -5,7 +5,7 @@ from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
 
 from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
-    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber
+    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, IntegerRangeOrdered, PositiveIntegerRangeOrdered
 
 
 class FramerateOps(NestedConf):
@@ -161,9 +161,9 @@ class LabFormat(NestedConf) :
 class SimMetricOps(XYops):
     bend = Selector(objects=['from_vectors', 'from_angles'],
                     doc='Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.')
-    front_vector = IntegerRange((1, 2), softbounds=(-12, 12),
+    front_vector = PositiveIntegerRangeOrdered((1, 2), softmax=12,
                                 doc='The initial & final segment of the front body vector.')
-    rear_vector = IntegerRange((-2, -1), softbounds=(-12, 12),
+    rear_vector = IntegerRangeOrdered((-2, -1), softbounds=(-12, 12),
                                doc='The initial & final segment of the rear body vector.')
     front_body_ratio = Magnitude(0.5,
                                  doc='The fraction of the body considered front, relevant for bend computation from angles.')
@@ -181,11 +181,17 @@ class SimMetricOps(XYops):
     def update_vectors(self):
         N=self.Npoints
         # self.param.params('front_vector').softbounds = (-N,N)
-        self.param.params('front_vector').bounds = (-N,N)
+        #self.param.front_vector.bounds = (-N,N)
+        self.param.params('front_vector').bounds=(0, N)
+
+        self.param.params('front_vector')._validate(self.front_vector)
+        self.param.params('rear_vector').bounds=(-N, N)
+        self.param.params('rear_vector')._validate(self.rear_vector)
+        # self.param.objects()
         # self.param.params('rear_vector').softbounds = (-N,N)
-        self.param.params('rear_vector').bounds = (-N,N)
-        self.param.params('point_idx').bounds=(hardmin, hardmax) = (0,N)
-        self.point_idx=self.param.params('point_idx').crop_to_bounds(self.point_idx)
+        # self.param.rear_vector.bounds = (-N,N)
+        self.param.point_idx.bounds=(hardmin, hardmax) = (0,N)
+        self.point_idx=self.param.point_idx.crop_to_bounds(self.point_idx)
         self.point=self.get_track_point()
 
     def get_track_point(self):

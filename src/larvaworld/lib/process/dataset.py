@@ -1,3 +1,4 @@
+import itertools
 import os
 import shutil
 import numpy as np
@@ -77,7 +78,7 @@ class BaseLarvaDataset:
         self.__dict__.update(c)
         self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
         self.larva_dicts = {}
-        self.h5_kdic = aux.h5_kdic(c.point, c.Npoints, c.Ncontour)
+        self.h5_kdic = h5_kdic(c.point, c.Npoints, c.Ncontour)
         if load_data:
             self.load()
         elif step is not None or end is not None:
@@ -117,7 +118,7 @@ class BaseLarvaDataset:
         if c0.metric_definition is None:
             c0.metric_definition = reg.get_null('metric_definition')
 
-        points = aux.nam.midline(c0.Npoints, type='point')
+        points = aux.aux.nam.midline(c0.Npoints, type='point')
 
         try:
             c0.point = points[c0.metric_definition.spatial.point_idx - 1]
@@ -160,11 +161,11 @@ class BaseLarvaDataset:
 
     @property
     def points(self):
-        return aux.nam.midline(self.config.Npoints, type='point')
+        return aux.aux.nam.midline(self.config.Npoints, type='point')
 
     @property
     def contour(self):
-        return aux.nam.contour(self.config.Ncontour)
+        return aux.aux.nam.contour(self.config.Ncontour)
 
     def delete(self):
         shutil.rmtree(self.config.dir)
@@ -220,7 +221,7 @@ class LarvaDataset(BaseLarvaDataset):
                 c.duration = c.dt * c.Nticks
             if 'quality' not in c.keys():
                 try:
-                    df = s[aux.nam.xy(c.point)[0]].values.flatten()
+                    df = s[aux.aux.nam.xy(c.point)[0]].values.flatten()
                     valid = np.count_nonzero(~np.isnan(df))
                     c.quality = np.round(valid / df.shape[0], 2)
                 except:
@@ -507,8 +508,20 @@ class LarvaDatasetCollection :
     def plot_dir(self):
         return f'{self.dir}/group_plots'
 
-    def plot(self, gID,**kwargs):
-        return reg.graphs.run_group(gID,datasets=self.datasets,save_to=self.plot_dir,**kwargs)
+    def plot(self,ids=[], gIDs=[],**kwargs):
+        kws={
+            'datasets':self.datasets,
+            'save_to':self.plot_dir,
+            'show':False,
+            'subfolder':None
+        }
+        kws.update(**kwargs)
+        plots=aux.AttrDict()
+        for id in ids :
+            plots[id]=reg.graphs.run(id, **kws)
+        for gID in gIDs :
+            plots[gID]=reg.graphs.run_group(gID, **kws)
+        return plots
 
 
     def get_datasets(self, datasets=None, refIDs=None, dirs=None, group_id=None):
@@ -666,4 +679,53 @@ def convert_group_output_to_dataset(df, collectors):
     step = df[collectors['step']]
 
     return step, end
+
+
+
+def h5_kdic(p, N, Nc):
+    def epochs_ps():
+        cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain', 'run']
+        pars = ['id', 'start', 'stop', 'dur', 'dst', aux.nam.scal('dst'), 'length', aux.nam.max('vel'), 'count']
+        pars = aux.flatten_list([aux.nam.chunk_track(c, pars) for c in cs])
+        return pars
+
+    def dspNtor_ps():
+        tor_ps = [f'tortuosity_{dur}' for dur in [1, 2, 5, 10, 20, 30, 60, 100, 120, 240, 300]]
+        dsp_ps = [f'dispersion_{t0}_{t1}' for (t0, t1) in
+                  itertools.product([0, 5, 10, 20, 30, 60], [30, 40, 60, 90, 120, 240, 300])]
+        pars = tor_ps + dsp_ps + aux.nam.scal(dsp_ps)
+        return pars
+
+    def base_spatial_ps(p=''):
+        d, v, a = ps = [aux.nam.dst(p), aux.nam.vel(p), aux.nam.acc(p)]
+        ld, lv, la = lps = aux.nam.lin(ps)
+        ps0 = aux.nam.xy(p) + ps + lps + aux.nam.cum([d, ld])
+        return ps0 + aux.nam.scal(ps0)
+
+    def ang_pars(angs):
+        avels = aux.nam.vel(angs)
+        aaccs = aux.nam.acc(angs)
+        uangs = aux.nam.unwrap(angs)
+        avels_min, avels_max = aux.nam.min(avels), aux.nam.max(avels)
+        return avels + aaccs + uangs + avels_min + avels_max
+
+    def angular(N):
+        Nangles = np.clip(N - 2, a_min=0, a_max=None)
+        Nsegs = np.clip(N - 1, a_min=0, a_max=None)
+        ors = aux.nam.orient(aux.unique_list(['front', 'rear', 'head', 'tail'] + aux.nam.midline(Nsegs, type='seg')))
+        ang = ors + [f'angle{i}' for i in range(Nangles)] + ['bend']
+        return aux.unique_list(ang + ang_pars(ang))
+
+    dic = aux.AttrDict({
+        'contour': aux.nam.contour_xy(Nc, flat=True),
+        'midline': aux.nam.midline_xy(N, flat=True),
+        'epochs': epochs_ps(),
+        'base_spatial': base_spatial_ps(p),
+        'angular': angular(N),
+        'dspNtor': dspNtor_ps(),
+    })
+    return dic
+
+
+
 

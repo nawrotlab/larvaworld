@@ -9,7 +9,7 @@ from scipy.stats import ttest_ind
 from larvaworld.lib import reg, aux, plot
 
 
-@reg.funcs.graph('error barplot')
+@reg.funcs.graph('error barplot', required={'args':['error_dict', 'evaluation']})
 def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
                   titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):
     def build_legend(ax, eval_df):
@@ -44,11 +44,11 @@ def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
     return P.get()
 
 
-@reg.funcs.graph('food intake (barplot)')
+@reg.funcs.graph('food intake (barplot)', required={'ks':['f_am']})
 def intake_barplot(**kwargs):
     return barplot(ks=['f_am'], **kwargs)
 
-@reg.funcs.graph('barplot')
+@reg.funcs.graph('barplot', required={'ks':[]})
 def barplot(ks, coupled_labels=None, xlabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 
@@ -108,7 +108,7 @@ def barplot(ks, coupled_labels=None, xlabel=None, leg_cols=None, **kwargs):
 
 
 
-@reg.funcs.graph('auto_barplot')
+@reg.funcs.graph('auto_barplot', required={'ks':[]})
 def auto_barplot(ks, coupled_labels=None, xlabel=None, leg_cols=None, **kwargs):
     Nks = len(ks)
 

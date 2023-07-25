@@ -6,7 +6,7 @@ from larvaworld.lib import reg, aux, plot
 
 
 
-@reg.funcs.graph('fft')
+@reg.funcs.graph('fft', required={'ks':['l', 'v', 'fov']})
 def plot_fft(s, c, name=f'fft_powerspectrum',palette=None, axx=None, **kwargs):
     if palette is None:
         palette = {'v': 'red', 'fov': 'blue'}
@@ -41,7 +41,7 @@ def plot_fft(s, c, name=f'fft_powerspectrum',palette=None, axx=None, **kwargs):
 
     return P.get()
 
-@reg.funcs.graph('fft multi')
+@reg.funcs.graph('fft multi', required={'ks':['l', 'v', 'fov']})
 def plot_fft_multi(name=f'fft_powerspectrum',axx=None, dataset_colors=False, **kwargs):
     P = plot.AutoPlot(name=name, build_kws={'w': 15, 'h': 12},**kwargs)
     if axx is None:
@@ -63,7 +63,7 @@ def plot_fft_multi(name=f'fft_powerspectrum',axx=None, dataset_colors=False, **k
 
 
 
-@reg.funcs.graph('powerspectrum')
+@reg.funcs.graph('powerspectrum', required={'ks':['v', 'fov']})
 def powerspectrum(ks=['v', 'fov'],name=None, thr=0.2, subfolder='powerspectrums', **kwargs):
     if name is None :
         name=f'fft_powerspectrum_x{len(ks)}'

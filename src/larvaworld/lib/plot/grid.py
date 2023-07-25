@@ -54,7 +54,7 @@ def calibration_plot(save_to=None, files=None):
     plot.save_plot(fig, filepath, filename)
     return fig
 
-@reg.funcs.graph('model summary')
+@reg.funcs.graph('model summary', required={'graphIDs':['configuration','module hists','stride cycle', 'epochs', 'sample track']})
 def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, **kwargs):
     if refDataset is None:
         d = reg.loadRef(refID)
@@ -130,7 +130,7 @@ def velocity_definition(dataset, save_to=None, save_as='vel_definition.pdf', com
     fig.subplots_adjust(hspace=0.1, wspace=0.5, bottom=0.1, top=0.9, left=0.07, right=0.95)
     fig.savefig(f'{save_to}/{save_as}', dpi=300)
 
-@reg.funcs.graph('dispersal summary')
+@reg.funcs.graph('dispersal summary', required={'graphIDs':['trajectories','dispersal', 'crawl pars']})
 def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
     w, h = 54, 26
     P = plot.GridPlot(name=f'dsp_summary_{range}', width=w, height=h, scale=(0.4, 0.5), text_xy0=(0.05, 0.95), **kwargs)
@@ -156,7 +156,7 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
     P.annotate()
     return P.get()
 
-@reg.funcs.graph('kinematic analysis')
+@reg.funcs.graph('kinematic analysis', required={'graphIDs':['fft multi','epochs', 'stride cycle multi']})
 def kinematic_analysis(datasets, **kwargs):
     w, h = 50, 28
     P = plot.GridPlot(name='kinematic_analysis', width=w, height=h, scale=(0.5, 0.5), text_xy0=(0.05, 0.94), **kwargs)
@@ -213,7 +213,7 @@ def RvsS_summary(entrylist, title, mdiff_df, **kwargs):
     P.fig.align_ylabels(ax_list)
     return P.get()
 
-@reg.funcs.graph('double-patch summary')
+@reg.funcs.graph('double-patch summary', required={'graphIDs':['trajectories','double patch']})
 def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
     Nmods = 2
     h_mpl = len(mdiff_df.index)
@@ -262,7 +262,7 @@ def DoublePatch_summary(datasets, title, mdiff_df,ks=None,name=None, **kwargs):
     P.annotate()
     return P.get()
 
-@reg.funcs.graph('chemotaxis summary')
+@reg.funcs.graph('chemotaxis summary', required={'graphIDs':['trajectories'], 'ks':['c_odor1', 'dc_odor1']})
 def chemo_summary(datasets, mdiff_df, title, **kwargs):
     Nmods = len(mdiff_df.columns)
     h_mpl = len(mdiff_df.index)
@@ -303,7 +303,7 @@ def chemo_summary(datasets, mdiff_df, title, **kwargs):
     P.annotate()
     return P.get()
 
-@reg.funcs.graph('eval summary')
+@reg.funcs.graph('eval summary', required={'graphIDs':['trajectories','epochs', 'crawl pars', 'angular pars']})
 def result_summary(datasets, target, **kwargs):
     w, h = 50, 34
     P = plot.GridPlot(name=f'{target.id}_result_summary', width=w, height=h, scale=(0.5, 0.5), **kwargs)
@@ -373,7 +373,7 @@ def model_sample_track(mID=None, m=None, dur=2 / 3, dt=1 / 16, Nids=1, min_turn_
     P.fig.align_ylabels(P.axs[:])
     return P.get()
 
-@reg.funcs.graph('error summary')
+@reg.funcs.graph('error summary', required={'graphIDs':['error barplot', 'error table']})
 def eval_summary(error_dict, evaluation, norm_mode='raw', eval_mode='pooled', **kwargs):
     label_dic = {
         '1:1': {'end': 'RSS error', 'step': r'median 1:1 distribution KS$_{D}$'},

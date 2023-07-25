@@ -8,6 +8,7 @@ from larvaworld.lib import reg, aux, plot
 class GraphRegistry:
     def __init__(self):
         self.dict = reg.funcs.graphs
+        self.required_data_dict=reg.funcs.graph_required_data
         self.graphgroups = self.build_graphgroups()
 
     @property

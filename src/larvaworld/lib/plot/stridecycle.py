@@ -85,7 +85,7 @@ def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_f
         fig.savefig(filepaths[i], dpi=300)
         print(f'Plot saved as {filepaths[i]}')
 
-@reg.funcs.graph('stride cycle')
+@reg.funcs.graph('stride cycle', required={'ks':['sv', 'fov', 'rov', 'foa', 'b']})
 def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None, subfolder='stride',
                  Nbins=64, individuals=False, pooled=True,title='Stride cycle analysis', **kwargs):
     from larvaworld.lib.process.annotation import compute_interference
@@ -146,7 +146,7 @@ def stride_cycle(name=None, shorts=['sv', 'fov', 'rov', 'foa', 'b'], modes=None,
     return P.get()
 
 
-@reg.funcs.graph('stride cycle multi')
+@reg.funcs.graph('stride cycle multi', required={'ks':['sv', 'fov', 'rov', 'foa', 'b']})
 def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='fov',subfolder='stride', maxNpoints=5,
                             axx=None, **kwargs):
 
@@ -232,7 +232,7 @@ def stride_cycle_all_points(name='stride cycle multi',  idx=0, Nbins=64, short='
     P.adjust((0.15, 0.9), (0.2, 0.9), 0.1, 0.15)
     return P.get()
 
-@reg.funcs.graph('stride Dbend')
+@reg.funcs.graph('stride Dbend', required={'pars':[nam.at('bend', nam.start('stride')),nam.at('bend', nam.stop('stride'))]})
 def plot_stride_Dbend(name='stride_bend_change',show_text=False, subfolder='stride', **kwargs):
     P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     ax = P.axs[0]
@@ -260,14 +260,14 @@ def plot_stride_Dbend(name='stride_bend_change',show_text=False, subfolder='stri
     P.adjust((0.25, 0.95), (0.2, 0.95), 0.01)
     return P.get()
 
-@reg.funcs.graph('stride Dor')
+@reg.funcs.graph('stride Dor', required={'ks':['str_fo', 'str_ro']})
 def plot_stride_Dorient(name='stride_orient_change',absolute=True, subfolder='stride',Nbins=200, **kwargs):
     P = plot.AutoPlot(ks=['str_fo', 'str_ro'],ranges=[80,80],absolute=absolute, name=name, subfolder=subfolder,build_kws={'Ncols': 'Nks'}, **kwargs)
     P.plot_hist(alpha=0.5,nbins=Nbins)
     P.adjust((0.12, 0.99), (0.2, 0.95), 0.01)
     return P.get()
 
-@reg.funcs.graph('interference')
+@reg.funcs.graph('interference', required={'ks':['sv','fov','rov', 'bv','l']})
 def plot_interference(mode='orientation', agent_idx=None, subfolder='interference', **kwargs):
     name = f'interference_{mode}' if agent_idx is None else f'interference_{mode}_agent_idx_{agent_idx}'
 

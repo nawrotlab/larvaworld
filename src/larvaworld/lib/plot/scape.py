@@ -15,7 +15,7 @@ def plot_surface(x, y, z, vars, target, z0=None, title=None, lims=None, azim=115
         P.axs[0].plot_surface(x, y, np.ones(x.shape) * z0, alpha=0.5)
     return P.get()
 
-@reg.funcs.graph('odorscape')
+@reg.funcs.graph('odorscape', required={'args':['odor_layers']})
 def plot_odorscape(odor_layers, scale=1.0, idx=0, **kwargs):
     for id, layer in odor_layers.items():
         X, Y = layer.meshgrid

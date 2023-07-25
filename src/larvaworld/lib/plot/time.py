@@ -4,7 +4,7 @@ from matplotlib import collections as mc
 from larvaworld.lib import reg, aux, plot
 
 
-@reg.funcs.graph('ethogram')
+@reg.funcs.graph('ethogram', required={'dicts':['chunk_dicts']})
 def plot_ethogram(subfolder='timeplots', **kwargs):
     P = plot.AutoPlot(name='ethogram', subfolder=subfolder,build_kws={'Nrows': 'Ndatasets', 'Ncols': 2, 'sharex': True}, **kwargs)
     Cbouts = {
@@ -103,7 +103,7 @@ def plot_nengo_network(datasets, group=None, probes=None, same_plot=False, subfo
     P.adjust((0.1, 0.95), (0.1, 0.95), 0.01, 0.05)
     return P.get()
 
-@reg.funcs.graph('timeplot')
+@reg.funcs.graph('timeplot', required={'ks':[]})
 def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table=None, unit='sec', absolute=True,
              show_legend=True, show_first=False, subfolder='timeplots', legend_loc='upper left', leg_fontsize=15,
              figsize=(7.5, 5),
@@ -174,7 +174,7 @@ def timeplot(ks=[], pars=[], name=None, same_plot=True, individuals=False, table
     return P.get()
 
 
-@reg.funcs.graph('timeplots')
+@reg.funcs.graph('timeplots', required={'ks':[]})
 def timeplots(ks,subfolder='timeplots',name=None, unit='sec',xlim=None,
               individuals=False,absolute=False,show_first=False,**kwargs):
     Nks=len(ks)
@@ -190,7 +190,7 @@ def timeplots(ks,subfolder='timeplots',name=None, unit='sec',xlim=None,
     return P.get()
 
 
-@reg.funcs.graph('navigation index')
+@reg.funcs.graph('navigation index', required={'traj':['default']})
 def plot_navigation_index(subfolder='source', **kwargs):
     P = plot.AutoPlot(name='nav_index', subfolder=subfolder, build_kws={'Nrows': 2, 'w': 20, 'h': 10,'sharex':True, 'sharey':True}, **kwargs)
 
@@ -221,7 +221,7 @@ def plot_navigation_index(subfolder='source', **kwargs):
     return P.get()
 
 
-@reg.funcs.graph('pathlength')
+@reg.funcs.graph('pathlength', required={'ks':['cum_d','cum_sd']})
 def plot_pathlength(scaled=False, **kwargs):
     k = 'cum_sd' if scaled else 'cum_d'
     return timeplots(ks=[k], **kwargs)

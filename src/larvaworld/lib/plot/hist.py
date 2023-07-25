@@ -42,7 +42,7 @@ def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, N
     P.adjust((0.2, 0.9), (0.2, 0.9), 0.01)
     return P.get()
 
-@reg.funcs.graph('angular pars')
+@reg.funcs.graph('angular pars', required={'ks':['b', 'bv', 'ba', 'fov', 'foa','rov', 'roa']})
 def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circles=True,kde=True, subfolder='turn',
                   Npars=5, Nbins=100,type='sns.hist', **kwargs):
     if Npars == 5:
@@ -64,7 +64,7 @@ def plot_ang_pars(absolute=False, include_rear=False, name='ang_pars', half_circ
     return P.get()
 
 # ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa']
-@reg.funcs.graph('distros')
+@reg.funcs.graph('distros', required={'ks':[]})
 def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa'],mode='hist',
                  half_circles=True,annotation=False,target_only=None, show_ns=False, subfolder='distro', Nbins=100, **kwargs):
     Nps = len(ks)
@@ -145,7 +145,7 @@ def plot_distros(name=None,ks=['v', 'a','sv', 'sa', 'b', 'bv', 'ba', 'fov', 'foa
         P.adjust((0.15, 0.95), (0.15, 0.95), 0.01, 0.1)
     return P.get()
 
-@reg.funcs.graph('crawl pars')
+@reg.funcs.graph('crawl pars', required={'ks':['str_N', 'run_tr', 'cum_sd']})
 def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_sd'],subfolder='endpoint',name='crawl_pars',
                     type='sns.hist',kde=True,  **kwargs):
     P = plot.AutoPlot(ks=ks,key='end',name=name, subfolder=subfolder, build_kws={'Ncols':'Nks', 'wh':7, 'sharey': True}, **kwargs)
@@ -153,11 +153,11 @@ def plot_crawl_pars(ks=['str_N', 'run_tr', 'cum_sd'],subfolder='endpoint',name='
     P.adjust((0.1, 0.95), (0.15, 0.95), 0.1)
     return P.get()
 
-@reg.funcs.graph('turn amplitude VS Y pos')
+@reg.funcs.graph('turn amplitude VS Y pos', required={'ks':['tur_y0']})
 def plot_turn_amp_VS_Ypos(**kwargs):
     return plot_turn_amp(k='tur_y0', **kwargs)
 
-@reg.funcs.graph('turn duration')
+@reg.funcs.graph('turn duration', required={'ks':['tur_t']})
 def plot_turn_duration(absolute=True, **kwargs):
     return plot_turn_amp(k='tur_t', absolute=absolute, **kwargs)
 
@@ -203,7 +203,7 @@ def plot_turn_amp(name=None,k='tur_t', ref_angle=None, subfolder='turn', absolut
         P.adjust((0.15, 0.95), (0.1, 0.95), 0.01)
     return P.get()
 
-@reg.funcs.graph('angular/epoch')
+@reg.funcs.graph('angular/epoch', required={'ks':['bv', 'fov', 'rov', 'ba', 'foa', 'roa']})
 def plot_bout_ang_pars(name='bout_ang_pars',absolute=True, include_rear=True, subfolder='turn', **kwargs):
     ks = ['bv', 'fov', 'rov', 'ba', 'foa', 'roa'] if include_rear else ['bv', 'fov', 'ba', 'foa']
     Nps=len(ks)
@@ -243,9 +243,9 @@ def plot_bout_ang_pars(name='bout_ang_pars',absolute=True, include_rear=True, su
     P.adjust((0.1, 0.95), (0.1, 0.9), 0.1, 0.3)
     return P.get()
 
-@reg.funcs.graph('endpoint pars (scatter)')
-def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
-    pairs = list(itertools.combinations(keys, 2))
+@reg.funcs.graph('endpoint pars (scatter)', required={'ks':[]})
+def plot_endpoint_scatter(subfolder='endpoint', ks=None, **kwargs):
+    pairs = list(itertools.combinations(ks, 2))
     Npairs = len(pairs)
     if Npairs % 3 == 0:
         Nx, Ny = 3, int(Npairs / 3)
@@ -258,7 +258,7 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
     if Nx * Ny > 1:
         name = f'endpoint_scatterplot'
     else:
-        name = f'{keys[1]}_vs_{keys[0]}'
+        name = f'{ks[1]}_vs_{ks[0]}'
     P = plot.AutoPlot(name=name, subfolder=subfolder,build_kws={'Nrows': Nx,'Ncols': Ny, 'wh' : 10}, **kwargs)
     for i, (p0, p1) in enumerate(pairs):
         pars, labs = reg.getPar([p0, p1], to_return=['d', 'l'])
@@ -276,18 +276,18 @@ def plot_endpoint_scatter(subfolder='endpoint', keys=None, **kwargs):
 
     return P.get()
 
-@reg.funcs.graph('turn amplitude')
+@reg.funcs.graph('turn amplitude', required={'ks':['tur_fou']})
 def plot_turns(name='turn_amplitude',absolute=False, subfolder='turn', **kwargs):
     P = plot.AutoPlot(ks=['tur_fou'],ranges=[100],absolute=absolute, rad2deg=True, name=name, subfolder=subfolder, **kwargs)
     P.plot_hist(par_legend=True, nbins=30, alpha=1.0, histtype='step')
     P.adjust((0.25, 0.95), (0.15, 0.92), 0.05, 0.005)
     return P.get()
 
-@reg.funcs.graph('endpoint hist')
+@reg.funcs.graph('endpoint hist', required={'ks':[]})
 def plot_endpoint_hist(**kwargs):
     return plot_endpoint_params(type='hist',**kwargs)
 
-@reg.funcs.graph('endpoint box')
+@reg.funcs.graph('endpoint box', required={'ks':[]})
 def plot_endpoint_box(**kwargs):
     return plot_endpoint_params(type='box',**kwargs)
 

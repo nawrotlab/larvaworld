@@ -5,6 +5,7 @@ from larvaworld.lib import reg, aux, plot
 
 
 @reg.funcs.graph('bearing/turn')
+# @reg.funcs.graph('bearing/turn', required={'pars':lambda source_ID: aux.flatten_list([[nam.atStartStopChunk(p,c) for c in ['Lturn', 'Rturn']]for p in [nam.bearing_to(source_ID),nam.unwrap(nam.orient('front'))]])})
 def plot_turn_Dbearing(name=None, min_angle=30.0, max_angle=180.0, ref_angle=None, source_ID='Source',
                        Nplots=4, subfolder='turn', **kwargs):
     if ref_angle is None:
@@ -30,10 +31,8 @@ def plot_turn_Dbearing(name=None, min_angle=30.0, max_angle=180.0, ref_angle=Non
         ii = Nplots * i
         for k, (chunk, side) in enumerate(zip(['Lturn', 'Rturn'], ['left', 'right'])):
             try :
-                b0_par = nam.at(p, nam.start(chunk))
-                b1_par = nam.at(p, nam.stop(chunk))
-                bd_par = nam.chunk_track(chunk, p)
-                # print(b0_par)
+                b0_par,b1_par,bd_par=nam.atStartStopChunk(p,chunk)
+
                 b0 = d.get_par(b0_par).dropna().values.flatten()
                 b1 = d.get_par(b1_par).dropna().values.flatten()
                 db = d.get_par(bd_par).dropna().values.flatten()
@@ -106,11 +105,7 @@ def plot_chunk_Dorient2source(source_ID, datasets,name=None,subfolder='bouts', c
     b = nam.bearing_to(source_ID)
     b0s, b1s, dbs= [], [], []
     try :
-        c0 = nam.start(chunk)
-        c1 = nam.stop(chunk)
-        b0_par = nam.at(b, c0)
-        b1_par = nam.at(b, c1)
-        db_par = nam.chunk_track(chunk, b)
+        b0_par, b1_par, db_par = nam.atStartStopChunk(b, chunk)
         for d in P.datasets :
             dur=d.get_par(c_dur).dropna().values
             b0=d.get_par(b0_par).dropna().values

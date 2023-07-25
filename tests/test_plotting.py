@@ -1,20 +1,31 @@
+import os
+
 from larvaworld.lib import reg, aux, plot
 
 import matplotlib.pyplot as plt
 
 
 def test_plots() :
-    refIDs=['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved']
+
+    gIDs=reg.conf.Ref.RefGroupIDs
+    gID = gIDs[1]
+    dcol=reg.loadRefGroup(gID, load=True, h5_ks=['angular', 'midline', 'epochs'])
+    assert dcol.dir is not None
+    assert os.path.exists(dcol.dir)
+    print(dcol.labels)
+    # raise
+    # refIDs=['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved']
     figs={}
-    ds=[reg.loadRef(id, load=True, h5_ks=['angular', 'midline', 'epochs']) for id in refIDs]
-    kws={'datasets':ds, 'show':False, 'save_to': f'{reg.ROOT_DIR}/tests/plots',
-         'subfolder': None}
+    # ds=[reg.loadRef(id, load=True, h5_ks=['angular', 'midline', 'epochs']) for id in refIDs]
+    kws={'save_to': f'{reg.ROOT_DIR}/tests/plots'}
 
 
-    for k in ['endpoint box', 'epochs', 'fft multi', 'dispersal summary',
+    graphIDs= ['endpoint box', 'epochs', 'fft multi', 'dispersal summary',
               'kinematic analysis', 'angular pars', 'crawl pars', 'stride cycle',
               'stride cycle multi', 'ethogram', 'dispersal', 'pathlength',
-              'trajectories'] :
-        figs[k] = reg.graphs.run(k, save_as=k,**kws)
+              'trajectories']
+
+    figs = dcol.plot(ids=graphIDs,**kws)
+    for k in graphIDs[2:5]:
         assert isinstance(figs[k], plt.Figure)
         plt.close(figs[k])

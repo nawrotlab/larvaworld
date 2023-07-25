@@ -66,7 +66,7 @@ def plot_stride_variability(component_vels=True, subfolder='metric_definition', 
         P.conf_ax(ii, xlab=r'$\overline{cv}_{spatial}$', ylab=r'$\overline{cv}_{temporal}$')
     return P.get()
 
-@reg.funcs.graph('correlated metrics')
+@reg.funcs.graph('correlated metrics', required={'pars':[]})
 def plot_correlated_pars(pars, labels, refID=None,dataset=None, save_to=None, save_as=f'correlated_pars.{plot.suf}', return_fig=False, show=False):
     if len(pars) != 3:
         raise ValueError('Currently implemented only for 3 parameters')

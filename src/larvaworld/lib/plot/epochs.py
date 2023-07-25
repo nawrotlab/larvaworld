@@ -52,7 +52,7 @@ def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits=
             plot.dataset_legend(distro_ls0, distro_cs0, ax=ax, loc='lower left', fontsize=15)
 
 
-@reg.funcs.graph('epochs')
+@reg.funcs.graph('epochs', required={'dicts':['pooled_epochs']})
 def plot_bouts(name=None, plot_fits='',print_fits=False, turns=False, stridechain_duration=False, legend_outside=False, **kwargs):
     if name is None :
         if not turns:

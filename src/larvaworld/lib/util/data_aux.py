@@ -5,6 +5,7 @@ import param
 
 
 from larvaworld.lib import reg, aux
+from larvaworld.lib.param.param_aux import vpar, get_vfunc
 
 
 def init2mdict(d0):
@@ -349,8 +350,8 @@ def prepare_LarvaworldParam(p, k=None, dtype=float, d=None, disp=None, sym=None,
 
 
         if vfunc is None:
-            vfunc = aux.get_vfunc(dtype=dtype, lim=lim, vs=vs)
-        vparfunc = aux.vpar(vfunc, v0, h, lab, lim, dv, vs)
+            vfunc =get_vfunc(dtype=dtype, lim=lim, vs=vs)
+        vparfunc = vpar(vfunc, v0, h, lab, lim, dv, vs)
     else:
         vparfunc = vparfunc()
 

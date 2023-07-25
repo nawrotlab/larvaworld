@@ -137,20 +137,47 @@ class IntegerTuple(NumericTuple):
 
 class IntegerRange(RangeRobust):
     """Tuple range of integers"""
+    def __init__(self, default=(0, 0), **kwargs):
+        super().__init__(default=default, **kwargs)
 
     def _validate_value(self, val, allow_None):
-        super(Range, self)._validate_value(val, allow_None)
+        super(RangeRobust, self)._validate_value(val, allow_None)
         for n in val:
             if isinstance(n, int):
                 continue
             raise ValueError("IntegerRange parameter %r only takes integer "
                              "values, not type %r." % (self.name, type(n)))
 
+class IntegerRangeOrdered(IntegerRange):
+    """Ordered range of integers"""
+
+    def _validate_value(self, val, allow_None):
+        super(IntegerRange, self)._validate_value(val, allow_None)
+        v1,v2=val
+        assert (v1<v2)
+        # raise ValueError("IntegerRange parameter %r only takes integer "
+        #                      "values, not type %r." % (self.name, type(n)))
+
+
 
 class PositiveIntegerRange(IntegerRange):
     """Tuple range of positive integers"""
     def __init__(self,default=(0, 0), softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
+
+
+
+class PositiveIntegerRangeOrdered(IntegerRangeOrdered):
+    """Tuple range of positive integers"""
+    def __init__(self,default=(0, 1), softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs):
+        super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
+
+class NegativeIntegerRangeOrdered(IntegerRangeOrdered):
+    """Tuple range of positive integers"""
+    def __init__(self,default=(-1, 0), softmin=None, softmax=0, hardmin=None, hardmax=0, **kwargs):
+        super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
+
+
 
 class NumericTuple2DRobust(NumericTuple):
     """XY point coordinates can be passed as list"""

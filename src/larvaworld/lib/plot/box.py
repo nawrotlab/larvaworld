@@ -68,7 +68,7 @@ from larvaworld.lib import reg, aux, plot
 #     return P.get()
 
 
-@reg.funcs.graph('boxplot (grouped)')
+@reg.funcs.graph('boxplot (grouped)', required={'ks':[]})
 def boxplot(ks, sort_labels=False, name=None, xlabel=None, pair_ids=None, common_ids=None, coupled_labels=None,
             **kwargs):
     Npars = len(ks)
@@ -215,7 +215,7 @@ def PIboxplot(df, exp, save_to, ylabel, ylim=None, show=False, suf=''):
         plt.show()
     plt.close()
 
-@reg.funcs.graph('double patch')
+@reg.funcs.graph('double patch', required={'ks':[]})
 def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=False, title=True, **kwargs):
     if ks is None:
         ks = ['v_mu', 'tur_N_mu', 'pau_tr', 'tur_H', 'cum_d', 'on_food_tr']
@@ -341,7 +341,7 @@ def boxplot_double_patch(ks=None, xlabel='substrate', show_ns=False, stripplot=F
     return P.get()
 
 
-@reg.funcs.graph('foraging')
+@reg.funcs.graph('foraging', required={'ks':['on_food_tr', 'sf_am']})
 def plot_foraging(**kwargs):
     P = plot.AutoPlot(name='foraging', build_kws={'Ncols': 2, 'w': 8, 'h': 10, 'sharex':True}, **kwargs)
     for j, k in enumerate(['on_food_tr', 'sf_am']):
@@ -371,7 +371,7 @@ def plot_foraging(**kwargs):
     P.adjust((0.1, 0.95), (0.15, 0.92), 0.2, 0.005)
     P.get()
 
-@reg.funcs.graph('lineplot')
+@reg.funcs.graph('lineplot', required={'ks':[]})
 def lineplot(markers, ks=['f_am'], name=None, coupled_labels=None, xlabel=None, ylabel=None, leg_cols=None,
              scale=1.0,
              **kwargs):
