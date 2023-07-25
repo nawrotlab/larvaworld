@@ -51,7 +51,8 @@ class ReplayRun(BaseRun):
         self.build_env(self.p.env_params)
         self.build_agents(s,e,c)
         screen_kws = {
-            'video': not self.p.overlap_mode,
+            'mode': 'video' if not self.p.overlap_mode else 'image',
+            'image_mode':'overlap' if self.p.overlap_mode else None,
             'background_motion': bg,
             'traj_color':s[dc] if dc is not None and dc in s.columns else None,
         }
@@ -97,13 +98,14 @@ class ReplayRun(BaseRun):
                 p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
             c.agent_ids = p.agent_ids
             c.N = len(c.agent_ids)
+
         if p.env_params is not None:
             c.env_params = p.env_params
-            if p.close_view:
-                c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
         else:
             p.env_params = c.env_params
-
+        if p.close_view:
+            c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
+            p.env_params.arena = c.env_params.arena
         # c.env_params.windscape = None
         return c
 

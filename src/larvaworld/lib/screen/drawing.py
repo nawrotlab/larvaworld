@@ -1,6 +1,7 @@
 import os
 import sys
 import numpy as np
+import param
 from param import Boolean, String
 
 from larvaworld.lib.param import NestedConf, PositiveNumber, OptionalSelector, PositiveInteger, Area2DPixel
@@ -18,6 +19,7 @@ class MediaDrawOps(NestedConf):
     video_file = String(doc='Filename for the saved video. File extension mp4 sutomatically added.')
     fps = PositiveInteger(60, softmax=100,doc='Video speed')
     save_video= Boolean(False, doc='Whether to save a video.')
+    mode=OptionalSelector(objects=['video', 'image'],doc='Screen mode.')
     # show_display = Boolean(True, doc='Whether to launch the pygame-visualization.')
 
 class AgentDrawOps(NestedConf):
@@ -51,12 +53,14 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
 
         # self.window_dims = self.dims
         self._fps= int(self.fps / m.dt)
-        if vis_kwargs is None:
-            mode='video' if video else None
-            vis_kwargs = reg.get_null('visualization', mode=mode)
-        vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
-        self.mode = vis.render.mode
-        self.__dict__.update(vis.aux)
+        if vis_kwargs is not None:
+            self.mode=vis_kwargs.render.mode
+            self.__dict__.update(vis_kwargs.aux)
+            # mode='video' if video else None
+            # vis_kwargs = reg.get_null('visualization', mode=mode)
+        # vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
+        # self.mode = vis.render.mode
+        # self.__dict__.update(vis.aux)
 
 
 
@@ -66,7 +70,7 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
             self.black_background)
         self.bg = background_motion
 
-        self.active = self.save_video or self.image_mode or self.show_display
+        self.active = self.save_video or self.image_mode or self.show_display or (self.mode is not None)
         self.v = None
 
         self.selected_type = ''
@@ -296,7 +300,7 @@ class ScreenManager(BaseScreenManager):
                 text=self.model.configuration_text,
                 text_color='lightgreen', default_color='white',
                 visible=True, frame_rect=v.get_rect_at_pos(),
-                font_type="comicsansms", font_size=40)
+                font_type="comicsansms", font_size=30)
             # box = screen.ScreenTextBox(
             #                text=self.model.configuration_text,
             #                text_color='black',default_color='white',
@@ -363,6 +367,8 @@ class ScreenManager(BaseScreenManager):
         if self.active:
             if self.image_mode == 'overlap':
                 self.v.render()
+                # pygame.time.wait(5000)
+                # raise
             elif self.image_mode == 'final':
                 self.capture_snapshot()
             if self.v:

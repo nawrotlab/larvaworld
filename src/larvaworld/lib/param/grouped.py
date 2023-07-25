@@ -51,7 +51,7 @@ class XYops(NestedConf):
 
     @property
     def contour_points(self):
-        return aux.nam.contour(self.Ncontour, type='point')
+        return aux.nam.contour(self.Ncontour)
 
     @property
     def contour_xy(self, flat=True):

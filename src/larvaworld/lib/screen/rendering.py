@@ -242,6 +242,8 @@ class Viewer(ScreenWindowAreaBackground):
         if self._image_writer:
             self._image_writer.append_data(np.flipud(np.rot90(image)))
             self._image_writer = None
+
+
         return image
 
     @staticmethod
@@ -359,7 +361,7 @@ class ScreenTextFont(NestedConf) :
             for i in range(N):
                 f = self.font.render(ls[i], True, self.text_color)
                 r = f.get_rect()
-                r.center = x0,y0+(i-int(N/2))*80
+                r.center = x0,y0+(i-int(N/2))*50
                 self.text_font.append(f)
                 self.text_font_r.append(r)
 
@@ -394,7 +396,7 @@ class ScreenTextFont(NestedConf) :
 
 class ScreenTextFontRect(ScreenTextFont):
     frame_rect = param.ClassSelector(pygame.Rect, doc='The frame rectangle')
-    linewidth = PositiveNumber(0.001, doc='The linewidth to draw the box')
+    linewidth = PositiveInteger(10, doc='The linewidth to draw the box')
     show_frame = param.Boolean(True, doc='Draw the rectangular frame around the text')
 
     def __init__(self, **kwargs):
@@ -403,7 +405,7 @@ class ScreenTextFontRect(ScreenTextFont):
 
     def draw(self, v, **kwargs):
         if self.show_frame and self.frame_rect is not None:
-            pygame.draw.rect(v._window, color=self.text_color, rect=self.frame_rect, width=int(v._scale[0, 0] * self.linewidth))
+            pygame.draw.rect(v._window, color=self.text_color, rect=self.frame_rect, width=self.linewidth)
 
         super().draw(v=v, **kwargs)
 

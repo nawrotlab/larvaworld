@@ -9,6 +9,13 @@ def test_replay() :
     replay_kws = {
 
 
+        'normal': {
+            'time_range': (10, 30)
+        },
+        'dispersal': {
+            'transposition': 'origin',
+            'time_range': (60, 80)
+        },
         'fixed_point': {
             'agent_ids': [1],
             'close_view': True,
@@ -28,13 +35,6 @@ def test_replay() :
             'fix_point': 6,
             'fix_segment': 'front',
             'overlap_mode': True
-        },
-        'normal': {
-            'time_range': (10, 30)
-        },
-        'dispersal': {
-            'transposition': 'origin',
-            'time_range': (60, 80)
         },
     }
 
