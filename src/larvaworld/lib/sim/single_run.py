@@ -102,7 +102,7 @@ class ExpRun(BaseRun):
         reg.vprint(f'--- Simulation {self.id} initialized!--- ', 1)
         start = time.time()
         self.run(**kwargs)
-        self.data_collection = larvaworld.LarvaDatasetCollection.from_agentpy_output(self.output)
+        self.data_collection = larvaworld.lib.LarvaDatasetCollection.from_agentpy_output(self.output)
         self.datasets=self.data_collection.datasets
         # self.datasets = self.retrieve()
         end = time.time()

@@ -278,7 +278,7 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         func=self.fit_dict.func
         # from larvaworld.lib.process.dataset import LarvaDatasetCollection
         # ds = LarvaDatasetCollection.from_agentpy_logs(logs=self._logs, Ngen=Ngen, p=self.p)
-        self.data_collection = larvaworld.LarvaDatasetCollection.from_agentpy_output(self.output)
+        self.data_collection = larvaworld.lib.LarvaDatasetCollection.from_agentpy_output(self.output)
         for d in self.data_collection.datasets:
             d._enrich(proc_keys=['angular', 'spatial'], is_last=False)
             fit_dicts = func(s=d.step_data)

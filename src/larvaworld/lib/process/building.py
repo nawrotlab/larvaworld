@@ -398,7 +398,7 @@ def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
         'env_params': reg.get_null('Env', arena=g.Tracker.arena),
         **g.Tracker.resolution
     }
-    d = larvaworld.LarvaDataset(**conf)
+    d = larvaworld.lib.LarvaDataset(**conf)
     kws0 = {
         'dataset': d,
         **kwargs

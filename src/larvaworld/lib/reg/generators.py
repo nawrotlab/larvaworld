@@ -193,7 +193,7 @@ class RefType(ConfType):
 
 
     def loadRef(self, id=None, dir=None, load=False, **kwargs):
-        from larvaworld import LarvaDataset
+        from larvaworld.lib import LarvaDataset
         c=self.getRef(id=id, dir=dir)
         assert c is not None
         d = LarvaDataset(config=c, load_data=False)

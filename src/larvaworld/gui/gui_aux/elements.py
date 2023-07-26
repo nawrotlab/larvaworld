@@ -1784,12 +1784,12 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
         return dic
     else:
         if os.path.exists(f'{path}/data'):
-            dd = larvaworld.LarvaDataset(dir=path)
+            dd = larvaworld.lib.LarvaDataset(dir=path)
             dic[dd.id] = dd
         else:
             for ddr in [x[0] for x in os.walk(path)]:
                 if os.path.exists(f'{ddr}/data'):
-                    dd = larvaworld.LarvaDataset(dir=ddr)
+                    dd = larvaworld.lib.LarvaDataset(dir=ddr)
                     dic[dd.id] = dd
         return dic
 

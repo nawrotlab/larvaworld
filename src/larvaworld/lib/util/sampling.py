@@ -293,7 +293,7 @@ lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id
     }
 
 
-    d = larvaworld.LarvaDataset(**c_kws, load_data=False)
+    d = larvaworld.lib.LarvaDataset(**c_kws, load_data=False)
 
 
     d.set_data(step=s, end=e)
