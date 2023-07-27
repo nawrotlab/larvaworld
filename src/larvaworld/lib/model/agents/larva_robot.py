@@ -2,36 +2,16 @@ from larvaworld.lib import aux
 from larvaworld.lib.model.agents._larva_sim import LarvaSim
 from larvaworld.lib.model.modules.motor_controller import MotorController, Actuator
 from larvaworld.lib.model.modules.sensor2 import ProximitySensor
+from larvaworld.lib.param import RandomizedColor
+
 
 class LarvaRobot(LarvaSim):
+    default_color = RandomizedColor(doc='The default color of the entity', instantiate=True)
 
     def __init__(self, larva_pars,genome=None,**kwargs):
-        if 'default_color' not in kwargs.keys():
-            kwargs['default_color']=aux.Color.random_color()
         super().__init__(**larva_pars, **kwargs)
 
         self.genome = genome
-
-
-
-
-
-
-    # def draw(self, viewer, filled=True):
-    #     for seg in self.segs:
-    #         viewer.draw_polygon(seg.vertices, filled=filled, color=seg.color)
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

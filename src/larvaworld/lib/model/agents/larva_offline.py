@@ -1,17 +1,18 @@
 import numpy as np
 
-from larvaworld.lib.model.agents._larva_sim import LarvaSim
+from larvaworld.lib.model.agents.larva_robot import LarvaRobot
+# from larvaworld.lib.model.agents._larva_sim import LarvaSim
 from larvaworld.lib import aux
 
 
 
 
 
-class LarvaOffline(LarvaSim):
-    def __init__(self, larva_pars,genome=None,  **kwargs):
-        super().__init__(**larva_pars, **kwargs)
+class LarvaOffline(LarvaRobot):
 
-        self.genome = genome
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
         self.fo = self.orientation

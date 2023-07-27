@@ -27,6 +27,7 @@ class AgentDrawOps(NestedConf):
     trajectory_dt = PositiveNumber(2,step=0.2,doc='Duration of the drawn trajectories')
     draw_sensors = Boolean(False,doc='Draw the larva sensors')
     draw_contour = Boolean(True,doc='Draw the larva contour')
+    draw_segs = Boolean(True,doc='Draw the larva body segments')
     draw_midline = Boolean(True,doc='Draw the larva midline')
     draw_centroid = Boolean(False,doc='Draw the larva centroid')
     draw_head = Boolean(False,doc='Draw the larva head')
@@ -334,6 +335,8 @@ class ScreenManager(BaseScreenManager):
             'draw_midline',
             'draw_contour',
             'draw_sensors',
+            'draw_orientations',
+            'draw_segs',
             'visible_clock',
             'visible_ids',
             'visible_state',

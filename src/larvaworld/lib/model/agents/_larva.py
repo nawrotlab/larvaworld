@@ -38,16 +38,17 @@ class Larva(MobileAgent):
             v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
 
         if v.manager.draw_orientations:
-            if not any(np.isnan(np.array(mid).flatten())):
-                Nmid = len(mid)
-                p0 = mid[int(Nmid / 2)]
-                p1 = mid[int(Nmid / 2) + 1]
-                p02 = [p0[0] + math.cos(self.front_orientation) * l,
-                       p0[1] + math.sin(self.front_orientation) * l]
-                v.draw_line(p0, p02, color='green', width=l / 10)
-                p12 = [p1[0] - math.cos(self.rear_orientation) * l,
-                       p1[1] - math.sin(self.rear_orientation) * l]
-                v.draw_line(p0, p12, color='red', width=l / 10)
+            # if not any(np.isnan(np.array(mid).flatten())):
+                # Nmid = len(mid)
+                # p0 = mid[int(Nmid / 2)]
+                # p1 = mid[int(Nmid / 2) + 1]
+            # print(self.front_orientation)
+            p02 = [p[0] + math.cos(self.front_orientation) * l,
+                   p[1] + math.sin(self.front_orientation) * l]
+            v.draw_line(p, p02, color='green', width=l / 10)
+            p12 = [p[0] - math.cos(self.rear_orientation) * l,
+                   p[1] - math.sin(self.rear_orientation) * l]
+            v.draw_line(p, p12, color='red', width=l / 10)
         super().draw(v, **kwargs)
 
 

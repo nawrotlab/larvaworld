@@ -7,7 +7,12 @@ def test_replay() :
     refID =  refIDs[-1]
     dataset=reg.loadRef(refID)
     replay_kws = {
-
+        '2segs': {
+            'draw_Nsegs': 2
+        },
+        'all_segs': {
+            'draw_Nsegs': dataset.config.Npoints-1
+        },
 
         'normal': {
             'time_range': (10, 30)

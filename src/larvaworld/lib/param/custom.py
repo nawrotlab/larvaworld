@@ -1,4 +1,4 @@
-
+import random
 
 import numpy as np
 import param
@@ -108,6 +108,24 @@ class RandomizedPhase(Phase):
         if val in [None, np.nan]:
             val = np.random.uniform(0, 2 * np.pi)
         super(RandomizedPhase, self)._validate_value(val, allow_None)
+
+class RandomizedColor(param.Color):
+    """Phase number within (0,2pi)"""
+
+    def __init__(self, default=None, **kwargs):
+        if default in [None, np.nan, '']:
+            default = random.choice(super()._named_colors)
+        if isinstance(default,tuple):
+            val=aux.colortuple2str(default)
+        super().__init__(default=default, **kwargs)
+
+
+    def _validate_value(self, val, allow_None):
+        if val in [None, np.nan, '']:
+            val = random.choice(super()._named_colors)
+        if isinstance(val,tuple):
+            val=aux.colortuple2str(val)
+        super(RandomizedColor, self)._validate_value(val, allow_None)
 
 class OptionalPositiveRange(RangeInf):
     """Tuple range of positive numbers"""

@@ -1,9 +1,12 @@
 import Box2D
 import numpy as np
+import param
 from shapely import geometry
 
 from larvaworld.lib import aux, reg
+from larvaworld.lib.model import LarvaSim
 from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController, BaseSegment
+from larvaworld.lib.param import SegmentedBodySensored
 
 
 class Box2DSegment(BaseSegment):
@@ -24,8 +27,8 @@ class Box2DSegment(BaseSegment):
             self._body.CreatePolygonFixture(
                 shape=Box2D.b2PolygonShape(vertices=v.tolist()),
                 density=physics_pars['density'],
-                friction=physics_pars['friction'],
-                restitution=physics_pars['restitution'],
+                friction=10,
+                restitution=0,
                 # radius=.00000001
             )
 
@@ -97,35 +100,68 @@ class Box2DSegment(BaseSegment):
 
 
 
-class LarvaBox2D(LarvaBody,BaseController):
-    def __init__(self, physics,Box2D_params,**kwargs):
-        LarvaBody.__init__(self, **kwargs)
 
-        BaseController.__init__(self, **physics)
 
-        joint_types=Box2D_params['joint_types']
+class LarvaBox2D(LarvaSim):
+    segs = param.List(item_type=Box2DSegment, doc='The body segments.')
+
+
+    def __init__(self, Box2D_params,**kwargs):
+        self.Box2D_params=Box2D_params
+        super().__init__(**kwargs)
+
+        # BaseController.__init__(self, **physics)
+
+        # joint_types=Box2D_params['joint_types']
 
     # def __init__(self, joint_types,physics,**kwargs):
     #     super().__init__(**physics)
 
 
+
+
+    def generate_segs(self):
+        # segs = []
+        kws= {
+            'physics_pars' : {'density': self.density,
+                              'lin_damping': self.lin_damping,
+                              'ang_damping': self.ang_damping,
+                              'inertia': 0.0},
+            'space' : self.model.space,
+        }
+
+        # segs=aux.generate_segs(self.Nsegs, self.pos, self.orientation,
+        #                         self.sim_length, self.seg_ratio,self.default_color,self.body_plan,
+        #                         segment_class=Box2DSegment, **kws)
+
+        self.segs = [self.param.segs.item_type(pos=self.seg_positions[i], orientation=self.orientation,
+                                                   base_vertices=self.base_seg_vertices[i],
+                                                   length=self.length * self.segment_ratio[i], **kws) for i in
+                         range(self.Nsegs)]
+
+
+        # put all agents into same group (negative so that no collisions are detected)
+        if self.model.larva_collisions:
+            for seg in self.segs :
+                for fixture in seg._fixtures:
+                    fixture.filterData.groupIndex = -1
+
         self.joints = []
-        self.segs = self.generate_segs()
+        # self.generate_segs()
         if self.Nsegs > 1:
-            self.create_joints(self.Nsegs, self.segs, joint_types)
+            self.create_joints(self.Nsegs, self.segs, joint_types=self.Box2D_params['joint_types'])
 
 
     def prepare_motion(self, lin, ang):
 
         if self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
-            self.segs[0]._body.angularVelocity = ang_vel
+            self.segs[0].set_angularvelocity(ang_vel)
             if self.Nsegs > 1:
                 for i in np.arange(1, int(self.Nsegs / 2), 1):
-                    self.segs[i]._body.angularVelocity = (ang_vel / i)
+                    self.segs[i].set_angularvelocity(ang_vel / i)
         elif self.ang_mode == 'torque':
-            torque = ang * self.torque_coef
-            self.segs[0]._body.ApplyTorque(torque, wake=True)
+            self.segs[0]._body.ApplyTorque(ang * self.torque_coef, wake=True)
 
         # Linear component
         # Option : Apply to single body segment
@@ -150,15 +186,13 @@ class LarvaBox2D(LarvaBody,BaseController):
         # Option : Apply to all body segments. This allows to control velocity for any Npoints. But it has the same shitty visualization as all options
         # for seg in [self.segs[0]]:
         for seg in self.segs:
+            l=lin *  seg.get_world_facing_axis()
             if self.lin_mode == 'impulse':
-                impulse = lin * self.lin_vel_coef * seg.get_world_facing_axis() / seg.get_mass()
-                seg._body.ApplyLinearImpulse(impulse, seg._body.worldCenter, wake=True)
+                seg._body.ApplyLinearImpulse(l * self.lin_vel_coef / seg.get_mass(), seg._body.worldCenter, wake=True)
             elif self.lin_mode == 'force':
-                force = lin * self.lin_force_coef * seg.get_world_facing_axis()
-                seg._body.ApplyForceToCenter(force, wake=True)
+                seg._body.ApplyForceToCenter(l * self.lin_force_coef , wake=True)
             elif self.lin_mode == 'velocity':
-                vel = lin * self.lin_vel_coef * seg.get_world_facing_axis()
-                seg.set_linearvelocity(vel, local=False)
+                seg.set_linearvelocity(l * self.lin_vel_coef, local=False)
 
 
     def updated_by_Box2D(self):
@@ -170,29 +204,27 @@ class LarvaBox2D(LarvaBody,BaseController):
         self.cum_dst += self.dst
         self.compute_body_bend()
 
-    def generate_segs(self):
-        # segs = []
-        kws= {
-            'physics_pars' : {'density': self.density,
-                              'friction': 10.0,
-                              'restitution': 0.0,
-                              'lin_damping': self.lin_damping,
-                              'ang_damping': self.ang_damping,
-                              'inertia': 0.0},
-            'space' : self.model.space,
-        }
-
-        segs=aux.generate_segs(self.Nsegs, self.pos, self.orientation,
-                                self.sim_length, self.seg_ratio,self.default_color,self.body_plan,
-                                segment_class=Box2DSegment, **kws)
-
-
-        # put all agents into same group (negative so that no collisions are detected)
-        if self.model.larva_collisions:
-            for seg in segs :
-                for fixture in seg._fixtures:
-                    fixture.filterData.groupIndex = -1
-        return segs
+    # def generate_segs(self):
+    #     # segs = []
+    #     kws= {
+    #         'physics_pars' : {'density': self.density,
+    #                           'lin_damping': self.lin_damping,
+    #                           'ang_damping': self.ang_damping,
+    #                           'inertia': 0.0},
+    #         'space' : self.model.space,
+    #     }
+    #
+    #     segs=aux.generate_segs(self.Nsegs, self.pos, self.orientation,
+    #                             self.sim_length, self.seg_ratio,self.default_color,self.body_plan,
+    #                             segment_class=Box2DSegment, **kws)
+    #
+    #
+    #     # put all agents into same group (negative so that no collisions are detected)
+    #     if self.model.larva_collisions:
+    #         for seg in segs :
+    #             for fixture in seg._fixtures:
+    #                 fixture.filterData.groupIndex = -1
+    #     return segs
 
     # To make peristalsis visible we try to leave some space between the segments.
     # We define an interval proportional to the length : int*l.

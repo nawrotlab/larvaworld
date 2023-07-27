@@ -64,8 +64,63 @@ class ReplayRun(BaseRun):
         if 'length' in e.columns:
             ls = e['length'].values
         else:
-            ls = np.ones(c.N) * 5
-        confs=[{'unique_id':id, 'length':ls[i], 'data':s.xs(id, level='AgentID', drop_level=True)} for i, id in enumerate(c.agent_ids)]
+            ls = np.ones(c.N) * 0.005
+
+        ors=['front_orientation','rear_orientation', 'bend']
+        assert aux.cols_exist(ors, s)
+        # for p in ors :
+        #     s[p]=np.deg2rad(s[p])
+
+        confs=[]
+        for i, id in enumerate(c.agent_ids):
+            conf = aux.AttrDict({'unique_id': id, 'length': ls[i]})
+            ss=s.xs(id, level='AgentID', drop_level=True)
+            xy=ss[['x', 'y']].values
+            conf.pos_array = aux.np2Dtotuples(xy)
+            fo,ro=ss['front_orientation'].values, ss['rear_orientation'].values
+            conf.front_orientation_array = fo
+            # conf.front_orientation_array = np.deg2rad(fo)
+            conf.rear_orientation_array = ro
+            # conf.rear_orientation_array = np.deg2rad(ro)
+            # print(fo)
+            # raise
+            if self.draw_Nsegs is not None:
+                conf.Nsegs=self.draw_Nsegs
+                if conf.Nsegs == 2:
+                    conf.orientation_array =np.vstack([conf.front_orientation_array,conf.rear_orientation_array]).T
+
+                    # assert aux.cols_exist(['front_orientation',  'bend'], ss)
+                    # ss['computed_orientation']=ss['front_orientation']-ss['bend']
+                    # conf.orientation_array = np.deg2rad(ss[['front_orientation', 'computed_orientation']].values)
+                    # xy0 = ss[aux.nam.xy('centroid')].values
+                    l1, l2 = conf.length/2,  conf.length/2
+                    # l1, l2 = conf.length * self.seg_ratio
+
+                    p1 = xy + aux.rotationMatrix(-fo).T @ (l1 / 2, 0)
+                    p2 = xy - aux.rotationMatrix(-ro).T @ (l2 / 2, 0)
+                    conf.midline_array = np.hstack([p1,p2]).reshape([-1,2,2])
+                elif conf.Nsegs == c.Npoints - 1:
+                    or_ps = aux.nam.orient(aux.nam.midline(conf.Nsegs, type='seg'))
+                    assert aux.cols_exist(or_ps, ss)
+                    conf.orientation_array = np.deg2rad(ss[or_ps].values)
+                    mid_ps = aux.nam.midline_xy(c.Npoints, flat=True)
+                    assert aux.cols_exist(mid_ps, ss)
+                    mid = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
+                    mid2=copy.deepcopy(mid)
+                    for i in range(conf.Nsegs):
+                        mid2[:,i,:]=(mid[:,i,:]+mid[:,i+1:])/2
+                    conf.midline_array = mid2
+                else:
+                    raise
+            else:
+                con_ps=aux.nam.contour_xy(c.Ncontour, flat=True)
+                assert aux.cols_exist(con_ps, ss)
+                conf.contour_array = ss[con_ps].values.reshape([-1, c.Ncontour, 2])
+                mid_ps = aux.nam.midline_xy(c.Npoints, flat=True)
+                assert aux.cols_exist(mid_ps, ss)
+                conf.midline_array = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
+            confs.append(conf)
+        # confs=[{'unique_id':id, 'length':ls[i], 'data':s.xs(id, level='AgentID', drop_level=True)} for i, id in enumerate(c.agent_ids)]
         self.place_agents(confs)
 
 
@@ -144,4 +199,7 @@ class ReplayRun(BaseRun):
         xy_pars=nam.xy(c.point)
         assert aux.cols_exist(xy_pars, s0)
         s0[['x','y']]=s0[xy_pars]
+
+
+
         return s0,e0, c

@@ -44,6 +44,8 @@ def init_shortcuts():
         'draw_midline': 'm',
         'draw_contour': 'c',
         'draw_sensors': 'j',
+        'draw_orientations': 'k',
+        'draw_segs': 'l',
     }
 
     inspect = {
@@ -122,8 +124,7 @@ class ControlRegistry :
     def __init__(self):
         self.path=f'{reg.CONF_DIR}/controls.txt'
         self.conf=init_controls()
-        if not os.path.isfile(self.path) :
-            self.save(self.conf)
+        self.save(self.conf)
 
     def save(self, conf=None):
         if conf is None:

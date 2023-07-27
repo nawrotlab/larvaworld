@@ -112,6 +112,7 @@ class SegmentedBody(BodyMobile):
         if self.segment_ratio is None:
             self.segment_ratio = np.array([1 / self.Nsegs] * self.Nsegs)
         self.base_seg_vertices=self.segmentize()
+        self.seg_positions = self.generate_seg_positions()
         self.generate_segs()
         self.update_seg_lengths()
 
@@ -191,8 +192,8 @@ class SegmentedBody(BodyMobile):
     def generate_segs(self):
 
         # base_seg_vertices = self.segmentize()
-        seg_positions = self.generate_seg_positions()
-        self.segs= [self.param.segs.item_type(pos=seg_positions[i], orientation=self.orientation,
+
+        self.segs= [self.param.segs.item_type(pos=self.seg_positions[i], orientation=self.orientation,
                        base_vertices=self.base_seg_vertices[i], length=self.length*self.segment_ratio[i]) for i in range(self.Nsegs)]
 
 
@@ -325,7 +326,6 @@ class SegmentedBody(BodyMobile):
         # if v.manager.draw_centroid:
         #     v.draw_circle(p, r / 2, c,filled, r / 3)
         # super().draw(v, **kwargs)
-
 
 
 class SegmentedBodySensored(SegmentedBody):
