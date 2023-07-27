@@ -91,7 +91,8 @@ class ViewableLine(Viewable,LineExtended):
 class Contour(Viewable,LineClosed):
 
     def draw(self, v, **kwargs):
-        v.draw_polygon(self.vertices, filled=True, color=self.color)
+        if self.vertices is not None and len(self.vertices)>1:
+            v.draw_polygon(self.vertices, filled=True, color=self.color)
 
 
 class ViewableNamedBoundedArea(Viewable,BoundedArea,Named): pass

@@ -30,7 +30,7 @@ class AgentDrawOps(NestedConf):
     draw_midline = Boolean(True,doc='Draw the larva midline')
     draw_centroid = Boolean(False,doc='Draw the larva centroid')
     draw_head = Boolean(False,doc='Draw the larva head')
-    draw_orientations = Boolean(True,doc='Draw the larva body vector orientations')
+    draw_orientations = Boolean(False,doc='Draw the larva body vector orientations')
 
 
 class ScreenOps(NestedConf):
@@ -42,9 +42,13 @@ class ScreenOps(NestedConf):
     color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
     panel_width = PositiveInteger(0, doc='The width of the side panel in pixels')
 
+class VisOps(NestedConf):
+    visible_clock = Boolean(True, doc='Whether clock is visible')
+    visible_scale = Boolean(True, doc='Whether scale is visible')
+    visible_state = Boolean(False, doc='Whether state is visible')
+    # visible_clock = Boolean(True, doc='Whether clock is visible')
 
-
-class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps) :
+class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps,VisOps) :
 
     def __init__(self, model, traj_color=None, background_motion=None,
                  vis_kwargs=None, video=None, **kwargs):

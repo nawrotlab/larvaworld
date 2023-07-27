@@ -14,8 +14,6 @@ class Larva(MobileAgent):
     def __init__(self, model,unique_id=None, **kwargs):
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
-        # if isinstance(unique_id,int):
-        #     unique_id = str(unique_id)
         super().__init__(unique_id=unique_id, model=model,**kwargs)
         self.trajectory = [self.initial_pos]
         self.cum_dur = 0
@@ -29,7 +27,6 @@ class Larva(MobileAgent):
             v.draw_circle(p, r / 4, c,True, r / 10)
 
         if v.manager.draw_midline:
-
             if not any(np.isnan(np.array(mid).flatten())):
                 Nmid = len(mid)
                 v.draw_polyline(mid, color=(0, 0, 255), closed=False, width=l / 20)
@@ -45,14 +42,6 @@ class Larva(MobileAgent):
                 Nmid = len(mid)
                 p0 = mid[int(Nmid / 2)]
                 p1 = mid[int(Nmid / 2) + 1]
-                # if front_or is None and rear_or is None:
-                #     if segs is not None:
-                #         front_or = segs[0].get_orientation()
-                #         rear_or = segs[-1].get_orientation()
-                #     else:
-                #         return
-                # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
-                # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
                 p02 = [p0[0] + math.cos(self.front_orientation) * l,
                        p0[1] + math.sin(self.front_orientation) * l]
                 v.draw_line(p0, p02, color='green', width=l / 10)
@@ -61,17 +50,7 @@ class Larva(MobileAgent):
                 v.draw_line(p0, p12, color='red', width=l / 10)
         super().draw(v, **kwargs)
 
-    # @property
-    # def midline_xy(self):
-    #     return [self.front_end, self.rear_end]
 
-    # @property
-    # def front_orientation(self):
-    #     return self.get_orientation()
-    #
-    # @property
-    # def rear_orientation(self):
-    #     return self.get_orientation()
 
 class LarvaContoured(Larva, Contour):
     def __init__(self, **kwargs):
@@ -80,18 +59,8 @@ class LarvaContoured(Larva, Contour):
 
 
     def draw(self, v, **kwargs):
-        # l = self.length
-        # mid = self.midline_xy
-
         if v.manager.draw_contour:
-            # for seg in self.segs:
-            #     seg.draw(v, **kwargs)
             Contour.draw(self, v, **kwargs)
-
-
-
-        # if v.manager.draw_centroid:
-        #     v.draw_circle(p, r / 2, c,filled, r / 3)
         super().draw(v, **kwargs)
 
 

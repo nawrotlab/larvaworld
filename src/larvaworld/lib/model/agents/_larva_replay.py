@@ -15,7 +15,7 @@ class LarvaReplay(Larva):
 
         N = data.index.size
         cols=data.columns
-
+        self.data=data
         # pos_pars = nam.xy(c.point)
         # if not set(pos_pars).issubset(cols):
         #     pos_pars = ['x', 'y']
@@ -46,20 +46,12 @@ class LarvaReplay(Larva):
         self.rear_or_ar = np.deg2rad(
             data['rear_orientation'].values) if 'rear_orientation' in cols else [None]*N
 
-        or_pars = aux.nam.orient(aux.nam.midline(self.Nsegs, type='seg'))
-        self.or_ar = np.ones([N, self.Nsegs]) * np.nan
-        for i, p in enumerate(or_pars):
-            if p in cols:
-                self.or_ar[:, i] = np.deg2rad(data[p].values)
-        # self.real_length = length
-
-        # self.Nsegs = model.draw_Nsegs
-
+        a=self.front_or_ar[0]
         kws={
             'model':model,
             'length':length,
-            'pos':self.get_position(),
-            'orientation':self.front_orientation,
+            'pos':self.pos_ar[0],
+            'orientation':a if not np.isnan(a) else 0.0,
             'radius':length / 2,
             **kwargs
 
@@ -95,7 +87,7 @@ class LarvaReplay(Larva):
         # m = self.model
         # mid =self.midline = self.mid_ar[m.t].tolist()
         # self.contour = self.con_ar[m.t][~np.isnan(self.con_ar[m.t])].reshape(-1, 2)
-        self.pos = self.get_position()
+        self.pos = self.pos_ar[self.model.t]
         # self.bend0 = self.bend_ar[m.t]
         self.trajectory.append(self.pos)
         # self.trajectory = self.pos_ar[:m.t]
@@ -115,9 +107,9 @@ class LarvaReplay(Larva):
     #               radius=self.radius, vertices=None, color=self.color, selected=self.selected,
     #               front_or=self.front_orientation, rear_or=self.rear_orientation)
 
-    @property
-    def get_position(self):
-        return self.pos_ar[self.model.t]
+    # @property
+    # def get_position(self):
+    #     return self.pos_ar[self.model.t]
 
     @property
     def front_orientation(self):
@@ -132,17 +124,19 @@ class LarvaReplay(Larva):
 
     @property
     def midline_xy(self):
-        return self.mid_ar[self.model.t].tolist()
+        return aux.np2Dtotuples(self.mid_ar[self.model.t])
 
     @property
     def contour_xy(self):
         a = self.con_ar[self.model.t]
-        return a[~np.isnan(a)].reshape(-1, 2)
+        a=a[~np.isnan(a)].reshape(-1, 2)
+        # raise(a)
+        return aux.np2Dtotuples(a)
 
 
 class LarvaReplayContoured(LarvaReplay, LarvaContoured):
     def __init__(self, **kwargs):
-        LarvaReplay.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
     def step(self):
         super().step()
@@ -150,11 +144,16 @@ class LarvaReplayContoured(LarvaReplay, LarvaContoured):
 
 
 
-class LarvaReplaySegmented(LarvaReplay, SegmentedBody):
+class LarvaReplaySegmented(LarvaReplay, LarvaSegmented):
     def __init__(self, model,**kwargs):
         # LarvaReplay.__init__(self, **kwargs)
     # def __init__(self, model, data, length=0.005, **kwargs):
         super().__init__(model=model,Nsegs=model.p.draw_Nsegs,**kwargs)
+        or_pars = aux.nam.orient(aux.nam.midline(self.Nsegs, type='seg'))
+        self.or_ar = np.ones([self.data.index.size, self.Nsegs]) * np.nan
+        for i, p in enumerate(or_pars):
+            if p in self.data.columns:
+                self.or_ar[:, i] = np.deg2rad(self.data[p].values)
 
     def step(self):
         super().step()
