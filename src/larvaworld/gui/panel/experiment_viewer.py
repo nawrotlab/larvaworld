@@ -15,7 +15,7 @@ class ArenaViewer:
         # super().__init__(**kwargs)
         self.size = size
 
-        self.launcher=sim.ExpRun(experiment=experiment, **kwargs)
+        self.launcher=sim.ExpRun(experiment=experiment,show_display=False, **kwargs)
         self.env=self.launcher.p.env_params
         # self.conf=reg.conf.Exp.expand(experiment)
         # self.conf.update(SimOps().nestedConf)
@@ -46,7 +46,7 @@ class ArenaViewer:
         return tank
 
     def get_app(self):
-        draw_ops=screen.AgentDrawOps(draw_centroid=True)
+        draw_ops=screen.AgentDrawOps(draw_centroid=True, draw_segs=False)
         # cb_vis = pn.widgets.CheckBoxGroup(value=['Positions', 'Disperal circle'],
         #                                   options=['Positions', 'IDs', 'Tracks', 'Disperal circle'])
         # cb_rnd_col = pn.widgets.Checkbox(name='Random colors', value=False, disabled=True)
@@ -93,24 +93,29 @@ class ArenaViewer:
 
             overlay = self.tank_plot
             agents=self.launcher.agents
+            if draw_ops.draw_segs:
+                for a in agents:
+                    segpolys = hv.Polygons([seg.vertices for seg in a.segs]).opts(color=a.color)
+                    overlay *= segpolys
             if draw_ops.draw_centroid:
-                ps=agents.get_position()
+                # ps=agents.get_position()
                 # colors = agents.color
                 points = hv.Points(agents.get_position()).opts(size=5, color='black')
                 overlay*=points
             if draw_ops.draw_head:
                 hpoints = hv.Points(agents.head.front_end).opts(size=5, color='red')
                 overlay *= hpoints
+            if draw_ops.draw_midline:
+                for a in agents:
+                    mid = hv.Path(a.midline_xy).opts(color='blue',line_width=2)
+                    overlay *= mid
             if draw_ops.trails:
                 Nfade = int(draw_ops.trajectory_dt / self.launcher.dt)
 
                 _paths = [a.trajectory[-Nfade:] for a in agents]
                 paths = hv.Contours(_paths).opts(color='black')
                 overlay *= paths
-            if draw_ops.draw_segs:
-                for a in agents:
-                    segpolys = hv.Polygons([seg.vertices for seg in a.segs]).opts(color=a.color)
-                    overlay *= segpolys
+
                 # segpolys = hv.Polygons(aux.flatten_list([[seg.vertices for seg in a.segs]for a in agents])).opts(color='black')
                 # overlay *= segpolys
 

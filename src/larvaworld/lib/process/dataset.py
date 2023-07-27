@@ -337,7 +337,7 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 
-    def _enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
+    def enrich(self,pre_kws={}, proc_keys=[],anot_keys=[], is_last=True,**kwargs):
         cc = {
             'd': self,
             's': self.step_data,
@@ -362,16 +362,16 @@ class LarvaDataset(BaseLarvaDataset):
         return self
 
 
-    def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},**kwargs):
-        proc_keys=[k for k, v in processing.items() if v]
-        anot_keys=[k for k, v in annotation.items() if v]
-        # if metric_definition is not None :
-        #     self.config.metric_definition.update(metric_definition)
-        #     for k in proc_keys :
-        #         if k in metric_definition.keys():
-        #             kwargs.update(metric_definition[k])
-        return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,
-                            anot_keys=anot_keys,**kwargs)
+    # def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},**kwargs):
+    #     proc_keys=[k for k, v in processing.items() if v]
+    #     anot_keys=[k for k, v in annotation.items() if v]
+    #     # if metric_definition is not None :
+    #     #     self.config.metric_definition.update(metric_definition)
+    #     #     for k in proc_keys :
+    #     #         if k in metric_definition.keys():
+    #     #             kwargs.update(metric_definition[k])
+    #     return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,
+    #                         anot_keys=anot_keys,**kwargs)
 
 
 

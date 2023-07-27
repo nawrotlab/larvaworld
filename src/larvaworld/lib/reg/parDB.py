@@ -1884,7 +1884,7 @@ class ParamClass:
         self.add(**{'p': 'x', 'disp': 'X position', 'sym': 'X', **kws})
         self.add(**{'p': 'y', 'disp': 'Y position', 'sym': 'Y', **kws})
         self.add(
-            **{'p': 'real_length', 'k': 'l', 'd': 'length', 'disp': 'body length',
+            **{'p': 'length', 'k': 'l', 'd': 'length', 'disp': 'body length',
                'sym': '$l$', 'v0': 0.004 * s, 'lim': (0.0005 * s, 0.01 * s), 'dv': 0.0005 * s, **kws})
 
         self.add(

@@ -113,9 +113,9 @@ class SimOps(SimTimeOps,SimSpatialOps):
 class RuntimeGeneralOps(NestedConf):
     offline = param.Boolean(False, doc='Whether to launch a full Larvaworld environment')
     multicore = param.Boolean(False, doc='Whether to use multiple cores')
-    show_display = param.Boolean(True, doc='Whether to launch the pygame-visualization.')
+    show_display = param.Boolean(False, doc='Whether to launch the pygame-visualization.')
 
-    def __init__(self, offline=False, show_display=True, **kwargs):
+    def __init__(self, offline=False, show_display=False, **kwargs):
         if offline:
             show_display = False
         super().__init__(show_display=show_display, offline=offline, **kwargs)

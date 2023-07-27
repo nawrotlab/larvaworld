@@ -280,7 +280,7 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         # ds = LarvaDatasetCollection.from_agentpy_logs(logs=self._logs, Ngen=Ngen, p=self.p)
         self.data_collection = larvaworld.lib.LarvaDatasetCollection.from_agentpy_output(self.output)
         for d in self.data_collection.datasets:
-            d._enrich(proc_keys=['angular', 'spatial'], is_last=False)
+            d.enrich(proc_keys=['angular', 'spatial'], is_last=False)
             fit_dicts = func(s=d.step_data)
             valid_gs = {}
             for i, g in genome_dict.items():

@@ -298,7 +298,7 @@ lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id
 
     d.set_data(step=s, end=e)
     if enrichment:
-        d = d._enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'],
+        d = d.enrich(proc_keys=['spatial', 'angular', 'dispersion', 'tortuosity'],
                       anot_keys=['bout_detection', 'bout_distribution', 'interference'],
                       dsp_starts=dsp_starts, dsp_stops=dsp_stops, tor_durs=tor_durs)
 

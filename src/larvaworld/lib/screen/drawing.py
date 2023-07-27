@@ -20,7 +20,7 @@ class MediaDrawOps(NestedConf):
     fps = PositiveInteger(60, softmax=100,doc='Video speed')
     save_video= Boolean(False, doc='Whether to save a video.')
     mode=OptionalSelector(objects=['video', 'image'],doc='Screen mode.')
-    # show_display = Boolean(True, doc='Whether to launch the pygame-visualization.')
+    show_display = Boolean(False, doc='Whether to launch the pygame-visualization.')
 
 class AgentDrawOps(NestedConf):
     trails = Boolean(False,doc='Draw the larva trajectories')
@@ -76,6 +76,8 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps,VisOps
         self.bg = background_motion
 
         self.active = self.save_video or self.image_mode or self.show_display or (self.mode is not None)
+        # print(self.active,self.save_video, self.image_mode,self.show_display,self.mode)
+        # raise
         self.v = None
 
         self.selected_type = ''
@@ -191,13 +193,14 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps,VisOps
 
 
     def render(self,**kwargs):
-        self.check(**kwargs)
+
         if self.active:
+            self.check(**kwargs)
             if self.image_mode != 'overlap':
                 self.draw_arena(self.v)
 
             self.draw_agents(self.v)
-            if self.model.show_display:
+            if self.show_display:
                 self.evaluate_input()
                 self.evaluate_graphs()
             if self.image_mode != 'overlap':
@@ -358,8 +361,9 @@ class ScreenManager(BaseScreenManager):
 
 
     def step(self):
-        self.check()
+
         if self.active :
+            self.check()
             self.sim_clock.tick_clock()
             if self.mode == 'video':
                 if self.image_mode != 'snapshots' or self.snapshot_tick:
