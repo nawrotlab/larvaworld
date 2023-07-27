@@ -6,7 +6,7 @@ from panel.template import DarkTheme
 
 pn.extension()
 
-from larvaworld.lib import reg, aux, model, sim
+from larvaworld.lib import reg, aux, model, sim, screen
 from larvaworld.lib.param import SimOps
 
 class ArenaViewer:
@@ -46,8 +46,7 @@ class ArenaViewer:
         return tank
 
     def get_app(self):
-        # pass
-        # cb_IDs = pn.widgets.CheckBoxGroup(value=self.labels, options=self.labels)
+        draw_ops=screen.AgentDrawOps(draw_centroid=True)
         # cb_vis = pn.widgets.CheckBoxGroup(value=['Positions', 'Disperal circle'],
         #                                   options=['Positions', 'IDs', 'Tracks', 'Disperal circle'])
         # cb_rnd_col = pn.widgets.Checkbox(name='Random colors', value=False, disabled=True)
@@ -93,64 +92,47 @@ class ArenaViewer:
             # goverlay = None
 
             overlay = self.tank_plot
-            ps=self.launcher.agents.get_position()
-            colors = self.launcher.agents.color
-            points = hv.Points(ps).opts(size=5, color='black')
-            overlay*=points
-            hps = self.launcher.agents.head.front_end
-            hpoints = hv.Points(hps).opts(size=5, color='red')
-            overlay *= hpoints
+            agents=self.launcher.agents
+            if draw_ops.draw_centroid:
+                ps=agents.get_position()
+                # colors = agents.color
+                points = hv.Points(agents.get_position()).opts(size=5, color='black')
+                overlay*=points
+            if draw_ops.draw_head:
+                hpoints = hv.Points(agents.head.front_end).opts(size=5, color='red')
+                overlay *= hpoints
+            if draw_ops.trails:
+                Nfade = int(draw_ops.trajectory_dt / self.launcher.dt)
+
+                _paths = [a.trajectory[-Nfade:] for a in agents]
+                paths = hv.Contours(_paths).opts(color='black')
+                overlay *= paths
+            if draw_ops.draw_segs:
+                for a in agents:
+                    segpolys = hv.Polygons([seg.vertices for seg in a.segs]).opts(color=a.color)
+                    overlay *= segpolys
+                # segpolys = hv.Polygons(aux.flatten_list([[seg.vertices for seg in a.segs]for a in agents])).opts(color='black')
+                # overlay *= segpolys
+
             for s in self.launcher.sources:
                 source = hv.Ellipse(s.pos[0], s.pos[1], s.radius*2).opts(line_width=5,color=s.color, bgcolor=s.color)
                 overlay *= source
 
-            # for gID in valid_gIDs:
-            #     gdata=self.xy_data[gID]
-            #     grouped_xy=gdata[mode].loc[:i].groupby('AgentID')
-            #
-            #     track_kws = {
-            #         'color': None if rnd_cols else self.color_palette[gID],
-            #     }
-            #     _points = grouped_xy.last()
-            #
-            #     points = hv.Points(_points, label=gID).opts(size=2, **track_kws)
-            #     overlay = points
-            #
-            #     if ids_on:
-            #         labels = hv.Labels(_points.reset_index(), ['x', 'y']).opts(text_font_size='8pt', xoffset=0.015,
-            #                                                                    visible=ids_on)
-            #         overlay *= labels
-            #     if paths_on:
-            #         _paths = [xyi for id, xyi in grouped_xy]
-            #         paths = hv.Path(_paths).opts(**track_kws)
-            #         overlay *= paths
-            #     if circle_on and mode == 'origin':
-            #         r = gdata['dispersal'][i]
-            #         circle = hv.Ellipse(0, 0, r).opts(line_width=5,  **track_kws)
-            #         overlay *= circle
-            #         r = ((_points.dropna() ** 2).sum(axis=1) ** 0.5).mean()
-            #         circle2 = hv.Ellipse(0, 0, r).opts(line_width=4,line_dash='dotted', **track_kws)
-            #         overlay *= circle2
-                # goverlay = overlay if goverlay is None else goverlay * overlay
-            #
-            # goverlay.opts(
-            #     hv.opts.Points(size=5, visible=pos_on),
-            #     hv.opts.Labels(text_font_size='8pt', xoffset=0.015,visible=ids_on),
-            # )
-            #
+
             overlay.opts(responsive=False, **self.image_kws)
 
             return overlay
 
         img_dmap = hv.DynamicMap(get_image)
         app = pn.Row(img_dmap, pn.Column(
-            # pn.Row(
+
             #     pn.Column('Datasets', cb_IDs, sizing_mode='stretch_width'),
             #     pn.Column('Visibility', cb_vis, sizing_mode='stretch_width'),
             #     pn.Column('Settings', cb_rnd_col, cb_dispersal, sizing_mode='stretch_width'),
             #     width=self.size),
             pn.Row(pn.Column('Tick', time_slider)),
             pn.Row(pn.Column('Simulation timestep', self.progress_bar)),
+            pn.Param(draw_ops),
         ))
         # from my_template import DarkTheme
         # template = pn.template.MaterialTemplate(title='Material Dark', theme=DarkTheme)
