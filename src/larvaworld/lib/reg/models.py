@@ -437,20 +437,20 @@ def init_aux_modules():
              },
         'body' : {
             'args': {
-            'initial_length': {'v0': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001,
+            'length': {'v0': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001,
                                'disp': 'length', 'sym': '$l$', 'u': reg.units.m, 'k': 'l0',
                                'h': 'The initial body length.'},
 
             'Nsegs': {'dtype': int, 'v0': 2, 'lim': (1, 12), 'disp': 'number of body segments', 'sym': sub('N', 'segs'),
                       'u_name': '# $segments$', 'k': 'Nsegs',
                       'h': 'The number of segments comprising the larva body.'},
-            'seg_ratio': {'k': 'seg_r', 'lim': (0.0, 1.0),
+            'segment_ratio': {'k': 'seg_r', 'lim': (0.0, 1.0),
                           'h': 'The length ratio of the body segments. If null, equal-length segments are generated.'},
 
-            'shape': {'dtype': str, 'v0': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
+            'body_plan': {'dtype': str, 'v0': 'drosophila_larva', 'vs': ['drosophila_larva', 'zebrafish_larva'],
                       'k': 'body_shape', 'h': 'The body shape.'},
         },
-            'variable': ['initial_length', 'Nsegs']
+            'variable': ['length', 'Nsegs']
         },
         'energetics' : {
             'mode': {
@@ -1085,7 +1085,7 @@ class ModelRegistry:
         if 'intermitter' not in space_mkeys:
             m0.brain.intermitter_params = self.adapt_intermitter(e=e, c=c, mode=m0.brain.intermitter_params.mode,
                                                                  conf=m0.brain.intermitter_params)
-        m0.body.initial_length = epar(e, 'l', average=True, Nround=5)
+        m0.body.length = epar(e, 'l', average=True, Nround=5)
 
         reg.conf.Model.setID(mID, m0)
         from larvaworld.lib.sim.genetic_algorithm import optimize_mID

@@ -9,7 +9,7 @@ from larvaworld.lib.aux import nam
 SAMPLING_PARS = aux.bidict(
     aux.AttrDict(
         {
-            'length': 'body.initial_length',
+            'length': 'body.length',
             nam.freq(nam.scal(nam.vel(''))): 'brain.crawler_params.initial_freq',
             'stride_reoccurence_rate': 'brain.intermitter_params.crawler_reoccurence_rate',
             nam.mean(nam.scal(nam.chunk_track('stride', nam.dst('')))): 'brain.crawler_params.stride_dst_mean',
@@ -319,7 +319,7 @@ def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None)
     AA = np.ones([Nticks, len(df_columns)]) * np.nan
 
     controller = BaseController(**m.physics)
-    l = m.body.initial_length
+    l = m.body.length
     bend_errors = 0
     DL = DefaultLocomotor(dt=dt, conf=m.brain)
     for qq in range(100):

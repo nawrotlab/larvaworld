@@ -7,6 +7,7 @@ from larvaworld.lib.model.agents._larva import Larva
 from larvaworld.lib.model.agents.draw_body import draw_body
 
 
+
 class LarvaReplay(Larva):
     def __init__(self, model, data, length=0.005, **kwargs):
 
@@ -59,9 +60,12 @@ class LarvaReplay(Larva):
         super().__init__(**kws)
 
         if self.Nsegs is not None:
-            self.segs=aux.generate_segs_offline(self.Nsegs , self.pos, self.orientation, length,
-                shape='drosophila_larva', seg_ratio=None, color=self.default_color,
-                 mode='default')
+            from larvaworld.lib.model.agents.segmented_body import DefaultSegment
+            self.segs = aux.generate_segs(N=self.Nsegs, pos=self.pos, orient=self.orientation,
+                                            ratio=None, l=length,color=self.default_color,
+                                      body_plan='drosophila_larva', segment_class=DefaultSegment)
+
+
 
             or_pars = aux.nam.orient(aux.nam.midline(self.Nsegs, type='seg'))
             self.or_ar = np.ones([N, self.Nsegs]) * np.nan

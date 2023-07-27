@@ -294,14 +294,15 @@ class NestedConf(param.Parameterized):
 
     #@ property
     def entry(self, id):
+        assert id is not None
         d=self.nestedConf
         if 'distribution' in d.keys():
             assert 'group' in d.keys()
             d.group=id
         else:
-            assert 'unique_id' in d.keys()
-            d.unique_id = id
-            d.pop('unique_id')
+            if 'unique_id' in d.keys():
+                d.unique_id = id
+                d.pop('unique_id')
         return {id:d}
 
     @property

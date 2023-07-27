@@ -11,8 +11,7 @@ from larvaworld.lib import aux
 
 from larvaworld.lib.model.agents._larva import LarvaMotile
 
-
-class DefaultSegment:
+class BaseSegment:
     def __init__(self, pos, orientation,color, base_seg_vertices,base_seg_ratio, body_length):
         self.color = color
         self.pos = pos
@@ -23,8 +22,17 @@ class DefaultSegment:
         self.base_seg_ratio = base_seg_ratio
         self.body_length=body_length
 
-        self.seg_vertices = self.base_seg_vertices*body_length
-        # self.seg_length = self.base_seg_ratio*body_length
+    @property
+    def seg_vertices(self):
+        return self.body_length*self.base_seg_vertices
+
+
+class DefaultSegment(BaseSegment):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.base_local_rear_end = np.array([np.min(self.base_seg_vertices[:, 0]), 0])
+        self.base_local_front_end = np.array([np.max(self.base_seg_vertices[:, 0]), 0])
+
         self.update_vertices(self.pos, self.orientation)
 
         self.lin_vel = 0.0
@@ -89,61 +97,45 @@ class DefaultSegment:
         return self.orientation
 
 
-def generate_segs(N, ps, orient, bvs, cs, ratio, l):
-    segs = []
-    for i in range(N):
-        seg = DefaultSegment(pos=ps[i], orientation=orient,
-                             base_seg_vertices=bvs[i], color=cs[i],
-                             base_seg_ratio=ratio[i], body_length=l)
-        segs.append(seg)
-    return segs
 
 
 class LarvaBody(LarvaMotile):
     Nsegs = PositiveInteger(2, softmax=20, doc='The number of segments comprising the segmented larva body.')
     symmetry = param.Selector(objects=['bilateral', 'radial'], doc='The body symmetry.')
-    initial_length = PositiveNumber(0.005, softmax=0.1, step=0.001, doc='The initial length of the body in meters')
+    length = PositiveNumber(0.005, softmax=0.1, step=0.001, doc='The initial length of the body in meters')
     density = PositiveNumber(300.0, softmax=10000.0, step=1.0, doc='The density of the larva body in kg/m**2')
+    body_plan=param.Selector(objects=['drosophila_larva', 'zebrafish'], doc='The body plan.')
 
-    def __init__(self, brain, energetics=None, life_history={}, seg_ratio=None, shape='drosophila_larva',  **kwargs):
-
+    def __init__(self, brain, energetics=None, life_history={}, segment_ratio=None,  **kwargs):
         super().__init__(brain, energetics, life_history, **kwargs)
         self.width_to_length_ratio = 0.2  # from [1] K. R. Kaun et al., “Natural variation in food acquisition mediated via a Drosophila cGMP-dependent protein kinase,” J. Exp. Biol., vol. 210, no. 20, pp. 3547–3558, 2007.
-        if seg_ratio is None:
-            seg_ratio = [1 / self.Nsegs] * self.Nsegs
-        self.seg_ratio = np.array(seg_ratio)
-        self.contour_points = body_shapes[shape]
-        self.base_seg_vertices = aux.generate_seg_shapes(self.Nsegs, seg_ratio=self.seg_ratio,points=self.contour_points)
+        if segment_ratio is None:
+            segment_ratio = [1 / self.Nsegs] * self.Nsegs
+        self.seg_ratio = np.array(segment_ratio)
+        self.contour_points = body_shapes[self.body_plan]
         self.body_bend = 0
-        self.cum_dst = 0.0
-        self.dst = 0.0
+
 
         self.Nangles = self.Nsegs - 1
 
         self.Nangles_b = int(self.Nangles + 1 / 2)
 
-        self.mid_seg_index = int(self.Nsegs / 2)
 
 
-        self.seg_colors = self.generate_seg_colors(self.Nsegs, color=self.default_color)
-        self.initialize(self.initial_length)
+        self.initialize(self.length)
         self.radius=self.sim_length/2
 
 
-        self.seg_positions = aux.generate_seg_positions(self.Nsegs, self.pos, self.orientation,
-                                                    self.sim_length, self.seg_ratio)
-
         if not self.model.Box2D :
-            self.segs = generate_segs(N=self.Nsegs, ps=self.seg_positions, orient=self.orientation, bvs=self.base_seg_vertices,
-                                      cs=self.seg_colors, ratio=self.seg_ratio, l=self.sim_length)
+            self.segs = aux.generate_segs(N=self.Nsegs, pos=self.pos, orient=self.orientation,
+                                            ratio=self.seg_ratio, l=self.sim_length,color=self.default_color,
+                                      body_plan=self.body_plan, segment_class=DefaultSegment)
         self.sensors = aux.AttrDict()
         self.define_sensor('olfactor', (1, 0))
 
         # self.compute_body_bend()
 
 
-    def generate_seg_colors(self, N, color):
-        return [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
 
     def initialize(self, l):
         if not hasattr(self, 'real_length') or self.real_length is None:
@@ -181,7 +173,7 @@ class LarvaBody(LarvaMotile):
     def compute_body_bend(self):
         angles = [
             aux.angle_dif(self.segs[i].get_orientation(), self.segs[i + 1].get_orientation(), in_deg=False) for i in
-            range(self.Nangles_b)]
+            range(int(self.Nangles + 1 / 2))]
         self.body_bend = aux.wrap_angle_to_0(sum(angles))
 
 
@@ -215,7 +207,7 @@ class LarvaBody(LarvaMotile):
             global_pos = self.segs[seg_idx].global_front_end
         else:
             seg_idx = int((self.Nsegs + 1) / 2)
-            global_pos = self.segs[seg_idx].get_world_point((0.0, 0.0))
+            global_pos = self.segs[seg_idx].get_position()
         return global_pos
 
 
@@ -239,8 +231,6 @@ class LarvaBody(LarvaMotile):
         for i in range(self.Nsegs) :
             self.segs[i].body_length=self.sim_length
 
-            self.segs[i].seg_vertices=self.sim_length *self.segs[i].base_seg_vertices
-        # self.update_sensor_position()
 
     '''
     seg_vertices of 2 segments example :
@@ -275,13 +265,6 @@ class LarvaBody(LarvaMotile):
             # 'local_pos': local_pos * self.sim_length
         })
 
-    # def get_sensor(self, sensor):
-    #     for sensor_dict in self.sensors:
-    #         if sensor_dict['sensor'] == sensor:
-    #             return sensor_dict
-
-    # def get_sensors(self):
-    #     return [s['sensor'] for s in self.sensors]
 
     def get_sensor_position(self, sensor):
         d=self.sensors[sensor]
@@ -307,8 +290,6 @@ class LarvaBody(LarvaMotile):
                   selected=self.selected, sensors=self.sensors, length=self.sim_length)
 
 
-    def get_contour(self):
-        return self.contour
 
 
 

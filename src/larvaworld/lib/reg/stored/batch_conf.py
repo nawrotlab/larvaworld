@@ -24,7 +24,7 @@ def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, as_entry=True, *
     # enr=reg.get_null('enrichment',processing=reg.get_null('processing', **{pr : True for pr in proc}))
     conf = reg.get_null('Batch',
                          exp=exp,
-                         exp_kws={'enrichment': reg.par.enr_dict(proc=proc), 'experiment': exp},
+                         exp_kws={'enrichment': reg.gen.EnrichConf(proc_keys=proc).nestedConf, 'experiment': exp},
                          optimization=reg.get_null("optimization", fit_par=o, **o_kws) if o is not None else None,
                          space_search=ss0,
                          # batch_methods=reg.get_null('batch_methods', **bm_kws),

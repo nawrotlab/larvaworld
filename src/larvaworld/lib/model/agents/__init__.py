@@ -1,4 +1,4 @@
-from ._agent import PointAgent, OrientedAgent
+from ._agent import PointAgent, OrientedAgent, MobileAgent
 
 
 from ._source import Source, Food

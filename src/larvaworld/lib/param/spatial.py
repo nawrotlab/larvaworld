@@ -19,6 +19,11 @@ class Pos2D(NestedConf):
     def get_position(self):
         return tuple(self.pos)
 
+    def set_position(self, pos):
+        if not isinstance(pos, tuple):
+            pos=tuple(pos)
+        self.pos = pos
+
     @property
     def x(self):
         return self.pos[0]
@@ -44,7 +49,7 @@ class RadiallyExtended(Pos2D):
     def contained(self, point):
         return geometry.Point(self.get_position()).distance(geometry.Point(point)) <= self.radius
 
-class OrientedPoint(RadiallyExtended):
+class OrientedPoint(Pos2D):
     orientation = RandomizedPhase(label='orientation',doc='The absolute orientation in space.')
 
     def __init__(self,**kwargs):
@@ -52,9 +57,58 @@ class OrientedPoint(RadiallyExtended):
         super().__init__(**kwargs)
         self.initial_orientation = self.orientation
 
+    @property
+    def rotationMatrix(self):
+        a=-self.orientation
+        return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+
+    def translate(self, point):
+        return tuple(np.array(self.pos) + np.array(point) @ self.rotationMatrix)
+
+    def set_orientation(self, orientation):
+        self.orientation = orientation % (np.pi * 2)
+
+
+    def get_orientation(self):
+        return self.orientation
+
+    def get_pose(self):
+        return np.array(self.pos), self.orientation
+
+    def update_poseNvertices(self, pos, orientation):
+        self.set_position(pos)
+        self.orientation=orientation % (np.pi * 2)
+        # self.vertices = pos + self.seg_vertices @ aux.rotationMatrix(-orientation)
+
+
+
+
+class MobilePoint(OrientedPoint):
+
+    def __init__(self,**kwargs):
+
+        super().__init__(**kwargs)
+        self.lin_vel = 0.0
+        self.ang_vel = 0.0
+        self.ang_acc = 0.0
+        self.cum_dst = 0.0
+        self.dst = 0.0
+
+    def get_angularvelocity(self):
+        return self.ang_vel
+
+    def get_linearvelocity(self):
+        return self.lin_vel
+
+    def update_all(self, pos, orientation, lin_vel, ang_vel):
+        self.set_position(pos)
+        self.orientation=orientation % (np.pi * 2)
+        # self.vertices = pos + self.seg_vertices @ aux.rotationMatrix(-orientation)
+        self.lin_vel=lin_vel
+        self.ang_vel=ang_vel
 
 class LineExtended(NestedConf):
-    width = PositiveNumber(0.001, softmax=10.0, doc='The width of the Obstacle')
+    width = PositiveNumber(0.001, softmax=10.0, doc='The width of the line vertices')
     vertices = XYLine(doc='The list of 2d points')
     closed = param.Boolean(False, doc='Whether the line is closed')
 
@@ -72,9 +126,12 @@ class LineClosed(LineExtended):
     def __init__(self, **kwargs):
         super().__init__(closed=True,**kwargs)
 
+
+
+
 class Area2D(NestedConf):
     dims = PositiveRange(doc='The arena dimensions')
-    centered = param.Boolean(True, doc='Whether entity is active')
+    centered = param.Boolean(True, doc='Whether area is centered to (0,0)')
 
     @property
     def w(self):

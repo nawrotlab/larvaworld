@@ -4,19 +4,24 @@ import numpy as np
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController
+from larvaworld.lib.model import agents
+from larvaworld.lib.model.agents.segmented_body import BaseController
 
 
-class LarvaSim(LarvaBody, BaseController):
-    def __init__(self, body, physics, Box2D_params, **kwargs):
-        LarvaBody.__init__(self,**body, **kwargs)
+
+class LarvaSim(agents.LarvaMotile, BaseController):
+    def __init__(self, physics, Box2D_params, **kwargs):
         BaseController.__init__(self, **physics)
+        agents.LarvaMotile.__init__(self,**kwargs)
+        # print(self.length)
+        # raise
         self.body_bend_errors = 0
         self.negative_speed_errors = 0
         self.border_go_errors = 0
         self.border_turn_errors = 0
 
         self.collision_with_object = False
+
 
 
     # def compute_ang_vel(self, torque, v):
@@ -81,7 +86,7 @@ class LarvaSim(LarvaBody, BaseController):
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
         hr0 = self.head.global_rear_end
-        l0 = self.head.seg_length
+        l0 = self.head.length
         A0,A1=self.valid_Dbend_range(0,ho0)
         fov0,fov1 = A0 / dt, A1 / dt
 
@@ -106,7 +111,7 @@ class LarvaSim(LarvaBody, BaseController):
             hp1 = hr0 + k * (d * sf + l0 / 2)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         self.dst = d
-        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.real_length)
+        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.length)
 
 
         if self.Nsegs > 1:
@@ -114,7 +119,7 @@ class LarvaSim(LarvaBody, BaseController):
             for i, seg in enumerate(self.segs[1:]):
                 o1 = seg.get_orientation() + d_or
                 k = np.array([np.cos(o1), np.sin(o1)])
-                p1 = self.segs[i].global_rear_end - k * seg.seg_length / 2
+                p1 = self.segs[i].global_rear_end - k * seg.length / 2
                 seg.update_poseNvertices(p1, o1)
 
         self.pos = tuple(self.global_midspine_of_body)

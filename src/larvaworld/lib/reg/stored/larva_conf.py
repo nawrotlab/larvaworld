@@ -152,7 +152,7 @@ def build_RvsS(b):
             }
         }
 
-        return reg.get_null('Model', brain=bb, body=reg.get_null('body', initial_length=l0, Nsegs=Nsegs),
+        return reg.get_null('Model', brain=bb, body=reg.get_null('body', length=l0, Nsegs=Nsegs),
                              energetics={'DEB': deb, 'gut': gut}, Box2D_params=null_Box2D_params)
 
     RvsS = {

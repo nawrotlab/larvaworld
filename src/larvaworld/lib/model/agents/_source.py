@@ -61,9 +61,11 @@ class Food(Source):
                 pass
         return np.min([amount, prev_amount])
 
-    def draw(self, viewer, filled=None):
+    def draw(self, v, filled=None):
         filled = True if self.amount > 0 else False
-        super().draw(viewer=viewer, filled=filled)
+        p, c, r = self.get_position(), self.color, self.radius
+        v.draw_circle(p, r, c, filled, r / 5)
+        super().draw(v=v, filled=filled)
 
 
 

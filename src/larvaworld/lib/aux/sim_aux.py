@@ -190,32 +190,31 @@ def generate_seg_shapes(Nsegs: int, points:ndarray, seg_ratio: Optional[ndarray]
 
 
 
-def generate_seg_positions(Nsegs, pos, orientation, length,seg_ratio=None) :
+def generate_seg_positions(N, pos, orientation, l,ratio=None) :
     x,y=pos
-    if seg_ratio is None:
-        seg_ratio = np.array([1 / Nsegs] * Nsegs)
-    # c,s=np.cos(orientation),np.sin(orientation)
-    ls_x = np.cos(orientation) * length * seg_ratio
-    ls_y = np.sin(orientation) * length / Nsegs
-    return [[x + (-i + (Nsegs - 1) / 2) * ls_x[i],
-                      y + (-i + (Nsegs - 1) / 2) * ls_y] for i in range(Nsegs)]
+    if ratio is None:
+        ratio = np.array([1 / N] * N)
+    ls_x = np.cos(orientation) * l * ratio
+    ls_y = np.sin(orientation) * l / N
+    return [[x + (-i + (N - 1) / 2) * ls_x[i],
+                      y + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
 
 
-
-def generate_segs_offline(N, pos, orientation, length, shape='drosophila_larva', seg_ratio=None, color=None,
-                 mode='default'):
-    if seg_ratio is None:
-        seg_ratio = np.array([1 / N] * N)
-
-    seg_positions =generate_seg_positions(N, pos, orientation, length,seg_ratio)
-    from larvaworld.lib.reg.stored.miscellaneous import body_shapes
-    base_seg_vertices = generate_seg_shapes(N, seg_ratio=seg_ratio, points=body_shapes[shape])
+def generate_segs(N, pos, orient, ratio, l,color,body_plan, segment_class, **kws):
     if color is None:
         color = [0.0, 0.0, 0.0]
-    seg_colors = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
-    if mode == 'default':
-        from larvaworld.lib.model.agents.segmented_body import generate_segs
-        return generate_segs(N, seg_positions, orientation, base_seg_vertices, seg_colors, seg_ratio, length)
+    cs = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
+    if ratio is None:
+        ratio = np.array([1 / N] * N)
+    ps = generate_seg_positions(N, pos, orient, l, ratio)
+    from larvaworld.lib.reg.stored.miscellaneous import body_shapes
+    bvs = generate_seg_shapes(N, seg_ratio=ratio, points=body_shapes[body_plan])
+
+    return [segment_class(pos=ps[i], orientation=orient,
+                           base_seg_vertices=bvs[i], color=cs[i],
+                           base_seg_ratio=ratio[i], body_length=l, **kws) for i in range(N)]
+
+
 
 
 

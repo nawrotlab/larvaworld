@@ -274,3 +274,9 @@ def unique_list(l):
 def checkEqual(L1, L2):
     return len(L1) == len(L2) and sorted(L1) == sorted(L2)
 
+def np2Dtotuples(a):
+    if isinstance(a, list) and all([isinstance(aa, tuple) for aa in a]):
+        return a
+    else:
+        return list(zip(a[:,0], a[:,1]))
+

@@ -39,7 +39,7 @@ class LarvaOffline(LarvaSim):
 
         self.fo = (self.fo + self.ang_vel * dt) % (2 * np.pi)
         self.dst = self.lin_vel * dt
-        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.real_length)
+        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.length)
 
         self.ro = (self.ro + delta_ro) % (2 * np.pi)
         self.body_bend = aux.wrap_angle_to_0(self.fo - self.ro)

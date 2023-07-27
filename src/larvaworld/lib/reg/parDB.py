@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Tuple
 import sys
 
-import pint_pandas
+from pint_pandas import PintType
 
 
 
@@ -1003,7 +1003,7 @@ def buildInitDict():
         }
 
         d['body'] = {
-            'initial_length': {'v': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001, 'aux_vs': ['sample'],
+            'length': {'v': 0.004, 'lim': (0.0, 0.01), 'dv': 0.0001, 'aux_vs': ['sample'],
                                'disp': 'initial',
                                'label': 'length', 'symbol': '$l$', 'u': reg.units.m, 'k': 'l0',
                                'combo': 'length', 'h': 'The initial body length.'},
@@ -2041,36 +2041,6 @@ class ParamRegistry:
         # return update_default(name, aux.copyDict(self.DEF[name]), **kwargs)
         return update_default(name, self.DEF[name].get_copy(), **kwargs)
 
-    def metric_def(self, ang={}, sp={}, **kwargs):
-        def ang_def(fv=(1, 2), rv=(-2, -1), **kwargs):
-            return self.get_null('ang_definition',front_vector=fv, rear_vector=rv, **kwargs)
-
-        return self.get_null('metric_definition',
-                             angular=ang_def(**ang),
-                             spatial=self.get_null('spatial_definition', **sp),
-                             **kwargs)
-
-
-
-    def enr_dict(self, proc=[], anot=[], pre_kws={},
-                 def_kws={}, metric_definition=None, **kwargs):
-        kw_dic0={
-            'preprocessing' : pre_kws,
-            'processing' : {k: True if k in proc else False for k in proc_type_keys},
-            'annotation' : {k: True if k in anot else False for k in anot_type_keys}
-                }
-        kws={k:self.get_null(k,**v) for k,v in kw_dic0.items()}
-
-        if metric_definition is None:
-            metric_definition = self.metric_def(**def_kws)
-        dic = self.get_null('enrichment',
-                                      metric_definition=metric_definition, **kws, **kwargs)
-        return dic
-
-    def base_enrich(self, **kwargs):
-        return self.enr_dict(proc=['angular', 'spatial', 'dispersion', 'tortuosity'],
-                             anot=['bout_detection', 'bout_distribution', 'interference'],
-                             **kwargs)
 
     def get(self, k, d, compute=True):
         if k not in self.kdict.keys() :
@@ -2169,7 +2139,7 @@ class ParamRegistry:
 
         '''
         valid_pars=self.valid_pkeys(df.columns)
-        valid_pars= [col for col in valid_pars if not isinstance(df.dtypes[col], pint_pandas.pint_array.PintType)]
+        valid_pars= [col for col in valid_pars if not isinstance(df.dtypes[col], PintType)]
         pint_dtypes = {par: self.getPar(d=par, to_return='upint') for par in valid_pars}
         df_pint = df.astype(dtype=pint_dtypes)
         return df_pint

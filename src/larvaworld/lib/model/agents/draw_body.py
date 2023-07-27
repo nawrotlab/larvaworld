@@ -4,34 +4,34 @@ import numpy as np
 from larvaworld.lib import aux
 
 
-def draw_body(v, model, pos,color,radius, midline_xy=None, contour_xy=None,  vertices=None,
+def draw_body(v, pos,color,radius, midline_xy=None, contour_xy=None,  vertices=None,
               segs=None, selected=False,
               front_or=None, rear_or=None, sensors=None, length=None):
-    if model.screen_manager.draw_centroid:
+    if v.manager.draw_centroid:
         draw_body_centroid(v, pos, radius, color)
 
-    if model.screen_manager.draw_contour:
+    if v.manager.draw_contour:
         if segs is not None:
             draw_body_segments(v, segs)
         elif contour_xy is not None :
             draw_body_contour(v, contour_xy, color, radius)
 
-    if model.screen_manager.draw_midline:
+    if v.manager.draw_midline:
         draw_body_midline(v, midline_xy, radius)
 
-    if model.screen_manager.draw_head:
+    if v.manager.draw_head:
         draw_body_head(v, midline_xy, radius)
 
     if selected:
         if vertices is not None :
-            draw_selected_body(v, pos, vertices, radius, model.screen_manager.selection_color)
+            draw_selected_body(v, pos, vertices, radius, v.manager.selection_color)
         elif contour_xy is not None :
 
-            draw_selected_body(v, pos, contour_xy, radius, model.screen_manager.selection_color)
+            draw_selected_body(v, pos, contour_xy, radius, v.manager.selection_color)
         else :
             pass
 
-    if model.screen_manager.draw_orientations:
+    if v.manager.draw_orientations:
         if not any(np.isnan(np.array(midline_xy).flatten())):
             Nmid=len(midline_xy)
             p0=midline_xy[int(Nmid/2)]
@@ -47,7 +47,7 @@ def draw_body(v, model, pos,color,radius, midline_xy=None, contour_xy=None,  ver
             draw_body_orientation(v, p0, front_or, radius, 'green')
             draw_body_orientation(v, p1, rear_or, radius, 'red')
 
-    if model.screen_manager.draw_sensors:
+    if v.manager.draw_sensors:
         if sensors :
             draw_sensors(v,sensors, radius, segs, length)
 
@@ -93,8 +93,7 @@ def draw_body_centroid(v, pos, radius, color):
 
 def draw_body_head(v, midline_xy, radius):
     try:
-        pos = midline_xy[0]
-        v.draw_circle(pos, radius / 2, color=(255, 0, 0), width=radius / 6)
+        v.draw_circle(midline_xy[0], radius / 2, color=(255, 0, 0), width=radius / 6)
     except:
         pass
 
@@ -111,7 +110,7 @@ def draw_selected_body(v, pos, xy_bounds, radius, color):
 
 def draw_body_orientation(v, pos, orientation, radius, color):
     dst=radius * 3
-    pos2=[pos[0] + math.cos(orientation) * dst,pos[1] + math.sin(orientation) * dst]
+    pos2=[pos[0] + math.cos(orientation) * radius * 3,pos[1] + math.sin(orientation) * radius * 3]
 
     v.draw_line(pos, pos2,color=color, width=radius / 10)
     # viewer.draw_line(self.midline[-1], xy_aux.xy_projection(self.midline[-1], self.rear_orientation, self.radius * 3),

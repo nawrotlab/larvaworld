@@ -1,7 +1,7 @@
 import numpy as np
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import OrientedPoint, RadiallyExtended, ClassAttr
+from larvaworld.lib.param import OrientedPoint, RadiallyExtended, ClassAttr, MobilePoint
 from larvaworld.lib.param.composition import Odor
 from larvaworld.lib.screen import LabelledGroupedObject
 
@@ -33,22 +33,27 @@ class NonSpatialAgent(LabelledGroupedObject):
 class PointAgent(RadiallyExtended,NonSpatialAgent):
 
 
-    def draw(self, viewer, filled=True):
+    def draw(self, v, filled=True):
         p, c, r = self.get_position(), self.color, self.radius
         if np.isnan(p).all():
             return
-        viewer.draw_circle(p, r, c, filled, r / 5)
+        # if v.manager.draw_centroid:
+
 
         if self.odor.peak_value > 0:
-            if self.model.screen_manager.odor_aura:
-                viewer.draw_circle(p, r * 1.5, c, False, r / 10)
-                viewer.draw_circle(p, r * 2.0, c, False, r / 15)
-                viewer.draw_circle(p, r * 3.0, c, False, r / 20)
+            if v.manager.odor_aura:
+                v.draw_circle(p, r * 1.5, c, False, r / 10)
+                v.draw_circle(p, r * 2.0, c, False, r / 15)
+                v.draw_circle(p, r * 3.0, c, False, r / 20)
         if self.selected:
-            viewer.draw_circle(p, r * 1.1, self.model.screen_manager.selection_color, False, r / 5)
+            v.draw_circle(p, r * 1.1, v.manager.selection_color, False, r / 5)
 
 
-class OrientedAgent(OrientedPoint,NonSpatialAgent):
+class OrientedAgent(OrientedPoint,PointAgent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class MobileAgent(MobilePoint,PointAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

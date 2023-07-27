@@ -3,20 +3,19 @@ import numpy as np
 from shapely import geometry
 
 from larvaworld.lib import aux, reg
-from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController
+from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController, BaseSegment
 
-class Box2DSegment:
 
-    def __init__(self, pos,orientation,base_seg_vertices,base_seg_ratio,color, space, physics_pars, facing_axis, body_length):
+class Box2DSegment(BaseSegment):
 
-        self.base_seg_ratio = base_seg_ratio
-        self.base_seg_vertices = base_seg_vertices
-        self.color = color
+    def __init__(self, space, physics_pars, **kwargs):
+
+        super().__init__(**kwargs)
         self.space = space
         self.physics_pars = physics_pars
         self._body: Box2D.b2Body = self.space.CreateDynamicBody(
-            position=Box2D.b2Vec2(*pos),
-            angle=orientation,
+            position=Box2D.b2Vec2(*self.pos),
+            angle=self.orientation,
 
             # gravityScale=100,
             # fixedRotation=True if  self.idx!=0 else False,
@@ -27,7 +26,7 @@ class Box2DSegment:
         self._body.bullet = True
 
         # overriden by LarvaBody
-        self.facing_axis = facing_axis
+        self.facing_axis = Box2D.b2Vec2(1.0, 0.0)
 
         # CAUTION
         # This sets the body'sigma origin (where pos, orientation is derived from)
@@ -39,11 +38,9 @@ class Box2DSegment:
 
         # TODO: right now this assumes that all subpolygons have the same number of edges
         # TODO: rewrite such that arbitrary subpolygons can be used here
-        self.body_length=body_length
-        seg_vertices=self.base_seg_vertices*body_length
         centroid = np.zeros(2)
         area = .0
-        for vs in seg_vertices:
+        for vs in self.seg_vertices:
             # compute centroid of circle_to_polygon
             r0 = np.roll(vs[:, 0], 1)
             r1 = np.roll(vs[:, 1], 1)
@@ -54,7 +51,7 @@ class Box2DSegment:
             centroid += np.mean(vs, axis=0) * a
 
         centroid /= area
-        self.__local_vertices = seg_vertices
+        self.__local_vertices = self.seg_vertices
         self.__local_vertices.setflags(write=False)
         for v in self.__local_vertices:
             self._body.CreatePolygonFixture(
@@ -173,7 +170,7 @@ class LarvaBox2D(LarvaBody,BaseController):
             ang_vel = ang * self.ang_vel_coef
             self.segs[0]._body.angularVelocity = ang_vel
             if self.Nsegs > 1:
-                for i in np.arange(1, self.mid_seg_index, 1):
+                for i in np.arange(1, int(self.Nsegs / 2), 1):
                     self.segs[i]._body.angularVelocity = (ang_vel / i)
         elif self.ang_mode == 'torque':
             torque = ang * self.torque_coef
@@ -223,29 +220,27 @@ class LarvaBox2D(LarvaBody,BaseController):
         self.compute_body_bend()
 
     def generate_segs(self):
-        segs = []
-        physics_pars = {'density': self.density,
-                        'friction': 10.0,
-                        'restitution': 0.0,
-                        'lin_damping': self.lin_damping,
-                        'ang_damping': self.ang_damping,
-                        'inertia': 0.0}
+        # segs = []
+        kws= {
+            'physics_pars' : {'density': self.density,
+                              'friction': 10.0,
+                              'restitution': 0.0,
+                              'lin_damping': self.lin_damping,
+                              'ang_damping': self.ang_damping,
+                              'inertia': 0.0},
+            'space' : self.model.space,
+        }
 
-        fixtures = []
-        for i in range(self.Nsegs):
-            seg = Box2DSegment(space=self.model.space, pos=self.seg_positions[i], orientation=self.orientation,
-                               physics_pars=physics_pars, facing_axis=Box2D.b2Vec2(1.0, 0.0),
-                               base_seg_vertices=self.base_seg_vertices[i],base_seg_ratio=self.seg_ratio[i], color=self.seg_colors[i], body_length=self.sim_length)
-            fixtures.extend(seg._fixtures)
-            segs.append(seg)
+        segs=aux.generate_segs(self.Nsegs, self.pos, self.orientation,
+                                self.sim_length, self.seg_ratio,self.default_color,self.body_plan,
+                                segment_class=Box2DSegment, **kws)
+
 
         # put all agents into same group (negative so that no collisions are detected)
         if self.model.larva_collisions:
-            for fixture in fixtures:
-                fixture.filterData.groupIndex = -1
-
-
-            # self.create_rotator(segs, position, orientation, physics_pars)
+            for seg in segs :
+                for fixture in seg._fixtures:
+                    fixture.filterData.groupIndex = -1
         return segs
 
     # To make peristalsis visible we try to leave some space between the segments.
@@ -385,8 +380,3 @@ class LarvaBox2D(LarvaBody,BaseController):
                     self.joints.append(j)
 
 
-# class LarvaBox2D(LarvaBody,Box2DController):
-#     def __init__(self, physics,Box2D_params,**kwargs):
-#         LarvaBody.__init__(self, **kwargs)
-#
-#         Box2DController.__init__(self, physics, **Box2D_params)

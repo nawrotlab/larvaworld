@@ -16,8 +16,8 @@ class BaseLarvaDataset:
     def initGeo(to_Geo=False,**kwargs):
         if to_Geo:
             try:
-                from larvaworld.lib.process.larva_trajectory_collection import LarvaTrajectoryCollection
-                return LarvaTrajectoryCollection(**kwargs)
+                from larvaworld.lib.process.dataset_geo import GeoLarvaDataset
+                return GeoLarvaDataset(**kwargs)
             except :
                 pass
             # from larvaworld.lib.process.dataset import LarvaDataset

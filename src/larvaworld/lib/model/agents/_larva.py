@@ -4,10 +4,11 @@ import numpy as np
 import param
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.model.agents import OrientedAgent,Source
+from larvaworld.lib.model.agents import Source
+from larvaworld.lib.model.agents._agent import MobileAgent
+from larvaworld.lib.param import SegmentedBodySensored
 
-
-class Larva(OrientedAgent):
+class Larva(MobileAgent):
     def __init__(self, model,unique_id=None, **kwargs):
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
@@ -18,18 +19,28 @@ class Larva(OrientedAgent):
 
         self.cum_dur = 0
 
+    def draw(self, v, **kwargs):
+        p, c, r = self.get_position(), self.color, self.radius
+        if np.isnan(p).all():
+            return
+        if v.manager.draw_centroid:
+            v.draw_circle(p, r / 4, c,True, r / 10)
+        super().draw(v, **kwargs)
 
 
-
-
-class LarvaMotile(Larva):
-    def __init__(self, brain, energetics, life_history, **kwargs):
-        super().__init__(**kwargs)
+class LarvaMotile(Larva,SegmentedBodySensored):
+    def __init__(self, brain, energetics, life_history,body, **kwargs):
+        super().__init__(**body,**kwargs)
         self.carried_objects = []
         self.brain = self.build_brain(brain)
         self.build_energetics(energetics, life_history=life_history)
         self.food_detected, self.feeder_motion = None, False
         self.cum_food_detected, self.amount_eaten = 0, 0
+
+    # @property
+    # def sim_length(self):
+    #     return self.real_length * self.model.scaling_factor
+
 
     def build_brain(self, conf):
         if conf.nengo:
@@ -202,7 +213,7 @@ class LarvaMotile(Larva):
                                         radius=self.radius)
         self.resolve_carrying(self.food_detected)
 
-        lin, ang, self.feeder_motion = self.brain.step(pos, length=self.real_length, on_food=self.on_food)
+        lin, ang, self.feeder_motion = self.brain.step(pos, length=self.length, on_food=self.on_food)
         V = self.feed(self.food_detected, self.feeder_motion)
         self.amount_eaten += V * 1000
         self.cum_food_detected += int(self.on_food)

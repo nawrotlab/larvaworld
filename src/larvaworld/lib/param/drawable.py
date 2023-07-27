@@ -2,7 +2,7 @@ import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.param import NestedConf, Named, NamedObject, GroupedObject, RadiallyExtended, BoundedArea, \
-    LineExtended
+    LineExtended, PositiveNumber
 
 
 class Viewable(NestedConf) :
@@ -77,6 +77,7 @@ class ViewableGroupedObject(Viewable,GroupedObject): pass
 
 
 class ViewableLine(Viewable,LineExtended):
+
 
 
     def draw(self, v, **kwargs):

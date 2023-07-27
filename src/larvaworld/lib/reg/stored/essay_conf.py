@@ -7,7 +7,7 @@ class Essay:
     def __init__(self, type,essay_id=None, N=5, enrichment=None, collections=['pose'], video=False, show=False,
                  **kwargs):
         if enrichment is None:
-            enrichment = reg.par.base_enrich()
+            enrichment = reg.gen.EnrichConf().nestedConf
         if video:
             self.vis_kwargs = reg.get_null('visualization', mode='video', video_speed=60)
         else:
@@ -64,7 +64,7 @@ class Essay:
 
 class RvsS_Essay(Essay):
     def __init__(self, all_figs=False, N=1, **kwargs):
-        super().__init__(type='RvsS', N=N, enrichment=reg.par.enr_dict(proc=['spatial']),
+        super().__init__(type='RvsS', N=N, enrichment=reg.gen.EnrichConf(proc_keys=['spatial']).nestedConf,
                          collections=['pose', 'feeder', 'gut'], **kwargs)
 
         self.all_figs = all_figs
@@ -325,8 +325,7 @@ class DoublePatch_Essay(Essay):
     def __init__(self, substrates=['sucrose', 'standard', 'cornmeal'], N=10, dur=5.0, olfactor=True, feeder=True,
                  arena_dims=(0.24, 0.24), patch_x=0.06,patch_radius=0.025,
                  **kwargs):
-        super().__init__(N=N,type='DoublePatch', enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                                                   anot=['bout_detection', 'patch_residency']),
+        super().__init__(N=N,type='DoublePatch', enrichment=reg.gen.EnrichConf(anot_keys=['bout_detection', 'patch_residency'], proc_keys=['spatial', 'angular', 'source']).nestedConf,
                          collections=['pose', 'toucher', 'feeder', 'olfactor'], **kwargs)
         self.arena_dims = arena_dims
         self.patch_x = patch_x
@@ -460,8 +459,7 @@ class DoublePatch_Essay(Essay):
 class Chemotaxis_Essay(Essay):
     def __init__(self, dur=5.0, gain=300.0, mode=1, **kwargs):
         super().__init__(type='Chemotaxis',
-                         enrichment=reg.par.enr_dict(proc=['spatial', 'angular', 'source'],
-                                               anot=['bout_detection', 'source_attraction']),
+                         enrichment=reg.gen.EnrichConf(anot_keys=['bout_detection', 'source_attraction'], proc_keys=['spatial', 'angular', 'source']).nestedConf,
                          collections=['pose', 'olfactor'], **kwargs)
         self.time_ks = ['c_odor1', 'dc_odor1']
         self.dur = dur
