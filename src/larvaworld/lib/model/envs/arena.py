@@ -11,16 +11,17 @@ class Arena(ViewableNamedBoundedArea, agentpy.Space):
 
 
 
-    def __init__(self, model,**kwargs):
+    def __init__(self, model=None,**kwargs):
         ViewableNamedBoundedArea.__init__(self, **kwargs)
         # X, Y = self.dims
         # self.scaled_dims = self.dims * model.scaling_factor
         self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(self.vertices, 2)]
         # self.range = np.array([-X / 2, X / 2, -Y / 2, Y / 2])
-        self.scaled_range=self.range*model.scaling_factor
+        # self.scaled_range=self.range*model.scaling_factor
         k = 0.96
         self.polygon = Polygon(np.array(self.vertices) * k)
-        agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
+        if model is not None :
+            agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
 
         self.stable_source_positions=[]
         self.displacable_source_positions=[]
@@ -80,7 +81,10 @@ class Arena(ViewableNamedBoundedArea, agentpy.Space):
 
     def draw(self, v=None):
         import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
+        from matplotlib.figure import Figure
+        fig = Figure()
+        ax = fig.subplots()
+        # fig, ax = plt.subplots()
         x, y = np.array(self.dims) * 1000
         if self.geometry == 'circular':
             if x != y:
@@ -96,5 +100,6 @@ class Arena(ViewableNamedBoundedArea, agentpy.Space):
         ax.set_xlabel('X (mm)')
         ax.set_ylabel('Y (mm)')
         plt.axis('equal')
-        plt.show()
+        # plt.show()
+        return fig
 

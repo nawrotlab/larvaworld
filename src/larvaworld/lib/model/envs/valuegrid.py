@@ -149,8 +149,9 @@ class ValueGrid(SpatialEntity):
 
         v.draw_circle(p, self.cell_radius / 2, self.default_color, filled=True, width=0.0005)
         p_text = (p[0] + self.x, p[1] - self.y)
-        text_box = ScreenTextBox(text=str(np.round(self.grid.max(), 2)), default_color=self.default_color, visible=True,
-                            screen_pos=v._transform(p_text))
+        text_box = ScreenTextBox(text=str(np.round(self.grid.max(), 2)),
+                                 default_color=self.default_color, visible=True,
+                                 text_centre =v.space2screen_pos(v._transform(p_text)))
         text_box.draw(v)
 
     def draw(self, v, **kwargs):
@@ -180,7 +181,7 @@ class ValueGrid(SpatialEntity):
                     pxy = ps[np.argmax(ps[:, 0]), :] + np.array([self.x, -self.y])
                     v.draw_convex(points, color=c, filled=False, width=0.0005)
                     text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=c, visible=True,
-                                        screen_pos=v._transform(pxy))
+                                        text_centre =v.space2screen_pos(v._transform(pxy)))
                     text_box.draw(v)
                 except:
                     pass
@@ -278,7 +279,7 @@ class GaussianValueLayer(OdorScape):
                 vv = s.odor.gaussian_value(pX)
                 v.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
                 text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True,
-                                    screen_pos=v._transform(pX))
+                                    text_centre =v.space2screen_pos(v._transform(pX)))
                 text_box.draw(v)
 
 

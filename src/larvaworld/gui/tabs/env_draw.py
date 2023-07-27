@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 import larvaworld.lib.aux.xy
 from larvaworld.lib import reg, aux
 from larvaworld.gui import gui_aux
-
+from larvaworld.lib.param import generate_xy_distro
 
 
 class DrawEnvTab(gui_aux.DrawTab):
@@ -504,7 +504,7 @@ class DrawEnvTab(gui_aux.DrawTab):
             loc = distribution['loc']
             scale = distribution['scale']
 
-        Ps = aux.generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True),
+        Ps = generate_xy_distro(mode, shape, N, loc=self.scale_xy(loc, reverse=True),
                                                scale=np.array(scale) * self.s)
         group_figs = []
         for i, P0 in enumerate(Ps):

@@ -117,3 +117,16 @@ class TrackViewer(LarvaDatasetCollection):
         ))
         return app
 
+
+# if __name__ == "__main__":
+#     refIDs = reg.conf.Ref.confIDs[10:13]
+#     # d=reg.loadRef(refID)
+#     v = TrackViewer(refIDs=refIDs)
+#     # from larvaworld.gui.tabs.larvaworld_gui import LarvaworldGui
+#     # larvaworld_gui = LarvaworldGui()
+#     # v=TrackViewer()
+#     app = v.get_app()
+#     # v.get_app()
+#     # app = v.get_app()
+#     app.servable()
+

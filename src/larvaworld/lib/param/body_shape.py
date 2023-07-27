@@ -60,13 +60,6 @@ class ShapeMobile(LineClosed, MobileVector):
         self.vertices = [self.translate(self.length/self.length_ratio*np.array(p)) for p in self.base_vertices]
         # self.vertices = self.pos + self.length*self.base_vertices @ self.rotationMatrix
 
-    # @property
-    # def global_front_end(self):
-    #     return self.translate((self.length/2,0))
-
-    # @property
-    # def global_rear_end(self):
-    #     return self.translate((-self.length/2,0))
 class ShapeViewable(ShapeMobile, Viewable):
 
     def draw(self, v, **kwargs):
@@ -77,9 +70,7 @@ class BodyMobile(ShapeMobile, BodyContour):
     density = PositiveNumber(300.0, softmax=10000.0, step=1.0, doc='The density of the larva body in kg/m**2')
 
     def __init__(self,**kwargs):
-        # if 'initial_length' in kwargs and 'length' not in kwargs:
-        #     kwargs['length']=kwargs['initial_length']
-        #     kwargs.pop('initial_length')
+
         super().__init__(**kwargs)
         self.initial_length = self.length
         self.body_bend = 0
@@ -191,8 +182,6 @@ class SegmentedBody(BodyMobile):
 
     def generate_segs(self):
 
-        # base_seg_vertices = self.segmentize()
-
         self.segs= [self.param.segs.item_type(pos=self.seg_positions[i], orientation=self.orientation,
                        base_vertices=self.base_seg_vertices[i], length=self.length*self.segment_ratio[i]) for i in range(self.Nsegs)]
 
@@ -240,7 +229,6 @@ class SegmentedBody(BodyMobile):
     @param.depends('length', watch=True)
     def update_seg_lengths(self):
         for i in range(self.Nsegs) :
-            # self.segs[i].base_vertices=aux.np2Dtotuples(np.array(self.base_seg_vertices[i])*self.length)
             self.segs[i].length=self.length*self.segment_ratio[i]
 
     def move_body(self, dx, dy):
@@ -277,55 +265,8 @@ class SegmentedBody(BodyMobile):
         return self.tail.get_orientation()%(2*np.pi)
 
     def draw_segs(self, v, **kwargs):
-        # l=self.length
-        # mid = self.midline_xy
-
-        # if v.manager.draw_contour:
         for seg in self.segs :
             seg.draw(v, **kwargs)
-
-    # def draw(self, v, **kwargs):
-        # l=self.length
-        # mid = self.midline_xy
-
-        # if v.manager.draw_contour:
-            # for seg in self.segs :
-            #     seg.draw(v, **kwargs)
-
-        # if v.manager.draw_midline:
-        #     mid=self.midline_xy
-        #     if not any(np.isnan(np.array(mid).flatten())):
-        #         Nmid = len(mid)
-        #         v.draw_polyline(mid, color=(0, 0, 255), closed=False, width=l / 20)
-        #         for i, xy in enumerate(mid):
-        #             c = 255 * i / (Nmid - 1)
-        #             v.draw_circle(xy, l / 30, color=(c, 255 - c, 0), width=l / 40)
-        #
-        # if v.manager.draw_head:
-        #     v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
-        #
-        # if v.manager.draw_orientations:
-        #     if not any(np.isnan(np.array(mid).flatten())):
-        #         Nmid = len(mid)
-        #         p0 = mid[int(Nmid / 2)]
-        #         p1 = mid[int(Nmid / 2) + 1]
-        #         # if front_or is None and rear_or is None:
-        #         #     if segs is not None:
-        #         #         front_or = segs[0].get_orientation()
-        #         #         rear_or = segs[-1].get_orientation()
-        #         #     else:
-        #         #         return
-        #         # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
-        #         # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
-        #         p02 = [p0[0] + math.cos(self.front_orientation) * l,
-        #                p0[1] + math.sin(self.front_orientation) * l]
-        #         v.draw_line(p0, p02, color='green', width=l / 10)
-        #         p12 = [p1[0] + math.cos(self.rear_orientation) * l,
-        #                 p1[1] + math.sin(self.rear_orientation) * l]
-        #         v.draw_line(p0, p12, color='red', width=l / 10)
-        # if v.manager.draw_centroid:
-        #     v.draw_circle(p, r / 2, c,filled, r / 3)
-        # super().draw(v, **kwargs)
 
 
 class SegmentedBodySensored(SegmentedBody):
@@ -360,28 +301,18 @@ class SegmentedBodySensored(SegmentedBody):
 
     def get_sensor_position(self, sensor):
         d=self.sensors[sensor]
-        return self.segs[d.seg_idx].get_world_point(d.local_pos* self.sim_length)
+        return self.segs[d.seg_idx].translate(d.local_pos* self.length)
 
     def add_touch_sensors(self, idx):
         for i in idx:
             self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
 
-    # def draw(self, v, **kwargs):
-    #     if v.manager.draw_sensors:
-    #         for s, d in self.sensors.items():
-    #             pos = self.segs[d.seg_idx].get_world_point(d.local_pos * self.length)
-    #             v.draw_circle(radius=self.length / 10,
-    #                                position=pos,
-    #                                filled=True, color=(255, 0, 0), width=.1)
-    #     super().draw(v, **kwargs)
 
     def draw_sensors(self, v, **kwargs):
-        # if v.manager.draw_sensors:
         for s, d in self.sensors.items():
-            pos = self.segs[d.seg_idx].get_world_point(d.local_pos * self.length)
+            pos = self.segs[d.seg_idx].translate(d.local_pos * self.length)
             v.draw_circle(radius=self.length / 10,
                                position=pos,
                                filled=True, color=(255, 0, 0), width=.1)
-        # super().draw(v, **kwargs)
 
 

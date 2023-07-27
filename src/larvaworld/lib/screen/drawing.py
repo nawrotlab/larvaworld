@@ -264,7 +264,7 @@ class ScreenManager(BaseScreenManager):
         super().__init__(**kwargs)
         f = self.model.dir
 
-        self.screen_kws.caption = self.model.id
+        self.screen_kws.caption = str(self.model.id)
         if self.save_video:
             os.makedirs(f, exist_ok=True)
             if self.video_file is None:

@@ -57,7 +57,7 @@ class BaseLarvaDataset:
         -   in the default mode  a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
             Data is stored as a single HDF5 file or as nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
         -   in the trajectory mode a "movingpandas.TrajectoryCollection" is adjusted to the needs of the larva-tracking data format via the
-            "lib.process.LarvaTrajectoryCollection" class
+            "lib.process.GeoLarvaDataset" class
 
         Args:
             dir: Path to stored data. Ignored if 'config' is provided. Defaults to None for no storage to disc

@@ -11,6 +11,7 @@ from larvaworld.lib.param import PositiveNumber, PositiveInteger
 class NeuralOscillator(Effector):
     base_activation = PositiveNumber(20.0,softmax=100.0,step=1.0, label='baseline activation', doc='The baseline activation of the oscillator.')
     activation_range = param.Range((10.0, 40.0),bounds=(0.0, 100.0), label='activation range', doc='The activation range of the oscillator.')
+    input_range = param.Range((-1, 1),bounds=(-1, 1), label='input range', doc='The input range of the oscillator.')
     tau = param.Number(0.1, label='time constant', doc='The time constant of the oscillator.')
     w_ee = param.Number(3.0, label='E->E weigths', doc='The E->E synapse connection weights.')
     w_ce = param.Number(0.1, label='C->E weigths', doc='The C->E synapse connection weights.')
@@ -26,6 +27,7 @@ class NeuralOscillator(Effector):
 
         self.r1 = self.activation_range[1] - self.base_activation
         self.r0 = self.base_activation - self.activation_range[0]
+        self.activation=self.base_activation
         # self.output = self.base_activation
 
         # Neural populations
@@ -50,17 +52,13 @@ class NeuralOscillator(Effector):
             if random.uniform(0, 1) < 0.5:
                 self.step()
 
-    def update_input(self,A_in=0):
-        A_in=self.apply_noise(A_in, self.input_noise)
-        if A_in == 0:
-            a = 0
-        elif A_in < 0:
-            a = self.r0 * A_in
-        elif A_in > 0:
-            a = self.r1 * A_in
-        upA_in=self.base_activation + a
-        # print(upA_in)
-        return upA_in
+    def update(self):
+        if self.input < 0:
+            a = self.r0 * self.input
+        elif self.input >= 0:
+            a = self.r1 * self.input
+        self.activation=self.base_activation + a
+
 
     # @property
     # def Act_coef(self):
@@ -73,7 +71,7 @@ class NeuralOscillator(Effector):
         self.output =0
 
     def oscillate(self):
-        A = self.input
+        A = self.activation
         # print(A)
         # print()
         t = self.scaled_tau

@@ -207,15 +207,7 @@ def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
         xy[-1 - i, :] = x, -y
     return xy
 
-from shapely.geometry import Point, Polygon
 
-def body_contour2(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
-    ps1 = [Point(p) for p in points]
-    ps2 = [Point(p.x,-p.y) for p in ps1]
-    ps2.reverse()
-    ps=[Point(start)] + ps1 + [Point(stop)] + ps2
-    pol=Polygon([[p.x,p.y] for p in ps])
-    return pol
 
 
 def apply_per_level(s, func, level='AgentID', **kwargs):
