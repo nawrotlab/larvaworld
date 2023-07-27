@@ -6,7 +6,7 @@ from ._source import Source, Food
 from ._larva import Larva, LarvaMotile
 from .segmented_body import LarvaBody, BaseController
 
-from ._larva_replay import LarvaReplay
+from ._larva_replay import LarvaReplay,LarvaReplayContoured, LarvaReplaySegmented
 from ._larva_sim import LarvaSim
 from .larva_robot import LarvaRobot,ObstacleLarvaRobot
 from .larva_offline import LarvaOffline

@@ -13,8 +13,6 @@ class LarvaSim(agents.LarvaMotile, BaseController):
     def __init__(self, physics, Box2D_params, **kwargs):
         BaseController.__init__(self, **physics)
         agents.LarvaMotile.__init__(self,**kwargs)
-        # print(self.length)
-        # raise
         self.body_bend_errors = 0
         self.negative_speed_errors = 0
         self.border_go_errors = 0
@@ -85,9 +83,9 @@ class LarvaSim(agents.LarvaMotile, BaseController):
         dt=self.model.dt
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()
-        hr0 = self.head.global_rear_end
+        hr0 = self.head.rear_end
         l0 = self.head.length
-        A0,A1=self.valid_Dbend_range(0,ho0)
+        A0,A1=self.valid_Dbend_range(0)
         fov0,fov1 = A0 / dt, A1 / dt
 
 
@@ -98,7 +96,7 @@ class LarvaSim(agents.LarvaMotile, BaseController):
             ang_vel = fov1
             self.body_bend_errors += 1
 
-        if not self.model.p.env_params.arena.torus :
+        if not self.model.space.torus :
             tank = self.model.space.polygon
             d, ang_vel, lin_vel,hp1, ho1, turn_err, go_err = aux.position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=sf)
 
@@ -111,15 +109,16 @@ class LarvaSim(agents.LarvaMotile, BaseController):
             hp1 = hr0 + k * (d * sf + l0 / 2)
         self.head.update_all(hp1, ho1, lin_vel, ang_vel)
         self.dst = d
-        delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.length)
+
 
 
         if self.Nsegs > 1:
+            delta_ro = self.compute_delta_rear_angle(self.body_bend, self.dst, self.length)
             d_or = delta_ro / (self.Nsegs - 1)
             for i, seg in enumerate(self.segs[1:]):
                 o1 = seg.get_orientation() + d_or
                 k = np.array([np.cos(o1), np.sin(o1)])
-                p1 = self.segs[i].global_rear_end - k * seg.length / 2
+                p1 = self.segs[i].rear_end - k * seg.length / 2
                 seg.update_poseNvertices(p1, o1)
 
         self.pos = tuple(self.global_midspine_of_body)
@@ -128,25 +127,9 @@ class LarvaSim(agents.LarvaMotile, BaseController):
         self.cum_dst += self.dst
         self.compute_body_bend()
 
-    def valid_Dbend_range(self, idx=0, ho0=None):
-        if ho0 is None:
-            ho0 = self.segs[idx].get_orientation()
-        jdx = idx + 1
-        if self.Nsegs > jdx:
-            o_bound = self.segs[jdx].get_orientation()
-            dang = aux.wrap_angle_to_0(o_bound - ho0)
+    def valid_Dbend_range(self, idx=0):
+        if self.Nsegs > idx + 1:
+            dang = aux.wrap_angle_to_0(self.segs[idx + 1].get_orientation() - self.segs[idx].get_orientation())
         else:
             dang = 0
         return (-np.pi + dang), (np.pi + dang)
-
-    def move_body(self, dx, dy):
-        for i, seg in enumerate(self.segs):
-            p, o = seg.get_pose()
-            new_p = p + np.array([dx, dy])
-            seg.set_orientation(o)
-            seg.set_position(tuple(new_p))
-            seg.update_vertices(new_p, o)
-        self.pos = self.global_midspine_of_body
-
-
-

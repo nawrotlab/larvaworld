@@ -11,54 +11,21 @@ class Box2DSegment(BaseSegment):
     def __init__(self, space, physics_pars, **kwargs):
 
         super().__init__(**kwargs)
-        self.space = space
-        self.physics_pars = physics_pars
-        self._body: Box2D.b2Body = self.space.CreateDynamicBody(
+        self._body: Box2D.b2Body = space.CreateDynamicBody(
             position=Box2D.b2Vec2(*self.pos),
             angle=self.orientation,
-
-            # gravityScale=100,
-            # fixedRotation=True if  self.idx!=0 else False,
+            linearVelocity=Box2D.b2Vec2(*[.0, .0]),
+            angularVelocity=.0,
+            bullet=True,
             linearDamping=physics_pars['lin_damping'],
             angularDamping=physics_pars['ang_damping'])
-        self._body.linearVelocity = Box2D.b2Vec2(*[.0, .0])
-        self._body.angularVelocity = .0
-        self._body.bullet = True
 
-        # overriden by LarvaBody
-        self.facing_axis = Box2D.b2Vec2(1.0, 0.0)
-
-        # CAUTION
-        # This sets the body'sigma origin (where pos, orientation is derived from)
-        # self._body.localCenter = Box2D.b2Vec2(11.0, 10.0)
-        # this sets the body' center of mass (where velocity is set etc)
-        # self._body.massData.center = self._body.localCenter
-        # self._body.massData.center= Box2D.b2Vec2(11.0, 10.0)
-        # self._body.localCenter = self._body.massData.center
-
-        # TODO: right now this assumes that all subpolygons have the same number of edges
-        # TODO: rewrite such that arbitrary subpolygons can be used here
-        centroid = np.zeros(2)
-        area = .0
-        for vs in self.seg_vertices:
-            # compute centroid of circle_to_polygon
-            r0 = np.roll(vs[:, 0], 1)
-            r1 = np.roll(vs[:, 1], 1)
-            a = 0.5 * np.abs(np.dot(vs[:, 0], r1) - np.dot(vs[:, 1], r0))
-            area += a
-            # FIXME This changed in refactoring. It is wrong probably.
-            # Find a way to use compute_centroid(points) function
-            centroid += np.mean(vs, axis=0) * a
-
-        centroid /= area
-        self.__local_vertices = self.seg_vertices
-        self.__local_vertices.setflags(write=False)
-        for v in self.__local_vertices:
+        for v in self.seg_vertices:
             self._body.CreatePolygonFixture(
                 shape=Box2D.b2PolygonShape(vertices=v.tolist()),
-                density=self.physics_pars['density'],
-                friction=self.physics_pars['friction'],
-                restitution=self.physics_pars['restitution'],
+                density=physics_pars['density'],
+                friction=physics_pars['friction'],
+                restitution=physics_pars['restitution'],
                 # radius=.00000001
             )
 
@@ -69,7 +36,7 @@ class Box2DSegment(BaseSegment):
 
     @property
     def vertices(self):
-        return np.array([[self.get_world_point(v) for v in vertices] for vertices in self.__local_vertices])
+        return np.array([[self.get_world_point(v) for v in vertices] for vertices in self.seg_vertices])
 
     def get_position(self):
         # CAUTION CAUTION This took me a whole day.
@@ -113,37 +80,21 @@ class Box2DSegment(BaseSegment):
     def get_mass(self):
         return self._body.mass
 
-    def add_mass(self, added_mass):
-        self._body.mass += added_mass
 
-    def set_massdata(self, massdata):
-        self._body.massData = massdata
 
-    def get_local_point(self, point):
-        return np.asarray(self._body.GetLocalPoint(np.asarray(point)))
 
-    def get_local_vector(self, vector):
-        return np.asarray(self._body.GetLocalVector(vector))
 
-    def get_local_orientation(self, angle):
-        return angle - self._body.angle
 
-    def get_local_pose(self, pose):
-        return tuple((*self.get_local_point(pose[:2]), self.get_local_orientation(pose[2])))
+
 
     def get_world_point(self, point):
         return self._body.GetWorldPoint(np.asarray(point))
 
-    def get_world_vector(self, vector):
-        return np.asarray(self._body.GetWorldVector(vector))
+
 
     def get_world_facing_axis(self):
-        return np.asarray(self._body.GetWorldVector(self.facing_axis))
+        return np.asarray(self._body.GetWorldVector(Box2D.b2Vec2(1.0, 0.0)))
 
-    def collides_with(self, other):
-        for contact_edge in self._body.contacts_gen:
-            if contact_edge.other == other and contact_edge.contact.touching:
-                return True
 
 
 class LarvaBox2D(LarvaBody,BaseController):

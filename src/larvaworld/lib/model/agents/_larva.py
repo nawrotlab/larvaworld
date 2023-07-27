@@ -1,3 +1,4 @@
+import math
 import random
 from copy import deepcopy
 import numpy as np
@@ -6,7 +7,8 @@ import param
 from larvaworld.lib import reg, aux
 from larvaworld.lib.model.agents import Source
 from larvaworld.lib.model.agents._agent import MobileAgent
-from larvaworld.lib.param import SegmentedBodySensored
+from larvaworld.lib.param import SegmentedBodySensored, Contour
+
 
 class Larva(MobileAgent):
     def __init__(self, model,unique_id=None, **kwargs):
@@ -16,19 +18,95 @@ class Larva(MobileAgent):
         #     unique_id = str(unique_id)
         super().__init__(unique_id=unique_id, model=model,**kwargs)
         self.trajectory = [self.initial_pos]
-
         self.cum_dur = 0
 
     def draw(self, v, **kwargs):
-        p, c, r = self.get_position(), self.color, self.radius
+        p, c, r, l = self.get_position(), self.color, self.radius, self.length
+        mid = self.midline_xy
         if np.isnan(p).all():
             return
         if v.manager.draw_centroid:
             v.draw_circle(p, r / 4, c,True, r / 10)
+
+        if v.manager.draw_midline:
+
+            if not any(np.isnan(np.array(mid).flatten())):
+                Nmid = len(mid)
+                v.draw_polyline(mid, color=(0, 0, 255), closed=False, width=l / 20)
+                for i, xy in enumerate(mid):
+                    c = 255 * i / (Nmid - 1)
+                    v.draw_circle(xy, l / 30, color=(c, 255 - c, 0), width=l / 40)
+
+        if v.manager.draw_head:
+            v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
+
+        if v.manager.draw_orientations:
+            if not any(np.isnan(np.array(mid).flatten())):
+                Nmid = len(mid)
+                p0 = mid[int(Nmid / 2)]
+                p1 = mid[int(Nmid / 2) + 1]
+                # if front_or is None and rear_or is None:
+                #     if segs is not None:
+                #         front_or = segs[0].get_orientation()
+                #         rear_or = segs[-1].get_orientation()
+                #     else:
+                #         return
+                # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
+                # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
+                p02 = [p0[0] + math.cos(self.front_orientation) * l,
+                       p0[1] + math.sin(self.front_orientation) * l]
+                v.draw_line(p0, p02, color='green', width=l / 10)
+                p12 = [p1[0] - math.cos(self.rear_orientation) * l,
+                       p1[1] - math.sin(self.rear_orientation) * l]
+                v.draw_line(p0, p12, color='red', width=l / 10)
+        super().draw(v, **kwargs)
+
+    # @property
+    # def midline_xy(self):
+    #     return [self.front_end, self.rear_end]
+
+    # @property
+    # def front_orientation(self):
+    #     return self.get_orientation()
+    #
+    # @property
+    # def rear_orientation(self):
+    #     return self.get_orientation()
+
+class LarvaContoured(Larva, Contour):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+
+    def draw(self, v, **kwargs):
+        # l = self.length
+        # mid = self.midline_xy
+
+        if v.manager.draw_contour:
+            # for seg in self.segs:
+            #     seg.draw(v, **kwargs)
+            Contour.draw(self, v, **kwargs)
+
+
+
+        # if v.manager.draw_centroid:
+        #     v.draw_circle(p, r / 2, c,filled, r / 3)
         super().draw(v, **kwargs)
 
 
-class LarvaMotile(Larva,SegmentedBodySensored):
+class LarvaSegmented(Larva,SegmentedBodySensored):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def draw(self, v, **kwargs):
+        if v.manager.draw_sensors:
+            self.draw_sensors(v, **kwargs)
+        if v.manager.draw_contour:
+            self.draw_segs(v, **kwargs)
+        super().draw(v, **kwargs)
+
+class LarvaMotile(LarvaSegmented):
     def __init__(self, brain, energetics, life_history,body, **kwargs):
         super().__init__(**body,**kwargs)
         self.carried_objects = []
@@ -170,6 +248,9 @@ class LarvaMotile(Larva,SegmentedBodySensored):
                         f.brain.olfactor.set_gain(0.0, carrier_group_odor_id)
                 self.brain.olfactor.set_gain(-gain_for_base_odor, opponent_group_odor_id)
 
+        for o in self.carried_objects:
+            o.pos = self.pos
+
     def update_behavior_dict(self, mode='lin'):
         inter = self.brain.locomotor.intermitter
         if mode == 'lin' and inter is not None:
@@ -214,16 +295,18 @@ class LarvaMotile(Larva,SegmentedBodySensored):
         self.resolve_carrying(self.food_detected)
 
         lin, ang, self.feeder_motion = self.brain.step(pos, length=self.length, on_food=self.on_food)
+        self.prepare_motion(lin=lin, ang=ang)
+
         V = self.feed(self.food_detected, self.feeder_motion)
         self.amount_eaten += V * 1000
         self.cum_food_detected += int(self.on_food)
         self.run_energetics(V)
 
 
-        for o in self.carried_objects:
-            o.pos = self.pos
+        # for o in self.carried_objects:
+        #     o.pos = self.pos
 
-        self.prepare_motion(lin=lin, ang=ang)
+
 
         try:
             if self.model.screen_manager.color_behavior:

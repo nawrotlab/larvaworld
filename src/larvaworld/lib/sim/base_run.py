@@ -147,7 +147,10 @@ class BaseRun(agentpy.Model,SimConfiguration):
 
     def define_agent_class(self):
         if self.runtype=='Replay' :
-            return agents.LarvaReplay
+            if self.p.draw_Nsegs is not None :
+                return agents.LarvaReplayContoured
+            else:
+                return agents.LarvaReplaySegmented
         elif self.Box2D :
             return agents.LarvaBox2D
         elif self.offline :

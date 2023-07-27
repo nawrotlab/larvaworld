@@ -2,7 +2,7 @@ import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.param import NestedConf, Named, NamedObject, GroupedObject, RadiallyExtended, BoundedArea, \
-    LineExtended, PositiveNumber
+    LineExtended, PositiveNumber, LineClosed
 
 
 class Viewable(NestedConf) :
@@ -88,7 +88,10 @@ class ViewableLine(Viewable,LineExtended):
                 v.draw_polyline(ver, color=self.color, width=self.width, closed=self.closed)
 
 
+class Contour(Viewable,LineClosed):
 
+    def draw(self, v, **kwargs):
+        v.draw_polygon(self.vertices, filled=True, color=self.color)
 
 
 class ViewableNamedBoundedArea(Viewable,BoundedArea,Named): pass

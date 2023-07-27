@@ -201,10 +201,10 @@ class LarvaBody(LarvaMotile):
         if self.Nsegs == 1:
             return self.head.get_position()
         elif self.Nsegs == 2:
-            return self.head.global_rear_end
+            return self.head.rear_end
         if (self.Nsegs % 2) == 0:
             seg_idx = int(self.Nsegs / 2)
-            global_pos = self.segs[seg_idx].global_front_end
+            global_pos = self.segs[seg_idx].front_end
         else:
             seg_idx = int((self.Nsegs + 1) / 2)
             global_pos = self.segs[seg_idx].get_position()
@@ -214,7 +214,7 @@ class LarvaBody(LarvaMotile):
 
     @property
     def olfactor_pos(self):
-        return self.head.global_front_end
+        return self.head.front_end
 
     @property
     def olfactor_point(self):
@@ -222,7 +222,7 @@ class LarvaBody(LarvaMotile):
 
     @property
     def midline_xy(self):
-        return [seg.global_front_end for seg in self.segs] + [self.tail.global_rear_end]
+        return [seg.front_end for seg in self.segs] + [self.tail.rear_end]
 
 
 

@@ -30,7 +30,7 @@ class AgentDrawOps(NestedConf):
     draw_midline = Boolean(True,doc='Draw the larva midline')
     draw_centroid = Boolean(False,doc='Draw the larva centroid')
     draw_head = Boolean(False,doc='Draw the larva head')
-    draw_orientations = Boolean(False,doc='Draw the larva body vector orientations')
+    draw_orientations = Boolean(True,doc='Draw the larva body vector orientations')
 
 
 class ScreenOps(NestedConf):
@@ -310,7 +310,7 @@ class ScreenManager(BaseScreenManager):
             # for i in range(10000):
             box.draw(v)
             v.render()
-            pygame.time.wait(5000)
+            pygame.time.wait(1000)
             box.visible = False
 
 

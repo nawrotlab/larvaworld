@@ -1,7 +1,7 @@
 import numpy as np
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import OrientedPoint, RadiallyExtended, ClassAttr, MobilePoint
+from larvaworld.lib.param import OrientedPoint, RadiallyExtended, ClassAttr, MobilePoint, MobileVector
 from larvaworld.lib.param.composition import Odor
 from larvaworld.lib.screen import LabelledGroupedObject
 
@@ -53,7 +53,13 @@ class OrientedAgent(OrientedPoint,PointAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-class MobileAgent(MobilePoint,PointAgent):
+class MobilePointAgent(MobilePoint,PointAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+class MobileAgent(MobileVector,PointAgent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 

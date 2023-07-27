@@ -140,4 +140,8 @@ class ReplayRun(BaseRun):
             p.env_params.arena=c.env_params.arena
         c.Nsteps = len(s0.index.unique('Step').values)-1
         c.duration=c.Nsteps * c.dt/60
+
+        xy_pars=nam.xy(c.point)
+        assert aux.cols_exist(xy_pars, s0)
+        s0[['x','y']]=s0[xy_pars]
         return s0,e0, c

@@ -100,12 +100,34 @@ class MobilePoint(OrientedPoint):
     def get_linearvelocity(self):
         return self.lin_vel
 
+    def set_linearvelocity(self, lin_vel):
+        self.lin_vel = lin_vel
+
+    def set_angularvelocity(self, ang_vel):
+        self.ang_vel = ang_vel
+
     def update_all(self, pos, orientation, lin_vel, ang_vel):
         self.set_position(pos)
-        self.orientation=orientation % (np.pi * 2)
-        # self.vertices = pos + self.seg_vertices @ aux.rotationMatrix(-orientation)
-        self.lin_vel=lin_vel
-        self.ang_vel=ang_vel
+        self.set_orientation(orientation % (np.pi * 2))
+        self.set_linearvelocity(lin_vel)
+        self.set_angularvelocity(ang_vel)
+
+class MobileVector(MobilePoint):
+    length = PositiveNumber(1, doc='The initial length of the body in meters')
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+    @property
+    def front_end(self):
+        return self.translate((self.length/2,0))
+
+    @property
+    def rear_end(self):
+        return self.translate((-self.length / 2, 0))
+
+
+
 
 class LineExtended(NestedConf):
     width = PositiveNumber(0.001, softmax=10.0, doc='The width of the line vertices')

@@ -6,7 +6,8 @@ import param
 from shapely import geometry, ops, affinity
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import LineClosed, XYLine, PositiveInteger, PositiveNumber, MobilePoint, Viewable
+from larvaworld.lib.param import LineClosed, XYLine, PositiveInteger, PositiveNumber, MobilePoint, Viewable, \
+    MobileVector, Contour
 
 body_plans=aux.AttrDict({
 'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],
@@ -41,8 +42,7 @@ class BodyContour(LineClosed):
 
 
 
-class ShapeMobile(LineClosed, MobilePoint, Viewable):
-    length = PositiveNumber(1, doc='The initial length of the body in meters')
+class ShapeMobile(LineClosed, MobileVector):
     base_vertices = XYLine(doc='The list of 2d points')
 
     def __init__(self, **kwargs):
@@ -60,13 +60,14 @@ class ShapeMobile(LineClosed, MobilePoint, Viewable):
         self.vertices = [self.translate(self.length/self.length_ratio*np.array(p)) for p in self.base_vertices]
         # self.vertices = self.pos + self.length*self.base_vertices @ self.rotationMatrix
 
-    @property
-    def global_front_end(self):
-        return self.translate((self.length/2,0))
+    # @property
+    # def global_front_end(self):
+    #     return self.translate((self.length/2,0))
 
-    @property
-    def global_rear_end(self):
-        return self.translate((-self.length/2,0))
+    # @property
+    # def global_rear_end(self):
+    #     return self.translate((-self.length/2,0))
+class ShapeViewable(ShapeMobile, Viewable):
 
     def draw(self, v, **kwargs):
         v.draw_polygon(self.vertices, filled=True, color=self.color)
@@ -103,7 +104,7 @@ class BodyMobile(ShapeMobile, BodyContour):
 class SegmentedBody(BodyMobile):
     Nsegs = PositiveInteger(2, softmax=20, doc='The number of segments comprising the segmented larva body.')
     segment_ratio = param.Parameter(None, doc='The number of segments comprising the segmented larva body.')
-    segs=param.List(item_type=ShapeMobile, doc='The body segments.')
+    segs=param.List(item_type=ShapeViewable, doc='The body segments.')
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -213,9 +214,7 @@ class SegmentedBody(BodyMobile):
     def direction(self):
         return self.head.get_orientation()
 
-    @property
-    def midline_xy(self):
-        return [seg.global_front_end for seg in self.segs] + [self.tail.global_rear_end]
+
 
     def get_shape(self, scale=1):
         ps=[geometry.Polygon(seg.vertices) for seg in self.segs]
@@ -228,10 +227,10 @@ class SegmentedBody(BodyMobile):
         if self.Nsegs == 1:
             return self.head.get_position()
         elif self.Nsegs == 2:
-            return self.head.global_rear_end
+            return self.head.rear_end
         if (self.Nsegs % 2) == 0:
             seg_idx = int(self.Nsegs / 2)
-            global_pos = self.segs[seg_idx].global_front_end
+            global_pos = self.segs[seg_idx].front_end
         else:
             seg_idx = int((self.Nsegs + 1) / 2)
             global_pos = self.segs[seg_idx].get_position()
@@ -250,16 +249,22 @@ class SegmentedBody(BodyMobile):
             x, y = seg.get_position()
             seg.set_position((x+dx,y+dy))
 
-    def valid_Dbend_range(self, idx=0, ho0=None):
-        if ho0 is None:
-            ho0 = self.segs[idx].get_orientation()
-        jdx = idx + 1
-        if self.Nsegs > jdx:
-            o_bound = self.segs[jdx].get_orientation()
-            dang = aux.wrap_angle_to_0(o_bound - ho0)
+    def valid_Dbend_range(self, idx=0):
+        if self.Nsegs > idx + 1:
+            dang = aux.wrap_angle_to_0(self.segs[idx + 1].get_orientation() - self.segs[idx].get_orientation())
         else:
             dang = 0
         return (-np.pi + dang), (np.pi + dang)
+
+    def set_color(self, colors):
+        if len(colors) != self.Nsegs:
+            colors = [tuple(colors)] * self.Nsegs
+        for seg, col in zip(self.segs, colors):
+            seg.color=col
+
+    @property
+    def midline_xy(self):
+        return [seg.front_end for seg in self.segs] + [self.tail.rear_end]
 
     @property
     def front_orientation(self):
@@ -270,51 +275,53 @@ class SegmentedBody(BodyMobile):
     def rear_orientation(self):
         return self.tail.get_orientation()%(2*np.pi)
 
-    def set_color(self, colors):
-        if len(colors) != self.Nsegs:
-            colors = [tuple(colors)] * self.Nsegs
-        for seg, col in zip(self.segs, colors):
-            seg.color=col
+    def draw_segs(self, v, **kwargs):
+        # l=self.length
+        # mid = self.midline_xy
 
-    def draw(self, v, **kwargs):
-        l=self.length
-        mid = self.midline_xy
+        # if v.manager.draw_contour:
+        for seg in self.segs :
+            seg.draw(v, **kwargs)
 
-        if v.manager.draw_contour:
-            for seg in self.segs :
-                seg.draw(v, **kwargs)
+    # def draw(self, v, **kwargs):
+        # l=self.length
+        # mid = self.midline_xy
 
-        if v.manager.draw_midline:
-            mid=self.midline_xy
-            if not any(np.isnan(np.array(mid).flatten())):
-                Nmid = len(mid)
-                v.draw_polyline(mid, color=(0, 0, 255), closed=False, width=l / 20)
-                for i, xy in enumerate(mid):
-                    c = 255 * i / (Nmid - 1)
-                    v.draw_circle(xy, l / 30, color=(c, 255 - c, 0), width=l / 40)
+        # if v.manager.draw_contour:
+            # for seg in self.segs :
+            #     seg.draw(v, **kwargs)
 
-        if v.manager.draw_head:
-            v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
-
-        if v.manager.draw_orientations:
-            if not any(np.isnan(np.array(mid).flatten())):
-                Nmid = len(mid)
-                p0 = mid[int(Nmid / 2)]
-                p1 = mid[int(Nmid / 2) + 1]
-                # if front_or is None and rear_or is None:
-                #     if segs is not None:
-                #         front_or = segs[0].get_orientation()
-                #         rear_or = segs[-1].get_orientation()
-                #     else:
-                #         return
-                # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
-                # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
-                p02 = [p0[0] + math.cos(self.front_orientation) * l,
-                       p0[1] + math.sin(self.front_orientation) * l]
-                v.draw_line(p0, p02, color='green', width=l / 10)
-                p12 = [p1[0] + math.cos(self.rear_orientation) * l,
-                        p1[1] + math.sin(self.rear_orientation) * l]
-                v.draw_line(p0, p12, color='red', width=l / 10)
+        # if v.manager.draw_midline:
+        #     mid=self.midline_xy
+        #     if not any(np.isnan(np.array(mid).flatten())):
+        #         Nmid = len(mid)
+        #         v.draw_polyline(mid, color=(0, 0, 255), closed=False, width=l / 20)
+        #         for i, xy in enumerate(mid):
+        #             c = 255 * i / (Nmid - 1)
+        #             v.draw_circle(xy, l / 30, color=(c, 255 - c, 0), width=l / 40)
+        #
+        # if v.manager.draw_head:
+        #     v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
+        #
+        # if v.manager.draw_orientations:
+        #     if not any(np.isnan(np.array(mid).flatten())):
+        #         Nmid = len(mid)
+        #         p0 = mid[int(Nmid / 2)]
+        #         p1 = mid[int(Nmid / 2) + 1]
+        #         # if front_or is None and rear_or is None:
+        #         #     if segs is not None:
+        #         #         front_or = segs[0].get_orientation()
+        #         #         rear_or = segs[-1].get_orientation()
+        #         #     else:
+        #         #         return
+        #         # draw_body_orientation(viewer, self.midline[1], self.head_orientation, self.radius, 'green')
+        #         # draw_body_orientation(viewer, self.midline[-2], self.tail_orientation, self.radius, 'red')
+        #         p02 = [p0[0] + math.cos(self.front_orientation) * l,
+        #                p0[1] + math.sin(self.front_orientation) * l]
+        #         v.draw_line(p0, p02, color='green', width=l / 10)
+        #         p12 = [p1[0] + math.cos(self.rear_orientation) * l,
+        #                 p1[1] + math.sin(self.rear_orientation) * l]
+        #         v.draw_line(p0, p12, color='red', width=l / 10)
         # if v.manager.draw_centroid:
         #     v.draw_circle(p, r / 2, c,filled, r / 3)
         # super().draw(v, **kwargs)
@@ -331,7 +338,7 @@ class SegmentedBodySensored(SegmentedBody):
 
     @property
     def olfactor_pos(self):
-        return self.head.global_front_end
+        return self.head.front_end
 
     @property
     def olfactor_point(self):
@@ -359,13 +366,22 @@ class SegmentedBodySensored(SegmentedBody):
         for i in idx:
             self.define_sensor(f'touch_sensor_{i}', self.contour_points[i])
 
-    def draw(self, v, **kwargs):
-        if v.manager.draw_sensors:
-            for s, d in self.sensors.items():
-                pos = self.segs[d.seg_idx].get_world_point(d.local_pos * self.length)
-                v.draw_circle(radius=self.length / 10,
-                                   position=pos,
-                                   filled=True, color=(255, 0, 0), width=.1)
-        super().draw(v, **kwargs)
+    # def draw(self, v, **kwargs):
+    #     if v.manager.draw_sensors:
+    #         for s, d in self.sensors.items():
+    #             pos = self.segs[d.seg_idx].get_world_point(d.local_pos * self.length)
+    #             v.draw_circle(radius=self.length / 10,
+    #                                position=pos,
+    #                                filled=True, color=(255, 0, 0), width=.1)
+    #     super().draw(v, **kwargs)
+
+    def draw_sensors(self, v, **kwargs):
+        # if v.manager.draw_sensors:
+        for s, d in self.sensors.items():
+            pos = self.segs[d.seg_idx].get_world_point(d.local_pos * self.length)
+            v.draw_circle(radius=self.length / 10,
+                               position=pos,
+                               filled=True, color=(255, 0, 0), width=.1)
+        # super().draw(v, **kwargs)
 
 

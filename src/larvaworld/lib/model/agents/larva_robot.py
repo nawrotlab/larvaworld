@@ -17,9 +17,9 @@ class LarvaRobot(LarvaSim):
 
 
 
-    def draw(self, viewer, filled=True):
-        for seg in self.segs:
-            viewer.draw_polygon(seg.vertices, filled=filled, color=seg.color)
+    # def draw(self, viewer, filled=True):
+    #     for seg in self.segs:
+    #         viewer.draw_polygon(seg.vertices, filled=filled, color=seg.color)
 
 
 
@@ -51,10 +51,10 @@ class ObstacleLarvaRobot(LarvaRobot):
         S_kws = {
             'saturation_value': sensor_saturation_value,
             'error': obstacle_sensor_error,
-            'max_distance': int(self.model.viewer._scale[0, 0] * sensor_max_distance * self.real_length),
+            'max_distance': int(self.model.screen_manager.viewer._scale[0, 0] * sensor_max_distance * self.real_length),
             # 'max_distance': sensor_max_distance * self.real_length,
             # 'viewer': self.model.viewer,
-            'collision_distance': int(self.model.viewer._scale[0, 0] * self.real_length / 5),
+            'collision_distance': int(self.model.screen_manager.viewer._scale[0, 0] * self.real_length / 5),
             # 'collision_distance': 0.1 * self.real_length,
         }
 
@@ -75,7 +75,7 @@ class ObstacleLarvaRobot(LarvaRobot):
 
     def sense(self):
         if not self.collision_with_object:
-            pos = self.model.viewer._transform(self.olfactor_pos)
+            pos = self.model.screen_manager.viewer._transform(self.olfactor_pos)
             try:
 
                 self.left_motor_controller.sense_and_act(pos=pos, direction=self.direction)
@@ -110,9 +110,9 @@ class ObstacleLarvaRobot(LarvaRobot):
     def set_right_motor_controller(self, right_motor_controller):
         self.right_motor_controller = right_motor_controller
 
-    def draw(self, viewer):
+    def draw(self, v, **kwargs):
         # pos = self.olfactor_pos
-        pos = self.model.viewer._transform(self.olfactor_pos)
+        pos = v._transform(self.olfactor_pos)
         # draw the sensor lines
 
         # in scene_loader a robot doesn't have sensors
@@ -121,4 +121,4 @@ class ObstacleLarvaRobot(LarvaRobot):
             self.right_motor_controller.sensor.draw(pos=pos, direction=self.direction)
 
         # call super method to draw the robot
-        super().draw(viewer)
+        super().draw(v, **kwargs)
