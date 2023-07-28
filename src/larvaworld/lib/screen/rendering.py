@@ -77,6 +77,8 @@ class ScreenWindowAreaPygame(ScreenWindowArea):
         for vs, c in zip(all_vertices, colors):
             pygame.draw.polygon(self._window, c, vs, w)
 
+
+
     def draw_polyline(self, vertices, color=(0, 0, 0), closed=False, width=.01, dynamic_color=False):
         vs = [self._transform(v) for v in vertices]
         w = int(self._scale[0, 0] * width)

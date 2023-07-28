@@ -154,6 +154,7 @@ def rotate_points_around_point(points, radians, origin=None):
         """
 
     if origin is None:
-        origin = [0, 0]
+        origin = (0, 0)
+    origin=np.array(origin)
     return (points - origin) @ rotationMatrix(radians) + origin
 

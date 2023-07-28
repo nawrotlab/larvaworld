@@ -7,10 +7,10 @@ from larvaworld.lib.param import PositiveNumber
 
 
 class Effector(Timer):
-    input_noise = param.Magnitude(0.0, label='input noise', doc='The noise applied at the input of the module.')
-    output_noise = param.Magnitude(0.0, label='output noise', doc='The noise applied at the output of the module.')
-    input_range = param.Range(label='input range',doc='The input range of the module.')
-    output_range = param.Range(label='output range',doc='The output range of the module.')
+    input_noise = param.Magnitude(0.0, precedence=-3,label='input noise', doc='The noise applied at the input of the module.')
+    output_noise = param.Magnitude(0.0, precedence=-3,label='output noise', doc='The noise applied at the output of the module.')
+    input_range = param.Range(precedence=-3,label='input range',doc='The input range of the module.')
+    output_range = param.Range(precedence=-3,label='output range',doc='The output range of the module.')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

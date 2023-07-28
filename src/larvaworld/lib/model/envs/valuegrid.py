@@ -278,17 +278,18 @@ class GaussianValueLayer(OdorScape):
     def draw_isocontours(self, v):
         for s in self.sources:
             p = s.get_position()
+
             if p[0]<0:
-                rsign=-1
-            else:
                 rsign=1
-            for r0 in np.arange(0, 0.050, 0.01):
-                r=r0*rsign
-                pX = (p[0] + r, p[1])
-                vv = s.odor.gaussian_value(pX)
-                v.draw_circle(p, r0, self.default_color, filled=False, width=0.0005)
-                text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True,
-                                    text_centre =tuple(v.space2screen_pos(pX)))
+            else:
+                rsign=-1
+            w=0.0005
+            for i,r0 in enumerate(np.arange(0, 0.040, 0.005)):
+                pX = (p[0] + r0*rsign, p[1])
+                vv = s.odor.gaussian_value((r0*rsign,0))
+                v.draw_circle(p, r0, self.color, filled=False, width=w)
+                text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=self.color, visible=True,
+                                    text_centre =tuple(v.space2screen_pos((p[0] + r0*rsign+5*w, p[1]))))
                 text_box.draw(v)
 
 
@@ -337,9 +338,7 @@ class DiffusionValueLayer(OdorScape):
                 np.clip(self.grid, a_min=0, a_max=None)
 
         for s in self.sources:
-            source_pos = s.get_position()
-            intensity = s.odor.intensity
-            self.add_value(source_pos, intensity)
+            self.add_value(s.get_position(), s.odor.intensity)
 
         self.grid = gaussian_filter(self.grid, sigma=self.sigma) * self.evap_const
 
@@ -393,7 +392,10 @@ class WindScape(SpatialEntity):
         self.draw_phi += self.wind_speed
 
     def generate_scapelines(self, D, N, A):
-        ds = self.max_dim / N * np.sqrt(2)
+        ds = D / N * np.sqrt(2)
+        # R= aux.rotationMatrix(-A)
+        # [[(-D, (i - N / 2) * ds),(D, (i - N / 2) * ds)] for i in range(N)]
+
         p0s = aux.rotate_points_around_point([(-D, (i - N / 2) * ds) for i in range(N)], -A)
         p1s = aux.rotate_points_around_point([(D, (i - N / 2) * ds) for i in range(N)], -A)
         return [(p0, p1) for p0, p1 in zip(p0s, p1s)]

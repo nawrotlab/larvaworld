@@ -24,6 +24,17 @@ def plot_odorscape(odor_layers, scale=1.0, idx=0, **kwargs):
         plot_surface(x=x, y=y, z=layer.grid, vars=[r'x $(mm)$', r'y $(mm)$'], target=r'concentration $(μM)$',
                      title=f'{id} odorscape', save_as=f'{id}_odorscape_{idx}', **kwargs)
 
+def odorscape_isocontours(intensity=2, spread=0.0002, radius=0.05):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.stats import multivariate_normal
+    x, y = np.mgrid[-radius:radius:.001, -radius:radius:.001]
+    rv = multivariate_normal([0, 0], [[spread, 0], [0, spread]])
+    p0 = rv.pdf((0, 0))
+    data = np.dstack((x, y))
+    z = rv.pdf(data) * intensity / p0
+    plt.contourf(x, y, z, cmap='coolwarm')
+    plt.show()
 
 def odorscape_from_config(c, mode='2D', fig=None, axs=None, show=True, grid_dims=(201, 201), col_max=(0, 0, 0),
                           **kwargs):

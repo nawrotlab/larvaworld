@@ -129,6 +129,23 @@ class Odor(NestedConf):
         else :
             return None
 
+    def draw_dist(self):
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from scipy.stats import multivariate_normal
+        I = 2
+        s = 0.0002
+        r = 0.05
+        x, y = np.mgrid[-r:r:.001, -r:r:.001]
+        rv = multivariate_normal([0, 0], [[s, 0], [0, s]])
+        p0 = rv.pdf((0, 0))
+        data = np.dstack((x, y))
+        z = rv.pdf(data) * I / p0
+        plt.contourf(x, y, z, cmap='coolwarm')
+        plt.show()
+
+
+
 
 class Epoch(NestedConf):
     age_range = OptionalPositiveRange((0.0, None),softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')

@@ -9,7 +9,7 @@ from larvaworld.lib.param import PositiveNumber, RandomizedPhase
 
 
 class Timer(param.Parameterized) :
-    dt = PositiveNumber(0.1, softmax=1.0, step=0.01, label='timestep', doc='The timestep of the simulation in seconds.')
+    dt = PositiveNumber(0.1, precedence=2,softmax=1.0, step=0.01, label='simulation timestep', doc='The timestep of the simulation in seconds.')
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ticks = 0
