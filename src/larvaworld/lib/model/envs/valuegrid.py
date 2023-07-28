@@ -151,14 +151,18 @@ class ValueGrid(SpatialEntity):
         p_text = (p[0] + self.x, p[1] - self.y)
         text_box = ScreenTextBox(text=str(np.round(self.grid.max(), 2)),
                                  default_color=self.default_color, visible=True,
-                                 text_centre =v.space2screen_pos(v._transform(p_text)))
+                                 text_centre =tuple(v.space2screen_pos(p_text)))
         text_box.draw(v)
+
 
     def draw(self, v, **kwargs):
         Cgrid = self.get_color_grid().reshape([self.X, self.Y, 3])
-        for i in range(self.X):
-            for j in range(self.Y):
-                v.draw_polygon(self.grid_vertices[i, j], Cgrid[i, j], filled=True)
+        try:
+            for i in range(self.X):
+                for j in range(self.Y):
+                    v.draw_polygon(self.grid_vertices[i, j], Cgrid[i, j], filled=True)
+        except:
+            pass
         self.draw_peak(v)
         if self.model.screen_manager.odor_aura:
             self.draw_isocontours(v)
@@ -181,7 +185,7 @@ class ValueGrid(SpatialEntity):
                     pxy = ps[np.argmax(ps[:, 0]), :] + np.array([self.x, -self.y])
                     v.draw_convex(points, color=c, filled=False, width=0.0005)
                     text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=c, visible=True,
-                                        text_centre =v.space2screen_pos(v._transform(pxy)))
+                                        text_centre =tuple(v.space2screen_pos(pxy)))
                     text_box.draw(v)
                 except:
                     pass
@@ -274,13 +278,19 @@ class GaussianValueLayer(OdorScape):
     def draw_isocontours(self, v):
         for s in self.sources:
             p = s.get_position()
-            for r in np.arange(0, 0.050, 0.01):
+            if p[0]<0:
+                rsign=-1
+            else:
+                rsign=1
+            for r0 in np.arange(0, 0.050, 0.01):
+                r=r0*rsign
                 pX = (p[0] + r, p[1])
                 vv = s.odor.gaussian_value(pX)
-                v.draw_circle(p, r, self.default_color, filled=False, width=0.0005)
+                v.draw_circle(p, r0, self.default_color, filled=False, width=0.0005)
                 text_box = ScreenTextBox(text=str(np.round(vv, 2)), default_color=self.default_color, visible=True,
-                                    text_centre =v.space2screen_pos(v._transform(pX)))
+                                    text_centre =tuple(v.space2screen_pos(pX)))
                 text_box.draw(v)
+
 
 
 class DiffusionValueLayer(OdorScape):

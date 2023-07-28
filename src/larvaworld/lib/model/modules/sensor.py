@@ -55,18 +55,15 @@ class Sensor(Effector):
         if gain_dict in [None, 'empty_dict']:
             gain_dict = {}
         self.base_gain = {}
-        self.X = {}
-        self.dX = {}
         self.Ngains = len(gain_dict)
         self.gain_ids = list(gain_dict.keys())
+        self.X = aux.AttrDict({id:0.0 for id in self.gain_ids})
+        self.dX = aux.AttrDict({id:0.0 for id in self.gain_ids})
         for id, p in gain_dict.items():
             if isinstance(p, dict):
-                m, s = p['mean'], p['std']
-                self.base_gain[id] = float(np.random.normal(m, s, 1))
+                self.base_gain[id] = float(np.random.normal(p['mean'], p['std'], 1))
             else:
                 self.base_gain[id] = p
-            self.X[id] = 0.0
-            self.dX[id] = 0.0
         self.gain = self.base_gain
 
     def get_dX(self):
@@ -125,7 +122,7 @@ class Olfactor(Sensor):
         if self.brain is not None:
             if self.brain.agent is not None:
                 ids=self.brain.agent.model.odor_ids
-                ids=[id for id in ids if id not in self.gain_ids]
+                ids=aux.nonexisting_cols(ids, self.gain_ids)
         return ids
 
     def update_gain(self):

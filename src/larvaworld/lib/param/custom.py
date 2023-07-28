@@ -18,8 +18,10 @@ class StringRobust(String):
 
 class PositiveNumber(Number):
     """Number that must be positive"""
-    def __init__(self,default=0.0, softmin=0.0, softmax=None, hardmin=0.0, hardmax=None, **kwargs):
-        super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),**kwargs)
+    def __init__(self,default=0.0, softmin=0.0, softmax=None, hardmin=0.0, hardmax=None,bounds=None, **kwargs):
+        if bounds is None:
+            bounds = (hardmin, hardmax)
+        super().__init__(default=default,softbounds=(softmin, softmax),bounds=bounds,**kwargs)
 
 class PositiveInteger(Integer):
     """Integer that must be positive"""

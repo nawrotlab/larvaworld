@@ -47,7 +47,7 @@ class VisOps(NestedConf):
     visible_clock = Boolean(True, doc='Whether clock is visible')
     visible_scale = Boolean(True, doc='Whether scale is visible')
     visible_state = Boolean(False, doc='Whether state is visible')
-    # visible_clock = Boolean(True, doc='Whether clock is visible')
+    visible_ids = Boolean(False, doc='Whether the agent IDs are visible')
 
 class ScreenOps(ColorDrawOps, AgentDrawOps, MediaDrawOps,VisOps):pass
 
@@ -427,7 +427,7 @@ class ScreenManager(BaseScreenManager):
         arena_drawn = False
         for id, layer in self.model.odor_layers.items():
             if layer.visible:
-                layer._draw(v)
+                layer.draw(v)
                 arena_drawn = True
                 break
 

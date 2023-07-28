@@ -381,6 +381,8 @@ class ScreenTextFont(NestedConf) :
 
     def draw(self, v,**kwargs):
         if self.N_text_lines == 1:
+            if self.text_font is None or self.text_font_r is None:
+                self.render_text()
             v.draw_text_box(self.text_font, self.text_font_r)
         else:
             for i in range(self.N_text_lines):
