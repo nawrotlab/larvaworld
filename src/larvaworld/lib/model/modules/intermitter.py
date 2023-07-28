@@ -298,8 +298,8 @@ class NengoIntermitter(Intermitter):
 
 
 class BranchIntermitter(Intermitter):
-    def __init__(self,beta=None,c=0.7,sigma=1,**kwargs):
-        super().__init__(feed_bouts=False,**kwargs)
+    def __init__(self,beta=None,c=0.7,sigma=1,feed_bouts=False,**kwargs):
+        super().__init__(feed_bouts=feed_bouts,**kwargs)
         self.c = c
         self.beta = beta
         self.sigma = sigma

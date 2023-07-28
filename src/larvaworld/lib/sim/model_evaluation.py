@@ -4,6 +4,7 @@ import warnings
 import param
 
 from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator, SimOps
+from larvaworld.lib.reg.generators import SimConfiguration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -17,11 +18,75 @@ from larvaworld.lib.sim.base_run import BaseRun
 # from larvaworld.lib.process.dataset import RefDataset
 
 
-class EvalRun(BaseRun):
+
+
+class EvalModelConf(NestedConf):
+    modelIDs = reg.conf.Model.confID_selector(single=False)
+    dataset_ids = param.List([],item_type=str, doc='The ids for the generated datasets')
+    N = PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        if self.dataset_ids in [None,[]]:
+            self.dataset_ids = self.modelIDs
+
+class EvalDataConf(NestedConf):
+    refID = reg.conf.Ref.confID_selector()
+    norm_modes = param.ListSelector(default=['raw', 'minmax'], objects=['raw', 'minmax', 'std'],
+                                    # label='keys of modules to include in space search',
+                                    doc='Normalization modes to use')
+    eval_modes = param.ListSelector(default=['pooled'], objects=['pooled', '1:1', '1:pooled'],
+                                    # label='keys of modules to include in space search',
+                                    doc='Evaluation modes to use')
+    eval_metrics = param.Dict(default=aux.AttrDict({
+        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
+        'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+                                 'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
+        'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
+        'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
+        'epochs': ['run_t', 'pau_t'],
+        'tortuosity': ['tor5', 'tor20']}),
+        doc='Evaluation metrics to use')
+
+    def __init__(self,dataset=None,  **kwargs):
+        super().__init__(**kwargs)
+        d = self.target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=self.refID)
+        d.id = 'experiment'
+        d.config.id = 'experiment'
+        d.color = 'grey'
+        d.config.color = 'grey'
+        kwargs['dt'] = self.target.config.dt
+        kwargs['duration'] = self.target.config.Nticks * kwargs['dt'] / 60
+        self.evaluation, self.target_data = util.arrange_evaluation(self.target, self.eval_metrics)
+        self.define_eval_args(self.evaluation)
+
+    def define_eval_args(self, ev):
+        self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
+        s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
+        self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
+        e_symbols = aux.flatten_list(ev['end']['symbols'].values.tolist())
+        self.eval_symbols = aux.AttrDict(
+            {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
 
 
-    def __init__(self,parameters, dataset=None,enrichment=True,show=False,  **kwargs):
+class EvalConf(EvalDataConf, EvalModelConf):
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        mIDs = self.modelIDs
+        dIDs=self.dataset_ids
+        Nm=len(mIDs)
+        self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs,
+                                    cs=aux.N_colors(Nm), expand=True, N=self.N)
+
+
+
+class EvalRun(EvalConf, SimConfiguration):
+
+
+
+    def __init__(self,show=False,enrichment=True,  **kwargs):
         '''
         Simulation mode 'Eval' compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.
 
@@ -36,21 +101,13 @@ class EvalRun(BaseRun):
         # RefDataset.__init__(self, refDataset=dataset, refID=parameters.refID, dataset_dir=parameters.dir)
         # d=self.refDataset
         # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
-        d=self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, refID=parameters.refID, dir=parameters.dataset_dir)
-        d.id = 'experiment'
-        d.config.id = 'experiment'
-        d.color = 'grey'
-        d.config.color = 'grey'
-        kwargs['dt'] = d.config.dt
-        kwargs['duration'] = d.config.Nticks * kwargs['dt'] / 60
-        self.target = d
-        super().__init__(runtype='Eval', parameters=parameters, **kwargs)
+        # BaseRun.__init__(self, runtype='Eval', parameters=parameters, **kwargs)
+        super().__init__(runtype='Eval',**kwargs)
+        # SimConfiguration.__init__(runtype='Eval', **kwargs)
+
+
         self.show = show
         self.enrichment = enrichment
-
-    def setup(self):
-        # self.refID = self.p.refID
-
 
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
@@ -58,52 +115,51 @@ class EvalRun(BaseRun):
         self.error_dicts = {}
         self.error_plot_dir = f'{self.plot_dir}/errors'
 
-        self.evaluation, self.target_data = util.arrange_evaluation(self.target, self.p.eval_metrics)
-        self.define_eval_args(self.evaluation)
+    # def setup(self):
+    #     # self.refID = self.p.refID
+    #     pass
 
-    def define_eval_args(self, ev):
-        self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
-        s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
-        self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
-        e_symbols = aux.flatten_list(ev['end']['symbols'].values.tolist())
-        self.eval_symbols = aux.AttrDict(
-            {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
-    def simulate(self, video=False):
-        if self.p.dataset_ids is None:
-            self.p.dataset_ids = self.p.modelIDs
-        dIDs, mIDs = self.p.dataset_ids, self.p.modelIDs
-        N, Nm=self.p.N, len(self.p.modelIDs)
-        lgs = reg.lgs(sample=self.p.refID, mIDs=mIDs, ids=dIDs,
-                                 cs=aux.N_colors(Nm),expand=True, N=N)
+
+
+
+
+
+
+    def simulate(self):
+        mIDs = self.modelIDs
+        dIDs=self.dataset_ids
+        Nm=len(mIDs)
+        # self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs,
+        #                             cs=aux.N_colors(Nm), expand=True, N=self.N)
         kws={
             'dt': self.dt,
             'duration': self.duration,
         }
-        self.setup(**self._setup_kwargs)
+        # self.setup(**self._setup_kwargs)
         c = self.target.config
 
         self.tor_durs, self.dsp_starts, self.dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
         if self.offline is None:
-            print(f'Simulating offline {Nm} models : {dIDs} with {N} larvae each')
+            print(f'Simulating offline {Nm} models : {dIDs} with {self.N} larvae each')
             self.datasets = util.sim_models(mIDs=mIDs, tor_durs=self.tor_durs,
                                         dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
-                                        dataset_ids=dIDs,lgs=lgs,
+                                        dataset_ids=dIDs,lgs=self.larva_groups,
                                         enrichment=self.enrichment,
-                                        Nids=N, env_params=c.env_params,
+                                        Nids=self.N, env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir, **kws)
         else:
             from larvaworld.lib.sim.single_run import ExpRun
-            print(f'Simulating {Nm} models : {dIDs} with {N} larvae each')
+            print(f'Simulating {Nm} models : {dIDs} with {self.N} larvae each')
             conf = reg.conf.Exp.expand(self.experiment)
-            conf.larva_groups=lgs
+            conf.larva_groups=self.larva_groups
             if self.enrichment is None:
                 conf.enrichment = None
-            else:
-                conf.enrichment.metric_definition.dispersion.update({'dsp_starts': self.dsp_starts, 'dsp_stops': self.dsp_stops})
-                conf.enrichment.metric_definition.tortuosity.tor_durs = self.tor_durs
+            # else:
+            #     conf.enrichment.metric_definition.dispersion.update({'dsp_starts': self.dsp_starts, 'dsp_stops': self.dsp_stops})
+            #     conf.enrichment.metric_definition.tortuosity.tor_durs = self.tor_durs
             kws0 = aux.AttrDict({
-                'video': video,
+                # 'video': video,
                 'dir': self.dir,
                 'store_data': self.store_data,
                 'experiment': self.experiment,
@@ -129,7 +185,7 @@ class EvalRun(BaseRun):
         }
         labels = label_dic[mode]
         dic = aux.AttrDict()
-        for norm in self.p.norm_modes:
+        for norm in self.norm_modes:
             d = self.norm_error_dict(error_dict, mode=norm)
             df0 = pd.DataFrame.from_dict({k: df.mean(axis=1) for i, (k, df) in enumerate(d.items())})
             kws = {
@@ -160,7 +216,7 @@ class EvalRun(BaseRun):
         print('Evaluating all models')
         os.makedirs(self.plot_dir, exist_ok=True)
         self.error_dicts = aux.AttrDict()
-        for mode in self.p.eval_modes:
+        for mode in self.eval_modes:
             k = f'{mode}_{suf}'
             d = util.eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
                                             min_size=min_size)
@@ -177,7 +233,7 @@ class EvalRun(BaseRun):
     def plot_models(self):
         GD = reg.graphs.dict
         save_to = self.plot_dir
-        for mID in self.p.modelIDs:
+        for mID in self.modelIDs:
             self.figs.models.table[mID] = GD['model table'](mID=mID, save_to=save_to, figsize=(14, 11))
             self.figs.models.summary[mID] = GD['model summary'](mID=mID, save_to=save_to, refID=self.refID)
 
@@ -232,26 +288,9 @@ class EvalRun(BaseRun):
 
 
 
-class EvalConf(SimOps):
-    modelIDs = reg.conf.Model.confID_selector(single=False)
-    dataset_ids = param.List([],item_type=str, doc='The ids for the generated datasets')
-    N = PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
-    refID = reg.conf.Ref.confID_selector()
-    norm_modes = param.ListSelector(default=['raw', 'minmax'], objects=['raw', 'minmax', 'std'],
-                                    # label='keys of modules to include in space search',
-                                    doc='Normalization modes to use')
-    eval_modes = param.ListSelector(default=['pooled'], objects=['pooled', '1:1', '1:pooled'],
-                                    # label='keys of modules to include in space search',
-                                    doc='Evaluation modes to use')
-    eval_metrics = param.Dict(default=aux.AttrDict({
-        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
-        'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                 'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
-        'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
-        'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-        'epochs': ['run_t', 'pau_t'],
-        'tortuosity': ['tor5', 'tor20']}),
-        doc='Evaluation metrics to use')
+
+
+
 
 reg.gen.Eval=class_generator(EvalConf, mode='Unit')
 
@@ -289,7 +328,7 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
             'brain.crawler_params.stride_dst_std',
             'brain.crawler_params.max_scaled_vel',
             'brain.crawler_params.max_vel_phase',
-            'brain.crawler_params.initial_freq',
+            'brain.crawler_params.freq',
         ]
     kwargs = {k: 'sample' for k in sample_ks}
     entries = {}

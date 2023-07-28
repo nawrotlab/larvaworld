@@ -59,7 +59,7 @@ def Batch_dict():
                 # bm='PI',
                 proc=['PI']),
         **batch('patchy_food',
-                ss={'EEB': [[0.0, 1.0], 3], 'initial_freq': [[1.5, 2.5], 3]},
+                ss={'EEB': [[0.0, 1.0], 3], 'freq': [[1.5, 2.5], 3]},
                 o='ingested_food_volume'),
         **batch('food_grid',
                 ss={'EEB': [[0.0, 1.0], 6], 'EEB_decay': [[0.1, 2.0], 6]},

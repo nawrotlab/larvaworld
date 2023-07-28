@@ -78,7 +78,7 @@ def model_summary(mID, refID=None, refDataset=None, Nids=1, model_table=False, *
     if model_table:
         P.plot(func='configuration', kws={'mID': mID}, h=hh0, w0=8, x0=True, y0=True)
 
-    # valid = ['initial_freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
+    # valid = ['freq', 'max_scaled_vel', 'max_vel_phase', 'stride_dst_mean', 'stride_dst_std']
 
     P.plot(func='module hists', kws={'mkey': 'crawler', 'mode': 'realistic', 'e': e, 'save_to': None},
            N=5, h=10, h0=hh0 + 3, share_h=True, dw=1, x0=True)

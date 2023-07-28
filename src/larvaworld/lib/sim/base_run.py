@@ -30,7 +30,6 @@ class BaseRun(agentpy.Model,SimConfiguration):
             id: Unique ID of the simulation. If not specified it is automatically set according to the simulation mode and experiment type.
             experiment: The experiment simulated
             offline: Whether to perform the simulation without launching a spatial arena. Defaults to False
-            show_display: Whether to launch the pygame-visualization. Defaults to True
             Box2D: Whether to implement the Box2D physics engine. Defaults to False
             larva_collisions: Whether to allow overlap between larva bodies. Defaults to True
             dt: The simulation timestep in seconds. Defaults to 0.1
@@ -78,7 +77,7 @@ class BaseRun(agentpy.Model,SimConfiguration):
                f"{pref0}Timestep (sec) : {c.dt}\n" \
                f"{pref0}Ticks (#) : {c.Nsteps}\n" \
                f"{pref0}Box2D active : {c.Box2D}\n" \
-               f"{pref0}Display active : {c.show_display}\n" \
+             \
                f"{pref0}Offline mode : {c.offline}\n" \
                f"{pref0}Data storage : {c.store_data}\n" \
                f"{pref0}Parent path : {c.dir}"

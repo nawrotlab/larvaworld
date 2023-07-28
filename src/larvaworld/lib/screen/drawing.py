@@ -34,7 +34,7 @@ class AgentDrawOps(NestedConf):
     draw_orientations = Boolean(False,doc='Draw the larva body vector orientations')
 
 
-class ScreenOps(NestedConf):
+class ColorDrawOps(NestedConf):
     intro_text = Boolean(True, doc='Show the introductory configuration screen')
     odor_aura = Boolean(False, doc='Draw the aura around odor sources')
     allow_clicks = Boolean(True, doc='Whether to allow input from display')
@@ -49,18 +49,23 @@ class VisOps(NestedConf):
     visible_state = Boolean(False, doc='Whether state is visible')
     # visible_clock = Boolean(True, doc='Whether clock is visible')
 
-class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps,VisOps) :
+class ScreenOps(ColorDrawOps, AgentDrawOps, MediaDrawOps,VisOps):pass
+
+class BaseScreenManager(Area2DPixel,ScreenOps) :
 
     def __init__(self, model, traj_color=None, background_motion=None,
                  vis_kwargs=None, video=None, **kwargs):
         m = self.model = model
-        super().__init__(dims=aux.get_window_dims(m.space.dims),show_display=m.show_display, **kwargs)
-
+        super().__init__(dims=aux.get_window_dims(m.space.dims), **kwargs)
+        if self.model.offline:
+            self.show_display = False
         # self.window_dims = self.dims
         self._fps= int(self.fps / m.dt)
         if vis_kwargs is not None:
             self.mode=vis_kwargs.render.mode
             self.__dict__.update(vis_kwargs.aux)
+            if self.mode=='video' and not self.save_video:
+                self.show_display=True
             # mode='video' if video else None
             # vis_kwargs = reg.get_null('visualization', mode=mode)
         # vis=self.vis_kwargs = aux.AttrDict(vis_kwargs)
@@ -76,8 +81,6 @@ class BaseScreenManager(Area2DPixel,ScreenOps, AgentDrawOps, MediaDrawOps,VisOps
         self.bg = background_motion
 
         self.active = self.save_video or self.image_mode or self.show_display or (self.mode is not None)
-        # print(self.active,self.save_video, self.image_mode,self.show_display,self.mode)
-        # raise
         self.v = None
 
         self.selected_type = ''
@@ -361,9 +364,9 @@ class ScreenManager(BaseScreenManager):
 
 
     def step(self):
-
+        self.check()
         if self.active :
-            self.check()
+
             self.sim_clock.tick_clock()
             if self.mode == 'video':
                 if self.image_mode != 'snapshots' or self.snapshot_tick:

@@ -322,3 +322,6 @@ def build_fitness(dic, refDataset):
 
     keys = aux.unique_list(keys)
     return aux.AttrDict({'func_global_dict': func_global_dict, 'func_solo_dict': func_solo_dict, 'keys': keys})
+
+# class Evaluator :
+

@@ -331,8 +331,8 @@ class SimModeParser :
             kw.parameters = p
             self.run = sim.GAlauncher(**kw)
         elif m == 'Eval':
-            kw.parameters = sp.Eval
-            self.run = sim.EvalRun(**kw)
+            # kw.parameters = sp.Eval
+            self.run = sim.EvalRun(**sp.Eval)
         elif m == 'Replay':
             kw.parameters = sp.Replay
             self.run = sim.ReplayRun(**kw)

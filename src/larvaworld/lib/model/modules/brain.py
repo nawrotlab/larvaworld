@@ -11,7 +11,7 @@ class Brain:
         self.A_touch = 0
         self.A_thermo = 0
         self.A_wind = 0
-
+        self.olfactor, self.toucher, self.windsensor, self.thermosensor = [None]*4
         # A dictionary of the possibly existing sensors along with the sensing functions and the possibly existing memory modules
         self.sensor_dict = aux.AttrDict({
             'olfactor': {'func': self.sense_odors, 'A': 0.0, 'mem': 'memory'},
@@ -89,7 +89,6 @@ class DefaultBrain(Brain):
         self.locomotor = modules.DefaultLocomotor(conf=conf, **kwargs)
 
         kws = {"brain": self, "dt": self.dt}
-        self.olfactor, self.toucher, self.windsensor, self.thermosensor = [None] * 4
         self.touch_memory = None
         self.memory = None
 

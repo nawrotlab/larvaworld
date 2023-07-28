@@ -62,7 +62,7 @@ def init_brain_modules():
                 }
 
         SINargs = {**Tamp,
-                   'initial_freq': {'v0': 0.58, 'lim': (0.01, 2.0), 'dv': 0.01,
+                   'freq': {'v0': 0.58, 'lim': (0.01, 2.0), 'dv': 0.01,
                                     'k': 'f_T0',
                                     'disp': 'bending frequency', 'sym': sub('f', 'T'), 'u_name': '$Hz$',
                                     'u': reg.units.Hz, 'codename': 'front_orientation_velocity_freq',
@@ -70,7 +70,7 @@ def init_brain_modules():
                    }
 
         d = {'neural': {'args': NEUargs, 'class_func': modules.NeuralOscillator, 'variable': ['base_activation', 'tau', 'n']},
-             'sinusoidal': {'args': SINargs, 'class_func': modules.SinOscillator, 'variable': ['initial_amp', 'initial_freq']},
+             'sinusoidal': {'args': SINargs, 'class_func': modules.SinOscillator, 'variable': ['initial_amp', 'freq']},
              'constant': {'args': Tamp, 'class_func': modules.StepEffector, 'variable': ['initial_amp']}
              }
         return aux.AttrDict(d)
@@ -92,7 +92,7 @@ def init_brain_modules():
                                 'k': 'A_C0', 'codename': 'stride_scaled_velocity_mean',
                                 'disp': 'output amplitude', 'sym': subsup('A', 'C', 0),
                                 'h': 'The initial output amplitude of the CRAWLER module.'}}
-        Cfr = {'initial_freq': {'v0': 1.42, 'lim': (0.5, 2.5), 'dv': 0.1,
+        Cfr = {'freq': {'v0': 1.42, 'lim': (0.5, 2.5), 'dv': 0.1,
                                 'k': 'f_C0',
                                 'disp': 'crawling frequency', 'sym': subsup('f', 'C', 0), 'u': reg.units.Hz,
                                 'codename': 'scaled_velocity_freq',
@@ -131,12 +131,12 @@ def init_brain_modules():
         d = {
 
             'gaussian': {'args': {**GAUargs, **str_kws}, 'class_func': modules.GaussOscillator,
-                         'variable': ['stride_dst_mean', 'stride_dst_std', 'std', 'initial_amp', 'initial_freq']},
+                         'variable': ['stride_dst_mean', 'stride_dst_std', 'std', 'initial_amp', 'freq']},
             'square': {'args': {**SQargs, **str_kws}, 'class_func': modules.SquareOscillator,
-                       'variable': ['stride_dst_mean', 'stride_dst_std', 'duty', 'initial_amp', 'initial_freq']},
+                       'variable': ['stride_dst_mean', 'stride_dst_std', 'duty', 'initial_amp', 'freq']},
             'realistic': {'args': {**Rargs, **str_kws}, 'class_func': modules.PhaseOscillator,
                           'variable': ['stride_dst_mean', 'stride_dst_std', 'max_scaled_vel', 'max_vel_phase',
-                                       'initial_freq']},
+                                       'freq']},
             'constant': {'args': Camp, 'class_func': modules.StepEffector, 'variable': ['initial_amp']}
         }
         return aux.AttrDict(d)
@@ -338,7 +338,7 @@ def init_brain_modules():
     def Fee0():
 
         Fargs = {
-            'initial_freq': {'v0': 2.0, 'lim': (0.0, 4.0), 'k': 'f_F0',
+            'freq': {'v0': 2.0, 'lim': (0.0, 4.0), 'k': 'f_F0',
                              'disp': 'feeding frequency', 'sym': sub('f', 'F'), 'u': reg.units.Hz,
                              'h': 'The initial default frequency of the repetitive feeding behavior'},
             'feed_radius': {'v0': 0.1, 'lim': (0.1, 10.0), 'sym': sub('rad', 'F'),
@@ -349,7 +349,7 @@ def init_brain_modules():
                        'h': 'The volume of food consumed on a single feeding motion as a fraction of the body volume.'}
         }
 
-        d = {'default': {'args': Fargs, 'class_func': modules.Feeder, 'variable': ['initial_freq']},
+        d = {'default': {'args': Fargs, 'class_func': modules.Feeder, 'variable': ['freq']},
              # 'nengo': {'args': IMargs, 'class_func': NengoIntermitter},
              # 'branch': {'args': BRargs, 'class_func': BranchIntermitter},
              }
@@ -938,7 +938,7 @@ class ModelRegistry:
             'brain.crawler_params.stride_dst_std',
             'brain.crawler_params.max_scaled_vel',
             'brain.crawler_params.max_vel_phase',
-            'brain.crawler_params.initial_freq',
+            'brain.crawler_params.freq',
         ]
         for mID0,RvSsuf,Fexists in zip(['RE_NEU_PHI_DEF', 'RE_NEU_PHI_DEF_feeder', 'RE_NEU_PHI_DEF_nav','RE_NEU_PHI_DEF_forager'], ['_loco', '', '_nav', '_forager'], ['woF', 'wF', 'woF', 'wF']):
             E[f'v{mID0}'] = self.newConf(m0=E[mID0], kwargs={k: 'sample' for k in sample_ks})

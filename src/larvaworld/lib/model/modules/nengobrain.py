@@ -17,7 +17,7 @@ class NengoBrain(Network, Brain):
         super().__init__(**kwargs)
         Brain.__init__(self, agent=agent, dt=dt)
         self.food_feedback = False
-        self.locomotor = NengoLocomotor(dt=self.dt, c=conf)
+        self.locomotor = NengoLocomotor(conf=conf,dt=self.dt)
         self.build()
         self.sim = Simulator(self, dt=0.01, progress_bar=False)
         self.Nsteps = int(self.dt / self.sim.dt)
@@ -80,7 +80,7 @@ class NengoBrain(Network, Brain):
                 return v
 
             def intermittency(x):
-                s, f, p = self.locomotor.intermitter.active_bouts
+                s, f, p,r = self.locomotor.intermitter.active_bouts
                 if s is None:
                     x[0] = 0
                 elif s > 0:
@@ -95,7 +95,8 @@ class NengoBrain(Network, Brain):
                 if x<=0 :
                     return 0
                 else :
-                    return x * 2 * self.locomotor.crawler.step_to_length_mu
+                    return x * 2 * self.locomotor.crawler.get_amp(0)
+                    # return x * 2 * self.locomotor.crawler.step_to_length_mu
 
             def turner(x):
                 return x * self.locomotor.turner.get_amp(0)

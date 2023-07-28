@@ -15,7 +15,7 @@ class ArenaViewer:
         # super().__init__(**kwargs)
         self.size = size
 
-        self.launcher=sim.ExpRun(experiment=experiment,show_display=False, **kwargs)
+        self.launcher=sim.ExpRun(experiment=experiment,**kwargs)
         self.env=self.launcher.p.env_params
         # self.conf=reg.conf.Exp.expand(experiment)
         # self.conf.update(SimOps().nestedConf)
