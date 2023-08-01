@@ -10,6 +10,8 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 from larvaworld.lib import reg, aux, screen
+from larvaworld.lib.screen import Viewer, SidePanel, ScreenMsgText, SimulationClock, SimulationScale, \
+    SimulationState, ScreenTextBoxRect
 
 
 class MediaDrawOps(NestedConf):
@@ -181,8 +183,8 @@ class GA_ScreenManager(BaseScreenManager):
 
 
     def initialize(self):
-        v = screen.Viewer.load_from_file(**self.screen_kws)
-        self.side_panel = screen.SidePanel(v)
+        v = Viewer.load_from_file(**self.screen_kws)
+        self.side_panel = SidePanel(v)
         print('Screen opened')
         return v
 
@@ -210,7 +212,7 @@ class ScreenManager(BaseScreenManager):
 
     def initialize(self):
 
-        v = screen.Viewer(**self.screen_kws)
+        v = Viewer(**self.screen_kws)
         self.build_aux(v)
 
         self.draw_arena(v)
@@ -224,12 +226,12 @@ class ScreenManager(BaseScreenManager):
 
     def build_aux(self,v):
         m=self.model
-        self.input_box = screen.ScreenTextBoxRect(text_color='lightgreen', default_color='white',
+        self.input_box = ScreenTextBoxRect(text_color='lightgreen', default_color='white',
                                               frame_rect=v.get_rect_at_pos(),
                                          font_type = "comicsansms",font_size = 40,
         )
         if self.intro_text:
-            box = screen.ScreenTextBoxRect(
+            box = ScreenTextBoxRect(
                 text=m.configuration_text,
                 text_color='lightgreen', default_color='white',
                 visible=True, frame_rect=v.get_rect_at_pos(),
@@ -245,14 +247,11 @@ class ScreenManager(BaseScreenManager):
             'default_color':'black',
         }
         self.screen_items = aux.AttrDict({
-            'clock': screen.SimulationClock(sim_step_in_sec=m.dt, **kws),
-            'scale': screen.SimulationScale(**kws),
-            'state': screen.SimulationState(model=m,**kws),
+            'clock': SimulationClock(sim_step_in_sec=m.dt, **kws),
+            'scale': SimulationScale(**kws),
+            'state': SimulationState(model=m,**kws),
         })
-        # self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
-        # self.sim_scale = screen.SimulationScale(**kws)
-        # self.sim_state = screen.SimulationState(model=m,**kws)
-        self.screen_texts = aux.AttrDict({name: screen.ScreenMsgText(text=name, **kws) for name in [
+        self.screen_texts = aux.AttrDict({name: ScreenMsgText(text=name, **kws) for name in [
             'trail_dt',
             'trail_color',
             'visible_trails',
