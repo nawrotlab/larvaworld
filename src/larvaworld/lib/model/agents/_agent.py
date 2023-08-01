@@ -34,20 +34,21 @@ class PointAgent(RadiallyExtended,NonSpatialAgent):
 
 
     def draw(self, v, filled=True):
-        p, c, r = self.get_position(), self.color, self.radius
-        if np.isnan(p).all():
-            return
-
         if self.odor.peak_value > 0:
             if v.manager.odor_aura:
-                v.draw_circle(p, r * 1.5, c, False, r / 10)
-                v.draw_circle(p, r * 2.0, c, False, r / 15)
-                v.draw_circle(p, r * 3.0, c, False, r / 20)
-
+                # print(r)
+                kws={
+                    'color':self.color,
+                    'filled':False,
+                    'position':self.get_position(),
+                }
+                for i in [1.5,2.0,3.0]:
+                    v.draw_circle(radius=self.radius * i, width=0.001 / i, **kws)
 
     def draw_selected(self, v, **kwargs):
-        p, c, r = self.get_position(), self.color, self.radius
-        v.draw_circle(p, r * 0.5, v.manager.selection_color, False, r / 5)
+        r = self.radius
+        v.draw_circle(position=self.get_position(), radius=self.radius * 0.5,
+                      color=v.manager.selection_color, filled=False, width=0.0002)
 
 
 class OrientedAgent(OrientedPoint,PointAgent):

@@ -101,9 +101,9 @@ def draw_body_head(v, midline_xy, radius):
 def draw_selected_body(v, pos, xy_bounds, radius, color):
     try:
         if len(xy_bounds) > 0 and not np.isnan(xy_bounds).any():
-            v.draw_polygon(xy_bounds, filled=False, color=color, width=radius / 5)
+            v.draw_polygon(xy_bounds, filled=False, color=color, width=0.0002)
         elif not np.isnan(pos).any():
-            v.draw_circle(pos, radius=radius, filled=False, color=color, width=radius / 3)
+            v.draw_circle(pos, radius=radius, filled=False, color=color, width=0.0002)
     except:
         pass
 

@@ -87,10 +87,6 @@ class Larva(MobileAgent):
             v.draw_line(p, p12, color='red', width=l / 10)
         super().draw(v, **kwargs)
 
-    # def draw_selected(self, v, **kwargs):
-    #     p, c, r = self.get_position(), self.color, self.radius
-    #     v.draw_circle(p, r * 0.5, v.manager.selection_color, False, r / 5)
-
 
 
 class LarvaContoured(Larva, Contour):
@@ -105,10 +101,9 @@ class LarvaContoured(Larva, Contour):
         super().draw(v, **kwargs)
 
     def draw_selected(self, v, **kwargs):
-        # raise
-        r = self.radius
         if self.vertices is not None and len(self.vertices) > 1:
-            v.draw_polygon(vertices=self.vertices, color=v.manager.selection_color, filled=False, width=r / 10)
+            v.draw_polygon(vertices=self.vertices, color=v.manager.selection_color,
+                           filled=False, width=0.0002)
 
 
 class LarvaSegmented(Larva,SegmentedBodySensored):
@@ -128,9 +123,8 @@ class LarvaSegmented(Larva,SegmentedBodySensored):
             seg.set_default_color(color)
 
     def draw_selected(self, v, **kwargs):
-        # raise
-        r = self.radius
-        v.draw_polygon(vertices=self.get_shape(), color=v.manager.selection_color, filled=False, width=r / 10)
+        v.draw_polygon(vertices=self.get_shape(), color=v.manager.selection_color,
+                       filled=False, width=0.0002)
 
 class LarvaMotile(LarvaSegmented):
     def __init__(self, brain, energetics, life_history,body, **kwargs):
