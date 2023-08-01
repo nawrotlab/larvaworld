@@ -226,7 +226,7 @@ class LarvaSim(agents.LarvaMotile, BaseController):
         def fov(ang_vel):
             dv = 8 * np.pi / 90
             idx = 0
-            while not self.model.space.in_arena(get_hf0(ang_vel)):
+            while not self.model.space.in_area(get_hf0(ang_vel)):
                 if idx == 0:
                     dv *= np.sign(ang_vel)
                 ang_vel -= dv
@@ -254,7 +254,7 @@ class LarvaSim(agents.LarvaMotile, BaseController):
         def lv(lin_vel):
             dv = 0.00011
             idx = 0
-            while not self.model.space.in_arena(get_hf1(lin_vel)):
+            while not self.model.space.in_area(get_hf1(lin_vel)):
                 idx += 1
                 lin_vel -= dv
                 if np.isnan(lin_vel) or lin_vel < 0 or idx > 100:

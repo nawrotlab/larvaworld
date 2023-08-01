@@ -61,9 +61,10 @@ class ScreenWindowAreaPygame(ScreenWindowArea):
         pygame.draw.circle(self._window, color, p, r, w)
 
     def draw_polygon(self, vertices, color=(0, 0, 0), filled=True, width=.01):
-        vs = [self._transform(v) for v in vertices]
-        w = 0 if filled else int(self._scale[0, 0] * width)
-        pygame.draw.polygon(self._window, color, vs, w)
+        if vertices is not None and len(vertices) > 1:
+            vs = [self._transform(v) for v in vertices]
+            w = 0 if filled else int(self._scale[0, 0] * width)
+            pygame.draw.polygon(self._window, color, vs, w)
 
     def draw_convex(self, points, **kwargs):
         from scipy.spatial import ConvexHull

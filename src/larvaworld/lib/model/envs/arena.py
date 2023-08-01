@@ -1,5 +1,6 @@
 import agentpy
 import numpy as np
+import param
 from shapely import geometry
 from shapely.geometry import Point,Polygon
 
@@ -9,14 +10,12 @@ from larvaworld.lib.param.drawable import ViewableNamedBoundedArea
 
 
 class Arena(ViewableNamedBoundedArea, agentpy.Space):
-
+    boundary_margin = param.Magnitude(0.96)
 
 
     def __init__(self, model=None,**kwargs):
         ViewableNamedBoundedArea.__init__(self, **kwargs)
         self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(self.vertices, 2)]
-        k = 0.96
-        self.polygon = Polygon(np.array(self.vertices) * k)
         if model is not None :
             agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
 
@@ -76,8 +75,7 @@ class Arena(ViewableNamedBoundedArea, agentpy.Space):
             dic={a: dic['sources'][0] if dic['dsts'][0]<=a.radius else None for a, dic in self.accessible_sources_sorted.items()}
         self.accessible_sources = dic
 
-    def in_arena(self, p):
-        return self.polygon.contains(geometry.Point(p))
+
 
     def draw(self, v=None):
         import matplotlib.pyplot as plt

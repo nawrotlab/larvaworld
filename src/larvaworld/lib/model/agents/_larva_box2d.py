@@ -208,8 +208,8 @@ class LarvaBox2D(LarvaSim):
 
 
     def updated_by_Box2D(self):
-        self.pos = self.global_midspine_of_body
-        self.trajectory.append(self.pos)
+        self.set_position(tuple(self.global_midspine_of_body))
+        self.trajectory.append(self.get_position())
 
         self.dst = geometry.Point(self.pos).distance(geometry.Point(self.trajectory[-1]))
         # self.dst = aux.eudis5(self.pos, self.trajectory[-1])

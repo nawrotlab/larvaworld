@@ -21,8 +21,8 @@ def LvsRtoggle(side):
         raise ValueError(f'Argument {side} is neither Left nor Right')
 
 
-def inside_polygon(points, tank_polygon):
-    return all([tank_polygon.contains(geometry.Point(x, y)) for x, y in points])
+# def inside_polygon(points, tank_polygon):
+#     return all([tank_polygon.contains(geometry.Point(x, y)) for x, y in points])
 
 
 
@@ -57,112 +57,112 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
         return tank_shape
 
 
-def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1):
-    def get_hf0(ang_vel):
-        return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))
-
-
-
-    def fov(ang_vel):
-        dv=8*np.pi / 90
-        idx=0
-        while not inside_polygon([get_hf0(ang_vel)], tank):
-            if idx == 0:
-                dv *= np.sign(ang_vel)
-            ang_vel -= dv
-            if ang_vel < fov0:
-                ang_vel = fov0
-                dv = np.abs(dv)
-            elif ang_vel > fov1:
-                ang_vel = fov1
-                dv -= np.abs(dv)
-            idx += 1
-            if np.isnan(ang_vel) or idx > 100:
-                ang_vel = 0
-                break
-        return ang_vel
-
-    ang_vel=fov(ang_vel)
-
-    ho1 = ho0 + ang_vel * dt
-    k = np.array([math.cos(ho1), math.sin(ho1)])
-    hf01 = get_hf0(ang_vel)
-
-    def get_hf1(lin_vel):
-        return hf01 + dt * sf * k * lin_vel
-    def lv(lin_vel):
-        dv = 0.00011
-        idx = 0
-        while not inside_polygon([get_hf1(lin_vel)], tank):
-            idx += 1
-            lin_vel -= dv
-            if np.isnan(lin_vel) or lin_vel < 0 or idx > 100:
-                lin_vel =0
-                break
-        return lin_vel
-
-    lin_vel=lv(lin_vel)
-    d = lin_vel * dt
-    hp1 = hr0 + k * (d * sf + l0 / 2)
-    return d, ang_vel, lin_vel, hp1, ho1
-
-
-def position_head_in_tank2(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
-    # hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
-    def get_hf0(ang_vel):
-        return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))
-        # return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
-        # return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
-
-
-    def fov(ang_vel, turn_err =0):
-        dv=8*np.pi / 90
-        idx=0
-        while not inside_polygon([get_hf0(ang_vel)], tank):
-            if idx == 0:
-                dv *= np.sign(ang_vel)
-            ang_vel -= dv
-            if ang_vel < fov0:
-                ang_vel = fov0
-                dv = np.abs(dv)
-            elif ang_vel > fov1:
-                ang_vel = fov1
-                dv -= np.abs(dv)
-            idx += 1
-            if np.isnan(ang_vel) or idx > 100:
-                turn_err += 1
-                ang_vel = 0
-                break
-        return ang_vel, turn_err
-
-    ang_vel, turn_err=fov(ang_vel, turn_err=turn_err)
-
-    ho1 = ho0 + ang_vel * dt
-    k = np.array([math.cos(ho1), math.sin(ho1)])
-    hf01 = get_hf0(ang_vel)
-    coef = dt * sf * k
-
-    def get_hf1(lin_vel):
-        return hf01 + coef * lin_vel
-    def lv(lin_vel,go_err=0):
-        dv = 0.00011
-        idx = 0
-        while not inside_polygon([get_hf1(lin_vel)], tank):
-            idx += 1
-            lin_vel -= dv
-            if np.isnan(lin_vel) or idx > 100:
-                go_err += 1
-                lin_vel =0
-                break
-            if lin_vel < 0:
-                lin_vel = 0
-                break
-        return lin_vel, go_err
-
-    lin_vel, go_err=lv(lin_vel, go_err=go_err)
-    d = lin_vel * dt
-    hp1 = hr0 + k * (d * sf + l0 / 2)
-    return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
+# def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1):
+#     def get_hf0(ang_vel):
+#         return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))
+#
+#
+#
+#     def fov(ang_vel):
+#         dv=8*np.pi / 90
+#         idx=0
+#         while not inside_polygon([get_hf0(ang_vel)], tank):
+#             if idx == 0:
+#                 dv *= np.sign(ang_vel)
+#             ang_vel -= dv
+#             if ang_vel < fov0:
+#                 ang_vel = fov0
+#                 dv = np.abs(dv)
+#             elif ang_vel > fov1:
+#                 ang_vel = fov1
+#                 dv -= np.abs(dv)
+#             idx += 1
+#             if np.isnan(ang_vel) or idx > 100:
+#                 ang_vel = 0
+#                 break
+#         return ang_vel
+#
+#     ang_vel=fov(ang_vel)
+#
+#     ho1 = ho0 + ang_vel * dt
+#     k = np.array([math.cos(ho1), math.sin(ho1)])
+#     hf01 = get_hf0(ang_vel)
+#
+#     def get_hf1(lin_vel):
+#         return hf01 + dt * sf * k * lin_vel
+#     def lv(lin_vel):
+#         dv = 0.00011
+#         idx = 0
+#         while not inside_polygon([get_hf1(lin_vel)], tank):
+#             idx += 1
+#             lin_vel -= dv
+#             if np.isnan(lin_vel) or lin_vel < 0 or idx > 100:
+#                 lin_vel =0
+#                 break
+#         return lin_vel
+#
+#     lin_vel=lv(lin_vel)
+#     d = lin_vel * dt
+#     hp1 = hr0 + k * (d * sf + l0 / 2)
+#     return d, ang_vel, lin_vel, hp1, ho1
+#
+#
+# def position_head_in_tank2(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
+#     # hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
+#     def get_hf0(ang_vel):
+#         return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))
+#         # return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
+#         # return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
+#
+#
+#     def fov(ang_vel, turn_err =0):
+#         dv=8*np.pi / 90
+#         idx=0
+#         while not inside_polygon([get_hf0(ang_vel)], tank):
+#             if idx == 0:
+#                 dv *= np.sign(ang_vel)
+#             ang_vel -= dv
+#             if ang_vel < fov0:
+#                 ang_vel = fov0
+#                 dv = np.abs(dv)
+#             elif ang_vel > fov1:
+#                 ang_vel = fov1
+#                 dv -= np.abs(dv)
+#             idx += 1
+#             if np.isnan(ang_vel) or idx > 100:
+#                 turn_err += 1
+#                 ang_vel = 0
+#                 break
+#         return ang_vel, turn_err
+#
+#     ang_vel, turn_err=fov(ang_vel, turn_err=turn_err)
+#
+#     ho1 = ho0 + ang_vel * dt
+#     k = np.array([math.cos(ho1), math.sin(ho1)])
+#     hf01 = get_hf0(ang_vel)
+#     coef = dt * sf * k
+#
+#     def get_hf1(lin_vel):
+#         return hf01 + coef * lin_vel
+#     def lv(lin_vel,go_err=0):
+#         dv = 0.00011
+#         idx = 0
+#         while not inside_polygon([get_hf1(lin_vel)], tank):
+#             idx += 1
+#             lin_vel -= dv
+#             if np.isnan(lin_vel) or idx > 100:
+#                 go_err += 1
+#                 lin_vel =0
+#                 break
+#             if lin_vel < 0:
+#                 lin_vel = 0
+#                 break
+#         return lin_vel, go_err
+#
+#     lin_vel, go_err=lv(lin_vel, go_err=go_err)
+#     d = lin_vel * dt
+#     hp1 = hr0 + k * (d * sf + l0 / 2)
+#     return d, ang_vel, lin_vel, hp1, ho1, turn_err, go_err
 
 
 class Collision(Exception):
@@ -319,8 +319,7 @@ def get_larva_dicts(ls, validIDs=None):
                          'nengo': nengo_dicts, 'bouts': bout_dicts,
                          })
 
-    dic = aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
-    return dic
+    return aux.AttrDict({k: v for k, v in dic0.items() if len(v) > 0})
 
 def get_step_slice(s,e,dt, pars=None, t0=0, t1=40, track_t0_min=0, track_t1_min=0, ids=None):
     s0, s1 = int(t0 / dt), int(t1 / dt)
@@ -365,19 +364,5 @@ def index_unique(df, level='Step', ascending=True, as_array=False):
     else:
         return a
 
-# def existing_cols(cols,df) :
-#     if isinstance(df, pd.DataFrame):
-#         df=df.columns.values
-#     return [col for col in cols if col in df]
-#
-# def nonexisting_cols(cols,df) :
-#     if isinstance(df, pd.DataFrame):
-#         df=df.columns.values
-#     return [col for col in cols if col not in df]
-#
-# def cols_exist(cols,df) :
-#     if isinstance(df, pd.DataFrame):
-#         df=df.columns.values
-#     return set(cols).issubset(df)
 
 

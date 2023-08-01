@@ -1,7 +1,7 @@
 import numpy as np
 import param
 
-from shapely import geometry
+from shapely import geometry, Polygon
 
 from larvaworld.lib import aux
 
@@ -305,6 +305,7 @@ class ScreenWindowArea(ScreenWindowAreaZoomable):
 
 
 class BoundedArea(Area, LineClosed):
+    boundary_margin = param.Magnitude(1.0, doc='The boundary margin width relative to the area vertices')
 
     def __init__(self,vertices=None,**kwargs):
 
@@ -321,6 +322,15 @@ class BoundedArea(Area, LineClosed):
                             (X / 2, Y / 2),
                             (X / 2, -Y / 2)]
         LineClosed.__init__(self,vertices=vertices,**kwargs)
+
+    @property
+    def polygon(self):
+        return Polygon(np.array(self.vertices) * self.boundary_margin)
+
+    def in_area(self, p):
+        return self.polygon.contains(geometry.Point(p))
+
+
 
 class Grid(NestedConf):
     grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
@@ -361,8 +371,8 @@ class PosPixelRel2Area(Pos2DPixel):
 
 
 
-class PositionedArea2DPixel(Pos2DPixel, Area2DPixel): pass
+# class PositionedArea2DPixel(Pos2DPixel, Area2DPixel): pass
 
 
-class PositionedArea2DPixelRel2Area(PosPixelRel2Area, Area2DPixel): pass
+# class PositionedArea2DPixelRel2Area(PosPixelRel2Area, Area2DPixel): pass
 

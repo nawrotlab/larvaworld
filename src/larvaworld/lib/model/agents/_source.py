@@ -29,7 +29,7 @@ class Source(PointAgent):
                 if ws != 0.0:
                     coef=ws * self.model.dt / self.radius * 10000
                     self.pos = (self.x + np.cos(wo) * coef, self.y + np.sin(wo) * coef)
-                    in_tank = aux.inside_polygon(points=[self.pos], tank_polygon=self.model.space.polygon)
+                    in_tank = self.model.space.in_area(self.pos)
                     if not in_tank:
                         if self.regeneration:
                             self.pos = xy_uniform_circle(1, **self.regeneration_pos)[0]

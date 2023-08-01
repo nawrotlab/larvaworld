@@ -101,8 +101,7 @@ class LarvaContoured(Larva, Contour):
         super().draw(v, **kwargs)
 
     def draw_selected(self, v, **kwargs):
-        if self.vertices is not None and len(self.vertices) > 1:
-            v.draw_polygon(vertices=self.vertices, color=v.manager.selection_color,
+        v.draw_polygon(vertices=self.vertices, color=v.manager.selection_color,
                            filled=False, width=0.0002)
 
 
@@ -310,8 +309,7 @@ class LarvaMotile(LarvaSegmented):
             self.food_detected = self.model.space.accessible_sources[self]
 
         elif self.brain.locomotor.feeder  or self.brain.toucher:
-            self.food_detected = aux.sense_food(pos, sources=self.model.sources, grid=self.model.food_grid,
-                                        radius=self.radius)
+            self.food_detected = aux.sense_food(pos, sources=self.model.sources, grid=self.model.food_grid,radius=self.radius)
         self.resolve_carrying(self.food_detected)
 
         lin, ang, self.feeder_motion = self.brain.step(pos, length=self.length, on_food=self.on_food)

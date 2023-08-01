@@ -7,7 +7,7 @@ from shapely import geometry, ops, affinity
 
 from larvaworld.lib import aux
 from larvaworld.lib.param import LineClosed, XYLine, PositiveInteger, PositiveNumber, MobilePoint, Viewable, \
-    MobileVector, Contour
+    MobileVector
 
 body_plans=aux.AttrDict({
 'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],
