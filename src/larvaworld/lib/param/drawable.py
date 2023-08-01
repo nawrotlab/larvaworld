@@ -31,6 +31,11 @@ class Viewable(NestedConf) :
         self.default_color = color
         self.color=color
 
+    def invert_default_color(self):
+        c00, c01 = aux.invert_color(self.default_color)
+        self.set_default_color(c01)
+
+
     def _draw(self,v,**kwargs):
         if self.visible :
             self.draw(v,**kwargs)

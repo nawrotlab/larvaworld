@@ -71,10 +71,6 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
                 self.show_display=True
 
 
-
-
-        self.tank_color, self.screen_color, self.scale_clock_color, self.default_larva_color = self.set_default_colors(
-            self.black_background)
         self.bg = background_motion
 
         self.active = self.save_video or self.image_mode or self.show_display or (self.mode is not None)
@@ -100,18 +96,6 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
         })
 
 
-    def set_default_colors(self, black_background):
-        if black_background:
-            tank_color = (0, 0, 0)
-            screen_color = (50, 50, 50)
-            scale_clock_color = 'white'
-            default_larva_color = 'white'
-        else:
-            tank_color = (255, 255, 255)
-            screen_color = (200, 200, 200)
-            scale_clock_color = 'black'
-            default_larva_color = 'black'
-        return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def draw_agents(self, v):
 
@@ -167,6 +151,14 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
 
     def draw_aux(self, v,**kwargs):
         pass
+
+    @property
+    def screen_color(self):
+        return (200, 200, 200) if not self.black_background else (50, 50, 50)
+
+    @property
+    def tank_color(self):
+        return aux.Color.WHITE if not self.black_background else aux.Color.BLACK
 
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,scene='no_boxes',**kwargs):
@@ -250,7 +242,7 @@ class ScreenManager(BaseScreenManager):
 
         kws={
             'reference_area':v,
-            'default_color':self.scale_clock_color,
+            'default_color':'black',
         }
         self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
         self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],**kws)
@@ -413,25 +405,12 @@ class ScreenManager(BaseScreenManager):
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
                 f.set_default_color(color)
         elif name == 'black_background':
-            self.update_default_colors()
+            for a in self.model.agents + self.model.sources + [self.sim_clock, self.sim_scale, self.sim_state] + list(
+                    self.screen_texts.values()):
+                a.invert_default_color()
         elif name == 'larva_collisions':
 
             self.eliminate_overlap()
-
-    def update_default_colors(self):
-        if self.black_background:
-            self.tank_color = aux.Color.BLACK
-            self.screen_color = (50, 50, 50)
-            self.scale_clock_color = 'white'
-        else:
-            self.tank_color = aux.Color.WHITE
-            self.screen_color = (200, 200, 200)
-            self.scale_clock_color = 'black'
-        for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
-            i.set_default_color(self.scale_clock_color)
-        for a in self.model.agents + self.model.sources:
-            c00,c01=aux.invert_color(a.default_color)
-            a.set_default_color(c01)
 
 
 
@@ -441,11 +420,6 @@ class ScreenManager(BaseScreenManager):
     @property
     def snapshot_tick(self):
         return (self.model.Nticks - 1) % self.snapshot_interval == 0
-
-
-    # def generate_larva_color(self):
-    #     return aux.random_colors(1)[0] if self.random_colors else self.default_larva_color
-
 
 
     def eliminate_overlap(self):
@@ -573,8 +547,6 @@ class ScreenManager(BaseScreenManager):
                     sel.brain.olfactor.gain = set_kwargs(sel.brain.olfactor.gain, title='Odor gains')
         else:
             self.toggle(k)
-
-
 
     def evaluate_graphs(self):
         for g in self.dynamic_graphs:

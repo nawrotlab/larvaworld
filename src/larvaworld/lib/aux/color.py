@@ -16,6 +16,7 @@ def invert_color(col):
     return col, col2
 
 
+
 def random_colors(n):
     ret = []
     r = int(random.random() * 200)
