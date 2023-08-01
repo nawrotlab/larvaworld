@@ -88,7 +88,7 @@ class OrientedPoint(Pos2D):
     def get_pose(self):
         return np.array(self.pos), self.orientation
 
-    def update_poseNvertices(self, pos, orientation):
+    def update_pose(self, pos, orientation):
         self.set_position(pos)
         self.set_orientation(orientation% (np.pi * 2))
 
