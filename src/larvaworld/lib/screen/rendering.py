@@ -168,7 +168,6 @@ class ScreenWindowAreaBackground(ScreenWindowAreaPygame):
                 for py in np.arange(min_y - 1, self.th_max + min_y, 1):
                     for px in np.arange(min_x - 1, self.tw_max + min_x, 1):
                         if a != 0.0:
-                            # px,py=aux.rotate_point_around_point((px,py),-a)
                             pass
                         p = ((px - x) * (self.tw - 1), (py + y) * (self.th - 1))
                         self._window.blit(self.bgimage, p)
@@ -518,7 +517,6 @@ class ScreenTextBox(ScreenTextFont, ScreenBox):
 
 
 class IDBox(ScreenTextBox2):
-    # centered = param.Boolean(False)
     agent = param.ClassSelector(Pos2D, doc='The agent owning the ID')
 
     def __init__(self, **kwargs):

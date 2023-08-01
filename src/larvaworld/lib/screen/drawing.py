@@ -44,13 +44,13 @@ class ColorDrawOps(NestedConf):
     color_behavior = Boolean(False,doc='Color the larvae according to their instantaneous behavior')
     panel_width = PositiveInteger(0, doc='The width of the side panel in pixels')
 
-class VisOps(NestedConf):
-    visible_clock = Boolean(True, doc='Whether clock is visible')
-    visible_scale = Boolean(True, doc='Whether scale is visible')
-    visible_state = Boolean(False, doc='Whether state is visible')
-    visible_ids = Boolean(False, doc='Whether the agent IDs are visible')
+# class VisOps(NestedConf):
+    # visible_clock = Boolean(True, doc='Whether clock is visible')
+    # visible_scale = Boolean(True, doc='Whether scale is visible')
+    # visible_state = Boolean(False, doc='Whether state is visible')
+    # visible_ids = Boolean(False, doc='Whether the agent IDs are visible')
 
-class ScreenOps(ColorDrawOps, AgentDrawOps, MediaDrawOps,VisOps):pass
+class ScreenOps(ColorDrawOps, AgentDrawOps, MediaDrawOps):pass
 
 class BaseScreenManager(Area2DPixel,ScreenOps) :
 
@@ -87,8 +87,6 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
         self.dynamic_graphs = []
         self.focus_mode = False
 
-        self.mousebuttondown_pos = None
-        self.mousebuttonup_pos = None
         self.snapshot_interval = int(self.snapshot_interval_in_sec / m.dt)
 
         self.snapshot_counter = 0
@@ -486,10 +484,7 @@ class ScreenManager(BaseScreenManager):
                         self.eval_keypress(k)
 
             if self.allow_clicks:
-                if e.type == pygame.MOUSEBUTTONDOWN:
-                    self.mousebuttondown_pos = self.v.mouse_position
-                elif e.type == pygame.MOUSEBUTTONUP:
-                    p = self.v.mouse_position
+                if e.type == pygame.MOUSEBUTTONUP:
                     if e.button == 1:
                         # if not self.eval_selection(p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
                         #     self.model.add_agent(agent_class=self.selected_type, p0=tuple(p),
