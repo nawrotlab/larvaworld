@@ -5,8 +5,21 @@ from shapely import geometry
 
 from larvaworld.lib import aux, reg
 from larvaworld.lib.model import LarvaSim
-from larvaworld.lib.model.agents.segmented_body import BaseSegment
 
+class BaseSegment:
+    def __init__(self, pos, orientation,color, base_seg_vertices,base_seg_ratio, body_length):
+        self.color = color
+        self.pos = pos
+        self.orientation = orientation % (np.pi * 2)
+        self.base_seg_vertices = base_seg_vertices
+        self.base_local_rear_end = np.array([np.min(self.base_seg_vertices[:, 0]), 0])
+        self.base_local_front_end = np.array([np.max(self.base_seg_vertices[:, 0]), 0])
+        self.base_seg_ratio = base_seg_ratio
+        self.body_length=body_length
+
+    @property
+    def seg_vertices(self):
+        return self.body_length*self.base_seg_vertices
 
 class Box2DSegment(BaseSegment):
 
