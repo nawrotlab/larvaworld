@@ -1,7 +1,8 @@
 import param
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import NestedConf, Named, RadiallyExtended, BoundedArea, LineExtended, LineClosed
+from larvaworld.lib.param import NestedConf, Named, RadiallyExtended, BoundedArea, LineExtended, LineClosed, \
+    RandomizedColor
 
 
 class Viewable(NestedConf) :
@@ -16,13 +17,11 @@ class Viewable(NestedConf) :
     '''
 
 
-    default_color = param.Color('black', doc='The default color of the entity',instantiate=True)
+    default_color = RandomizedColor(default='black', doc='The default color of the entity',instantiate=True)
     visible = param.Boolean(True, doc='Whether the entity is visible or not')
 
-    def __init__(self,default_color ='black',**kwargs):
-        if isinstance(default_color,tuple):
-            default_color=aux.colortuple2str(default_color)
-        super().__init__(default_color =default_color,**kwargs)
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
         self.color = self.default_color
 
     def set_color(self, color):

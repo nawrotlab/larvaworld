@@ -68,23 +68,3 @@ def exclude_rows(s, e, c, flag='collision_flag',  accepted=[0], rejected=None, *
 
     reg.vprint(f'Rows excluded according to {flag}.', 1)
 
-
-@reg.funcs.proc("traj_colors")
-def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
-    N = len(s.index.unique('Step'))
-    if sp_vel is None:
-        sp_vel = reg.getPar('sv')
-    if ang_vel is None:
-        ang_vel = reg.getPar('fov')
-    for p, c, l, lim in zip([sp_vel, ang_vel],
-                            [[(255, 0, 0), (0, 255, 0)], [(255, 0, 0), (0, 255, 0)]],
-                            ['lin_color', 'ang_color'],
-                            [0.8, 300]):
-        if p in s.columns:
-            (r1, b1, g1), (r2, b2, g2) = c
-            r, b, g = r2 - r1, b2 - b1, g2 - g1
-            temp = np.clip(s[p].abs().values / lim, a_min=0, a_max=1)
-            s[l] = [(r1 + r * t, b1 + b * t, g1 + g * t) for t in temp]
-        else:
-            s[l] = [(np.nan, np.nan, np.nan)] * N
-

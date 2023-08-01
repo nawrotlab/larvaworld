@@ -35,7 +35,7 @@ def get_pygame_key(key):
 
 def init_shortcuts():
     draw = {
-        'visible trail': 'p',
+        'visible_trails': 'p',
         '▲ trail duration': '+',
         '▼ trail duration': '-',
 

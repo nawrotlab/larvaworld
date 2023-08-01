@@ -526,7 +526,7 @@ class IDBox(ScreenTextFont, ViewableToggleable):
         self.update_agent()
 
 
-    @param.depends('agent', watch=True)
+    @param.depends('agent','agent.default_color', watch=True)
     def update_agent(self):
         self.text_color = self.agent.default_color
         self.set_text(self.agent.unique_id)
@@ -582,6 +582,10 @@ class ScreenMsgText(ScreenTextFontRel, Viewable):
     def draw(self, v, **kwargs):
         ScreenTextFont.draw(self,v=v, **kwargs)
         # self.text_font.draw(v, **kwargs)
+
+    def set_default_color(self, color):
+        super().set_default_color(color)
+        self.text_color=self.color
 
 
 # class ScreenMsgText(PosPixelRel2AreaViewable):
@@ -658,6 +662,11 @@ class SimulationClock(PosPixelRel2AreaViewable):
                 f.set_text("{0:02}".format(t))
             f.draw(v,**kwargs)
 
+    def set_default_color(self, color):
+        super().set_default_color(color)
+        for k,v in self.text_fonts.items():
+            v.text_color=self.color
+
 
 
 
@@ -708,6 +717,10 @@ class SimulationScale(PosPixelRel2AreaViewable):
         # v.draw_text_box(self.text_font, self.text_font_r)
         self.text_font.draw(v,**kwargs)
 
+    def set_default_color(self, color):
+        super().set_default_color(color)
+        self.text_font.text_color=self.color
+
 
 class SimulationState(PosPixelRel2AreaViewable):
     pos_scale = PositiveRange((0.85, 0.94))
@@ -726,3 +739,7 @@ class SimulationState(PosPixelRel2AreaViewable):
 
     def draw(self, v, **kwargs):
         self.text_font.draw(v, **kwargs)
+
+    def set_default_color(self, color):
+        super().set_default_color(color)
+        self.text_font.text_color=self.color

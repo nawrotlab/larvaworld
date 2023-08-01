@@ -118,7 +118,7 @@ class RandomizedColor(param.Color):
         if default in [None, np.nan, '']:
             default = random.choice(super()._named_colors)
         if isinstance(default,tuple):
-            val=aux.colortuple2str(default)
+            default=aux.colortuple2str(default)
         super().__init__(default=default, **kwargs)
 
 

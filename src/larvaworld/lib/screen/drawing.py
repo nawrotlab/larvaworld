@@ -104,13 +104,13 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
         if black_background:
             tank_color = (0, 0, 0)
             screen_color = (50, 50, 50)
-            scale_clock_color = (255, 255, 255)
-            default_larva_color = np.array([255, 255, 255])
+            scale_clock_color = 'white'
+            default_larva_color = 'white'
         else:
             tank_color = (255, 255, 255)
             screen_color = (200, 200, 200)
-            scale_clock_color = (0, 0, 0)
-            default_larva_color = np.array([0, 0, 0])
+            scale_clock_color = 'black'
+            default_larva_color = 'black'
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
     def draw_agents(self, v):
@@ -398,14 +398,7 @@ class ScreenManager(BaseScreenManager):
             value = self.trail_dt
         elif name == 'trail_color':
             obs=self.param.trail_color.objects
-            cur=self.trail_color
-
-            if cur == obs[0]:
-                self.trail_color = obs[1]
-            elif cur == obs[1]:
-                self.trail_color = obs[2]
-            elif cur == obs[2]:
-                self.trail_color = obs[0]
+            self.trail_color = obs[(obs.index(self.trail_color) + 1) % len(obs)]
             value = self.trail_color
 
         if value is None:
@@ -429,13 +422,16 @@ class ScreenManager(BaseScreenManager):
         if self.black_background:
             self.tank_color = aux.Color.BLACK
             self.screen_color = (50, 50, 50)
-            self.scale_clock_color = aux.Color.WHITE
+            self.scale_clock_color = 'white'
         else:
             self.tank_color = aux.Color.WHITE
             self.screen_color = (200, 200, 200)
-            self.scale_clock_color = aux.Color.BLACK
+            self.scale_clock_color = 'black'
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
-            i.color=self.scale_clock_color
+            i.set_default_color(self.scale_clock_color)
+        for a in self.model.agents + self.model.sources:
+            c00,c01=aux.invert_color(a.default_color)
+            a.set_default_color(c01)
 
 
 
@@ -500,7 +496,7 @@ class ScreenManager(BaseScreenManager):
                 pass
 
     def eval_keypress(self, k):
-        from larvaworld.lib.model.agents._larva import Larva
+
         # print(k)
         if k == 'visible_ids':
             for a in self.model.agents + self.model.sources:
@@ -524,8 +520,8 @@ class ScreenManager(BaseScreenManager):
             self.toggle('trail_dt', plus=True, disp='trail duration')
         elif k == '▼ trail duration':
             self.toggle('trail_dt', minus=True, disp='trail duration')
-        elif k == 'visible trail':
-            self.toggle('visible_trails', disp='trails')
+        elif k == 'visible_trails':
+            self.toggle(k, disp='trails')
         elif k == 'pause':
             self.toggle('is_paused')
         elif k == 'move left':
@@ -562,6 +558,7 @@ class ScreenManager(BaseScreenManager):
                     self.selected_agents.remove(f)
                     self.model.delete_agent(f)
         elif k == 'dynamic graph':
+            from larvaworld.lib.model.agents._larva import Larva
             if len(self.selected_agents) > 0:
                 sel = self.selected_agents[0]
                 if isinstance(sel, Larva):

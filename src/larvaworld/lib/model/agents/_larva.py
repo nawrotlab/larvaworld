@@ -112,6 +112,11 @@ class LarvaSegmented(Larva,SegmentedBodySensored):
             self.draw_segs(v, **kwargs)
         super().draw(v, **kwargs)
 
+    def set_default_color(self, color):
+        super().set_default_color(color)
+        for seg in self.segs:
+            seg.set_default_color(color)
+
 class LarvaMotile(LarvaSegmented):
     def __init__(self, brain, energetics, life_history,body, **kwargs):
         super().__init__(**body,**kwargs)

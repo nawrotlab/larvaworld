@@ -252,6 +252,10 @@ class SegmentedBody(BodyMobile):
         for seg, col in zip(self.segs, colors):
             seg.color=col
 
+
+
+
+
     @property
     def midline_xy(self):
         return [seg.front_end for seg in self.segs] + [self.tail.rear_end]
