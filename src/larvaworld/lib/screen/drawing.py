@@ -426,7 +426,6 @@ class ScreenManager(BaseScreenManager):
         if self.pygame_keys is None:
             self.pygame_keys = reg.controls.load()['pygame_keys']
 
-        d_zoom = 0.01
         ev = pygame.event.get()
         for e in ev:
             if e.type == pygame.QUIT:
@@ -438,7 +437,10 @@ class ScreenManager(BaseScreenManager):
                         self.eval_keypress(k)
 
             if self.allow_clicks:
-                if e.type == pygame.MOUSEBUTTONUP:
+                if e.type == pygame.MOUSEWHEEL:
+                    self.v.zoom_screen(e.y, pos=self.v.mouse_position)
+                    self.toggle(name='zoom', value=self.v.zoom)
+                elif e.type == pygame.MOUSEBUTTONUP:
                     if e.button == 1:
                         # if not self.eval_selection(p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
                         #     self.model.add_agent(agent_class=self.selected_type, p0=tuple(p),
@@ -453,10 +455,7 @@ class ScreenManager(BaseScreenManager):
                                 sel = set_agent_kwargs(sel, location=loc)
                         else:
                             self.selected_type = object_menu(self.selected_type, location=loc)
-                    elif e.button in [4, 5]:
-                        d_zoom = -d_zoom if e.button == 4 else d_zoom
-                        self.v.zoom_screen(d_zoom, pos=self.v.mouse_position)
-                        self.toggle(name='zoom', value=self.v.zoom)
+
         if self.focus_mode and len(self.selected_agents) > 0:
             try:
                 sel = self.selected_agents[0]

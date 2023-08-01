@@ -281,7 +281,8 @@ class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
 
-    def zoom_screen(self, d_zoom, pos=None):
+    def zoom_screen(self, sign, pos=None):
+        d_zoom = -0.01*sign
         if pos is None:
             pos = self.mouse_position
         if 0.001 <= self.zoom + d_zoom <= 1:
