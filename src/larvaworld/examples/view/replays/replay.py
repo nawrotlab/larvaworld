@@ -2,7 +2,8 @@ from larvaworld.lib import reg, aux
 
 from larvaworld.lib.sim.dataset_replay import ReplayRun
 
-mode = '2segs'
+# mode = '2segs'
+mode = 'dispersal'
 # mode = 'normal'
 # refID = 'Rehydration/AttP2.Deprived'
 # refID = 'exploration.dish'
@@ -23,7 +24,7 @@ replay_kws = {
     },
     'dispersal': {
         'transposition': 'origin',
-'time_range': (10,30)
+'time_range': (30,130)
     },
     'fixed_point': {
         # 'id':f'{refID}_replay_solo_fixed_point',

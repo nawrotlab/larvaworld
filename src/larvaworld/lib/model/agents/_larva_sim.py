@@ -121,9 +121,11 @@ class LarvaSim(agents.LarvaMotile, BaseController):
                 p1 = self.segs[i].rear_end - k * seg.length / 2
                 seg.update_poseNvertices(p1, o1)
 
-        self.pos = tuple(self.global_midspine_of_body)
-        self.trajectory.append(self.pos)
-        self.model.space.move_to(self, np.array(self.pos))
+        self.set_position(tuple(self.global_midspine_of_body))
+        self.set_orientation(self.head.get_orientation())
+        self.trajectory.append(self.get_position())
+        self.orientation_trajectory.append(self.get_orientation())
+        self.model.space.move_to(self, np.array(self.get_position()))
         self.cum_dst += self.dst
         self.compute_body_bend()
 

@@ -19,8 +19,7 @@ def traj_1group(xy, c, unit='mm', title=None, single_color=False, **kwargs):
     for id in ids:
         xy0 = xy.xs(id, level="AgentID").values * scale
         ax.plot(xy0[:, 0], xy0[:, 1], color=color)
-    # print(tank)
-    # print(tank[:, 0])
+
     ax.fill(tank[:, 0], tank[:, 1], fill=True, color='lightgrey', edgecolor='black', linewidth=4)
     for sid, sdic in c.env_params.food_params.source_units.items():
         px, py = sdic['pos']

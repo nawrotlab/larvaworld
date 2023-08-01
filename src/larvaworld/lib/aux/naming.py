@@ -11,12 +11,12 @@ def join(s, p, loc, c='_'):
 
 
 def name(s, ps, loc='suf', c='_'):
-    if type(ps) == str:
+    if isinstance(ps,str):
         if ps == '':
             return s
         else:
             return join(s, ps, loc, c)
-    elif type(ps) == list:
+    elif isinstance(ps,list):
         return [join(s, p, loc, c) if p != '' else s for p in ps]
 
 
@@ -85,7 +85,7 @@ class NamingRegistry(aux.AttrDict):
                 t=[np.array(t)[:,i].tolist() for i in [0,1]]
             if flat :
                 t=[item for sublist in t for item in sublist]
-        return t
+        return aux.SuperList(t)
 
     def chunk_track(self, chunk_name, params):
         return self[chunk_name](params, loc='pref')

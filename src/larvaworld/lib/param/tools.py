@@ -1,10 +1,9 @@
-import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.param import Larva_Distro, Spatial_Distro, ClassAttr, NestedConf
 
 
-def class_generator(agent_class, mode='Unit') :
+def class_generator(A0, mode='Unit') :
     class A(NestedConf):
 
         def __init__(self, **kwargs):
@@ -74,26 +73,23 @@ def class_generator(agent_class, mode='Unit') :
 
         @classmethod
         def agent_class(cls):
-            return agent_class.__name__
+            return A0.__name__
 
         @classmethod
         def mode(cls):
             return mode
 
-    A.__name__=f'{agent_class.__name__}{mode}'
+    A.__name__=f'{A0.__name__}{mode}'
     invalid = ['name', 'closed', 'visible']
     if mode=='Group':
-        if not 'pos' in agent_class.param.objects():
-            raise ValueError (f'No Group distribution for class {agent_class.__name__}. Change mode to Unit')
-        if 'orientation' in agent_class.param.objects():
-            distro = Larva_Distro
-        else:
-            distro = Spatial_Distro
+        if not 'pos' in A0.param.objects():
+            raise ValueError (f'No Group distribution for class {A0.__name__}. Change mode to Unit')
+        distro = Larva_Distro if 'orientation' in A0.param.objects() else Spatial_Distro
         A.param._add_parameter('distribution',ClassAttr(distro, doc='The spatial distribution of the group agents'))
         invalid+=['unique_id', 'pos', 'orientation']
     elif mode=='Unit':
         pass
-    for k, p in agent_class.param.params().items():
+    for k, p in A0.param.params().items():
         if k not in invalid:
             A.param._add_parameter(k,p)
     return A

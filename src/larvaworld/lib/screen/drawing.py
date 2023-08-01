@@ -23,8 +23,9 @@ class MediaDrawOps(NestedConf):
     show_display = Boolean(False, doc='Whether to launch the pygame-visualization.')
 
 class AgentDrawOps(NestedConf):
-    trails = Boolean(False,doc='Draw the larva trajectories')
-    trajectory_dt = PositiveNumber(2,step=0.2,doc='Duration of the drawn trajectories')
+    draw_trajectories = Boolean(True,doc='Draw the larva trajectories')
+    trajectory_dt = PositiveNumber(20,step=0.2,doc='Duration of the drawn trajectories')
+    trajectory_color = param.Selector(objects=['normal', 'linear', 'angular'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
     draw_sensors = Boolean(False,doc='Draw the larva sensors')
     draw_contour = Boolean(True,doc='Draw the larva contour')
     draw_segs = Boolean(True,doc='Draw the larva body segments')
@@ -133,12 +134,14 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
             default_larva_color = np.array([0, 0, 0])
         return tank_color, screen_color, scale_clock_color, default_larva_color
 
-    def draw_trajectories(self):
+    def draw_trajectories(self,Nfade):
         agents = self.model.agents
-        Nfade = int(self.trajectory_dt / self.model.dt)
 
         for fly in agents :
             traj = fly.trajectory[-Nfade:]
+
+
+
             if self.traj_color is not None:
                 traj_col = self.traj_color.xs(fly.unique_id, level='AgentID')[-Nfade:]
             else:
@@ -152,14 +155,13 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
                 continue
             # This is the case for larva trajectories derived from experiments where some values are np.nan
             else:
-                traj_x = np.array([x for x, y in traj])
-                ds, de = aux.parse_array_at_nans(traj_x)
+                ds, de = aux.parse_array_at_nans(np.array(traj)[:,0])
                 parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
                 parsed_traj_col = [traj_col[s:e] for s, e in zip(ds, de)]
+                # parsed_traj = [traj]
 
             for t, c in zip(parsed_traj, parsed_traj_col):
                 # If trajectory has one point, skip
-
                 if len(t) < 2:
                     pass
                 else:
@@ -168,7 +170,7 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
                     else:
                         c = [tuple(float(x) for x in s.strip('()').split(',')) for s in c]
                         c = [s if not np.isnan(s).any() else (255, 0, 0) for s in c]
-                        self.v.draw_polyline(t, color=c,  dynamic_color=True)
+                        self.v.draw_polyline(t, color=c)
 
     def draw_agents(self, v):
 
@@ -177,8 +179,11 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
         for g in self.model.agents:
             g._draw(v=v)
 
-        if self.trails:
-            self.draw_trajectories()
+        # if self.trails:
+        #     Nfade = int(self.trajectory_dt / self.model.dt)
+        #     self.draw_trajectories(Nfade)
+
+
 
     def check(self,**kwargs):
         if self.v is None:
@@ -321,7 +326,7 @@ class ScreenManager(BaseScreenManager):
             # for i in range(10000):
             box.draw(v)
             v.render()
-            pygame.time.wait(1000)
+            pygame.time.wait(2000)
             box.visible = False
 
 
@@ -334,7 +339,8 @@ class ScreenManager(BaseScreenManager):
         self.sim_state = screen.SimulationState(model=m,**kws)
         self.screen_texts = {name: screen.ScreenMsgText(text=name, **kws) for name in [
             'trajectory_dt',
-            'trails',
+            'trajectory_color',
+            'draw_trajectories',
             'focus_mode',
             'draw_centroid',
             'draw_head',
@@ -473,6 +479,16 @@ class ScreenManager(BaseScreenManager):
                 dt = +1
             self.trajectory_dt = np.clip(self.trajectory_dt + 5 * dt, a_min=0, a_max=np.inf)
             value = self.trajectory_dt
+        elif name == 'trajectory_color':
+            obs=self.param.trajectory_color.objects
+            if self.trajectory_color == obs[0]:
+                self.trajectory_color = obs[1]
+            elif self.trajectory_color == obs[1]:
+                self.trajectory_color = obs[2]
+            elif self.trajectory_color == obs[2]:
+                self.trajectory_color = obs[0]
+            value = self.trajectory_color
+
 
         if value is None:
             setattr(self, name, not getattr(self, name))
@@ -584,7 +600,7 @@ class ScreenManager(BaseScreenManager):
         elif k == '▼ trail duration':
             self.toggle('trajectory_dt', minus=True, disp='trail duration')
         elif k == 'visible trail':
-            self.toggle('trails')
+            self.toggle('draw_trajectories')
         elif k == 'pause':
             self.toggle('is_paused')
         elif k == 'move left':

@@ -16,7 +16,9 @@ class Larva(MobileAgent):
             unique_id = model.next_id(type='Larva')
         super().__init__(unique_id=unique_id, model=model,**kwargs)
         self.trajectory = [self.initial_pos]
+        self.orientation_trajectory = [self.initial_orientation]
         self.cum_dur = 0
+
 
     def draw(self, v, **kwargs):
         p, c, r, l = self.get_position(), self.color, self.radius, self.length
@@ -37,12 +39,47 @@ class Larva(MobileAgent):
         if v.manager.draw_head:
             v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
 
+        if v.manager.draw_trajectories :
+            Nfade = int(v.manager.trajectory_dt / self.model.dt)
+            color_mode=v.manager.trajectory_color
+            traj = self.trajectory[-Nfade:]
+            or_traj = self.orientation_trajectory[-Nfade:]
+            if not np.isnan(traj).any():
+                parsed_traj = [traj]
+                parsed_or_traj = [or_traj]
+            elif np.isnan(traj).all():
+                return
+            # This is the case for larva trajectories derived from experiments where some values are np.nan
+            else:
+                ds, de = aux.parse_array_at_nans(np.array(traj)[:,0])
+                parsed_traj = [traj[s:e] for s, e in zip(ds, de)]
+                parsed_or_traj = [or_traj[s:e] for s, e in zip(ds, de)]
+            Npars=len(parsed_traj)
+            for i in range(Npars):
+                t=parsed_traj[i]
+                or_t=parsed_or_traj[i]
+                # If trajectory has one point, skip
+                if len(t) < 2:
+                    pass
+                else:
+                    if color_mode=='normal':
+                        color = self.color
+                    elif color_mode =='linear':
+                        a = aux.eudist(np.array(t)) / self.length / self.model.dt
+                        color = aux.scaled_velocity_to_col(a)
+                    elif color_mode =='angular':
+                        a = np.diff(np.array(or_t))/self.model.dt
+                        color = aux.angular_velocity_to_col(a)
+
+                    try :
+                        v.draw_polyline(t, color=color,width=0.0005)
+                    except :
+                        pass
+
+
+
+
         if v.manager.draw_orientations:
-            # if not any(np.isnan(np.array(mid).flatten())):
-                # Nmid = len(mid)
-                # p0 = mid[int(Nmid / 2)]
-                # p1 = mid[int(Nmid / 2) + 1]
-            # print(self.front_orientation)
             p02 = [p[0] + math.cos(self.front_orientation) * l,
                    p[1] + math.sin(self.front_orientation) * l]
             v.draw_line(p, p02, color='green', width=l / 10)

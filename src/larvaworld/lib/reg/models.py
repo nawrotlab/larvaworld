@@ -597,10 +597,9 @@ def build_confdicts():
 
 # @decorators.timeit
 class ModelRegistry:
-    def __init__(self, ct):
-        self.ct = ct
+    def __init__(self):
         self.dict = build_confdicts()
-        self.full_dict = self.build_full_dict(D=self.dict)
+        self.full_dict = self.build_full_dict()
 
         self.mcolor = aux.AttrDict({
             'body': 'lightskyblue',
@@ -628,7 +627,6 @@ class ModelRegistry:
         return self.dict.model.keys
 
     def get_mdict(self, mkey, mode='default'):
-
         if mkey is None or mkey not in self.mkeys:
             raise ValueError('Module key must be one of larva-model configuration keys')
         else:
@@ -646,7 +644,6 @@ class ModelRegistry:
             else:
                 conf[d] = self.generate_configuration(mdict=p)
         conf.update_existingdict(kwargs)
-        # conf.update(kwargs)
         return aux.AttrDict(conf)
 
     def conf(self, mdict=None, mkey=None, mode=None, refID=None, **kwargs):
@@ -733,7 +730,6 @@ class ModelRegistry:
         from larvaworld.lib.plot.table import conf_table
         if m is None :
             m = reg.conf.Model.getID(mID)
-            # m = reg.stored.getModel(mID)
         df = self.mIDtable_data(m, columns=columns)
         row_colors = [None] + [self.mcolor[ii] for ii in df.index.values]
         df.index = arrange_index_labels(df.index)
@@ -776,7 +772,6 @@ class ModelRegistry:
 
         conf = aux.AttrDict()
         conf.brain = bconf
-        # for mkey in self.dict.brain.keys:
 
         for auxkey in self.dict.aux.keys:
             if auxkey in auxkws.keys():
@@ -950,35 +945,33 @@ class ModelRegistry:
 
         return E
 
-    def build_full_dict(self, D):
+    def build_full_dict(self):
+        D = self.dict
+        FD = aux.AttrDict()
 
-        def register(dic, k0, full_dic):
+        def register(dic, k0):
             for k, p in dic.items():
                 kk = f'{k0}.{k}'
                 if isinstance(p, param.Parameterized):
-                    full_dic[kk] = p
+                    FD[kk] = p
                 else:
-                    register(p, kk, full_dic)
+                    register(p, kk)
 
-        full_dic = aux.AttrDict()
+
         for aux_key in D.aux.keys:
             if aux_key in ['energetics', 'sensorimotor']:
                 continue
-            aux_dic = D.aux.m[aux_key]
-            register(aux_dic.args, aux_key, full_dic)
+            register(D.aux.m[aux_key].args, aux_key)
         for aux_key in ['energetics', 'sensorimotor']:
             for m, mdic in D.aux.m[aux_key].mode.items():
-                k0 = f'{aux_key}.{m}'
-                register(mdic.args, k0, full_dic)
+                register(mdic.args, f'{aux_key}.{m}')
 
         for bkey in D.brain.keys:
-            bkey0 = f'brain.{bkey}_params'
             bdic = D.brain.m[bkey]
             for mod in bdic.mode.keys():
-                mdic = bdic.mode[mod].args
-                register(mdic, bkey0, full_dic)
+                register(bdic.mode[mod].args, f'brain.{bkey}_params')
 
-        return full_dic
+        return FD
 
     def diff_df(self, mIDs, ms=None, dIDs=None):
         dic = {}
@@ -987,7 +980,7 @@ class ModelRegistry:
         if ms is None:
             ms = [reg.conf.Model.getID(mID) for mID in mIDs]
         ms = [m.flatten() for m in ms]
-        ks = aux.unique_list(aux.flatten_list([list(m.keys()) for m in ms]))
+        ks = aux.unique_list(aux.flatten_list([m.keylist for m in ms]))
 
         for k in ks:
             entry = {dID: m[k] if k in m.keys() else None for dID, m in zip(dIDs, ms)}
@@ -1007,7 +1000,6 @@ class ModelRegistry:
                 dic[k0] = entry
         df = pd.DataFrame.from_dict(dic).T
         df.index = df.index.set_names(['parameter'])
-        # df=df.reset_index().rename(columns={df.index.name: 'parameter'})
         df.reset_index(drop=False, inplace=True)
         df.set_index(['field'], inplace=True)
         df.sort_index(inplace=True)
@@ -1109,16 +1101,12 @@ class ModelRegistry:
                     mdict[d] = self.update_mdict(mdict=p, mmdic=new_v)
             return mdict
 
-    def variable_keys(self, mkey, mode='default'):
-        d0 = self.dict.model.init[mkey]
-        var_ks = d0.mode[mode].variable
-        return var_ks
 
     def variable_mdict(self, mkey, mode='default'):
-        var_ks = self.variable_keys(mkey, mode=mode)
-        d00 = self.dict.model.m[mkey].mode[mode].args
-        mdict = aux.AttrDict({k: d00[k] for k in var_ks})
-        return mdict
+        D=self.dict.model
+        var_ks = D.init[mkey].mode[mode].variable
+        d00 = D.m[mkey].mode[mode].args
+        return aux.AttrDict({k: d00[k] for k in var_ks})
 
     def space_dict(self, mkeys, mConf0):
         mF = mConf0.flatten()
@@ -1142,12 +1130,6 @@ class ModelRegistry:
                     dic[k0].v = mF[k0]
         return aux.AttrDict(dic)
 
-    # def to_string(self, mdict):
-    #     s = ''
-    #     for k, p in mdict.items():
-    #         s = s + f'{p.d} : {p.v}'
-    #     return s
-
 
 def epar(e, k=None, par=None, average=True, Nround=2):
     if par is None:
@@ -1160,53 +1142,4 @@ def epar(e, k=None, par=None, average=True, Nround=2):
 
 
 
-model = ModelRegistry(reg.stored.conf.Model)
-
-#
-# class GAselector(aux.NestedConf):
-#     init_mode = param.Selector(default='random', objects=['random', 'model', 'default'],
-#                                label='mode of initial generation', doc='Mode of initial generation')
-#     # base_model = param.Selector(default='explorer', objects=reg.conf.Model.confIDs,
-#     #                             label='agent model to optimize',doc='ID of the model to optimize')
-#     base_model = reg.conf.Model.confID_selector('loco_default')
-#
-#     space_mkeys = param.ListSelector(default=[], objects=model.mkeys,
-#                                      label='keys of modules to include in space search',
-#                                      doc='Keys of the modules where the optimization parameters are')
-#
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
-#
-#
-#
-#         self.mConf0 = reg.conf.Model.getID(self.base_model)
-#         self.space_dict = model.space_dict(mkeys=self.space_mkeys, mConf0=self.mConf0)
-#         self.space_columns = [p.name for k, p in self.space_dict.items()]
-#         self.gConf0 = model.conf(self.space_dict)
-#
-#     def create_first_generation(self, N):
-#         mode = self.init_mode
-#
-#         d = self.space_dict
-#         if mode == 'default':
-#             gConf = model.conf(d)
-#             gConfs = [gConf] * N
-#         elif mode == 'model':
-#             gConf = {k: self.mConf0.flatten()[k] for k, p in d.items()}
-#             gConfs = [gConf] * N
-#         elif mode == 'random':
-#             gConfs = []
-#             for i in range(N):
-#                 model.randomize(d)
-#                 gConf = model.conf(d)
-#                 gConfs.append(gConf)
-#         else:
-#             raise ValueError('Not implemented')
-#         return gConfs
-#
-#     def new_genome(self, gConf, mConf0):
-#         mConf = mConf0.update_nestdict(gConf)
-#         return aux.AttrDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
-#
-#
-#
+model = ModelRegistry()

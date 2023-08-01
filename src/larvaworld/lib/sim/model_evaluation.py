@@ -292,7 +292,7 @@ class EvalRun(EvalConf, SimConfiguration):
 
 
 
-reg.gen.Eval=class_generator(EvalConf, mode='Unit')
+reg.gen.Eval=class_generator(EvalConf)
 
 
 def eval_model_graphs(refID, mIDs, dIDs=None, id=None, dir=None, N=10,

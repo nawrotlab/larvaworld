@@ -828,7 +828,7 @@ class CollapsibleTable(Collapsible):
                     c2, c1 = ['lightblue', 'black']
                 else:
                     try:
-                        c2, c1 = aux.invert_color(c0, return_self=True)
+                        c2, c1 = aux.invert_color(c0)
                     except:
                         c2, c1 = ['lightblue', 'black']
                 row_cols.append((i, c1, c2))
@@ -1273,7 +1273,7 @@ class PadTable(PadElement):
                     c2, c1 = ['lightblue', 'black']
                 else:
                     try:
-                        c2, c1 = aux.invert_color(c0, return_self=True)
+                        c2, c1 = aux.invert_color(c0)
                     except:
                         c2, c1 = ['lightblue', 'black']
                 row_cols.append((i, c1, c2))

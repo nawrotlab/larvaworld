@@ -1,8 +1,7 @@
 import param
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import NestedConf, Named, NamedObject, GroupedObject, RadiallyExtended, BoundedArea, \
-    LineExtended, PositiveNumber, LineClosed
+from larvaworld.lib.param import NestedConf, Named, RadiallyExtended, BoundedArea, LineExtended, LineClosed
 
 
 class Viewable(NestedConf) :
@@ -60,15 +59,9 @@ class ViewableToggleable(Viewable):
 
     def toggle(self):
         self.active = not self.active
-        # self.update_color()
 
 
-# class ViewableNamed(Viewable,Named):
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
 class ViewableNamed(Viewable,Named): pass
-class ViewableSingleObject(Viewable,NamedObject): pass
-class ViewableGroupedObject(Viewable,GroupedObject): pass
 
 
 
@@ -106,20 +99,3 @@ class ViewableCircle(Viewable,RadiallyExtended):
 
 
 
-class SpatialEntity(ViewableSingleObject):
-    default_color = param.Color(default='white')
-    visible = param.Boolean(default=False)
-    # def __init__(self, visible=False,default_color='white', **kwargs):
-    #     super().__init__(visible=visible,default_color=default_color,**kwargs)
-
-    def record_positions(self, label='p'):
-        """ Records the positions of each agent.
-
-        Arguments:
-            label (string, optional):
-                Name under which to record each position (default p).
-                A number will be added for each coordinate (e.g. p1, p2, ...).
-        """
-        for agent, pos in self.positions.items():
-            for i, p in enumerate(pos):
-                agent.record(label+str(i), p)

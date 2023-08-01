@@ -5,8 +5,7 @@ from shapely import geometry
 
 from larvaworld.lib import aux, reg
 from larvaworld.lib.model import LarvaSim
-from larvaworld.lib.model.agents.segmented_body import LarvaBody, BaseController, BaseSegment
-from larvaworld.lib.param import SegmentedBodySensored
+from larvaworld.lib.model.agents.segmented_body import BaseSegment
 
 
 class Box2DSegment(BaseSegment):

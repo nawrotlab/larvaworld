@@ -7,19 +7,12 @@ def test_replay() :
     refID =  refIDs[-1]
     dataset=reg.loadRef(refID)
     replay_kws = {
-        '2segs': {
-            'draw_Nsegs': 2
-        },
-        'all_segs': {
-            'draw_Nsegs': dataset.config.Npoints-1
-        },
-
         'normal': {
-            'time_range': (10, 30)
+            'time_range': (10, 80)
         },
         'dispersal': {
             'transposition': 'origin',
-            'time_range': (60, 80)
+            'time_range': (60, 120)
         },
         'fixed_point': {
             'agent_ids': [1],
@@ -40,6 +33,12 @@ def test_replay() :
             'fix_point': 6,
             'fix_segment': 'front',
             'overlap_mode': True
+        },
+        '2segs': {
+            'draw_Nsegs': 2
+        },
+        'all_segs': {
+            'draw_Nsegs': dataset.config.Npoints - 1
         },
     }
 

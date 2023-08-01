@@ -5,8 +5,9 @@ import imageio
 import param
 from shapely import geometry
 
-from larvaworld.lib.param import Viewable, ViewableGroupedObject, PositiveRange, PositiveNumber, PositionedArea2DPixel, \
-    ViewableToggleable, NestedConf, PositiveInteger, Pos2DPixel, Area2DPixel, PosPixelRel2Area, IntegerTuple2DRobust, \
+from larvaworld.lib.model import GroupedObject
+from larvaworld.lib.param import Viewable, PositiveRange, PositiveNumber, \
+    ViewableToggleable, NestedConf, PositiveInteger, Area2DPixel, PosPixelRel2Area, \
     NumericTuple2DRobust, Pos2D, ScreenWindowArea
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -79,14 +80,15 @@ class ScreenWindowAreaPygame(ScreenWindowArea):
 
 
 
-    def draw_polyline(self, vertices, color=(0, 0, 0), closed=False, width=.01, dynamic_color=False):
+    def draw_polyline(self, vertices, color=(0, 0, 0), closed=False, width=.01):
         vs = [self._transform(v) for v in vertices]
         w = int(self._scale[0, 0] * width)
-        if not dynamic_color:
-            pygame.draw.lines(self._window, color, closed, vs, w)
-        else:
+        if isinstance(color, list):
             for v1, v2, c in zip(vs[:-1], vs[1:], color):
-                pygame.draw.lines(self._window, c, closed, [v1, v2], w)
+                pygame.draw.lines(self._window, c, closed=closed, points=[v1, v2], width=w)
+        else:
+            pygame.draw.lines(self._window, color, closed=closed, points=vs, width=w)
+
 
     def draw_line(self, start, end, color=(0, 0, 0), width=.01):
         start = self._transform(start)
@@ -330,7 +332,7 @@ class Viewer(ScreenWindowAreaBackground):
 class ScreenTextFont(NestedConf) :
     text_color = param.Color('black', doc='The color of the text')
     text = param.String('', doc='The text to draw')
-    font_size = PositiveInteger(32, doc='The font size')
+    font_size = PositiveInteger(20, doc='The font size')
     font_type = param.Parameter("Trebuchet MS", doc='The font type to use')
     text_centre = NumericTuple2DRobust(doc='The text center position')
 
@@ -539,7 +541,7 @@ class IDBox(ScreenTextBox2):
     def update_font_centre_pos(self,v):
         pos = self.agent.get_position()
         x,y = v.space2screen_pos(pos)
-        self.text_centre =x+140,y+32
+        self.text_centre =x+50,y+12
 
 
     def draw(self, v, **kwargs):
@@ -549,7 +551,7 @@ class IDBox(ScreenTextBox2):
 
 
 
-class LabelledGroupedObject(ViewableGroupedObject):
+class LabelledGroupedObject(Viewable,GroupedObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.id_box = IDBox(agent=self)

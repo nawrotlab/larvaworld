@@ -38,21 +38,20 @@ def segments_intersection_p(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y):
 
 def detect_nearest_obstacle(obstacles, sensor_ray, p0) :
 
-    min_dst = None
-    nearest_obstacle = None
+    Dmin = None
+    Onearest = None
 
     for obj in obstacles:
         # check collision between obstacle edges and sensor ray
         for edge in obj.edges:
-            intersection_point = segments_intersection(sensor_ray, edge)
+            p = segments_intersection(sensor_ray, edge)
 
-            if intersection_point is not None:
-                dst = geometry.Point(p0).distance(geometry.Point(intersection_point))
-                if min_dst is None or dst < min_dst:
-                    min_dst = dst
-                    nearest_obstacle = obj
+            if p is not None:
+                if Dmin is None or p0.distance(p) < Dmin:
+                    Dmin = p0.distance(p)
+                    Onearest = obj
 
-    return min_dst, nearest_obstacle
+    return Dmin, Onearest
 
 
 

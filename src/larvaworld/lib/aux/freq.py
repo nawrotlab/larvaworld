@@ -12,7 +12,7 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
     Parameters
     ----------
     a : array
-        1D np.array : velocity timeseries
+        1D np.array : signal timeseries
     dt : float
         Timestep of the timeseries
     fr_range : Tuple[float,float]
@@ -28,17 +28,17 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
         Dominant frequency within range.
 
     """
-    from numpy.fft import fftfreq
     from scipy.fft import fft
     a = np.nan_to_num(a)
-    Nticks = len(a)
-    xf = fftfreq(Nticks, dt)[:Nticks // 2]
+    N = len(a)
+    xf = np.fft.fftfreq(N, dt)[:N // 2]
     yf = fft(a, norm="ortho")
-    yf = 2.0 / Nticks * np.abs(yf[:Nticks // 2])
+    yf = 2.0 / N * np.abs(yf[:N // 2])
     yf = 1000 * yf / np.sum(yf)
-    # yf = moving_average(yf, n=21)
-    xf_trunc = xf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
-    yf_trunc = yf[(xf >= fr_range[0]) & (xf <= fr_range[1])]
+
+    fr_min,fr_max=fr_range
+    xf_trunc = xf[(xf >= fr_min) & (xf <= fr_max)]
+    yf_trunc = yf[(xf >= fr_min) & (xf <= fr_max)]
     fr = xf_trunc[np.argmax(yf_trunc)]
     if return_amps:
         return fr, yf

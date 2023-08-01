@@ -138,11 +138,15 @@ def arrange_evaluation(d, evaluation_metrics=None):
         d.load(h5_ks=['epochs','base_spatial','angular','dspNtor'])
     s,e=d.step_data,d.endpoint_data
     # Edata, Ddata = {}, {}
-    all_ks=aux.unique_list(aux.flatten_list(evaluation_metrics.values()))
-    all_ps = reg.getPar(all_ks)
-    Eps = aux.existing_cols(all_ps, e)
-    Dps = aux.existing_cols(all_ps, s)
-    Dps=aux.nonexisting_cols(Dps,Eps)
+    all_ks=aux.SuperList(evaluation_metrics.values()).flatten.unique
+    # all_ks=aux.unique_list(aux.flatten_list(evaluation_metrics.values()))
+    all_ps = aux.SuperList(reg.getPar(all_ks))
+    Eps = all_ps.existing(e)
+    # Eps = aux.existing_cols(all_ps, e)
+    Dps = all_ps.existing(s)
+    # Dps = aux.existing_cols(all_ps, s)
+    Dps=Dps.nonexisting(Eps)
+    # Dps=aux.nonexisting_cols(Dps,Eps)
     Eks = reg.getPar(p=Eps, to_return='k')
     Dks = reg.getPar(p=Dps, to_return='k')
     target_data = aux.AttrDict({'step': {p:s[p].dropna() for p in Dps}, 'end': {p:e[p] for p in Eps}})

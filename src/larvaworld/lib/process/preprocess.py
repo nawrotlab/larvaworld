@@ -87,3 +87,4 @@ def generate_traj_colors(s, sp_vel=None, ang_vel=None, **kwargs):
             s[l] = [(r1 + r * t, b1 + b * t, g1 + g * t) for t in temp]
         else:
             s[l] = [(np.nan, np.nan, np.nan)] * N
+

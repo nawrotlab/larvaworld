@@ -450,8 +450,8 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     return entry
 
 
-reg.gen.GAselector=class_generator(GAselector, mode='Unit')
-reg.gen.GAevaluation=class_generator(GAevaluation, mode='Unit')
+reg.gen.GAselector=class_generator(GAselector)
+reg.gen.GAevaluation=class_generator(GAevaluation)
 
 class GAconf(SimOps):
     env_params = reg.conf.Env.confID_selector()
@@ -461,4 +461,4 @@ class GAconf(SimOps):
     refID = reg.conf.Ref.confID_selector()
     scene = param.String('no_boxes', doc='The name of the scene to load')
 
-reg.gen.Ga=class_generator(GAconf, mode='Unit')
+reg.gen.Ga=class_generator(GAconf)

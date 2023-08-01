@@ -61,5 +61,22 @@ class MobileAgent(MobileVector,PointAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    @property
+    def last_orientation_vel(self):
+        return self.last_delta_orientation/self.dt
+
+    @property
+    def last_pos_vel(self):
+        return self.last_delta_pos / self.dt
+
+    @property
+    def last_scaled_pos_vel(self):
+        return self.last_delta_pos /self.length/ self.dt
+
+
+
+
+
+
 
 

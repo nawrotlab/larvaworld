@@ -57,7 +57,8 @@ class ShapeMobile(LineClosed, MobileVector):
 
     @param.depends('pos','orientation','length', watch=True)
     def update_vertices(self):
-        self.vertices = [self.translate(self.length/self.length_ratio*np.array(p)) for p in self.base_vertices]
+        self.vertices = self.translate(self.length/self.length_ratio*np.array(self.base_vertices))
+        # self.vertices = [self.translate(self.length / self.length_ratio * np.array(p)) for p in self.base_vertices]
         # self.vertices = self.pos + self.length*self.base_vertices @ self.rotationMatrix
 
 class ShapeViewable(ShapeMobile, Viewable):

@@ -51,8 +51,8 @@ def delta(p):
     return fr'$\delta{{{p.replace("$", "")}}}$'
 
 
-def hat_th(p):
-    return fr'$\hat{{\theta}}_{{{p}}}$'
+# def hat_th(p):
+#     return fr'$\hat{{\theta}}_{{{p}}}$'
 
 
 def dot(p):
@@ -62,8 +62,8 @@ def circle(p):
     return fr'$\mathring{{{p.replace("$", "")}}}$'
 
 
-def circledcirc(p):
-    return f'${p.replace("$", "")}^{{\circledcirc}}$'
+# def circledcirc(p):
+#     return f'${p.replace("$", "")}^{{\circledcirc}}$'
 
 def mathring(p):
     return fr'$\mathring{{{p.replace("$", "")}}}$'

@@ -104,35 +104,35 @@ def rotationMatrix(a):
     return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
 
-def rotate_point_around_point(point, radians, origin=None):
-    """Rotate a point around a given point clockwise
-
-        Parameters
-        ----------
-        point : Tuple[float]
-            The XY coordinates of the point to be rotated
-        radians : float
-            The rotation angle
-        origin : Tuple[float], optional
-            The XY coordinates of the rotation point (default is [0, 0])
-
-        Returns
-        -------
-        p : Tuple[float]
-            The XY coordinates of the rotated point
-        """
-
-    if origin is None:
-        origin = [0, 0]
-    x, y = point
-    x0, y0 = origin
-    xx = (x - x0)
-    yy = (y - y0)
-    cos_rad = math.cos(radians)
-    sin_rad = math.sin(radians)
-    qx = x0 + cos_rad * xx + sin_rad * yy
-    qy = y0 + -sin_rad * xx + cos_rad * yy
-    return np.array([qx, qy])
+# def rotate_point_around_point(point, radians, origin=None):
+#     """Rotate a point around a given point clockwise
+#
+#         Parameters
+#         ----------
+#         point : Tuple[float]
+#             The XY coordinates of the point to be rotated
+#         radians : float
+#             The rotation angle
+#         origin : Tuple[float], optional
+#             The XY coordinates of the rotation point (default is [0, 0])
+#
+#         Returns
+#         -------
+#         p : Tuple[float]
+#             The XY coordinates of the rotated point
+#         """
+#
+#     if origin is None:
+#         origin = [0, 0]
+#     x, y = point
+#     x0, y0 = origin
+#     xx = (x - x0)
+#     yy = (y - y0)
+#     cos_rad = math.cos(radians)
+#     sin_rad = math.sin(radians)
+#     qx = x0 + cos_rad * xx + sin_rad * yy
+#     qy = y0 + -sin_rad * xx + cos_rad * yy
+#     return np.array([qx, qy])
 
 
 def rotate_points_around_point(points, radians, origin=None):

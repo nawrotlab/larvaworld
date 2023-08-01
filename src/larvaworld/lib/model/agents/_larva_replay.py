@@ -20,6 +20,8 @@ class LarvaReplay(Larva):
 
     def step(self):
         self.pos = self.data.pos[self.model.t]
+        self.trajectory.append(self.pos)
+        self.orientation_trajectory.append(self.front_orientation)
         if not np.isnan(self.pos).any():
             self.model.space.move_to(self, np.array(self.pos))
 

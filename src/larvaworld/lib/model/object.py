@@ -1,7 +1,7 @@
 import param
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import NestedConf
+from larvaworld.lib.param import Named
 
 
 class Object:
@@ -109,17 +109,6 @@ class Object:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-
-
-class Named(NestedConf) :
-    unique_id = param.String(None, doc='The unique ID of the entity')
-
-    def set_id(self, id):
-        self.unique_id = id
-
-
-class Grouped(Named) :
-    group = param.String(None, doc='The unique ID of the entity"s group')
 
 
 class NamedObject(Named, Object):

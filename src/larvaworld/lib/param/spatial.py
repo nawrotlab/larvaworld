@@ -15,6 +15,7 @@ class Pos2D(NestedConf):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.initial_pos = self.pos
+        self.last_pos = self.get_position()
 
     def get_position(self):
         return tuple(self.pos)
@@ -22,6 +23,7 @@ class Pos2D(NestedConf):
     def set_position(self, pos):
         if not isinstance(pos, tuple):
             pos=tuple(pos)
+        self.last_pos = self.get_position()
         self.pos = pos
 
     @property
@@ -32,10 +34,14 @@ class Pos2D(NestedConf):
     def y(self):
         return self.pos[1]
 
+    @property
+    def last_delta_pos(self):
+        x0,y0=self.last_pos
+        x1,y1=self.get_position()
+        return ((x1-x0)**2+(y1-y0)**2)**(1/2)
+
 class Pos2DPixel(Pos2D):
     pos = IntegerTuple2DRobust(doc='The xy spatial position coordinates')
-
-# Pos2DPixel=param.parameterized_class('Pos2DPixel', {'pos':IntegerTuple2DRobust(doc='The xy spatial position coordinates')}, bases=Pos2D)
 
 
 
@@ -56,6 +62,7 @@ class OrientedPoint(Pos2D):
 
         super().__init__(**kwargs)
         self.initial_orientation = self.orientation
+        self.last_orientation=self.get_orientation()
 
     @property
     def rotationMatrix(self):
@@ -63,10 +70,16 @@ class OrientedPoint(Pos2D):
         return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
     def translate(self, point):
-        return tuple(np.array(self.pos) + np.array(point) @ self.rotationMatrix)
+        p=np.array(self.pos) + np.array(point) @ self.rotationMatrix
+        if isinstance(point, tuple):
+            return tuple(p)
+        else:
+            return aux.np2Dtotuples(p)
+
 
     def set_orientation(self, orientation):
-        self.orientation = orientation % (np.pi * 2)
+        self.last_orientation = self.get_orientation()
+        self.orientation = orientation
 
 
     def get_orientation(self):
@@ -77,8 +90,13 @@ class OrientedPoint(Pos2D):
 
     def update_poseNvertices(self, pos, orientation):
         self.set_position(pos)
-        self.orientation=orientation % (np.pi * 2)
-        # self.vertices = pos + self.seg_vertices @ aux.rotationMatrix(-orientation)
+        self.set_orientation(orientation% (np.pi * 2))
+
+    @property
+    def last_delta_orientation(self):
+        a0=self.last_orientation
+        a1=self.get_orientation()
+        return a1-a0
 
 
 
@@ -111,6 +129,10 @@ class MobilePoint(OrientedPoint):
         self.set_orientation(orientation % (np.pi * 2))
         self.set_linearvelocity(lin_vel)
         self.set_angularvelocity(ang_vel)
+
+
+
+
 
 class MobileVector(MobilePoint):
     length = PositiveNumber(1, doc='The initial length of the body in meters')
@@ -197,13 +219,14 @@ class ScreenWindowAreaBasic(Area2DPixel):
         self.dims = aux.get_window_dims(self.space.dims)
 
     def space2screen_pos(self, pos):
-        if pos is None or any(np.isnan(pos)):
+        if pos is None:
             return None
+        if any(np.isnan(pos)):
+            return (np.nan,np.nan)
         try:
             return self._transform(pos)
         except:
             X, Y = np.array(self.space.dims) * self.scaling_factor
-            # X0, Y0 = self.window_dims
 
             p = pos[0] * 2 / X, pos[1] * 2 / Y
             pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
@@ -226,26 +249,19 @@ class ScreenWindowAreaBasic(Area2DPixel):
 
 
 class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
-    # scaling_factor=PositiveNumber(1., doc='Scaling factor')
-    # space=param.ClassSelector(Area,default=Area(), doc='Arena')
     zoom = PositiveNumber(1., doc='Zoom factor')
-    # center=NumericTuple2DRobust((0.0,0.0), doc='Center xy')
     center=param.Parameter(np.array([0., 0.]), doc='Center xy')
     center_lim=param.Parameter(np.array([0., 0.]), doc='Center xy lim')
-    # center_lim=RangeRobust((0.0,0.0), doc='Center xy')
     _scale = param.Parameter(np.array([[1., .0], [.0, -1.]]), doc='Scale of xy')
     _translation = param.Parameter(np.zeros(2), doc='Translation of xy')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.dims = aux.get_window_dims(self.space.dims)
         self.set_bounds()
 
     @ property
     def display_size(self):
         return (np.array(self.dims) / self.zoom).astype(int)
-
-
 
     @param.depends('zoom', 'center', watch=True)
     def set_bounds(self):
@@ -264,24 +280,20 @@ class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
-        # self.set_bounds()
 
     def zoom_screen(self, d_zoom, pos=None):
         if pos is None:
             pos = self.mouse_position
         if 0.001 <= self.zoom + d_zoom <= 1:
             self.zoom = np.round(self.zoom + d_zoom, 2)
-            # self.display_size = self.zoomed_window_dims
             self.center = np.clip(self.center - np.array(pos) * d_zoom, self.center_lim, -self.center_lim)
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
-        # self.set_bounds()
 
 class ScreenWindowArea(ScreenWindowAreaZoomable):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # # self.dims = aux.get_window_dims(self.space.dims)
-        # self.sim_scale=
+
 
 
 class BoundedArea(Area, LineClosed):

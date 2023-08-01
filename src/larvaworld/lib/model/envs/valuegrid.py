@@ -7,10 +7,29 @@ from scipy.ndimage.filters import gaussian_filter
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import Substrate, ViewableNamed, SpatialEntity, PositiveIntegerRange, ClassAttr, \
-    PositiveNumber, Phase
+from larvaworld.lib.model import NamedObject
+from larvaworld.lib.param import Substrate, ViewableNamed, PositiveIntegerRange, ClassAttr, \
+    PositiveNumber, Phase, Viewable
 from larvaworld.lib.screen.rendering import ScreenTextBox
 
+
+class SpatialEntity(Viewable,NamedObject):
+    default_color = param.Color(default='white')
+    visible = param.Boolean(default=False)
+    # def __init__(self, visible=False,default_color='white', **kwargs):
+    #     super().__init__(visible=visible,default_color=default_color,**kwargs)
+
+    def record_positions(self, label='p'):
+        """ Records the positions of each agent.
+
+        Arguments:
+            label (string, optional):
+                Name under which to record each position (default p).
+                A number will be added for each coordinate (e.g. p1, p2, ...).
+        """
+        for agent, pos in self.positions.items():
+            for i, p in enumerate(pos):
+                agent.record(label+str(i), p)
 
 class GridOverSpace(ViewableNamed, agentpy.Grid):
     unique_id = param.String('GridOverArena')

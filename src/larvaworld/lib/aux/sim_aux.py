@@ -60,10 +60,11 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
 
 
 def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
-    hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
+    # hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
     def get_hf0(ang_vel):
-        d_or = ang_vel * dt
-        return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
+        return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))
+        # return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
+        # return aux.rotate_point_around_point(origin=hr0, point=hf0, radians=-d_or)
 
 
     def fov(ang_vel, turn_err =0):
@@ -190,47 +191,47 @@ def generate_seg_shapes(Nsegs: int, points:ndarray, seg_ratio: Optional[ndarray]
 
 
 
-def generate_seg_positions(N, pos, orientation, l,ratio=None) :
-    x,y=pos
-    if ratio is None:
-        ratio = np.array([1 / N] * N)
-    ls_x = np.cos(orientation) * l * ratio
-    ls_y = np.sin(orientation) * l / N
-    return [[x + (-i + (N - 1) / 2) * ls_x[i],
-                      y + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
+# def generate_seg_positions(N, pos, orientation, l,ratio=None) :
+#     x,y=pos
+#     if ratio is None:
+#         ratio = np.array([1 / N] * N)
+#     ls_x = np.cos(orientation) * l * ratio
+#     ls_y = np.sin(orientation) * l / N
+#     return [[x + (-i + (N - 1) / 2) * ls_x[i],
+#                       y + (-i + (N - 1) / 2) * ls_y] for i in range(N)]
 
 
-def generate_segs(N, pos, orient, ratio, l,color,body_plan, segment_class, **kws):
-    if color is None:
-        color = [0.0, 0.0, 0.0]
-    cs = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
-    if ratio is None:
-        ratio = np.array([1 / N] * N)
-    ps = generate_seg_positions(N, pos, orient, l, ratio)
-    from larvaworld.lib.reg.stored.miscellaneous import body_shapes
-    bvs = generate_seg_shapes(N, seg_ratio=ratio, points=body_shapes[body_plan])
-
-    return [segment_class(pos=ps[i], orientation=orient,
-                           base_seg_vertices=bvs[i], color=cs[i],
-                           base_seg_ratio=ratio[i], body_length=l, **kws) for i in range(N)]
-
-
-
+# def generate_segs(N, pos, orient, ratio, l,color,body_plan, segment_class, **kws):
+#     if color is None:
+#         color = [0.0, 0.0, 0.0]
+#     cs = [np.array((0, 255, 0))] + [color] * (N - 2) + [np.array((255, 0, 0))] if N > 5 else [color] * N
+#     if ratio is None:
+#         ratio = np.array([1 / N] * N)
+#     ps = generate_seg_positions(N, pos, orient, l, ratio)
+#     from larvaworld.lib.reg.stored.miscellaneous import body_shapes
+#     bvs = generate_seg_shapes(N, seg_ratio=ratio, points=body_shapes[body_plan])
+#
+#     return [segment_class(pos=ps[i], orientation=orient,
+#                            base_seg_vertices=bvs[i], color=cs[i],
+#                            base_seg_ratio=ratio[i], body_length=l, **kws) for i in range(N)]
 
 
 
-def set_contour(segs, Ncontour=22):
-    vertices = [np.array(seg.vertices) for seg in segs]
-    l_side = aux.flatten_list([v[:int(len(v) / 2)] for v in vertices])
-    r_side = aux.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
-    r_side.reverse()
-    total_contour = l_side + r_side
-    if len(total_contour) > Ncontour:
-        random.seed(1)
-        contour = [total_contour[i] for i in sorted(random.sample(range(len(total_contour)), Ncontour))]
-    else:
-        contour = total_contour
-    return contour
+
+
+
+# def set_contour(segs, Ncontour=22):
+#     vertices = [np.array(seg.vertices) for seg in segs]
+#     l_side = aux.flatten_list([v[:int(len(v) / 2)] for v in vertices])
+#     r_side = aux.flatten_list([np.flip(v[int(len(v) / 2):], axis=0) for v in vertices])
+#     r_side.reverse()
+#     total_contour = l_side + r_side
+#     if len(total_contour) > Ncontour:
+#         random.seed(1)
+#         contour = [total_contour[i] for i in sorted(random.sample(range(len(total_contour)), Ncontour))]
+#     else:
+#         contour = total_contour
+#     return contour
 
 def sense_food(pos, sources=None, grid=None, radius=None):
 
@@ -316,19 +317,19 @@ def index_unique(df, level='Step', ascending=True, as_array=False):
     else:
         return a
 
-def existing_cols(cols,df) :
-    if isinstance(df, pd.DataFrame):
-        df=df.columns.values
-    return [col for col in cols if col in df]
-
-def nonexisting_cols(cols,df) :
-    if isinstance(df, pd.DataFrame):
-        df=df.columns.values
-    return [col for col in cols if col not in df]
-
-def cols_exist(cols,df) :
-    if isinstance(df, pd.DataFrame):
-        df=df.columns.values
-    return set(cols).issubset(df)
+# def existing_cols(cols,df) :
+#     if isinstance(df, pd.DataFrame):
+#         df=df.columns.values
+#     return [col for col in cols if col in df]
+#
+# def nonexisting_cols(cols,df) :
+#     if isinstance(df, pd.DataFrame):
+#         df=df.columns.values
+#     return [col for col in cols if col not in df]
+#
+# def cols_exist(cols,df) :
+#     if isinstance(df, pd.DataFrame):
+#         df=df.columns.values
+#     return set(cols).issubset(df)
 
 

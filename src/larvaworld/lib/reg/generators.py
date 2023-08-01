@@ -270,17 +270,17 @@ from larvaworld.lib.model import Food, Border, \
 
 gen=aux.AttrDict({
     'FoodGroup':class_generator(Food, mode='Group'),
-    'Food':class_generator(Food, mode='Unit'),
-    'Arena':class_generator(Area, mode='Unit'),
-    'Border':class_generator(Border, mode='Unit'),
-    'Odor':class_generator(Odor, mode='Unit'),
-    'Substrate':class_generator(Substrate, mode='Unit'),
-    'FoodGrid':class_generator(FoodGrid, mode='Unit'),
-    'WindScape':class_generator(WindScape, mode='Unit'),
-    'ThermoScape':class_generator(ThermoScape, mode='Unit'),
-    'OdorScape':class_generator(OdorScape, mode='Unit'),
-    'DiffusionValueLayer':class_generator(DiffusionValueLayer, mode='Unit'),
-    'GaussianValueLayer':class_generator(GaussianValueLayer, mode='Unit'),
+    'Food':class_generator(Food),
+    'Arena':class_generator(Area),
+    'Border':class_generator(Border),
+    'Odor':class_generator(Odor),
+    'Substrate':class_generator(Substrate),
+    'FoodGrid':class_generator(FoodGrid),
+    'WindScape':class_generator(WindScape),
+    'ThermoScape':class_generator(ThermoScape),
+    'OdorScape':class_generator(OdorScape),
+    'DiffusionValueLayer':class_generator(DiffusionValueLayer),
+    'GaussianValueLayer':class_generator(GaussianValueLayer),
 })
 
 # How to load existing
@@ -339,10 +339,8 @@ class FoodConf(NestedConf):
 
 
 
-gen.FoodConf=class_generator(FoodConf, mode='Unit')
-gen.EnrichConf=class_generator(EnrichConf, mode='Unit')
-# gen.GAspace=class_generator(sim.GAspace, mode='Unit')
-# gen.GAevaluation=class_generator(sim.GAevaluation, mode='Unit')
+gen.FoodConf=class_generator(FoodConf)
+gen.EnrichConf=class_generator(EnrichConf)
 
 class EnvConf(NestedConf):
     arena = ClassAttr(gen.Arena, doc='The arena configuration')
@@ -417,7 +415,7 @@ class LarvaGroup(NestedConf):
             confs.append(conf)
         return confs
 
-gen.Env=class_generator(EnvConf, mode='Unit')
+gen.Env=class_generator(EnvConf)
 
 class ExpConf(SimOps):
     env_params = conf.Env.confIDorNew()
@@ -441,21 +439,27 @@ class ExpConf(SimOps):
 #     sim_options = ClassAttr(SimOps, doc='The spatiotemporal resolution')
 #     larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
 
-
-class ReplayConf(NestedConf):
-    refID = conf.Ref.confID_selector()
-    refDir = param.String(None)
+class ReplayConfGroup(NestedConf):
     agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
-    time_range = OptionalPositiveRange(default=None, doc='Whether to only replay a defined temporal slice of the dataset.')
-    env_params = conf.Env.confID_selector()
     transposition = OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
-    overlap_mode = param.Boolean(False,doc='Whether to draw overlapped image of the track.')
-    close_view = param.Boolean(False,doc='Whether to visualize a small arena on close range.')
-    fix_segment = OptionalSelector(objects=['rear', 'front'], doc='Whether to additionally fixate the above or below body segment.')
-    fix_point = OptionalPositiveInteger(softmin=1, softmax=12, doc='Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.')
-    draw_Nsegs = OptionalPositiveInteger(softmin=1, softmax=12,doc='Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.')
     track_point = param.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
     dynamic_color = OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
+    env_params = conf.Env.confID_selector()
+
+class ReplayConfUnit(NestedConf):
+    close_view = param.Boolean(False, doc='Whether to visualize a small arena on close range.')
+    fix_segment = OptionalSelector(objects=['rear', 'front'],
+                                   doc='Whether to additionally fixate the above or below body segment.')
+    fix_point = OptionalPositiveInteger(softmin=1, softmax=12,
+                                        doc='Whether to fixate a specific midline point to the center of the screen. Relevant when replaying a single larva track.')
+
+
+class ReplayConf(ReplayConfGroup, ReplayConfUnit):
+    refID = conf.Ref.confID_selector()
+    refDir = param.String(None)
+    time_range = OptionalPositiveRange(default=None, doc='Whether to only replay a defined temporal slice of the dataset.')
+    overlap_mode = param.Boolean(False,doc='Whether to draw overlapped image of the track.')
+    draw_Nsegs = OptionalPositiveInteger(softmin=1, softmax=12,doc='Whether to artificially simplify the experimentally tracked larva body to a segmented virtual body of the given number of segments.')
 
 
 
@@ -463,33 +467,9 @@ class ReplayConf(NestedConf):
 
 
 
-
-gen.LarvaGroup=class_generator(LarvaGroup, mode='Unit')
+gen.LarvaGroup=class_generator(LarvaGroup)
 gen.Exp=ExpConf
-# gen.Exp=class_generator(ExpConf, mode='Unit')
-gen.Replay=class_generator(ReplayConf, mode='Unit')
-
-
-
-
-
-# class DatasetSubsetConf():
-#     time_range = aux.OptionalPositiveRange(softmax=1000.0, doc='Whether to only replay a defined temporal slice of the dataset.')
-#     agent_ids = param.List(default=None,empty_default=True,allow_None=True, doc='Whether to only display some larvae of the dataset, defined by their indexes.')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+gen.Replay=class_generator(ReplayConf)
 
 
 
@@ -542,19 +522,3 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls'
 
         lgs.update(full_lg(**kws))
     return aux.AttrDict(lgs)
-
-
-
-
-
-
-
-
-
-
-
-
-class ConfGeneratorRegistry :
-    def __init__(self):
-        # self.group=aux.AttrDict({k: BaseType(k=k) for k in GROUPTYPES})
-        self.conf=aux.AttrDict({k: ConfType(conftype=k) for k in reg.CONFTYPES})

@@ -58,33 +58,37 @@ def single_parametric_interpolate(obj_x_loc, obj_y_loc, numPts=50):
 
 
 def xy_along_circle(N, loc, radius):
+    X, Y = loc
+    dX, dY = radius
     angles = np.linspace(0, np.pi * 2, N + 1)[:-1]
-    p = [(loc[0] + np.cos(a) * radius[0], loc[1] + np.sin(a) * radius[1]) for a in angles]
+    p = [(X + np.cos(a) * dX, Y + np.sin(a) * dY) for a in angles]
     return p
 
 
 def xy_along_rect(N, loc, scale):
-    x0, y0 = -scale
-    x1, y1 = scale
-    rext_x = [loc[0] + x for x in [x0, x1, x1, x0]]
-    rext_y = [loc[1] + y for y in [y0, y0, y1, y1]]
+    X,Y=loc
+    dX,dY=scale
+    rext_x = [X + x for x in [-dX, dX, dX, -dX]]
+    rext_y = [Y + y for y in [-dY, -dY, dY, dY]]
     p = single_parametric_interpolate(rext_x, rext_y, numPts=N)
     return p
 
 
 def xy_uniform_circle(N, loc, scale):
+    X, Y = loc
+    dX, dY = scale
     angles = np.random.uniform(0, 2 * np.pi, N).tolist()
-    xs = np.random.uniform(0, scale[0] ** 2, N) ** 0.5 * np.cos(angles)
-    ys = np.random.uniform(0, scale[1] ** 2, N) ** 0.5 * np.sin(angles)
-    p = [(loc[0] + x, loc[1] + y) for a, x, y in zip(angles, xs, ys)]
+    xs = np.random.uniform(0, dX ** 2, N) ** 0.5 * np.cos(angles)
+    ys = np.random.uniform(0, dY ** 2, N) ** 0.5 * np.sin(angles)
+    p = [(X + x, Y + y) for a, x, y in zip(angles, xs, ys)]
     return p
 
 def xy_grid(grid_dims, area, loc=(0.0, 0.0)) :
-    x0, y0 = loc
-    X,Y=area
+    X, Y = loc
+    W,H=area
     Nx, Ny=grid_dims
-    dx,dy=X/Nx, Y/Ny
-    grid = np.meshgrid(np.linspace(x0-X/2+dx/2,x0+X/2+dx/2, Nx), np.linspace(y0-Y/2+dy/2,y0+Y/2+dy/2, Ny))
+    dx,dy=W/Nx, H/Ny
+    grid = np.meshgrid(np.linspace(X-W/2+dx/2,X+W/2+dx/2, Nx), np.linspace(Y-H/2+dy/2,Y+H/2+dy/2, Ny))
     cartprod = np.stack(grid, axis=-1).reshape(-1, 2)
 
     # Convert to list of tuples
@@ -125,7 +129,6 @@ def generate_xyNor_distro(d):
     a1, a2 = np.deg2rad(d.orientation_range)
     ors = (np.random.uniform(low=a1, high=a2, size=N)%(2*np.pi)).tolist()
     ps = generate_xy_distro(N=N, mode=d.mode,shape=d.shape, loc=d.loc, scale=d.scale)
-    # ps = generate_xy_distro(N=N, **{k: d[k] for k in ['mode', 'shape', 'loc', 'scale']})
     return ps, ors
 
 

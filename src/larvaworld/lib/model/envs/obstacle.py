@@ -5,15 +5,15 @@ from shapely.affinity import affine_transform
 from shapely import geometry
 
 from larvaworld.lib import aux
-from larvaworld.lib.param import ViewableLine, NamedObject
+from larvaworld.lib.model import NamedObject
+from larvaworld.lib.param import Contour
 
 
-class Obstacle(NamedObject, ViewableLine):
-    closed = param.Boolean(True)
+class Obstacle(NamedObject, Contour):
 
     def __init__(self,model,edges=None,**kwargs):
         NamedObject.__init__(self,model=model)
-        ViewableLine.__init__(self,**kwargs)
+        Contour.__init__(self,**kwargs)
 
         # self.vertices = vertices
         self.edges = edges

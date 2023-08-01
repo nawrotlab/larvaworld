@@ -512,9 +512,10 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
     mode=transposition
 
     xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
-    xy_pairs = [xy for xy in xy_pairs if aux.cols_exist(xy,s)]
-    xy_flat=np.unique(aux.flatten_list(xy_pairs))
-    xy_pairs = aux.group_list_by_n(xy_flat, 2)
+    xy_flat=xy_pairs.flatten.existing(s)
+    xy_pairs = xy_flat.in_pairs
+    # xy_flat=np.unique(aux.flatten_list(xy_pairs))
+    # xy_pairs = aux.group_list_by_n(xy_flat, 2)
 
     if replace :
         ss=s
@@ -564,121 +565,32 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
         return ss
 
 
-def fixate_larva_multi(s, c, point, arena_dims=None, fix_segment=None):
-    ids = s.index.unique(level='AgentID').values
-    Nids=len(ids)
-    points = nam.midline(c.Npoints, type='point') + ['centroid']
-    points_xy = nam.xy(points, flat=True)
-    contour = nam.contour(c.Ncontour)
-    contour_xy = nam.xy(contour, flat=True)
-
-    all_xy_pars = points_xy + contour_xy
-
-    if type(point) == int:
-        if point == -1:
-            point = 'centroid'
-        else:
-            if fix_segment is not None and type(fix_segment) == int and np.abs(fix_segment) == 1:
-                fix_segment = points[point + fix_segment]
-            point = points[point]
-
-    pars = aux.existing_cols(all_xy_pars,s)
-    xy_ps = nam.xy(point)
-    if not aux.cols_exist(xy_ps,s):
-        raise ValueError(f" The requested {point} is not part of the dataset")
-    reg.vprint(f'Fixing {point} to arena center')
-    if arena_dims is None :
-        arena_dims=c.env_params.arena.dims
-    X, Y = arena_dims
-    xy = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).values for id in ids]
-    xy_start = [s[xy_ps].xs(id, level='AgentID').copy(deep=True).dropna().values[0] for id in ids]
-    bg_x = np.array([(p[:, 0] - start[0]) / X for p, start in zip(xy, xy_start)])
-    bg_y = np.array([(p[:, 1] - start[1]) / Y for p, start in zip(xy, xy_start)])
-
-    for id, p in zip(ids, xy):
-        for x, y in aux.group_list_by_n(pars, 2):
-            s.loc[(slice(None), id), [x, y]] -= p
-
-    if fix_segment is not None:
-        xy_ps2 = nam.xy(fix_segment)
-        if not aux.cols_exist(xy_ps2,s):
-            raise ValueError(f" The requested secondary {fix_segment} is not part of the dataset")
-
-        reg.vprint(f'Fixing {fix_segment} as secondary point on vertical axis')
-        xy_sec = [s[xy_ps2].xs(id, level='AgentID').copy(deep=True).values for id in ids]
-        bg_a = np.array([np.arctan2(xy_sec[i][:, 1], xy_sec[i][:, 0]) - np.pi / 2 for i in range(Nids)])
-
-        for id, angle in zip(ids, bg_a):
-            dd = s[pars].xs(id, level='AgentID', drop_level=True).copy(deep=True).values
-            s.loc[(slice(None), id), pars] = [
-                aux.flatten_list(aux.rotate_points_around_point(points=np.array(aux.group_list_by_n(dd[i].tolist(), 2)),
-                                                                        radians=a)) for i, a in enumerate(angle)]
-    else:
-        bg_a = np.array([np.zeros(len(bg_x[0])) for i in range(Nids)])
-    bg = [np.vstack((bg_x[i, :], bg_y[i, :], bg_a[i, :])) for i in range(Nids)]
-
-    reg.vprint('Fixed-point dataset generated')
-    return s, bg
-
-
 @reg.funcs.preproc("fixation")
-def fixate_larva(s, c, fixed_point_idx, arena_dims=None, fix_segment=None):
+def fixate_larva(s, c, P1, P2=None):
     R=XYops(Npoints=c.Npoints,Ncontour=c.Ncontour)
 
-    ids = s.index.unique(level='AgentID').values
-    Nids = len(ids)
-    N=s.index.unique('Step').size
-    #points = nam.midline(c.Npoints, type='point') + ['centroid']
-    # points_xy = nam.xy(points, flat=True)
-    # contour = nam.contour(c.Ncontour)
-    # contour_xy = nam.xy(contour, flat=True)
-
-    all_xy_pars = R.midline_xy + R.contour_xy + nam.xy('centroid')
-    pars = aux.existing_cols(all_xy_pars, s)
-    point = R.get_track_point(fixed_point_idx)
-    xy_ps = nam.xy(point)
-    if not aux.cols_exist(xy_ps, s):
-        raise ValueError(f" The requested {point} is not part of the dataset")
 
 
-    if point!='centroid' or fix_segment is None:
-        second_point = None
-    else:
-        if fix_segment == 'rear':
-            second_point_idx=fixed_point_idx + 1
-        elif fix_segment == 'front':
-            second_point_idx = fixed_point_idx - 1
-        else:
-            raise
-        second_point = R.get_track_point(second_point_idx)
-
-
-    if Nids != 1:
-        raise ValueError('Fixation only implemented for a single agent.')
-    id=ids[0]
-
-
-
-
-    reg.vprint(f'Fixing {point} to arena center')
-    if arena_dims is None:
-        arena_dims = c.env_params.arena.dims
-    X, Y = arena_dims
-    xy = s[xy_ps].values
-    xy_start = s[xy_ps].dropna().values[0]
+    pars = (R.midline_xy + R.contour_xy + aux.nam.xy('centroid')).existing(s)
+    if not nam.xy(P1).exist_in(s):
+        raise ValueError(f" The requested {P1} is not part of the dataset")
+    reg.vprint(f'Fixing {P1} to arena center')
+    X, Y = c.env_params.arena.dims
+    xy = s[nam.xy(P1)].values
+    xy_start = s[nam.xy(P1)].dropna().values[0]
     bg_x = (xy[:, 0] - xy_start[0]) / X
     bg_y = (xy[:, 1] - xy_start[1]) / Y
 
-    for x, y in aux.group_list_by_n(pars, 2):
+    for x, y in pars.in_pairs:
         s[[x, y]] -= xy
 
-    if second_point is not None:
-        xy_ps2 = nam.xy(second_point)
-        if not aux.cols_exist(xy_ps2,s):
-            raise ValueError(f" The requested secondary {second_point} is not part of the dataset")
+    N = s.index.unique('Step').size
+    if P2 is not None:
+        if not nam.xy(P2).exist_in(s):
+            raise ValueError(f" The requested secondary {P2} is not part of the dataset")
 
-        reg.vprint(f'Fixing {second_point} as secondary point on vertical axis')
-        xy_sec = s[xy_ps2].values
+        reg.vprint(f'Fixing {P2} as secondary point on vertical axis')
+        xy_sec = s[nam.xy(P2)].values
         bg_a = np.arctan2(xy_sec[:, 1], xy_sec[:, 0]) - np.pi / 2
 
         s[pars] = [

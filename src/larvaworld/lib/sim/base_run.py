@@ -65,23 +65,7 @@ class BaseRun(agentpy.Model,SimConfiguration):
         self._odor_ids=None
 
 
-    @property
-    def configuration_text(self):
-        c=self.p
-        pref0 = '     '
-        text = f"Simulation configuration : \n" \
-               f"{pref0}Simulation mode : {c.runtype}\n" \
-               f"{pref0}Experiment : {c.experiment}\n" \
-               f"{pref0}Simulation ID : {c.id}\n" \
-               f"{pref0}Duration (min) : {c.duration}\n" \
-               f"{pref0}Timestep (sec) : {c.dt}\n" \
-               f"{pref0}Ticks (#) : {c.Nsteps}\n" \
-               f"{pref0}Box2D active : {c.Box2D}\n" \
-             \
-               f"{pref0}Offline mode : {c.offline}\n" \
-               f"{pref0}Data storage : {c.store_data}\n" \
-               f"{pref0}Parent path : {c.dir}"
-        return text
+
 
     @property
     def Nticks(self):

@@ -277,7 +277,7 @@ class ClassAttr(ClassSelector):
 
 
 
-class NestedConf(param.Parameterized):
+class NestedConf(Parameterized):
 
     def __init__(self,**kwargs):
         # for k in kwargs.keys():

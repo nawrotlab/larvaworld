@@ -4,7 +4,7 @@ from matplotlib import cm, colors
 
 
 
-def invert_color(col, return_self=False):
+def invert_color(col):
     if type(col) in [list, tuple] and len(col) == 3:
         if not all([0 <= i <= 1 for i in col]):
             col = list(np.array(col) / 255)
@@ -13,10 +13,7 @@ def invert_color(col, return_self=False):
         col = colors.cnames[col]
     table = str.maketrans('0123456789abcdef', 'fedcba9876543210')
     col2 = '#' + col[1:].lower().translate(table).upper()
-    if not return_self:
-        return col2
-    else:
-        return col, col2
+    return col, col2
 
 
 def random_colors(n):
@@ -78,12 +75,7 @@ def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
 
 
 
-def get_class_by_name(name):
-    components = name.split('.')
-    mod = __import__(components[0])
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
+
 
 
 class Color:
@@ -110,3 +102,19 @@ class Color:
         g = random.randint(min_value, 255)
         b = random.randint(min_value, 255)
         return r, g, b
+
+def scaled_velocity_to_col(a) :
+    return timeseries_to_col(a, lim=0.8, color_range=[(255, 0, 0), (0, 255, 0)])
+
+def angular_velocity_to_col(a) :
+    return timeseries_to_col(a, lim=np.deg2rad(300), color_range=[(255, 0, 0), (0, 255, 0)])
+
+def timeseries_to_col(a, lim, color_range) :
+    t = np.clip(np.abs(a) / lim, a_min=0, a_max=1)
+    (r1, b1, g1), (r2, b2, g2) = color_range
+    r, b, g = r2 - r1, b2 - b1, g2 - g1
+    if isinstance(a,float) :
+        return r1 + r * t, b1 + b * t, g1 + g * t
+    else :
+        return [(r1 + r * tt, b1 + b * tt, g1 + g * tt) for tt in t]
+

@@ -5,6 +5,9 @@ import pickle
 import numpy as np
 import typing
 
+import pandas as pd
+
+
 
 class AttrDict(dict):
     '''
@@ -88,9 +91,6 @@ class AttrDict(dict):
     def update_nestdict(self, dic):
         dic0_f = self.flatten()
         dic0_f.update(dic)
-        # for k, v in dic0_f.items():
-        #     if v == 'empty_dict':
-        #         dic0_f[k] = {}
         return dic0_f.unflatten()
 
     def update_existingnestdict(self, dic):
@@ -125,6 +125,10 @@ class AttrDict(dict):
                         print_nested_level(v, pref=f'{pref}{pref0}')
 
             print_nested_level(self, pref=pref0)
+
+    @property
+    def keylist(self):
+        return SuperList(self.keys())
 
 # class StoreDict(AttrDict):
 #
@@ -245,6 +249,73 @@ class bidict(dict):
             del self.inverse[self[key]]
         super(bidict, self).__delitem__(key)
 
+class SuperList(list) :
+
+    @property
+    def N(self):
+        return len(self)
+
+    @property
+    def sorted(self):
+        return sorted(self)
+
+    @property
+    def flatten(self):
+        return SuperList([item for sublist in self for item in sublist])
+
+    @property
+    def unique(self):
+        if len(self) == 0:
+            return SuperList()
+        elif len(self) == 1:
+            return self
+        else:
+            seen = set()
+            seen_add = seen.add
+            return SuperList([x for x in self if not (x in seen or seen_add(x))])
+
+    def group_by_n(self, n=2):
+        Nmore = int(len(self) % n)
+        N = int((len(self) - Nmore) / n)
+        g = [self[i * n:(i + 1) * n] for i in range(N)]
+        if Nmore != 0:
+            g.append(self[-Nmore:])
+        return SuperList(g)
+
+    @property
+    def in_pairs(self):
+        return self.group_by_n(n=2)
+
+
+    def existing(self, df):
+        return SuperList(existing_cols(self,df))
+
+    def nonexisting(self, df):
+        return SuperList(nonexisting_cols(self,df))
+
+    def exist_in(self, df):
+        return cols_exist(self,df)
+
+    def __add__(self, *args, **kwargs): # real signature unknown
+        """ Return self+value. """
+        return SuperList(super().__add__(*args, **kwargs))
+
+
+
+def existing_cols(cols,df) :
+    if isinstance(df, pd.DataFrame):
+        df=df.columns.values
+    return [col for col in cols if col in df]
+
+def nonexisting_cols(cols,df) :
+    if isinstance(df, pd.DataFrame):
+        df=df.columns.values
+    return [col for col in cols if col not in df]
+
+def cols_exist(cols,df) :
+    if isinstance(df, pd.DataFrame):
+        df=df.columns.values
+    return set(cols).issubset(df)
 
 
 def flatten_list(l):

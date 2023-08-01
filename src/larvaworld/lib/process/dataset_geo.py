@@ -295,7 +295,7 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
     def load_midline(self, drop=True, keep_midline_LineString=False):
         l='length'
         xy_pairs=aux.nam.midline_xy(self.config.Npoints)
-        if self.cols_exist_in_all_traj(aux.flatten_list(xy_pairs)):
+        if self.cols_exist_in_all_traj(xy_pairs.flatten):
             for tr in self:
                 if keep_midline_LineString:
                     tr.df['midline'] = tr.df.apply(lambda r: shp.geometry.LineString( [(r[x], r[y]) for [x, y] in xy_pairs]), axis=1)
@@ -303,20 +303,20 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
                 else:
                     tr.df[l] = tr.df.apply(lambda r: shp.geometry.LineString( [(r[x], r[y]) for [x, y] in xy_pairs]).length, axis=1)
                 if drop :
-                    tr.df=tr.df.drop(columns=aux.flatten_list(xy_pairs))
+                    tr.df=tr.df.drop(columns=xy_pairs.flatten)
 
             self.endpoint_data[l] = {traj.id: traj.df[l].values.mean() for traj in self}
             self.set_dtype(l, self.spatial_unit)
 
     def load_contour(self, drop=True):
         xy_pairs=aux.nam.contour_xy(self.config.Ncontour)
-        if self.cols_exist_in_all_traj(aux.flatten_list(xy_pairs)):
+        if self.cols_exist_in_all_traj(xy_pairs.flatten):
             for tr in self:
                 tr.df['contour'] = tr.df.apply(lambda r: shp.geometry.Polygon([(r[x], r[y]) for [x, y] in xy_pairs]), axis=1)
                 tr.df['area'] = tr.df.apply(lambda r: r.contour.area, axis=1)
                 tr.df['centroid'] = tr.df.apply(lambda r: r.contour.centroid, axis=1)
                 if drop :
-                    tr.df=tr.df.drop(columns=aux.flatten_list(xy_pairs))
+                    tr.df=tr.df.drop(columns=xy_pairs.flatten)
             self.set_dtype(cols='area',units=self.spatial_unit**2)
 
     def set_dtype(self,cols,units):
