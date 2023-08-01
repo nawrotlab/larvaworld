@@ -40,13 +40,13 @@ class Viewable(NestedConf) :
     def _draw(self,v,**kwargs):
         if self.visible :
             self.draw(v,**kwargs)
-            # if self.selected:
+            if self.selected:
                 # raise
-                # self.draw_selected(v, **kwargs)
+                self.draw_selected(v, **kwargs)
 
 
-    # def draw_selected(self, v, **kwargs):
-    #     pass
+    def draw_selected(self, v, **kwargs):
+        pass
 
     def draw(self, v, **kwargs):
         pass

@@ -546,24 +546,16 @@ class IDBox(ScreenTextFont, ViewableToggleable):
 
 
 class LabelledGroupedObject(Viewable,GroupedObject):
-    selected = param.Boolean(False, doc='Whether the entity is selected or not')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.id_box = IDBox(agent=self)
 
     def _draw(self,v,**kwargs):
-        if self.visible :
-            self.draw(v,**kwargs)
-            if self.id_box.visible:
-                self.id_box.draw(v)
-            if self.selected:
-                # raise
-                self.draw_selected(v, **kwargs)
+        super()._draw(v, **kwargs)
+        self.id_box._draw(v, **kwargs)
 
 
-    def draw_selected(self, v, **kwargs):
-        pass
 
 
 

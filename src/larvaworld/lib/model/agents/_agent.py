@@ -37,8 +37,6 @@ class PointAgent(RadiallyExtended,NonSpatialAgent):
         p, c, r = self.get_position(), self.color, self.radius
         if np.isnan(p).all():
             return
-        # if v.manager.draw_centroid:
-
 
         if self.odor.peak_value > 0:
             if v.manager.odor_aura:
