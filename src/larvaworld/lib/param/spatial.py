@@ -290,6 +290,19 @@ class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
 
+    # @param.depends('zoom', watch=True)
+    # def update_scale(self):
+    #     def closest(lst, k):
+    #         return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
+    #
+    #     # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
+    #     self.scale_in_mm = closest(
+    #         lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=self.space.w * self.zoom* 100)
+    #     # self.text_font.set_text(f'{self.scale_in_mm} mm')
+    #     # self.lines = self.compute_lines(self.x, self.y, self.scale_in_mm / self.zoom /1000)
+
+
+
 class ScreenWindowArea(ScreenWindowAreaZoomable):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

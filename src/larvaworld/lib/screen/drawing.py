@@ -452,9 +452,7 @@ class ScreenManager(BaseScreenManager):
             i.color=self.scale_clock_color
 
 
-    def apply_screen_zoom(self, d_zoom):
-        self.v.zoom_screen(d_zoom, pos = self.v.mouse_position)
-        self.sim_scale.real_width=self.model.space.dims[0] * self.v.zoom
+
 
 
 
@@ -507,7 +505,9 @@ class ScreenManager(BaseScreenManager):
                         else:
                             self.selected_type = object_menu(self.selected_type, location=loc)
                     elif e.button in [4, 5]:
-                        self.apply_screen_zoom(d_zoom=-d_zoom if e.button == 4 else d_zoom)
+                        d_zoom = -d_zoom if e.button == 4 else d_zoom
+                        self.v.zoom_screen(d_zoom, pos=self.v.mouse_position)
+                        self.sim_scale.real_width = self.model.space.dims[0] * self.v.zoom
                         self.toggle(name='zoom', value=self.v.zoom)
         if self.focus_mode and len(self.selected_agents) > 0:
             try:

@@ -181,10 +181,7 @@ class Viewer(ScreenWindowAreaBackground):
     def __init__(self, manager, **kwargs):
         self.manager = manager
         m=manager.model
-        super().__init__(
-            scaling_factor=m.scaling_factor,
-            space=m.space,
-                         **kwargs)
+        super().__init__(scaling_factor=m.scaling_factor,space=m.space,**kwargs)
 
 
         self._t = pygame.time.Clock()
@@ -686,9 +683,12 @@ class SimulationScale(PosPixelRel2AreaViewable):
 
     @param.depends('real_width', watch=True)
     def update_scale(self):
+        def closest(lst, k):
+            return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
+
         # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
         w_in_mm = self.real_width * 1000
-        self.scale_in_mm = self.closest(
+        self.scale_in_mm = closest(
             lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
         self.text_font.set_text(f'{self.scale_in_mm} mm')
         self.lines = self.compute_lines(self.x, self.y, self.scale_in_mm / w_in_mm * self.reference_area.w)
@@ -699,8 +699,7 @@ class SimulationScale(PosPixelRel2AreaViewable):
                 [(x + scale / 2, y * 0.75), (x + scale / 2, y * 1.25)],
                 [(x - scale / 2, y * 0.75), (x - scale / 2, y * 1.25)]]
 
-    def closest(self, lst, k):
-        return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
+
 
 
 
