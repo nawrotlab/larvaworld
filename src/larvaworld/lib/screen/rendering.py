@@ -412,24 +412,24 @@ class ScreenTextFontRect(ScreenTextFont):
 class ScreenTextBoxRect(ScreenTextFontRect, Viewable):
     visible = param.Boolean(False)
 
-class ScreenTextBox2(ScreenTextFont, ViewableToggleable):
-    visible = param.Boolean(False)
-
-    def get_input(self, event):
-        if self.visible:
-            self.switch(event)
-            if event.type == pygame.KEYDOWN:
-                if self.active:
-                    if event.key == pygame.K_RETURN:
-                        self.submit()
-                    elif event.key == pygame.K_BACKSPACE:
-                        self.text = self.text[:-1]
-                    else:
-                        self.text += event.unicode
-
-    def submit(self):
-        print(self.text)
-        self.visible = False
+# class ScreenTextBox2(ScreenTextFont, ViewableToggleable):
+#     visible = param.Boolean(False)
+#
+#     def get_input(self, event):
+#         if self.visible:
+#             self.switch(event)
+#             if event.type == pygame.KEYDOWN:
+#                 if self.active:
+#                     if event.key == pygame.K_RETURN:
+#                         self.submit()
+#                     elif event.key == pygame.K_BACKSPACE:
+#                         self.text = self.text[:-1]
+#                     else:
+#                         self.text += event.unicode
+#
+#     def submit(self):
+#         print(self.text)
+#         self.visible = False
 
 class ScreenTextFontRel(ScreenTextFont):
     text_centre_scale = PositiveRange((0.9, 0.9),softmax=10.0, step=0.01, doc='The text center position relative to the position')
@@ -516,7 +516,8 @@ class ScreenTextBox(ScreenTextFont, ScreenBox):
 
 
 
-class IDBox(ScreenTextBox2):
+class IDBox(ScreenTextFont, ViewableToggleable):
+    visible = param.Boolean(False)
     agent = param.ClassSelector(Pos2D, doc='The agent owning the ID')
 
     def __init__(self, **kwargs):

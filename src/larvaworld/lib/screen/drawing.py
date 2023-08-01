@@ -408,29 +408,17 @@ class ScreenManager(BaseScreenManager):
                 self.trail_color = obs[0]
             value = self.trail_color
 
-
         if value is None:
             setattr(self, name, not getattr(self, name))
             value = 'ON' if getattr(self, name) else 'OFF'
+
         self.screen_texts[name].flash_text(f'{disp} {value}')
 
-        if name == 'visible_ids':
-            for a in m.agents + m.sources:
-                a.id_box.toggle_vis()
-        # elif name == 'color_behavior':
-            # if not self.color_behavior:
-            #     for f in self.model.agents:
-            #         f.set_color(f.default_color)
-        elif name == 'visible_clock':
-            self.sim_clock.toggle_vis()
-        elif name == 'visible_scale':
-            self.sim_scale.toggle_vis()
-        elif name == 'visible_state':
-            self.sim_state.toggle_vis()
-        elif name == 'random_colors':
+
+        if name == 'random_colors':
             for f in m.agents:
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
-                f.color=color
+                f.set_default_color(color)
         elif name == 'black_background':
             self.update_default_colors()
         elif name == 'larva_collisions':
@@ -514,12 +502,30 @@ class ScreenManager(BaseScreenManager):
     def eval_keypress(self, k):
         from larvaworld.lib.model.agents._larva import Larva
         # print(k)
-        if k == '▲ trail duration':
+        if k == 'visible_ids':
+            for a in self.model.agents + self.model.sources:
+                a.id_box.toggle_vis()
+                temp=a.id_box.visible
+        # elif name == 'color_behavior':
+            # if not self.color_behavior:
+            #     for f in self.model.agents:
+            #         f.set_color(f.default_color)
+            self.toggle(k, 'ON' if temp else 'OFF', disp='IDs')
+        elif k == 'visible_clock':
+            self.sim_clock.toggle_vis()
+            self.toggle(k,'ON' if self.sim_clock.visible else 'OFF', disp='clock')
+        elif k == 'visible_scale':
+            self.sim_scale.toggle_vis()
+            self.toggle(k, 'ON' if self.sim_scale.visible else 'OFF', disp='scale')
+        elif k == 'visible_state':
+            self.sim_state.toggle_vis()
+            self.toggle(k, 'ON' if self.sim_state.visible else 'OFF', disp='state')
+        elif k == '▲ trail duration':
             self.toggle('trail_dt', plus=True, disp='trail duration')
         elif k == '▼ trail duration':
             self.toggle('trail_dt', minus=True, disp='trail duration')
         elif k == 'visible trail':
-            self.toggle('visible_trails', disp='trails visible')
+            self.toggle('visible_trails', disp='trails')
         elif k == 'pause':
             self.toggle('is_paused')
         elif k == 'move left':
