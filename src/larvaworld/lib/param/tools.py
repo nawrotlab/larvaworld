@@ -10,6 +10,13 @@ def class_generator(A0, mode='Unit') :
             if hasattr(A,'distribution'):
                 D=A.distribution.__class__
                 ks=list(D.param.objects().keys())
+                kwargs=self.shortcut(kdict={
+                    'ors':'orientation_range',
+                    's': 'scale',
+                    # 'p': 'scale',
+                    'sh': 'shape',
+                },kws=kwargs)
+
                 existing=[k for k in ks if k in kwargs.keys()]
                 if len(existing)>0:
                     d={}
@@ -17,21 +24,19 @@ def class_generator(A0, mode='Unit') :
                         d[k]=kwargs[k]
                         kwargs.pop(k)
                     kwargs['distribution']=D(**d)
-            if 'c' in kwargs.keys():
-                kwargs['default_color']=kwargs['c']
-                kwargs.pop('c')
-            if 'or' in kwargs.keys():
-                kwargs['orientation']=kwargs['or']
-                kwargs.pop('or')
-            # if 'id' in kwargs.keys():
-            #     kwargs['unique_id']=kwargs['id']
-            #     kwargs.pop('id')
-            if 'r' in kwargs.keys():
-                kwargs['radius']=kwargs['r']
-                kwargs.pop('r')
-            if 'a' in kwargs.keys():
-                kwargs['amount']=kwargs['a']
-                kwargs.pop('a')
+            kwargs = self.shortcut(kdict={
+                'mID': 'model',
+                'c': 'default_color',
+                'or': 'orientation',
+                'r': 'radius',
+                'a': 'amount',
+            }, kws=kwargs)
+
+            if 'life' in kwargs.keys():
+                assert 'life_history' not in kwargs.keys()
+                assert len(kwargs['life'])==2
+                kwargs['life_history']=dict(zip(['age', 'epochs'], kwargs['life']))
+                kwargs.pop('life')
             if 'o' in kwargs.keys():
                 assert 'odor' not in kwargs.keys()
                 assert len(kwargs['o'])==3
@@ -44,6 +49,14 @@ def class_generator(A0, mode='Unit') :
                 kwargs.pop('sub')
 
             super().__init__(**kwargs)
+
+        def shortcut(self,kdict, kws):
+            for k, key in kdict.items():
+                if k in kws.keys():
+                    assert key not in kws.keys()
+                    kws[key] = kws[k]
+                    kws.pop(k)
+            return kws
 
         @classmethod
         def from_entries(cls, entries):

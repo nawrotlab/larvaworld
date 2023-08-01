@@ -30,8 +30,8 @@ class Essay:
         self.results = {}
 
     def conf(self, exp, id, dur, lgs, env, **kwargs):
-        # sim = reg.get_null('sim_params', duration=dur)
-        return reg.gen.Exp(duration=dur, env_params=env,
+        sim = reg.get_null('sim_params', duration=dur)
+        return reg.get_null('Exp', sim_params=sim, env_params=env, trials={},
                              larva_groups=lgs, experiment=exp, enrichment=self.enrichment,
                              collections=self.collections, **kwargs)
 
@@ -688,8 +688,8 @@ def Essay_dict():
         # 'roversVSsitters': rover_sitter_essay,
         # 'RvsS_essay': {}
     }
-    for E in [DoublePatch_Essay]:
-    # for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
+    # for E in [RvsS_Essay,Chemotaxis_Essay]:
+    for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
         e=E()
         d[e.type]=e.exp_dict
     return aux.AttrDict(d)

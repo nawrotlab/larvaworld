@@ -73,14 +73,14 @@ def grouped_exp_dic():
         x = np.round(x * dim, 3)
         y = np.round(y * dim, 3)
         if mode == 'king':
-            l = {**reg.lg('Left', N=N, p=(-x, y), mID='gamer-5x', c='darkblue', o=oG(id='Left_odor')),
-                 **reg.lg('Right', N=N, p=(+x, y), mID='gamer-5x', c='darkred', o=oG(id='Right_odor'))}
+            l = {**reg.lg('Left', N=N, loc=(-x, y), mID='gamer-5x', c='darkblue', o=oG(id='Left_odor')),
+                 **reg.lg('Right', N=N, loc=(+x, y), mID='gamer-5x', c='darkred', o=oG(id='Right_odor'))}
         elif mode == 'flag':
-            l = {**reg.lg('Left', N=N, p=(-x, y), mID='gamer', c='darkblue'),
-                 **reg.lg('Right', N=N, p=(+x, y), mID='gamer', c='darkred')}
+            l = {**reg.lg('Left', N=N, loc=(-x, y), mID='gamer', c='darkblue'),
+                 **reg.lg('Right', N=N, loc=(+x, y), mID='gamer', c='darkred')}
         elif mode == 'catch_me':
-            l = {**reg.lg('Left', N=1, p=(-0.01, 0.0), mID='follower-L', c='darkblue', o=oD(id='Left_odor')),
-                 **reg.lg('Right', N=1, p=(+0.01, 0.0), mID='follower-R', c='darkred', o=oD(id='Right_odor'))}
+            l = {**reg.lg('Left', N=1, loc=(-0.01, 0.0), mID='follower-L', c='darkblue', o=oD(id='Left_odor')),
+                 **reg.lg('Right', N=1, loc=(+0.01, 0.0), mID='follower-R', c='darkred', o=oD(id='Right_odor'))}
         return l
 
     def lgs_x4(N=5):
@@ -110,7 +110,7 @@ def grouped_exp_dic():
 
     d1={
             'chemotaxis': {'env':'odor_gradient','dur':5.0,
-                                   'l' :reg.lg(mID='NEU_Levy_continuous_nav', N=8, p=(-0.04, 0.0), s=(0.005, 0.02),
+                                   'l' :reg.lg(mID='NEU_Levy_continuous_nav', N=8, loc=(-0.04, 0.0), s=(0.005, 0.02),
                                         ors=(-30.0, 30.0))},
             'chemorbit': {'env':'mid_odor_gaussian', 'dur':3.0, 'l' :reg.lg(mID='RE_NEU_PHI_DEF_nav', N=3)},
             'chemorbit_x3': {'env':'mid_odor_gaussian', 'dur':3.0,
@@ -123,7 +123,7 @@ def grouped_exp_dic():
             'reorientation': {'env': 'mid_odor_diffusion', 'l' :reg.lg(mID='immobile', N=200, s=0.05)},
             'food_at_bottom': {'dur':1.0,
                                        'l' :reg.lgs(mIDs=['RE_NEU_PHI_DEF_max_feeder', 'RE_NEU_PHI_DEF_max_forager'],
-                                             ids=['Orco', 'control'], N=5, sh='oval', p=(0.0, 0.04), s=(0.04, 0.01))}
+                                             ids=['Orco', 'control'], N=5, sh='oval', loc=(0.0, 0.04), s=(0.04, 0.01))}
         }
 
     d11 = {id: exp(id=id, c0=['olfactor', 'pose'],
@@ -259,7 +259,7 @@ def grouped_exp_dic():
 
         'games': {
             'maze': game_exp('maze',env= 'maze', c=['olfactor'],
-                             l=reg.lg(N=5, p=(-0.4 * 0.1, 0.0), ors=(-60.0, 60.0), mID='RE_NEU_PHI_DEF_nav')),
+                             l=reg.lg(N=5, loc=(-0.4 * 0.1, 0.0), ors=(-60.0, 60.0), mID='RE_NEU_PHI_DEF_nav')),
             'keep_the_flag': game_exp('keep_the_flag', env='game', l=game_groups(mode='king')),
             'capture_the_flag': game_exp('capture_the_flag', env='game', l=game_groups(mode='flag')),
             'catch_me': game_exp('catch_me',env= 'arena_50mm_diffusion', l=game_groups(mode='catch_me'))
