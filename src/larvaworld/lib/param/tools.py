@@ -62,20 +62,23 @@ def class_generator(A0, mode='Unit') :
         def from_entries(cls, entries):
             all_confs = []
             for gid, dic in entries.items():
-                A = cls(**dic)
-                gconf = aux.AttrDict(A.param.values())
+                Ainst = cls(**dic)
+                gconf = aux.AttrDict(Ainst.param.values())
                 gconf.pop('name')
-                if hasattr(A, 'distribution'):
+                # print(Ainst)
+                # print(Ainst.distribution)
+                # print(hasattr(Ainst, 'distribution'))
+                if hasattr(Ainst, 'distribution'):
 
-                    ids = [f'{gid}_{i}' for i in range(A.distribution.N)]
+                    ids = [f'{gid}_{i}' for i in range(Ainst.distribution.N)]
 
                     gconf.pop('distribution')
-
+                    gconf.group=gid
                     try :
-                        ps,ors=A.distribution()
+                        ps,ors=Ainst.distribution()
                         confs = [{'unique_id': id, 'pos': p, 'orientation': ori, **gconf} for id, p,ori in zip(ids, ps, ors)]
                     except:
-                        ps = A.distribution()
+                        ps = Ainst.distribution()
                         confs = [{'unique_id': id, 'pos': p, **gconf} for id, p in zip(ids, ps)]
                     all_confs += confs
                 else:

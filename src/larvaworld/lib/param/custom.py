@@ -313,16 +313,22 @@ class NestedConf(Parameterized):
         return d
 
     #@ property
-    def entry(self, id):
-        assert id is not None
+    def entry(self, id=None):
         d=self.nestedConf
         if 'distribution' in d.keys():
-            assert 'group' in d.keys()
-            d.group=id
-        else:
-            if 'unique_id' in d.keys():
-                d.unique_id = id
+            if 'group' in d.keys():
+                if id is not None:
+                    d.group=id
+                elif d.group is not None:
+                    id=d.group
+            if 'model' in d.keys():
+                if id is None:
+                    id=d.model
+        elif 'unique_id' in d.keys():
+            if id is None and d.unique_id is not None:
+                id=d.unique_id
                 d.pop('unique_id')
+        assert id is not None
         return {id:d}
 
     @property
