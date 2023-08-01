@@ -405,7 +405,7 @@ class ScreenManager(BaseScreenManager):
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
                 f.set_default_color(color)
         elif name == 'black_background':
-            for a in self.model.agents + self.model.sources + [self.sim_clock, self.sim_scale, self.sim_state] + list(
+            for a in self.model.get_all_objects() + [self.sim_clock, self.sim_scale, self.sim_state] + list(
                     self.screen_texts.values()):
                 a.invert_default_color()
         elif name == 'larva_collisions':
@@ -457,7 +457,6 @@ class ScreenManager(BaseScreenManager):
                     elif e.button in [4, 5]:
                         d_zoom = -d_zoom if e.button == 4 else d_zoom
                         self.v.zoom_screen(d_zoom, pos=self.v.mouse_position)
-                        # self.sim_scale.real_width = self.model.space.dims[0] * self.v.zoom
                         self.toggle(name='zoom', value=self.v.zoom)
         if self.focus_mode and len(self.selected_agents) > 0:
             try:
