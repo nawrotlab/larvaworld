@@ -130,7 +130,7 @@ class CatchMeCondition:
                 print(f'{group} group wins')
                 return True
         try:
-            env.sim_state.set_text(f'L:{np.round(env.score["Left"], 1)} vs R:{np.round(env.score["Right"], 1)}')
+            env.screen_manager.screen_items.state.set_text(f'L:{np.round(env.score["Left"], 1)} vs R:{np.round(env.score["Right"], 1)}')
         except:
             pass
         return False
@@ -164,7 +164,7 @@ class KeepFlagCondition:
                 print('Right group wins')
                 return True
         try :
-            env.sim_state.set_text(f'L:{np.round(dur - env.l_t, 2)} vs R:{np.round(dur - env.r_t, 2)}')
+            env.screen_manager.screen_items.state.set_text(f'L:{np.round(dur - env.l_t, 2)} vs R:{np.round(dur - env.r_t, 2)}')
         except:
             pass
         return False
@@ -202,7 +202,7 @@ class CaptureFlagCondition:
             print('Right group wins')
             return True
         try:
-            env.sim_state.set_text(f'L:{l_dst} vs R:{r_dst}')
+            env.screen_manager.screen_items.state.set_text(f'L:{l_dst} vs R:{r_dst}')
         except:
             pass
         return False

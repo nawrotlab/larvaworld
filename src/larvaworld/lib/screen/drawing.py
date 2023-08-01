@@ -244,10 +244,15 @@ class ScreenManager(BaseScreenManager):
             'reference_area':v,
             'default_color':'black',
         }
-        self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
-        self.sim_scale = screen.SimulationScale(**kws)
-        self.sim_state = screen.SimulationState(model=m,**kws)
-        self.screen_texts = {name: screen.ScreenMsgText(text=name, **kws) for name in [
+        self.screen_items = aux.AttrDict({
+            'clock': screen.SimulationClock(sim_step_in_sec=m.dt, **kws),
+            'scale': screen.SimulationScale(**kws),
+            'state': screen.SimulationState(model=m,**kws),
+        })
+        # self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
+        # self.sim_scale = screen.SimulationScale(**kws)
+        # self.sim_state = screen.SimulationState(model=m,**kws)
+        self.screen_texts = aux.AttrDict({name: screen.ScreenMsgText(text=name, **kws) for name in [
             'trail_dt',
             'trail_color',
             'visible_trails',
@@ -274,7 +279,7 @@ class ScreenManager(BaseScreenManager):
             'windscape',
             'is_paused',
         ] + list(m.odor_layers.keys())
-                             }
+                              })
 
 
 
@@ -283,7 +288,7 @@ class ScreenManager(BaseScreenManager):
         self.check()
         if self.active :
 
-            self.sim_clock.tick_clock()
+            self.screen_items.clock.tick_clock()
             if self.mode == 'video':
                 if self.image_mode != 'snapshots' or self.snapshot_tick:
                     self.render()
@@ -323,18 +328,12 @@ class ScreenManager(BaseScreenManager):
 
     def draw_aux(self, v, **kwargs):
         v.draw_arena(self.tank_color, self.screen_color)
-        self.sim_clock._draw(v)
-        self.sim_scale._draw(v)
-        self.sim_state._draw(v)
-        self.draw_screen_texts(v)
-
-    def draw_screen_texts(self, v):
+        for t in list(self.screen_items.values()):
+            t._draw(v)
         for t in list(self.screen_texts.values()) + [self.input_box]:
-            if t and t.start_time < pygame.time.get_ticks() < t.end_time:
-                t.visible = True
-                t.draw(v)
-            else:
-                t.visible = False
+            t.visible = t.start_time < pygame.time.get_ticks() < t.end_time
+            t._draw(v)
+
 
     def draw_arena(self, v):
         m = self.model
@@ -405,7 +404,8 @@ class ScreenManager(BaseScreenManager):
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
                 f.set_default_color(color)
         elif name == 'black_background':
-            for a in self.model.get_all_objects() + [self.sim_clock, self.sim_scale, self.sim_state] + list(
+            for a in self.model.get_all_objects() + list(
+                    self.screen_items.values()) + list(
                     self.screen_texts.values()):
                 a.invert_default_color()
         elif name == 'larva_collisions':
@@ -478,14 +478,14 @@ class ScreenManager(BaseScreenManager):
             #         f.set_color(f.default_color)
             self.toggle(k, 'ON' if temp else 'OFF', disp='IDs')
         elif k == 'visible_clock':
-            self.sim_clock.toggle_vis()
-            self.toggle(k,'ON' if self.sim_clock.visible else 'OFF', disp='clock')
+            self.screen_items.clock.toggle_vis()
+            self.toggle(k,'ON' if self.screen_items.clock.visible else 'OFF', disp='clock')
         elif k == 'visible_scale':
-            self.sim_scale.toggle_vis()
-            self.toggle(k, 'ON' if self.sim_scale.visible else 'OFF', disp='scale')
+            self.screen_items.scale.toggle_vis()
+            self.toggle(k, 'ON' if self.screen_items.scale.visible else 'OFF', disp='scale')
         elif k == 'visible_state':
-            self.sim_state.toggle_vis()
-            self.toggle(k, 'ON' if self.sim_state.visible else 'OFF', disp='state')
+            self.screen_items.state.toggle_vis()
+            self.toggle(k, 'ON' if self.screen_items.state.visible else 'OFF', disp='state')
         elif k == '▲ trail duration':
             self.toggle('trail_dt', plus=True, disp='trail duration')
         elif k == '▼ trail duration':
