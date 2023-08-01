@@ -45,8 +45,11 @@ class PointAgent(RadiallyExtended,NonSpatialAgent):
                 v.draw_circle(p, r * 1.5, c, False, r / 10)
                 v.draw_circle(p, r * 2.0, c, False, r / 15)
                 v.draw_circle(p, r * 3.0, c, False, r / 20)
-        if self.selected:
-            v.draw_circle(p, r * 1.1, v.manager.selection_color, False, r / 5)
+
+
+    def draw_selected(self, v, **kwargs):
+        p, c, r = self.get_position(), self.color, self.radius
+        v.draw_circle(p, r * 0.5, v.manager.selection_color, False, r / 5)
 
 
 class OrientedAgent(OrientedPoint,PointAgent):

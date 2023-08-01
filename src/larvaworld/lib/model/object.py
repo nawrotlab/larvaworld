@@ -117,7 +117,7 @@ class NamedObject(Named, Object):
         Object.__init__(self, model=model)
         if self.unique_id is not None:
             self.id = self.unique_id
-        self.selected = False
+
 
 
 class GroupedObject(NamedObject):

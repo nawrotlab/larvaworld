@@ -226,10 +226,12 @@ class ScreenWindowAreaBasic(Area2DPixel):
         try:
             return self._transform(pos)
         except:
-            X, Y = np.array(self.space.dims) * self.scaling_factor
+            s = self.scaling_factor
+            rw, rh = self.w / self.space.w, self.h / self.space.h
+            # X, Y = np.array(self.space.dims) * self.scaling_factor
 
-            p = pos[0] * 2 / X, pos[1] * 2 / Y
-            pp = ((p[0] + 1) * self.w / 2, (-p[1] + 1) * self.h)
+            # p = pos[0] * 2 / self.space.w/s, pos[1] * 2 / self.space.h/s
+            pp = (pos[0] /s* rw + self.w / 2, -pos[1] * 2 /s* rh + self.h)
             return pp
 
     def get_rect_at_pos(self, pos=(0,0), convert2screen_pos=True):
@@ -293,16 +295,6 @@ class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
         if self.zoom == 1.0:
             self.center = np.array([0.0, 0.0])
 
-    # @param.depends('zoom', watch=True)
-    # def update_scale(self):
-    #     def closest(lst, k):
-    #         return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
-    #
-    #     # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
-    #     self.scale_in_mm = closest(
-    #         lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=self.space.w * self.zoom* 100)
-    #     # self.text_font.set_text(f'{self.scale_in_mm} mm')
-    #     # self.lines = self.compute_lines(self.x, self.y, self.scale_in_mm / self.zoom /1000)
 
 
 

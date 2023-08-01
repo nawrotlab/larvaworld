@@ -546,6 +546,8 @@ class IDBox(ScreenTextFont, ViewableToggleable):
 
 
 class LabelledGroupedObject(Viewable,GroupedObject):
+    selected = param.Boolean(False, doc='Whether the entity is selected or not')
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.id_box = IDBox(agent=self)
@@ -555,8 +557,13 @@ class LabelledGroupedObject(Viewable,GroupedObject):
             self.draw(v,**kwargs)
             if self.id_box.visible:
                 self.id_box.draw(v)
+            if self.selected:
+                # raise
+                self.draw_selected(v, **kwargs)
 
 
+    def draw_selected(self, v, **kwargs):
+        pass
 
 
 
@@ -575,7 +582,7 @@ class ScreenMsgText(ScreenTextFontRel, Viewable):
 
     def __init__(self,reference_area, **kwargs):
         reference_object = PosPixelRel2Area(reference_area=reference_area,
-                                            pos_scale=(0.85, 0.1))
+                                            pos_scale=(0.95, 0.1))
         super().__init__(reference_object=reference_object,**kwargs)
 
 

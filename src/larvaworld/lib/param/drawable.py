@@ -19,6 +19,7 @@ class Viewable(NestedConf) :
 
     default_color = RandomizedColor(default='black', doc='The default color of the entity',instantiate=True)
     visible = param.Boolean(True, doc='Whether the entity is visible or not')
+    selected = param.Boolean(False, doc='Whether the entity is selected or not')
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -39,6 +40,13 @@ class Viewable(NestedConf) :
     def _draw(self,v,**kwargs):
         if self.visible :
             self.draw(v,**kwargs)
+            # if self.selected:
+                # raise
+                # self.draw_selected(v, **kwargs)
+
+
+    # def draw_selected(self, v, **kwargs):
+    #     pass
 
     def draw(self, v, **kwargs):
         pass

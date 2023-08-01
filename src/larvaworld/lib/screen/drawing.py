@@ -162,6 +162,10 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
     def tank_color(self):
         return aux.Color.WHITE if not self.black_background else aux.Color.BLACK
 
+    @property
+    def snapshot_tick(self):
+        return (self.model.Nticks - 1) % self.snapshot_interval == 0
+
 class GA_ScreenManager(BaseScreenManager):
     def __init__(self, panel_width=600,scene='no_boxes',**kwargs):
         super().__init__(black_background=True,panel_width=panel_width,**kwargs)
@@ -416,9 +420,7 @@ class ScreenManager(BaseScreenManager):
 
 
 
-    @property
-    def snapshot_tick(self):
-        return (self.model.Nticks - 1) % self.snapshot_interval == 0
+
 
 
     def evaluate_input(self):
@@ -442,10 +444,10 @@ class ScreenManager(BaseScreenManager):
                     self.toggle(name='zoom', value=self.v.zoom)
                 elif e.type == pygame.MOUSEBUTTONUP:
                     if e.button == 1:
-                        # if not self.eval_selection(p, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
+                        if not self.eval_selection(p=self.v.mouse_position, ctrl=pygame.key.get_mods() & pygame.KMOD_CTRL):
                         #     self.model.add_agent(agent_class=self.selected_type, p0=tuple(p),
                         #                 p1=tuple(self.mousebuttondown_pos))
-                        pass
+                            pass
 
                     elif e.button == 3:
                         from larvaworld.gui.gui_aux.windows import set_agent_kwargs, object_menu
@@ -462,6 +464,7 @@ class ScreenManager(BaseScreenManager):
                 self.v.move_center(pos=sel.get_position())
             except:
                 pass
+        # print(self.selected_agents)
 
     def eval_keypress(self, k):
 
