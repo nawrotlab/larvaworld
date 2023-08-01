@@ -1,5 +1,6 @@
 import agentpy
 import numpy as np
+from shapely import geometry
 from shapely.geometry import Point,Polygon
 
 from larvaworld.lib import aux
@@ -74,6 +75,9 @@ class Arena(ViewableNamedBoundedArea, agentpy.Space):
         else:
             dic={a: dic['sources'][0] if dic['dsts'][0]<=a.radius else None for a, dic in self.accessible_sources_sorted.items()}
         self.accessible_sources = dic
+
+    def in_arena(self, p):
+        return self.polygon.contains(geometry.Point(p))
 
     def draw(self, v=None):
         import matplotlib.pyplot as plt

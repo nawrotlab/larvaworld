@@ -57,9 +57,57 @@ def get_tank_polygon(c, k=0.97, return_polygon=True):
         return tank_shape
 
 
+def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1):
+    def get_hf0(ang_vel):
+        return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))
 
 
-def position_head_in_tank(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
+
+    def fov(ang_vel):
+        dv=8*np.pi / 90
+        idx=0
+        while not inside_polygon([get_hf0(ang_vel)], tank):
+            if idx == 0:
+                dv *= np.sign(ang_vel)
+            ang_vel -= dv
+            if ang_vel < fov0:
+                ang_vel = fov0
+                dv = np.abs(dv)
+            elif ang_vel > fov1:
+                ang_vel = fov1
+                dv -= np.abs(dv)
+            idx += 1
+            if np.isnan(ang_vel) or idx > 100:
+                ang_vel = 0
+                break
+        return ang_vel
+
+    ang_vel=fov(ang_vel)
+
+    ho1 = ho0 + ang_vel * dt
+    k = np.array([math.cos(ho1), math.sin(ho1)])
+    hf01 = get_hf0(ang_vel)
+
+    def get_hf1(lin_vel):
+        return hf01 + dt * sf * k * lin_vel
+    def lv(lin_vel):
+        dv = 0.00011
+        idx = 0
+        while not inside_polygon([get_hf1(lin_vel)], tank):
+            idx += 1
+            lin_vel -= dv
+            if np.isnan(lin_vel) or lin_vel < 0 or idx > 100:
+                lin_vel =0
+                break
+        return lin_vel
+
+    lin_vel=lv(lin_vel)
+    d = lin_vel * dt
+    hp1 = hr0 + k * (d * sf + l0 / 2)
+    return d, ang_vel, lin_vel, hp1, ho1
+
+
+def position_head_in_tank2(hr0, ho0, l0, fov0,fov1, ang_vel, lin_vel, dt, tank, sf=1, go_err =0, turn_err =0):
     # hf0 = hr0 + np.array([math.cos(ho0), math.sin(ho0)]) * l0
     def get_hf0(ang_vel):
         return tuple(np.array(hr0) + np.array([l0,0]) @ aux.rotationMatrix(-ho0-ang_vel * dt))

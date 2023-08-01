@@ -308,7 +308,7 @@ lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id
 
 def sim_single_agent(m, Nticks=1000, dt=0.1, df_columns=None, p0=None, fo0=None):
     from larvaworld.lib.model.modules.locomotor import DefaultLocomotor
-    from larvaworld.lib.model.agents.segmented_body import BaseController
+    from larvaworld.lib.model.agents._larva_sim import BaseController
     if fo0 is None :
         fo0=0.0
     if p0 is None :
