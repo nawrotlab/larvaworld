@@ -6,7 +6,7 @@ import param
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
-    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps
+    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch
 
 
 class ConfType(param.Parameterized) :
@@ -274,6 +274,8 @@ gen=aux.AttrDict({
     'Arena':class_generator(Area),
     'Border':class_generator(Border),
     'Odor':class_generator(Odor),
+    'Epoch':class_generator(Epoch),
+    'Life':class_generator(Life),
     'Substrate':class_generator(Substrate),
     'FoodGrid':class_generator(FoodGrid),
     'WindScape':class_generator(WindScape),
@@ -418,9 +420,10 @@ class LarvaGroup(NestedConf):
 gen.Env=class_generator(EnvConf)
 
 class ExpConf(SimOps):
-    env_params = conf.Env.confIDorNew()
+    env_params = ClassAttr(gen.Env, doc='The environment configuration')
+    # env_params = conf.Env.confIDorNew()
     # env_params = conf.Env.confID_selector()
-    # experiment = conf.Exp.confID_selector()
+    experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
     larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')

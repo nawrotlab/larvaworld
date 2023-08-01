@@ -30,8 +30,8 @@ class Essay:
         self.results = {}
 
     def conf(self, exp, id, dur, lgs, env, **kwargs):
-        sim = reg.get_null('sim_params', duration=dur)
-        return reg.get_null('Exp', sim_params=sim, env_params=env, trials={},
+        # sim = reg.get_null('sim_params', duration=dur)
+        return reg.gen.Exp(duration=dur, env_params=env,
                              larva_groups=lgs, experiment=exp, enrichment=self.enrichment,
                              collections=self.collections, **kwargs)
 
@@ -89,11 +89,10 @@ class RvsS_Essay(Essay):
         self.mdiff_df, row_colors = reg.model.diff_df(mIDs=['rover', 'sitter'])
 
     def RvsS_env(self, on_food=True):
-        grid = reg.get_null('food_grid') if on_food else None
-        return reg.get_null('Env',
-                             arena=reg.get_null('arena', shape='rectangular', dims=(0.02, 0.02)),
-                             food_params=reg.get_null('food_params', food_grid=grid),
-                             )
+        grid = reg.gen.FoodGrid() if on_food else None
+        return reg.gen.Env(arena=reg.gen.Arena(geometry='rectangular', dims=(0.02, 0.02)),
+                             food_params=reg.gen.FoodConf(food_grid=grid),
+                             ).nestedConf
 
     def GTRvsS(self, **kwargs):
         return reg.GTRvsS(expand=True, N=self.N, **kwargs)
@@ -359,56 +358,69 @@ class DoublePatch_Essay(Essay):
     def get_larvagroups(self,age=120.0):
 
 
-        kws0 = {
-            'kwdic': {
-                'distribution': {'N': self.N, 'scale': (0.005, 0.005)},
-                'life_history': {'age': age, 'epochs': reg.stored.group.epoch.entry(0, start=0.0, stop=age)},
-                'odor': {}
-            },
-            'sample': 'None.150controls',
-        }
+        kws0 = {'N': self.N, 's': (0.005, 0.005),'sample': 'exploration.150controls',
+                'age': age,'epochs': {'0': reg.gen.Epoch(age_range=(0.0, age)).nestedConf}}
 
-        return aux.AttrDict({
-            mID0: reg.stored.group.LarvaGroup.gConf(default_color=mcol,
-                                                    model=reg.conf.Model.getID(mID),
-                                                    # model=self.CT.dict.Model.loadConf(mID),
-                                                    **kws0)
+        return reg.lgs(mIDs=self.mIDs,ids=['rover', 'sitter'],  cs=['blue', 'red'],**kws0)
 
-            for mID0,mID, mcol in zip(['rover', 'sitter'],self.mIDs, ['blue', 'red'])
-        })
+    # def get_sources(self, type='standard', q=1.0, Cpeak=2.0, Cscale=0.0002):
+    #
+    #     kws0 = {'radius': self.patch_radius, 'default_color': 'green', 'amount': 0.1,
+    #             'type': type, 'quality': q, 'group': 'Patch',
+    #             'odor': {'id': 'Odor', 'intensity': Cpeak, 'spread': Cscale}
+    #
+    #             }
+    #
+    #     return aux.AttrDict({
+    #         'Left_patch': reg.stored.conf.Food.gConf(pos=(-self.patch_x, 0.0), **kws0),
+    #         'Right_patch': reg.stored.conf.Food.gConf(pos=(self.patch_x, 0.0), **kws0),
+    #
+    #     })
 
     def get_sources(self, type='standard', q=1.0, Cpeak=2.0, Cscale=0.0002):
 
-        kws0 = {'radius': self.patch_radius, 'default_color': 'green', 'amount': 0.1,
-                'type': type, 'quality': q, 'group': 'Patch',
-                'odor': {'id': 'Odor', 'intensity': Cpeak, 'spread': Cscale}
+        kws0 = {'r': self.patch_radius, 'c': 'green', 'a': 0.1,
+                'sub': [q,type], 'group': 'Patch',
+                'o': ['Odor',Cpeak,Cscale]
 
                 }
 
         return aux.AttrDict({
-            'Left_patch': reg.stored.conf.Food.gConf(pos=(-self.patch_x, 0.0), **kws0),
-            'Right_patch': reg.stored.conf.Food.gConf(pos=(self.patch_x, 0.0), **kws0),
+            **reg.gen.Food(pos=(-self.patch_x, 0.0), **kws0).entry('Left_patch'),
+            **reg.gen.Food(pos=(self.patch_x, 0.0), **kws0).entry('Right_patch')
 
         })
 
-
-
     def patch_env(self, type='standard', q=1.0, o='G'):
         if o == 'G':
-            odorscape = {'odorscape': 'Gaussian'}
+            odorscape = reg.gen.GaussianValueLayer()
             Cpeak, Cscale = 2.0, 0.0002
         else:
             raise
 
-        kws = {'kwdic': {
-            'arena': {'dims': self.arena_dims, 'shape': 'rectangular'},
-            'food_params': {'source_units': self.get_sources(type=type, q=q, Cpeak=Cpeak, Cscale=Cscale),
-                            'source_groups': {}, 'food_grid': None},
-        }, 'odorscape': odorscape, 'border_list': {}, 'windscape': None, 'thermoscape': None,
-
+        kws = {'arena': reg.gen.Arena(dims=self.arena_dims,geometry='rectangular'),
+            'food_params': reg.gen.FoodConf(source_units=self.get_sources(type=type, q=q, Cpeak=Cpeak, Cscale=Cscale)),
+        'odorscape': odorscape
         }
 
-        return reg.stored.conf.Env.gConf(**kws)
+        return reg.gen.Env(**kws)
+
+    # def patch_env(self, type='standard', q=1.0, o='G'):
+    #     if o == 'G':
+    #         odorscape = {'odorscape': 'Gaussian'}
+    #         Cpeak, Cscale = 2.0, 0.0002
+    #     else:
+    #         raise
+    #
+    #     kws = {'kwdic': {
+    #         'arena': {'dims': self.arena_dims, 'shape': 'rectangular'},
+    #         'food_params': {'source_units': self.get_sources(type=type, q=q, Cpeak=Cpeak, Cscale=Cscale),
+    #                         'source_groups': {}, 'food_grid': None},
+    #     }, 'odorscape': odorscape, 'border_list': {}, 'windscape': None, 'thermoscape': None,
+    #
+    #     }
+    #
+    #     return reg.stored.conf.Env.gConf(**kws)
 
     def time_ratio_exp(self):
 
@@ -416,23 +428,18 @@ class DoublePatch_Essay(Essay):
         # exp = 'double_patch'
         confs = {}
         for n in self.substrates:
-            kws = {'kwdic': {
-                'sim_params': {'duration': self.dur, 'path': self.path, 'sim_ID': f'{self.type}_{n}_{self.dur}min',
-                               'store_data': True},
-                # 'enrichment': {'processing': {n: True for n in ['angular', 'spatial', 'source', 'dispersion']},
-                #                'annotation': {n: True for n in ['stride', 'on_food']}, 'to_drop': None},
-                # 'food_params' : {'source_units':patches, 'source_groups':{}, 'food_grid': None},
-            },
+            kws = {
+                'duration': self.dur,
                 'env_params': self.patch_env(type=n),
                 'larva_groups': self.get_larvagroups(),
                 'experiment': 'double_patch',
-                'trials': {},
+                #'trials': {},
                 'collections': self.collections,
                 'enrichment': self.enrichment
 
             }
 
-            confs[n]=[aux.AttrDict(reg.stored.conf.Exp.gConf(**kws))]
+            confs[n]=[reg.gen.Exp(**kws).nestedConf]
         return aux.AttrDict(confs)
 
 
@@ -681,7 +688,8 @@ def Essay_dict():
         # 'roversVSsitters': rover_sitter_essay,
         # 'RvsS_essay': {}
     }
-    for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
+    for E in [DoublePatch_Essay]:
+    # for E in [RvsS_Essay,DoublePatch_Essay,Chemotaxis_Essay]:
         e=E()
         d[e.type]=e.exp_dict
     return aux.AttrDict(d)

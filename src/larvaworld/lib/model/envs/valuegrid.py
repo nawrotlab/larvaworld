@@ -223,7 +223,7 @@ class FoodGrid(ValueGrid):
     default_color = param.Color(default='green')
     fixed_max = param.Boolean(default=True)
     initial_value = param.Number(10**-6)
-    substrate = ClassAttr(Substrate, doc='The substrate where the agent feeds')
+    substrate = ClassAttr(Substrate,default=Substrate(type='standard'), doc='The substrate where the agent feeds')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

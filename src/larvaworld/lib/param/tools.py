@@ -80,7 +80,7 @@ def class_generator(A0, mode='Unit') :
             return mode
 
     A.__name__=f'{A0.__name__}{mode}'
-    invalid = ['name', 'closed', 'visible']
+    invalid = ['name', 'closed', 'visible', 'selected', 'centered']
     if mode=='Group':
         if not 'pos' in A0.param.objects():
             raise ValueError (f'No Group distribution for class {A0.__name__}. Change mode to Unit')

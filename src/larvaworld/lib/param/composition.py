@@ -37,15 +37,21 @@ compound_dict = aux.AttrDict(
 all_compounds = [a for a in list(compound_dict.keys()) if a not in ['water']]
 nutritious_compounds = [a for a in list(compound_dict.keys()) if a not in ['water', 'agar']]
 
+# class Composition(param.Dict):
+#     def __init__(self, default=aux.AttrDict({k : 0.0 for k in all_compounds}),**params):
+#         param.Dict.__init__(self,default=default, **params)
 
 
 class Substrate(NestedConf):
     composition=param.Dict({k : 0.0 for k in all_compounds},doc='The substrate composition')
     quality = param.Magnitude(1.0,doc='The substrate quality as percentage of nutrients relative to the intact substrate type')
 
-    def __init__(self,**kwargs):
-        composition={k : kwargs[k] if k in kwargs.keys() else 0.0 for k in all_compounds}
-        super().__init__(composition=composition)
+    def __init__(self,quality =1.0,type=None,**kwargs):
+        if type is not None and type in substrate_dict.keys():
+            composition =substrate_dict[type].composition
+        else :
+            composition={k : kwargs[k] if k in kwargs.keys() else 0.0 for k in all_compounds}
+        super().__init__(composition=composition,quality =quality)
         self.d_water = 1
         self.d_yeast_drop = 0.125  # g/cm**3 https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwi3iaeqipLxAhVPyYUKHTmpCqMQFjAAegQIAxAD&url=https%3A%2F%2Fwww.mdpi.com%2F2077-0375%2F11%2F3%2F182%2Fpdf&usg=AOvVaw1qDlMHxBPu73W8B1vZWn76
         self.V_drop = 0.05  # cm**3
@@ -149,7 +155,7 @@ class Odor(NestedConf):
 
 class Epoch(NestedConf):
     age_range = OptionalPositiveRange((0.0, None),softmax=100.0, hardmax=250.0, doc='The beginning and end of the epoch in hours post-hatch.')
-    substrate = ClassAttr(Substrate, doc='The substrate of the epoch')
+    substrate = ClassAttr(Substrate,default=Substrate(type='standard'), doc='The substrate of the epoch')
 
 
 
