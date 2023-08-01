@@ -2,7 +2,7 @@ import param
 
 from larvaworld.lib import aux
 from larvaworld.lib.param import NestedConf, Named, RadiallyExtended, BoundedArea, LineExtended, LineClosed, \
-    RandomizedColor
+    RandomizedColor, Grid
 
 
 class Viewable(NestedConf) :
@@ -104,6 +104,8 @@ class Contour(Viewable,LineClosed):
 
 
 class ViewableNamedBoundedArea(Viewable,BoundedArea,Named): pass
+
+class ViewableNamedGrid(Viewable,Grid,Named): pass
 
 class ViewableCircle(Viewable,RadiallyExtended):
 

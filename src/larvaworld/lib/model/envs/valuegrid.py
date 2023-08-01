@@ -8,16 +8,13 @@ from shapely import geometry
 
 from larvaworld.lib import aux
 from larvaworld.lib.model import NamedObject
-from larvaworld.lib.param import Substrate, ViewableNamed, PositiveIntegerRange, ClassAttr, \
-    PositiveNumber, Phase, Viewable
+from larvaworld.lib.param import Substrate, ClassAttr, PositiveNumber, Phase, Viewable, Grid, ViewableNamedGrid
 from larvaworld.lib.screen.rendering import ScreenTextBox
 
 
 class SpatialEntity(Viewable,NamedObject):
     default_color = param.Color(default='white')
     visible = param.Boolean(default=False)
-    # def __init__(self, visible=False,default_color='white', **kwargs):
-    #     super().__init__(visible=visible,default_color=default_color,**kwargs)
 
     def record_positions(self, label='p'):
         """ Records the positions of each agent.
@@ -31,19 +28,19 @@ class SpatialEntity(Viewable,NamedObject):
             for i, p in enumerate(pos):
                 agent.record(label+str(i), p)
 
-class GridOverSpace(ViewableNamed, agentpy.Grid):
+class GridOverSpace(ViewableNamedGrid, agentpy.Grid):
     unique_id = param.String('GridOverArena')
     default_color = param.Color(default='white')
     visible = param.Boolean(default=False)
     # initial_value = param.Number(0.0, doc='initial value over the grid')
     # fixed_max = param.Boolean(False, doc='whether the max is kept constant')
-    grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
+    # grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
     def __init__(self,model,**kwargs):
-        ViewableNamed.__init__(self,**kwargs)
+        ViewableNamedGrid.__init__(self,**kwargs)
         agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
         self._torus = self.space._torus
-        self.X, self.Y = self.XY = np.array(self.grid_dims)
+        self.XY = np.array(self.grid_dims)
         self.xy = np.array(self.space.dims)
         x0, x1, y0, y1 = self.space.range
 
@@ -73,11 +70,11 @@ class GridOverSpace(ViewableNamed, agentpy.Grid):
                       (x * (i + 1 - X), y * (j + 1 - Y)),
                       (x * (i - X), y * (j + 1 - Y))])
 
-class ValueGrid(SpatialEntity):
+class ValueGrid(SpatialEntity, Grid):
     initial_value = param.Number(0.0, doc='initial value over the grid')
 
     fixed_max = param.Boolean(False,doc='whether the max is kept constant')
-    grid_dims = PositiveIntegerRange((51, 51),softmax=500, doc='The spatial resolution of the food grid.')
+    # grid_dims = PositiveIntegerRange((51, 51),softmax=500, doc='The spatial resolution of the food grid.')
 
 
     def __init__(self, sources=None, max_value=None, min_value=0.0, **kwargs):
@@ -86,7 +83,7 @@ class ValueGrid(SpatialEntity):
         if sources is None:
             sources = []
         self.sources = sources
-        self.X, self.Y =self.XY0=np.array(self.grid_dims)
+        self.XY0=np.array(self.grid_dims)
         self.grid = np.ones(self.grid_dims) * self.initial_value
 
         if max_value is None:

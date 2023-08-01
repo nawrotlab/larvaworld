@@ -57,6 +57,19 @@ class DefaultLocomotor(Locomotor):
                 M = None
             setattr(self, k, M)
 
+    @property
+    def stride_completed(self):
+        if self.crawler :
+            return self.crawler.complete_iteration
+        else:
+            return False
+
+    @property
+    def feed_motion(self):
+        if self.feeder:
+            return self.feeder.complete_iteration
+        else:
+            return False
 
 
     def step(self, A_in=0, length=1, on_food=False):
@@ -64,20 +77,16 @@ class DefaultLocomotor(Locomotor):
         if If:
             If.cur_attenuation=1
         if F :
-            feed_motion = F.step()
+            F.step()
             if F.active and If:
                 If.check_feeder(F)
-        else :
-            feed_motion = False
         if C :
             lin = C.step() * length
-            stride_completed=C.complete_iteration
             if C.active and If:
                 If.check_crawler(C)
         else:
             lin =  0
-            stride_completed = False
-        self.step_intermitter(stride_completed=stride_completed,feed_motion=feed_motion, on_food=on_food)
+        self.step_intermitter(stride_completed=self.stride_completed,feed_motion=self.feed_motion, on_food=on_food)
 
         if T :
             if If:
@@ -89,4 +98,4 @@ class DefaultLocomotor(Locomotor):
         else:
             ang = 0
 
-        return lin, ang, feed_motion
+        return lin, ang, self.feed_motion

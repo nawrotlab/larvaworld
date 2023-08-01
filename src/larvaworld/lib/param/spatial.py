@@ -335,6 +335,14 @@ class BoundedArea(Area, LineClosed):
 class Grid(NestedConf):
     grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
+    @property
+    def X(self):
+        return self.grid_dims[0]
+
+    @property
+    def Y(self):
+        return self.grid_dims[1]
+
 
 class PosPixelRel2Point(Pos2DPixel):
     reference_point = param.ClassSelector(Pos2DPixel, doc='The reference position instance', is_instance=False)

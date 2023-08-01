@@ -17,7 +17,7 @@ class Feeder(Oscillator):
         self.complete_iteration=False
         if self.active :
             self.oscillate()
-        return self.complete_iteration
+        # return self.complete_iteration
 
     def suppresion_relief(self, phi_range):
         return self.phi_in_range(phi_range)
