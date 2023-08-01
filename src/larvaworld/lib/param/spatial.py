@@ -265,13 +265,15 @@ class ScreenWindowAreaZoomable(ScreenWindowAreaBasic):
 
     @param.depends('zoom', 'center', watch=True)
     def set_bounds(self):
-        left, right, bottom, top=self.space.range * self.scaling_factor
-        assert right > left and top > bottom
-        x = self.display_size[0] / (right - left)
-        y = self.display_size[1] / (top - bottom)
-        self._scale = np.array([[x, .0], [.0, -y]])
-        self._translation = np.array([(-left * self.zoom) * x, (-bottom * self.zoom) * y]) + self.center * [-x, y]
-        self.center_lim = (1 - self.zoom) * np.array([left, bottom])
+        s,z=self.scaling_factor, self.zoom
+        rw,rh=self.w/ self.space.w,self.h/ self.space.h
+        # left, right, bottom, top=self.space.range * s
+        # assert right > left and top > bottom
+        # x = int(self.w/ z) / (self.space.w* s)
+        # y = int(self.h/ z) / (self.space.h* s)
+        self._scale = np.array([[rw, .0], [.0, -rh]])/ z/ s
+        self._translation = np.array(self.dims)/2 + self.center/ z/ s * [-rw, rh]
+        self.center_lim = (z-1) *s* np.array(self.space.dims)/2
 
     def _transform(self, position):
         return np.round(self._scale.dot(position) + self._translation).astype(int)
