@@ -178,7 +178,7 @@ class ScreenWindowAreaBackground(ScreenWindowAreaPygame):
 
 
 class Viewer(ScreenWindowAreaBackground):
-    def __init__(self, manager,  record_video_to=None, record_image_to=None, **kwargs):
+    def __init__(self, manager, **kwargs):
         self.manager = manager
         m=manager.model
         super().__init__(
@@ -192,17 +192,15 @@ class Viewer(ScreenWindowAreaBackground):
         self.snapshot_requested=None
         self.objects = []
 
-
-        if record_video_to:
-            self._video_writer = imageio.get_writer(record_video_to, mode='I', fps=self._fps)
+        if self.manager.save_video:
+            self.vid_writer = imageio.get_writer(f'{m.dir}/{self.manager.video_file}.mp4', mode='I', fps=self._fps)
         else:
-            self._video_writer = None
+            self.vid_writer = None
 
-        if record_image_to:
-
-            self._image_writer = imageio.get_writer(record_image_to, mode='i')
+        if self.manager.image_mode:
+            self.img_writer = imageio.get_writer(f'{m.dir}/{self.manager.image_file}.png', mode='i')
         else:
-            self._image_writer = None
+            self.img_writer = None
 
 
     def increase_fps(self):
@@ -238,14 +236,14 @@ class Viewer(ScreenWindowAreaBackground):
             self._t.tick(self._fps)
         else:
             image = pygame.surfarray.array3d(self._window)
-        if self._video_writer:
-            self._video_writer.append_data(np.flipud(np.rot90(image)))
+        if self.vid_writer:
+            self.vid_writer.append_data(np.flipud(np.rot90(image)))
         if self.snapshot_requested :
-            self._image_writer = imageio.get_writer(f'{self.caption}_at_{self.snapshot_requested}_sec.png', mode='i')
+            self.img_writer = imageio.get_writer(f'{self.caption}_at_{self.snapshot_requested}_sec.png', mode='i')
             self.snapshot_requested=None
-        if self._image_writer:
-            self._image_writer.append_data(np.flipud(np.rot90(image)))
-            self._image_writer = None
+        if self.img_writer:
+            self.img_writer.append_data(np.flipud(np.rot90(image)))
+            self.img_writer = None
 
 
         return image
@@ -258,10 +256,10 @@ class Viewer(ScreenWindowAreaBackground):
 
     def close(self):
         pygame.display.quit()
-        if self._video_writer:
-            self._video_writer.close()
-        if self._image_writer:
-            self._image_writer.close()
+        if self.vid_writer:
+            self.vid_writer.close()
+        if self.img_writer:
+            self.img_writer.close()
         del self
 
         print('Screen closed')

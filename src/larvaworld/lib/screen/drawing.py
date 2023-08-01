@@ -59,6 +59,10 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
         super().__init__(dims=aux.get_window_dims(m.space.dims), **kwargs)
         if self.model.offline:
             self.show_display = False
+        if self.video_file is None:
+            self.video_file = str(m.id)
+        if self.image_file is None:
+            self.image_file = f'{str(m.id)}_{self.image_mode}'
         self._fps= int(self.fps / m.dt)
         if vis_kwargs is not None:
             self.mode=vis_kwargs.render.mode
@@ -209,19 +213,8 @@ class ScreenManager(BaseScreenManager):
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
-        f = self.model.dir
-
         self.screen_kws.caption = str(self.model.id)
-        if self.save_video:
-            os.makedirs(f, exist_ok=True)
-            if self.video_file is None:
-                self.video_file = str(self.model.id)
-            self.screen_kws.record_video_to = f'{f}/{self.video_file}.mp4'
-        if self.image_mode:
-            os.makedirs(f, exist_ok=True)
-            if self.image_file is None:
-                self.image_file = str(self.model.id)
-            self.screen_kws.record_image_to = f'{f}/{self.image_file}_{self.image_mode}.png'
+
 
 
 
@@ -229,8 +222,6 @@ class ScreenManager(BaseScreenManager):
 
         v = screen.Viewer(**self.screen_kws)
         self.build_aux(v)
-        # self.display_configuration(v)
-        # self.set_background(*v.display_dims)
 
         self.draw_arena(v)
 
@@ -249,17 +240,10 @@ class ScreenManager(BaseScreenManager):
         )
         if self.intro_text:
             box = screen.ScreenTextBoxRect(
-                text=self.model.configuration_text,
+                text=m.configuration_text,
                 text_color='lightgreen', default_color='white',
                 visible=True, frame_rect=v.get_rect_at_pos(),
                 font_type="comicsansms", font_size=30)
-            # box = screen.ScreenTextBox(
-            #                text=self.model.configuration_text,
-            #                text_color='black',default_color='white',
-            #                visible=True,fullscreen=True,display_area=v,
-            #                font_type = "comicsansms",font_size = 32 * 2)
-
-            # for i in range(10000):
             box.draw(v)
             v.render()
             pygame.time.wait(2000)
@@ -349,46 +333,44 @@ class ScreenManager(BaseScreenManager):
 
     def draw_aux(self, v, **kwargs):
         v.draw_arena(self.tank_color, self.screen_color)
-        if self.visible_clock:
-            self.sim_clock.draw(v)
-        if self.visible_scale:
-            self.sim_scale.draw(v)
-        if self.visible_state:
-            self.sim_state.draw(v)
+        self.sim_clock._draw(v)
+        self.sim_scale._draw(v)
+        self.sim_state._draw(v)
         self.draw_screen_texts(v)
 
     def draw_screen_texts(self, v):
-        for text in list(self.screen_texts.values()) + [self.input_box]:
-            if text and text.start_time < pygame.time.get_ticks() < text.end_time:
-                text.visible = True
-                text.draw(v)
+        for t in list(self.screen_texts.values()) + [self.input_box]:
+            if t and t.start_time < pygame.time.get_ticks() < t.end_time:
+                t.visible = True
+                t.draw(v)
             else:
-                text.visible = False
+                t.visible = False
 
     def draw_arena(self, v):
+        m = self.model
         arena_drawn = False
-        for id, layer in self.model.odor_layers.items():
+        for id, layer in m.odor_layers.items():
             if layer.visible:
                 layer.draw(v)
                 arena_drawn = True
                 break
 
 
-        if not arena_drawn and self.model.food_grid is not None:
-            self.model.food_grid._draw(v=v)
+        if not arena_drawn and m.food_grid is not None:
+            m.food_grid._draw(v=v)
             # print(self.model.food_grid.visible)
             arena_drawn = True
 
         if not arena_drawn:
-            v.draw_polygon(self.model.space.vertices, color=self.tank_color)
+            v.draw_polygon(m.space.vertices, color=self.tank_color)
             v.draw_background()
 
 
 
-        if self.model.windscape is not None and self.model.windscape.visible:
-            self.model.windscape._draw(v=v)
+        if m.windscape is not None:
+            m.windscape._draw(v=v)
 
-        for b in self.model.borders:
+        for b in m.borders:
             b._draw(v=v)
         # self.model.borders._draw(v=v)
 
@@ -396,16 +378,17 @@ class ScreenManager(BaseScreenManager):
 
 
     def toggle(self, name, value=None, show=False, minus=False, plus=False, disp=None):
+        m=self.model
         if disp is None:
             disp = name
 
         if name == 'snapshot #':
-            self.v.snapshot_requested = int(self.model.Nticks * self.model.dt)
+            self.v.snapshot_requested = int(m.Nticks * m.dt)
             value = self.snapshot_counter
             self.snapshot_counter += 1
         elif name == 'odorscape #':
-            reg.graphs.dict['odorscape'](odor_layers = self.model.odor_layers,save_to=self.model.plot_dir,
-                                         show=show, scale=self.model.scaling_factor, idx=self.odorscape_counter)
+            reg.graphs.dict['odorscape'](odor_layers = m.odor_layers,save_to=m.plot_dir,
+                                         show=show, scale=m.scaling_factor, idx=self.odorscape_counter)
             value = self.odorscape_counter
             self.odorscape_counter += 1
         elif name == 'trail_dt':
@@ -434,14 +417,20 @@ class ScreenManager(BaseScreenManager):
         self.screen_texts[name].flash_text(f'{disp} {value}')
 
         if name == 'visible_ids':
-            for a in self.model.agents + self.model.sources:
-                a.id_box.visible = not a.id_box.visible
+            for a in m.agents + m.sources:
+                a.id_box.toggle_vis()
         # elif name == 'color_behavior':
             # if not self.color_behavior:
             #     for f in self.model.agents:
             #         f.set_color(f.default_color)
+        elif name == 'visible_clock':
+            self.sim_clock.toggle_vis()
+        elif name == 'visible_scale':
+            self.sim_scale.toggle_vis()
+        elif name == 'visible_state':
+            self.sim_state.toggle_vis()
         elif name == 'random_colors':
-            for f in self.model.agents:
+            for f in m.agents:
                 color = aux.random_colors(1)[0] if self.random_colors else f.default_color
                 f.color=color
         elif name == 'black_background':
@@ -452,13 +441,13 @@ class ScreenManager(BaseScreenManager):
 
     def update_default_colors(self):
         if self.black_background:
-            self.tank_color = (0, 0, 0)
+            self.tank_color = aux.Color.BLACK
             self.screen_color = (50, 50, 50)
-            self.scale_clock_color = (255, 255, 255)
+            self.scale_clock_color = aux.Color.WHITE
         else:
-            self.tank_color = (255, 255, 255)
+            self.tank_color = aux.Color.WHITE
             self.screen_color = (200, 200, 200)
-            self.scale_clock_color = (0, 0, 0)
+            self.scale_clock_color = aux.Color.BLACK
         for i in [self.sim_clock, self.sim_scale, self.sim_state] + list(self.screen_texts.values()):
             i.color=self.scale_clock_color
 
@@ -535,7 +524,7 @@ class ScreenManager(BaseScreenManager):
         elif k == '▼ trail duration':
             self.toggle('trail_dt', minus=True, disp='trail duration')
         elif k == 'visible trail':
-            self.toggle('visible_trails')
+            self.toggle('visible_trails', disp='trails visible')
         elif k == 'pause':
             self.toggle('is_paused')
         elif k == 'move left':
@@ -553,7 +542,7 @@ class ScreenManager(BaseScreenManager):
             try:
                 layer_id = list(self.model.odor_layers.keys())[idx]
                 layer = self.model.odor_layers[layer_id]
-                layer.visible = not layer.visible
+                layer.toggle_vis()
                 self.toggle(layer_id, 'ON' if layer.visible else 'OFF')
             except:
                 pass
@@ -561,7 +550,7 @@ class ScreenManager(BaseScreenManager):
             self.toggle('snapshot #')
         elif k == 'windscape':
             try:
-                self.model.windscape.visible = not self.model.windscape.visible
+                self.model.windscape.toggle_vis()
                 self.toggle('windscape', 'ON' if self.model.windscape.visible else 'OFF')
             except:
                 pass

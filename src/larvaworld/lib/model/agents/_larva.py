@@ -41,7 +41,6 @@ class Larva(MobileAgent):
 
         if v.manager.visible_trails :
             Nfade = int(v.manager.trail_dt / self.model.dt)
-            color_mode=v.manager.trajectory_color
             traj = self.trajectory[-Nfade:]
             or_traj = self.orientation_trajectory[-Nfade:]
             if not np.isnan(traj).any():
@@ -62,14 +61,14 @@ class Larva(MobileAgent):
                 if len(t) < 2:
                     pass
                 else:
-                    if color_mode=='normal':
+                    if v.manager.trail_color=='normal':
                         color = self.color
-                    elif color_mode =='linear':
-                        a = aux.eudist(np.array(t)) / self.length / self.model.dt
-                        color = aux.scaled_velocity_to_col(a)
-                    elif color_mode =='angular':
-                        a = np.diff(np.array(or_t))/self.model.dt
-                        color = aux.angular_velocity_to_col(a)
+                    elif v.manager.trail_color =='linear':
+                        color = aux.scaled_velocity_to_col(aux.eudist(np.array(t)) / self.length / self.model.dt)
+                    elif v.manager.trail_color =='angular':
+                        color = aux.angular_velocity_to_col(np.diff(np.array(or_t))/self.model.dt)
+                    else:
+                        raise
 
                     try :
                         v.draw_polyline(t, color=color,width=0.0005)

@@ -45,8 +45,7 @@ class ReplayRun(BaseRun):
                f"{pref0}Timestep (sec) : {c.dt}\n" \
                f"{pref0}Time range (sec) : {c.time_range}\n" \
                f"{pref0}Transposition : {c.transposition}\n" \
-               f"{pref0}Tracked midline point : {c.point}\n" \
-               f"{pref0}Dynamically colored trajectories : {c.dynamic_color}"
+               f"{pref0}Tracked midline point : {c.point}"
         return text
 
     def setup(self):

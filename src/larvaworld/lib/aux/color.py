@@ -103,18 +103,20 @@ class Color:
         b = random.randint(min_value, 255)
         return r, g, b
 
+    @staticmethod
+    def timeseries_to_col(a, lim=1.0, color_range=[RED, GREEN]):
+        t = np.clip(np.abs(a) / lim, a_min=0, a_max=1)
+        (r1, b1, g1), (r2, b2, g2) = color_range
+        r, b, g = r2 - r1, b2 - b1, g2 - g1
+        if isinstance(a, float):
+            return r1 + r * t, b1 + b * t, g1 + g * t
+        else:
+            return [(r1 + r * tt, b1 + b * tt, g1 + g * tt) for tt in t]
+
 def scaled_velocity_to_col(a) :
-    return timeseries_to_col(a, lim=0.8, color_range=[(255, 0, 0), (0, 255, 0)])
+    return Color.timeseries_to_col(a, lim=0.8)
 
 def angular_velocity_to_col(a) :
-    return timeseries_to_col(a, lim=np.deg2rad(300), color_range=[(255, 0, 0), (0, 255, 0)])
+    return Color.timeseries_to_col(a, lim=np.deg2rad(100))
 
-def timeseries_to_col(a, lim, color_range) :
-    t = np.clip(np.abs(a) / lim, a_min=0, a_max=1)
-    (r1, b1, g1), (r2, b2, g2) = color_range
-    r, b, g = r2 - r1, b2 - b1, g2 - g1
-    if isinstance(a,float) :
-        return r1 + r * t, b1 + b * t, g1 + g * t
-    else :
-        return [(r1 + r * tt, b1 + b * tt, g1 + g * tt) for tt in t]
 
