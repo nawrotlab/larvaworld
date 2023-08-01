@@ -672,7 +672,6 @@ class SimulationClock(PosPixelRel2AreaViewable):
 
 
 class SimulationScale(PosPixelRel2AreaViewable):
-    real_width = PositiveNumber(0.1, softmax=10.0, doc='The width of the Arena possibly zoomed')
     pos_scale = PositiveRange((0.1, 0.04))
 
 
@@ -689,13 +688,13 @@ class SimulationScale(PosPixelRel2AreaViewable):
 
 
 
-    @param.depends('real_width', watch=True)
+    @param.depends('reference_area.zoom', watch=True)
     def update_scale(self):
         def closest(lst, k):
             return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
 
+        w_in_mm =self.reference_area.space.w*self.reference_area.zoom* 1000
         # Get 1/10 of max real dimension, transform it to mm and find the closest reasonable scale
-        w_in_mm = self.real_width * 1000
         self.scale_in_mm = closest(
             lst=[0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10, 25, 50, 75, 100, 250, 500, 750, 1000], k=w_in_mm / 10)
         self.text_font.set_text(f'{self.scale_in_mm} mm')

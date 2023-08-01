@@ -245,7 +245,7 @@ class ScreenManager(BaseScreenManager):
             'default_color':'black',
         }
         self.sim_clock = screen.SimulationClock(sim_step_in_sec=m.dt, **kws)
-        self.sim_scale = screen.SimulationScale(real_width=m.space.dims[0],**kws)
+        self.sim_scale = screen.SimulationScale(**kws)
         self.sim_state = screen.SimulationState(model=m,**kws)
         self.screen_texts = {name: screen.ScreenMsgText(text=name, **kws) for name in [
             'trail_dt',
@@ -457,7 +457,7 @@ class ScreenManager(BaseScreenManager):
                     elif e.button in [4, 5]:
                         d_zoom = -d_zoom if e.button == 4 else d_zoom
                         self.v.zoom_screen(d_zoom, pos=self.v.mouse_position)
-                        self.sim_scale.real_width = self.model.space.dims[0] * self.v.zoom
+                        # self.sim_scale.real_width = self.model.space.dims[0] * self.v.zoom
                         self.toggle(name='zoom', value=self.v.zoom)
         if self.focus_mode and len(self.selected_agents) > 0:
             try:
