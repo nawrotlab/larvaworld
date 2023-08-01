@@ -443,7 +443,7 @@ class ReplayConfGroup(NestedConf):
     agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
     transposition = OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
     track_point = param.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
-    dynamic_color = OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
+    # dynamic_color = OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
     env_params = conf.Env.confID_selector()
 
 class ReplayConfUnit(NestedConf):

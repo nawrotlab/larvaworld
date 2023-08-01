@@ -51,7 +51,6 @@ class ReplayRun(BaseRun):
 
     def setup(self):
         s,e,c=self.step_data,self.endpoint_data,self.config
-        dc=self.p.dynamic_color
 
         if c.fix_point is not None:
             s, bg = reg.funcs.preprocessing['fixation'](s, c, P1=c.fix_point,P2=c.fix_point2)
@@ -65,7 +64,6 @@ class ReplayRun(BaseRun):
             'show_display' : True,
             'image_mode':'overlap' if self.p.overlap_mode else None,
             'background_motion': bg,
-            'traj_color':s[dc] if dc is not None and dc in s.columns else None,
         }
         self.screen_manager = ScreenManager(model=self, **screen_kws)
 
@@ -144,48 +142,6 @@ class ReplayRun(BaseRun):
         self.screen_manager.finalize()
 
 
-    # def define_config(self, p, c):
-    #     R = XYops(Npoints=c.Npoints, Ncontour=c.Ncontour)
-    #
-    #
-    #     if p.track_point is not None:
-    #         c.point = R.get_track_point(p.track_point)
-    #     if p.fix_point is not None:
-    #         c.fix_point = R.get_track_point(p.fix_point)
-    #         if c.fix_point != 'centroid' or p.fix_segment is None:
-    #             c.fix_point2 = None
-    #         else:
-    #             if p.fix_segment == 'rear':
-    #                 P2_idx = p.fix_point + 1
-    #             elif p.fix_segment == 'front':
-    #                 P2_idx = p.fix_point - 1
-    #             else:
-    #                 raise
-    #             c.fix_point2 = R.get_track_point(P2_idx)
-    #     else:
-    #         c.fix_point = None
-    #
-    #
-    #     if p.agent_ids not in [None, []]:
-    #         if isinstance(p.agent_ids, list) and all([type(i) == int for i in p.agent_ids]):
-    #             p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
-    #         elif isinstance(p.agent_ids, int):
-    #             p.agent_ids = [c.agent_ids[p.agent_ids]]
-    #         c.agent_ids = p.agent_ids
-    #     if c.fix_point is not None:
-    #         c.agent_ids = c.agent_ids[:1]
-    #     c.N = len(c.agent_ids)
-    #
-    #     if p.env_params is not None:
-    #         c.env_params = p.env_params
-    #     else:
-    #         p.env_params = c.env_params
-    #     if p.close_view:
-    #         c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
-    #         p.env_params.arena = c.env_params.arena
-    #     # c.env_params.windscape = None
-    #     return c
-
     def smaller_dataset(self,p, d):
         c = d.config.get_copy()
         R = XYops(Npoints=c.Npoints, Ncontour=c.Ncontour)
@@ -224,10 +180,6 @@ class ReplayRun(BaseRun):
             c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
             p.env_params.arena = c.env_params.arena
 
-
-
-        # c=self.define_config(p, c)
-
         def get_data(dd,ids) :
             if not hasattr(dd, 'step_data'):
                 dd.load(h5_ks=['contour', 'midline'])
@@ -249,12 +201,6 @@ class ReplayRun(BaseRun):
             s0 = s0.loc[(slice(a, b), slice(None)), :]
 
         if p.transposition is not None:
-            # try:
-            #     s_tr = d.load_traj(mode=p.transposition)
-            #     s0.update(s_tr)
-            #
-            # except:
-            #     s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)
             s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)
             xy_max=2*np.max(s0[nam.xy(c.point)].dropna().abs().values.flatten())
             c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
@@ -262,9 +208,4 @@ class ReplayRun(BaseRun):
         c.Nsteps = len(s0.index.unique('Step').values)-1
         c.duration=c.Nsteps * c.dt/60
         c.N = len(c.agent_ids)
-
-
-
-
-
         return s0,e0, c

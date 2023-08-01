@@ -39,8 +39,8 @@ class Larva(MobileAgent):
         if v.manager.draw_head:
             v.draw_circle(mid[0], l / 4, color=(255, 0, 0), width=l / 12)
 
-        if v.manager.draw_trajectories :
-            Nfade = int(v.manager.trajectory_dt / self.model.dt)
+        if v.manager.visible_trails :
+            Nfade = int(v.manager.trail_dt / self.model.dt)
             color_mode=v.manager.trajectory_color
             traj = self.trajectory[-Nfade:]
             or_traj = self.orientation_trajectory[-Nfade:]

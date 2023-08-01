@@ -39,7 +39,7 @@ def init_shortcuts():
         '▲ trail duration': '+',
         '▼ trail duration': '-',
 
-        'trajectory_color': 'x',
+        'trail_color': 'x',
         'draw_head': 'h',
         'draw_centroid': 'e',
         'draw_midline': 'm',
