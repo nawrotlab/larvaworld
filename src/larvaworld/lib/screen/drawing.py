@@ -66,7 +66,7 @@ class BaseScreenManager(Area2DPixel,ScreenOps) :
         self._fps= int(self.fps / m.dt)
         if vis_kwargs is not None:
             self.mode=vis_kwargs.render.mode
-            self.__dict__.update(vis_kwargs.aux)
+            # self.__dict__.update(vis_kwargs.aux)
             if self.mode=='video' and not self.save_video:
                 self.show_display=True
 
@@ -306,7 +306,7 @@ class ScreenManager(BaseScreenManager):
 
     def capture_snapshot(self):
         self.render()
-        self.model.toggle('snapshot #')
+        self.toggle('snapshot #')
         self.v.render()
 
 
@@ -410,7 +410,7 @@ class ScreenManager(BaseScreenManager):
                 a.invert_default_color()
         elif name == 'larva_collisions':
 
-            self.eliminate_overlap()
+            self.model.eliminate_overlap()
 
 
 
@@ -421,9 +421,6 @@ class ScreenManager(BaseScreenManager):
     def snapshot_tick(self):
         return (self.model.Nticks - 1) % self.snapshot_interval == 0
 
-
-    def eliminate_overlap(self):
-        pass
 
     def evaluate_input(self):
 
