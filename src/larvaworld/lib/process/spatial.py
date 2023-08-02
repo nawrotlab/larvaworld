@@ -579,10 +579,9 @@ def fixate_larva(s, c, P1, P2=None):
     if P2 is not None:
         if not nam.xy(P2).exist_in(s):
             raise ValueError(f" The requested secondary {P2} is not part of the dataset")
-
         reg.vprint(f'Fixing {P2} as secondary point on vertical axis')
         xy_sec = s[nam.xy(P2)].values
-        bg_a = np.arctan2(xy_sec[:, 1], xy_sec[:, 0]) - np.pi / 2
+        bg_a = np.arctan2(xy_sec[:, 1], xy_sec[:, 0])- np.pi / 2
 
         s[pars] = [
             aux.flatten_list(aux.rotate_points_around_point(points=np.reshape(s[pars].values[i,:], (-1, 2)),

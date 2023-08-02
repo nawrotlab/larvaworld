@@ -190,11 +190,13 @@ class Viewer(ScreenWindowAreaBackground):
         self.objects = []
 
         if self.manager.save_video:
+            os.makedirs(m.dir, exist_ok=True)
             self.vid_writer = imageio.get_writer(f'{m.dir}/{self.manager.video_file}.mp4', mode='I', fps=self._fps)
         else:
             self.vid_writer = None
 
         if self.manager.image_mode:
+            os.makedirs(m.dir,exist_ok=True)
             self.img_writer = imageio.get_writer(f'{m.dir}/{self.manager.image_file}.png', mode='i')
         else:
             self.img_writer = None

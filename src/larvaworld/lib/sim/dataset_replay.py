@@ -175,7 +175,7 @@ class ReplayRun(BaseRun):
         # Unit mode
         if p.fix_point is not None:
             c.fix_point = c.get_track_point(p.fix_point)
-            if c.fix_point != 'centroid' or p.fix_segment is None:
+            if c.fix_point == 'centroid' or p.fix_segment is None:
                 c.fix_point2 = None
             else:
                 if p.fix_segment == 'rear':
@@ -187,6 +187,9 @@ class ReplayRun(BaseRun):
                 c.fix_point2 = c.get_track_point(P2_idx)
         else:
             c.fix_point = None
+        # print(c.fix_point2, c.fix_point, p.fix_point, p.fix_segment)
+        # raise
+
         if c.fix_point is not None:
             c.agent_ids = c.agent_ids[:1]
         if p.close_view:
