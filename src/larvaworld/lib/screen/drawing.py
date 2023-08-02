@@ -305,7 +305,7 @@ class ScreenManager(BaseScreenManager):
         if self.active:
             if self.image_mode == 'overlap':
                 self.v.render()
-                # pygame.time.wait(5000)
+                pygame.time.wait(5000)
                 # raise
             elif self.image_mode == 'final':
                 self.capture_snapshot()
