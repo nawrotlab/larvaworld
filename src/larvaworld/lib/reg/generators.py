@@ -6,7 +6,7 @@ import param
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
-    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch
+    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch, RuntimeDataOps, RandomizedColor
 
 
 class ConfType(param.Parameterized) :
@@ -525,3 +525,20 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls'
 
         lgs.update(full_lg(**kws))
     return aux.AttrDict(lgs)
+
+
+class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
+    # duration = OptionalPositiveNumber(default=None)
+    # Nsteps = OptionalPositiveInteger(default=None)
+    refID = param.String(None, doc='The unique ID of the reference dataset')
+    group_id = param.String(None, doc='The unique ID of the group')
+    color = RandomizedColor(default='black', doc='The color of the dataset', instantiate=True)
+    # larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
+    env_params = ClassAttr(gen.Env, doc='The environment configuration')
+    N = OptionalPositiveInteger(default=None, softmax=500, doc='The number of agents in the group')
+    sample = conf.Ref.confID_selector()
+
+    @property
+    def h5_kdic(self):
+        from larvaworld.lib.process.dataset import h5_kdic
+        return h5_kdic(self.point, self.Npoints, self.Ncontour)

@@ -65,9 +65,6 @@ def class_generator(A0, mode='Unit') :
                 Ainst = cls(**dic)
                 gconf = aux.AttrDict(Ainst.param.values())
                 gconf.pop('name')
-                # print(Ainst)
-                # print(Ainst.distribution)
-                # print(hasattr(Ainst, 'distribution'))
                 if hasattr(Ainst, 'distribution'):
 
                     ids = [f'{gid}_{i}' for i in range(Ainst.distribution.N)]

@@ -76,6 +76,20 @@ class ReplayRun(BaseRun):
 
         ors=['front_orientation','rear_orientation']
         assert aux.cols_exist(ors, s)
+        mid_ps = aux.nam.midline_xy(c.Npoints, flat=True)
+        con_ps = aux.nam.contour_xy(c.Ncontour, flat=True)
+        if self.p.draw_Nsegs is not None:
+            if self.p.draw_Nsegs == 2:
+                pass
+            elif self.p.draw_Nsegs == c.Npoints - 1:
+                or_ps = aux.nam.orient(aux.nam.midline(c.Npoints - 1, type='seg'))
+                assert or_ps.exist_in(s)
+                assert mid_ps.exist_in(s)
+            else:
+                raise
+        else:
+            assert con_ps.exist_in(s)
+            assert mid_ps.exist_in(s)
 
         confs=[]
         for i, id in enumerate(c.agent_ids):
@@ -96,11 +110,11 @@ class ReplayRun(BaseRun):
                     p2 = xy - aux.rotationMatrix(-ro).T @ (l2 / 2, 0)
                     data.midline = np.hstack([p1,p2]).reshape([-1,2,2])
                 elif conf.Nsegs == c.Npoints - 1:
-                    or_ps = aux.nam.orient(aux.nam.midline(conf.Nsegs, type='seg'))
-                    assert aux.cols_exist(or_ps, ss)
+                    # or_ps = aux.nam.orient(aux.nam.midline(conf.Nsegs, type='seg'))
+                    # assert or_ps.exist_in(ss)
                     data.seg_orientations = np.deg2rad(ss[or_ps].values)
-                    mid_ps = aux.nam.midline_xy(c.Npoints, flat=True)
-                    assert aux.cols_exist(mid_ps, ss)
+
+                    # assert mid_ps.exist_in(ss)
                     mid = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
                     mid2=copy.deepcopy(mid)
                     for i in range(conf.Nsegs):
@@ -109,11 +123,10 @@ class ReplayRun(BaseRun):
                 else:
                     raise
             else:
-                con_ps=aux.nam.contour_xy(c.Ncontour, flat=True)
-                assert aux.cols_exist(con_ps, ss)
+
+                # assert con_ps.exist_in(ss)
                 data.contour = ss[con_ps].values.reshape([-1, c.Ncontour, 2])
-                mid_ps = aux.nam.midline_xy(c.Npoints, flat=True)
-                assert aux.cols_exist(mid_ps, ss)
+                # assert mid_ps.exist_in(ss)
                 data.midline = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
             conf.data=data
             confs.append(conf)
@@ -195,9 +208,10 @@ class ReplayRun(BaseRun):
 
         if p.time_range is not None:
             a, b = p.time_range
-            a = int(a / c.dt)
-            b = int(b / c.dt)
-            s0 = s0.loc[(slice(a, b), slice(None)), :]
+            # a = int(a / c.dt)
+            # b = int(b / c.dt)
+            s0 = s0.query(f'{a}<=Step*{c.dt}<={b}')
+            # s0 = s0.loc[(slice(a, b), slice(None)), :]
 
         if p.transposition is not None:
             s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)

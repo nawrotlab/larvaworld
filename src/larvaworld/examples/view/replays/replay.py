@@ -3,8 +3,8 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.sim.dataset_replay import ReplayRun
 
 # mode = '2segs'
-mode = 'dispersal'
-# mode = 'normal'
+# mode = 'dispersal'
+mode = 'normal'
 # refID = 'Rehydration/AttP2.Deprived'
 # refID = 'exploration.dish'
 refID = 'exploration.40controls'
@@ -20,7 +20,7 @@ replay_kws = {
             'draw_Nsegs': dataset.config.Npoints-1
         },
     'normal': {
-        'time_range': (10,80)
+        'time_range': (10,70)
     },
     'dispersal': {
         'transposition': 'origin',

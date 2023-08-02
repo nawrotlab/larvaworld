@@ -10,6 +10,7 @@ import param
 from larvaworld.lib import reg, aux
 
 
+
 class BaseLarvaDataset:
 
     @staticmethod
@@ -67,15 +68,24 @@ class BaseLarvaDataset:
         '''
 
         if config is None:
-            config = reg.getRef(dir=dir, id=refID)
-            if config is None:
-                config = self.generate_config(dir=dir, refID=refID, **kwargs)
+            try:
+                config = reg.getRef(dir=dir, id=refID)
+                config = reg.DatasetConfig(**config)
+            except:
+            # if config is None:
+            #     config = self.generate_config(dir=dir, refID=refID, **kwargs)
+                config = reg.DatasetConfig(dir=dir, refID=refID, **kwargs)
+        else:
+            config = reg.DatasetConfig(**config)
 
         c = self.config = config
         if c.dir is not None:
             os.makedirs(c.dir, exist_ok=True)
             os.makedirs(self.data_dir, exist_ok=True)
-        self.__dict__.update(c)
+        try:
+            self.__dict__.update(c)
+        except:
+            self.__dict__.update(c.nestedConf)
         self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
         self.larva_dicts = {}
         self.h5_kdic = h5_kdic(c.point, c.Npoints, c.Ncontour)
@@ -96,6 +106,8 @@ class BaseLarvaDataset:
                            'dir': None,
                            'fr': None,
                            'dt': None,
+                           'duration': None,
+                           'Nsteps': None,
                            'Npoints': 3,
                            'Ncontour': 0,
                            'u' : 'm',
@@ -150,10 +162,16 @@ class BaseLarvaDataset:
         if c.refID is not None:
             reg.conf.Ref.setID(c.refID, c.dir)
             reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
-        for k, v in c.items():
-            if isinstance(v, np.ndarray):
-                c[k] = v.tolist()
-        aux.save_dict(c, f'{self.data_dir}/conf.txt')
+        try:
+            for k, v in c.items():
+                if isinstance(v, np.ndarray):
+                    c[k] = v.tolist()
+        except:
+            pass
+        try:
+            aux.save_dict(c, f'{self.data_dir}/conf.txt')
+        except:
+            aux.save_dict(c.nestedConf, f'{self.data_dir}/conf.txt')
 
     @property
     def Nangles(self):
@@ -215,17 +233,16 @@ class LarvaDataset(BaseLarvaDataset):
             assert step.index.names == ['Step', 'AgentID']
             s = step.sort_index(level=['Step', 'AgentID'])
             self.Nticks = s.index.unique('Step').size
-            c.t0 = int(s.index.unique('Step')[0])
+            # c.t0 = int(s.index.unique('Step')[0])
             c.Nticks = self.Nticks
-            if 'duration' not in c.keys():
-                c.duration = c.dt * c.Nticks
-            if 'quality' not in c.keys():
-                try:
-                    df = s[aux.aux.nam.xy(c.point)[0]].values.flatten()
-                    valid = np.count_nonzero(~np.isnan(df))
-                    c.quality = np.round(valid / df.shape[0], 2)
-                except:
-                    pass
+            c.duration = c.dt * c.Nticks/60
+            # if 'quality' not in c.keys():
+            #     try:
+            #         df = s[aux.aux.nam.xy(c.point)[0]].values.flatten()
+            #         valid = np.count_nonzero(~np.isnan(df))
+            #         c.quality = np.round(valid / df.shape[0], 2)
+            #     except:
+            #         pass
 
             self.step_data = s
 
@@ -362,16 +379,6 @@ class LarvaDataset(BaseLarvaDataset):
         return self
 
 
-    # def enrich(self, metric_definition=None, preprocessing={}, processing={},annotation={},**kwargs):
-    #     proc_keys=[k for k, v in processing.items() if v]
-    #     anot_keys=[k for k, v in annotation.items() if v]
-    #     # if metric_definition is not None :
-    #     #     self.config.metric_definition.update(metric_definition)
-    #     #     for k in proc_keys :
-    #     #         if k in metric_definition.keys():
-    #     #             kwargs.update(metric_definition[k])
-    #     return self._enrich(pre_kws=preprocessing,proc_keys=proc_keys,
-    #                         anot_keys=anot_keys,**kwargs)
 
 
 
@@ -488,7 +495,7 @@ class LarvaDatasetCollection :
         self.colors = self.get_colors()
         assert self.Ndatasets == len(self.labels)
 
-        self.group_ids = aux.unique_list([d.config['group_id'] for d in self.datasets])
+        self.group_ids = aux.unique_list([d.config.group_id for d in self.datasets])
         self.Ngroups = len(self.group_ids)
         self.dir=self.set_dir()
 
@@ -538,7 +545,7 @@ class LarvaDatasetCollection :
     def get_colors(self):
         colors=[]
         for d in self.datasets :
-            color=d.config['color']
+            color=d.config.color
             while color is None or color in colors :
                 color=aux.random_colors(1)[0]
             colors.append(color)

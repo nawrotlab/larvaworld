@@ -1,12 +1,14 @@
 import os
 
+import numpy as np
 import param
 from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
 from larvaworld.lib import aux
 
 from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
-    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, IntegerRangeOrdered, PositiveIntegerRangeOrdered
+    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, IntegerRangeOrdered, PositiveIntegerRangeOrdered, \
+    RandomizedColor, ClassDict
 
 
 class FramerateOps(NestedConf):
@@ -42,6 +44,10 @@ class XYops(NestedConf):
                                doc='The number of points tracked around the larva contour.')
 
     @property
+    def Nangles(self):
+        return np.clip(self.Npoints - 2, a_min=0, a_max=None)
+
+    @property
     def midline_points(self):
         return aux.nam.midline(self.Npoints, type='point')
 
@@ -69,7 +75,7 @@ class Resolution(FramerateOps,XYops):
         super().__init__(**kwargs)
 
 class SimTimeOps(FramerateOps):
-    duration = OptionalPositiveNumber(5.0, softmax=100.0, step=0.1,
+    duration = OptionalPositiveNumber(softmax=100.0, step=0.1,
                                doc='The duration of the simulation in minutes.')
     Nsteps = OptionalPositiveInteger(label='# simulation timesteps', doc='The number of simulation timesteps.')
 
@@ -79,11 +85,17 @@ class SimTimeOps(FramerateOps):
 
     @param.depends('duration', 'dt', watch=True)
     def update_Nsteps(self):
-        self.Nsteps = int(self.duration * 60 / self.dt)
+        if self.duration is not None :
+            self.Nsteps = int(self.duration * 60 / self.dt)
+        else:
+            self.Nsteps=None
 
     @param.depends('Nsteps', watch=True)
     def update_duration(self):
-        self.duration = self.Nsteps * self.dt / 60
+        if self.Nsteps is not None:
+            self.duration = self.Nsteps * self.dt / 60
+        else:
+            self.duration=None
 
 
 class SimSpatialOps(NestedConf):
@@ -113,7 +125,7 @@ class SimOps(SimTimeOps,SimSpatialOps):
 class RuntimeGeneralOps(NestedConf):
     offline = param.Boolean(False, doc='Whether to launch a full Larvaworld environment')
     multicore = param.Boolean(False, doc='Whether to use multiple cores')
-
+    store_data = param.Boolean(True, doc='Whether to store the simulation data')
 
 
 
@@ -122,7 +134,7 @@ class RuntimeGeneralOps(NestedConf):
 class RuntimeDataOps(NestedConf):
     id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
     dir = param.String(default=None, label='storage folder', doc='The directory to store data')
-    store_data = param.Boolean(True, doc='Whether to store the simulation data')
+
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
 
@@ -175,7 +187,7 @@ class LabFormat(NestedConf) :
     filesystem = ClassAttr(LabFormatFilesystem, doc='The import-relevant lab-format filesystem')
 
 class TrackedPointIdx(XYops):
-    point_idx = param.Integer(softbounds=(None,20),bounds=(-1,None),
+    point_idx = param.Integer(default=-1,softbounds=(None,20),bounds=(-1,None),
                                         doc='Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.')
     point = param.String(doc='Midline point to use as the larva spatial position. Default is centroid.')
 
@@ -220,8 +232,6 @@ class SimMetricOps(TrackedPointIdx):
         self.param.params('front_vector')._validate(self.front_vector)
         self.param.params('rear_vector').bounds=(-N, N)
         self.param.params('rear_vector')._validate(self.rear_vector)
-
-
 
 
 

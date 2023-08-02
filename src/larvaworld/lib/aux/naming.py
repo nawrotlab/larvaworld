@@ -17,7 +17,7 @@ def name(s, ps, loc='suf', c='_'):
         else:
             return join(s, ps, loc, c)
     elif isinstance(ps,list):
-        return [join(s, p, loc, c) if p != '' else s for p in ps]
+        return aux.SuperList([join(s, p, loc, c) if p != '' else s for p in ps])
 
 
 
