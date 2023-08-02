@@ -319,7 +319,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
                     if rad2deg:
                         v = np.rad2deg(v)
                     dfs[l]=df
-                    dics[l]={'df': v, 'col': col}
+                    dics[l]=aux.AttrDict({'df': v, 'col': col})
                     vs.append(v)
                 self.kkdict[k]=dfs
                 self.kdict[k] = dics
@@ -329,6 +329,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
             except :
                 reg.vprint(f'Failed to retrieve key {k}', 1)
                 pass
+        self.dkdict=aux.AttrDict({l:{k:self.kkdict[k][l] for k in self.ks} for l in self.labels})
         self.pars = reg.getPar(self.ks)
         self.Nks=len(self.ks)
         self.ranges = ranges

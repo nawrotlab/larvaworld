@@ -39,6 +39,7 @@ class ParamLarvaDataset(param.Parameterized):
         self.merge_configs()
         self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
         self.larva_dicts = {}
+        self.__dict__.update(self.config.nestedConf)
 
     #@param.depends('step_data', 'endpoint_data', watch=True)
     def validate_IDs(self):

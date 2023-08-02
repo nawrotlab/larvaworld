@@ -536,7 +536,7 @@ class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
     color = RandomizedColor(default='black', doc='The color of the dataset', instantiate=True)
     # larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
     env_params = ClassAttr(gen.Env, doc='The environment configuration')
-    agent_ids=param.List(item_type=str, doc='The unique IDs of the agents in the dataset')
+    agent_ids=param.List(item_type=None, doc='The unique IDs of the agents in the dataset')
     N = OptionalPositiveInteger(default=None, softmax=500, doc='The number of agents in the group')
     sample = conf.Ref.confID_selector()
     filtered_at = OptionalPositiveNumber(default=None)
