@@ -3,7 +3,7 @@ import random
 import numpy as np
 import param
 from param import Parameterized, Number, NumericTuple, Integer, Selector, Range, Magnitude, Boolean, ClassSelector, \
-    Parameter, List, Dict, String
+    Parameter, List, Dict, String, DataFrame
 
 from larvaworld.lib import aux
 
@@ -275,6 +275,38 @@ class ClassAttr(ClassSelector):
             kwargs['default'] = cc(**kwargs['default'])
         super().__init__(class_=class_, **kwargs)
 
+class DataFrameIndexed(DataFrame):
+    __slots__ = ['rows', 'columns', 'ordered', 'levels']
+
+    """A dataframe of specified index levels"""
+    def __init__(self, levels=None,  **params):
+        self.levels = levels
+        DataFrame.__init__(self,**params)
+
+    def _validate(self, val):
+        super(DataFrame, self)._validate(val)
+        self._validate_levels(val, self.levels)
+
+    def _validate_levels(self, val, levels):
+        if levels is None or (self.allow_None and val is None):
+            return
+        val_levels=list(val.index.names)
+        if val_levels != levels:
+            raise TypeError("DataFrameIndexed parameter %r levels must be "
+                            " %r, not %r." % (self.name, levels, val_levels))
+
+class StepDataFrame(DataFrameIndexed):
+    """A dataframe of specified index levels"""
+
+    def __init__(self, **params):
+        DataFrameIndexed.__init__(self, levels = ['Step', 'AgentID'], **params)
+
+class EndpointDataFrame(DataFrameIndexed):
+    """A dataframe of specified index levels"""
+
+    def __init__(self, **params):
+        DataFrameIndexed.__init__(self, levels = ['AgentID'], **params)
+
 
 
 class NestedConf(Parameterized):
@@ -334,9 +366,9 @@ class NestedConf(Parameterized):
     @property
     def param_keys(self):
         ks= list(self.param.objects().keys())
-        return [k for k in ks if k not in ['name']]
+        return aux.SuperList([k for k in ks if k not in ['name']])
 
 
     def params_missing(self, d):
         ks=self.param_keys
-        return [k for k in ks if k not in d.keys()]
+        return aux.SuperList([k for k in ks if k not in d.keys()])

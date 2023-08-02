@@ -228,9 +228,10 @@ def comp_dispersion(s, e, c,d=None, dsp_starts=[0], dsp_stops=[40], **kwargs):
         fp = nam.final(p)
         mp = nam.max(p)
         mup = nam.mean(p)
-        e[mp] = s[p].groupby('AgentID').max()
-        e[mup] = s[p].groupby('AgentID').mean()
-        e[fp] = s[p].dropna().groupby('AgentID').last()
+        temp=s[p].dropna().groupby('AgentID')
+        e[mp] = temp.max()
+        e[mup] = temp.mean()
+        e[fp] = temp.last()
         scale_to_length(s, e, c, pars=[p, fp, mp, mup])
         for par in [p, nam.scal(p)]:
             dsps[par] = get_disp_df(s[par], s0, Nt)
@@ -342,54 +343,54 @@ def straightness_index(ss, rolling_ticks):
     return SI0
 
 
-def straightness_index2(ss, w, match_shape=True):
-    xy0 = ss[['x', 'y']].values
-    # Compute tortuosity over intervals of duration w
-    xys = rolling_window_xy(xy0, w)
-
-
-    k0, k1 = xy0.shape[0], xys.shape[0]
-    l_xys = np.array([xys[i, :][~np.isnan(xys[i, :]).any(axis=1)] for i in range(k1)])
-    valid=np.where([l_xys[i].shape[0]>= 2 for i in range(k1)])[0]
-
-    if 'dst' in ss.columns:
-        dst = ss['dst'].values
-        Ds = np.nansum(rolling_window(dst, w), axis=1)[valid]
-
-    else:
-        Ds = np.array([np.nansum(np.sqrt(np.nansum(np.diff(l_xys[i], axis=0) ** 2, axis=1))) for i in valid])
-
-    valid2=np.where(Ds!=0)[0]
-    Ds=Ds[valid2]
-
-    valid_fin=valid[valid2]
-
-    dxys=np.array([l_xys[i][-1, :] -l_xys[i][0, :] for i in valid_fin])
-    Ls = np.sqrt(np.nansum(dxys ** 2, axis=1))
-    A=1 - Ls / Ds
-
-    if match_shape:
-        dk = int((k0 - k1) / 2)
-        SI0 = np.zeros(k0) * np.nan
-        SI0[dk+valid_fin] = A
-        return SI0
-    else:
-        SI = np.zeros(k1) * np.nan
-        SI[valid_fin] = A
-
-        return SI
-    '''
-        if match_shape:
-        dk = int((k0 - k1) / 2)
-        SI = np.zeros(k0) * np.nan
-        for i in range(k1):
-            SI[dk + i] = tortuosity(xys[i, :])
-    else:
-        SI = np.zeros(k1) * np.nan
-        for i in range(k1):
-            SI[i] = tortuosity(xys[i, :])
-    return SI
-    '''
+# def straightness_index2(ss, w, match_shape=True):
+#     xy0 = ss[['x', 'y']].values
+#     # Compute tortuosity over intervals of duration w
+#     xys = rolling_window_xy(xy0, w)
+#
+#
+#     k0, k1 = xy0.shape[0], xys.shape[0]
+#     l_xys = np.array([xys[i, :][~np.isnan(xys[i, :]).any(axis=1)] for i in range(k1)])
+#     valid=np.where([l_xys[i].shape[0]>= 2 for i in range(k1)])[0]
+#
+#     if 'dst' in ss.columns:
+#         dst = ss['dst'].values
+#         Ds = np.nansum(rolling_window(dst, w), axis=1)[valid]
+#
+#     else:
+#         Ds = np.array([np.nansum(np.sqrt(np.nansum(np.diff(l_xys[i], axis=0) ** 2, axis=1))) for i in valid])
+#
+#     valid2=np.where(Ds!=0)[0]
+#     Ds=Ds[valid2]
+#
+#     valid_fin=valid[valid2]
+#
+#     dxys=np.array([l_xys[i][-1, :] -l_xys[i][0, :] for i in valid_fin])
+#     Ls = np.sqrt(np.nansum(dxys ** 2, axis=1))
+#     A=1 - Ls / Ds
+#
+#     if match_shape:
+#         dk = int((k0 - k1) / 2)
+#         SI0 = np.zeros(k0) * np.nan
+#         SI0[dk+valid_fin] = A
+#         return SI0
+#     else:
+#         SI = np.zeros(k1) * np.nan
+#         SI[valid_fin] = A
+#
+#         return SI
+#     '''
+#         if match_shape:
+#         dk = int((k0 - k1) / 2)
+#         SI = np.zeros(k0) * np.nan
+#         for i in range(k1):
+#             SI[dk + i] = tortuosity(xys[i, :])
+#     else:
+#         SI = np.zeros(k1) * np.nan
+#         for i in range(k1):
+#             SI[i] = tortuosity(xys[i, :])
+#     return SI
+#     '''
 
 
 @reg.funcs.proc("tortuosity")

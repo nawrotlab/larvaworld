@@ -85,9 +85,7 @@ def comp_angular(s,e, c, pars=None, **kwargs):
 
         if p in ['bend', ho, to, fo, ro]:
             for pp in [p,pvel,avel] :
-                sss=s[pp]
-
-                temp=sss.dropna().groupby('AgentID')
+                temp=s[pp].dropna().groupby('AgentID')
                 e[aux.nam.mean(pp)] = temp.mean()
                 e[aux.nam.std(pp)] = temp.std()
                 e[aux.nam.initial(pp)] = temp.first()
@@ -135,12 +133,9 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwarg
             else :
                 f1,f2=c.front_vector
                 r1,r2=c.rear_vector
-                f1-=1
-                f2-=1
-                r1-=1
-                r2-=1
-                fx, fy = Ax[:, f1] - Ax[:, f2], Ay[:, f1] - Ay[:, f2]
-                rx, ry = Ax[:, r1] - Ax[:, r2], Ay[:, r1] - Ay[:, r2]
+
+                fx, fy = Ax[:, f1-1] - Ax[:, f2-1], Ay[:, f1-1] - Ay[:, f2-1]
+                rx, ry = Ax[:, r1-1] - Ax[:, r2-1], Ay[:, r1-1] - Ay[:, r2-1]
                 s[fo] =Afo = np.arctan2(fy, fx)% (2 * np.pi)
                 s[ro] =Aro = np.arctan2(ry, rx)% (2 * np.pi)
 

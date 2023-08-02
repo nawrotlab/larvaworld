@@ -8,7 +8,44 @@ import warnings
 import param
 
 from larvaworld.lib import reg, aux
+from larvaworld.lib.param import ClassAttr, StepDataFrame, EndpointDataFrame
 
+
+class ParamLarvaDataset(param.Parameterized):
+    config = ClassAttr(reg.DatasetConfig, doc='The dataset metadata')
+    step_data = StepDataFrame(doc='The timeseries data')
+    endpoint_data = EndpointDataFrame(doc='The endpoint data')
+
+    def __init__(self,**kwargs):
+        if 'config' not in kwargs.keys():
+            kws={}
+            for k in reg.DatasetConfig().param_keys:
+                if k in kwargs.keys():
+                    kws[k]=kwargs[k]
+                    kwargs.pop(k)
+            kwargs['config']=reg.DatasetConfig(**kws)
+        super().__init__(**kwargs)
+
+    @param.depends('step_data', 'endpoint_data', watch=True)
+    def validate_IDs(self):
+        if self.step_data is not None and self.endpoint_data is not None:
+            s1=self.step_data.index.unique('AgentID').tolist()
+            s2 = self.endpoint_data.index.values.tolist()
+            assert s1==s2
+            self.config.agent_ids=s1
+
+    @param.depends('step_data', watch=True)
+    def update_Nticks(self):
+        self.config.Nticks = self.step_data.index.unique('Step').size
+        self.config.duration = self.config.dt * self.config.Nticks / 60
+
+    @property
+    def s(self):
+        return self.step_data
+
+    @property
+    def e(self):
+        return self.endpoint_data
 
 
 class BaseLarvaDataset:
