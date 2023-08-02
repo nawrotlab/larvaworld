@@ -9,7 +9,7 @@ from larvaworld.lib import reg, aux, util
 def register_bout_distros(c,e):
     from larvaworld.lib.model.modules.intermitter import get_EEB_poly1d
     try:
-        c['intermitter'] = {
+        c.intermitter = {
             nam.freq('crawl'): e[nam.freq(nam.scal(nam.vel('')))].mean(),
             nam.freq('feed'): e[nam.freq('feed')].mean() if nam.freq('feed') in e.columns else 2.0,
             'dt': c.dt,
@@ -20,7 +20,7 @@ def register_bout_distros(c,e):
             'run_dist': c.bout_distros.run_dur,
             'feeder_reoccurence_rate': None,
         }
-        c['EEB_poly1d'] = get_EEB_poly1d(**c['intermitter']).c.tolist()
+        c.EEB_poly1d = get_EEB_poly1d(**c.intermitter).c.tolist()
     except :
         pass
 

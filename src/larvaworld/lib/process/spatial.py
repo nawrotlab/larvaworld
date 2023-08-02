@@ -10,13 +10,12 @@ from larvaworld.lib.param import XYops
 
 
 def comp_linear(s, e, c, mode='minimal'):
-    points = nam.midline(c.Npoints, type='point')
-    Nsegs = np.clip(c.Npoints - 1, a_min=0, a_max=None)
-    segs = nam.midline(Nsegs, type='seg')
+    assert isinstance(c, reg.DatasetConfig)
+    points = c.midline_points
     if mode == 'full':
-        reg.vprint(f'Computing linear distances, velocities and accelerations for {len(points) - 1} points')
+        reg.vprint(f'Computing linear distances, velocities and accelerations for {c.Npoints - 1} points')
         points = points[1:]
-        orientations = nam.orient(segs)
+        orientations = c.seg_orientations
     elif mode == 'minimal':
         if c.point == 'centroid' or c.point == points[0]:
             reg.vprint('Defined point is either centroid or head. Orientation of front segment not defined.')
@@ -65,10 +64,10 @@ def comp_linear(s, e, c, mode='minimal'):
 
 
 def comp_spatial(s, e, c, mode='minimal'):
-    points = nam.midline(c.Npoints, type='point')
+    points = c.midline_points
     if mode == 'full':
-        reg.vprint(f'Computing distances, velocities and accelerations for {len(points)} points',1)
-        points += ['centroid']
+        reg.vprint(f'Computing distances, velocities and accelerations for {c.Npoints} points',1)
+        points = c.midline_points + ['centroid']
     elif mode == 'minimal':
         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint',1)
         points = [c.point]
@@ -106,26 +105,23 @@ def comp_spatial(s, e, c, mode='minimal'):
     reg.vprint('All spatial parameters computed')
 
 @reg.funcs.proc("length")
-def comp_length(s, e, c=None, N=None, mode='minimal', recompute=False):
+def comp_length(s, e, c, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
         reg.vprint('Length is already computed. If you want to recompute it, set recompute_length to True',1)
         return
-    if N is None :
-        N = c.Npoints
-    points = nam.midline(N, type='point')
-    xy_pars = nam.xy(points, flat=True)
+    N=c.Npoints
+    xy_pars = c.midline_xy
     if not aux.cols_exist(xy_pars,s):
         reg.vprint(f'XY coordinates not found for the {N} midline points. Body length can not be computed.',1)
         return
     xy = s[xy_pars].values
 
     if mode == 'full':
-        Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-        segs = nam.midline(Nsegs, type='seg')
+        segs = c.midline_segs
         t = len(s)
-        S = np.zeros([Nsegs, t]) * np.nan
+        S = np.zeros([c.Nsegs, t]) * np.nan
         L = np.zeros([1, t]) * np.nan
-        reg.vprint(f'Computing lengths for {Nsegs} segments and total body length',1)
+        reg.vprint(f'Computing lengths for {c.Nsegs} segments and total body length',1)
         for j in range(t):
             for i, seg in enumerate(segs):
                 S[i, j] = np.sqrt(np.nansum((xy[j, 2 * i:2 * i + 2] - xy[j, 2 * i + 2:2 * i + 4]) ** 2))
@@ -146,7 +142,7 @@ def comp_centroid(s, c, recompute=False):
     if aux.cols_exist(nam.xy('centroid'),s) and not recompute:
         reg.vprint('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
     Nc=c.Ncontour
-    con_pars = nam.xy(nam.contour(Nc), flat=True)
+    con_pars = c.contour_xy
     if not aux.cols_exist(con_pars,s) or Nc == 0:
         reg.vprint(f'No contour found. Not computing centroid')
     else:
@@ -210,6 +206,8 @@ def store_spatial(s, e, c, d=None):
 
 @reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, traj2origin=True, **kwargs):
+    assert isinstance(c, reg.DatasetConfig)
+
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
     comp_spatial(s, e, c, mode=mode)
@@ -507,11 +505,14 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
 
 @reg.funcs.preproc("transposition")
 def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transposition='origin', replace=True, **kwargs):
+    if not isinstance(c, reg.DatasetConfig):
+        c=reg.DatasetConfig(**c)
+
     if transposition in ['', None, np.nan]:
         return
     mode=transposition
 
-    xy_pairs = nam.xy(nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(c.Ncontour))
+    xy_pairs = nam.xy(c.midline_points + ['centroid', ''] + c.contour_points)
     xy_flat=xy_pairs.flatten.existing(s)
     xy_pairs = xy_flat.in_pairs
     # xy_flat=np.unique(aux.flatten_list(xy_pairs))
@@ -567,11 +568,12 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
 
 @reg.funcs.preproc("fixation")
 def fixate_larva(s, c, P1, P2=None):
-    R=XYops(Npoints=c.Npoints,Ncontour=c.Ncontour)
+    if not isinstance(c, reg.DatasetConfig):
+        c = reg.DatasetConfig(**c)
 
 
 
-    pars = (R.midline_xy + R.contour_xy + aux.nam.xy('centroid')).existing(s)
+    pars = (c.midline_xy + c.contour_xy + aux.nam.xy('centroid')).existing(s)
     if not nam.xy(P1).exist_in(s):
         raise ValueError(f" The requested {P1} is not part of the dataset")
     reg.vprint(f'Fixing {P1} to arena center')

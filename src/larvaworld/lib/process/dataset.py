@@ -483,7 +483,7 @@ class LarvaDatasetCollection :
             labels = [d.id for d in datasets]
 
         if add_samples:
-            targetIDs = aux.unique_list([d.config['sample'] for d in datasets])
+            targetIDs = aux.unique_list([d.config.sample for d in datasets])
             targets = [reg.loadRef(id) for id in targetIDs if id in reg.conf.Ref.confIDs]
             datasets += targets
             if labels is not None:

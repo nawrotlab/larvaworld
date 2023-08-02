@@ -7,11 +7,10 @@ from larvaworld.lib import reg, aux
 
 @reg.funcs.preproc("interpolate_nans")
 def interpolate_nan_values(s, c, pars=None, **kwargs):
+    assert isinstance(c, reg.DatasetConfig)
     if pars is None:
-        points = nam.midline(c.Npoints, type='point') + ['centroid', ''] + nam.contour(
-            c.Ncontour)  # changed from N and Nc to N[0] and Nc[0] as comma above was turning them into tuples, which the naming function does not accept.
-        pars = nam.xy(points, flat=True)
-    for p in aux.existing_cols(pars, s):
+        pars = c.midline_xy + c.contour_xy + aux.nam.xy('centroid')+ aux.nam.xy('')
+    for p in pars.existing(s):
         for id in s.index.unique('AgentID').values:
             s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
     reg.vprint('All parameters interpolated', 1)
@@ -19,6 +18,7 @@ def interpolate_nan_values(s, c, pars=None, **kwargs):
 
 @reg.funcs.preproc("filter_f")
 def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
+    assert isinstance(c, reg.DatasetConfig)
     if filter_f in ['', None, np.nan]:
         return
     if 'filtered_at' in c and not recompute:
@@ -28,8 +28,7 @@ def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
         return
     c['filtered_at'] = filter_f
 
-    points = nam.midline(c.Npoints, type='point') + ['centroid', '']
-    pars = aux.existing_cols(nam.xy(points, flat=True), s)
+    pars = nam.xy(c.midline_points+ ['centroid', '']).existing(s)
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
     f_array = aux.apply_filter_to_array_with_nans_multidim(data, freq=filter_f, fr=1 / c.dt)
     for j, p in enumerate(pars):
@@ -39,6 +38,7 @@ def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
 
 @reg.funcs.preproc("rescale_by")
 def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
+    assert isinstance(c, reg.DatasetConfig)
     if rescale_by in ['', None, np.nan]:
         return
     if 'rescaled_by' in c and not recompute:
@@ -46,10 +46,9 @@ def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
             f'Dataset already rescaled by {c["rescaled_by"]}. If you want to rescale again set recompute to True', 1)
         return
     c['rescaled_by'] = rescale_by
-    points = nam.midline(c.Npoints, type='point') + ['centroid', '']
-    contour_pars = nam.xy(nam.contour(c.Ncontour), flat=True)
+    points = c.midline_points + ['centroid', '']
     pars = nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + [
-        'spinelength'] + contour_pars
+        'spinelength'] + c.contour_xy
     for p in aux.existing_cols(pars,s):
         s[p] = s[p].apply(lambda x: x * rescale_by)
     if 'length' in e.columns:

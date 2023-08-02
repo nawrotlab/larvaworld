@@ -11,17 +11,11 @@ def comp_orientations(s, e, c, mode='minimal'):
         comp_orientation_1point(s, e)
         return
 
-    temp=c.metric_definition.angular
-    for key in ['front_vector', 'rear_vector']:
-        if temp[key] is None:
-            reg.vprint('Front and rear vectors are not defined. Can not compute orients')
-            return
-    else:
-        f1, f2 = temp.front_vector
-        r1, r2 = temp.rear_vector
+    f1, f2 = c.front_vector
+    r1, r2 = c.rear_vector
 
 
-    xy_pars = aux.nam.midline_xy(Np, flat=True)
+    xy_pars = c.midline_xy
     Axy=s[xy_pars].values
 
     reg.vprint(f'Computing front/rear body-vector and head/tail orientation angles')
@@ -33,8 +27,8 @@ def comp_orientations(s, e, c, mode='minimal'):
     }
 
     if mode == 'full':
-        reg.vprint(f'Computing additional orients for {Np - 1} spinesegments')
-        for i, vec in enumerate(aux.nam.midline(Np - 1, type='seg')):
+        reg.vprint(f'Computing additional orients for {c.Nsegs} spinesegments')
+        for i, vec in enumerate(c.midline_segs):
              vector_idx[vec] = (i+1,i)
 
     for vec, (idx1, idx2) in vector_idx.items() :
@@ -62,14 +56,14 @@ def comp_orientation_1point(s, e):
 
 
 @reg.funcs.proc("ang_moments")
-def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
+def comp_angular(s,e, c, pars=None, **kwargs):
     vecs = ['head', 'tail', 'front', 'rear']
     ho,to,fo,ro=aux.nam.orient(vecs)
     if pars is None :
-        if Npoints > 3 :
+        if c.Npoints > 3 :
             base_pars = ['bend', ho, to, fo, ro]
-            segs = aux.nam.midline(Npoints - 1, type='seg')
-            ang_pars = [f'angle{i}' for i in range(Npoints - 2)]
+            segs = c.midline_segs
+            ang_pars = [f'angle{i}' for i in range(c.Nangles)]
             pars = base_pars + ang_pars+aux.nam.orient(segs)
         else :
             pars = [ho]
@@ -86,8 +80,8 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
             s[p_unw] = aux.apply_per_level(s[p], aux.unwrap_deg).flatten()
             ss=s[p_unw]
 
-        s[pvel] = aux.apply_per_level(ss, aux.rate, dt=dt).flatten()
-        s[avel] = aux.apply_per_level(s[pvel], aux.rate, dt=dt).flatten()
+        s[pvel] = aux.apply_per_level(ss, aux.rate, dt=c.dt).flatten()
+        s[avel] = aux.apply_per_level(s[pvel], aux.rate, dt=c.dt).flatten()
 
         if p in ['bend', ho, to, fo, ro]:
             for pp in [p,pvel,avel] :
@@ -107,27 +101,21 @@ def comp_angular(s,e, dt,Npoints, pars=None, **kwargs):
 
 @reg.funcs.proc("angular")
 def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwargs):
-    Np=c.Npoints
-    dt = c.dt
-
-    def ang_conf():
-        return c.bend,c.front_body_ratio, np.array(c.front_vector) - 1, np.array(c.rear_vector) - 1
+    assert isinstance(c, reg.DatasetConfig)
 
     ho, to, fo, ro = aux.nam.orient(['head', 'tail', 'front', 'rear'])
 
-    if Np < 3:
-        Nangles = 0
+    if c.Nangles == 0:
         or_pars =[fo]
         bend_pars=[]
 
     else :
-        Nangles = Np - 2
         or_pars = [fo, ro]
         bend_pars=['bend']
 
     if not aux.cols_exist(or_pars+bend_pars,s) or recompute:
     # if not set(or_pars+bend_pars).issubset(s.columns.values) or recompute:
-        if Np == 1:
+        if c.Npoints == 1:
             def func(ss):
                 x, y = ss[:, 0].values, ss[:, 1].values
                 dx, dy = np.diff(x, prepend=np.nan), np.diff(y, prepend=np.nan)
@@ -137,16 +125,21 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwarg
 
             s[fo]=  aux.apply_per_level(s[['x', 'y']], func).flatten()
         else :
-            xy_pars = aux.nam.midline_xy(Np, flat=True)
+            xy_pars = c.midline_xy
             Axy = s[xy_pars].values
             Ax, Ay = Axy[:, ::2], Axy[:, 1::2]
             Adx = np.diff(Ax)
             Ady = np.diff(Ay)
             Aa = np.arctan2(Ady, Adx) % (2 * np.pi)
-            if Np == 2 :
+            if c.Npoints == 2 :
                 s[fo] = Aa[:, 0]
             else :
-                bend_mode,front_body_ratio, (f1,f2), (r1,r2)= ang_conf()
+                f1,f2=c.front_vector
+                r1,r2=c.rear_vector
+                f1-=1
+                f2-=1
+                r1-=1
+                r2-=1
                 fx, fy = Ax[:, f1] - Ax[:, f2], Ay[:, f1] - Ay[:, f2]
                 rx, ry = Ax[:, r1] - Ax[:, r2], Ay[:, r1] - Ay[:, r2]
                 s[fo] =Afo = np.arctan2(fy, fx)% (2 * np.pi)
@@ -155,34 +148,30 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwarg
                 Ada = np.diff(Aa) % (2 * np.pi)
                 Ada[Ada > np.pi] -= 2 * np.pi
 
-                if bend_mode == 'from_vectors':
+                if c.bend == 'from_vectors':
                     reg.vprint(f'Computing bending angle as the difference between front and rear orients')
                     a = np.remainder(Afo-Aro, 2 * np.pi)
                     a[a > np.pi] -= 2 * np.pi
-                elif bend_mode == 'from_angles':
-                    Nbend_angles = int(np.round(front_body_ratio * Nangles))
-                    reg.vprint(f'Computing bending angle as the sum of the first {Nbend_angles} front angles')
-                    a = np.sum(Ada[:, :Nbend_angles], axis=1)
+                elif c.bend == 'from_angles':
+                    reg.vprint(f'Computing bending angle as the sum of the first {c.Nbend_angles} front angles')
+                    a = np.sum(Ada[:, :c.Nbend_angles], axis=1)
                 else :
                     raise
 
                 s['bend'] = np.degrees(a)
 
                 if mode=='full' :
-                    ang_pars = [f'angle{i}' for i in range(Nangles)]
-                    s[ang_pars] = Ada
-                    bend_pars += ang_pars
+                    s[c.angles] = Ada
+                    bend_pars += c.angles
 
-                    segs = aux.nam.midline(Np - 1, type='seg')
-                    seg_pars = aux.nam.orient(segs)
-                    s[seg_pars] = Aa
-                    or_pars =aux.unique_list(or_pars + seg_pars)
+                    s[c.seg_orientations] = Aa
+                    or_pars =aux.unique_list(or_pars + c.seg_orientations)
 
     else :
         reg.vprint(
             'Orientation and bend are already computed. If you want to recompute them, set recompute to True', 1)
     ps = or_pars + bend_pars
-    comp_angular(s, e, dt,Np, pars=ps)
+    comp_angular(s, e, c, pars=ps)
 
 
     reg.vprint(f'Completed {mode} angular processing.')
@@ -221,23 +210,23 @@ def ang_from_xy(xy):
     return ang_vel, ang_acc
 
 
-def comp_ang_from_xy(s, e, dt):
-    N = s.index.unique('Step').size
-    p = aux.nam.orient('front')
-    p_vel, p_acc = aux.nam.vel(p), aux.nam.acc(p)
-    ids = s.index.unique('AgentID').values
-    Nids = len(ids)
-    V = np.zeros([N, 1, Nids]) * np.nan
-    A = np.zeros([N, 1, Nids]) * np.nan
-    for j, id in enumerate(ids):
-        xy = s[["x", "y"]].xs(id, level='AgentID').values
-        avel, aacc = ang_from_xy(xy)
-        V[:, 0, j] = avel / dt
-        A[:, 0, j] = aacc / dt
-    s[p_vel] = V[:, 0, :].flatten()
-    s[p_acc] = A[:, 0, :].flatten()
-    e[aux.nam.mean(p_vel)] = s[p_vel].dropna().groupby('AgentID').mean()
-    e[aux.nam.mean(p_acc)] = s[p_acc].dropna().groupby('AgentID').mean()
+# def comp_ang_from_xy(s, e, dt):
+#     N = s.index.unique('Step').size
+#     p = aux.nam.orient('front')
+#     p_vel, p_acc = aux.nam.vel(p), aux.nam.acc(p)
+#     ids = s.index.unique('AgentID').values
+#     Nids = len(ids)
+#     V = np.zeros([N, 1, Nids]) * np.nan
+#     A = np.zeros([N, 1, Nids]) * np.nan
+#     for j, id in enumerate(ids):
+#         xy = s[["x", "y"]].xs(id, level='AgentID').values
+#         avel, aacc = ang_from_xy(xy)
+#         V[:, 0, j] = avel / dt
+#         A[:, 0, j] = aacc / dt
+#     s[p_vel] = V[:, 0, :].flatten()
+#     s[p_acc] = A[:, 0, :].flatten()
+#     e[aux.nam.mean(p_vel)] = s[p_vel].dropna().groupby('AgentID').mean()
+#     e[aux.nam.mean(p_acc)] = s[p_acc].dropna().groupby('AgentID').mean()
 
 @reg.funcs.proc("extrema")
 def comp_extrema_multi(s, pars=None, **kwargs):

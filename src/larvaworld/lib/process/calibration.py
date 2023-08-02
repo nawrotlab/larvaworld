@@ -16,6 +16,7 @@ from larvaworld.lib.process.annotation import detect_strides, process_epochs
 
 def vel_definition(d) :
     s, e, c = d.data
+    assert isinstance(c,reg.DatasetConfig)
     res_v = comp_stride_variation(s, e, c)
     res_fov = comp_segmentation(s, e, c)
     fit_metric_definition(str_var=res_v['stride_variability'], df_corr=res_fov['bend2or_correlation'], c=c)
@@ -30,7 +31,7 @@ def comp_stride_variation(s, e, c):
 
 
     N = c.Npoints
-    points = aux.nam.midline(N, type='point')
+    points = c.midline_points
     vels = aux.nam.vel(points)
     cvel = aux.nam.vel('centroid')
     lvels = aux.nam.lin(aux.nam.vel(points[1:]))

@@ -43,13 +43,32 @@ class XYops(NestedConf):
     Ncontour = PositiveInteger(0, softmax=100, label='# contour 2D points',
                                doc='The number of points tracked around the larva contour.')
 
+
+
     @property
     def Nangles(self):
         return np.clip(self.Npoints - 2, a_min=0, a_max=None)
 
     @property
+    def Nsegs(self):
+        return np.clip(self.Npoints - 1, a_min=0, a_max=None)
+
+    @property
+    def angles(self):
+        return aux.SuperList([f'angle{i}' for i in range(self.Nangles)])
+
+    @property
     def midline_points(self):
         return aux.nam.midline(self.Npoints, type='point')
+
+    @property
+    def midline_segs(self):
+        return aux.nam.midline(self.Nsegs, type='seg')
+
+    @property
+    def seg_orientations(self):
+        return aux.nam.orient(self.midline_segs)
+
 
     @property
     def midline_xy(self, flat=True):
@@ -234,7 +253,9 @@ class SimMetricOps(TrackedPointIdx):
         self.param.params('rear_vector')._validate(self.rear_vector)
 
 
-
+    @property
+    def Nbend_angles(self):
+        return int(np.round(self.front_body_ratio * self.Nangles))
 
 
 class PreprocessConf(NestedConf):
