@@ -253,6 +253,10 @@ class ParamLarvaDataset(param.Parameterized):
         c=self.config
         self.step_data[c.centroid_xy] = np.sum(self.step_data[c.contour_xy].values.reshape([-1, c.Ncontour, 2]), axis=1)/c.Ncontour
 
+    def comp_length(self):
+        self.step_data['length'] = np.sum(np.sum(np.diff(self.midline_xy_data, axis=1) ** 2, axis=2) ** (1 / 2), axis=1)
+        self.endpoint_data['length'] = self.step_data['length'].groupby('AgentID').quantile(q=0.5)
+
 
 
 class BaseLarvaDataset(ParamLarvaDataset):
