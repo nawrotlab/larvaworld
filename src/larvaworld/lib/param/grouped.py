@@ -66,6 +66,10 @@ class XYops(NestedConf):
         return aux.nam.midline(self.Nsegs, type='seg')
 
     @property
+    def midline_seg_xy(self, flat=True):
+        return aux.nam.xy(self.midline_segs, flat=flat)
+
+    @property
     def seg_orientations(self):
         return aux.nam.orient(self.midline_segs)
 

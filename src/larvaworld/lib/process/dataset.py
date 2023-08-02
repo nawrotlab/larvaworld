@@ -40,13 +40,25 @@ class ParamLarvaDataset(param.Parameterized):
         self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
         self.larva_dicts = {}
 
-    @param.depends('step_data', 'endpoint_data', watch=True)
+    #@param.depends('step_data', 'endpoint_data', watch=True)
     def validate_IDs(self):
         if self.step_data is not None and self.endpoint_data is not None:
             s1=self.step_data.index.unique('AgentID').tolist()
             s2 = self.endpoint_data.index.values.tolist()
+            #print(s1,s2)
             assert s1==s2
             self.config.agent_ids=s1
+
+    #@param.depends('config.agent_ids', watch=True)
+    def update_ids_in_data(self):
+        s,e=None,None
+        if self.step_data is not None :
+            s=self.step_data.loc[(slice(None), self.config.agent_ids), :]
+
+        if self.endpoint_data is not None:
+            e=self.endpoint_data.loc[self.config.agent_ids]
+        self.set_data(step=s,end=e)
+
 
     @param.depends('step_data', watch=True)
     def update_Nticks(self):
@@ -71,11 +83,11 @@ class ParamLarvaDataset(param.Parameterized):
         for n,p in d.items():
             self.config.param.add_parameter(n,p)
 
-    @property
-    def c_full(self):
-        c = self.config.nestedConf
-        c.update(**self.config2)
-        return c
+    # @property
+    # def c_full(self):
+    #     c = self.config.nestedConf
+    #     c.update(**self.config2)
+    #     return c
 
     def set_data(self, step=None, end=None,agents=None,**kwargs):
         if step is not None:
@@ -84,27 +96,21 @@ class ParamLarvaDataset(param.Parameterized):
             self.endpoint_data = end.sort_index()
         if agents is not None:
             self.larva_dicts = aux.get_larva_dicts(agents, validIDs=self.config.agent_ids)
+        self.validate_IDs()
 
     @property
     def data(self):
         return self.step_data, self.endpoint_data, self.config
 
-    @property
-    def default_filename(self):
-        return 'data'
 
-    def path_to_file(self, file=None):
-        if file is None:
-            file=self.default_filename
+    def path_to_file(self, file='data'):
         return f'{self.config.data_dir}/{file}.h5'
 
     @property
     def path_to_config(self):
         return f'{self.config.data_dir}/conf.txt'
 
-    def store(self, df, key, file=None):
-        if file is None:
-            file=self.default_filename
+    def store(self, df, key, file='data'):
         path=self.path_to_file(file)
         if not isinstance(df, pd.DataFrame):
             pd.DataFrame(df).to_hdf(path, key)
@@ -112,9 +118,7 @@ class ParamLarvaDataset(param.Parameterized):
             df.to_hdf(path, key)
 
 
-    def read(self, key, file=None):
-        if file is None:
-            file=self.default_filename
+    def read(self, key, file='data'):
         path=self.path_to_file(file)
         try :
             return pd.read_hdf(path, key)
@@ -165,7 +169,7 @@ class ParamLarvaDataset(param.Parameterized):
         if c.refID is not None:
             reg.conf.Ref.setID(c.refID, c.dir)
             reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
-        aux.save_dict(self.c_full, self.path_to_config)
+        aux.save_dict(c.nestedConf, self.path_to_config)
 
     def load_traj(self, mode='default'):
         key=f'traj.{mode}'
@@ -192,6 +196,63 @@ class ParamLarvaDataset(param.Parameterized):
         else:
             ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.config.data_dir}/individuals/{type}.txt')
         return ds
+
+    @property
+    def contour_xy_data_byID(self):
+        xy=self.config.contour_xy
+        assert xy.exist_in(self.step_data)
+        grouped=self.step_data[self.config.contour_xy].groupby('AgentID')
+        return aux.AttrDict({id: df.values.reshape([-1, self.config.Ncontour, 2]) for id, df in grouped})
+
+
+
+    @property
+    def midline_xy_data_byID(self):
+        xy = self.config.midline_xy
+        assert xy.exist_in(self.step_data)
+        grouped = self.step_data[xy].groupby('AgentID')
+        return aux.AttrDict({id: df.values.reshape([-1, self.config.Npoints, 2]) for id, df in grouped})
+
+    @property
+    def midline_xy_data(self):
+        return self.step_data[self.config.midline_xy].values.reshape([-1, self.config.Npoints, 2])
+
+    @property
+    def contour_xy_data(self):
+        return self.step_data[self.config.contour_xy].values.reshape([-1, self.config.Ncontour, 2])
+
+    # def centroid_xy_data(self):
+    #     xy=self.contour_xy_data
+    #     return np.sum(xy, axis=1) / self.config.Ncontour
+
+
+    def midline_xy_1less(self, mid):
+        mid2 = copy.deepcopy(mid[:,:-1,:])
+        for i in range(mid.shape[1]-1):
+            mid2[:, i, :] = (mid[:, i, :] + mid[:, i + 1,:]) / 2
+        return mid2
+
+    @property
+    def midline_seg_xy_data_byID(self):
+        g=self.midline_xy_data_byID
+        return aux.AttrDict({id: self.midline_xy_1less(mid) for id, mid in g.items()})
+
+    @property
+    def midline_seg_orients_data_byID(self):
+        g = self.midline_xy_data_byID
+        return aux.AttrDict({id: self.midline_seg_orients_from_mid(mid) for id, mid in g.items()})
+
+
+    def midline_seg_orients_from_mid(self,mid):
+        Ax, Ay = mid[:, :, 0], mid[:, :, 1]
+        Adx = np.diff(Ax)
+        Ady = np.diff(Ay)
+        return np.arctan2(Ady, Adx) % (2 * np.pi)
+
+    def comp_centroid(self):
+        c=self.config
+        self.step_data[c.centroid_xy] = np.sum(self.step_data[c.contour_xy].values.reshape([-1, c.Ncontour, 2]), axis=1)/c.Ncontour
+
 
 
 class BaseLarvaDataset(ParamLarvaDataset):

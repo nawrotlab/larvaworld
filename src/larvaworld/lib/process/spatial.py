@@ -137,13 +137,7 @@ def comp_centroid(s, c, recompute=False):
         reg.vprint(f'No contour found. Not computing centroid')
     else:
         reg.vprint(f'Computing centroid from {c.Ncontour} contourpoints')
-        xy = s[c.contour_xy].values
-        t = xy.shape[0]
-        xy = np.reshape(xy, (t, c.Ncontour, 2))
-        cen = np.zeros([t, 2]) * np.nan
-        for i in range(t):
-            cen[i, :] = np.sum(xy[i, :, :], axis=0)/c.Ncontour
-        s[c.centroid_xy] = cen
+        s[c.centroid_xy] = np.sum(s[c.contour_xy].values.reshape([-1, c.Ncontour, 2]), axis=1)/c.Ncontour
     reg.vprint('Centroid coordinates computed.')
 
 

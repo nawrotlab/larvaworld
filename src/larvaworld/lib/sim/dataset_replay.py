@@ -23,15 +23,18 @@ class ReplayRun(BaseRun):
             experiment: The type of experiment. Defaults to 'replay'
             **kwargs: Arguments passed to parent class
         '''
-        d = self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID,
+        d = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID,
                                                             dir=parameters.refDir)
 
+        self.refDataset=copy.deepcopy(d)
+
         # Configure the dataset to replay
-        self.step_data, self.endpoint_data, self.config = self.smaller_dataset(p=parameters, d=self.refDataset)
-        parameters.steps = self.config.Nsteps
-        kwargs.update(**{'duration':self.config.duration,
-                       'dt':self.config.dt,
-                       'Nsteps':self.config.Nsteps})
+        self.refDataset=self.smaller_dataset(p=parameters, d=self.refDataset)
+        c=self.refDataset.config
+        parameters.steps = c.Nsteps
+        kwargs.update(**{'duration':c.duration,
+                       'dt':c.dt,
+                       'Nsteps':c.Nsteps})
 
         BaseRun.__init__(self,runtype='Replay', parameters=parameters,**kwargs)
 
@@ -49,26 +52,25 @@ class ReplayRun(BaseRun):
         return text
 
     def setup(self):
-        s,e,c=self.step_data,self.endpoint_data,self.config
+        # s,e,c=self.step_data,self.endpoint_data,self.config
 
-        if c.fix_point is not None:
-            s, bg = reg.funcs.preprocessing['fixation'](s, c, P1=c.fix_point,P2=c.fix_point2)
-        else:
-            bg = None
+
         self.draw_Nsegs = self.p.draw_Nsegs
         self.build_env(self.p.env_params)
-        self.build_agents(s,e,c)
+        self.build_agents(d=self.refDataset)
         screen_kws = {
             'mode': 'video' if not self.p.overlap_mode else 'image',
             'show_display' : True,
             'image_mode':'overlap' if self.p.overlap_mode else None,
-            'background_motion': bg,
+            'background_motion': self.background_motion,
         }
         self.screen_manager = ScreenManager(model=self, **screen_kws)
 
 
 
-    def build_agents(self, s,e,c):
+    def build_agents(self, d):
+        s, e, c = d.data
+
         if 'length' in e.columns:
             ls = e['length'].values
         else:
@@ -76,20 +78,22 @@ class ReplayRun(BaseRun):
 
         ors=['front_orientation','rear_orientation']
         assert aux.cols_exist(ors, s)
-        mid_ps = aux.nam.midline_xy(c.Npoints, flat=True)
-        con_ps = aux.nam.contour_xy(c.Ncontour, flat=True)
+        # mid_ps = c.midline_xy
+        # con_ps = c.contour_xy
         if self.p.draw_Nsegs is not None:
             if self.p.draw_Nsegs == 2:
                 pass
             elif self.p.draw_Nsegs == c.Npoints - 1:
-                or_ps = aux.nam.orient(aux.nam.midline(c.Npoints - 1, type='seg'))
-                assert or_ps.exist_in(s)
-                assert mid_ps.exist_in(s)
+                # or_ps = c.seg_orientations
+                # assert or_ps.exist_in(s)
+                # assert mid_ps.exist_in(s)
+                seg_orientD=d.midline_seg_orients_data_byID
+                midlineD=d.midline_seg_xy_data_byID
             else:
                 raise
         else:
-            assert con_ps.exist_in(s)
-            assert mid_ps.exist_in(s)
+            contourD=d.contour_xy_data_byID
+            midlineD=d.midline_xy_data_byID
 
         confs=[]
         for i, id in enumerate(c.agent_ids):
@@ -112,22 +116,22 @@ class ReplayRun(BaseRun):
                 elif conf.Nsegs == c.Npoints - 1:
                     # or_ps = aux.nam.orient(aux.nam.midline(conf.Nsegs, type='seg'))
                     # assert or_ps.exist_in(ss)
-                    data.seg_orientations = np.deg2rad(ss[or_ps].values)
+                    data.seg_orientations = seg_orientD[id]
 
-                    # assert mid_ps.exist_in(ss)
-                    mid = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
-                    mid2=copy.deepcopy(mid)
-                    for i in range(conf.Nsegs):
-                        mid2[:,i,:]=(mid[:,i,:]+mid[:,i+1:])/2
-                    data.midline = mid2
+                    # # assert mid_ps.exist_in(ss)
+                    # mid = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
+                    # mid2=copy.deepcopy(mid)
+                    # for i in range(conf.Nsegs):
+                    #     mid2[:,i,:]=(mid[:,i,:]+mid[:,i+1:])/2
+                    data.midline = midlineD[id]
                 else:
                     raise
             else:
 
                 # assert con_ps.exist_in(ss)
-                data.contour = ss[con_ps].values.reshape([-1, c.Ncontour, 2])
+                data.contour = contourD[id]
                 # assert mid_ps.exist_in(ss)
-                data.midline = ss[mid_ps].values.reshape([-1, c.Npoints, 2])
+                data.midline = midlineD[id]
             conf.data=data
             confs.append(conf)
         self.place_agents(confs)
@@ -155,22 +159,20 @@ class ReplayRun(BaseRun):
 
 
     def smaller_dataset(self,p, d):
-        c = copy.deepcopy(d.config)
+        d.load(h5_ks=['contour', 'midline', 'angular'])
+        c=d.config
+
         assert isinstance(c, reg.DatasetConfig)
         # R = XYops(Npoints=c.Npoints, Ncontour=c.Ncontour)
         # Group mode
         if p.track_point is not None:
             c.point_idx=p.track_point
-        if p.agent_ids not in [None, []]:
-            if isinstance(p.agent_ids, list) and all([type(i) == int for i in p.agent_ids]):
-                p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
-            elif isinstance(p.agent_ids, int):
-                p.agent_ids = [c.agent_ids[p.agent_ids]]
-            c.agent_ids = p.agent_ids
-        if p.env_params is not None:
-            c.env_params = p.env_params
-        else:
-            p.env_params = c.env_params.nestedConf
+
+
+
+
+
+
 
         # Unit mode
         if p.fix_point is not None:
@@ -189,40 +191,53 @@ class ReplayRun(BaseRun):
             c.fix_point = None
         # print(c.fix_point2, c.fix_point, p.fix_point, p.fix_segment)
         # raise
-
+        if p.agent_ids not in [None, []]:
+            if isinstance(p.agent_ids, list) and all([type(i) == int for i in p.agent_ids]):
+                p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
+            elif isinstance(p.agent_ids, int):
+                p.agent_ids = [c.agent_ids[p.agent_ids]]
+            c.agent_ids = p.agent_ids
         if c.fix_point is not None:
             c.agent_ids = c.agent_ids[:1]
+        d.update_ids_in_data()
+
+
+
+        if p.env_params is None:
+            p.env_params = c.env_params.nestedConf
+
         if p.close_view:
-            c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
-            p.env_params.arena = c.env_params.arena.nestedConf
+            p.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
 
-        def get_data(dd,ids) :
-            if not hasattr(dd, 'step_data'):
-                dd.load(h5_ks=['contour', 'midline'])
-            s, e = dd.step_data, dd.endpoint_data
-            e0=copy.deepcopy(e.loc[ids])
-            s0=copy.deepcopy(s.loc[(slice(None), ids), :])
-            return s0,e0
+        s = d.step_data
 
-        s0,e0=get_data(d,c.agent_ids)
-
-        xy_pars = nam.xy(c.point)
-        assert aux.cols_exist(xy_pars, s0)
-        s0[['x', 'y']] = s0[xy_pars]
 
         if p.time_range is not None:
             a, b = p.time_range
             # a = int(a / c.dt)
             # b = int(b / c.dt)
-            s0 = s0.query(f'{a}<=Step*{c.dt}<={b}')
+            s = s.query(f'{a}<=Step*{c.dt}<={b}')
             # s0 = s0.loc[(slice(a, b), slice(None)), :]
 
+        xy_pars = nam.xy(c.point)
+        assert aux.cols_exist(xy_pars, s)
+        s[['x', 'y']] = s[xy_pars]
+
+        if c.fix_point is not None:
+            s, bg = reg.funcs.preprocessing['fixation'](s, c, P1=c.fix_point,P2=c.fix_point2)
+        else:
+            bg = None
+        self.background_motion=bg
+
         if p.transposition is not None:
-            s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)
-            xy_max=2*np.max(s0[nam.xy(c.point)].dropna().abs().values.flatten())
-            c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max))
-            p.env_params.arena=c.env_params.arena.nestedConf
-        c.Nsteps = len(s0.index.unique('Step').values)-1
-        c.duration=c.Nsteps * c.dt/60
-        c.N = len(c.agent_ids)
-        return s0,e0, c
+            s = reg.funcs.preprocessing["transposition"](s, c=c, transposition=p.transposition,replace=True)
+            xy_max=2*np.max(s[nam.xy(c.point)].dropna().abs().values.flatten())
+            # c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max))
+            p.env_params.arena=reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
+
+        d.set_data(step=s)
+
+        # # c.Nsteps = len(s0.index.unique('Step').values)-1
+        # # c.duration=c.Nsteps * c.dt/60
+        # # c.N = len(c.agent_ids)
+        return d
