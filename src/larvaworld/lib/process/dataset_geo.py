@@ -50,13 +50,16 @@ class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
             self.init_mpd(step, dt=dt)
         BaseLarvaDataset.__init__(self, **kwargs)
 
-    @property
-    def default_filename(self):
-        return 'geodata'
+    # @property
+    # def default_filename(self):
+    #     return 'geodata'
 
 
     def init_gdf(self,step,dt):
         if len(step.index.names) != 1 or 'datetime' not in step.index.names:
+            max_tick = step[['x', 'y']].dropna().index.unique('Step').max()
+            step = step.query(f'Step<={max_tick}')
+
             step = step.reset_index()
             t = 't'
             if 'datetime' not in step.columns:
@@ -110,13 +113,16 @@ class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
 
         c = self.config
         if step is not None:
-            self.init_mpd(step,c.dt)
-            self.step_data=self.get_step_data()
+            if not hasattr(self, 'trajectories'):
+                self.init_mpd(step,c.dt)
+                end = self.build_endpoint_data()
+                self.step_data=self.get_step_data()
 
-            end=self.build_endpoint_data()
+            else :
+                self.step_data = step.sort_index(level=self.param.step_data.levels)
 
         if end is not None:
-            self.endpoint_data=end
+            self.endpoint_data=end.sort_index()
 
 
 
@@ -292,12 +298,12 @@ class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
         if all([p not in e.columns for p in [x0,x1,y0,y1]]):
             e[x0] = {tr.id: tr.df.xy.iloc[0].x for tr in self}
             e[y0] = {tr.id: tr.df.xy.iloc[0].y for tr in self}
-            try:
-                e[x1] = {tr.id: tr.df.xy.iloc[-1].x for tr in self}
-                e[y1] = {tr.id: tr.df.xy.iloc[-1].y for tr in self}
-            except:
-                e[x1] = {tr.id: tr.df.xy.iloc[-2].x for tr in self}
-                e[y1] = {tr.id: tr.df.xy.iloc[-2].y for tr in self}
+            # try:
+            e[x1] = {tr.id: tr.df.xy.iloc[-1].x for tr in self}
+            e[y1] = {tr.id: tr.df.xy.iloc[-1].y for tr in self}
+            # except:
+            #     e[x1] = {tr.id: tr.df.xy.iloc[-2].x for tr in self}
+            #     e[y1] = {tr.id: tr.df.xy.iloc[-2].y for tr in self}
 
 
         spatial_ps=[x0,x1,y0,y1]+[cum_d]
@@ -377,13 +383,19 @@ class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
 
 
         inst = cls(step=step,dt=d.config.dt,load_data=False, refID=refID)
-        inst.set_data(end=inst.build_endpoint_data())
+        inst.set_data(end=inst.build_endpoint_data(), step=inst.get_step_data())
         return inst
 
+    def path_to_file(self, file='geostep'):
+        return f'{self.config.data_dir}/{file}.txt'
+
     def save(self, refID=None):
-        self.store(self.df, 'step')
+        # print(self.config.dir)
+        aux.save_dict(self.df, self.path_to_file('geodf'))
+        aux.save_dict(self.get_step_data(), self.path_to_file('geostep'))
+
         if self.endpoint_data is not None:
-            self.store(self.endpoint_data, 'end')
+            aux.save_dict(self.df, self.path_to_file('geoend'))
         self.save_config(refID=refID)
         reg.vprint(f'***** Dataset {self.config.id} stored.-----', 1)
 
@@ -464,8 +476,8 @@ class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
 
 
     def load(self, **kwargs):
-        s = self.read('step')
-        e = self.read('end')
+        s = pd.DataFrame(aux.load_dict(self.path_to_file('geostep')))
+        e = pd.DataFrame(aux.load_dict(self.path_to_file('geoend')))
         self.set_data(step=s, end=e)
 
     # @property
@@ -585,6 +597,7 @@ class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
 if __name__ == "__main__":
     tpd = GeoLarvaDataset.from_ID(refID='exploration.40controls')
     # tpd.comp_spatial()
+    # tpd.save()
     # tpd.load_midline()
     #tpd.load_contour(d.Ncontour)
 
