@@ -3,8 +3,8 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.sim.dataset_replay import ReplayRun
 
 # mode = '2segs'
-# mode = 'dispersal'
-mode = 'normal'
+mode = 'fixed_point'
+# mode = 'normal'
 # refID = 'Rehydration/AttP2.Deprived'
 # refID = 'exploration.dish'
 refID = 'exploration.40controls'

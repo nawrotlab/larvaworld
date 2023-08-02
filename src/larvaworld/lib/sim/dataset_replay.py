@@ -155,11 +155,12 @@ class ReplayRun(BaseRun):
 
 
     def smaller_dataset(self,p, d):
-        c = d.config.get_copy()
-        R = XYops(Npoints=c.Npoints, Ncontour=c.Ncontour)
+        c = copy.deepcopy(d.config)
+        assert isinstance(c, reg.DatasetConfig)
+        # R = XYops(Npoints=c.Npoints, Ncontour=c.Ncontour)
         # Group mode
         if p.track_point is not None:
-            c.point = R.get_track_point(p.track_point)
+            c.point_idx=p.track_point
         if p.agent_ids not in [None, []]:
             if isinstance(p.agent_ids, list) and all([type(i) == int for i in p.agent_ids]):
                 p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
@@ -169,11 +170,11 @@ class ReplayRun(BaseRun):
         if p.env_params is not None:
             c.env_params = p.env_params
         else:
-            p.env_params = c.env_params
+            p.env_params = c.env_params.nestedConf
 
         # Unit mode
         if p.fix_point is not None:
-            c.fix_point = R.get_track_point(p.fix_point)
+            c.fix_point = c.get_track_point(p.fix_point)
             if c.fix_point != 'centroid' or p.fix_segment is None:
                 c.fix_point2 = None
             else:
@@ -183,14 +184,14 @@ class ReplayRun(BaseRun):
                     P2_idx = p.fix_point - 1
                 else:
                     raise
-                c.fix_point2 = R.get_track_point(P2_idx)
+                c.fix_point2 = c.get_track_point(P2_idx)
         else:
             c.fix_point = None
         if c.fix_point is not None:
             c.agent_ids = c.agent_ids[:1]
         if p.close_view:
-            c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
-            p.env_params.arena = c.env_params.arena
+            c.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01))
+            p.env_params.arena = c.env_params.arena.nestedConf
 
         def get_data(dd,ids) :
             if not hasattr(dd, 'step_data'):
@@ -216,8 +217,8 @@ class ReplayRun(BaseRun):
         if p.transposition is not None:
             s0 = reg.funcs.preprocessing["transposition"](s0, c=c, transposition=p.transposition,replace=True)
             xy_max=2*np.max(s0[nam.xy(c.point)].dropna().abs().values.flatten())
-            c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
-            p.env_params.arena=c.env_params.arena
+            c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max))
+            p.env_params.arena=c.env_params.arena.nestedConf
         c.Nsteps = len(s0.index.unique('Step').values)-1
         c.duration=c.Nsteps * c.dt/60
         c.N = len(c.agent_ids)

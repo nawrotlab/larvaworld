@@ -6,7 +6,8 @@ import param
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
-    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch, RuntimeDataOps, RandomizedColor
+    generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch, RuntimeDataOps, RandomizedColor, \
+    OptionalPositiveNumber
 
 
 class ConfType(param.Parameterized) :
@@ -538,6 +539,8 @@ class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
     agent_ids=param.List(item_type=str, doc='The unique IDs of the agents in the dataset')
     N = OptionalPositiveInteger(default=None, softmax=500, doc='The number of agents in the group')
     sample = conf.Ref.confID_selector()
+    filtered_at = OptionalPositiveNumber(default=None)
+    rescaled_by = OptionalPositiveNumber(default=None)
 
     @property
     def h5_kdic(self):

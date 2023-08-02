@@ -87,8 +87,8 @@ class XYops(NestedConf):
         return aux.nam.xy('centroid')
 
     @property
-    def all_xy(self):
-        return aux.nam.xy(self.midline_points+self.contour_points+['centroid', ''])
+    def all_xy(self, flat=True):
+        return aux.nam.xy(self.midline_points+self.contour_points+['centroid', ''], flat=flat)
 
     def get_track_point(self,idx):
         if idx==-1:

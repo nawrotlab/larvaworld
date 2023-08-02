@@ -198,7 +198,7 @@ class BaseLarvaDataset:
     def set_endpoint_data(self,end):
         self.endpoint_data = end.sort_index()
         self.agent_ids = self.endpoint_data.index.values
-        self.config.agent_ids = self.agent_ids
+        self.config.agent_ids = list(self.agent_ids)
         self.config.N = len(self.agent_ids)
 
     def load(self, **kwargs):
