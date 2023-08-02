@@ -9,7 +9,7 @@ from larvaworld.lib import reg, aux
 def interpolate_nan_values(s, c, pars=None, **kwargs):
     assert isinstance(c, reg.DatasetConfig)
     if pars is None:
-        pars = c.midline_xy + c.contour_xy + aux.nam.xy('centroid')+ aux.nam.xy('')
+        pars = c.all_xy
     for p in pars.existing(s):
         for id in s.index.unique('AgentID').values:
             s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
@@ -28,7 +28,7 @@ def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
         return
     c['filtered_at'] = filter_f
 
-    pars = nam.xy(c.midline_points+ ['centroid', '']).existing(s)
+    pars = c.all_xy.existing(s)
     data = np.dstack(list(s[pars].groupby('AgentID').apply(pd.DataFrame.to_numpy)))
     f_array = aux.apply_filter_to_array_with_nans_multidim(data, freq=filter_f, fr=1 / c.dt)
     for j, p in enumerate(pars):
@@ -47,8 +47,8 @@ def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
         return
     c['rescaled_by'] = rescale_by
     points = c.midline_points + ['centroid', '']
-    pars = nam.xy(points, flat=True) + nam.dst(points) + nam.vel(points) + nam.acc(points) + [
-        'spinelength'] + c.contour_xy
+    pars = c.all_xy + nam.dst(points) + nam.vel(points) + nam.acc(points) + [
+        'spinelength']
     for p in aux.existing_cols(pars,s):
         s[p] = s[p].apply(lambda x: x * rescale_by)
     if 'length' in e.columns:

@@ -529,12 +529,13 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls'
 
 class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
     # duration = OptionalPositiveNumber(default=None)
-    # Nsteps = OptionalPositiveInteger(default=None)
+    Nticks = OptionalPositiveInteger(default=None)
     refID = param.String(None, doc='The unique ID of the reference dataset')
     group_id = param.String(None, doc='The unique ID of the group')
     color = RandomizedColor(default='black', doc='The color of the dataset', instantiate=True)
     # larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
     env_params = ClassAttr(gen.Env, doc='The environment configuration')
+    agent_ids=param.List(item_type=str, doc='The unique IDs of the agents in the dataset')
     N = OptionalPositiveInteger(default=None, softmax=500, doc='The number of agents in the group')
     sample = conf.Ref.confID_selector()
 
@@ -542,3 +543,7 @@ class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
     def h5_kdic(self):
         from larvaworld.lib.process.dataset import h5_kdic
         return h5_kdic(self.point, self.Npoints, self.Ncontour)
+
+    @param.depends('agent_ids', watch=True)
+    def update_Nagents(self):
+        self.N=len(self.agent_ids)

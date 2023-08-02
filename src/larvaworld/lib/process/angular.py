@@ -103,7 +103,7 @@ def comp_angular(s,e, c, pars=None, **kwargs):
 def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwargs):
     assert isinstance(c, reg.DatasetConfig)
 
-    ho, to, fo, ro = aux.nam.orient(['head', 'tail', 'front', 'rear'])
+    fo, ro = aux.nam.orient(['front', 'rear'])
 
     if c.Nangles == 0:
         or_pars =[fo]

@@ -29,8 +29,6 @@ def comp_linear(s, e, c, mode='minimal'):
         reg.vprint('Required orients not found. Component linear metrics not computed.')
         return
 
-    xy_params = aux.xy.raw_or_filtered_xy(s, points)
-    xy_params = aux.group_list_by_n(xy_params, 2)
 
     all_d = [s.xs(id, level='AgentID', drop_level=True) for id in c.agent_ids]
     dsts = nam.lin(nam.dst(points))
@@ -38,14 +36,14 @@ def comp_linear(s, e, c, mode='minimal'):
     vels = nam.lin(nam.vel(points))
     accs = nam.lin(nam.acc(points))
 
-    for p, xy, dst, cum_dst, vel, acc, orient in zip(points, xy_params, dsts, cum_dsts, vels, accs, orientations):
+    for p, dst, cum_dst, vel, acc, orient in zip(points, dsts, cum_dsts, vels, accs, orientations):
         D = np.zeros([c.Nticks, c.N]) * np.nan
         Dcum = np.zeros([c.Nticks, c.N]) * np.nan
         V = np.zeros([c.Nticks, c.N]) * np.nan
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, data in enumerate(all_d):
-            v, d = aux.compute_component_velocity(xy=data[xy].values, angles=data[orient].values, dt=c.dt, return_dst=True)
+            v, d = aux.compute_component_velocity(xy=data[nam.xy(p)].values, angles=data[orient].values, dt=c.dt, return_dst=True)
             a = np.diff(v) / c.dt
             cum_d = np.nancumsum(d)
             D[:, i] = d
@@ -58,39 +56,35 @@ def comp_linear(s, e, c, mode='minimal'):
         s[vel] = V.flatten()
         s[acc] = A.flatten()
         e[nam.cum(dst)] = Dcum[-1, :]
-    pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = nam.xy(points) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     reg.vprint('All linear parameters computed')
 
 
 def comp_spatial(s, e, c, mode='minimal'):
-    points = c.midline_points
     if mode == 'full':
         reg.vprint(f'Computing distances, velocities and accelerations for {c.Npoints} points',1)
-        points = c.midline_points + ['centroid']
+        points = c.midline_points + ['centroid', '']
     elif mode == 'minimal':
         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint',1)
-        points = [c.point]
-    points += ['']
-    points = np.unique(points).tolist()
-    points = [p for p in points if aux.cols_exist(nam.xy(p),s)]
+        points = [c.point, '']
+    points = aux.unique_list(points)
+    points = [p for p in aux.unique_list(points) if nam.xy(p).exist_in(s)]
 
-    xy_params = aux.raw_or_filtered_xy(s, points)
-    xy_params = aux.group_list_by_n(xy_params, 2)
 
     dsts = nam.dst(points)
     cum_dsts = nam.cum(dsts)
     vels = nam.vel(points)
     accs = nam.acc(points)
 
-    for p, xy, dst, cum_dst, vel, acc in zip(points, xy_params, dsts, cum_dsts, vels, accs):
+    for p, dst, cum_dst, vel, acc in zip(points, dsts, cum_dsts, vels, accs):
         D = np.zeros([c.Nticks, c.N]) * np.nan
         Dcum = np.zeros([c.Nticks, c.N]) * np.nan
         V = np.zeros([c.Nticks, c.N]) * np.nan
         A = np.zeros([c.Nticks, c.N]) * np.nan
 
         for i, id in enumerate(c.agent_ids):
-            D[:, i] = aux.eudist(s[xy].xs(id, level='AgentID').values)
+            D[:, i] = aux.eudist(s[nam.xy(p)].xs(id, level='AgentID').values)
             Dcum[:, i] = np.nancumsum(D[:, i])
             V[:, i] = D[:, i]/c.dt
             A[1:, i] = np.diff(V[:, i]) / c.dt
@@ -100,7 +94,7 @@ def comp_spatial(s, e, c, mode='minimal'):
         s[acc] = A.flatten()
         e[nam.cum(dst)] = s[cum_dst].dropna().groupby('AgentID').last()
 
-    pars = aux.flatten_list(xy_params) + dsts + cum_dsts + vels + accs
+    pars = nam.xy(points) + dsts + cum_dsts + vels + accs
     scale_to_length(s, e, c, pars=pars)
     reg.vprint('All spatial parameters computed')
 
@@ -109,12 +103,10 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
     if 'length' in e.columns.values and not recompute:
         reg.vprint('Length is already computed. If you want to recompute it, set recompute_length to True',1)
         return
-    N=c.Npoints
-    xy_pars = c.midline_xy
-    if not aux.cols_exist(xy_pars,s):
-        reg.vprint(f'XY coordinates not found for the {N} midline points. Body length can not be computed.',1)
+    if not c.midline_xy.exist_in(s):
+        reg.vprint(f'XY coordinates not found for the {c.Npoints} midline points. Body length can not be computed.',1)
         return
-    xy = s[xy_pars].values
+    xy = s[c.midline_xy].values
 
     if mode == 'full':
         segs = c.midline_segs
@@ -130,7 +122,7 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
             s[seg] = S[i, :].flatten()
     elif mode == 'minimal':
         reg.vprint(f'Computing body length')
-        xy2 = xy.reshape(xy.shape[0], N, 2)
+        xy2 = xy.reshape(xy.shape[0], c.Npoints, 2)
         xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
         L = np.sum(np.sqrt(xy3), axis=1)
     s['length'] = L
@@ -139,21 +131,19 @@ def comp_length(s, e, c, mode='minimal', recompute=False):
 
 @reg.funcs.proc("centroid")
 def comp_centroid(s, c, recompute=False):
-    if aux.cols_exist(nam.xy('centroid'),s) and not recompute:
+    if c.centroid_xy.exist_in(s) and not recompute:
         reg.vprint('Centroid is already computed. If you want to recompute it, set recompute_centroid to True')
-    Nc=c.Ncontour
-    con_pars = c.contour_xy
-    if not aux.cols_exist(con_pars,s) or Nc == 0:
+    if not c.contour_xy.exist_in(s) or c.Ncontour == 0:
         reg.vprint(f'No contour found. Not computing centroid')
     else:
-        reg.vprint(f'Computing centroid from {Nc} contourpoints')
-        xy = s[con_pars].values
+        reg.vprint(f'Computing centroid from {c.Ncontour} contourpoints')
+        xy = s[c.contour_xy].values
         t = xy.shape[0]
-        xy = np.reshape(xy, (t, Nc, 2))
+        xy = np.reshape(xy, (t, c.Ncontour, 2))
         cen = np.zeros([t, 2]) * np.nan
         for i in range(t):
-            cen[i, :] = np.sum(xy[i, :, :], axis=0)/Nc
-        s[nam.xy('centroid')] = cen
+            cen[i, :] = np.sum(xy[i, :, :], axis=0)/c.Ncontour
+        s[c.centroid_xy] = cen
     reg.vprint('Centroid coordinates computed.')
 
 
@@ -512,8 +502,7 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
         return
     mode=transposition
 
-    xy_pairs = nam.xy(c.midline_points + ['centroid', ''] + c.contour_points)
-    xy_flat=xy_pairs.flatten.existing(s)
+    xy_flat=c.all_xy.existing(s)
     xy_pairs = xy_flat.in_pairs
     # xy_flat=np.unique(aux.flatten_list(xy_pairs))
     # xy_pairs = aux.group_list_by_n(xy_flat, 2)
@@ -573,7 +562,7 @@ def fixate_larva(s, c, P1, P2=None):
 
 
 
-    pars = (c.midline_xy + c.contour_xy + aux.nam.xy('centroid')).existing(s)
+    pars = c.all_xy.existing(s)
     if not nam.xy(P1).exist_in(s):
         raise ValueError(f" The requested {P1} is not part of the dataset")
     reg.vprint(f'Fixing {P1} to arena center')
