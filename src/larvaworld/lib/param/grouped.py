@@ -174,15 +174,17 @@ class RuntimeDataOps(NestedConf):
 
     @property
     def data_dir(self):
-        f = f'{self.dir}/data'
-        os.makedirs(f, exist_ok=True)
-        return f
+        if self.dir is not None :
+            f = f'{self.dir}/data'
+            os.makedirs(f, exist_ok=True)
+            return f
 
     @property
     def plot_dir(self):
-        f= f'{self.dir}/plots'
-        os.makedirs(f, exist_ok=True)
-        return f
+        if self.dir is not None:
+            f= f'{self.dir}/plots'
+            os.makedirs(f, exist_ok=True)
+            return f
 
 
 

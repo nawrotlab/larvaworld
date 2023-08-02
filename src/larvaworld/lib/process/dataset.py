@@ -1,3 +1,4 @@
+import copy
 import itertools
 import os
 import shutil
@@ -8,13 +9,14 @@ import warnings
 import param
 
 from larvaworld.lib import reg, aux
-from larvaworld.lib.param import ClassAttr, StepDataFrame, EndpointDataFrame
+from larvaworld.lib.param import ClassAttr, StepDataFrame, EndpointDataFrame, ClassDict
 
 
 class ParamLarvaDataset(param.Parameterized):
     config = ClassAttr(reg.DatasetConfig, doc='The dataset metadata')
     step_data = StepDataFrame(doc='The timeseries data')
     endpoint_data = EndpointDataFrame(doc='The endpoint data')
+    config2 = ClassDict(default=aux.AttrDict(), item_type=None, doc='Additional dataset metadata')
 
     def __init__(self,**kwargs):
         if 'config' not in kwargs.keys():
@@ -24,7 +26,19 @@ class ParamLarvaDataset(param.Parameterized):
                     kws[k]=kwargs[k]
                     kwargs.pop(k)
             kwargs['config']=reg.DatasetConfig(**kws)
+        assert 'config2' not in kwargs.keys()
+
+        ks=list(kwargs.keys())
+        kws2 = {}
+        for k in ks:
+            if k not in self.param.objects().keys():
+                kws2[k] = kwargs[k]
+                kwargs.pop(k)
+        kwargs['config2']=aux.AttrDict(kws2)
         super().__init__(**kwargs)
+        self.merge_configs()
+        self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
+        self.larva_dicts = {}
 
     @param.depends('step_data', 'endpoint_data', watch=True)
     def validate_IDs(self):
@@ -47,8 +61,130 @@ class ParamLarvaDataset(param.Parameterized):
     def e(self):
         return self.endpoint_data
 
+    @property
+    def c(self):
+        return self.config
 
-class BaseLarvaDataset:
+
+    def merge_configs(self):
+        d=param.guess_param_types(**self.config2)
+        for n,p in d.items():
+            self.config.param.add_parameter(n,p)
+
+    @property
+    def c_full(self):
+        c = self.config.nestedConf
+        c.update(**self.config2)
+        return c
+
+    def set_data(self, step=None, end=None,agents=None,**kwargs):
+        if step is not None:
+            self.step_data = step.sort_index(level=self.param.step_data.levels)
+        if end is not None:
+            self.endpoint_data = end.sort_index()
+        if agents is not None:
+            self.larva_dicts = aux.get_larva_dicts(agents, validIDs=self.config.agent_ids)
+
+    @property
+    def data(self):
+        return self.step_data, self.endpoint_data, self.config
+
+    def path_to_file(self, file='data'):
+        return f'{self.config.data_dir}/{file}.h5'
+
+    @property
+    def path_to_config(self):
+        return f'{self.config.data_dir}/conf.txt'
+
+    def store(self, df, key, file='data'):
+        path=self.path_to_file(file)
+        if not isinstance(df, pd.DataFrame):
+            pd.DataFrame(df).to_hdf(path, key)
+        else :
+            df.to_hdf(path, key)
+
+
+    def read(self, key, file='data'):
+        path=self.path_to_file(file)
+        try :
+            return pd.read_hdf(path, key)
+        except:
+            return None
+
+    def load(self, step=True, h5_ks=None):
+        s = self._load_step(h5_ks=h5_ks) if step else None
+        e = self.read('end')
+        self.set_data(step=s, end=e)
+
+    def _load_step(self, h5_ks=None):
+        s = self.read('step')
+        if h5_ks is None :
+            h5_ks=list(self.config.h5_kdic.keys())
+        for h5_k in h5_ks:
+            ss = self.read(h5_k)
+            if ss is not None :
+                ps = aux.nonexisting_cols(ss.columns.values,s)
+                if len(ps) > 0:
+                    s = s.join(ss[ps])
+        return s
+
+
+    def _save_step(self, s):
+        s = s.loc[:, ~s.columns.duplicated()]
+        stored_ps = []
+        for h5_k,ps in self.config.h5_kdic.items():
+            pps =ps.unique.existing(s)
+            if len(pps) > 0:
+                self.store(s[pps], h5_k)
+                stored_ps += pps
+
+        self.store(s.drop(stored_ps, axis=1, errors='ignore'), 'step')
+
+    def save(self, refID=None):
+        if self.step_data is not None:
+            self._save_step(s=self.step_data)
+        if self.endpoint_data is not None:
+            self.store(self.endpoint_data, 'end')
+        self.save_config(refID=refID)
+        reg.vprint(f'***** Dataset {self.config.id} stored.-----', 1)
+
+    def save_config(self, refID=None):
+        c=self.config
+        if refID is not None:
+            c.refID = refID
+        if c.refID is not None:
+            reg.conf.Ref.setID(c.refID, c.dir)
+            reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
+        aux.save_dict(self.c_full, self.path_to_config)
+
+    def load_traj(self, mode='default'):
+        key=f'traj.{mode}'
+        df = self.read(key)
+        if df is None :
+            if mode=='default':
+                df = self._load_step(h5_ks=[])[['x', 'y']]
+            elif mode in ['origin', 'center']:
+                s = self._load_step(h5_ks=['contour', 'midline'])
+                df=reg.funcs.preprocessing["transposition"](s, c=self.config, replace=False, transposition=mode)[['x', 'y']]
+            else :
+                raise ValueError('Not implemented')
+            self.store(df,key)
+        return df
+
+
+
+    def load_dicts(self, type, ids=None):
+        if ids is None:
+            ids = self.config.agent_ids
+        ds0 = self.larva_dicts
+        if type in ds0 and all([id in ds0[type].keys() for id in ids]):
+            ds = [ds0[type][id] for id in ids]
+        else:
+            ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.config.data_dir}/individuals/{type}.txt')
+        return ds
+
+
+class BaseLarvaDataset(ParamLarvaDataset):
 
     @staticmethod
     def initGeo(to_Geo=False,**kwargs):
@@ -65,7 +201,8 @@ class BaseLarvaDataset:
 
 
 
-    def __init__(self, dir=None, config=None, refID=None,load_data=True,step=None, end=None,agents=None, **kwargs):
+    def __init__(self, dir=None,refID=None, load_data=True,config=None, step=None, end=None, agents=None, **kwargs):
+    # def __init__(self, dir=None, config=None, refID=None, load_data=True, step=None, end=None, agents=None, **kwargs):
         '''
         Dataset class that stores a single experiment, real or simulated.
         Metadata and configuration parameters are stored in the 'config' dictionary.
@@ -104,28 +241,30 @@ class BaseLarvaDataset:
             **kwargs: Any arguments to store in a novel configuration dictionary
         '''
 
+
         if config is None:
             try:
                 config = reg.getRef(dir=dir, id=refID)
-                config = reg.DatasetConfig(**config)
+                # config = reg.DatasetConfig(**config)
             except:
             # if config is None:
-            #     config = self.generate_config(dir=dir, refID=refID, **kwargs)
-                config = reg.DatasetConfig(dir=dir, refID=refID, **kwargs)
-        else:
-            config = reg.DatasetConfig(**config)
+                config = self.generate_config(dir=dir, refID=refID, **kwargs)
+                # config = reg.DatasetConfig(dir=dir, refID=refID, **kwargs)
+        # else:
+        #     config = reg.DatasetConfig(**config)
 
-        c = self.config = config
-        if c.dir is not None:
-            os.makedirs(c.dir, exist_ok=True)
-            os.makedirs(self.data_dir, exist_ok=True)
-        try:
-            self.__dict__.update(c)
-        except:
-            self.__dict__.update(c.nestedConf)
-        self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
-        self.larva_dicts = {}
-        self.h5_kdic = h5_kdic(c.point, c.Npoints, c.Ncontour)
+        super().__init__(**config)
+        # c = self.config = config
+        # if c.dir is not None:
+        #     os.makedirs(c.dir, exist_ok=True)
+        #     os.makedirs(self.data_dir, exist_ok=True)
+        # try:
+        #     self.__dict__.update(c)
+        # except:
+        #     self.__dict__.update(c.nestedConf)
+        # self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
+        # self.larva_dicts = {}
+        # self.h5_kdic = h5_kdic(c.point, c.Npoints, c.Ncontour)
         if load_data:
             self.load()
         elif step is not None or end is not None:
@@ -133,8 +272,8 @@ class BaseLarvaDataset:
 
 
 
-    def set_data(self, step=None, end=None,**kwargs):
-        pass
+    # def set_data(self, step=None, end=None,**kwargs):
+    #     pass
 
     def generate_config(self, **kwargs):
         c0 = aux.AttrDict({'id': 'unnamed',
@@ -192,35 +331,35 @@ class BaseLarvaDataset:
     def plot_dir(self):
         return f'{self.config.dir}/plots'
 
-    def save_config(self, refID=None):
-        c = self.config
-        if refID is not None:
-            c.refID = refID
-        if c.refID is not None:
-            reg.conf.Ref.setID(c.refID, c.dir)
-            reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
-        try:
-            for k, v in c.items():
-                if isinstance(v, np.ndarray):
-                    c[k] = v.tolist()
-        except:
-            pass
-        try:
-            aux.save_dict(c, f'{self.data_dir}/conf.txt')
-        except:
-            aux.save_dict(c.nestedConf, f'{self.data_dir}/conf.txt')
+    # def save_config(self, refID=None):
+    #     c = self.config
+    #     if refID is not None:
+    #         c.refID = refID
+    #     if c.refID is not None:
+    #         reg.conf.Ref.setID(c.refID, c.dir)
+    #         reg.vprint(f'Saved reference dataset under : {c.refID}', 1)
+    #     try:
+    #         for k, v in c.items():
+    #             if isinstance(v, np.ndarray):
+    #                 c[k] = v.tolist()
+    #     except:
+    #         pass
+    #     try:
+    #         aux.save_dict(c, f'{self.data_dir}/conf.txt')
+    #     except:
+    #         aux.save_dict(c.nestedConf, f'{self.data_dir}/conf.txt')
 
-    @property
-    def Nangles(self):
-        return np.clip(self.config.Npoints - 2, a_min=0, a_max=None)
+    # @property
+    # def Nangles(self):
+    #     return np.clip(self.config.Npoints - 2, a_min=0, a_max=None)
 
-    @property
-    def points(self):
-        return aux.aux.nam.midline(self.config.Npoints, type='point')
+    # @property
+    # def points(self):
+    #     return aux.aux.nam.midline(self.config.Npoints, type='point')
 
-    @property
-    def contour(self):
-        return aux.aux.nam.contour(self.config.Ncontour)
+    # @property
+    # def contour(self):
+    #     return aux.aux.nam.contour(self.config.Ncontour)
 
     def delete(self):
         shutil.rmtree(self.config.dir)
@@ -232,14 +371,14 @@ class BaseLarvaDataset:
         if save:
             self.save_config()
 
-    def set_endpoint_data(self,end):
-        self.endpoint_data = end.sort_index()
-        self.agent_ids = self.endpoint_data.index.values
-        self.config.agent_ids = list(self.agent_ids)
-        self.config.N = len(self.agent_ids)
+    # def set_endpoint_data(self,end):
+    #     self.endpoint_data = end.sort_index()
+    #     self.agent_ids = self.endpoint_data.index.values
+    #     self.config.agent_ids = list(self.agent_ids)
+    #     self.config.N = len(self.agent_ids)
 
-    def load(self, **kwargs):
-        pass
+    # def load(self, **kwargs):
+    #     pass
 
 class LarvaDataset(BaseLarvaDataset):
     def __init__(self, **kwargs):
@@ -264,113 +403,113 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 
-    def set_data(self, step=None, end=None, agents=None):
-        c=self.config
-        if step is not None:
-            assert step.index.names == ['Step', 'AgentID']
-            s = step.sort_index(level=['Step', 'AgentID'])
-            self.Nticks = s.index.unique('Step').size
-            # c.t0 = int(s.index.unique('Step')[0])
-            c.Nticks = self.Nticks
-            c.duration = c.dt * c.Nticks/60
-            # if 'quality' not in c.keys():
-            #     try:
-            #         df = s[aux.aux.nam.xy(c.point)[0]].values.flatten()
-            #         valid = np.count_nonzero(~np.isnan(df))
-            #         c.quality = np.round(valid / df.shape[0], 2)
-            #     except:
-            #         pass
-
-            self.step_data = s
-
-        if end is not None:
-            self.set_endpoint_data(end)
-
-        if agents is not None :
-            self.larva_dicts = aux.get_larva_dicts(agents, validIDs=self.agent_ids)
-
-
-    def _load_step(self, h5_ks=None):
-        s = self.read('step')
-        if h5_ks is None :
-            h5_ks=list(self.h5_kdic.keys())
-        for h5_k in h5_ks:
-            ss = self.read(h5_k)
-            if ss is not None :
-                ps = aux.nonexisting_cols(ss.columns.values,s)
-                if len(ps) > 0:
-                    s = s.join(ss[ps])
-        return s
+    # def set_data(self, step=None, end=None, agents=None):
+    #     c=self.config
+    #     if step is not None:
+    #         assert step.index.names == ['Step', 'AgentID']
+    #         s = step.sort_index(level=['Step', 'AgentID'])
+    #         self.Nticks = s.index.unique('Step').size
+    #         # c.t0 = int(s.index.unique('Step')[0])
+    #         c.Nticks = self.Nticks
+    #         c.duration = c.dt * c.Nticks/60
+    #         # if 'quality' not in c.keys():
+    #         #     try:
+    #         #         df = s[aux.aux.nam.xy(c.point)[0]].values.flatten()
+    #         #         valid = np.count_nonzero(~np.isnan(df))
+    #         #         c.quality = np.round(valid / df.shape[0], 2)
+    #         #     except:
+    #         #         pass
+    #
+    #         self.step_data = s
+    #
+    #     if end is not None:
+    #         self.set_endpoint_data(end)
+    #
+    #     if agents is not None :
+    #         self.larva_dicts = aux.get_larva_dicts(agents, validIDs=self.agent_ids)
 
 
-    def load(self, step=True, h5_ks=None):
-        s = self._load_step(h5_ks=h5_ks) if step else None
-        e = self.read('end')
-        self.set_data(step=s, end=e)
-
-
-    def _save_step(self, s):
-        s = s.loc[:, ~s.columns.duplicated()]
-        stored_ps = []
-        for h5_k,ps in self.h5_kdic.items():
-            pps = aux.unique_list(aux.existing_cols(ps,s))
-            if len(pps) > 0:
-                self.store(s[pps], h5_k)
-                stored_ps += pps
-
-        self.store(s.drop(stored_ps, axis=1, errors='ignore'), 'step')
-
-    def save(self, refID=None):
-        if hasattr(self, 'step_data'):
-            self._save_step(s=self.step_data)
-        if hasattr(self, 'endpoint_data'):
-            self.store(self.endpoint_data, 'end')
-        self.save_config(refID=refID)
-        reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
-
-    def store(self, df, key, file='data'):
-        path=f'{self.data_dir}/{file}.h5'
-        if not isinstance(df, pd.DataFrame):
-            pd.DataFrame(df).to_hdf(path, key)
-        else :
-            df.to_hdf(path, key)
-
-
-    def read(self, key, file='data'):
-        path=f'{self.data_dir}/{file}.h5'
-        try :
-            return pd.read_hdf(path, key)
-        except:
-            return None
-
-
-
-
-    def load_traj(self, mode='default'):
-        key=f'traj.{mode}'
-        df = self.read(key)
-        if df is None :
-            if mode=='default':
-                df = self._load_step(h5_ks=[])[['x', 'y']]
-            elif mode in ['origin', 'center']:
-                s = self._load_step(h5_ks=['contour', 'midline'])
-                df=reg.funcs.preprocessing["transposition"](s, c=self.config, replace=False, transposition=mode)[['x', 'y']]
-            else :
-                raise ValueError('Not implemented')
-            self.store(df,key)
-        return df
-
-
-
-    def load_dicts(self, type, ids=None):
-        if ids is None:
-            ids = self.agent_ids
-        ds0 = self.larva_dicts
-        if type in ds0 and all([id in ds0[type].keys() for id in ids]):
-            ds = [ds0[type][id] for id in ids]
-        else:
-            ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.data_dir}/individuals/{type}.txt')
-        return ds
+    # def _load_step(self, h5_ks=None):
+    #     s = self.read('step')
+    #     if h5_ks is None :
+    #         h5_ks=list(self.h5_kdic.keys())
+    #     for h5_k in h5_ks:
+    #         ss = self.read(h5_k)
+    #         if ss is not None :
+    #             ps = aux.nonexisting_cols(ss.columns.values,s)
+    #             if len(ps) > 0:
+    #                 s = s.join(ss[ps])
+    #     return s
+    #
+    #
+    # def load(self, step=True, h5_ks=None):
+    #     s = self._load_step(h5_ks=h5_ks) if step else None
+    #     e = self.read('end')
+    #     self.set_data(step=s, end=e)
+    #
+    #
+    # def _save_step(self, s):
+    #     s = s.loc[:, ~s.columns.duplicated()]
+    #     stored_ps = []
+    #     for h5_k,ps in self.h5_kdic.items():
+    #         pps = aux.unique_list(aux.existing_cols(ps,s))
+    #         if len(pps) > 0:
+    #             self.store(s[pps], h5_k)
+    #             stored_ps += pps
+    #
+    #     self.store(s.drop(stored_ps, axis=1, errors='ignore'), 'step')
+    #
+    # def save(self, refID=None):
+    #     if hasattr(self, 'step_data'):
+    #         self._save_step(s=self.step_data)
+    #     if hasattr(self, 'endpoint_data'):
+    #         self.store(self.endpoint_data, 'end')
+    #     self.save_config(refID=refID)
+    #     reg.vprint(f'***** Dataset {self.id} stored.-----', 1)
+    #
+    # def store(self, df, key, file='data'):
+    #     path=f'{self.data_dir}/{file}.h5'
+    #     if not isinstance(df, pd.DataFrame):
+    #         pd.DataFrame(df).to_hdf(path, key)
+    #     else :
+    #         df.to_hdf(path, key)
+    #
+    #
+    # def read(self, key, file='data'):
+    #     path=f'{self.data_dir}/{file}.h5'
+    #     try :
+    #         return pd.read_hdf(path, key)
+    #     except:
+    #         return None
+    #
+    #
+    #
+    #
+    # def load_traj(self, mode='default'):
+    #     key=f'traj.{mode}'
+    #     df = self.read(key)
+    #     if df is None :
+    #         if mode=='default':
+    #             df = self._load_step(h5_ks=[])[['x', 'y']]
+    #         elif mode in ['origin', 'center']:
+    #             s = self._load_step(h5_ks=['contour', 'midline'])
+    #             df=reg.funcs.preprocessing["transposition"](s, c=self.config, replace=False, transposition=mode)[['x', 'y']]
+    #         else :
+    #             raise ValueError('Not implemented')
+    #         self.store(df,key)
+    #     return df
+    #
+    #
+    #
+    # def load_dicts(self, type, ids=None):
+    #     if ids is None:
+    #         ids = self.agent_ids
+    #     ds0 = self.larva_dicts
+    #     if type in ds0 and all([id in ds0[type].keys() for id in ids]):
+    #         ds = [ds0[type][id] for id in ids]
+    #     else:
+    #         ds= aux.loadSoloDics(agent_ids=ids, path=f'{self.data_dir}/individuals/{type}.txt')
+    #     return ds
 
     def visualize(self,parameters={}, **kwargs):
         from larvaworld.lib.sim.dataset_replay import ReplayRun
@@ -385,9 +524,9 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 
-    @property
-    def data_path(self):
-        return f'{self.data_dir}/data.h5'
+    # @property
+    # def data_path(self):
+    #     return f'{self.data_dir}/data.h5'
 
 
 
@@ -458,15 +597,15 @@ class LarvaDataset(BaseLarvaDataset):
             
         dic0 = aux.AttrDict(self.read('chunk_dicts'))
 
-        dics = [dic0[id] for id in self.agent_ids]
-        sss = [self.step_data[par].xs(id, level='AgentID') for id in self.agent_ids]
+        dics = [dic0[id] for id in self.config.agent_ids]
+        sss = [self.step_data[par].xs(id, level='AgentID') for id in self.config.agent_ids]
 
         if mode == 'distro':
 
             vs = []
             for ss, dic in zip(sss, dics):
                 if min_dur == 0:
-                    idx = dic[chunk_idx]+self.t0
+                    idx = dic[chunk_idx]+1
                 else:
                     epochs = dic[chunk][dic[chunk_dur] >= min_dur]
                     Nepochs = epochs.shape[0]
@@ -500,11 +639,11 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 
-    @property
-    def data(self):
-        s=self.step_data if hasattr(self, 'step_data') else None
-        e=self.endpoint_data if hasattr(self, 'endpoint_data') else None
-        return s, e, self.config
+    # @property
+    # def data(self):
+    #     s=self.step_data if hasattr(self, 'step_data') else None
+    #     e=self.endpoint_data if hasattr(self, 'endpoint_data') else None
+    #     return s, e, self.config
 
 
 

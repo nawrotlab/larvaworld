@@ -106,7 +106,7 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
             end=self.build_endpoint_data(e=end)
 
         if end is not None:
-            self.set_endpoint_data(end)
+            self.endpoint_data=end
 
 
 
@@ -396,7 +396,7 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
         Nticks=int(self.duration/dt)
         ticks = np.arange(0, Nticks, 1).astype(int)
         ts = np.array([self.time_to_datetime(i * dt) for i in ticks])
-        ids=self.agent_ids
+        ids=self.config.agent_ids
 
 
 
@@ -532,7 +532,7 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
         end[l] = {traj.id: np.mean(traj.df[l].values) for traj in self}
         end[l] = end[l].astype({l: self.spatial_pint_unit})
 
-        self.set_endpoint_data(end)
+        self.endpoint_data = end.sort_index()
         reg.vprint(f'**--- Trajectories reduced from {Nids0} to {self.config.N} by the matchIDs algorithm -----',verbose)
 
     def comp_spatial(self):
