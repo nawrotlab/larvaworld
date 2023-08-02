@@ -89,14 +89,22 @@ class ParamLarvaDataset(param.Parameterized):
     def data(self):
         return self.step_data, self.endpoint_data, self.config
 
-    def path_to_file(self, file='data'):
+    @property
+    def default_filename(self):
+        return 'data'
+
+    def path_to_file(self, file=None):
+        if file is None:
+            file=self.default_filename
         return f'{self.config.data_dir}/{file}.h5'
 
     @property
     def path_to_config(self):
         return f'{self.config.data_dir}/conf.txt'
 
-    def store(self, df, key, file='data'):
+    def store(self, df, key, file=None):
+        if file is None:
+            file=self.default_filename
         path=self.path_to_file(file)
         if not isinstance(df, pd.DataFrame):
             pd.DataFrame(df).to_hdf(path, key)
@@ -104,7 +112,9 @@ class ParamLarvaDataset(param.Parameterized):
             df.to_hdf(path, key)
 
 
-    def read(self, key, file='data'):
+    def read(self, key, file=None):
+        if file is None:
+            file=self.default_filename
         path=self.path_to_file(file)
         try :
             return pd.read_hdf(path, key)

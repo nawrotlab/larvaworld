@@ -29,7 +29,7 @@ warnings.filterwarnings('ignore')
 # Initialize the larvaworld registry and load the sample dataset
 from larvaworld.lib import reg, aux
 
-class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
+class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
     '''
     An alternative mode to maintain a dataset is this "trajectory" mode inheriting from "movingpandas.TrajectoryCollection"
      and adjusted to the needs of the larva-tracking data format
@@ -45,10 +45,47 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
 
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, step=None,dt=None,**kwargs):
+        if step is not None:
+            self.init_mpd(step, dt=dt)
         BaseLarvaDataset.__init__(self, **kwargs)
 
+    @property
+    def default_filename(self):
+        return 'geodata'
 
+
+    def init_gdf(self,step,dt):
+        if len(step.index.names) != 1 or 'datetime' not in step.index.names:
+            step = step.reset_index()
+            t = 't'
+            if 'datetime' not in step.columns:
+                if t not in step.columns:
+                    if 'Step' in step.columns and dt is not None:
+                        step[t] = step['Step'] * dt
+                    else:
+                        raise
+
+                step['datetime'] = pd.to_datetime(step[t], unit='s')
+                step[t] = step[t].astype({t: PintType('pint[s]')})
+            step = step.set_index('datetime')
+
+        if 'xy' not in step.columns:
+            assert aux.cols_exist(['x', 'y'], step)
+            step['xy'] = gpd.points_from_xy(step['x'], step['y'])
+        gdf = gpd.GeoDataFrame(step)
+        gdf = gdf.set_geometry('xy')
+        return gdf
+
+    def init_mpd(self, step,dt):
+        gdf = self.init_gdf(step, dt)
+        mpd.TrajectoryCollection.__init__(self, gdf, traj_id_col='AgentID')
+
+        for tr in self:
+            tr.df = reg.par.df_to_pint(tr.df)
+            tr.df[['x', 'y']] = tr.df[['x', 'y']].astype({p: self.spatial_pint_unit for p in ['x', 'y']})
+            # print(tr.df.xy.iloc[-1])
+        # raise
 
 
 
@@ -73,37 +110,10 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
 
         c = self.config
         if step is not None:
-            if len(step.index.names)!=1 or 'datetime' not in step.index.names:
-                step = step.reset_index()
-                t='t'
-                if 'datetime' not in step.columns :
-                    if t not in step.columns:
-                        if 'Step' in step.columns and c.dt is not None:
-                            step[t] = step['Step'] * c.dt
-                        else :
-                            raise
+            self.init_mpd(step,c.dt)
+            self.step_data=self.get_step_data()
 
-
-                    step['datetime'] = pd.to_datetime(step[t], unit='s')
-                    step[t] = step[t].astype({t: PintType('pint[s]')})
-                step = step.set_index('datetime')
-
-
-
-
-            if 'xy' not in step.columns :
-                assert aux.cols_exist(['x', 'y'], step)
-                step['xy'] = gpd.points_from_xy(step['x'], step['y'])
-            gdf = gpd.GeoDataFrame(step)
-            gdf = gdf.set_geometry('xy')
-
-            mpd.TrajectoryCollection.__init__(self, gdf, traj_id_col='AgentID')
-
-            for tr in self:
-                tr.df = reg.par.df_to_pint(tr.df)
-                tr.df[['x', 'y']] = tr.df[['x', 'y']].astype({p: self.spatial_pint_unit for p in ['x', 'y']})
-
-            end=self.build_endpoint_data(e=end)
+            end=self.build_endpoint_data()
 
         if end is not None:
             self.endpoint_data=end
@@ -277,11 +287,17 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
             e[t1] = {traj.id: mpd.trajectory.to_unixtime(traj.df.index.max()) for traj in self}
         x0, x1 = reg.getPar(['x0', 'x_fin'])
         y0, y1 = reg.getPar(['y0', 'y_fin'])
+
+        # print([tr.df.index.max() for tr in self])
         if all([p not in e.columns for p in [x0,x1,y0,y1]]):
-            e[x0] = {tr.id: tr.df.xy.loc[tr.df.index.min()].x for tr in self}
-            e[y0] = {tr.id: tr.df.xy.loc[tr.df.index.min()].y for tr in self}
-            e[x1] = {tr.id: tr.df.xy.loc[tr.df.index.max()].x for tr in self}
-            e[y1] = {tr.id: tr.df.xy.loc[tr.df.index.max()].y for tr in self}
+            e[x0] = {tr.id: tr.df.xy.iloc[0].x for tr in self}
+            e[y0] = {tr.id: tr.df.xy.iloc[0].y for tr in self}
+            try:
+                e[x1] = {tr.id: tr.df.xy.iloc[-1].x for tr in self}
+                e[y1] = {tr.id: tr.df.xy.iloc[-1].y for tr in self}
+            except:
+                e[x1] = {tr.id: tr.df.xy.iloc[-2].x for tr in self}
+                e[y1] = {tr.id: tr.df.xy.iloc[-2].y for tr in self}
 
 
         spatial_ps=[x0,x1,y0,y1]+[cum_d]
@@ -294,8 +310,9 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
 
     def load_midline(self, drop=True, keep_midline_LineString=False):
         l='length'
-        xy_pairs=aux.nam.midline_xy(self.config.Npoints)
-        if self.cols_exist_in_all_traj(xy_pairs.flatten):
+        xy_flat=self.config.midline_xy
+        xy_pairs=xy_flat.in_pairs
+        if self.cols_exist_in_all_traj(xy_flat):
             for tr in self:
                 if keep_midline_LineString:
                     tr.df['midline'] = tr.df.apply(lambda r: shp.geometry.LineString( [(r[x], r[y]) for [x, y] in xy_pairs]), axis=1)
@@ -303,20 +320,21 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
                 else:
                     tr.df[l] = tr.df.apply(lambda r: shp.geometry.LineString( [(r[x], r[y]) for [x, y] in xy_pairs]).length, axis=1)
                 if drop :
-                    tr.df=tr.df.drop(columns=xy_pairs.flatten)
+                    tr.df=tr.df.drop(columns=xy_flat)
 
             self.endpoint_data[l] = {traj.id: traj.df[l].values.mean() for traj in self}
             self.set_dtype(l, self.spatial_unit)
 
     def load_contour(self, drop=True):
-        xy_pairs=aux.nam.contour_xy(self.config.Ncontour)
-        if self.cols_exist_in_all_traj(xy_pairs.flatten):
+        xy_flat = self.config.contour_xy
+        xy_pairs = xy_flat.in_pairs
+        if self.cols_exist_in_all_traj(xy_flat):
             for tr in self:
                 tr.df['contour'] = tr.df.apply(lambda r: shp.geometry.Polygon([(r[x], r[y]) for [x, y] in xy_pairs]), axis=1)
                 tr.df['area'] = tr.df.apply(lambda r: r.contour.area, axis=1)
                 tr.df['centroid'] = tr.df.apply(lambda r: r.contour.centroid, axis=1)
                 if drop :
-                    tr.df=tr.df.drop(columns=xy_pairs.flatten)
+                    tr.df=tr.df.drop(columns=xy_flat)
             self.set_dtype(cols='area',units=self.spatial_unit**2)
 
     def set_dtype(self,cols,units):
@@ -346,23 +364,45 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
 
     @classmethod
     def from_ID(cls, refID, **kwargs):
+        # c = reg.getRef(refID)
+
+        # cc=d.config.get_copy()
+        # c.update(**kwargs)
+
+        # inst = cls(load_data=False, config=reg.getRef(refID))
+
         d = reg.loadRef(refID)
         d.load(h5_ks=['midline', 'contour'])
-        cc=d.config.get_copy()
-        cc.update(**kwargs)
-        inst = cls(load_data=False, config=cc)
-        inst.set_data(step=d.step_data)
+        step = d.step_data
+
+
+        inst = cls(step=step,dt=d.config.dt,load_data=False, refID=refID)
+        inst.set_data(end=inst.build_endpoint_data())
         return inst
 
     def save(self, refID=None):
-        aux.save_dict(self.endpoint_data, self.endpoint_data_path)
-        aux.save_dict(self.df, self.data_path)
+        self.store(self.df, 'step')
+        if self.endpoint_data is not None:
+            self.store(self.endpoint_data, 'end')
         self.save_config(refID=refID)
         reg.vprint(f'***** Dataset {self.config.id} stored.-----', 1)
+
+    # def save(self, refID=None):
+    #     aux.save_dict(self.endpoint_data, self.endpoint_data_path)
+    #     aux.save_dict(self.df, self.data_path)
+    #     self.save_config(refID=refID)
+    #     reg.vprint(f'***** Dataset {self.config.id} stored.-----', 1)
 
     @property
     def df(self):
         return pd.concat([tr.df for tr in self])
+
+    def get_step_data(self):
+        df = self.df.reset_index()
+        df.set_index(keys=['Step', 'AgentID'], inplace=True, drop=True, verify_integrity=False)
+        df.sort_index(level=['Step', 'AgentID'], inplace=True)
+        return df
+
 
     @property
     def duration(self):
@@ -391,8 +431,8 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
 
 
 
-        c=self.config
-        xy = [c.x, c.y]
+        # c=self.config
+        xy = ['x', 'y']
         Nticks=int(self.duration/dt)
         ticks = np.arange(0, Nticks, 1).astype(int)
         ts = np.array([self.time_to_datetime(i * dt) for i in ticks])
@@ -421,19 +461,20 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
 
 
 
-    # @classmethod
+
+
     def load(self, **kwargs):
-        step=pd.DataFrame(aux.load_dict(self.data_path))
-        end = pd.DataFrame(aux.load_dict(self.endpoint_data_path))
-        self.set_data(step,end)
+        s = self.read('step')
+        e = self.read('end')
+        self.set_data(step=s, end=e)
 
-    @property
-    def data_path(self):
-        return f'{self.data_dir}/data.txt'
-
-    @property
-    def endpoint_data_path(self):
-        return f'{self.data_dir}/end.txt'
+    # @property
+    # def data_path(self):
+    #     return f'{self.data_dir}/data.txt'
+    #
+    # @property
+    # def endpoint_data_path(self):
+    #     return f'{self.data_dir}/end.txt'
 
 
 
@@ -536,14 +577,15 @@ class GeoLarvaDataset(mpd.TrajectoryCollection,BaseLarvaDataset):
         reg.vprint(f'**--- Trajectories reduced from {Nids0} to {self.config.N} by the matchIDs algorithm -----',verbose)
 
     def comp_spatial(self):
-        self.add_distance()
-        self.add_speed()
+        self.add_distance(overwrite=True)
+        self.add_speed(overwrite=True)
         self.scale_to_length(ks=['d', 'v'])
         self.get_means(ks=['v', 'sv'])
 
 if __name__ == "__main__":
     tpd = GeoLarvaDataset.from_ID(refID='exploration.40controls')
-    #tpd.load_midline(d.Npoints)
+    # tpd.comp_spatial()
+    # tpd.load_midline()
     #tpd.load_contour(d.Ncontour)
 
 #print(t.get_start_location().x)
