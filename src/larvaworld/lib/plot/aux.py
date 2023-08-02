@@ -32,7 +32,7 @@ def plot_quantiles(df, x=None, **kwargs):
     plot_mean_and_range(x=x, mean=df_m, lb=df_b, ub=df_u, **kwargs)
 
 
-def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None, linewidth=2):
+def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None,linestyle='solid', linewidth=2):
     if x.shape[0] > mean.shape[0]:
         xx = x[:mean.shape[0]]
     elif x.shape[0] == mean.shape[0]:
@@ -42,7 +42,7 @@ def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, l
     # plot the shaded range of e.g. the confidence intervals
     axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2, zorder=0)
     # plot the mean on top
-    axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10)
+    axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10,linestyle=linestyle)
 
     # pass
 

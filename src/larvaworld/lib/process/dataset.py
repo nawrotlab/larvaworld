@@ -259,6 +259,38 @@ class ParamLarvaDataset(param.Parameterized):
         self.endpoint_data['length'] = self.step_data['length'].groupby('AgentID').quantile(q=0.5)
 
 
+    def get_par(self, par=None, k=None, key='step'):
+        s,e=self.step_data,self.endpoint_data
+        if par is None and k is not None:
+            par=reg.getPar(k)
+
+        def read_key(key,par):
+            res=self.read(key)[par]
+            if res is not None:
+                return res
+
+
+        if key == 'end':
+            if e is not None and par in e.columns:
+                return e[par]
+        if key == 'step':
+            if s is not None and par in s.columns:
+                return s[par]
+            else:
+                for h5_k,ps in self.config.h5_kdic.items():
+                    if par in ps:
+                        try:
+                            return read_key(h5_k, par)
+                        except:
+                            pass
+        try:
+            return read_key(key, par)
+        except:
+            if k is None :
+                k = reg.getPar(p=par, to_return='k')
+            return reg.par.get(k=k, d=self, compute=True)
+
+
 
 class BaseLarvaDataset(ParamLarvaDataset):
 
@@ -637,28 +669,28 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 
-    def get_par(self, par=None, k=None, key='step'):
-        if par is None and k is not None:
-            par=reg.getPar(k)
-
-        if key == 'end':
-            if not hasattr(self, 'endpoint_data'):
-                self.load(step=False)
-            df=self.endpoint_data
-
-        elif key == 'step':
-            if not hasattr(self, 'step_data'):
-                self.load()
-            df=self.step_data
-        else :
-            raise
-
-        if par in df.columns :
-            return df[par]
-        else :
-            if k is None :
-                k = reg.getPar(p=par, to_return='k')
-            return reg.par.get(k=k, d=self, compute=True)
+    # def get_par(self, par=None, k=None, key='step'):
+    #     if par is None and k is not None:
+    #         par=reg.getPar(k)
+    #
+    #     if key == 'end':
+    #         if not hasattr(self, 'endpoint_data'):
+    #             self.load(step=False)
+    #         df=self.endpoint_data
+    #
+    #     elif key == 'step':
+    #         if not hasattr(self, 'step_data'):
+    #             self.load()
+    #         df=self.step_data
+    #     else :
+    #         raise
+    #
+    #     if par in df.columns :
+    #         return df[par]
+    #     else :
+    #         if k is None :
+    #             k = reg.getPar(p=par, to_return='k')
+    #         return reg.par.get(k=k, d=self, compute=True)
 
 
 

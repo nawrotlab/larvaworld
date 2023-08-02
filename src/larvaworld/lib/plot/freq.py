@@ -4,50 +4,46 @@ from scipy.fft import fft, fftfreq
 
 from larvaworld.lib import reg, aux, plot
 
-
-
-@reg.funcs.graph('fft', required={'ks':['v', 'fov']})
-def plot_fft(dkdict, c, name=f'fft_powerspectrum',palette=None, axx=None, **kwargs):
-    if palette is None:
-        palette = {'v': 'red', 'fov': 'blue'}
-    P = plot.AutoBasePlot(name=name,build_kws={'w': 15, 'h': 12}, **kwargs)
-    if axx is None:
-        axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])
-    xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
-
-    # fvs = np.zeros(c.N) * np.nan
-    # ffovs = np.zeros(c.N) * np.nan
-    # v_ys = np.zeros([c.N, c.Nticks // 2])
-    # fov_ys = np.zeros([c.N, c.Nticks // 2])
-
-    res_v=dkdict['v'].groupby('AgentID').apply(aux.fft_max,dt=c.dt, fr_range=(1.0, 2.5), return_amps=True)
-    res_fov=dkdict['fov'].groupby('AgentID').apply(aux.fft_max,dt=c.dt, fr_range=(0.1, 0.8), return_amps=True)
-
-    fvs = [r[0] for r in res_v.values]
-    ffovs = [r[0] for r in res_fov.values]
-    v_ys = np.array([r[1] for r in res_v.values])
-    fov_ys = np.array([r[1] for r in res_fov.values])
-
-
-    # for j, id in enumerate(c.agent_ids):
-        #ss = s.xs(id, level='AgentID')
-        # fvs[j], v_ys[j, :] = aux.fft_max(dkdict['v'].xs(id, level='AgentID'), c.dt, fr_range=(1.0, 2.5), return_amps=True)
-        # ffovs[j], fov_ys[j, :] = aux.fft_max(dkdict['fov'].xs(id, level='AgentID'), c.dt, fr_range=(0.1, 0.8), return_amps=True)
-    plot.plot_quantiles(v_ys, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
-    plot.plot_quantiles(fov_ys, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
-    P.conf_ax(0, ylim=(0, 4), xlim=(0, 3.5), ylab='Amplitude (a.u.)', xlab='Frequency (Hz)',
-              title='Fourier analysis',titlefontsize=25, leg_loc='lower left', yMaxN=5)
-
-    bins = np.linspace(0, 2, 40)
-
-    v_weights = np.ones_like(fvs) / float(len(fvs))
-    fov_weights = np.ones_like(ffovs) / float(len(ffovs))
-    axx.hist(fvs, color=palette['v'], bins=bins, weights=v_weights)
-    axx.hist(ffovs, color=palette['fov'], bins=bins, weights=fov_weights)
-    P.conf_ax(ax=axx, ylab='Probability', xlab='Dominant frequency (Hz)',yMaxN=2,
-              major_ticklabelsize=10,minor_ticklabelsize=10)
-
-    return P.get()
+#
+#
+# @reg.funcs.graph('fft', required={'ks':['v', 'fov']})
+# def plot_fft(dkdict, c, name=f'fft_powerspectrum',palette=None, axx=None,**kwargs):
+#     if palette is None:
+#         palette = {'v': 'red', 'fov': 'blue'}
+#     P = plot.AutoBasePlot(name=name,build_kws={'w': 15, 'h': 12}, **kwargs)
+#     if axx is None:
+#         axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])
+#     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
+#
+#     # fvs = np.zeros(c.N) * np.nan
+#     # ffovs = np.zeros(c.N) * np.nan
+#     # v_ys = np.zeros([c.N, c.Nticks // 2])
+#     # fov_ys = np.zeros([c.N, c.Nticks // 2])
+#
+#     res_v=dkdict['v'].groupby('AgentID').apply(aux.fft_max,dt=c.dt, fr_range=(1.0, 2.5), return_amps=True)
+#     res_fov=dkdict['fov'].groupby('AgentID').apply(aux.fft_max,dt=c.dt, fr_range=(0.1, 0.8), return_amps=True)
+#
+#     fvs = [r[0] for r in res_v.values]
+#     ffovs = [r[0] for r in res_fov.values]
+#     v_ys = np.array([r[1] for r in res_v.values])
+#     fov_ys = np.array([r[1] for r in res_fov.values])
+#
+#
+#     plot.plot_quantiles(v_ys, x=xf, axis=P.axs[0], label='forward speed', color_shading=palette['v'])
+#     plot.plot_quantiles(fov_ys, x=xf, axis=P.axs[0], label='angular speed', color_shading=palette['fov'])
+#     P.conf_ax(0, ylim=(0, 8), xlim=(0, 3.5), ylab='Amplitude (a.u.)', xlab='Frequency (Hz)',
+#               title='Fourier analysis',titlefontsize=25, leg_loc='lower left', yMaxN=5)
+#
+#     bins = np.linspace(0, 2, 40)
+#
+#     v_weights = np.ones_like(fvs) / float(len(fvs))
+#     fov_weights = np.ones_like(ffovs) / float(len(ffovs))
+#     axx.hist(fvs, color=palette['v'], bins=bins, weights=v_weights)
+#     axx.hist(ffovs, color=palette['fov'], bins=bins, weights=fov_weights)
+#     P.conf_ax(ax=axx, ylab='Probability', xlab='Dominant frequency (Hz)',yMaxN=2,
+#               major_ticklabelsize=10,minor_ticklabelsize=10)
+#
+#     return P.get()
 
 @reg.funcs.graph('fft multi', required={'ks':[ 'v', 'fov']})
 def plot_fft_multi(ks=['v', 'fov'],name=f'fft_powerspectrum',axx=None, dataset_colors=False, **kwargs):
@@ -55,20 +51,46 @@ def plot_fft_multi(ks=['v', 'fov'],name=f'fft_powerspectrum',axx=None, dataset_c
     if axx is None:
         axx = P.axs[0].inset_axes([0.64, 0.65, 0.3, 0.25])
 
-    # print(P.dkdict)
-    # raise
-    for l, d, col in P.data_palette :
-        if dataset_colors :
-            palette = {'v': col, 'fov': col}
-        else :
-            palette = None
+    palette = {'v': 'green', 'fov': 'blue'}
+    data_palette_new= {k:[aux.mix2colors(c,palette[k]) for c in P.colors] for k in ks}
 
-        # try:
-        #     s = d.step_data
-        # except:
-        #     s = d.read('step')
-        # c = d.config
-        _ = plot_fft(dkdict=P.dkdict[l],c=d.config, axx=axx, axs=P.axs[0], fig=P.fig, palette=palette, return_fig=True)
+    fvs = []
+    ffovs = []
+    v_ys = []
+    fov_ys = []
+    for i,(l, d, col) in enumerate(P.data_palette) :
+        c = d.config
+        res_v = P.dkdict[l]['v'].groupby('AgentID').apply(aux.fft_max, dt=c.dt, fr_range=(1.0, 2.5), return_amps=True)
+        res_fov = P.dkdict[l]['fov'].groupby('AgentID').apply(aux.fft_max, dt=c.dt, fr_range=(0.1, 0.8), return_amps=True)
+
+        fvs.append([r[0] for r in res_v.values])
+        ffovs.append( [r[0] for r in res_fov.values])
+        v_ys.append(np.array([r[1] for r in res_v.values]))
+        fov_ys.append(np.array([r[1] for r in res_fov.values]))
+
+
+    for i,(l, d, col) in enumerate(P.data_palette) :
+        c = d.config
+        xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]
+
+
+        plot.plot_quantiles(v_ys[i], x=xf, axis=P.axs[0], label='forward speed', color_shading=data_palette_new['v'][i])
+        plot.plot_quantiles(fov_ys[i], x=xf, axis=P.axs[0], label='angular speed', color_shading=data_palette_new['fov'][i])
+    P.conf_ax(0, ylim=(0, 8), xlim=(0, 3.5), ylab='Amplitude (a.u.)', xlab='Frequency (Hz)',
+                  title='Fourier analysis', titlefontsize=25, yMaxN=5)
+    P.data_leg(0, loc='lower left',labels=['forward speed','angular speed'],colors=list(palette.values()), fontsize=15)
+
+    bins = np.linspace(0, 2, 40)
+
+    plot.prob_hist(vs=fvs, colors=data_palette_new['v'], labels=P.labels, ax=axx, bins=bins, alpha=0.5)
+    plot.prob_hist(vs=ffovs, colors=data_palette_new['fov'], labels=P.labels, ax=axx, bins=bins, alpha=0.5)
+
+
+    P.conf_ax(ax=axx, ylab='Probability', xlab='Dominant frequency (Hz)', yMaxN=2,
+                  major_ticklabelsize=10, minor_ticklabelsize=10)
+
+    if P.Ndatasets > 1:
+        P.data_leg(0,loc='lower right', fontsize=15)
     return P.get()
 
 

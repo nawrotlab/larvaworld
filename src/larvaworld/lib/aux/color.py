@@ -114,6 +114,29 @@ class Color:
         else:
             return [(r1 + r * tt, b1 + b * tt, g1 + g * tt) for tt in t]
 
+    # @staticmethod
+def combine_hex_values(d):
+    dd={}
+    for k, v in d.items():
+        if type(k)==str:
+            k=colors.to_hex(k)
+        k=k.lstrip('#')
+        dd[k]=v
+    d_items = sorted(dd.items())
+    tot_weight = sum(dd.values())
+    red = int(sum([int(k[:2], 16) * v for k, v in d_items]) / tot_weight)
+    green = int(sum([int(k[2:4], 16) * v for k, v in d_items]) / tot_weight)
+    blue = int(sum([int(k[4:6], 16) * v for k, v in d_items]) / tot_weight)
+    zpad = lambda x: x if len(x) == 2 else '0' + x
+    return '#' + zpad(hex(red)[2:]) + zpad(hex(green)[2:]) + zpad(hex(blue)[2:])
+
+    # @staticmethod
+def mix2colors(c0,c1):
+    cc= combine_hex_values(d={c0:0.7,c1:0.3})
+    return cc
+
+
+
 def scaled_velocity_to_col(a) :
     return Color.timeseries_to_col(a, lim=0.8)
 
