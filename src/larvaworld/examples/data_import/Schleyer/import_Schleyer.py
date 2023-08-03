@@ -4,7 +4,7 @@ from larvaworld.lib import reg
 from larvaworld.lib.process.building import import_dataset
 
 kws0 = {
-    'datagroup_id': 'Schleyer lab',
+    'labID': 'Schleyer',
     'group_id': 'exploration',
     'add_reference': True,
     'enrich' : True

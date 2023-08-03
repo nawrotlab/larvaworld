@@ -46,7 +46,9 @@ class ParamLarvaDataset(param.Parameterized):
         if self.step_data is not None and self.endpoint_data is not None:
             s1=self.step_data.index.unique('AgentID').tolist()
             s2 = self.endpoint_data.index.values.tolist()
-            #print(s1,s2)
+            print(len(s1),len(s2))
+            assert len(s1)==len(s2)
+            assert set(s1)==set(s2)
             assert s1==s2
             self.config.agent_ids=s1
 
@@ -84,11 +86,7 @@ class ParamLarvaDataset(param.Parameterized):
         for n,p in d.items():
             self.config.param.add_parameter(n,p)
 
-    # @property
-    # def c_full(self):
-    #     c = self.config.nestedConf
-    #     c.update(**self.config2)
-    #     return c
+
 
     def set_data(self, step=None, end=None,agents=None,**kwargs):
         if step is not None:
@@ -431,13 +429,13 @@ class BaseLarvaDataset(ParamLarvaDataset):
         reg.vprint(f'Generated new conf {c0.id}', 1)
         return c0
 
-    @property
-    def data_dir(self):
-        return f'{self.config.dir}/data'
-
-    @property
-    def plot_dir(self):
-        return f'{self.config.dir}/plots'
+    # @property
+    # def data_dir(self):
+    #     return f'{self.config.dir}/data'
+    #
+    # @property
+    # def plot_dir(self):
+    #     return f'{self.config.dir}/plots'
 
     # def save_config(self, refID=None):
     #     c = self.config
@@ -972,40 +970,38 @@ def convert_group_output_to_dataset(df, collectors):
     return step, end
 
 
-
 def h5_kdic(p, N, Nc):
     def epochs_ps():
         cs = ['turn', 'Lturn', 'Rturn', 'pause', 'exec', 'stride', 'stridechain', 'run']
         pars = ['id', 'start', 'stop', 'dur', 'dst', aux.nam.scal('dst'), 'length', aux.nam.max('vel'), 'count']
-        pars = aux.flatten_list([aux.nam.chunk_track(c, pars) for c in cs])
-        return pars
+        return aux.SuperList([aux.nam.chunk_track(c, pars) for c in cs]).flatten
 
     def dspNtor_ps():
         tor_ps = [f'tortuosity_{dur}' for dur in [1, 2, 5, 10, 20, 30, 60, 100, 120, 240, 300]]
         dsp_ps = [f'dispersion_{t0}_{t1}' for (t0, t1) in
                   itertools.product([0, 5, 10, 20, 30, 60], [30, 40, 60, 90, 120, 240, 300])]
-        pars = tor_ps + dsp_ps + aux.nam.scal(dsp_ps)
+        pars = aux.SuperList(tor_ps + dsp_ps + aux.nam.scal(dsp_ps))
         return pars
 
     def base_spatial_ps(p=''):
         d, v, a = ps = [aux.nam.dst(p), aux.nam.vel(p), aux.nam.acc(p)]
         ld, lv, la = lps = aux.nam.lin(ps)
         ps0 = aux.nam.xy(p) + ps + lps + aux.nam.cum([d, ld])
-        return ps0 + aux.nam.scal(ps0)
+        return aux.SuperList(ps0 + aux.nam.scal(ps0))
 
     def ang_pars(angs):
         avels = aux.nam.vel(angs)
         aaccs = aux.nam.acc(angs)
         uangs = aux.nam.unwrap(angs)
         avels_min, avels_max = aux.nam.min(avels), aux.nam.max(avels)
-        return avels + aaccs + uangs + avels_min + avels_max
+        return aux.SuperList(avels + aaccs + uangs + avels_min + avels_max)
 
     def angular(N):
         Nangles = np.clip(N - 2, a_min=0, a_max=None)
         Nsegs = np.clip(N - 1, a_min=0, a_max=None)
         ors = aux.nam.orient(aux.unique_list(['front', 'rear', 'head', 'tail'] + aux.nam.midline(Nsegs, type='seg')))
         ang = ors + [f'angle{i}' for i in range(Nangles)] + ['bend']
-        return aux.unique_list(ang + ang_pars(ang))
+        return aux.SuperList(ang + ang_pars(ang)).unique
 
     dic = aux.AttrDict({
         'contour': aux.nam.contour_xy(Nc, flat=True),

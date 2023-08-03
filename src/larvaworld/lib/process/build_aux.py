@@ -48,7 +48,7 @@ def df_from_csvs(pref,Npoints=11,Ncontour=0, max_Nagents=None, time_slice=None, 
 def match_larva_ids(s, e, pars, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, verbose=1, **kwargs):
     t = 't'
     aID = 'AgentID'
-    s.reset_index(level=t, drop=False, inplace=True)
+    # s.reset_index(level=t, drop=False, inplace=True)
     s[t] = s[t].values.astype(float)
 
     pairs = {}
@@ -124,8 +124,8 @@ def match_larva_ids(s, e, pars, wl=100, wt=0.1, ws=0.5, max_error=600, Nidx=20, 
                 pairs[id0] = pairs[id1]
                 break
     s.rename(index=pairs, inplace=True)
-    s.reset_index(drop=False, inplace=True)
-    s.set_index(keys=[t, aID], inplace=True, drop=True)
+    # s.reset_index(drop=False, inplace=True)
+    # s.set_index(keys=[t, aID], inplace=True, drop=True)
     if verbose >= 1:
         print(f'**--- Track IDs reduced from {Nids0} to {Nids1} by the matchIDs algorithm -----')
     return s

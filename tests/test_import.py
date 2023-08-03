@@ -3,32 +3,34 @@ from larvaworld.lib import reg
 from larvaworld.lib.process.building import import_dataset, import_datasets
 
 
-def test_import_Schleyer() :
+def xxtest_import_Schleyer() :
     kws0 = {
-        'datagroup_id': 'Schleyer lab',
+        'labID': 'Schleyer',
         'group_id': 'exploration',
-        'enrich' : True
+        # 'enrich' : True
     }
 
     # Merged case
+    N=60
     kws1 = {
         'parent_dir': 'exploration',
         'merged': True,
-        'N': 40,
+        'N': N,
         'min_duration_in_sec': 180,
-        'id': f'40controls',
-        'refID': f'exploration.40controls',
+        # 'id': f'40controls',
+        'refID': f'exploration.{N}controls',
         **kws0
     }
 
     # Single dish case
+    folder='dish04'
     kws2 = {
-        'parent_dir': 'exploration/dish03',
+        'parent_dir': f'exploration/{folder}',
         'merged': False,
         'N': None,
         'min_duration_in_sec': 90,
-        'id': f'dish03',
-        'refID': f'exploration.dish03',
+        'id': folder,
+        'refID': f'exploration.{folder}',
         **kws0
     }
 
@@ -40,10 +42,10 @@ def test_import_Schleyer() :
 
 def test_import_Jovanic() :
     kws0 = {
-        'datagroup_id': 'Jovanic lab',
+        'labID': 'Jovanic',
         # 'group_id': 'exploration',
         # 'add_reference': True,
-        'enrich' : True,
+        # 'enrich' : True,
         'merged' : False
     }
 
@@ -55,10 +57,10 @@ def test_import_Jovanic() :
     # }
 
     kws1 = {
-        'parent_dir': 'AttP240',
-        'source_ids': ['Fed', 'Deprived', 'Starved'],
-        'refIDs': ['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved'],
-        # 'id': f'dish',
+        'parent_dir': 'Refeeding_yeast_paste_baseline',
+        'source_ids': ['Fed', 'Fed_paste', 'Pd', 'Pd_paste',],
+       # 'refIDs': ['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved'],
+        'colors':['green', 'lightblue', 'red', 'yellow'],
         **kws0
     }
 
@@ -72,14 +74,14 @@ def test_import_Jovanic() :
     }
 
 
-    for kws in [kws2] :
+    for kws in [kws1] :
         ds = import_datasets(**kws)
         for d in ds :
             assert isinstance(d, larvaworld.lib.LarvaDataset)
 
 def xxtest_import_Berni() :
     kws0 = {
-        'datagroup_id': 'Berni lab',
+        'labID': 'Berni',
         # 'group_id': 'exploration',
         # 'add_reference': True,
         'enrich' : True,

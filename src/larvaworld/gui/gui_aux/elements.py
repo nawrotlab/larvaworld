@@ -597,9 +597,9 @@ class DataList(NamedList):
         v0 = v[k]
         kks = [v0[i] if self.aux_cols is None else list(d0.keys())[v0[i]] for i in range(len(v0))]
         # print(kks)
-        datagroup_id = self.tab.current_ID(v) if self.raw else None
+        labID = self.tab.current_ID(v) if self.raw else None
         if e == self.browse_key:
-            new = detect_dataset(datagroup_id, v[self.browse_key], raw=self.raw)
+            new = detect_dataset(labID, v[self.browse_key], raw=self.raw)
             self.add(w, new)
         elif e == f'SELECT_ALL {n}':
             ks = np.arange(len(d0)).tolist()
@@ -635,7 +635,7 @@ class DataList(NamedList):
             k1 = dl1.key
             raw_dic = {id: dir for id, dir in d0.items() if id in v[k]}
             if len(raw_dic) > 0:
-                proc_dic = gui_aux.import_window(datagroup_id=datagroup_id, raw_dic=raw_dic)
+                proc_dic = gui_aux.import_window(labID=labID, raw_dic=raw_dic)
                 d1.update(proc_dic)
                 dl1.update_window(w)
         elif e == f'ENRICH {n}':
@@ -1744,29 +1744,28 @@ class GuiTreeData(sg.TreeData):
         w.close()
 
 
-def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
+def detect_dataset(labID=None, path=None, raw=True, **kwargs):
     dic = {}
     if path in ['', None]:
         return dic
     if raw:
-        conf = reg.conf.Group.getID(datagroup_id).tracker.filesystem
-        dF, df = conf.folder, conf.file
-        dFp, dFs = dF.pref, dF.suf
-        dfp, dfs, df_ = df.pref, df.suf, df.sep
+        conf = reg.conf.LabFormat.getID(labID).filesystem
+        dFp, dFs = conf.folder_pref, conf.folder_suf
+        dfp, dfs, df_ = conf.file_pref, conf.file_suf, conf.file_sep
 
         fn = path.split('/')[-1]
         if dFp is not None:
             if fn.startswith(dFp):
                 dic[fn] = path
             else:
-                ids, dirs = detect_dataset_in_subdirs(datagroup_id, path, fn, **kwargs)
+                ids, dirs = detect_dataset_in_subdirs(labID, path, fn, **kwargs)
                 for id, dr in zip(ids, dirs):
                     dic[id] = dr
         elif dFs is not None:
             if fn.startswith(dFs):
                 dic[fn] = path
             else:
-                ids, dirs = detect_dataset_in_subdirs(datagroup_id, path, fn, **kwargs)
+                ids, dirs = detect_dataset_in_subdirs(labID, path, fn, **kwargs)
                 for id, dr in zip(ids, dirs):
                     dic[id] = dr
         elif dfp is not None:
@@ -1794,12 +1793,12 @@ def detect_dataset(datagroup_id=None, path=None, raw=True, **kwargs):
         return dic
 
 
-def detect_dataset_in_subdirs(datagroup_id, path, last_dir, full_ID=False):
+def detect_dataset_in_subdirs(labID, path, last_dir, full_ID=False):
     fn = last_dir
     ids, dirs = [], []
     if os.path.isdir(path):
         for f in os.listdir(path):
-            dic = detect_dataset(datagroup_id, f'{path}/{f}', full_ID=full_ID, raw=True)
+            dic = detect_dataset(labID, f'{path}/{f}', full_ID=full_ID, raw=True)
             for id, dr in dic.items():
                 if full_ID:
                     ids += [f'{fn}/{id0}' for id0 in id]

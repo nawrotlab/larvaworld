@@ -169,39 +169,39 @@ def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwarg
 
 
     reg.vprint(f'Completed {mode} angular processing.')
-
-
-def ang_from_xy(xy):
-    dx_dt = np.gradient(xy[:,0])
-    dy_dt = np.gradient(xy[:,1])
-    velocity = np.array([[dx_dt[i], dy_dt[i]] for i in range(dx_dt.size)])
-    ds_dt = np.sqrt(dx_dt * dx_dt + dy_dt * dy_dt)
-    tangent = np.array([1 / ds_dt] * 2).transpose() * velocity
-    tangent_x = tangent[:, 0]
-    tangent_y = tangent[:, 1]
-
-    deriv_tangent_x = np.gradient(tangent_x)
-    deriv_tangent_y = np.gradient(tangent_y)
-
-    dT_dt = np.array([[deriv_tangent_x[i], deriv_tangent_y[i]] for i in range(deriv_tangent_x.size)])
-
-    length_dT_dt = np.sqrt(deriv_tangent_x * deriv_tangent_x + deriv_tangent_y * deriv_tangent_y)
-
-    normal = np.array([1 / length_dT_dt] * 2).transpose() * dT_dt
-    d2s_dt2 = np.gradient(ds_dt)
-    d2x_dt2 = np.gradient(dx_dt)
-    d2y_dt2 = np.gradient(dy_dt)
-
-    curvature = np.abs(d2x_dt2 * dy_dt - dx_dt * d2y_dt2) / (dx_dt * dx_dt + dy_dt * dy_dt) ** 1.5
-    t_component = np.array([d2s_dt2] * 2).transpose()
-    n_component = np.array([curvature * ds_dt * ds_dt] * 2).transpose()
-
-    acceleration = t_component * tangent + n_component * normal
-
-    ang_vel = np.arctan(normal[:, 0] / normal[:, 1])
-
-    ang_acc = np.arctan(acceleration[:, 0] / acceleration[:, 1])
-    return ang_vel, ang_acc
+#
+#
+# def ang_from_xy(xy):
+#     dx_dt = np.gradient(xy[:,0])
+#     dy_dt = np.gradient(xy[:,1])
+#     velocity = np.array([[dx_dt[i], dy_dt[i]] for i in range(dx_dt.size)])
+#     ds_dt = np.sqrt(dx_dt * dx_dt + dy_dt * dy_dt)
+#     tangent = np.array([1 / ds_dt] * 2).transpose() * velocity
+#     tangent_x = tangent[:, 0]
+#     tangent_y = tangent[:, 1]
+#
+#     deriv_tangent_x = np.gradient(tangent_x)
+#     deriv_tangent_y = np.gradient(tangent_y)
+#
+#     dT_dt = np.array([[deriv_tangent_x[i], deriv_tangent_y[i]] for i in range(deriv_tangent_x.size)])
+#
+#     length_dT_dt = np.sqrt(deriv_tangent_x * deriv_tangent_x + deriv_tangent_y * deriv_tangent_y)
+#
+#     normal = np.array([1 / length_dT_dt] * 2).transpose() * dT_dt
+#     d2s_dt2 = np.gradient(ds_dt)
+#     d2x_dt2 = np.gradient(dx_dt)
+#     d2y_dt2 = np.gradient(dy_dt)
+#
+#     curvature = np.abs(d2x_dt2 * dy_dt - dx_dt * d2y_dt2) / (dx_dt * dx_dt + dy_dt * dy_dt) ** 1.5
+#     t_component = np.array([d2s_dt2] * 2).transpose()
+#     n_component = np.array([curvature * ds_dt * ds_dt] * 2).transpose()
+#
+#     acceleration = t_component * tangent + n_component * normal
+#
+#     ang_vel = np.arctan(normal[:, 0] / normal[:, 1])
+#
+#     ang_acc = np.arctan(acceleration[:, 0] / acceleration[:, 1])
+#     return ang_vel, ang_acc
 
 
 # def comp_ang_from_xy(s, e, dt):

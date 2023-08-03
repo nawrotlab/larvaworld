@@ -3,7 +3,7 @@ from larvaworld.lib.process.building import import_datasets
 
 
 kws0 = {
-    'datagroup_id': 'Jovanic lab',
+    'labID': 'Jovanic',
     'enrich' : True,
     'merged' : False,
     'match_ids' : True,

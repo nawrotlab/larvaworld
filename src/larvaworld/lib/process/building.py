@@ -68,8 +68,8 @@ def build_Jovanic(dataset,  source_id,source_dir,
         return e
 
     def comp_length(df, e):
-        xys = nam.xy(d.points, flat=True)
-        xy2 = df[xys].values.reshape(-1, d.Npoints, 2)
+        xys = d.config.midline_xy
+        xy2 = df[xys].values.reshape(-1, d.config.Npoints, 2)
         xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
         df['length'] = np.sum(np.sqrt(xy3), axis=1)
         e['length'] = df['length'].groupby('AgentID').quantile(q=0.5)
@@ -85,6 +85,7 @@ def build_Jovanic(dataset,  source_id,source_dir,
     if match_ids :
         comp_length(df, e)
         df = match_larva_ids(s=df, e=e, pars=['head_x', 'head_y'])
+        e = init_endpoint_data(df=df, dt=d.dt)
 
     s = interpolate_step_data(df=df, dt=d.dt)
     print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated in full mode ')
@@ -138,9 +139,8 @@ def build_Schleyer(dataset, source_dir,save_mode='semifull',
         except:
             return [-0.8, 0]
 
-    datagroup_id = 'Schleyer lab'
-    g = reg.conf.Group.getID(datagroup_id)
-    build_conf = g.Tracker.filesystem
+    g = reg.conf.LabFormat.getID('Schleyer')
+    build_conf = g.filesystem
 
     d = dataset
     dt=d.dt
@@ -219,9 +219,8 @@ def build_Schleyer(dataset, source_dir,save_mode='semifull',
 
 
 def build_Berni(dataset, source_files,  max_Nagents=None, min_duration_in_sec=0.0,min_end_time_in_sec=0, **kwargs):
-    datagroup_id = 'Berni lab'
-    g = reg.conf.Group.getID(datagroup_id)
-    cols0 = g.Tracker.filesystem['read_sequence']
+    g = reg.conf.LabFormat.getID('Berni')
+    cols0 = g.filesystem.read_sequence
     cols1 = cols0[1:]
 
     d = dataset
@@ -264,9 +263,8 @@ def build_Berni(dataset, source_files,  max_Nagents=None, min_duration_in_sec=0.
 
 def build_Arguello(dataset, source_files, max_Nagents=None, min_duration_in_sec=0.0,
                   min_end_time_in_sec=0, **kwargs):
-    datagroup_id='Arguello lab'
-    g = reg.conf.Group.getID(datagroup_id)
-    cols0 = g.Tracker.filesystem['read_sequence']
+    g = reg.conf.LabFormat.getID('Arguello')
+    cols0 = g.filesystem.read_sequence
     cols1 = cols0[1:]
     d = dataset
     dt = d.dt
@@ -330,10 +328,10 @@ def import_datasets(source_ids, ids=None, colors=None, refIDs=None, **kwargs):
     return ds
 
 
-def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, merged=False, enrich=True,
+def import_dataset(labID, parent_dir, group_id=None, N=None, id=None, merged=False,
                    refID=None, enrich_conf=None, **kwargs):
     print()
-    print(f'----- Initializing {datagroup_id} format-specific dataset import. -----')
+    print(f'----- Initializing {labID} format-specific dataset import. -----')
 
     if id is None:
         id = f'{N}controls'
@@ -341,7 +339,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
         group_id = parent_dir
 
 
-    g = reg.conf.Group.getID(datagroup_id)
+    g = reg.conf.LabFormat.get(labID)
     group_dir = g.path
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
@@ -349,7 +347,7 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
     if merged:
         source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
     kws = {
-        'datagroup_id': datagroup_id,
+        'labID': labID,
         'group_id': group_id,
         'Ν': N,
         'target_dir': f'{proc_folder}/{group_id}/{id}',
@@ -359,12 +357,13 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
     }
     d = build_dataset(id=id, **kws)
     if d is not None:
-        print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
-        if enrich:
-            print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
-            if enrich_conf is None:
-                enrich_conf = g.enrichment
-            d = d.enrich(**enrich_conf, is_last=False)
+        print(f'***-- Dataset {d.id} created with {len(d.config.agent_ids)} larvae! -----')
+        print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
+        if enrich_conf is None:
+            enrich_conf=reg.gen.EnrichConf(proc_keys =[], anot_keys =[])
+        enrich_conf.pre_kws = g.preprocess
+        d = d.enrich(**enrich_conf.nestedConf, is_last=False)
+
         d.save(refID=refID)
         if refID is not None :
             print(f'***** Dataset stored under the reference ID : {refID} -----')
@@ -373,47 +372,47 @@ def import_dataset(datagroup_id, parent_dir, group_id=None, N=None, id=None, mer
     return d
 
 
-def build_dataset(datagroup_id, id, target_dir, group_id, N=None, sample=None,
+def build_dataset(labID, id, target_dir, group_id, N=None, sample=None,
                   color='black', epochs={},age=0.0, **kwargs):
-    print(f'*---- Building dataset {id} under the {datagroup_id} format. -----')
+    print(f'*---- Building dataset {id} under the {labID} format. -----')
 
     func_dict = {
-        'Jovanic lab': build_Jovanic,
-        'Berni lab': build_Berni,
-        'Schleyer lab': build_Schleyer,
-        'Arguello lab': build_Arguello,
+        'Jovanic': build_Jovanic,
+        'Berni': build_Berni,
+        'Schleyer': build_Schleyer,
+        'Arguello': build_Arguello,
     }
 
     warnings.filterwarnings('ignore')
 
     shutil.rmtree(target_dir, ignore_errors=True)
-    g = reg.conf.Group.getID(datagroup_id)
+    g = reg.conf.LabFormat.getID(labID)
 
     conf = {
         'load_data': False,
         'dir': target_dir,
         'id': id,
-        'metric_definition': g.enrichment.metric_definition,
         'larva_groups': reg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs=epochs,age=age),
-        'env_params': reg.get_null('Env', arena=g.Tracker.arena),
-        **g.Tracker.resolution
+        'env_params': g.env_params,
+        **g.tracker
     }
     d = larvaworld.lib.LarvaDataset(**conf)
     kws0 = {
         'dataset': d,
+        # **g.filesystem
         **kwargs
     }
 
-    try:
+    # try:
 
-        step, end = func_dict[datagroup_id](**kws0)
-        d.set_data(step=step, end=end)
-        # print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
-        return d
-    except:
+    step, end = func_dict[labID](**kws0)
+    d.set_data(step=step, end=end)
+    # print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
+    return d
+    # except:
         # print(f'xxxxx Failed to create dataset {id}! -----')
         # d.delete()
-        return None
+        # return None
 
 
 

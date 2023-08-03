@@ -183,7 +183,7 @@ class IntegerRangeOrdered(IntegerRange):
     def _validate_value(self, val, allow_None):
         super(IntegerRange, self)._validate_value(val, allow_None)
         v1,v2=val
-        assert (v1<v2)
+        assert (v1<=v2)
         # raise ValueError("IntegerRange parameter %r only takes integer "
         #                      "values, not type %r." % (self.name, type(n)))
 

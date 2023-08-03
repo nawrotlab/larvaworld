@@ -206,7 +206,7 @@ class RuntimeOps(RuntimeGeneralOps,RuntimeDataOps):
 
 
 
-class LabFormatFilesystem(NestedConf):
+class Filesystem(NestedConf):
     read_sequence = List(label='data columns',doc='The sequence of columns in the tracker-exported files.')
     read_metadata = Boolean(False, doc='Whether metadata files are available for the tracker-exported files/folders.')
     folder_pref = String(doc='A prefix for detecting a raw-data folder.')
@@ -217,9 +217,8 @@ class LabFormatFilesystem(NestedConf):
 
 
 
-class LabFormat(NestedConf) :
-    resolution = ClassAttr(Resolution, doc='The dataset metadata')
-    filesystem = ClassAttr(LabFormatFilesystem, doc='The import-relevant lab-format filesystem')
+
+
 
 class TrackedPointIdx(XYops):
     point_idx = param.Integer(default=-1,softbounds=(None,20),bounds=(-1,None),
@@ -255,7 +254,7 @@ class SimMetricOps(TrackedPointIdx):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.update_vectors()
+        # self.update_vectors()
 
     @param.depends('Npoints', watch=True)
     def update_vectors(self):
@@ -272,6 +271,8 @@ class SimMetricOps(TrackedPointIdx):
     @property
     def Nbend_angles(self):
         return int(np.round(self.front_body_ratio * self.Nangles))
+
+class TrackerOps(SimMetricOps,FramerateOps):pass
 
 
 class PreprocessConf(NestedConf):

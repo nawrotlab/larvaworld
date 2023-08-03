@@ -251,11 +251,11 @@ def save_ref_window(d):
         d.save_config(refID=v[k])
 
 
-def import_window(datagroup_id, raw_dic):
+def import_window(labID, raw_dic):
     from larvaworld.gui.tabs.larvaworld_gui import check_togglesNcollapsibles
     from larvaworld.gui.gui_aux.elements import PadDict
-    g = reg.conf.Group.getID(datagroup_id)
-    group_dir = f'{reg.DATA_DIR}/{g["path"]}'
+    g = reg.conf.LabFormat.get(labID)
+    group_dir = g.path
     raw_folder = f'{group_dir}/raw'
     proc_folder = f'{group_dir}/processed'
 
@@ -317,7 +317,7 @@ def import_window(datagroup_id, raw_dic):
             if e == 'Ok':
                 conf = s1.get_dict(v, w)
                 kws = {
-                    'datagroup_id': datagroup_id,
+                    'labID': labID,
                     # 'larva_groups': {gID: preg.get_null('LarvaGroup', sample=None)},
                     **conf}
                 w.close()
@@ -327,7 +327,7 @@ def import_window(datagroup_id, raw_dic):
                     print(f'------ Building {N} discrete datasets ------')
                     for target, source_id, source in zip(targets, raw_ids, raw_dirs):
                         target_id = v[f'new_{source_id}']
-                        if datagroup_id in ['Berni lab']:
+                        if labID in ['Berni']:
                             kws0={
                                 'id' : target_id,
                                 'target_dir' : f'{target}/{target_id}',
@@ -335,7 +335,7 @@ def import_window(datagroup_id, raw_dic):
                                             n.startswith(source_id)],
                                 **kws
                             }
-                        elif datagroup_id in ['Jovanic lab']:
+                        elif labID in ['Jovanic']:
                             kws0 = {
                                 'id': target_id,
                                 'target_dir': f'{target}/{target_id}',
@@ -343,14 +343,14 @@ def import_window(datagroup_id, raw_dic):
                                 'source_id': source_id,
                                 **kws
                             }
-                        elif datagroup_id in ['Schleyer lab']:
+                        elif labID in ['Schleyer']:
                             kws0 = {
                                 'id': target_id,
                                 'target_dir': target.replace(source_id, target_id),
                                 'source_dir': [source],
                                 **kws
                             }
-                        elif datagroup_id in ['Arguello lab']:
+                        elif labID in ['Arguello']:
                             kws0 = {
                                 'id': target_id,
                                 'target_dir': f'{target}/{target_id}',
@@ -369,7 +369,7 @@ def import_window(datagroup_id, raw_dic):
                     print(f'------ Building a single merged dataset ------')
                     target_id0 = v[f'new_{raw_ids[0]}']
 
-                    if datagroup_id in ['Berni lab', 'Arguello lab']:
+                    if labID in ['Berni', 'Arguello']:
                         kws0 = {
                             'id': target_id0,
                             'target_dir':  f'{targets[0]}/{target_id0}',
@@ -378,14 +378,14 @@ def import_window(datagroup_id, raw_dic):
                                                                   raw_dic.items()]),
                             **kws
                         }
-                    elif datagroup_id in ['Schleyer lab']:
+                    elif labID in ['Schleyer']:
                         kws0 = {
                             'id': target_id0,
                             'target_dir': targets[0].replace(raw_ids[0], target_id0),
                             'source_dir': raw_dirs,
                             **kws
                         }
-                    elif datagroup_id in ['Jovanic lab']:
+                    elif labID in ['Jovanic']:
                         raise NotImplemented
                     dd = build_dataset(**kws0)
                     proc_dir[dd.id] = dd

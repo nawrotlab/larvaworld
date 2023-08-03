@@ -7,7 +7,7 @@ from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
     generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch, RuntimeDataOps, RandomizedColor, \
-    OptionalPositiveNumber
+    OptionalPositiveNumber, Filesystem, Resolution, TrackerOps, PreprocessConf
 
 
 class ConfType(param.Parameterized) :
@@ -420,6 +420,18 @@ class LarvaGroup(NestedConf):
 
 gen.Env=class_generator(EnvConf)
 
+
+class LabFormat(NestedConf) :
+    labID=param.String(doc='The identifier ID of the lab')
+    tracker = ClassAttr(TrackerOps, doc='The dataset metadata')
+    filesystem = ClassAttr(Filesystem, doc='The import-relevant lab-format filesystem')
+    env_params = ClassAttr(gen.Env, doc='The environment configuration')
+    preprocess=ClassAttr(PreprocessConf, doc='The environment configuration')
+
+    @property
+    def path(self):
+        return f'{reg.DATA_DIR}/{self.labID}Group'
+
 class ExpConf(SimOps):
     env_params = ClassAttr(gen.Env, doc='The environment configuration')
     # env_params = conf.Env.confIDorNew()
@@ -473,6 +485,7 @@ class ReplayConf(ReplayConfGroup, ReplayConfUnit):
 
 gen.LarvaGroup=class_generator(LarvaGroup)
 gen.Exp=ExpConf
+gen.LabFormat=LabFormat
 gen.Replay=class_generator(ReplayConf)
 
 

@@ -293,7 +293,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
         self.key = key
         self.ks = []
         self.kkdict = aux.AttrDict()
-        self.kdict = aux.AttrDict()
+        # self.kdict = aux.AttrDict()
         self.pdict = aux.AttrDict()
         self.vdict = aux.AttrDict()
 
@@ -308,7 +308,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
                 if k in klabels.keys():
                     p.disp=klabels[k]
                 dfs = aux.AttrDict()
-                dics = aux.AttrDict()
+                # dics = aux.AttrDict()
                 vs=[]
                 for l, d, col in self.data_palette :
                     df = d.get_par(k=k, key=key)*coeff
@@ -319,10 +319,10 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
                     if rad2deg:
                         v = np.rad2deg(v)
                     dfs[l]=df
-                    dics[l]=aux.AttrDict({'df': v, 'col': col})
+                    # dics[l]=aux.AttrDict({'df': v, 'col': col})
                     vs.append(v)
                 self.kkdict[k]=dfs
-                self.kdict[k] = dics
+                # self.kdict[k] = dics
                 self.vdict[k] = vs
                 self.pdict[k] = p
                 self.ks.append(k)

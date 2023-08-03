@@ -21,8 +21,8 @@ os.makedirs(CONF_DIR, exist_ok=True)
 
 SIMTYPES=['Exp', 'Batch', 'Ga', 'Eval','Replay']
 
-CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga', 'Tracker',
-                          'Group', 'Trial', 'Life', 'Body', 'Tree', 'Food']
+CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Essay', 'Batch', 'Ga',
+                          'LabFormat', 'Trial', 'Life', 'Body', 'Tree', 'Food']
 
 GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
