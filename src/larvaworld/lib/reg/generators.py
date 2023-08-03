@@ -210,6 +210,16 @@ class RefType(ConfType):
             dataset.load()
         return dataset
 
+    @property
+    def cleanRefIDs(self):
+        ids=self.confIDs
+        for id in ids:
+            try:
+                self.loadRef(id)
+            except:
+                self.delete(id)
+
+
 
     @property
     def dict_entry_type(self):
@@ -500,7 +510,7 @@ def full_lg(id=None, expand=False,as_entry=True,**conf):
     except :
         raise
 
-def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.150controls', substrate_type='standard', pref='',
+def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.40controls', substrate_type='standard', pref='',
            navigator=False, expand=False, **kwargs):
     if age == 0.0:
         epochs = {}

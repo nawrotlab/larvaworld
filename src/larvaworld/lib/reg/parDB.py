@@ -1341,7 +1341,7 @@ def buildInitDict():
         }
 
         d['reference_dataset'] = {
-            'refID': ConfID_entry('Ref', default='exploration.150controls'),
+            'refID': ConfID_entry('Ref', default='exploration.40controls'),
             'dataset_dir': {'dtype': str, 'symbol': 'dataset_dir',
                     'k': 'dataset_dir',
                     'h': 'The path to the stored dataset relative to Root/data. Alternative to providing refID'}
