@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name='larvaworld'
-version = "0.0.6"
+version = "0.0.8"
 description='Drosophila larva behavioral analysis and simulation platform'
 authors=[
     {name='Panagiotis Sakagiannis', email='bagjohn0@gmail.com'}
@@ -25,6 +25,7 @@ dependencies = [
     'argparse',
     'pint',
     'pint_pandas',
+    'tables',
     'matplotlib',
     'seaborn',
     'scikit-learn',

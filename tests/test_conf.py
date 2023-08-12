@@ -19,8 +19,4 @@ def test_conf() :
     assert aux.checkEqual(ids + [id_new], C.confIDs)
     C.delete(id_new)
     assert aux.checkEqual(ids, C.confIDs)
-    # confgen=C.get(id)
-    # assert isinstance(confgen, C.conf_class)
 
-# def test_reset() :
-#     reg.resetConfs()

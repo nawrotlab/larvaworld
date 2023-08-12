@@ -10,6 +10,28 @@ from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro,
     OptionalPositiveNumber, Filesystem, Resolution, TrackerOps, PreprocessConf
 
 
+
+
+
+
+
+def build_GroupTypeSubkeys():
+    d0 = {k: {} for k in reg.GROUPTYPES}
+    d1 = {
+        'LarvaGroup': {'Model'},
+        # 'Ga': {'env_params': 'Env'},
+        # 'Exp': {'env_params': 'Env',
+        #         'trials': 'Trial',
+        #         'larva_groups': 'Model',
+        #         }
+    }
+    d0.update(d1)
+    return aux.AttrDict(d0)
+
+# GROUPTYPE_SUBKEYS = build_GroupTypeSubkeys()
+
+
+
 class ConfType(param.Parameterized) :
     """Select among available configuration types"""
     conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
@@ -18,7 +40,22 @@ class ConfType(param.Parameterized) :
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.CONFTYPE_SUBKEYS = self.build_ConfTypeSubkeys()
         self.update_dict()
+
+    def build_ConfTypeSubkeys(self):
+        d0 = {k: {} for k in reg.CONFTYPES}
+        d1 = {
+            'Batch': {'exp': 'Exp'},
+            'Ga': {'env_params': 'Env'},
+            'Exp': {'env_params': 'Env',
+                    'trials': 'Trial',
+                    'larva_groups': 'Model',
+                    }
+        }
+        d0.update(d1)
+        return aux.AttrDict(d0)
+
 
     @property
     def path_to_dict(self):
@@ -101,7 +138,7 @@ class ConfType(param.Parameterized) :
                 conf = self.dict[id]
             else:
                 return None
-        subks = reg.CONFTYPE_SUBKEYS[self.conftype]
+        subks = self.CONFTYPE_SUBKEYS[self.conftype]
         if len(subks) > 0:
             for subID, subk in subks.items():
                 ids = reg.conf[subk].confIDs

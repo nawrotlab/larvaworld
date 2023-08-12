@@ -21,7 +21,7 @@ def test_import_Schleyer() :
     }
 
     # Single dish case
-    folder='dish04'
+    folder='dish01'
     kws2 = {
         'parent_dir': f'exploration/{folder}',
         'merged': False,
