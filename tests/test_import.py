@@ -58,9 +58,11 @@ def test_import_Jovanic() :
 
     kws1 = {
         'parent_dir': 'Refeeding_yeast_paste_baseline',
-        'source_ids': ['Fed', 'Fed_paste', 'Pd', 'Pd_paste',],
+        'source_ids': ['Fed', 'Pd'],
+        # 'source_ids': ['Fed', 'Fed_paste', 'Pd', 'Pd_paste',],
        # 'refIDs': ['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved'],
-        'colors':['green', 'lightblue', 'red', 'yellow'],
+        'colors':['green', 'red'],
+        # 'colors':['green', 'lightblue', 'red', 'yellow'],
         **kws0
     }
 
