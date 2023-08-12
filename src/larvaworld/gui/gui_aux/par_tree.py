@@ -129,12 +129,12 @@ def multiconf_to_tree(ids, conftype):
     return df0.to_dict(orient='records')
 
 
-if __name__ == '__main__':
-
-    name = 'crawler'
-    # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
-    # for mID in mIDs:
-    #     m=loadConf(mID, 'Model')
-    #     print(m)
-    ddf=pars_to_tree(name)
-    print(ddf.values)
+# if __name__ == '__main__':
+#
+#     name = 'crawler'
+#     # mIDs = ['PHIonNEU', 'SQonNEU', 'PHIonSIN', 'SQonSIN']
+#     # for mID in mIDs:
+#     #     m=loadConf(mID, 'Model')
+#     #     print(m)
+#     ddf=pars_to_tree(name)
+#     print(ddf.values)

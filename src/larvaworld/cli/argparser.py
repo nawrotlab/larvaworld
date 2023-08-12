@@ -185,7 +185,6 @@ class SimModeParser :
         sp.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
         if m in ['Exp', 'Batch', 'Ga']:
             sp.add_argument('experiment', choices=reg.conf[m].confIDs, help='The experiment mode')
-            # sp.add_argument('experiment', choices=list(reg.CONFTREE[m].keys()), help='The experiment mode')
             # p.add_argument('experiment', choices=reg.stored.confIDs(sim_mode), help='The experiment mode')
         # elif k == 't':
         #     p.add_argument('-t', '--duration', type=float, help='The duration of the simulation in minutes')

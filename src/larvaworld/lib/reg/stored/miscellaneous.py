@@ -34,33 +34,33 @@ def Life_dict() :
     return d
 
 
-
-body_shapes= aux.AttrDict({
-        'drosophila_larva': np.array([
-            [1.0, 0.0],
-            [0.9, 0.1],
-            [0.05, 0.1],
-            [0.0, 0.0],
-            [0.05, -0.1],
-            [0.9, -0.1]
-        ]),
-        'zebrafish_larva': np.array([
-            [1.0, 0.0],
-            [0.9, 0.25],
-            [0.7, 0.25],
-            [0.6, 0.005],
-            [0.05, 0.005],
-            [0.0, 0.0],
-            [0.05, -0.005],
-            [0.6, -0.005],
-            [0.7, -0.25],
-            [0.9, -0.25],
-        ])
-    })
-
-@reg.funcs.stored_conf("Body")
-def Body_dict() :
-    return aux.AttrDict({name : reg.get_null('Body', points=points, symmetry='bilateral') for name,points in body_shapes.items()})
+#
+# body_shapes= aux.AttrDict({
+#         'drosophila_larva': np.array([
+#             [1.0, 0.0],
+#             [0.9, 0.1],
+#             [0.05, 0.1],
+#             [0.0, 0.0],
+#             [0.05, -0.1],
+#             [0.9, -0.1]
+#         ]),
+#         'zebrafish_larva': np.array([
+#             [1.0, 0.0],
+#             [0.9, 0.25],
+#             [0.7, 0.25],
+#             [0.6, 0.005],
+#             [0.05, 0.005],
+#             [0.0, 0.0],
+#             [0.05, -0.005],
+#             [0.6, -0.005],
+#             [0.7, -0.25],
+#             [0.9, -0.25],
+#         ])
+#     })
+#
+# @reg.funcs.stored_conf("Body")
+# def Body_dict() :
+#     return aux.AttrDict({name : reg.get_null('Body', points=points, symmetry='bilateral') for name,points in body_shapes.items()})
 
 
 
