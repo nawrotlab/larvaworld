@@ -333,29 +333,32 @@ class SimModeParser :
 
 
 
-def update_larva_groups(lgs, N=None, mIDs=None):
+def update_larva_groups(lgs, N=None, mIDs=None, ids=None):
     '''
     Modifies the experiment's configuration larvagroups
     Args:
         lgs: The existing larvagroups in the experiment configuration
         N: Overwrite the number of agents per larva group
         mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.
+        ids: The displayed ids of the groups. If None the model IDs (mIDs) are used
 
     Returns:
         The experiment's configuration larvagroups
     '''
 
     if mIDs is not None:
+        if ids is None:
+            ids=mIDs
         Nm = len(mIDs)
         gConfs = list(lgs.values())
         if len(lgs) != Nm:
             gConfs = [gConfs[0]] * Nm
             for gConf, col in zip(gConfs, aux.N_colors(Nm)):
                 gConf.default_color = col
-        lgs = aux.AttrDict({mID: {} for mID in mIDs})
-        for mID, gConf in zip(mIDs, gConfs):
-            lgs[mID] = gConf
-            lgs[mID].model = reg.conf.Model.getID(mID)
+        lgs = aux.AttrDict({id: {} for id in ids})
+        for id, mID, gConf in zip(ids, mIDs, gConfs):
+            lgs[id] = gConf
+            lgs[id].model = reg.conf.Model.getID(mID)
 
     if N is not None:
         for gID, gConf in lgs.items():
