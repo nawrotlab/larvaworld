@@ -8,7 +8,7 @@ from larvaworld.lib import reg, aux, sim
 
 
 
-class ParsArg:
+class SingleParserArgument:
     """
     Create a single parser argument
     This is a class used to populate a parser with arguments and get their values.
@@ -28,18 +28,14 @@ class ParsArg:
 
     @ classmethod
     def from_dict(cls, name, **kwargs):
-        entry = build_ParsArg(name, **kwargs)
-        return cls(**entry)
+        return cls(**parser_entry_from_dict(name, **kwargs))
 
     @classmethod
     def from_param(cls, k, p):
-        entry = build_ParamArg(k, p)
-        return cls(**entry)
+        return cls(**parser_entry_from_param(k, p))
 
-
-def build_ParamArg(k, p):
+def parser_entry_from_param(k, p):
     c = p.__class__
-    # dtype=aux.param_dtype(c)
     v = p.default
     d = aux.AttrDict({
         'key': k,
@@ -67,70 +63,7 @@ def build_ParamArg(k, p):
             d.type = p.item_type
     return d
 
-
-
-def parser_Paramdict(d0):
-    d = aux.AttrDict()
-    for k, p in d0.param.objects().items():
-
-        if p.__class__ not in param.Parameterized.__subclasses__():
-            d[k] = ParsArg.from_param(k, p)
-        else:
-            d[k] = parser_Paramdict(p)
-    return d.flatten()
-
-
-
-
-
-
-class ParsDict:
-    def __init__(self, parsargs):
-        self.parsargs = parsargs
-
-    @classmethod
-    def from_param(cls, d0):
-        parsargs = parser_Paramdict(d0)
-        return cls(parsargs)
-
-    @classmethod
-    def from_dict(cls, d0):
-        parsargs = parser_dict(d0)
-        return cls(parsargs)
-
-    def add(self, parser=None):
-        if parser is None:
-            parser = ArgumentParser()
-        for k, v in self.parsargs.items():
-            parser = v.add(parser)
-        return parser
-
-    def get(self, input):
-        dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
-        return dic.unflatten()
-
-class Parser:
-    """
-    Create an argument parser for a group of arguments (normally from a dict).
-    """
-
-    def __init__(self, name):
-        self.name = name
-        self.parsargs = parser_dict(reg.par.PI[name])
-
-
-    def add(self, parser=None):
-        if parser is None:
-            parser = ArgumentParser()
-        for k, v in self.parsargs.items():
-            parser = v.add(parser)
-        return parser
-
-    def get(self, input):
-        dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
-        return dic.unflatten()
-
-def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
+def parser_entry_from_dict(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
     if k is None:
         k = name
     d = {
@@ -159,36 +92,53 @@ def build_ParsArg(name, k=None, h='', dtype=float, v=None, vs=None, **kwargs):
             d['nargs'] = '?'
     return d
 
-def parser_dict(d0):
-    p = aux.AttrDict()
-    for n, v in d0.items():
-        if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
-            p[n] = ParsArg.from_dict(n, **v)
-        else:
-            p[n] = parser_dict(v)
-    return p.flatten()
 
-
-
-
-
-class MultiParser:
+class ParserArgumentDict:
     """
-    Combine multiple parsers under a single multi-parser
+        Create a dictionary of parser arguments
+        This can be instantiated either by a dictionary of param.Parameters or by a dictionary existing in the registry parameter Database
     """
 
-    def __init__(self, names):
-        self.parsers = {n: Parser(n) for n in names}
+
+    def __init__(self, parsargs):
+        self.parsargs = parsargs
+
+    @classmethod
+    def from_param(cls, d0):
+        return cls(parser_dict_from_param(d0))
+
+    @classmethod
+    def from_dict(cls, d0):
+        return cls(parser_dict_from_dict(d0))
 
     def add(self, parser=None):
         if parser is None:
             parser = ArgumentParser()
-        for k, v in self.parsers.items():
+        for k, v in self.parsargs.items():
             parser = v.add(parser)
         return parser
 
     def get(self, input):
-        return aux.AttrDict({k: v.get(input) for k, v in self.parsers.items()})
+        dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
+        return dic.unflatten()
+
+def parser_dict_from_param(d0):
+    d = aux.AttrDict()
+    for k, p in d0.param.objects().items():
+        if p.__class__ not in param.Parameterized.__subclasses__():
+            d[k] = SingleParserArgument.from_param(k, p)
+        else:
+            d[k] = parser_dict_from_param(p)
+    return d.flatten()
+
+def parser_dict_from_dict(d0):
+    p = aux.AttrDict()
+    for n, v in d0.items():
+        if 'v' in v.keys() or 'k' in v.keys() or 'h' in v.keys():
+            p[n] = SingleParserArgument.from_dict(n, **v)
+        else:
+            p[n] = parser_dict_from_dict(v)
+    return p.flatten()
 
 
 class SimModeParser :
@@ -206,7 +156,6 @@ class SimModeParser :
         self.mode=None
         self.run=None
         self.args = aux.AttrDict()
-        # self.default_args = aux.AttrDict()
         self.parser_args = aux.AttrDict()
         self.run_kws = aux.AttrDict()
 
@@ -217,11 +166,13 @@ class SimModeParser :
         self.args = aux.AttrDict(vars(self.cli_parser.parse_args()))
 
     def init_parsers(self):
-        parsers = aux.AttrDict()
-        parsers.sim_params = Parser('sim_params')
+        d = aux.AttrDict()
+        d.sim_params = ParserArgumentDict.from_dict(reg.par.PI['sim_params'])
+        # d.sim_params = Parser('sim_params')
         for p_key in self.parser_keys:
-            parsers[p_key] = Parser(p_key)
-        return parsers
+            d[p_key] = ParserArgumentDict.from_dict(reg.par.PI[p_key])
+            # d[p_key] = Parser(p_key)
+        return d
 
     def populate_mode_subparser(self, sp, m):
         if m not in ['Replay', 'Eval']:
@@ -276,17 +227,15 @@ class SimModeParser :
         return self.parsers[p_key].get(self.args)
 
     def eval_parsers(self):
-        parser_args = aux.AttrDict()
+        d = aux.AttrDict()
         if self.mode not in ['Replay', 'Eval']:
-            parser_args.sim_params = self.eval_parser('sim_params')
+            d.sim_params = self.eval_parser('sim_params')
         for k in self.dict[self.mode]:
-            parser_args[k] = self.eval_parser(k)
-        return parser_args
+            d[k] = self.eval_parser(k)
+        return d
 
     def configure(self, show_args=False):
         a=self.args
-
-        # self.default_args =aux.AttrDict(vars(self.cli_parser.parse_args([])))
         self.mode= m =a.sim_mode
         self.parser_args=sp=self.eval_parsers()
         kw = aux.AttrDict({'id': a.id})

@@ -154,43 +154,13 @@ def arrange_evaluation(d, evaluation_metrics=None):
     dic = aux.AttrDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
     for g, shs in evaluation_metrics.items():
         Eshorts, Dshorts = aux.existing_cols(shs,Eks), aux.existing_cols(shs,Dks)
-        # ps = reg.getPar(shs)
-        # Eps=aux.existing_cols(ps, d.endpoint_data)
-        # Dps=aux.existing_cols(ps-Eps, d.step_data)
 
-
-        # for p in aux.existing_cols(ps, d.endpoint_data):
-
-        # for sh, p in zip(shs, ps):
-        #     # print(p)
-        #     try:
-        #         data = d.get_par(par=p,k=sh,key='end')
-        #         # data = d.read(key='end')[p]
-        #         if data is not None:
-        #             Edata[p] = data
-        #             Eshorts.append(sh)
-        #     except:
-        #         try:
-        #             data = d.get_par(par=p,k=sh,key='step')
-        #             # data = d.read(key=p, file='distro')
-        #             if data is not None:
-        #                 Ddata[p] = data.dropna()
-        #                 Dshorts.append(sh)
-        #         except:
-        #             pass
-
-        # Eshorts = [sh for sh, p in zip(shs, ps) if p in e.columns]
-        # Dshorts = [sh for sh, p in zip(shs, ps) if p in s.columns]
-        # Dshorts = [sh for sh in Dshorts if sh not in Eshorts]
         if len(Eshorts) > 0:
             dic.end.shorts.append(Eshorts)
             dic.end.groups.append(g)
         if len(Dshorts) > 0:
             dic.step.shorts.append(Dshorts)
             dic.step.groups.append(g)
-    # target_data = aux.AttrDict({'step': Ddata, 'end': Edata})
-
-
     ev = aux.AttrDict({k: col_df(**v) for k, v in dic.items()})
 
     return ev, target_data
@@ -327,5 +297,4 @@ def build_fitness(dic, refDataset):
     keys = aux.unique_list(keys)
     return aux.AttrDict({'func_global_dict': func_global_dict, 'func_solo_dict': func_solo_dict, 'keys': keys})
 
-# class Evaluator :
 
