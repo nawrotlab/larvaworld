@@ -192,8 +192,8 @@ class SimModeParser :
         #     p.add_argument('-Box2D', '--Box2D', action="store_true", help='Whether to use the Box2D physics engine or not')
         if m in ['Exp', 'Batch']:
             sp.add_argument('-N', '--Nagents', type=int, help='The number of simulated larvae in each larva group')
-            sp.add_argument('-ms', '--models', type=str, nargs='+',
-                            help='The larva models to use for creating the simulation larva groups')
+            sp.add_argument('-mIDs', '--group_model_ids', type=str, nargs='+', help='The larva models to use for creating the simulation larva groups')
+            sp.add_argument('-dIDs', '--group_disp_ids', type=str, nargs='+', help='The displayed IDs of the simulation larva groups')
         # elif k == 'mID0':
         #     p.add_argument('-mID0', '--base_model', choices=reg.storedConf('Model'),
         #                    help='The model configuration to optimize')
@@ -247,7 +247,7 @@ class SimModeParser :
             kw.conf = reg.conf.Batch.getID(a.experiment)
             kw.conf.exp = reg.conf.Exp.expand(kw.conf.exp)
             kw.conf.exp.experiment = kw.conf.exp
-            kw.conf.exp.larva_groups = update_larva_groups(kw.conf.exp.larva_groups, N=a.Nagents, mIDs=a.models)
+            kw.conf.exp.larva_groups = update_larva_groups(kw.conf.exp.larva_groups, N=a.Nagents, mIDs=a.group_model_ids, dIDs=a.group_disp_ids)
 
 
             if kw.duration is None:
@@ -256,7 +256,7 @@ class SimModeParser :
         elif m == 'Exp':
             kw.parameters = reg.conf.Exp.expand(kw.experiment)
             kw.parameters.experiment = kw.experiment
-            kw.parameters.larva_groups = update_larva_groups(kw.parameters.larva_groups, N=a.Nagents, mIDs=a.models)
+            kw.parameters.larva_groups = update_larva_groups(kw.parameters.larva_groups, N=a.Nagents, mIDs=a.group_model_ids, dIDs=a.group_disp_ids)
             if kw.duration is None:
                 kw.duration = kw.parameters.sim_params.duration
 
@@ -333,32 +333,32 @@ class SimModeParser :
 
 
 
-def update_larva_groups(lgs, N=None, mIDs=None, ids=None):
+def update_larva_groups(lgs, N=None, mIDs=None, dIDs=None):
     '''
     Modifies the experiment's configuration larvagroups
     Args:
         lgs: The existing larvagroups in the experiment configuration
         N: Overwrite the number of agents per larva group
         mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.
-        ids: The displayed ids of the groups. If None the model IDs (mIDs) are used
+        dIDs: The displayed ids of the groups. If None the model IDs (mIDs) are used
 
     Returns:
         The experiment's configuration larvagroups
     '''
 
     if mIDs is not None:
-        if ids is None:
-            ids=mIDs
+        if dIDs is None:
+            dIDs=mIDs
         Nm = len(mIDs)
         gConfs = list(lgs.values())
         if len(lgs) != Nm:
             gConfs = [gConfs[0]] * Nm
             for gConf, col in zip(gConfs, aux.N_colors(Nm)):
                 gConf.default_color = col
-        lgs = aux.AttrDict({id: {} for id in ids})
-        for id, mID, gConf in zip(ids, mIDs, gConfs):
-            lgs[id] = gConf
-            lgs[id].model = reg.conf.Model.getID(mID)
+        lgs = aux.AttrDict({dID: {} for dID in dIDs})
+        for dID, mID, gConf in zip(dIDs, mIDs, gConfs):
+            lgs[dID] = gConf
+            lgs[dID].model = reg.conf.Model.getID(mID)
 
     if N is not None:
         for gID, gConf in lgs.items():

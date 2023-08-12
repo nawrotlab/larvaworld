@@ -68,7 +68,8 @@ def comp_spatial(s, e, c, mode='minimal'):
     elif mode == 'minimal':
         reg.vprint(f'Computing distances, velocities and accelerations for a single spinepoint',1)
         points = [c.point, '']
-    points = aux.unique_list(points)
+    else:
+        raise ValueError(f'{mode} not in supported modes : [minimal, full]')
     points = [p for p in aux.unique_list(points) if nam.xy(p).exist_in(s)]
 
 
@@ -211,7 +212,6 @@ def comp_dispersion(s, e, c,d=None, dsp_starts=[0], dsp_stops=[40], **kwargs):
         return
 
     xy0 = d.load_traj(mode='default') if s is None else s[['x', 'y']]
-    # print(s)
     dsps = {}
     for t0, t1 in itertools.product(dsp_starts, dsp_stops):
         p = reg.getPar(f'dsp_{int(t0)}_{int(t1)}')

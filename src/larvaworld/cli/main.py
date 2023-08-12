@@ -6,8 +6,8 @@ def main():
 
     P=SimModeParser()
     P.parse_args()
-    P.configure(show_args=False)
-    P.launch()
+    P.configure(show_args=True)
+    # P.launch()
 
 
 if __name__ == '__main__':

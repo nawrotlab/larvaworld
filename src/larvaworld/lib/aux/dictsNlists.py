@@ -11,7 +11,7 @@ import pandas as pd
 
 class AttrDict(dict):
     '''
-    Dictionary subclass whose entries can be accessed by attributes (as well as normally).
+    Dictionary subclass whose entries can be accessed as attributes (as well as normally).
     '''
 
     def __init__(self, *args, **kwargs):
@@ -79,9 +79,8 @@ class AttrDict(dict):
                 self[k] = v
 
     def update_existingdict_by_suffix(self, dic):
-        k0s=list(self.keys())
         for k, v in dic.items():
-            k1s=[k0 for k0 in k0s if k0.endswith(k)]
+            k1s=[k0 for k0 in self.keylist if k0.endswith(k)]
             if len(k1s)==1:
                 k1=k1s[0]
                 self[k1] = v

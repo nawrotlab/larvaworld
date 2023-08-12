@@ -40,8 +40,6 @@ class GAselector(NestedConf):
                                      label='keys of modules to include in space search',doc='Keys of the modules where the optimization parameters are')
 
     def __init__(self, **kwargs):
-        # print(kwargs)
-        # raise
         super().__init__(**kwargs)
 
         self.Nagents_min = round(self.Nagents * self.selection_ratio)

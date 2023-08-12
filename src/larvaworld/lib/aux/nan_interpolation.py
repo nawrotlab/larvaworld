@@ -39,13 +39,13 @@ def parse_array_at_nans(a):
 def apply_sos_filter_to_array_with_nans(sos, x, padlen=6):
 
     try:
-        array_filt = np.full_like(x, np.nan)
+        A = np.full_like(x, np.nan)
         ds, de = parse_array_at_nans(x)
         for s, e in zip(ds, de):
             k = x[s:e]
             if len(k) > padlen:
-                array_filt[s:e] = sosfiltfilt(sos, x[s:e], padlen=padlen)
-        return array_filt
+                A[s:e] = sosfiltfilt(sos, x[s:e], padlen=padlen)
+        return A
     except:
         return sosfiltfilt(sos, x, padlen=padlen)
 
