@@ -169,8 +169,8 @@ class SimModeParser :
         d = aux.AttrDict()
         d.sim_params = ParserArgumentDict.from_dict(reg.par.PI['sim_params'])
         # d.sim_params = Parser('sim_params')
-        for p_key in self.parser_keys:
-            d[p_key] = ParserArgumentDict.from_dict(reg.par.PI[p_key])
+        for k in self.parser_keys:
+            d[k] = ParserArgumentDict.from_dict(reg.par.PI[k])
             # d[p_key] = Parser(p_key)
         return d
 
@@ -214,8 +214,6 @@ class SimModeParser :
 
     def build_cli_parser(self):
         p = ArgumentParser()
-
-
         subparsers = p.add_subparsers(dest='sim_mode', help='The simulation mode to launch')
         for m in reg.SIMTYPES:
             sp = subparsers.add_parser(m)
@@ -247,12 +245,18 @@ class SimModeParser :
             kw.mode='batch'
             kw.run_externally=False
             kw.conf = reg.conf.Batch.getID(a.experiment)
-            kw.conf.exp = update_exp_conf(kw.conf.exp, N=a.Nagents, mIDs=a.models)
+            kw.conf.exp = reg.conf.Exp.expand(kw.conf.exp)
+            kw.conf.exp.experiment = kw.conf.exp
+            kw.conf.exp.larva_groups = update_larva_groups(kw.conf.exp.larva_groups, N=a.Nagents, mIDs=a.models)
+
+
             if kw.duration is None:
                 kw.duration = kw.conf.exp.sim_params.duration
             self.run = sim.Exec(**kw)
         elif m == 'Exp':
-            kw.parameters = update_exp_conf(kw.experiment, N=a.Nagents, mIDs=a.models)
+            kw.parameters = reg.conf.Exp.expand(kw.experiment)
+            kw.parameters.experiment = kw.experiment
+            kw.parameters.larva_groups = update_larva_groups(kw.parameters.larva_groups, N=a.Nagents, mIDs=a.models)
             if kw.duration is None:
                 kw.duration = kw.parameters.sim_params.duration
 
@@ -329,35 +333,32 @@ class SimModeParser :
 
 
 
-def update_exp_conf(type, N=None, mIDs=None):
+def update_larva_groups(lgs, N=None, mIDs=None):
     '''
-    Loads the configuration of an experiment based on its ID.
-    Modifies the included larvagroups
+    Modifies the experiment's configuration larvagroups
     Args:
-        type: The experiment type
+        lgs: The existing larvagroups in the experiment configuration
         N: Overwrite the number of agents per larva group
         mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.
 
     Returns:
-        The experiment's configuration
+        The experiment's configuration larvagroups
     '''
-    conf = reg.conf.Exp.expand(type)
-    conf.experiment = type
 
     if mIDs is not None:
         Nm = len(mIDs)
-        gConfs = list(conf.larva_groups.values())
-        if len(conf.larva_groups) != Nm:
+        gConfs = list(lgs.values())
+        if len(lgs) != Nm:
             gConfs = [gConfs[0]] * Nm
             for gConf, col in zip(gConfs, aux.N_colors(Nm)):
                 gConf.default_color = col
-        conf.larva_groups = aux.AttrDict({mID: {} for mID in mIDs})
+        lgs = aux.AttrDict({mID: {} for mID in mIDs})
         for mID, gConf in zip(mIDs, gConfs):
-            conf.larva_groups[mID] = gConf
-            conf.larva_groups[mID].model = reg.conf.Model.getID(mID)
+            lgs[mID] = gConf
+            lgs[mID].model = reg.conf.Model.getID(mID)
 
     if N is not None:
-        for gID, gConf in conf.larva_groups.items():
+        for gID, gConf in lgs.items():
             gConf.distribution.N = N
 
-    return conf
+    return lgs
