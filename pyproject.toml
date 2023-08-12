@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name='larvaworld'
-version = "0.0.5"
+version = "0.0.6"
 description='Drosophila larva behavioral analysis and simulation platform'
 authors=[
     {name='Panagiotis Sakagiannis', email='bagjohn0@gmail.com'}
 ]
 license = {file = "LICENSE.txt"}
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 dependencies = [
     'pandas',
     'numpy',
@@ -21,7 +21,6 @@ dependencies = [
     'shapely',
     'imageio',
     'agentpy',
-#    'box2d-py',
     'pygame',
     'argparse',
     'pint',
@@ -34,7 +33,6 @@ dependencies = [
     'powerlaw',
     'progressbar',
     'param',
-    'decorator',
     'movingpandas',
     'geopandas',
 ]
