@@ -4,7 +4,7 @@ import pandas as pd
 import param
 
 from larvaworld.lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
-from larvaworld.lib import reg, aux, util, decorators
+from larvaworld.lib import reg, aux, util
 
 bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}
 
@@ -595,7 +595,6 @@ def build_confdicts():
 
 
 
-# @decorators.timeit
 class ModelRegistry:
     def __init__(self):
         self.dict = build_confdicts()
