@@ -207,6 +207,8 @@ class Evaluation(NestedConf) :
 
 
     def __init__(self, dataset=None,refID=None, **kwargs):
+        print(refID)
+        raise
         target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
         super().__init__(**kwargs)
         self.target = target
@@ -359,23 +361,23 @@ class DataEvaluation(Evaluation) :
 
 
 
-
-class AgentEvaluation(Evaluation) :
-    eval_metrics = param.Dict(default={})
-
-    def __init__(self, fit_kws=None, **kwargs):
-        # raise
-        if isinstance(fit_kws, dict) :
-            if 'eval_metrics' in fit_kws.keys() :
-                kwargs['eval_metrics']=fit_kws['eval_metrics']
-            if 'cycle_curves' in fit_kws.keys() :
-                kwargs['cycle_curve_metrics']=fit_kws['cycle_curves']
-        self.fit_kws = fit_kws
-        super().__init__(**kwargs)
-
-    def get_fit_dict(self):
-        return aux.AttrDict({'func': self.fit_func_multi, 'keys': aux.unique_list(self.cycle_curve_metrics+self.s_shorts), 'func_arg': 's'})
-        # self.fit_dict = self.fit_func_multi
+#
+# class AgentEvaluation(Evaluation) :
+#     eval_metrics = param.Dict(default={})
+#
+#     def __init__(self, fit_kws=None, **kwargs):
+#         # raise
+#         if isinstance(fit_kws, dict) :
+#             if 'eval_metrics' in fit_kws.keys() :
+#                 kwargs['eval_metrics']=fit_kws['eval_metrics']
+#             if 'cycle_curves' in fit_kws.keys() :
+#                 kwargs['cycle_curve_metrics']=fit_kws['cycle_curves']
+#         self.fit_kws = fit_kws
+#         super().__init__(**kwargs)
+#
+#     def get_fit_dict(self):
+#         return aux.AttrDict({'func': self.fit_func_multi, 'keys': aux.unique_list(self.cycle_curve_metrics+self.s_shorts), 'func_arg': 's'})
+#         # self.fit_dict = self.fit_func_multi
 
 
 def GA_optimization(d, fit_kws):

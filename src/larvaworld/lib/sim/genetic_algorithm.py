@@ -11,7 +11,7 @@ import numpy as np
 import larvaworld
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import NestedConf, ClassAttr, class_generator, SimOps, OptionalSelector
-from larvaworld.lib.process.evaluation import AgentEvaluation
+from larvaworld.lib.process.evaluation import Evaluation
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
@@ -156,7 +156,7 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-class GAevaluation(AgentEvaluation):
+class GAevaluation(Evaluation):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = OptionalSelector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
@@ -169,7 +169,15 @@ class GAevaluation(AgentEvaluation):
                           label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
 
     def __init__(self,fit_kws={},fitness_target_kws = None,fit_dict = None,**kwargs):
-        super().__init__(fit_kws=fitness_target_kws,**kwargs)
+        # raise
+        if isinstance(fitness_target_kws, dict):
+            if 'eval_metrics' in fitness_target_kws.keys():
+                kwargs['eval_metrics'] = fitness_target_kws['eval_metrics']
+            if 'cycle_curves' in fitness_target_kws.keys():
+                kwargs['cycle_curve_metrics'] = fitness_target_kws['cycle_curves']
+
+
+        super().__init__(**kwargs)
 
         self.exclude_func = exclusion_funcs[self.exclude_func_name] if type(self.exclude_func_name)==str else None
 
@@ -183,12 +191,16 @@ class GAevaluation(AgentEvaluation):
                 return fitness_funcs[self.fitness_func_name](robot, **fit_kws)
 
             self.fit_dict = aux.AttrDict({'func': func, 'func_arg': 'robot'})
-        elif self.target and self.fitness_target_kws:
-        # elif self.refDataset and self.fitness_target_kws:
+        else:        # elif self.target and self.fitness_target_kws:
+        # elif self.target and self.fitness_target_kws:
             self.fit_dict = self.get_fit_dict()
             # self.fit_dict = GA_optimization(d=self.refDataset, fit_kws=self.fitness_target_kws)
-        else:
-            raise
+        # else:
+        #     raise
+
+    def get_fit_dict(self):
+        return aux.AttrDict({'func': self.fit_func_multi, 'keys': aux.unique_list(self.cycle_curve_metrics+self.s_shorts), 'func_arg': 's'})
+        # self.fit_dict = self.fit_func_multi
 
 
 class GAlauncher(BaseRun, GAevaluation,GAselector):
@@ -202,9 +214,10 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
             **kwargs: Arguments passed to the setup method
 
         '''
-
+        parameters.ga_eval_kws.refID=parameters.refID
+        parameters.ga_eval_kws.dataset=dataset
         # self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, load=False)
-        GAevaluation.__init__(self,dataset=dataset, refID=parameters.refID, **parameters.ga_eval_kws)
+        GAevaluation.__init__(self,**parameters.ga_eval_kws)
         GAselector.__init__(self, **parameters.ga_select_kws)
         BaseRun.__init__(self,runtype='Ga',parameters=parameters, **kwargs)
 
