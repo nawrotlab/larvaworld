@@ -20,7 +20,7 @@ class ParamLarvaDataset(param.Parameterized):
 
     def __init__(self,**kwargs):
         if 'config' not in kwargs.keys():
-            kws={}
+            kws=aux.AttrDict()
             for k in reg.DatasetConfig().param_keys:
                 if k in kwargs.keys():
                     kws[k]=kwargs[k]
@@ -29,7 +29,7 @@ class ParamLarvaDataset(param.Parameterized):
         assert 'config2' not in kwargs.keys()
 
         ks=list(kwargs.keys())
-        kws2 = {}
+        kws2 = aux.AttrDict()
         for k in ks:
             if k not in self.param.objects().keys():
                 kws2[k] = kwargs[k]
@@ -926,7 +926,7 @@ class LarvaDatasetCollection :
                 'refID': None,
                 # 'refID': f'{config0.id}/{gID}',
                 'dir': None,
-                'color': None,
+                # 'color': None,
                 # 'sample': gConf.sample,
                 # 'life_history': gConf.life_history,
                 # 'model': gConf.model,
