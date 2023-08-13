@@ -273,7 +273,7 @@ class Evaluation(NestedConf) :
     def func_eval_metric_solo(self):
         def func(ss):
             return aux.AttrDict({'KS': {sym: ks_2samp(self.target_data.step[p].values, ss[p].dropna().values)[0] for
-                                        p, sym in self.s_symbols.items()}})
+                                        p, sym in self.eval_symbols.step.items()}})
 
         return func
 
@@ -281,7 +281,7 @@ class Evaluation(NestedConf) :
     def func_eval_metric_multi(self):
         def gfunc(s):
             return aux.AttrDict(
-                {'KS': eval_distro_fast(s, self.target_data.step, self.s_symbols, mode='1:pooled', min_size=10)})
+                {'KS': eval_distro_fast(s, self.target_data.step, self.eval_symbols.step, mode='1:pooled', min_size=10)})
 
         return gfunc
 
@@ -312,10 +312,22 @@ class Evaluation(NestedConf) :
         def fit_func(s):
             fit_dicts = aux.AttrDict()
             if len(self.cycle_curve_metrics) > 0:
-                fit_dicts['cycle_curves']=self.func_cycle_curve_multi(s)
+                fit_dicts.update(self.func_cycle_curve_multi(s))
             if len(self.eval_metrics) > 0:
-                fit_dicts['eval_metrics']=self.func_eval_metric_multi(s)
+                fit_dicts.update(self.func_eval_metric_multi(s))
             return fit_dicts
+        return fit_func
+
+    @property
+    def fit_func_solo(self):
+        def fit_func(ss):
+            fit_dicts = aux.AttrDict()
+            if len(self.cycle_curve_metrics) > 0:
+                fit_dicts.update(self.func_cycle_curve_solo(ss))
+            if len(self.eval_metrics) > 0:
+                fit_dicts.update(self.func_eval_metric_solo(ss))
+            return fit_dicts
+
         return fit_func
 
 

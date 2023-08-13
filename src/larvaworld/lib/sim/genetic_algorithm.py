@@ -77,7 +77,7 @@ class GAevaluation(Evaluation):
             self.fit_func = func
         elif self.target:
             self.fit_func_arg = 's'
-            self.fit_func = self.fit_func_multi
+            self.fit_func = self.fit_func_solo
         else:
             raise
 
@@ -142,6 +142,7 @@ class GAselector(NestedConf):
 
     def new_genome(self, gConf, mConf0):
         mConf = mConf0.update_nestdict(gConf)
+        mConf.life_history = {'age': 0.0, 'epochs': {}}
         return aux.AttrDict({'fitness': None, 'fitness_dict': {}, 'gConf': gConf, 'mConf': mConf})
 
     def create_new_generation(self, sorted_gs):
@@ -227,7 +228,7 @@ class GAlauncher(BaseRun,GAselector,GAevaluation):
 
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
-        reg.vprint(f'Launching {temp} generations of {self.duration} seconds, with {self.Nagents} agents each!', 2)
+        reg.vprint(f'Launching {temp} generations of {self.duration} minutes, with {self.Nagents} agents each!', 2)
         if self.Ngenerations is not None:
             self.progress_bar = progressbar.ProgressBar(self.Ngenerations)
             self.progress_bar.start()
@@ -272,10 +273,17 @@ class GAlauncher(BaseRun,GAselector,GAevaluation):
         self.data_collection = larvaworld.lib.LarvaDatasetCollection.from_agentpy_output(self.output)
         for d in self.data_collection.datasets:
             d.enrich(proc_keys=['angular', 'spatial'], is_last=False)
-            fit_dicts = self.fit_func(s=d.step_data)
             valid_gs = {}
             for i, g in genome_dict.items():
-                g.fitness_dict = aux.AttrDict({k: dic[str(i)] for k, dic in fit_dicts.items()})
+            # for id in d.config.agent_ids:
+                ss = d.step_data.xs(str(i), level='AgentID')
+                g.fitness_dict = self.fit_func(ss)
+
+
+            # fit_dicts = self.fit_func(s=d.step_data)
+
+            # for i, g in genome_dict.items():
+            #     g.fitness_dict = aux.AttrDict({k: dic[str(i)] for k, dic in fit_dicts.items()})
                 mus = aux.AttrDict({k: -np.mean(list(dic.values())) for k, dic in g.fitness_dict.items()})
                 if len(mus) == 1:
                     g.fitness = list(mus.values())[0]

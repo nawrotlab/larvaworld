@@ -6,14 +6,9 @@ import param
 from larvaworld.lib import reg, aux, util, plot
 from larvaworld.lib.model import envs, agents
 from larvaworld.lib.param import SimOps
-from larvaworld.lib.reg.generators import SimConfiguration
 
 
-# class BaseRunConf(reg.SimOps):
-#     def __init__(self, runtype, **kwargs):
-#         reg.SimOps.__init__(self, runtype=runtype, **kwargs)
-
-class BaseRun(agentpy.Model,SimConfiguration):
+class BaseRun(agentpy.Model,reg.SimConfiguration):
 
     def __init__(self, runtype,experiment=None,parameters=None, **kwargs):
         '''
@@ -43,13 +38,11 @@ class BaseRun(agentpy.Model,SimConfiguration):
                 raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
             else :
                 parameters = reg.conf[runtype].expand(experiment)
-                for k in set(parameters).intersection(set(SimOps().nestedConf)):
-                    kwargs[k]=parameters[k]
+        for k in set(parameters).intersection(set(SimOps().nestedConf)):
+            kwargs[k]=parameters[k]
 
         agentpy.Model.__init__(self, parameters=parameters)
-        # print('ssss')
-
-        SimConfiguration.__init__(self, runtype=runtype, **kwargs)
+        reg.SimConfiguration.__init__(self, runtype=runtype, **kwargs)
         self.p.update(**self.nestedConf)
         self.agent_class = self.define_agent_class()
         self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,

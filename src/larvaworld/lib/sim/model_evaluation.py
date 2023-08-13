@@ -5,7 +5,6 @@ import param
 
 from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator
 from larvaworld.lib.process.evaluation import DataEvaluation
-from larvaworld.lib.reg.generators import SimConfiguration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -59,7 +58,7 @@ class EvalConf(EvalDataConf, EvalModelConf):
 
 
 
-class EvalRun(EvalConf, SimConfiguration):
+class EvalRun(EvalConf, reg.SimConfiguration):
 
 
 

@@ -342,7 +342,7 @@ class SimConfiguration(RuntimeOps,SimMetricOps, SimOps):
         self.param.add_parameter('experiment', self.exp_selector_param(runtype))
         super().__init__(runtype=runtype,**kwargs)
         if 'experiment' in kwargs and kwargs['experiment'] is not None :
-            self.experiment='experiment'
+            self.experiment=kwargs['experiment']
 
 
         if self.id is None:

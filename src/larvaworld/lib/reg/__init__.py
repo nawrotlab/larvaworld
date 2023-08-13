@@ -44,7 +44,7 @@ from .parDB import output_keys, par
 vprint("Initializing configuration registry")
 from .config import Path,stored, lgs, lg, next_idx, imitation_exp
 
-from .generators import gen,GTRvsS,full_lg,ConfType, conf, resetConfs,LarvaGroup, ExpConf, FoodConf, DatasetConfig
+from .generators import gen,GTRvsS,full_lg,ConfType, conf, resetConfs,LarvaGroup, ExpConf, FoodConf, DatasetConfig,SimConfiguration
 from .controls import controls
 
 vprint("Initializing model registry")

@@ -11,13 +11,12 @@ import pandas as pd
 
 from larvaworld.lib import reg, aux
 from larvaworld.lib.plot.scape import plot_heatmap_PI, plot_3d, plot_3pars, plot_2d
-from larvaworld.lib.reg.generators import SimConfiguration
 from larvaworld.lib.sim import ExpRun
 
 
 
 
-class BatchRun(SimConfiguration,ap.Experiment):
+class BatchRun(reg.SimConfiguration,ap.Experiment):
     def __init__(self, experiment, space_search,id=None,space_kws={},optimization=None,
                  exp=None, exp_kws={}, store_data=False, **kwargs):
         '''
@@ -36,7 +35,7 @@ class BatchRun(SimConfiguration,ap.Experiment):
             store_data: Whether to store batch-run results
             **kwargs: Arguments passed to parent class
         '''
-        SimConfiguration.__init__(self, runtype='Batch',experiment=experiment, id=id,
+        reg.SimConfiguration.__init__(self, runtype='Batch',experiment=experiment, id=id,
                                 store_data=store_data)
 
         # Define directories
