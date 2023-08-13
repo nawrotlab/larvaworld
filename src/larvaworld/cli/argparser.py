@@ -333,10 +333,11 @@ class SimModeParser :
 
 
 
-def update_larva_groups(lgs, N=None, mIDs=None, dIDs=None):
+def update_larva_groups(lgs, N=None, mIDs=None, dIDs=None,sample=None):
     '''
     Modifies the experiment's configuration larvagroups
     Args:
+        sample : The reference dataset
         lgs: The existing larvagroups in the experiment configuration
         N: Overwrite the number of agents per larva group
         mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.
@@ -363,5 +364,9 @@ def update_larva_groups(lgs, N=None, mIDs=None, dIDs=None):
     if N is not None:
         for gID, gConf in lgs.items():
             gConf.distribution.N = N
+
+    if sample is not None:
+        for gID, gConf in lgs.items():
+            gConf.sample = sample
 
     return lgs

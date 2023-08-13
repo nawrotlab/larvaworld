@@ -13,7 +13,7 @@ from larvaworld.lib.sim.base_run import BaseRun
 
 
 class ReplayRun(BaseRun):
-    def __init__(self,parameters=None,  dataset=None, screen_kws={},**kwargs):
+    def __init__(self,parameters,  dataset=None, screen_kws={},**kwargs):
         '''
         Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
 
@@ -23,8 +23,7 @@ class ReplayRun(BaseRun):
             experiment: The type of experiment. Defaults to 'replay'
             **kwargs: Arguments passed to parent class
         '''
-        d = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID,
-                                                            dir=parameters.refDir)
+        d = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, dir=parameters.refDir)
 
         self.refDataset=copy.deepcopy(d)
 
@@ -36,7 +35,7 @@ class ReplayRun(BaseRun):
                        'dt':c.dt,
                        'Nsteps':c.Nsteps})
 
-        BaseRun.__init__(self,runtype='Replay', parameters=parameters,**kwargs)
+        super().__init__(runtype='Replay', parameters=parameters,**kwargs)
 
     @property
     def configuration_text(self):
@@ -163,7 +162,6 @@ class ReplayRun(BaseRun):
         c=d.config
 
         assert isinstance(c, reg.DatasetConfig)
-        # R = XYops(Npoints=c.Npoints, Ncontour=c.Ncontour)
         # Group mode
         if p.track_point is not None:
             c.point_idx=p.track_point
@@ -189,8 +187,6 @@ class ReplayRun(BaseRun):
                 c.fix_point2 = c.get_track_point(P2_idx)
         else:
             c.fix_point = None
-        # print(c.fix_point2, c.fix_point, p.fix_point, p.fix_segment)
-        # raise
         if p.agent_ids not in [None, []]:
             if isinstance(p.agent_ids, list) and all([type(i) == int for i in p.agent_ids]):
                 p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
@@ -214,10 +210,7 @@ class ReplayRun(BaseRun):
 
         if p.time_range is not None:
             a, b = p.time_range
-            # a = int(a / c.dt)
-            # b = int(b / c.dt)
             s = s.query(f'{a}<=Step*{c.dt}<={b}')
-            # s0 = s0.loc[(slice(a, b), slice(None)), :]
 
         xy_pars = nam.xy(c.point)
         assert aux.cols_exist(xy_pars, s)
@@ -232,12 +225,8 @@ class ReplayRun(BaseRun):
         if p.transposition is not None:
             s = reg.funcs.preprocessing["transposition"](s, c=c, transposition=p.transposition,replace=True)
             xy_max=2*np.max(s[nam.xy(c.point)].dropna().abs().values.flatten())
-            # c.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max))
             p.env_params.arena=reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
 
         d.set_data(step=s)
 
-        # # c.Nsteps = len(s0.index.unique('Step').values)-1
-        # # c.duration=c.Nsteps * c.dt/60
-        # # c.N = len(c.agent_ids)
         return d

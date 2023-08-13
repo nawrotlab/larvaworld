@@ -1,3 +1,4 @@
+from .ABM_model import ABModel
 from .base_run import BaseRun
 from .dataset_replay import ReplayRun
 

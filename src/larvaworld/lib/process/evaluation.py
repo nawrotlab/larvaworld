@@ -154,44 +154,44 @@ def col_df(shorts, groups):
     df.set_index('group', inplace=True)
     return df
 
-def arrange_evaluation(d, evaluation_metrics=None):
-    if evaluation_metrics is None:
-        evaluation_metrics = {
-            'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
-            'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                     'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
-            'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
-            'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std'],
-            #'epochs': ['run_t', 'pau_t'],
-            #'tortuosity': ['tor5', 'tor20']
-        }
-
-
-    if not hasattr(d, 'step_data'):
-        d.load(h5_ks=['epochs','base_spatial','angular','dspNtor'])
-    s,e=d.step_data,d.endpoint_data
-    all_ks=aux.SuperList(evaluation_metrics.values()).flatten.unique
-    all_ps = aux.SuperList(reg.getPar(all_ks))
-    Eps = all_ps.existing(e)
-    Dps = all_ps.existing(s)
-    Dps=Dps.nonexisting(Eps)
-    Eks = reg.getPar(p=Eps, to_return='k')
-    Dks = reg.getPar(p=Dps, to_return='k')
-    target_data = aux.AttrDict({'step': {p:s[p].dropna() for p in Dps}, 'end': {p:e[p] for p in Eps}})
-
-    dic = aux.AttrDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
-    for g, shs in evaluation_metrics.items():
-        Eshorts, Dshorts = aux.existing_cols(shs,Eks), aux.existing_cols(shs,Dks)
-
-        if len(Eshorts) > 0:
-            dic.end.shorts.append(Eshorts)
-            dic.end.groups.append(g)
-        if len(Dshorts) > 0:
-            dic.step.shorts.append(Dshorts)
-            dic.step.groups.append(g)
-    ev = aux.AttrDict({k: col_df(**v) for k, v in dic.items()})
-
-    return ev, target_data
+# def arrange_evaluation(d, evaluation_metrics=None):
+#     if evaluation_metrics is None:
+#         evaluation_metrics = {
+#             'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
+#             'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
+#                                      'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
+#             'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
+#             'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std'],
+#             #'epochs': ['run_t', 'pau_t'],
+#             #'tortuosity': ['tor5', 'tor20']
+#         }
+#
+#
+#     if not hasattr(d, 'step_data'):
+#         d.load(h5_ks=['epochs','base_spatial','angular','dspNtor'])
+#     s,e=d.step_data,d.endpoint_data
+#     all_ks=aux.SuperList(evaluation_metrics.values()).flatten.unique
+#     all_ps = aux.SuperList(reg.getPar(all_ks))
+#     Eps = all_ps.existing(e)
+#     Dps = all_ps.existing(s)
+#     Dps=Dps.nonexisting(Eps)
+#     Eks = reg.getPar(p=Eps, to_return='k')
+#     Dks = reg.getPar(p=Dps, to_return='k')
+#     target_data = aux.AttrDict({'step': {p:s[p].dropna() for p in Dps}, 'end': {p:e[p] for p in Eps}})
+#
+#     dic = aux.AttrDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
+#     for g, shs in evaluation_metrics.items():
+#         Eshorts, Dshorts = aux.existing_cols(shs,Eks), aux.existing_cols(shs,Dks)
+#
+#         if len(Eshorts) > 0:
+#             dic.end.shorts.append(Eshorts)
+#             dic.end.groups.append(g)
+#         if len(Dshorts) > 0:
+#             dic.step.shorts.append(Dshorts)
+#             dic.step.groups.append(g)
+#     ev = aux.AttrDict({k: col_df(**v) for k, v in dic.items()})
+#
+#     return ev, target_data
 
 class Evaluation(NestedConf) :
     refID = reg.conf.Ref.confID_selector()

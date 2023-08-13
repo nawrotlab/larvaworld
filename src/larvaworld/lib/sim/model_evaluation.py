@@ -3,6 +3,7 @@ import warnings
 
 import param
 
+from larvaworld.cli.argparser import update_larva_groups
 from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator
 from larvaworld.lib.process.evaluation import DataEvaluation
 
@@ -18,21 +19,7 @@ from larvaworld.lib import reg, aux, plot, util
 
 
 
-
-class EvalModelConf(NestedConf):
-    modelIDs = reg.conf.Model.confID_selector(single=False)
-    dataset_ids = param.List([],item_type=str, doc='The ids for the generated datasets')
-    N = PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
-
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-        if self.dataset_ids in [None,[]]:
-            self.dataset_ids = self.modelIDs
-
 class EvalDataConf(DataEvaluation):
-
-
-
 
     def __init__(self,dataset=None, **kwargs):
         super().__init__(dataset =dataset, **kwargs)
@@ -46,15 +33,18 @@ class EvalDataConf(DataEvaluation):
 
 
 
-class EvalConf(EvalDataConf, EvalModelConf):
+class EvalConf(EvalDataConf):
+    modelIDs = reg.conf.Model.confID_selector(single=False)
+    dataset_ids = param.List([], item_type=str, doc='The ids for the generated datasets')
+    N = PositiveInteger(5, label='# agents/group', doc='Number of agents per model ID')
+
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        mIDs = self.modelIDs
-        dIDs=self.dataset_ids
-        Nm=len(mIDs)
-        self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs,
-                                    cs=aux.N_colors(Nm), expand=True, N=self.N)
+        # mIDs = self.modelIDs
+        # dIDs=self.dataset_ids
+        # Nm=len(mIDs)
+        # self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs, cs=aux.N_colors(Nm), expand=True, N=self.N)
 
 
 
@@ -88,9 +78,14 @@ class EvalRun(EvalConf, reg.SimConfiguration):
 
 
     def simulate(self):
-        mIDs = self.modelIDs
-        dIDs=self.dataset_ids
-        Nm=len(mIDs)
+        conf = reg.conf.Exp.expand(self.experiment)
+        conf.larva_groups = update_larva_groups(conf.larva_groups, N=self.N, mIDs=self.modelIDs, dIDs=self.dataset_ids,
+                                                sample=self.refID)
+
+
+        # mIDs = self.modelIDs
+        # dIDs=self.dataset_ids
+        Nm=len(self.modelIDs)
         kws={
             'dt': self.dt,
             'duration': self.duration,
@@ -99,7 +94,7 @@ class EvalRun(EvalConf, reg.SimConfiguration):
 
 
         if self.offline is None:
-            print(f'Simulating offline {Nm} models : {dIDs} with {self.N} larvae each')
+            print(f'Simulating offline {Nm} models : {self.dataset_ids} with {self.N} larvae each')
             tor_durs = np.unique([int(ii[len('tortuosity') + 1:]) for ii in self.s_pars + self.e_pars if ii.startswith('tortuosity')])
             dsp = reg.getPar('dsp')
             dsp_temp = [ii[len(dsp) + 1:].split('_') for ii in self.s_pars + self.e_pars if ii.startswith(f'{dsp}_')]
@@ -107,17 +102,17 @@ class EvalRun(EvalConf, reg.SimConfiguration):
             dsp_stops = np.unique([int(ii[1]) for ii in dsp_temp]).tolist()
 
 
-            self.datasets = util.sim_models(mIDs=mIDs, tor_durs=tor_durs,
+            self.datasets = util.sim_models(mIDs=self.modelIDs, tor_durs=tor_durs,
                                         dsp_starts=dsp_starts, dsp_stops=dsp_stops,
-                                        dataset_ids=dIDs,lgs=self.larva_groups,
+                                        dataset_ids=self.dataset_ids,lgs=conf.larva_groups,
                                         enrichment=self.enrichment,
                                         Nids=self.N, env_params=c.env_params,
                                         refDataset=self.target, data_dir=self.data_dir, **kws)
         else:
             from larvaworld.lib.sim.single_run import ExpRun
-            print(f'Simulating {Nm} models : {dIDs} with {self.N} larvae each')
-            conf = reg.conf.Exp.expand(self.experiment)
-            conf.larva_groups=self.larva_groups
+            print(f'Simulating {Nm} models : {self.dataset_ids} with {self.N} larvae each')
+
+            # conf.larva_groups=self.larva_groups
             if self.enrichment is None:
                 conf.enrichment = None
             kws0 = aux.AttrDict({

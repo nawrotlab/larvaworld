@@ -1,16 +1,14 @@
-import os
 import agentpy
-import numpy as np
-import param
 
-from larvaworld.lib import reg, aux, util, plot
+from larvaworld.lib import reg, aux
 from larvaworld.lib.model import envs, agents
-from larvaworld.lib.param import SimOps
+# from larvaworld.lib.param import SimOps
+from larvaworld.lib.sim import ABModel
 
 
-class BaseRun(agentpy.Model,reg.SimConfiguration):
+class BaseRun(ABModel):
 
-    def __init__(self, runtype,experiment=None,parameters=None, **kwargs):
+    def __init__(self, **kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.
@@ -33,24 +31,13 @@ class BaseRun(agentpy.Model,reg.SimConfiguration):
             **kwargs: Arguments passed to the setup method
         '''
 
-        if parameters is None :
-            if experiment is None or experiment not in reg.conf[runtype].confIDs:
-                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
-            else :
-                parameters = reg.conf[runtype].expand(experiment)
-        elif experiment is None and 'experiment' in parameters.keys():
-            experiment = parameters['experiment']
-        for k in set(parameters).intersection(set(SimOps().nestedConf)):
-            kwargs[k]=parameters[k]
-
-        agentpy.Model.__init__(self, parameters=parameters)
-        reg.SimConfiguration.__init__(self, runtype=runtype,experiment=experiment, **kwargs)
+        super().__init__(**kwargs)
         self.p.update(**self.nestedConf)
         self.agent_class = self.define_agent_class()
-        self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
-                                   'path': f'{self.data_dir}/agentpy_output'}
+        # self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
+        #                            'path': f'{self.data_dir}/agentpy_output'}
 
-        self.p.steps = self.p.Nsteps
+        # self.p.steps = self.p.Nsteps
 
         self.is_paused = False
         self.datasets = None

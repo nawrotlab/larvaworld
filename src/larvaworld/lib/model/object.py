@@ -12,10 +12,10 @@ class Object:
     '''
     """ Base class for all objects of an agent-based models. """
 
-    def __init__(self, model=None):
+    def __init__(self, model=None, id='Nada'):
         self._var_ignore = []
 
-        self.id = 'Nada'  # Assign id to new object
+        self.id = id
         # self.id = model._new_id()  # Assign id to new object
         self.type = type(self).__name__
         self.log = {}
@@ -114,9 +114,9 @@ class Object:
 class NamedObject(Named, Object):
     def __init__(self,model=None, **kwargs):
         Named.__init__(self,**kwargs)
-        Object.__init__(self, model=model)
-        if self.unique_id is not None:
-            self.id = self.unique_id
+        Object.__init__(self, model=model, id = self.unique_id)
+        # if self.unique_id is not None:
+        #     self.id = self.unique_id
 
 
 
