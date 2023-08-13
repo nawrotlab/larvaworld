@@ -31,13 +31,12 @@ class EvalModelConf(NestedConf):
             self.dataset_ids = self.modelIDs
 
 class EvalDataConf(DataEvaluation):
-    refID = reg.conf.Ref.confID_selector()
 
 
 
-    def __init__(self,dataset=None,refID=None,  **kwargs):
-        # target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
-        super().__init__(dataset =dataset, refID=refID,**kwargs)
+
+    def __init__(self,dataset=None, **kwargs):
+        super().__init__(dataset =dataset, **kwargs)
         self.target.id = 'experiment'
         self.target.config.id = 'experiment'
         self.target.color = 'grey'

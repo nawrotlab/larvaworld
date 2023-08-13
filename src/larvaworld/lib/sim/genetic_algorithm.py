@@ -16,6 +16,72 @@ from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
 
+
+
+def dst2source_evaluation(robot, source_xy):
+    traj = np.array(robot.trajectory)
+    dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
+    cum_dst = np.sum(dst)
+    l=[]
+    for label, pos in source_xy.items():
+        l.append(aux.eudi5x(traj, pos))
+    fitness= - np.mean(np.min(np.vstack(l),axis=0))/ cum_dst
+    return fitness
+
+def cum_dst(robot, **kwargs):
+    return robot.cum_dst / robot.real_length
+
+
+def bend_error_exclusion(robot):
+    if robot.body_bend_errors >= 20:
+        return True
+    else:
+        return False
+
+
+fitness_funcs = aux.AttrDict({
+    'dst2source': dst2source_evaluation,
+    'cum_dst': cum_dst,
+})
+
+
+
+exclusion_funcs = aux.AttrDict({
+    'bend_errors': bend_error_exclusion
+})
+
+
+
+
+class GAevaluation(Evaluation):
+    exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
+    exclude_func_name = OptionalSelector(default=None,objects=list(exclusion_funcs.keys()),
+                                       label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
+    fitness_func_name = OptionalSelector(default=None,objects=list(fitness_funcs.keys()),
+                                       label='name of fitness function',doc='The function that evaluates fitness', allow_None=True)
+
+    fit_kws = param.Dict(default={}, label='fitness metrics to evaluate', doc='The target metrics to optimize against')
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self.exclude_func = exclusion_funcs[self.exclude_func_name] if type(self.exclude_func_name)==str else None
+
+        if self.exclusion_mode:
+            self.fit_func = None
+        elif self.fitness_func_name and self.fitness_func_name in fitness_funcs.keys() :
+
+            def func(robot):
+                return fitness_funcs[self.fitness_func_name](robot, **self.fit_kws)
+
+            self.fit_func_arg = 'robot'
+            self.fit_func = func
+        elif self.target:
+            self.fit_func_arg = 's'
+            self.fit_func = self.fit_func_multi
+        else:
+            raise
+
+
 class GAselector(NestedConf):
     Ngenerations = param.Integer(default=None, allow_None=True, label='# generations',
                                  doc='Number of generations to run for the genetic algorithm engine')
@@ -116,37 +182,6 @@ class GAselector(NestedConf):
 
 
 
-def dst2source_evaluation(robot, source_xy):
-    traj = np.array(robot.trajectory)
-    dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
-    cum_dst = np.sum(dst)
-    l=[]
-    for label, pos in source_xy.items():
-        l.append(aux.eudi5x(traj, pos))
-    fitness= - np.mean(np.min(np.vstack(l),axis=0))/ cum_dst
-    return fitness
-
-def cum_dst(robot, **kwargs):
-    return robot.cum_dst / robot.real_length
-
-
-def bend_error_exclusion(robot):
-    if robot.body_bend_errors >= 20:
-        return True
-    else:
-        return False
-
-
-fitness_funcs = aux.AttrDict({
-    'dst2source': dst2source_evaluation,
-    'cum_dst': cum_dst,
-})
-
-
-
-exclusion_funcs = aux.AttrDict({
-    'bend_errors': bend_error_exclusion
-})
 
 
 
@@ -155,55 +190,12 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-
-class GAevaluation(Evaluation):
-    exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
-    exclude_func_name = OptionalSelector(default=None,objects=list(exclusion_funcs.keys()),
-                                       label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
-    fitness_func_name = OptionalSelector(default=None,objects=list(fitness_funcs.keys()),
-                                       label='name of fitness function',doc='The function that evaluates fitness', allow_None=True)
-
-    fitness_target_kws = param.Parameter(default=None, label='fitness metrics to evaluate',
-                                         doc='The target metrics to optimize against')
-    fit_dict = param.ClassSelector(aux.AttrDict,
-                          label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
-
-    def __init__(self,fit_kws={},fitness_target_kws = None,fit_dict = None,**kwargs):
-        # raise
-        if isinstance(fitness_target_kws, dict):
-            if 'eval_metrics' in fitness_target_kws.keys():
-                kwargs['eval_metrics'] = fitness_target_kws['eval_metrics']
-            if 'cycle_curves' in fitness_target_kws.keys():
-                kwargs['cycle_curve_metrics'] = fitness_target_kws['cycle_curves']
+# class GAlauncher2(BaseRun):
+#     def __init__(self, parameters, **kwargs):
+#         super().__init__(runtype='Ga', parameters=parameters, **kwargs)
 
 
-        super().__init__(**kwargs)
-
-        self.exclude_func = exclusion_funcs[self.exclude_func_name] if type(self.exclude_func_name)==str else None
-
-        if self.exclusion_mode:
-            self.fit_dict = None
-        elif fit_dict is not None:
-            self.fit_dict = fit_dict
-        elif self.fitness_func_name and self.fitness_func_name in fitness_funcs.keys() :
-
-            def func(robot):
-                return fitness_funcs[self.fitness_func_name](robot, **fit_kws)
-
-            self.fit_dict = aux.AttrDict({'func': func, 'func_arg': 'robot'})
-        else:        # elif self.target and self.fitness_target_kws:
-        # elif self.target and self.fitness_target_kws:
-            self.fit_dict = self.get_fit_dict()
-            # self.fit_dict = GA_optimization(d=self.refDataset, fit_kws=self.fitness_target_kws)
-        # else:
-        #     raise
-
-    def get_fit_dict(self):
-        return aux.AttrDict({'func': self.fit_func_multi, 'keys': aux.unique_list(self.cycle_curve_metrics+self.s_shorts), 'func_arg': 's'})
-        # self.fit_dict = self.fit_func_multi
-
-
-class GAlauncher(BaseRun, GAevaluation,GAselector):
+class GAlauncher(BaseRun,GAselector,GAevaluation):
 
 
     def __init__(self,parameters, dataset=None, **kwargs):
@@ -214,13 +206,15 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
             **kwargs: Arguments passed to the setup method
 
         '''
-        parameters.ga_eval_kws.refID=parameters.refID
-        parameters.ga_eval_kws.dataset=dataset
-        # self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, load=False)
-        GAevaluation.__init__(self,**parameters.ga_eval_kws)
-        GAselector.__init__(self, **parameters.ga_select_kws)
-        BaseRun.__init__(self,runtype='Ga',parameters=parameters, **kwargs)
+        GAevaluation.__init__(self,dataset=dataset,**parameters.ga_eval_kws)
+        GAselector.__init__(self,**parameters.ga_select_kws)
+        BaseRun.__init__(self,runtype='Ga', parameters=parameters, **kwargs)
 
+
+
+
+
+    def setup(self):
         self.best_genome = None
         self.best_fitness = None
         self.sorted_genomes = None
@@ -229,7 +223,8 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         self.generation_num = 0
         self.start_total_time = aux.TimeUtil.current_time_millis()
 
-    def setup(self):
+
+
         reg.vprint(f'--- Genetic Algorithm  "{self.id}" initialized!--- ', 2)
         temp = self.Ngenerations if self.Ngenerations is not None else 'unlimited'
         reg.vprint(f'Launching {temp} generations of {self.duration} seconds, with {self.Nagents} agents each!', 2)
@@ -272,14 +267,12 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
 
     def eval_robots(self, Ngen, genome_dict):
         reg.vprint(f'Evaluating generation {Ngen}', 1)
+        assert self.fit_func_arg =='s'
 
-        if self.fit_dict.func_arg!='s' :
-            raise ValueError ('Evaluation function must take step data as argument')
-        func=self.fit_dict.func
         self.data_collection = larvaworld.lib.LarvaDatasetCollection.from_agentpy_output(self.output)
         for d in self.data_collection.datasets:
             d.enrich(proc_keys=['angular', 'spatial'], is_last=False)
-            fit_dicts = func(s=d.step_data)
+            fit_dicts = self.fit_func(s=d.step_data)
             valid_gs = {}
             for i, g in genome_dict.items():
                 g.fitness_dict = aux.AttrDict({k: dic[str(i)] for k, dic in fit_dicts.items()})
@@ -456,7 +449,7 @@ class GAconf(SimOps):
     experiment = reg.conf.Ga.confID_selector()
     ga_eval_kws = ClassAttr(reg.gen.GAevaluation, doc='The GA evaluation configuration')
     ga_select_kws = ClassAttr(reg.gen.GAselector, doc='The GA selection configuration')
-    refID = reg.conf.Ref.confID_selector()
+
     scene = param.String('no_boxes', doc='The name of the scene to load')
 
 reg.gen.Ga=class_generator(GAconf)

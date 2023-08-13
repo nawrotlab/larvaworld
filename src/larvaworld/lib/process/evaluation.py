@@ -194,6 +194,7 @@ def arrange_evaluation(d, evaluation_metrics=None):
     return ev, target_data
 
 class Evaluation(NestedConf) :
+    refID = reg.conf.Ref.confID_selector()
     eval_metrics = param.Dict(default=aux.AttrDict({
         'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
         'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
@@ -203,17 +204,13 @@ class Evaluation(NestedConf) :
         'epochs': ['run_t', 'pau_t'],
         'tortuosity': ['tor5', 'tor20']}),
         doc='Evaluation metrics to use')
-    cycle_curve_metrics = param.List(default=[])
+    cycle_curve_metrics = param.List()
 
 
-    def __init__(self, dataset=None,refID=None, **kwargs):
-        print(refID)
-        raise
-        target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
+    def __init__(self, dataset=None,**kwargs):
         super().__init__(**kwargs)
-        self.target = target
-        # print(self.target)
-        # raise
+        self.target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=self.refID)
+
 
         if not hasattr(self.target, 'step_data'):
             self.target.load(h5_ks=['epochs', 'base_spatial', 'angular', 'dspNtor'])
@@ -361,23 +358,6 @@ class DataEvaluation(Evaluation) :
 
 
 
-#
-# class AgentEvaluation(Evaluation) :
-#     eval_metrics = param.Dict(default={})
-#
-#     def __init__(self, fit_kws=None, **kwargs):
-#         # raise
-#         if isinstance(fit_kws, dict) :
-#             if 'eval_metrics' in fit_kws.keys() :
-#                 kwargs['eval_metrics']=fit_kws['eval_metrics']
-#             if 'cycle_curves' in fit_kws.keys() :
-#                 kwargs['cycle_curve_metrics']=fit_kws['cycle_curves']
-#         self.fit_kws = fit_kws
-#         super().__init__(**kwargs)
-#
-#     def get_fit_dict(self):
-#         return aux.AttrDict({'func': self.fit_func_multi, 'keys': aux.unique_list(self.cycle_curve_metrics+self.s_shorts), 'func_arg': 's'})
-#         # self.fit_dict = self.fit_func_multi
 
 
 def GA_optimization(d, fit_kws):
