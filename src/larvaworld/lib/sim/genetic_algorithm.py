@@ -11,7 +11,7 @@ import numpy as np
 import larvaworld
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import NestedConf, ClassAttr, class_generator, SimOps, OptionalSelector
-
+from larvaworld.lib.process.evaluation import GA_optimization
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
@@ -170,36 +170,22 @@ class GAevaluation(NestedConf):
 
     def __init__(self,fit_kws={},fit_dict = None,**kwargs):
         super().__init__(**kwargs)
-        if type(self.exclude_func_name)==str:
-            self.exclude_func = exclusion_funcs[self.exclude_func_name]
-        else:
-            self.exclude_func = None
+        self.exclude_func = exclusion_funcs[self.exclude_func_name] if type(self.exclude_func_name)==str else None
 
-        self.fit_dict=self.define_fitness_dict(fit_dict,**fit_kws)
-        assert isinstance(self.fit_dict, aux.AttrDict)
-
-    def define_fitness_dict(self,fit_dict=None,**kwargs):
         if self.exclusion_mode:
-            return None
+            self.fit_dict = None
         elif fit_dict is not None:
-            return fit_dict
+            self.fit_dict = fit_dict
         elif self.fitness_func_name and self.fitness_func_name in fitness_funcs.keys() :
-            fitness_func = fitness_funcs[self.fitness_func_name]
-            return arrange_fitness(fitness_func, **kwargs)
+
+            def func(robot):
+                return fitness_funcs[self.fitness_func_name](robot, **fit_kws)
+
+            self.fit_dict = aux.AttrDict({'func': func, 'func_arg': 'robot'})
         elif self.refDataset and self.fitness_target_kws:
-            return util.GA_optimization(d=self.refDataset, fitness_target_kws=self.fitness_target_kws)
+            self.fit_dict = GA_optimization(d=self.refDataset, fit_kws=self.fitness_target_kws)
         else:
             raise
-
-
-
-
-
-def arrange_fitness(fitness_func, **kwargs):
-    def func(robot):
-        return fitness_func(robot, **kwargs)
-
-    return aux.AttrDict({'func': func, 'func_arg': 'robot'})
 
 
 class GAlauncher(BaseRun, GAevaluation,GAselector):
@@ -274,8 +260,6 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
         if self.fit_dict.func_arg!='s' :
             raise ValueError ('Evaluation function must take step data as argument')
         func=self.fit_dict.func
-        # from larvaworld.lib.process.dataset import LarvaDatasetCollection
-        # ds = LarvaDatasetCollection.from_agentpy_logs(logs=self._logs, Ngen=Ngen, p=self.p)
         self.data_collection = larvaworld.lib.LarvaDatasetCollection.from_agentpy_output(self.output)
         for d in self.data_collection.datasets:
             d.enrich(proc_keys=['angular', 'spatial'], is_last=False)

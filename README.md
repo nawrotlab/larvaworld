@@ -142,7 +142,7 @@ Five different modes are available. The mode has to declared after the command a
    Evaluate diverse model configurations against real data.
    This line evaluates two models against a reference experimental dataset
 
-        larvaworld-cli Eval -refID exploration.40controls -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
+        larvaworld-cli Eval -refID exploration.60controls -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3
 
    
 A graphical user interface is also available. All functionalities are available via the respective tabs.
@@ -150,14 +150,7 @@ Launch the GUI :
 
       larvaworld-gui
 
-Samples of experimental datasets are available :
-for import :
 
-        larvaworld-examples import-Jovanic
-        larvaworld-examples import-Schleyer
-and plotting :
-
-        larvaworld-examples plot-Jovanic
 
 
 Troubleshooting

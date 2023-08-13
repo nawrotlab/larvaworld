@@ -3,7 +3,8 @@ import warnings
 
 import param
 
-from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator, SimOps
+from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator
+from larvaworld.lib.process.evaluation import DataEvaluation,GA_optimization
 from larvaworld.lib.reg.generators import SimConfiguration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -11,11 +12,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import itertools
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
 
 from larvaworld.lib import reg, aux, plot, util
-from larvaworld.lib.sim.base_run import BaseRun
-# from larvaworld.lib.process.dataset import RefDataset
+
 
 
 
@@ -30,43 +30,21 @@ class EvalModelConf(NestedConf):
         if self.dataset_ids in [None,[]]:
             self.dataset_ids = self.modelIDs
 
-class EvalDataConf(NestedConf):
+class EvalDataConf(DataEvaluation):
     refID = reg.conf.Ref.confID_selector()
-    norm_modes = param.ListSelector(default=['raw', 'minmax'], objects=['raw', 'minmax', 'std'],
-                                    # label='keys of modules to include in space search',
-                                    doc='Normalization modes to use')
-    eval_modes = param.ListSelector(default=['pooled'], objects=['pooled', '1:1', '1:pooled'],
-                                    # label='keys of modules to include in space search',
-                                    doc='Evaluation modes to use')
-    eval_metrics = param.Dict(default=aux.AttrDict({
-        'angular kinematics': ['run_fov_mu', 'pau_fov_mu', 'b', 'fov', 'foa', 'rov', 'roa', 'tur_fou'],
-        'spatial displacement': ['cum_d', 'run_d', 'str_c_l', 'v_mu', 'pau_v_mu', 'run_v_mu', 'v', 'a',
-                                 'dsp_0_40_max', 'str_N', 'tor5', 'tor20'],
-        'temporal dynamics': ['fsv', 'ffov', 'run_t', 'pau_t', 'run_tr', 'pau_tr'],
-        'stride cycle': ['str_d_mu', 'str_d_std', 'str_sv_mu', 'str_fov_mu', 'str_fov_std', 'str_N'],
-        'epochs': ['run_t', 'pau_t'],
-        'tortuosity': ['tor5', 'tor20']}),
-        doc='Evaluation metrics to use')
 
-    def __init__(self,dataset=None,  **kwargs):
-        super().__init__(**kwargs)
-        d = self.target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=self.refID)
-        d.id = 'experiment'
-        d.config.id = 'experiment'
-        d.color = 'grey'
-        d.config.color = 'grey'
+
+
+    def __init__(self,dataset=None,refID=None,  **kwargs):
+        target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
+        super().__init__(target =target, refID=refID,**kwargs)
+        self.target.id = 'experiment'
+        self.target.config.id = 'experiment'
+        self.target.color = 'grey'
+        self.target.config.color = 'grey'
         kwargs['dt'] = self.target.config.dt
         kwargs['duration'] = self.target.config.Nticks * kwargs['dt'] / 60
-        self.evaluation, self.target_data = util.arrange_evaluation(self.target, self.eval_metrics)
-        self.define_eval_args(self.evaluation)
 
-    def define_eval_args(self, ev):
-        self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
-        s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
-        self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
-        e_symbols = aux.flatten_list(ev['end']['symbols'].values.tolist())
-        self.eval_symbols = aux.AttrDict(
-            {'step': dict(zip(self.s_pars, s_symbols)), 'end': dict(zip(self.e_pars, e_symbols))})
 
 
 
@@ -98,12 +76,7 @@ class EvalRun(EvalConf, SimConfiguration):
             experiment: The type of experiment. Defaults to 'dispersion'
             **kwargs: Arguments passed to parent class
         '''
-        # RefDataset.__init__(self, refDataset=dataset, refID=parameters.refID, dataset_dir=parameters.dir)
-        # d=self.refDataset
-        # Specify and load the reference dataset. For plotting purposes label it as 'experiment' and color it in 'grey'
-        # BaseRun.__init__(self, runtype='Eval', parameters=parameters, **kwargs)
         super().__init__(runtype='Eval',**kwargs)
-        # SimConfiguration.__init__(runtype='Eval', **kwargs)
 
 
         self.show = show
@@ -112,38 +85,32 @@ class EvalRun(EvalConf, SimConfiguration):
         self.figs = aux.AttrDict({'errors': {}, 'hist': {}, 'boxplot': {}, 'stride_cycle': {}, 'loco': {}, 'epochs': {},
                                   'models': {'table': {}, 'summary': {}}})
 
-        self.error_dicts = {}
+
         self.error_plot_dir = f'{self.plot_dir}/errors'
-
-    # def setup(self):
-    #     # self.refID = self.p.refID
-    #     pass
-
-
-
-
-
-
 
 
     def simulate(self):
         mIDs = self.modelIDs
         dIDs=self.dataset_ids
         Nm=len(mIDs)
-        # self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs,
-        #                             cs=aux.N_colors(Nm), expand=True, N=self.N)
         kws={
             'dt': self.dt,
             'duration': self.duration,
         }
-        # self.setup(**self._setup_kwargs)
         c = self.target.config
 
-        self.tor_durs, self.dsp_starts, self.dsp_stops = util.torsNdsps(self.s_pars + self.e_pars)
+
         if self.offline is None:
             print(f'Simulating offline {Nm} models : {dIDs} with {self.N} larvae each')
-            self.datasets = util.sim_models(mIDs=mIDs, tor_durs=self.tor_durs,
-                                        dsp_starts=self.dsp_starts, dsp_stops=self.dsp_stops,
+            tor_durs = np.unique([int(ii[len('tortuosity') + 1:]) for ii in self.s_pars + self.e_pars if ii.startswith('tortuosity')])
+            dsp = reg.getPar('dsp')
+            dsp_temp = [ii[len(dsp) + 1:].split('_') for ii in self.s_pars + self.e_pars if ii.startswith(f'{dsp}_')]
+            dsp_starts = np.unique([int(ii[0]) for ii in dsp_temp]).tolist()
+            dsp_stops = np.unique([int(ii[1]) for ii in dsp_temp]).tolist()
+
+
+            self.datasets = util.sim_models(mIDs=mIDs, tor_durs=tor_durs,
+                                        dsp_starts=dsp_starts, dsp_stops=dsp_stops,
                                         dataset_ids=dIDs,lgs=self.larva_groups,
                                         enrichment=self.enrichment,
                                         Nids=self.N, env_params=c.env_params,
@@ -155,11 +122,7 @@ class EvalRun(EvalConf, SimConfiguration):
             conf.larva_groups=self.larva_groups
             if self.enrichment is None:
                 conf.enrichment = None
-            # else:
-            #     conf.enrichment.metric_definition.dispersion.update({'dsp_starts': self.dsp_starts, 'dsp_stops': self.dsp_stops})
-            #     conf.enrichment.metric_definition.tortuosity.tor_durs = self.tor_durs
             kws0 = aux.AttrDict({
-                # 'video': video,
                 'dir': self.dir,
                 'store_data': self.store_data,
                 'experiment': self.experiment,
@@ -173,7 +136,6 @@ class EvalRun(EvalConf, SimConfiguration):
             self.datasets = run.datasets
         self.analyze()
         if self.store_data:
-            # os.makedirs(self.data_dir, exist_ok=True)
             self.store()
         return self.datasets
 
@@ -204,24 +166,17 @@ class EvalRun(EvalConf, SimConfiguration):
             dic[norm] = {'tables': tabs, 'barplots': bars}
         return aux.AttrDict(dic)
 
-    def norm_error_dict(self, error_dict, mode='raw'):
-        if mode == 'raw':
-            return error_dict
-        elif mode == 'minmax':
-            return aux.AttrDict({k : pd.DataFrame(MinMaxScaler().fit(df).transform(df), index=df.index, columns=df.columns) for k, df in error_dict.items()})
-        elif mode == 'std':
-            return aux.AttrDict({k : pd.DataFrame(StandardScaler().fit(df).transform(df), index=df.index, columns=df.columns) for k, df in error_dict.items()})
 
-    def analyze(self, suf='fitted', min_size=20):
+
+    def analyze(self, **kwargs):
         print('Evaluating all models')
         os.makedirs(self.plot_dir, exist_ok=True)
-        self.error_dicts = aux.AttrDict()
+
         for mode in self.eval_modes:
-            k = f'{mode}_{suf}'
-            d = util.eval_fast(self.datasets, self.target_data, self.eval_symbols, mode=mode,
-                                            min_size=min_size)
-            self.figs.errors[k] = self.get_error_plots(d, mode)
-            self.error_dicts[k] = d
+
+            d = self.eval_datasets(self.datasets, mode=mode,**kwargs)
+            self.figs.errors[mode] = self.get_error_plots(d, mode)
+            self.error_dicts[mode] = d
 
     def store(self):
         aux.save_dict(self.error_dicts, f'{self.data_dir}/error_dicts.txt')
@@ -240,7 +195,6 @@ class EvalRun(EvalConf, SimConfiguration):
     def plot_results(self, plots=['hists', 'trajectories', 'dispersion', 'bouts', 'fft', 'boxplots']):
         GD = reg.graphs.dict
 
-        # print('Generating comparative graphs')
 
         self.target.load(h5_ks=['epochs', 'angular', 'dspNtor'])
         kws = {
@@ -341,10 +295,11 @@ def add_var_mIDs(refID, e=None, c=None, mID0s=None, mIDs=None, sample_ks=None):
     return entries
 
 def adapt_6mIDs(refID, e=None, c=None):
+    d = reg.loadRef(refID)
     if e is None or c is None:
-        d = reg.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
+
 
     fit_kws = {
         'eval_metrics': {
@@ -356,7 +311,7 @@ def adapt_6mIDs(refID, e=None, c=None):
         'cycle_curves': ['fov', 'foa', 'b']
     }
 
-    fit_dict = util.GA_optimization(refID, fitness_target_kws=fit_kws)
+    fit_dict = GA_optimization(d = d, fit_kws=fit_kws)
     entries = {}
     mIDs = []
     for Tmod in ['NEU', 'SIN']:
@@ -371,8 +326,8 @@ def adapt_6mIDs(refID, e=None, c=None):
     return entries, mIDs
 
 def adapt_3modules(refID, e=None, c=None):
+    d = reg.loadRef(refID)
     if e is None or c is None:
-        d = reg.loadRef(refID)
         d.load(step=False)
         e, c = d.endpoint_data, d.config
 
@@ -386,7 +341,7 @@ def adapt_3modules(refID, e=None, c=None):
         'cycle_curves': ['fov', 'foa', 'b']
     }
 
-    fit_dict = util.GA_optimization(refID, fitness_target_kws=fit_kws)
+    fit_dict = GA_optimization(d = d, fit_kws=fit_kws)
     entries = {}
     mIDs = []
     for Cmod in ['RE', 'SQ', 'GAU', 'CON']:

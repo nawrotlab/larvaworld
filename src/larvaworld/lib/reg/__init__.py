@@ -1,7 +1,7 @@
 import os
 from os.path import dirname, abspath
 
-VERBOSE =2
+VERBOSE =1
 def vprint(text='', verbose=0):
     if verbose >= VERBOSE:
         print(text)
