@@ -413,7 +413,7 @@ class GA_thread(threading.Thread):
             robot.step()
 
 
-def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
+def optimize_mID(mID0, mID1=None, refID=None, space_mkeys=['turner', 'interference'], init='model',
                exclusion_mode=False,experiment='exploration',
                  id=None, dt=1 / 16, dur=0.5, dir=None,  Nagents=30, Nelits=6, Ngenerations=20,
                  **kwargs):
@@ -425,10 +425,9 @@ def optimize_mID(mID0, mID1=None, fit_dict=None, refID=None, space_mkeys=['turne
     gaconf = reg.gen.Ga(ga_select_kws=reg.gen.GAselector(Nagents=Nagents, Nelits=Nelits, Ngenerations=Ngenerations,
                                       selection_ratio=0.1,init_mode=init, space_mkeys=space_mkeys,
                                       base_model=mID0,bestConfID=mID1),
-                      ga_eval_kws=reg.gen.GAevaluation(exclusion_mode=exclusion_mode,fit_dict = fit_dict),
+                      ga_eval_kws=reg.gen.GAevaluation(refID=refID,**kwargs),
                       env_params='arena_200mm',
-                      experiment=experiment,
-                      refID=refID).nestedConf
+                      experiment=experiment).nestedConf
 
 
     gaconf.env_params = reg.conf.Env.getID(gaconf.env_params)

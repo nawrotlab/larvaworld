@@ -4,7 +4,7 @@ import warnings
 import param
 
 from larvaworld.lib.param import NestedConf, PositiveInteger, class_generator
-from larvaworld.lib.process.evaluation import DataEvaluation,GA_optimization
+from larvaworld.lib.process.evaluation import DataEvaluation
 from larvaworld.lib.reg.generators import SimConfiguration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -310,7 +310,7 @@ def adapt_6mIDs(refID, e=None, c=None):
         'cycle_curves': ['fov', 'foa', 'b']
     }
 
-    fit_dict = GA_optimization(d = d, fit_kws=fit_kws)
+    # fit_dict = GA_optimization(d = d, fit_kws=fit_kws)
     entries = {}
     mIDs = []
     for Tmod in ['NEU', 'SIN']:
@@ -318,8 +318,7 @@ def adapt_6mIDs(refID, e=None, c=None):
             mID0 = f'RE_{Tmod}_{Ifmod}_DEF'
             mID = f'{Ifmod}on{Tmod}'
             entry = reg.model.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
-                                   space_mkeys=['turner', 'interference'],
-                                   fit_dict=fit_dict)
+                                   space_mkeys=['turner', 'interference'],**fit_kws)
             entries.update(entry)
             mIDs.append(mID)
     return entries, mIDs
@@ -340,7 +339,7 @@ def adapt_3modules(refID, e=None, c=None):
         'cycle_curves': ['fov', 'foa', 'b']
     }
 
-    fit_dict = GA_optimization(d = d, fit_kws=fit_kws)
+    # fit_dict = GA_optimization(d = d, fit_kws=fit_kws)
     entries = {}
     mIDs = []
     for Cmod in ['RE', 'SQ', 'GAU', 'CON']:
@@ -349,8 +348,7 @@ def adapt_3modules(refID, e=None, c=None):
                 mID0 = f'{Cmod}_{Tmod}_{Ifmod}_DEF'
                 mID = f'{mID0}_fit'
                 entry = reg.model.adapt_mID(refID=refID, mID0=mID0, mID=mID, e=e, c=c,
-                                       space_mkeys=['crawler', 'turner', 'interference'],
-                                       fit_dict=fit_dict)
+                                       space_mkeys=['crawler', 'turner', 'interference'],**fit_kws)
                 entries.update(entry)
                 mIDs.append(mID)
     return entries, mIDs
