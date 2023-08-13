@@ -2,7 +2,6 @@ import agentpy
 
 from larvaworld.lib import reg, aux
 from larvaworld.lib.model import envs, agents
-# from larvaworld.lib.param import SimOps
 from larvaworld.lib.sim import ABModel
 
 
@@ -34,11 +33,6 @@ class BaseRun(ABModel):
         super().__init__(**kwargs)
         self.p.update(**self.nestedConf)
         self.agent_class = self.define_agent_class()
-        # self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
-        #                            'path': f'{self.data_dir}/agentpy_output'}
-
-        # self.p.steps = self.p.Nsteps
-
         self.is_paused = False
         self.datasets = None
         self.results = None

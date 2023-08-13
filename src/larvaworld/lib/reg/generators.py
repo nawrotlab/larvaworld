@@ -317,6 +317,7 @@ class SimConfiguration(RuntimeOps,SimMetricOps, SimOps):
     def __init__(self,runtype,**kwargs):
         self.param.add_parameter('experiment', self.exp_selector_param(runtype))
         super().__init__(runtype=runtype,**kwargs)
+        # raise
         if 'experiment' in kwargs and kwargs['experiment'] is not None :
             self.experiment=kwargs['experiment']
 

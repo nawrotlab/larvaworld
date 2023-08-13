@@ -20,6 +20,7 @@ class FramerateOps(NestedConf):
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
+
         if 'dt' in kwargs:
             self.update_framerate()
         elif 'fr' in kwargs:
@@ -131,17 +132,14 @@ class SimTimeOps(FramerateOps):
 
 class SimSpatialOps(NestedConf):
     Box2D = param.Boolean(False, doc='Whether to use the Box2D physics engine or not.')
-    # store_data = param.Boolean(True, doc='Whether to store the simulation data')
     larva_collisions = param.Boolean(True, doc='Whether to allow overlap between larva bodies.')
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Define constant parameters
-        self.scaling_factor = 1000.0 if self.Box2D else 1.0
 
-class SimOps(SimTimeOps,SimSpatialOps):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+    @property
+    def scaling_factor(self):
+        return 1000.0 if self.Box2D else 1.0
+
+class SimOps(SimTimeOps,SimSpatialOps):pass
 
 
 
@@ -166,15 +164,7 @@ class RuntimeDataOps(NestedConf):
     id=param.Parameter(None,doc='ID of the simulation. If not specified,set according to runtype and experiment.')
     dir = param.String(default=None, label='storage folder', doc='The directory to store data')
 
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
 
-
-
-
-    # @property
-    # def dir(self):
-    #     return f'{self.save_to}/{self.id}'
 
     @property
     def data_dir(self):
@@ -199,9 +189,8 @@ class RuntimeDataOps(NestedConf):
 
 
 
-class RuntimeOps(RuntimeGeneralOps,RuntimeDataOps):
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
+class RuntimeOps(RuntimeGeneralOps,RuntimeDataOps):pass
+
 
 
 
@@ -252,9 +241,7 @@ class SimMetricOps(TrackedPointIdx):
     use_component_vel = Boolean(False,
                                 doc='Whether to use the component velocity ralative to the axis of forward motion.')
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # self.update_vectors()
+
 
     @param.depends('Npoints', watch=True)
     def update_vectors(self):

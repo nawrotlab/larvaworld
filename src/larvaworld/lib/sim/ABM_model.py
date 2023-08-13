@@ -417,13 +417,17 @@ class ABModel(BasicABModel,reg.SimConfiguration):
                 parameters = reg.conf[runtype].expand(experiment)
         elif experiment is None and 'experiment' in parameters.keys():
             experiment = parameters['experiment']
+
+        self.initialize_superclasses(parameters)
         for k in set(parameters).intersection(set(SimOps().nestedConf)):
             kwargs[k]=parameters[k]
         reg.SimConfiguration.__init__(self, runtype=runtype, experiment=experiment, **kwargs)
+        # raise
         parameters.steps = self.Nsteps
         parameters.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                      'path': f'{self.data_dir}/agentpy_output'}
         BasicABModel.__init__(self, parameters=parameters, id=self.id)
 
 
-
+    def initialize_superclasses(self, parameters,**kwargs):
+        pass
