@@ -64,6 +64,7 @@ class GAevaluation(Evaluation):
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
+
         self.exclude_func = exclusion_funcs[self.exclude_func_name] if type(self.exclude_func_name)==str else None
 
         if self.exclusion_mode:
@@ -208,16 +209,20 @@ class GAlauncher(BaseRun,GAselector,GAevaluation):
 
         '''
 
-        BaseRun.__init__(self, runtype='Ga', **kwargs)
+        BaseRun.__init__(self, runtype='Ga',dataset=dataset, **kwargs)
         # raise
-        # GAevaluation.__init__(self,dataset=dataset,**self.p.ga_eval_kws)
-        # GAselector.__init__(self,**self.p.ga_select_kws)
+        GAevaluation.__init__(self,dataset=dataset,**self.p.ga_eval_kws)
+        # GAselector.__init__(self,**self.p.ga_select_kws,dataset=dataset,**self.p.ga_eval_kws)
+        GAselector.__init__(self,**self.p.ga_select_kws)
 
 
 
-    def initialize_superclasses(self, parameters,dataset=None):
-        GAevaluation.__init__(self, dataset=dataset, **parameters.ga_eval_kws)
-        GAselector.__init__(self, **parameters.ga_select_kws)
+    # def initialize_superclasses(self, parameters,dataset=None):
+    #     # print('DD')
+    #     GAevaluation.__init__(self, dataset=dataset, **parameters.ga_eval_kws)
+    #     # print('DDD')
+    #     GAselector.__init__(self, **parameters.ga_select_kws,dataset=dataset, **parameters.ga_eval_kws)
+    #     # print('DDDD')
 
 
     def setup(self):
@@ -464,4 +469,5 @@ class GAconf(SimOps):
 
     scene = param.String('no_boxes', doc='The name of the scene to load')
 
+# reg.gen.Ga=class_generator(GAlauncher)
 reg.gen.Ga=class_generator(GAconf)

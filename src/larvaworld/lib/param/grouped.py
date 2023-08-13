@@ -101,10 +101,8 @@ class XYops(NestedConf):
         else:
             return self.midline_points[idx - 1]
 
-class Resolution(FramerateOps,XYops):
+class Resolution(FramerateOps,XYops):pass
 
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
 
 class SimTimeOps(FramerateOps):
     duration = OptionalPositiveNumber(softmax=100.0, step=0.1,

@@ -385,9 +385,9 @@ class BasicABModel(Object):
 
 
 
-class ABModel(BasicABModel,reg.SimConfiguration):
+class ABModel(BasicABModel,reg.SimConfigurationParams):
 
-    def __init__(self, runtype='Exp',experiment=None,parameters=None, **kwargs):
+    def __init__(self, **kwargs):
         '''
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.
@@ -410,24 +410,13 @@ class ABModel(BasicABModel,reg.SimConfiguration):
             **kwargs: Arguments passed to the setup method
         '''
 
-        if parameters is None :
-            if experiment is None or experiment not in reg.conf[runtype].confIDs:
-                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
-            else :
-                parameters = reg.conf[runtype].expand(experiment)
-        elif experiment is None and 'experiment' in parameters.keys():
-            experiment = parameters['experiment']
-
-        self.initialize_superclasses(parameters)
-        for k in set(parameters).intersection(set(SimOps().nestedConf)):
-            kwargs[k]=parameters[k]
-        reg.SimConfiguration.__init__(self, runtype=runtype, experiment=experiment, **kwargs)
-        # raise
-        parameters.steps = self.Nsteps
-        parameters.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
+        reg.SimConfigurationParams.__init__(self, **kwargs)
+        # self.initialize_superclasses(self.parameters)
+        self.parameters.steps = self.Nsteps
+        self.parameters.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
                                      'path': f'{self.data_dir}/agentpy_output'}
-        BasicABModel.__init__(self, parameters=parameters, id=self.id)
+        BasicABModel.__init__(self, parameters=self.parameters, id=self.id)
 
 
-    def initialize_superclasses(self, parameters,**kwargs):
-        pass
+    # def initialize_superclasses(self, parameters,**kwargs):
+    #     pass

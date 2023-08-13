@@ -356,6 +356,24 @@ class SimConfiguration(RuntimeOps,SimMetricOps, SimOps):
             return param.String(**kws)
 
 
+class SimConfigurationParams(SimConfiguration):
+    parameters = param.Parameter(default=None)
+    def __init__(self,runtype='Exp',experiment=None,parameters=None,**kwargs):
+        if parameters is None :
+            if experiment is None or experiment not in reg.conf[runtype].confIDs:
+                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
+            else :
+                parameters = reg.conf[runtype].expand(experiment)
+        elif experiment is None and 'experiment' in parameters.keys():
+            experiment = parameters['experiment']
+        if parameters is not None:
+            for k in set(parameters).intersection(set(SimOps().nestedConf)):
+                kwargs[k] = parameters[k]
+        super().__init__(runtype=runtype,experiment=experiment,parameters=parameters,**kwargs)
+
+
+
+
 
 class FoodConf(NestedConf):
     source_groups = ClassDict(item_type=gen.FoodGroup,  doc='The groups of odor or food sources available in the arena')

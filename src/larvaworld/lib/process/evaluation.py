@@ -210,7 +210,7 @@ class Evaluation(NestedConf) :
     def __init__(self, dataset=None,**kwargs):
         super().__init__(**kwargs)
         self.target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=self.refID)
-
+        print(self.eval_metrics)
 
         if not hasattr(self.target, 'step_data'):
             self.target.load(h5_ks=['epochs', 'base_spatial', 'angular', 'dspNtor'])

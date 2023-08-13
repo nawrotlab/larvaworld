@@ -314,7 +314,7 @@ class NestedConf(Parameterized):
     def __init__(self,**kwargs):
         # for k in kwargs.keys():
         #     p=self.class_type(k)
-
+        # print(self.name)
 
         param_classes = self.param.objects()
         for k, p in param_classes.items():
