@@ -295,7 +295,6 @@ class RefType(ConfType):
         elif to_return=='collection':
             from larvaworld.lib.process.dataset import LarvaDatasetCollection
             return LarvaDatasetCollection(datasets=[self.loadRef(dir=dir, **kwargs) for id, dir in d.items()])
-        # grefs = aux.AttrDict({id: self.getRef(dir=dir) for id, dir in d.items()})
 
 
 conf=aux.AttrDict({k: ConfType(conftype=k) for k in reg.CONFTYPES if k!='Ref'})
@@ -312,9 +311,7 @@ def resetConfs(conftypes=None, **kwargs):
         conf[conftype].reset(**kwargs)
 
 
-from larvaworld.lib.model import Food, Border, \
-    WindScape, ThermoScape, FoodGrid, \
-    PointAgent, OrientedAgent, Substrate, OdorScape, DiffusionValueLayer, GaussianValueLayer, agents
+from larvaworld.lib.model import Food, Border, WindScape, ThermoScape, FoodGrid, Substrate, OdorScape, DiffusionValueLayer, GaussianValueLayer
 
 gen=aux.AttrDict({
     'FoodGroup':class_generator(Food, mode='Group'),
