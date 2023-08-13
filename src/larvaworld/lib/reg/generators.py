@@ -1,13 +1,12 @@
 import os
 
-import agentpy
 import param
 
 from larvaworld.lib import reg, aux, util
-from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro, ClassAttr, SimTimeOps, \
+from larvaworld.lib.param import Area, NestedConf, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
     generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch, RuntimeDataOps, RandomizedColor, \
-    OptionalPositiveNumber, Filesystem, Resolution, TrackerOps, PreprocessConf
+    OptionalPositiveNumber, Filesystem, TrackerOps, PreprocessConf
 
 
 
@@ -18,24 +17,18 @@ from larvaworld.lib.param import Area, NestedConf, Spatial_Distro, Larva_Distro,
 def build_GroupTypeSubkeys():
     d0 = {k: {} for k in reg.GROUPTYPES}
     d1 = {
-        'LarvaGroup': {'Model'},
-        # 'Ga': {'env_params': 'Env'},
-        # 'Exp': {'env_params': 'Env',
-        #         'trials': 'Trial',
-        #         'larva_groups': 'Model',
-        #         }
+        'LarvaGroup': {'Model'}
     }
     d0.update(d1)
     return aux.AttrDict(d0)
 
-# GROUPTYPE_SUBKEYS = build_GroupTypeSubkeys()
 
 
 
 class ConfType(param.Parameterized) :
     """Select among available configuration types"""
     conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
-    dict= ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
+    dict= ClassDict(default=aux.AttrDict(), item_type=aux.AttrDict, doc='The configuration dictionary')
 
 
     def __init__(self, **kwargs):
@@ -67,7 +60,6 @@ class ConfType(param.Parameterized) :
 
     @param.depends('conftype', watch=True)
     def update_dict(self):
-        self.param.params('dict').item_type = self.dict_entry_type
         self.load()
 
 
@@ -98,7 +90,6 @@ class ConfType(param.Parameterized) :
             if init:
                 return
             else:
-                # self.load()
                 d = self.dict
         else:
             d = {}
@@ -111,7 +102,6 @@ class ConfType(param.Parameterized) :
         Nnew = Ncur - N0
         Nup = N1 - Nnew
 
-        self.param.params('dict').item_type = self.dict_entry_type
         self.dict = d
         self.save()
         reg.vprint(f'{self.conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing', 1)
@@ -142,16 +132,13 @@ class ConfType(param.Parameterized) :
         if len(subks) > 0:
             for subID, subk in subks.items():
                 ids = reg.conf[subk].confIDs
-                # ids = self.confIDs(subk)
                 if subID == 'larva_groups' and subk == 'Model':
                     for k, v in conf['larva_groups'].items():
                         if v.model in ids:
                             v.model = reg.conf[subk].getID(v.model)
-                            # v.model = self.get(subk, id=v.model)
                 else:
                     if conf[subID] in ids:
                         conf[subID] = reg.conf[subk].getID(conf[subID])
-                        # conf[subID] = self.get(subk, id=conf[subID])
 
         return conf
 
@@ -168,8 +155,8 @@ class ConfType(param.Parameterized) :
         else :
             return param.ListSelector(**kws)
 
-    def confIDorNew(self):
-        return ClassAttr(class_=(self.confID_selector(), self.conf_class()),default=None, doc='Accepts either an existing ID or a new configuration')
+    # def confIDorNew(self):
+    #     return ClassAttr(class_=(self.confID_selector(), self.conf_class()),default=None, doc='Accepts either an existing ID or a new configuration')
 
     @property
     def confIDs(self):
@@ -185,15 +172,7 @@ class ConfType(param.Parameterized) :
         else :
             return aux.AttrDict
 
-    @property
-    def dict_entry_type(self):
-    #     c = self.conftype
-    #     if c is None:
-    #         return None
-    #     elif c == 'Ref':
-    #         return str
-    #     else:
-        return aux.AttrDict
+
 
 
 class RefType(ConfType):
@@ -266,11 +245,7 @@ class RefType(ConfType):
         d=self.Refdict
         gd=aux.AttrDict({c.group_id:c for id,c in d.items()})
         gIDs=aux.unique_list(list(gd.keys()))
-        gIDgroups = aux.AttrDict({gID: {c.id : c.dir for id,c in d.items() if c.group_id==gID} for gID in gIDs})
-        # for gID,cs in gIDgroups.items():
-        #     print(f'{gID} : {list(cs.keys())}')
-        #     print()
-        return gIDgroups
+        return aux.AttrDict({gID: {c.id : c.dir for id,c in d.items() if c.group_id==gID} for gID in gIDs})
 
     @property
     def RefGroupIDs(self):
@@ -422,7 +397,6 @@ class LarvaGroup(NestedConf):
         conf = self.nestedConf
         if expand and conf.model is not None:
             conf.model = reg.conf.Model.getID(conf.model)
-            # conf.model = reg.stored.getModel(conf.model)
         if as_entry :
             return aux.AttrDict({self.id: conf})
         else:
@@ -478,8 +452,6 @@ class LabFormat(NestedConf) :
 
 class ExpConf(SimOps):
     env_params = ClassAttr(gen.Env, doc='The environment configuration')
-    # env_params = conf.Env.confIDorNew()
-    # env_params = conf.Env.confID_selector()
     experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
@@ -494,16 +466,11 @@ class ExpConf(SimOps):
     def __init__(self,id=None,**kwargs):
         super().__init__(**kwargs)
 
-# class DatasetConf(NestedConf):
-#     environment = ClassAttr(EnvConf, doc='The environment configuration')
-#     sim_options = ClassAttr(SimOps, doc='The spatiotemporal resolution')
-#     larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
 
 class ReplayConfGroup(NestedConf):
     agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
     transposition = OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
     track_point = param.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
-    # dynamic_color = OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
     env_params = conf.Env.confID_selector()
 
 class ReplayConfUnit(NestedConf):
@@ -586,7 +553,6 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.40controls',
 
 
 class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
-    # duration = OptionalPositiveNumber(default=None)
     Nticks = OptionalPositiveInteger(default=None)
     refID = param.String(None, doc='The unique ID of the reference dataset')
     group_id = param.String(None, doc='The unique ID of the group')
