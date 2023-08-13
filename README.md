@@ -160,4 +160,16 @@ and plotting :
         larvaworld-examples plot-Jovanic
 
 
-## git clone https://github.com/bagjohn/larvaworld_sample_data.git
+Troubleshooting
+
+1. If the installation crashes because of the *cartopy* library dependency, try running : 
+    
+       sudo apt install libgeos-dev
+
+2. If you get the error msg : *libGL error: MESA-LOADER: failed to open iris* when running a simulation with video on, try running : 
+
+        export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+3. If the sample datasets are not included in the original installation, you can download them separately to the *data* folder:
+
+       git clone https://github.com/bagjohn/larvaworld_sample_data.git
