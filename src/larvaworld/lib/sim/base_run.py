@@ -38,11 +38,13 @@ class BaseRun(agentpy.Model,reg.SimConfiguration):
                 raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
             else :
                 parameters = reg.conf[runtype].expand(experiment)
+        elif experiment is None and 'experiment' in parameters.keys():
+            experiment = parameters['experiment']
         for k in set(parameters).intersection(set(SimOps().nestedConf)):
             kwargs[k]=parameters[k]
 
         agentpy.Model.__init__(self, parameters=parameters)
-        reg.SimConfiguration.__init__(self, runtype=runtype, **kwargs)
+        reg.SimConfiguration.__init__(self, runtype=runtype,experiment=experiment, **kwargs)
         self.p.update(**self.nestedConf)
         self.agent_class = self.define_agent_class()
         self.p.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,
@@ -104,9 +106,7 @@ class BaseRun(agentpy.Model,reg.SimConfiguration):
 
     def place_food(self, p):
         self.food_grid = envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
-        c1 = reg.gen.FoodGroup.from_entries(p.source_groups)
-        c2 = reg.gen.Food.from_entries(p.source_units)
-        sourceConfs=c1+c2
+        sourceConfs=reg.gen.FoodGroup.from_entries(p.source_groups)+reg.gen.Food.from_entries(p.source_units)
         source_list = [agents.Food(model=self, **conf) for conf in sourceConfs]
         self.p.source_xy = aux.AttrDict({a.id: a.pos for a in source_list})
         self.space.add_sources(source_list, positions=[a.pos for a in source_list])
@@ -120,6 +120,7 @@ class BaseRun(agentpy.Model,reg.SimConfiguration):
         agent_list = [self.agent_class(model=self, **conf) for conf in confs]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
+
 
     def define_agent_class(self):
         if self.runtype=='Replay' :

@@ -199,7 +199,7 @@ class GAselector(NestedConf):
 class GAlauncher(BaseRun,GAselector,GAevaluation):
 
 
-    def __init__(self,parameters, dataset=None, **kwargs):
+    def __init__(self,experiment=None,parameters=None, dataset=None, **kwargs):
         '''
         Simulation mode 'Ga' launches a genetic algorith optimization simulation of a specified agent model.
 
@@ -207,9 +207,18 @@ class GAlauncher(BaseRun,GAselector,GAevaluation):
             **kwargs: Arguments passed to the setup method
 
         '''
+        runtype = 'Ga'
+        if parameters is None :
+            if experiment is None or experiment not in reg.conf[runtype].confIDs:
+                raise ValueError('Either a parameter dictionary or the name of the experiment must be provided')
+            else :
+                parameters = reg.conf[runtype].expand(experiment)
+        elif experiment is None and 'experiment' in parameters.keys():
+            experiment = parameters['experiment']
+
         GAevaluation.__init__(self,dataset=dataset,**parameters.ga_eval_kws)
         GAselector.__init__(self,**parameters.ga_select_kws)
-        BaseRun.__init__(self,runtype='Ga', parameters=parameters, **kwargs)
+        BaseRun.__init__(self,runtype='Ga', parameters=parameters,experiment=experiment, **kwargs)
 
 
 

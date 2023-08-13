@@ -28,7 +28,7 @@ def build_GroupTypeSubkeys():
 class ConfType(param.Parameterized) :
     """Select among available configuration types"""
     conftype = param.Selector(objects=reg.CONFTYPES, doc= 'The configuration type')
-    dict= ClassDict(default=aux.AttrDict(), item_type=aux.AttrDict, doc='The configuration dictionary')
+    dict= ClassDict(default=aux.AttrDict(), item_type=None, doc='The configuration dictionary')
 
 
     def __init__(self, **kwargs):
@@ -60,6 +60,7 @@ class ConfType(param.Parameterized) :
 
     @param.depends('conftype', watch=True)
     def update_dict(self):
+        self.param.params('dict').item_type = self.dict_entry_type
         self.load()
 
 
@@ -102,6 +103,7 @@ class ConfType(param.Parameterized) :
         Nnew = Ncur - N0
         Nup = N1 - Nnew
 
+        self.param.params('dict').item_type = self.dict_entry_type
         self.dict = d
         self.save()
         reg.vprint(f'{self.conftype}  configurations : {Nnew} added , {Nup} updated,{Ncur} now existing', 1)
@@ -155,8 +157,8 @@ class ConfType(param.Parameterized) :
         else :
             return param.ListSelector(**kws)
 
-    # def confIDorNew(self):
-    #     return ClassAttr(class_=(self.confID_selector(), self.conf_class()),default=None, doc='Accepts either an existing ID or a new configuration')
+    def confIDorNew(self):
+        return ClassAttr(class_=(self.confID_selector(), self.conf_class()),default=None, doc='Accepts either an existing ID or a new configuration')
 
     @property
     def confIDs(self):
@@ -172,7 +174,9 @@ class ConfType(param.Parameterized) :
         else :
             return aux.AttrDict
 
-
+    @property
+    def dict_entry_type(self):
+        return aux.AttrDict
 
 
 class RefType(ConfType):
@@ -316,8 +320,7 @@ class SimConfiguration(RuntimeOps,SimMetricOps, SimOps):
         if 'experiment' in kwargs and kwargs['experiment'] is not None :
             self.experiment=kwargs['experiment']
 
-
-        if self.id is None:
+        if self.id is None or not type(self.id)==str:
             self.id = self.generate_id(self.runtype, self.experiment)
         if self.dir is None:
             save_to = f'{self.path_to_runtype_data}/{self.experiment}'
@@ -397,6 +400,7 @@ class LarvaGroup(NestedConf):
         conf = self.nestedConf
         if expand and conf.model is not None:
             conf.model = reg.conf.Model.getID(conf.model)
+            # conf.model = reg.stored.getModel(conf.model)
         if as_entry :
             return aux.AttrDict({self.id: conf})
         else:
@@ -452,6 +456,8 @@ class LabFormat(NestedConf) :
 
 class ExpConf(SimOps):
     env_params = ClassAttr(gen.Env, doc='The environment configuration')
+    # env_params = conf.Env.confIDorNew()
+    # env_params = conf.Env.confID_selector()
     experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
     collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
@@ -466,11 +472,16 @@ class ExpConf(SimOps):
     def __init__(self,id=None,**kwargs):
         super().__init__(**kwargs)
 
+# class DatasetConf(NestedConf):
+#     environment = ClassAttr(EnvConf, doc='The environment configuration')
+#     sim_options = ClassAttr(SimOps, doc='The spatiotemporal resolution')
+#     larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
 
 class ReplayConfGroup(NestedConf):
     agent_ids = param.List(item_type=int,doc='Whether to only display some larvae of the dataset, defined by their indexes.')
     transposition = OptionalSelector(objects=['origin', 'arena', 'center'], doc='Whether to transpose the dataset spatial coordinates.')
     track_point = param.Integer(default=-1,softbounds=(-1,12), doc='The midline point to use for defining the larva position.')
+    # dynamic_color = OptionalSelector(objects=['lin_color', 'ang_color'], doc='Whether to display larva tracks according to the instantaneous forward or angular velocity.')
     env_params = conf.Env.confID_selector()
 
 class ReplayConfUnit(NestedConf):
@@ -553,6 +564,7 @@ def GTRvsS(N=1, age=72.0, q=1.0, h_starved=0.0, sample='exploration.40controls',
 
 
 class DatasetConfig(RuntimeDataOps,SimMetricOps, SimTimeOps):
+    # duration = OptionalPositiveNumber(default=None)
     Nticks = OptionalPositiveInteger(default=None)
     refID = param.String(None, doc='The unique ID of the reference dataset')
     group_id = param.String(None, doc='The unique ID of the group')
