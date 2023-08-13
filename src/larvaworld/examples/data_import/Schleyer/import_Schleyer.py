@@ -4,31 +4,30 @@ from larvaworld.lib import reg
 from larvaworld.lib.process.building import import_dataset
 
 kws0 = {
-    'labID': 'Schleyer',
-    'group_id': 'exploration',
-    'add_reference': True,
-    'enrich' : True
-}
+        'labID': 'Schleyer',
+        'group_id': 'exploration',
+    }
 
-# Merged case
+    # Merged case
+N=40
 kws1 = {
     'parent_dir': 'exploration',
     'merged': True,
-    'N': 40,
-    'min_duration_in_sec': 180,
-    'id': f'40controls',
-    'refID': f'exploration.40controls',
+    'N': N,
+    'min_duration_in_sec': 120,
+    'refID': f'exploration.{N}controls',
     **kws0
 }
 
 # Single dish case
+folder='dish01'
 kws2 = {
-    'parent_dir': 'exploration/dish03',
+    'parent_dir': f'exploration/{folder}',
     'merged': False,
     'N': None,
     'min_duration_in_sec': 90,
-    'id': f'dish03',
-    'refID': f'exploration.dish03',
+    'id': folder,
+    'refID': f'exploration.{folder}',
     **kws0
 }
 

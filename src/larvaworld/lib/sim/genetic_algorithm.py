@@ -11,7 +11,7 @@ import numpy as np
 import larvaworld
 from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import NestedConf, ClassAttr, class_generator, SimOps, OptionalSelector
-from larvaworld.lib.process.evaluation import GA_optimization
+from larvaworld.lib.process.evaluation import AgentEvaluation
 from larvaworld.lib.screen import GA_ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
@@ -156,7 +156,7 @@ exclusion_funcs = aux.AttrDict({
 
 
 
-class GAevaluation(NestedConf):
+class GAevaluation(AgentEvaluation):
     exclusion_mode = param.Boolean(default=False,label='exclusion mode', doc='Whether to apply exclusion mode')
     exclude_func_name = OptionalSelector(default=None,objects=list(exclusion_funcs.keys()),
                                        label='name of exclusion function',doc='The function that evaluates exclusion', allow_None=True)
@@ -168,8 +168,9 @@ class GAevaluation(NestedConf):
     fit_dict = param.ClassSelector(aux.AttrDict,
                           label='fitness evaluation dictionary', doc='The complete dictionary of the fitness evaluation process')
 
-    def __init__(self,fit_kws={},fit_dict = None,**kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,fit_kws={},fitness_target_kws = None,fit_dict = None,**kwargs):
+        super().__init__(fit_kws=fitness_target_kws,**kwargs)
+
         self.exclude_func = exclusion_funcs[self.exclude_func_name] if type(self.exclude_func_name)==str else None
 
         if self.exclusion_mode:
@@ -182,8 +183,10 @@ class GAevaluation(NestedConf):
                 return fitness_funcs[self.fitness_func_name](robot, **fit_kws)
 
             self.fit_dict = aux.AttrDict({'func': func, 'func_arg': 'robot'})
-        elif self.refDataset and self.fitness_target_kws:
-            self.fit_dict = GA_optimization(d=self.refDataset, fit_kws=self.fitness_target_kws)
+        elif self.target and self.fitness_target_kws:
+        # elif self.refDataset and self.fitness_target_kws:
+            self.fit_dict = self.get_fit_dict()
+            # self.fit_dict = GA_optimization(d=self.refDataset, fit_kws=self.fitness_target_kws)
         else:
             raise
 
@@ -200,8 +203,8 @@ class GAlauncher(BaseRun, GAevaluation,GAselector):
 
         '''
 
-        self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, load=False)
-        GAevaluation.__init__(self, **parameters.ga_eval_kws)
+        # self.refDataset = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, load=False)
+        GAevaluation.__init__(self,dataset=dataset, refID=parameters.refID, **parameters.ga_eval_kws)
         GAselector.__init__(self, **parameters.ga_select_kws)
         BaseRun.__init__(self,runtype='Ga',parameters=parameters, **kwargs)
 

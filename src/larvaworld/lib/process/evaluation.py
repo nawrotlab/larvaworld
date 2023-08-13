@@ -206,14 +206,25 @@ class Evaluation(NestedConf) :
     cycle_curve_metrics = param.List(default=[])
 
 
-    def __init__(self, target,  **kwargs):
+    def __init__(self, dataset=None,refID=None, **kwargs):
+        target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
         super().__init__(**kwargs)
         self.target = target
+        # print(self.target)
+        # raise
+
         if not hasattr(self.target, 'step_data'):
             self.target.load(h5_ks=['epochs', 'base_spatial', 'angular', 'dspNtor'])
-        self.evaluation, self.target_data = self.arrange_evaluation()
+
+        self.build()
+
+    def build(self):
+        if len(self.eval_metrics) > 0:
+            self.evaluation, self.target_data = self.arrange_evaluation()
+        else:
+            self.s_shorts = []
         if len(self.cycle_curve_metrics)>0:
-            if not 'pooled_cycle_curves' in self.target.config:
+            if not hasattr(self.target.config,'pooled_cycle_curves') :
                 from larvaworld.lib.process.annotation import compute_interference
                 s, e, c = self.target.data
                 self.target.config.pooled_cycle_curves = compute_interference(s, e, c=c, d=self.target, chunk_dicts=self.target.read('chunk_dicts'))
@@ -222,19 +233,21 @@ class Evaluation(NestedConf) :
             self.cycle_modes = {sh: cycle_dict[sh] for sh in self.cycle_curve_metrics}
             self.cycle_curve_target = aux.AttrDict({sh: np.array(self.target.config.pooled_cycle_curves[sh][mod]) for sh, mod in self.cycle_modes.items()})
             self.rss_sym = {sh: sh for sh in self.cycle_curve_metrics}
-        self.keys = aux.unique_list(self.cycle_curve_metrics+self.s_shorts)
+
+
+
 
 
     def arrange_evaluation(self):
 
         s, e = self.target.step_data, self.target.endpoint_data
         all_ks = aux.SuperList(self.eval_metrics.values()).flatten.unique
-        all_ps = aux.SuperList(reg.getPar(all_ks))
+        all_ps = aux.SuperList(reg.getPar(all_ks[:]))
         Eps = all_ps.existing(e)
         Dps = all_ps.existing(s)
         Dps = Dps.nonexisting(Eps)
-        Eks = reg.getPar(p=Eps, to_return='k')
-        Dks = reg.getPar(p=Dps, to_return='k')
+        Eks = reg.getPar(p=Eps[:], to_return='k')
+        Dks = reg.getPar(p=Dps[:], to_return='k')
         target_data = aux.AttrDict({'step': {p: s[p].dropna() for p in Dps}, 'end': {p: e[p] for p in Eps}})
 
         dic = aux.AttrDict({'end': {'shorts': [], 'groups': []}, 'step': {'shorts': [], 'groups': []}})
@@ -249,6 +262,7 @@ class Evaluation(NestedConf) :
                 dic.step.groups.append(g)
         ev = aux.AttrDict({k: col_df(**v) for k, v in dic.items()})
         self.s_pars = aux.flatten_list(ev['step']['pars'].values.tolist())
+        self.s_shorts = aux.flatten_list(ev['step']['shorts'].values.tolist())
         self.s_symbols = aux.flatten_list(ev['step']['symbols'].values.tolist())
         self.e_pars = aux.flatten_list(ev['end']['pars'].values.tolist())
         self.e_symbols = aux.flatten_list(ev['end']['symbols'].values.tolist())
@@ -346,10 +360,11 @@ class DataEvaluation(Evaluation) :
 
 
 
-class GaEvaluation(Evaluation) :
+class AgentEvaluation(Evaluation) :
     eval_metrics = param.Dict(default={})
 
-    def __init__(self, fit_kws, **kwargs):
+    def __init__(self, fit_kws=None, **kwargs):
+        # raise
         if isinstance(fit_kws, dict) :
             if 'eval_metrics' in fit_kws.keys() :
                 kwargs['eval_metrics']=fit_kws['eval_metrics']
@@ -357,7 +372,10 @@ class GaEvaluation(Evaluation) :
                 kwargs['cycle_curve_metrics']=fit_kws['cycle_curves']
         self.fit_kws = fit_kws
         super().__init__(**kwargs)
-        self.fit_dict = self.fit_func_multi
+
+    def get_fit_dict(self):
+        return aux.AttrDict({'func': self.fit_func_multi, 'keys': aux.unique_list(self.cycle_curve_metrics+self.s_shorts), 'func_arg': 's'})
+        # self.fit_dict = self.fit_func_multi
 
 
 def GA_optimization(d, fit_kws):

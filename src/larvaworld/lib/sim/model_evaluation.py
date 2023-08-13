@@ -36,8 +36,8 @@ class EvalDataConf(DataEvaluation):
 
 
     def __init__(self,dataset=None,refID=None,  **kwargs):
-        target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
-        super().__init__(target =target, refID=refID,**kwargs)
+        # target = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=refID)
+        super().__init__(dataset =dataset, refID=refID,**kwargs)
         self.target.id = 'experiment'
         self.target.config.id = 'experiment'
         self.target.color = 'grey'
