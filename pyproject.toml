@@ -65,3 +65,12 @@ nengo = [
 
 #[tool.poetry.scripts]
 #download_sample_data = 'my_package.console:run'
+
+## Commands to upload new package version to Pypi
+# Remember to also  :
+#    - update the version number in pyproject.toml
+#    - clear the data folder keeping only minimal samples
+#    - delete the li.reg.confDicts contents
+
+# python -m build
+# python -m twine upload dist/* --verbose

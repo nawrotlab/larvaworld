@@ -1,6 +1,6 @@
 import random
+import matplotlib
 import numpy as np
-from matplotlib import cm, colors
 
 
 
@@ -8,9 +8,9 @@ def invert_color(col):
     if type(col) in [list, tuple] and len(col) == 3:
         if not all([0 <= i <= 1 for i in col]):
             col = list(np.array(col) / 255)
-        col = colors.rgb2hex(col)
+        col = matplotlib.colors.rgb2hex(col)
     elif col[0] != '#':
-        col = colors.cnames[col]
+        col = matplotlib.colors.cnames[col]
     table = str.maketrans('0123456789abcdef', 'fedcba9876543210')
     col2 = '#' + col[1:].lower().translate(table).upper()
     return col, col2
@@ -42,7 +42,7 @@ def N_colors(N, as_rgb=False):
         cs = ['lightgreen', 'green', 'red', 'darkred', 'lightblue', 'blue', 'darkblue', 'magenta', 'cyan', 'orange',
               'purple']
     else:
-        colormap = cm.get_cmap('brg')
+        colormap = matplotlib.cm.get_cmap('brg')
         cs = [colormap(i) for i in np.linspace(0, 1, N)]
     if as_rgb:
         cs = [colorname2tuple(c) for c in cs]
@@ -50,14 +50,14 @@ def N_colors(N, as_rgb=False):
 
 
 def colorname2tuple(name):
-    c0 = colors.to_rgb(name)
+    c0 = matplotlib.colors.to_rgb(name)
     c1 = tuple([i * 255 for i in c0])
     return c1
 
 def colortuple2str(t):
     if any([tt>1 for tt in t]):
         t=tuple([tt/255 for tt in t])
-    return colors.rgb2hex(t)
+    return matplotlib.colors.rgb2hex(t)
 
 
 def col_range(q, low=(255, 0, 0), high=(255, 255, 255), mul255=False):
