@@ -270,37 +270,54 @@ def pvalue_star(pv):
     return "ns"
 
 
-def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs):
-    from statannotations.Annotator import Annotator
 
+def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs):
+    """
+    Annotate a plot with Mann-Whitney U test p-values.
+
+    Parameters:
+    - data: DataFrame
+        The input data.
+    - x: str
+        The column name for the x-axis variable.
+    - y: str
+        The column name for the y-axis variable.
+    - hue: str or None
+        The column name for grouping data by hue (optional).
+    - show_ns: bool
+        Whether to display annotations for non-significant comparisons (default: True).
+    - target_only: Any or None
+        Specify a target value for comparisons (optional).
+    - **kwargs: keyword arguments
+        Additional arguments for annotation customization.
+
+    Returns:
+    - None
+    """
+    from statannotations.Annotator import Annotator
     subIDs0 = np.unique(data[x].values)
+
     if hue is not None:
         h1, h2 = np.unique(data[hue].values)
-
         pairs = [((subID, h1), (subID, h2)) for subID in subIDs0]
-        pvs = []
-        for subID in subIDs0:
-            dd = data[data[x] == subID]
-            dd0 = dd[dd[hue] == h1][y].dropna().values.tolist()
-            dd1 = dd[dd[hue] == h2][y].dropna().values.tolist()
-            pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+        pvs = [mannwhitneyu(
+            data[(data[x] == subID) & (data[hue] == h1)][y].dropna(),
+            data[(data[x] == subID) & (data[hue] == h2)][y].dropna(),
+            alternative="two-sided").pvalue for subID in subIDs0]
     else:
         if target_only is None:
             pairs = list(itertools.combinations(subIDs0, 2))
-            pvs = []
-            for subID0, subID1 in pairs:
-                dd0 = data[data[x] == subID0][y].dropna().values.tolist()
-                dd1 = data[data[x] == subID1][y].dropna().values.tolist()
-                pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+            pvs = [mannwhitneyu(
+                data[data[x] == subID0][y].dropna(),
+                data[data[x] == subID1][y].dropna(),
+                alternative="two-sided").pvalue for subID0, subID1 in pairs]
         else:
-            pairs = []
-            pvs = []
-            dd0 = data[data[x] == target_only][y].dropna().values.tolist()
-            for subID in subIDs0:
-                if subID != target_only:
-                    pairs.append((target_only, subID))
-                    dd1 = data[data[x] == subID][y].dropna().values.tolist()
-                    pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
+            pairs = [(target_only, subID) for subID in subIDs0 if subID != target_only]
+            dd0 = data[data[x] == target_only][y].dropna()
+            pvs = [mannwhitneyu(
+                dd0,
+                data[data[x] == subID][y].dropna(),
+                alternative="two-sided").pvalue for subID in subIDs0 if subID != target_only]
 
     f_pvs = [pvalue_star(pv) for pv in pvs]
 
@@ -309,31 +326,59 @@ def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs
         pairs = [pairs[i] for i in valid_idx]
         f_pvs = [f_pvs[i] for i in valid_idx]
 
-    # Add annotations
     if len(pairs) > 0:
         annotator = Annotator(pairs=pairs, data=data, x=x, y=y, hue=hue, **kwargs)
         annotator.verbose = False
         annotator.annotate_custom_annotations(f_pvs)
 
 
-
-
-def dual_half_circle(center, radius= 0.04, angle=90, ax=None, colors=('W', 'k'), **kwargs):
+def dual_half_circle(center, radius=0.04, angle=90, ax=None, colors=('W', 'k'), **kwargs):
     """
-    Add two half circles to the axes *ax* (or the current axes) with the
-    specified facecolors *colors* rotated at *angle* (in degrees).
+    Add two half circles to the axes 'ax' (or the current axes) with the specified face colors 'colors' rotated at 'angle' (in degrees).
+
+    Parameters:
+    - center: tuple
+        Center coordinates of the half circles.
+    - radius: float, optional (default: 0.04)
+        Radius of the half circles.
+    - angle: float, optional (default: 90)
+        Angle by which the half circles are rotated (in degrees).
+    - ax: matplotlib.axes.Axes, optional (default: None)
+        The axes to which the half circles will be added. If None, the current axes are used.
+    - colors: tuple, optional (default: ('W', 'k'))
+        Face colors of the two half circles. The first color is for the left half, and the second color is for the right half.
+    - **kwargs: keyword arguments
+        Additional keyword arguments to customize the appearance of the half circles.
+
+    Returns:
+    - wedge_list: list
+        A list containing the two half circle patches.
     """
     if ax is None:
         ax = plt.gca()
     theta1, theta2 = angle, angle + 180
     w1 = patches.Wedge(center, radius, theta1, theta2, fc=colors[0], **kwargs)
     w2 = patches.Wedge(center, radius, theta2, theta1, fc=colors[1], **kwargs)
-    for wedge in [w1, w2]:
-        ax.add_artist(wedge)
+    ax.add_patch(w1)
+    ax.add_patch(w2)
     return [w1, w2]
 
 
 def save_plot(fig, filepath, filename):
+    """
+        Save a Matplotlib figure to a specified file path.
+
+        Parameters:
+        - fig: matplotlib.figure.Figure
+            The figure to save.
+        - filepath: str
+            The full file path where the figure should be saved.
+        - filename: str
+            The name of the file to save.
+
+        Returns:
+        None
+    """
     fig.savefig(filepath, dpi=300, facecolor=None)
     try:
         plt.close(fig)
@@ -343,20 +388,40 @@ def save_plot(fig, filepath, filename):
 
 
 def process_plot(fig, save_to, filename, return_fig=False, show=False):
+    """
+        Process and optionally save or show a Matplotlib figure.
+
+        Parameters:
+        - fig: matplotlib.figure.Figure
+            The figure to process.
+        - save_to: str or None
+            The directory where the figure should be saved. If None, the figure won't be saved.
+        - filename: str
+            The name of the file to save.
+        - return_fig: bool
+            Whether to return the figure in the result.
+        - show: bool
+            Whether to display the figure.
+
+        Returns:
+        - fig: matplotlib.figure.Figure (if return_fig=False)
+            The processed figure.
+        - save_to (if return_fig=True)
+        - filename (if return_fig=True)
+    """
     if show:
         plt.show()
     if hasattr(fig, 'patch'):
         fig.patch.set_visible(False)
 
     if return_fig:
-        res = fig, save_to, filename
+        return fig, save_to, filename
     else:
-        res = fig
         if save_to is not None:
             os.makedirs(save_to, exist_ok=True)
             filepath = os.path.join(save_to, filename)
             save_plot(fig, filepath, filename)
-    return res
+        return fig
 
 def prob_hist(vs, colors, labels, bins, ax, hist_type='plt.hist', kde=False, sns_kws={}, plot_fit=True, **kwargs):
     """
