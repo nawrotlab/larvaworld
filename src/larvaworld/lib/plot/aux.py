@@ -358,15 +358,48 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False):
             save_plot(fig, filepath, filename)
     return res
 
-def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},plot_fit=True, **kwargs) :
+def prob_hist(vs, colors, labels, bins, ax, hist_type='plt.hist', kde=False, sns_kws={}, plot_fit=True, **kwargs):
+    """
+    Create a probability histogram or distribution plot for multiple datasets.
+
+    Parameters:
+    - vs: list of arrays
+        List of datasets to plot.
+    - colors: list of str
+        List of colors for each dataset.
+    - labels: list of str
+        List of labels for the legend.
+    - bins: int or list
+        Number of bins or bin edges for the histogram.
+    - ax: Matplotlib axis object
+        The axis to plot on.
+    - hist_type: str ('plt.hist' or 'sns.hist')
+        Type of histogram to create (default: 'plt.hist').
+    - kde: bool
+        Whether to overlay a kernel density estimate (default: False).
+    - sns_kws: dict
+        Additional keyword arguments for Seaborn (default: {}).
+    - plot_fit: bool
+        Whether to plot a smoothed fit curve (default: True).
+    - **kwargs: keyword arguments
+        Additional keyword arguments for the histogram.
+
+    Returns:
+    None
+
+    Example usage:
+    fig, ax = plt.subplots()
+    prob_hist([data1, data2], ['blue', 'green'], ['Dataset 1', 'Dataset 2'], bins=20, ax=ax)
+    plt.show()
+    """
     for v, c, l in zip(vs, colors, labels):
-        ax_kws={'label':l, 'color':c}
-        if type == 'sns.hist':
-            sns_kws0 = {'kde': kde, 'stat': "probability", 'element': "step", 'fill': True, 'multiple': "layer",'shrink': 1}
+        ax_kws = {'label': l, 'color': c}
+        if hist_type == 'sns.hist':
+            sns_kws0 = {'kde': kde, 'stat': 'probability', 'element': 'step', 'fill': True, 'multiple': 'layer', 'shrink': 1}
             sns_kws0.update(sns_kws)
-            sns.histplot(v,  bins=bins, ax=ax, **ax_kws, **sns_kws0)
-        elif type == 'plt.hist':
-            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / float(len(v)), **ax_kws, **kwargs)
+            sns.histplot(v, bins=bins, ax=ax, **ax_kws, **sns_kws0)
+        elif hist_type == 'plt.hist':
+            y, x, patches = ax.hist(v, bins=bins, weights=np.ones_like(v) / len(v), **ax_kws, **kwargs)
             if plot_fit:
                 x = x[:-1] + (x[1] - x[0]) / 2
                 y_smooth = np.polyfit(x, y, 5)
@@ -374,27 +407,49 @@ def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},pl
                 ax.plot(x, poly_y, **ax_kws, linewidth=3)
 
 
-def single_boxplot(x,y,ax,data, hue=None, palette=None, color=None,
-                   annotation=True, show_ns=False,target_only=None,stripplot=True, **kwargs) :
-    kws = {
-        'x': x,
-        'y': y,
-        'ax': ax,
-        'palette': palette,
-        'color': color,
-        'hue': hue,
-        'data': data,
-    }
 
-    box_kws = {
-        'width': 0.8,
-        'fliersize': 3,
-        'whis': 1.5,
-        'linewidth': None
-    }
+
+def single_boxplot(x, y, ax, data, hue=None, palette=None, color=None,
+                   annotation=True, show_ns=False, target_only=None, stripplot=True, **kwargs):
+    """
+    Create a single boxplot with optional annotations and stripplot.
+
+    Parameters:
+    - x: str
+        Column name for the x-axis.
+    - y: str
+        Column name for the y-axis.
+    - ax: matplotlib.axes.Axes
+        The axes where the boxplot will be drawn.
+    - data: pandas.DataFrame
+        The data source.
+    - hue: str, optional
+        Grouping variable that will produce boxes with different colors.
+    - palette: str or dict, optional
+        Color palette to use for coloring the boxes.
+    - color: str, optional
+        Color for the boxes.
+    - annotation: bool, optional
+        Whether to annotate the plot with additional information.
+    - show_ns: bool, optional
+        Show notches on the boxes.
+    - target_only: str, optional
+        Filter the data to include only a specific target.
+    - stripplot: bool, optional
+        Whether to include a stripplot alongside the boxplot.
+    - **kwargs: keyword arguments
+        Additional keyword arguments to customize the boxplot.
+
+    Returns:
+    - None
+    """
+    kws = {'x': x, 'y': y, 'ax': ax, 'palette': palette, 'color': color, 'hue': hue, 'data': data}
+
+    box_kws = {'width': 0.8, 'fliersize': 3, 'whis': 1.5, 'linewidth': None}
     box_kws.update(kwargs)
+
     with sns.plotting_context('notebook', font_scale=1.4):
-        g1 = sns.boxplot(**kws, **box_kws)  # RUN PLOT
+        g1 = sns.boxplot(**kws, **box_kws)
         g1.set(xlabel=None)
         try:
             g1.get_legend().remove()
@@ -416,34 +471,49 @@ def single_boxplot(x,y,ax,data, hue=None, palette=None, color=None,
             g2.set(xlabel=None)
 
 
-def getNcolsNrows(N=None, Ncols=None, Nrows=None):
-    if N is not None:
-        if Nrows is None and Ncols is not None:
-            Nrows = int(np.ceil(N / Ncols))
-        elif Ncols is None and Nrows is not None:
-            Ncols = int(np.ceil(N / Nrows))
-        elif Ncols is None and Nrows is None:
-            Ncols = int(np.ceil(np.sqrt(N)))
-            Nrows = int(np.ceil(N / Ncols))
-    if Nrows is None:
-        Nrows = 1
-    if Ncols is None:
-        Ncols = 1
-    return Nrows, Ncols
 
 
+def configure_subplot_grid(N=None, wh=None, w=8, h=8, sharex=False, sharey=False, Ncols=None, Nrows=None, Nrows_coef=1, figsize=None, **kwargs):
+    """
+    Calculate the number of rows and columns for arranging N elements in a grid and configure subplot grid parameters.
 
+    Parameters:
+    - N: int or None
+        Total number of elements (optional).
+    - wh: float or None
+        Width and height for each subplot (optional).
+    - w: float
+        Width for each subplot when wh is not specified (default: 8).
+    - h: float
+        Height for each subplot when wh is not specified (default: 8).
+    - sharex: bool
+        Share the x-axis among subplots (default: False).
+    - sharey: bool
+        Share the y-axis among subplots (default: False).
+    - Ncols: int or None
+        Number of columns for the subplot grid (optional).
+    - Nrows: int or None
+        Number of rows for the subplot grid (optional).
+    - Nrows_coef: int
+        Coefficient to adjust the number of rows (default: 1).
+    - figsize: tuple or None
+        Figure size (optional).
+    - **kwargs: keyword arguments
+        Additional keyword arguments to be passed to the subplot creation function.
 
-def NcolNrows(N=None, wh=None, w=8, h=8, sharex=False, sharey=False, Ncols=None, Nrows=None,Nrows_coef=1, figsize=None,
-              **kwargs):
+    Returns:
+    - kws: dict
+        A dictionary of keyword arguments for configuring subplots.
+    """
+    def calculate_grid_dimensions(N, Ncols, Nrows):
+        if N:
+            Nrows, Ncols = Nrows or -(-N // Ncols), Ncols or -(-N // Nrows) if Nrows else (int(N**0.5), -(-N // int(N**0.5)))
+        return Nrows or 1, Ncols or 1
+
     if Nrows is not None:
-        Nrows*=Nrows_coef
-    Nrows, Ncols = getNcolsNrows(N=N, Ncols=Ncols, Nrows=Nrows)
-    if figsize is None:
-        if wh is not None:
-            w = wh
-            h = wh
-        figsize = (w * Ncols, h * Nrows)
+        Nrows *= Nrows_coef
+    Nrows, Ncols = calculate_grid_dimensions(N, Ncols, Nrows)
+    figsize = figsize or (wh * Ncols, wh * Nrows) if wh else (w * Ncols, h * Nrows)
 
     kws = {
         'sharex': sharex,
@@ -454,6 +524,7 @@ def NcolNrows(N=None, wh=None, w=8, h=8, sharex=False, sharey=False, Ncols=None,
         **kwargs
     }
     return kws
+
 
 
 def define_end_ks(ks=None, mode='basic'):

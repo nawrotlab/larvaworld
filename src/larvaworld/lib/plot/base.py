@@ -62,7 +62,7 @@ class BasePlot:
                 else :
                     build_kws[k] = None
         build_kws['subplot_kw']=subplot_kw
-        return plot.NcolNrows(**build_kws)
+        return plot.configure_subplot_grid(**build_kws)
 
 
     def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15):
