@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib
 import pandas as pd
 # matplotlib.use('Agg')
-from matplotlib import pyplot as plt, patches, transforms, ticker
+from matplotlib import pyplot as plt, patches, transforms
 from scipy.stats import mannwhitneyu
 import warnings
 import seaborn as sns
@@ -15,36 +15,85 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 suf = 'pdf'
 
-
 def plot_quantiles(df, x=None, **kwargs):
+    """
+    Plot quantiles or confidence intervals along with the mean.
+
+    Parameters:
+    - df: numpy.ndarray, pandas.DataFrame, or pandas.Series
+        The data to compute quantiles from. If it's a numpy.ndarray,
+        quantiles are computed along the first axis (columns).
+        If it's a pandas.DataFrame or pandas.Series, quantiles are
+        computed grouped by the 'Step' level.
+    - x: numpy.ndarray, optional
+        The x-axis values for the plot. If None, a default range is used.
+    - **kwargs: keyword arguments
+        Additional keyword arguments to be passed to the plot_mean_and_range function.
+
+    Raises:
+    - Exception if the input data type is not recognized.
+
+    Example usage:
+    plot_quantiles(data_array, x_values, axis=plt.gca(), color_shading='blue', label='Data')
+    """
     if isinstance(df, np.ndarray):
-        df_m = np.nanquantile(df, q=0.5, axis=0)
-        df_u = np.nanquantile(df, q=0.75, axis=0)
-        df_b = np.nanquantile(df, q=0.25, axis=0)
+        mean = np.nanquantile(df, q=0.5, axis=0)
+        ub = np.nanquantile(df, q=0.75, axis=0)
+        lb = np.nanquantile(df, q=0.25, axis=0)
         if x is None:
-            x = np.arange(len(df_m))
+            x = np.arange(len(mean))
     elif isinstance(df, pd.DataFrame) or isinstance(df, pd.Series):
-        df_m = df.groupby(level='Step').quantile(q=0.5)
-        df_u = df.groupby(level='Step').quantile(q=0.75)
-        df_b = df.groupby(level='Step').quantile(q=0.25)
-    else :
-        raise
-    plot_mean_and_range(x=x, mean=df_m, lb=df_b, ub=df_u, **kwargs)
+        mean = df.groupby(level='Step').quantile(q=0.5)
+        ub = df.groupby(level='Step').quantile(q=0.75)
+        lb = df.groupby(level='Step').quantile(q=0.25)
+    else:
+        raise Exception("Input data type not recognized.")
+    plot_mean_and_range(x=x, mean=mean, lb=lb, ub=ub, **kwargs)
 
 
-def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None,linestyle='solid', linewidth=2):
-    if x.shape[0] > mean.shape[0]:
-        xx = x[:mean.shape[0]]
-    elif x.shape[0] == mean.shape[0]:
+def plot_mean_and_range(x, mean, lb, ub, axis, color_shading, color_mean=None, label=None, linestyle='solid', linewidth=2):
+    """
+    Plot the mean and a shaded range (quantiles or confidence intervals).
+
+    Parameters:
+    - x: numpy.ndarray
+        The x-axis values for the plot.
+    - mean: numpy.ndarray or pandas.Series
+        The mean values to be plotted.
+    - lb: numpy.ndarray or pandas.Series
+        The lower bound of the range.
+    - ub: numpy.ndarray or pandas.Series
+        The upper bound of the range.
+    - axis: matplotlib.axes.Axes
+        The axis where the plot will be drawn.
+    - color_shading: str
+        The color of the shaded range.
+    - color_mean: str, optional
+        The color of the mean line. If None, it will be set to color_shading.
+    - label: str, optional
+        The label for the legend.
+    - linestyle: str, optional
+        The line style for the mean line (e.g., 'solid', 'dashed').
+    - linewidth: int, optional
+        The line width for the mean line.
+
+    Example usage:
+    plot_mean_and_range(x_values, mean_values, lower_bound, upper_bound, plt.gca(), color_shading='blue', label='Mean and Range')
+    """
+    N = mean.shape[0]
+    if x.shape[0] > N:
+        xx = x[:N]
+    elif x.shape[0] == N:
         xx = x
+    else:
+        raise Exception("Incompatible input shapes.")
     if color_mean is None:
         color_mean = color_shading
-    # plot the shaded range of e.g. the confidence intervals
-    axis.fill_between(xx, ub, lb, color=color_shading, alpha=.2, zorder=0)
-    # plot the mean on top
-    axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10,linestyle=linestyle)
+    # Plot the shaded range (confidence intervals)
+    axis.fill_between(xx, ub, lb, color=color_shading, alpha=0.2, zorder=0)
+    # Plot the mean on top
+    axis.plot(xx, mean, color_mean, label=label, linewidth=linewidth, alpha=1.0, zorder=10, linestyle=linestyle)
 
-    # pass
 
 
 def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
@@ -225,7 +274,6 @@ def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs
     from statannotations.Annotator import Annotator
 
     subIDs0 = np.unique(data[x].values)
-    # print(subIDs0)
     if hue is not None:
         h1, h2 = np.unique(data[hue].values)
 
@@ -235,8 +283,6 @@ def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs
             dd = data[data[x] == subID]
             dd0 = dd[dd[hue] == h1][y].dropna().values.tolist()
             dd1 = dd[dd[hue] == h2][y].dropna().values.tolist()
-            # print(hue, subID)
-            # print(len(dd0),len(dd1))
             pvs.append(mannwhitneyu(dd0, dd1, alternative="two-sided").pvalue)
     else:
         if target_only is None:
@@ -272,7 +318,7 @@ def annotate_plot(data, x, y, hue=None, show_ns=True, target_only=None, **kwargs
 
 
 
-def dual_half_circle(center, radius, angle=0, ax=None, colors=('W', 'k'), **kwargs):
+def dual_half_circle(center, radius= 0.04, angle=90, ax=None, colors=('W', 'k'), **kwargs):
     """
     Add two half circles to the axes *ax* (or the current axes) with the
     specified facecolors *colors* rotated at *angle* (in degrees).
@@ -311,109 +357,6 @@ def process_plot(fig, save_to, filename, return_fig=False, show=False):
             filepath = os.path.join(save_to, filename)
             save_plot(fig, filepath, filename)
     return res
-
-
-# def scatter_hist(xs, ys, labels, colors, Nbins=40, xlabel=None, ylabel=None, cumylabel=None, ylim=None, fig=None,
-#                  cumy=False):
-#     ticksize = 15
-#     labelsize = 15
-#     labelsize2 = 20
-#     # definitions for the axes
-#     left, width = 0.15, 0.6
-#     bottom, height = 0.12, 0.4
-#     dh = 0.01
-#     # dw = 0.01
-#     h = 0.2
-#     if not cumy:
-#         height += h
-#     h1 = bottom + dh + h
-#     h2 = h1 + height + dh
-#     w1 = left + width + dh
-#
-#     y0, y1 = np.min([np.min(y) for y in ys]), np.max([np.max(y) for y in ys])
-#     ybins = np.linspace(y0, y1, Nbins)
-#     if ylim is None:
-#         ylim = (y0, y1)
-#     # ymax=0.4
-#     show_zero = True if ylim is not None and ylim[0] == -ylim[1] else False
-#     x0, x1 = np.min([np.min(x) for x in xs]), np.max([np.max(x) for x in xs])
-#     xbins = np.linspace(x0, x1, Nbins)
-#     dx = xbins[1] - xbins[0]
-#     xbin_mids = xbins[:-1] + dx / 2
-#
-#     rect_scatter = [left, h1, width, height]
-#     rect_cumy = [left, h2, width, 1.1 * h]
-#     rect_histy = [w1 + dh, h1, h, height]
-#     rect_histx = [left, bottom, width, h]
-#
-#     # start with a rectangular Figure
-#     if fig is None:
-#         fig = plt.figure(figsize=(10, 8))
-#     cc = {
-#         'left': True,
-#         'top': False,
-#         'bottom': True,
-#         'right': False,
-#         'labelsize': ticksize,
-#         'direction': 'in',
-#     }
-#     ax_scatter = plt.axes(rect_scatter)
-#     ax_scatter.tick_params(labelbottom=False, **cc)
-#     ax_histx = plt.axes(rect_histx)
-#     ax_histx.tick_params(**cc)
-#     ax_histy = plt.axes(rect_histy)
-#     ax_histy.tick_params(labelleft=False, **cc)
-#
-#     ax_scatter.set_xlim([x0, x1])
-#     ax_scatter.set_ylim(ylim)
-#     ax_histx.set_xlim(ax_scatter.get_xlim())
-#     ax_histy.set_ylim(ax_scatter.get_ylim())
-#     ax_histy.set_xlabel('pdf', fontsize=labelsize)
-#     if xlabel is not None:
-#         ax_histx.set_xlabel(xlabel, fontsize=labelsize2)
-#     if ylabel is not None:
-#         ax_scatter.set_ylabel(ylabel, fontsize=labelsize2)
-#
-#     if cumy:
-#         ax_cumy = plt.axes(rect_cumy)
-#         ax_cumy.tick_params(labelbottom=False, **cc)
-#         ax_cumy.set_xlim(ax_scatter.get_xlim())
-#     xmax_ps, ymax_ps = [], []
-#     for x, y, l, c in zip(xs, ys, labels, colors):
-#         ax_scatter.scatter(x, y, marker='.', color=c, alpha=1.0, label=l)
-#         if show_zero:
-#             ax_scatter.axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
-#
-#         yw = np.ones_like(y) / float(len(y))
-#         y_vs0, y_vs1, y_patches = ax_histy.hist(y, bins=ybins, weights=yw, color=c, alpha=0.5, orientation='horizontal')
-#
-#         y_vs1 = y_vs1[:-1] + (y_vs1[1] - y_vs1[0]) / 2
-#         y_smooth = np.polyfit(y_vs1, y_vs0, 5)
-#         poly_y = np.poly1d(y_smooth)(y_vs1)
-#         ax_histy.plot(poly_y, y_vs1, color=c, linewidth=2)
-#
-#         xw = np.ones_like(x) / float(len(x))
-#         x_vs0, x_vs1, x_patches = ax_histx.hist(x, bins=xbins, weights=xw, color=c, alpha=0.5)
-#         x_vs1 = x_vs1[:-1] + (x_vs1[1] - x_vs1[0]) / 2
-#         x_smooth = np.polyfit(x_vs1, x_vs0, 5)
-#         poly_x = np.poly1d(x_smooth)(x_vs1)
-#         ax_histx.plot(x_vs1, poly_x, color=c, linewidth=2)
-#
-#         xmax_ps.append(np.max(x_vs0))
-#         ymax_ps.append(np.max(y_vs0))
-#         ax_histx.set_ylabel('pdf', fontsize=labelsize)
-#         if cumy:
-#             xbinned_y = [y[(x0 <= x) & (x < x1)] for x0, x1 in zip(xbins[:-1], xbins[1:])]
-#             cum_y = np.array([np.sum(y) / len(y) for y in xbinned_y])
-#             ax_cumy.plot(xbin_mids, cum_y, color=c, alpha=0.5)
-#             if show_zero:
-#                 ax_cumy.axhline(0.0, color='green', alpha=0.5, linestyle='dashed', linewidth=1)
-#             if cumylabel is not None:
-#                 ax_cumy.set_ylabel(cumylabel, fontsize=labelsize)
-#     ax_histx.set_ylim([0.0, np.max(xmax_ps) + 0.05])
-#     ax_histy.set_xlim([0.0, np.max(ymax_ps) + 0.05])
-#     dataset_legend(labels, colors, ax=ax_scatter, loc='upper left', anchor=(1.0, 1.6) if cumy else None, fontsize=10)
-#     return fig
 
 def prob_hist(vs,colors, labels,bins,ax,type='plt.hist',kde=False, sns_kws={},plot_fit=True, **kwargs) :
     for v, c, l in zip(vs, colors, labels):

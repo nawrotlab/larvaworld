@@ -389,7 +389,7 @@ class AutoPlot(AutoBasePlot,LarvaDatasetCollection):
             rad = 0.04
             yy = 0.95 - coef * 0.08
             xx = 0.75
-            plot.dual_half_circle(center=(xx, yy), radius=rad, angle=90, ax=ax, colors=(c1, c2), transform=ax.transAxes)
+            plot.dual_half_circle(center=(xx, yy), radius=rad, ax=ax, colors=(c1, c2), transform=ax.transAxes)
             if pv == 0:
                 pvi = -9
             else:
