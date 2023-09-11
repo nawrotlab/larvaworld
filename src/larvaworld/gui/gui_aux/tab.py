@@ -2,6 +2,11 @@
 from larvaworld.lib import reg
 from larvaworld.gui.gui_aux.elements import GuiElement
 
+__all__ = [
+    'GuiTab',
+    'DrawTab'
+]
+
 class GuiTab(GuiElement):
     def __init__(self, name, gui, conftype=None, dtype=None):
         super().__init__(name)

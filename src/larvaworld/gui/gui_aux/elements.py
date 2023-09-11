@@ -19,6 +19,31 @@ import larvaworld
 from larvaworld.lib import reg, aux
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'SectionDict',
+    'SingleSpin',
+    'MultiSpin',
+    'GuiElement',
+    'ProgressBarLayout',
+    'HeadedElement',
+    'SelectionList',
+    'Header',
+    'NamedList',
+    'DataList',
+    'Collapsible',
+    'CollapsibleTable',
+    'PadDict',
+    'PadTable',
+    'Table',
+    'GraphList',
+    'ButtonGraphList',
+    'draw_canvas',
+    'DynamicGraph',
+    'GuiTreeData',
+    'detect_dataset',
+    'detect_dataset_in_subdirs',
+]
+
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'

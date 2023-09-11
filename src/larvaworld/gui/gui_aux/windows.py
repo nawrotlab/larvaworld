@@ -5,7 +5,18 @@ import PySimpleGUI as sg
 from larvaworld.gui import gui_aux
 from larvaworld.lib import reg, aux
 
-
+__all__ = [
+    'table_window',
+    'delete_objects_window',
+    'object_menu',
+    'save_conf_window',
+    'delete_conf_window',
+    'add_ref_window',
+    'save_ref_window',
+    'import_window',
+    'change_dataset_id',
+    'entry_window',
+]
 
 
 def table_window(data, pars_dict, title, return_layout=False):

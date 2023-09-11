@@ -4,6 +4,12 @@ import base64
 from PIL import Image
 from io import BytesIO
 
+
+__all__ = [
+    'png_to_b64',
+    'bs64_to_png',
+]
+
 def png_to_b64():
     # Base64 Encoder - encodes a folder of PNG files and creates a .py file with definitions
 

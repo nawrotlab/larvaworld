@@ -6,6 +6,13 @@ import PySimpleGUI as sg
 from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'button_row',
+    'GraphButton',
+    'BoolButton',
+    'ClickableImage',
+    'color_pick_layout',
+]
 
 sg.theme('LightGreen')
 b_kws = {

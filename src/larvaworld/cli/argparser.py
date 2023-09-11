@@ -6,6 +6,12 @@ import param
 from larvaworld.lib import reg, aux, sim
 
 
+__all__ = [
+    'SingleParserArgument',
+    'ParserArgumentDict',
+    'SimModeParser',
+    'update_larva_groups',
+]
 
 
 class SingleParserArgument:
