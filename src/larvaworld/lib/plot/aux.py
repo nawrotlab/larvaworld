@@ -1,14 +1,16 @@
 import itertools
 import os
-import numpy as np
+import warnings
+
 import matplotlib
+import numpy as np
 import pandas as pd
+import seaborn as sns
 # matplotlib.use('Agg')
 from matplotlib import pyplot as plt, patches, transforms
 from scipy.stats import mannwhitneyu
-import warnings
-import seaborn as sns
-from larvaworld.lib import reg, aux
+
+from larvaworld.lib import reg
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 

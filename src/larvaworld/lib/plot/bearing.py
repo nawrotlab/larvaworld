@@ -1,7 +1,7 @@
 import numpy as np
 
+from larvaworld.lib import reg, plot
 from larvaworld.lib.aux import nam
-from larvaworld.lib import reg, aux, plot
 
 
 @reg.funcs.graph('bearing/turn')

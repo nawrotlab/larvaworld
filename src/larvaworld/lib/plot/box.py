@@ -6,10 +6,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
 
-
 from larvaworld.lib import reg, aux, plot
-
-
 
 
 # @reg.funcs.graph('endpoint box')

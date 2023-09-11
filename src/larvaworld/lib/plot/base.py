@@ -4,12 +4,10 @@ import os
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from scipy.stats import ttest_ind
 from matplotlib import pyplot as plt, ticker, patches
 from matplotlib.gridspec import GridSpec
+from scipy.stats import ttest_ind
 
-import larvaworld
 from larvaworld.lib import reg, aux, plot
 from larvaworld.lib.process.dataset import LarvaDatasetCollection
 

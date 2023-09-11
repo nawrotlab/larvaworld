@@ -1,10 +1,8 @@
 import itertools
-import time
 
 import numpy as np
 from matplotlib.patches import Patch
 from scipy.stats import ttest_ind
-
 
 from larvaworld.lib import reg, aux, plot
 
