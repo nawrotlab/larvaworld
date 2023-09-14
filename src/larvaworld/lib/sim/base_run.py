@@ -4,6 +4,9 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.model import envs, agents
 from larvaworld.lib.sim import ABModel
 
+__all__ = [
+    'BaseRun',
+]
 
 class BaseRun(ABModel):
 

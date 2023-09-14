@@ -15,6 +15,11 @@ import pygame
 
 from larvaworld.lib import aux
 
+__all__ = [
+    'Viewer',
+    'ScreenBox',
+    'IDBox',
+]
 
 class ScreenWindowAreaPygame(ScreenWindowArea):
     caption = param.String('', doc='The caption of the screen window')

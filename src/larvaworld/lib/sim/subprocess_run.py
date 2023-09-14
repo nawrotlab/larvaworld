@@ -5,6 +5,10 @@ import larvaworld
 from larvaworld.lib import reg, aux, sim
 
 
+__all__ = [
+    'Exec',
+]
+
 class Exec:
     def __init__(self, mode, conf, run_externally=True, progressbar=None, w_progressbar=None, **kwargs):
         self.run_externally = run_externally

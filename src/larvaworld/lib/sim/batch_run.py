@@ -14,6 +14,9 @@ from larvaworld.lib.plot.scape import plot_heatmap_PI, plot_3d, plot_3pars, plot
 from larvaworld.lib.sim import ExpRun
 
 
+__all__ = [
+    'BatchRun',
+]
 
 
 class BatchRun(reg.SimConfiguration,ap.Experiment):

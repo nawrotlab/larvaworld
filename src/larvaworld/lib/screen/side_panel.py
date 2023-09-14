@@ -7,6 +7,9 @@ import pygame
 from larvaworld.lib import aux
 
 
+__all__ = [
+    'SidePanel',
+]
 
 class SidePanel:
     FONT_SIZE = 30

@@ -17,7 +17,14 @@ import pandas as pd
 from larvaworld.lib import reg, aux, plot, util
 
 
-
+__all__ = [
+    'EvalRun',
+    'eval_model_graphs',
+    'add_var_mIDs',
+    'adapt_6mIDs',
+    'adapt_3modules',
+    'modelConf_analysis',
+]
 
 class EvalDataConf(DataEvaluation):
 

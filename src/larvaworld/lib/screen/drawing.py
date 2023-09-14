@@ -13,6 +13,12 @@ from larvaworld.lib import reg, aux, screen
 from larvaworld.lib.screen import Viewer, SidePanel, ScreenMsgText, SimulationClock, SimulationScale, \
     SimulationState, ScreenTextBoxRect
 
+__all__ = [
+    'BaseScreenManager',
+    'GA_ScreenManager',
+    'ScreenManager',
+]
+
 
 class MediaDrawOps(NestedConf):
     image_mode = OptionalSelector(objects=['final', 'snapshots', 'overlap'],doc='When to save images.')

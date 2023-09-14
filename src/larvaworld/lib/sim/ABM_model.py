@@ -16,6 +16,10 @@ from larvaworld.lib.model import Object
 from larvaworld.lib import reg, aux
 from larvaworld.lib.param import SimOps
 
+__all__ = [
+    'BasicABModel',
+    'ABModel',
+]
 
 class BasicABModel(Object):
     '''

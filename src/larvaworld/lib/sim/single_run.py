@@ -12,6 +12,10 @@ from larvaworld.lib.model.envs.conditions import get_exp_condition
 from larvaworld.lib.sim.base_run import BaseRun
 import larvaworld
 
+__all__ = [
+    'ExpRun',
+]
+
 class ExpRun(BaseRun):
     def __init__(self,experiment=None,parameters=None, screen_kws={},parameter_dict={}, **kwargs):
         '''

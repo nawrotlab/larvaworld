@@ -12,6 +12,10 @@ from larvaworld.lib.screen import ScreenManager
 from larvaworld.lib.sim.base_run import BaseRun
 
 
+__all__ = [
+    'ReplayRun',
+]
+
 class ReplayRun(BaseRun):
     def __init__(self,parameters,  dataset=None, screen_kws={},**kwargs):
         '''
