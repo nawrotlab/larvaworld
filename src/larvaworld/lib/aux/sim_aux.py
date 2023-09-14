@@ -10,10 +10,14 @@ from typing import Optional, List
 from larvaworld.lib import aux
 
 __all__ = [
+    'LvsRtoggle',
+    'rearrange_contour',
     'get_tank_polygon',
+    'Collision',
     'generate_seg_shapes',
     'sense_food',
     'get_larva_dicts',
+    'get_step_slice',
     'index_unique',
 ]
 

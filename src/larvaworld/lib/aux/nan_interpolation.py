@@ -6,6 +6,7 @@ from scipy.signal import sosfiltfilt, butter
 __all__ = [
     'interpolate_nans',
     'parse_array_at_nans',
+    'apply_sos_filter_to_array_with_nans',
     'apply_filter_to_array_with_nans_multidim',
     'convex_hull',
 ]

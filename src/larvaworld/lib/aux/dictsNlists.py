@@ -9,9 +9,19 @@ import pandas as pd
 
 __all__ = [
     'AttrDict',
+    'load_dict',
+    'save_dict',
+    'merge_dicts',
+    'load_dicts',
+    'loadSoloDics',
+    'storeSoloDics',
+    'group_epoch_dicts',
+    'bidict',
     'SuperList',
     'existing_cols',
     'nonexisting_cols',
+    'cols_exist',
+    'flatten_list',
     'np2Dtotuples',
 ]
 
