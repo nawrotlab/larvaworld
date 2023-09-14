@@ -9,7 +9,11 @@ from larvaworld.lib.param.param_aux import vpar, get_vfunc
 
 
 __all__ = [
+    'init2mdict',
+    'gConf',
+    'get_ks',
     'LarvaworldParam',
+    'get_LarvaworldParam',
     'prepare_LarvaworldParam',
     'build_LarvaworldParam',
 ]

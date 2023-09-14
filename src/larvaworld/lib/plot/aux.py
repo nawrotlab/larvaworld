@@ -15,6 +15,7 @@ from larvaworld.lib import reg
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 __all__ = [
+    'suf',
     'plot_quantiles',
     'plot_mean_and_range',
     'circular_hist',

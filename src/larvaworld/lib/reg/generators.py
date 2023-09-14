@@ -6,9 +6,7 @@ from larvaworld.lib import reg, aux, util
 from larvaworld.lib.param import Area, NestedConf, Larva_Distro, ClassAttr, SimTimeOps, \
     SimMetricOps, ClassDict, EnrichConf, OptionalPositiveRange, OptionalSelector, OptionalPositiveInteger, \
     generate_xyNor_distro, Odor, Life, class_generator, SimOps, RuntimeOps, Epoch, RuntimeDataOps, RandomizedColor, \
-    OptionalPositiveNumber, Filesystem, TrackerOps, PreprocessConf
-
-
+    OptionalPositiveNumber, Filesystem, TrackerOps, PreprocessConf, Substrate
 
 __all__ = [
     'ConfType',
@@ -295,7 +293,7 @@ def resetConfs(conftypes=None, **kwargs):
         conf[conftype].reset(**kwargs)
 
 
-from larvaworld.lib.model import Food, Border, WindScape, ThermoScape, FoodGrid, Substrate, OdorScape, DiffusionValueLayer, GaussianValueLayer
+from larvaworld.lib.model import Food, Border, WindScape, ThermoScape, FoodGrid, OdorScape, DiffusionValueLayer, GaussianValueLayer
 
 gen=aux.AttrDict({
     'FoodGroup':class_generator(Food, mode='Group'),

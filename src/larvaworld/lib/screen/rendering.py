@@ -19,6 +19,12 @@ __all__ = [
     'Viewer',
     'ScreenBox',
     'IDBox',
+    'LabelledGroupedObject',
+    'ScreenTextBoxRect',
+    'ScreenMsgText',
+    'SimulationClock',
+    'SimulationScale',
+    'SimulationState',
 ]
 
 class ScreenWindowAreaPygame(ScreenWindowArea):

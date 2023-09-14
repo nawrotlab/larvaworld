@@ -15,6 +15,7 @@ from larvaworld.lib.screen.rendering import ScreenTextBox
 __all__ = [
     'GridOverSpace',
     'ValueGrid',
+    'FoodGrid',
     'OdorScape',
     'GaussianValueLayer',
     'DiffusionValueLayer',
