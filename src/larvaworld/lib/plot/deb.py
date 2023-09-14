@@ -8,6 +8,12 @@ from scipy import signal
 
 from larvaworld.lib import reg, aux, plot
 
+__all__ = [
+    'plot_gut',
+    'plot_food_amount',
+    'plot_debs',
+    'plot_EEB_vs_food_quality',
+]
 
 @reg.funcs.graph('gut')
 def plot_gut(**kwargs):

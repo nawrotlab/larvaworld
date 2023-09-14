@@ -6,6 +6,23 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, util
 
 
+__all__ = [
+    'register_bout_distros',
+    'detect_pauses',
+    'detect_epochs',
+    'detect_runs',
+    'detect_strides',
+    'detect_turns',
+    'weathervanesNheadcasts',
+    'comp_chunk_dicts',
+    'bout_distribution',
+    'bout_detection',
+    'compute_interference_data',
+    'turn_mode_annotation',
+    'turn_annotation',
+    'crawl_annotation',
+]
+
 def register_bout_distros(c,e):
     from larvaworld.lib.model.modules.intermitter import get_EEB_poly1d
     try:

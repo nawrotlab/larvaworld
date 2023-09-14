@@ -6,6 +6,13 @@ import param
 import larvaworld
 from larvaworld.lib import reg, aux, util
 
+__all__ = [
+    'Path',
+    'BaseType',
+    'StoredConfRegistry',
+    'imitation_exp',
+]
+
 Path = aux.AttrDict({k : f'{reg.CONF_DIR}/{k}.txt' for k in reg.CONFTYPES})
 
 

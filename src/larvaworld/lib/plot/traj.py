@@ -3,8 +3,21 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt, patches
 
-from larvaworld.lib.aux import nam, moving_average
+from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, plot
+
+__all__ = [
+    'traj_1group',
+    'traj_grouped',
+    'track_annotated',
+    'annotated_strideplot',
+    'annotated_turnplot',
+    'track_annotated_data',
+    'annotated_strideplot_data',
+    'annotated_turnplot_data',
+    'plot_marked_strides',
+    'plot_sample_tracks',
+]
 
 
 
@@ -137,7 +150,7 @@ def epoch_func(**kwargs):
                 aa2plot = a2plot
             else:
                 if moving_average_interval:
-                    a = moving_average(a, n=int(moving_average_interval / dt))
+                    a = aux.moving_average(a, n=int(moving_average_interval / dt))
                 aa2plot = a
 
             epochs, epochs0, ax_func = kws.func(a, trange, a2plot=a2plot, dt=dt, **kwargs)

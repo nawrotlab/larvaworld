@@ -16,6 +16,7 @@ __all__ = [
     'get_arena_bounds',
     'circle_to_polygon',
     'apply_per_level',
+    'moving_average',
     'unwrap_deg',
     'unwrap_rad',
     'rate',

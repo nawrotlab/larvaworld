@@ -4,6 +4,10 @@ from scipy.fft import fft, fftfreq
 
 from larvaworld.lib import reg, aux, plot
 
+__all__ = [
+    'plot_fft_multi',
+]
+
 #
 #
 # @reg.funcs.graph('fft', required={'ks':['v', 'fov']})

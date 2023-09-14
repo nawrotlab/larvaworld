@@ -11,6 +11,14 @@ from scipy.stats import ttest_ind
 from larvaworld.lib import reg, aux, plot
 from larvaworld.lib.process.dataset import LarvaDatasetCollection
 
+
+__all__ = [
+    'BasePlot',
+    'AutoBasePlot',
+    'AutoPlot',
+    'GridPlot',
+]
+
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
             'figure.titlesize': 25,

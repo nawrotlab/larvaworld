@@ -3,6 +3,15 @@ from matplotlib import collections as mc
 
 from larvaworld.lib import reg, aux, plot
 
+__all__ = [
+    'plot_ethogram',
+    'plot_nengo_network',
+    'timeplot',
+    'timeplots',
+    'plot_navigation_index',
+    'plot_pathlength',
+    'plot_dispersal',
+]
 
 @reg.funcs.graph('ethogram', required={'dicts':['chunk_dicts']})
 def plot_ethogram(subfolder='timeplots', **kwargs):

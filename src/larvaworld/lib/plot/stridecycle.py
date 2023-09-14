@@ -8,6 +8,14 @@ from larvaworld.lib import reg, aux, plot
 
 
 
+__all__ = [
+    'plot_vel_during_strides',
+    'stride_cycle',
+    'stride_cycle_all_points',
+    'plot_stride_Dbend',
+    'plot_stride_Dorient',
+    'plot_interference',
+]
 
 def plot_vel_during_strides(dataset, use_component=False, save_to=None, return_fig=False, show=False):
     chunk = 'stride'

@@ -8,6 +8,23 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
 from larvaworld.lib.param import XYops
 
+__all__ = [
+    'comp_spatial',
+    'comp_length',
+    'comp_centroid',
+    'store_spatial',
+    'spatial_processing',
+    'comp_dispersion',
+    'straightness_index',
+    'comp_straightness_index',
+    'comp_source_metrics',
+    'comp_wind',
+    'align_trajectories',
+    'fixate_larva',
+    'comp_PI',
+    'comp_dataPI',
+    'scale_to_length',
+]
 
 def comp_linear(s, e, c, mode='minimal'):
     assert isinstance(c, reg.DatasetConfig)

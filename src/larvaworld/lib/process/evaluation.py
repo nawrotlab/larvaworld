@@ -8,6 +8,18 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.param import NestedConf
 
 
+__all__ = [
+    'eval_end_fast',
+    'eval_distro_fast',
+    'eval_fast',
+    'RSS',
+    'RSS_dic',
+    'eval_RSS',
+    'col_df',
+    'Evaluation',
+    'DataEvaluation',
+]
+
 def eval_end_fast(ee, e_data, e_sym, mode='pooled'):
     E = {}
     for p, sym in e_sym.items():

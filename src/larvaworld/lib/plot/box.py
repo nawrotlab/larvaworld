@@ -8,6 +8,14 @@ from scipy.stats import ttest_ind
 
 from larvaworld.lib import reg, aux, plot
 
+__all__ = [
+    'boxplot',
+    'boxplot_PI',
+    'PIboxplot',
+    'boxplot_double_patch',
+    'plot_foraging',
+    'lineplot',
+]
 
 # @reg.funcs.graph('endpoint box')
 # def boxplots(name=None,mode='basic', ks=None, subfolder='endpoint',**kwargs):

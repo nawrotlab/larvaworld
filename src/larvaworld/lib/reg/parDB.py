@@ -19,6 +19,12 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib.aux.par_aux import tilde, circle, bar, wave, subsup, sub, sup, th, Delta, dot, circledast, omega, ddot, mathring, delta
 from larvaworld.lib import reg, aux, util
 
+
+__all__ = [
+    'ParamClass',
+    'ParamRegistry',
+]
+
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
 anot_type_keys = ['bout_detection', 'bout_distribution', 'interference', 'source_attraction', 'patch_residency']
 

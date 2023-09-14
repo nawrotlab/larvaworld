@@ -6,6 +6,19 @@ import larvaworld
 from larvaworld.lib import reg, aux
 from larvaworld.lib.aux import nam
 
+__all__ = [
+    'generate_larvae',
+    'sample_group',
+    'sampleRef',
+    'imitateRef',
+    'generate_agentGroup',
+    'generate_agentConfs',
+    'generate_sourceConfs',
+    'sim_model',
+    'sim_models',
+]
+
+
 SAMPLING_PARS = aux.bidict(
     aux.AttrDict(
         {

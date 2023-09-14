@@ -9,7 +9,20 @@ import seaborn as sns
 from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux, plot
 
-
+__all__ = [
+    'module_endpoint_hists',
+    'plot_ang_pars',
+    'plot_distros',
+    'plot_crawl_pars',
+    'plot_turn_amp_VS_Ypos',
+    'plot_turn_duration',
+    'plot_bout_ang_pars',
+    'plot_endpoint_scatter',
+    'plot_turns',
+    'plot_endpoint_hist',
+    'plot_endpoint_box',
+    'plot_endpoint_params',
+]
 
 @reg.funcs.graph('module hists')
 def module_endpoint_hists(mkey='crawler', mode='realistic',e=None, refID=None, Nbins=None, show_median=True, **kwargs):

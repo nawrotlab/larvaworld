@@ -7,7 +7,18 @@ import matplotlib.pyplot as plt
 
 from larvaworld.lib import reg, aux, plot,util
 
-
+__all__ = [
+    'calibration_plot',
+    'model_summary',
+    'velocity_definition',
+    'dsp_summary',
+    'RvsS_summary',
+    'DoublePatch_summary',
+    'chemo_summary',
+    'result_summary',
+    'model_sample_track',
+    'eval_summary',
+]
 
 
 

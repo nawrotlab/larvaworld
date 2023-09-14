@@ -5,6 +5,13 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib import reg, aux
 
 
+__all__ = [
+    'interpolate_nan_values',
+    'filter',
+    'rescale',
+    'exclude_rows',
+]
+
 @reg.funcs.preproc("interpolate_nans")
 def interpolate_nan_values(s, c,  **kwargs):
     assert isinstance(c, reg.DatasetConfig)

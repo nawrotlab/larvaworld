@@ -3,6 +3,10 @@ import pandas as pd
 
 from larvaworld.lib import aux
 
+__all__ = [
+    'df_from_csvs',
+    'match_larva_ids',
+]
 
 def df_from_csvs(pref,Npoints=11,Ncontour=0, max_Nagents=None, time_slice=None, min_duration_in_sec=0.0):
     t='t'

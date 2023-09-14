@@ -4,6 +4,15 @@ import pandas as pd
 from larvaworld.lib import reg, aux, plot, util
 
 
+__all__ = [
+    'modelConfTable',
+    'mtable',
+    'mpl_table',
+    'conf_table',
+    'mdiff_table',
+    'error_table',
+    'store_model_graphs',
+]
 
 @reg.funcs.graph('model table')
 def modelConfTable(mID, **kwargs):

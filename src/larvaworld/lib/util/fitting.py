@@ -5,7 +5,12 @@ from scipy.stats import levy, norm, rv_discrete, ks_2samp
 
 from larvaworld.lib import reg, aux
 
-
+__all__ = [
+    'fit_epochs',
+    'get_bout_distros',
+    'fit_bout_distros',
+    'BoutGenerator',
+]
 
 def get_logNpow(x, xmax, xmid, overlap=0, discrete=False):
     r = len(x[x < xmid]) / len(x)

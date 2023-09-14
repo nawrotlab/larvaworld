@@ -6,6 +6,11 @@ import scipy
 from larvaworld.lib.aux.par_aux import sub, subsup
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'generate_distro_database',
+]
+
+
 
 def powerlaw_cdf(x, xmin, alpha):
     return 1 - (x / xmin) ** (1 - alpha)

@@ -6,6 +6,12 @@ from scipy.stats import multivariate_normal
 
 from larvaworld.lib import reg, aux, plot
 
+__all__ = [
+    'plot_odorscape',
+    'odorscape_isocontours',
+    'odorscape_with_sample_tracks',
+    'plot_heatmap_PI',
+]
 
 def plot_surface(x, y, z, vars, target, z0=None, title=None, lims=None, azim=115, elev=15, **kwargs):
     P = plot.AutoBasePlot(name='3d_surface', dim3=True, azim=azim, elev=elev, **kwargs)

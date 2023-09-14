@@ -11,6 +11,13 @@ import param
 from larvaworld.lib import reg, aux
 from larvaworld.lib.param import ClassAttr, StepDataFrame, EndpointDataFrame, ClassDict
 
+__all__ = [
+    'ParamLarvaDataset',
+    'BaseLarvaDataset',
+    'LarvaDataset',
+    'LarvaDatasetCollection',
+    'convert_group_output_to_dataset',
+]
 
 class ParamLarvaDataset(param.Parameterized):
     config = ClassAttr(reg.DatasetConfig, doc='The dataset metadata')

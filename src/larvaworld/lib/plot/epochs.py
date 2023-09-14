@@ -7,7 +7,11 @@ from larvaworld.lib.aux import nam
 
 from larvaworld.lib import reg, aux, plot,util
 
-
+__all__ = [
+    'plot_single_bout',
+    'plot_bouts',
+    'plot_stridesNpauses',
+]
 
 def plot_single_bout(x0, discr, bout, color, label, ax, fit_dic=None, plot_fits='best',print_fits=False,
                      marker='.', legend_outside=False,xlabel = 'time (sec)',xlim=None, **kwargs):

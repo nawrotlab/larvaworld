@@ -1,6 +1,11 @@
 from larvaworld.lib import aux
 
 
+
+__all__ = [
+    'FunctionDict',
+]
+
 class FunctionDict:
     def __init__(self):
         self.graphs = aux.AttrDict()

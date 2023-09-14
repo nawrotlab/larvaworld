@@ -14,6 +14,25 @@ from larvaworld.lib import reg
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+__all__ = [
+    'plot_quantiles',
+    'plot_mean_and_range',
+    'circular_hist',
+    'circNarrow',
+    'confidence_ellipse',
+    'dataset_legend',
+    'label_diff',
+    'annotate_plot',
+    'dual_half_circle',
+    'annotate_plot',
+    'save_plot',
+    'process_plot',
+    'prob_hist',
+    'single_boxplot',
+    'configure_subplot_grid',
+    'define_end_ks',
+    'get_vs',
+]
 
 suf = 'pdf'
 

@@ -5,6 +5,13 @@ import scipy
 from larvaworld.lib import reg, aux
 
 
+__all__ = [
+    'comp_angular',
+    'angular_processing',
+    'comp_extrema_multi',
+    'comp_extrema_solo',
+]
+
 def comp_orientations(s, e, c, mode='minimal'):
     Np = c.Npoints
     if Np == 1:

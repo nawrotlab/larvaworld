@@ -6,6 +6,11 @@ import param
 from larvaworld.lib.aux.par_aux import sub, subsup, circle, bar, tilde, sup
 from larvaworld.lib import reg, aux, util
 
+
+__all__ = [
+    'ModelRegistry',
+]
+
 bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}
 
 

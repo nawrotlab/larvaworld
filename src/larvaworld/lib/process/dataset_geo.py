@@ -29,6 +29,10 @@ warnings.filterwarnings('ignore')
 # Initialize the larvaworld registry and load the sample dataset
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'GeoLarvaDataset',
+]
+
 class GeoLarvaDataset(BaseLarvaDataset,mpd.TrajectoryCollection):
     '''
     An alternative mode to maintain a dataset is this "trajectory" mode inheriting from "movingpandas.TrajectoryCollection"

@@ -7,6 +7,14 @@ from scipy.stats import ttest_ind
 from larvaworld.lib import reg, aux, plot
 
 
+
+__all__ = [
+    'error_barplot',
+    'intake_barplot',
+    'barplot',
+    'auto_barplot',
+]
+
 @reg.funcs.graph('error barplot', required={'args':['error_dict', 'evaluation']})
 def error_barplot(error_dict, evaluation, labels=None, name='error_barplots',
                   titles=[r'$\bf{endpoint}$ $\bf{metrics}$', r'$\bf{timeseries}$ $\bf{metrics}$'], **kwargs):

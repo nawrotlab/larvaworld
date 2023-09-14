@@ -8,6 +8,12 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.param.param_aux import vpar, get_vfunc
 
 
+__all__ = [
+    'LarvaworldParam',
+    'prepare_LarvaworldParam',
+    'build_LarvaworldParam',
+]
+
 def init2mdict(d0):
     def check(D0):
         D = {}

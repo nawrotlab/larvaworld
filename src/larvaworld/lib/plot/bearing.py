@@ -3,6 +3,11 @@ import numpy as np
 from larvaworld.lib import reg, plot
 from larvaworld.lib.aux import nam
 
+__all__ = [
+    'plot_turn_Dbearing',
+    'plot_turn_Dorient2center',
+    'plot_chunk_Dorient2source',
+]
 
 @reg.funcs.graph('bearing/turn')
 # @reg.funcs.graph('bearing/turn', required={'pars':lambda source_ID: aux.flatten_list([[nam.atStartStopChunk(p,c) for c in ['Lturn', 'Rturn']]for p in [nam.bearing_to(source_ID),nam.unwrap(nam.orient('front'))]])})

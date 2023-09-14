@@ -14,6 +14,13 @@ from larvaworld.lib.process.spatial import comp_centroid
 from larvaworld.lib.process.annotation import detect_strides, process_epochs
 
 
+__all__ = [
+    'vel_definition',
+    'comp_stride_variation',
+    'fit_metric_definition',
+    'comp_segmentation',
+]
+
 def vel_definition(d) :
     s, e, c = d.data
     assert isinstance(c,reg.DatasetConfig)

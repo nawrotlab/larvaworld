@@ -2,6 +2,13 @@ import numpy as np
 
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'comp_chunk_bearing',
+    'comp_patch_metrics',
+    'comp_bearing_to_source',
+    'comp_time_on_patch',
+]
+
 def comp_chunk_bearing(s, c, chunk, **kwargs):
 
     c0 = aux.nam.start(chunk)

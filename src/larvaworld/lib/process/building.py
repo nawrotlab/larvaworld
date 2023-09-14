@@ -15,6 +15,16 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib.process.build_aux import df_from_csvs, match_larva_ids
 
 
+__all__ = [
+    'build_Jovanic',
+    'build_Schleyer',
+    'build_Berni',
+    'build_Arguello',
+    'import_datasets',
+    'import_dataset',
+    'build_dataset',
+]
+
 def interpolate_step_data(df, dt):
     t = 't'
     step='Step'

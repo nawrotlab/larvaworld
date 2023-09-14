@@ -5,6 +5,11 @@ import seaborn as sns
 from larvaworld.lib import reg, aux, plot
 
 
+__all__ = [
+    'plot_segmentation_definition',
+    'plot_stride_variability',
+    'plot_correlated_pars',
+]
 
 def plot_segmentation_definition(subfolder='metric_definition', **kwargs):
     P = plot.AutoPlot(name=f'segmentation_definition', subfolder=subfolder,build_kws={'Nrows': 2, 'wh': 5}, **kwargs)
