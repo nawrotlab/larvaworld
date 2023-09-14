@@ -9,7 +9,13 @@ from typing import Optional, List
 
 from larvaworld.lib import aux
 
-
+__all__ = [
+    'get_tank_polygon',
+    'generate_seg_shapes',
+    'sense_food',
+    'get_larva_dicts',
+    'index_unique',
+]
 
 
 def LvsRtoggle(side):

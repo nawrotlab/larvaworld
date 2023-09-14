@@ -3,7 +3,10 @@ import random
 
 from shapely.geometry import LineString
 
-
+__all__ = [
+    'Cell',
+    'Maze',
+]
 
 class Cell:
     """A cell in the maze.

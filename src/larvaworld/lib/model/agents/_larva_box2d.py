@@ -6,6 +6,13 @@ from shapely import geometry
 from larvaworld.lib import aux, reg
 from larvaworld.lib.model import LarvaSim
 
+
+__all__ = [
+    'BaseSegment',
+    'Box2DSegment',
+    'LarvaBox2D',
+]
+
 class BaseSegment:
     def __init__(self, pos, orientation,color, base_seg_vertices,base_seg_ratio, body_length):
         self.color = color

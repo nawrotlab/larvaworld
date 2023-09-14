@@ -2,7 +2,19 @@ import random
 import matplotlib
 import numpy as np
 
-
+__all__ = [
+    'invert_color',
+    'random_colors',
+    'N_colors',
+    'colorname2tuple',
+    'colortuple2str',
+    'col_range',
+    'Color',
+    'combine_hex_values',
+    'mix2colors',
+    'scaled_velocity_to_col',
+    'angular_velocity_to_col',
+]
 
 def invert_color(col):
     if type(col) in [list, tuple] and len(col) == 3:
@@ -119,7 +131,7 @@ def combine_hex_values(d):
     dd={}
     for k, v in d.items():
         if type(k)==str:
-            k=colors.to_hex(k)
+            k=matplotlib.colors.to_hex(k)
         k=k.lstrip('#')
         dd[k]=v
     d_items = sorted(dd.items())

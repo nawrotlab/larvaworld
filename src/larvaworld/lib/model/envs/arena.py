@@ -7,7 +7,9 @@ from shapely.geometry import Point,Polygon
 from larvaworld.lib import aux
 from larvaworld.lib.param.drawable import ViewableNamedBoundedArea
 
-
+__all__ = [
+    'Arena',
+]
 
 class Arena(ViewableNamedBoundedArea, agentpy.Space):
     boundary_margin = param.Magnitude(0.96)

@@ -1,7 +1,10 @@
 from shapely import geometry
 import math
 
-
+__all__ = [
+    'segments_intersection',
+    'detect_nearest_obstacle',
+]
 
 
 def segments_intersection(segment_1, segment_2):

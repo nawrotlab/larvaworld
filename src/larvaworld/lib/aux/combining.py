@@ -3,6 +3,13 @@ from PyPDF2 import PdfFileMerger, PdfFileReader
 import numpy as np
 from PIL import Image
 
+__all__ = [
+    'combine_images',
+    'combine_videos_4to1',
+    'append_pdf',
+    'combine_pdfs',
+    'concat_files',
+]
 
 def combine_images(filenames=None, file_dir='.', save_as='combined_image.pdf', save_to='.', size=(1000, 1000),
                    figsize=None):

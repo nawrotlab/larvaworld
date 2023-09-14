@@ -9,6 +9,13 @@ from larvaworld.lib.model.agents import Source
 from larvaworld.lib.model.agents._agent import MobileAgent
 from larvaworld.lib.param import SegmentedBodySensored, Contour
 
+__all__ = [
+    'Larva',
+    'LarvaContoured',
+    'LarvaSegmented',
+    'LarvaMotile',
+]
+
 
 class Larva(MobileAgent):
     def __init__(self, model,unique_id=None, **kwargs):

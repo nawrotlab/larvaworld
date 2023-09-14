@@ -3,6 +3,10 @@ import itertools
 import numpy as np
 from larvaworld.lib import aux
 
+__all__ = [
+    'NamingRegistry',
+]
+
 def join(s, p, loc, c='_'):
     if loc == 'suf':
         return f'{p}{c}{s}'

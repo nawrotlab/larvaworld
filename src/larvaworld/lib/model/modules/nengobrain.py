@@ -11,6 +11,12 @@ from larvaworld.lib.model.modules.intermitter import NengoIntermitter
 from larvaworld.lib.model.modules.locomotor import Locomotor
 
 
+__all__ = [
+    'NengoBrain',
+    'NengoEffector',
+    'NengoLocomotor',
+]
+
 class NengoBrain(Network, Brain):
 
     def __init__(self, conf, agent=None, dt=None, **kwargs):

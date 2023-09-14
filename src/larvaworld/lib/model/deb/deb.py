@@ -26,6 +26,14 @@ Larvae were reared from egg-hatch to mid- third-instar (96±2h post-hatch) in 25
 '''
 
 
+
+__all__ = [
+    'DEB',
+    'deb_default',
+    'get_best_EEB',
+    'deb_sim',
+]
+
 class DEB(NestedConf):
     species = param.Selector(objects=['default', 'rover', 'sitter'],label='phenotype',
                              doc='The phenotype/species-specific fitted DEB model to use.') # Drosophila model by default

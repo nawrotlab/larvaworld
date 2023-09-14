@@ -4,6 +4,12 @@ from larvaworld.lib import aux
 from larvaworld.lib.param import Named
 
 
+__all__ = [
+    'Object',
+    'NamedObject',
+    'GroupedObject',
+]
+
 class Object:
     '''
         Basic Class for all Larvaworld model objects

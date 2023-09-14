@@ -12,6 +12,17 @@ from larvaworld.lib.param import Substrate, ClassAttr, PositiveNumber, Phase, Vi
 from larvaworld.lib.screen.rendering import ScreenTextBox
 
 
+__all__ = [
+    'GridOverSpace',
+    'ValueGrid',
+    'OdorScape',
+    'GaussianValueLayer',
+    'DiffusionValueLayer',
+    'WindScape',
+    'ThermoScape',
+    'create_odor_layers',
+]
+
 class SpatialEntity(Viewable,NamedObject):
     default_color = param.Color(default='white')
     visible = param.Boolean(default=False)

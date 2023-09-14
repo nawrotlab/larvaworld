@@ -5,6 +5,14 @@ from larvaworld.lib.param import OrientedPoint, RadiallyExtended, ClassAttr, Mob
 from larvaworld.lib.param.composition import Odor
 from larvaworld.lib.screen import LabelledGroupedObject
 
+__all__ = [
+    'NonSpatialAgent',
+    'PointAgent',
+    'OrientedAgent',
+    'MobilePointAgent',
+    'MobileAgent',
+]
+
 
 class NonSpatialAgent(LabelledGroupedObject):
     """

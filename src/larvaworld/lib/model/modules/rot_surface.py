@@ -3,6 +3,13 @@ import pygame
 
 from larvaworld.lib import aux
 
+
+__all__ = [
+    'RotSurface',
+    'RotTriangle',
+    'LightSource',
+]
+
 class RotSurface:
 
     def __init__(self, x, y, direction, surf, model=None):

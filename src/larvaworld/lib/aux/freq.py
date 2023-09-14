@@ -2,6 +2,11 @@ import numpy as np
 
 from larvaworld.lib.aux import nam
 
+__all__ = [
+    'fft_max',
+    'fft_freqs',
+    'get_freq',
+]
 
 def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
     """

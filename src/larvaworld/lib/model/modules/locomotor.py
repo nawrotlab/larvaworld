@@ -1,5 +1,10 @@
 from larvaworld.lib import reg
 
+__all__ = [
+    'Locomotor',
+    'DefaultLocomotor',
+]
+
 class Locomotor:
     def __init__(self, dt=0.1):
         self.crawler, self.turner, self.feeder, self.intermitter, self.interference = [None] * 5

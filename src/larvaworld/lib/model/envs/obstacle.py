@@ -9,6 +9,13 @@ from larvaworld.lib.model import NamedObject
 from larvaworld.lib.param import Contour
 
 
+__all__ = [
+    'Obstacle',
+    'Box',
+    'Wall',
+    'Border',
+]
+
 class Obstacle(NamedObject, Contour):
 
     def __init__(self,model,edges=None,**kwargs):

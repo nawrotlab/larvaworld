@@ -1,3 +1,9 @@
+
+__all__ = [
+    'MotorController',
+    'Actuator',
+]
+
 class MotorController:
 
     def __init__(self, sensor, coefficient, actuator, min_actuator_value):

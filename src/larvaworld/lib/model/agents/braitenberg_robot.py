@@ -5,6 +5,12 @@ import numpy as np
 from larvaworld.lib.model.modules.rot_surface import RotTriangle
 from larvaworld.lib import aux
 
+
+__all__ = [
+    'DifferentialDriveRobot',
+    'SensorDrivenRobot',
+]
+
 class DifferentialDriveRobot(RotTriangle):
 
     def __init__(self,  unique_id, model,x, y, length, wheel_radius):

@@ -5,6 +5,12 @@ from larvaworld.lib import aux
 from larvaworld.lib.model.modules.oscillator import Timer, Oscillator
 from larvaworld.lib.param import PositiveNumber
 
+__all__ = [
+    'Effector',
+    'StepEffector',
+    'StepOscillator',
+    'SinOscillator',
+]
 
 class Effector(Timer):
     input_noise = param.Magnitude(0.0, precedence=-3,label='input noise', doc='The noise applied at the input of the module.')

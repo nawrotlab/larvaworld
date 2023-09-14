@@ -7,6 +7,9 @@ from larvaworld.lib import aux
 from larvaworld.lib.model.modules.basic import Effector
 from larvaworld.lib.param import PositiveNumber, PositiveInteger
 
+__all__ = [
+    'NeuralOscillator',
+]
 
 class NeuralOscillator(Effector):
     base_activation = PositiveNumber(20.0,bounds=(10.0, 40.0),step=1.0,precedence=1, label='baseline activation', doc='The baseline activation of the oscillator.')

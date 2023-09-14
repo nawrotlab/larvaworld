@@ -6,6 +6,9 @@ from larvaworld.lib import aux
 
 
 
+__all__ = [
+    'LarvaOffline',
+]
 
 
 class LarvaOffline(LarvaRobot):

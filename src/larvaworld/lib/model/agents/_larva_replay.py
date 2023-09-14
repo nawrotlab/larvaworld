@@ -4,6 +4,12 @@ from larvaworld.lib import aux
 from larvaworld.lib.aux import nam
 from larvaworld.lib.model.agents._larva import Larva, LarvaContoured, LarvaSegmented
 
+__all__ = [
+    'LarvaReplay',
+    'LarvaReplayContoured',
+    'LarvaReplaySegmented',
+]
+
 
 class LarvaReplay(Larva):
     def __init__(self, data, **kwargs):

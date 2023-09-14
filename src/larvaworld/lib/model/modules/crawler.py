@@ -7,6 +7,13 @@ from larvaworld.lib.model.modules.basic import StepOscillator
 from larvaworld.lib.param import PositiveNumber, Phase
 
 
+__all__ = [
+    'StrideOscillator',
+    'GaussOscillator',
+    'SquareOscillator',
+    'PhaseOscillator',
+]
+
 class StrideOscillator(StepOscillator) :
     stride_dst_mean = PositiveNumber(0.23,softmax=1.0, step=0.01, label='stride distance mean', doc='The mean displacement achieved in a single peristaltic stride as a fraction of the body length.')
     stride_dst_std = PositiveNumber(0.04,softmax=1.0, step=0.01, label='stride distance std', doc='The standard deviation of the displacement achieved in a single peristaltic stride as a fraction of the body length.')

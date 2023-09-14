@@ -7,7 +7,7 @@ from io import BytesIO
 
 __all__ = [
     'png_to_b64',
-    'bs64_to_png',
+    'bs64_to_png'
 ]
 
 def png_to_b64():

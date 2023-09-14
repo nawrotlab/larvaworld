@@ -6,6 +6,14 @@ from larvaworld.lib.model.modules.basic import Effector
 from larvaworld.lib.param import PositiveNumber, RangeRobust
 
 
+__all__ = [
+    'Sensor',
+    'Olfactor',
+    'Toucher',
+    'WindSensor',
+    'Thermosensor',
+]
+
 class Sensor(Effector):
     output_range = RangeRobust((-1.0,1.0))
     perception = param.Selector(objects=['linear', 'log', 'null'], label='sensory transduction mode', doc='The method used to calculate the perceived sensory activation from the current and previous sensory input.')

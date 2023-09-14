@@ -5,6 +5,12 @@ from larvaworld.lib.model.modules.sensor2 import ProximitySensor
 from larvaworld.lib.param import RandomizedColor
 
 
+
+__all__ = [
+    'LarvaRobot',
+    'ObstacleLarvaRobot',
+]
+
 class LarvaRobot(LarvaSim):
     default_color = RandomizedColor(doc='The default color of the entity', instantiate=True)
 

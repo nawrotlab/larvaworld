@@ -3,6 +3,10 @@ import numpy as np
 from larvaworld.lib import reg, aux
 from larvaworld.lib.model import modules
 
+__all__ = [
+    'Brain',
+    'DefaultBrain',
+]
 
 class Brain:
     def __init__(self, agent=None, dt=None):

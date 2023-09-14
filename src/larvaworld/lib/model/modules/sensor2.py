@@ -8,6 +8,13 @@ from larvaworld.lib import aux
 from larvaworld.lib.model.modules.rot_surface import LightSource
 
 
+
+__all__ = [
+    'Sensor2',
+    'LightSensor',
+    'ProximitySensor',
+]
+
 class Sensor2:
 
     def __init__(self, robot, delta_direction, saturation_value, error):

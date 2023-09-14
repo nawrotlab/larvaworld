@@ -17,6 +17,12 @@ import socket
 import struct
 import json
 
+__all__ = [
+    'Message',
+    'Client',
+    'Server',
+]
+
 
 class IPCError(Exception):
     pass

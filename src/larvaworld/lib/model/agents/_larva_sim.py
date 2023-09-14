@@ -8,6 +8,10 @@ from larvaworld.lib import aux
 from larvaworld.lib.model import agents
 from larvaworld.lib.param import PositiveNumber
 
+__all__ = [
+    'BaseController',
+    'LarvaSim',
+]
 
 class BaseController(param.Parameterized):
     lin_vel_coef = PositiveNumber(1.0, doc='Coefficient for translational velocity')

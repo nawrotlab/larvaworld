@@ -12,6 +12,14 @@ from larvaworld.lib.ipc.ipc import Client
 from larvaworld.lib.model.modules.oscillator import Timer
 
 
+__all__ = [
+    'Memory',
+    'RLmemory',
+    'RLOlfMemory',
+    'RLTouchMemory',
+    'RemoteBrianModelMemory',
+]
+
 class Memory(Timer):
     def __init__(self, brain, gain, update_dt=2, train_dur=30, **kwargs):
         super().__init__(**kwargs)

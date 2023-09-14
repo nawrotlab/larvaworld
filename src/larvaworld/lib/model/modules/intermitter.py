@@ -8,6 +8,16 @@ from larvaworld.lib import reg, aux, util
 from larvaworld.lib.aux import nam
 from larvaworld.lib.param import PositiveNumber, OptionalPositiveNumber
 
+__all__ = [
+    'Intermitter',
+    'OfflineIntermitter',
+    'NengoIntermitter',
+    'BranchIntermitter',
+    'FittedIntermitter',
+    'get_EEB_poly1d',
+    'get_EEB_time_fractions',
+]
+
 default_bout_distros=aux.AttrDict({'turn_dur': {'range': [0.25, 3.25], 'name': 'exponential', 'beta': 4.70099},
  'turn_amp': {'range': [0.00042, 305.7906],
   'name': 'lognormal',

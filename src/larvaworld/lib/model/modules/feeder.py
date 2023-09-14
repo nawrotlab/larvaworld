@@ -3,6 +3,9 @@ import param
 from larvaworld.lib.model.modules.oscillator import Oscillator
 from larvaworld.lib.param import PositiveNumber
 
+__all__ = [
+    'Feeder',
+]
 
 class Feeder(Oscillator):
     freq = PositiveNumber(2.0,bounds =(1.0, 3.0))

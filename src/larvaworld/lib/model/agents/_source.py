@@ -5,6 +5,10 @@ from larvaworld.lib import aux
 from larvaworld.lib.model.agents import PointAgent
 from larvaworld.lib.param import xy_uniform_circle,Substrate, PositiveNumber, ClassAttr
 
+__all__ = [
+    'Source',
+    'Food',
+]
 
 class Source(PointAgent):
     can_be_carried = param.Boolean(False,label='carriable', doc='Whether the source can be carried around.')

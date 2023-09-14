@@ -4,6 +4,10 @@ import param
 from larvaworld.lib.param import PositiveNumber, NestedConf
 
 
+__all__ = [
+    'Gut',
+]
+
 class Gut(NestedConf):
     M_gm = PositiveNumber(10 ** -2, doc='gut capacity in C-moles for unit of gut volume')
     r_w2l = param.Magnitude(0.2, doc='body width to length ratio')

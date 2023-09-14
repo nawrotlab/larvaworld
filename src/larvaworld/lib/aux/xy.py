@@ -6,7 +6,26 @@ import scipy as sp
 from larvaworld.lib.aux import nam
 
 
+__all__ = [
+    'comp_bearing',
+    'compute_dispersal_multi',
+    'compute_component_velocity',
+    'compute_velocity_threshold',
+    'get_display_dims',
+    'get_window_dims',
+    'get_arena_bounds',
+    'circle_to_polygon',
+    'apply_per_level',
+    'unwrap_deg',
+    'unwrap_rad',
+    'rate',
+    'eudist',
+    'eudi5x',
+    'eudiNxN',
+    'compute_dst',
+    'comp_extrema',
 
+]
 
 def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     x0, y0 = loc

@@ -7,7 +7,13 @@ import typing
 
 import pandas as pd
 
-
+__all__ = [
+    'AttrDict',
+    'SuperList',
+    'existing_cols',
+    'nonexisting_cols',
+    'np2Dtotuples',
+]
 
 class AttrDict(dict):
     '''
@@ -320,29 +326,10 @@ def cols_exist(cols,df) :
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
-def group_list_by_n(l, n):
-    Nmore = int(len(l) % n)
-    N = int((len(l) - Nmore) / n)
-    g = [l[i * n:(i + 1) * n] for i in range(N)]
-    if Nmore != 0:
-        g.append(l[-Nmore:])
-    return g
 
 
 
-def unique_list(l):
-    if len(l) == 0:
-        return []
-    elif len(l) == 1:
-        return l
-    else:
-        seen = set()
-        seen_add = seen.add
-        return [x for x in l if not (x in seen or seen_add(x))]
 
-
-def checkEqual(L1, L2):
-    return len(L1) == len(L2) and sorted(L1) == sorted(L2)
 
 def np2Dtotuples(a):
     if isinstance(a, list) and all([isinstance(aa, tuple) for aa in a]):
