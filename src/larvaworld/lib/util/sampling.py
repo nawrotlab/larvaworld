@@ -264,7 +264,7 @@ lg=None,env_params={}, dir=None, duration=3, dt=1 / 16, color='blue', dataset_id
         dataset_id = mID
     if lg is None :
 
-        lg=reg.lg(id=dataset_id, c=color, sample=refID, mID=mID, N=Nids, expand=True, **kwargs)
+        lg=reg.config.lg(id=dataset_id, c=color, sample=refID, mID=mID, N=Nids, expand=True, **kwargs)
     # confs=generate_agentConfs(lg)
 
 

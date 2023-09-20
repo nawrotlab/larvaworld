@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 class ParamLarvaDataset(param.Parameterized):
-    config = ClassAttr(reg.DatasetConfig, doc='The dataset metadata')
+    config = ClassAttr(reg.generators.DatasetConfig, doc='The dataset metadata')
     step_data = StepDataFrame(doc='The timeseries data')
     endpoint_data = EndpointDataFrame(doc='The endpoint data')
     config2 = ClassDict(default=aux.AttrDict(), item_type=None, doc='Additional dataset metadata')
@@ -28,11 +28,11 @@ class ParamLarvaDataset(param.Parameterized):
     def __init__(self,**kwargs):
         if 'config' not in kwargs.keys():
             kws=aux.AttrDict()
-            for k in reg.DatasetConfig().param_keys:
+            for k in reg.generators.DatasetConfig().param_keys:
                 if k in kwargs.keys():
                     kws[k]=kwargs[k]
                     kwargs.pop(k)
-            kwargs['config']=reg.DatasetConfig(**kws)
+            kwargs['config']=reg.generators.DatasetConfig(**kws)
         assert 'config2' not in kwargs.keys()
 
         ks=list(kwargs.keys())
@@ -358,26 +358,12 @@ class BaseLarvaDataset(ParamLarvaDataset):
         if config is None:
             try:
                 config = reg.getRef(dir=dir, id=refID)
-                # config = reg.DatasetConfig(**config)
             except:
-            # if config is None:
                 config = self.generate_config(dir=dir, refID=refID, **kwargs)
-                # config = reg.DatasetConfig(dir=dir, refID=refID, **kwargs)
-        # else:
-        #     config = reg.DatasetConfig(**config)
+
 
         super().__init__(**config)
-        # c = self.config = config
-        # if c.dir is not None:
-        #     os.makedirs(c.dir, exist_ok=True)
-        #     os.makedirs(self.data_dir, exist_ok=True)
-        # try:
-        #     self.__dict__.update(c)
-        # except:
-        #     self.__dict__.update(c.nestedConf)
-        # self.epoch_dict = aux.AttrDict({'pause': None, 'run': None})
-        # self.larva_dicts = {}
-        # self.h5_kdic = h5_kdic(c.point, c.Npoints, c.Ncontour)
+
         if load_data:
             self.load()
         elif step is not None or end is not None:

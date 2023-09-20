@@ -136,7 +136,7 @@ def imitation_exp(refID, model='explorer', **kwargs):
 
 
     exp_conf = reg.get_null('Exp', sim_params=reg.get_null('sim_params', dt=c.dt, duration=c.duration),
-                            env_params=c.env_params, larva_groups=reg.full_lg(**kws),experiment='imitation',
+                            env_params=c.env_params, larva_groups=reg.generators.full_lg(**kws),experiment='imitation',
                             trials={}, enrichment=reg.gen.EnrichConf().nestedConf)
     exp_conf.update(**kwargs)
     return exp_conf

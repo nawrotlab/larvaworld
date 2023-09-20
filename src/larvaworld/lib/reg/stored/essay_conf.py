@@ -21,7 +21,7 @@ class Essay:
         self.enrichment = enrichment
         self.collections = collections
         if essay_id is None:
-            essay_id=f'{type}_{reg.next_idx(id=type, conftype="Essay")}'
+            essay_id=f'{type}_{reg.config.next_idx(id=type, conftype="Essay")}'
         self.essay_id = essay_id
         # self.path = f'essays/{type}/{self.essay_id}/data'
         self.path = f'{reg.SIM_DIR}/essays/{type}/{self.essay_id}'
@@ -98,7 +98,7 @@ class RvsS_Essay(Essay):
                              ).nestedConf
 
     def GTRvsS(self, **kwargs):
-        return reg.GTRvsS(expand=True, N=self.N, **kwargs)
+        return reg.generators.GTRvsS(expand=True, N=self.N, **kwargs)
 
     def pathlength_exp(self):
         dur = self.dur_pathlength
@@ -364,7 +364,7 @@ class DoublePatch_Essay(Essay):
         kws0 = {'N': self.N, 's': (0.005, 0.005),'sample': 'exploration.40controls',
                 'age': age,'epochs': {'0': reg.gen.Epoch(age_range=(0.0, age)).nestedConf}}
 
-        return reg.lgs(mIDs=self.mIDs,ids=['rover', 'sitter'],  cs=['blue', 'red'],**kws0)
+        return reg.config.lgs(mIDs=self.mIDs,ids=['rover', 'sitter'],  cs=['blue', 'red'],**kws0)
 
     # def get_sources(self, type='standard', q=1.0, Cpeak=2.0, Cscale=0.0002):
     #

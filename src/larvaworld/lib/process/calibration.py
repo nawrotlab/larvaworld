@@ -23,7 +23,7 @@ __all__ = [
 
 def vel_definition(d) :
     s, e, c = d.data
-    assert isinstance(c,reg.DatasetConfig)
+    assert isinstance(c,reg.generators.DatasetConfig)
     res_v = comp_stride_variation(s, e, c)
     res_fov = comp_segmentation(s, e, c)
     fit_metric_definition(str_var=res_v['stride_variability'], df_corr=res_fov['bend2or_correlation'], c=c)

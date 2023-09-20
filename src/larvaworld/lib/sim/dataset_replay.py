@@ -165,7 +165,7 @@ class ReplayRun(BaseRun):
         d.load(h5_ks=['contour', 'midline', 'angular'])
         c=d.config
 
-        assert isinstance(c, reg.DatasetConfig)
+        assert isinstance(c, reg.generators.DatasetConfig)
         # Group mode
         if p.track_point is not None:
             c.point_idx=p.track_point

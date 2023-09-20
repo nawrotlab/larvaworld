@@ -85,7 +85,7 @@ class SimTab(gui_aux.GuiTab):
         ks=reg.parDB.output_keys
         c['output'].update(w, dict(zip(ks, [True if k in conf['collections'] else False for k in ks])))
         sim = copy.deepcopy(conf['sim_params'])
-        sim.update({'sim_ID': f'{id}_{reg.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
+        sim.update({'sim_ID': f'{id}_{reg.config.next_idx(id=id, conftype="Exp")}', 'path': f'single_runs/{id}'})
         c['sim_params'].update(w, sim)
         c['trials'].update(w, reg.conf.Trial.getID(conf['trials']))
         self.draw_tab.set_env_db(env=reg.conf.Env.getID(conf.env_params), lg=conf['larva_groups'])

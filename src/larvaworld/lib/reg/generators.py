@@ -346,7 +346,7 @@ class SimConfiguration(RuntimeOps,SimMetricOps, SimOps):
         return f'{reg.SIM_DIR}/{self.runtype.lower()}_runs'
 
     def generate_id(self, runtype, exp):
-        idx = reg.next_idx(exp, conftype=runtype)
+        idx = reg.config.next_idx(exp, conftype=runtype)
         return f'{exp}_{idx}'
 
     # @ staticmethod

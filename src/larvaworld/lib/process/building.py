@@ -407,7 +407,7 @@ def build_dataset(labID, id, target_dir, group_id, N=None, sample=None,
         'load_data': False,
         'dir': target_dir,
         'id': id,
-        'larva_groups': reg.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs=epochs,age=age),
+        'larva_groups': reg.config.lg(id=group_id, c=color, sample=sample, mID= None, N=N,epochs=epochs,age=age),
         'env_params': g.env_params,
         **g.tracker
     }

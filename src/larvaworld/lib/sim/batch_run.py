@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class BatchRun(reg.SimConfiguration,ap.Experiment):
+class BatchRun(reg.generators.SimConfiguration,ap.Experiment):
     def __init__(self, experiment, space_search,id=None,space_kws={},optimization=None,
                  exp=None, exp_kws={}, store_data=False, **kwargs):
         '''
@@ -38,7 +38,7 @@ class BatchRun(reg.SimConfiguration,ap.Experiment):
             store_data: Whether to store batch-run results
             **kwargs: Arguments passed to parent class
         '''
-        reg.SimConfiguration.__init__(self, runtype='Batch',experiment=experiment, id=id,
+        reg.generators.SimConfiguration.__init__(self, runtype='Batch',experiment=experiment, id=id,
                                 store_data=store_data)
 
         # Define directories

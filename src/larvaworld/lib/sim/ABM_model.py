@@ -388,7 +388,7 @@ class BasicABModel(Object):
 
 
 
-class ABModel(BasicABModel,reg.SimConfigurationParams):
+class ABModel(BasicABModel,reg.generators.SimConfigurationParams):
 
     def __init__(self, **kwargs):
         '''
@@ -413,7 +413,7 @@ class ABModel(BasicABModel,reg.SimConfigurationParams):
             **kwargs: Arguments passed to the setup method
         '''
 
-        reg.SimConfigurationParams.__init__(self, **kwargs)
+        reg.generators.SimConfigurationParams.__init__(self, **kwargs)
         # self.initialize_superclasses(self.parameters)
         self.parameters.steps = self.Nsteps
         self.parameters.agentpy_output_kws = {'exp_name': self.experiment, 'exp_id': self.id,

@@ -27,7 +27,7 @@ __all__ = [
 ]
 
 def comp_linear(s, e, c, mode='minimal'):
-    assert isinstance(c, reg.DatasetConfig)
+    assert isinstance(c, reg.generators.DatasetConfig)
     points = c.midline_points
     if mode == 'full':
         reg.vprint(f'Computing linear distances, velocities and accelerations for {c.Npoints - 1} points')
@@ -208,7 +208,7 @@ def store_spatial(s, e, c, d=None):
 
 @reg.funcs.proc("spatial")
 def spatial_processing(s, e, c, d=None,mode='minimal', recompute=False, traj2origin=True, **kwargs):
-    assert isinstance(c, reg.DatasetConfig)
+    assert isinstance(c, reg.generators.DatasetConfig)
 
     comp_length(s, e, c, mode=mode, recompute=recompute)
     comp_centroid(s, c, recompute=recompute)
@@ -507,8 +507,8 @@ def comp_final_anemotaxis(s, e, c, **kwargs):
 
 @reg.funcs.preproc("transposition")
 def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transposition='origin', replace=True, **kwargs):
-    if not isinstance(c, reg.DatasetConfig):
-        c=reg.DatasetConfig(**c)
+    if not isinstance(c, reg.generators.DatasetConfig):
+        c=reg.generators.DatasetConfig(**c)
 
     if transposition in ['', None, np.nan]:
         return
@@ -569,8 +569,8 @@ def align_trajectories(s, c, d=None, track_point=None, arena_dims=None, transpos
 
 @reg.funcs.preproc("fixation")
 def fixate_larva(s, c, P1, P2=None):
-    if not isinstance(c, reg.DatasetConfig):
-        c = reg.DatasetConfig(**c)
+    if not isinstance(c, reg.generators.DatasetConfig):
+        c = reg.generators.DatasetConfig(**c)
 
 
 

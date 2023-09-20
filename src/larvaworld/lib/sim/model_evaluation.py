@@ -48,14 +48,11 @@ class EvalConf(EvalDataConf):
 
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        # mIDs = self.modelIDs
-        # dIDs=self.dataset_ids
-        # Nm=len(mIDs)
-        # self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs, cs=aux.N_colors(Nm), expand=True, N=self.N)
 
 
 
-class EvalRun(EvalConf, reg.SimConfiguration):
+
+class EvalRun(EvalConf, reg.generators.SimConfiguration):
 
 
 

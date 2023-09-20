@@ -14,7 +14,7 @@ __all__ = [
 
 @reg.funcs.preproc("interpolate_nans")
 def interpolate_nan_values(s, c,  **kwargs):
-    assert isinstance(c, reg.DatasetConfig)
+    assert isinstance(c, reg.generators.DatasetConfig)
     for p in c.all_xy.existing(s):
         for id in s.index.unique('AgentID').values:
             s.loc[(slice(None), id), p] = aux.interpolate_nans(s[p].xs(id, level='AgentID', drop_level=True).values)
@@ -23,7 +23,7 @@ def interpolate_nan_values(s, c,  **kwargs):
 
 @reg.funcs.preproc("filter_f")
 def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
-    assert isinstance(c, reg.DatasetConfig)
+    assert isinstance(c, reg.generators.DatasetConfig)
     if filter_f in ['', None, np.nan]:
         return
     if c.filtered_at is not None and not recompute:
@@ -41,7 +41,7 @@ def filter(s, c, filter_f=2.0, recompute=False, **kwargs):
 
 @reg.funcs.preproc("rescale_by")
 def rescale(s, e, c, recompute=False, rescale_by=1.0, **kwargs):
-    assert isinstance(c, reg.DatasetConfig)
+    assert isinstance(c, reg.generators.DatasetConfig)
     if rescale_by in ['', None, np.nan]:
         return
     if c.rescaled_by is not None and not recompute:

@@ -650,7 +650,7 @@ class DataList(NamedList):
             if len(v0) > 0:
                 if d0[kks[0]].config['refID'] is None:
                     gui_aux.save_ref_window(d0[kks[0]])
-                exp_conf = reg.imitation_exp(d0[kks[0]].config['refID'])
+                exp_conf = reg.config.imitation_exp(d0[kks[0]].config['refID'])
                 exp_conf.screen_kws['vis_kwargs'] = self.tab.gui.get_vis_kwargs(v)
                 self.tab.imitate(exp_conf)
         elif e == f'ADD_REF {n}':

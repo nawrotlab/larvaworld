@@ -1,7 +1,7 @@
 
 from . import lib, cli, gui
 
-lib.reg.resetConfs(init=True)
+lib.reg.generators.resetConfs(init=True)
 
 
 

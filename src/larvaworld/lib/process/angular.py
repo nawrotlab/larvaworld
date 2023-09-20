@@ -106,7 +106,7 @@ def comp_angular(s,e, c, pars=None, **kwargs):
 
 @reg.funcs.proc("angular")
 def angular_processing(s, e, c, d=None, recompute=False, mode='minimal', **kwargs):
-    assert isinstance(c, reg.DatasetConfig)
+    assert isinstance(c, reg.generators.DatasetConfig)
 
     fo, ro = aux.nam.orient(['front', 'rear'])
 
