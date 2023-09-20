@@ -4,8 +4,8 @@ from larvaworld.lib import reg, aux, plot
 
 
 __all__ = [
-    'graphs',
-    # 'GraphRegistry',
+    # 'graphs',
+    'GraphRegistry',
 ]
 
 
@@ -326,5 +326,5 @@ class GraphRegistry:
         })
         return d
 
-graphs = GraphRegistry()
+# graphs = GraphRegistry()
 

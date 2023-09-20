@@ -11,6 +11,7 @@ from larvaworld.lib.param import Area, NestedConf, Larva_Distro, ClassAttr, SimT
 __all__ = [
     'ConfType',
     'RefType',
+    'conf',
     'resetConfs',
     'gen',
     'SimConfiguration',

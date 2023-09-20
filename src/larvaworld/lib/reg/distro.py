@@ -7,7 +7,7 @@ from larvaworld.lib.aux.par_aux import sub, subsup
 from larvaworld.lib import reg, aux
 
 __all__ = [
-    'distro_database',
+    'generate_distro_database',
     'get_dist',
 ]
 
@@ -156,10 +156,10 @@ def generate_distro_database():
     })
     return d
 
-distro_database = generate_distro_database()
+# distro_database = generate_distro_database()
 
 
-def get_dist(k, k0='intermitter', v=None, return_tabrows=False, return_all=False, d0=distro_database):
+def get_dist(k, k0='intermitter', v=None, return_tabrows=False, return_all=False, d0=reg.distro_database):
 
     dict0 = {
         'stridechain_dist': ('exec length', ('N', 'R'), reg.units.dimensionless, '# $strides$'),

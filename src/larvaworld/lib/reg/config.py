@@ -12,7 +12,7 @@ __all__ = [
     'lgs',
     'lg',
     'next_idx',
-    'stored',
+    'StoredConfRegistry',
     'imitation_exp',
 ]
 
@@ -88,7 +88,7 @@ def lg(id=None, c='black', N=1, mode='uniform', sh='circle', loc=(0.0, 0.0), ors
     if o is not None:
         kws['odor'] = o
 
-    return stored.group.LarvaGroup.entry(id=id, **kws)
+    return reg.stored.group.LarvaGroup.entry(id=id, **kws)
 
 
 
@@ -142,5 +142,5 @@ def imitation_exp(refID, model='explorer', **kwargs):
     return exp_conf
 
 
-stored=StoredConfRegistry()
+# stored=StoredConfRegistry()
 

@@ -4,7 +4,7 @@ import os
 from larvaworld.lib import reg, aux
 
 __all__ = [
-    'controls',
+    'ControlRegistry',
 ]
 
 def get_pygame_key(key):
@@ -142,4 +142,4 @@ class ControlRegistry :
         return aux.AttrDict(c)
 
 
-controls=ControlRegistry()
+# controls=ControlRegistry()

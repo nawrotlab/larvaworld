@@ -1,5 +1,12 @@
 import os
 from os.path import dirname, abspath
+import warnings
+
+
+
+warnings.simplefilter(action='ignore')
+
+
 
 __all__ = [
     'VERBOSE',
@@ -12,12 +19,14 @@ __all__ = [
     'SIMTYPES',
     'CONFTYPES',
     'GROUPTYPES',
+    'units',
     'getPar',
     'get_null',
     'loadRef',
     'getRef',
     'loadRefGroup',
 ]
+
 
 
 VERBOSE =2
@@ -51,26 +60,39 @@ GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
 
 vprint("Initializing function registry")
-from .units import units
-from .facade import funcs
+from pint import UnitRegistry
+units = UnitRegistry()
+units.default_format = "~P"
+units.setup_matplotlib(True)
+
+
+
+from . import facade, keymap, distro, models, graph
+funcs=facade.FunctionDict()
+controls=keymap.ControlRegistry()
+distro_database = distro.generate_distro_database()
+
 from .parFunc import *
 from .stored import *
-from .distro import distro_database,get_dist
+
 
 vprint("Initializing parameter registry")
-from .parDB import output_keys, par
+from .parDB import output_keys, ParamRegistry
+par = ParamRegistry()
 
 vprint("Initializing configuration registry")
-from .config import Path,stored, lgs, lg, next_idx, imitation_exp
-
+from .config import Path, lgs, lg, next_idx, imitation_exp, StoredConfRegistry
+stored=StoredConfRegistry()
 from .generators import gen,GTRvsS,full_lg,ConfType, conf, resetConfs,LarvaGroup, ExpConf, FoodConf, DatasetConfig,SimConfiguration,SimConfigurationParams
-from .controls import controls
 
-vprint("Initializing model registry")
-from .models import model
 
-vprint("Initializing graph registry")
-from .graph import graphs
+# vprint("Initializing model registry")
+# from .models import ModelRegistry
+model = models.ModelRegistry()
+
+# vprint("Initializing graph registry")
+# from .graph import GraphRegistry
+graphs = graph.GraphRegistry()
 
 
 

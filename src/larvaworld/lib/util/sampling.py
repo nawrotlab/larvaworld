@@ -13,7 +13,7 @@ __all__ = [
     'imitateRef',
     'generate_agentGroup',
     'generate_agentConfs',
-    'generate_sourceConfs',
+    # 'generate_sourceConfs',
     'sim_model',
     'sim_models',
 ]
@@ -219,20 +219,20 @@ def generate_agentConfs(larva_groups, parameter_dict={}):
     return agent_confs
 
 
-def generate_sourceConfs(groups={}, units={}) :
-    from larvaworld.lib.param import generate_xy_distro
-
-    confs = []
-    for gID, gConf in groups.items():
-        ps = generate_xy_distro(**gConf.distribution)
-        gConf.pop('distribution')
-        for i, p in enumerate(ps):
-            conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
-            confs.append(conf)
-    for uID, uConf in units.items():
-        conf = {'unique_id': uID, **uConf}
-        confs.append(conf)
-    return confs
+# def generate_sourceConfs(groups={}, units={}) :
+#     from larvaworld.lib.param import generate_xy_distro
+#
+#     confs = []
+#     for gID, gConf in groups.items():
+#         ps = generate_xy_distro(**gConf.distribution)
+#         gConf.pop('distribution')
+#         for i, p in enumerate(ps):
+#             conf = {'unique_id': f'{gID}_{i}', 'pos': p, 'group': gID, **gConf}
+#             confs.append(conf)
+#     for uID, uConf in units.items():
+#         conf = {'unique_id': uID, **uConf}
+#         confs.append(conf)
+#     return confs
 
 
 def sim_models(mIDs, colors=None, dataset_ids=None,lgs=None, data_dir=None, **kwargs):

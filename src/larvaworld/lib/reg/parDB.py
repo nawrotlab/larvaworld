@@ -23,8 +23,7 @@ from larvaworld.lib import reg, aux, util
 __all__ = [
     'output_keys',
     'ParamClass',
-    'ParamClass',
-    'par',
+    'ParamRegistry',
 ]
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']
@@ -1751,6 +1750,9 @@ class ParamClass:
             in_deg = True
         elif b.u == reg.units.rad:
             in_deg = False
+        else:
+            raise
+
 
         kws = {
             'p': nam.unwrap(b.p),
@@ -2172,4 +2174,4 @@ class ParamRegistry:
             "end": self.output_reporters(ks=ks['end'], agents=agents),
         })
 
-par = ParamRegistry()
+# par = ParamRegistry()
