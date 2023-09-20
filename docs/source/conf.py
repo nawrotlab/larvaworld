@@ -96,9 +96,45 @@ autodoc_typehints = "description"
 import larvaworld
 #print(larvaworld.__path__)
 
+append_material = """
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+   :hidden:
+
+   about-examples.rst
+   examples/index
+
+"""
+
+extra = """
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development Guide
+   :hidden:
+
+   dev-guide/contributing
+   dev-guide/repo-structure
+   dev-guide/templates
+   dev-guide/snippets/index
+   dev-guide/resources
+
+"""
+
 from gendocs import Generator
 gen = Generator()
 gen.DocumentPackages(larvaworld,
                      index_base='../index_base.rst',
-                     showprivate=True
+                     showprivate=True,
+                     notify=False,
+                     intro_pages=[
+                         'readme_link',
+                         #'overview/getting-started',
+                         #'overview/featured',
+                         #'overview/agu-2018',
+                     ],
+                     # append_material=append_material,
+                     # extra=extra,
                     )

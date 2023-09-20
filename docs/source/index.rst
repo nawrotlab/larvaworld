@@ -28,10 +28,15 @@ environment and install ``larvaworld`` through pip:
     pip install larvaworld
 
 
+
+
+
+
 .. toctree::
    :hidden:
 
    self
+   readme_link
 
 
 
@@ -42,11 +47,3 @@ environment and install ``larvaworld`` through pip:
 
 
    content/larvaworld/index.rst
-
-.. admonition:: Docs Automatically Generated
-   :class: note
-
-   `Learn more`_ about automatic documentation
-
-.. _Learn more: https://gendocs.readthedocs.io/en/latest/
-
