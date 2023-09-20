@@ -38,26 +38,26 @@ def wrap_angle_to_0(angle: float, in_deg: bool = False) -> float:
 def angles_between_vectors(xy_front: np.ndarray, xy_mid: np.ndarray = None, xy_rear: np.ndarray = None,
                            in_deg: bool = True, wrap_to_0: bool = True) -> np.ndarray:
     """
-        Calculate the angles defined by 3 arrays of 2D points.
-        Each line of the 3 arrays defines a pair of vectors :
-            - front vector starting at the midpoint and ending at the frontpoint.
-            - rear vector starting at the rearpoint and ending at the midpoint.
+    Calculate the angles defined by 3 arrays of 2D points.
+    Each line of the 3 arrays defines a pair of vectors :
+        - front vector starting at the midpoint and ending at the frontpoint.
+        - rear vector starting at the rearpoint and ending at the midpoint.
 
-        Parameters:
-            xy_front (np.ndarray):
-                The coordinates of the frontpoints as an array of shape (N,2).
-            xy_mid (np.ndarray):
-                The coordinates of the midpoints as an array of shape (N,2). Defaults to array of (0,0) if not provided.
-            xy_rear (np.ndarray):
-                The coordinates of the rearpoints as an array of shape (N,2). Default to rear vectors parallel to the x-axis if not provided.
-            in_deg (bool):
-                If True, the angle is returned in degrees.
-            wrap_to_0 (bool):
-                If True, the angle is normalized within a range (-lim,lim) where lim=π (180 if in_deg is True).
-                Otherwise, the angle is normalized within a range (0,2*lim)
+    Parameters:
+        xy_front (np.ndarray):
+            The coordinates of the frontpoints as an array of shape (N,2).
+        xy_mid (np.ndarray):
+            The coordinates of the midpoints as an array of shape (N,2). Defaults to array of (0,0) if not provided.
+        xy_rear (np.ndarray):
+            The coordinates of the rearpoints as an array of shape (N,2). Default to rear vectors parallel to the x-axis if not provided.
+        in_deg (bool):
+            If True, the angle is returned in degrees.
+        wrap_to_0 (bool):
+            If True, the angle is normalized within a range (-lim,lim) where lim=π (180 if in_deg is True).
+            Otherwise, the angle is normalized within a range (0,2*lim)
 
-        Returns:
-            np.ndarray: The array of pairwise angles of the front and rear vectors. Range [-π, π).
+    Returns:
+        np.ndarray: The array of pairwise angles of the front and rear vectors. Range [-π, π).
 
     """
     xy_front = xy_front.astype(float)

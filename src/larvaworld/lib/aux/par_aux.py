@@ -17,6 +17,7 @@ __all__ = [
     'circle',
     'mathring',
     'circledast',
+    'base_dtype',
 ]
 
 

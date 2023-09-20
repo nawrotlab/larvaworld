@@ -342,67 +342,148 @@ class EndpointDataFrame(DataFrameIndexed):
         DataFrameIndexed.__init__(self, levels = ['AgentID'], **params)
 
 
+#
+# class NestedConf(Parameterized):
+#
+#     def __init__(self,**kwargs):
+#         param_classes = self.param.objects()
+#         for k, p in param_classes.items():
+#             try:
+#                 if  k in kwargs.keys():
+#                     if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
+#                         kwargs[k] = p.class_(**kwargs[k])
+#                     elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk,vv in kwargs[k].items()):
+#                         kwargs[k] = p.class_({kk: p.item_type(**vv) for kk, vv in kwargs[k].items()})
+#             except :
+#                 pass
+#         super().__init__(**kwargs)
+#
+#
+#
+#
+#     @ property
+#     def nestedConf(self):
+#         d = aux.AttrDict(self.param.values())
+#         d.pop('name')
+#         for k, p in self.param.objects().items():
+#             if k in d and d[k] is not None :
+#
+#                 if type(p) == ClassAttr:
+#                     d[k] = d[k].nestedConf
+#                 elif type(p) == ClassDict:
+#                     d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
+#         return d
+#
+#     #@ property
+#     def entry(self, id=None):
+#         d=self.nestedConf
+#         if 'distribution' in d.keys():
+#             if 'group' in d.keys():
+#                 if id is not None:
+#                     d.group=id
+#                 elif d.group is not None:
+#                     id=d.group
+#             if 'model' in d.keys():
+#                 if id is None:
+#                     id=d.model
+#         elif 'unique_id' in d.keys():
+#             if id is None and d.unique_id is not None:
+#                 id=d.unique_id
+#                 d.pop('unique_id')
+#         assert id is not None
+#         return {id:d}
+#
+#     @property
+#     def param_keys(self):
+#         ks= list(self.param.objects().keys())
+#         return aux.SuperList([k for k in ks if k not in ['name']])
+#
+#
+#     def params_missing(self, d):
+#         ks=self.param_keys
+#         return aux.SuperList([k for k in ks if k not in d.keys()])
+
 
 class NestedConf(Parameterized):
+    """
+    A class for managing nested configuration parameters.
+    """
 
-    def __init__(self,**kwargs):
-        # for k in kwargs.keys():
-        #     p=self.class_type(k)
-        # print(self.name)
+    def __init__(self, **kwargs):
+        """
+        Initializes a NestedConf instance.
 
+        :param kwargs: Keyword arguments for configuring the instance.
+        """
         param_classes = self.param.objects()
         for k, p in param_classes.items():
             try:
-                if  k in kwargs.keys():
+                if k in kwargs.keys():
                     if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
                         kwargs[k] = p.class_(**kwargs[k])
-                    elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk,vv in kwargs[k].items()):
+                    elif type(p) == ClassDict and not all(isinstance(vv, p.item_type) for kk, vv in kwargs[k].items()):
                         kwargs[k] = p.class_({kk: p.item_type(**vv) for kk, vv in kwargs[k].items()})
-            except :
+            except:
                 pass
         super().__init__(**kwargs)
 
-
-
-
-    @ property
+    @property
     def nestedConf(self):
+        """
+        Generates a nested configuration dictionary.
+
+        :return: A nested configuration dictionary.
+        """
         d = aux.AttrDict(self.param.values())
         d.pop('name')
         for k, p in self.param.objects().items():
-            if k in d and d[k] is not None :
-
+            if k in d and d[k] is not None:
                 if type(p) == ClassAttr:
                     d[k] = d[k].nestedConf
                 elif type(p) == ClassDict:
                     d[k] = aux.AttrDict({kk: vv.nestedConf for kk, vv in d[k].items()})
         return d
 
-    #@ property
     def entry(self, id=None):
-        d=self.nestedConf
+        """
+        Creates an entry in the configuration.
+
+        :param id: The identifier for the entry.
+        :return: A dictionary containing the configuration entry.
+        """
+        d = self.nestedConf
         if 'distribution' in d.keys():
             if 'group' in d.keys():
                 if id is not None:
-                    d.group=id
+                    d.group = id
                 elif d.group is not None:
-                    id=d.group
+                    id = d.group
             if 'model' in d.keys():
                 if id is None:
-                    id=d.model
+                    id = d.model
         elif 'unique_id' in d.keys():
             if id is None and d.unique_id is not None:
-                id=d.unique_id
+                id = d.unique_id
                 d.pop('unique_id')
         assert id is not None
-        return {id:d}
+        return {id: d}
 
     @property
     def param_keys(self):
-        ks= list(self.param.objects().keys())
+        """
+        Retrieves a list of parameter keys.
+
+        :return: A list of parameter keys excluding 'name'.
+        """
+        ks = list(self.param.objects().keys())
         return aux.SuperList([k for k in ks if k not in ['name']])
 
-
     def params_missing(self, d):
-        ks=self.param_keys
+        """
+        Checks for missing parameters in the configuration.
+
+        :param d: The configuration dictionary to compare against.
+        :return: A list of missing parameter keys.
+        """
+        ks = self.param_keys
         return aux.SuperList([k for k in ks if k not in d.keys()])

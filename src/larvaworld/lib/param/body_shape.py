@@ -22,6 +22,10 @@ body_plans=aux.AttrDict({
 })
 
 class BodyContour(LineClosed):
+    '''
+    Body contour class
+
+    '''
     symmetry = param.Selector(objects=['bilateral', 'radial'], doc='The body symmetry.')
     guide_points=XYLine(doc='A list of 2d points outside the midline in order to generate the vertices')
     base_vertices = XYLine(doc='The list of 2d points')

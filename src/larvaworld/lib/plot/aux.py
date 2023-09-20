@@ -195,7 +195,33 @@ def circular_hist(ax, x, bins=16, density=True, offset=0, gaps=True, **kwargs):
 
 
 def circNarrow(ax, data, alpha, label, color, Nbins=16):
+    """
+    Create a circular histogram with an arrow indicator.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes._subplots.PolarAxesSubplot
+        Axis instance created with subplot_kw=dict(projection='polar').
+
+    data : array
+        Angles to plot, expected in units of radians.
+
+    alpha : float
+        The transparency of the circular histogram and arrow.
+
+    label : str
+        The label for the circular histogram.
+
+    color : str
+        The color of the circular histogram and arrow.
+
+    Nbins : int, optional
+        Defines the number of equal-width bins in the range. The default is 16.
+    """
+    # Create the circular histogram
     circular_hist(ax, data, bins=Nbins, alpha=alpha, label=label, color=color, offset=np.pi / 2)
+
+    # Create an arrow indicator
     arrow = patches.FancyArrowPatch((0, 0), (np.mean(data), 0.3), zorder=2, mutation_scale=30, alpha=alpha,
                                     facecolor=color, edgecolor='black', fill=True, linewidth=0.5)
     ax.add_patch(arrow)

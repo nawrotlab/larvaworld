@@ -6,9 +6,8 @@ from param import Selector,String, ListSelector, Magnitude, Boolean, List
 
 from larvaworld.lib import aux
 
-from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, IntegerRange, \
-    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, IntegerRangeOrdered, PositiveIntegerRangeOrdered, \
-    RandomizedColor, ClassDict
+from larvaworld.lib.param import OptionalPositiveNumber, OptionalSelector, PositiveInteger, \
+    OptionalPositiveInteger, ClassAttr, NestedConf, PositiveNumber, IntegerRangeOrdered, PositiveIntegerRangeOrdered
 
 
 __all__ = [
@@ -54,8 +53,6 @@ class FramerateOps(NestedConf):
         # raise
 
 class XYops(NestedConf):
-    # dt = PositiveNumber(0.1, softmax=1.0, step=0.01, label='tracker timestep',doc='The tracking timestep (inverse of tracking framerate) in seconds.')
-    # constant_framerate = Boolean(True, doc='Whether the tracking framerate is constant.')
     XY_unit = Selector(default='m', objects=['m', 'mm'], doc='The spatial unit of the XY coordinate data')
     Npoints = PositiveInteger(3, softmax=20, label='# midline 2D points',
                               doc='The number of points tracked along the larva midline.')
