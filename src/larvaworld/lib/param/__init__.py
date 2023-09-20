@@ -1,3 +1,6 @@
+"""
+Custom parameters and parameterized classes extending those existing in the param package
+"""
 
 from .custom import *
 from .xy_distro import *
@@ -12,3 +15,4 @@ from .grouped import *
 
 from .composition import *
 
+__displayname__ = 'Parameters'

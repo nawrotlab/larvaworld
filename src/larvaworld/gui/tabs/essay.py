@@ -64,7 +64,7 @@ class EssayTab(gui_aux.GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
-        from larvaworld.lib.reg.stored.essay_conf import RvsS_Essay, DoublePatch_Essay, Chemotaxis_Essay
+        from larvaworld.lib.reg.stored_confs.essay_conf import RvsS_Essay, DoublePatch_Essay, Chemotaxis_Essay
         type = self.current_ID(v)
         pars = c['Essay'].get_dict(v, w)
         kws = {

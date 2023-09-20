@@ -1,12 +1,13 @@
+"""
+This module sets up the larvaworld registry where most functions, classes and configurations are registered.
+It is initialized automatically when importing the package and serves as an accessible database for all functionalities
+"""
+
 import os
 from os.path import dirname, abspath
 import warnings
 
-
-
 warnings.simplefilter(action='ignore')
-
-
 
 __all__ = [
     'VERBOSE',
@@ -20,6 +21,13 @@ __all__ = [
     'CONFTYPES',
     'GROUPTYPES',
     'units',
+    'funcs',
+    'controls',
+    'distro_database',
+    'par',
+    'stored',
+    'model',
+    'graphs',
     'getPar',
     'get_null',
     'loadRef',
@@ -27,7 +35,7 @@ __all__ = [
     'loadRefGroup',
 ]
 
-
+__displayname__ = 'Registry'
 
 VERBOSE =2
 def vprint(text='', verbose=0):
@@ -35,8 +43,6 @@ def vprint(text='', verbose=0):
         print(text)
 vprint("Initializing larvaworld registry", 2)
 
-
-vprint("Initializing path registry", 0)
 
 ROOT_DIR = dirname(dirname(dirname(abspath(__file__))))
 DATA_DIR = f'{ROOT_DIR}/data'
@@ -48,10 +54,7 @@ CONF_DIR = f'{ROOT_DIR}/lib/reg/confDicts'
 os.makedirs(CONF_DIR, exist_ok=True)
 
 SIMTYPES=['Exp', 'Batch', 'Ga', 'Eval','Replay']
-
-CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Batch', 'Ga',
-                          'LabFormat', 'Trial', 'Life', 'Tree', 'Food']
-
+CONFTYPES = ['Ref', 'Model', 'ModelGroup', 'Env', 'Exp', 'ExpGroup', 'Batch', 'Ga', 'LabFormat', 'Trial', 'Life', 'Tree', 'Food']
 GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
 
@@ -65,19 +68,14 @@ units = UnitRegistry()
 units.default_format = "~P"
 units.setup_matplotlib(True)
 
-
-
-from . import facade, keymap, distro,parDB
+from . import facade, keymap, distro
 funcs=facade.FunctionDict()
 controls=keymap.ControlRegistry()
 distro_database = distro.generate_distro_database()
 
-from .parFunc import *
-from .stored import *
-
 
 vprint("Initializing parameter registry")
-# from . import parDB
+from . import parDB, parFunc, stored_confs
 par = parDB.ParamRegistry()
 
 vprint("Initializing configuration registry")

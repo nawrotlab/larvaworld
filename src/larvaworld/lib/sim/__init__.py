@@ -1,3 +1,7 @@
+"""
+Launchers of the diverse available simulation modes
+"""
+
 from .ABM_model import ABModel
 from .base_run import BaseRun
 from .dataset_replay import ReplayRun
@@ -14,3 +18,4 @@ from .batch_run import BatchRun
 # from .model_calibration import Calibration
 from .genetic_algorithm import GAlauncher
 
+__displayname__ = 'Simulation'

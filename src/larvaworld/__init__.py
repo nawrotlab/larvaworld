@@ -1,3 +1,7 @@
+"""
+Larvaworld : A Drosophila larva behavioral analysis and simulation platform
+"""
+
 
 from . import lib, cli, gui
 

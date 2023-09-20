@@ -8,7 +8,7 @@ __all__ = [
     'GroupedObject',
 ]
 
-__displayname__ = 'Basic Simulation Object'
+__displayname__ = 'Basic ABM class'
 
 class Object:
     """
