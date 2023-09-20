@@ -67,7 +67,7 @@ units.setup_matplotlib(True)
 
 
 
-from . import facade, keymap, distro, models, graph
+from . import facade, keymap, distro
 funcs=facade.FunctionDict()
 controls=keymap.ControlRegistry()
 distro_database = distro.generate_distro_database()
@@ -85,7 +85,7 @@ from .config import Path, lgs, lg, next_idx, imitation_exp, StoredConfRegistry
 stored=StoredConfRegistry()
 from .generators import gen,GTRvsS,full_lg,ConfType, conf, resetConfs,LarvaGroup, ExpConf, FoodConf, DatasetConfig,SimConfiguration,SimConfigurationParams
 
-
+from . import models, graph
 # vprint("Initializing model registry")
 # from .models import ModelRegistry
 model = models.ModelRegistry()
