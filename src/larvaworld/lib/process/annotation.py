@@ -287,14 +287,15 @@ def weathervanesNheadcasts(run_idx, pause_idx, turn_slices, Tamps):
     return wvane_min, wvane_max, cast_min, cast_max
 
 
-def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True,castsNweathervanes=True, **kwargs):
+def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True,turns=True,runs=True,castsNweathervanes=True, **kwargs):
     aux.fft_freqs(s, e, c)
-    turn_dict = turn_annotation(s, e, c)
-    crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr)
-    chunk_dicts = aux.AttrDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
-    if castsNweathervanes :
-        turn_mode_annotation(e, chunk_dicts)
-    return chunk_dicts
+    turn_dict = turn_annotation(s, e, c) if turns else None
+    crawl_dict = crawl_annotation(s, e, c, strides_enabled=strides_enabled, vel_thr=vel_thr) if runs else None
+    if turn_dict and crawl_dict:
+        chunk_dicts = aux.AttrDict({id: {**turn_dict[id], **crawl_dict[id]} for id in c.agent_ids})
+        if castsNweathervanes :
+            turn_mode_annotation(e, chunk_dicts)
+        return chunk_dicts
 
 @reg.funcs.annotation("bout_distribution")
 def bout_distribution(s, e, c, d, **kwargs) :
