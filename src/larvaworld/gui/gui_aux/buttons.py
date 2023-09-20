@@ -7,7 +7,9 @@ from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 
 __all__ = [
+    'b_kws',
     'button_row',
+    'named_bool_button',
     'GraphButton',
     'BoolButton',
     'ClickableImage',

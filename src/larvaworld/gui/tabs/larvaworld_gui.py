@@ -8,6 +8,11 @@ import pandas as pd
 from larvaworld.lib import reg
 from larvaworld.gui import gui_aux, tabs
 
+__all__ = [
+    'LarvaworldGui',
+    'check_togglesNcollapsibles',
+]
+
 def build_tab_dict():
     tab_dict = {
         'intro': (tabs.IntroTab, None, None, 'introduction'),

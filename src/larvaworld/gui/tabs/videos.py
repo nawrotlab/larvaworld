@@ -4,6 +4,9 @@ import PySimpleGUI as sg
 from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'VideoTab',
+]
 
 class VideoTab(gui_aux.GuiTab):
 

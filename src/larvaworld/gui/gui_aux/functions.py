@@ -1,5 +1,13 @@
 import PySimpleGUI as sg
 
+__all__ = [
+    'window_size',
+    'col_size',
+    'col_kws',
+    'b6_kws',
+    't_kws',
+]
+
 window_size = (2400, 1200)  #(1512,982)
 # window_size = sg.Window.get_screen_size() #(2400, 1200)
 
@@ -9,7 +17,7 @@ def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
         win_size = window_size
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
 
-
+'''
 w_list = 25
 w_kws = {
     'finalize': True,
@@ -24,30 +32,12 @@ w_kws = {
     'debugger_enabled': True,
     # 'border_depth': 4,
 }
-col_kws = {'vertical_alignment': 't', 'expand_x': False, 'expand_y': False}
-# b_kws = {'font': ('size', 6)}
-# b3_kws = {'font': ('size', 6),
-#           'size': (3, 1)}
-b6_kws = {'font': ('size', 6),
-          'size': (6, 1)}
-# b12_kws = {'font': ('size', 6),
-#            'size': (12, 1)}
-# spin_size = {'size': (4, 1)}
-tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
-           'tab_background_color': 'lightgrey'}
-
-
-
-
-def t_kws(w, h=1):
-    return {'size': (w, h)}
-
 
 def get_disp_name(name) -> str:
     n = "%s%s" % (name[0].upper(), name[1:])
     n = n.replace('_', ' ')
     return n
-
+    
 
 def retrieve_value(v, t):
     from typing import List, Tuple, Union, Type
@@ -128,6 +118,7 @@ def retrieve_value(v, t):
     else:
         vv = v
     return vv
+    
 
 
 # def retrieve_dict(dic, type_dic):
@@ -194,6 +185,31 @@ def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False):
             e = gui_row([e], x_frac=x_fracs[i], y_frac=y_fracs[i], as_pane=as_pane)
             l.append(e)
     return l
+
+'''
+
+col_kws = {'vertical_alignment': 't', 'expand_x': False, 'expand_y': False}
+# b_kws = {'font': ('size', 6)}
+# b3_kws = {'font': ('size', 6),
+#           'size': (3, 1)}
+b6_kws = {'font': ('size', 6),
+          'size': (6, 1)}
+# b12_kws = {'font': ('size', 6),
+#            'size': (12, 1)}
+# spin_size = {'size': (4, 1)}
+#tab_kws = {'font': ("Helvetica", 14, "normal"), 'selected_title_color': 'darkblue', 'title_color': 'grey',
+ #          'tab_background_color': 'lightgrey'}
+
+
+
+
+def t_kws(w, h=1):
+    return {'size': (w, h)}
+
+
+
+
+
 
 
 

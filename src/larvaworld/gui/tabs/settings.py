@@ -8,6 +8,10 @@ from larvaworld.gui import gui_aux
 
 import larvaworld.lib.aux.dictsNlists as dNl
 
+__all__ = [
+    'SettingsTab',
+]
+
 class SettingsTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

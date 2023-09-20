@@ -4,6 +4,17 @@ from larvaworld.lib import aux
 from larvaworld.lib.param import NestedConf, Named, RadiallyExtended, BoundedArea, LineExtended, LineClosed, \
     RandomizedColor, Grid
 
+__all__ = [
+    'Viewable',
+    'ViewableToggleable',
+    'ViewableNamed',
+    'ViewableLine',
+    'Contour',
+    'ViewableLine',
+    'ViewableNamedBoundedArea',
+    'ViewableNamedGrid',
+    'ViewableCircle',
+]
 
 class Viewable(NestedConf) :
     '''

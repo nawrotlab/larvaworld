@@ -4,6 +4,10 @@ from larvaworld.lib.param import NestedConf
 
 
 
+__all__ = [
+    'Named',
+    'Grouped',
+]
 
 
 class Named(NestedConf) :

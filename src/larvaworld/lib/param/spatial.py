@@ -8,6 +8,26 @@ from larvaworld.lib import aux
 from larvaworld.lib.param import NestedConf, PositiveNumber, RandomizedPhase, XYLine, \
     PositiveIntegerRange, PositiveRange, NumericTuple2DRobust, IntegerTuple2DRobust, RangeRobust
 
+__all__ = [
+    'Pos2D',
+    'Pos2DPixel',
+    'RadiallyExtended',
+    'OrientedPoint',
+    'MobilePoint',
+    'MobileVector',
+    'LineExtended',
+    'LineClosed',
+    'Area2D',
+    'Area2DPixel',
+    'Area',
+    'ScreenWindowAreaBasic',
+    'ScreenWindowAreaZoomable',
+    'ScreenWindowArea',
+    'BoundedArea',
+    'Grid',
+    'PosPixelRel2Point',
+    'PosPixelRel2Area',
+]
 
 class Pos2D(NestedConf):
     pos = NumericTuple2DRobust(doc='The xy spatial position coordinates')

@@ -2,6 +2,9 @@
 from larvaworld.lib import aux
 from larvaworld.lib.param import Larva_Distro, Spatial_Distro, ClassAttr, NestedConf
 
+__all__ = [
+    'class_generator',
+]
 
 def class_generator(A0, mode='Unit') :
     class A(NestedConf):

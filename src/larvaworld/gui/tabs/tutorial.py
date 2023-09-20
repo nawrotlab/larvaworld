@@ -5,6 +5,10 @@ import PySimpleGUI as sg
 from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'TutorialTab',
+]
+
 class TutorialTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

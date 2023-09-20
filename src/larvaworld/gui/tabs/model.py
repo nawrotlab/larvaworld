@@ -7,6 +7,10 @@ from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 from larvaworld.gui.tabs import DrawBodyTab
 
+__all__ = [
+    'ModelTab',
+]
+
 class ModelTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

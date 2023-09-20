@@ -8,6 +8,9 @@ pn.extension()
 from larvaworld.lib import reg, aux
 from larvaworld.lib.process.dataset import LarvaDatasetCollection
 
+__all__ = [
+    'TrackViewer',
+]
 
 class TrackViewer(LarvaDatasetCollection):
 

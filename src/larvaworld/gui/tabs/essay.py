@@ -4,6 +4,10 @@ import os
 from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'EssayTab',
+]
+
 class EssayTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

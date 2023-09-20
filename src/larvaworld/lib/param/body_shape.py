@@ -9,6 +9,13 @@ from larvaworld.lib import aux
 from larvaworld.lib.param import LineClosed, XYLine, PositiveInteger, PositiveNumber, MobilePoint, Viewable, \
     MobileVector
 
+__all__ = [
+    'BodyContour',
+    'SegmentedBody',
+    'SegmentedBodySensored',
+]
+
+
 body_plans=aux.AttrDict({
 'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],
 'zebrafish_larva': [(0.9, 0.25), (0.7, 0.25), (0.6, 0.005), (0.05, 0.005)]

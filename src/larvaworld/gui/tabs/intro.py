@@ -4,6 +4,10 @@ import PySimpleGUI as sg
 from larvaworld.lib import reg
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'IntroTab',
+]
+
 class IntroTab(gui_aux.GuiTab):
 
     def build(self):

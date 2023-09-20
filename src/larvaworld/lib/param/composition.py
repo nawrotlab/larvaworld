@@ -7,6 +7,15 @@ from larvaworld.lib.param import PositiveNumber, PositiveInteger, NestedConf, St
     OptionalPositiveRange, ClassAttr, ClassDict
 
 
+__all__ = [
+    'Compound',
+    'Substrate',
+    'substrate_dict',
+    'Odor',
+    'Epoch',
+    'Life',
+]
+
 class Compound(NestedConf):
     d=PositiveNumber(doc=f'density in g/cm**3')
     w=PositiveNumber(doc=f'molecular weight (g/mol)')

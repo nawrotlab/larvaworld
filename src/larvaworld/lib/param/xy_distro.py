@@ -4,6 +4,18 @@ import param
 from larvaworld.lib.param import NestedConf, PositiveInteger
 
 
+
+__all__ = [
+    'Spatial_Distro',
+    'Larva_Distro',
+    'xy_along_circle',
+    'xy_along_rect',
+    'xy_uniform_circle',
+    'xy_grid',
+    'generate_xy_distro',
+    'generate_xyNor_distro',
+]
+
 class Spatial_Distro(NestedConf):
     shape = param.Selector(objects=['circle', 'rect', 'oval', 'rectangular'], doc='The shape of the spatial distribution')
     mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],

@@ -4,6 +4,11 @@ from shapely import geometry
 
 from larvaworld.lib.process.spatial import comp_PI
 
+
+__all__ = [
+    'get_exp_condition',
+]
+
 def get_exp_condition(exp):
     d = {
         'PItrain_mini': PrefTrainCondition,

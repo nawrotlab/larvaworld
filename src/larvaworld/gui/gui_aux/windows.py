@@ -9,6 +9,8 @@ __all__ = [
     'table_window',
     'delete_objects_window',
     'object_menu',
+    'set_kwargs',
+    'set_agent_kwargs',
     'save_conf_window',
     'delete_conf_window',
     'add_ref_window',

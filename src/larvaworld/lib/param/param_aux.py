@@ -13,6 +13,12 @@ from param import Parameterized, Number,NumericTuple,Integer,Selector,String, Li
 
 from larvaworld.lib import aux
 
+__all__ = [
+    'get_vfunc',
+    'vpar',
+    'param_to_arg',
+]
+
 
 def param_dtype(parclass):
     func_dic = {

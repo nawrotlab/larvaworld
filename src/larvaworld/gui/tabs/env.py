@@ -1,5 +1,9 @@
 from larvaworld.gui import gui_aux
 
+__all__ = [
+    'EnvTab',
+]
+
 class EnvTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

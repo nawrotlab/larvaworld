@@ -9,6 +9,9 @@ from larvaworld.lib import reg, aux
 from larvaworld.gui import gui_aux
 from larvaworld.lib.param import generate_xy_distro
 
+__all__ = [
+    'DrawEnvTab',
+]
 
 class DrawEnvTab(gui_aux.DrawTab):
     def __init__(self,canvas_size = (800, 800), **kwargs):

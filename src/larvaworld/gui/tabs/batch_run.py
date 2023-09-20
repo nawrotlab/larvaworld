@@ -9,6 +9,10 @@ import larvaworld.lib.util.data_aux
 from larvaworld.gui import gui_aux
 from larvaworld.lib.plot.table import mpl_table
 
+__all__ = [
+    'BatchTab',
+]
+
 class BatchTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -3,6 +3,10 @@ import typing
 
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'par',
+    'par_dict',
+]
 
 def define_dv(dv, cur_dtype):
     if dv is None:

@@ -7,6 +7,10 @@ from larvaworld.lib import reg, aux, sim
 from larvaworld.gui import gui_aux
 from larvaworld.gui.tabs import DrawEnvTab, EnvTab
 
+__all__ = [
+    'SimTab',
+]
+
 class SimTab(gui_aux.GuiTab):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -60,8 +60,7 @@ def interpolate_step_data(df, dt):
     return df_new
 
 def build_Jovanic(dataset,  source_id,source_dir,
-                  max_Nagents=None, min_duration_in_sec=0.0,time_slice=None,
-                  match_ids=True,**kwargs):
+                  max_Nagents=None, min_duration_in_sec=0.0,time_slice=None, match_ids=True,**kwargs):
     d = dataset
 
     def init_endpoint_data(df, dt):
@@ -98,7 +97,7 @@ def build_Jovanic(dataset,  source_id,source_dir,
         e = init_endpoint_data(df=df, dt=d.dt)
 
     s = interpolate_step_data(df=df, dt=d.dt)
-    print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated ')
+    print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated.')
 
     return s, e
 
@@ -419,16 +418,9 @@ def build_dataset(labID, id, target_dir, group_id, N=None, sample=None,
         **kwargs
     }
 
-    # try:
-
     step, end = func_dict[labID](**kws0)
     d.set_data(step=step, end=end)
-    # print(f'***-- Dataset {d.id} created with {len(d.agent_ids)} larvae! -----')
     return d
-    # except:
-        # print(f'xxxxx Failed to create dataset {id}! -----')
-        # d.delete()
-        # return None
 
 
 

@@ -9,6 +9,10 @@ pn.extension()
 from larvaworld.lib import reg, aux, model, sim, screen
 from larvaworld.lib.param import SimOps
 
+__all__ = [
+    'ArenaViewer',
+]
+
 class ArenaViewer:
 
     def __init__(self, size=600, experiment='dish',**kwargs):

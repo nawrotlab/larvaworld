@@ -4,6 +4,12 @@ import pandas as pd
 from larvaworld.lib import reg
 
 
+__all__ = [
+    'tree_dict',
+    'pars_to_tree',
+    'multiconf_to_tree',
+]
+
 def tree_dict(d, parent_key='', sep='.'):
     cols = ['parent', 'key', 'text', 'values']
     entries = []

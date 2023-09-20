@@ -20,6 +20,9 @@ from larvaworld.lib import reg, aux
 from larvaworld.gui import gui_aux
 
 __all__ = [
+    'SYMBOL_UP',
+    'SYMBOL_DOWN',
+    'col_idx_dict',
     'SectionDict',
     'SingleSpin',
     'MultiSpin',
@@ -37,7 +40,6 @@ __all__ = [
     'Table',
     'GraphList',
     'ButtonGraphList',
-    'draw_canvas',
     'DynamicGraph',
     'GuiTreeData',
     'detect_dataset',
