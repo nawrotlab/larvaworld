@@ -1006,7 +1006,7 @@ def h5_kdic(p, N, Nc):
     def angular(N):
         Nangles = np.clip(N - 2, a_min=0, a_max=None)
         Nsegs = np.clip(N - 1, a_min=0, a_max=None)
-        ors = aux.nam.orient(aux.unique_list(['front', 'rear', 'head', 'tail'] + aux.nam.midline(Nsegs, type='seg')))
+        ors = aux.nam.orient(['front', 'rear', 'head', 'tail'] + aux.nam.midline(Nsegs, type='seg'))
         ang = ors + [f'angle{i}' for i in range(Nangles)] + ['bend']
         return aux.SuperList(ang + ang_pars(ang)).unique
 

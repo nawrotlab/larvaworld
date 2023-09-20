@@ -22,6 +22,7 @@ __all__ = [
     'nonexisting_cols',
     'cols_exist',
     'flatten_list',
+    'unique_list',
     'np2Dtotuples',
 ]
 
@@ -337,7 +338,15 @@ def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
 
-
+def unique_list(l):
+    if len(l) == 0:
+        return SuperList()
+    elif len(l) == 1:
+        return l
+    else:
+        seen = set()
+        seen_add = seen.add
+        return SuperList([x for x in l if not (x in seen or seen_add(x))])
 
 
 
