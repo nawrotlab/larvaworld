@@ -40,6 +40,8 @@ SAMPLING_PARS = aux.bidict(
 
 
 
+
+
 def get_sample_bout_distros(model, sample):
     def get_sample_bout_distros0(Im, bout_distros):
         dic = {
