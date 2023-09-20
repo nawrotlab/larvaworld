@@ -375,7 +375,7 @@ def import_dataset(labID, parent_dir=None, group_id=None,raw_folder=None,proc_fo
         print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
         if enrich_conf is None:
             enrich_conf=reg.gen.EnrichConf(proc_keys =[], anot_keys =[]).nestedConf
-        enrich_conf['pre_kws'] = g.preprocess
+        enrich_conf['pre_kws'] = g.preprocess.nestedConf
         d = d.enrich(**enrich_conf, is_last=False)
         if save_dataset:
             d.save(refID=refID)
