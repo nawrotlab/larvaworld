@@ -296,6 +296,8 @@ def comp_chunk_dicts(s, e, c, vel_thr=0.3, strides_enabled=True,turns=True,runs=
         if castsNweathervanes :
             turn_mode_annotation(e, chunk_dicts)
         return chunk_dicts
+    else:
+        return None
 
 @reg.funcs.annotation("bout_distribution")
 def bout_distribution(s, e, c, d, **kwargs) :
@@ -311,8 +313,10 @@ def bout_distribution(s, e, c, d, **kwargs) :
 
 @reg.funcs.annotation("bout_detection")
 def bout_detection(s, e, c, d, **kwargs):
-    d.chunk_dicts = comp_chunk_dicts(s, e, c, **kwargs)
-    d.store(d.chunk_dicts, 'chunk_dicts')
+    chunk_dicts = comp_chunk_dicts(s, e, c, **kwargs)
+    if chunk_dicts :
+        d.chunk_dicts =chunk_dicts
+        d.store(d.chunk_dicts, 'chunk_dicts')
     reg.vprint(f'Completed bout detection.',1)
 
 
