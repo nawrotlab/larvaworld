@@ -8,3 +8,12 @@ from . import lib, cli, gui
 # # from .cli.argparser import SimModeParser
 #
 lib.reg.resetConfs(init=True)
+
+
+
+__author__ = 'Panagiotis Sakagiannis'
+__license__ = 'GNU GENERAL PUBLIC LICENSE'
+__copyright__ = '2023, Panagiotis Sakagiannis'
+__version__ = '0.0.26'
+__displayname__ = 'larvaworld'
+__name__ = 'larvaworld'
