@@ -29,6 +29,8 @@ class BaseSegment:
 
     """
 
+    __displayname__ = 'Body segment'
+
     def __init__(self, pos, orientation,color, base_seg_vertices,base_seg_ratio, body_length):
         self.color = color
         self.pos = pos
@@ -100,6 +102,8 @@ class Box2DSegment(BaseSegment):
         get_world_facing_axis():
             Get the world-facing axis of the segment.
     """
+
+    __displayname__ = 'Box2D body segment'
 
     def __init__(self, space, physics_pars, **kwargs):
         super().__init__(**kwargs)
@@ -281,28 +285,10 @@ class Box2DSegment(BaseSegment):
 class LarvaBox2D(LarvaSim):
     """
     Box2D-based larva simulation.
-
-    Parameters
-    ----------
-    Box2D_params : dict
-        Parameters related to the Box2D simulation.
-    **kwargs : dict
-        Additional keyword arguments.
-
-    Attributes
-    ----------
-    segs : param.List
-        List of Box2DSegment objects.
-
-    Methods
-    -------
-    generate_segs
-        Generate the segments of the larva.
-    prepare_motion(lin, ang)
-        Prepare the larva for motion with given linear and angular velocities.
-    updated_by_Box2D
-        Update the larva simulation based on Box2D physics.
     """
+
+    __displayname__ = 'Box2D larva'
+
     segs = param.List(item_type=Box2DSegment, doc='The body segments.')
 
     def __init__(self, Box2D_params, **kwargs):

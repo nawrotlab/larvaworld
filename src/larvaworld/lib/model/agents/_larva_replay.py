@@ -29,6 +29,9 @@ class LarvaReplay(Larva):
     larva's position and orientation based on the provided data.
 
     """
+
+    __displayname__ = 'Replay larva'
+
     def __init__(self, data, **kwargs):
         self.data=data
         fo0=self.data.front_orientation[0]
@@ -112,6 +115,8 @@ class LarvaReplayContoured(LarvaReplay, LarvaContoured):
 
     """
 
+    __displayname__ = 'Contoured replay larva'
+
     def step(self):
         """
         Update the replay larva's position, orientation, and contour based on recorded data.
@@ -153,6 +158,8 @@ class LarvaReplaySegmented(LarvaReplay, LarvaSegmented):
     recorded data.
 
     """
+
+    __displayname__ = 'Segmented replay larva'
 
     def step(self):
         """

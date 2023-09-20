@@ -239,6 +239,8 @@ class LarvaSim(agents.LarvaMotile, BaseController):
         Position the larva's body based on translational and angular motion.
     """
 
+    __displayname__ = 'Simulated larva'
+
     def __init__(self, physics, Box2D_params, **kwargs):
         BaseController.__init__(self, **physics)
         agents.LarvaMotile.__init__(self,**kwargs)

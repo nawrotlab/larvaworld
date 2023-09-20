@@ -108,6 +108,8 @@ class Larva(MobileAgent):
 class LarvaContoured(Larva, Contour):
     """A larva surrounded by a contour."""
 
+    __displayname__ = 'Contoured larva'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -125,6 +127,8 @@ class LarvaContoured(Larva, Contour):
 
 class LarvaSegmented(Larva, SegmentedBodySensored):
     """A larva with a segmented body, possibly bearing sensors."""
+
+    __displayname__ = 'Segmented larva'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -156,6 +160,9 @@ class LarvaMotile(LarvaSegmented):
         life_history  (dict) : The life history of the larva. Defaults to None.
         **kwargs (dict) : Additional keyword arguments.
     """
+
+    __displayname__ = 'Behaving & growing larva'
+
     def __init__(self, brain, energetics, life_history,body, **kwargs):
         super().__init__(**body,**kwargs)
         self.carried_objects = []

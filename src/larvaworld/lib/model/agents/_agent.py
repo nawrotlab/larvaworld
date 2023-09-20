@@ -22,6 +22,8 @@ class NonSpatialAgent(LabelledGroupedObject):
 
     """
 
+    __displayname__ = 'Non-spatial agent'
+
     odor = ClassAttr(Odor, doc='The odor of the agent')
 
     @property
@@ -35,6 +37,8 @@ class PointAgent(RadiallyExtended, NonSpatialAgent):
     """ Agent with a point spatial representation.
     This agent class extends the NonSpatialAgent class and represents agents as points.
     """
+
+    __displayname__ = 'Point agent'
 
     def draw(self, v, filled=True):
         if self.odor.peak_value > 0:
@@ -58,6 +62,8 @@ class OrientedAgent(OrientedPoint, PointAgent):
     This agent class extends the PointAgent class and adds orientation to the agent.
     """
 
+    __displayname__ = 'Oriented agent'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -66,6 +72,8 @@ class MobilePointAgent(MobilePoint, PointAgent):
     This agent class extends the PointAgent class and adds mobility with point representation.
     """
 
+    __displayname__ = 'Mobile point agent'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -73,6 +81,8 @@ class MobileAgent(MobileVector, PointAgent):
     """ An agent represented in space as a mobile oriented vector.
     This agent class extends the PointAgent class and uses vector representation for mobility.
     """
+
+    __displayname__ = 'Mobile agent'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
