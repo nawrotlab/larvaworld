@@ -79,6 +79,6 @@ import larvaworld
 from gendocs import Generator
 gen = Generator()
 gen.DocumentPackages(larvaworld,
-                     #index_base='index.rst',
+                     index_base='../index_base.rst',
                      showprivate=True
                     )
