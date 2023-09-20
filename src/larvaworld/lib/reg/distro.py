@@ -156,10 +156,9 @@ def generate_distro_database():
     })
     return d
 
-# distro_database = generate_distro_database()
 
 
-def get_dist(k, k0='intermitter', v=None, return_tabrows=False, return_all=False, d0=reg.distro_database):
+def get_dist(k, k0='intermitter', v=None, return_tabrows=False, return_all=False):
 
     dict0 = {
         'stridechain_dist': ('exec length', ('N', 'R'), reg.units.dimensionless, '# $strides$'),
@@ -177,12 +176,12 @@ def get_dist(k, k0='intermitter', v=None, return_tabrows=False, return_all=False
          'v0': {'fit': True, 'name': None, 'range': None}}
 
     if return_tabrows:
-        dist_v = d0[v.name].lab_func(v)
+        dist_v = reg.distro_database[v.name].lab_func(v)
         vs1 = [k0, dispD, symD, dist_v, '-']
         vs2 = [k0, dispR, symR, v.range, uname]
         return vs1, vs2
     elif return_all:
-        pD = {'disp': dispD, 'k': kD, 'v0': None, 'vs': list(d0.keys()), 'sym': symD, 'dtype': str}
+        pD = {'disp': dispD, 'k': kD, 'v0': None, 'vs': list(reg.distro_database.keys()), 'sym': symD, 'dtype': str}
         pR = {'disp': dispR, 'k': kR, 'u_name': uname, 'u': u, 'sym': symR, 'v0': None, 'dtype': typing.Tuple[float]}
         return p, pD, pR
     else:
