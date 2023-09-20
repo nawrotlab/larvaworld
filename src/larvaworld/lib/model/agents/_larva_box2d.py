@@ -19,45 +19,16 @@ class BaseSegment:
     """
     Base segment of a larva.
 
-    Parameters
-    ----------
-    pos : tuple
-        The position of the segment.
-    orientation : float
-        The orientation of the segment.
-    color : tuple
-        The color of the segment.
-    base_seg_vertices : numpy.ndarray
-        The base segment vertices.
-    base_seg_ratio : float
-        The base segment ratio.
-    body_length : float
-        The length of the larva's body.
+    Args:
+        pos (tuple): The position of the segment.
+        orientation (float): The orientation of the segment.
+        color (tuple): The color of the segment.
+        base_seg_vertices (numpy.ndarray): The base segment vertices.
+        base_seg_ratio (float): The base segment ratio.
+        body_length (float): The length of the larva's body.
 
-    Attributes
-    ----------
-    color : tuple
-        The color of the segment.
-    pos : tuple
-        The position of the segment.
-    orientation : float
-        The orientation of the segment.
-    base_seg_vertices : numpy.ndarray
-        The base segment vertices.
-    base_local_rear_end : numpy.ndarray
-        The base local rear end of the segment.
-    base_local_front_end : numpy.ndarray
-        The base local front end of the segment.
-    base_seg_ratio : float
-        The base segment ratio.
-    body_length : float
-        The length of the larva's body.
-
-    Methods
-    -------
-    seg_vertices
-        Get the vertices of the segment.
     """
+
     def __init__(self, pos, orientation,color, base_seg_vertices,base_seg_ratio, body_length):
         self.color = color
         self.pos = pos
@@ -70,13 +41,11 @@ class BaseSegment:
 
     @property
     def seg_vertices(self):
-        """
-        Get the vertices of the segment.
+        """Get the vertices of the segment.
 
-        Returns
-        -------
-        numpy.ndarray
-            The vertices of the segment.
+        Returns:
+            numpy.ndarray:
+                The vertices of the segment.
         """
         return self.body_length * self.base_seg_vertices
 
@@ -85,49 +54,51 @@ class Box2DSegment(BaseSegment):
     """
     Box2D-based segment of a larva.
 
-    Parameters
-    ----------
-    space : Box2D.b2World
-        The Box2D world space.
-    physics_pars : dict
-        Parameters related to the physics simulation.
-    **kwargs : dict
-        Additional keyword arguments.
+    Args:
+        space (Box2D.b2World): The Box2D world space.
+        physics_pars (dict): Parameters related to the physics simulation.
+        **kwargs (dict): Additional keyword arguments.
 
-    Attributes
-    ----------
-    _body : Box2D.b2Body
-        The Box2D body associated with the segment.
 
-    Methods
-    -------
-    vertices
-        Get the world coordinates of the segment's vertices.
-    get_position
-        Get the world position of the segment.
-    set_position(position)
-        Set the world position of the segment.
-    get_orientation
-        Get the orientation of the segment.
-    set_orientation(orientation)
-        Set the orientation of the segment.
-    get_pose
-        Get the pose (position and orientation) of the segment.
-    set_linearvelocity(lin_vel, local=False)
-        Set the linear velocity of the segment.
-    get_angularvelocity
-        Get the angular velocity of the segment.
-    set_angularvelocity(ang_vel)
-        Set the angular velocity of the segment.
-    set_mass(mass)
-        Set the mass of the segment.
-    get_mass
-        Get the mass of the segment.
-    get_world_point(point)
-        Transform a local point to world coordinates.
-    get_world_facing_axis
-        Get the world-facing axis of the segment.
+    Methods:
+        vertices():
+            Get the world coordinates of the segment's vertices.
 
+        get_position():
+            Get the world position of the segment.
+
+        set_position(position):
+            Set the world position of the segment.
+
+        get_orientation():
+            Get the orientation of the segment.
+
+        set_orientation(orientation):
+            Set the orientation of the segment.
+
+        get_pose():
+            Get the pose (position and orientation) of the segment.
+
+        set_linearvelocity(lin_vel, local=False):
+            Set the linear velocity of the segment.
+
+        get_angularvelocity():
+            Get the angular velocity of the segment.
+
+        set_angularvelocity(ang_vel):
+            Set the angular velocity of the segment.
+
+        set_mass(mass):
+            Set the mass of the segment.
+
+        get_mass():
+            Get the mass of the segment.
+
+        get_world_point(point):
+            Transform a local point to world coordinates.
+
+        get_world_facing_axis():
+            Get the world-facing axis of the segment.
     """
 
     def __init__(self, space, physics_pars, **kwargs):

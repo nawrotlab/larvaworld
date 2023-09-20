@@ -15,27 +15,11 @@ __all__ = [
 __displayname__ = 'Agent'
 
 class NonSpatialAgent(LabelledGroupedObject):
-    """
-    Base class for LarvaworldAgent.
+    """An agent lacking spatial positioning in space.
 
-    This is the base class for all agent types in Larvaworld.
+    Args:
+        odor (dict) : An optional dictionary containing odor information of the agent.
 
-    Parameters
-    ----------
-    odor : dict, optional
-        An optional dictionary containing odor information of the agent.
-
-    Attributes
-    ----------
-    odor : Odor
-        The odor of the agent.
-    dt : float
-        The time step used for the model simulation.
-
-    Methods
-    -------
-    step()
-        Placeholder method for agent's step behavior.
     """
 
     odor = ClassAttr(Odor, doc='The odor of the agent')
@@ -48,17 +32,8 @@ class NonSpatialAgent(LabelledGroupedObject):
         pass
 
 class PointAgent(RadiallyExtended, NonSpatialAgent):
-    """
-    Agent with a point representation.
-
+    """ Agent with a point spatial representation.
     This agent class extends the NonSpatialAgent class and represents agents as points.
-
-    Methods
-    -------
-    draw(v, filled=True)
-        Draw the agent.
-    draw_selected(v, **kwargs)
-        Draw the selected agent.
     """
 
     def draw(self, v, filled=True):
@@ -79,46 +54,24 @@ class PointAgent(RadiallyExtended, NonSpatialAgent):
                       color=v.manager.selection_color, filled=False, width=0.0002)
 
 class OrientedAgent(OrientedPoint, PointAgent):
-    """
-    Agent with orientation.
-
+    """ An agent represented as an oriented point in space.
     This agent class extends the PointAgent class and adds orientation to the agent.
-
-    Methods
-    -------
-    __init__(**kwargs)
-        Initialize the OrientedAgent.
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 class MobilePointAgent(MobilePoint, PointAgent):
-    """
-    Mobile point agent.
-
+    """A mobile point agent.
     This agent class extends the PointAgent class and adds mobility with point representation.
-
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 class MobileAgent(MobileVector, PointAgent):
-    """
-    Mobile agent with vector representation.
-
+    """ An agent represented in space as a mobile oriented vector.
     This agent class extends the PointAgent class and uses vector representation for mobility.
-
-    Properties
-    ----------
-    last_orientation_vel : float
-        The last orientation velocity of the agent.
-    last_pos_vel : float
-        The last position velocity of the agent.
-    last_scaled_pos_vel : float
-        The last scaled position velocity of the agent.
-
     """
 
     def __init__(self, **kwargs):
@@ -126,12 +79,18 @@ class MobileAgent(MobileVector, PointAgent):
 
     @property
     def last_orientation_vel(self):
+        """The last angular velocity of the agent."""
+
         return self.last_delta_orientation / self.dt
 
     @property
     def last_pos_vel(self):
+        """The last translational velocity of the agent."""
+
         return self.last_delta_pos / self.dt
 
     @property
     def last_scaled_pos_vel(self):
+        """The last translational velocity of the agent, scaled to its vector length."""
+
         return self.last_delta_pos / self.length / self.dt

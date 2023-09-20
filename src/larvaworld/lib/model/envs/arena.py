@@ -12,12 +12,13 @@ __all__ = [
 ]
 
 class Arena(ViewableNamedBoundedArea, agentpy.Space):
+
     boundary_margin = param.Magnitude(0.96)
 
 
     def __init__(self, model=None,**kwargs):
         ViewableNamedBoundedArea.__init__(self, **kwargs)
-        self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.group_list_by_n(self.vertices, 2)]
+        self.edges = [[Point(x1,y1), Point(x2,y2)] for (x1,y1), (x2,y2) in aux.SuperList(self.vertices).in_pairs]
         if model is not None :
             agentpy.Space.__init__(self, model=model, torus=self.torus, shape=self.dims)
 

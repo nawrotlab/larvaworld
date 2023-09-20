@@ -1,3 +1,7 @@
+"""
+Agent classes for the agent-based-modeling simulations.
+"""
+
 from ._agent import PointAgent, OrientedAgent, MobileAgent
 
 
@@ -12,3 +16,4 @@ from .larva_offline import LarvaOffline
 # from .physics_controller import ManualController
 # from .Box2D_larva import Box2DController
 
+__displayname__ = 'Agents'

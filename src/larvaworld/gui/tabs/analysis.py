@@ -6,6 +6,7 @@ __all__ = [
 ]
 
 class AnalysisTab(gui_aux.GuiTab):
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
