@@ -45,6 +45,7 @@ extensions = [
     "sphinx.ext.autodoc",  # automatically generate documentation for modules
     "sphinx.ext.napoleon",  # to read Google-style or Numpy-style docstrings
     "sphinx.ext.viewcode",  # to allow vieing the source code in the web page
+    'sphinx.ext.graphviz',
     "autodocsumm",  # to generate tables of functions, attributes, methods, etc.
 ]
 
