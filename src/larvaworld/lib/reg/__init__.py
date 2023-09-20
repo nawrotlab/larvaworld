@@ -67,7 +67,7 @@ units.setup_matplotlib(True)
 
 
 
-from . import facade, keymap, distro
+from . import facade, keymap, distro,parDB
 funcs=facade.FunctionDict()
 controls=keymap.ControlRegistry()
 distro_database = distro.generate_distro_database()
@@ -77,7 +77,7 @@ from .stored import *
 
 
 vprint("Initializing parameter registry")
-from . import parDB
+# from . import parDB
 par = parDB.ParamRegistry()
 
 vprint("Initializing configuration registry")
