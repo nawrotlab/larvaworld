@@ -338,7 +338,7 @@ def import_datasets(source_ids, ids=None, colors=None, refIDs=None, **kwargs):
     return ds
 
 
-def import_dataset(labID, parent_dir, group_id=None,group_dir=None, N=None, id=None, merged=False,
+def import_dataset(labID, parent_dir=None, group_id=None,source_dir=None,target_dir=None, N=None, id=None, merged=False,
                    refID=None, enrich_conf=None, **kwargs):
     print()
     print(f'----- Initializing {labID} format-specific dataset import. -----')
@@ -348,21 +348,24 @@ def import_dataset(labID, parent_dir, group_id=None,group_dir=None, N=None, id=N
     if group_id is None:
         group_id = parent_dir
 
+    g = reg.conf.LabFormat.get(labID)
+    if source_dir is None:
 
-
-    if group_dir is None:
-        g = reg.conf.LabFormat.get(labID)
         group_dir = g.path
-    raw_folder = f'{group_dir}/raw'
-    proc_folder = f'{group_dir}/processed'
-    source_dir = f'{raw_folder}/{parent_dir}'
+        raw_folder = f'{group_dir}/raw'
+        source_dir = f'{raw_folder}/{parent_dir}'
+    if target_dir is None:
+        group_dir = g.path
+        proc_folder = f'{group_dir}/processed'
+        target_dir = f'{proc_folder}/{group_id}/{id}'
+
     if merged:
         source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
     kws = {
         'labID': labID,
         'group_id': group_id,
         'Ν': N,
-        'target_dir': f'{proc_folder}/{group_id}/{id}',
+        'target_dir': target_dir,
         'source_dir': source_dir,
         'max_Nagents': N,
         **kwargs
