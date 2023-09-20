@@ -8,7 +8,8 @@ from larvaworld.lib import reg, aux, util
 
 
 __all__ = [
-    'ModelRegistry',
+    'model',
+    # 'ModelRegistry',
 ]
 
 bF, bT = {'dtype': bool, 'v0': False, 'v': False}, {'dtype': bool, 'v0': True, 'v': True}

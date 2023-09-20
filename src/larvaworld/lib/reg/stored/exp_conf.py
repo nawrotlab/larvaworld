@@ -3,6 +3,11 @@ import numpy as np
 
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'Exp_dict',
+    'ExpGroup_dict',
+]
+
 def grouped_exp_dic():
     from larvaworld.lib.reg import gen
 

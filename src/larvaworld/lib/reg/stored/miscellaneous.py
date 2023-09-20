@@ -1,6 +1,13 @@
 import numpy as np
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'Trial_dict',
+    'Life_dict',
+    'Tree_dict',
+    'Food_dict',
+]
+
 def trial_conf(durs=[], qs=[]):
     cumdurs = np.cumsum([0] + durs)
     return aux.AttrDict({i: reg.get_null('epoch', start=t0, stop=t1, substrate=reg.get_null('substrate', quality=q)) for i, (t0, t1, q) in

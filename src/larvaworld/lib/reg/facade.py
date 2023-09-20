@@ -3,7 +3,8 @@ from larvaworld.lib import aux
 
 
 __all__ = [
-    'FunctionDict',
+    # 'FunctionDict',
+   'funcs',
 ]
 
 class FunctionDict:

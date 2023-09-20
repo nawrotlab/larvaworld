@@ -21,8 +21,10 @@ from larvaworld.lib import reg, aux, util
 
 
 __all__ = [
+    'output_keys',
     'ParamClass',
-    'ParamRegistry',
+    'ParamClass',
+    'par',
 ]
 
 proc_type_keys = ['angular', 'spatial', 'source', 'dispersion', 'tortuosity', 'PI', 'wind']

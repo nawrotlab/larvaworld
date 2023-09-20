@@ -3,7 +3,9 @@ from matplotlib import colors
 
 from larvaworld.lib import reg, aux
 
-
+__all__ = [
+    'Env_dict',
+]
 
 @reg.funcs.stored_conf("Env")
 def Env_dict() :

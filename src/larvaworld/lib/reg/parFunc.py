@@ -7,6 +7,27 @@ from larvaworld.lib.aux import nam
 from larvaworld.lib.reg import funcs
 from larvaworld.lib import aux
 
+
+__all__ = [
+    'track_par_func',
+    'chunk_func',
+    'dsp_func',
+    'tor_func',
+    'mean_func',
+    'std_func',
+    'var_func',
+    'min_func',
+    'max_func',
+    'fin_func',
+    'init_func',
+    'cum_func',
+    'freq_func',
+    'tr_func',
+    'unwrap_func',
+    'dst_func',
+    'func_v_spatial',
+]
+
 @funcs.param("track_par")
 def track_par_func(chunk, par):
     def func(d):

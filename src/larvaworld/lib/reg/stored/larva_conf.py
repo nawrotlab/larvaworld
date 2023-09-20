@@ -7,6 +7,11 @@ import numpy as np
 
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'Model_dict',
+    'ModelGroup_dict',
+]
+
 OD1 = {'Odor': {'mean': 150.0, 'std': 0.0}}
 OD2 = {'CS': {'mean': 150.0, 'std': 0.0}, 'UCS': {'mean': 0.0, 'std': 0.0}}
 

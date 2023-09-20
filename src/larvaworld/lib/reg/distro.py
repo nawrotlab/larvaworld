@@ -7,7 +7,8 @@ from larvaworld.lib.aux.par_aux import sub, subsup
 from larvaworld.lib import reg, aux
 
 __all__ = [
-    'generate_distro_database',
+    'distro_database',
+    'get_dist',
 ]
 
 

@@ -2,6 +2,9 @@ import shutil
 
 from larvaworld.lib import reg, aux
 
+__all__ = [
+    'Essay_dict',
+]
 
 class Essay:
     def __init__(self, type,essay_id=None, N=5, enrichment=None, collections=['pose'], video=False, show=False,

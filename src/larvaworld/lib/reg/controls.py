@@ -4,7 +4,7 @@ import os
 from larvaworld.lib import reg, aux
 
 __all__ = [
-    'ControlRegistry',
+    'controls',
 ]
 
 def get_pygame_key(key):

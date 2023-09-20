@@ -6,7 +6,9 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 from larvaworld.lib import reg, aux
 
 
-
+__all__ = [
+    'Ga_dict',
+]
 
 
 def ga_conf(name, env,mkeys, scene='no_boxes', refID=None, fit_kws={},

@@ -6,6 +6,11 @@ from larvaworld.lib import reg, aux
 from larvaworld.lib.param import Resolution, Filesystem, TrackerOps, PreprocessConf
 
 
+__all__ = [
+    'LabFormat_dict',
+    'Ref_dict',
+]
+
 @reg.funcs.stored_conf("LabFormat")
 def LabFormat_dict():
     d={

@@ -1,5 +1,9 @@
 from larvaworld.lib import reg
 
+__all__ = [
+    'Batch_dict',
+]
+
 def batch(exp, proc=[], ss=None, ssbool=None, o=None, o_kws={}, as_entry=True, **kwargs):
     # if bm is None:
     #     bm_kws = {}

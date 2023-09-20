@@ -12,6 +12,16 @@ __all__ = [
     'ConfType',
     'RefType',
     'resetConfs',
+    'gen',
+    'SimConfiguration',
+    'SimConfigurationParams',
+    'FoodConf',
+    'EnvConf',
+    'LarvaGroup',
+    'LabFormat',
+    'ExpConf',
+    'full_lg',
+    'GTRvsS',
     'DatasetConfig',
 ]
 

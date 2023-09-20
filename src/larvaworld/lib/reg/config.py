@@ -9,7 +9,10 @@ from larvaworld.lib import reg, aux, util
 __all__ = [
     'Path',
     'BaseType',
-    'StoredConfRegistry',
+    'lgs',
+    'lg',
+    'next_idx',
+    'stored',
     'imitation_exp',
 ]
 
