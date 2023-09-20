@@ -1,4 +1,0 @@
-[cache]
-    dir = /home/panos/Science/git_repos/shared/dvc-cache
-    shared = group
-    type = symlink
