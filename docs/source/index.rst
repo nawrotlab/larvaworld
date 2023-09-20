@@ -15,7 +15,7 @@ The ``larvaworld`` Python package is a virtual lab
 for modeling and analysis of Drosophila larva behavior.
 
 This website hosts the documentation for the ``larvaworld`` Python package found
-on `GitHub`_ and `PyPI`_.
+on `GitHub  <https://github.com/nawrotlab/larvaworld>`_ and `PyPI <https://pypi.org/project/larvaworld/>`_.
 
 Getting Started
 ---------------
